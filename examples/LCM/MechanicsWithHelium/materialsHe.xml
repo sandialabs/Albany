@@ -28,6 +28,9 @@
       <!-- Stabilization Parameter - 2.0 is equivalent to lumped mass -->
       <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
 
+      <!-- Initial Concentration for this block -->
+      <Parameter name="Initial Concentration" type="double" value="5.6e-4"/>
+      
       <!-- Hydorgen Isotope Transport Parameters -->
       <ParameterList name="Transport Coefficients">
 	<Parameter name="Partial Molar Volume" type="double" value="2.0"/>
@@ -35,8 +38,8 @@
 	<Parameter name="Pre-exponential Factor" type="double" value="5.4e5"/>
 	<Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9"/>
 	<Parameter name="Trap Binding Energy" type="double" value="9.65"/>
-	<Parameter name="Number of Lattice Sites" type="double" value="0.145"/>
-        <Parameter name="Reference Total Concentration" type="double" value="3.87e-5"/>
+	<Parameter name="Number of Lattice Sites" type="double" value="0.1405283867341203"/>
+        <Parameter name="Reference Total Concentration" type="double" value="5.6e-4"/>
         <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
         <Parameter name="A Constant" type="double" value="8.6"/>
 	<Parameter name="B Constant" type="double" value="1.5"/>

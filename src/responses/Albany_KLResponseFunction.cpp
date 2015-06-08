@@ -27,7 +27,7 @@ Albany::KLResponseFunction::
 {
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::KLResponseFunction::
 responseMap() const
@@ -43,7 +43,7 @@ responseMapT() const
   return response->responseMapT();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_Operator> 
 Albany::KLResponseFunction::
 createGradientOp() const
@@ -105,7 +105,7 @@ evaluateTangentT(const double alpha,
 			    gT, gxT, gpT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::KLResponseFunction::
@@ -121,7 +121,7 @@ evaluateDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::KLResponseFunction::
 evaluateDerivative(const double current_time,
@@ -324,7 +324,7 @@ evaluateMPDerivative(
 }
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 bool
 Albany::KLResponseFunction::
 computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,

@@ -1,0 +1,42 @@
+# Here is a script for configuring Trilinos using cmake
+# that includes the packages needed for Albany.
+# Any environment variables (e.g. $BOOST_DIR) are
+# set in the customization file, e.g. set_andy_env.in
+# 
+# Uncomment for local build
+#TRILINSTALLDIR=/ascldap/users/gahanse/Codes/AlbanyBuild/Results/Trilinos/build/install
+
+rm -f CMakeCache.txt
+
+BUILD_DIR=`pwd`
+
+cmake \
+      -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINSTALLDIR" \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+      -D ENABLE_LCM:BOOL=ON \
+      -D ENABLE_MOR:BOOL=ON \
+      -D ENABLE_FELIX:BOOL=ON \
+      -D ENABLE_HYDRIDE:BOOL=ON \
+      -D ENABLE_AMP:BOOL=ON \
+      -D ENABLE_ATO:BOOL=ON \
+      -D ENABLE_SCOREC:BOOL=OFF \
+      -D ENABLE_QCAD:BOOL=ON \
+      -D ENABLE_SG_MP:BOOL=OFF \
+      -D ENABLE_ASCR:BOOL=OFF \
+      -D ENABLE_AERAS:BOOL=ON \
+      -D ENABLE_64BIT_INT:BOOL=OFF \
+      -D ENABLE_LAME:BOOL=OFF \
+      -D LAME_INCLUDE_DIR:FILEPATH="$LAMEINCLUDEDIR" \
+      -D LAME_LIBRARY_DIR:FILEPATH="$LAMELIBDIR" \
+      -D ENABLE_INSTALL:BOOL=ON \
+      -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+      -D ENABLE_DEMO_PDES:BOOL=ON \
+      -D ENABLE_MPAS_INTERFACE:BOOL=ON \
+      -D ENABLE_CISM_INTERFACE:BOOL=OFF \
+      -D CISM_INCLUDE_DIR:FILEPATH=$CISMDIR/libdycore \
+      -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
+      -D ENABLE_SLFAD:BOOL=ON \
+      -D SLFAD_SIZE=1000 \
+       ../
+
+#      -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11 -g" \

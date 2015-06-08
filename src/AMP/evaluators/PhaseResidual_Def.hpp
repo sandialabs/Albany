@@ -59,7 +59,6 @@ PhaseResidual(const Teuchos::ParameterList& p,
 
   term1_.resize(dims[0],num_qps_,num_dims_);
   term2_.resize(dims[0],num_qps_);
-//  term2_.initialize(0);
 
   this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
 }
@@ -87,77 +86,26 @@ template<typename EvalT, typename Traits>
 void PhaseResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- 
+ //current time
+  const RealType time = workset.current_time;
+
   typedef Intrepid::FunctionSpaceTools FST;
+
+  // diffusive term
   FST::scalarMultiplyDataData<ScalarT> (term1_,k_,T_grad_);
   FST::integrate<ScalarT>(residual_,term1_,w_grad_bf_,Intrepid::COMP_CPP,false);
+
+  // transient term
   FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
   FST::integrate<ScalarT>(residual_,term2_,w_bf_,Intrepid::COMP_CPP,true);
-  PHAL::scale(source_, -1.0);
-  FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid::COMP_CPP,true);
+
+  // heat source from laser 
   PHAL::scale(laser_source_, -1.0);
   FST::integrate<ScalarT>(residual_,laser_source_,w_bf_,Intrepid::COMP_CPP,true);  
 
-/*
- std::cout<<"rho Cp values"<<std::endl;
- for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-            std::cout<<rho_cp_(cell,qp)<<" ";  
-         }
-     std::cout<<std::endl;
-     }
-
-  std::cout<<"Thermal cond values"<<std::endl;
-   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {          
-      for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-              std::cout<<k_(cell,qp)<<" ";
-          }
-      std::cout<<std::endl;
-      }
-       
-        
-*/
-
-//----------------------------
-#if 0
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      term2_(cell,qp) = rho_cp_(cell,qp)*T_dot_(cell,qp);  
-    }
-  }
-#endif
-
-//  no rho_cp_ term - equivalent to heat problem
-//  FST::integrate<ScalarT>(residual_,T_dot_,w_bf_,Intrepid::COMP_CPP,true);
- 
-#if 0
-  // temperature residual
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t node = 0; node < num_nodes_; ++node) {
-      residual_(cell,node) = 0.0;
-    }
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          residual_(cell,node) +=
-            k_(cell,qp) * T_grad_(cell,qp,i) * w_grad_bf_(cell,node,qp,i) +
-            rho_cp_(cell,qp) * T_dot_(cell,qp) * w_bf_(cell,node,qp);
-        }
-      }
-    }
-  }
-
-  // source function
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
-        residual_(cell,node) -=
-         source_(cell,qp) * w_bf_(cell,node,qp);
-      }
-    }
-  }
-#endif
-
+  // all other problem sources
+  PHAL::scale(source_, -1.0);
+  FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid::COMP_CPP,true);
 }
 
 //**********************************************************************

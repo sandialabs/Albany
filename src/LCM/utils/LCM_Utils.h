@@ -17,21 +17,41 @@
 
 namespace LCM {
 
-typedef QCAD::MaterialDatabase MaterialDatabase;
-
-using Teuchos::ParameterList;
-using Teuchos::RCP;
-
 template <typename Container, typename T>
-bool contains(Container const & c, T const & t)
+bool
+contains(Container const & c, T const & t)
 {
   return std::find(c.begin(), c.end(), t) != c.end();
 }
 
-RCP<MaterialDatabase>
+template <typename T>
+T
+lcm_sqrt(T const & x)
+{
+  auto
+  zero = Teuchos::ScalarTraits<T>::zero();
+
+  if (x == zero) return zero;
+
+  return std::sqrt(x);
+}
+
+template <typename T>
+T
+lcm_cbrt(T const & x)
+{
+  auto
+  zero = Teuchos::ScalarTraits<T>::zero();
+
+  if (x == zero) return zero;
+
+  return std::cbrt(x);
+}
+
+Teuchos::RCP<QCAD::MaterialDatabase>
 createMaterialDatabase(
-    RCP<ParameterList> const & params,
-    RCP<const Teuchos_Comm> & commT);
+    Teuchos::RCP<Teuchos::ParameterList> const & params,
+    Teuchos::RCP<Teuchos_Comm const> & commT);
 
 } // namespace LCM
 

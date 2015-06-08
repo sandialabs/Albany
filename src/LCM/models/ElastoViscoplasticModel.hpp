@@ -104,6 +104,11 @@ private:
   RealType eN_, sN_, fN_;
 
   ///
+  /// Void Nucleation Parameters with H, He
+  ///
+  RealType eHN_, eHN_coeff_, sHN_, fHeN_, fHeN_coeff_;
+  
+  ///
   /// Critical Void Parameters
   ///
   RealType fc_, ff_;
@@ -116,7 +121,7 @@ private:
   ///
   /// Hydrogen and Helium yield surface parameters
   ///
-  RealType alpha1_, alpha2_;
+  RealType alpha1_, alpha2_, Ra_;
 
   ///
   /// flag to print convergence

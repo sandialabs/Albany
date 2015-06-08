@@ -4,31 +4,64 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except SG and MP
-
-//#include "AAdapt_STKAdapt.hpp"
-#include "Albany_STKDiscretization.hpp"
+#include "Albany_Application.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "Intrepid_MiniTensor.h"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
-//define DEBUG_LCM_SCHWARZ
+//#define DEBUG_LCM_SCHWARZ
 
 //
-// Genereric Template Code for Constructor and PostRegistrationSetup
+// Generic Template Code for Constructor and PostRegistrationSetup
 //
 
 namespace LCM {
 
-template <typename EvalT, typename Traits>
+template<typename EvalT, typename Traits>
 SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
-  PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_block_(p.get<std::string>("Coupled Block")),
-  disc_(Teuchos::null)
+    PHAL::DirichletBase<EvalT, Traits>(p),
+    app_(p.get<Teuchos::RCP<Albany::Application>>(
+        "Application", Teuchos::null)),
+    coupled_apps_(app_->getApplications()),
+    coupled_app_name_(p.get<std::string>("Coupled Application", "self")),
+    coupled_block_name_(p.get<std::string>("Coupled Block"))
 {
+  std::string const &
+  nodeset_name = this->nodeSetID;
+
+  app_->setCoupledAppBlockNodeset(
+      coupled_app_name_,
+      coupled_block_name_,
+      nodeset_name);
+
+  std::string const &
+  this_app_name = app_->getAppName();
+
+  auto const &
+  app_name_index_map = *(app_->getAppNameIndexMap());
+
+  auto
+  it = app_name_index_map.find(this_app_name);
+
+  assert(it != app_name_index_map.end());
+
+  auto const
+  this_app_index = it->second;
+
+  setThisAppIndex(this_app_index);
+
+  it = app_name_index_map.find(coupled_app_name_);
+
+  assert(it != app_name_index_map.end());
+
+  auto const
+  coupled_app_index = it->second;
+
+  setCoupledAppIndex(coupled_app_index);
 }
 
 //
@@ -44,86 +77,110 @@ computeBCs(
     ScalarT & y_val,
     ScalarT & z_val)
 {
+  auto const
+  this_app_index = getThisAppIndex();
+
+  auto const
+  coupled_app_index = getCoupledAppIndex();
+
+  Albany::Application const &
+  this_app = getApplication(this_app_index);
+
+  Albany::Application const &
+  coupled_app = getApplication(coupled_app_index);
+
   Teuchos::RCP<Albany::AbstractDiscretization>
-  disc = dirichlet_workset.disc;
+  this_disc = this_app.getDiscretization();
 
-  assert(disc != Teuchos::null);
+  auto *
+  this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
 
-  Albany::STKDiscretization *
-  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  coupled_disc = coupled_app.getDiscretization();
 
-  Teuchos::RCP<const Tpetra_Vector>
-  solution = stk_discretization->getSolutionFieldT();
+  auto *
+  coupled_stk_disc =
+      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
 
-  Teuchos::ArrayRCP<const ST>
-  solution_view = solution->get1dView();
+  auto &
+  coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
+    (*(coupled_stk_disc->getSTKMeshStruct()));
 
-  Albany::GenericSTKMeshStruct &
-  gms = dynamic_cast<Albany::GenericSTKMeshStruct &>(
-      *(stk_discretization->getSTKMeshStruct())
-  );
-
-  const Teuchos::ArrayRCP<double> &
-  coordinates = stk_discretization->getCoordinates();
-
-  std::string const
-  coupled_block = this->getCoupledBlock();
-
-  Albany::WorksetArray<std::string>::type const &
-  ws_eb_names = disc->getWsEBNames();
+  auto const &
+  coupled_ws_eb_names = coupled_disc->getWsEBNames();
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
-  mesh_specs = gms.getMeshSpecs();
+  coupled_mesh_specs = coupled_gms.getMeshSpecs();
 
-  // Get cell topology of the block to which this node set
+  // Get cell topology of the application and block to which this node set
   // is coupled.
+  std::string const &
+  this_app_name = this_app.getAppName();
+
+  std::string const &
+  coupled_app_name = coupled_app.getAppName();
+
+  std::string const
+  coupled_block_name = this_app.getCoupledBlockName(coupled_app_index);
+
   std::map<std::string, int> const &
-  block_name_2_index = gms.ebNameToIndex;
+  coupled_block_name_2_index = coupled_gms.ebNameToIndex;
 
-  std::map<std::string, int>::const_iterator
-  it = block_name_2_index.find(coupled_block);
+  auto
+  it = coupled_block_name_2_index.find(coupled_block_name);
 
-  assert(it != block_name_2_index.end());
-
-  int const
-  index_block = it->second;
-
-  CellTopologyData const
-  cell_topology_data = mesh_specs[index_block]->ctd;
-
-  shards::CellTopology
-  cell_topology(&cell_topology_data);
-
-  size_t const
-  dimension = cell_topology_data.dimension;
-
-  size_t const
-  vertex_count = cell_topology_data.vertex_count;
-
-  Intrepid::ELEMENT::Type const
-  element_type = Intrepid::find_type(dimension, vertex_count);
-
-  std::vector<double *> const &
-  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
-
-  typedef
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type
-  WSELND;
-
-  WSELND const &
-  ws_el_2_nd = stk_discretization->getWsElNodeID();
-
-  std::vector< Intrepid::Vector<double> >
-  element_vertices(vertex_count);
-
-  std::vector< Intrepid::Vector<double> >
-  element_solution(vertex_count);
-
-  for (size_t i = 0; i < vertex_count; ++i) {
-    element_vertices[i].set_dimension(dimension);
-    element_solution[i].set_dimension(dimension);
+  if (it == coupled_block_name_2_index.end()) {
+    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    std::cerr << "Coupling application : " << this_app_name << '\n';
+    std::cerr << "To application       : " << coupled_app_name << '\n';
+    exit(1);
   }
 
+  auto const
+  coupled_block_index = it->second;
+
+  CellTopologyData const
+  coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
+
+  shards::CellTopology
+  coupled_cell_topology(&coupled_cell_topology_data);
+
+  auto const
+  coupled_dimension = coupled_cell_topology_data.dimension;
+
+  // FIXME: Generalize element topology.
+  auto const
+  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
+
+  auto const
+  coupled_element_type =
+      Intrepid::find_type(coupled_dimension, coupled_vertex_count);
+
+  std::string const &
+  coupled_nodeset_name = this_app.getNodesetName(coupled_app_index);
+
+  std::vector<double *> const &
+  ns_coord =
+      this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
+
+  auto const &
+  ws_elem_2_node_id = coupled_stk_disc->getWsElNodeID();
+
+  std::vector<Intrepid::Vector<double>>
+  coupled_element_vertices(coupled_vertex_count);
+
+  std::vector<Intrepid::Vector<double>>
+  coupled_element_solution(coupled_vertex_count);
+
+  for (auto i = 0; i < coupled_vertex_count; ++i) {
+    coupled_element_vertices[i].set_dimension(coupled_dimension);
+    coupled_element_solution[i].set_dimension(coupled_dimension);
+  }
+
+  // This tolerance is used for geometric approximations. It will be used
+  // to determine whether a node of this_app is inside an element of
+  // coupled_app within that tolerance.
   double const
   tolerance = 5.0e-2;
 
@@ -133,55 +190,83 @@ computeBCs(
   Intrepid::Vector<double>
   point;
 
-  point.set_dimension(dimension);
+  point.set_dimension(coupled_dimension);
 
   point.fill(coord);
+
+#if defined(DEBUG_LCM_SCHWARZ)
+  std::cout << "--------------------------------------------------------\n";
+  std::cout << "Current app      : " << this_app_name << '\n';
+  std::cout << "Coupling to app  : " << coupled_app_name << '\n';
+  std::cout << "Coupling to block: " << coupled_block_name << '\n';
+  std::cout << "Node set node    : " << ns_node << '\n';
+  std::cout << "Point            : " << point << '\n';
+  std::cout << "--------------------------------------------------------\n";
+#endif // DEBUG_LCM_SCHWARZ
 
   // Determine the element that contains this point.
   bool
   found = false;
 
-  size_t
+  auto
   parametric_dimension = 0;
 
-  Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > >
+  Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
   basis;
 
-  for (size_t workset = 0; workset < ws_el_2_nd.size(); ++workset) {
+  Teuchos::ArrayRCP<double> const &
+  coupled_coordinates = coupled_stk_disc->getCoordinates();
+
+  Teuchos::RCP<Tpetra_Vector const>
+  coupled_solution = coupled_stk_disc->getSolutionFieldT();
+
+  Teuchos::ArrayRCP<ST const>
+  coupled_solution_view = coupled_solution->get1dView();
+
+  Teuchos::RCP<Tpetra_Map const>
+  coupled_overlap_node_map = coupled_stk_disc->getOverlapNodeMapT();
+
+  for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
 
     std::string const &
-    element_block = ws_eb_names[workset];
+    coupled_element_block = coupled_ws_eb_names[workset];
 
-    if (element_block != coupled_block) continue;
+    if (coupled_element_block != coupled_block_name) continue;
 
-    size_t const
-    elements_per_workset = ws_el_2_nd[workset].size();
+    auto const
+    elements_per_workset = ws_elem_2_node_id[workset].size();
 
-    for (size_t element = 0; element < elements_per_workset; ++element) {
+    for (auto element = 0; element < elements_per_workset; ++element) {
 
-      for (size_t node = 0; node < vertex_count; ++node) {
+      for (auto node = 0; node < coupled_vertex_count; ++node) {
 
-        size_t const
-        node_id = ws_el_2_nd[workset][element][node];
+        auto const
+        global_node_id = ws_elem_2_node_id[workset][element][node];
+
+        auto const
+        local_node_id =
+            coupled_overlap_node_map->getLocalElement(global_node_id);
 
         double * const
-        pcoord = &(coordinates[dimension * node_id]);
+        pcoord = &(coupled_coordinates[coupled_dimension * local_node_id]);
 
-        element_vertices[node].fill(pcoord);
+        coupled_element_vertices[node].fill(pcoord);
 
-        for (size_t i = 0; i < dimension; ++i) {
-          element_solution[node](i) = solution_view[dimension * node_id + i];
-        }
-      }
+        for (auto i = 0; i < coupled_dimension; ++i) {
+          coupled_element_solution[node](i) =
+              coupled_solution_view[coupled_dimension * local_node_id + i];
+        } // dimension loop
+
+      } // node loop
 
       bool
       in_element = false;
 
-      switch (element_type) {
+      switch (coupled_element_type) {
 
       default:
-        std::cerr << "ERROR: " << __PRETTY_FUNCTION__ << '\n';
-        std::cerr << "Unknown element type: " << element_type << '\n';
+        std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+        std::cerr << "Unknown element type: " << coupled_element_type << '\n';
         exit(1);
         break;
 
@@ -189,14 +274,14 @@ computeBCs(
         parametric_dimension = 3;
 
         basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM<
-            double, Intrepid::FieldContainer<double> >());
+            double, Intrepid::FieldContainer<double>>());
 
         in_element = Intrepid::in_tetrahedron(
             point,
-            element_vertices[0],
-            element_vertices[1],
-            element_vertices[2],
-            element_vertices[3],
+            coupled_element_vertices[0],
+            coupled_element_vertices[1],
+            coupled_element_vertices[2],
+            coupled_element_vertices[3],
             tolerance);
         break;
 
@@ -204,22 +289,22 @@ computeBCs(
         parametric_dimension = 3;
 
         basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<
-            double, Intrepid::FieldContainer<double> >());
+            double, Intrepid::FieldContainer<double>>());
 
         in_element = Intrepid::in_hexahedron(
             point,
-            element_vertices[0],
-            element_vertices[1],
-            element_vertices[2],
-            element_vertices[3],
-            element_vertices[4],
-            element_vertices[5],
-            element_vertices[6],
-            element_vertices[7],
+            coupled_element_vertices[0],
+            coupled_element_vertices[1],
+            coupled_element_vertices[2],
+            coupled_element_vertices[3],
+            coupled_element_vertices[4],
+            coupled_element_vertices[5],
+            coupled_element_vertices[6],
+            coupled_element_vertices[7],
             tolerance);
         break;
 
-      }
+      } // switch
 
       if (in_element == true) {
         found = true;
@@ -237,22 +322,22 @@ computeBCs(
   assert(found == true);
 
   // We do this element by element
-  size_t const
+  auto const
   number_cells = 1;
 
   // Container for the parametric coordinates
   Intrepid::FieldContainer<double>
   parametric_point(number_cells, parametric_dimension);
 
-  for (size_t j = 0; j < parametric_dimension; ++j) {
+  for (auto j = 0; j < parametric_dimension; ++j) {
     parametric_point(0, j) = 0.0;
   }
 
   // Container for the physical point
   Intrepid::FieldContainer<double>
-  physical_coordinates(number_cells, dimension);
+  physical_coordinates(number_cells, coupled_dimension);
 
-  for (size_t i = 0; i < dimension; ++i) {
+  for (auto i = 0; i < coupled_dimension; ++i) {
     physical_coordinates(0, i) = point(i);
   }
 
@@ -260,11 +345,11 @@ computeBCs(
   // TODO: matToReference more general, accepts more topologies.
   // Use it to find if point is contained in element as well.
   Intrepid::FieldContainer<double>
-  nodal_coordinates(number_cells, vertex_count, dimension);
+  nodal_coordinates(number_cells, coupled_vertex_count, coupled_dimension);
 
-  for (size_t i = 0; i < vertex_count; ++i) {
-    for (size_t j = 0; j < dimension; ++j) {
-      nodal_coordinates(0,i,j) = element_vertices[i](j);
+  for (auto i = 0; i < coupled_vertex_count; ++i) {
+    for (auto j = 0; j < coupled_dimension; ++j) {
+      nodal_coordinates(0,i,j) = coupled_element_vertices[i](j);
     }
   }
 
@@ -273,44 +358,55 @@ computeBCs(
       parametric_point,
       physical_coordinates,
       nodal_coordinates,
-      cell_topology,
+      coupled_cell_topology,
       0
   );
 
   // Evaluate shape functions at parametric point.
-  size_t const number_points = 1;
+  auto const
+  number_points = 1;
 
   Intrepid::FieldContainer<double>
-  basis_values(vertex_count, number_points);
+  basis_values(coupled_vertex_count, number_points);
 
   basis->getValues(basis_values, parametric_point, Intrepid::OPERATOR_VALUE);
 
   // Evaluate solution at parametric point using values of shape
   // functions just computed.
   Intrepid::Vector<double>
-  value(dimension, Intrepid::ZEROS);
+  value(coupled_dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "Coupling to block: " << coupled_block << '\n';
+  std::cout << "NODE   BASIS                     VALUE\n";
+  std::cout << "---------------------------------------------------------\n";
 #endif // DEBUG_LCM_SCHWARZ
 
-  for (size_t i = 0; i < vertex_count; ++i) {
-    value += basis_values(i, 0) * element_solution[i];
+  for (auto i = 0; i < coupled_vertex_count; ++i) {
+    value += basis_values(i, 0) * coupled_element_solution[i];
 
 #if defined(DEBUG_LCM_SCHWARZ)
-    std::cout << std::scientific << std::setprecision(16);
-    std::cout << basis_values(i, 0) << "    " << element_solution[i] << '\n';
+    std::cout << std::setw(4) << i << ' ';
+    std::cout << std::scientific << std::setw(24) << std::setprecision(16);
+    std::cout << basis_values(i, 0) << "    ";
+    std::cout << coupled_element_solution[i] << '\n';
 #endif // DEBUG_LCM_SCHWARZ
 
   }
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << " ==> " << value << '\n';
+  std::cout << "--------------------------------------------------------\n";
+  std::cout << "RESULT : " << value << '\n';
+  std::cout << "--------------------------------------------------------\n";
 #endif // DEBUG_LCM_SCHWARZ
 
   x_val = value(0);
   y_val = value(1);
   z_val = value(2);
+//  x_val = 0.0;
+//  y_val = 0.0;
+//  z_val = 0.0;
+
+  return;
 }
 
 //
@@ -319,7 +415,7 @@ computeBCs(
 template<typename Traits>
 SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
 SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
+    SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
 }
 
@@ -331,82 +427,47 @@ void
 SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  //
-  // Fetch data structures and corresponding info that is needed
-  //
-
-  // Coordinates
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichlet_workset.xT;
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-
   // Solution
-  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
-  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::RCP<const Tpetra_Vector>
+  xT = dirichlet_workset.xT;
 
+  Teuchos::ArrayRCP<const ST>
+  xT_const_view = xT->get1dView();
 
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** RESIDUAL ***\n";
-  std::cout << "\n*** X BEFORE COMPUTE BC ***\n";
-  xT->print(std::cout);
-  std::cout << "\n*** F BEFORE COMPUTE BC ***\n";
-  fT->print(std::cout);
-#endif // DEBUG_LCM_SCHWARZ
+  // Residual
+  Teuchos::RCP<Tpetra_Vector>
+  fT = dirichlet_workset.fT;
 
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  disc = dirichlet_workset.disc;
+  Teuchos::ArrayRCP<ST>
+  fT_view = fT->get1dViewNonConst();
 
-  Albany::STKDiscretization *
-  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
-
-  this->setDiscretization(disc);
-
-  //
-  // Collect nodal coordinates of nodeset (BC) nodes
-  //
   std::vector<std::vector<int> > const &
-  ns_dof =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  ns_dof = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "CONSTRAINED DOFS:\n";
-  for (size_t i = 0; i < ns_dof.size(); ++i) {
-    for (size_t j = 0; j < ns_dof[i].size(); ++j) {
-      std::cout << ' ' << ns_dof[i][j];
-    }
-    std::cout << '\n';
-  }
-#endif // DEBUG_LCM_SCHWARZ
-
-  size_t const
+  auto const
   ns_number_nodes = ns_dof.size();
 
-  ScalarT
-  x_val, y_val, z_val;
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
-  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+    ScalarT
+    x_val, y_val, z_val;
 
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
-    size_t const
-    dof_x = ns_dof[ns_node][0];
+    auto const
+    x_dof = ns_dof[ns_node][0];
 
-    size_t const
-    dof_y = ns_dof[ns_node][1];
+    auto const
+    y_dof = ns_dof[ns_node][1];
 
-    size_t const
-    dof_z = ns_dof[ns_node][2];
+    auto const
+    z_dof = ns_dof[ns_node][2];
 
-    fT_nonconstView[dof_x] = xT_constView[dof_x] - x_val;
-    fT_nonconstView[dof_y] = xT_constView[dof_y] - y_val;
-    fT_nonconstView[dof_z] = xT_constView[dof_z] - z_val;
+    fT_view[x_dof] = xT_const_view[x_dof] - x_val;
+    fT_view[y_dof] = xT_const_view[y_dof] - y_val;
+    fT_view[z_dof] = xT_const_view[z_dof] - z_val;
 
   } // node in node set loop
-
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** X AFTER COMPUTE BC ***\n";
-  xT->print(std::cout);
-  std::cout << "\n*** F AFTER COMPUTE BC ***\n";
-  fT->print(std::cout);
-#endif // DEBUG_LCM_SCHWARZ
 
   return;
 }
@@ -417,7 +478,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 template<typename Traits>
 SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+    SchwarzBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
 }
 
@@ -428,17 +489,20 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** JACOBIAN ***\n";
-#endif // DEBUG_LCM_SCHWARZ
+  Teuchos::RCP<Tpetra_Vector>
+  fT = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
+  Teuchos::ArrayRCP<ST>
+  fT_view;
 
-  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichlet_workset.JacT;
+  Teuchos::RCP<Tpetra_CrsMatrix>
+  jacT = dirichlet_workset.JacT;
 
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichlet_workset.xT;
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<const Tpetra_Vector>
+  xT = dirichlet_workset.xT;
+
+  Teuchos::ArrayRCP<const ST>
+  xT_const_view = xT->get1dView();
 
   RealType const
   j_coeff = dirichlet_workset.j_coeff;
@@ -446,76 +510,108 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::vector<double*> const &
-  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
+  Teuchos::Array<LO>
+  index(1);
 
-  RealType *
+  Teuchos::Array<ST>
+  value(1);
+
+  value[0] = j_coeff;
+
+  Teuchos::Array<ST>
   matrix_entries;
 
-  int *
+  Teuchos::Array<LO>
   matrix_indices;
 
-  int
-  num_entries;
+  bool const
+  fill_residual = (fT != Teuchos::null);
 
-  RealType
-  diag = j_coeff;
+  if (fill_residual == true) {
+    fT_view = fT->get1dViewNonConst();
+  }
 
+  for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
 
-  Teuchos::Array<LO> index(1);
-  Teuchos::Array<ST> value(1);
-  size_t numEntriesT;
-  value[0] = j_coeff;
-  Teuchos::Array<ST> matrixEntriesT;
-  Teuchos::Array<LO> matrixIndicesT;
-
-  bool fill_residual = (fT != Teuchos::null);
-  if (fill_residual) fT_nonconstView = fT->get1dViewNonConst();
-
-  // local indices into unknown vector
-  int
-  x_dof, y_dof, z_dof;
-
-  double *
-  coord;
-
-  ScalarT
-  x_val, y_val, z_val;
-
-  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    auto const
     x_dof = ns_nodes[ns_node][0];
+
+    auto const
     y_dof = ns_nodes[ns_node][1];
+
+    auto const
     z_dof = ns_nodes[ns_node][2];
-    coord = ns_coord[ns_node];
+
+    ScalarT
+    x_val, y_val, z_val;
 
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
-    numEntriesT = jacT->getNumEntriesInLocalRow(x_dof);
-    matrixEntriesT.resize(numEntriesT);
-    matrixIndicesT.resize(numEntriesT);
-
     // replace jac values for the X dof
-    jacT->getLocalRowCopy(x_dof, matrixIndicesT(), matrixEntriesT(), numEntriesT);
-    for (int i = 0; i < num_entries; ++i) matrixEntriesT[i] = 0;
+    auto
+    num_entries = jacT->getNumEntriesInLocalRow(x_dof);
+
+    matrix_entries.resize(num_entries);
+    matrix_indices.resize(num_entries);
+
+    jacT->getLocalRowCopy(
+        x_dof,
+        matrix_indices(),
+        matrix_entries(),
+        num_entries);
+
+    for (auto i = 0; i < num_entries; ++i) {
+      matrix_entries[i] = 0;
+    }
+
+    jacT->replaceLocalValues(x_dof, matrix_indices(), matrix_entries());
     index[0] = x_dof;
     jacT->replaceLocalValues(x_dof, index(), value());
 
     // replace jac values for the y dof
-    jacT->getLocalRowCopy(y_dof, matrixIndicesT(), matrixEntriesT(), numEntriesT);
-    for (int i = 0; i < num_entries; ++i) matrixEntriesT[i] = 0;
+    num_entries = jacT->getNumEntriesInLocalRow(y_dof);
+
+    matrix_entries.resize(num_entries);
+    matrix_indices.resize(num_entries);
+
+    jacT->getLocalRowCopy(
+        y_dof,
+        matrix_indices(),
+        matrix_entries(),
+        num_entries);
+
+    for (auto i = 0; i < num_entries; ++i) {
+      matrix_entries[i] = 0;
+    }
+
+    jacT->replaceLocalValues(y_dof, matrix_indices(), matrix_entries());
     index[0] = y_dof;
     jacT->replaceLocalValues(y_dof, index(), value());
 
     // replace jac values for the z dof
-    jacT->getLocalRowCopy(z_dof, matrixIndicesT(), matrixEntriesT(), numEntriesT);
-    for (int i = 0; i < num_entries; ++i) matrixEntriesT[i] = 0;
+    num_entries = jacT->getNumEntriesInLocalRow(z_dof);
+
+    matrix_entries.resize(num_entries);
+    matrix_indices.resize(num_entries);
+
+    jacT->getLocalRowCopy(
+        z_dof,
+        matrix_indices(),
+        matrix_entries(),
+        num_entries);
+
+    for (auto i = 0; i < num_entries; ++i) {
+      matrix_entries[i] = 0;
+    }
+
+    jacT->replaceLocalValues(z_dof, matrix_indices(), matrix_entries());
     index[0] = z_dof;
     jacT->replaceLocalValues(z_dof, index(), value());
 
     if (fill_residual == true) {
-      fT_nonconstView[x_dof] = xT_constView[x_dof] - x_val.val();
-      fT_nonconstView[y_dof] = xT_constView[y_dof] - y_val.val();
-      fT_nonconstView[z_dof] = xT_constView[z_dof] - z_val.val();
+      fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
+      fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
+      fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
     }
   }
 }
@@ -526,7 +622,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 template<typename Traits>
 SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
 SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
+    SchwarzBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
 }
 
@@ -537,19 +633,20 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** TANGENT ***\n";
-#endif // DEBUG_LCM_SCHWARZ
+  Teuchos::RCP<Tpetra_Vector>
+  fT = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_Vector>  fT = dirichlet_workset.fT;
+  Teuchos::RCP<Tpetra_MultiVector>
+  fpT = dirichlet_workset.fpT;
 
-  Teuchos::RCP<Tpetra_MultiVector>  fpT = dirichlet_workset.fpT;
+  Teuchos::RCP<Tpetra_MultiVector>
+  JVT = dirichlet_workset.JVT;
 
-  Teuchos::RCP<Tpetra_MultiVector> JVT = dirichlet_workset.JVT;
+  Teuchos::RCP<const Tpetra_Vector>
+  xT = dirichlet_workset.xT;
 
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichlet_workset.xT;
-
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichlet_workset.VxT;
+  Teuchos::RCP<const Tpetra_MultiVector>
+  VxT = dirichlet_workset.VxT;
 
   RealType const
   j_coeff = dirichlet_workset.j_coeff;
@@ -557,59 +654,64 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::vector<double*> const &
-  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
+  Teuchos::ArrayRCP<const ST>
+  VxT_const_view;
 
-  // global and local indices into unknown vector
-  int
-  x_dof, y_dof, z_dof;
+  Teuchos::ArrayRCP<ST>
+  fT_view;
 
-  double *
-  coord;
+  Teuchos::ArrayRCP<const ST>
+  xT_const_view = xT->get1dView();
 
-  ScalarT
-  x_val, y_val, z_val;
+  if (fT != Teuchos::null) {
+    fT_view = fT->get1dViewNonConst();
+  }
 
-  Teuchos::ArrayRCP<const ST> VxT_constView;
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-
-  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+  for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    auto const
     x_dof = ns_nodes[ns_node][0];
+
+    auto const
     y_dof = ns_nodes[ns_node][1];
+
+    auto const
     z_dof = ns_nodes[ns_node][2];
-    coord = ns_coord[ns_node];
+
+    ScalarT
+    x_val, y_val, z_val;
 
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
     if (fT != Teuchos::null) {
-      fT_nonconstView[x_dof] = xT_constView[x_dof] - x_val.val();
-      fT_nonconstView[y_dof] = xT_constView[y_dof] - y_val.val();
-      fT_nonconstView[z_dof] = xT_constView[z_dof] - z_val.val();
+      fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
+      fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
+      fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
     }
 
     if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> JVT_nonconstView;
-      for (int i = 0; i < dirichlet_workset.num_cols_x; ++i) {
-        JVT_nonconstView = JVT->getDataNonConst(i); 
-        VxT_constView = VxT->getData(i); 
-        JVT_nonconstView[x_dof] = j_coeff * VxT_constView[x_dof];
-        JVT_nonconstView[y_dof] = j_coeff * VxT_constView[y_dof];
-        JVT_nonconstView[z_dof] = j_coeff * VxT_constView[z_dof];
+      Teuchos::ArrayRCP<ST>
+      JVT_view;
+
+      for (auto i = 0; i < dirichlet_workset.num_cols_x; ++i) {
+        JVT_view = JVT->getDataNonConst(i);
+        VxT_const_view = VxT->getData(i);
+        JVT_view[x_dof] = j_coeff * VxT_const_view[x_dof];
+        JVT_view[y_dof] = j_coeff * VxT_const_view[y_dof];
+        JVT_view[z_dof] = j_coeff * VxT_const_view[z_dof];
       }
     }
 
     if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> fpT_nonconstView;
-      for (int i = 0; i < dirichlet_workset.num_cols_p; ++i) {
-        fpT_nonconstView = fpT->getDataNonConst(i); 
-        fpT_nonconstView[x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
-        fpT_nonconstView[y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
-        fpT_nonconstView[z_dof] = -z_val.dx(dirichlet_workset.param_offset + i);
+      Teuchos::ArrayRCP<ST>
+      fpT_view;
+
+      for (auto i = 0; i < dirichlet_workset.num_cols_p; ++i) {
+        fpT_view = fpT->getDataNonConst(i);
+        fpT_view[x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
+        fpT_view[y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
+        fpT_view[z_dof] = -z_val.dx(dirichlet_workset.param_offset + i);
       }
     }
-
   }
 }
 
@@ -619,7 +721,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 template<typename Traits>
 SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+    SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
 }
 
@@ -630,11 +732,17 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
+  Teuchos::RCP<Tpetra_MultiVector>
+  fpVT = dirichlet_workset.fpVT;
 
-  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichlet_workset.fpVT;
-  Teuchos::ArrayRCP<ST> fpVT_nonconstView; 
-  bool trans = dirichlet_workset.transpose_dist_param_deriv;
-  int num_cols = fpVT->getNumVectors();
+  Teuchos::ArrayRCP<ST>
+  fpVT_view;
+
+  bool const
+  trans = dirichlet_workset.transpose_dist_param_deriv;
+
+  auto const
+  num_cols = fpVT->getNumVectors();
 
   //
   // We're currently assuming Dirichlet BC's can't be distributed parameters.
@@ -645,13 +753,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::vector<double*> const &
+  std::vector<double *> const &
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
   // global and local indices into unknown vector
-  int
-  xlunk, ylunk, zlunk;
-
   // double *
   // coord;
 
@@ -659,47 +764,63 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   // x_val, y_val, z_val;
 
   // For (df/dp)^T*V we zero out corresponding entries in V
-  if (trans) {
-    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichlet_workset.Vp_bcT;
-    Teuchos::ArrayRCP<ST> VpT_nonconstView; 
-    for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-      xlunk = ns_nodes[inode][0];
-      ylunk = ns_nodes[inode][1];
-      zlunk = ns_nodes[inode][2];
+  if (trans == true) {
+    Teuchos::RCP<Tpetra_MultiVector>
+    VpT = dirichlet_workset.Vp_bcT;
+
+    Teuchos::ArrayRCP<ST>
+    VpT_view;
+
+    for (auto inode = 0; inode < ns_nodes.size(); ++inode) {
+
+      auto const
+      x_dof = ns_nodes[inode][0];
+
+      auto const
+      y_dof = ns_nodes[inode][1];
+
+      auto const
+      z_dof = ns_nodes[inode][2];
       // coord = ns_coord[inode];
 
       // this->computeBCs(coord, x_val, y_val, z_val);
 
-      for (int col=0; col<num_cols; ++col) {
-        //(*Vp)[col][xlunk] = 0.0;
-        //(*Vp)[col][ylunk] = 0.0;
-        //(*Vp)[col][zlunk] = 0.0;
-        VpT_nonconstView = VpT->getDataNonConst(col); 
-        VpT_nonconstView[xlunk] = 0.0; 
-        VpT_nonconstView[ylunk] = 0.0; 
-        VpT_nonconstView[zlunk] = 0.0; 
+      for (auto col = 0; col < num_cols; ++col) {
+        //(*Vp)[col][x_dof] = 0.0;
+        //(*Vp)[col][y_dof] = 0.0;
+        //(*Vp)[col][z_dof] = 0.0;
+        VpT_view = VpT->getDataNonConst(col);
+        VpT_view[x_dof] = 0.0;
+        VpT_view[y_dof] = 0.0;
+        VpT_view[z_dof] = 0.0;
       }
     }
   }
 
   // for (df/dp)*V we zero out corresponding entries in df/dp
   else {
-    for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
-      xlunk = ns_nodes[inode][0];
-      ylunk = ns_nodes[inode][1];
-      zlunk = ns_nodes[inode][2];
+    for (auto inode = 0; inode < ns_nodes.size(); ++inode) {
+
+      auto const
+      x_dof = ns_nodes[inode][0];
+
+      auto const
+      y_dof = ns_nodes[inode][1];
+
+      auto const
+      z_dof = ns_nodes[inode][2];
       // coord = ns_coord[inode];
 
       // this->computeBCs(coord, x_val, y_val, z_val);
 
-      for (int col=0; col<num_cols; ++col) {
-        //(*fpV)[col][xlunk] = 0.0;
-        //(*fpV)[col][ylunk] = 0.0;
-        //(*fpV)[col][zlunk] = 0.0;
-        fpVT_nonconstView = fpVT->getDataNonConst(col); 
-        fpVT_nonconstView[xlunk] = 0.0; 
-        fpVT_nonconstView[ylunk] = 0.0; 
-        fpVT_nonconstView[zlunk] = 0.0; 
+      for (auto col = 0; col < num_cols; ++col) {
+        //(*fpV)[col][x_dof] = 0.0;
+        //(*fpV)[col][y_dof] = 0.0;
+        //(*fpV)[col][z_dof] = 0.0;
+        fpVT_view = fpVT->getDataNonConst(col);
+        fpVT_view[x_dof] = 0.0;
+        fpVT_view[y_dof] = 0.0;
+        fpVT_view[z_dof] = 0.0;
       }
     }
   }
@@ -1235,6 +1356,4 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 }
 #endif //ALBANY_SG_MP
 
-}
- // namespace LCM
-
+} // namespace LCM

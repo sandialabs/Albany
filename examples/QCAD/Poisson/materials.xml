@@ -65,11 +65,25 @@
 
   </ParameterList>
 
+  <ParameterList name="SideSets">
+
+    <ParameterList name="topofsilicon">
+      <Parameter name="elementBlock" type="string" value="silicon.insulator" />
+    </ParameterList>
+
+  </ParameterList>
+
+
 
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="silicon">
       <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="Dopant Type" type="string" value="None" />
+    </ParameterList>
+
+    <ParameterList name="silicon.insulator">
+      <Parameter name="material" type="string" value="Si_Insulator" />
       <Parameter name="Dopant Type" type="string" value="None" />
     </ParameterList>
 
@@ -196,6 +210,33 @@
 
     </ParameterList>
 
+    <ParameterList name="Si_Insulator">
+      <Parameter name="Category" type="string" value="Insulator"/>
+      <Parameter name="Permittivity" type="double" value="11.9"/>
+
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="2"/>
+
+      <!-- Electron effective mass in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5"/>
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5"/>
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.61566" />
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="1.1455"/>
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.05"/>
+      
+      <!-- Scaling for Neumann b.c. -->
+      <Parameter name="Flux Scale" type="double" value="9.0475e2"/>
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+    
 
     <!-- Use Silicon parameters for PolySilicon as assumed standardly, since the latter 
     has complicated structure (polycrystalline or amorphous) and no data is available -->

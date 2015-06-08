@@ -53,6 +53,9 @@ AnisotropicDamageModel(Teuchos::ParameterList* p,
   std::string f1_damage_string = (*field_name_map_)["F1_Damage"];
   std::string f2_damage_string = (*field_name_map_)["F2_Damage"];
 
+  // optional material tangent computation
+  std::string tangent_string = (*field_name_map_)["Material Tangent"];
+
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(
@@ -63,8 +66,10 @@ AnisotropicDamageModel(Teuchos::ParameterList* p,
       std::make_pair(matrix_damage_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(f1_damage_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(f2_damage_string, dl->qp_scalar));
-  this->eval_field_map_.insert(
-      std::make_pair("Material Tangent", dl->qp_tensor4));
+  
+  if(compute_tangent_) {
+    this->eval_field_map_.insert(std::make_pair(tangent_string, dl->qp_tensor4));
+  }
 
   // define the state variables
   //
@@ -157,6 +162,7 @@ computeState(typename Traits::EvalData workset,
   std::string matrix_damage_string = (*field_name_map_)["Matrix_Damage"];
   std::string f1_damage_string = (*field_name_map_)["F1_Damage"];
   std::string f2_damage_string = (*field_name_map_)["F2_Damage"];
+  std::string tangent_string = (*field_name_map_)["Material Tangent"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
@@ -166,7 +172,11 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> damage_m = *eval_fields[matrix_damage_string];
   PHX::MDField<ScalarT> damage_f1 = *eval_fields[f1_damage_string];
   PHX::MDField<ScalarT> damage_f2 = *eval_fields[f2_damage_string];
-  PHX::MDField<ScalarT> tangent = *eval_fields["Material Tangent"];
+  PHX::MDField<ScalarT> tangent;
+
+  if(compute_tangent_) {
+    tangent = *eval_fields[tangent_string];
+  }
 
   // previous state
   Albany::MDArray energy_m_old =
@@ -190,15 +200,23 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> M1dyadM1(num_dims_), M2dyadM2(num_dims_);
   Intrepid::Tensor<ScalarT> S0_m(num_dims_), S0_f1(num_dims_), S0_f2(num_dims_);
 
-  Intrepid::Tensor4<ScalarT> Tangent_m(num_dims_);
-  Intrepid::Tensor4<ScalarT> Tangent_f1(num_dims_), Tangent_f2(num_dims_);
+  // tangent is w.r.t. the right Cauchy-Green tensor
+  Intrepid::Tensor4<ScalarT> tangent_m(num_dims_);
+  Intrepid::Tensor4<ScalarT> tangent_f1(num_dims_), tangent_f2(num_dims_);
+  // tangentA is w.r.t. the deformation gradient
+  Intrepid::Tensor4<ScalarT> tangentA_m(num_dims_);
+  Intrepid::Tensor4<ScalarT> tangentA_f1(num_dims_), tangentA_f2(num_dims_);
 
   Intrepid::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
 
-  volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
+  //volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_pts_; ++pt) {
+      
+      // for debugging
+      //std::cout << "AnisotropicModel compute_tangent_=" << compute_tangent_ << std::endl;
+
       // local parameters
       mu = elastic_modulus(cell, pt)
           / (2.0 * (1.0 + poissons_ratio(cell, pt)));
@@ -228,9 +246,16 @@ computeState(typename Traits::EvalData workset,
 
       // elasticity tensor (undamaged) for M
       mu_tilde = mu - 0.5 * lame * lnI3_m;
-      Tangent_m = lame * Intrepid::tensor(invC, invC)
+
+      // optional material tangent computation
+
+      if(compute_tangent_) {
+        tangent_m = lame * Intrepid::tensor(invC, invC)
           + mu_tilde * (Intrepid::tensor2(invC, invC)
-              + Intrepid::tensor3(invC, invC));
+              + Intrepid::tensor3(invC, invC)); 
+      }// compute_tangent_
+
+
 
       // damage term in M
       alpha_m = energy_m_old(cell, pt);
@@ -243,9 +268,34 @@ computeState(typename Traits::EvalData workset,
       damage_deriv_m =
           max_damage_m_ / saturation_m_ * std::exp(-alpha_m / saturation_m_);
 
-      // tangent for matrix considering damage
-      Tangent_m = (1.0 - damage_m(cell, pt)) * Tangent_m
+      // optional material tangent computation
+      if(compute_tangent_) {
+        tangent_m = (1.0 - damage_m(cell, pt)) * tangent_m
           - damage_deriv_m * Intrepid::tensor(S0_m, S0_m);
+
+        // convert tangent_m to tangentA 
+        // tangentA is w.r.t. the deformation gradient
+        tangentA_m.fill(0.0);
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
+            for (int p(0); p < num_dims_; ++p) {
+              for (int q(0); q < num_dims_; ++q) {
+		
+                for (int k(0); k < num_dims_; ++k){
+                 for (int n(0); n < num_dims_; ++n){
+                   tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q)
+                     + F(i,k) * tangent_m(k,j,n,q) * F(p,n);
+                 }
+                }
+              
+                tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q)
+                  + S0_m(q,j) * I(i,p);
+              }
+            }
+          }
+        }     
+
+      }// compute_tangent_
 
       //-----------compute quantities in Fibers------------
 
@@ -296,8 +346,11 @@ computeState(typename Traits::EvalData workset,
           * (1.0 + 2.0 * q_f2_ * (I4_f2 - 1.0) * (I4_f2 - 1.0))
           * exp(q_f2_ * (I4_f2 - 1.0) * (I4_f2 - 1.0));
 
-      Tangent_f1 = coefficient_f1 * Intrepid::tensor(M1dyadM1, M1dyadM1);
-      Tangent_f2 = coefficient_f2 * Intrepid::tensor(M2dyadM2, M2dyadM2);
+      // optional material tangent computation
+      if(compute_tangent_) {
+        tangent_f1 = coefficient_f1 * Intrepid::tensor(M1dyadM1, M1dyadM1);
+        tangent_f2 = coefficient_f2 * Intrepid::tensor(M2dyadM2, M2dyadM2);
+      }
 
       // maximum thermodynamic forces
       alpha_f1 = energy_f1_old(cell, pt);
@@ -323,10 +376,44 @@ computeState(typename Traits::EvalData workset,
               * std::exp(-alpha_f2 / saturation_f2_);
 
       // tangent for fibers including damage
-      Tangent_f1 = (1.0 - damage_f1(cell, pt)) * Tangent_f1
+      // optional material tangent computation
+      if(compute_tangent_) {
+        tangent_f1 = (1.0 - damage_f1(cell, pt)) * tangent_f1
           - damage_deriv_f1 * Intrepid::tensor(S0_f1, S0_f1);
-      Tangent_f2 = (1.0 - damage_f2(cell, pt)) * Tangent_f2
+        tangent_f2 = (1.0 - damage_f2(cell, pt)) * tangent_f2
           - damage_deriv_f2 * Intrepid::tensor(S0_f2, S0_f2);
+
+        // convert tangent_m to tangentA 
+        // tangentA is w.r.t. the deformation gradient
+        tangentA_f1.fill(0.0);
+        tangentA_f2.fill(0.0);
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
+            for (int p(0); p < num_dims_; ++p) {
+              for (int q(0); q < num_dims_; ++q) {
+		
+                for (int k(0); k < num_dims_; ++k){
+                 for (int n(0); n < num_dims_; ++n){
+                   
+                   tangentA_f1(i,j,p,q) = tangentA_f1(i,j,p,q)
+                     + F(i,k) * tangent_f1(k,j,n,q) * F(p,n);
+
+                   tangentA_f2(i,j,p,q) = tangentA_f2(i,j,p,q)
+                     + F(i,k) * tangent_f2(k,j,n,q) * F(p,n);
+                 }
+                }
+
+                tangentA_f1(i,j,p,q) = tangentA_f1(i,j,p,q)
+                  + S0_f1(q,j) * I(i,p);
+              
+                tangentA_f2(i,j,p,q) = tangentA_f2(i,j,p,q)
+                  + S0_f2(q,j) * I(i,p);
+              }
+            }
+          }
+        }   
+
+      }// compute_tangent_
 
       // total Cauchy stress (M, Fibers)
       for (int i(0); i < num_dims_; ++i) {
@@ -341,20 +428,30 @@ computeState(typename Traits::EvalData workset,
       }
 
       // total tangent (M, Fibers)
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
-          for (int k(0); k < num_dims_; ++k) {
-            for (int l(0); l < num_dims_; ++l) {
+      if(compute_tangent_) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
+            for (int k(0); k < num_dims_; ++k) {
+              for (int l(0); l < num_dims_; ++l) {
+                // std::cout << "Tangent w.r.t. the deformation gradient" 
+                // << std::endl;
+                tangent(cell, pt, i, j, k, l) =
+                  volume_fraction_m_ * tangentA_m(i, j, k, l)
+                  + volume_fraction_f1_ * tangentA_f1(i, j, k, l)
+                  + volume_fraction_f2_ * tangentA_f2(i, j, k, l);
 
-              tangent(cell, pt, i, j, k, l) =
-                  volume_fraction_m_ * Tangent_m(i, j, k, l)
-                      + volume_fraction_f1_ * Tangent_f1(i, j, k, l)
-                      + volume_fraction_f2_ * Tangent_f2(i, j, k, l);
+                  //std::cout << "Tangent w.r.t. the right Cauchy-Green tensor" 
+                  // << std::endl;
+                 // tangent(cell, pt, i, j, k, l) =
+                  //volume_fraction_m_ * tangent_m(i, j, k, l)
+                   // + volume_fraction_f1_ * tangent_f1(i, j, k, l)
+                   // + volume_fraction_f2_ * tangent_f2(i, j, k, l);
+              }//l
+            }//k
+          }//j
+        }//i
+      }//compute_tangent_
 
-            }
-          }
-        }
-      }
     } // pt
   } // cell
 }

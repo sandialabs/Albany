@@ -16,6 +16,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace AMP {
 ///
@@ -50,7 +51,7 @@ private:
   ScalarT constant_value_;
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> coord_;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
 
   PHX::MDField<ScalarT,Cell,Node> source_;
 

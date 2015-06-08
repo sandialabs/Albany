@@ -75,6 +75,7 @@ if(ALBANY_CTEST_TIMEOUT)
 endif()
 
 #  Fifth test
+IF(ALBANY_SEACAS)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLaw.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all_glensLaw.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLawT.xml
@@ -84,5 +85,5 @@ add_test(${testName}_FO_CosExp_BasalAll ${SerialAlbany.exe} input_fo_cosexp_basa
 endif()
 add_test(${testName}_FO_CosExp_BasalAll_Tpetra ${SerialAlbanyT.exe}
 input_fo_cosexp_basal_all_glensLawT.xml)
-
+ENDIF()
 

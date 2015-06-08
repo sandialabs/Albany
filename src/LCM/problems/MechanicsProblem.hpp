@@ -1154,12 +1154,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
               eb_name,
               "Output IP" + transport);
 
+    RealType ic(0.0);
+    if (material_db_->isElementBlockParam(eb_name, "Initial Concentration")) {
+      ic = material_db_->
+        getElementBlockParam<double>(eb_name, "Initial Concentration");
+    }
+
     p = stateMgr.registerStateVariable(transport,
         dl_->qp_scalar,
         dl_->dummy,
         eb_name,
         "scalar",
-        38.7, // JTO: What sort of Magic is 38.7 !?!
+        ic,
         true,
         output_flag);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
@@ -1314,6 +1320,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Total Bubble Density Name", total_bubble_density);
       param_list.set<bool>("Have Bubble Volume Fraction", true);
       param_list.set<bool>("Have Total Bubble Density", true);
+      param_list.set<RealType>("Helium Radius", 
+          param_list.sublist("Tritium Coefficients").get<RealType>("Helium Radius", 0.0));
     }
 
     param_list.set<Teuchos::RCP<std::map<std::string, std::string> > >(
@@ -1692,13 +1700,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           volume_average_stabilization_param);
 
       // strain
-      if (small_strain) {
+      if (small_strain)
         p->set<std::string>("Strain Name", "Strain");
-        if (Teuchos::nonnull(rc_mgr_))
-          rc_mgr_->registerField(
-              "Strain", dl_->qp_tensor, AAdapt::rc::Init::zero,
-              AAdapt::rc::Transformation::none, p);
-      }
 
       // set flag for return strain and velocity gradient
       bool have_velocity_gradient(false);
@@ -1730,10 +1733,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           "QP Scalar Data Layout",
           dl_->qp_scalar);
 
-      if (Teuchos::nonnull(rc_mgr_))
+      if (Teuchos::nonnull(rc_mgr_)) {
         rc_mgr_->registerField(
             defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
             AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
+        p->set<std::string>("Displacement Name", "Displacement");
+      }
 
       //ev = Teuchos::rcp(new LCM::DefGrad<EvalT,PHAL::AlbanyTraits>(*p));
       ev = Teuchos::rcp(
@@ -2239,8 +2244,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Temperature Name", temperature);
     // FIXME: this creates a circular dependency between the constitutive model and transport
     // see below
-    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
-    if (false) {
+    if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
@@ -2249,6 +2253,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         "Average J Stabilization Parameter",
         volume_average_stabilization_param);
 
+    p->set<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map",fnm);
+
     //Output
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);
     p->set<std::string>("Total Concentration Name", totalConcentration);
@@ -2256,10 +2262,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     // FIXME: this creates a circular dependency between the constitutive model and transport
-    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
-    //if (false) {
+    if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
       p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-      //}
+    }
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
@@ -2709,6 +2714,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
     p->set<RealType>("Stabilization Parameter", stab_param);
     p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    // Get material list prior to establishing a new parameter list
+    std::string matName = material_db_->getElementBlockParam<std::string>(
+        eb_name, "material");
+    Teuchos::ParameterList& param_list =
+        material_db_->getElementBlockSublist(eb_name, matName);
+
+    RealType decay_constant(0.0);
+    // Check if Tritium Sublist exists. If true, move forward
+    if (param_list.isSublist("Tritium Coefficients")) {
+
+      Teuchos::ParameterList& tritium_param = material_db_->
+          getElementBlockSublist(eb_name, matName).sublist(
+          "Tritium Coefficients");
+      decay_constant = tritium_param.get<RealType>("Tritium Decay Constant",0.0);
+    }
+    p->set<RealType>("Tritium Decay Constant", decay_constant);
 
     //Output
     p->set<std::string>("Residual Name", "Transport Residual");

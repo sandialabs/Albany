@@ -294,32 +294,33 @@ NeumannBase(const Teuchos::ParameterList& p) :
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
 
-  const CellTopologyData * const side_top = elem_top->side[0].topology;
-
-  if(strncasecmp(side_top->name, "Line", 4) == 0)
-
-    side_type = LINE;
-
-  else if(strncasecmp(side_top->name, "Tri", 3) == 0)
-
-    side_type = TRI;
-
-  else if(strncasecmp(side_top->name, "Quad", 4) == 0)
-
-    side_type = QUAD;
-
-  else
-
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-             "PHAL_Neumann: side type : " << side_top->name << " is not supported." << std::endl);
-
-
-  sideType = Teuchos::rcp(new shards::CellTopology(side_top));
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
-  cubatureSide = cubFactory.create(*sideType, cubatureDegree);
 
-  sideDims = sideType->getDimension();
-  numQPsSide = cubatureSide->getNumPoints();
+  int numSidesOnElem = elem_top->side_count;
+  sideType.resize(numSidesOnElem);
+  cubatureSide.resize(numSidesOnElem);
+  side_type.resize(numSidesOnElem);
+
+  // Build containers that depend on side topology
+  int maxSideDim(0), maxNumQpSide(0);
+  const char* sideTypeName;
+
+  for(int i=0; i<numSidesOnElem; ++i) {
+    sideType[i] = Teuchos::rcp(new shards::CellTopology(elem_top->side[i].topology));
+    cubatureSide[i] = cubFactory.create(*sideType[i], cubatureDegree);
+    maxSideDim = std::max( maxSideDim, (int)sideType[i]->getDimension());
+    maxNumQpSide = std::max(maxNumQpSide, (int)cubatureSide[i]->getNumPoints());
+    sideTypeName = sideType[i]->getName();
+    if(strncasecmp(sideTypeName, "Line", 4) == 0)
+      side_type[i] = LINE;
+    else if(strncasecmp(sideTypeName, "Tri", 3) == 0)
+      side_type[i] = TRI;
+    else if(strncasecmp(sideTypeName, "Quad", 4) == 0)
+      side_type[i] = QUAD;
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "PHAL_Neumann: side type : " << sideTypeName << " is not supported." << std::endl);
+  }
 
   numNodes = intrepidBasis->getCardinality();
 
@@ -331,33 +332,32 @@ NeumannBase(const Teuchos::ParameterList& p) :
   cellDims = dim[2];
 
   // Allocate Temporary FieldContainers
-  cubPointsSide.resize(numQPsSide, sideDims);
-  refPointsSide.resize(numQPsSide, cellDims);
-  cubWeightsSide.resize(numQPsSide);
-  physPointsSide.resize(1, numQPsSide, cellDims);
-  dofSide.resize(1, numQPsSide);
-  dofSideVec.resize(1, numQPsSide, numDOFsSet);
-
-  // Do the BC one side at a time for now
-  jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-  jacobianSide_det.resize(1, numQPsSide);
-
-  weighted_measure.resize(1, numQPsSide);
-  basis_refPointsSide.resize(numNodes, numQPsSide);
-  trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-  weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-
   physPointsCell.resize(1, numNodes, cellDims);
   dofCell.resize(1, numNodes);
   dofCellVec.resize(1, numNodes, numDOFsSet);
   neumann.resize(containerSize, numNodes, numDOFsSet);
-  data.resize(1, numQPsSide, numDOFsSet);
 
-  // Pre-Calculate reference element quantitites
-  cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
+  // Allocate Temporary FieldContainers based on max sizes of sides. Need to be resized later for each side.
+  cubPointsSide.resize(maxNumQpSide, maxSideDim);
+  refPointsSide.resize(maxNumQpSide, cellDims);
+  cubWeightsSide.resize(maxNumQpSide);
+  physPointsSide.resize(1, maxNumQpSide, cellDims);
+  dofSide.resize(1, maxNumQpSide);
+  dofSideVec.resize(1, maxNumQpSide, numDOFsSet);
+
+  // Do the BC one side at a time for now
+  jacobianSide.resize(1, maxNumQpSide, cellDims, cellDims);
+  jacobianSide_det.resize(1, maxNumQpSide);
+
+  weighted_measure.resize(1, maxNumQpSide);
+  basis_refPointsSide.resize(numNodes, maxNumQpSide);
+  trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
+  weighted_trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
+
+  data.resize(1, maxNumQpSide, numDOFsSet);
+
 
   this->setName(name);
-
 }
 
 //**********************************************************************
@@ -414,11 +414,11 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
                                   // once we move logic to BCUtils
 
-  const std::vector<Albany::SideStruct>& sideSet = it->second;
+  Intrepid::FieldContainer<ScalarT> betaOnSide;
+  Intrepid::FieldContainer<ScalarT> thicknessOnSide;
+  Intrepid::FieldContainer<ScalarT> elevationOnSide;
 
-  Intrepid::FieldContainer<ScalarT> betaOnSide(1,numQPsSide);
-  Intrepid::FieldContainer<ScalarT> thicknessOnSide(1,numQPsSide);
-  Intrepid::FieldContainer<ScalarT> elevationOnSide(1,numQPsSide);
+  const std::vector<Albany::SideStruct>& sideSet = it->second;
 
   // Loop over the sides that form the boundary condition
 
@@ -429,6 +429,34 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     const int elem_GID = sideSet[side].elem_GID;
     const int elem_LID = sideSet[side].elem_LID;
     const int elem_side = sideSet[side].side_local_id;
+
+    int sideDims = sideType[elem_side]->getDimension();
+    int numQPsSide = cubatureSide[elem_side]->getNumPoints();
+
+
+    //need to resize containers because they depend on side topology
+    cubPointsSide.resize(numQPsSide, sideDims);
+    refPointsSide.resize(numQPsSide, cellDims);
+    cubWeightsSide.resize(numQPsSide);
+    physPointsSide.resize(1, numQPsSide, cellDims);
+    dofSide.resize(1, numQPsSide);
+    dofSideVec.resize(1, numQPsSide, numDOFsSet);
+
+    // Do the BC one side at a time for now
+    jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
+    jacobianSide_det.resize(1, numQPsSide);
+
+    weighted_measure.resize(1, numQPsSide);
+    basis_refPointsSide.resize(numNodes, numQPsSide);
+    trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
+    weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
+    data.resize(1, numQPsSide, numDOFsSet);
+
+    betaOnSide.resize(1,numQPsSide);
+    thicknessOnSide.resize(1,numQPsSide);
+    elevationOnSide.resize(1,numQPsSide);
+
+    cubatureSide[elem_side]->getCubature(cubPointsSide, cubWeightsSide);
 
     // Copy the coordinate data over to a temp container
 
@@ -819,7 +847,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   // Calculate proper areas
 
-  switch(side_type){
+  switch(side_type[local_side_id]){
 
     case LINE:
 
@@ -837,7 +865,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-             "Need to supply area function for boundary type: " << side_type << std::endl);
+             "Need to supply area function for boundary type: " << side_type[local_side_id] << std::endl);
       break;
 
   }

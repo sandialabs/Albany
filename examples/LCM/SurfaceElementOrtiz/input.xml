@@ -51,16 +51,6 @@
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
   </ParameterList>
-  <!-- RGRESSION comparison of the RESPONSE FUNCTION declared above-->
-  <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0110403259752}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
-    <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
-  </ParameterList>
 
   <ParameterList name="Piro">
     <!-- LOCA is used for stability analysis, continuation -->

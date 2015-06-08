@@ -9,7 +9,6 @@
 
 SET(SOURCES
     AAdapt_AbstractAdapterT.cpp
-    AAdapt_CopyRemeshT.cpp
     AAdapt_AdaptiveSolutionManagerT.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
@@ -24,7 +23,6 @@ SET(SOURCES
 
 SET(HEADERS
     AAdapt_AbstractAdapterT.hpp
-    AAdapt_CopyRemeshT.hpp
     AAdapt_AdaptiveSolutionManagerT.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
@@ -36,11 +34,20 @@ SET(HEADERS
     AAdapt_RC_Projector_impl.hpp
    )
 
+IF(ALBANY_HAVE_STK)
+  SET(SOURCES ${SOURCES}
+    AAdapt_CopyRemeshT.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    AAdapt_CopyRemeshT.hpp
+  )
+ENDIF()
+
+
 IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES} 
     AAdapt_AbstractAdapter.cpp
     AAdapt_AdaptationFactory.cpp
-    AAdapt_CopyRemesh.cpp
     AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_AdaptiveModelFactory.cpp
     AAdapt_ThyraAdaptiveModelEvaluator.cpp
@@ -48,16 +55,23 @@ IF (ALBANY_EPETRA)
   SET(HEADERS ${HEADERS} 
     AAdapt_AbstractAdapter.hpp
     AAdapt_AdaptationFactory.hpp
-    AAdapt_CopyRemesh.hpp
     AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_AdaptiveModelFactory.hpp
     AAdapt_ThyraAdaptiveModelEvaluator.hpp
   )
+  IF(ALBANY_HAVE_STK)
+    SET(SOURCES ${SOURCES}
+      AAdapt_CopyRemesh.cpp
+    )
+    SET(HEADERS ${HEADERS}
+      AAdapt_CopyRemesh.hpp
+    )
+  ENDIF()
 ENDIF()
 
 # Random Criterion & Stress Fracture depend on LCM
 # Speculative features and code, currently
-IF(ALBANY_LCM AND LCM_SPECULATIVE)
+IF(ALBANY_LCM AND LCM_SPECULATIVE AND ALBANY_HAVE_STK)
 
 SET(SOURCES ${SOURCES}
     AAdapt_RandomCriterion.cpp
@@ -79,8 +93,8 @@ SET(HEADERS ${HEADERS}
 ENDIF()
 ENDIF()
 
-# Topology Modification depends on LCM
-IF(ALBANY_LCM)
+# Topology Modification depends on LCM and STK
+IF(ALBANY_LCM AND ALBANY_HAVE_STK)
 
 SET(SOURCES ${SOURCES}
     AAdapt_TopologyModificationT.cpp
@@ -103,7 +117,7 @@ ENDIF()
 
 ENDIF()
 
-IF(ALBANY_LCM AND ALBANY_STK_PERCEPT)
+IF(ALBANY_LCM AND ALBANY_STK_PERCEPT AND ALBANY_HAVE_STK)
 
 SET(SOURCES ${SOURCES}
     AAdapt_STKAdaptT.cpp
@@ -128,20 +142,23 @@ ENDIF()
 
 ENDIF()
 
-# Mesh Adapt depends on SCOREC tools and FMDB
+# Mesh Adapt depends on SCOREC tools and PUMI
 IF(ALBANY_SCOREC)
 
 SET(SOURCES ${SOURCES}
     AAdapt_MeshAdapt.cpp
+    AAdapt_MeshSizeField.cpp
     AAdapt_UnifSizeField.cpp
     AAdapt_UnifRefSizeField.cpp
+    AAdapt_NonUnifRefSizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
+    AAdapt_MeshSizeField.hpp
     AAdapt_MeshAdapt.hpp
-    AAdapt_MeshAdapt_Def.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
+    AAdapt_NonUnifRefSizeField.hpp
    )
 
 IF(ENABLE_SPR)
@@ -149,7 +166,7 @@ SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
 SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
 ENDIF()
 
-include_directories(${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
+include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
 ENDIF()
 

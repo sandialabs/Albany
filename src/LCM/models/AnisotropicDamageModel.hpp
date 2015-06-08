@@ -29,6 +29,9 @@ public:
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
+  // optional material tangent computation
+  using ConstitutiveModel<EvalT, Traits>::compute_tangent_;
+
   ///
   /// Constructor
   ///

@@ -34,6 +34,9 @@ namespace LCM {
     weighted_average_(p.get<bool>("Weighted Volume Average J", false)),
     alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0))
   {
+    field_name_map_ =
+      p.get<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map");
+
     // get the material parameter list
     Teuchos::ParameterList* mat_params = 
       p.get<Teuchos::ParameterList*>("Material Parameters");
@@ -61,9 +64,9 @@ namespace LCM {
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
       have_eqps_ = true;
-      PHX::MDField<ScalarT, Cell, QuadPoint> 
-        tmp(p.get<std::string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
-      eqps_ = tmp;
+      //PHX::MDField<ScalarT, Cell, QuadPoint> 
+      //  tmp(p.get<std::string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
+      //eqps_ = tmp;
     }
 
 
@@ -72,7 +75,7 @@ namespace LCM {
     this->addDependentField(temperature_);
     this->addDependentField(c_lattice_);
     if (have_eqps_) {
-      this->addDependentField(eqps_);
+      //this->addDependentField(eqps_);
     }
     this->addEvaluatedField(k_eq_);
     this->addEvaluatedField(n_trap_);
@@ -105,7 +108,7 @@ namespace LCM {
     this->utils.setFieldData(F_mech_,fm);
     this->utils.setFieldData(J_,fm);
     if ( have_eqps_ ) {
-      this->utils.setFieldData(eqps_,fm);
+      //this->utils.setFieldData(eqps_,fm);
     }
     this->utils.setFieldData(k_eq_,fm);
     this->utils.setFieldData(c_trapped_,fm);
@@ -125,6 +128,12 @@ namespace LCM {
   {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     ScalarT theta_term(0.0);
+
+    Albany::MDArray eqps;
+    if (have_eqps_) {
+      std::string eqps_string = (*field_name_map_)["eqps"];
+      eqps = (*workset.stateArrayPtr)[eqps_string + "_old"];
+    }
 
     // Diffusion Coefficient
     for (int cell=0; cell < workset.numCells; ++cell) {
@@ -175,7 +184,7 @@ namespace LCM {
         for (int pt(0); pt < num_pts_; ++pt) {
           n_trap_(cell,pt) = (1.0/avogadros_num_) * 
             std::pow( 10.0, (a_ - b_ *
-                             std::exp( -c_ * eqps_(cell,pt) ))  );
+                             std::exp( -c_ * eqps(cell,pt) ))  );
           //     std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
         }
       }
@@ -197,7 +206,7 @@ namespace LCM {
             ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
 
           strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) * 
-            std::log(10.0) * b_ * c_ * std::exp( -c_ * eqps_(cell,pt) );
+            std::log(10.0) * b_ * c_ * std::exp( -c_ * eqps(cell,pt) );
         }
       }
     }
@@ -255,6 +264,7 @@ namespace LCM {
         }
       }
     }
+
     // Since Intrepid will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to inversion of 0 tensors.

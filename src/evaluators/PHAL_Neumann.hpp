@@ -59,7 +59,7 @@ protected:
   const Teuchos::RCP<Albany::Layouts>& dl;
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 
-  int  cellDims, sideDims, numQPs, numQPsSide, numNodes;
+  int  cellDims,  numQPs, numNodes;
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
@@ -159,9 +159,9 @@ protected:
   PHX::MDField<ScalarT,Cell,Node> thickness_field;
   PHX::MDField<ScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
-  Teuchos::RCP<shards::CellTopology> sideType;
+  Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureSide;
+  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::Cubature<RealType> > > cubatureSide;
 
   // The basis
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
@@ -198,7 +198,7 @@ protected:
   std::string name;
 
   NEU_TYPE bc_type;
-  SIDE_TYPE side_type;
+  Teuchos::Array<SIDE_TYPE> side_type;
   ScalarT const_val;
   ScalarT robin_vals[5]; // (dof_value, coeff multiplying difference (dof - dof_value), jump)
   std::vector<ScalarT> dudx;

@@ -1,0 +1,75 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.77) Modified: 2014-07-02
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2015/03/18   10:53:52 PDT
+#  *****************************************************************
+
+#  FILE 1: /home/jwfoulk/LCM/Albany/examples/LCM/SurfaceElementOrtiz/out-tpetra.e.gold
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 10, Sidesets = 1
+#          Vars: Global = 0, Nodal = 6, Element = 32, Nodeset = 0, Sideset = 0, Times = 151
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:             1.5 @ t151
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	disp_x   # min:               0 @ t1,n1	max:               0 @ t1,n1
+	disp_y   # min:               0 @ t1,n1	max:           0.125 @ t151,n1
+	disp_z   # min:               0 @ t1,n1	max:               0 @ t1,n1
+	force_x  # min:               0 @ t1,n1	max:   3.0098932e-15 @ t41,n2
+	force_y  # min:               0 @ t1,n1	max:             250 @ t41,n2
+	force_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Cohesive_Traction_01  # min:               0 @ t1,b3,e1	max:   1.5265567e-14 @ t41,b3,e1
+	Cohesive_Traction_02  # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Cohesive_Traction_03  # min:               0 @ t1,b3,e1	max:               0 @ t1,b3,e1
+	Cohesive_Traction_04  # min:               0 @ t1,b3,e1	max:               0 @ t1,b3,e1
+	Cohesive_Traction_05  # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Cohesive_Traction_06  # min:               0 @ t1,b3,e1	max:               0 @ t1,b3,e1
+	Cohesive_Traction_07  # min:               0 @ t1,b3,e1	max:   1.5265567e-14 @ t41,b3,e1
+	Cohesive_Traction_08  # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Cohesive_Traction_09  # min:               0 @ t1,b3,e1	max:               0 @ t1,b3,e1
+	Cohesive_Traction_10  # min:               0 @ t1,b3,e1	max:               0 @ t1,b3,e1
+	Cohesive_Traction_11  # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Cohesive_Traction_12  # min:               0 @ t1,b3,e1	max:               0 @ t1,b3,e1
+	Max_Jump_1            # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Max_Jump_2            # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Max_Jump_3            # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Max_Jump_4            # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Normal_Jump_1         # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Normal_Jump_2         # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Normal_Jump_3         # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Normal_Jump_4         # min:               0 @ t1,b3,e1	max:           0.125 @ t151,b3,e1
+	Normal_Traction_1     # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Normal_Traction_2     # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Normal_Traction_3     # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Normal_Traction_4     # min:               0 @ t1,b3,e1	max:            1000 @ t41,b3,e1
+	Shear_Jump_1          # min:               0 @ t1,b3,e1	max:   3.4555692e-18 @ t150,b3,e1
+	Shear_Jump_2          # min:               0 @ t1,b3,e1	max:   6.9111383e-18 @ t150,b3,e1
+	Shear_Jump_3          # min:               0 @ t1,b3,e1	max:   3.4555692e-18 @ t150,b3,e1
+	Shear_Jump_4          # min:               0 @ t1,b3,e1	max:   6.9111383e-18 @ t150,b3,e1
+	Shear_Traction_1      # min:               0 @ t1,b3,e1	max:   3.4555692e-18 @ t150,b3,e1
+	Shear_Traction_2      # min:               0 @ t1,b3,e1	max:   6.9111383e-18 @ t150,b3,e1
+	Shear_Traction_3      # min:               0 @ t1,b3,e1	max:   3.4555692e-18 @ t150,b3,e1
+	Shear_Traction_4      # min:               0 @ t1,b3,e1	max:   6.9111383e-18 @ t150,b3,e1
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

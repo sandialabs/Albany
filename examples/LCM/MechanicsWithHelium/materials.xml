@@ -28,6 +28,9 @@
       <!-- Stabilization Parameter - 2.0 is equivalent to lumped mass -->
       <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
 
+      <!-- Initial Concentration for this block -->
+      <Parameter name="Initial Concentration" type="double" value="0.0005"/>
+
       <!-- Hydorgen Isotope Transport Parameters -->
       <ParameterList name="Transport Coefficients">
 	<Parameter name="Partial Molar Volume" type="double" value="2.0"/>

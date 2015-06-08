@@ -92,12 +92,8 @@
       </ParameterList>
       <ParameterList name="Step Size">
       <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-       <Parameter name="Method" type="string" value="Adaptive"/>      
+       <Parameter name="Method" type="string" value="Constant"/>      
        <Parameter name="Initial Step Size" type="double" value="60.0"/>
-       <Parameter name="Max Step Size" type="double" value="60.0"/>
-       <Parameter name="Min Step Size" type="double" value="20.0"/>
-       <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
       </ParameterList>
     </ParameterList>
     <!-- BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed. -->
@@ -209,7 +205,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-9"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">

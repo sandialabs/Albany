@@ -7,6 +7,8 @@
 # SCOREC/meshes ##################
 
 add_subdirectory(cube)
+add_subdirectory(cube2)
 add_subdirectory(bar)
 add_subdirectory(necking)
 add_subdirectory(cylinder)
+add_subdirectory(tm_bar)

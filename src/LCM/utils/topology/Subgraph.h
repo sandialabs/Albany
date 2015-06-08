@@ -70,6 +70,8 @@ public:
   ///\brief Add a vertex in the subgraph.
   ///
   ///\param[in] Rank of vertex to be added
+  ///\param[in] For articulation points, pass the entity to determine
+  /// the parts to which it belongs for propagation to new vertices.
   ///\return New vertex
   ///
   ///  Mirrors the change in the subgraph by adding a corresponding entity
@@ -77,7 +79,9 @@ public:
   ///  to the maps localGlobalVertexMap and globalLocalVertexMap.
   ///
   Vertex
-  addVertex(stk::mesh::EntityRank vertex_rank);
+  addVertex(
+      stk::mesh::EntityRank vertex_rank,
+      stk::mesh::Entity entity = INVALID_ENTITY);
 
   ///
   /// \brief Remove vertex in subgraph

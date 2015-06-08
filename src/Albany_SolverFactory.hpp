@@ -14,7 +14,7 @@
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_VectorBase.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "EpetraExt_ModelEvaluator.h"
 #include "Epetra_Vector.h"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
@@ -28,7 +28,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "AAdapt_AdaptiveModelFactory.hpp"
 #endif
 
@@ -53,7 +53,7 @@ namespace Albany {
     //! Destructor
     virtual ~SolverFactory();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Create solver as response-only model evaluator
     virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create(
       const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -67,7 +67,7 @@ namespace Albany {
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -85,7 +85,7 @@ namespace Albany {
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null, 
       bool createAlbanyApp = true);  
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -107,7 +107,7 @@ namespace Albany {
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
       const bool createAlbanyApp = true);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<EpetraExt::ModelEvaluator> createModel(
       const Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm);
@@ -150,7 +150,7 @@ namespace Albany {
     SolverFactory& operator=(const SolverFactory&);
 
   public:
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
    /** \brief Function that does regression testing for problem solves. */
     int checkSolveTestResults(
       int response_index,
@@ -175,7 +175,7 @@ namespace Albany {
       int response_index,
       const Teuchos::RCP<Thyra::VectorBase<double> >& tvec) const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     /** \brief Function that does regression testing for SG runs. */
     int checkSGTestResults(
       int response_index,
@@ -201,7 +201,7 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory;
 #endif
   };

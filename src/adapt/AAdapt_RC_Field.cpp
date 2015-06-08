@@ -97,6 +97,20 @@ void Field<2>::multiplyInto (typename Tensor<ad_type, 2>::type& f_incr) const {
   loopf(cell, 0) loopf(qp, 1) multiplyIntoImpl(f_, f_incr, cell, qp, w);
 }
 
+void transformWeightedGradientBF (
+  const Field<2>& F, const RealType& F_det,
+  const PHX::MDField<RealType, Cell, Node, QuadPoint, Dim>& w_grad_bf,
+  const int cell, const int pt, const int node, RealType w[3])
+{
+  const int nd = w_grad_bf.dimension(3);
+  for (int k = 0; k < nd; ++k) {
+    w[k] = 0;
+    for (int i = 0; i < nd; ++i)
+      w[k] += (w_grad_bf(cell, node, pt, i) * F()(cell, pt, i, k));
+    w[k] /= F_det;
+  }
+}
+
 #undef loopf
 #undef loop
 

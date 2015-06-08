@@ -6,7 +6,7 @@
 #include "Albany_ObserverImpl.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 # include "AAdapt_AdaptiveSolutionManager.hpp"
 #endif
 
@@ -15,7 +15,7 @@
 #include "Petra_Converters.hpp"
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PeridigmManager.hpp"
 #endif
 #endif
@@ -29,7 +29,7 @@ ObserverImpl (const Teuchos::RCP<Application> &app)
   : StatelessObserverImpl(app)
 {}
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void ObserverImpl::observeSolution (
   double stamp, const Epetra_Vector& nonOverlappedSolution,
   const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot)
@@ -49,10 +49,19 @@ void ObserverImpl::observeSolution (
     app_->getStateMgr().updateStates();
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-    LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
-    peridigmManager.writePeridigmSubModel(stamp);
-    peridigmManager.updateState();
+#if defined(ALBANY_EPETRA)
+    const Teuchos::RCP<LCM::PeridigmManager>&
+      peridigmManager = LCM::PeridigmManager::self();
+    if (Teuchos::nonnull(peridigmManager)) {
+      double obcFunctional = peridigmManager->obcEvaluateFunctional();
+      peridigmManager->writePeridigmSubModel(stamp);
+      peridigmManager->updateState();
+
+      int myPID = nonOverlappedSolution.Map().Comm().MyPID();
+      if(myPID == 0)
+        std::cout << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = "
+                  << obcFunctional << "\n" << std::endl;
+    }
 #endif
 #endif
   }

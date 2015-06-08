@@ -67,6 +67,13 @@ ConstitutiveModel(Teuchos::ParameterList* p,
       have_bubble_volume_fraction_ = true;
     }
   }
+
+  if (p->isType<bool>("Compute Tangent")) {
+    if (p->get<bool>("Compute Tangent")) {
+      compute_tangent_ = true;
+    }
+  }
+
 }
 //------------------------------------------------------------------------------
 ////Kokkos Kernel for computeVolumeAverage

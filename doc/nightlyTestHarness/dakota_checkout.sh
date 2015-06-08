@@ -28,13 +28,9 @@ cd $NIGHTLYDIR
 # copy, configure, build, install Dakota 
 #-------------------------------------------
 
-wget -nv --no-check-certificate \
- https://development.sandia.gov/dakota/distributions/dakota/stable/dakota-stable.src.tar.gz \
- >  $DAKOUTDIR/dakota_wget.out 
-gunzip dakota-stable.src.tar.gz
-
+#New for Dakota 6.2
+wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.2-public.src.tar.gz >  $DAKOUTDIR/dakota_wget.out 
 cd $TRIKOTADIR
+tar xvfz $NIGHTLYDIR/dakota-6.2-public.src.tar.gz  > $DAKOUTDIR/dakota_untar.out 2>&1
+mv dakota-6.2.0.src Dakota
 
-tar xvf $NIGHTLYDIR/dakota-stable.src.tar > $DAKOUTDIR/dakota_untar.out 2>&1
-
-mv dakota-5.4.0.src Dakota

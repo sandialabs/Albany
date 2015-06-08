@@ -58,9 +58,9 @@ namespace Albany {
     double (*xyz)[3]; //hard-coded for 3D for now 
     double* sh;
     double* beta;
-    GO* globalElesID; //int array to define element map 
-    GO* globalNodesID; //int array to define node map 
-    GO* basalFacesID; //int array to define basal face map 
+    Teuchos::Array<GO> globalElesID; //int array to define element map 
+    Teuchos::Array<GO> globalNodesID; //int array to define node map 
+    Teuchos::Array<GO> basalFacesID; //int array to define basal face map 
     int (*eles)[8]; //hard-coded for 3D hexes for now 
     double *flwa; //double array that gives value of flow factor  
     double *temper; //double array that gives value of flow factor  

@@ -13,6 +13,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
+#include "Albany_StateManager.hpp"
 
 namespace QCAD {
 /** 
@@ -31,8 +32,12 @@ namespace QCAD {
   
     void postRegistrationSetup(typename Traits::SetupData d,
 			       PHX::FieldManager<Traits>& vm);
-    
+
+    void preEvaluate(typename Traits::PreEvalData workset);
+
     void evaluateFields(typename Traits::EvalData d);
+
+    void postEvaluate(typename Traits::PostEvalData workset);
 
     Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
       return response_field_tag;
@@ -48,6 +53,7 @@ namespace QCAD {
     std::string fieldName;
     std::string stateName;
     
+    std::size_t numNodes;
     std::size_t numQPs;
     std::size_t numDims;
     
@@ -60,6 +66,9 @@ namespace QCAD {
     bool isVectorField;
 
     std::string vectorOp;
+    std::string fieldIndices;
+
+    Albany::StateManager* pStateMgr;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
   };

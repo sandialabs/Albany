@@ -26,8 +26,8 @@
 #include "Sacado_ETV_Vector.hpp"
 
 //amb Need to move to configuration.
-#define ALBANY_SFAD_SIZE 16
-#define ALBANY_SLFAD_SIZE 16
+//#define ALBANY_SFAD_SIZE 27
+//#define ALBANY_SLFAD_SIZE 27
 
 //#define ALBANY_FAST_FELIX
 // Typedef AD types to standard names
@@ -37,7 +37,7 @@ typedef double RealType;
   // are the same or different typdefs
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 //  typedef Sacado::ELRFad::SLFad<double,16> FadType;
-  typedef Sacado::Fad::SLFad<double, ALBANY_SFAD_SIZE> FadType;
+  typedef Sacado::Fad::SLFad<double, ALBANY_SLFAD_SIZE> FadType;
 #else
   typedef Sacado::Fad::DFad<double> FadType;
 #endif
@@ -58,7 +58,6 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Operator.hpp"
 #include "Tpetra_MultiVector.hpp"
-#include "Tpetra_KokkosRefactor_CrsMatrix_decl.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 #include "Thyra_TpetraThyraWrappers.hpp"
 #include "MatrixMarket_Tpetra.hpp"
@@ -90,12 +89,13 @@ typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
 typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
 typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
 typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
-typedef Tpetra_CrsMatrix::k_local_matrix_type  Tpetra_LocalMatrixType ;
 typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
 typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
 typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT;
 typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix> Tpetra_MatrixMarket_Writer;
+typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode> ThyraVector;
+typedef Thyra::TpetraMultiVector<ST,LO,GO,KokkosNode> ThyraMultiVector;
 
 
 // Include ScalarParameterLibrary to specialize its traits

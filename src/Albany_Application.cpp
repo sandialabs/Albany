@@ -14,7 +14,7 @@
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_LocalMap.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
@@ -31,16 +31,18 @@
   #include "STKMeshData.hpp"
 #endif
 
+#ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Teko_StridedEpetraOperator.hpp"
+#endif
 #endif
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "PHAL_Utilities.hpp"
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PeridigmManager.hpp"
 #endif
 #endif
@@ -61,7 +63,6 @@ int countRes; //counter which counts instances of residual (for debug output)
 
 extern bool TpetraBuild;
 
-
 Albany::Application::
 Application(const RCP<const Teuchos_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
@@ -74,7 +75,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   phxGraphVisDetail(0),
   stateGraphVisDetail(0)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
   initialSetUp(params);
@@ -95,7 +96,7 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     phxGraphVisDetail(0),
     stateGraphVisDetail(0)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
 };
@@ -133,7 +134,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   distParamLib = rcp(new DistParamLib);
 
 #ifdef ALBANY_DEBUG
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   int break_set = (getenv("ALBANY_BREAK") == NULL)?0:1;
   int env_status = 0;
   int length = 1;
@@ -223,8 +224,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   determinePiroSolver(params);
 
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
+#ifdef ALBANY_TEKO
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
+#endif
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -233,6 +236,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
   writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0);
   writeToCoutRes = debugParams->get("Write Residual to Standard Output", 0);
+  derivatives_check_ = debugParams->get<int>("Derivative Check", 0);
   //the above 4 parameters cannot have values < -1
   if (writeToMatrixMarketJac < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in Albany::Application constructor:  " <<
@@ -258,7 +262,47 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   discFactory->setMeshMover(meshMover);
 #endif
 
- }
+#if defined(ALBANY_LCM)
+  // Check for Schwarz parameters
+  bool const
+  has_app_array = params->isParameter("Application Array");
+
+  bool const
+  has_app_index = params->isParameter("Application Index");
+
+  bool const
+  has_app_name_index_map = params->isParameter("Application Name Index Map");
+
+  // Only if all these are present set them in the app.
+  bool const
+  has_all = has_app_array && has_app_index && has_app_name_index_map;
+
+  if (has_all == true) {
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+    aa = params->get<Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>>
+    ("Application Array");
+
+    int const
+    ai = params->get<int>("Application Index");
+
+    Teuchos::RCP<std::map<std::string, int>>
+    anim = params->get<Teuchos::RCP<std::map<std::string, int>>>
+    ("Application Name Index Map");
+
+    this->setApplications(aa.create_weak());
+
+    this->setAppIndex(ai);
+
+    this->setAppNameIndexMap(anim);
+  }
+#endif // ALBANY_LCM
+
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  LCM::PeridigmManager::initializeSingleton(params);
+#endif
+#endif
+}
 
 void Albany::Application::createMeshSpecs() {
   // Get mesh specification object: worksetSize, cell topology, etc
@@ -272,6 +316,12 @@ void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruc
 
 
 void Albany::Application::buildProblem()   {
+#if defined(ALBANY_LCM)
+  // This is needed for Schwarz coupling so that when Dirichlet
+  // BCs are created we know what application is doing it.
+  problem->setApplication(Teuchos::rcp(this, false));
+#endif //ALBANY_LCM
+
   problem->buildProblem(meshSpecs, stateMgr);
 
   neq = problem->numEquations();
@@ -339,7 +389,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   if(!stateMgr.areStateVarsAllocated())
     stateMgr.setStateArrays(disc);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(!TpetraBuild){
     RCP<Epetra_Vector> initial_guessE;
     if (Teuchos::nonnull(initial_guess)) {
@@ -356,9 +406,17 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
       commT));
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
-#ifdef ALBANY_EPETRA
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+    LCM::PeridigmManager::self()->setDirichletFields(disc);
+#endif
+#endif
+
+
+#if defined(ALBANY_EPETRA)
   try {
-    //dp-todo getNodalParameterSIS() needs to be implemented in FMDB. Until
+    //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
     // Create Distributed parameters and initialize them with data stored in the mesh.
     const Albany::StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();
@@ -406,7 +464,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
   // Now setup response functions (see note above)
   if(!TpetraBuild){
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     for (int i=0; i<responses.size(); i++)
       responses[i]->setup();
 #endif
@@ -452,7 +510,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   }
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(disc->supportsMOR())
     morFacade = createMORFacade(disc, problemParams);
 #endif
@@ -462,7 +520,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
  * Initialize mesh adaptation features
  */
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(!TpetraBuild &&  solMgr->hasAdaptation()){
 
     solMgr->buildAdaptiveProblem(paramLib, stateMgr, commT);
@@ -471,8 +529,9 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 #endif
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-  LCM::PeridigmManager::self().initialize(params, disc, commT);
+#if defined(ALBANY_EPETRA)
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+    LCM::PeridigmManager::self()->initialize(params, disc, commT);
 #endif
 #endif
 }
@@ -506,7 +565,7 @@ getComm() const
   return commT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_Map>
 Albany::Application::
 getMap() const
@@ -523,7 +582,7 @@ getMapT() const
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_CrsGraph>
 Albany::Application::
 getJacobianGraph() const
@@ -539,11 +598,12 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
-#if ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
 {
+#if defined(ALBANY_TEKO)
    //inverseLib = Teko::InverseLibrary::buildFromStratimikos();
    inverseLib = Teko::InverseLibrary::buildFromParameterList(tekoParams->sublist("Inverse Factory Library"));
    inverseLib->PrintAvailableInverses(*out);
@@ -565,6 +625,9 @@ getPreconditioner()
    TEUCHOS_ASSERT(neq==sum);
 
    return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
+#else
+   return Teuchos::null; 
+#endif
 }
 
 RCP<const Epetra_Vector>
@@ -584,7 +647,7 @@ getInitialSolutionT() const
   return solMgrT->getInitialSolutionT();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDot() const
@@ -717,6 +780,138 @@ void dfm_set (
   workset.transientTerms = ! Teuchos::nonnull(xd);
   workset.accelerationTerms = ! Teuchos::nonnull(xdd);
 }
+
+// For the perturbation xd,
+//     f_i(x + xd) = f_i(x) + J_i(x) xd + O(xd' H_i(x) xd),
+// where J_i is the i'th row of the Jacobian matrix and H_i is the Hessian of
+// f_i at x. We don't have the Hessian, however, so approximate the last term by
+// norm(f) O(xd' xd). We use the inf-norm throughout.
+//   For check_lvl >= 1, check that f(x + xd) - f(x) is approximately equal to
+// J(x) xd by computing
+//     reldif(f(x + dx) - f(x), J(x) dx)
+//        = norm(f(x + dx) - f(x) - J(x) dx) /
+//          max(norm(f(x + dx) - f(x)), norm(J(x) dx)).
+// This norm should be on the order of norm(xd).
+//   For check_lvl >= 2, output a multivector in matrix market format having
+// columns
+//     [x, dx, f(x), f(x + dx) - f(x), f(x + dx) - f(x) - J(x) dx].
+//   The purpose of this derivative checker is to help find programming errors
+// in the Jacobian. Automatic differentiation largely or entirely prevents math
+// errors, but other kinds of programming errors (uninitialized memory,
+// accidentaly omission of a FadType, etc.) can cause errors. The common symptom
+// of such an error is that the residual is correct, and therefore so is the
+// solution, but convergence to the solution is not quadratic.
+//   A complementary method to check for errors in the Jacobian is to use
+//     Piro -> Jacobian Operator = Matrix-Free,
+// which works for Epetra-based problems.
+//   Enable this check using the debug block:
+//     <ParameterList>
+//       <ParameterList name="Debug Output">
+//         <Parameter name="Derivative Check" type="int" value="1"/>
+void checkDerivatives (Albany::Application& app, const double time,
+                       const Teuchos::RCP<const Tpetra_Vector>& xdot,
+                       const Teuchos::RCP<const Tpetra_Vector>& xdotdot,
+                       const Teuchos::RCP<const Tpetra_Vector>& x,
+                       const Teuchos::Array<ParamVec>& p,
+                       const Teuchos::RCP<const Tpetra_Vector>& fi,
+                       const Teuchos::RCP<const Tpetra_CrsMatrix>& jacobian,
+                       const int check_lvl) {
+  if (check_lvl <= 0) return;
+
+  // Work vectors. x's map is compatible with f's, so don't distinguish among
+  // maps in this function.
+  Tpetra_Vector w1(x->getMap()), w2(x->getMap()), w3(x->getMap());
+
+  Teuchos::RCP<Tpetra_MultiVector> mv;
+  if (check_lvl > 1)
+    mv = Teuchos::rcp(new Tpetra_MultiVector(x->getMap(), 5));
+
+  // Construct a perturbation.
+  const double delta = 1e-7;
+  Tpetra_Vector& xd = w1;
+  xd.randomize();
+  Tpetra_Vector& xpd = w2;
+  {
+    const Teuchos::ArrayRCP<const RealType> x_d = x->getData();
+    const Teuchos::ArrayRCP<RealType>
+      xd_d = xd.getDataNonConst(), xpd_d = xpd.getDataNonConst();
+    for (size_t i = 0; i < x_d.size(); ++i) {
+      xd_d[i] = 2*xd_d[i] - 1;
+      const double xdi = xd_d[i];
+      if (x_d[i] == 0) {
+        // No scalar-level way to get the magnitude of x_i, so just go with
+        // something:
+        xd_d[i] = xpd_d[i] = delta*xd_d[i];
+      } else {
+        // Make the perturbation meaningful relative to the magnitude of x_i.
+        xpd_d[i] = (1 + delta*xd_d[i])*x_d[i]; // mult line
+        // Sanitize xd_d.
+        xd_d[i] = xpd_d[i] - x_d[i];
+        if (xd_d[i] == 0) {
+          // Underflow in "mult line" occurred because x_d[i] is something like
+          // 1e-314. That's a possible sign of uninitialized memory. However,
+          // carry on here to get a good perturbation by reverting to the
+          // no-magnitude case:
+          xd_d[i] = xpd_d[i] = delta*xd_d[i];
+        }
+      }
+    }
+  }
+  if (Teuchos::nonnull(mv)) {
+    mv->getVectorNonConst(0)->update(1, *x, 0);
+    mv->getVectorNonConst(1)->update(1, xd, 0);
+  }
+
+  // If necessary, compute f(x).
+  Teuchos::RCP<const Tpetra_Vector> f;
+  if (fi.is_null()) {
+    Teuchos::RCP<Tpetra_Vector>
+      w = Teuchos::rcp(new Tpetra_Vector(x->getMap()));
+    app.computeGlobalResidualT(time, xdot.get(), xdotdot.get(), *x, p, *w);
+    f = w;
+  } else {
+    f = fi;
+  }
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(2)->update(1, *f, 0);
+
+  // fpd = f(xpd).
+  Tpetra_Vector& fpd = w3;
+  app.computeGlobalResidualT(time, xdot.get(), xdotdot.get(), xpd, p, fpd);
+
+  // fd = fpd - f.
+  Tpetra_Vector& fd = fpd;
+  fd.update(-1, *f, 1);
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(3)->update(1, fd, 0);
+
+  // Jxd = J xd.
+  Tpetra_Vector& Jxd = w2;
+  jacobian->apply(xd, Jxd);
+
+  // Norms.
+  const double fdn = fd.normInf(), Jxdn = Jxd.normInf(), xdn = xd.normInf();
+  // d = norm(fd - Jxd).
+  Tpetra_Vector& d = fd;
+  d.update(-1, Jxd, 1);
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(4)->update(1, d, 0);
+  const double dn = d.normInf();
+
+  // Assess.
+  const double
+    den = std::max(fdn, Jxdn),
+    e = dn / den;
+  *Teuchos::VerboseObjectBase::getDefaultOStream()
+    << "Albany::Application Check Derivatives level " << check_lvl << ":\n"
+    << "   reldif(f(x + dx) - f(x), J(x) dx) = " << e
+    << ",\n which should be on the order of " << xdn << "\n";
+
+  if (Teuchos::nonnull(mv)) {
+    static int ctr = 0;
+    std::stringstream ss;
+    ss << "dc" << ctr << ".mm";
+    Tpetra_MatrixMarket_Writer::writeDenseFile(ss.str(), mv);
+    ++ctr;
+  }
+}
 } // namespace
 
 void
@@ -777,21 +972,15 @@ computeGlobalResidualImplT(
   fT->putScalar(0.0);
 
 #ifdef ALBANY_PERIDIGM 
-#ifdef ALBANY_EPETRA
-
-//   xT
-//   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
-//   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
-//   return initial_x_dot;
-
-
-
-  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
-  peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
-  peridigmManager.evaluateInternalForce();
+#if defined(ALBANY_EPETRA)
+  const Teuchos::RCP<LCM::PeridigmManager>&
+    peridigmManager = LCM::PeridigmManager::self();
+  if (Teuchos::nonnull(peridigmManager)) {
+    peridigmManager->setCurrentTimeAndDisplacement(current_time, xT);
+    peridigmManager->evaluateInternalForce();
+  }
 #endif
 #endif
-
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -833,15 +1022,20 @@ computeGlobalResidualImplT(
     else
       workset.current_time = current_time;
     workset.distParamLib = distParamLib;
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalResidual(const double current_time,
@@ -912,20 +1106,55 @@ computeGlobalResidual(const double current_time,
 
 void
 Albany::Application::
-computeGlobalResidualT(const double current_time,
-		      const Tpetra_Vector* xdotT,
-		      const Tpetra_Vector* xdotdotT,
-		      const Tpetra_Vector& xT,
-		      const Teuchos::Array<ParamVec>& p,
-		      Tpetra_Vector& fT)
+computeGlobalResidualT(
+    const double current_time,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector& fT)
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   this->computeGlobalResidualImplT(
       current_time,
-      Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT),
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
       p,
       Teuchos::rcpFromRef(fT));
+
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+      sprintf(name, "rhs%i.mm", countRes);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(
+            name,
+            Teuchos::rcpFromRef(fT));
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+      std::cout << "Global Residual #" << countRes << ": " << std::endl;
+      fT.describe(*out, Teuchos::VERB_EXTREME);
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        fT.describe(*out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
+    countRes++;  //increment residual counter
+  }
 }
 
 void
@@ -1051,17 +1280,26 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
 
   jacT->fillComplete();
+
+  if (derivatives_check_ > 0)
+    checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
+                     derivatives_check_);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalJacobian(const double alpha,
@@ -1146,89 +1384,74 @@ computeGlobalJacobian(const double alpha,
 
 void
 Albany::Application::
-computeGlobalJacobianT(const double alpha,
-                       const double beta,
-                       const double omega,
-                       const double current_time,
-                       const Tpetra_Vector* xdotT,
-                       const Tpetra_Vector* xdotdotT,
-                       const Tpetra_Vector& xT,
-                       const Teuchos::Array<ParamVec>& p,
-                       Tpetra_Vector* fT,
-                       Tpetra_CrsMatrix& jacT)
+computeGlobalJacobianT(
+    const double alpha,
+    const double beta,
+    const double omega,
+    const double current_time,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector* fT,
+    Tpetra_CrsMatrix& jacT)
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   this->computeGlobalJacobianImplT(
-      alpha, beta, omega, current_time,
-      Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT),
+      alpha,
+      beta,
+      omega,
+      current_time,
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
       p,
-      Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT));
- //Debut output
+      Teuchos::rcp(fT, false),
+      Teuchos::rcpFromRef(jacT));
+  //Debut output
   if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
     char name[100];  //create string for file name
     if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
-       sprintf(name, "jac%i.mm", countJac);
-       Tpetra_MatrixMarket_Writer::writeSparseFile(name, Teuchos::rcpFromRef(jacT));
+      sprintf(name, "jac%i.mm", countJac);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(
+          name,
+          Teuchos::rcpFromRef(jacT));
     }
     else {
       if (countJac == writeToMatrixMarketJac) { //write jacobian only at requested count#
         sprintf(name, "jac%i.mm", countJac);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(name, Teuchos::rcpFromRef(jacT));
+        Tpetra_MatrixMarket_Writer::writeSparseFile(
+            name,
+            Teuchos::rcpFromRef(jacT));
       }
     }
   }
   Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
-       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-       jacT.describe(*out, Teuchos::VERB_HIGH);
+      std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+      jacT.describe(*out, Teuchos::VERB_HIGH);
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
-       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-       jacT.describe(*out, Teuchos::VERB_HIGH);
+        std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+        jacT.describe(*out, Teuchos::VERB_HIGH);
       }
     }
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) {
     countJac++; //increment Jacobian counter
-  //Debut output
-  if (writeToMatrixMarketRes != 0 && fT != NULL) { //If requesting writing to MatrixMarket of residual...
-    char name[100];  //create string for file name
-    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
-       sprintf(name, "rhs%i.mm", countRes);
-       Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
-    }
-    else {
-      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
-      }
-    }
   }
-  if (writeToCoutRes != 0 && fT != NULL) { //If requesting writing of residual to cout...
-    if (writeToCoutRes == -1) { //cout residual time it arises
-       std::cout << "Global Residual #" << countRes << ": " << std::endl;
-       fT->describe(*out, Teuchos::VERB_EXTREME);
-    }
-    else {
-      if (countRes == writeToCoutRes) { //cout residual only at requested count#
-        std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        fT->describe(*out, Teuchos::VERB_EXTREME);
-      }
-    }
-  }
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
-    countRes++;  //increment residual counter
 }
 
-#if ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
                             const RCP<Epetra_Operator>& prec)
 {
+#if defined(ALBANY_TEKO)
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
 
   *out << "Computing WPrec by Teko" << std::endl;
@@ -1240,6 +1463,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
 
   wrappedJac = buildWrappedOperator(jac, wrappedJac);
   blockPrec->rebuildInverseOperator(wrappedJac);
+#endif
 }
 #endif
 
@@ -1552,15 +1776,20 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalTangent(const double alpha,
@@ -1754,6 +1983,8 @@ applyGlobalDistParamDerivImplT(const double current_time,
     workset.fpVT = fpVT;
     workset.Vp_bcT = V_bc_ncT;
     workset.transpose_dist_param_deriv = trans;
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.disc = disc;
 
     if ( paramLib->isParameter("Time") )
       workset.current_time =
@@ -1816,7 +2047,9 @@ applyGlobalDistParamDerivImplT(const double current_time,
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Distributed Parameter Derivative Export");
   // Assemble global df/dp*V
   if (trans) {
+    Tpetra_MultiVector temp(*fpVT,Teuchos::Copy);
     distParamLib->get(dist_param_name)->export_add(*fpVT, *overlapped_fpVT);
+    fpVT->update(1.0, temp, 1.0); //fpTV += temp;
   }
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
@@ -1904,7 +2137,7 @@ evaluateResponseTangentT(int response_index,
     alpha, beta, omega, t, sum_derivs, xdotT, xdotdotT, xT, p, deriv_p, VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateResponseDerivative(
@@ -1955,7 +2188,7 @@ evaluateResponseDerivativeT(
     t, xdotT, xdotdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateResponseDistParamDeriv(
@@ -2111,8 +2344,13 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -2295,8 +2533,13 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -2569,8 +2812,13 @@ computeGlobalSGTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
@@ -2793,8 +3041,13 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -2976,8 +3229,13 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
@@ -3255,9 +3513,14 @@ computeGlobalMPTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-    // FillType template argument used to specialize Sacado
-    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+
+    // FillType template argument used to specialize Sacado
+#if defined(ALBANY_LCM)
+    // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     dfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
   }
@@ -3340,7 +3603,7 @@ evaluateMPResponseDerivative(
 }
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateStateFieldManager(const double current_time,
@@ -3430,10 +3693,12 @@ evaluateStateFieldManagerT(
   workset.fT = overlapped_fT;
 
   // Perform fill via field manager
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginEvaluatingSfm();
   for (int ws=0; ws < numWorksets; ws++) {
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endEvaluatingSfm();
 }
 
 void Albany::Application::registerShapeParameters()
@@ -3671,7 +3936,7 @@ postRegSetup(std::string eval)
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
 RCP<Epetra_Operator>
 Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
                                           const RCP<Epetra_Operator>& wrapInput,
@@ -3740,7 +4005,7 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset,
        double current_time)
@@ -3797,7 +4062,7 @@ void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const i
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -3999,7 +4264,7 @@ void Albany::Application::setupBasicWorksetInfo(
 }
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4424,10 +4689,43 @@ void Albany::Application::setupTangentWorksetInfo(
 #endif //ALBANY_SG_MP
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 {
   return morFacade;
 }
 #endif
 #endif
+
+#if defined(ALBANY_LCM)
+void
+Albany::
+Application::
+setCoupledAppBlockNodeset(
+    std::string const & app_name,
+    std::string const & block_name,
+    std::string const & nodeset_name)
+{
+  // Check for valid application name
+  auto
+  it = app_name_index_map_->find(app_name);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      it == app_name_index_map_->end(),
+      std::logic_error,
+      "Trying to couple to an unknown Application: " <<
+      app_name << '\n');
+
+  int const
+  app_index = it->second;
+
+  auto
+  block_nodeset_names = std::make_pair(block_name, nodeset_name);
+
+  auto
+  app_index_block_names = std::make_pair(app_index, block_nodeset_names);
+
+  coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
+}
+
+#endif // ALBANY_LCM

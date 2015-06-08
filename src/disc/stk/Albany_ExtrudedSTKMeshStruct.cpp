@@ -83,11 +83,17 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
   params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
+#ifdef ALBANY_SEACAS
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
   meshStruct2D = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
   Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
   meshStruct2D->setFieldAndBulkData(comm, params, 1, req, sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
+#else
+    // Above block of code could allow for 2D mesh to come from other sources instead of Ioss
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+              std::endl << "Error in ExtrudedSTKMeshStruct: Currently Requires 2D mesh to come from exodus");
+#endif
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(meshStruct2D->metaData->universal_part()) & stk::mesh::Selector(meshStruct2D->metaData->locally_owned_part());
   int numCells = stk::mesh::count_selected_entities(select_owned_in_part, meshStruct2D->bulkData->buckets(stk::topology::ELEMENT_RANK));

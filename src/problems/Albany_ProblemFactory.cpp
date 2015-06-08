@@ -16,6 +16,7 @@
 #include "Albany_NavierStokes.hpp"
 #include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
+#include "Albany_AdvDiffProblem.hpp"
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_PNPProblem.hpp"
@@ -33,7 +34,7 @@
 #include "ATO/problems/PoissonsEquation.hpp"
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 #include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
@@ -44,8 +45,9 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
+#include "LCM/problems/ConstitutiveDriverProblem.hpp"
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "LCM/problems/PeridigmProblem.hpp"
 #endif
 #endif
@@ -60,10 +62,6 @@
 #include "Hydride/problems/HydMorphProblem.hpp"
 #include "Hydride/problems/MesoScaleLinkProblem.hpp"
 #include "Hydride/problems/LaplaceBeltramiProblem.hpp"
-#endif
-
-#ifdef ALBANY_SEE
-#include "SEE/problems/NonlinearPoissonProblem.hpp"
 #endif
 
 #ifdef ALBANY_AMP
@@ -156,6 +154,12 @@ Albany::ProblemFactory::create()
   else if (method == "LinComprNS 1D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 1));
   }
+  else if (method == "AdvDiff 1D") {
+    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "AdvDiff 2D") {
+    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 2));
+  }
   else if (method == "LinComprNS 2D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
   }
@@ -207,7 +211,7 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
   }
 #endif
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   else if (method == "LAME" || method == "Lame" || method == "lame") {
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
     strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3, commT));
@@ -220,6 +224,9 @@ Albany::ProblemFactory::create()
   }
   else if (getName(method) == "Elasticity") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, getNumDim(method), rc_mgr));
+  }
+  else if (method == "Constitutive Model Driver") {
+    strategy = rcp(new Albany::ConstitutiveDriverProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "ThermoElasticity 1D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 1));
@@ -320,17 +327,6 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 3));
   }
 #endif
-#ifdef ALBANY_SEE
-  else if (method == "Nonlinear Poisson 1D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 1, commT));
-  }
-  else if (method == "Nonlinear Poisson 2D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "Nonlinear Poisson 3D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 3, commT));
-  }
-#endif
 #ifdef ALBANY_AMP
   else if (method == "Phase 1D") {
     strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 1, commT));
@@ -405,7 +401,7 @@ Albany::ProblemFactory::create()
 #endif
   else if (method == "Peridigm Code Coupling" ) {
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling requires epetra and Peridigm, recompile with -DENABLE_ALBANY_EPETRA_EXE and -DENABLE_PERIDIGM ****\n");

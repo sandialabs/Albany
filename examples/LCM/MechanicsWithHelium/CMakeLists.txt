@@ -18,31 +18,44 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.xml
                ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogen.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogen.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogenV2.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogenV2.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHelium.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHelium.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHeliumV2.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHeliumV2.xml COPYONLY)
 
 # material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
-# material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsHe.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materialsHe.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsHeV2.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialsHeV2.xml COPYONLY)
 
 # exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogen.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogen.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogenV2.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogenV2.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHelium.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHelium.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHeliumV2.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHeliumV2.exodiff COPYONLY)
 
 # gold files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogen.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogen.gold.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogenV2.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogenV2.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHelium.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHelium.gold.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHeliumV2.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHeliumV2.gold.e COPYONLY)
 
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py

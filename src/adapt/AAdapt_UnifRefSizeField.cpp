@@ -6,17 +6,20 @@
 
 
 #include "AAdapt_UnifRefSizeField.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
 #include "Albany_Utils.hpp"
 
-#include <boost/mpi/collectives.hpp>
-#include <boost/mpi/collectives/all_reduce.hpp>
+AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
+  MeshSizeField(disc) {
+}
 
-AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  mesh(disc->getFMDBMeshStruct()->getMesh()),
-  commT(disc->getComm()) {
-  initialAverageEdgeLength = ma::getAverageEdgeLength(mesh);
+void
+AAdapt::UnifRefSizeField::copyInputFields()
+{
+
+  averageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
+
 }
 
 AAdapt::UnifRefSizeField::
@@ -29,14 +32,13 @@ AAdapt::UnifRefSizeField::computeError() {
 
 void
 AAdapt::UnifRefSizeField::setParams(
-				    double element_size, double err_bound,
-				    const std::string state_var_name) {
+    const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
-  elem_size = element_size;
+  elem_size = p->get<double>("Target Element Size", 0.7);
 
 }
 
 double AAdapt::UnifRefSizeField::getValue(ma::Entity* v) {
-  return 0.5 * initialAverageEdgeLength;
+  return elem_size * averageEdgeLength;
 }
 

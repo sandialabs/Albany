@@ -66,17 +66,19 @@ private:
   bool done_;
 };
 
-//! Reduce on an MDField. Holdover until we get the official reduceAll
-//! implementation back.
+//! Reduce on an MDField.
 template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<T>& a);
-//! Reduce on a ScalarT. Holdover until we get the official reduceAll
-//! implementation back.
+//! Reduce on a ScalarT.
 template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type, T& a);
+//! Broadcast an MDField.
+template<typename T>
+void broadcast(
+  const Teuchos_Comm& comm, const int root_rank, PHX::MDField<T>& a);
 
 /*! \brief Loop over an array and apply a functor.
  *
@@ -97,11 +99,11 @@ void loop(Functor& f, PHX::MDField<ScalarT>& a);
 
 //! a(:) = val
 template<typename ArrayT, typename T>
-void set (ArrayT& a, const T& val);
+void set(ArrayT& a, const T& val);
 
 //! a(:) *= val
 template<typename ArrayT, typename T>
-void scale (ArrayT& a, const T& val);
+void scale(ArrayT& a, const T& val);
 
 } // namespace PHAL
 

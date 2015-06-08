@@ -148,7 +148,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   eigensolverName = problemParams.get<string>("Schrodinger Eigensolver","LOBPCG");
   bRealEvecs = problemParams.get<bool>("Eigenvectors are Real",false);
-
+  
   // Get problem parameters used for iterating Poisson-Schrodinger loop
   if(problemNameBase == "Poisson Schrodinger" || problemNameBase == "Poisson Schrodinger CI") {
     bUseIntegratedPS = problemParams.get<bool>("Use Integrated Poisson Schrodinger",true);
@@ -213,6 +213,52 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // Get name of output exodus file specified in Discretization section
   std::string outputExo = appParams->sublist("Discretization").get<std::string>("Exodus Output File Name");
+
+  // Set variables for case when the discretization depends on the parameters
+  std::vector<double> geoParamInitialVals;
+  discretizationCreateCmd = problemParams.get<std::string>("Discretization Creation Cmd","");
+  bDiscretizationDependsOnParameters = bool(discretizationCreateCmd.length() > 0);
+  if(bDiscretizationDependsOnParameters) {
+    // Use a pointer to an integer here instead of just an integer so that this
+    //  counter can be modified within the const member function evalModel(...).
+    //  This can be viewed as a hack to get around evalModel being const, or as
+    //   a poor man's observer counter, which will be later incorporated into some
+    //   persistent observer object that makes sure it doesn't overwrite previously
+    //   written solutions (as in Albany::STKDiscretization::writeSolution), except 
+    //   in this case the discretizations are different so we write to a new Exodus file.
+    currentEvalIndex = Teuchos::rcp(new int); 
+    *currentEvalIndex = -1;
+    baseOutputExodusFilename = outputExo;
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+    typedef int GlobalIndex;
+#else
+    typedef long long GlobalIndex;
+#endif
+
+    //Create a dummy solution vector to return as the last response vector, since we don't
+    // know what the final solution vector size/map will be given that it depends on the parameters.
+    std::size_t dummySize = 1;
+    dummy_soln_map = Teuchos::rcp(new Epetra_LocalMap(static_cast<GlobalIndex>(dummySize), 0, *comm));
+    dummy_soln_vec = Teuchos::rcp(new Epetra_Vector(*(dummy_soln_map)));
+
+    //Get geometry parameter initial values
+    if(problemParams.isSublist("Geometry Parameters")) {
+      Teuchos::ParameterList& geoParamPL = problemParams.sublist("Geometry Parameters", true);
+      int nGeoParams = geoParamPL.get<int>("Number", 0);
+      geoParamInitialVals.resize(nGeoParams);
+      for (int i=0; i<nGeoParams; i++) {
+	geoParamInitialVals[i] = geoParamPL.get<double>(Albany::strint("Geometry Parameter",i));
+      }
+    }
+  }
+  else {
+    dummy_soln_map = Teuchos::null;
+    dummy_soln_vec = Teuchos::null;
+    currentEvalIndex = Teuchos::null;
+    baseOutputExodusFilename = "UNUSED_OUTPUT_EXO_NAME";
+  }
+
 
   // Create Solver parameter lists based on problem name
   if( problemNameBase == "Poisson" ) {
@@ -288,21 +334,25 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   //Save the initial guess passed to the solver
   saved_initial_guess = initial_guess;
 
-  //Temporarily create a map of sub-solvers, used for obtaining the initial parameter vector and 
-  //   for figuring out what types of derivatives are supported.
+  // Create a map of sub-solvers, used for obtaining the initial parameter vector,
+  //   for figuring out what types of derivatives are supported, and for use 
+  //   within evalModel (unless we need to re-mesh at each evalModel)
   std::map<std::string, SolverSubSolverData> subSolversData;
   std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >::const_iterator itp;
   for(itp = subProblemAppParams.begin(); itp != subProblemAppParams.end(); ++itp) {
     const std::string& name = itp->first;
     const Teuchos::RCP<Teuchos::ParameterList>& param_list = itp->second;
-    const SolverSubSolver& sub = CreateSubSolver( param_list , *comm);
-
-    subSolversData[ name ] = CreateSubSolverData( sub );
+    bool use_initial_guess = ( problemNameBase == "Poisson" && name == "Poisson" ) ||
+                             ( problemNameBase == "Poisson Schrodinger" && name == "InitPoisson" ) ||
+                             ( problemNameBase == "Poisson Schrodinger CI" && name == "InitPoisson" );
+    
+    persistent_subSolvers[name] = CreateSubSolver( name, param_list , *comm, use_initial_guess ? initial_guess : Teuchos::null);
+    subSolversData[ name ] = CreateSubSolverData( persistent_subSolvers[name] );
 
     // Create Epetra map for solution vector (second response vector).  Assume 
     //  each subSolver has the same map, so just get the first one.
     if(itp == subProblemAppParams.begin()) {
-      Teuchos::RCP<const Epetra_Map> sub_x_map = sub.app->getMap();
+      Teuchos::RCP<const Epetra_Map> sub_x_map = persistent_subSolvers[name].app->getMap();
       TEUCHOS_TEST_FOR_EXCEPT( sub_x_map == Teuchos::null );
       epetra_x_map = Teuchos::rcp(new Epetra_Map( *sub_x_map ));
     }    
@@ -339,6 +389,10 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   num_p = (nParameters > 0) ? 1 : 0; // Only use first parameter (p) vector, if there are any parameters
   num_g = (responseFns.size() > 0) ? 1 : 0; // Only use first response vector (but really one more than num_g -- 2nd holds solution vector)
 
+  //Make sure "Number" parameter under "Parameters" list is set correctly so that sensitivities are displayed
+  // currectly, now that Main_Solve.cpp checks "Number" to determine what parameter vectors are distributed vs. not.
+  // We want Main_Solve to treat the fist parameter vector as non-distributed if we have any paramters.
+  paramList.set<int>("Number",nParameters);
 
 #ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   typedef int GlobalIndex;
@@ -359,7 +413,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Take initial value from the first (if multiple) parameter 
   //    fns for each given parameter
   for(std::size_t i=0; i<nParameters; i++) {
-    (*epetra_param_vec)[i] = paramFnVecs[i][0]->getInitialParam(subSolversData);
+    (*epetra_param_vec)[i] = paramFnVecs[i][0]->getInitialParam(subSolversData, geoParamInitialVals);
   }
 }
 
@@ -1091,7 +1145,10 @@ Teuchos::RCP<const Epetra_Map> QCAD::Solver::get_g_map(int j) const
                      j << std::endl);
 
   if      (j < num_g) return epetra_response_map;  //no index because num_g == 1 so j must be zero
-  else if (j == num_g) return epetra_x_map;
+  else if (j == num_g) {
+    if(bDiscretizationDependsOnParameters) return dummy_soln_map;
+    else return epetra_x_map; 
+  }
   return Teuchos::null;
 }
 
@@ -1148,9 +1205,31 @@ void
 QCAD::Solver::evalModel(const InArgs& inArgs,
 			const OutArgs& outArgs ) const
 {
+  //Because evalModel is a const member function, we cannot update the any member SolverSubSolver
+  // variables and instead need to copy at least their app and model object pointers into local
+  // SolverSubSolver variables so that we can "fill" their inArgs appropriately.  In the case that
+  // we need to remesh before each evaluation, then the entire app & model need to be re-created
+  // anyway, so we don't copy from persistent_subSolvers (member variable) in this case.  Logic
+  // for this is contained within the CreateSubSolverFunction, which uses peristent_subSolvers as
+  // a cache that can be used when re-meshing is not needed.
+
   std::vector<double> eigenvalueResponses;
-  std::map<std::string, SolverSubSolver> subSolvers;
+  std::map<std::string, SolverSubSolver> subSolvers; 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  if(bDiscretizationDependsOnParameters) {
+    //Increment evaluation index, which keeps us from overwriting a previous output by
+    // changing the output exodus filename.
+    (*currentEvalIndex)++;  // a pointer to an integer so it's value can be modified in a const member fn
+       	
+    //Write geometry parameters to a (HARDCODED) text file and do re-meshing on root processor
+    if( solverComm->MyPID() == 0 ) {
+      writeSingleSubSolverParamsToFile(inArgs, "Geometry", "QCAD_geometry_params.txt");
+      std::system(discretizationCreateCmd.c_str()); 
+      //std::system("echo \"QCAD REMESHING PLACEHOLDER\""); //TEST
+    }
+    solverComm->Barrier(); //make sure processors wait until root is done working
+  }
 
   if(bVerbose) {
     if(num_p > 0) {   // or could use: (inArgs.Np() > 0)
@@ -1166,7 +1245,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
       if(bVerbose) *out << "QCAD Solve: Simple Poisson solve" << std::endl;
 
       //Create Poisson solver & fill its parameters
-      subSolvers[ "Poisson" ] = CreateSubSolver( getSubSolverParams("Poisson") , *solverComm, saved_initial_guess);
+      subSolvers[ "Poisson" ] = CreateSubSolver( "Poisson", getSubSolverParams("Poisson") , *solverComm); //, saved_initial_guess);
       fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "Poisson" ]);
 
       QCAD::SolveModel(subSolvers["Poisson"]);
@@ -1177,7 +1256,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
       if(bVerbose) *out << "QCAD Solve: Simple Schrodinger solve" << std::endl;
 
       //Create Schrodinger solver & fill its parameters
-      subSolvers[ "Schrodinger" ] = CreateSubSolver( getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
+      subSolvers[ "Schrodinger" ] = CreateSubSolver( "Schrodinger", getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
       fillSingleSubSolverParams(inArgs, "Schrodinger", subSolvers[ "Schrodinger" ]);
 
       Teuchos::RCP<Albany::EigendataStruct> eigenData = Teuchos::null;
@@ -1308,7 +1387,8 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
       }
     }
     
-    subSolvers[ "PoissonSchrodinger" ] = CreateSubSolver( getSubSolverParams("PoissonSchrodinger") , *solverComm, initial_guess);
+    subSolvers[ "PoissonSchrodinger" ] = CreateSubSolver( "PoissonSchrodinger", getSubSolverParams("PoissonSchrodinger") ,
+							  *solverComm, initial_guess);
     fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "PoissonSchrodinger" ], 1); //Fills (first) param vec with Poisson parameters
     QCAD::SolveModel(subSolvers["PoissonSchrodinger"]);
     
@@ -1380,7 +1460,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   for(itp = subProblemAppParams.begin(); itp != subProblemAppParams.end(); ++itp) {
     const std::string& name = itp->first;
     const Teuchos::RCP<Teuchos::ParameterList>& param_list = itp->second;
-    subSolvers[ name ] = CreateSubSolver( param_list , *solverComm);
+    subSolvers[ name ] = CreateSubSolver( name, param_list , *solverComm);
   }
   // NOTE: this loop creates CoulombPoissonIm even if bRealEvecs is true, which is unnecessary.  Fix
   //       later to reduce memory consumption.
@@ -1553,7 +1633,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	//   occur due to boundary conditions (e.g. charge on surface of conductors due to DBCs) that we must subtract
 	//   from terms below to get effect of *just* the quantum electron charges and their image charges. 
 	if(bVerbose) *out << "QCAD Solve: No-charge Poisson computation" << std::endl;
-	subSolvers[ "NoChargePoisson" ] = CreateSubSolver( getSubSolverParams("NoChargePoisson") , *solverComm);
+	subSolvers[ "NoChargePoisson" ] = CreateSubSolver( "NoChargePoisson", getSubSolverParams("NoChargePoisson") , *solverComm);
 	fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "NoChargePoisson" ]);
 	QCAD::SolveModel(subSolvers[ "NoChargePoisson" ], eigenDataToPass, eigenDataNull);
 	Teuchos::RCP<Epetra_Vector> g_noCharge = subSolvers[ "NoChargePoisson" ].responses_out->get_g(0); 
@@ -1561,7 +1641,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	
 	// Delta Poisson Solve - get delta_ij in reponse vector
 	if(bVerbose) *out << "QCAD Solve: Delta Poisson computation" << std::endl;
-	subSolvers[ "DeltaPoisson" ] = CreateSubSolver( getSubSolverParams("DeltaPoisson") , *solverComm);
+	subSolvers[ "DeltaPoisson" ] = CreateSubSolver( "DeltaPoisson", getSubSolverParams("DeltaPoisson") , *solverComm);
 	fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "DeltaPoisson" ]);
 	QCAD::SolveModel(subSolvers[ "DeltaPoisson" ], eigenDataToPass, eigenDataNull);
 	Teuchos::RCP<Epetra_Vector> g_delta =  subSolvers[ "DeltaPoisson" ].responses_out->get_g(0);
@@ -1570,11 +1650,11 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	ciSolver.fill1Pmx(eigenDataToPass, g_noCharge, g_delta, deltaFactor, bRealEvecs, bVerbose);
 
 	// Construct CI 2P-matrix:
-	subSolvers[ "CoulombPoisson" ] = CreateSubSolver( getSubSolverParams("CoulombPoisson") , *solverComm);
+	subSolvers[ "CoulombPoisson" ] = CreateSubSolver( "CoulombPoisson", getSubSolverParams("CoulombPoisson") , *solverComm);
 	fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "CoulombPoisson" ]);
       
 	if(!bRealEvecs) {
-	  subSolvers[ "CoulombPoissonIm" ] = CreateSubSolver( getSubSolverParams("CoulombPoissonIm") , *solverComm);
+	  subSolvers[ "CoulombPoissonIm" ] = CreateSubSolver( "CoulombPoissonIm", getSubSolverParams("CoulombPoissonIm") , *solverComm);
 	  fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "CoulombPoissonIm" ]);
 	  ciSolver.fill2Pmx(eigenDataToPass, &subSolvers["CoulombPoisson"], &subSolvers["CoulombPoissonIm"], 
 			    g_noCharge, bRealEvecs, bVerbose); 
@@ -1630,7 +1710,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       // Poisson Solve which uses CI MB state density and eigenvalues to get quantum electron density
       //   Initialize with the solution from the last Poisson iteration
       Teuchos::RCP<Epetra_Vector> last_solnVec = subSolvers["Poisson"].responses_out->get_g(1); //get the *first* response vector (solution)
-      subSolvers[ "CIPoisson" ] = CreateSubSolver( getSubSolverParams("CIPoisson") , *solverComm,  last_solnVec);
+      subSolvers[ "CIPoisson" ] = CreateSubSolver( "CIPoisson", getSubSolverParams("CIPoisson") , *solverComm,  last_solnVec);
       fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "CIPoisson" ]);
       
       if(bVerbose) *out << "QCAD Solve: CI Poisson iteration " << iter << std::endl;
@@ -1711,19 +1791,19 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
   std::vector<Intrepid::FieldContainer<RealType> > prevConductionBand;
 
   //Create Initial Poisson solver & fill its parameters
-  subSolvers[ "InitPoisson" ] = CreateSubSolver( getSubSolverParams("InitPoisson") , *solverComm, saved_initial_guess);
+  subSolvers[ "InitPoisson" ] = CreateSubSolver( "InitPoisson", getSubSolverParams("InitPoisson") , *solverComm); //, saved_initial_guess);
   fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "InitPoisson" ], 1); //any Poisson[x] parameters get set in initial poisson simulation too
 
   if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << std::endl;
   QCAD::SolveModel(subSolvers["InitPoisson"], pStatesToPass, pStatesToLoop);
   
   //Create Schrodinger solver & fill its parameters
-  subSolvers[ "Schrodinger" ] = CreateSubSolver( getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
+  subSolvers[ "Schrodinger" ] = CreateSubSolver( "Schrodinger", getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
   fillSingleSubSolverParams(inArgs, "Schrodinger", subSolvers[ "Schrodinger" ]);
   
   //Create Poisson solver & fill its parameters.  Initialize with the solution from the InitPoisson solver
   Teuchos::RCP<Epetra_Vector> initial_solnVec = subSolvers["InitPoisson"].responses_out->get_g(1); //get the *first* response vector (solution)
-  subSolvers[ "Poisson" ] = CreateSubSolver( getSubSolverParams("Poisson") , *solverComm,  initial_solnVec);
+  subSolvers[ "Poisson" ] = CreateSubSolver( "Poisson", getSubSolverParams("Poisson") , *solverComm,  initial_solnVec);
   fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "Poisson" ]);  
 
   if(bVerbose) *out << "QCAD Solve: Beginning Poisson-Schrodinger solve loop" << std::endl;
@@ -1977,7 +2057,7 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 
 
 void QCAD::Solver::setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
-					 const std::map<std::string, SolverSubSolverData>& subSolversData )
+					 const std::map<std::string, SolverSubSolverData>& subSolversData)
 {
   std::string s;
   std::vector<std::string> fnStrings;
@@ -2057,6 +2137,25 @@ void QCAD::Solver::fillSingleSubSolverParams(const InArgs& inArgs, const std::st
   }
 }
 
+void QCAD::Solver::writeSingleSubSolverParamsToFile(const InArgs& inArgs, const std::string& name,
+						    const std::string& filename) const
+{
+  std::fstream f;
+  f.open (filename.c_str(), std::fstream::out);
+
+  if(num_p > 0) {   // or could use: (inArgs.Np() > 0)
+    Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
+    std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
+    for(std::size_t i=0; i<nParameters; i++) {
+      for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
+	(*pit)->writeSingleSubSolverParamsToFile((*p)[i], name, f);
+      }
+    }
+  }
+  f.close();
+}
+
+
 
 const Teuchos::RCP<Teuchos::ParameterList>& QCAD::Solver::getSubSolverParams(const std::string& name) const
 {
@@ -2065,7 +2164,7 @@ const Teuchos::RCP<Teuchos::ParameterList>& QCAD::Solver::getSubSolverParams(con
 
 
 QCAD::SolverSubSolver 
-QCAD::Solver::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
+QCAD::Solver::CreateSubSolver(const std::string& name, const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
 			      const Teuchos::RCP<const Epetra_Vector>& initial_guess) const
 {
   using Teuchos::RCP;
@@ -2077,19 +2176,60 @@ QCAD::Solver::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appPara
   Teuchos::RCP<const Teuchos_Comm> mpiCommT = Albany::createTeuchosCommFromMpiComm(mpiComm);
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "QCAD Solver creating solver from " << appParams->name() 
-       << " parameter list" << std::endl;
- 
-  //! Create solver factory, which reads xml input filen
-  Albany::SolverFactory slvrfctry(appParams, mpiCommT);
-    
-  //! Create solver and application objects via solver factory
-  RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
-  RCP<const Tpetra_Vector> initial_guessT;
-  if (Teuchos::nonnull(initial_guess)) {
-    initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, mpiCommT);
+  Teuchos::RCP<Teuchos::ParameterList> modified_appParams = Teuchos::rcp( new Teuchos::ParameterList(*appParams) );
+
+  if(bDiscretizationDependsOnParameters) {
+    //Find and replace output exodus name in appParams if the set value
+    //  equals baseOutputExodusFilename, since this indicates that this is the final 
+    //  output exodus file that we don't want to overwrite.
+
+    if(modified_appParams->isSublist("Discretization")) {
+      Teuchos::ParameterList& discList = modified_appParams->sublist("Discretization");
+      if(discList.get<std::string>("Exodus Output File Name","") == baseOutputExodusFilename) {
+	if( (*currentEvalIndex) >= 0) {
+	  std::string outputExo = Albany::strint(baseOutputExodusFilename, *currentEvalIndex, '_');
+	  discList.set("Exodus Output File Name",outputExo);
+	  if(bVerbose) *out << "QCAD Solver setting Exodus Output File Name =\"" << outputExo 
+			    << "\" for " << name << " sub-solver" << std::endl;
+	}
+	else {
+	  discList.remove("Exodus Output File Name",false);
+	  if(bVerbose) *out << "QCAD Solver removing Exodus Output File Name" 
+			    << " for " << name << " sub-solver" << std::endl;
+	}
+      }
+    }
   }
-  ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
+
+
+  //Determine whether we should create a new subSolver (using solver factory) or populate from
+  //  persistent_subSolvers "cache"
+  if( persistent_subSolvers.find(name) == persistent_subSolvers.end() ||
+      (persistent_subSolvers.find(name)->second).app == Teuchos::null ||
+      initial_guess != Teuchos::null || bDiscretizationDependsOnParameters) {
+  
+      *out << "QCAD Solver creating solver from " << appParams->name() 
+           << " parameter list" << std::endl;
+     
+      //! Create solver factory, which reads xml input filen
+      Albany::SolverFactory slvrfctry(modified_appParams, mpiCommT);
+        
+      //! Create solver and application objects via solver factory
+      RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
+      RCP<const Tpetra_Vector> initial_guessT;
+      if (Teuchos::nonnull(initial_guess)) {
+        initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, mpiCommT);
+      }
+      ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
+  }
+  else {
+    //TODO: check if app and model are non-null (could have had freeUp() called?) and if so need to re-create via factory?
+    *out << "QCAD Solver using cached solver that was initially created using " << appParams->name() 
+	 << " parameter list" << std::endl;
+    const QCAD::SolverSubSolver& sub = persistent_subSolvers.find(name)->second;
+    ret.app = sub.app;
+    ret.model = sub.model;
+  }
 
   ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
   ret.responses_out = rcp(new EpetraExt::ModelEvaluator::OutArgs);  
@@ -2213,6 +2353,7 @@ QCAD::Solver::getValidProblemParameters() const
 
   validPL->set<std::string>("Schrodinger Eigensolver", "LOBPCG", "Name of eigensolver to use in schrodinger solve.  Can be LOCA or LOBPCG");
   validPL->set<bool>("Eigenvectors are Real",false,"Whether Schrodinger eigenvectors are known to have no imaginary part.");
+  validPL->set<std::string>("Discretization Creation Cmd", "", "Shell command to run in order to create the input mesh");
 
   validPL->set<bool>("Use Integrated Poisson Schrodinger",true,"After converging iterative P-S, run integrated P-S solver");
   validPL->set<int>("Number of Eigenvalues",0,"The number of eigenvalue-eigenvector pairs");
@@ -2256,6 +2397,14 @@ QCAD::Solver::getValidProblemParameters() const
     validResponsePL.sublist(Albany::strint("Response Vector",i));
   }
 
+  const int maxGeoParameters = 100;
+  Teuchos::ParameterList& validGeoParamPL = validPL->sublist("Geometry Parameters", false, "");
+  validGeoParamPL.set<int>("Number", 0);
+  for (int i=0; i<maxGeoParameters; i++) {
+    validGeoParamPL.set<double>(Albany::strint("Geometry Parameter",i), 0.0);
+  }
+
+
   // Candidates for deprecation. Pertain to the solution rather than the problem definition.
   validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
   
@@ -2273,7 +2422,7 @@ QCAD::Solver::getValidProblemParameters() const
 // "fn1(a,b)>fn2(c,d) ... >SolverName[X:Y]  OR
 // "SolverName[X:Y]"
 QCAD::SolverParamFn::SolverParamFn(const std::string& fnString, 
-			     const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData)
+				   const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData)
 {
   std::vector<std::string> fnsAndTarget = QCAD::string_split(fnString,'>',true);
   std::vector<std::string>::const_iterator it;  
@@ -2323,11 +2472,37 @@ void QCAD::SolverParamFn::fillSingleSubSolverParams(double parameterValue, const
   inArgs->set_p(0, p);
 }
 
+void QCAD::SolverParamFn::writeSingleSubSolverParamsToFile(double parameterValue, const std::string& subSolverName,
+							   std::fstream& file) const
+{
+  if(subSolverName != targetName) return;
+
+  std::vector< std::vector<std::string> >::const_iterator fit;
+  for(fit = filters.begin(); fit != filters.end(); ++fit) {
+
+    //perform function operation
+    std::string fnName = (*fit)[0];
+    if( fnName == "scale" ) {
+      TEUCHOS_TEST_FOR_EXCEPT( fit->size() != 1+1 ); // "scale" should have 1 parameter
+      parameterValue *= atof( (*fit)[1].c_str() );
+    }
+    else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	      "Unknown function " << (*fit)[0] << " for given type." << std::endl);
+  }
+  
+  // copy parameterValue into sub-solver parameter vector where appropriate
+  std::vector<int>::const_iterator it;
+  for(it = targetIndices.begin(); it != targetIndices.end(); ++it)
+    file << (*it) << "   " << std::setprecision(8) << parameterValue << std::endl;
+}
+
 
 
 void QCAD::SolverParamFn::fillSubSolverParams(double parameterValue, 
    const std::map<std::string, QCAD::SolverSubSolver>& subSolvers) const
 {
+  if(subSolvers.find(targetName) == subSolvers.end()) return; //target not applicable to these subSolvers
+
   std::vector< std::vector<std::string> >::const_iterator fit;
   for(fit = filters.begin(); fit != filters.end(); ++fit) {
 
@@ -2354,16 +2529,25 @@ void QCAD::SolverParamFn::fillSubSolverParams(double parameterValue,
 }
 
 double QCAD::SolverParamFn::
-getInitialParam(const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData) const
+getInitialParam(const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData, 
+		const std::vector<double>& geoParamInitialVals) const
 {
   //get first target parameter's initial value
   double initVal;
 
-  Teuchos::RCP<const Epetra_Vector> p_init = 
-    (subSolversData.find(targetName)->second).p_init; //only one p vector used
+  if(targetName == "Geometry") { //special case of geometry parameter
+    TEUCHOS_TEST_FOR_EXCEPT(targetIndices.size() == 0);
+    TEUCHOS_TEST_FOR_EXCEPT(geoParamInitialVals.size() <= targetIndices[0]);
+    initVal = geoParamInitialVals[ targetIndices[0] ];
+  }
+  else {
 
-  TEUCHOS_TEST_FOR_EXCEPT(targetIndices.size() == 0);
-  initVal = (*p_init)[ targetIndices[0] ];
+    Teuchos::RCP<const Epetra_Vector> p_init = 
+      (subSolversData.find(targetName)->second).p_init; //only one p vector used
+
+    TEUCHOS_TEST_FOR_EXCEPT(targetIndices.size() == 0);
+    initVal = (*p_init)[ targetIndices[0] ];
+  }
 
   std::vector< std::vector<std::string> >::const_iterator fit;
   for(fit = filters.end(); fit != filters.begin(); --fit) {

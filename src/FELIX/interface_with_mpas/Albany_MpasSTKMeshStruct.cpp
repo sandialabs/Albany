@@ -18,8 +18,11 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
+
+#ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #include <Ioss_SubSystem.h>
+#endif
 
 #include <boost/algorithm/string/predicate.hpp>
 

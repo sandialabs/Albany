@@ -82,7 +82,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid::OPERATOR_D2);
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
-
+/*
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   refWeights_CUDA=Kokkos::View<RealType*, PHX::Device>("refWeights_CUDA", numQPs);
   val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
@@ -98,7 +98,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
         grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
     }
   }
-#endif
+#endif*/
 }
 
 //**********************************************************************
@@ -126,251 +126,280 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 //Kokkos functors:
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-template < typename MeshScalarType,class DeviceType, class MDFieldType >
-class compute_jacobian_inv  {
- MDFieldType jacobian_;
- MDFieldType jacobian_inv_;
- int numQPs_;
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
- public:
- typedef DeviceType device_type;
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+operator() (const ComputeBasisFunctions_Tag& tag, const int& cell) const
+{
+  for(int nodes = 0; nodes < numNodes; nodes++) 
+        for(int pt = 0; pt < numQPs; pt++) 
+           for( int dim = 0; dim < numDims; dim++) 
+              GradBF(cell, nodes,pt,dim) =0.0;
+ 
+   compute_jacobian(cell);
+   compute_jacobian_inv(cell);
+   compute_jacobian_det(cell);
+   computeCellMeasure(cell);
+   compute_BF(cell);
+   compute_wBF(cell);
+   compute_GradBF(cell);
+   compute_wGradBF(cell);
+}
 
- compute_jacobian_inv(
-            MDFieldType &jacobian,
-            MDFieldType &jacobian_inv,
-            int numQPs)
-  : jacobian_(jacobian)
-  , jacobian_inv_(jacobian_inv)
-  , numQPs_(numQPs){}
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+operator() (const ComputeBasisFunctions_basisDim_Tag& tag, const int& cell) const
+{
 
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
+  for(int nodes = 0; nodes < numNodes; nodes++)
+        for(int pt = 0; pt < numQPs; pt++)
+           for( int dim = 0; dim < numDims; dim++)
+              GradBF(cell, nodes,pt,dim) =0.0;
+
+ 
+   compute_jacobian(cell); 
+   compute_jacobian_inv(cell);
+   compute_jacobian_det(cell);
+   computeCellMeasure(cell);
+   compute_BF(cell);
+   compute_wBF(cell);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+operator() (const ComputeBasisFunctions_no_Jacobian_Tag& tag, const int& cell) const
+{
+
+  for(int nodes = 0; nodes < numNodes; nodes++)
+        for(int pt = 0; pt < numQPs; pt++)
+           for( int dim = 0; dim < numDims; dim++)
+              GradBF(cell, nodes,pt,dim) =0.0;
+
+
+   compute_jacobian_inv(cell);
+   compute_jacobian_det(cell);
+   computeCellMeasure(cell);
+   compute_BF(cell);
+   compute_wBF(cell);
+   compute_GradBF(cell);
+   compute_wGradBF(cell);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+operator() (const ComputeBasisFunctions_no_Jacobian_basisDim_Tag& tag, const int& cell) const
+{
+
+  for(int nodes = 0; nodes < numNodes; nodes++)
+        for(int pt = 0; pt < numQPs; pt++)
+           for( int dim = 0; dim < numDims; dim++)
+              GradBF(cell, nodes,pt,dim) =0.0;
+
+
+   compute_jacobian_inv(cell);
+   compute_jacobian_det(cell);
+   computeCellMeasure(cell);
+   compute_BF(cell);
+   compute_wBF(cell);
+}
+
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_jacobian (const int e) const
+{
+  for (int q = 0; q<numQPs;          ++q)
+       for (int b1= 0; b1<basisDim;     ++b1)
+          for (int b2= 0; b2<basisDim;   ++b2)
+            for (int d = 0; d<spatialDim;++d)
+              jacobian(e,q,b1,b2) = 0;
+
+
+      for (int q = 0; q<numQPs;         ++q)
+        for (int d = 0; d<spatialDim;   ++d)
+          for (int v = 0; v<numNodes;  ++v)
+            phi(q,d) += coordVec(e,v,d) * val_at_cub_points_CUDA(v,q);
+
+      for (int v = 0; v<numNodes;      ++v)
+        for (int q = 0; q<numQPs;       ++q)
+          for (int d = 0; d<spatialDim; ++d)
+            for (int b = 0; b<basisDim; ++b)
+              dphi(q,d,b) += coordVec(e,v,d) * grad_at_cub_points_CUDA(v,q,b);
+
+      for (int q = 0; q<numQPs;         ++q)
+        for (int d = 0; d<spatialDim;   ++d)
+          norm(q) += phi(q,d)*phi(q,d);
+
+      for (int q = 0; q<numQPs;         ++q) {
+         norm(q) = std::sqrt(norm(q));
+      }
+
+      for (int q = 0; q<numQPs;         ++q)
+        for (int d = 0; d<spatialDim;   ++d)
+          phi(q,d) /= norm(q);
+
+      for (int q = 0; q<numQPs;         ++q) {
+      const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
+
+        MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
+        if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
+        else if (longitude < 0) longitude += 2*pi;
+
+
+        sphere_coord(e,q,0) = longitude;
+        sphere_coord(e,q,1) = latitude;
+
+        sinT(q) = std::sin(latitude);
+        cosT(q) = std::cos(latitude);
+        sinL(q) = std::sin(longitude);
+        cosL(q) = std::cos(longitude);
+      }
+
+      for (int q = 0; q<numQPs;         ++q) {
+        D1(q,0,0) = -sinL(q);
+        D1(q,0,1) =  cosL(q);
+        D1(q,1,2) =        1;
+      }
+
+      for (int q = 0; q<numQPs;         ++q) {
+        D2(q,0,0) =  sinL(q)*sinL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
+        D2(q,0,1) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
+        D2(q,0,2) = -cosL(q)*sinT(q)*cosT(q);
+
+        D2(q,1,0) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
+        D2(q,1,1) =  cosL(q)*cosL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
+        D2(q,1,2) = -sinL(q)*sinT(q)*cosT(q);
+
+        D2(q,2,0) = -cosL(q)*sinT(q);
+        D2(q,2,1) = -sinL(q)*sinT(q);
+        D2(q,2,2) =  cosT(q);
+      }
+
+      for (int q = 0; q<numQPs;          ++q)
+        for (int b = 0; b<basisDim;      ++b)
+          for (int d = 0; d<spatialDim;  ++d)
+            for (int j = 0; j<spatialDim;++j)
+              D3(q,b,d) += D1(q,b,j)*D2(q,j,d);
+
+      for (int q = 0; q<numQPs;          ++q)
+        for (int b1= 0; b1<basisDim;     ++b1)
+          for (int b2= 0; b2<basisDim;   ++b2)
+            for (int d = 0; d<spatialDim;++d)
+              jacobian(e,q,b1,b2) += D3(q,b1,d) *  dphi(q,d,b2);
+
+      for (int q = 0; q<numQPs;          ++q)
+        for (int b1= 0; b1<basisDim;     ++b1)
+          for (int b2= 0; b2<basisDim;   ++b2)
+            jacobian(e,q,b1,b2) *= earthRadius/norm(q);
+
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>:: 
+compute_jacobian_inv (const int i) const
  {
-   MeshScalarType determinant;
-   for (int i1=0; i1<numQPs_; i1++) {
-   determinant = jacobian_(i, i1, 0, 0)*jacobian_(i, i1, 1, 1)-jacobian_(i, i1, 0, 1)*jacobian_(i, i1, 1, 0);
-    jacobian_inv_(i, i1, 0, 0) =jacobian_ (i,i1, 1, 1)/ determinant;
-    jacobian_inv_(i, i1, 0, 1) =jacobian_ (i,i1, 0, 1)/ determinant;
-    jacobian_inv_(i, i1, 1, 0) =jacobian_ (i,i1, 1, 0)/ determinant;
-    jacobian_inv_(i, i1, 1, 1) =jacobian_ (i,i1, 0, 0)/ determinant;
+   MeshScalarT determinant;
+   for (int i1=0; i1<numQPs; i1++) {
+   determinant = jacobian(i, i1, 0, 0)*jacobian(i, i1, 1, 1)-jacobian(i, i1, 0, 1)*jacobian(i, i1, 1, 0);
+    jacobian_inv(i, i1, 0, 0) =jacobian (i,i1, 1, 1)/ determinant;
+    jacobian_inv(i, i1, 0, 1) =jacobian (i,i1, 0, 1)/ determinant;
+    jacobian_inv(i, i1, 1, 0) =jacobian (i,i1, 1, 0)/ determinant;
+    jacobian_inv(i, i1, 1, 1) =jacobian (i,i1, 0, 0)/ determinant;
     }
-
  }
-};
 
-template < typename MeshScalarType, class DeviceType, class MDFieldTypeJac, class MDFieldTypeJacDet>
-class compute_jacobian_det  {
- MDFieldTypeJac jacobian_;
- MDFieldTypeJacDet jacobian_det_;
- int numQPs_;
-
- public:
- typedef DeviceType device_type;
-
- compute_jacobian_det(
-            MDFieldTypeJac &jacobian,
-            MDFieldTypeJacDet &jacobian_det,
-            int numQPs)
-  : jacobian_(jacobian)
-  , jacobian_det_(jacobian_det)
-  , numQPs_(numQPs){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
- {
-   for (int i1=0; i1<numQPs_; i1++) {
-    jacobian_det_(i, i1)=jacobian_(i, i1, 0, 0)*jacobian_(i, i1, 1, 1)-jacobian_(i, i1, 0, 1)*jacobian_(i, i1, 1, 0);
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_jacobian_det(const int i) const
+{
+   for (int i1=0; i1<numQPs; i1++) {
+    jacobian_det(i, i1)=jacobian(i, i1, 0, 0)*jacobian(i, i1, 1, 1)-jacobian(i, i1, 0, 1)*jacobian(i, i1, 1, 0);
    }
+}
 
- }
-};
-
-template <  typename MeshScalarType, class DeviceType, class MDFieldType2d, class MDFieldType1d >
-class computeCellMeasure  {
- MDFieldType2d weighted_measure_;
- MDFieldType1d refWeights_;
- MDFieldType2d jacobian_det_;
- int numQPs_;
-
- public:
- typedef DeviceType device_type;
-
- computeCellMeasure(
-            MDFieldType2d &weighted_measure,
-            MDFieldType1d &refWeights,
-            MDFieldType2d &jacobian_det,
-            int numQPs)
-  : weighted_measure_(weighted_measure)
-  , refWeights_(refWeights)
-  , jacobian_det_(jacobian_det)
-  , numQPs_(numQPs){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
- {
-   if (jacobian_det_(i,0) < 0.0) {
-    for(int pt = 0; pt < numQPs_; pt++) {
-       weighted_measure_(i, pt) = -1* refWeights_(pt)*jacobian_det_(i, pt);
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+computeCellMeasure(const int i) const 
+{
+   if (jacobian_det(i,0) < 0.0) {
+    for(int pt = 0; pt < numQPs; pt++) {
+       weighted_measure(i, pt) = -1* refWeights_CUDA(pt)*jacobian_det(i, pt);
      } // P-loop
    }
    else {
-   for(int pt = 0; pt < numQPs_; pt++) {
-       weighted_measure_(i, pt) = refWeights_(pt)*jacobian_det_(i, pt);
+   for(int pt = 0; pt < numQPs; pt++) {
+       weighted_measure(i, pt) = refWeights_CUDA(pt)*jacobian_det(i, pt);
      }
    }
+}
 
- }
-};
-
-
-template < class DeviceType, class MDFieldType3d, class MDFieldType2d>
-class compute_BF  {
- MDFieldType3d BF_;
- MDFieldType2d val_at_cub_points_;
- int numNodes_;
- int numQPs_;
-
- public:
- typedef DeviceType device_type;
-
- compute_BF(
-            MDFieldType3d &BF,
-            MDFieldType2d &val_at_cub_points,
-            int numNodes,
-            int numQPs)
-  : BF_(BF)
-  , val_at_cub_points_(val_at_cub_points)
-  , numNodes_(numNodes)
-  , numQPs_ (numQPs){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
- {
-  for(int nodes = 0; nodes < numNodes_; nodes++) {
-     for(int pt = 0; pt < numQPs_; pt++) {
-        BF_(i, nodes, pt) = val_at_cub_points_(nodes, pt);
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_BF(const int i) const 
+{
+  for(int nodes = 0; nodes < numNodes; nodes++) {
+     for(int pt = 0; pt < numQPs; pt++) {
+        BF(i, nodes, pt) = val_at_cub_points_CUDA(nodes, pt);
      } // pt-loop
    } // nodes-loop
- }
-};
+}
 
-template < class DeviceType, class MDFieldTypeWBF, class MDFieldTypeWM, class MDFieldTypeBF >
-class compute_wBF  {
- MDFieldTypeWBF wBF_;
- MDFieldTypeWM weighted_measure_;
- MDFieldTypeBF BF_;
- int numNodes_;
- int numQPs_;
-
- public:
- typedef DeviceType device_type;
-
- compute_wBF(
-            MDFieldTypeWBF &wBF,
-            MDFieldTypeWM &weighted_measure,
-            MDFieldTypeBF &BF,
-            int numNodes,
-            int numQPs)
-  : wBF_(wBF)
-  , weighted_measure_(weighted_measure)
-  , BF_(BF)
-  , numNodes_(numNodes)
-  , numQPs_(numQPs){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
- {
-  for(int nodes = 0; nodes < numNodes_; nodes++) {
-     for(int pt = 0; pt < numQPs_; pt++) {
-         wBF_(i, nodes, pt) = BF_(i, nodes, pt)*weighted_measure_(i, pt);
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_wBF(const int i) const 
+{
+  for(int nodes = 0; nodes < numNodes; nodes++) {
+     for(int pt = 0; pt < numQPs; pt++) {
+         wBF(i, nodes, pt) = BF(i, nodes, pt)*weighted_measure(i, pt);
      } // P-loop
    } //
- }
-};
+}
 
-template < class DeviceType, class MDFieldTypeGradBF, class MDFieldTypeJacob, class MDFieldTypeGrad >
-class compute_GradBF  {
- MDFieldTypeGradBF  GradBF_;
- MDFieldTypeJacob  jacobian_inv_;
- MDFieldTypeGrad  grad_at_cub_points_;
- int numNodes_;
- int numQPs_;
- int numDims_; 
-
- public:
- typedef DeviceType device_type;
-
- compute_GradBF(
-            MDFieldTypeGradBF &GradBF,
-            MDFieldTypeJacob &jacobian_inv,
-            MDFieldTypeGrad  &grad_at_cub_points,
-            int numNodes,
-            int numQPs,
-            int numDims)
-  : GradBF_(GradBF)
-  , jacobian_inv_(jacobian_inv)
-  , grad_at_cub_points_(grad_at_cub_points)
-  , numNodes_(numNodes)
-  , numQPs_(numQPs)
-  , numDims_(numDims){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
- {
-  for(int nodes = 0; nodes < numNodes_; nodes++) {
-     for(int pt = 0; pt < numQPs_; pt++) {
-       for(int row = 0; row < numDims_; row++){
-              GradBF_(i, nodes, pt, row) = 0.0;
-              for(int col = 0; col < numDims_; col++){
-                  GradBF_(i, nodes, pt, row) +=jacobian_inv_(i, pt, col, row)*grad_at_cub_points_(nodes, pt, col);
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_GradBF(const int i) const
+{
+  for(int nodes = 0; nodes < numNodes; nodes++) {
+     for(int pt = 0; pt < numQPs; pt++) {
+       for(int row = 0; row < numDims; row++){
+              GradBF(i, nodes, pt, row) = 0.0;
+              for(int col = 0; col < numDims; col++){
+                  GradBF(i, nodes, pt, row) +=jacobian_inv(i, pt, col, row)*grad_at_cub_points_CUDA(nodes, pt, col);
                }// col
             } //row
      } // P-loop
    } //
- }
-};
+}
 
-template <  class DeviceType, class MDFieldTypeWGradBF, class MDFieldTypeGradBF, class MDFieldTypeWM  >
-class compute_wGradBF  {
- MDFieldTypeWGradBF wGradBF_;
- MDFieldTypeGradBF GradBF_;
- MDFieldTypeWM weighted_measure_;
- int numNodes_;
- int numQPs_;
- int numDims_;
-
- public:
- typedef DeviceType device_type;
-
- compute_wGradBF(
-             MDFieldTypeWGradBF &wGradBF,
-             MDFieldTypeGradBF &GradBF,
-             MDFieldTypeWM &weighted_measure,
-             int numNodes,
-             int numQPs,
-             int numDims)
-  : wGradBF_(wGradBF)
-  , GradBF_(GradBF)
-  , weighted_measure_(weighted_measure)
-  , numNodes_(numNodes)
-  , numQPs_(numQPs)
-  , numDims_(numDims){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
- {
-  for(int nodes = 0; nodes < numNodes_; nodes++) {
-        for(int pt = 0; pt < numQPs_; pt++) {
-           for( int dim = 0; dim < numDims_; dim++) {
-              wGradBF_(i, nodes, pt, dim) = GradBF_(i, nodes, pt, dim)*weighted_measure_(i, pt);
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_wGradBF(const int i) const
+{
+  for(int nodes = 0; nodes < numNodes; nodes++) {
+        for(int pt = 0; pt < numQPs; pt++) {
+           for( int dim = 0; dim < numDims; dim++) {
+              wGradBF(i, nodes, pt, dim) = GradBF(i, nodes, pt, dim)*weighted_measure(i, pt);
            } // D1-loop
          } // P-loop
       } // F-loop
- }
-};
-#endif
+}
 
+#endif
+*/
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
@@ -385,6 +414,12 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
 
+
+  // setJacobian only needs to be RealType since the data type is only
+  //  used internally for Basis Fns on reference elements, which are
+  //  not functions of coordinates. This save 18min of compile time!!!
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
   const double pi = ShallowWaterConstants::self().pi;
   const double DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
 
@@ -392,9 +427,7 @@ evaluateFields(typename Traits::EvalData workset)
   const int spatialDim  = coordVec.dimension(2);
   const int basisDim    =                    2;
 
-  // setJacobian only needs to be RealType since the data type is only
-  //  used internally for Basis Fns on reference elements, which are
-  //  not functions of coordinates. This save 18min of compile time!!!
+
   if (spatialDim==basisDim) {
     //Check that we don't have a higher order spectral element.  The node_count is based on 
     //2D quad/shellquad elements.  This logic will only get hit if spatialDim = 2.
@@ -674,8 +707,10 @@ evaluateFields(typename Traits::EvalData workset)
   }//end of if-statement which turns on/off homme;s map
   //////////////////////////////////////////////////////////////////////
 
-  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
+
+
+  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
   for (int e = 0; e<numelements;      ++e) {
@@ -685,7 +720,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
 
@@ -697,53 +731,83 @@ evaluateFields(typename Traits::EvalData workset)
     (GradBF, jacobian_inv, grad_at_cub_points);
   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
-#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
-//   Kokkos::parallel_for (numelements, compute_jacobian_inv< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> > (jacobian, jacobian_inv, numQPs));  
- 
-//  Kokkos::parallel_for (numelements, compute_jacobian_det< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint> > (jacobian, jacobian_det, numQPs));
-
-
-/*  Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
-    (weighted_measure, jacobian_det, refWeights);
-
-  Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
-    (BF, val_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-    (wBF, weighted_measure, BF);
-  Intrepid::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
-    (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-    (wGradBF, weighted_measure, GradBF);
-*/
-   Kokkos::parallel_for (numelements, computeCellMeasure<MeshScalarT,  PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint>, Kokkos::View<RealType*, PHX::Device> > (weighted_measure, refWeights_CUDA, jacobian_det, numQPs));
-
-   Kokkos::parallel_for (numelements, compute_BF< PHX::Device , PHX::MDField<RealType,Cell,Node,QuadPoint>, Kokkos::View<RealType**, PHX::Device>  > (BF, val_at_cub_points_CUDA, numNodes, numQPs));
-
-  Kokkos::parallel_for (numelements, compute_wBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>, PHX::MDField<MeshScalarT,Cell,QuadPoint>, PHX::MDField<RealType,Cell,Node,QuadPoint> > (wBF, weighted_measure, BF, numNodes, numQPs));
- 
-  Kokkos::parallel_for (numelements, compute_GradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, Kokkos::View<RealType***, PHX::Device>  > (GradBF, jacobian_inv, grad_at_cub_points_CUDA, numNodes, numQPs, numDims));
-
-  Kokkos::parallel_for (numelements, compute_wGradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint>  > (wGradBF, GradBF, weighted_measure, numNodes, numQPs, numDims));
-#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   PHAL::set(GradGradBF, 0.0);
-  if (spatialDim!=basisDim) 
-    for (int e=0; e<numelements; ++e) 
-      for (int v=0; v<numNodes; ++v) 
-        for (int q=0; q<numQPs; ++q) 
+  if (spatialDim!=basisDim)
+    for (int e=0; e<numelements; ++e)
+      for (int v=0; v<numNodes; ++v)
+        for (int q=0; q<numQPs; ++q)
           for (int i=0; i<basisDim; i++)
             for (int j=0; j<basisDim; j++)
               for (int k=0; k<basisDim; k++)
                 GradGradBF(e,v,q,i,j) += jacobian_inv(e,q,i,k)*D2_at_cub_points(v,q,i+j);
 
-  if (spatialDim!=basisDim) 
-    for (int e=0; e<numelements; ++e) 
-      for (int v=0; v<numNodes; ++v) 
-        for (int q=0; q<numQPs; ++q) 
+  if (spatialDim!=basisDim)
+    for (int e=0; e<numelements; ++e)
+      for (int v=0; v<numNodes; ++v)
+        for (int q=0; q<numQPs; ++q)
           for (int i=0; i<basisDim; i++)
             for (int j=0; j<basisDim; j++)
               wGradGradBF(e,v,q,i,j) = weighted_measure(e,q) * GradGradBF(e,v,q,i,j);
 
+
+
+/*#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+ pi = ShallowWaterConstants::self().pi;
+ DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
+
+ numelements = coordVec.dimension(0);
+ spatialDim  = coordVec.dimension(2);
+ basisDim    =                    2;
+
+
+ phi  =  Kokkos::View<MeshScalarT**,  PHX::Device> ("phi", numQPs,spatialDim);
+ dphi =  Kokkos::View<MeshScalarT***, PHX::Device> ("dphi", numQPs,spatialDim, basisDim);
+ norm =  Kokkos::View<MeshScalarT*,   PHX::Device> ("norm", numQPs);
+ sinL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinL", numQPs);
+ cosL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosL", numQPs);
+ sinT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinT", numQPs);
+ cosT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosT", numQPs);
+ D1   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D1", numQPs,basisDim,spatialDim);
+ D2   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D2", numQPs,spatialDim,spatialDim);
+ D3   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D3", numQPs,basisDim,spatialDim);
+
+// PHAL::set(GradGradBF, 0.0);
+
+ if (spatialDim==basisDim) {
+ //Check that we don't have a higher order spectral element.  The node_count is based on 
+ //2D quad/shellquad elements.  This logic will only get hit if spatialDim = 2.
+ //Only a quad or shellquad element can be enriched according to the logic in Aeras::SpectralDiscretization
+   TEUCHOS_TEST_FOR_EXCEPTION(cellType->getNodeCount() > 9,
+                       Teuchos::Exceptions::InvalidParameter,
+                       std::endl << "Error!  Intrepid::CellTools<RealType>::setJacobian " <<
+                       "is only implemented for bilinear and biquadratic elements!  Attempting " <<
+                  "to call this function for a higher order element. \n");
+  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+   if (spatialDim!=basisDim)
+      Kokkos::parallel_for(ComputeBasisFunctions_no_Jacobian_Policy(0,workset.numCells),*this);
+   else
+      Kokkos::parallel_for(ComputeBasisFunctions_no_Jacobian_basisDim_Policy(0,workset.numCells),*this);
+ }
+ else {
+     if (spatialDim!=basisDim)
+        Kokkos::parallel_for(ComputeBasisFunctions_Policy(0,workset.numCells),*this);
+     else
+        Kokkos::parallel_for(ComputeBasisFunctions_basisDim_Policy(0,workset.numCells),*this);
+ }
+
+ for (int e = 0; e<numelements;      ++e) {
+    for (int q = 0; q<numQPs;          ++q) {
+      TEUCHOS_TEST_FOR_EXCEPTION(std::abs(jacobian_det(e,q))<.1e-8,
+                  std::logic_error,"Bad Jacobian Found.");
+    }
+  }
+
+   
+
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+*/
   //div_check(spatialDim, numelements);
 }
 

@@ -100,8 +100,8 @@ namespace Aeras {
 
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_ShallowWaterSource.hpp"
+#include "Aeras_ShallowWaterHyperViscosity.hpp"
 #include "Aeras_SurfaceHeight.hpp"
-#include "Aeras_Atmosphere.hpp"
 
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
@@ -142,9 +142,13 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
   const int numQPts     = cubature->getNumPoints();
   const int numVertices = meshSpecs.ctd.node_count;
-  int vecDim; 
-  if (neq == 1) vecDim = neq; 
-  else vecDim = spatialDim;
+  int vecDim = neq;
+
+  /*if (neq == 1 || neq == 2) 
+    vecDim = neq; 
+  else 
+    vecDim = spatialDim; 
+  */
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -249,6 +253,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Resid"));
    
     //Input
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("QP Variable Name", dof_names[0]);
@@ -257,6 +262,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     p->set<std::string>("Aeras Surface Height QP Variable Name", "Aeras Surface Height");
     p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
+    p->set<std::string>("Hyperviscosity Name", "Shallow Water Hyperviscosity");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
     p->set<string>("Spherical Coord Name",       "Lat-Long");
     p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
@@ -278,7 +284,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Shallow Water Problem", &paramList);
 
     //Output
-    p->set<std::string>("Residual Name", "Pre Atmosphere Residual");
+    p->set<std::string>("Residual Name",       resid_names[0]);
 
     ev = rcp(new Aeras::ShallowWaterResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -302,33 +308,21 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
     
   }
-  { // Aeras Atmosphere for shallow water equations 
+  { // Aeras hyperviscosity for shallow water equations
 
-    RCP<ParameterList> p = rcp(new ParameterList("Aeras Atmosphere"));
-
-    p->set<int>("Number of Tracers", 5),
-    p->set<int>("Number of Levels" ,30),
+    RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Hyperviscosity"));
 
     //Input
-    p->set<std::string>("Spherical Coord Name", "Lat-Long");
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
-    p->set<std::string>("QP Variable Name", dof_names[0]);
-    p->set<std::string>("Residual Name In", "Pre Atmosphere Residual");
-    
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Aeras Atmosphere");
+    Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
-    //Output
-    p->set<std::string>("Tracer Vector Old Name", "Tracer Vector Old");
-    p->set<std::string>("Tracer Vector New Name", "Tracer Vector New");
-    p->set<std::string>("Residual Name",       resid_names[0]);
 
-    ev = rcp(new Aeras::Atmosphere<EvalT,AlbanyTraits>(*p,dl));
+    //Output
+    p->set<std::string>("Hyperviscosity Name", "Shallow Water Hyperviscosity");
+    ev = rcp(new Aeras::ShallowWaterHyperViscosity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
   }
+ 
 
   { // Aeras source for shallow water equations
 
@@ -345,6 +339,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     ev = rcp(new Aeras::ShallowWaterSource<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
  
 /*
   { // Aeras viscosity

@@ -1,0 +1,37 @@
+set node constraint on
+create pyramid height 1 sides 4 radius 1 top 0 
+rotate Volume 1 angle 45 preview  about Z include_merged 
+rotate Volume 1 angle 45  about Z include_merged 
+webcut volume 1 with plane yplane offset 0 preview
+webcut volume 1 with plane yplane offset 0 noimprint nomerge 
+pick volume
+delete volume 11
+delete volume 1
+webcut volume 2  with plane xplane offset 0 preview
+webcut volume 2  with plane xplane offset 0 noimprint nomerge 
+pick volume
+delete volume 33
+delete volume 3
+Volume 2  copy reflect z 
+move Volume 4  preview z -1 include_merged 
+move Volume 4  z -1 include_merged 
+unite volume 2 4 
+volume 2  size 1
+volume 2  size 1
+mesh volume 2 
+volume 2  scheme Tetmesh
+set tetmesher interior points on 
+set tetmesher optimize level 3 optimize overconstrained  off sliver  off 
+set tetmesher boundary recovery  off 
+volume 2  tetmesh growth_factor 1.0
+mesh volume 2 
+block 1 volume 2
+block 1 name "bulk-block"
+pick vertex
+nodeset 1 vertex 13
+nodeset 2 vertex 8
+pick surface
+nodeset 3 surface 10
+nodeset 4 surface 11
+export mesh "two-tet.exo" overwrite
+exit

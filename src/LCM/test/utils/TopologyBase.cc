@@ -170,23 +170,7 @@ int main(int ac, char* av[])
 
   topology.set_output_type(plot_style);
 
-#if defined(DEBUG_LCM_TOPOLOGY)
-  gviz_filename = LCM::parallelize_string("before") + ".dot";
-  topology.outputToGraphviz(gviz_filename);
-#endif
-  std::string
-  boundary_filename = LCM::parallelize_string("before") + ".vtk";
-  topology.outputBoundary(boundary_filename);
-
-
   topology.splitOpenFaces();
-
-#if defined(DEBUG_LCM_TOPOLOGY)
-  gviz_filename = LCM::parallelize_string("after") + ".dot";
-  topology.outputToGraphviz(gviz_filename);
-#endif
-  boundary_filename = LCM::parallelize_string("after") + ".vtk";
-  topology.outputBoundary(boundary_filename);
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   discretization_ptr = topology.get_discretization();

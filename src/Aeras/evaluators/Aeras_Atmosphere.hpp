@@ -49,11 +49,26 @@ private:
 
  
   bool  periodic;
-  std::size_t worksetSize;
-  std::size_t numNodes;
-  std::size_t numCoords;
-  std::size_t numTracers;
-  std::size_t numLevels;
+  int worksetSize;
+  int numNodes;
+  int numCoords;
+  int numTracers;
+  int numLevels;
+
+//Kokkos
+public:
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct Atmosphere_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, Atmosphere_Tag> Atmosphere_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const Atmosphere_Tag& tag, const int& cell) const;
+
+#endif
+
 };
 }
 

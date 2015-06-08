@@ -13,9 +13,14 @@ VERBOSE = False
 """
 TODO:
  - Way to provide overrides from the command line?
- - May need machine categorization in the case where lots of
-   machines have the same env settings.
 """
+
+# Map nodename regex to machine type
+MACHINE_NODENAME_MAP = \
+{
+    "(face|melvin)" : "rhel6_slave",
+    "s968061"       : "jim_mac_laptop"
+}
 
 ALBANY_BUILD_TYPES = \
 {
@@ -61,9 +66,6 @@ ALBANY_BUILD_TYPES = \
     ],
     "hydride" : [
         ("ALBANY_HYDRIDE", "ON"),
-    ],
-    "see" : [
-        ("ALBANY_SEE", "ON"),
     ],
     "amp" : [
         ("ALBANY_AMP", "ON"),
@@ -160,8 +162,6 @@ COMPILERS = [
     "pgi"
 ]
 
-LOCAL_CMAKE_BASE_NAME = "do-cmake-ATH"
-
 ###############################################################################
 def expect(condition, error_msg):
 ###############################################################################
@@ -244,7 +244,7 @@ formatter_class=argparse.RawTextHelpFormatter
                         help="Have harness manage your environment for you")
 
     parser.add_argument("-g", action="store_true", dest="generate_cmake", default=False,
-                        help="Generate local cmake fragment, do not run it")
+                        help="Generate local cmake fragment and test scripts, do not run them")
 
     parser.add_argument("-c", action="store", dest="compiler", choices=COMPILERS, default=None,
                         help="Choose compiler. Only works with -e")
@@ -298,21 +298,45 @@ def set_env_for_build(build_keys, env_map):
                 os.environ[env_var] = env_setting
 
 ###############################################################################
-def set_jenkins_env():
+def get_machine_type():
+###############################################################################
+    nodename = socket.gethostname().split(".")[0]
+    for regex_str, machinetype in MACHINE_NODENAME_MAP.iteritems():
+        regex = re.compile(regex_str)
+        if (regex.match(nodename)):
+            return machinetype
+
+    expect(False, "Unrecognized machine '%s'" % nodename)
+    return None
+
+###############################################################################
+def set_jenkins_env(generate=False):
 ###############################################################################
     expect("WORKSPACE" in os.environ,
            "You're in jenkins mode and WORKSPACE not set, did you mean to run build_albany or build_trilinos?")
+
+    if (generate):
+        fd = open("jenkins_env_setup", "w")
 
     for env_var, env_setting in JENKINS_ENVS:
         # Set env after dereferencing vars
         components = [os.environ[item[1:]] if item.startswith('$') else item for item in env_setting.split("/")]
         env_value = "/".join(components)
+
+        if (generate):
+            fd.write("export %s=%s\n" % (env_var, env_value))
+
         os.environ[env_var] = env_value
+
         if (env_var in ["ALBDIR", "TRILDIR"]):
             expect(os.path.isdir(env_value), "Value of '%s', '%s', not a valid directory" % (env_var, env_value))
 
+    if (generate):
+        fd.close()
+        print "Created Jenkins env setup file: jenkins_env_setup"
+
 ###############################################################################
-def generate_cmake_fragment(generic_fragment_path, env_cmd, frag_name):
+def generate_cmake_fragment(generic_fragment_path, env_cmd, build_types, build_mode, compiler):
 ###############################################################################
     # Read in generic_fragment_path
     generic_fragment = open(generic_fragment_path, 'r').read()
@@ -322,6 +346,11 @@ def generate_cmake_fragment(generic_fragment_path, env_cmd, frag_name):
 
     # Run cmake echo, capture output
     cmake_cmd = run_cmd("%s && %s" % (env_cmd, generic_fragment_echo), PIPE)
+
+    # Compute file name
+    generic_base = os.path.basename(generic_fragment_path)
+    extension = generate_frag_extension(build_types, build_mode, compiler)
+    frag_name = "%s-%s" % (generic_base, extension)
 
     # Be aware of potential file name conflicts for local fragment we want
     # to create
@@ -359,9 +388,9 @@ def generate_cmake_fragment(generic_fragment_path, env_cmd, frag_name):
     print "Created CMake fragment:", frag_name
 
 ###############################################################################
-def generate_frag_name(build_types, build_mode, compiler):
+def generate_frag_extension(build_types, build_mode, compiler):
 ###############################################################################
-    return "%s-%s-%s-%s" % (LOCAL_CMAKE_BASE_NAME, "-".join(sorted(build_types)), compiler, build_mode)
+    return "%s%s%s" % ("-".join(sorted(build_types)), "-%s-" if compiler else "-", build_mode)
 
 ###############################################################################
 def perform_test(mode, build_types, build_mode, manage_environment, gen_cmake, compiler):
@@ -381,29 +410,48 @@ provide a compiler via the -c option. This is OK if your environment
 is already configured for a certain compiler."""
 )
 
-        nodename = socket.gethostname().split(".")[0]
-        env_file_path = os.path.join(exe_dir, "env", "%s_env" % nodename)
+        machine_type = get_machine_type()
+        env_file_path = os.path.join(exe_dir, "env", "%s_env" % machine_type)
         expect(os.path.exists(env_file_path), "env file '%s' does not exist" % env_file_path)
 
         env_cmd = "source %s" % env_file_path
     else:
         env_cmd = ":"
 
-    if (gen_cmake):
-        frag_name = generate_frag_name(build_types, build_mode, compiler)
-
     if (mode == "jenkins"):
-        set_jenkins_env()
-
-        expect(not gen_cmake, "-g option doesn't make sense in jenkins mode")
+        set_jenkins_env(gen_cmake)
 
         test_script = os.path.join(exe_dir, "test_scripts", "test-engine")
-        run_cmd("%s && %s" % (env_cmd, test_script))
+        if (gen_cmake):
+            tril_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-trilinos")
+            generate_cmake_fragment(tril_fragment, env_cmd, build_types, build_mode, compiler)
+
+            alb_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-albany")
+            generate_cmake_fragment(alb_fragment, env_cmd, build_types, build_mode, compiler)
+
+            print "The necessary scripts have been created, to test, run:"
+            print " > source jenkins_env_setup"
+            print " # Set up compiler env"
+            if ("TRILINOS_TRIKOTA" in os.environ and os.environ["TRILINOS_TRIKOTA"] == "ON"):
+                print " > $ALBDIR/tools/checkout_scripts/dakota-checkout"
+            if ("TRILINOS_SCOREC" in os.environ and os.environ["TRILINOS_SCOREC"] == "ON"):
+                print " > $ALBDIR/tools/checkout_scripts/scorec-checkout"
+            print " > %s" % tril_fragment
+            print " > make -j N"
+            print " > make install"
+            print " > mv %s $ALBBUILDIR" % alb_fragment
+            print " > cd $ALBBUILDDIR"
+            print " > %s" % alb_fragment
+            print " > make -j N"
+            print " > make test"
+
+        else:
+            run_cmd("%s && %s" % (env_cmd, test_script))
 
     elif (mode == "tril"):
         tril_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-trilinos")
         if (gen_cmake):
-            generate_cmake_fragment(tril_fragment, env_cmd, frag_name)
+            generate_cmake_fragment(tril_fragment, env_cmd, build_types, build_mode, compiler)
         else:
             run_cmd("%s && %s" % (env_cmd, tril_fragment))
 
@@ -412,7 +460,7 @@ is already configured for a certain compiler."""
 
         alb_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-albany")
         if (gen_cmake):
-            generate_cmake_fragment(alb_fragment, env_cmd, frag_name)
+            generate_cmake_fragment(alb_fragment, env_cmd, build_types, build_mode, compiler)
         else:
             run_cmd("%s && %s" % (env_cmd, alb_fragment))
 

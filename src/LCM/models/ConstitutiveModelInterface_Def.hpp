@@ -16,6 +16,7 @@
 #include "J2FiberModel.hpp"
 #include "J2Model.hpp"
 #include "CreepModel.hpp"
+#include "NewtonianFluidModel.hpp"
 #include "MooneyRivlinModel.hpp"
 #include "NeohookeanModel.hpp"
 #include "RIHMRModel.hpp"
@@ -23,6 +24,7 @@
 #include "AAAModel.hpp"
 #include "LinearElasticModel.hpp"
 #include "LinearHMCModel.hpp"
+#include "J2HMCModel.hpp"
 #include "HyperelasticDamageModel.hpp"
 #include "CapExplicitModel.hpp"
 #include "CapImplicitModel.hpp"
@@ -288,6 +290,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new CreepModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {
     model = rcp(new J2Model<EvalT, Traits>(p, dl));
+  } else if (model_name == "Newtonian Fluid") {
+    model = rcp(new NewtonianFluidModel<EvalT, Traits>(p, dl));
   } else if (model_name == "CrystalPlasticity") {
     model = rcp(new CrystalPlasticityModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
@@ -326,6 +330,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new AnisotropicViscoplasticModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Linear HMC") {
     model = rcp(new LinearHMCModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "J2 HMC") {
+    model = rcp(new J2HMCModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Ortiz Pandolfi") {
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elasto Viscoplastic") {

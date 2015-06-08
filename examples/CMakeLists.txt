@@ -77,6 +77,8 @@ if (ALBANY_ASCR)
   set(SerialAlbanySGCoupled.exe  ${AlbanySGCoupledPath})
 endif()
 
+IF(ALBANY_HAVE_STK) # STK is needed for all these
+
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat1D)
   add_subdirectory(SteadyHeat2D)
@@ -104,22 +106,25 @@ endif()
     add_subdirectory(SteadyHeat2DInternalNeumann)
     add_subdirectory(SteadyHeat2DRobin)
     add_subdirectory(SteadyHeat2DSS)
-  ENDIF()
+  ENDIF(ALBANY_SEACAS)
 
   IF(ALBANY_ENABLE_CUBIT)
     add_subdirectory(CUTR_Heat1D)
     add_subdirectory(CUTR_Heat2D)
     add_subdirectory(CUTR_HeatStruct2D)
-  ENDIF()
+  ENDIF(ALBANY_ENABLE_CUBIT)
+ENDIF(ALBANY_HAVE_STK)
 
-  IF(ALBANY_SCOREC)
-    add_subdirectory(Heat3DFMDB)
-  ENDIF()
+IF(ALBANY_SCOREC)
+  add_subdirectory(Heat3DPUMI)
+ENDIF()
 
+IF(ALBANY_HAVE_STK)
 # DEMO PDES ###############
 IF(ALBANY_DEMO_PDES)
   add_subdirectory(Helmholtz2D)
   add_subdirectory(LinComprNS)
+  add_subdirectory(AdvDiff)
   add_subdirectory(ComprNS)
   add_subdirectory(ODE)
   add_subdirectory(TekoPrec)
@@ -134,24 +139,28 @@ IF(ALBANY_DEMO_PDES)
 #    add_subdirectory(NSRayleighBernard2DwithNeut)
     add_subdirectory(NSVortexShedding2D)
     add_subdirectory(PNP)
-  ENDIF()
+  ENDIF(ALBANY_SEACAS)
 
   if (ALBANY_ASCR)
     add_subdirectory(CoupledReactor)
     add_subdirectory(NSReactor)
-  endif()
+  endif(ALBANY_ASCR)
 
   IF(ALBANY_ENABLE_CUBIT)
     add_subdirectory(HTE3D)
-  ENDIF()
+  ENDIF(ALBANY_ENABLE_CUBIT)
 
 ENDIF(ALBANY_DEMO_PDES)
+
+ENDIF(ALBANY_HAVE_STK)
 
 # LCM ###############
 
 IF(ALBANY_LCM)
   add_subdirectory(LCM)
 ENDIF(ALBANY_LCM)
+
+IF(ALBANY_HAVE_STK)
 
 # QCAD ##################
 
@@ -170,7 +179,7 @@ ENDIF()
 
 # FELIX ##################
 
-IF(ALBANY_FELIX AND ALBANY_SEACAS )
+IF(ALBANY_FELIX)
   add_subdirectory(FELIX_Stokes)
 ENDIF()
 
@@ -186,14 +195,16 @@ IF(ALBANY_MOR AND ALBANY_EPETRA)
   add_subdirectory(MOR)
 ENDIF()
 
-# SEE   ##################
+# AMP   ##################
 
-IF(ALBANY_SEE)
-  add_subdirectory(SEE)
+IF(ALBANY_AMP)
+  add_subdirectory(AMP)
 ENDIF()
 
 IF(ALBANY_PERFORMANCE_TESTS)
   add_subdirectory(PerformanceTests)
 ENDIF()
+
+ENDIF(ALBANY_HAVE_STK)
 
 ###################

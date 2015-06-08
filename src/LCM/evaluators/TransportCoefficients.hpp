@@ -60,7 +60,7 @@ namespace LCM {
     ///
     /// Input: Equvalent plastic strain
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
+    //PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
 
     ///
     /// Input: Temperature
@@ -192,6 +192,10 @@ namespace LCM {
     ///
     bool have_eqps_;
 
+    ///
+    /// Map of field names
+    ///
+    Teuchos::RCP<std::map<std::string, std::string> > field_name_map_;
   };
 }
 

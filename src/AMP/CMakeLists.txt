@@ -40,7 +40,7 @@ set(INCLUDE_DIRS
   ${Albany_SOURCE_DIR}/src/adapt
   ${AMP_DIR}/problems
   ${AMP_DIR}/evaluators
-  ${ALBANY_FMDB_INCLUDE_DIRS} 
+  ${ALBANY_PUMI_INCLUDE_DIRS} 
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
 

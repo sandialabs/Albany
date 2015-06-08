@@ -1,0 +1,55 @@
+#-------------------------------------------
+#
+# Platform and User-Specific Paths and environment variables
+#
+# This file must be modified for each machine
+#
+# BvBW  10/06/08
+# AGS  04/09
+# JGF 11/14
+#-------------------------------------------
+
+export BOOSTDIR=/projects/install/rhel6-x86_64/sems/tpl/boost/1.55.0/gcc/4.7.2/base
+export NETCDFDIR=/projects/install/rhel6-x86_64/sems/tpl/netcdf/4.3.2/gcc/4.7.2/parallel
+export HDF5DIR=/projects/install/rhel6-x86_64/sems/tpl/hdf5/1.8.12/gcc/4.7.2/parallel
+export SUPERLUDIR=/projects/install/rhel6-x86_64/sems/tpl/superlu/4.3/gcc/4.7.2/base
+# export LAMEDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/lame-4.24.1
+export PARMETISDIR=/projects/install/rhel6-x86_64/sems/tpl/parmetis/4.0.3/gcc/4.7.2/base
+# export CISMDIR=/home/ikalash/Desktop/glimmer/felix_interface_branch # TODO - Fix
+# export YAMLDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/yaml_cpp_0.5.1
+
+export SSGUSER=$(whoami)
+
+export SEMS_MODULE_ROOT=/projects/modulefiles
+
+module use /projects/modulefiles/rhel6-x86_64/sems/compiler
+module use /projects/modulefiles/rhel6-x86_64/sems/tpl
+module use /projects/modulefiles/rhel6-x86_64/sems/utility
+
+module load gcc/4.7.2/base
+module load gcc/4.7.2/openmpi/1.6.5
+module load cmake/2.8.12
+
+# Pick up newer cmake
+export PATH=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/cmake-3.0.2/bin:$PATH
+
+# Set up compiler env
+if [ -n "$ATH_COMPILER" ]
+then
+    if [ "$ATH_COMPILER" = "clang" ]
+    then
+        export CMAKE_CXX_FLAGS="-Weverything -pedantic -Wno-long-long -Wno-documentation"
+        export OMPI_CC=/projects/sems/compilers/clang/arch_x86_64/bin/clang
+        export OMPI_CXX=/projects/sems/compilers/clang/arch_x86_64/bin/clang++
+        export OMPI_FC=`which gfortran`
+    elif [ "$ATH_COMPILER" = "gcc" ]
+    then
+        export CMAKE_CXX_FLAGS="-ansi -Wall -pedantic -Wno-long-long"
+        export OMPI_CC=`which gcc`
+        export OMPI_CXX=`which g++`
+        export OMPI_FC=`which gfortran`
+    else
+        echo "Compiler $ATH_COMPILER not supported on face" 1>&2
+        exit 1
+    fi
+fi

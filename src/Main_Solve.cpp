@@ -30,6 +30,12 @@
 
 #include "Kokkos_Core.hpp"
 
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+#include "PeridigmManager.hpp"
+#endif
+#endif
+
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 //
@@ -39,6 +45,12 @@
 #include <math.h>
 //#include <Accelerate/Accelerate.h>
 #include <xmmintrin.h>
+#endif
+
+//#define ALBANY_FLUSH_DENORMALS
+#ifdef ALBANY_FLUSH_DENORMALS
+#include <xmmintrin.h>
+#include <pmmintrin.h>
 #endif
 
 // Global variable that denotes this is not the Tpetra executable
@@ -123,6 +135,11 @@ int main(int argc, char *argv[]) {
 #endif
 
   Kokkos::initialize(argc, argv);
+
+#ifdef ALBANY_FLUSH_DENORMALS
+  _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+  _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+#endif
 
 #ifdef ALBANY_CHECK_FPE
    // Catch FPEs. Follow Main_SolveT.cpp's approach to checking for floating
@@ -233,22 +250,26 @@ int main(int argc, char *argv[]) {
           for (int j=0; j<num_p; j++) {
             const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
             if (Teuchos::nonnull(dgdp)) {
-              if(j < num_param_vecs)
+              if(j < num_param_vecs) {
                 dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "): \n");
+                status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
+              }
               else {
+                const Epetra_Map serial_map(-1, 1, 0, dgdp.get()->Comm());
+                Epetra_MultiVector norms(serial_map,dgdp->NumVectors());
               //  RCP<Albany::ScalarResponseFunction> response = rcp_dynamic_cast<Albany::ScalarResponseFunction>(app->getResponse(i));
                // int numResponses = response->numResponses();
                 *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
                 *out << "    ";
                 for(int ir=0; ir<dgdp->NumVectors(); ++ir) {
                   (*dgdp)(ir)->Norm2(&norm2);
+                  (*norms(ir))[0] = norm2;
                   *out << "    " << norm2;
                 }
                 *out << "\n" << std::endl;
+                status += slvrfctry.checkSolveTestResults(i, j, g.get(), &norms);
               }
             }
-
-            status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
           }
         }
       }
@@ -268,6 +289,15 @@ int main(int argc, char *argv[]) {
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
     if (writeToCoutSoln == true) 
        std::cout << "xfinal: " << *xfinal << std::endl;
+
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+    if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
+      *out << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE = "
+           << LCM::PeridigmManager::self()->obcEvaluateFunctional()  << "\n" << std::endl;
+    }
+#endif
+#endif
 
     if (debugParams.get<bool>("Analyze Memory", false))
       Albany::printMemoryAnalysis(std::cout, comm);

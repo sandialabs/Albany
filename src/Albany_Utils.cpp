@@ -12,7 +12,7 @@
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
@@ -60,7 +60,7 @@
 
 #else
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
@@ -87,11 +87,11 @@
 
   // End of Utils to do with Communicators
 
-  std::string Albany::strint(const std::string s, const int i) {
-    std::ostringstream ss;
-    ss << s << " " << i;
-    return ss.str();
-  }
+  std::string Albany::strint(const std::string s, const int i, const char delim) {
+      std::ostringstream ss;
+      ss << s << delim << i;
+      return ss.str();
+    }
 
   bool Albany::isValidInitString(const std::string& initString) {
 

@@ -63,7 +63,7 @@ evaluateFields (typename Traits::EvalData workset)
 {
   rc_mgr_->beginQpWrite(workset, bf_, wbf_);
   for (FieldsIterator it = fields_.begin(); it != fields_.end(); ++it)
-    rc_mgr_->writeQpField(*it, workset, bf_, wbf_);
+    rc_mgr_->writeQpField(*it, workset, wbf_);
   rc_mgr_->endQpWrite();
 }
 

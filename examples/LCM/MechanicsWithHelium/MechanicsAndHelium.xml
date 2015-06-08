@@ -31,8 +31,8 @@
       <!-- Uniaxial Extension Boundary Conditions on a Cube -->
       <ParameterList name="Time Dependent DBC on NS NodeSet3 for DOF Y">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 31.536e6, 34.1e6}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.0, 0.1}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 3.0}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.0, 0.2}"/>
       </ParameterList>
       <Parameter name="DBC on NS NodeSet0 for DOF C" type="double" value="5.6e-4"/>
       <Parameter name="DBC on NS NodeSet1 for DOF C" type="double" value="5.6e-4"/>
@@ -75,7 +75,7 @@
 	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<Parameter  name="Max Steps" type="int" value="10000"/>         
-	<Parameter  name="Max Value" type="double" value="34.036e6"/>
+	<Parameter  name="Max Value" type="double" value="2.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/> 
 	<ParameterList name="Eigensolver">
@@ -85,12 +85,8 @@
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Method" type="string" value="Adaptive"/>      
-        <Parameter name="Initial Step Size" type="double" value="100.0"/>
-        <Parameter name="Max Step Size" type="double" value="50000.0"/>
-        <Parameter name="Min Step Size" type="double" value="100.0"/>
-        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-        <Parameter name="Successful Step Increase Factor" type="double" value="1.01"/>
+        <Parameter name="Method" type="string" value="Constant"/>      
+        <Parameter name="Initial Step Size" type="double" value="0.1"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">

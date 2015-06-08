@@ -1,0 +1,8 @@
+MAILTO=""
+# Note: Crontab is in local (MDT / MST time). Shannon tests begin at 0700 UTC,
+# 5AM local should be plenty late to post them
+#
+00 05 * * * /ascldap/users/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/cee-compute012/submit_script.sh
+
+00 05 * * * /ascldap/users/gahanse/Codes/ACME/ACME_miniContact/doc/dashboards/shannon.sandia.gov/cee-compute011/submit_script.sh
+

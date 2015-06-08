@@ -9,11 +9,14 @@
 cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
-# Error check up front
-#IF (NOT DEFINED ALBANY_TRILINOS_DIR)
-#  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
-#  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
-#ENDIF()
+if (NOT DEFINED SET_COMPILERS_AUTOMATICALLY)
+  set(SET_COMPILERS_AUTOMATICALLY TRUE)
+endif()
+
+if (NOT SET_COMPILERS_AUTOMATICALLY)
+  message("Experimental configuration.")
+  project(Albany CXX C Fortran)
+endif ()
 
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
@@ -76,14 +79,24 @@ IF (INSTALL_ALBANY)
   include(CMakePackageConfigHelpers)
 ENDIF ()
 
-MESSAGE("Setting and checking of compilers:")
-SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
-SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
-SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )
-
-IF (CMAKE_Fortran_COMPILER) # Enable Fortran if it is enabled in Trilinos.
-  ENABLE_LANGUAGE(Fortran)
-ENDIF()
+if (SET_COMPILERS_AUTOMATICALLY)
+  MESSAGE("Setting and checking of compilers:")
+  SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
+  SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
+  SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )   
+else()
+  # Make sure the compilers match.
+  MESSAGE("Checking compilers:")
+  IF(NOT ${Trilinos_CXX_COMPILER} STREQUAL ${CMAKE_CXX_COMPILER})
+    MESSAGE(FATAL_ERROR "C++ compilers don't match (Trilinos: ${Trilinos_CXX_COMPILER}, ${PROJECT_NAME}: ${CMAKE_CXX_COMPILER}).")
+  ENDIF()
+  IF(NOT ${Trilinos_C_COMPILER} STREQUAL ${CMAKE_C_COMPILER})
+    MESSAGE(FATAL_ERROR "C compilers don't match (Trilinos: ${Trilinos_C_COMPILER}, ${PROJECT_NAME}: ${CMAKE_C_COMPILER}).")
+  ENDIF()
+  IF(NOT ${Trilinos_Fortran_COMPILER} STREQUAL ${CMAKE_Fortran_COMPILER})
+    MESSAGE(FATAL_ERROR "Fortran compilers don't match (Trilinos: ${Trilinos_Fortran_COMPILER}, ${PROJECT_NAME}: ${CMAKE_Fortran_COMPILER}).")
+  ENDIF()
+endif()
 
 # Build Albany as shared libraries if Trilinos was compiled that way
 
@@ -95,11 +108,26 @@ ELSE(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE STATIC)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
+OPTION(Albany_BUILD_STATIC_EXE "Flag to turn on building of static executables in Albany" OFF)
+IF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE)) 
+  MESSAGE("-- Building Albany with static executables")
+ENDIF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
+  
+
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
 
-PROJECT(Albany)
+if (SET_COMPILERS_AUTOMATICALLY)
+  PROJECT(Albany)
+endif()
+
+set(ALBANY_ENABLE_FORTRAN ON CACHE BOOL "enable fortran" )
+
+IF (CMAKE_Fortran_COMPILER AND ALBANY_ENABLE_FORTRAN) # Enable Fortran if it is enabled in Trilinos.
+  ENABLE_LANGUAGE(Fortran)
+ENDIF()
+
 
 IF (NOT CMAKE_CXX_FLAGS)
   SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS} )
@@ -161,34 +189,40 @@ ELSE()
 ENDIF()
 
 
-# set optional dependency on SEACAS, for I/O via stk_io
-# MESSAGE("-- Looking for SEACAS:")
-LIST(FIND Trilinos_PACKAGE_LIST SEACASIoss SEACASIoss_List_ID)
-IF (SEACASIoss_List_ID GREATER -1)
-  ADD_DEFINITIONS(-DALBANY_SEACAS)
-  MESSAGE("-- Looking for SEACASIoss:         Found, compiling with -DALBANY_SEACAS")
-  SET(ALBANY_SEACAS TRUE)
+
+# set optional dependency on stk
+LIST(FIND Trilinos_PACKAGE_LIST STK have_stk_List_ID)
+IF (have_stk_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DHAVE_STK)
+  MESSAGE("-- Looking for STK:        Found, compiling with -DHAVE_STK")
+  SET(ALBANY_HAVE_STK TRUE)
+
+  # set optional dependency on SEACAS, for I/O via stk_io
+  # MESSAGE("-- Looking for SEACAS:")
+  LIST(FIND Trilinos_PACKAGE_LIST SEACASIoss SEACASIoss_List_ID)
+  IF (SEACASIoss_List_ID GREATER -1)
+    ADD_DEFINITIONS(-DALBANY_SEACAS)
+    MESSAGE("---- Looking for SEACASIoss:         Found, compiling with -DALBANY_SEACAS")
+    SET(ALBANY_SEACAS TRUE)
+  ELSE()
+    MESSAGE("---- Looking for SEACASIoss:         NOT found.")
+    SET(ALBANY_SEACAS FALSE)
+  ENDIF()
+
+  # set optional dependency on stk_percept, for uniform adaptivity
+  LIST(FIND Trilinos_LIBRARIES stk_percept stk_percept_List_ID)
+  IF (stk_percept_List_ID GREATER -1)
+    ADD_DEFINITIONS(-DALBANY_STK_PERCEPT)
+    MESSAGE("---- Looking for stk_percept:        Found, compiling with -DALBANY_STK_PERCEPT")
+    SET(ALBANY_STK_PERCEPT TRUE)
+  ELSE()
+    MESSAGE("---- Looking for stk_percept:        NOT found.")
+    SET(ALBANY_STK_PERCEPT FALSE)
+  ENDIF()
+
 ELSE()
-  MESSAGE("-- Looking for SEACASIoss:         NOT found.")
-  SET(ALBANY_SEACAS FALSE)
-
-# Warning message for 8/15/11 trilinos change -- remove after dust settles
-#  LIST(FIND Trilinos_PACKAGE_LIST SEACAS SEACAS_List_ID)
-#  IF (SEACAS_List_ID GREATER -1)
-#     MESSAGE("TRILINOS HAS CHANGED! Configure with Trilinos_ENABLE_SEACASIoss:BOOL=ON")
-#  ENDIF()
-
-ENDIF()
-
-# set optional dependency on stk_percept, for uniform adaptivity
-LIST(FIND Trilinos_LIBRARIES stk_percept stk_percept_List_ID)
-IF (stk_percept_List_ID GREATER -1)
-  ADD_DEFINITIONS(-DALBANY_STK_PERCEPT)
-  MESSAGE("-- Looking for stk_percept:        Found, compiling with -DALBANY_STK_PERCEPT")
-  SET(ALBANY_STK_PERCEPT TRUE)
-ELSE()
-  MESSAGE("-- Looking for stk_percept:        NOT found.")
-  SET(ALBANY_STK_PERCEPT FALSE)
+  MESSAGE("-- Looking for STK:        NOT found.")
+  SET(ALBANY_HAVE_STK FALSE)
 ENDIF()
 
 # set optional dependency on Zoltan, for partitioning
@@ -196,10 +230,15 @@ ENDIF()
 LIST(FIND Trilinos_PACKAGE_LIST Zoltan Zoltan_List_ID)
 IF (Zoltan_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_ZOLTAN)
-  ADD_DEFINITIONS(-DALBANY_STK_REBALANCE)
-  MESSAGE("-- Looking for Zoltan:             Found, compiling with -DALBANY_ZOLTAN -DALBANY_STK_REBALANCE")
   SET(ALBANY_ZOLTAN TRUE)
-  SET(ALBANY_STK_REBALANCE TRUE)
+  IF(ALBANY_HAVE_STK)
+    ADD_DEFINITIONS(-DALBANY_STK_REBALANCE)
+    SET(ALBANY_STK_REBALANCE TRUE)
+    MESSAGE("-- Looking for Zoltan:             Found, compiling with -DALBANY_ZOLTAN -DALBANY_STK_REBALANCE")
+  ELSE()
+    SET(ALBANY_STK_REBALANCE FALSE)
+    MESSAGE("-- Looking for Zoltan:             Found, compiling with -DALBANY_ZOLTAN")
+  ENDIF()
 ELSE()
   MESSAGE("-- Looking for Zoltan:             NOT found.")
   SET(ALBANY_ZOLTAN FALSE)
@@ -212,14 +251,10 @@ IF (Amesos2_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_AMESOS2)
   MESSAGE("-- Looking for Amesos2:            Found, compiling with -DALBANY_AMESOS2")
   SET(ALBANY_AMESOS2 TRUE)
-  LIST(FIND Amesos2_TPL_LIST SuperLU Amesos2_SuperLU_List_ID)
-  IF (Amesos2_SuperLU_List_ID GREATER -1)
-    MESSAGE("---- Amesos2 has been compiled with an operational solver")
-    SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER TRUE)
-  ELSE()
-    MESSAGE("---- Amesos2 has NOT been compiled with an operational solver. Enable SuperLU.")
-    SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER FALSE)
-  ENDIF()
+  # We can't rely on Amesos2_TPL_LIST any longer; KLU2 and Basker are not
+  # TPLs. These will soon be enabled by default in Amesos2. So we'll just
+  # assume we have a coarse direct solver.
+  SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER TRUE)
 ELSE()
   MESSAGE("-- Looking for Amesos2:            NOT found.")
   SET(ALBANY_AMESOS2 FALSE)
@@ -332,7 +367,7 @@ IF (ENABLE_LCM)
   ADD_DEFINITIONS(-DALBANY_LCM)
   MESSAGE("-- LCM       is Enabled, compiling with -DALBANY_LCM")
   SET(ALBANY_LCM TRUE)
-  IF (ENABLE_LCM_TEST_EXES)
+  IF (ENABLE_LCM_TEST_EXES AND ALBANY_HAVE_STK) # Need STK for the EXES
     SET(LCM_TEST_EXES TRUE)
   ENDIF()
 ELSE()
@@ -552,15 +587,18 @@ ELSE()
   SET(ALBANY_HYDRIDE FALSE)
 ENDIF()
 
-# Set optional dependency on SEE, defaults to Disabled
-OPTION(ENABLE_SEE "Flag to turn on SEE (SCOREC error estimation) source code" OFF)
-IF (ENABLE_SEE)
-  ADD_DEFINITIONS(-DALBANY_SEE)
-  MESSAGE("-- SEE       is Enabled, compiling with -DALBANY_SEE")
-  SET(ALBANY_SEE TRUE)
+# Set optional dependency on GOAL, defaults to Disabled
+OPTION(ENABLE_GOAL "Flag to turn on goal-oriented error estimation source code" OFF)
+IF (ENABLE_GOAL)
+  IF(NOT ENABLE_SCOREC)
+    MESSAGE(FATAL_ERROR "\nError: GOAL requires ENABLE_SCOREC to be ON\n")
+  ENDIF()
+  ADD_DEFINITIONS(-DALBANY_GOAL)
+  MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
+  SET(ALBANY_GOAL TRUE)
 ELSE()
-  MESSAGE("-- SEE       is NOT Enabled.")
-  SET(ALBANY_SEE FALSE)
+  MESSAGE("-- GOAL      is NOT Enabled.")
+  SET(ALBANY_GOAL FALSE)
 ENDIF()
 
 # Set optional dependency on AMP, defaults to Disabled
@@ -574,8 +612,8 @@ ELSE()
   SET(ALBANY_AMP FALSE)
 ENDIF()
 
-# Set optional build of MOR (Model Order Reduction) defaults to ON
-OPTION(ENABLE_MOR "Flag to turn on MOR Source code" ON)
+# Set optional build of MOR (Model Order Reduction) defaults to OFF
+OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
   ADD_DEFINITIONS(-DALBANY_MOR)
   MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
@@ -625,7 +663,7 @@ ELSE()
   #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
 
-# Set optional dependency on SCOREC FMDB,  optional adaptivity
+# Set optional dependency on SCOREC PUMI,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
@@ -678,9 +716,18 @@ ENDIF()
 # These are required for embedded UQ, but slow compilation considerably
 OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
 IF (ENABLE_SG_MP)
-  ADD_DEFINITIONS(-DALBANY_SG_MP)
-  MESSAGE("-- SG_MP     is Enabled, compiling with -DALBANY_SG_MP")
-  SET(ALBANY_SG_MP TRUE)
+  if (1)
+    message ("-- WARNING: SG/MP is not working yet after the Kokkos merge.")
+    set (ALBANY_SG_MP FALSE)
+    if (ENABLE_ASCR)
+      set (ENABLE_ASCR FALSE)
+    endif ()
+    message ("-- SG_MP     is NOT Enabled.")
+  else ()
+    ADD_DEFINITIONS(-DALBANY_SG_MP)
+    MESSAGE("-- SG_MP     is Enabled, compiling with -DALBANY_SG_MP")
+    SET(ALBANY_SG_MP TRUE)
+  endif ()
 ELSE()
   MESSAGE("-- SG_MP     is NOT Enabled.")
   SET(ALBANY_SG_MP FALSE)
@@ -709,9 +756,16 @@ MESSAGE("\nMiscellaneous Albany Options:")
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_FAST_FELIX "Flag to turn on Code Optimization for FELIX that
 may break other physics" OFF)
-IF (ENABLE_FELIX AND ENABLE_FAST_FELIX)
+OPTION(ENABLE_SLFAD "Flag to turn on Code Optimization for ALBANY that
+may break other physics" OFF)
+
+SET(SLFAD_SIZE 27 CACHE INT "set Sacado SLFad size")
+
+IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
+  ADD_DEFINITIONS(-DALBANY_SLFAD_SIZE=${SLFAD_SIZE})
   MESSAGE("-- FAST_FELIX               is Enabled: MIGHT BREAK OTHER PHYSICS!!")
+  MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
 ENDIF()
 
 
@@ -724,6 +778,17 @@ IF (ENABLE_CHECK_FPE)
 ELSE()
   MESSAGE("-- FPE checking              is NOT Enabled.")
   SET(ALBANY_CHECK_FPE FALSE)
+ENDIF()
+
+# Add option to set FTZ and DAZ
+OPTION(ENABLE_FLUSH_DENORMALS "Flag to turn on FTZ and DAZ" OFF)
+IF (ENABLE_FLUSH_DENORMALS)
+  ADD_DEFINITIONS(-DALBANY_FLUSH_DENORMALS)
+  MESSAGE("-- FTZ/DAZ flags             is Enabled, compiling with -DALBANY_FLUSH_DENORMALS")
+  SET(ALBANY_FLUSH_DENORMALS TRUE)
+ELSE()
+  MESSAGE("-- FTZ/DAZ flags             is NOT Enabled.")
+  SET(ALBANY_FLUSH_DENORMALS FALSE)
 ENDIF()
 
 #amb Default to on until the merge.
@@ -824,6 +889,13 @@ if (ENABLE_KERNELGETMEMORYSIZE)
   message("-- Memory: Kernel_GetMemorySize() is Enabled.")
 endif()
 
+# Mesh database tools.
+OPTION(ENABLE_MESHDB_TOOLS "Flag to turn on mesh database tools" OFF)
+IF (ENABLE_MESHDB_TOOLS)
+  MESSAGE("-- Mesh database tools       are Enabled.")
+  SET(ALBANY_MESHDB_TOOLS TRUE)
+ENDIF()
+
 IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
@@ -846,10 +918,6 @@ IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
 ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
 want to useTriKota.")
 ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
-
-IF (ALBANY_SEE AND (NOT ALBANY_SCOREC))
-  MESSAGE("-- WARNING: SEE              is Enabled but SCOREC is not; SEE tests will fail.")
-ENDIF(ALBANY_SEE AND (NOT ALBANY_SCOREC))
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)

@@ -1,0 +1,9 @@
+PD_Block.sphere.g
+PS_Block.g
+no
+title
+change
+Tensile bar modeled with meshless peridynamics and FEM partial-stress peridynamics
+up
+finish
+TensileBarPDPS.g

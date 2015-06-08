@@ -36,6 +36,7 @@ template<bool Interleaved>
 Albany::GenericSTKFieldContainer<Interleaved>::~GenericSTKFieldContainer() {
 }
 
+#ifdef ALBANY_SEACAS
 namespace {
 //amb 13 Nov 2014. After new STK was integrated, fields with output set to false
 // were nonetheless being written to Exodus output files. As a possibly
@@ -52,6 +53,7 @@ inline Ioss::Field::RoleType role_type(const bool output) {
   return output ? Ioss::Field::TRANSIENT : Ioss::Field::INFORMATION;
 }
 }
+#endif
 
 template<bool Interleaved>
 void
@@ -138,7 +140,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
     } // end QuadPoint
     // Single scalar at center of the workset
     else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
-      scalarValue_states.push_back(st.name);
+      scalarValue_states.push_back(&st.name); // Just save a pointer to the name allocated in st
     } // End scalar at center of element
     else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter)) { // Data at the node points
 
@@ -171,7 +173,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 template<class T>
 typename boost::disable_if< boost::is_same<T, Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
@@ -294,7 +296,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &
     }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 // Specialization for ScalarFieldType
 template<bool Interleaved>
 void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& soln,

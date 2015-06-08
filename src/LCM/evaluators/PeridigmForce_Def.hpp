@@ -36,7 +36,7 @@ PeridigmForceBase(Teuchos::ParameterList& p,
   this->addEvaluatedField(force);
   this->addEvaluatedField(residual);
 
-  outputFieldInfo = LCM::PeridigmManager::self().getOutputFields();
+  outputFieldInfo = LCM::PeridigmManager::self()->getOutputFields();
 
   for(unsigned int i=0 ; i<outputFieldInfo.size() ; ++i){
     std::string albanyName = outputFieldInfo[i].albanyName;
@@ -99,7 +99,7 @@ evaluateFields(typename Traits::EvalData workset)
   std::string blockName = workset.EBName;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > wsElNodeID = workset.wsElNodeID;
 
-  PeridigmManager& peridigmManager = PeridigmManager::self();
+  PeridigmManager& peridigmManager = *PeridigmManager::self();
 
   for(int cell = 0; cell < workset.numCells; ++cell){
     int globalNodeId = wsElNodeID[cell][0];
@@ -145,6 +145,15 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
   }
 }
+
+//**********************************************************************
+template<typename Traits>
+void PeridigmForce<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset) {
+  //do nothing
+}
+
+
 
 } // namespace LCM
 

@@ -23,6 +23,13 @@ add_test(${testName} ${Albany.exe})
 add_test(${testName}_nodeGIDArrayResponse ${Albany.exe} input_nodeGIDArrayResponse.xml)
 endif()
 
+# PUMI. Serial for now.
+if (ALBANY_SCOREC)
+  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/inputT_pumi.xml
+    ${CMAKE_CURRENT_BINARY_DIR}/inputT_pumi.xml COPYONLY)
+  add_test (${testName}_pumi ${SerialAlbanyT.exe} inputT_pumi.xml)
+endif ()
+
 IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA)
   add_test(${testName}_10x10x10_ioss ${SerialAlbany.exe} input_10x10x10_ioss.xml)
 

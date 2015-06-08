@@ -3,6 +3,8 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tc3_interp.ncl
 #               ${CMAKE_CURRENT_BINARY_DIR}/tc3_interp.ncl COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tc3_native.ncl
