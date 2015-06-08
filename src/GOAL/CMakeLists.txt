@@ -9,10 +9,16 @@
 SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/Apogee)
 
 SET(SOURCES
+  GOAL_Discretization.cpp
+  GOAL_FieldManagerBundle.cpp
+  GOAL_LinearSystem.cpp
   evaluators/GOAL_MechanicsAdjoint.cpp
   responses/GOAL_MechAdjResponse.cpp)
 
 SET(HEADERS
+  GOAL_Discretization.hpp
+  GOAL_FieldManagerBundle.hpp
+  GOAL_LinearSystem.hpp
   evaluators/GOAL_MechanicsAdjoint.hpp
   evaluators/GOAL_MechanicsAdjoint_Def.hpp
   responses/GOAL_MechAdjResponse.hpp)
