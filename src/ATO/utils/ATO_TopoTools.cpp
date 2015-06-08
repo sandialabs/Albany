@@ -22,6 +22,11 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
   }
 
   entityType = topoParams.get<std::string>("Entity Type");
+
+  if( topoParams.isType<std::string>("Integration Method") )
+    integrationMethod = topoParams.get<std::string>("Integration Method");
+  else
+    integrationMethod = "Gauss Quadrature";
   
   if( topoParams.isType<int>("Topology Output Filter") )
     topologyOutputFilter = topoParams.get<int>("Topology Output Filter");
@@ -49,7 +54,7 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
   if( topoParams.isType<double>("Material Value") )
     materialValue = topoParams.get<double>("Material Value");
   else
-    materialValue = bounds[0];
+    materialValue = bounds[1];
 
   const Teuchos::ParameterList& functionParams = topoParams.sublist("Functions");
   int nFunctions = functionParams.get<int>("Number of Functions");

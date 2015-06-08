@@ -40,6 +40,7 @@ public:
   double getMaterialValue(){return materialValue;}
   const Teuchos::Array<double> getBounds(){return bounds;}
   std::string getEntityType(){return entityType;}
+  std::string getIntegrationMethod(){return integrationMethod;}
   int TopologyOutputFilter(){return topologyOutputFilter;}
   int SpatialFilterIndex(){return spatialFilterIndex;}
 private:
@@ -47,6 +48,7 @@ private:
   // general case, the topology may be defined by multiple fields.
   std::string name;
   std::string entityType;
+  std::string integrationMethod;
 
   // JR: There's probably a better way to do this.  
   typedef struct PenaltyFunction {

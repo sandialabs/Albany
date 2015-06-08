@@ -24,7 +24,8 @@ class Integrator
 {
 
  public:
-  Integrator(Teuchos::RCP<shards::CellTopology> celltype);
+  Integrator(Teuchos::RCP<shards::CellTopology> celltype,
+             Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basis);
   virtual ~Integrator(){};
 
   template<typename C>
@@ -46,14 +47,28 @@ class Integrator
 //                 C c = C());
 
   void getCubature(std::vector<std::vector<T> >& refPoints, std::vector<T>& weights, 
+                   const Intrepid::FieldContainer<T>& topoVals, 
                    const Intrepid::FieldContainer<T>& coordCon, 
-                   const Intrepid::FieldContainer<T>& topoVals, T zeroVal);
+                   T zeroVal);
 
  private:
 
   typedef Intrepid::Vector<T,3> Vector3D;
   typedef Intrepid::Vector<int,3> Tri;
   typedef Intrepid::Vector<int,4> Tet;
+
+  typedef struct Intersection {
+    Intersection(Vector3D p, std::pair<int,int> c):point(p),connect(c){}
+    Vector3D point;
+    std::pair<int, int> connect;
+  } Intersection;
+
+  typedef struct MiniPoly {
+    MiniPoly(){}
+    MiniPoly(int n){points.resize(n,Vector3D(Intrepid::ZEROS));mapToBase.resize(n);}
+    std::vector<Vector3D> points;
+    std::vector<int> mapToBase;
+  } MiniPoly;
 
   Teuchos::RCP<shards::CellTopology> cellTopology;
 
@@ -63,10 +78,21 @@ class Integrator
   template<typename C>
   void getSurfaceTris(std::vector< Vector3D >& points,
                       std::vector< Tri >& tris,
-                      const CellTopologyData& cellData,
-                      const Intrepid::FieldContainer<T>& coordCon,
                       const Intrepid::FieldContainer<T>& topoVals, 
+                      const Intrepid::FieldContainer<T>& coordCon, 
                       T zeroVal, C comparison);
+
+  template<typename C>
+  bool included(Teuchos::RCP<MiniPoly> poly,
+                const Intrepid::FieldContainer<T>& topoVals,
+                T zeroVal, C compare);
+
+  void trisFromPoly(std::vector< Vector3D >& points,
+                    std::vector< Tri >& tris,
+                    Teuchos::RCP<MiniPoly> poly);
+
+  void partitionBySegment(std::vector<Teuchos::RCP<MiniPoly> >& polys,
+                          const std::pair<Vector3D,Vector3D>& segment);
 
   void addCubature(std::vector<std::vector<T> >& refPoints, std::vector<T>& weights, 
                    const Vector3D& c0,
@@ -77,6 +103,8 @@ class Integrator
                    const Vector3D& c1,
                    const Vector3D& c2,
                    const Vector3D& c3);
+
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basis;
 };
 
 }

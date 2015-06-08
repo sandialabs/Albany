@@ -98,6 +98,10 @@ Optimizer(optimizerParams)
   _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _moveLimit     = optimizerParams.get<double>("Move Limiter");
   _stabExponent  = optimizerParams.get<double>("Stabilization Parameter");
+
+  if( optimizerParams.isType<double>("Volume Enforcement Acceptable Tolerance") )
+    _volAccpTol    = optimizerParams.get<double>("Volume Enforcement Acceptable Tolerance");
+  else _volAccpTol = _volConvTol;
 }
 
 #ifdef ATO_USES_NLOPT
@@ -448,11 +452,6 @@ Optimizer_OC::computeUpdatedTopology()
 
   double vol = 0.0;
   do {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      niters > _volMaxIter, Teuchos::Exceptions::InvalidParameter, 
-      std::endl << "Enforcement of volume constraint failed:  Exceeded max iterations" 
-      << std::endl);
-
     vol = 0.0;
     vmid = (v2+v1)/2.0;
 
@@ -475,7 +474,14 @@ Optimizer_OC::computeUpdatedTopology()
     if( (vol - _volConstraint*_optVolume) > 0.0 ) v1 = vmid;
     else v2 = vmid;
     niters++;
-  } while ( fabs(vol - _volConstraint*_optVolume) > _volConvTol*_optVolume );
+  } while ( niters < _volMaxIter && fabs(vol - _volConstraint*_optVolume) > _volConvTol*_optVolume );
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    ( fabs(vol - _volConstraint*_optVolume) > _volAccpTol*_optVolume ),
+    Teuchos::Exceptions::InvalidParameter, 
+    std::endl << "Enforcement of volume constraint failed:  Exceeded max iterations" 
+    << std::endl);
+
 }
 
 #ifdef ATO_USES_NLOPT
