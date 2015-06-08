@@ -25,6 +25,8 @@
 #include "LinearElasticModel.hpp"
 #include "LinearHMCModel.hpp"
 #include "J2HMCModel.hpp"
+#include "LinearPiezoModel.hpp"
+#include "FerroicModel.hpp"
 #include "HyperelasticDamageModel.hpp"
 #include "CapExplicitModel.hpp"
 #include "CapImplicitModel.hpp"
@@ -332,6 +334,10 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new LinearHMCModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2 HMC") {
     model = rcp(new J2HMCModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Linear Piezoelectric") {
+    model = rcp(new LinearPiezoModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Ferroic") {
+    model = rcp(new FerroicModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Ortiz Pandolfi") {
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elasto Viscoplastic") {
