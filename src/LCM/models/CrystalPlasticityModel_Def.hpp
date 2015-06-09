@@ -670,7 +670,7 @@ bool print_debug = false;
         out << "\n" << "Lp: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
-            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(L_np1(i,j)) << " ";
+            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Lp_np1(i,j)) << " ";
           }
         }
         out << "\n";
