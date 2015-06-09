@@ -380,7 +380,7 @@ bool print_debug = false;
   Intrepid::Tensor<ScalarT> Fp_n(num_dims_);
   std::vector<ScalarT> slip_n(num_slip_);
   std::vector<ScalarT> hardness_n(num_slip_);
-// Testing a more appropriate measure of EQPS - not working AtM - disregard the man behind the curtain...
+// Testing a more appropriate measure of EQPS - not working AtM - ignore the man behind the curtain...
 /* !!! */ // ScalarT equivalent_plastic_strain;
 
   // Unknown quantities
@@ -415,7 +415,7 @@ bool print_debug = false;
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
-// Testing a more appropriate measure of EQPS - not working AtM - disregard the man behind the curtain...
+// Testing a more appropriate measure of EQPS - not working AtM - ignore the man behind the curtain...
 /* !!! */ // equivalent_plastic_strain = eqps(cell, pt);
 
       // Copy data from Albany fields into local data structures
@@ -610,13 +610,15 @@ bool print_debug = false;
 	equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
       }
       eqps(cell, pt) = equivalent_plastic_strain;
-// Testing a more appropriate measure of EQPS - not working AtM - disregard the man behind the curtain...
+//
+// Testing a more appropriate measure of EQPS - not working AtM - ignore the man behind the curtain...
 /* !!! */ // Lp_np1_sym = Intrepid::sym(Lp_np1);
 /* !!! */ // ScalarT delta_eqps_v1 = dt*(std::sqrt(2.0/3.0)) * ( Intrepid::dotdot(Lp_np1_sym, Lp_np1_sym) );
 /* !!! */ // ScalarT delta_eqps_v2 = dt*(std::sqrt(2.0/3.0)) * ( Intrepid::dotdot(Lp_np1, Lp_np1) );
 /* !!! */ // ScalarT delta_eqps_v3 = dt * ( std::sqrt((2.0/3.0)*(Intrepid::dotdot(Lp_np1, Lp_np1))) );
 /* !!! */ // equivalent_plastic_strain += delta_eqps_v1;
 /* !!! */ // eqps(cell, pt) = equivalent_plastic_strain;
+//
       // The xtal rotation from the polar decomp of Fe.
       // Saint Venant–Kirchhoff model
 #ifdef DECOUPLE
