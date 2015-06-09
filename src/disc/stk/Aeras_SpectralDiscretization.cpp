@@ -1871,7 +1871,7 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
         2*deg-1, Intrepid::PL_GAUSS_LOBATTO));
   Field_t refCoords(np, 1);
   Field_t refWeights(np);
-  gl1D.getCubature(refCoords, refWeights);
+  gl1D->getCubature(refCoords, refWeights);
 
   // Get the appropriate STK element buckets for extracting the
   // element end nodes
@@ -1910,11 +1910,11 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
       for (size_t inode = 0; inode < np; ++inode)
       {
         double x = refCoords(inode,0);
-        coords[iws][ielem][inode][idim] = (c[0] * (x-1.0) -
-                                           c[1] * (x+1.0)) * 0.5;
+        coords[iws][ielem][inode][0] = (c[0] * (x-1.0) -
+                                        c[1] * (x+1.0)) * 0.5;
+        coords[iws][ielem][inode][1] = 0.0;
+        coords[iws][ielem][inode][2] = 0.0;
       }
-      coords[iws][ielem][inode][1] = 0.0;
-      coords[iws][ielem][inode][2] = 0.0;
     }
   }
 }
@@ -2023,7 +2023,7 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
 
   overlap_graphT = Teuchos::null; // delete existing graph here on remesh
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
-                                                    neq*nodes_per_element));
+                                                    neq*points_per_edge));
 
   stk::mesh::Selector select_owned =
     stk::mesh::Selector(metaData.locally_owned_part());
@@ -2048,14 +2048,14 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
     for (std::size_t i = 0; i < buck.size(); ++i)
     {
       Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
-      for (int j = 0; j < nodes_per_element; ++j)
+      for (int j = 0; j < points_per_edge; ++j)
       {
         const GO rowNode = node_rels[j];
         // loop over eqs
         for (std::size_t k=0; k < neq; k++)
         {
           row = getGlobalDOF(rowNode, k);
-          for (std::size_t l=0; l < nodes_per_element; l++)
+          for (std::size_t l=0; l < points_per_edge; l++)
           {
             const GO colNode = node_rels[l];
             for (std::size_t m=0; m < neq; m++)
