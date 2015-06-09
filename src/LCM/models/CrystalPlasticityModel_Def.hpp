@@ -11,7 +11,7 @@
 #include "LocalNonlinearSolver.hpp"
 
 //#define  PRINT_DEBUG
-#define  PRINT_OUTPUT
+//#define  PRINT_OUTPUT
 //#define  DECOUPLE
 //#define LINE_SEARCH
 
@@ -380,8 +380,7 @@ bool print_debug = false;
   Intrepid::Tensor<ScalarT> Fp_n(num_dims_);
   std::vector<ScalarT> slip_n(num_slip_);
   std::vector<ScalarT> hardness_n(num_slip_);
-// Testing a more appropriate measure of EQPS - not working AtM - ignore the man behind the curtain...
-/* !!! */ // ScalarT equivalent_plastic_strain;
+  ScalarT equivalent_plastic_strain;
 
   // Unknown quantities
   std::vector<ScalarT> slip_np1(num_slip_);
@@ -415,8 +414,7 @@ bool print_debug = false;
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
-// Testing a more appropriate measure of EQPS - not working AtM - ignore the man behind the curtain...
-/* !!! */ // equivalent_plastic_strain = eqps(cell, pt);
+      equivalent_plastic_strain = eqps(cell, pt);
 
       // Copy data from Albany fields into local data structures
       for (int i(0); i < num_dims_; ++i) {
@@ -600,26 +598,35 @@ bool print_debug = false;
 #endif
       } // integration_scheme == IMPLICIT
       
-      // The EQPS can be computed (or can it?) from the Cauchy Green strain operator applied to Fp.
-      Intrepid::Tensor<ScalarT> Re_np1(num_dims_);
-      Intrepid::Tensor<ScalarT> Fe(num_dims_);
-      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
-      CGS_Fp = 0.5*(((Intrepid::transpose(Fp_np1))*Fp_np1) - I);
-      ScalarT equivalent_plastic_strain = (2.0/3.0)*Intrepid::dotdot(CGS_Fp, CGS_Fp);
-      if(equivalent_plastic_strain > 0.0){
-        equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
-      }
+// The EQPS can be computed (or can it?) from the Cauchy Green strain operator applied to Fp.
+//      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
+//      CGS_Fp = 0.5*(((Intrepid::transpose(Fp_np1))*Fp_np1) - I);
+//      equivalent_plastic_strain = (2.0/3.0)*Intrepid::dotdot(CGS_Fp, CGS_Fp);
+//      if(equivalent_plastic_strain > 0.0){
+//        equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
+//      }
+//      eqps(cell, pt) = equivalent_plastic_strain;
+//
+// Compute the equivalent plastic strain from the velocity gradient:
+//       eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
+//
+      ScalarT delta_eqps = Intrepid::dotdot(Intrepid::sym(Lp_np1), Intrepid::sym(Lp_np1));
+      if (delta_eqps > 0.0) {
+	delta_eqps = 2.0*(std::sqrt(delta_eqps))/3.0;
+      } // Otherwise delta_eqps is - or BETTER be! - zero, so don't bother with the 2/3.
+// ccbatta 2015/06/09: The quantity Lp_np1 is actually of the form Lp * dt,
+//    i.e. it's a velocity gradient multiplied by the time step,
+//    since it's computed using DELTA_gamma, instead of gamma_dot.
+//    So until that convention is changed, leave out the dt prefactor
+//    when converting eqps_dot to eqps since it's already included
+//    in Lp_np1 = Lp * dt. (See applySlipIncrement().)
+//      delta_eqps *= dt;
+      equivalent_plastic_strain += delta_eqps;
       eqps(cell, pt) = equivalent_plastic_strain;
 //
-// Testing a more appropriate measure of EQPS - not working AtM - ignore the man behind the curtain...
-/* !!! */ // Intrepid::Tensor<ScalarT> Lp_np1_sym = Intrepid::sym(Lp_np1);
-/* !!! */ // ScalarT delta_eqps_v1 = dt*(std::sqrt(2.0/3.0)) * ( Intrepid::dotdot(Lp_np1_sym, Lp_np1_sym) );
-/* !!! */ // ScalarT delta_eqps_v2 = dt*(std::sqrt(2.0/3.0)) * ( Intrepid::dotdot(Lp_np1, Lp_np1) );
-/* !!! */ // ScalarT delta_eqps_v3 = dt * ( std::sqrt((2.0/3.0)*(Intrepid::dotdot(Lp_np1, Lp_np1))) );
-/* !!! */ // equivalent_plastic_strain += delta_eqps_v1;
-/* !!! */ // eqps(cell, pt) = equivalent_plastic_strain;
-//
-      // The xtal rotation from the polar decomp of Fe.
+// The xtal rotation from the polar decomp of Fe.
+      Intrepid::Tensor<ScalarT> Fe(num_dims_);
+      Intrepid::Tensor<ScalarT> Re_np1(num_dims_);
       // Saint Venant–Kirchhoff model
 #ifdef DECOUPLE
       Fe = F_np1;
@@ -649,6 +656,8 @@ bool print_debug = false;
         Intrepid::Tensor<RealType> P(num_dims_);
         out << "\n" << "time: ";
         out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
+        out << "    dt: ";
+        out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(dt) << " ";
         out << "\n";
         for (int s(0); s < num_slip_; ++s) {
           out << "\n" << "P" << s << ": ";
@@ -661,7 +670,7 @@ bool print_debug = false;
         }
         for (int s(0); s < num_slip_; ++s) {
           out << "\n" << "slips: ";
-          out << std::setprecision(12) << slip_np1[s] << " ";
+          out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(slip_np1[s]) << " ";
         }
         out << "\n" << "F: ";
         for (int i(0); i < num_dims_; ++i) {
