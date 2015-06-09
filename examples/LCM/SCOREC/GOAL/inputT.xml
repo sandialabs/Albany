@@ -4,10 +4,16 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS ns_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_2 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_3 for DOF Z" type="double" value="0.0"/>
-      <ParameterList name="Time Dependent DBC on NS ns_4 for DOF X">
+      <Parameter name="DBC on NS bxm for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS txm for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS bym for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS tym for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS bzm for DOF Z" type="double" value="0.0"/>
+      <ParameterList name="Time Dependent DBC on NS bxp for DOF X">
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.75}"/>
+      </ParameterList>
+      <ParameterList name="Time Dependent DBC on NS txp for DOF X">
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
         <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.75}"/>
       </ParameterList>
@@ -21,17 +27,24 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Mechanics Adjoint"/>
       <ParameterList name="ResponseParams 1">
-        <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
+        <Parameter name="Enriched Solve" type="bool" value="1"/>
+        <Parameter name="Write Linear System" type="bool" value="1"/>
+        <Parameter name="Write Phalanx Graphs" type="bool" value="1"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="PUMI"/>
-    <Parameter name="PUMI Input File Name" type="string" value="../meshes/cube/cube-serial.smb"/>
-    <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/cube/cube.dmg"/>
+    <Parameter name="Workset Size" type="int" value="50"/> 
+    <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/cube2/cube2.dmg"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/cube2/cube2-coarse.smb"/>
     <Parameter name="PUMI Output File Name" type="string" value=""/>
-    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{95, eb_1}"/>
-    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{85,83,43,81,ns_1,ns_2,ns_3,ns_4}"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{92,192,top,bottom}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)"
+      value="2x10:{82,78,80,76,164,174,169,179,186,24,txm,txp,tym,typ,bxm,bxp,bym,byp,bzm,tzp}"/>
+    <Parameter name="2nd Order Mesh" type="bool" value="false"/>
+    <Parameter name="Cubature Degree" type="int" value="2"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>

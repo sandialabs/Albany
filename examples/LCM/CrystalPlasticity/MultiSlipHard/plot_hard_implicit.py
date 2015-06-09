@@ -87,3 +87,12 @@ plt.tight_layout()
 plt.show()
 fig.savefig(output_file_name_4)
 
+
+# Exporting data to file
+output = open('true_stress_sim.dat','w')
+for i in range(len(eqps_var)):
+    if (ind_var[i] > 0.000001):
+         s = '{0}    {1} \n'.format(ind_var[i][0],dep_var_4[i][0])
+         print s
+         output.write(s)
+

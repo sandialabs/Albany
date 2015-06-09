@@ -104,6 +104,12 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
     //! Get number of total DOFs per node
     int getNumEq() const { return neq; }
 
+    //! Get the names of the solution fields
+    virtual std::vector<std::string> getSolNames() const { return solNames; }
+
+    //! Get the solution index offsets
+    virtual std::vector<int> getSolIndex() const { return solIndex; }
+
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names

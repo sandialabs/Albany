@@ -57,6 +57,20 @@ namespace Albany {
     virtual void getField(const char* name, ST* dataT, bool overlapped,
                           int offset = 0, int nentries = -1) const = 0;
 
+    //! get solution field names
+    virtual std::vector<std::string> getSolNames() const = 0;
+
+    //! get solution index offsets
+    virtual std::vector<int> getSolIndex() const = 0;
+
+    //! Copy split field data to APF
+    virtual void setSplitFields(const std::vector<std::string>& names,
+        const std::vector<int>& indices, const ST* data, bool overlapped) = 0;
+
+    //! Copy split field data to APF
+    virtual void getSplitFields(const std::vector<std::string>& names,
+        const std::vector<int>& indices, ST* data, bool overlapped) const = 0;
+
     //amb-dbg
     virtual void writeMeshDebug (const std::string& filename) {}
   };
