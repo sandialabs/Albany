@@ -48,56 +48,72 @@ namespace Aeras
 {
 
   struct AerasMeshSpectStruct
-  { 
-    Teuchos::RCP<Albany::MeshSpecsStruct> createAerasMeshSpecs(const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct, 
-                                                               const int points_per_edge) 
-      {
+  {
+    Teuchos::RCP<Albany::MeshSpecsStruct>
+    createAerasMeshSpecs(
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct, 
+      const int points_per_edge) 
+    {
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  " << points_per_edge << std::endl;
+      std::cout << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  "
+                << points_per_edge << std::endl;
 #endif 
       //get data from original STK Mesh struct
       CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 
       std::string orig_name = orig_ctd.name;
       size_t len      = orig_name.find("_");
       if (len != std::string::npos) orig_name = orig_name.substr(0,len);
-      TEUCHOS_TEST_FOR_EXCEPTION((orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral")
-                                  && (orig_name != "Line"), 
-                                  Teuchos::Exceptions::InvalidParameter,
-                                  std::endl << "Error!  Attempting to enrich a non-quadrilateral element (" <<
-                                  orig_name << ")!  Aeras::SpectralDiscretization is currently implemented only for " <<
-                                  "Quadrilateral, ShellQuadrilateral and Line elements.\n"); 
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        (orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral")
+        && (orig_name != "Line"), 
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error!  Attempting to enrich a non-quadrilateral element "
+        << "(" << orig_name << ")!  Aeras::SpectralDiscretization is currently "
+        << "implemented only for " << "Quadrilateral, ShellQuadrilateral and "
+        << "Line elements." << std::endl); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
 #endif 
       int orig_numDim = orig_mesh_specs_struct->numDim;
       int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
-      std::vector<std::string> orig_nsNames = orig_mesh_specs_struct->nsNames;  //Node Sets Names
-      std::vector<std::string> orig_ssNames = orig_mesh_specs_struct->ssNames;  //Side Sets Names
+      // Node Sets Names
+      std::vector<std::string> orig_nsNames = orig_mesh_specs_struct->nsNames;
+      // Side Sets Names
+      std::vector<std::string> orig_ssNames = orig_mesh_specs_struct->ssNames;
       int orig_worksetSize = orig_mesh_specs_struct->worksetSize;
-      std::string orig_ebName = orig_mesh_specs_struct->ebName;  //Element block name for the EB that this struct corresponds to
-      std::map<std::string, int>& orig_ebNameToIndex = orig_mesh_specs_struct->ebNameToIndex;
-      bool orig_interleavedOrdering = orig_mesh_specs_struct->interleavedOrdering;
+      //Element block name for the EB that this struct corresponds to
+      std::string orig_ebName = orig_mesh_specs_struct->ebName;
+      std::map<std::string, int>& orig_ebNameToIndex = 
+        orig_mesh_specs_struct->ebNameToIndex;
+      bool orig_interleavedOrdering =
+        orig_mesh_specs_struct->interleavedOrdering;
       bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
-      const Intrepid::EIntrepidPLPoly orig_cubatureRule = orig_mesh_specs_struct->cubatureRule;
-      //Create enriched MeshSpecsStruct object, to be returned.  It will have the same everything as the original mesh struct 
-      //except a CellTopologyData (ctd) with a different name and node_count (and dimension?). 
-      //New (enriched) CellTopologyData is same as original (unenriched) 
-      //cell topology data (ctd), but with a different node_count, vertex_count and name. 
+      const Intrepid::EIntrepidPLPoly orig_cubatureRule =
+        orig_mesh_specs_struct->cubatureRule;
+      // Create enriched MeshSpecsStruct object, to be returned.  It
+      // will have the same everything as the original mesh struct
+      // except a CellTopologyData (ctd) with a different name and
+      // node_count (and dimension?).  New (enriched) CellTopologyData
+      // is same as original (unenriched) cell topology data (ctd),
+      // but with a different node_count, vertex_count and name.
       CellTopologyData new_ctd = orig_ctd; 
       //overwrite node_count, vertex_count and name of the original ctd.
       int np; 
       if (orig_name == "ShellQuadrilateral" || orig_name == "Quadrilateral") 
         np = points_per_edge*points_per_edge; 
       else if (orig_name == "Line") 
-        np = points_per_edge; 
-      new_ctd.node_count = np; 
-      new_ctd.vertex_count = np; //Assumes vertex_count = node_count for ctd, which is the case for 
-                                 //isoparametric finite elements.
+        np = points_per_edge;
+      new_ctd.node_count = np;
+      // Assumes vertex_count = node_count for ctd, which is the case
+      // for isoparametric finite elements.
+      new_ctd.vertex_count = np;
 
-      std::ostringstream convert; //used to convert int to string  
+      // Used to convert int to string  
+      std::ostringstream convert;
       convert << np; 
       std::string new_name = "Spectral" + orig_name + '_' + convert.str();
-      //The following seems to be necessary b/c setting new_ctd.name = new_name.c_str() does not work. 
+      // The following seems to be necessary b/c setting new_ctd.name
+      // = new_name.c_str() does not work.
       char* new_name_char = new char[new_name.size() + 1]; 
       std::copy(new_name.begin(), new_name.end(), new_name_char);
       new_name_char[new_name.size()] = '\0';
@@ -105,12 +121,20 @@ namespace Aeras
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
 #endif
-      //create and return Albany::MeshSpecsStruct object based on the new (enriched) ctd. 
-      return Teuchos::rcp(new Albany::MeshSpecsStruct(new_ctd, orig_numDim, orig_cubatureDegree,
-                              orig_nsNames, orig_ssNames, orig_worksetSize,
-                              orig_ebName, orig_ebNameToIndex, orig_interleavedOrdering,
-                              orig_sepEvalsByEB, orig_cubatureRule));
-      delete [] new_name_char; 
+      // Create and return Albany::MeshSpecsStruct object based on the
+      // new (enriched) ctd.
+      return Teuchos::rcp(new Albany::MeshSpecsStruct(new_ctd,
+                                                      orig_numDim,
+                                                      orig_cubatureDegree,
+                                                      orig_nsNames,
+                                                      orig_ssNames,
+                                                      orig_worksetSize,
+                                                      orig_ebName,
+                                                      orig_ebNameToIndex,
+                                                      orig_interleavedOrdering,
+                                                      orig_sepEvalsByEB,
+                                                      orig_cubatureRule));
+      delete [] new_name_char;
     }
   };
 
@@ -133,11 +157,15 @@ namespace Aeras
 
   struct NodalDOFsStructContainer
   {
-    typedef std::map<std::pair<std::string,int>,  DOFsStruct >  MapOfDOFsStructs;
+    typedef std::map<std::pair<std::string,int>, DOFsStruct >  MapOfDOFsStructs;
 
     MapOfDOFsStructs mapOfDOFsStructs;
     std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
-    const DOFsStruct& getDOFsStruct(const std::string& field_name) const {return fieldToMap.find(field_name)->second->second;}; //TODO handole errors
+    const DOFsStruct& getDOFsStruct(const std::string& field_name) const
+    {
+      // TODO: handole errors
+      return fieldToMap.find(field_name)->second->second;
+    }
 
     void addEmptyDOFsStruct(const std::string& field_name,
                             const std::string& meshPart,
@@ -157,10 +185,11 @@ namespace Aeras
   public:
 
     //! Constructor
-    SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+    SpectralDiscretization(
+       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
-       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
+       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
     //! Destructor
     ~SpectralDiscretization();
@@ -173,7 +202,8 @@ namespace Aeras
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
     //! Get field overlapped node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const;
+    Teuchos::RCP<const Epetra_Map>
+    getOverlapNodeMap(const std::string& field_name) const;
 #endif
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
@@ -243,19 +273,27 @@ namespace Aeras
     };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
+    getWsElNodeEqID() const;
 
     //! Get map from (Ws, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     getWsElNodeID() const;
 
 #if defined(ALBANY_EPETRA)
-    //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
-    const std::vector<Albany::IDArray>& getElNodeEqID(const std::string& field_name) const
-        {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;}
+    //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID,
+    //! works for both scalar and vector fields
+    const std::vector<Albany::IDArray>&
+    getElNodeEqID(const std::string& field_name) const
+    {
+      return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
+    }
 
-    const Albany::NodalDOFManager& getDOFManager(const std::string& field_name) const
-            {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
+    const Albany::NodalDOFManager&
+    getDOFManager(const std::string& field_name) const
+    {
+      return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
+    }
 #endif
 
 
@@ -266,7 +304,8 @@ namespace Aeras
     //! Set coordinate vector (num_used_nodes * 3)
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
 
-    void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
+    void
+    setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
     getCoords() const;
@@ -302,9 +341,11 @@ namespace Aeras
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const double time,
                        const bool overlapped = false);
+
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const double time,
                                      const bool overlapped = false);
+
    void writeSolutionToFileT(const Tpetra_Vector& solnT,
                              const double time,
                              const bool overlapped = false);
