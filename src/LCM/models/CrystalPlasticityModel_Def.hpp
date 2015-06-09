@@ -11,7 +11,7 @@
 #include "LocalNonlinearSolver.hpp"
 
 //#define  PRINT_DEBUG
-//#define  PRINT_OUTPUT
+#define  PRINT_OUTPUT
 //#define  DECOUPLE
 //#define LINE_SEARCH
 
@@ -607,12 +607,12 @@ bool print_debug = false;
       CGS_Fp = 0.5*(((Intrepid::transpose(Fp_np1))*Fp_np1) - I);
       ScalarT equivalent_plastic_strain = (2.0/3.0)*Intrepid::dotdot(CGS_Fp, CGS_Fp);
       if(equivalent_plastic_strain > 0.0){
-	equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
+        equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
       }
       eqps(cell, pt) = equivalent_plastic_strain;
 //
 // Testing a more appropriate measure of EQPS - not working AtM - ignore the man behind the curtain...
-/* !!! */ // Lp_np1_sym = Intrepid::sym(Lp_np1);
+/* !!! */ // Intrepid::Tensor<ScalarT> Lp_np1_sym = Intrepid::sym(Lp_np1);
 /* !!! */ // ScalarT delta_eqps_v1 = dt*(std::sqrt(2.0/3.0)) * ( Intrepid::dotdot(Lp_np1_sym, Lp_np1_sym) );
 /* !!! */ // ScalarT delta_eqps_v2 = dt*(std::sqrt(2.0/3.0)) * ( Intrepid::dotdot(Lp_np1, Lp_np1) );
 /* !!! */ // ScalarT delta_eqps_v3 = dt * ( std::sqrt((2.0/3.0)*(Intrepid::dotdot(Lp_np1, Lp_np1))) );
@@ -646,9 +646,23 @@ bool print_debug = false;
       }
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
+        Intrepid::Tensor<RealType> P(num_dims_);
         out << "\n" << "time: ";
         out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
         out << "\n";
+        for (int s(0); s < num_slip_; ++s) {
+          out << "\n" << "P" << s << ": ";
+          P = slip_systems_[s].projector_;
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(P(i,j)) << " ";
+            }
+	  }
+        }
+        for (int s(0); s < num_slip_; ++s) {
+          out << "\n" << "slips: ";
+          out << std::setprecision(12) << slip_np1[s] << " ";
+        }
         out << "\n" << "F: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
