@@ -76,7 +76,7 @@
       </ParameterList>
       <Parameter name="Density" type="double" value="7920"/>
       <Parameter name="Reference Temperature" type="double" value="293.0"/>
-      <Parameter name="Initial Temperature" type="double" value="293.0"/>
+      <Parameter name="Initial Temperature" type="double" value="300.0"/>
       <Parameter name="Thermal Transient Coefficient" type="double" value="1.0"/>
       <Parameter name="Thermal Expansion Coefficient" type="double" value="1.e-5"/>
       <Parameter name="Heat Capacity" type="double" value="500.0"/>
@@ -116,7 +116,7 @@
       </ParameterList>
       <Parameter name="Density" type="double" value="7920"/>
       <Parameter name="Reference Temperature" type="double" value="293.0"/>
-      <Parameter name="Initial Temperature" type="double" value="293.0"/>
+      <Parameter name="Initial Temperature" type="double" value="300.0"/>
       <Parameter name="Thermal Transient Coefficient" type="double" value="1.0"/>
       <Parameter name="Thermal Expansion Coefficient" type="double" value="1.e-5"/>
       <Parameter name="Heat Capacity" type="double" value="500.0"/>
