@@ -12,6 +12,7 @@
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types
+#include "Stokhos_Sacado_Kokkos.hpp"
 #include "Sacado.hpp"
 #include "Sacado_MathFunctions.hpp"
 #include "Stokhos_Sacado_MathFunctions.hpp"
@@ -23,11 +24,13 @@
 #include "Sacado_ELRFad_SFad.hpp"
 #include "Sacado_CacheFad_DFad.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"
-#include "Sacado_ETV_Vector.hpp"
+#include "Sacado_MP_Vector.hpp"
 
 //amb Need to move to configuration.
 //#define ALBANY_SFAD_SIZE 27
 //#define ALBANY_SLFAD_SIZE 27
+
+//#define ALBANY_ENSEMBLE_SIZE 32  -- set in CMakeLists.txt
 
 //#define ALBANY_FAST_FELIX
 // Typedef AD types to standard names
@@ -43,10 +46,18 @@ typedef double RealType;
   typedef Sacado::Fad::DFad<double> FadType;
 #endif
 typedef Sacado::Fad::DFad<double> TanFadType;
+
+// SG data types
 typedef Stokhos::StandardStorage<int,double> StorageType;
 typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
 typedef Sacado::Fad::DFad<SGType> SGFadType;
-typedef Sacado::ETV::Vector<double,StorageType> MPType;
+
+#ifndef ALBANY_ENSEMBLE_SIZE
+#define ALBANY_ENSEMBLE_SIZE 1
+#endif
+// Ensemble (a.k.a. MP) data types
+typedef Stokhos::StaticFixedStorage<int,double,ALBANY_ENSEMBLE_SIZE,Kokkos::Serial> MPStorageType;
+typedef Sacado::MP::Vector<MPStorageType> MPType;
 typedef Sacado::Fad::DFad<MPType> MPFadType;
 
 //Tpetra includes

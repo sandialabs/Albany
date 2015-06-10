@@ -1,7 +1,5 @@
 #  DAKOTA INPUT FILE
 
-strategy,
-        single_method #graphics
 method,
         nond_polynomial_chaos
            expansion_order = 5

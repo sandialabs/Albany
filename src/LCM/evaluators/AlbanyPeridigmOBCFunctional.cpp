@@ -134,7 +134,7 @@ evaluateDistParamDeriv(
 };
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::AlbanyPeridigmOBCFunctional::
 evaluateSGResponse(
@@ -189,6 +189,8 @@ evaluateSGGradient(
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
 {}
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::AlbanyPeridigmOBCFunctional::
@@ -244,4 +246,4 @@ evaluateMPGradient(
   Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
   Stokhos::ProductEpetraMultiVector* mp_dg_dp)
 {}
-#endif //ALBANY_SG_MP
+#endif

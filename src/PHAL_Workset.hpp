@@ -239,7 +239,7 @@ struct Workset {
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   //dp-convert Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;
@@ -248,6 +248,8 @@ struct Workset {
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdotdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdp;
+#endif 
+#ifdef ALBANY_ENSEMBLE 
   Teuchos::RCP< Stokhos::ProductEpetraVector > mp_g;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdx;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdot;
@@ -361,7 +363,7 @@ struct Workset {
      }
   };
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   template <> struct BuildSerializer<PHAL::AlbanyTraits::SGResidual> {
     BuildSerializer(Workset& workset) {
       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
@@ -408,6 +410,8 @@ struct Workset {
         setValue<PHAL::AlbanyTraits::SGTangent>(serializer);
     }
   };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
   template <> struct BuildSerializer<PHAL::AlbanyTraits::MPResidual> {
     BuildSerializer(Workset& workset) {
       int nblock = workset.mp_x->size();
@@ -457,7 +461,7 @@ struct Workset {
         setValue<PHAL::AlbanyTraits::MPTangent>(serializer);
     }
   };
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

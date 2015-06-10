@@ -20,7 +20,7 @@ if (ALBANY_MUELU)
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
-if (ALBANY_SG_MP)
+if (ALBANY_SG)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)
@@ -33,29 +33,29 @@ endif ()
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
 if (ALBANY_DAKOTA)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
-                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
+                  ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data)
+     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_nls.data
+                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_nls.data COPYONLY)
+   endif ()
+   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
+   add_test(${testName} ${AlbanyDakota.exe})
   endif ()
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota NAME)
-  add_test(${testName} ${AlbanyDakota.exe})
-endif ()
-
-if (ALBANY_SG_MP)
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/dakota_mp.in COPYONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMPDakota.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputMPDakota.xml COPYONLY)
-  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_DakotaMP NAME)
-  #add_test(${testName} ${AlbanyDakota.exe} inputMPDakota.xml)
-endif ()
-endif ()
+ 
+  if (ALBANY_ENSEMBLE)
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in)
+     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in
+                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_mp.in COPYONLY)
+     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMPDakota.xml
+                    ${CMAKE_CURRENT_BINARY_DIR}/inputMPDakota.xml COPYONLY)
+     get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_DakotaMP NAME)
+     add_test(${testName} ${AlbanyDakota.exe} inputMPDakota.xml)
+    endif ()
+  endif ()
 endif()
 
 # 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists

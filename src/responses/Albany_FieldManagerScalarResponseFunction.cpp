@@ -433,7 +433,7 @@ evaluateDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateSGResponse(
@@ -574,6 +574,8 @@ evaluateSGGradient(
     evaluate<PHAL::AlbanyTraits::SGJacobian>(workset);
   }  
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::FieldManagerScalarResponseFunction::
@@ -712,4 +714,4 @@ evaluateMPGradient(
     evaluate<PHAL::AlbanyTraits::MPJacobian>(workset);
   }  
 }
-#endif //ALBANY_SG_MP
+#endif

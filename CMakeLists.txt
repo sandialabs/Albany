@@ -731,26 +731,47 @@ ENDIF()
 
 # Set optional build of StochasticGalerkin and MultiPoint types
 # These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
+OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
 IF (ENABLE_SG_MP)
+  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
+          Use ENABLE_SG for Stochastic Galerkin
+          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
+ENDIF()
+
+# OPtional build with embedded Stochastic Galerkin evaluations
+OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
+IF (ENABLE_SG)
   if (1)
-    message ("-- WARNING: SG/MP is not working yet after the Kokkos merge.")
-    set (ALBANY_SG_MP FALSE)
+    message ("-- WARNING: SG is not working yet after the Kokkos merge. Disabling.")
+    set (ALBANY_SG FALSE)
     if (ENABLE_ASCR)
       set (ENABLE_ASCR FALSE)
     endif ()
-    message ("-- SG_MP     is NOT Enabled.")
+    message ("-- SG        is NOT Enabled.")
   else ()
-    ADD_DEFINITIONS(-DALBANY_SG_MP)
-    MESSAGE("-- SG_MP     is Enabled, compiling with -DALBANY_SG_MP")
-    SET(ALBANY_SG_MP TRUE)
+    ADD_DEFINITIONS(-DALBANY_SG)
+    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
+    SET(ALBANY_SG TRUE)
   endif ()
 ELSE()
-  MESSAGE("-- SG_MP     is NOT Enabled.")
-  SET(ALBANY_SG_MP FALSE)
+  MESSAGE("-- SG        is NOT Enabled.")
+  SET(ALBANY_SG FALSE)
   IF(ENABLE_ASCR)
-    MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG_MP to be ON\n")
+    MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG to be ON\n")
   ENDIF()
+ENDIF()
+
+# Toggle embedded ensemble capability  (Ensemble is a rename of MP)
+OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
+IF (ENABLE_ENSEMBLE)
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
+  SET(ENSEMBLE_SIZE 32 CACHE INT "set Sacado ENSEMBLE MP::Vector size")
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE})
+  MESSAGE("-- ENSEMBLE  is Enabled, compiling with -DALBANY_ENSEMBLE -DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE}")
+  SET(ALBANY_ENSEMBLE TRUE)
+ELSE()
+  MESSAGE("-- ENSEMBLE  is NOT Enabled.")
+  SET(ALBANY_ENSEMBLE FALSE)
 ENDIF()
 
 # Add option for CONTACT work, defaults to disabled
@@ -920,10 +941,6 @@ ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 IF (ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: MOR               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-
-IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
-  MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")
-ENDIF(NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
 
 # Repeat this warning.
 IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 

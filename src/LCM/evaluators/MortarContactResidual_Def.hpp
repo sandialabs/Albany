@@ -484,7 +484,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 MortarContactResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 MortarContactResidual(const Teuchos::ParameterList& p,
@@ -710,6 +710,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #endif
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -934,7 +936,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #endif
 }
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

@@ -34,8 +34,7 @@ namespace QCAD {
 template<typename EvalT, typename Traits>
 class PoissonSourceNeumannBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>,
-    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
@@ -50,8 +49,6 @@ public:
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d) = 0;
-
-  ScalarT& getValue(const std::string &n);
 
   //! Public Universal Constants
   /***** define universal constants as double constants *****/
@@ -224,7 +221,7 @@ private:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class PoissonSourceNeumann<PHAL::AlbanyTraits::SGResidual,Traits>
   : public PoissonSourceNeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -260,6 +257,8 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual 
@@ -299,7 +298,7 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
 };
-#endif //ALBANY_SG_MP
+#endif
 
 
 

@@ -100,7 +100,7 @@ class PDNeighborFitBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>
 // **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class PDNeighborFitBC<PHAL::AlbanyTraits::SGResidual, Traits>
     : public PDNeighborFitBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -133,6 +133,8 @@ class PDNeighborFitBC<PHAL::AlbanyTraits::SGTangent, Traits>
     typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
     void evaluateFields(typename Traits::EvalData d);
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual
@@ -169,7 +171,7 @@ class PDNeighborFitBC<PHAL::AlbanyTraits::MPTangent, Traits>
     typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
     void evaluateFields(typename Traits::EvalData d);
 };
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

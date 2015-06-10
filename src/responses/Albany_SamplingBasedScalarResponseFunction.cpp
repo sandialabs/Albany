@@ -70,7 +70,7 @@ private:
 };
 }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::SamplingBasedScalarResponseFunction::
 init_sg(
@@ -355,6 +355,8 @@ evaluateSGGradient(
       sg_dg_dp->sumIntoAllTerms(weights[qp], vals[qp], norms, *dg_dp);
   }
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::SamplingBasedScalarResponseFunction::
@@ -512,4 +514,4 @@ evaluateMPGradient(
 		     g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
   }
 }
-#endif //ALBANY_SG_MP
+#endif

@@ -348,10 +348,72 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   }
 }
 
-#ifdef ALBANY_SG_MP
-// todo
-#endif //ALBANY_SG_MP
+#ifdef ALBANY_SG
+// **********************************************************************
+template<typename Traits>
+PDNeighborFitBC<PHAL::AlbanyTraits::SGResidual, Traits>::
+PDNeighborFitBC(Teuchos::ParameterList& p) :
+  PDNeighborFitBC_Base<PHAL::AlbanyTraits::SGResidual, Traits>(p) {
+    throw("LCM::PDNeighborFitBC not implemented for SG or ENSEMBLE configurations");
+}
+template<typename Traits>
+void PDNeighborFitBC<PHAL::AlbanyTraits::SGResidual, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+}
+template<typename Traits>
+PDNeighborFitBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
+PDNeighborFitBC(Teuchos::ParameterList& p) :
+  PDNeighborFitBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits>(p) {
+    throw("LCM::PDNeighborFitBC not implemented for SG or ENSEMBLE configurations");
+}
+template<typename Traits>
+void PDNeighborFitBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+}
+template<typename Traits>
+PDNeighborFitBC<PHAL::AlbanyTraits::SGTangent, Traits>::
+PDNeighborFitBC(Teuchos::ParameterList& p) :
+  PDNeighborFitBC_Base<PHAL::AlbanyTraits::SGTangent, Traits>(p) {
+    throw("LCM::PDNeighborFitBC not implemented for SG or ENSEMBLE configurations");
+}
+template<typename Traits>
+void PDNeighborFitBC<PHAL::AlbanyTraits::SGTangent, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+}
+#endif
+
+#ifdef ALBANY_ENSEMBLE
+template<typename Traits>
+PDNeighborFitBC<PHAL::AlbanyTraits::MPResidual, Traits>::
+PDNeighborFitBC(Teuchos::ParameterList& p) :
+  PDNeighborFitBC_Base<PHAL::AlbanyTraits::MPResidual, Traits>(p) {
+    throw("LCM::PDNeighborFitBC not implemented for SG or ENSEMBLE configurations");
+}
+template<typename Traits>
+void PDNeighborFitBC<PHAL::AlbanyTraits::MPResidual, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+}
+template<typename Traits>
+PDNeighborFitBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
+PDNeighborFitBC(Teuchos::ParameterList& p) :
+  PDNeighborFitBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits>(p) {
+    throw("LCM::PDNeighborFitBC not implemented for SG or ENSEMBLE configurations");
+}
+template<typename Traits>
+void PDNeighborFitBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+}
+template<typename Traits>
+PDNeighborFitBC<PHAL::AlbanyTraits::MPTangent, Traits>::
+PDNeighborFitBC(Teuchos::ParameterList& p) :
+  PDNeighborFitBC_Base<PHAL::AlbanyTraits::MPTangent, Traits>(p) {
+    throw("LCM::PDNeighborFitBC not implemented for SG or ENSEMBLE configurations");
+}
+template<typename Traits>
+void PDNeighborFitBC<PHAL::AlbanyTraits::MPTangent, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+}
+#endif
 
 // **********************************************************************
 }
-

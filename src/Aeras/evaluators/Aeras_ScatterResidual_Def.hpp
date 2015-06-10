@@ -545,7 +545,7 @@ evaluateFields(typename Traits::EvalData workset)
   } 
 }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE
 // **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
@@ -763,6 +763,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 }

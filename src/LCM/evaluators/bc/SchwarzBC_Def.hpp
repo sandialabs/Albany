@@ -840,7 +840,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 //
 // Specialization: Stochastic Galerkin Residual
 //
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 SchwarzBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 SchwarzBC(Teuchos::ParameterList & p) :
@@ -1100,6 +1100,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   }
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 //
 // Specialization: Multi-point Residual
@@ -1365,6 +1367,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 } // namespace LCM
