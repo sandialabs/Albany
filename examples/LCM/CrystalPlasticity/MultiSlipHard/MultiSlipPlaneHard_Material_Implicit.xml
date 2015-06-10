@@ -3,10 +3,14 @@
 
     <ParameterList name="block_1">
       <Parameter name="material" type="string" value="Aligned Lattice" />
+      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <Parameter name="Volume Average Pressure" type="bool" value="true" />
     </ParameterList>
 
     <ParameterList name="block_2">
       <Parameter name="material" type="string" value="FCC" />
+      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <Parameter name="Volume Average Pressure" type="bool" value="true" />
     </ParameterList>
 
   </ParameterList>
@@ -30,9 +34,9 @@
       </ParameterList>
 
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-45"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-12"/>
-      <Parameter name="Implicit Integration Max Iterations Implicit" type="int" value="100"/>
+      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-9"/>
+      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-9"/>
+      <Parameter name="Implicit Integration Max Iterations" type="int" value="20"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
       <!-- Crystal Plasticity Slip System -->
@@ -75,9 +79,9 @@
       </ParameterList>
 
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-45"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-12"/>
-      <Parameter name="Implicit Integration Max Iterations Implicit" type="int" value="100"/>
+      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-9"/>
+      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-9"/>
+      <Parameter name="Implicit Integration Max Iterations" type="int" value="20"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
       <!-- Crystal Plasticity Slip System -->

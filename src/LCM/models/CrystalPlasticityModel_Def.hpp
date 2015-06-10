@@ -13,7 +13,7 @@
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
-//#define LINE_SEARCH
+#define LINE_SEARCH
 
 #include <typeinfo>
 #include <iostream>
@@ -481,7 +481,7 @@ bool print_debug = false;
 #ifdef LINE_SEARCH
 	  // Line search
 	  if(iteration > 0){
-            for(int s=0 ; s<num_slip_ ; s++){
+       for(int s=0 ; s<num_slip_ ; s++){
 	      delta_delta_slip[s] = slip_np1[s] - slip_np1_km1[s];
 	     }
 	    RealType alpha;
@@ -490,7 +490,7 @@ bool print_debug = false;
 	      slip_np1[s] = slip_np1_km1[s] + alpha*delta_delta_slip[s];
 	      slip_np1_km1[s] = slip_np1[s];
 	    }
-          }
+    }
 #endif
 
 	  // Seed the AD objects
@@ -825,7 +825,9 @@ computeResidual(ScalarT                       dt,
 		ArgT &                        norm_slip_residual) const
 {
   ScalarT g0, tauC, m;
+  //ScalarT one_over_m;
   ArgT dgamma_value1, dgamma_value2, temp;
+  //ArgT temp2;
   Intrepid::Tensor<RealType> P(num_dims_);
   int sign;
 
@@ -835,6 +837,8 @@ computeResidual(ScalarT                       dt,
     P = slip_systems_[s].projector_;
     tauC = slip_systems_[s].tau_critical_;
     m = slip_systems_[s].gamma_exp_;
+    //one_over_m = 1.0/m;
+
     g0 = slip_systems_[s].gamma_dot_0_;
 
     // The current computed value of dgamma
@@ -843,17 +847,28 @@ computeResidual(ScalarT                       dt,
     // Compute slip increment using Fe_np1
     sign = shear_np1[s] < 0 ? -1 : 1;
     temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
-    // Establishing filter for active slip systems (help from JTO)
-    const double filter = std::numeric_limits<RealType>::epsilon()*100.0;
-    if (temp < filter) {
+    // establishing normalized filter for active slip systems
+    const double active_filter = std::numeric_limits<RealType>::epsilon()*100.0;
+    if (temp < active_filter) {
       dgamma_value2 = dt * g0 * 0.0 * sign;
     }
     else {
-      // JWF - m is positive, we don't need std::fabs(std::pow(temp,m))
       dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
     }
-    // The difference between the slip increment calculations is the residual for this slip system
+
+    //The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value2 - dgamma_value1;
+
+    //residual can take two forms - see Steinmann and Stein, CMAME (2006)
+    //establishing filter for gamma, 1.0e-4 for now
+    //const double gamma_filter = 1.0e-4;
+    //if (dgamma_value2 <= gamma_filter) {
+    //  slip_residual[s] = dgamma_value2 - dgamma_value1;
+    //}
+    //else {
+    //  temp2 = dgamma_value1 / (dt * g0 * sign);
+    //  slip_residual[s] = -std::pow(temp2, one_over_m) + temp;
+    //}
   }
 
   // Take norm of residual - protect sqrt (Saccado)
@@ -932,7 +947,7 @@ lineSearch(ScalarT                            dt,
 	   std::vector<ArgT> const &          slip_np1_km1,
 	   std::vector<ArgT> const &          delta_delta_slip,
 	   std::vector<ScalarT> const &       hardness_n,
-           ScalarT const &                    norm_slip_residual,
+     ScalarT const &                    norm_slip_residual,
 	   RealType &                         alpha) const
 {
   std::vector<ArgT> slip_np1_k(num_slip_);
@@ -951,14 +966,8 @@ lineSearch(ScalarT                            dt,
   // We denote configurations k-1 (km1) and k instead of k and k+1
   // to be consistent with the incoming slip - slip_np1_km1
 
-  // Establish algorithmic parameters
-  RealType eta = 0.1;
-  RealType beta = 1.0e-4; 
-
-  // Initialize line search parameter, alpha, for km1 and k
-  RealType alpha_km1 = 1.0;
-  RealType alpha_k = 1.0;
-
+  // Initialize line search parameter, alpha, for j
+  RealType alpha_j = 1.0;
   // Initialize M and M' for km1 and k
   RealType residual_val_k, residual_val_km1;
   RealType M_km1, M_prime_km1, M_k;
@@ -966,8 +975,10 @@ lineSearch(ScalarT                            dt,
   M_km1 = residual_val_km1 * residual_val_km1 / 2.0;
   M_prime_km1 = -2.0*M_km1;
  
-  // Initialize convergence loop
-  int max_iterations =  20;
+  // Initialize algorithmic parameters and convergence loop
+  RealType eta = 0.1;
+  RealType beta = 1.0e-4;
+  int max_iterations =  10;
   int iteration = 0;
   bool converged = false;
   RealType arg1, arg2;
@@ -975,7 +986,7 @@ lineSearch(ScalarT                            dt,
   while(!converged){
 
     for (int s(0); s < num_slip_; ++s) {
-      slip_np1_k[s] = slip_np1_km1[s] +  alpha_k* delta_delta_slip[s];
+      slip_np1_k[s] = slip_np1_km1[s] +  alpha_j* delta_delta_slip[s];
     }
 
     try{
@@ -989,25 +1000,26 @@ lineSearch(ScalarT                            dt,
       M_k = residual_val_k * residual_val_k / 2.0; 
       
       // test residual      
-      if(M_k <= (1.0 - 2.0 * beta * alpha_km1 * M_km1) || (iteration > max_iterations)) {
+      if(M_k <= (1.0 - 2.0 * beta * alpha_j) * M_km1 || iteration > max_iterations) {
         converged = true;
       } 
       else {
-        arg1 = eta*alpha_km1;
-        arg2 = -alpha_km1 * alpha_km1 * M_prime_km1 / (2.0 * (M_k - M_km1 - alpha_km1 * M_prime_km1));      
-        alpha_k = std::max(arg1, arg2);  
+        arg1 = eta*alpha_j;
+        arg2 = -alpha_j * alpha_j * M_prime_km1 / 2.0 / (M_k - M_km1 - alpha_j * M_prime_km1);
+        alpha_j = std::max(arg1, arg2);
      
         // increment iteration 
         iteration += 1;
-        alpha_km1 = alpha_k;
       } 
     } catch (...) {
       std::cout << "DJL DEBUGGING caught exception in line search!" << std::endl;
     }
 
   }
-
-  alpha = alpha_k;
+#ifdef PRINT_DEBUG
+  std::cout << "Number of line search iterations: " << iteration << ", alpha: " << alpha_j << std::endl;
+#endif
+  alpha = alpha_j;
 }
 
 //------------------------------------------------------------------------------
