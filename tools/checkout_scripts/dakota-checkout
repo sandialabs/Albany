@@ -22,10 +22,10 @@ DLDIR=`pwd`
 #-------------------------------------------
 # copy, configure, build, install Dakota
 #-------------------------------------------
-TARBALL=dakota-6.2-public.src.tar.gz
+TARBALL=dakota-stable.src.tar.gz
 
 wget -nv --no-check-certificate \
-    https://dakota.sandia.gov/sites/default/files/distributions/public/$TARBALL
+    https://development.sandia.gov/dakota/distributions/dakota/stable/$TARBALL
 
 cd $TRIKOTADIR
 
