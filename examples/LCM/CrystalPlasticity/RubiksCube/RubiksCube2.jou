@@ -46,3 +46,5 @@ refine vol all numsplit 1
 export genesis 'RubiksCube2_Mesh2.g' overwrite
 refine vol all numsplit 1
 export genesis 'RubiksCube2_Mesh3.g' overwrite
+refine vol all numsplit 1
+export genesis 'RubiksCube2_Mesh4.g' overwrite

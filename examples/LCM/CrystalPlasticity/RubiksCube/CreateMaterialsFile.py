@@ -170,6 +170,13 @@ def WriteParameter(name, type, value, file, indent):
     file.write("<Parameter name=\"" + name + "\" type=\"" + type + "\" value=\"" + str(value) + "\"/>\n")
     return
 
+def WriteBool(name, type, value, file, indent):
+
+    file.write(" "*INDENTATION*indent)
+    file.write("<Parameter name=\"" + name + "\" type=\"" + type + "\" value=\"" + value + "\"/>\n")
+    return
+
+
 def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
 
     block_names = []
@@ -188,6 +195,8 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
     for iBlock in range(num_blocks):
         indent = StartParamList(block_names[iBlock], mat_file, indent)
         WriteParameter("material", "string", material_names[iBlock], mat_file, indent)
+        WriteBool("Weighted Volume Average J", "bool", "true", mat_file, indent)
+        WriteBool("Volume Average Pressure", "bool", "true", mat_file, indent)
         indent = EndParamList(mat_file, indent)
     indent = EndParamList(mat_file, indent)
 
@@ -215,13 +224,20 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         # Specify output to exodus
         WriteParameter("Output Cauchy Stress", "bool", "true", mat_file, indent)
         WriteParameter("Output Fp", "bool", "true", mat_file, indent)
-        WriteParameter("Output L", "bool", "true", mat_file, indent)
-        WriteParameter("Output CP Residual", "bool", "true", mat_file, indent)
-        for i in range(num_slip_systems):
+        #WriteParameter("Output L", "bool", "true", mat_file, indent)
+        WriteParameter("Output CP_Residual", "bool", "true", mat_file, indent)
+        #for i in range(num_slip_systems):
+        #    WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(num_slip_systems):
+        #    WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(num_slip_systems):
+        #    WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
+
+        for i in range(1):
             WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
-        for i in range(num_slip_systems):
+        for i in range(1):
             WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
-        for i in range(num_slip_systems):
+        for i in range(1):
             WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
 
         # Elastic modulii and lattice orientation
