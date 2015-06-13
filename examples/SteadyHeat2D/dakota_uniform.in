@@ -1,0 +1,25 @@
+#  DAKOTA INPUT FILE
+
+method,
+        sampling
+           sample_type random
+           samples = 32
+           seed = 17
+           #response_levels = 100
+variables,
+        uniform_uncertain = 1 
+           lower_bounds   0.01
+           upper_bounds   1.00
+           descriptors  'Thermal Conductivity' 
+interface,
+        direct
+          #asynch
+          #evaluation_concurrency = 32
+          analysis_driver = 'Albany_Dakota'
+#          processors_per_analysis = 2
+          evaluation_servers = 1
+
+responses,
+        num_response_functions = 1
+        analytic_gradients
+        no_hessians

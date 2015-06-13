@@ -206,12 +206,11 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // this should go somewhere else.  for now ...
   GlobalPoint gp;
-  int blockcounts[3] = {1,3,1};
-  MPI_Datatype oldtypes[3] = {MPI_INT, MPI_DOUBLE, MPI_UB};
+  int blockcounts[2] = {1,3};
+  MPI_Datatype oldtypes[2] = {MPI_INT, MPI_DOUBLE};
   MPI_Aint offsets[3] = {(MPI_Aint)&(gp.gid)    - (MPI_Aint)&gp, 
-                         (MPI_Aint)&(gp.coords) - (MPI_Aint)&gp, 
-                         sizeof(GlobalPoint)};
-  MPI_Type_struct(3,blockcounts,offsets,oldtypes,&MPI_GlobalPoint);
+                         (MPI_Aint)&(gp.coords) - (MPI_Aint)&gp};
+  MPI_Type_create_struct(2,blockcounts,offsets,oldtypes,&MPI_GlobalPoint);
   MPI_Type_commit(&MPI_GlobalPoint);
 
   // initialize/build the filter operators. these are built once.
@@ -268,6 +267,48 @@ ATO::Solver::evalModel(const InArgs& inArgs,
 /******************************************************************************/
 {
 
+  // initialize topology of fixed blocks to have material
+  const Teuchos::Array<std::string>& fixedBlocks = _topology->getFixedBlocks();
+
+  for(int i=0; i<_numPhysics; i++){
+    Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+    const Albany::WorksetArray<std::string>::type& 
+      wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
+    Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+    Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
+    int numWorksets = dest.size();
+
+    for(int ws=0; ws<numWorksets; ws++){
+
+      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
+
+        if( _topology->getEntityType() == "State Variable" ){
+          double matVal = _topology->getMaterialValue();
+          Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
+          int numCells = wsTopo.dimension(0);
+          int numNodes = wsTopo.dimension(1);
+          for(int cell=0; cell<numCells; cell++)
+            for(int node=0; node<numNodes; node++){
+              wsTopo(cell,node) = matVal;
+            }
+        } else if( _topology->getEntityType() == "Distributed Parameter" ){
+          Teuchos::RCP<DistParamLib> distParams = _subProblems[i].app->getDistParamLib();
+          const std::vector<Albany::IDArray>& 
+            wsElDofs = distParams->get(_topology->getName())->workset_elem_dofs();
+          double* ltopo; topoVec->ExtractView(&ltopo);
+          double matVal = _topology->getMaterialValue();
+          const Albany::IDArray& elDofs = wsElDofs[ws];
+          int numCells = elDofs.dimension(0);
+          int numNodes = elDofs.dimension(1);
+          for(int cell=0; cell<numCells; cell++)
+            for(int node=0; node<numNodes; node++){
+              int lid = elDofs(cell,node,0);
+              if(lid != -1) ltopo[lid] = matVal;
+            }
+        }
+      }
+    }
+  }
 
   if(_is_verbose){
     Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -331,7 +372,6 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
     wsElDofs = distParams->get(_topology->getName())->workset_elem_dofs();
 
   // communicate boundary info
-  int numLocalNodes = topoVec->MyLength();
   double* ltopo; topoVec->ExtractView(&ltopo);
   int numWorksets = wsElDofs.size();
   for(int ws=0; ws<numWorksets; ws++){

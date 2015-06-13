@@ -13,7 +13,8 @@
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
-//#define LINE_SEARCH
+#define LINE_SEARCH
+#define SLIP_PREDICTOR
 
 #include <typeinfo>
 #include <iostream>
@@ -238,6 +239,22 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     this->state_var_output_flags_.push_back(
         p->get<bool>(output_gamma_string, false));
   }
+  // gammadots for each slip system
+    for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
+      std::string g_dot = Albany::strint("gamma_dot", num_ss + 1, '_');
+      std::string gamma_dot_string = (*field_name_map_)[g_dot];
+      std::string output_gamma_dot_string = "Output " + gamma_dot_string;
+      this->eval_field_map_.insert(std::make_pair(gamma_dot_string, dl->qp_scalar));
+      this->num_state_variables_++;
+      this->state_var_names_.push_back(gamma_dot_string);
+      this->state_var_layouts_.push_back(dl->qp_scalar);
+      this->state_var_init_types_.push_back("scalar");
+      this->state_var_init_values_.push_back(0.0);
+      this->state_var_old_state_flags_.push_back(true);
+      this->state_var_output_flags_.push_back(
+          p->get<bool>(output_gamma_dot_string, false));
+  }
+
   // tau_hard - state variable for hardening on each slip system
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string t_h = Albany::strint("tau_hard", num_ss + 1, '_');
@@ -341,6 +358,16 @@ bool print_debug = false;
     previous_slips.push_back(
         &((*workset.stateArrayPtr)[gamma_string + "_old"]));
   }
+  // extract slip rate on each slip system
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips_dot;
+  std::vector<Albany::MDArray *> previous_slips_dot;
+  for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
+    std::string g_dot = Albany::strint("gamma_dot", num_ss + 1, '_');
+    std::string gamma_dot_string = (*field_name_map_)[g_dot];
+    slips_dot.push_back(eval_fields[gamma_dot_string]);
+    previous_slips_dot.push_back(
+        &((*workset.stateArrayPtr)[gamma_dot_string + "_old"]));
+  }
   // extract hardening on each slip system
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > hards;
   std::vector<Albany::MDArray *> previous_hards;
@@ -351,7 +378,6 @@ bool print_debug = false;
     previous_hards.push_back(
         &((*workset.stateArrayPtr)[tau_hard_string + "_old"]));
   }
-
   // store shear on each slip system for output
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > shears;
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
@@ -379,7 +405,9 @@ bool print_debug = false;
   Intrepid::Tensor<ScalarT> F_np1(num_dims_);
   Intrepid::Tensor<ScalarT> Fp_n(num_dims_);
   std::vector<ScalarT> slip_n(num_slip_);
+  std::vector<ScalarT> slip_dot_n(num_slip_);
   std::vector<ScalarT> hardness_n(num_slip_);
+  ScalarT equivalent_plastic_strain;
 
   // Unknown quantities
   std::vector<ScalarT> slip_np1(num_slip_);
@@ -413,19 +441,40 @@ bool print_debug = false;
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
+      equivalent_plastic_strain = eqps(cell, pt);
+
       // Copy data from Albany fields into local data structures
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
-	  F_np1(i, j) = def_grad(cell, pt, i, j);
+	        F_np1(i, j) = def_grad(cell, pt, i, j);
           Fp_n(i, j) = previous_plastic_deformation(cell, pt, i, j);
         }
       }
       for (int s(0); s < num_slip_; ++s) {
-	slip_n[s] = (*(previous_slips[s]))(cell, pt);
-	slip_np1[s] = slip_n[s]; // initialize state n+1 assuming zero slip increment
-	slip_np1_km1[s] = slip_np1[s];
-	hardness_n[s] = (*(previous_hards[s]))(cell, pt);
+	      slip_n[s] = (*(previous_slips[s]))(cell, pt);
+	      // initialize state n+1 with either (a) zero slip incremet or (b) a predictor
+	      slip_np1[s] = slip_n[s];
+
+#ifdef SLIP_PREDICTOR
+	        slip_dot_n[s] = (*(previous_slips_dot[s]))(cell, pt);
+          slip_np1[s] += dt * slip_dot_n[s];
+#endif
+
+	      slip_np1_km1[s] = slip_np1[s];
+	      hardness_n[s] = (*(previous_hards[s]))(cell, pt);
       }
+
+#ifdef PRINT_DEBUG
+      for (int s(0); s < num_slip_; ++s) {
+        std::cout << "Slip on system " << s << " before predictor: " << slip_n[s] << std::endl;
+      }
+      for (int s(0); s < num_slip_; ++s) {
+        std::cout << "Slip rate on system " << s << " is: " << slip_dot_n[s] << std::endl;
+      }
+      for (int s(0); s < num_slip_; ++s) {
+        std::cout << "Slip on system " << s << " after predictor: " << slip_np1[s] << std::endl;
+      }
+#endif
 
       if(integration_scheme_ == EXPLICIT){
 
@@ -477,15 +526,17 @@ bool print_debug = false;
 
 #ifdef LINE_SEARCH
 	  // Line search
-	  for(int s=0 ; s<num_slip_ ; s++){
-	    delta_delta_slip[s] = slip_np1[s] - slip_np1_km1[s];
-	  }
-	  RealType alpha;
-	  lineSearch(dt, Fp_n, F_np1, slip_n, slip_np1_km1, delta_delta_slip, hardness_n, alpha);
-	  for(int s=0 ; s<num_slip_ ; s++){
-	    slip_np1[s] = slip_np1_km1[s] + alpha*delta_delta_slip[s];
-	    slip_np1_km1[s] = slip_np1[s];
-	  }
+	  if(iteration > 0){
+       for(int s=0 ; s<num_slip_ ; s++){
+	      delta_delta_slip[s] = slip_np1[s] - slip_np1_km1[s];
+	     }
+	    RealType alpha;
+	    lineSearch(dt, Fp_n, F_np1, slip_n, slip_np1_km1, delta_delta_slip, hardness_n, norm_slip_residual, alpha);
+	    for(int s=0 ; s<num_slip_ ; s++){
+	      slip_np1[s] = slip_np1_km1[s] + alpha*delta_delta_slip[s];
+	      slip_np1_km1[s] = slip_np1[s];
+	    }
+    }
 #endif
 
 	  // Seed the AD objects
@@ -593,17 +644,35 @@ bool print_debug = false;
 #endif
       } // integration_scheme == IMPLICIT
       
-      // The EQPS can be computed (or can it?) from the Cauchy Green strain of Fp.
-      Intrepid::Tensor<ScalarT> Re_np1(num_dims_);
-      Intrepid::Tensor<ScalarT> Fe(num_dims_);
-      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
-      CGS_Fp = 0.5*(((Intrepid::transpose(Fp_np1))*Fp_np1) - I);
-      ScalarT equivalent_plastic_strain = (2.0/3.0)*Intrepid::dotdot(CGS_Fp, CGS_Fp);
-      if(equivalent_plastic_strain > 0.0){
-	equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
-      }
+// The EQPS can be computed (or can it?) from the Cauchy Green strain operator applied to Fp.
+//      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
+//      CGS_Fp = 0.5*(((Intrepid::transpose(Fp_np1))*Fp_np1) - I);
+//      equivalent_plastic_strain = (2.0/3.0)*Intrepid::dotdot(CGS_Fp, CGS_Fp);
+//      if(equivalent_plastic_strain > 0.0){
+//        equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
+//      }
+//      eqps(cell, pt) = equivalent_plastic_strain;
+//
+// Compute the equivalent plastic strain from the velocity gradient:
+//       eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
+//
+      ScalarT delta_eqps = Intrepid::dotdot(Intrepid::sym(Lp_np1), Intrepid::sym(Lp_np1));
+      if (delta_eqps > 0.0) {
+	delta_eqps = 2.0*(std::sqrt(delta_eqps))/3.0;
+      } // Otherwise delta_eqps is - or BETTER be! - zero, so don't bother with the 2/3.
+// ccbatta 2015/06/09: The quantity Lp_np1 is actually of the form Lp * dt,
+//    i.e. it's a velocity gradient multiplied by the time step,
+//    since it's computed using DELTA_gamma, instead of gamma_dot.
+//    So until that convention is changed, leave out the dt prefactor
+//    when converting eqps_dot to eqps since it's already included
+//    in Lp_np1 = Lp * dt. (See applySlipIncrement().)
+//      delta_eqps *= dt;
+      equivalent_plastic_strain += delta_eqps;
       eqps(cell, pt) = equivalent_plastic_strain;
-      // The xtal rotation from the polar decomp of Fe.
+//
+// The xtal rotation from the polar decomp of Fe.
+      Intrepid::Tensor<ScalarT> Fe(num_dims_);
+      Intrepid::Tensor<ScalarT> Re_np1(num_dims_);
       // Saint Venant–Kirchhoff model
 #ifdef DECOUPLE
       Fe = F_np1;
@@ -624,15 +693,38 @@ bool print_debug = false;
         }
       }
       for (int s(0); s < num_slip_; ++s) {
-	(*(slips[s]))(cell, pt) = slip_np1[s];
-	(*(hards[s]))(cell, pt) = hardness_np1[s];
-	(*(shears[s]))(cell, pt) = shear_np1[s];
+	      (*(slips[s]))(cell, pt) = slip_np1[s];
+	      (*(hards[s]))(cell, pt) = hardness_np1[s];
+	      (*(shears[s]))(cell, pt) = shear_np1[s];
+	      // storing the slip rate for the predictor
+	        if (dt > 0) {
+	          (*(slips_dot[s]))(cell, pt) = (slip_np1[s] - slip_n[s])/dt;
+	        }
+	        else {
+	          (*(slips_dot[s]))(cell, pt) = 0.0;
+	        }
       }
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
+        Intrepid::Tensor<RealType> P(num_dims_);
         out << "\n" << "time: ";
         out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
+        out << "    dt: ";
+        out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(dt) << " ";
         out << "\n";
+        for (int s(0); s < num_slip_; ++s) {
+          out << "\n" << "P" << s << ": ";
+          P = slip_systems_[s].projector_;
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(P(i,j)) << " ";
+            }
+	  }
+        }
+        for (int s(0); s < num_slip_; ++s) {
+          out << "\n" << "slips: ";
+          out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(slip_np1[s]) << " ";
+        }
         out << "\n" << "F: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -654,7 +746,7 @@ bool print_debug = false;
         out << "\n" << "Lp: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
-            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(L_np1(i,j)) << " ";
+            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Lp_np1(i,j)) << " ";
           }
         }
         out << "\n";
@@ -690,7 +782,6 @@ updateSlipViaExplicitIntegration(ScalarT                         dt,
 
     int sign = shear[s] < 0 ? -1 : 1;
     temp = std::fabs(shear[s] / (tauC + hardness[s]));
-    // JWF - m is positive, we don't need std::fabs(std::pow(temp,m))
     slip_np1[s] = slip_n[s] + dt * g0 * std::pow(temp, m) * sign;
   }
 }
@@ -723,6 +814,9 @@ applySlipIncrement(std::vector<ScalarT> const &       slip_n,
   confirmTensorSanity(Lp_np1, "Lp_np1 in applySlipIncrement().");
 
   // update plastic deformation gradient
+
+  //std::cout  << "Lp_np1 " << Lp_np1;
+
   expL = Intrepid::exp(Lp_np1);
   Fp_np1 = expL * Fp_n;
 
@@ -783,7 +877,9 @@ computeResidual(ScalarT                       dt,
 		ArgT &                        norm_slip_residual) const
 {
   ScalarT g0, tauC, m;
+  //ScalarT one_over_m;
   ArgT dgamma_value1, dgamma_value2, temp;
+  //ArgT temp2;
   Intrepid::Tensor<RealType> P(num_dims_);
   int sign;
 
@@ -793,6 +889,8 @@ computeResidual(ScalarT                       dt,
     P = slip_systems_[s].projector_;
     tauC = slip_systems_[s].tau_critical_;
     m = slip_systems_[s].gamma_exp_;
+    //one_over_m = 1.0/m;
+
     g0 = slip_systems_[s].gamma_dot_0_;
 
     // The current computed value of dgamma
@@ -801,17 +899,28 @@ computeResidual(ScalarT                       dt,
     // Compute slip increment using Fe_np1
     sign = shear_np1[s] < 0 ? -1 : 1;
     temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
-    // Establishing filter for active slip systems (help from JTO)
-    const double filter = std::numeric_limits<RealType>::epsilon()*100.0;
-    if (temp < filter) {
+    // establishing normalized filter for active slip systems
+    const double active_filter = std::numeric_limits<RealType>::epsilon()*10.0;
+    if (temp < active_filter) {
       dgamma_value2 = dt * g0 * 0.0 * sign;
     }
     else {
-      // JWF - m is positive, we don't need std::fabs(std::pow(temp,m))
       dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
     }
-    // The difference between the slip increment calculations is the residual for this slip system
+
+    //The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value2 - dgamma_value1;
+
+    //residual can take two forms - see Steinmann and Stein, CMAME (2006)
+    //establishing filter for gamma, 1.0e-4 for now
+    //const double gamma_filter = 1.0e-4;
+    //if (dgamma_value2 <= gamma_filter) {
+    //  slip_residual[s] = dgamma_value2 - dgamma_value1;
+    //}
+    //else {
+    //  temp2 = dgamma_value1 / (dt * g0 * sign);
+    //  slip_residual[s] = -std::pow(temp2, one_over_m) + temp;
+    //}
   }
 
   // Take norm of residual - protect sqrt (Saccado)
@@ -890,80 +999,79 @@ lineSearch(ScalarT                            dt,
 	   std::vector<ArgT> const &          slip_np1_km1,
 	   std::vector<ArgT> const &          delta_delta_slip,
 	   std::vector<ScalarT> const &       hardness_n,
+     ScalarT const &                    norm_slip_residual,
 	   RealType &                         alpha) const
 {
-  std::vector<ArgT> slip_np1_temp(num_slip_);
-  std::vector<ArgT> hardness_np1_temp(num_slip_);
-  Intrepid::Tensor<ArgT> Lp_np1_temp(num_dims_);
-  Intrepid::Tensor<ArgT> Fp_np1_temp(num_dims_);
-  Intrepid::Tensor<ArgT> sigma_np1_temp(num_dims_), S_np1_temp(num_dims_);
-  std::vector<ArgT> shear_np1_temp(num_slip_);
+  std::vector<ArgT> slip_np1_k(num_slip_);
+  std::vector<ArgT> hardness_np1_k(num_slip_);
+  Intrepid::Tensor<ArgT> Lp_np1_k(num_dims_);
+  Intrepid::Tensor<ArgT> Fp_np1_k(num_dims_);
+  Intrepid::Tensor<ArgT> sigma_np1_k(num_dims_), S_np1_k(num_dims_);
+  std::vector<ArgT> shear_np1_k(num_slip_);
   std::vector<ArgT> slip_residual_unperturbed(num_slip_);
-  std::vector<ArgT> slip_residual_temp(num_slip_);
-  ArgT slip_increment, norm_slip_residual_temp;
+  std::vector<ArgT> slip_residual_k(num_slip_);
+  ArgT slip_increment, norm_slip_residual_k;
 
-  RealType residual_val;
-  RealType bestAlpha = 1.0;
-  RealType bestResidual = std::numeric_limits<RealType>::max();
+  // Line search taken from Perez & Armero, On the Formulation of Closest-Point 
+  // Projection Algorithms in Elastoplasticity . Part II: Globally Convergent Schemes
+  // (2000), Box I.1. 
+  // We denote configurations k-1 (km1) and k instead of k and k+1
+  // to be consistent with the incoming slip - slip_np1_km1
 
-  // DJL We'll want to replace this brute-force approach with something clever.
-  std::vector<RealType> candidateAlpha;
-  candidateAlpha.push_back(0.00001);
-  candidateAlpha.push_back(0.0001);
-  candidateAlpha.push_back(0.001);
-  candidateAlpha.push_back(0.01);
-  candidateAlpha.push_back(0.1);
-  candidateAlpha.push_back(0.2);
-  candidateAlpha.push_back(0.3);
-  candidateAlpha.push_back(0.4);
-  candidateAlpha.push_back(0.5);
-  candidateAlpha.push_back(0.6);
-  candidateAlpha.push_back(0.7);
-  candidateAlpha.push_back(0.8);
-  candidateAlpha.push_back(0.9);
-  candidateAlpha.push_back(1.0);
-  candidateAlpha.push_back(1.1);
-  candidateAlpha.push_back(1.2);
-  candidateAlpha.push_back(1.3);
-  candidateAlpha.push_back(1.4);
-  candidateAlpha.push_back(1.5);
-  candidateAlpha.push_back(1.6);
-  candidateAlpha.push_back(1.7);
-  candidateAlpha.push_back(1.8);
-  candidateAlpha.push_back(1.9);
-  candidateAlpha.push_back(2.0);
-  candidateAlpha.push_back(3.0);
-  candidateAlpha.push_back(4.0);
-  candidateAlpha.push_back(5.0);
-  candidateAlpha.push_back(10.0);
+  // Initialize line search parameter, alpha, for j
+  RealType alpha_j = 1.0;
+  // Initialize M and M' for km1 and k
+  RealType residual_val_k, residual_val_km1;
+  RealType M_km1, M_prime_km1, M_k;
+  residual_val_km1 = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
+  M_km1 = residual_val_km1 * residual_val_km1 / 2.0;
+  M_prime_km1 = -2.0*M_km1;
+ 
+  // Initialize algorithmic parameters and convergence loop
+  RealType eta = 0.1;
+  RealType beta = 1.0e-4;
+  int max_iterations =  10;
+  int iteration = 0;
+  bool converged = false;
+  RealType arg1, arg2;
 
-  for(unsigned int iAlpha = 0 ; iAlpha < candidateAlpha.size() ; iAlpha++){
+  while(!converged){
 
     for (int s(0); s < num_slip_; ++s) {
-      slip_np1_temp[s] = slip_np1_km1[s] + candidateAlpha[iAlpha] * delta_delta_slip[s];
+      slip_np1_k[s] = slip_np1_km1[s] +  alpha_j* delta_delta_slip[s];
     }
 
     try{
-      applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
-      updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
-      computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
-      computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_unperturbed, norm_slip_residual_temp);
-      residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual_temp);
-      std::cout << "DJL DEBUGGING alpha " << candidateAlpha[iAlpha] << ", residual " << residual_val << std::endl;
+      
+      // find residual for alpha_k
+      applySlipIncrement(slip_n, slip_np1_k, Fp_n, Lp_np1_k, Fp_np1_k);
+      updateHardness(slip_np1_k, hardness_n, hardness_np1_k);
+      computeStress(F_np1, Fp_np1_k, sigma_np1_k, S_np1_k, shear_np1_k);
+      computeResidual(dt, slip_n, slip_np1_k, hardness_np1_k, shear_np1_k, slip_residual_unperturbed, norm_slip_residual_k);
+      residual_val_k = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual_k);
+      M_k = residual_val_k * residual_val_k / 2.0; 
+      
+      // test residual      
+      if(M_k <= (1.0 - 2.0 * beta * alpha_j) * M_km1 || iteration > max_iterations) {
+        converged = true;
+      } 
+      else {
+        arg1 = eta*alpha_j;
+        arg2 = -alpha_j * alpha_j * M_prime_km1 / 2.0 / (M_k - M_km1 - alpha_j * M_prime_km1);
+        alpha_j = std::max(arg1, arg2);
+     
+        // increment iteration 
+        iteration += 1;
+      } 
     } catch (...) {
       std::cout << "DJL DEBUGGING caught exception in line search!" << std::endl;
-      residual_val = std::numeric_limits<RealType>::max();
     }
 
-    if(residual_val < bestResidual){
-      bestAlpha = candidateAlpha[iAlpha];
-      bestResidual = residual_val;
-    }
   }
-
-  std::cout << "DJL DEBUGGING Best alpha " << bestAlpha << ", best residual " << bestResidual << "\n" << std::endl;  
-
-  alpha = bestAlpha;
+#ifdef PRINT_DEBUG
+  std::cout << "Number of line search iterations: " << iteration << ", alpha: " << alpha_j << std::endl;
+#endif
+  alpha = alpha_j;
 }
 
 //------------------------------------------------------------------------------

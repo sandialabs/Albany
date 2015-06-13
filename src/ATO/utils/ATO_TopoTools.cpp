@@ -22,6 +22,11 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
   }
 
   entityType = topoParams.get<std::string>("Entity Type");
+
+  if( topoParams.isType<std::string>("Integration Method") )
+    integrationMethod = topoParams.get<std::string>("Integration Method");
+  else
+    integrationMethod = "Gauss Quadrature";
   
   if( topoParams.isType<int>("Topology Output Filter") )
     topologyOutputFilter = topoParams.get<int>("Topology Output Filter");
@@ -32,6 +37,24 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
   else spatialFilterIndex = -1;
 
   bounds = topoParams.get<Teuchos::Array<double> >("Bounds");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    bounds[0] > bounds[1], Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error!  Topology bounds require bounds[0] < bounds[1]" << std::endl);
+
+  if( topoParams.isType<double>("Void Value") )
+    voidValue = topoParams.get<double>("Void Value");
+  else
+    voidValue = bounds[0];
+
+  if( topoParams.isType<double>("Interface Value") )
+    interfaceValue = topoParams.get<double>("Interface Value");
+  else
+    interfaceValue = (bounds[0]+bounds[1])/2.0;
+
+  if( topoParams.isType<double>("Material Value") )
+    materialValue = topoParams.get<double>("Material Value");
+  else
+    materialValue = bounds[1];
 
   const Teuchos::ParameterList& functionParams = topoParams.sublist("Functions");
   int nFunctions = functionParams.get<int>("Number of Functions");

@@ -64,6 +64,8 @@ public virtual Albany::AbstractProblem {
    Teuchos::RCP<Topology> topology;
    int functionIndex;
 
+   std::string strIntegrationMethod;
+
 };
 
 }

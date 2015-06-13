@@ -140,7 +140,8 @@ IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
 # On Intel, turn of interprocedural optimization at linking to keep linker from hanging
 # This could possibly be removed with further study (GAH)
 #  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-ip")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,47")
+   MESSAGE("-- Using Intel Compiler.")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,488,161,47")
 ENDIF()
 
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
@@ -590,6 +591,9 @@ ENDIF()
 # Set optional dependency on GOAL, defaults to Disabled
 OPTION(ENABLE_GOAL "Flag to turn on goal-oriented error estimation source code" OFF)
 IF (ENABLE_GOAL)
+  IF(NOT ENABLE_SCOREC)
+    MESSAGE(FATAL_ERROR "\nError: GOAL requires ENABLE_SCOREC to be ON\n")
+  ENDIF()
   ADD_DEFINITIONS(-DALBANY_GOAL)
   MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
   SET(ALBANY_GOAL TRUE)
