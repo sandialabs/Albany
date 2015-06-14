@@ -3,9 +3,13 @@ This documents lists to-dos to get Albany working when
 KOKKOS_UNDER_DEVELOPMENT is turned ON.
 
 Commented out ifdefs: 
-src/Aeras/evaluators/Aeras_ComputeBasisFunctions*.hpp
-src/Aeras/evaluators/Aeras_ShallowWaterResid*.hpp
-src/evaluators/PHAL_ComputeBasisFunctions*.hpp
+- src/Aeras/evaluators/Aeras_ComputeBasisFunctions*.hpp
+- src/Aeras/evaluators/Aeras_ShallowWaterResid*.hpp
+- src/evaluators/PHAL_ComputeBasisFunctions*.hpp (kokkos kernels are implemented
+for 3D only. Wait until Compute Basis functions kernels are implemented in
+Intrepid)
+- src/evaluators/PHAL_GatherSolution*.hpp  (need to fix memory leak with
+Kokkos::vector)
 
 Failing tests when KOKKOS_UNDER_DEVELOPMENT is ON + SERIAL node: 
 The following tests FAILED:

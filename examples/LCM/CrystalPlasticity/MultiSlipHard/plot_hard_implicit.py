@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 
 file_name = "MultiSlipPlaneHard_Implicit.exo"
 exo_file = exodus.exodus(file_name,"r")
-inp_var_name = "gamma_1_1"
-dep_var_name = "tau_hard_1_1"
-dep_var_name_2 = "tau_1_1"
-dep_var_name_3 =  "CP_Residual_1"
+inp_var_name = "gamma_3_1"
+dep_var_name = "tau_hard_3_1"
+dep_var_name_2 = "tau_3_1"
+dep_var_name_3 =  "CP_Residual_3"
 dep_var_name_4 = "Cauchy_Stress_01"
-
+dep_var_name_5 = "gamma_dot_3_1"
 int_pt = 1
 block_id = 2
 
@@ -28,6 +28,7 @@ dep_var = numpy.zeros(shape=(n_steps,1))
 dep_var_2 = numpy.zeros(shape=(n_steps,1))
 dep_var_3 = numpy.zeros(shape=(n_steps,1))
 dep_var_4 = numpy.zeros(shape=(n_steps,1))
+dep_var_5 = numpy.zeros(shape=(n_steps,1))
 check = numpy.zeros(shape=(n_steps,1))
 
 ## Material parameters for power-law hardening
@@ -41,6 +42,7 @@ for i in range(n_steps):
     dep_var_2[i]=exo_file.get_element_variable_values(block_id,dep_var_name_2,i+1)
     dep_var_3[i]=exo_file.get_element_variable_values(block_id,dep_var_name_3,i+1)
     dep_var_4[i]=exo_file.get_element_variable_values(block_id,dep_var_name_4,i+1)
+    dep_var_5[i]=exo_file.get_element_variable_values(block_id,dep_var_name_5,i+1)
     check[i] = hardening/recovery*(1.0 - numpy.exp(-recovery*inp_var[i])) 
 
 
@@ -86,6 +88,15 @@ lg.draw_frame(False)
 plt.tight_layout()
 plt.show()
 fig.savefig(output_file_name_4)
+
+fig, ax = plt.subplots()
+ax.plot(time_vals[:-1],dep_var_5[:-1],color='blue',marker='o',label=file_name)
+plt.xlabel('time')
+plt.ylabel('gamma_dot (m/m)')
+lg = plt.legend(loc = 4)
+lg.draw_frame(False)
+plt.tight_layout()
+plt.show()
 
 
 # Exporting data to file

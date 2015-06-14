@@ -14,6 +14,7 @@
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
 #define LINE_SEARCH
+#define SLIP_PREDICTOR
 
 #include <typeinfo>
 #include <iostream>
@@ -238,6 +239,22 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     this->state_var_output_flags_.push_back(
         p->get<bool>(output_gamma_string, false));
   }
+  // gammadots for each slip system
+    for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
+      std::string g_dot = Albany::strint("gamma_dot", num_ss + 1, '_');
+      std::string gamma_dot_string = (*field_name_map_)[g_dot];
+      std::string output_gamma_dot_string = "Output " + gamma_dot_string;
+      this->eval_field_map_.insert(std::make_pair(gamma_dot_string, dl->qp_scalar));
+      this->num_state_variables_++;
+      this->state_var_names_.push_back(gamma_dot_string);
+      this->state_var_layouts_.push_back(dl->qp_scalar);
+      this->state_var_init_types_.push_back("scalar");
+      this->state_var_init_values_.push_back(0.0);
+      this->state_var_old_state_flags_.push_back(true);
+      this->state_var_output_flags_.push_back(
+          p->get<bool>(output_gamma_dot_string, false));
+  }
+
   // tau_hard - state variable for hardening on each slip system
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string t_h = Albany::strint("tau_hard", num_ss + 1, '_');
@@ -341,6 +358,16 @@ bool print_debug = false;
     previous_slips.push_back(
         &((*workset.stateArrayPtr)[gamma_string + "_old"]));
   }
+  // extract slip rate on each slip system
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips_dot;
+  std::vector<Albany::MDArray *> previous_slips_dot;
+  for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
+    std::string g_dot = Albany::strint("gamma_dot", num_ss + 1, '_');
+    std::string gamma_dot_string = (*field_name_map_)[g_dot];
+    slips_dot.push_back(eval_fields[gamma_dot_string]);
+    previous_slips_dot.push_back(
+        &((*workset.stateArrayPtr)[gamma_dot_string + "_old"]));
+  }
   // extract hardening on each slip system
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > hards;
   std::vector<Albany::MDArray *> previous_hards;
@@ -351,7 +378,6 @@ bool print_debug = false;
     previous_hards.push_back(
         &((*workset.stateArrayPtr)[tau_hard_string + "_old"]));
   }
-
   // store shear on each slip system for output
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > shears;
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
@@ -379,6 +405,7 @@ bool print_debug = false;
   Intrepid::Tensor<ScalarT> F_np1(num_dims_);
   Intrepid::Tensor<ScalarT> Fp_n(num_dims_);
   std::vector<ScalarT> slip_n(num_slip_);
+  std::vector<ScalarT> slip_dot_n(num_slip_);
   std::vector<ScalarT> hardness_n(num_slip_);
   ScalarT equivalent_plastic_strain;
 
@@ -419,16 +446,35 @@ bool print_debug = false;
       // Copy data from Albany fields into local data structures
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
-	  F_np1(i, j) = def_grad(cell, pt, i, j);
+	        F_np1(i, j) = def_grad(cell, pt, i, j);
           Fp_n(i, j) = previous_plastic_deformation(cell, pt, i, j);
         }
       }
       for (int s(0); s < num_slip_; ++s) {
-	slip_n[s] = (*(previous_slips[s]))(cell, pt);
-	slip_np1[s] = slip_n[s]; // initialize state n+1 assuming zero slip increment
-	slip_np1_km1[s] = slip_np1[s];
-	hardness_n[s] = (*(previous_hards[s]))(cell, pt);
+	      slip_n[s] = (*(previous_slips[s]))(cell, pt);
+	      // initialize state n+1 with either (a) zero slip incremet or (b) a predictor
+	      slip_np1[s] = slip_n[s];
+
+#ifdef SLIP_PREDICTOR
+	        slip_dot_n[s] = (*(previous_slips_dot[s]))(cell, pt);
+          slip_np1[s] += dt * slip_dot_n[s];
+#endif
+
+	      slip_np1_km1[s] = slip_np1[s];
+	      hardness_n[s] = (*(previous_hards[s]))(cell, pt);
       }
+
+#ifdef PRINT_DEBUG
+      for (int s(0); s < num_slip_; ++s) {
+        std::cout << "Slip on system " << s << " before predictor: " << slip_n[s] << std::endl;
+      }
+      for (int s(0); s < num_slip_; ++s) {
+        std::cout << "Slip rate on system " << s << " is: " << slip_dot_n[s] << std::endl;
+      }
+      for (int s(0); s < num_slip_; ++s) {
+        std::cout << "Slip on system " << s << " after predictor: " << slip_np1[s] << std::endl;
+      }
+#endif
 
       if(integration_scheme_ == EXPLICIT){
 
@@ -647,9 +693,16 @@ bool print_debug = false;
         }
       }
       for (int s(0); s < num_slip_; ++s) {
-	(*(slips[s]))(cell, pt) = slip_np1[s];
-	(*(hards[s]))(cell, pt) = hardness_np1[s];
-	(*(shears[s]))(cell, pt) = shear_np1[s];
+	      (*(slips[s]))(cell, pt) = slip_np1[s];
+	      (*(hards[s]))(cell, pt) = hardness_np1[s];
+	      (*(shears[s]))(cell, pt) = shear_np1[s];
+	      // storing the slip rate for the predictor
+	        if (dt > 0) {
+	          (*(slips_dot[s]))(cell, pt) = (slip_np1[s] - slip_n[s])/dt;
+	        }
+	        else {
+	          (*(slips_dot[s]))(cell, pt) = 0.0;
+	        }
       }
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
@@ -729,7 +782,6 @@ updateSlipViaExplicitIntegration(ScalarT                         dt,
 
     int sign = shear[s] < 0 ? -1 : 1;
     temp = std::fabs(shear[s] / (tauC + hardness[s]));
-    // JWF - m is positive, we don't need std::fabs(std::pow(temp,m))
     slip_np1[s] = slip_n[s] + dt * g0 * std::pow(temp, m) * sign;
   }
 }
@@ -848,7 +900,7 @@ computeResidual(ScalarT                       dt,
     sign = shear_np1[s] < 0 ? -1 : 1;
     temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
     // establishing normalized filter for active slip systems
-    const double active_filter = std::numeric_limits<RealType>::epsilon()*100.0;
+    const double active_filter = std::numeric_limits<RealType>::epsilon()*10.0;
     if (temp < active_filter) {
       dgamma_value2 = dt * g0 * 0.0 * sign;
     }

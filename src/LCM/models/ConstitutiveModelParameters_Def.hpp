@@ -3,6 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -156,7 +159,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
 
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    ddims_.push_back(24);
+    ddims_.push_back(ALBANY_SLFAD_SIZE);
    int num_cells=dims[0];
     point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
     point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
@@ -335,7 +338,11 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
     typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it; 
+
    for (it = field_map_.begin(); it != field_map_.end();    ++it) {
 
     constant_value = constant_value_map_[it->first];
@@ -371,6 +378,13 @@ evaluateFields(typename Traits::EvalData workset)
 
     }
    }
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "ConstitutiveModelParameters time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
 #endif
 }
 //------------------------------------------------------------------------------

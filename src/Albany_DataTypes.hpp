@@ -39,6 +39,7 @@ typedef double RealType;
 //  typedef Sacado::ELRFad::SLFad<double,16> FadType;
   typedef Sacado::Fad::SLFad<double, ALBANY_SLFAD_SIZE> FadType;
 #else
+  #define ALBANY_SFAD_SIZE 300
   typedef Sacado::Fad::DFad<double> FadType;
 #endif
 typedef Sacado::Fad::DFad<double> TanFadType;
