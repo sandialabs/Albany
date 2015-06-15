@@ -17,6 +17,7 @@ export SUPERLUDIR=/projects/install/rhel6-x86_64/sems/tpl/superlu/4.3/gcc/4.7.2/
 export PARMETISDIR=/projects/install/rhel6-x86_64/sems/tpl/parmetis/4.0.3/gcc/4.7.2/base
 # export CISMDIR=/home/ikalash/Desktop/glimmer/felix_interface_branch # TODO - Fix
 # export YAMLDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/yaml_cpp_0.5.1
+export HWLOCDIR=/projects/install/rhel6-x86_64/kokkos/tpl/hwloc/1.10.1/gcc/4.7.2/base
 
 export SSGUSER=$(whoami)
 
