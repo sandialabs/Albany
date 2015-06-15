@@ -84,6 +84,7 @@ void HydrologyResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalData
 {
   ScalarT resRhs, resMass, resStiff;
 
+  // (rhs,v) - (h/mu_i,phi) + (q,grad(v))
   for (int cell=0; cell < workset.numCells; ++cell)
   {
     for (int node=0; node < numNodes; ++node)
@@ -92,7 +93,6 @@ void HydrologyResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalData
       for (int qp=0; qp < numQPs; ++qp)
       {
         resRhs  += (m(cell,qp)/rho_w - has_melt_opening * m(cell,qp)/rho_i + constantRhs(cell,qp)) * wBF(cell,node,qp);
-
         resMass += h(cell,qp)*phi(cell,qp)*wBF(cell,node,qp)/mu_i(cell);
 
         for (int dim=0; dim<numDims; ++dim)
@@ -100,7 +100,8 @@ void HydrologyResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalData
           resStiff += q(cell,qp,dim) * wGradBF(cell,node,qp,dim);
         }
       }
-      residual (cell,node) = resRhs - resMass - resStiff;
+
+      residual (cell,node) = resRhs - resMass + resStiff;
     }
   }
 }
