@@ -477,37 +477,58 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
 
   overlapTopoVec->Import(*topoVec, *importer, Insert);
 
-  // If this is not a fixed block, copy the topology into the state manager
+  // copy the topology into the state manager
   double* otopo; overlapTopoVec->ExtractView(&otopo);
+  double matVal = _topology->getMaterialValue();
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
-    int numCells = wsTopo.dimension(0);
-    int numNodes = wsTopo.dimension(1);
-    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ){
+    int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
           int lid = overlapNodeMap->LID(gid);
           wsTopo(cell,node) = otopo[lid];
         }
-    }
   }
-  // Otherwise, if it is a fixed block, set the state and topology variable to the material value
-  double matVal = _topology->getMaterialValue();
+
+  // determine fixed/nonfixed status of nodes across processors
+  Epetra_Vector overlapFixedNodeMask(*overlapTopoVec);
+  Epetra_Vector localFixedNodeMask(*topoVec);
+  overlapFixedNodeMask.PutScalar(1.0);
+  double* fMask; overlapFixedNodeMask.ExtractView(&fMask);
   for(int ws=0; ws<numWorksets; ws++){
     Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
-    int numCells = wsTopo.dimension(0);
-    int numNodes = wsTopo.dimension(1);
-    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
+    int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
+    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ){
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
           int lid = overlapNodeMap->LID(gid);
+          fMask[lid] = 0.0;
+        }
+    } else {
+      for(int cell=0; cell<numCells; cell++)
+        for(int node=0; node<numNodes; node++){
           wsTopo(cell,node) = matVal;
-          otopo[lid] = matVal;
         }
     }
   }
+  localFixedNodeMask.PutScalar(0.0);
+  localFixedNodeMask.Export(overlapFixedNodeMask, *exporter, Epetra_Min);
+  overlapFixedNodeMask.Import(localFixedNodeMask, *importer, Insert);
+  
+  // if it is a fixed block, set the topology variable to the material value
+  for(int ws=0; ws<numWorksets; ws++){
+    Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
+    int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
+    for(int cell=0; cell<numCells; cell++)
+      for(int node=0; node<numNodes; node++){
+        int gid = wsElNodeID[ws][cell][node];
+        int lid = overlapNodeMap->LID(gid);
+        if(fMask[lid] != 0.0) otopo[lid] = matVal;
+      }
+  }
+
 
   // save topology to nodal data for output sake
   std::string nodal_topoName = _topology->getName()+"_node";
@@ -524,6 +545,9 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
 /******************************************************************************/
 {
 
+  // aggregated objective derivative is stored in the first subproblem
+  Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
+
   g = *gValue;
 
   Teuchos::RCP<Albany::AbstractDiscretization> disc = _subProblems[0].app->getDiscretization();
@@ -536,22 +560,6 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
   dgdpVec->PutScalar(0.0);
   double* odgdp; overlapdgdpVec->ExtractView(&odgdp);
 
-  // set fixed blocks to the highest sensitivity (Material goes here first)
-  double globalMin = 0.0;
-  overlapdgdpVec->MinValue(&globalMin);
-
-  int numWorksets = wsElNodeID.size();
-  for(int ws=0; ws<numWorksets; ws++){
-    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ) continue;
-    int numCells = wsElNodeID[ws].size();
-    int numNodes = wsElNodeID[ws][0].size();
-    for(int cell=0; cell<numCells; cell++)
-      for(int node=0; node<numNodes; node++){
-        int gid = wsElNodeID[ws][cell][node];
-        int lid = overlapNodeMap->LID(gid);
-        odgdp[lid] = globalMin;
-      }
-  }
   if( _topology->getEntityType() == "Distributed Parameter" )
     *dgdpVec = *overlapdgdpVec;
   else
@@ -561,14 +569,27 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
   double* lvec; dgdpVec->ExtractView(&lvec);
 
   // apply filter if requested
+  Epetra_Vector filtered_dgdpVec(*dgdpVec);
   if(_derivativeFilter != Teuchos::null){
-    Epetra_Vector filtered_dgdpVec(*dgdpVec);
     _derivativeFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *dgdpVec, filtered_dgdpVec);
     filtered_dgdpVec.ExtractView(&lvec);
     std::memcpy((void*)dgdp, (void*)lvec, numLocalNodes*sizeof(double));
   } else {
     std::memcpy((void*)dgdp, (void*)lvec, numLocalNodes*sizeof(double));
   }
+
+  // save dgdp to nodal data for output sake
+  overlapdgdpVec->Import(filtered_dgdpVec, *importer, Insert);
+  Teuchos::RCP<Albany::NodeFieldContainer> 
+    nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
+  const Teuchos::RCP<const Teuchos_Comm>
+    commT = Albany::createTeuchosCommFromEpetraComm(overlapdgdpVec->Comm());
+  std::string nodal_derName = _aggregator->getOutputDerivativeName()+"_node";
+  const Teuchos::RCP<const Tpetra_Vector>
+    overlapdgdpVecT = Petra::EpetraVector_To_TpetraVectorConst(
+      *overlapdgdpVec, commT);
+  (*nodeContainer)[nodal_derName]->saveFieldVector(overlapdgdpVecT,/*offset=*/0);
+
 }
 /******************************************************************************/
 void
@@ -1024,6 +1045,7 @@ ATO::SpatialFilter::buildOperator(
     std::set<int> excludeNodes;
     if( blocks.size() > 0 ){
       size_t num_worksets = coords.size();
+      // add to the excludeNodes set all nodes that are not to be smoothed
       for (size_t ws=0; ws<num_worksets; ws++) {
         if( find(blocks.begin(), blocks.end(), wsEBNames[ws]) != blocks.end() ) continue;
         int num_cells = coords[ws].size();
@@ -1032,6 +1054,21 @@ ATO::SpatialFilter::buildOperator(
           for (int node=0; node<num_nodes; node++) {
             int gid = wsElNodeID[ws][cell][node];
             excludeNodes.insert(gid);
+          }
+        }
+      }
+      // remove from the excludeNodes set all nodes that are on boundaries 
+      // between smoothed and non-smoothed blocks
+      std::set<int>::iterator it;
+      for (size_t ws=0; ws<num_worksets; ws++) {
+        if( find(blocks.begin(), blocks.end(), wsEBNames[ws]) == blocks.end() ) continue;
+        int num_cells = coords[ws].size();
+        for (int cell=0; cell<num_cells; cell++) {
+          size_t num_nodes = coords[ws][cell].size();
+          for (int node=0; node<num_nodes; node++) {
+            int gid = wsElNodeID[ws][cell][node];
+            it = excludeNodes.find(gid);
+            excludeNodes.erase(it,excludeNodes.end());
           }
         }
       }

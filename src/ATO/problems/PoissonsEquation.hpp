@@ -271,7 +271,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     p->set<std::string>("Unweighted Variable Name", kinVarName);
     p->set<std::string>("Weighted Variable Name", kinVarName+"_Weighted");
     p->set<std::string>("Variable Layout", "QP Vector");
-    p->set<int>("Function Index", wfParams.get<int>("Flux"));
+    p->set<int>("Function Index", wfParams.get<int>("kinVar"));
     
     if( topology->getEntityType() == "Distributed Parameter" )
       ev = rcp(new ATO::TopologyFieldWeighting<EvalT,AlbanyTraits>(*p,dl));

@@ -283,6 +283,8 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
                                    "scalar", initValue, /*registerOldState=*/ false, false);
     stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
                                    "scalar", initValue, /*registerOldState=*/ false, true);
+    stateMgr->registerStateVariable(derName+"_node", dl->node_node_scalar, "all",
+                                   "scalar", initValue, /*registerOldState=*/ false, true);
 
     if( topology->TopologyOutputFilter() >= 0 )
       stateMgr->registerStateVariable(topology->getName()+"_node_filtered", dl->node_node_scalar, "all",
@@ -354,32 +356,6 @@ ATO::OptimizationProblem::InitTopOpt()
     Intrepid::CellTools<double>::setJacobianDet(jacobian_det, jacobian);
     Intrepid::FunctionSpaceTools::computeCellMeasure<double>
      (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
-
-// moving this to ATO::Solver::evalModel()
-//    // initialize topology of fixed blocks to have material
-//    if( topology->getEntityType() == "State Variable" ){
-//      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
-//        double matVal = topology->getMaterialValue();
-//        Albany::MDArray& wsTopo = dest[ws][topology->getName()];
-//        int numCells = wsTopo.dimension(0);
-//        int numNodes = wsTopo.dimension(1);
-//        for(int cell=0; cell<numCells; cell++)
-//          for(int node=0; node<numNodes; node++){
-//            wsTopo(cell,node) = matVal;
-//          }
-//      }
-//    } else if( topology->getEntityType() == "Distributed Parameter" ){
-//      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
-//        double matVal = topology->getMaterialValue();
-//        Albany::MDArray& wsTopo = dest[ws][topology->getName()];
-//        int numCells = wsTopo.dimension(0);
-//        int numNodes = wsTopo.dimension(1);
-//        for(int cell=0; cell<numCells; cell++)
-//          for(int node=0; node<numNodes; node++){
-//            wsTopo(cell,node) = matVal;
-//          }
-//      }
-//    }
 
   }
   overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();

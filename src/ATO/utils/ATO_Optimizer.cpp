@@ -219,8 +219,9 @@ Optimizer_OC::Optimize()
   solverInterface->ComputeObjective(p, f, dfdp);
   computeUpdatedTopology();
 
-  double pnorm = computeNorm(p, numOptDofs);
-  convergenceChecker->initNorm(f, pnorm);
+  double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
+  comm->SumAll(&f, &global_f, 1);
+  convergenceChecker->initNorm(global_f, pnorm);
 
   int iter=0;
   bool optimization_converged = false;
@@ -552,8 +553,9 @@ Optimizer_NLopt::Optimize()
   double* dfdp_init = new double[numOptDofs];
   solverInterface->ComputeObjective(p, f_init, dfdp_init);
   delete [] dfdp_init;
-  double pnorm = computeNorm(p, numOptDofs);
-  convergenceChecker->initNorm(f_init, pnorm);
+  double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
+  comm->SumAll(&f_init, &global_f, 1);
+  convergenceChecker->initNorm(global_f, pnorm);
 
   double minf;
   int errorcode = nlopt_optimize(opt, p, &minf);

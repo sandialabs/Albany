@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Solution Method" type="string" value="ATO Problem" />
-    <Parameter name="Number of Subproblems" type="int" value="2" />
+    <Parameter name="Number of Subproblems" type="int" value="1" />
     <Parameter name="Verbose Output" type="bool" value="1" />
 
 
@@ -12,17 +12,16 @@
     <ParameterList name="Objective Aggregator">
       <Parameter name="Objective Name" type="string" value="F" />
       <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
-      <Parameter name="Objectives" type="Array(string)" value="{R0,R1}"/>
-      <Parameter name="Objective Derivatives" type="Array(string)" value="{dR0dRho,dR1dRho}"/>
-      <Parameter name="Weighting" type="string" value="Scaled"/>
-      <Parameter name="Weights" type="Array(double)" value="{0.1,0.9}"/>
-      <Parameter name="Spatial Filter" type="int" value="0" />
+      <Parameter name="Objectives" type="Array(string)" value="{R0}"/>
+      <Parameter name="Objective Derivatives" type="Array(string)" value="{dR0dRho}"/>
+      <Parameter name="Weighting" type="string" value="Uniform"/>
     </ParameterList>
 
     <ParameterList name="Spatial Filters">
       <Parameter name="Number of Filters" type="int" value="1" />
       <ParameterList name="Filter 0">
-        <Parameter name="Filter Radius" type="double" value="0.075" />
+        <Parameter name="Filter Radius" type="double" value="0.15" />
+        <Parameter name="Blocks" type="Array(string)" value="{block_2}" />
       </ParameterList>
     </ParameterList>
 
@@ -31,13 +30,14 @@
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
       <Parameter name="Move Limiter" type="double" value="0.5" />
       <ParameterList name="Convergence Tests">
-        <Parameter name="Maximum Iterations" type="int" value="25" />
+        <Parameter name="Maximum Iterations" type="int" value="2" />
         <Parameter name="Combo Type" type="string" value="OR"/>
         <Parameter name="Relative Topology Change" type="double" value="5e-3" />
         <Parameter name="Relative Objective Change" type="double" value="1e-4" />
       </ParameterList>
       <Parameter name="Volume Enforcement Maximum Iterations" type="int" value="120" />
       <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-6" />
+      <Parameter name="Minimum Density" type="double" value="0.05" />
       <Parameter name="Objective Name" type="string" value="F" />
       <Parameter name="Volume Multiplier Initial Guess" type="double" value="1e5" />
       <Parameter name="Volume Fraction Constraint" type="double" value="0.5" />
@@ -55,6 +55,7 @@
       <Parameter name="Entity Type" type="string" value="State Variable" />
       <Parameter name="Bounds" type="Array(double)" value="{0.0,1.0}" />
       <Parameter name="Initial Value" type="double" value="0.5" />
+      <Parameter name="Fixed Blocks" type="Array(string)" value="{block_1,block_3,block_4}" />
       <ParameterList name="Functions">
         <Parameter name="Number of Functions" type="int" value="1" />
         <ParameterList name="Function 0">
@@ -67,46 +68,7 @@
     </ParameterList>
 
     <ParameterList name="Physics Problem 0">    
-      <Parameter name="Name" type="string" value="Poissons Equation 2D" />
-      <!--
-      <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
-      -->
-  
-      <ParameterList name="Dirichlet BCs">
-        <Parameter name="DBC on NS nodelist_1 for DOF P" type="double" value="0.0"/>
-      </ParameterList> <!-- end Dirichlet BCs -->
-      <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS surface_1 for DOF P set (dudx, dudy)" type="Array(double)" value="{5e4,0.0}"/>
-      </ParameterList>
-
-      <ParameterList name="Apply Topology Weight Functions">
-        <Parameter name="kinVar" type="int" value="0" />
-      </ParameterList>
-
-      <Parameter name="Isotropic Modulus" type="double" value="1e9"/>
-
-      <!--
-          This response provides an objective function and the derivative of the 
-          objective function wrt the topology defined above.  The variable is added
-          to the state manager, and can be accessed by the objective aggregator above.
-          You can define as many of these as you like.
-      -->
-      <ParameterList name="Response Functions">
-        <Parameter name="Number of Response Vectors" type="int" value="1"/>
-        <ParameterList name="Response Vector 0">
-          <Parameter name="Name" type="string" value="Stiffness Objective" />
-          <Parameter name="Gradient Field Name" type="string" value="Phi Gradient" />
-          <Parameter name="Gradient Field Layout" type="string" value="QP Vector" />
-          <Parameter name="Work Conjugate Name" type="string" value="kinVar" />
-          <Parameter name="Work Conjugate Layout" type="string" value="QP Vector" />
-          <Parameter name="Response Name" type="string" value="R0" />
-          <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
-        </ParameterList>
-      </ParameterList>
-    </ParameterList>
-
-    <ParameterList name="Physics Problem 1">    
-      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+      <Parameter name="Name" type="string" value="LinearElasticity 3D" />
       <!--
       <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
       -->
@@ -114,9 +76,11 @@
       <ParameterList name="Dirichlet BCs">
         <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
         <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+        <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
       </ParameterList> <!-- end Dirichlet BCs -->
       <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS surface_1 for DOF sig_y set dudn" type="Array(double)" value="{4.5}"/>
+        <Parameter name="NBC on SS surface_2 for DOF sig_y set dudn" type="Array(double)" value="{4.5e4}"/>
+        <Parameter name="NBC on SS surface_3 for DOF sig_y set dudn" type="Array(double)" value="{4.5e4}"/>
       </ParameterList>
 
       <ParameterList name="Apply Topology Weight Functions">
@@ -140,8 +104,8 @@
           <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
           <Parameter name="Work Conjugate Name" type="string" value="Stress" />
           <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
-          <Parameter name="Response Name" type="string" value="R1" />
-          <Parameter name="Response Derivative Name" type="string" value="dR1dRho" />
+          <Parameter name="Response Name" type="string" value="R0" />
+          <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
         </ParameterList>
       </ParameterList>
     </ParameterList>
@@ -150,8 +114,8 @@
 
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
-    <Parameter name="Exodus Input File Name" type="string" value="mitchell.gen"/>
-    <Parameter name="Exodus Output File Name" type="string" value="mitchell.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="fblock.gen"/>
+    <Parameter name="Exodus Output File Name" type="string" value="fblock.exo"/>
   </ParameterList>
 
   <ParameterList name="Piro">
