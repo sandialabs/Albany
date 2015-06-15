@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_RHS_HPP
-#define FELIX_HYDROLOGY_RHS_HPP 1
+#ifndef FELIX_HYDROLOGY_HYDROSTATIC_POTENTIAL_HPP
+#define FELIX_HYDROLOGY_HYDROSTATIC_POTENTIAL_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,15 +22,15 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits>
-class HydrologyRhs : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyHydrostaticPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                      public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  HydrologyRhs (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+  HydrologyHydrostaticPotential (const Teuchos::ParameterList& p,
+                                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -39,26 +39,20 @@ public:
 
 private:
 
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-
   // Input:
-  PHX::MDField<ScalarT,Cell>            mu_i;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  h;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  phi_H;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  u_b;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  omega;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      z_s;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      H;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint>  rhs;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      phi_H;
 
-  unsigned int numQPs;
+  int numQPs;
 
-  ScalarT h_b;
-  ScalarT l_b;
-
-  double use_net_bump_height;
+  double rho_i;
+  double rho_w;
+  double g;
 };
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_RHS_HPP
+#endif // FELIX_HYDROLOGY_HYDROSTATIC_POTENTIAL_HPP

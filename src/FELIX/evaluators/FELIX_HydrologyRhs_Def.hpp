@@ -13,18 +13,16 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 HydrologyRhs<EvalT, Traits>::HydrologyRhs (const Teuchos::ParameterList& p,
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
-  mu_i      (p.get<std::string> ("Ice Viscosity Variable Name"), dl->cell_scalar2),
-  h         (p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar),
-  H         (p.get<std::string> ("Ice Thickness QP Variable Name"), dl->qp_scalar),
-  z_s       (p.get<std::string> ("Surface Height QP Variable Name"), dl->qp_scalar),
-  u_b       (p.get<std::string> ("Sliding Velocity Norm QP Variable Name"), dl->qp_scalar),
-  omega     (p.get<std::string> ("Surface Water Input QP Variable Name"), dl->qp_scalar),
-  rhs       (p.get<std::string> ("RHS QP Name"),dl->qp_scalar)
+  mu_i  (p.get<std::string> ("Ice Viscosity Variable Name"), dl->cell_scalar2),
+  h     (p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar),
+  phi_H (p.get<std::string> ("Hydrostatic Potential QP Variable Name"), dl->qp_scalar),
+  u_b   (p.get<std::string> ("Sliding Velocity Norm QP Variable Name"), dl->qp_scalar),
+  omega (p.get<std::string> ("Surface Water Input QP Variable Name"), dl->qp_scalar),
+  rhs   (p.get<std::string> ("RHS QP Name"),dl->qp_scalar)
 {
   this->addDependentField(mu_i);
   this->addDependentField(h);
-  this->addDependentField(H);
-  this->addDependentField(z_s);
+  this->addDependentField(phi_H);
   this->addDependentField(u_b);
   this->addDependentField(omega);
 
@@ -32,7 +30,6 @@ HydrologyRhs<EvalT, Traits>::HydrologyRhs (const Teuchos::ParameterList& p,
 
   // Setting parameters
   Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("Hydrology Parameters");
-  Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("Physical Parameters");
 
   h_b = hydrology_params.get<double>("Bed Bumps Height");
   l_b = hydrology_params.get<double>("Bed Bumps Length");
@@ -45,11 +42,6 @@ HydrologyRhs<EvalT, Traits>::HydrologyRhs (const Teuchos::ParameterList& p,
   {
     use_net_bump_height = 0.0;
   }
-
-  mu_w  = physical_params.get<double>("Water Viscosity");
-  rho_i = physical_params.get<double>("Ice Density");
-  rho_w = physical_params.get<double>("Water Density");
-  g     = physical_params.get<double>("Gravity Acceleration");
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_scalar->dimensions(dims);
@@ -66,8 +58,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(mu_i,fm);
   this->utils.setFieldData(h,fm);
-  this->utils.setFieldData(H,fm);
-  this->utils.setFieldData(z_s,fm);
+  this->utils.setFieldData(phi_H,fm);
   this->utils.setFieldData(u_b,fm);
   this->utils.setFieldData(omega,fm);
 
@@ -78,14 +69,11 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void HydrologyRhs<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
-  ScalarT gradPhiNormSq, resRhs, resMass, resNlin, resStiff;
   for (int cell=0; cell < workset.numCells; ++cell)
   {
     for (int qp=0; qp < numQPs; ++qp)
     {
-      rhs(cell,qp) = omega(cell,qp) - u_b(cell,qp)*(h_b - use_net_bump_height*h(cell,qp))/l_b
-                     + rho_i*g*h(cell,qp)*H(cell,qp)/mu_i(cell)
-                     + rho_w*g*h(cell,qp)*(z_s(cell,qp)-H(cell,qp))/mu_i(cell);
+      rhs(cell,qp) = omega(cell,qp) - u_b(cell,qp)*(h_b - use_net_bump_height*h(cell,qp))/l_b + h(cell,qp)*phi_H(cell,qp)/ mu_i(cell);
     }
   }
 }
