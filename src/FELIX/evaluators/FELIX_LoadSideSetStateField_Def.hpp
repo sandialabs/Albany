@@ -16,36 +16,10 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits>
-SaveSideSetStateField<EvalT, Traits>::
-SaveSideSetStateField (const Teuchos::ParameterList& p,
-                       const Albany::MeshSpecsStruct& meshSpecs)
-{
-  // States Not Saved for Generic Type, only Specializations
-  this->setName("Save Side Set State Field" );
-}
-
 // **********************************************************************
-template<typename EvalT, typename Traits>
-void SaveSideSetStateField<EvalT, Traits>::
-postRegistrationSetup (typename Traits::SetupData d,
-                       PHX::FieldManager<Traits>& fm)
-{
-  // States Not Saved for Generic Type, only Specializations
-}
-
-// **********************************************************************
-template<typename EvalT, typename Traits>
-void SaveSideSetStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
-{
-  // States Not Saved for Generic Type, only Specializations
-}
-// **********************************************************************
-
-// **********************************************************************
-template<typename Traits>
-SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
-SaveSideSetStateField (const Teuchos::ParameterList& p,
+template<typename EvalT,typename Traits>
+LoadSideSetStateField<EvalT, Traits>::
+LoadSideSetStateField (const Teuchos::ParameterList& p,
                        const Albany::MeshSpecsStruct& meshSpecs)
 {
   sideSetName = p.get<std::string>("Side Set Name");
@@ -56,12 +30,9 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
   PHX::MDField<ScalarT> f(cellFieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Cell Field Layout") );
   field = f;
 
-  savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(cellFieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
+  this->addEvaluatedField (field);
 
-  this->addDependentField (field);
-  this->addEvaluatedField (*savestate_operation);
-
-  this->setName ("Save Cell Field " + cellFieldName + " to Side Set State " + sideStateName + "Residual");
+  this->setName ("Load Cell Field " + cellFieldName + " from Side Set State " + sideStateName);
 
   const CellTopologyData * const elem_top = &meshSpecs.ctd;
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
@@ -75,16 +46,16 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 }
 
 // **********************************************************************
-template<typename Traits>
-void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
+template<typename EvalT, typename Traits>
+void LoadSideSetStateField<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
 }
 // **********************************************************************
-template<typename Traits>
-void SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
+template<typename EvalT, typename Traits>
+void LoadSideSetStateField<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
@@ -147,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
     Albany::StateArray::const_iterator it_state = elem_state_arrays[wsIndex2D].find(sideStateName);
 
     TEUCHOS_TEST_FOR_EXCEPTION (it_state == elem_state_arrays[wsIndex2D].end(), std::logic_error,
-                                "Error! Cannot locate " << sideStateName << " in PHAL_SaveSideSetStateField_Def.\n");
+                                "Error! Cannot locate " << sideStateName << " in PHAL_LoadSideSetStateField_Def.\n");
 
     // Now we have the two arrays: 3D and 2D. We need to take the part we need from the 3D
     // and put it at the right place in the 2D one
@@ -167,14 +138,14 @@ evaluateFields(typename Traits::EvalData workset)
     {
       case 1:
       {
-        state(elem2D_LID) = field(elem3D_LID);
+        field(elem3D_LID) = state(elem2D_LID);
         break;
       }
       case 2:
         for (int node = 0; node < dims[1]; ++node)
         {
           int node3D = cellType->getNodeMap(sideDims, elem_side, node);
-          state(elem2D_LID, node) = field(elem3D_LID,node3D);
+          field(elem3D_LID,node3D) = field(elem3D_LID,node3D);
         }
         break;
 
@@ -183,13 +154,13 @@ evaluateFields(typename Traits::EvalData workset)
         {
           int node3D = cellType->getNodeMap(sideDims, elem_side, node);
           for (int dim = 0; dim < dims[2]; ++dim)
-            state(elem2D_LID, node, dim) = field(elem3D_LID,node3D,dim);
+            field(elem3D_LID,node3D,dim) = state(elem2D_LID, node, dim);
         }
         break;
 
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                    "Error! Unexpected array dimensions in SaveSideSetStateField: " << size << ".\n");
+                                    "Error! Unexpected array dimensions in LoadSideSetStateField: " << size << ".\n");
     }
   }
 }
