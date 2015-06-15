@@ -49,21 +49,6 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     beta_given = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Given Beta Field Name"), dl->node_scalar);
     this->addDependentField (beta_given);
   }
-  else if (betaType == "Hydrostatic")
-  {
-#ifdef OUTPUT_TO_SCREEN
-    *output << "Hydrostatic beta:\n\n"
-            << "      beta = mu*rho*g*H\n\n"
-            << "  with H being the ice thickness, and\n"
-            << "    - mu  (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - rho (Ice Density): " << rho << "\n"
-            << "    - g (Gravity Acceleration): " << g << "\n";
-#endif
-
-    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("thickness Field Name"), dl->node_scalar);
-    this->addDependentField (thickness);
-    beta_type = HYDROSTATIC;
-  }
   else if (betaType == "Power Law")
   {
     beta_type = POWER_LAW;
@@ -74,11 +59,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (power law):\n\n"
-            << "      beta = mu*rho*g*H * |u|^p \n\n"
-            << "  with H being the ice thickness, u the ice velocity, and\n"
+            << "      beta = mu * N * |u|^p \n\n"
+            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
             << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - rho (Ice Density): " << rho << "\n"
-            << "    - g (Gravity Acceleration): " << g << "\n"
             << "    - p  (Power Exponent): " << power << "\n";
 #endif
 
@@ -95,11 +78,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     L = beta_list->get("Regularization Parameter",1e-4);
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
-            << "      beta = mu*rho*g*H * |u|^{p-1} / [|u| + L*N^(1/p)]^p\n\n"
-            << "  with H being the ice thickness, u the ice velocity, and\n"
+            << "      beta = mu * N * |u|^{p-1} / [|u| + L*N^(1/p)]^p\n\n"
+            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
             << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - rho (Ice Density): " << rho << "\n"
-            << "    - g (Gravity Acceleration): " << g << "\n"
             << "    - L  (Regularization Parameter): " << L << "\n"
             << "    - p  (Power Exponent): " << power << "\n";
 #endif
@@ -127,11 +108,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     }
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (piecewise linear FE):\n\n"
-            << "      beta = mu*rho*g*H * [sum_i c_i*phi_i(|u|)] \n\n"
-            << "  with H being the ice thickness, u the ice velocity, and\n"
+            << "      beta = mu * N * [sum_i c_i*phi_i(|u|)] \n\n"
+            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
             << "    - mu  (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - rho (Ice Density): " << rho << "\n"
-            << "    - g (Gravity Acceleration): " << g << "\n"
             << "    - c_i (Values): [" << beta_coeffs[0];
     for (int i(1); i<nb_pts; ++i)
         *output << " " << beta_coeffs[i];
@@ -217,14 +196,9 @@ postRegistrationSetup (typename Traits::SetupData d,
     case FROM_FILE:
         this->utils.setFieldData(beta_given,fm);
         break;
-    case HYDROSTATIC:
-        this->utils.setFieldData(thickness,fm);
-        break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
-        this->utils.setFieldData(thickness,fm);
-        this->utils.setFieldData(u_norm,fm);
-        break;
+        this->utils.setFieldData(N,fm);
     case PIECEWISE_LINEAR:
         this->utils.setFieldData(u_norm,fm);
   }
@@ -252,46 +226,28 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 
             break;
 
-        case HYDROSTATIC:
-        {
-            for (int node=0; node < numNodes; ++node)
-            {
-                beta(i,node) = mu*rho*g*thickness(i,node);
-            }
-            break;
-        }
-
         case POWER_LAW:
-        {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
-
             for (int node=0; node < numNodes; ++node)
             {
-                beta(i,node) = mu*rho*g*thickness(i,node) * std::pow(u_norm(i,node), power);
+                beta(i,node) = mu * N(i,node) * std::pow(u_norm(i,node), power);
             }
             break;
-        }
+
         case REGULARIZED_COULOMB:
         {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
+            ScalarT ff = 0;
+            if (homotopyParam!=0 && *homotopyParam!=0)
+                ff = pow(10.0, -10.0*(*homotopyParam));
 
             for (int node=0; node < numNodes; ++node)
             {
-                beta(i,node) = mu*(1-alpha)*rho*g*thickness(i,node) * std::pow (u_norm(i,node), power-1)
-                             / std::pow( std::pow(u_norm(i,node),*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(i,node),1./power), power);
+                beta(i,node) = mu * N(i,node) * std::pow (u_norm(i,node), power-1)
+                             / std::pow(u_norm(i,node) + L*std::pow(N(i,node),1./power), power);
             }
             break;
         }
         case PIECEWISE_LINEAR:
         {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
-
             ptrdiff_t where;
             ScalarT xi;
             for (int node=0; node < numNodes; ++node)
@@ -321,55 +277,34 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
 
             break;
 
-        case HYDROSTATIC:
-        {
-            for (int cell=0; cell<workset.numCells; ++cell)
-            {
-                for (int node=0; node < numNodes; ++node)
-                {
-                    beta(cell,node) = mu*rho*g*thickness(cell,node);
-                }
-            }
-            break;
-        }
-
         case POWER_LAW:
-        {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
-
             for (int cell=0; cell<workset.numCells; ++cell)
             {
                 for (int node=0; node < numNodes; ++node)
                 {
-                    beta(cell,node) = mu*rho*g*thickness(cell,node) * std::pow (u_norm(cell,node), power);
+                    beta(cell,node) = mu * N(cell,node) * std::pow (u_norm(cell,node), power);
                 }
             }
             break;
-        }
+
         case REGULARIZED_COULOMB:
         {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
+            ScalarT ff = 0;
+            if (homotopyParam!=0 && *homotopyParam!=0)
+                ff = pow(10.0, -10.0*(*homotopyParam));
 
             for (int cell=0; cell<workset.numCells; ++cell)
             {
                 for (int node=0; node < numNodes; ++node)
                 {
-                    beta(cell,node) = mu*(1-alpha)*rho*g*thickness(cell,node) * std::pow (u_norm(cell,node), power-1)
-                                 / std::pow( std::pow(u_norm(cell,node),*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(cell,node),1./power), power);
+                    beta(cell,node) = mu * N(cell,node) * std::pow (u_norm(cell,node), power-1)
+                                 / std::pow( u_norm(cell,node) + L*std::pow(N(cell,node),1./power), power);
                 }
             }
             break;
         }
         case PIECEWISE_LINEAR:
         {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
-
             ptrdiff_t where;
             ScalarT xi;
             for (int cell=0; cell<workset.numCells; ++cell)

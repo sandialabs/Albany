@@ -53,12 +53,9 @@ private:
   double getScalarTValue (const ScalarT& s);
 
   // Coefficients for computing beta (if not given)
-  double mu;    // Coulomb friction coefficient
-  double rho;   // Ice density
-  double g;     // Gravity acceleration
-  double L;     // Roughness of the bed (for REGULARIZED_COULOMB only)
-  double power; // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
-  double alpha; // Water pressure p_w as a fraction of rho*g*H. This is a way to compute N = rho*g*H-p_w
+  double mu;      // Coulomb friction coefficient
+  double L;       // Roughness of the bed (for REGULARIZED_COULOMB only)
+  double power;   // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
 
   // Data to compute beta in case beta(|u|) is a piecewise linear function of |u|
   int      nb_pts;
@@ -69,14 +66,14 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,Node>     u_norm;
   PHX::MDField<ScalarT,Cell,Node>     beta_given;
-  PHX::MDField<ScalarT,Cell,Node>     thickness;
+  PHX::MDField<ScalarT,Cell,Node>     N;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> beta;
 
   unsigned int numDims, numNodes, numCells;
 
-  enum BETA_TYPE {FROM_FILE, HYDROSTATIC, POWER_LAW, REGULARIZED_COULOMB, PIECEWISE_LINEAR};
+  enum BETA_TYPE {FROM_FILE, POWER_LAW, REGULARIZED_COULOMB, PIECEWISE_LINEAR};
   BETA_TYPE beta_type;
 };
 
