@@ -35,7 +35,7 @@ FELIX::Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& params,
   this->requirements.push_back("ice_viscosity");
   this->requirements.push_back("surface_water_input");
   this->requirements.push_back("geothermal_flux");
-  this->requirements.push_back("effective_pressure");
+//  this->requirements.push_back("effective_pressure");
 
   dof_names.resize(1);
   resid_names.resize(1);
