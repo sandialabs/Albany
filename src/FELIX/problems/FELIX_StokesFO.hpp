@@ -104,6 +104,7 @@ protected:
       void operator() (T x) {
       evaluators_.push_back(prob_.template buildBasalFrictionCoefficientEvaluator<T>());
       evaluators_.push_back(prob_.template buildSlidingVelocityEvaluator<T>());
+      evaluators_.push_back(prob_.template buildEffectivePressureEvaluator<T>());
       }
   };
 
@@ -114,6 +115,10 @@ protected:
   template<typename EvalT>
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
   buildSlidingVelocityEvaluator();
+
+  template<typename EvalT>
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
+  buildEffectivePressureEvaluator ();
 
   int numDim;
   double gravity;  //gravity
@@ -143,6 +148,7 @@ protected:
 #include "FELIX_SaveSideSetStateField.hpp"
 #include "FELIX_QuadPointsToCellInterpolation.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
+#include "FELIX_EffectivePressure.hpp"
 #include "PHAL_Neumann.hpp"
 #include "PHAL_Source.hpp"
 #include <type_traits>
@@ -359,8 +365,14 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = buildSlidingVelocityEvaluator<EvalT>();
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  // Effective pressur
+  {
+    ev = buildEffectivePressureEvaluator<EvalT>();
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
-  { // FELIX basal friction coefficient
+  // FELIX basal friction coefficient
+  {
     ev = buildBasalFrictionCoefficientEvaluator<EvalT>();
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -436,7 +448,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     const int sideNumVertices = sideCellType->getNodeCount();
 
     RCP<Albany::Layouts> side_dl = rcp(new Albany::Layouts(sideWorksetSize,sideNumVertices,sideNumNodes,sideNumQPts,numDim-1, vecDim));
-/*
+
     // Save Friction Coefficient
     {
       entity = Albany::StateStruct::NodalDataToElemNode;
@@ -450,7 +462,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       PHX::Tag<typename EvalT::ScalarT> tag("beta_field", side_dl->dummy);
       fm0.requireField<EvalT>(tag);
     }
-*/
+
     // Ice viscosity interpolation from QP to Cell
     {
       RCP<ParameterList> p = rcp(new ParameterList("Quad Points To Cell Interpolation"));
@@ -473,7 +485,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       PHX::Tag<typename EvalT::ScalarT> tag("FELIX Viscosity Cell", side_dl->dummy);
       fm0.requireField<EvalT>(tag);
     }
-/*
+
     // Save Sliding Velocity
     {
       entity = Albany::StateStruct::NodalDataToElemNode;
@@ -487,7 +499,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       PHX::Tag<typename EvalT::ScalarT> tag("Velocity Norm", side_dl->dummy);
       fm0.requireField<EvalT>(tag);
     }
-*/
+
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
@@ -521,6 +533,32 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 template<typename EvalT>
 Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
+FELIX::StokesFO::buildEffectivePressureEvaluator ()
+{
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure"));
+
+  Teuchos::ParameterList& physics = this->params->sublist("Physical Parameters");
+  Teuchos::ParameterList& paramList = this->params->sublist("FELIX Basal Friction Coefficient");
+
+  // Input
+  p->set<Teuchos::ParameterList*>("Physical Parameters", &physics);
+  p->set<bool>("Has Hydraulic Potential",paramList.get<bool>("Has Hydraulic Potential",false));
+  p->set<double>("Hydraulic-Over-Hydrostatic Potential Ratio",paramList.get<double>("Hydraulic To Hydrostatic Potential Ratio",0.9));
+  p->set<std::string> ("Hydraulic Potential Variable Name","Phi");
+  p->set<std::string> ("Surface Height Variable Name","Phi");
+  p->set<std::string> ("Ice Thickness Variable Name","Phi");
+
+  // Output
+  p->set<std::string> ("Effective Pressure Variable Name","N");
+
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits>(*p,dl));
+
+  return ev;
+}
+
+template<typename EvalT>
+Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
 FELIX::StokesFO::buildSlidingVelocityEvaluator ()
 {
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Velocity Norm"));
@@ -542,9 +580,10 @@ FELIX::StokesFO::buildBasalFrictionCoefficientEvaluator ()
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
 
   //Input fields
-  p->set<std::string>("Velocity Norm Name", "Velocity Norm");
-  p->set<std::string>("Given Beta Field Name", "basal_friction");
-  p->set<std::string>("thickness Field Name", "thickness");
+  p->set<std::string>("Velocity Norm Variable Name", "Velocity Norm");
+  p->set<std::string>("Given Beta Variable Name", "basal_friction");
+  p->set<std::string>("Ice Thickness Variable Name", "thickness");
+  p->set<std::string>("Effective Pressure Variable Name", "N");
 
   //Input physics parameters
   Teuchos::ParameterList& physics = this->params->sublist("Physical Parameters");
