@@ -13,9 +13,9 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 HydrologyDischarge<EvalT, Traits>::HydrologyDischarge (const Teuchos::ParameterList& p,
                                                    const Teuchos::RCP<Albany::Layouts>& dl) :
-  gradPhi   (p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->qp_gradient),
-  h         (p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar),
-  q         (p.get<std::string> ("Discharge QP Variable Name"), dl->qp_gradient)
+  gradPhi (p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->qp_gradient),
+  h       (p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar),
+  q       (p.get<std::string> ("Discharge QP Variable Name"), dl->qp_gradient)
 {
   this->addDependentField(h);
   this->addDependentField(gradPhi);
@@ -28,7 +28,11 @@ HydrologyDischarge<EvalT, Traits>::HydrologyDischarge (const Teuchos::ParameterL
 
   mu_w = physical_params.get<double>("Water Viscosity");
   k_0  = hydrology_params.get<double>("Transmissivity");
-
+/*
+  std::cout << "HydrologyDischarge:\n"
+            << "    mu_w : " << mu_w << "\n"
+            << "    k_0  : " << k_0 << "\n";
+*/
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs = dims[1];
@@ -44,8 +48,9 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(h,fm);
-  this->utils.setFieldData(q,fm);
   this->utils.setFieldData(gradPhi,fm);
+
+  this->utils.setFieldData(q,fm);
 }
 
 //**********************************************************************
@@ -58,7 +63,7 @@ void HydrologyDischarge<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
     for (int qp=0; qp < numQPs; ++qp)
     {
       for (int dim(0); dim<numDim; ++dim)
-        q(cell,qp,dim) = -k_0 * std::pow(h(cell,qp),3) * gradPhi(cell,qp,dim);
+        q(cell,qp,dim) = -k_0 * std::pow(h(cell,qp),3) * gradPhi(cell,qp,dim) / mu_w;
     }
   }
 }
