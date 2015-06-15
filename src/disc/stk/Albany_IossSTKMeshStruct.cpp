@@ -518,6 +518,13 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
         *out << "Reading Node Scalar field " << *it << " from file " << fname << "\n";
         // Read the input file and stuff it in the Tpetra vector
         readScalarFileSerial (fname,serial_req_vec,commT);
+
+        temp_str = *it + " Scale Factor";
+        if (req_fields_info->isParameter(temp_str))
+        {
+          double scale_factor = req_fields_info->get<double>(temp_str);
+          serial_req_vec.scale (scale_factor);
+        }
       }
 
       // Fill the (possibly) parallel vector
@@ -526,7 +533,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       // Extracting the mesh field and the tpetra vector view
       ScalarFieldType* field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, *it);
 
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field not present (perhaps is 'Elem Scalar'?).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Scalar'?).\n");
 
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
 
@@ -576,13 +583,20 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
         // Read the input file and stuff it in the Tpetra vector
         readScalarFileSerial (fname,serial_req_vec,commT);
+
+        temp_str = *it + " Scale Factor";
+        if (req_fields_info->isParameter(temp_str))
+        {
+          double scale_factor = req_fields_info->get<double>(temp_str);
+          serial_req_vec.scale (scale_factor);
+        }
       }
       // Fill the (possibly) parallel vector
       req_vec.doImport(serial_req_vec,importOperatorElem,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector view
       QPScalarFieldType* field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field not present (perhaps is 'Node Scalar'?).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Scalar'?).\n");
 
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
 
@@ -637,6 +651,13 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
         // Read the input file and stuff it in the Tpetra multivector
         readVectorFileSerial (fname,serial_req_mvec,commT);
+
+        temp_str = *it + " Scale Factors";
+        if (req_fields_info->isParameter(temp_str))
+        {
+          Teuchos::Array<double> scale_factors = req_fields_info->get<Teuchos::Array<double> >(temp_str);
+          serial_req_mvec.scale (scale_factors);
+        }
       }
 
       // Fill the (possibly) parallel vector
@@ -644,7 +665,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
       // Extracting the mesh field and the tpetra vector views
       VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, *it);
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field not present (perhaps is 'Elem Vector'?).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Vector'?).\n");
 
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
       for (int i(0); i<fieldDim; ++i)
@@ -703,13 +724,20 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
         // Read the input file and stuff it in the Tpetra multivector
         readVectorFileSerial (fname,serial_req_mvec,commT);
+
+        temp_str = *it + " Scale Factors";
+        if (req_fields_info->isParameter(temp_str))
+        {
+          Teuchos::Array<double> scale_factors = req_fields_info->get<Teuchos::Array<double> >(temp_str);
+          serial_req_mvec.scale (scale_factors);
+        }
       }
       // Fill the (possibly) parallel vector
       req_mvec.doImport(serial_req_mvec,importOperatorNode,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector views
       VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::ELEM_RANK, *it);
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field not present (perhaps is 'Node Vector'?).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Vector'?).\n");
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
       for (int i(0); i<fieldDim; ++i)
         req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
