@@ -18,7 +18,20 @@ EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterLis
   z_s       (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
   N         (p.get<std::string> ("Effective Pressure Name"),dl->node_scalar)
 {
-  this->addDependentField(phi);
+  has_phi = p.isParameter("Has Hydraulic Potential") ? p.get<bool>("Has Hydraulic Potential") : false;
+
+  if (has_phi)
+  {
+    this->addDependentField(phi);
+  }
+  else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (p.isParameter("Hydraulic-Over-Hydrostatic Potential Ratio"), std::logic_error,
+                                "Error! The parameter 'Hydraulic-Over-Hydrostatic Potential Ratio' must be specified if the Hydraulic Potential is not available.\n");
+
+    alpha = p.get<double>("Hydraulic-Over-Hydrostatic Potential Ratio");
+  }
+
   this->addDependentField(H);
   this->addDependentField(z_s);
 
@@ -44,7 +57,8 @@ void EffectivePressure<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(phi,fm);
+  if (has_phi)
+    this->utils.setFieldData(phi,fm);
   this->utils.setFieldData(H,fm);
   this->utils.setFieldData(z_s,fm);
 
@@ -55,12 +69,18 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void EffectivePressure<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
-  for (int cell=0; cell < workset.numCells; ++cell)
+  if (has_phi)
   {
-    for (int node=0; node < numNodes; ++node)
+    for (int cell=0; cell < workset.numCells; ++cell)
     {
-      N (cell,node) = rho_w*g*(z_s(cell,node)-H(cell,node)) + rho_i*g*H(cell,node) - phi(cell,node);
+      for (int node=0; node < numNodes; ++node)
+      {
+        N (cell,node) = rho_w*g*(z_s(cell,node)-H(cell,node)) + rho_i*g*H(cell,node) - phi(cell,node);
+      }
     }
+  }
+  else
+  {
   }
 }
 

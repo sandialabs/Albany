@@ -49,6 +49,8 @@ private:
 
   unsigned int numNodes;
 
+  bool   has_phi;
+  double alpha;
   double rho_i;
   double rho_w;
   double g;
