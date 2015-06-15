@@ -143,11 +143,30 @@ void QCADT::ImplicitPSJacobian::apply(Tpetra_MultiVector const & X,
   else if (index_i_ == 0 && index_j_ == nEigenvals+1) {
    for (int i=0; i<nEigenvals; i++) {
      Teuchos::RCP<const Tpetra_Vector> dn_dPsi_i = dn_dPsi->getVector(i); 
-     const Teuchos::ArrayRCP<const ST> x_neg_evals_local_constView = x_neg_evals_local->get1dView(); 
-     tempVec->update(-1*x_neg_evals_local_constView[i], *dn_dPsi_i, 0.0); //tempVec = -dn_dEval[i] * scalar(x_neg_eval[i]);
+     tempVec->update(-1.0, *dn_dPsi_i, 0.0); //tempVec = -dn_dEval[i];
      massMatrix->apply(*tempVec, *tempVec2, Teuchos::NO_TRANS, 1.0, 0.0); //tempVec2 = M*tempVec
+     //FIXME? Should we have importer from X to x_neg_evals_local? 
      Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec2, X, 1.0); //Y += M*(-dn_dEval[i] * scalar(x_neg_eval[i])) 
    } 
+  }
+  //(Schrodinger, 0) block
+  else if (index_i_ > 0 && index_i_ < nEigenvals+1 && index_j_ == 0) {
+    Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(index_i_); 
+    massMatrix->apply(*psiVectors_i, *tempVec, Teuchos::NO_TRANS, 1.0, 0.0); //tempVec = massMatrix*psiVectors[index_i]
+    Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec, X, 0.0); //Y = tempVec*X 
+  }
+  //(Schrodinger, Schrodinger) block
+  else if (index_i_ > 0 && index_i_ < nEigenvals+1 && index_j_ > 0 && index_j_ < nEigenvals+1) {
+    schrodingerJacobian->apply(X, Y, Teuchos::NO_TRANS, 1.0, 0.0); //Y = schrodingerJac*X
+    const Teuchos::ArrayRCP<const ST> neg_eigenvalues_constView = neg_eigenvalues->get1dView(); 
+    //FIXME: Is index_i_ below correct? 
+    massMatrix->apply(X, *tempVec, Teuchos::NO_TRANS, neg_eigenvalues_constView[index_i_], 0.0); //tempVec = -eval[index_i]*massMatrix*X
+    Y.update(1.0, *tempVec, 1.0); //Y += tempVec
+  }
+  //(Schrodinger, eigenvalue) block
+  else if (index_i_ > 0 && index_i_ < nEigenvals+1 && index_j_ == nEigenvals+1) {
+    //FIXME? Should X be x_neg_evals_local? 
+    Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *M_Psi, X, 1.0); //Y += M*Psi[j] * scalar(x_neg_eval[j]) 
   }
   //FIXME: fill in!
 }

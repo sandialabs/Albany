@@ -18,6 +18,7 @@
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
 #include "AAdapt_NonUnifRefSizeField.hpp"
+#include "AAdapt_AlbanySizeField.hpp"
 #ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
 #endif
@@ -48,6 +49,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::UnifRefSizeField(pumi_discretization));
   else if (method == "RPI NonUnifRef Size")
     szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
+  else if (method == "RPI Albany Size")
+    szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
 #ifdef SCOREC_SPR
   else if (method == "RPI SPR Size")
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));

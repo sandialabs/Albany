@@ -151,6 +151,7 @@ SET(SOURCES ${SOURCES}
     AAdapt_UnifSizeField.cpp
     AAdapt_UnifRefSizeField.cpp
     AAdapt_NonUnifRefSizeField.cpp
+    AAdapt_AlbanySizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
@@ -159,6 +160,7 @@ SET(HEADERS ${HEADERS}
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
     AAdapt_NonUnifRefSizeField.hpp
+    AAdapt_AlbanySizeField.hpp
    )
 
 IF(ENABLE_SPR)

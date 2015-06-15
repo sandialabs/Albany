@@ -3,7 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -183,6 +185,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #else
 
+#ifdef ALBANY_TIMER
+ auto start = std::chrono::high_resolution_clock::now();
+#endif
  fT = workset.fT;
  f_nonconstView = fT->get1dViewNonConst();
  Index=workset.wsElNodeEqID_kokkos;
@@ -195,15 +200,14 @@ evaluateFields(typename Traits::EvalData workset)
  else if (this->tensorRank == 2) {
   Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
  }
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "Scatter Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
-/*  //Irina Debug
-  std::cout <<"Irina Debug Scatter valvec" <<std::endl;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) 
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-        for (std::size_t eq = 0; eq < numFields; eq++)
-         std::cout << (this->valVec)(cell,node,eq)<< std::endl;
-  std::cout << "Irina Debug Scatter f_nonconst" <<f_nonconstView <<std::endl;
-*/
+#endif
 }
 
 // **********************************************************************
@@ -508,7 +512,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #else
    //Kokkos parallel execution
-
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
    fT = workset.fT;
    JacT = workset.JacT;
    Index=workset.wsElNodeEqID_kokkos;
@@ -549,7 +555,13 @@ evaluateFields(typename Traits::EvalData workset)
 
  if (JacT->isFillComplete())
     JacT->resumeFill();
- 
+#ifdef ALBANY_TIMER
+  PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
+#endif 
 #endif
 
 }

@@ -43,6 +43,7 @@ SurfaceHeight(const Teuchos::ParameterList& p,
    this->addDependentField(sphere_coord);
 
    hs0 = 2000.; //meters are units
+   hs0 = hs_list->get("Value", 2000.0);  //JF height read from input file
 
    Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
    this->registerSacadoParameter("Mountain Height", paramLib);

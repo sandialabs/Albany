@@ -22,6 +22,8 @@
 #include "Epetra_Vector.h"
 #endif
 
+#include "Kokkos_Vector.hpp"
+
 namespace PHAL {
 /** \brief Gathers solution values from the Newton solution vector into
     the nodal fields of the field manager
@@ -63,17 +65,21 @@ protected:
   PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec;
   PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dot;
   PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dotdot;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dot;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dotdot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> valTensor;
+  PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> valTensor_dot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> valTensor_dotdot;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
   unsigned short int tensorRank;
   bool enableTransient;
   bool enableAcceleration;
-  
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
+ typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+ Kokkos::vector< PHX::MDField<ScalarT, Cell, Node>, PHX::Device > val_kokkos;
+ typename Kokkos::vector< PHX::MDField<ScalarT, Cell, Node>, PHX::Device >::t_dev d_val;
 
+#endif*/
 };
 
 template<typename EvalT, typename Traits> class GatherSolution;
@@ -146,6 +152,8 @@ public:
   void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
 
 
+
+
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   const int numFields;
@@ -155,7 +163,17 @@ private:
   Teuchos::ArrayRCP<const ST> xdotT_constView;
   Teuchos::ArrayRCP<const ST> xdotdotT_constView;
   Kokkos::View<int***, PHX::Device> wsID_kokkos;
-  
+
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_kokkos;
+//  Kokkos::vector< PHX::MDField<ScalarT,Cell,Node> , PHX::Device > val_kokkos;
+  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dot_kokkos; 
+  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dotdot_kokkos;
+
+//  typename Kokkos::vector< PHX::MDField<ScalarT,Cell,Node> , PHX::Device >::t_dev d_val;
+  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val;
+  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dot;
+  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dotdot;
 };
 
 // **************************************************************
@@ -221,6 +239,15 @@ private:
   double n_coeff;
   double m_coeff;
   bool ignore_residual;
+
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_kokkosjac;
+  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dot_kokkosjac;
+  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dotdot_kokkosjac;
+
+  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val;
+  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dot;
+  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dotdot;
  
 };
 

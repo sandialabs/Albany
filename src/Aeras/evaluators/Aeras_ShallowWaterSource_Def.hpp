@@ -105,6 +105,7 @@ ShallowWaterSource<EvalT,Traits>::getValue(const std::string &n)
 
 // --------------------------------------------------------------------
 // Kokkos kernel
+
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 template<typename EvalT, typename Traits>
@@ -112,52 +113,39 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterSource<EvalT, Traits>::
 operator() (const ShallowWaterSource_Tag& tag, const int& cell) const{
 
+ ScalarT TMSHFT = SU0*time/A;
+ ScalarT AI    = 1.0/A;
+ ScalarT RLAT, SNJ, CSJ, BUB, COR, SRCSJ, TMPRY;
+ ScalarT CSJI, ACSJI, RLON, C, DCDM, DCDL, D2CDM, D2CDL;
  for(int qp = 0; qp < numQPs; ++qp) {
           const MeshScalarT theta = sphere_coord(cell, qp, 0);
           const MeshScalarT lambda = sphere_coord(cell, qp, 1);
-          ScalarT TMSHFT = SU0*time/A;
-          ScalarT DFDM   = 2.0*Omega;
-          ScalarT AI    = 1.0/A;
-          ScalarT A2I   = 1.0/(A*A);
           
-          ScalarT RLAT = theta;
+          RLAT = theta;
 
-          ScalarT SNJ  = sin(RLAT);
-          ScalarT CSJ  = cos(RLAT)*cos(RLAT);
+          SNJ  = sin(theta);
+          CSJ  = cos(theta)*cos(theta);
 
-          ScalarT BUB    = bubfnc(RLAT)*cos(RLAT);
-          ScalarT DBUB   = dbubf(RLAT);
-          ScalarT D2BUB  = d2bubf(RLAT);
+          BUB    = bubfnc(theta)*cos(theta);
 
-          ScalarT COR    = 2.0*Omega*SNJ;
+          COR    = 2.0*Omega*SNJ;
 
-          ScalarT SRCSJ  = cos(RLAT);
-          ScalarT TMPRY  = tan(RLAT); //////potential problem at poles
+          SRCSJ  = cos(theta);
+          TMPRY  = tan(theta); //////potential problem at poles
 
-          ScalarT CSJI   = 1.0/CSJ;
-          ScalarT CSJ2I  = 1.0/(CSJ*CSJ);
-          ScalarT ACSJI  = 1.0/(A*CSJ);
-          ScalarT AACSJI = 1.0/(A*A*CSJ);
-          ScalarT ACSJ2I = 1.0/((A*CSJ)*(A*CSJ));
+          CSJI   = 1.0/CSJ;
+          ACSJI  = 1.0/(A*CSJ);
 
-          ScalarT RLON = lambda;
-          ScalarT C = sin(RLAT0)*SNJ + cos(RLAT0)*SRCSJ*cos(RLON-TMSHFT-RLON0);
+          RLON = lambda;
+          C = sin(RLAT0)*SNJ + cos(RLAT0)*SRCSJ*cos(RLON-TMSHFT-RLON0);
 
-          ScalarT DCDM    = sin(RLAT0) - cos(RLON-TMSHFT-RLON0)*cos(RLAT0)*TMPRY;
-          ScalarT DCDL    = -cos(RLAT0)*SRCSJ*sin(RLON-TMSHFT-RLON0);
-          ScalarT D2CDM   = -cos(RLAT0)*cos(RLON-TMSHFT-RLON0)*CSJI/SRCSJ;
+          DCDM    = sin(RLAT0) - cos(RLON-TMSHFT-RLON0)*cos(RLAT0)*TMPRY;
+          DCDL    = -cos(RLAT0)*SRCSJ*sin(RLON-TMSHFT-RLON0);
+          D2CDM   = -cos(RLAT0)*cos(RLON-TMSHFT-RLON0)*CSJI/SRCSJ;
 
-          ScalarT D2CDL   = -cos(RLAT0)*SRCSJ*cos(RLON-TMSHFT-RLON0);
-
-          ScalarT D3CDM   = D2CDM *3.0*SNJ*CSJI;
-
-          ScalarT D3CDL   = -DCDL;
+          D2CDL   = -cos(RLAT0)*SRCSJ*cos(RLON-TMSHFT-RLON0);
 
           ScalarT DMDCDL  = +cos(RLAT0)*sin(RLON-TMSHFT-RLON0)*TMPRY;
-
-          ScalarT DLD2CM  = +cos(RLAT0)*sin(RLON-TMSHFT-RLON0)*CSJI/SRCSJ;
-
-          ScalarT DMD2CL  = +cos(RLAT0)*cos(RLON-TMSHFT-RLON0)*TMPRY;
 
           ScalarT PSIB;
           if (C == -1) PSIB = 0.0;
@@ -171,54 +159,32 @@ operator() (const ShallowWaterSource_Tag& tag, const int& cell) const{
 
           ScalarT DKDM    = TMP1 *DCDM;
 
-          ScalarT DKDL    = TMP1 *DCDL;
-
-          ScalarT D2KDM   = TMP1 *(D2CDM  + 2.0*(DCDM *DCDM)*TMP2 );
-
-          ScalarT D2KDL   = TMP1 *(D2CDL  + 2.0*(DCDL *DCDL)*TMP2 );
-
-          ScalarT D3KDM   = TMP1 *(D3CDM  + 2.0*(DCDM *DCDM*DCDM)*TMP3  + 2.0*DCDM *TMP2
-                                  *(3.0*D2CDM  + 2.0*(DCDM *DCDM)*TMP2 ));
-
-          ScalarT D3KDL   = TMP1 *(D3CDL  + 2.0*(DCDL *DCDL*DCDL)*TMP3  + 2.0*DCDL *TMP2
-                                  *(3.0*D2CDL  + 2.0*(DCDL *DCDL)*TMP2 ));
-
           ScalarT DLDKDM  = TMP1 *(DMDCDL  + 2.0*DCDL *DCDM *TMP2 );
 
-          ScalarT DMD2KL  = TMP1 *(DMD2CL  + 2.0*(DCDL *DCDL)
-                                  *DCDM *TMP3  + 2.0*DCDM *TMP2
-                         *(D2CDL  + 2.0*(DCDL *DCDL)*TMP2 )
-                                  + 4.0*DCDL *DMDCDL *TMP2 );
-
-          ScalarT DLD2KM  = TMP1 *(DLD2CM  + 2.0*(DCDM *DCDM)
-                         *DCDL *TMP3  + 2.0*DCDL *TMP2
-                         *(D2CDM  + 2.0*(DCDM *DCDM)*TMP2 )
-                                + 4.0*DCDM *DMDCDL *TMP2 );
-
           ScalarT UT     = BUB - CSJ*DKDM *AI;
-          ScalarT VT     = DKDL *AI;
+          ScalarT VT     = (TMP1 *DCDL) *AI;
           ScalarT DUTDL  = -CSJ*DLDKDM *AI;
-          ScalarT DVTDL  = D2KDL *AI;
-          ScalarT DUTDM  = DBUB - (CSJ*D2KDM  - 2.0*SNJ*DKDM )*AI;
+          ScalarT DVTDL  = (TMP1 *(D2CDL  + 2.0*(DCDL *DCDL)*TMP2 )) *AI;
+          ScalarT DUTDM  = (dbubf(RLAT)) - (CSJ*(TMP1 *(D2CDM  + 2.0*(DCDM *DCDM)*TMP2 ))  - 2.0*SNJ*DKDM )*AI;
           ScalarT DVTDM  = DLDKDM *AI;
 
           TMP1  = (CSJ*SU0)/(A*A)*DLDKDM;
           TMP1  = TMP1  + UT *ACSJI*DUTDL;
           TMP1  = TMP1  + VT *AI*DUTDM;
 
-          ScalarT ETAFCG = TMP1  + COR*(AI*DKDL -VT ); //U
+          ScalarT ETAFCG = TMP1  + COR*(AI*(TMP1 *DCDL) -VT ); //U
 
-          TMP3      = COR*DKDL;
+          TMP3      = COR*(TMP1 *DCDL);
           ScalarT PHIFCG = -SU0*AI*TMP3  + UT *TMP3 *ACSJI;
-          PHIFCG = PHIFCG + AI*VT *(PSIB *DFDM+COR*DKDM );
+          PHIFCG = PHIFCG + AI*VT *(PSIB *(2.0*Omega)+COR*DKDM );
           PHIFCG = PHIFCG - VT *BUB*CSJI*(COR + BUB*ACSJI*SNJ);  //H
 
-          TMP3  = - SU0*A2I*D2KDL;
+          TMP3  = - SU0*(1.0/(A*A))*(TMP1 *(D2CDL  + 2.0*(DCDL *DCDL)*TMP2 ));
           TMP3  = TMP3  + UT *ACSJI*DVTDL;
           TMP3  = TMP3  + VT *AI*DVTDM;
           TMP3  = TMP3  + (UT *UT +VT *VT )*SNJ*ACSJI;
 
-          ScalarT DIVFCG = TMP3  + CSJ*AI*(COR*DKDM +PSIB *DFDM);
+          ScalarT DIVFCG = TMP3  + CSJ*AI*(COR*DKDM +PSIB *(2.0*Omega));
           DIVFCG = DIVFCG + COR*(UT -BUB) - ACSJI*SNJ*BUB*BUB; //V
 
 
@@ -384,6 +350,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     
   }
+
 #else
 
   if (sourceType == NONE) {
@@ -402,7 +369,7 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
   typename ShallowWaterSource<EvalT,Traits>::ScalarT
- ShallowWaterSource<EvalT,Traits>::d2bubf(const ScalarT lat)const{
+ ShallowWaterSource<EvalT,Traits>::d2bubf(const ScalarT &lat)const{
     ScalarT rmu = sin(lat);
     ScalarT coslat = cos(lat);
     return 8.0*SU0* std::pow((2.0*rmu*coslat), (NPWR-3.)) *rmu*
@@ -414,7 +381,7 @@ KOKKOS_INLINE_FUNCTION
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
     typename ShallowWaterSource<EvalT,Traits>::ScalarT
-  ShallowWaterSource<EvalT,Traits>::dbubf(const ScalarT lat) const{
+  ShallowWaterSource<EvalT,Traits>::dbubf(const ScalarT &lat) const{
     ScalarT rmu = sin(lat);
     ScalarT coslat = cos(lat);
     return 2.*SU0*std::pow(2.*rmu*coslat,NPWR-1.)
@@ -424,7 +391,7 @@ KOKKOS_INLINE_FUNCTION
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
     typename ShallowWaterSource<EvalT,Traits>::ScalarT
-  ShallowWaterSource<EvalT,Traits>::bubfnc(const ScalarT lat) const{
+  ShallowWaterSource<EvalT,Traits>::bubfnc(const ScalarT &lat) const{
     return SU0*std::pow((2.*sin(lat)*cos(lat)), NPWR);
   }
 

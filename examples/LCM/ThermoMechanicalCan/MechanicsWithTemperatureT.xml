@@ -59,8 +59,8 @@
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>
     <Parameter name="Test Values" type="Array(double)" value="{79.5451970069}"/>
-    <Parameter name="Relative Tolerance" type="double" value="1.0e-4"/>
-    <Parameter name="Absolute Tolerance" type="double" value="1.0e-4"/>
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-2"/>
+    <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
