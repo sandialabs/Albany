@@ -322,13 +322,47 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
 
   bool hasBasal_friction = std::find(req.begin(), req.end(), "basal_friction") != req.end();
-  if(hasBasal_friction) {
-    std::string fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
-    read2DFileSerial(fname, temp, comm);
+  if(hasBasal_friction)
+  {
     bFrictionVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
-    bFrictionVec->doImport(*temp, *importOperator, Tpetra::INSERT);
+
+    if (params->isParameter("Basal Friction File Name"))
+    {
+      std::string fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
+      read2DFileSerial(fname, temp, comm);
+      bFrictionVec->doImport(*temp, *importOperator, Tpetra::INSERT);
+    }
+    else
+    {
+      // Try to load it from the 2D mesh
+      Albany::AbstractSTKFieldContainer::ScalarFieldType* field = 0;
+      field = metaData2D.get_field<Albany::AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
+      if (field!=0)
+      {
+        Teuchos::ArrayRCP<ST> bFrictionVec_view = bFrictionVec->get1dViewNonConst();
+
+        stk::mesh::Entity node;
+        stk::mesh::EntityId nodeId;
+        int lid;
+        double* values;
+
+        //Now we have to stuff the vector in the mesh data
+        for (int i(0); i<nodes2D.size(); ++i)
+        {
+          nodeId = bulkData2D.identifier(nodes2D[i]) - 1;
+          lid    = nodes_map->getLocalElement((GO)(nodeId));
+
+          values = stk::mesh::field_data(*field, nodes2D[i]);
+          bFrictionVec_view[lid] = values[0];
+        }
+      }
+      else
+      {
+        // We use a zero vector, but we issue a warning. Just in case the user forgot to setup something
+        std::cout << "No file name specified for 'basal_friction', and no field retrieved from the mesh. Using a zero vector.\n";
+      }
+    }
   }
-  Teuchos::ArrayRCP<const ST> bFrictionVec_constView = bFrictionVec->get1dView();
 
   bool hasTemperature = std::find(req.begin(), req.end(), "temperature") != req.end();
   if(hasTemperature) {
@@ -481,7 +515,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
     if(hasBasal_friction && basal_friction_field) {
       double* bFriction = stk::mesh::field_data(*basal_friction_field, node);
-      bFriction[0] = bFrictionVec_constView[lid];
+      bFriction[0] = bFrictionVec->get1dView()[lid];
     }
   }
 
