@@ -9,7 +9,7 @@
 
 #include <ma.h>
 
-#include "Albany_PUMIDiscretization.hpp"
+#include "Albany_APFDiscretization.hpp"
 #include "Albany_StateManager.hpp"
 
 namespace AAdapt {
@@ -18,7 +18,7 @@ namespace AAdapt {
  */
 struct MeshSizeField {
 
-  MeshSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+  MeshSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
   virtual ma::Input* configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
@@ -30,7 +30,7 @@ struct MeshSizeField {
 
 protected:
 
-  Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
+  Teuchos::RCP<Albany::APFMeshStruct> mesh_struct;
   Teuchos::RCP<const Teuchos_Comm> commT;
 
 };

@@ -5,36 +5,29 @@
 //*****************************************************************//
 
 
-#ifndef ALBANY_PUMIDISCRETIZATION_HPP
-#define ALBANY_PUMIDISCRETIZATION_HPP
+#ifndef ALBANY_SIMDISCRETIZATION_HPP
+#define ALBANY_SIMDISCRETIZATION_HPP
 
 #include "Albany_APFDiscretization.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_SimMeshStruct.hpp"
 
 namespace Albany {
 
-class PUMIDiscretization : public APFDiscretization {
+class SimDiscretization : public APFDiscretization {
   public:
 
     //! Constructor
-    PUMIDiscretization(
-       Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct,
+    SimDiscretization(
+       Teuchos::RCP<Albany::SimMeshStruct> meshStruct_,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
     //! Destructor
-    ~PUMIDiscretization();
+    ~SimDiscretization();
 
     void createField(const char* name, int value_type);
-
-    // Retrieve mesh struct
-    Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() {return pumiMeshStruct;}
-
-  private:
-
-    Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct;
 };
 
 }
 
-#endif // ALBANY_PUMIDISCRETIZATION_HPP
+#endif // ALBANY_SIMDISCRETIZATION_HPP

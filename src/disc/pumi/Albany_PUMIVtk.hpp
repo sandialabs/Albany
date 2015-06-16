@@ -15,7 +15,7 @@ class PUMIVtk : public PUMIOutput {
 
   public:
 
-    PUMIVtk(const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
+    PUMIVtk(const Teuchos::RCP<APFMeshStruct>& meshStruct,
             const Teuchos::RCP<const Teuchos_Comm>& commT_);
 
     ~PUMIVtk();
@@ -27,7 +27,7 @@ class PUMIVtk : public PUMIOutput {
 
     std::ofstream vtu_collection_file;
 
-    Teuchos::RCP<PUMIMeshStruct> mesh_struct;
+    Teuchos::RCP<APFMeshStruct> mesh_struct;
 
     bool doCollection;
     std::string outputFileName;

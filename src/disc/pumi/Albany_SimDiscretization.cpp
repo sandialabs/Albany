@@ -4,26 +4,25 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Albany_APFDiscretization.hpp"
-#include "Albany_PUMIDiscretization.hpp"
+#include "Albany_SimDiscretization.hpp"
+#include <apfSIM.h>
 
-Albany::PUMIDiscretization::PUMIDiscretization(
-    Teuchos::RCP<Albany::PUMIMeshStruct> meshStruct_,
+Albany::SimDiscretization::SimDiscretization(
+    Teuchos::RCP<Albany::SimMeshStruct> meshStruct_,
     const Teuchos::RCP<const Teuchos_Comm>& commT_,
     const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_):
   APFDiscretization(meshStruct_, commT_, rigidBodyModes_)
 {
-  pumiMeshStruct = meshStruct_;
 }
 
-Albany::PUMIDiscretization::~PUMIDiscretization()
+Albany::SimDiscretization::~SimDiscretization()
 {
 }
 
-void Albany::PUMIDiscretization::
+void Albany::SimDiscretization::
 createField(const char* name, int value_type)
 {
-  apf::Field* f =
-    apf::createFieldOn(meshStruct->getMesh(), name, value_type);
+  apf::Mesh* mesh = meshStruct->getMesh();
+  apf::Field* f = apf::createSIMField(mesh,name,value_type,mesh->getShape());
   apf::zeroField(f);
 }

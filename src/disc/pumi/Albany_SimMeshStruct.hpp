@@ -5,37 +5,32 @@
 //*****************************************************************//
 
 
-#ifndef ALBANY_PUMIMESHSTRUCT_HPP
-#define ALBANY_PUMIMESHSTRUCT_HPP
+#ifndef ALBANY_SIMMESHSTRUCT_HPP
+#define ALBANY_SIMMESHSTRUCT_HPP
 
 #include "Albany_APFMeshStruct.hpp"
 
 namespace Albany {
 
-class PUMIMeshStruct : public APFMeshStruct {
+class SimMeshStruct : public APFMeshStruct {
 
   public:
 
-    PUMIMeshStruct(
+    SimMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-    ~PUMIMeshStruct();
+    ~SimMeshStruct();
 
     msType meshSpecsType();
-
-    // For RC: Recoverable.
-    void setMesh(apf::Mesh2* new_mesh);
 
 private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    void buildBoxMesh(int nex, int ney, int nez,
-        double wx, double wy, double wz, bool is);
-
 };
 
 }
 #endif
+

@@ -16,7 +16,7 @@ class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
 
-    UnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    UnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~UnifRefSizeField();
 

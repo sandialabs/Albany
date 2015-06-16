@@ -35,7 +35,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   disc = StateMgr_.getDiscretization();
 
-  pumi_discretization = Teuchos::rcp_dynamic_cast<Albany::AbstractPUMIDiscretization>(disc);
+  pumi_discretization = Teuchos::rcp_dynamic_cast<Albany::PUMIDiscretization>(disc);
 
   Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
     pumi_discretization->getPUMIMeshStruct();
@@ -247,11 +247,11 @@ struct AdaptCallbackOf : public Parma_GroupCode
  */
 namespace al {
 void anlzCoords(
-  const Teuchos::RCP<const Albany::AbstractPUMIDiscretization>& pumi_disc);
+  const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc);
 void writeMesh(
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc);
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc);
 double findAlpha(
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
@@ -573,7 +573,7 @@ void dispExtremum (
 
 // For analysis.
 void anlzCoords (
-  const Teuchos::RCP<const Albany::AbstractPUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc)
 {
   // x = coords + displacement.
   const int dim = pumi_disc->getNumDim();
@@ -591,7 +591,7 @@ void anlzCoords (
 }
 
 void writeMesh (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
 {
   static int ncalls = 0;
   std::stringstream ss;
@@ -613,7 +613,7 @@ public:
   const Teuchos::ArrayRCP<const ST> soln_ol_data;
 
   CoordState (
-    const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc)
+    const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
     : soln_ol_(pumi_disc->getSolutionFieldT(true)),
       soln_nol(pumi_disc->getSolutionFieldT(false)),
       soln_ol_data(soln_ol_->get1dView())
@@ -634,7 +634,7 @@ public:
 };
 
 void updateCoordinates (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const CoordState& cs, const Teuchos::ArrayRCP<double>& x)
 {
   // Albany::PUMIDiscretization uses interleaved DOF and coordinates, so we
@@ -645,7 +645,7 @@ void updateCoordinates (
 }
 
 void updateRefConfig (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   const CoordState& cs)
 {
@@ -657,7 +657,7 @@ void updateRefConfig (
 }
 
 void updateSolution (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const double alpha, CoordState& cs)
 {
   // Set solution to (1 - alpha) solution.
@@ -680,7 +680,7 @@ void updateSolution (
 // reference configuration is updated, and the solution field is set to (1 -
 // alpha) [original solution].
 double findAlpha (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
