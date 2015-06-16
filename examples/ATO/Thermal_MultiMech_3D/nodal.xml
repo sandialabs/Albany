@@ -80,7 +80,7 @@
       </ParameterList>
 
       <ParameterList name="Apply Topology Weight Functions">
-        <Parameter name="Flux" type="int" value="0" />
+        <Parameter name="kinVar" type="int" value="0" />
       </ParameterList>
 
       <Parameter name="Isotropic Modulus" type="double" value="1e9"/>

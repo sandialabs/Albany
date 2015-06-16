@@ -16,6 +16,7 @@
 #include "Albany_NavierStokes.hpp"
 #include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
+#include "Albany_AdvDiffProblem.hpp"
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_PNPProblem.hpp"
@@ -45,12 +46,13 @@
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConstitutiveDriverProblem.hpp"
+#include "LCM/problems/HMCProblem.hpp"
+#include "LCM/problems/ElectroMechanicsProblem.hpp"
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
 #include "LCM/problems/PeridigmProblem.hpp"
 #endif
 #endif
-#include "LCM/problems/HMCProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
@@ -152,6 +154,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinComprNS 1D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "AdvDiff 1D") {
+    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "AdvDiff 2D") {
+    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 2));
   }
   else if (method == "LinComprNS 2D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));
@@ -289,6 +297,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "HMC 3D") {
     strategy = rcp(new Albany::HMCProblem(problemParams, paramLib, 3, commT));
+  }
+  else if (method == "Electromechanics 1D") {
+    strategy = rcp(new Albany::ElectroMechanicsProblem(problemParams, paramLib, 1, commT));
+  }
+  else if (method == "Electromechanics 2D") {
+    strategy = rcp(new Albany::ElectroMechanicsProblem(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "Electromechanics 3D") {
+    strategy = rcp(new Albany::ElectroMechanicsProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_ATO

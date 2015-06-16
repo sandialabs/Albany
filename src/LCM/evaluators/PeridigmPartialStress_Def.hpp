@@ -67,7 +67,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::string blockName = workset.EBName;
   int worksetIndex = static_cast<int>(workset.wsIndex);
-  PeridigmManager& peridigmManager = PeridigmManager::self();
+  PeridigmManager& peridigmManager = *PeridigmManager::self();
 
   // Container for the partial stress values at each quadrature point in an element
   std::vector< std::vector<RealType> > partialStressValues;

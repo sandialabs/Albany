@@ -16,6 +16,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubbles.xml
                ${CMAKE_CURRENT_BINARY_DIR}/HeBubbles.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubblesDecay.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/HeBubblesDecay.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hexOneElement.g
                ${CMAKE_CURRENT_BINARY_DIR}/hexOneElement.g COPYONLY)
 
@@ -26,10 +28,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsScaledPlasticity.xml
 # exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubbles.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/HeBubbles.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubblesDecay.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/HeBubblesDecay.exodiff COPYONLY)
 
 # gold files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubbles.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/HeBubbles.gold.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubblesDecay.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/HeBubblesDecay.gold.e COPYONLY)
 
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py

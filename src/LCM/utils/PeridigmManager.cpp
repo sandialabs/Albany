@@ -9,18 +9,30 @@
 #include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_Dimension.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
+#include <Teuchos_LAPACK.hpp>
+#include <Teuchos_SerialDenseMatrix.hpp>
 
-LCM::PeridigmManager& LCM::PeridigmManager::self() {
-  static PeridigmManager peridigmManager;
+const Teuchos::RCP<LCM::PeridigmManager>& LCM::PeridigmManager::self() {
+  static Teuchos::RCP<PeridigmManager> peridigmManager;
   return peridigmManager;
+}
+
+void LCM::PeridigmManager::initializeSingleton(
+  const Teuchos::RCP<Teuchos::ParameterList>& params)
+{
+  if ( ! params->sublist("Problem").isSublist("Peridigm Parameters"))
+    return;
+  Teuchos::RCP<LCM::PeridigmManager>* ston =
+    const_cast<Teuchos::RCP<LCM::PeridigmManager>*>(&self());
+  *ston = Teuchos::rcp(new PeridigmManager());
 }
 
 LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), enableOptimizationBasedCoupling(false), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)
 {}
 
 void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                      Teuchos::RCP<Albany::AbstractDiscretization> disc,
-				      const Teuchos::RCP<const Teuchos_Comm>& comm)
+  Teuchos::RCP<Albany::AbstractDiscretization> disc,
+  const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
   if(!params->sublist("Problem").isSublist("Peridigm Parameters")){
     hasPeridynamics = false;
@@ -63,20 +75,20 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     }
   }
 
-//   const stk::mesh::FieldVector &fields = metaData->get_fields();
-//   for(unsigned int i=0 ; i<fields.size() ; ++i)
-//     std::cout << "DJL DEBUGGING STK field " << *fields[i] << std::endl;
+  //   const stk::mesh::FieldVector &fields = metaData->get_fields();
+  //   for(unsigned int i=0 ; i<fields.size() ; ++i)
+  //     std::cout << "DJL DEBUGGING STK field " << *fields[i] << std::endl;
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
-    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+      metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access coordinates field.\n\n");
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
-    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+      metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
-    stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
+      stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
 
   // Select element mesh entities that match the selector
   std::vector<stk::mesh::Entity> elements;
@@ -89,6 +101,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   // Bookkeeping so that partial stress nodes on the Peridigm side are guaranteed to have ids that don't exist in the Albany discretization
   int maxAlbanyElementId(0), maxAlbanyNodeId(0);
+
+  // Create a list of all node GIDs in the Albany disc. for partial stress blocks
+  // This will be used to determine neighor PD particles for each node
+  // as needed in boundary conditions, etc.
+  std::vector<int> albanyPartialStressNodeGIDs;
+  std::map<int,int> albanyPartialStressNodeGlobalToLocalID;
 
   // Store the global node id for each sphere element that will be used for "Peridynamics" materials
   // Store necessary information for each Gauss point in a solid element for "Peridynamic Partial Stress" materials
@@ -106,12 +124,13 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
     // Create a selector for all locally-owned elements in the block
     stk::mesh::Selector selector = 
-      stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+        stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
     std::vector<stk::mesh::Entity> elementsInElementBlock;
     stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elementsInElementBlock);
-
+    std::vector<stk::mesh::Entity> nodesInElementBlock;
+    stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::NODE_RANK), nodesInElementBlock);
     // Determine the material model assigned to this block
     std::string materialModelName;
     if(!materialDataBase.is_null())
@@ -133,6 +152,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     }
     // Standard solid elements with the "Peridynamic Partial Stress" material model
     else if(materialModelName == "Peridynamic Partial Stress"){
+      for(unsigned int iNode=0; iNode<nodesInElementBlock.size(); iNode++){
+        const int nodeLocalID = albanyPartialStressNodeGIDs.size();
+        const int nodeGlobalID = bulkData->identifier(nodesInElementBlock[iNode])-1;
+        albanyPartialStressNodeGIDs.push_back(nodeGlobalID);
+        albanyPartialStressNodeGlobalToLocalID[nodeGlobalID] = nodeLocalID;
+      }
       peridynamicPartialStressBlocks.push_back(blockName);
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
@@ -150,13 +175,13 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
       int elementId = bulkData->identifier(elementsInElementBlock[iElement]) - 1;
       if(elementId > maxAlbanyElementId)
-	maxAlbanyElementId = elementId;
+        maxAlbanyElementId = elementId;
       int numNodes = bulkData->num_nodes(elementsInElementBlock[iElement]);
       const stk::mesh::Entity* nodes = bulkData->begin_nodes(elementsInElementBlock[iElement]);
       for(int i=0 ; i<numNodes ; ++i){
-	int nodeId = bulkData->identifier(nodes[i]) - 1;
-	if(nodeId > maxAlbanyNodeId)
-	  maxAlbanyNodeId = nodeId;
+        int nodeId = bulkData->identifier(nodes[i]) - 1;
+        if(nodeId > maxAlbanyNodeId)
+          maxAlbanyNodeId = nodeId;
       }
     }
   }
@@ -204,7 +229,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   std::cout << "\n  peridynamics blocks:";
   for(unsigned int i=0 ; i<peridynamicsBlocks.size() ; ++i)
     std::cout << " " << peridynamicsBlocks[i];
-  std::cout << "\n  peridynamic partial stres blocks:";
+  std::cout << "\n  peridynamic partial stress blocks:";
   for(unsigned int i=0 ; i<peridynamicPartialStressBlocks.size() ; ++i)
     std::cout << " " << peridynamicPartialStressBlocks[i];
   std::cout << "\n  classical continuum mechanics blocks:";
@@ -233,6 +258,8 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   std::vector<double> initialX(3*peridigmNodeGlobalIds.size());
   std::vector<double> cellVolume(peridigmNodeGlobalIds.size());
   std::vector<int> blockId(peridigmNodeGlobalIds.size());
+  std::vector<double> initialNodeX(3*albanyPartialStressNodeGIDs.size());
+  std::vector<int> nodeBlockId(albanyPartialStressNodeGIDs.size());
 
   // loop over the element blocks and store the initial positions, volume, and block_id
   int peridigmPartialStressIndex = 0;
@@ -243,11 +270,13 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
     // Create a selector for all locally-owned elements in the block
     stk::mesh::Selector selector = 
-      stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+        stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
     std::vector<stk::mesh::Entity> elementsInElementBlock;
     stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elementsInElementBlock);
+    std::vector<stk::mesh::Entity> nodesInElementBlock;
+    stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::NODE_RANK), nodesInElementBlock);
 
     // Determine the material model assigned to this block
     std::string materialModelName;
@@ -277,6 +306,16 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     }
 
     else if(materialModelName == "Peridynamic Partial Stress"){
+
+      for(unsigned int iNode=0; iNode<nodesInElementBlock.size(); iNode++){
+        const int nodeGlobalID = bulkData->identifier(nodesInElementBlock[iNode])-1;
+        const int nodeLocalID = albanyPartialStressNodeGlobalToLocalID[nodeGlobalID];
+        double* exodusCoordinates = stk::mesh::field_data(*coordinatesField, nodesInElementBlock[iNode]);
+        initialNodeX[nodeLocalID*3]   = exodusCoordinates[0];
+        initialNodeX[nodeLocalID*3+1] = exodusCoordinates[1];
+        initialNodeX[nodeLocalID*3+2] = exodusCoordinates[2];
+        nodeBlockId[nodeLocalID] = bId;
+      }
 
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
@@ -323,9 +362,9 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
       // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
       for(int qp=0 ; qp<numQuadPoints ; ++qp){
-	for(int dof=0 ; dof<3 ; ++dof){
-	  refPoints(0, qp, dof) = quadratureRefPoints(qp, dof);
-	}
+        for(int dof=0 ; dof<3 ; ++dof){
+          refPoints(0, qp, dof) = quadratureRefPoints(qp, dof);
+        }
       }
 
       for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
@@ -382,17 +421,21 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
   TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
   peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(*mpiComm->getRawMpiComm(),
-                                                                                                            peridigmParams,
-													    static_cast<int>(peridigmNodeGlobalIds.size()),
-													    &peridigmNodeGlobalIds[0],
-                                                                                                            &initialX[0],
-                                                                                                            &cellVolume[0],
-                                                                                                            &blockId[0]));
+    peridigmParams,
+    static_cast<int>(peridigmNodeGlobalIds.size()),
+    &peridigmNodeGlobalIds[0],
+    &initialX[0],
+    &cellVolume[0],
+    &blockId[0],
+    static_cast<int>(albanyPartialStressNodeGIDs.size()),
+    &albanyPartialStressNodeGIDs[0],
+    &initialNodeX[0],
+    &nodeBlockId[0]));
 
   // Create a Peridigm object
   peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(*mpiComm->getRawMpiComm(),
-									 peridigmParams,
-									 peridynamicDiscretization));
+    peridigmParams,
+    peridynamicDiscretization));
 
   // Create data structure for obtaining the global element id given the workset index and workset local element id.
   Albany::WsLIDList wsLIDList = stkDisc->getElemGIDws();
@@ -1005,6 +1048,152 @@ double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
   }
   return force;
 }
+
+double LCM::PeridigmManager::getDisplacementNeighborhoodFit(int globalAlbanyNodeId, double * coord, int dof)
+{
+  double fitDisp(0.0);
+
+  if(hasPeridynamics){
+    Epetra_Vector& peridigmU = *(peridigm->getU());
+    Epetra_Vector& peridigmX = *(peridigm->getX());
+
+    // determine the nieghbors to collect disp values from and fit with a polynomial:
+
+    Teuchos::RCP<PeridigmNS::AlbanyDiscretization> castDisc = Teuchos::rcp_dynamic_cast<PeridigmNS::AlbanyDiscretization>(peridynamicDiscretization);
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = castDisc->getAlbanyPartialStressNeighborhoodData();
+
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int localAlbanyNodeId = castDisc->getAlbanyInterface1DMap()->LID(globalAlbanyNodeId);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(localAlbanyNodeId>=numOwnedPoints || localAlbanyNodeId<0, "\n\n**** Error in PeridigmManager::getDisplacementNeighborhoodFit(), invalid local id.\n\n");
+
+    Teuchos::ArrayRCP<double> neighborDispValues;
+    Teuchos::ArrayRCP<double> neighborXValues;
+    Teuchos::ArrayRCP<double> neighborYValues;
+    Teuchos::ArrayRCP<double> neighborZValues;
+
+    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    int neighborhoodListIndex = 0;
+    for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+      // Sum in the contributions for the neighbors
+      int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+      if(iID==localAlbanyNodeId){
+        neighborDispValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);
+        neighborXValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);
+        neighborYValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);
+        neighborZValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);
+      }
+      for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+        int neighborID = neighborhoodList[neighborhoodListIndex++];
+        if(iID==localAlbanyNodeId){
+          neighborDispValues[iNID] = peridigmU[3*neighborID+dof];
+          neighborXValues[iNID] = peridigmX[3*neighborID+0];
+          neighborYValues[iNID] = peridigmX[3*neighborID+1];
+          neighborZValues[iNID] = peridigmX[3*neighborID+2];
+        }
+      }
+    } // iID
+
+    // least squares linear fit in each dimension:
+
+    const int N = 4;
+    int *IPIV = new int[N+1];
+    int LWORK = N*N;
+    int INFO = 0;
+    double *WORK = new double[LWORK];
+    double *GWORK = new double[10*N];
+    int *IWORK = new int[LWORK];
+    Teuchos::LAPACK<int,double> lapack;
+    int num_neigh = neighborXValues.size();
+
+    Teuchos::ArrayRCP<double> X_t_u_x(N,0.0);
+    Teuchos::ArrayRCP<double> coeffs(N,0.0);
+    Teuchos::SerialDenseMatrix<int,double> X_t(N,num_neigh, true);
+    Teuchos::SerialDenseMatrix<int,double> X_t_X(N,N,true);
+
+    // set up the X^T matrix
+    for(int j=0;j<num_neigh;++j){
+      X_t(0,j) = 1.0;
+      X_t(1,j) = neighborXValues[j];
+      X_t(2,j) = neighborYValues[j];
+      X_t(3,j) = neighborZValues[j];
+    }
+    // set up X^T*X
+    for(int k=0;k<N;++k){
+      for(int m=0;m<N;++m){
+        for(int j=0;j<num_neigh;++j){
+          X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+        }
+      }
+    }
+    //X_t_X.print(std::cout);
+
+    // Invert X^T*X
+    // TODO: remove for performance?
+    // compute the 1-norm of H:
+    std::vector<double> colTotals(X_t_X.numCols(),0.0);
+    for(int i=0;i<X_t_X.numCols();++i){
+      for(int j=0;j<X_t_X.numRows();++j){
+        colTotals[i]+=std::abs(X_t_X(j,i));
+      }
+    }
+    double anorm = 0.0;
+    for(int i=0;i<X_t_X.numCols();++i){
+      if(colTotals[i] > anorm) anorm = colTotals[i];
+    }
+    double rcond=0.0; // reciporical condition number
+    try
+    {
+      lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
+      lapack.GECON('1',X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),anorm,&rcond,GWORK,IWORK,&INFO);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(rcond < 1.0E-12, "\n\n**** Error, The pseudo-inverse of the least squares fit is (or is near) singular.\n\n");
+    }
+    catch(std::exception &e){
+      std::cout << e.what();
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(false, "\n\n**** Error, Something went wrong in the condition number calculation.\n\n");
+    }
+    try
+    {
+      lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
+    }
+    catch(std::exception &e){
+      std::cout << e.what();
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(false, "\n\n**** Error, Something went wrong in the inverse calculation of X^T*X .\n\n");
+    }
+
+    // compute X^T*u
+    for(int i=0;i<N;++i){
+      for(int j=0;j<num_neigh;++j){
+        X_t_u_x[i] += X_t(i,j)*neighborDispValues[j];
+      }
+    }
+
+    // compute the coeffs
+    for(int i=0;i<N;++i){
+      for(int j=0;j<N;++j){
+        coeffs[i] += X_t_X(i,j)*X_t_u_x[j];
+      }
+    }
+
+    fitDisp = coeffs[0] + coeffs[1]*coord[0] +  coeffs[2]*coord[1] +  coeffs[3]*coord[2];
+
+    delete [] WORK;
+    delete [] GWORK;
+    delete [] IWORK;
+    delete [] IPIV;
+
+    // Do a weighted average of the disp values to compare
+
+//    double totalX = 0.0;
+//    double compareDisp = 0.0;
+//    for(int i=0;i<neighborXValues.size();++i)
+//      totalX += std::abs(neighborXValues[i]-coord[dof]);
+//    TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborXValues.size()!=neighborDispValues.size(), "\n\n**** Error in PeridigmManager, neighbor arrays are not equal size.\n\n");
+//    for(int i=0;i<neighborDispValues.size();++i)
+//      compareDisp += neighborDispValues[i]*std::abs(neighborXValues[i]-coord[dof])/totalX;
+  }
+  return fitDisp;
+}
+
 
 void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues)
 {

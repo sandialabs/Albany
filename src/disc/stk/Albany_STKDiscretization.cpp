@@ -1131,11 +1131,11 @@ void Albany::STKDiscretization::computeNodalEpetraMaps (bool overlapped)
     numNodes = nodes.size();
     std::vector<int> indices(numNodes*nComp);
     NodalDOFManager* dofManager = (overlapped) ? &it->second.overlap_dofManager : &it->second.dofManager;
-    dofManager->setup(&bulkData, nComp, numNodes, numGlobalNodes, interleavedOrdering);
+    dofManager->setup(nComp, numNodes, numGlobalNodes, interleavedOrdering);
 
     for (int i=0; i < numNodes; i++)
       for (int j=0; j < nComp; j++)
-        indices[dofManager->getLocalDOF(i,j)] = dofManager->getGlobalDOF(nodes[i],j);
+        indices[dofManager->getLocalDOF(i,j)] = dofManager->getGlobalDOF(bulkData.identifier(nodes[i])-1, j);
 
     Teuchos::RCP<Epetra_Map>& map = (overlapped) ? it->second.overlap_map : it->second.map;
     map = Teuchos::null;
@@ -1499,7 +1499,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
           stk::mesh::Entity node = node_rels[j];
           wsElNodeID_array((int)i,j) = gid(node);
           for (int k=0; k < nComp; k++) {
-            const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(node,k);
+            const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(bulkData.identifier(node)-1, k);
             const int node_lid = it->second.overlap_map->LID(
 #ifdef ALBANY_64BIT_INT
               static_cast<long long int>(node_gid)

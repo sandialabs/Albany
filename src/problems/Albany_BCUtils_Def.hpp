@@ -101,6 +101,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         bcs.push_back(ss);
       }
 
+
       // Add other functional boundary conditions here. Note that Torsion could fit into this framework
     }
   }
@@ -212,9 +213,42 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   }
 
   ///
+  /// Least squares fit of peridynamics neighbors BC
+  ////
+  for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    std::string ss = traits_type::constructBCName(nodeSetIDs[i], "lsfit");
+
+    if(BCparams.isSublist(ss)) {
+      // grab the sublist
+      ParameterList& sub_list = BCparams.sublist(ss);
+
+      if(sub_list.get<std::string>("BC Function") == "Displacement") {
+        RCP<ParameterList> p = rcp(new ParameterList);
+        p->set<int>("Type", traits_type::typePd);
+
+        // Fill up ParameterList with things DirichletBase wants
+        p->set< RCP<DataLayout> >("Data Layout", dummy);
+        p->set< std::string > ("Dirichlet Name", ss);
+        p->set< RealType >("Dirichlet Value", 0.0);
+        p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
+        //p->set< int >     ("Number of Equations", dirichletNames.size());
+        p->set< int > ("Equation Offset", 0);
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        std::stringstream ess;
+        ess << "Evaluator for " << ss;
+        evaluators_to_build[ess.str()] = p;
+
+        bcs.push_back(ss);
+      }
+    }
+  }
+
+  ///
   /// Schwarz BC specific
   ///
-  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+  for (auto i = 0; i < nodeSetIDs.size(); ++i) {
 
     std::string
     ss = traits_type::constructBCName(nodeSetIDs[i], "Schwarz");
@@ -250,11 +284,11 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set<Teuchos::RCP<Albany::Application>>("Application", application);
 
         // Fill up ParameterList with things DirichletBase wants
-        p->set< RCP<DataLayout> >("Data Layout", dummy);
-        p->set< std::string > ("Dirichlet Name", ss);
-        p->set< RealType >("Dirichlet Value", 0.0);
-        p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
-        p->set< int > ("Equation Offset", 0);
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<std::string> ("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<std::string> ("Node Set ID", nodeSetIDs[i]);
+        p->set<int> ("Equation Offset", 0);
         // if set to zero, the cubature degree of the side
         // will be set to that of the element
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
@@ -804,10 +838,12 @@ Albany::DirichletTraits::getValidBCParameters(
     std::string tt = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "twist");
     std::string ww = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
     std::string uu = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
+    std::string pd = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "lsfit");
     validPL->sublist(ss, false, "");
     validPL->sublist(tt, false, "");
     validPL->sublist(ww, false, "");
     validPL->sublist(uu, false, "");
+    validPL->sublist(pd, false, "");
   }
 
   return validPL;

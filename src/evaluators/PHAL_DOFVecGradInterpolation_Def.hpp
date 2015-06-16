@@ -3,6 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -117,10 +120,23 @@ namespace PHAL {
 
     //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 #else
-    Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
-Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim));
+ Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
 
-//std::cout << grad_val_qp (30,3,0,0) << "      "<< val_node (30,3,0) << "       " <<GradBF (30,1,3,0) << std::endl;
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto start = std::chrono::high_resolution_clock::now(); 
+#endif
+
+ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim));
+
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "DOFVecGradInterpolation Residual time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
+
 #endif
   }
   
@@ -242,9 +258,21 @@ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PH
     //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 #else
-  
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
+
    //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), ScalarT(0.0));
    Kokkos::parallel_for ( workset.numCells,  VecGradInterpolationJacobian <FadType,  PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim, offset));
+
+#ifdef ALBANY_TIMER
+  PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "DOFVecGradInterpolation Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
+
 #endif
   }
   

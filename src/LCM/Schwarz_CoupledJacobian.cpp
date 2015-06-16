@@ -38,13 +38,16 @@ LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
 {
 }
 
+//#define USE_OFF_DIAGONAL
+//#define EXPLICIT_OFF_DIAGONAL
+
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
-Teuchos::RCP<Thyra::LinearOpBase<ST> >
+Teuchos::RCP<Thyra::LinearOpBase<ST>>
 LCM::Schwarz_CoupledJacobian::
 getThyraCoupledJacobian(
-    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca)
+    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca)
 const
 {
 #ifdef OUTPUT_TO_SCREEN
@@ -66,7 +69,7 @@ const
 
   // get the block dimension
   // this operator will be square
-  Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST> >
+  Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST>>
   blocked_op = Thyra::defaultBlockedLinearOp<ST>();
 
   blocked_op->beginBlockFill(block_dim, block_dim);
@@ -76,28 +79,49 @@ const
     for (std::size_t j = 0; j < block_dim; j++) {
       // build (i,j) block matrix and add it to blocked operator
       if (i == j) { // Diagonal blocks
-        Teuchos::RCP<Thyra::LinearOpBase<ST> >
+        Teuchos::RCP<Thyra::LinearOpBase<ST>>
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
       } else { // Off-diagonal blocks
+#if defined(USE_OFF_DIAGONAL)
+#if defined(EXPLICIT_OFF_DIAGONAL)
+
+        Teuchos::RCP<Schwarz_BoundaryJacobian>
+        jac_boundary =
+            Teuchos::rcp(
+                new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
+
+        Teuchos::RCP<Tpetra_CrsMatrix>
+        exp_jac = jac_boundary->getExplicitOperator();
+
+        Teuchos::RCP<Thyra::LinearOpBase<ST>>
+        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(exp_jac);
+
+#else
+
         Teuchos::RCP<Tpetra_Operator>
         jac_boundary =
             Teuchos::rcp(
                 new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
 
-        Teuchos::RCP<Thyra::LinearOpBase<ST> >
+        Teuchos::RCP<Thyra::LinearOpBase<ST>>
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
 
+#endif // EXPLICIT_OFF_DIAGONAL
+
         blocked_op->setNonconstBlock(i, j, block);
+#endif // USE_OFF_DIAGONAL
       }
     }
   }
 
   // all done
   blocked_op->endBlockFill();
+#ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));
   std::cout << "blocked_op: " << std::endl;
   blocked_op->describe(*out, Teuchos::VERB_HIGH);
+#endif
   return blocked_op;
 }
 

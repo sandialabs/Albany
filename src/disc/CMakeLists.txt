@@ -4,9 +4,7 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
-# SCOREC PUMI
-
-IF(ALBANY_SCOREC)
+IF(ALBANY_APF)
   add_subdirectory(pumi)
 ENDIF()
 
@@ -14,5 +12,7 @@ if(ALBANY_CATALYST)
   add_subdirectory(catalyst)
 endif()
 
-add_subdirectory(stk)
+IF(ALBANY_HAVE_STK)
+  add_subdirectory(stk)
+ENDIF()
 

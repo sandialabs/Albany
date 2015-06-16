@@ -16,12 +16,16 @@
 #include "LCM/evaluators/bc/TimeDepBC.hpp"
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/Time.hpp"
+#if defined(HAVE_STK)
 #include "LCM/evaluators/bc/SchwarzBC.hpp"
+#endif
 #include "LCM/evaluators/bc/TorsionBC.hpp"
+#include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
 #endif
 #ifdef ALBANY_QCAD
 #include "QCAD_PoissonDirichlet.hpp"
 #include "QCAD_PoissonNeumann.hpp"
+#include "QCAD_PoissonSourceNeumann.hpp"
 #endif
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
@@ -34,7 +38,6 @@
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
-
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -67,11 +70,14 @@ namespace PHAL {
     static const int id_time                           =  7; // Only for LCM probs
     static const int id_torsion_bc                     =  8; // Only for LCM probs
     static const int id_schwarz_bc                     =  9; // Only for LCM probs
+    static const int id_pd_neigh_fit_bc                = 10; // Only for LCM-Peridigm coupling
 
-#if defined(ALBANY_LCM)
-    typedef boost::mpl::vector10<
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
+    typedef boost::mpl::vector11<
+#elif defined(ALBANY_LCM)
+    typedef boost::mpl::vector9<
 #else
-      typedef boost::mpl::vector5<
+    typedef boost::mpl::vector5<
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
@@ -87,8 +93,12 @@ namespace PHAL {
         LCM::KfieldBC<_,Traits>,                  //  5
         LCM::TimeDepBC<_, Traits>,                //  6
         LCM::Time<_, Traits>,                     //  7
-        LCM::TorsionBC<_, Traits>,                //  8
-        LCM::SchwarzBC<_, Traits>                 //  9
+        LCM::TorsionBC<_, Traits>                 //  8
+#endif
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
+        ,
+        LCM::SchwarzBC<_, Traits>,                 //  9
+        LCM::PDNeighborFitBC<_, Traits>           //  10
 #endif
         > EvaluatorTypes;
 };
@@ -104,27 +114,30 @@ namespace PHAL {
     static const int id_load_stateField           =  4;
     static const int id_GatherScalarNodalParameter=  5;
     static const int id_qcad_poisson_neumann      =  6; // Only for QCAD probs
-    static const int id_timedep_bc                =  7; // Only for LCM probs
+    static const int id_qcad_poissonsource_neumann=  7; // Only for QCAD probs
+    static const int id_timedep_bc                =  8; // Only for LCM probs
 
 
 #if defined(ALBANY_LCM)
-    typedef boost::mpl::vector8<
+    typedef boost::mpl::vector9<
 #else
-    typedef boost::mpl::vector7<
+    typedef boost::mpl::vector8<
 #endif
-	     PHAL::Neumann<_,Traits>,                   //  0
-	     PHAL::NeumannAggregator<_,Traits>,         //  1
+       PHAL::Neumann<_,Traits>,                   //  0
+       PHAL::NeumannAggregator<_,Traits>,         //  1
        PHAL::GatherCoordinateVector<_,Traits>,    //  2
        PHAL::GatherSolution<_,Traits>,            //  3
        PHAL::LoadStateField<_,Traits>,            //  4
        PHAL::GatherScalarNodalParameter<_,Traits>,//  5
 #ifdef ALBANY_QCAD
-       QCAD::PoissonNeumann<_,Traits>             //  6
+       QCAD::PoissonNeumann<_,Traits>,            //  6
+       QCAD::PoissonSourceNeumann<_,Traits>       //  7
 #else
-       PHAL::Neumann<_,Traits>                    //  6 dummy
+       PHAL::Neumann<_,Traits>,                   //  6 dummy
+       PHAL::Neumann<_,Traits>                    //  7 dummy
 #endif
 #if defined(ALBANY_LCM)
-       , LCM::TimeTracBC<_, Traits>               //  7
+       , LCM::TimeTracBC<_, Traits>               //  8
 #endif
 	  > EvaluatorTypes;
 };

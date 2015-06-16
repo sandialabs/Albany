@@ -50,14 +50,18 @@ void ObserverImpl::observeSolution (
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-    LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
-    double obcFunctional = peridigmManager.obcEvaluateFunctional();
-    peridigmManager.writePeridigmSubModel(stamp);
-    peridigmManager.updateState();
+    const Teuchos::RCP<LCM::PeridigmManager>&
+      peridigmManager = LCM::PeridigmManager::self();
+    if (Teuchos::nonnull(peridigmManager)) {
+      double obcFunctional = peridigmManager->obcEvaluateFunctional();
+      peridigmManager->writePeridigmSubModel(stamp);
+      peridigmManager->updateState();
 
-    int myPID = nonOverlappedSolution.Map().Comm().MyPID();
-    if(myPID == 0)
-      std::cout << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = " << obcFunctional << "\n" << std::endl;
+      int myPID = nonOverlappedSolution.Map().Comm().MyPID();
+      if(myPID == 0)
+        std::cout << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = "
+                  << obcFunctional << "\n" << std::endl;
+    }
 #endif
 #endif
   }

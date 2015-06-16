@@ -7,9 +7,6 @@
 #ifndef AADAPT_UNIFSIZEFIELD_HPP
 #define AADAPT_UNIFSIZEFIELD_HPP
 
-#include "Albany_PUMIDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
@@ -17,7 +14,7 @@ namespace AAdapt {
 class UnifSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
-    UnifSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~UnifSizeField();
 
@@ -32,8 +29,6 @@ class UnifSizeField : public ma::IsotropicFunction, public MeshSizeField {
     void freeSizeField() {}
 
   private:
-
-    Teuchos::RCP<const Teuchos_Comm> commT;
 
     double elem_size;
 

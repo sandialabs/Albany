@@ -288,7 +288,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<string> condNames(4);
+   std::vector<string> condNames(5);
      //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
 
    // Note that sidesets are only supported for two and 3D currently
@@ -305,6 +305,8 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
    condNames[2] = "scaled jump";
 
    condNames[3] = "robin";
+
+   condNames[4] = "poisson source"; //include here for validation of parameter list
 
    nfm.resize(1); // Poisson problem only has one physics set
 
@@ -335,8 +337,8 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 
    // Check for all possible standard BCs (every dof on every sideset) to see which is set
    for (std::size_t i=0; i<meshSpecs->ssNames.size(); i++) {
-     for (std::size_t j=0; j<bcNames.size(); j++) {
-       for (std::size_t k=0; k<condNames.size(); k++) {
+     for (std::size_t j=0; j<bcNames.size(); j++) {  //these are the dof names, e.g. "Phi"
+       for (std::size_t k=0; k<condNames.size(); k++) {  //these are "dudn", "scaled jump", "robin", "poisson source"
 	 
         // construct input.xml string like:
         // "NBC on SS sidelist_12 for DOF T set dudn"
@@ -355,22 +357,28 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 	   
            TEUCHOS_TEST_FOR_EXCEPTION(BCparams.isType<string>(ss), std::logic_error,
 				      "NBC array information in XML file must be of type Array(double)\n");
-	   
+	   	   
+	   if(condNames[k] == "poisson source") {
+	     // Special case of Poisson source neumann BC - processed separately 
+	     //  in getPoissonSourceNeumannEvaluatorParams so it can be re-used for volumetric response fill
+	     continue;
+	   }
+
            // These are read in the Albany::Neumann constructor (PHAL_Neumann_Def.hpp)
 	   
            RCP<ParameterList> p = rcp(new ParameterList);
-	   
+
 	   int type = NeumannFactoryTraits<AlbanyTraits>::id_qcad_poisson_neumann;
-	   p->set<int>                            ("Type", type);
-	   
+	   p->set<int>                            ("Type", type);	   
            p->set<RCP<ParamLib> >                 ("Parameter Library", this->paramLib);
 
-	   //! Additional parameters needed for Poisson Dirichlet BCs	 
+	   //! Additional parameters needed for Poisson Neumann BCs	 
 	   Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
 	   p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
 	   p->set<double>("Temperature", temperature);
 	   p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
 	   p->set<double>("Energy unit in eV", energy_unit_in_eV);
+	   p->set<double>("Length unit in meters", length_unit_in_m);
 
 	   p->set<string>                         ("Side Set ID", meshSpecs->ssNames[i]);
 	   p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[j]);
@@ -402,9 +410,18 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
            p->set< Teuchos::Array<double> >       ("Neumann Input Value", BCparams.get<Teuchos::Array<double> >(ss));
            p->set< string >                       ("Neumann Input Conditions", condNames[k]);
 
-           // If we are doing a Neumann internal boundary with a "scaled jump" (includes "robin" too)
-           // The material DB database needs to be passed to the BC object
+           // In order to convert slope "jump" values between those specified in the input file
+	   // (e.g. in units of 1e11 e/cm^-2) to the slope unit appropriate for the solution (i.e. [myV] / um)
+	   // we use the "Flux Scale" paramter in the material database.
+	   // Note: this may not be necessary for the "scaled jump", since all materials scale the same way, since the
+	   //  material dependent epsilon is already included (the "du" in dudn is really epsilon * grad(phi)).
+	   //  Instead there could just be a parameter somewhere specifying what units surface charge is given in.
 
+	   // For Robin conditions, sidesets should explicitly (in materials.xml) be given a material
+	   //  (possibly via their element block): Robin BCs should have sideset associated with the **metallic** gate
+	   //   material they're setting a DBC for (Note this is NOT the material of the parent cells of the sideset faces
+	   //   and so we really need to specify this in the materials.xml since it can't be inferred from the mesh hierarchy
+	   //   (for Robin BCs the metallic gates themselves aren't meshed at all).
            if(condNames[k] == "scaled jump" || condNames[k] == "robin"){ 
 
               TEUCHOS_TEST_FOR_EXCEPTION(materialDB == Teuchos::null,
@@ -412,7 +429,6 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
                 "This BC needs a material database specified");
 
               p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
-
 
            }
 
@@ -430,6 +446,18 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
      }
    }
 
+
+   // Build evaluator for poisson source neumann boundary conditions
+   string NeuPoissonSrc = "Neumann Poisson Source Evaluator";
+   {
+     RCP<ParameterList> p = getPoissonSourceNeumannEvaluatorParams(meshSpecs);
+     if( p != Teuchos::null ) {
+       int type = NeumannFactoryTraits<AlbanyTraits>::id_qcad_poissonsource_neumann;
+       p->set<int>("Type", type);
+       p->set<bool>("Response Only", false);
+       evaluators_to_build[NeuPoissonSrc] = p;	   
+     }
+   }
 
    // Build evaluator for Gather Coordinate Vector
    string NeuGCV="Evaluator for Gather Coordinate Vector";
@@ -555,3 +583,127 @@ QCAD::PoissonProblem::getValidProblemParameters() const
   return validPL;
 }
 
+
+
+Teuchos::RCP< Teuchos::ParameterList >
+QCAD::PoissonProblem::getPoissonSourceNeumannEvaluatorParams(const Teuchos::RCP<const Albany::MeshSpecsStruct>& meshSpecs)
+{
+   using std::string;
+   // Note: we only enter this function if sidesets are defined in the mesh file
+   // i.e. meshSpecs.ssNames.size() > 0
+
+   Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+
+   // Check to make sure that Neumann BCs are given in the input file
+
+   if(!bcUtils.haveBCSpecified(this->params))
+     return Teuchos::null;
+
+   // Construct BC evaluators for all side sets and names
+   // Note that the string index sets up the equation offset, so ordering is important
+   std::vector<string> bcNames(neq);
+   Teuchos::ArrayRCP<string> dof_names(neq);
+   Teuchos::Array<Teuchos::Array<int> > offsets;
+   offsets.resize(neq);
+
+   bcNames[0] = "Phi";
+   dof_names[0] = "Potential";
+   offsets[0].resize(1);
+   offsets[0][0] = 0;
+
+
+   // Construct BC evaluators for all possible names and "poisson source" condition
+   std::vector<string> condNames(1);
+   condNames[0] = "poisson source";
+
+   // Note that sidesets are only supported for two and 3D currently
+   TEUCHOS_TEST_FOR_EXCEPTION( (numDim != 2) && (numDim != 3), Teuchos::Exceptions::InvalidParameter,
+   			      std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
+
+   bool isVectorField = false;
+   int offsetToFirstDOF = 0;
+
+   // From here down, this code was copied from constructBCEvaluators call commented out
+   //   above and modified to create QCAD::PoissonNeumann evaluators.
+   using Teuchos::RCP;
+   using Teuchos::rcp;
+   using Teuchos::ParameterList;
+   using PHX::DataLayout;
+   using PHX::MDALayout;
+   using std::vector;
+
+   using PHAL::NeumannFactoryTraits;
+   using PHAL::AlbanyTraits;
+
+   // Drop into the "Neumann BCs" sublist
+   Teuchos::ParameterList BCparams = this->params->sublist(Albany::NeumannTraits::bcParamsPl);
+   
+   Teuchos::Array< std::string > poissonSourceSidesets; //holds all the sideset names that are to be used as a poisson source
+   poissonSourceSidesets.reserve(meshSpecs->ssNames.size());
+
+   // Check for all possible poisson source BCs (every dof on every sideset) to see which is set
+   for (std::size_t i=0; i<meshSpecs->ssNames.size(); i++) {
+     for (std::size_t j=0; j<bcNames.size(); j++) {  //these are the dof names, e.g. "Phi"
+       for (std::size_t k=0; k<condNames.size(); k++) {  //this is "poisson source"
+	 
+         std::string ss = Albany::NeumannTraits::constructBCName(meshSpecs->ssNames[i], bcNames[j], condNames[k]);
+
+         // Have a match of the line in input.xml	 
+         if (BCparams.isParameter(ss)) {
+	   
+           //std::cout << "Constructing Poisson Source NBC: " << ss << std::endl;
+	   
+           TEUCHOS_TEST_FOR_EXCEPTION(BCparams.isType<string>(ss), std::logic_error,
+				      "NBC array information in XML file must be of type Array(double)\n");
+
+	   poissonSourceSidesets.push_back(meshSpecs->ssNames[i]); //add to list of all poisson source sidesets
+         }
+       }
+     }
+   }
+
+
+   // Build evaluator for poisson source neumann boundary conditions
+   string NeuPoissonSrc = "Neumann Poisson Source Evaluator";
+   if(poissonSourceSidesets.size() > 0) {
+     RCP<ParameterList> p = rcp(new ParameterList);
+
+     p->set<RCP<ParamLib> >                 ("Parameter Library", this->paramLib);
+
+     //! Additional parameters needed for Poisson Source Neumann BC
+     Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
+     p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
+     p->set<double>("Temperature", temperature);
+     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+     p->set<double>("Energy unit in eV", energy_unit_in_eV);
+     p->set<double>("Length unit in meters", length_unit_in_m);
+
+     p->set< Teuchos::Array<std::string> >  ("Side Set IDs", poissonSourceSidesets);
+     p->set<Teuchos::Array< int > >         ("Equation Offset", offsets[0]); // just one physics set in Poisson problem     
+     p->set< RCP<Albany::Layouts> >         ("Layouts Struct", dl);
+     p->set< RCP<const Albany::MeshSpecsStruct> > ("Mesh Specs Struct", meshSpecs );
+     
+     p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
+     p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
+
+     
+     p->set<string>  ("DOF Name", dof_names[0]);
+     p->set<bool> ("Vector Field", isVectorField);
+     if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
+     else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+
+     
+     // For poisson source conditions, sidesets should explicitly (in materials.xml) be given a material
+     //  (possibly via their element block):   Poisson Source BCs should be given the material in
+     //   which the electrons/holes are accumulating (e.g. Silicon for a Silicon/Oxide interface).
+     //   This could be inferred from the mesh using a one-sided sideset, but for now we require that 
+     //   it's explicitly stated in the materials.xml for clarity.
+     TEUCHOS_TEST_FOR_EXCEPTION(materialDB == Teuchos::null,
+				Teuchos::Exceptions::InvalidParameter, 
+				"To use the Poisson Source Neumann BC, a material database must be specified");
+
+     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+     return p;
+   }
+   return Teuchos::null;
+}

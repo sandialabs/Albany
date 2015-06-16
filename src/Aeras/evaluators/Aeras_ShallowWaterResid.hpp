@@ -72,17 +72,16 @@ private:
 
   bool usePrescribedVelocity;
   bool useHyperViscosity;
-  bool ibpGradH;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Intrepid::FieldContainer<MeshScalarT>  nodal_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
-#endif
+//#endif
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
   PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
   PHX::MDField<ScalarT,Cell,Node> theta_nodal;
@@ -91,8 +90,6 @@ private:
   ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
   ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
  
-  double ViscCoeff; //viscosity or hv coeff
-                     
   double AlphaAngle;
 
   int numNodes;
@@ -102,7 +99,7 @@ private:
   int spatialDim;
   //og: not used
   //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
       std::size_t cell, Intrepid::FieldContainer<ScalarT>  & div);
 
@@ -121,7 +118,7 @@ private:
   std::vector<LO> qpToNodeMap; 
   std::vector<LO> nodeToQPMap; 
 
-#else
+/*#else
 public:
 
   Kokkos::View<MeshScalarT***, PHX::Device> nodal_jacobian;
@@ -185,33 +182,38 @@ public:
 
  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
- struct ShallowWaterResid_VecDim1_Tag{};
  struct ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag{};
- struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Tag{};
- struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Tag{};
+ struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag{};
+ //The following are for hyperviscosity
+ struct ShallowWaterResid_VecDim4_Tag{};
+ struct ShallowWaterResid_VecDim6_Tag{};
 
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim1_Tag> ShallowWaterResid_VecDim1_Policy;
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim4_Tag> ShallowWaterResid_VecDim4_Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim6_Tag> ShallowWaterResid_VecDim6_Policy;
 
 
- KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_VecDim1_Tag& tag, const int& cell) const;
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const;
  KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Tag& tag, const int& cell) const;
+ void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, const int& cell) const; 
  KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Tag& tag, const int& cell) const; 
+ void operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const;
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const; 
  
  KOKKOS_INLINE_FUNCTION
  void compute_huAtNodes_vecDim3(const int& cell) const;
  
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual0(const int& cell) const;
+ KOKKOS_INLINE_FUNCTION 
+ void compute_Residual0_useHyperViscosity(const int& cell) const;
+ KOKKOS_INLINE_FUNCTION 
+ void compute_Residual3(const int& cell) const;
 
-#endif
+#endif*/
 };
 
 // Warning: these maps are a temporary fix, introduced by Steve Bova,

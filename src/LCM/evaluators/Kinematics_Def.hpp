@@ -8,7 +8,9 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include <Intrepid_MiniTensor.h>
-
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 #include <typeinfo>
 
 namespace LCM {
@@ -67,7 +69,8 @@ namespace LCM {
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     //Allocationg additional data for Kokkos functors
-    ddims_.push_back(24);
+ ddims_.push_back(ALBANY_SLFAD_SIZE);
+
     const int num_cells=dims[0];//
     F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));   
     strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
@@ -457,9 +460,9 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
       }
     }
  #else
-
-
-
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
     if (weighted_average_) {
      if (needs_strain_) Kokkos::parallel_for(kinematic_weighted_average_needs_strain_Policy(0,workset.numCells),*this);
      else{ Kokkos::parallel_for(kinematic_weighted_average_Policy(0,workset.numCells),*this);}
@@ -468,6 +471,13 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
    if (needs_strain_) Kokkos::parallel_for(kinematic_needs_strain_Policy(0,workset.numCells),*this);
    else Kokkos::parallel_for(kinematic_Policy(0,workset.numCells),*this);
   }
+#ifdef ALBANY_TIMER
+  PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "Kinematics time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
 
 #endif
   }

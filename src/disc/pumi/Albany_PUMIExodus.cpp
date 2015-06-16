@@ -21,7 +21,7 @@
 #include <Teuchos_RCP.hpp>
 
 Albany::PUMIExodus::
-PUMIExodus(const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
+PUMIExodus(const Teuchos::RCP<APFMeshStruct>& meshStruct,
            const Teuchos::RCP<const Teuchos_Comm>& comm_)
   : mesh_struct(meshStruct),
     sets_p(meshStruct->getSets()),

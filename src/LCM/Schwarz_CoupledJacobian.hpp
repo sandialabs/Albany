@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LCM_SCHWARZ_JACOBIAN_H
-#define LCM_SCHWARZ_JACOBIAN_H
+#if !defined(LCM_SchwarzCoupledJacobian_hpp)
+#define LCM_SchwarzCoupledJacobian_hpp
 
 #include <iostream>
 #include "Teuchos_Comm.hpp"
@@ -36,16 +36,15 @@ public:
 
   ~Schwarz_CoupledJacobian();
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST> > getThyraCoupledJacobian(
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca) const;
 
 private:
 
   Teuchos::RCP<Teuchos_Comm const>
   commT_;
-
 };
 
 }
-#endif
+#endif // LCM_SchwarzCoupledJacobian_hpp

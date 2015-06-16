@@ -263,7 +263,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
      { // Save Variables to Exodus
        const Teuchos::ParameterList& outputVariables = peridigmParams->sublist("Output").sublist("Output Variables");     
-       LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+       LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
        // peridigmManger::setOutputVariableList() records the variables that will be output to Exodus, determines
        // if they are node, element, or global variables, and determines if they are scalar, vector, etc.
        peridigmManager.setOutputFields(outputVariables);

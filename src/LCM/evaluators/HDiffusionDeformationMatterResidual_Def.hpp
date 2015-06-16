@@ -57,8 +57,8 @@ namespace LCM {
                p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>           ("Residual Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
-     stab_param_(p.get<RealType>("Stabilization Parameter"))
-
+     stab_param_(p.get<RealType>("Stabilization Parameter")),
+     t_decay_constant_(p.get<RealType>("Tritium Decay Constant"))
   {
     if (p.isType<bool>("Disable Transient"))
       enableTransient = !p.get<bool>("Disable Transient");
@@ -84,7 +84,6 @@ namespace LCM {
     this->addDependentField(deltaTime);
 
     this->addEvaluatedField(TResidual);
-
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
@@ -222,6 +221,10 @@ namespace LCM {
                  TResidual(cell,node) +=  eqpsFactor(cell,qp)*
                                                            (eqps(cell,qp)- eqps_old(cell, qp))*
                                                             wBF(cell, node, qp)*temp;
+
+                 // Isotope decay term
+                 TResidual(cell,node) += t_decay_constant_*(Clattice(cell,qp) + Ctrapped(cell,qp))
+                                         *wBF(cell,node,qp)*dt*temp;
 
                  // hydrostatic stress term
                  for (int dim=0; dim < numDims; ++dim) {

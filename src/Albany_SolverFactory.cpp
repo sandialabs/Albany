@@ -49,6 +49,7 @@
   #include "QCAD_CoupledPSObserver.hpp"
   #include "QCAD_GenEigensolver.hpp"
 #endif
+  #include "QCADT_CoupledPoissonSchrodinger.hpp"
 #endif
 
 #include "Albany_ModelEvaluatorT.hpp"
@@ -56,7 +57,7 @@
   #include "ATO_Solver.hpp"
 #endif
 
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
   #include "SchwarzMultiscale.hpp"
   #include "Schwarz_PiroObserverT.hpp"
 #endif
@@ -572,6 +573,20 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     if (solutionMethod == "QCAD Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "QCAD Poisson-Schrodinger does not work with AlbanyT executable!  QCAD::CoupledPoissonSchrodinger class needs to be implemented with Thyra::ModelEvaluator instead of EpetraExt. \n");
+      std::cout <<"In Albany_SolverFactory: solutionMethod = QCAD Poisson-Schrodinger!" << std::endl;
+      const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+      const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
+      // Create and setup the Piro solver factory
+      Piro::SolverFactory piroFactory;
+      // Setup linear solver
+      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+      //FIXME, IKT, 5/22/15: inject Ifpack2, MueLu, Teko into Stratimikos.
+      linearSolverBuilder.setParameterList(stratList);
+      const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
+        createLinearSolveStrategy(linearSolverBuilder);
+      const RCP<QCADT::CoupledPoissonSchrodinger> ps_model = 
+            rcp(new QCADT::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess, lowsFactory));
+     //FIXME, IKT, 5/22/15: add observer!
       //const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
       //const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
@@ -587,8 +602,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
         // LOCA auxiliary objects -- needed?
          }
-      return piroFactory.createSolver(piroParams, ps_model);
       */
+      return piroFactory.createSolver<ST>(piroParams, ps_model);
 
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
@@ -626,7 +641,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //#endif /* ALBANY_ATO */
 //    }
   
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
@@ -675,18 +690,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
                                                                          initial_guess, lowsFactory));
 
 
-    //FIXME, IKT, 2/13/15: the following needs to be replaced with the right observer for CoupledSchwarz!
-    //I think we need to write an observer that takes in coupled_model similar to QCAD::CoupledPS_NOXObserverConstructor.
     const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
-    //Will have something like: 
-    //const RCP<Piro::ObserverBase<double> > coupled_observer = rcp(new LCM::CoupledSchwarz_NOXObserverConstructor(coupled_model));
-    //Coupled observer would split up the coupled solution into individual solution vectors (one for each model/domain)
-    //and write it to its own exodus output file. 
-    //setSource is not implemented for Tpetra in Piro!! 
-    //piroFactory.setSource<NOX::Tpetra?::Observer>(coupled_observer);
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
-    // FIXME?
-    std::cout << "DEBUG: In Albany::SolverFactory: before createSolver call! \n"; 
     return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
     }
 #endif

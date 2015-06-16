@@ -74,6 +74,7 @@ SET(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
+  Albany_EigendataInfoStructT.hpp
   )
 
 IF(ALBANY_EPETRA) 
@@ -107,6 +108,7 @@ SET(PDE_SRCS
   problems/Albany_NavierStokes.cpp
   problems/Albany_GPAMProblem.cpp
   problems/Albany_LinComprNSProblem.cpp
+  problems/Albany_AdvDiffProblem.cpp
   problems/Albany_ComprNSProblem.cpp
   problems/Albany_ODEProblem.cpp
   problems/Albany_Helmholtz2DProblem.cpp
@@ -131,6 +133,7 @@ SET(PDE_HDRS
   problems/Albany_NavierStokes.hpp
   problems/Albany_GPAMProblem.hpp
   problems/Albany_LinComprNSProblem.hpp
+  problems/Albany_AdvDiffProblem.hpp
   problems/Albany_ComprNSProblem.hpp
   problems/Albany_ODEProblem.hpp
   problems/Albany_Helmholtz2DProblem.hpp
@@ -214,6 +217,7 @@ SET(HEADERS ${HEADERS}
   disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
+  disc/Albany_NodalDOFManager.hpp
   disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataVector.hpp
   disc/Adapt_NodalFieldUtils.hpp
@@ -247,7 +251,6 @@ SET(SOURCES ${SOURCES}
   evaluators/QCAD_ResponseFieldIntegral.cpp
   evaluators/QCAD_ResponseFieldValue.cpp
   evaluators/QCAD_ResponseFieldAverage.cpp
-  evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
   evaluators/QCAD_ResponseSaveField.cpp
   evaluators/QCAD_ResponseCenterOfMass.cpp
   evaluators/QCAD_MeshRegion.cpp
@@ -281,6 +284,7 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_ODEResid.cpp
   evaluators/PHAL_GPAMResid.cpp
   evaluators/PHAL_LinComprNSResid.cpp
+  evaluators/PHAL_AdvDiffResid.cpp
   evaluators/PHAL_LinComprNSBodyForce.cpp
   evaluators/PHAL_ComprNSResid.cpp
   evaluators/PHAL_ComprNSBodyForce.cpp
@@ -359,8 +363,6 @@ SET(HEADERS ${HEADERS}
   evaluators/QCAD_ResponseFieldValue_Def.hpp
   evaluators/QCAD_ResponseFieldAverage.hpp
   evaluators/QCAD_ResponseFieldAverage_Def.hpp
-  evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
-  evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
   evaluators/QCAD_ResponseSaveField.hpp
   evaluators/QCAD_ResponseSaveField_Def.hpp
   evaluators/QCAD_ResponseCenterOfMass.hpp
@@ -410,6 +412,8 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_GPAMResid_Def.hpp
   evaluators/PHAL_LinComprNSResid.hpp
   evaluators/PHAL_LinComprNSResid_Def.hpp
+  evaluators/PHAL_AdvDiffResid.hpp
+  evaluators/PHAL_AdvDiffResid_Def.hpp
   evaluators/PHAL_ComprNSResid.hpp
   evaluators/PHAL_ComprNSResid_Def.hpp
   evaluators/PHAL_LinComprNSBodyForce.hpp
@@ -457,17 +461,6 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PNP_ConcentrationResid.hpp
   evaluators/PNP_ConcentrationResid_Def.hpp
   )
-
-# FELIX
-IF (ALBANY_FELIX)
-  SET(SOURCES ${SOURCES}
-    evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
-    evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
-  )
-ENDIF()
 
 # AERAS
 IF (ALBANY_AERAS)
@@ -684,12 +677,11 @@ ELSE()
   set(ALBANY_CI_LIB )
 ENDIF()
 
-# RPI SCOREC Adaptivity
-IF(ALBANY_SCOREC)
+# RPI APF mesh interface
+IF(ALBANY_APF)
   SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
   include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
 ELSE()
-  set(SCOREC_LIB )
   SET(ALBANY_PUMI_INCLUDE_DIRS )
 ENDIF()
 
@@ -765,7 +757,6 @@ set(ALL_LIBRARIES
   ${NLOPT_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
-  ${SCOREC_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   )
@@ -775,7 +766,11 @@ set(ALL_LIBRARIES
 add_subdirectory(adapt)
 add_subdirectory(disc)
 
+IF(ALBANY_HAVE_STK)
 SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK)
+ELSE()
+SET(ALBANY_LIBRARIES albanyLib albanyAdapt)
+ENDIF()
 
 IF(ALBANY_DEMO_PDES)
   add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS} ${PDE_HDRS})
@@ -810,8 +805,8 @@ IF (ALBANY_AERAS)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
 ENDIF()
 
-# RPI SCOREC Adaptivity tools
-IF(ALBANY_SCOREC)
+# RPI APF mesh interface
+IF(ALBANY_APF)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
 ENDIF()
 

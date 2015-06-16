@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
 
-SET(CTEST_DO_SUBMIT ON)
-SET(CTEST_TEST_TYPE Nightly)
+#SET(CTEST_DO_SUBMIT ON)
+#SET(CTEST_TEST_TYPE Nightly)
 
 #SET(CTEST_DO_SUBMIT OFF)
 #SET(CTEST_TEST_TYPE Experimental)
+
+SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
+SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 
 # What to build and test
 SET(DOWNLOAD_TRILINOS TRUE)
@@ -28,6 +31,8 @@ set( CTEST_BINARY_NAME          buildAlbany)
 SET(PREFIX_DIR /home/gahanse)
 SET(MPI_BASE_DIR /home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28)
 SET(INTEL_DIR /opt/intel/mkl/lib/intel64)
+#SET(BOOST_DIR /home/projects/x86-64/boost/1.57.0/gnu/4.7.2)
+SET(BOOST_DIR /home/gahanse)
 
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -172,8 +177,16 @@ endif()
 #EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update_Trilinos.xml
 #               )
 
+# Note: CTest will store files in ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION} - ending in Update.xml.
+# Not sure what the first part of that filename is, so glob all possibliities into UPDATE_FILES. Then
+# grab the last one and rename it to Update_Trilinos.xml in the drop location. We assume there is only a 
+# single update file, if there are more skip this.
 FILE(GLOB UPDATE_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Update.xml")
-FILE(RENAME ${UPDATE_FILES} ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Update_Trilinos.xml)
+LIST(LENGTH UPDATE_FILES UP_LIST_LEN)
+IF(UP_LIST_LEN EQUAL 1)
+  LIST(GET UPDATE_FILES -1 SINGLE_UPDATE_FILE)
+  FILE(RENAME "${SINGLE_UPDATE_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Update_Trilinos.xml")
+ENDIF()
 
 # Get the SCOREC tools
 
@@ -232,12 +245,20 @@ SET(CONFIGURE_OPTIONS
   "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper"
   "-DCMAKE_C_COMPILER:FILEPATH=mpicc"
   "-DCMAKE_Fortran_COMPILER:FILEPATH=mpifort"
-  "-DCMAKE_CXX_FLAGS:STRING='-w -DNDEBUG'"
+  "-DCMAKE_CXX_FLAGS:STRING='-DNDEBUG'"
   "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -DNDEBUG'"
-  "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
+  "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+#  "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
+  "-DTpetra_INST_INT_LONG_LONG:BOOL=OFF"
+  "-DTpetra_INST_INT_INT:BOOL=ON"
+  "-DTpetra_INST_DOUBLE:BOOL=ON"
+  "-DTpetra_INST_FLOAT:BOOL=OFF"
+  "-DTpetra_INST_COMPLEX_FLOAT:BOOL=OFF"
+  "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
+  "-DTpetra_INST_INT_LONG:BOOL=OFF"
+  "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
 #
-  "-DRythmos_ENABLE_DEBUG:BOOL=ON"
   "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
   "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=CUDA"
   "-DPhalanx_INDEX_SIZE_TYPE:STRING=INT"
@@ -257,12 +278,12 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Boost:BOOL=ON"
   "-DTPL_ENABLE_BoostLib:BOOL=ON"
   "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DBoostLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DBoostLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
 #
   "-DTPL_ENABLE_Netcdf:STRING=ON"
   "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
@@ -286,22 +307,25 @@ SET(CONFIGURE_OPTIONS
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
-  "-DTPL_ENABLE_SuperLU:STRING=ON"
-  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
-#
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
-#
-  "-DTPL_ENABLE_ParMETIS:STRING=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
   "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lz'"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
 #
   "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
   "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
+  "-DTPL_ENABLE_X11:BOOL=OFF"
+  "-DTPL_ENABLE_Matio:BOOL=OFF"
+  "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
+  "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=OFF"
+  "-DTrilinos_ENABLE_Teko:BOOL=OFF"
+  "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+# Comment these out to disable stk
+  "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+  "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
+  "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
   "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
   "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
   "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
@@ -312,17 +336,16 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
   "-DTrilinos_ENABLE_STKIO:BOOL=ON"
   "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
-  "-DTPL_ENABLE_X11:BOOL=OFF"
-  "-DTPL_ENABLE_Matio:BOOL=OFF"
-  "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
-  "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
-  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=OFF"
-  "-DTrilinos_ENABLE_Teko:BOOL=OFF"
-  "-DTrilinos_ENABLE_MueLu:BOOL=OFF"
+# Comment these out to enable stk
+#  "-DTrilinos_ENABLE_STK:BOOL=OFF"
+#  "-DTrilinos_ENABLE_SEACAS:BOOL=OFF"
 #
-  "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
-  "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
-  "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
+  "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
+  "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+# Try turning off more of Trilinos
+  "-DTrilinos_ENABLE_OptiPack:BOOL=OFF"
+  "-DTrilinos_ENABLE_GlobiPack:BOOL=OFF"
+  "-DTrilinos_ENABLE_Pamgen:BOOL=OFF"
   )
 
 IF(BUILD_TRILINOS)
@@ -380,7 +403,11 @@ endif()
 #               )
 
 FILE(GLOB CONFIG_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Configure.xml")
-FILE(RENAME ${CONFIG_FILES} ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Configure_Trilinos.xml)
+LIST(LENGTH CONFIG_FILES CO_LIST_LEN)
+IF(CO_LIST_LEN EQUAL 1)
+  LIST(GET CONFIG_FILES -1 SINGLE_CONFIG_FILE)
+  FILE(RENAME "${SINGLE_CONFIG_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Configure_Trilinos.xml")
+ENDIF()
 
 SET(CTEST_BUILD_TARGET install)
 
@@ -414,7 +441,11 @@ endif()
 #               )
 
 FILE(GLOB BUILD_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Build.xml")
-FILE(RENAME ${BUILD_FILES} ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Build_Trilinos.xml)
+LIST(LENGTH BUILD_FILES BU_LIST_LEN)
+IF(BU_LIST_LEN EQUAL 1)
+  LIST(GET BUILD_FILES -1 SINGLE_BUILD_FILE)
+  FILE(RENAME "${SINGLE_BUILD_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Build_Trilinos.xml")
+ENDIF()
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
         message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
@@ -506,7 +537,22 @@ CTEST_BUILD(
 )
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+  IF(CTEST_DO_SUBMIT)
+    CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+    )
+
+    if(S_HAD_ERROR)
+        message(FATAL_ERROR "Cannot submit Albany build results!")
+    endif()
+  ENDIF()
+
+  if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Albany!")
+  endif()
+
+  message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+
 endif()
 
 SET(CTEST_BUILD_TARGET "AlbanyT")
@@ -545,6 +591,7 @@ endif()
 
 CTEST_TEST(
               BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+#              INCLUDE "SCOREC_ThermoMechanicalCan_thermomech_tpetra"
 #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
 #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
               INCLUDE_LABEL "CUDA_TEST"
@@ -561,7 +608,7 @@ IF(CTEST_DO_SUBMIT)
   endif()
 ENDIF()
 
-ENDIF()
+ENDIF (BUILD_ALBANY)
 
 
 # Done!!!

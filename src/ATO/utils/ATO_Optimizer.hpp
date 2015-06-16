@@ -72,6 +72,7 @@ class Optimizer_OC : public Optimizer {
   int numOptDofs;
 
   double _volConvTol;
+  double _volAccpTol;
   double _volMaxIter;
   double _initLambda;
   double _moveLimit;

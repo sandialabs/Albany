@@ -8,9 +8,6 @@
 #ifndef AADAPT_SPRSIZEFIELD_HPP
 #define AADAPT_SPRSIZEFIELD_HPP
 
-#include "Albany_PUMIDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
@@ -18,7 +15,7 @@ namespace AAdapt {
 class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
-    SPRSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
   
     ~SPRSizeField();
 
@@ -36,13 +33,10 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   private:
 
-    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
     apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
-    Teuchos::RCP<Albany::AbstractPUMIDiscretization> pumi_disc;
-
-    Teuchos::RCP<const Teuchos_Comm> commT;
+    Teuchos::RCP<Albany::APFDiscretization> pumi_disc;
 
     std::string sv_name;
     double rel_err;

@@ -3,7 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -104,7 +106,21 @@ evaluateFields(typename Traits::EvalData workset)
   }
 //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
+
+#ifdef ALBANY_TIMER
+auto start = std::chrono::high_resolution_clock::now();
+#endif
+
    Kokkos::parallel_for ( workset.numCells,  VecInterpolation <  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numQPs, numNodes, vecDim));
+
+#ifdef ALBANY_TIMER
+PHX::Device::fence();
+auto elapsed = std::chrono::high_resolution_clock::now() - start;
+long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+std::cout<< "DOFVecInterpolation Residual time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
+
 #endif
 }
 
@@ -217,8 +233,21 @@ evaluateFields(typename Traits::EvalData workset)
   }
 //Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
-  Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <FadType,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
+
+#ifdef ALBANY_TIMER
+ auto start = std::chrono::high_resolution_clock::now();
 #endif
 
+  Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <FadType,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
+
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "DOFVecInterpolation Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
+
+#endif
 }
 }

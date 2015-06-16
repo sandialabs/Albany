@@ -968,6 +968,12 @@ namespace Albany {
       return name;
     }
 
+    Teuchos::RCP<Tpetra_Vector>
+    getOverlappedSolutionT()
+    {
+      return solMgrT->get_overlapped_xT();
+    }
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
@@ -1142,6 +1148,8 @@ namespace Albany {
     Teuchos::RCP<MORFacade> morFacade;
 #endif
 #endif
+
+    int derivatives_check_;
 
   };
 }
