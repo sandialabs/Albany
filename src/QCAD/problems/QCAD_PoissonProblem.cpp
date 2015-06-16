@@ -146,7 +146,9 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
 
    const std::vector<std::string>& nodeSetIDs = meshSpecs.nsNames;
 
-   Teuchos::ParameterList DBCparams = params->sublist("Dirichlet BCs");
+   ParameterList& DBCparams = params->sublist("Dirichlet BCs");
+   ParameterList& SBHparams = params->sublist("Schottky Barrier");
+   
    DBCparams.validateParameters(*(Albany::DirichletTraits::getValidBCParameters(nodeSetIDs,dirichletNames)),0);
 
    map<string, RCP<ParameterList> > evaluators_to_build;
@@ -175,12 +177,23 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
          p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
          //! Additional parameters needed for Poisson Dirichlet BCs
-         Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
+         ParameterList& paramList = params->sublist("Poisson Source");
          p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
+         
          //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
          p->set<double>("Temperature", temperature);
+         
          p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
-	 p->set<double>("Energy unit in eV", energy_unit_in_eV);
+         p->set<double>("Energy unit in eV", energy_unit_in_eV);
+         
+         // check if the nodeset is a Schottky contact
+         std::stringstream schottkysstrm;
+         schottkysstrm << "Schottky Barrier Height for NS " << nodeSetIDs[i];
+         std::string schottkystr = schottkysstrm.str();
+         
+         if (SBHparams.isParameter(schottkystr)) {
+           p->set< RealType >("Schottky Barrier Height", SBHparams.get<double>(schottkystr)); // SBH in [eV]
+         } 
 
          std::stringstream ess; ess << "Evaluator for " << ss;
          evaluators_to_build[ess.str()] = p;
