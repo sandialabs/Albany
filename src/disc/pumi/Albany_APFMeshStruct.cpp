@@ -231,8 +231,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   using Albany::StateStruct;
 
   // Set the number of equation present per node. Needed by Albany_APFDiscretization.
-
   neq = neq_;
+
+  this->nodal_data_base = sis->getNodalDataBase();
 
   Teuchos::Array<std::string> defaultLayout;
   solVectorLayout =

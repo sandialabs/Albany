@@ -36,10 +36,10 @@ class NodalDataBase {
 
     Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
 
-    void updateNodalGraph(const Teuchos::RCP<Tpetra_CrsGraph>& nGraph)
+    void updateNodalGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& nGraph)
          { nodalGraph = nGraph; }
 
-    Teuchos::RCP<Tpetra_CrsGraph> getNodalGraph()
+    const Teuchos::RCP<const Tpetra_CrsGraph>& getNodalGraph()
          { return nodalGraph; }
 
     void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
@@ -62,7 +62,7 @@ class NodalDataBase {
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
-    Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
+    Teuchos::RCP<const Tpetra_CrsGraph> nodalGraph;
 
     NodeFieldSizeVector nodeVectorLayout;
     NodeFieldSizeMap nodeVectorMap;

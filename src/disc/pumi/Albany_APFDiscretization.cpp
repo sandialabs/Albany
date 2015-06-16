@@ -1192,6 +1192,11 @@ Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
   // transfer of internal variables
   if (shouldTransferIPData)
     copyQPStatesFromAPF();
+  // Tell the nodal data base that the graph changed. We don't create the graph
+  // (as STKDiscretization does), but others might (such as
+  // ProjectIPtoNodalField), so invalidate it.
+  if (Teuchos::nonnull(meshStruct->nodal_data_base))
+    meshStruct->nodal_data_base->updateNodalGraph(Teuchos::null);
 }
 
 void
