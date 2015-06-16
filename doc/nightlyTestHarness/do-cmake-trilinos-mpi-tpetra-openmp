@@ -34,9 +34,9 @@ BUILD_DIR=`pwd`
 
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
- -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.a \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.a \
+      -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
+      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
       -D Boost_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
@@ -141,10 +141,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_HDF5:BOOL=ON \
       -D TPL_ENABLE_SuperLU:BOOL=OFF \
       -D TPL_ENABLE_yaml-cpp:BOOL=OFF \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
-      -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
-      -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include/openmpi-x86_64 \
+      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
+      -D HDF5_INCLUDE_DIRS:PATH=/usr/include \
+      -D HDF5_LIBRARY_DIRS:PATH=/usr/lib64 \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_CXX11:BOOL=ON \

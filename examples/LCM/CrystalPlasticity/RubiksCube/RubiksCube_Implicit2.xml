@@ -7,8 +7,8 @@
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{0.00,  1.0 2.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{0.00,  0.10 0.20}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{0.00, 1.0, 2.0}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{0.00, 0.10, 0.20}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
@@ -51,11 +51,11 @@
       </ParameterList>
       <ParameterList name="Step Size">
         <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.0001"/>
-       <Parameter name="Max Step Size" type="double" value="0.0005"/>
+       <Parameter name="Initial Step Size" type="double" value="0.001"/>
+       <Parameter name="Max Step Size" type="double" value="0.02"/>
        <Parameter name="Min Step Size" type="double" value="0.00000001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Aggressiveness" type="double" value="0.001"/>
+       <Parameter name="Aggressiveness" type="double" value="0.2"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
@@ -117,7 +117,7 @@
       <ParameterList name="Line Search">
         <ParameterList name="Backtrack">
           <Parameter name="Reduction Factor" type="double" value="0.5"/>
-          <Parameter name="Max Iters" type="int" value="4"/>
+          <Parameter name="Max Iters" type="int" value="10"/>
         </ParameterList>
         <Parameter name="Method" type="string" value="Backtrack"/>
       </ParameterList>

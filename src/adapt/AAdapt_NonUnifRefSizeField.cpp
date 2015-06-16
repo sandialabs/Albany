@@ -10,7 +10,7 @@
 
 #include "Albany_Utils.hpp"
 
-AAdapt::NonUnifRefSizeField::NonUnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
+AAdapt::NonUnifRefSizeField::NonUnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
   MeshSizeField(disc) {
 }
 

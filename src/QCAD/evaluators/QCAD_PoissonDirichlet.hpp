@@ -7,7 +7,7 @@
 #ifndef QCAD_POISSONDIRICHLET_HPP
 #define QCAD_POISSONDIRICHLET_HPP
 
-#include "Phalanx_config.hpp"
+#include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -43,24 +43,27 @@ protected:
 
   //! built-in potential for MB statistics and complete ionization
   ScalarT potentialForMBComplIon(const ScalarT &Nc, const ScalarT &Nv, 
-				 const ScalarT &Eg, const double &Chi,
-				 const std::string &dopType, const double &dopingConc);
+				  const ScalarT &Eg, const double &Chi,
+				  const std::string &dopType, const double &dopingConc);
 
   //! built-in potential for MB statistics and incomplete ionization
   ScalarT potentialForMBIncomplIon(const ScalarT &Nc, const ScalarT &Nv, 
-				   const ScalarT &Eg, const double &Chi, 
-				   const std::string &dopType, const double &dopingConc, const double &dopantActE);
+				  const ScalarT &Eg, const double &Chi, 
+				  const std::string &dopType, const double &dopingConc, const double &dopantActE);
 
   //! built-in potential for FD statistics and complete ionization
   ScalarT potentialForFDComplIon(const ScalarT &Nc, const ScalarT &Nv, 
-				 const ScalarT &Eg, const double &Chi, 
-				 const std::string &dopType, const double &dopingConc);
+				  const ScalarT &Eg, const double &Chi, 
+				  const std::string &dopType, const double &dopingConc);
 
   //! built-in potential for zero-K FD statistics and complete ionization
   ScalarT potentialForZeroKFDComplIon(const ScalarT &Nc, const ScalarT &Nv, 
-				      const ScalarT &Eg, const double &Chi, 
-				      const std::string &dopType, const double &dopingConc);
+				  const ScalarT &Eg, const double &Chi, 
+				  const std::string &dopType, const double &dopingConc);
 
+  //! built-in potential for Schottky barrier
+  ScalarT potentialForSchottkyBarrier(const ScalarT &Eg, const double &Chi, 
+				  const std::string &dopType);
 
 private:
   ScalarT user_value;    // value entered by user, distinguished from actual DBC value
@@ -69,11 +72,14 @@ private:
   std::string ebName;
   std::string carrierStatistics;
   std::string incompIonization;
+  std::string nodeSetName; 
+  std::string contactType; 
   
   double dopingDonor;   // in [cm-3]
   double dopingAcceptor;
   double donorActE;     // (Ec-Ed) where Ed = donor energy level, [eV]
   double acceptorActE;  // (Ea-Ev) where Ea = acceptor energy level, [eV]
+  double sbHeight;      // Schottky barrier height in [eV]
 
   ScalarT temperature;  // [K]
   

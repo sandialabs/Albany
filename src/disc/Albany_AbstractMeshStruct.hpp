@@ -67,11 +67,15 @@ struct AbstractMeshStruct {
   public:
 
     //! Internal mesh specs type needed
+    enum msType {
+      STK_MS,
 #ifdef ALBANY_SCOREC
-    enum msType { STK_MS, PUMI_MS };
-#else
-    enum msType { STK_MS};
+      PUMI_MS,
 #endif
+#ifdef ALBANY_AMP
+      SIM_MS,
+#endif
+    };
 
     virtual void setFieldAndBulkData(
       const Teuchos::RCP<const Teuchos_Comm>& commT,

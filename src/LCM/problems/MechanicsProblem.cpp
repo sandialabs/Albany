@@ -64,6 +64,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     have_stab_pressure_eq_(false),
     have_peridynamics_(false),
     have_topmod_adaptation_(false),
+    have_adaptation_(false),
     rc_mgr_(rc_mgr)
 {
 
@@ -75,6 +76,9 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Is contact specified?
   have_contact_ = params->isSublist("Contact");
+
+  // Is adaptation specified?
+  have_adaptation_ = params->isSublist("Adaptation");
 
   getVariableType(params->sublist("Displacement"),
       "DOF",

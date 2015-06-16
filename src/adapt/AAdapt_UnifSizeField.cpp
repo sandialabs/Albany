@@ -8,7 +8,7 @@
 #include "AAdapt_UnifSizeField.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 
-AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
+AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
   MeshSizeField(disc) {
 }
 

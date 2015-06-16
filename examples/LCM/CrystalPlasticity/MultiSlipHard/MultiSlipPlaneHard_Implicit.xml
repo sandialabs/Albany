@@ -6,9 +6,9 @@
     <Parameter name="MaterialDB Filename" type="string" value="MultiSlipPlaneHard_Material_Implicit.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
-        <Parameter name="Number of points" type="int" value="4"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.00}"/>
+        <Parameter name="Number of points" type="int" value="3"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.00, 3.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.00, 0.00}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_12 for DOF X">
         <Parameter name="Number of points" type="int" value="4"/>
