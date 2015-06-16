@@ -12,6 +12,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
 #include "Teuchos_Array.hpp"
+#include <PHAL_Utilities.hpp>
 
 namespace LCM
 {
@@ -157,17 +158,6 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
   this->setName(
       "Constitutive Model Parameters" + PHX::typeAsString<EvalT>());
 
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    ddims_.push_back(ALBANY_SLFAD_SIZE);
-   int num_cells=dims[0];
-    point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
-    point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
-    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(num_cells, num_pts_)));
-    second.setFieldData(ViewFactory::buildView(second.fieldTag(), ddims_));
-#endif
-
-
 }
 
 //------------------------------------------------------------------------------
@@ -187,6 +177,19 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   if (have_temperature_) this->utils.setFieldData(temperature_, fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    int deriv_dims=PHAL::getDerivativeDimensionsFromView(coord_vec_.get_kokkos_view());
+    ddims_.push_back(deriv_dims);
+    const int num_cells=coord_vec_.dimension(0);
+
+    point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
+    point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
+    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(num_cells, num_pts_)));
+    second.setFieldData(ViewFactory::buildView(second.fieldTag(), ddims_));
+#endif
+
+
 }
 //------------------------------------------------------------------------------
 //Kokkos kernels
