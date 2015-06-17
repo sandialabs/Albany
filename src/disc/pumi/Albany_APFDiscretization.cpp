@@ -413,9 +413,9 @@ void Albany::APFDiscretization::writeAnySolutionToFile(
   int dim = getNumDim();
   apf::FieldShape* fs = apf::getIPShape(dim, meshStruct->cubatureDegree);
   copyQPStatesToAPF(f,fs,false);
-
+  copyNodalDataToAPF(false);
   meshOutput->writeFile(time_label);
-
+  removeNodalDataFromAPF();
   removeQPStatesFromAPF();
 }
 
@@ -1128,6 +1128,52 @@ void Albany::APFDiscretization::computeSideSets()
     }
   }
   m->end(it);
+}
+
+void Albany::APFDiscretization::
+copyNodalDataToAPF (const bool copy_all) {
+  if (meshStruct->nodal_data_base.is_null()) return;
+  const Teuchos::RCP<Albany::NodeFieldContainer>
+    node_states = meshStruct->nodal_data_base->getNodeContainer();
+  apf::Mesh2* const m = meshStruct->getMesh();
+
+  for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
+       nfs != node_states->end(); ++nfs) {
+    Teuchos::RCP<Albany::PUMINodeDataBase<RealType> >
+      nd = Teuchos::rcp_dynamic_cast<Albany::PUMINodeDataBase<RealType>>(
+        nfs->second);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      nd.is_null(), std::logic_error,
+      "A node field container is not a PUMINodeDataBase");
+    if ( ! copy_all && ! nd->output) continue;
+
+    int value_type, nentries;
+    switch (nd->ndims()) {
+    case 0: value_type = apf::SCALAR; nentries = 1; break;
+    case 1: value_type = apf::VECTOR; nentries = 3; break;
+    case 2: value_type = apf::MATRIX; nentries = 9; break;
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                                 "dim is not in {1,2,3}");
+    }
+    apf::Field* f = apf::createFieldOn(m, nd->name.c_str(), value_type);
+    setField(nd->name.c_str(), &nd->buffer[0], false, 0, nentries);
+  }
+}
+
+void Albany::APFDiscretization::removeNodalDataFromAPF () {
+  if (meshStruct->nodal_data_base.is_null()) return;
+  const Teuchos::RCP<Albany::NodeFieldContainer>
+    node_states = meshStruct->nodal_data_base->getNodeContainer();
+  apf::Mesh2* m = meshStruct->getMesh();
+
+  for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
+       nfs != node_states->end(); ++nfs) {
+    Teuchos::RCP<Albany::PUMINodeDataBase<RealType> >
+      nd = Teuchos::rcp_dynamic_cast<Albany::PUMINodeDataBase<RealType>>(
+        nfs->second);
+    apf::destroyField(m->findField(nd->name.c_str()));
+  }
 }
 
 void Albany::APFDiscretization::computeNodeSets()

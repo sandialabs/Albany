@@ -324,6 +324,10 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void copyQPTensorFromAPF(unsigned nqp, PUMIQPData<double, 4>& state, apf::Field* f);
     void copyQPStatesFromAPF();
 
+    // Transfer nodal data to/from APF.
+    void copyNodalDataToAPF(const bool copy_all);
+    void removeNodalDataFromAPF();
+
     // ! Split Solution fields
     std::vector<std::string> solNames;
     std::vector<std::string> resNames;
