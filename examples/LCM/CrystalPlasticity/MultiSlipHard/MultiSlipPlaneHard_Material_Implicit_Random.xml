@@ -28,9 +28,9 @@
         <Parameter name="C11" type="double" value="204.6e3"/>
         <Parameter name="C12" type="double" value="137.7e3"/>
         <Parameter name="C44" type="double" value="126.2e3"/>
-        <Parameter name="Basis Vector 1" type="Array(double)" value="{1.0,0.0,0.0}"/>
-        <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0,1.0,0.0}"/>
-        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
+        <Parameter name="Basis Vector 1" type="Array(double)" value="{0.552061386751, 0.600986582566, -0.577964837023}"/>
+        <Parameter name="Basis Vector 2" type="Array(double)" value="{-0.0104815238375, 0.698114038161, 0.715909859815}"/>
+        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.833737586364, -0.389168237782, 0.391701059209}"/>
       </ParameterList>
 
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
