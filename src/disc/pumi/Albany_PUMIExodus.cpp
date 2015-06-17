@@ -7,13 +7,14 @@
 
 #include "Albany_PUMIExodus.hpp"
 
+#ifdef ALBANY_SEACAS
 #include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 #include <stk_io/IossBridge.hpp>
 #include <Ionit_Initializer.h>
-#ifdef ALBANY_SEACAS
-  #include <stk_io/StkMeshIoBroker.hpp>
+#include <stk_io/StkMeshIoBroker.hpp>
 #endif
+
 #include <apfSTK.h>
 
 #include <Albany_Utils.hpp>
@@ -32,10 +33,12 @@ PUMIExodus(const Teuchos::RCP<APFMeshStruct>& meshStruct,
 Albany::PUMIExodus::
 ~PUMIExodus()
 {
+#ifdef ALBANY_SEACAS
   // See comment in Albany::IossSTKMeshStruct::~IossSTKMeshStruct.
   bulk = Teuchos::null;
   meta = Teuchos::null;
   mesh_data = Teuchos::null;
+#endif
 }
 
 void Albany::PUMIExodus::setFileName(const std::string& fname)
