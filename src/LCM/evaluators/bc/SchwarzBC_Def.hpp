@@ -124,7 +124,7 @@ computeBCs(
   coupled_block_name = this_app.getCoupledBlockName(coupled_app_index);
 
   bool const
-  ignore_block = coupled_block_name == "NONE";
+  use_block = coupled_block_name != "NONE";
 
   std::map<std::string, int> const &
   coupled_block_name_2_index = coupled_gms.ebNameToIndex;
@@ -133,9 +133,9 @@ computeBCs(
   it = coupled_block_name_2_index.find(coupled_block_name);
 
   bool const
-  found_block = it != coupled_block_name_2_index.end();
+  missing_block = it == coupled_block_name_2_index.end();
 
-  if (ignore_block == false && found_block == false) {
+  if (use_block == true && missing_block == true) {
     std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
     std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
     std::cerr << "Coupling application : " << this_app_name << '\n';
@@ -146,7 +146,7 @@ computeBCs(
   // When ignoring the block, set the index to zero to get defaults
   // corresponding to the first block.
   auto const
-  coupled_block_index = ignore_block == true ? 0 : it->second;
+  coupled_block_index = use_block == true ? it->second : 0;
 
   CellTopologyData const
   coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
@@ -240,9 +240,9 @@ computeBCs(
     coupled_element_block = coupled_ws_eb_names[workset];
 
     bool const
-    block_names_match = coupled_element_block == coupled_block_name;
+    block_names_differ = coupled_element_block != coupled_block_name;
 
-    if (ignore_block == false && block_names_match == false) continue;
+    if (use_block == true && block_names_differ == true) continue;
 
     auto const
     elements_per_workset = ws_elem_2_node_id[workset].size();
