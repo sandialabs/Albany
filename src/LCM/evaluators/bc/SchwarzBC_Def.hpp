@@ -190,7 +190,7 @@ computeBCs(
   // to determine whether a node of this_app is inside an element of
   // coupled_app within that tolerance.
   double const
-  tolerance = 5.0e-2;
+  tolerance = 1.0e-3;
 
   double * const
   coord = ns_coord[ns_node];
