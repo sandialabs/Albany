@@ -7,12 +7,12 @@
 
 #include "Albany_PUMIExodus.hpp"
 
+#ifdef ALBANY_SEACAS
 #include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 #include <stk_io/IossBridge.hpp>
 #include <Ionit_Initializer.h>
-#ifdef ALBANY_SEACAS
-  #include <stk_io/StkMeshIoBroker.hpp>
+#include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
 #include <apfSTK.h>
@@ -33,6 +33,22 @@ PUMIExodus(const Teuchos::RCP<APFMeshStruct>& meshStruct,
 Albany::PUMIExodus::
 ~PUMIExodus()
 {
+#ifdef ALBANY_SEACAS
+  // See comment in Albany::IossSTKMeshStruct::~IossSTKMeshStruct.
+  bulk = Teuchos::null;
+  meta = Teuchos::null;
+  mesh_data = Teuchos::null;
+#endif
+}
+
+void Albany::PUMIExodus::setFileName(const std::string& fname)
+{
+  outputFileName = fname;
+#ifdef ALBANY_SEACAS
+  bulk = Teuchos::null;
+  meta = Teuchos::null;
+  mesh_data = Teuchos::null;
+#endif 
 }
 
 namespace {
@@ -54,8 +70,7 @@ void define_output_fields(stk::io::StkMeshIoBroker& mesh_data,
 }
 
 void
-Albany::PUMIExodus::
-write(const char* filename, const double time_val)
+Albany::PUMIExodus::write(const char* filename, const double time_val)
 {
 #ifdef ALBANY_SEACAS
   apf::Mesh2* mesh = mesh_struct->getMesh();
@@ -64,23 +79,31 @@ write(const char* filename, const double time_val)
   apf::makeStkNumberings(mesh, n);
   apf::StkModels& models = sets_p;
 
-  stk::mesh::MetaData meta(mesh->getDimension());
-  apf::copyMeshToMeta(mesh, models, &meta);
-  apf::copyFieldsToMeta(mesh, &meta);
-  meta.commit();
+  if (mesh_data.is_null()) {
+    meta = Teuchos::rcp(new stk::mesh::MetaData(mesh->getDimension()));
+    apf::copyMeshToMeta(mesh, models, meta.get());
+    apf::copyFieldsToMeta(mesh, meta.get());
+    meta->commit();
+  }
 
-  stk::mesh::BulkData bulk(meta, Albany::getMpiCommFromTeuchosComm(comm));
-  apf::copyMeshToBulk(n, models, &meta, &bulk);
-  apf::copyFieldsToBulk(n, &meta, &bulk);
+  if (bulk.is_null()) {
+    bulk = Teuchos::rcp(
+      new stk::mesh::BulkData(*meta, Albany::getMpiCommFromTeuchosComm(comm)));
+    apf::copyMeshToBulk(n, models, meta.get(), bulk.get());
+  }
+  apf::copyFieldsToBulk(n, meta.get(), bulk.get());
 
-  Ioss::Init::Initializer();
-  stk::io::StkMeshIoBroker mesh_data(Albany::getMpiCommFromTeuchosComm(comm));
-  mesh_data.set_bulk_data(bulk);
+  if (mesh_data.is_null()) {
+    Ioss::Init::Initializer();
+    mesh_data = Teuchos::rcp(
+      new stk::io::StkMeshIoBroker(Albany::getMpiCommFromTeuchosComm(comm)));
+    output_file_idx = mesh_data->create_output_mesh(filename,
+                                                    stk::io::WRITE_RESULTS);
+    mesh_data->set_bulk_data(*bulk);
+    define_output_fields(*mesh_data, output_file_idx);
+  }
 
-  std::size_t output_file_idx =
-    mesh_data.create_output_mesh(filename, stk::io::WRITE_RESULTS);
-  define_output_fields(mesh_data, output_file_idx);
-  mesh_data.process_output_request(output_file_idx, time_val);
+  mesh_data->process_output_request(output_file_idx, time_val);
 
   apf::freeStkNumberings(mesh, n);
 #else

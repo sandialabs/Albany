@@ -281,8 +281,10 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
 
     stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
                                    "scalar", initValue, /*registerOldState=*/ false, false);
-    stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
-                                   "scalar", initValue, /*registerOldState=*/ false, true);
+
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+    stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_scalar, "all",true,&entity);
+                                   
     stateMgr->registerStateVariable(derName+"_node", dl->node_node_scalar, "all",
                                    "scalar", initValue, /*registerOldState=*/ false, true);
 
