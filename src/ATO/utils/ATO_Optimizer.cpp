@@ -208,6 +208,7 @@ Optimizer_OC::Initialize()
   std::fill_n(dfdp,   numOptDofs, 0.0);
 
   solverInterface->ComputeVolume(_optVolume);
+  solverInterface->InitializeTopology(p);
 }
 
 /******************************************************************************/

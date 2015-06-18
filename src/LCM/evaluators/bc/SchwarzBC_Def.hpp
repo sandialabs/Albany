@@ -27,8 +27,8 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
     coupled_apps_(app_->getApplications()),
-    coupled_app_name_(p.get<std::string>("Coupled Application", "self")),
-    coupled_block_name_(p.get<std::string>("Coupled Block"))
+    coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
+    coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
 {
   std::string const &
   nodeset_name = this->nodeSetID;

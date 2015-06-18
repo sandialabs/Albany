@@ -2,9 +2,10 @@
 
 SCRIPT_NAME=`basename $0`
 PACKAGE=$1
-TOOL_CHAIN=$2
-BUILD_TYPE=$3
-NUM_PROCS=$4
+ARCH=$2
+TOOL_CHAIN=$3
+BUILD_TYPE=$4
+NUM_PROCS=$5
 LCM_DIR=`pwd`
 TRILINOS="trilinos"
 INTEL_DIR=/opt/intel
@@ -12,6 +13,11 @@ INTEL_DIR=/opt/intel
 # Some basic error checking.
 if [ -z "$PACKAGE" ]; then
     echo "Specifiy package [trilinos|albany]"
+    exit 1
+fi
+
+if [ -z "$ARCH" ]; then
+    echo "Specifiy architecture [serial|openmp|cuda]"
     exit 1
 fi
 
@@ -40,6 +46,25 @@ case "$PACKAGE" in
 	;;
     *)
 	echo "Unrecognized package option"
+	exit 1
+	;;
+esac
+
+case "$ARCH" in
+    serial)
+	ARCH_STRING="SERIAL"
+	ARCH_NAME="Serial"
+	;;
+    openmp)
+	ARCH_STRING="OPENMP"
+	ARCH_NAME="Open MP"
+	;;
+    cuda)
+	ARCH_STRING="CUDA"
+	ARCH_NAME="Cuda"
+	;;
+    *)
+	echo "Unrecognized architecture option"
 	exit 1
 	;;
 esac
@@ -132,12 +157,12 @@ esac
 
 # Setup flags with the info gathered above.
 CONFIG_FILE="$PACKAGE-config.sh"
-BUILD=$TOOL_CHAIN-$BUILD_TYPE
+BUILD=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
 PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
 # Install directory for trilinos only
 INSTALL_DIR="$LCM_DIR/$TRILINOS-install-$BUILD"
 BUILD_DIR="$LCM_DIR/$PACKAGE-build-$BUILD"
-PREFIX="$PACKAGE-$TOOL_CHAIN-$BUILD_TYPE"
+PREFIX="$PACKAGE-$BUILD"
 BUILD_LOG="$LCM_DIR/$PREFIX-build.log"
 ERROR_LOG="$LCM_DIR/$PREFIX-error.log"
 STATUS_LOG="$LCM_DIR/$PREFIX-status.log"
