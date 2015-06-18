@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "QCADT_CoupledPSJacobian.hpp"
+#include "QCADT_ImplicitPSJacobian.hpp"
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -43,7 +44,14 @@ QCADT::CoupledPSJacobian::~CoupledPSJacobian()
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson, 
+QCADT::CoupledPSJacobian::getThyraCoupledJacobian(int nEigenvals,
+                                                  const Teuchos::RCP<const Tpetra_Map>& discretizationMap,
+                                           	  const Teuchos::RCP<const Tpetra_Map>& fullPSMap,
+                                           	  const Teuchos::RCP<const Teuchos_Comm>& comm,
+                                           	  int dim, int valleyDegen, double temp,
+                                           	  double lengthUnitInMeters, double energyUnitInElectronVolts,
+                                           	  double effMass, double conductionBandOffset, 
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson, 
                                                   Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger,
                                                   Teuchos::RCP<Tpetra_CrsMatrix> Mass,
                                                   Teuchos::RCP<Tpetra_Vector> neg_eigenvals, 
@@ -84,8 +92,47 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   //populate (0,0) block with Jac_Poisson
   Teuchos::RCP<Thyra::LinearOpBase<ST>> block00 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
   blocked_op->setNonconstBlock(0, 0, block00);
-  //FIXME: populate other blocks
   
+  //populate remaining blocks
+  Teuchos::Array<Teuchos::RCP<ImplicitPSJacobian> > implicitJacs; 
+  implicitJacs.resize((2+nEigenvals)*(2+nEigenvals)); 
+  for (int i=0; i< 2+nEigenvals; i++) {
+    for (int j=0; j<2+nEigenvals; j++) {
+        implicitJacs[j+i*(2+nEigenvals)] = Teuchos::rcp(new QCADT::ImplicitPSJacobian(nEigenvals,
+                                                  discretizationMap, fullPSMap, comm, dim, valleyDegen, temp,
+                                                  lengthUnitInMeters, energyUnitInElectronVolts,
+                                                  effMass, conductionBandOffset));
+        implicitJacs[j+i*(2+nEigenvals)]->initialize(Jac_Schrodinger, Mass, neg_eigenvals, eigenvecs);
+        implicitJacs[j+i*(2+nEigenvals)]->setIndices(i, j); 
+    }
+  }
+  //(0, *) blocks
+  for (int j=1; j<2+nEigenvals; j++) {
+    Teuchos::RCP<Thyra::LinearOpBase<ST>>
+        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j]);
+    blocked_op->setNonconstBlock(0,j, block); 
+  }
+  //(1:1+nEigenvalues, *) blocks
+  for (int i=1; i < 1+nEigenvals; i++) {
+    for (int j=0; j<2+nEigenvals; j++) {
+      Teuchos::RCP<Thyra::LinearOpBase<ST>>
+          block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j+i*(2+nEigenvals)]);
+      blocked_op->setNonconstBlock(i,j, block); 
+    }
+  }
+  //(2+nEigenvals, *) blocks
+    for (int j=1; j<1+nEigenvals; j++) {
+      Teuchos::RCP<Thyra::LinearOpBase<ST>>
+          block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j+(1+nEigenvals)*(2+nEigenvals)]);
+      blocked_op->setNonconstBlock(1+nEigenvals,j, block); 
+    }
+  
+   //(2+nEigenvals, *) blocks
+   for (int j=1; j<1+nEigenvals; j++) {
+     Teuchos::RCP<Thyra::LinearOpBase<ST>>    
+     block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j+(1+nEigenvals)*(2+nEigenvals)]);
+     blocked_op->setNonconstBlock(1+nEigenvals,j, block);
+   }
 
   // all done
   blocked_op->endBlockFill();

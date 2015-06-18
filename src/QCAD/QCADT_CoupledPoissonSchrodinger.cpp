@@ -398,7 +398,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   allocateVectors(); //sets x and x_dot in nominal_values_
 
   //We are coupling 2+nEigenvals models: 1 Poisson eqn + nEigenvals Schrodinger eqns + 1 nEigenvals eigenvalue eqns
-  num_models_ = 1+2*nEigenvals; 
+  num_models_ = 2 + nEigenvals; 
   //set p_init
   for (int l = 0; l < num_param_vecs; ++l) {
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
@@ -428,6 +428,10 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
 
     nominal_values_.set_p(l, p_prod_vec);
   }
+  // Get material parameters for quantum region, used in computing quantum density
+  quantumMtrlName = materialDB->getParam<std::string>("Quantum Material");
+  valleyDegeneracyFactor = materialDB->getMaterialParam<int>(quantumMtrlName,"Number of conduction band min",2);
+  effMass = materialDB->getMaterialParam<double>(quantumMtrlName,"Transverse Electron Effective Mass");
 }
 
 QCADT::CoupledPoissonSchrodinger::~CoupledPoissonSchrodinger()
@@ -624,7 +628,9 @@ QCADT::CoupledPoissonSchrodinger::create_W_op() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   QCADT::CoupledPSJacobian psJac(num_models_, myComm); 
-  return psJac.getThyraCoupledJacobian(); 
+  return psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map, myComm,
+                          numDims, valleyDegeneracyFactor, temperature,
+                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
@@ -1088,9 +1094,13 @@ evalModelImpl(
 					  schrodinger_sacado_param_vec, f_schrodinger_vec[0], *W_out_schrodinger_crs);
       f_schrodinger_already_computed[0] = true;
     }    
-    Teuchos::RCP<QCADT::CoupledPSJacobian> W_out_psj = Teuchos::rcp_dynamic_cast<QCADT::CoupledPSJacobian>(W_out, true);
-    //FIXME, IKT, 5/26/15: set initialization of ImplicitPSJacobian object, if applicable. 
-    //W_out_psj->initialize(W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs, eigenvals, x_schrodinger);
+    if (W_out != Teuchos::null) {
+      QCADT::CoupledPSJacobian psJac(num_models_, myComm);
+      W_out = psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map, myComm,
+                          numDims, valleyDegeneracyFactor, temperature,
+                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB,
+                          W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs, eigenvals, x_schrodinger); 
+    } 
 
     /*
     // DEBUG --- JACOBIAN TEST -----------------------------------------------------------------------------------------

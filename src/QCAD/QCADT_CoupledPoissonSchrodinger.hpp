@@ -154,6 +154,9 @@ namespace QCADT {
     double temperature;
     double length_unit_in_m;
     double energy_unit_in_eV;
+    std::string quantumMtrlName; 
+    int valleyDegeneracyFactor; 
+    double effMass; 
 
     //! Sacado parameter vectors
     mutable Teuchos::Array<ParamVec> poisson_sacado_param_vec, schrodinger_sacado_param_vec;

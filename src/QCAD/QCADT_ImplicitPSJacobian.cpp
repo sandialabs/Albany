@@ -102,8 +102,7 @@ void QCADT::ImplicitPSJacobian::initialize(const Teuchos::RCP<Tpetra_CrsMatrix>&
 
    // Prepare the distributed and local eigenvalue maps
    int my_nEigenvals = domainMap->getNodeNumElements() - num_discMap_myEls * (1+nEigenvalues);
-   //FIXME, IKT, 5/28/15: the following needs the Kokkos node.
-   //dist_evalMap  = Teuchos::rcp(new Tpetra_Map(nEigenvalues, my_nEigenvals, 0, *myComm));
+   dist_evalMap  = Teuchos::rcp(new Tpetra_Map(nEigenvalues, my_nEigenvals, 0, myComm));
    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
    Teuchos::RCP<Tpetra_Map> local_evalMap = Teuchos::rcp(new Tpetra_Map(nEigenvalues, 0, myComm, lg));
    eval_importer = Teuchos::rcp(new Tpetra_Import(dist_evalMap, local_evalMap));
@@ -133,20 +132,21 @@ void QCADT::ImplicitPSJacobian::apply(Tpetra_MultiVector const & X,
   Teuchos::RCP<Tpetra_Vector> tempVec = Teuchos::rcp(new Tpetra_Vector(discMap)); 
   Teuchos::RCP<Tpetra_Vector> tempVec2 = Teuchos::rcp(new Tpetra_Vector(discMap)); 
    
-  //(0, Schrodinger) block
+  //(Poisson, Schrodinger) block
   if (index_i_ == 0 && index_j_ > 0 && index_j_ < nEigenvals+1) {
     Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(index_j_); 
     massMatrix->apply(*dn_dPsi_j, *tempVec, Teuchos::NO_TRANS, 1.0, 0.0);   //tempVec = massMatrix*dn_dPsi[index_j]
     Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec, X, 0.0); //Y = tempVec*X 
   }
-  //(0, eigenvalue) block
+  //(Poisson, eigenvalue) block
   else if (index_i_ == 0 && index_j_ == nEigenvals+1) {
    for (int i=0; i<nEigenvals; i++) {
      Teuchos::RCP<const Tpetra_Vector> dn_dPsi_i = dn_dPsi->getVector(i); 
      tempVec->update(-1.0, *dn_dPsi_i, 0.0); //tempVec = -dn_dEval[i];
      massMatrix->apply(*tempVec, *tempVec2, Teuchos::NO_TRANS, 1.0, 0.0); //tempVec2 = M*tempVec
-     //FIXME? Should we have importer from X to x_neg_evals_local? 
-     Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec2, X, 1.0); //Y += M*(-dn_dEval[i] * scalar(x_neg_eval[i])) 
+     // Communicate all the x_evals to every processor, since all parts of the mesh need them
+     x_neg_evals_local->doImport(X, *eval_importer, Tpetra::INSERT);
+     Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec2, *x_neg_evals_local, 1.0); //Y += M*(-dn_dEval[i] * scalar(x_neg_eval[i])) 
    } 
   }
   //(Schrodinger, 0) block
@@ -165,10 +165,29 @@ void QCADT::ImplicitPSJacobian::apply(Tpetra_MultiVector const & X,
   }
   //(Schrodinger, eigenvalue) block
   else if (index_i_ > 0 && index_i_ < nEigenvals+1 && index_j_ == nEigenvals+1) {
-    //FIXME? Should X be x_neg_evals_local? 
-    Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *M_Psi, X, 1.0); //Y += M*Psi[j] * scalar(x_neg_eval[j]) 
+    // Communicate all the x_evals to every processor, since all parts of the mesh need them
+    x_neg_evals_local->doImport(X, *eval_importer, Tpetra::INSERT);
+    Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *M_Psi, *x_neg_evals_local, 1.0); //Y += M*Psi[j] * scalar(x_neg_eval[j]) 
   }
-  //FIXME: fill in!
+  //(eigenvalue, Schrodinger) block
+  else if (index_i_ == nEigenvals+1 && index_j_ >0 && index_j_ < nEigenvals + 1) {
+    std::vector<double> y_neg_evals_local(nEigenvals);
+    for (int j=0; j<nEigenvals; j++) {
+       Teuchos::RCP<const Tpetra_Vector> M_Psi_j = M_Psi->getVector(j); 
+       Teuchos::RCP<const Tpetra_Vector> MT_Psi_j = MT_Psi->getVector(j); 
+       tempVec->update(-1.0, *M_Psi_j, 0.0); //tempVec = -M*Psi[j]
+       tempVec->update(-1.0, *MT_Psi_j, 1.0); //tempVec += -MT*Psi[j]
+       ST y_neg_evals_local_j = y_neg_evals_local[j]; 
+       const Teuchos::ArrayView<ST> y_neg_evals_local_j_AV = Teuchos::arrayView(&y_neg_evals_local_j, 1);
+       tempVec->dot(X, y_neg_evals_local_j_AV); 
+    } 
+    int my_nEigenvals = dist_evalMap->getNodeNumElements();
+    Teuchos::ArrayView<const int> eval_global_elements = dist_evalMap->getNodeElementList();
+    for (int i=0; i<my_nEigenvals; i++) { 
+      const Teuchos::ArrayRCP<ST> Y_nonConstView = Y.get1dViewNonConst();
+      Y_nonConstView[i] = y_neg_evals_local[eval_global_elements[i]];  
+    }
+  } 
 }
 
 
