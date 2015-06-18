@@ -91,15 +91,13 @@ class NodalDataVector {
 
     //eb-hack This interface, and the evaluator-based response functions that
     // interact with Exodus files through this and the Vector version of this
-    // interface, need to be redesigned. There are number of problems. For
+    // interface, need to be redesigned. There are a number of problems. For
     // example, if there are multiple element blocks, multiple redundant calls
     // are made to these methods in preEvaluate and postEvaluate, possibly with
     // erroneous results.
-    //   However, I want to continue to push off this task, so I'm expanding
-    // eb-hack to take care of IPtoNodalField.
-    void initEvaluateCalls();
+    void initEvaluateCalls(const int num_eb);
     int numPreEvaluateCalls();
-    int numPostEvaluateCalls();
+    int isFinalPostEvaluateCall();
 
   private:
 

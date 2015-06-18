@@ -2096,7 +2096,7 @@ evaluateResponseT(int response_index,
       ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
     if (!ndb.is_null()) {
       ndb->getNodalDataVector()->initializeVectors(0);
-      ndb->getNodalDataVector()->initEvaluateCalls();
+      ndb->getNodalDataVector()->initEvaluateCalls(meshSpecs.size());
     }
   } catch (...) { /* No nodal data vector. */ }
 

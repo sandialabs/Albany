@@ -176,14 +176,15 @@ void Adapt::NodalDataVector::initializeVectors(ST value) {
   local_node_vec->putScalar(value);
 }
 
-void Adapt::NodalDataVector::initEvaluateCalls () {
-  num_preeval_calls = num_posteval_calls = 0;
+void Adapt::NodalDataVector::initEvaluateCalls (const int num_eb) {
+  num_preeval_calls = 0;
+  num_posteval_calls = num_eb;
 }
 
 int Adapt::NodalDataVector::numPreEvaluateCalls () {
   return ++num_preeval_calls;
 }
 
-int Adapt::NodalDataVector::numPostEvaluateCalls () {
-  return ++num_posteval_calls;
+int Adapt::NodalDataVector::isFinalPostEvaluateCall () {
+  return --num_posteval_calls == 0;
 }

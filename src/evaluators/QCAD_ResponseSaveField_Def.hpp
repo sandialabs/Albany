@@ -394,7 +394,7 @@ postEvaluate(typename Traits::PostEvalData workset)
         pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
     //eb-hack Do the postEvaluate calculations just once even if there are
     // multiple element blocks.
-    if (node_data->numPostEvaluateCalls() > 1) return;
+    if ( ! node_data->isFinalPostEvaluateCall()) return;
   
     // Export the data from the local to overlapped decomposition.
     node_data->initializeExport();
