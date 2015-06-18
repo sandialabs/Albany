@@ -15,7 +15,7 @@ namespace AAdapt {
 class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
-    SPRSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
   
     ~SPRSizeField();
 
@@ -36,7 +36,7 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
     apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
-    Teuchos::RCP<Albany::AbstractPUMIDiscretization> pumi_disc;
+    Teuchos::RCP<Albany::APFDiscretization> pumi_disc;
 
     std::string sv_name;
     double rel_err;

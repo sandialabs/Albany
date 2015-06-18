@@ -6,39 +6,60 @@
 
 # SCOREC PUMI
 
+SET(SOURCES
+  Albany_APFMeshStruct.cpp
+  Albany_APFDiscretization.cpp
+  Albany_PUMIQPData.cpp
+  Albany_PUMINodeData.cpp
+  Albany_PUMIVtk.cpp
+  Albany_PUMIOutput.cpp
+  )
+
+SET(HEADERS
+  Albany_APFMeshStruct.hpp
+  Albany_APFDiscretization.hpp
+  Albany_PUMIQPData.hpp
+  Albany_PUMIQPData_Def.hpp
+  Albany_PUMINodeData.hpp
+  Albany_PUMINodeData_Def.hpp
+  )
+
+IF(ALBANY_SCOREC)
   SET(SOURCES
-    Albany_PUMIMeshStruct.cpp
-    Albany_PUMIDiscretization.cpp
-    Albany_PUMIQPData.cpp
-    Albany_PUMINodeData.cpp
-    Albany_PUMIVtk.cpp
-    Albany_PUMIOutput.cpp
-    Albany_PUMIBuildBox.cpp
-    )
-
+      ${SOURCES}
+      Albany_PUMIMeshStruct.cpp
+      Albany_PUMIDiscretization.cpp
+      Albany_PUMIBuildBox.cpp
+     )
   SET(HEADERS
-    Albany_AbstractPUMIDiscretization.hpp
-    Albany_PUMIMeshStruct.hpp
-    Albany_PUMIDiscretization.hpp
-    Albany_PUMIQPData.hpp
-    Albany_PUMIQPData_Def.hpp
-    Albany_PUMINodeData.hpp
-    Albany_PUMINodeData_Def.hpp
-    )
+      ${HEADERS}
+      Albany_PUMIMeshStruct.hpp
+      Albany_PUMIDiscretization.hpp
+     )
+ENDIF()
 
-  IF(ALBANY_HAVE_STK)
+IF(ALBANY_AMP)
+  SET(SOURCES
+      ${SOURCES}
+      Albany_SimMeshStruct.cpp
+      Albany_SimDiscretization.cpp
+     )
+  SET(HEADERS
+      ${HEADERS}
+      Albany_SimMeshStruct.hpp
+      Albany_SimDiscretization.hpp
+     )
+ENDIF()
 
-    SET(SOURCES ${SOURCES}
-      Albany_PUMIExodus.cpp
-      )
-    SET(HEADERS ${HEADERS}
-      Albany_PUMIExodus.hpp
-      )
-
-  ENDIF()
+IF(ALBANY_HAVE_STK)
+  SET(SOURCES ${SOURCES} Albany_PUMIExodus.cpp)
+  SET(HEADERS ${HEADERS} Albany_PUMIExodus.hpp)
+ENDIF()
 
 
-include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
+include_directories(
+  ${Trilinos_INCLUDE_DIRS}
+  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src
   )
 

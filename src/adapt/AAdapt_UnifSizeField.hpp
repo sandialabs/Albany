@@ -14,7 +14,7 @@ namespace AAdapt {
 class UnifSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
-    UnifSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~UnifSizeField();
 

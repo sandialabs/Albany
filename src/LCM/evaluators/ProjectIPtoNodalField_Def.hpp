@@ -153,6 +153,7 @@ public:
     const std::size_t
       num_nodes = this->base_->num_nodes_,
       num_pts   = this->base_->num_pts_;
+    const bool is_static_graph = this->matrix_->isStaticGraph();
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t rnode = 0; rnode < num_nodes; ++rnode) {
         GO global_row = workset.wsElNodeID[cell][rnode];
@@ -170,12 +171,16 @@ public:
               this->base_->BF (cell, cnode, qp);
           vals.push_back(mass_value);
         }
-        const LO
-          ret = this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
-        TEUCHOS_TEST_FOR_EXCEPTION(
-          ret != cols.size(), std::logic_error,
-          "global_row " << global_row << " of mass matrix is missing elements"
-          << std::endl);
+        if (is_static_graph) {
+          const LO
+            ret = this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
+          TEUCHOS_TEST_FOR_EXCEPTION(
+            ret != cols.size(), std::logic_error,
+            "global_row " << global_row << " of mass matrix is missing elements"
+            << std::endl);
+        } else {
+          this->matrix_->insertGlobalValues(global_row, cols, vals);
+        }
       }
     }
   }
@@ -194,6 +199,7 @@ public:
     const std::size_t
       num_nodes = this->base_->num_nodes_,
       num_pts   = this->base_->num_pts_;
+    const bool is_static_graph = this->matrix_->isStaticGraph();
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t rnode = 0; rnode < num_nodes; ++rnode) {
         const GO global_row = workset.wsElNodeID[cell][rnode];
@@ -206,7 +212,10 @@ public:
           diag += this->base_->wBF(cell, rnode, qp) * diag_qp;
         }
         const Teuchos::Array<ST> vals(1, diag);
-        this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
+        if (is_static_graph)
+          this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
+        else
+          this->matrix_->insertGlobalValues(global_row, cols, vals);
       }
     }
   }
@@ -411,17 +420,29 @@ preEvaluate (typename Traits::PreEvalData workset)
   //   getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   // node_data->initializeVectors(0.0);
 
-  Teuchos::RCP<Tpetra_CrsGraph> current_graph = this->p_state_mgr_->
-    getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
-
   // Reallocate the mass matrix for assembly. Since the matrix is overwritten by
   // a version used for linear algebra having a nonoverlapping row map, we can't
   // just resumeFill. source_load_vector_ also alternates between overlapping
   // and nonoverlapping maps and so must be reallocated.
-  this->mass_matrix_->matrix() =
-    Teuchos::rcp(new Tpetra_CrsMatrix(current_graph));
+  Teuchos::RCP<const Tpetra_CrsGraph> current_graph = this->p_state_mgr_->
+    getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
+  if (Teuchos::nonnull(current_graph)) {
+    // Use a graph if it's available.
+    this->mass_matrix_->matrix() =
+      Teuchos::rcp(new Tpetra_CrsMatrix(current_graph));
+  } else {
+    // Otherwise, construct the graph on the fly.
+    const Teuchos::RCP<const Tpetra_Map>
+      ovl_map = (this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+                 getNodalDataVector()->getOverlapMap());
+    // Enough for first-order hex, but only a hint.
+    const size_t max_num_entries = 27;
+    this->mass_matrix_->matrix() =
+      Teuchos::rcp(new Tpetra_CrsMatrix(ovl_map, ovl_map, max_num_entries));
+  }
   this->source_load_vector_ = Teuchos::rcp(
-    new Tpetra_MultiVector(current_graph->getRowMap(), this->num_vecs_, true));
+    new Tpetra_MultiVector(this->mass_matrix_->matrix()->getRowMap(),
+                           this->num_vecs_, true));
 }
 
 //------------------------------------------------------------------------------
@@ -531,6 +552,12 @@ postEvaluate (typename Traits::PostEvalData workset)
     // Get overlapping and nonoverlapping maps.
     const Teuchos::RCP<const Tpetra_CrsMatrix>&
       mm_ovl = this->mass_matrix_->matrix();
+    if ( ! mm_ovl->isStaticGraph()) {
+      // If this matrix was constructed without a graph, grab the graph now and
+      // store it for possible reuse later.
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+        updateNodalGraph(mm_ovl->getCrsGraph());
+    }
     const Teuchos::RCP<const Tpetra_Map> ovl_map = mm_ovl->getRowMap();
     const Teuchos::RCP<const Tpetra_Map> map = Tpetra::createOneToOne(ovl_map);
     // Export the mass matrix.

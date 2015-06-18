@@ -6,9 +6,9 @@
     <Parameter name="MaterialDB Filename" type="string" value="MultiSlipPlaneHard_Material_Implicit.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
-        <Parameter name="Number of points" type="int" value="4"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.00}"/>
+        <Parameter name="Number of points" type="int" value="3"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.00, 3.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.00, 0.00}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_12 for DOF X">
         <Parameter name="Number of points" type="int" value="4"/>
@@ -70,17 +70,20 @@
       </ParameterList>
       <ParameterList name="Step Size">
        <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.001"/>
+       <Parameter name="Initial Step Size" type="double" value="0.0005"/>
        <Parameter name="Max Step Size" type="double" value="0.01"/>
        <Parameter name="Min Step Size" type="double" value="0.00001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Aggressiveness" type="double" value="0.10"/>
+       <Parameter name="Aggressiveness" type="double" value="0.1"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
       <ParameterList name="Direction">
         <Parameter name="Method" type="string" value="Newton"/>
         <ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-12"/>
+          </ParameterList>
           <Parameter name="Forcing Term Method" type="string" value="Constant"/>
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
           <ParameterList name="Stratimikos Linear Solver">
@@ -105,7 +108,6 @@
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
                     <ParameterList name="Block GMRES">
-                      <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
                       <Parameter name="Output Frequency" type="int" value="0"/>
                       <Parameter name="Output Style" type="int" value="0"/>
                       <Parameter name="Verbosity" type="int" value="0"/>
@@ -159,7 +161,7 @@
         </ParameterList>
         <ParameterList name="Test 1">
          <Parameter name="Test Type" type="string" value="MaxIters"/>
-         <Parameter name="Maximum Iterations" type="int" value="15"/>
+         <Parameter name="Maximum Iterations" type="int" value="10"/>
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="Combo"/>

@@ -21,7 +21,7 @@ class AlbanySizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
 
-    AlbanySizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    AlbanySizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~AlbanySizeField();
 

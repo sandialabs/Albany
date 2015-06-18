@@ -46,7 +46,6 @@ cmake \
  -D CUDA_VERBOSE_BUILD:BOOL=OFF \
  -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=OFF \
  -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
- -D KokkosClassic_DefaultNode:STRING="Kokkos::Compat::KokkosSerialWrapperNode" \
  -D Kokkos_ENABLE_CUDA:BOOL=OFF \
  -D Kokkos_ENABLE_CXX11:BOOL=ON \
  -D Kokkos_ENABLE_Cuda_UVM=OFF \
@@ -55,7 +54,6 @@ cmake \
  -D Kokkos_ENABLE_Pthread:BOOL=OFF \
  -D Kokkos_ENABLE_Serial:BOOL=ON \
  -D Kokkos_ENABLE_TESTS:BOOL=OFF \
- -D Kokkos_ENABLE_Thrust=OFF \
  -D TPL_ENABLE_CUDA:STRING=OFF \
 \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
@@ -90,16 +88,12 @@ cmake \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
- -D Trilinos_ENABLE_KokkosClassic:BOOL=ON \
- -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
- -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
- -D Trilinos_ENABLE_KokkosMpiComm:BOOL=ON \
- -D Trilinos_ENABLE_KokkosTPL:BOOL=ON \
  -D Trilinos_ENABLE_ML:BOOL=ON \
  -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
+ -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_Pamgen:BOOL=ON \

@@ -8,7 +8,7 @@
 #ifndef AADAPT_NONUNIFREFSIZEFIELD_HPP
 #define AADAPT_NONUNIFREFSIZEFIELD_HPP
 
-#include "Albany_AbstractPUMIDiscretization.hpp"
+#include "Albany_APFDiscretization.hpp"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
 #include "AAdapt_MeshSizeField.hpp"
@@ -18,7 +18,7 @@ namespace AAdapt {
 class NonUnifRefSizeField : public MeshSizeField {
 
   public:
-    NonUnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    NonUnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~NonUnifRefSizeField();
 

@@ -7,7 +7,7 @@
 #include "Albany_PUMIVtk.hpp"
 
 Albany::PUMIVtk::
-PUMIVtk(const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
+PUMIVtk(const Teuchos::RCP<APFMeshStruct>& meshStruct,
         const Teuchos::RCP<const Teuchos_Comm>& commT_) :
   commT(commT_),
   doCollection(false),

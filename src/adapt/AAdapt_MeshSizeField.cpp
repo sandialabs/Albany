@@ -9,8 +9,8 @@
 namespace AAdapt {
 
 MeshSizeField::MeshSizeField(
-    const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc): 
-    mesh_struct(disc->getPUMIMeshStruct()),
+    const Teuchos::RCP<Albany::APFDiscretization>& disc): 
+    mesh_struct(disc->getAPFMeshStruct()),
     commT(disc->getComm())
 {
 }

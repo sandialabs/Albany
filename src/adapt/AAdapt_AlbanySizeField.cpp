@@ -10,7 +10,7 @@
 
 #include "Albany_Utils.hpp"
 
-AAdapt::AlbanySizeField::AlbanySizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
+AAdapt::AlbanySizeField::AlbanySizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
   MeshSizeField(disc) {
 }
 

@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include <PHAL_Utilities.hpp>
 #include <Intrepid_MiniTensor.h>
 #ifdef ALBANY_TIMER
 #include <chrono>
@@ -67,29 +67,6 @@ namespace LCM {
       this->addDependentField(u_);
     }
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    //Allocationg additional data for Kokkos functors
- ddims_.push_back(ALBANY_SLFAD_SIZE);
-
-    const int num_cells=dims[0];//
-    F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));   
-    strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    gradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    Itensor=PHX::MDField<ScalarT,Dim,Dim>("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-
-    F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
-    strain.setFieldData(ViewFactory::buildView(strain.fieldTag(),ddims_));
-    gradu.setFieldData(ViewFactory::buildView(gradu.fieldTag(),ddims_));
-    Itensor.setFieldData(ViewFactory::buildView(Itensor.fieldTag(),ddims_));
-
-   for (int i=0; i<num_dims_; i++){
-     for (int j=0; j<num_dims_; j++){
-        Itensor(i,j)=ScalarT(0.0);
-        if (i==j) Itensor(i,j)=ScalarT(1.0);
-     }
-   }
-
-#endif 
  }
 
   //----------------------------------------------------------------------------
@@ -106,6 +83,32 @@ namespace LCM {
     if (needs_vel_grad_) this->utils.setFieldData(vel_grad_,fm);
     if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(),fm);
     if (def_grad_rc_) this->utils.setFieldData(u_,fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+    int deriv_dims=PHAL::getDerivativeDimensionsFromView(strain_.get_kokkos_view());
+
+    ddims_.push_back(deriv_dims);
+    const int num_cells=strain_.dimension(0);
+
+    F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    gradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    Itensor=PHX::MDField<ScalarT,Dim,Dim>("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+
+    F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
+    strain.setFieldData(ViewFactory::buildView(strain.fieldTag(),ddims_));
+    gradu.setFieldData(ViewFactory::buildView(gradu.fieldTag(),ddims_));
+    Itensor.setFieldData(ViewFactory::buildView(Itensor.fieldTag(),ddims_));
+
+   for (int i=0; i<num_dims_; i++){
+     for (int j=0; j<num_dims_; j++){
+        Itensor(i,j)=ScalarT(0.0);
+        if (i==j) Itensor(i,j)=ScalarT(1.0);
+     }
+   }
+
+#endif
   }
 
 //----------------------------------------------------------------------------

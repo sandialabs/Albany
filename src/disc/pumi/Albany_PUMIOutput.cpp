@@ -14,7 +14,7 @@ Albany::PUMIOutput::~PUMIOutput() {
 }
 
 Albany::PUMIOutput* Albany::PUMIOutput::create(
-  const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
+  const Teuchos::RCP<APFMeshStruct>& meshStruct,
   const Teuchos::RCP<const Teuchos_Comm>& comm) {
   if (meshStruct->outputFileName.empty())
     return 0;

@@ -9,7 +9,7 @@
 #define ALBANY_PUMIOUTPUT_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_APFMeshStruct.hpp"
 
 namespace Albany {
 
@@ -18,7 +18,7 @@ class PUMIOutput {
     virtual ~PUMIOutput();
     virtual void writeFile(const double time) = 0;
     virtual void setFileName(const std::string& fname) = 0;
-    static PUMIOutput* create(const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
+    static PUMIOutput* create(const Teuchos::RCP<APFMeshStruct>& meshStruct,
         const Teuchos::RCP<const Teuchos_Comm>& comm);
 };
 
