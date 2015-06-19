@@ -72,7 +72,21 @@ esac
 case "$TOOL_CHAIN" in
     gcc)
 	export OMPI_CC=`which gcc`
-	export OMPI_CXX=`which g++`
+	case "$ARCH" in
+	    serial)
+		export OMPI_CXX=`which g++`
+		;;
+	    openmp)
+		export OMPI_CXX=`which g++`
+		;;
+	    cuda)
+		export OMPI_CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper"
+		;;
+	    *)
+		echo "Unrecognized architecture option"
+		exit 1
+		;;
+	esac
 	export OMPI_FC=`which gfortran`
 	;;
     clang)

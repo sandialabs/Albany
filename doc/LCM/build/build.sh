@@ -86,27 +86,69 @@ case "$SCRIPT_NAME" in
 	fi
 	cp -p "$CONFIG_FILE" "$BUILD_DIR"
 	cd "$BUILD_DIR"
-	sed -i -e "s|ompi_cc|$OMPI_CC|g;" "$CONFIG_FILE"
-	sed -i -e "s|ompi_cxx|$OMPI_CXX|g;" "$CONFIG_FILE"
-	sed -i -e "s|ompi_fc|$OMPI_FC|g;" "$CONFIG_FILE"
-	sed -i -e "s|install_dir|$INSTALL_DIR|g;" "$CONFIG_FILE"
-	sed -i -e "s|build_type|$BUILD_STRING|g;" "$CONFIG_FILE"
-	sed -i -e "s|package_dir|$PACKAGE_DIR|g;" "$CONFIG_FILE"
+	sed -i -e "s|lcm_ompi_cc|$OMPI_CC|g;" "$CONFIG_FILE"
+	sed -i -e "s|lcm_ompi_cxx|$OMPI_CXX|g;" "$CONFIG_FILE"
+	sed -i -e "s|lcm_ompi_fc|$OMPI_FC|g;" "$CONFIG_FILE"
+	sed -i -e "s|lcm_install_dir|$INSTALL_DIR|g;" "$CONFIG_FILE"
+	sed -i -e "s|lcm_build_type|$BUILD_STRING|g;" "$CONFIG_FILE"
+	sed -i -e "s|lcm_package_dir|$PACKAGE_DIR|g;" "$CONFIG_FILE"
 	case "$BUILD_TYPE" in
 	    debug)
-		sed -i -e "s|fpe_switch|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
 		;;
 	    release)
-		sed -i -e "s|fpe_switch|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		;;
 	    profile)
-		sed -i -e "s|fpe_switch|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		;;
 	    small)
-		sed -i -e "s|fpe_switch|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		;;
 	    *)
 		echo "Unrecognized build type option"
+		exit 1
+		;;
+	esac
+	case "$ARCH" in
+	    serial)
+		sed -i -e "s|lcm_enable_cuda|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_uvm|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_kokkos_examples|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_openmp|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_cusparse|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_phalanx_index_type|INT|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_kokkos_device|SERIAL|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_hwloc|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_kokkos_devel|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_slfad|OFF|g;" "$CONFIG_FILE"
+		;;
+	    openmp)
+		sed -i -e "s|lcm_enable_cuda|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_uvm|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_kokkos_examples|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_openmp|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_cusparse|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_phalanx_index_type|INT|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_kokkos_device|OPENMP|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_hwloc|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_kokkos_devel|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_slfad|ON|g;" "$CONFIG_FILE"
+		;;
+	    cuda)
+		sed -i -e "s|lcm_enable_cuda|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_uvm|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_kokkos_examples|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_openmp|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_cusparse|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_phalanx_index_type|UINT|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_kokkos_device|CUDA|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_hwloc|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_kokkos_devel|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_enable_slfad|ON|g;" "$CONFIG_FILE"
+		;;
+	    *)
+		echo "Unrecognized architecture option"
 		exit 1
 		;;
 	esac
