@@ -24,6 +24,8 @@ class MeshSpecsStruct;
 
 namespace GOAL {
 
+class BCManager;
+
 struct ProblemBundle
 {
   ProblemBundle(
@@ -45,13 +47,16 @@ struct ProblemBundle
 class FieldManagerBundle
 {
   public:
-    FieldManagerBundle(Teuchos::RCP<ProblemBundle>& bundle);
+    FieldManagerBundle(
+        Teuchos::RCP<BCManager>& mgr,
+        Teuchos::RCP<ProblemBundle>& bundle);
     ~FieldManagerBundle();
     void writePHXGraphs();
     void evaluateJacobian(PHAL::Workset& workset);
   private:
     void createFieldManagers();
     Teuchos::RCP<ProblemBundle> pb; 
+    Teuchos::RCP<BCManager> bcm;
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
 };

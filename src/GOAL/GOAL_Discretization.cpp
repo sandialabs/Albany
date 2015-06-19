@@ -9,8 +9,8 @@
 #include "apfMesh.h"
 #include "apfShape.h"
 #include "Albany_StateManager.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
-#include "Albany_AbstractPUMIDiscretization.hpp"
+#include "Albany_APFMeshStruct.hpp"
+#include "Albany_APFDiscretization.hpp"
 
 namespace GOAL {
 
@@ -18,23 +18,23 @@ using Teuchos::RCP;
 using Teuchos::ArrayRCP;
 using Teuchos::rcp_dynamic_cast;
 using Albany::StateManager;
-using Albany::PUMIMeshStruct;
+using Albany::APFMeshStruct;
 using Albany::AbstractDiscretization;
-using Albany::AbstractPUMIDiscretization;
+using Albany::APFDiscretization;
 
 static void getDiscretization(
     RCP<StateManager>& sm,
-    RCP<AbstractPUMIDiscretization>& d,
+    RCP<APFDiscretization>& d,
     apf::Mesh** m)
 {
   RCP<AbstractDiscretization> ad = sm->getDiscretization();
-  d = rcp_dynamic_cast<AbstractPUMIDiscretization>(ad);
-  RCP<PUMIMeshStruct> ms = d->getPUMIMeshStruct();
+  d = rcp_dynamic_cast<APFDiscretization>(ad);
+  RCP<APFMeshStruct> ms = d->getAPFMeshStruct();
   *m = ms->getMesh();
 }
 
 static void getSolutionFields(
-    RCP<AbstractPUMIDiscretization>& d,
+    RCP<APFDiscretization>& d,
     apf::Mesh* m,
     std::vector<std::string>& solNames,
     std::vector<int>& solIndex,
@@ -43,7 +43,7 @@ static void getSolutionFields(
   solNames = d->getSolNames();
   solIndex = d->getSolIndex();
   if (solNames.size() == 0)
-    solNames.push_back(PUMIMeshStruct::solution_name);
+    solNames.push_back(APFMeshStruct::solution_name);
   if (solIndex.size() == 0)
     solIndex.push_back(m->getDimension());
   fields.resize(solNames.size());
@@ -52,7 +52,7 @@ static void getSolutionFields(
 }
 
 static void changeMeshShape(int o, apf::Mesh* m,
-    RCP<AbstractPUMIDiscretization>& d)
+    RCP<APFDiscretization>& d)
 {
   apf::changeMeshShape(m,apf::getLagrange(o),/*project*/true);
   d->updateMesh(/*ip transfer*/false);

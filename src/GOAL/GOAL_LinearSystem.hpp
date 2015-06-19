@@ -22,6 +22,7 @@ class LinearSystem
     ~LinearSystem();
     void setWorksetSolutionInfo(PHAL::Workset& workset);
     void completeJacobianFill();
+    void writeLinearSystem(int ctr);
   private:
     void init();
     void fillSolution();

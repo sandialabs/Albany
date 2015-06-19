@@ -5,11 +5,12 @@
 //*****************************************************************//
 
 #include "GOAL_MechAdjResponse.hpp"
+#include "GOAL_BCManager.hpp"
 #include "GOAL_FieldManagerBundle.hpp"
 #include "GOAL_Discretization.hpp"
 #include "GOAL_LinearSystem.hpp"
 #include "PHAL_Utilities.hpp"
-#include "Albany_AbstractPUMIDiscretization.hpp"
+#include "Albany_APFDiscretization.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 namespace GOAL {
@@ -17,6 +18,7 @@ namespace GOAL {
 using Teuchos::rcp;
 using Teuchos::RCP;
 using Teuchos::ArrayRCP;
+using Teuchos::rcp_dynamic_cast;
 using Albany::Application;
 using Albany::AbstractProblem;
 using Albany::StateManager;
@@ -47,6 +49,7 @@ MechAdjResponse::MechAdjResponse(
   evalCtr(0)
 {
   pb = rcp( new ProblemBundle(rp,app,prob,sm,ms) );
+  Teuchos::RCP<BCManager> bcm = app->getBCManager();
 
   RCP<const Teuchos::ParameterList> vp = getValidParams();
   pb->params.validateParameters(*vp,0);
@@ -55,7 +58,7 @@ MechAdjResponse::MechAdjResponse(
   writeLinearSystem = pb->params.get<bool>("Write Linear System",false);
   pb->enrich = enrich;
 
-  fmb = rcp( new FieldManagerBundle(pb) );
+  fmb = rcp( new FieldManagerBundle(bcm,pb) );
   if (writePHXGraphs)
     fmb->writePHXGraphs();
 }
@@ -114,8 +117,13 @@ void MechAdjResponse::evaluateResponseT(
   fmb->evaluateJacobian(workset);
   ls->completeJacobianFill();
 
+  if (writeLinearSystem)
+    ls->writeLinearSystem(evalCtr);
+
   if (pb->enrich)
     d->decreaseDiscretization();
+
+  evalCtr++;
 }
 
 }
