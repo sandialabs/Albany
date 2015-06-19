@@ -103,10 +103,11 @@ int Albany_Dakota(int argc, char *argv[])
       rcp(&(appParams2.sublist("Piro")),false);
     // ALBANY_ENSEMBLE_SIZE set in Cmake -- defaults=32
     int block_size = mpParams->get("Block Size", ALBANY_ENSEMBLE_SIZE);
-    TEUCHOS_TEST_FOR_EXCEPTION((block_size>ALBANY_ENSEMBLE_SIZE) || (block_size<1),
+    TEUCHOS_TEST_FOR_EXCEPTION((block_size != ALBANY_ENSEMBLE_SIZE) ,
       std::logic_error,
-      "Multi-Point Block size " << block_size << 
-      " must be <= ENEMBLE_SIZE that Albany was configured with: " << ALBANY_ENSEMBLE_SIZE);
+      "Multi-Point Block Size " << block_size << 
+      " can no longer be set by user. Must be set at compile time with ENSEMBLE_SIZE: "
+      << ALBANY_ENSEMBLE_SIZE);
     
     RCP<Piro::Epetra::StokhosMPSolver> mp_solver =
       rcp(new Piro::Epetra::StokhosMPSolver(

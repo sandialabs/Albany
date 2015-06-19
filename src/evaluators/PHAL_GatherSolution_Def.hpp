@@ -1177,9 +1177,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
  
- int nblock = x->size();
+  int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -1287,7 +1286,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -1372,7 +1370,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -1470,7 +1467,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];

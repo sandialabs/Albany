@@ -52,7 +52,7 @@ if (ALBANY_DAKOTA)
                     ${CMAKE_CURRENT_BINARY_DIR}/dakota_mp.in COPYONLY)
      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMPDakota.xml
                     ${CMAKE_CURRENT_BINARY_DIR}/inputMPDakota.xml COPYONLY)
-     get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_DakotaMP NAME)
+     get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota_Ensemble NAME)
      add_test(${testName} ${AlbanyDakota.exe} inputMPDakota.xml)
     endif ()
   endif ()

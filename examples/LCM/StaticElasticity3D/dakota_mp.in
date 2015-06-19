@@ -1,24 +1,23 @@
 #  DAKOTA INPUT FILE
 
 method,
-        nond_polynomial_chaos
-           expansion_order = 5
-           collocation_ratio = 2
-           use_derivatives
-           #sparse_grid_level = 3
-           #non_nested
+        sampling
+           sample_type random
+           samples = 64
+           seed = 17
 variables,
         uniform_uncertain     = 2 
-           uuv_lower_bounds   = -1.0 -1.0 #-1.0 -1.0 -1.0 -1.0 -1.0 
-           uuv_upper_bounds   =  1.0  1.0 # 1.0  1.0  1.0  1.0  1.0 
+           uuv_lower_bounds   =  0.20 0.75 #-1.0 -1.0 -1.0 -1.0 -1.0 
+           uuv_upper_bounds   =  0.35 1.25 # 1.0  1.0  1.0  1.0  1.0 
            uuv_descriptor     =  'a'  'a' # 'a'  'a'  'a'  'a'  'a' 
+
 interface,
         direct
           asynch
           analysis_driver = 'Albany_Dakota'
 #          processors_per_analysis = 2
           evaluation_servers = 1
-          evaluation_concurrency = 4
+          evaluation_concurrency = 32
 
 responses,
         num_response_functions = 1

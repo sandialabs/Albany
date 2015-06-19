@@ -56,7 +56,7 @@ typedef Sacado::MP::Vector<MPStorageType> MPType;
   typedef Sacado::Fad::SLFad<SGType, ALBANY_SLFAD_SIZE> SGFadType;
   typedef Sacado::Fad::SLFad<MPType, ALBANY_SLFAD_SIZE> MPFadType;
 #else
-  #define ALBANY_SFAD_SIZE 300
+#define ALBANY_SFAD_SIZE 300
   typedef Sacado::Fad::DFad<double> FadType;
   typedef Sacado::Fad::DFad<SGType> SGFadType;
   typedef Sacado::Fad::DFad<MPType> MPFadType;
