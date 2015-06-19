@@ -89,12 +89,37 @@ static void setupInitialWorksetInfo(
   workset.accelerationTerms = false;
 }
 
+static void evaluateJacobian(
+    const double time,
+    RCP<LinearSystem>& ls,
+    RCP<FieldManagerBundle>& fmb)
+{
+  PHAL::Workset workset;
+  setupInitialWorksetInfo(workset,time);
+  ls->setWorksetSolutionInfo(workset);
+  fmb->evaluateJacobian(workset);
+}
+
 static void setupWorksetNodesetInfo(
     PHAL::Workset& workset,
     RCP<APFDiscretization> d)
 {
   workset.nodeSets = rcpFromRef(d->getNodeSets());
   workset.nodeSetCoords = rcpFromRef(d->getNodeSetCoords());
+}
+
+static void applyDirichletBC(
+    const double time,
+    RCP<Discretization>& d,
+    RCP<LinearSystem>& ls,
+    RCP<FieldManagerBundle>& fmb)
+{
+  PHAL::Workset workset;
+  setupInitialWorksetInfo(workset,time);
+  setupWorksetNodesetInfo(workset,d->getAPFDisc());
+  ls->exportJacobian();
+  ls->setWorksetDirichletInfo(workset);
+  fmb->evaluateDirichletBC(workset);
 }
 
 void MechAdjResponse::evaluateResponseT(
@@ -119,16 +144,9 @@ void MechAdjResponse::evaluateResponseT(
 
   RCP<LinearSystem> ls = rcp(new LinearSystem(d));
 
-  PHAL::Workset workset;
-  setupInitialWorksetInfo(workset,currentTime);
-  ls->setWorksetSolutionInfo(workset);
-  fmb->evaluateJacobian(workset);
+  evaluateJacobian(currentTime,ls,fmb);
 
-  PHAL::Workset dworkset;
-  setupInitialWorksetInfo(dworkset,currentTime);
-  setupWorksetNodesetInfo(dworkset,d->getAPFDisc());
-  ls->setWorksetDirichletInfo(workset);
-  fmb->evaluateDirichletBC(dworkset);
+  applyDirichletBC(currentTime,d,ls,fmb);
 
   ls->completeJacobianFill();
 

@@ -64,9 +64,13 @@ void LinearSystem::setWorksetSolutionInfo(PHAL::Workset& workset)
 
 void LinearSystem::setWorksetDirichletInfo(PHAL::Workset& workset)
 {
-  jac->doExport(*(overlapJac),*(exporter),Tpetra::ADD);
   workset.JacT = jac;
-  workset.xT = overlapX;
+  workset.xT = x;
+}
+
+void LinearSystem::exportJacobian()
+{
+  jac->doExport(*(overlapJac),*(exporter),Tpetra::ADD);
 }
 
 void LinearSystem::completeJacobianFill()
