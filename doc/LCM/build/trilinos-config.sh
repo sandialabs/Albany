@@ -6,20 +6,20 @@ if [ -f ./CMakeCache.txt ]; then
     rm CMakeCache.txt
 fi
 
-export OMPI_CC=ompi_cc
-export OMPI_CXX=ompi_cxx
-export OMPI_FC=ompi_fc
+export OMPI_CC=lcm_ompi_cc
+export OMPI_CXX=lcm_ompi_cxx
+export OMPI_FC=lcm_ompi_fc
 
 #
 # The CMake command.
 #
 cmake \
  -D BUILD_SHARED_LIBS:BOOL=ON \
- -D CMAKE_BUILD_TYPE:STRING="build_type" \
+ -D CMAKE_BUILD_TYPE:STRING="lcm_build_type" \
  -D CMAKE_CXX_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicxx" \
  -D CMAKE_C_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicc" \
  -D CMAKE_Fortran_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpif90" \
- -D CMAKE_INSTALL_PREFIX:PATH=install_dir \
+ -D CMAKE_INSTALL_PREFIX:PATH=lcm_install_dir \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 \
  -D TPL_ENABLE_MPI:BOOL=ON \
@@ -42,36 +42,31 @@ cmake \
  -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
  -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
 \
- -D CUDA_PROPAGATE_HOST_FLAGS:BOOL=OFF \
- -D CUDA_VERBOSE_BUILD:BOOL=OFF \
- -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=OFF \
  -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
- -D Kokkos_ENABLE_CUDA:BOOL=OFF \
  -D Kokkos_ENABLE_CXX11:BOOL=ON \
- -D Kokkos_ENABLE_Cuda_UVM=OFF \
- -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
- -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+ -D Kokkos_ENABLE_Cuda_UVM=lcm_enable_uvm \
+ -D Kokkos_ENABLE_EXAMPLES:BOOL=lcm_enable_kokkos_examples \
+ -D Kokkos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Kokkos_ENABLE_Pthread:BOOL=OFF \
  -D Kokkos_ENABLE_Serial:BOOL=ON \
- -D Kokkos_ENABLE_TESTS:BOOL=OFF \
- -D TPL_ENABLE_CUDA:STRING=OFF \
+ -D Kokkos_ENABLE_TESTS:BOOL=ON \
+ -D TPL_ENABLE_CUDA:STRING=lcm_enable_cuda \
+ -D TPL_ENABLE_CUSPARSE:BOOL=lcm_enable_cusparse \
 \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
  -D Intrepid_ENABLE_TESTS:BOOL=OFF \
- -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
- -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+ -D Phalanx_INDEX_SIZE_TYPE:STRING="lcm_phalanx_index_type" \
+ -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="lcm_kokkos_device" \
  -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
  -D Sacado_ENABLE_COMPLEX:BOOL=ON \
  -D Teuchos_ENABLE_COMPLEX:BOOL=ON \
- -D Tpetra_ENABLE_CLASSIC_VBR:BOOL=ON \
  -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
 \
  -D TPL_ENABLE_HDF5:BOOL=OFF \
- -D TPL_ENABLE_HWLOC:STRING=OFF \
+ -D TPL_ENABLE_HWLOC:STRING=lcm_enable_hwloc \
  -D TPL_ENABLE_Matio:BOOL=OFF \
  -D TPL_ENABLE_Netcdf:BOOL=ON \
- -D TPL_ENABLE_OpenMP:BOOL=OFF \
  -D TPL_ENABLE_X11:BOOL=OFF \
  -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
 \
@@ -93,7 +88,7 @@ cmake \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
  -D Trilinos_ENABLE_ML:BOOL=ON \
  -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
- -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
+ -D Trilinos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
@@ -124,4 +119,4 @@ cmake \
  -D Trilinos_ENABLE_Tpetra:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan:BOOL=ON \
- package_dir
+ lcm_package_dir

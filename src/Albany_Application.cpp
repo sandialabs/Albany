@@ -47,6 +47,10 @@
 #endif
 #endif
 
+#if defined (ALBANY_GOAL)
+#include "GOAL_BCManager.hpp"
+#endif
+
 //eb-hack
 #include "Adapt_NodalDataVector.hpp"
 
@@ -178,6 +182,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (Teuchos::nonnull(rc_mgr))
     problemFactory.setReferenceConfigurationManager(rc_mgr);
   problem = problemFactory.create();
+
+#if defined(ALBANY_GOAL)
+  bcMgr = GOAL::BCManager::create(*problemParams);
+#endif
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
@@ -2096,7 +2104,7 @@ evaluateResponseT(int response_index,
       ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
     if (!ndb.is_null()) {
       ndb->getNodalDataVector()->initializeVectors(0);
-      ndb->getNodalDataVector()->initEvaluateCalls();
+      ndb->getNodalDataVector()->initEvaluateCalls(meshSpecs.size());
     }
   } catch (...) { /* No nodal data vector. */ }
 

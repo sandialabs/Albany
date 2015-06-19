@@ -17,6 +17,7 @@
 
 namespace GOAL {
 
+class BCManager;
 struct ProblemBundle;
 class FieldManagerBundle;
 

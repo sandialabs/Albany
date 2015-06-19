@@ -70,7 +70,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
        <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.0005"/>
+       <Parameter name="Initial Step Size" type="double" value="0.001"/>
        <Parameter name="Max Step Size" type="double" value="0.01"/>
        <Parameter name="Min Step Size" type="double" value="0.00001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>

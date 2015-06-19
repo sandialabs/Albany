@@ -7,7 +7,7 @@
 #include "GOAL_LinearSystem.hpp"
 #include "GOAL_Discretization.hpp"
 #include "PHAL_Workset.hpp"
-#include "Albany_AbstractPUMIDiscretization.hpp"
+#include "Albany_APFDiscretization.hpp"
 
 using Teuchos::rcp;
 using Teuchos::RCP;
@@ -27,7 +27,7 @@ LinearSystem::~LinearSystem()
 
 void LinearSystem::init()
 {
-  RCP<Albany::AbstractPUMIDiscretization> d = disc->getPUMIDisc();
+  RCP<Albany::APFDiscretization> d = disc->getAPFDisc();
   RCP<const Tpetra_Map> m = d->getMapT();
   RCP<const Tpetra_Map> om = d->getOverlapMapT();
   RCP<const Tpetra_CrsGraph> g = d->getJacobianGraphT();
@@ -62,10 +62,32 @@ void LinearSystem::setWorksetSolutionInfo(PHAL::Workset& workset)
   workset.comm = x->getMap()->getComm();
 }
 
-void LinearSystem::completeJacobianFill()
+void LinearSystem::setWorksetDirichletInfo(PHAL::Workset& workset)
+{
+  workset.JacT = jac;
+  workset.xT = x;
+}
+
+void LinearSystem::exportJacobian()
 {
   jac->doExport(*(overlapJac),*(exporter),Tpetra::ADD);
+}
+
+void LinearSystem::completeJacobianFill()
+{
   jac->fillComplete();
+}
+
+static void writeJacobian(const char* n, RCP<Tpetra_CrsMatrix>& j)
+{
+  Tpetra_MatrixMarket_Writer::writeSparseFile(n,j);
+}
+
+void LinearSystem::writeLinearSystem(int ctr)
+{
+  char n[25];
+  sprintf(n,"g_jac_%i.mm",ctr);
+  writeJacobian(n,jac);
 }
 
 }
