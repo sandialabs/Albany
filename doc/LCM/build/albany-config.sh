@@ -21,5 +21,5 @@ cmake \
  -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=lcm_enable_kokkos_devel \
  -D ALBANY_ENABLE_FORTRAN:BOOL=OFF \
  -D ENABLE_SLFAD:BOOL=lcm_enable_slfad \
- -D SLFAD_SIZE=27 \
+ -D SLFAD_SIZE=48 \
   lcm_package_dir

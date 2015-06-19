@@ -47,7 +47,7 @@ cmake \
  -D Kokkos_ENABLE_Cuda_UVM=lcm_enable_uvm \
  -D Kokkos_ENABLE_EXAMPLES:BOOL=lcm_enable_kokkos_examples \
  -D Kokkos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
- -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+ -D Kokkos_ENABLE_Pthread:BOOL=lcm_enable_pthreads \
  -D Kokkos_ENABLE_Serial:BOOL=ON \
  -D Kokkos_ENABLE_TESTS:BOOL=ON \
  -D TPL_ENABLE_CUDA:STRING=lcm_enable_cuda \
