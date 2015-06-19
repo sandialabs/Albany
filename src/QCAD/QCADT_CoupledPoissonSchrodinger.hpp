@@ -129,6 +129,7 @@ namespace QCADT {
     Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_; 
 
     Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson; 
+    Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger; 
 
     //for setting get_W_factory() 
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> solver_factory_;

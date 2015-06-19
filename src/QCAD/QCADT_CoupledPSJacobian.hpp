@@ -39,7 +39,6 @@ public:
   Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(int nEigenvals,
                                            	  const Teuchos::RCP<const Tpetra_Map>& discretizationMap,
                                            	  const Teuchos::RCP<const Tpetra_Map>& fullPSMap,
-                                           	  const Teuchos::RCP<const Teuchos_Comm>& comm,
                                            	  int dim, int valleyDegen, double temp,
                                            	  double lengthUnitInMeters, double energyUnitInElectronVolts,
                                            	  double effMass, double conductionBandOffset, 

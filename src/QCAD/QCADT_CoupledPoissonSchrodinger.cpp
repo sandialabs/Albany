@@ -279,6 +279,16 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   // Create model evaluator
   Albany::ModelFactory schrodingerModelFactory(schro_appParams, schrodingerApp);
   schrodingerModel = schrodingerModelFactory.createT();
+  
+  //Get Schrodinger Jacobian 
+  Teuchos::RCP<Tpetra_Operator> const Jac_Schrodinger_temp =
+        Teuchos::nonnull(poissonModel->create_W_op()) ?
+            ConverterT::getTpetraOperator(schrodingerModel->create_W_op()) :
+            Teuchos::null;
+  Jac_Schrodinger =
+        Teuchos::nonnull(Jac_Schrodinger_temp) ?
+            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Jac_Schrodinger_temp, true) :
+            Teuchos::null;
 
   //Save the discretization's maps for convenience (should be the same for Poisson and Schrodinger apps)
   disc_map = poissonApp->getMapT();
@@ -626,9 +636,10 @@ QCADT::CoupledPoissonSchrodinger::create_W_op() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   QCADT::CoupledPSJacobian psJac(num_models_, myComm); 
-  return psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map, myComm,
+  return psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map,
                           numDims, valleyDegeneracyFactor, temperature,
-                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB); 
+                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB, 
+                          Jac_Poisson, Jac_Schrodinger, Jac_Schrodinger); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
@@ -1093,7 +1104,7 @@ evalModelImpl(
     }    
     if (W_out != Teuchos::null) {
       QCADT::CoupledPSJacobian psJac(num_models_, myComm);
-      W_out = psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map, myComm,
+      W_out = psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map, 
                           numDims, valleyDegeneracyFactor, temperature,
                           length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB,
                           W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs, eigenvals, x_schrodinger); 

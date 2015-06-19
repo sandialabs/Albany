@@ -47,7 +47,6 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 QCADT::CoupledPSJacobian::getThyraCoupledJacobian(int nEigenvals,
                                                   const Teuchos::RCP<const Tpetra_Map>& discretizationMap,
                                            	  const Teuchos::RCP<const Tpetra_Map>& fullPSMap,
-                                           	  const Teuchos::RCP<const Teuchos_Comm>& comm,
                                            	  int dim, int valleyDegen, double temp,
                                            	  double lengthUnitInMeters, double energyUnitInElectronVolts,
                                            	  double effMass, double conductionBandOffset, 
@@ -83,8 +82,8 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(int nEigenvals,
     //   Where:
     //       n = quantum density function which depends on dimension
 
-  int block_dim = num_models_;  
-  
+  int block_dim = num_models_; 
+
   // this operator will be square
   Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST>>blocked_op = Thyra::defaultBlockedLinearOp<ST>();
   blocked_op->beginBlockFill(block_dim, block_dim);
@@ -99,7 +98,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(int nEigenvals,
   for (int i=0; i< 2+nEigenvals; i++) {
     for (int j=0; j<2+nEigenvals; j++) {
         implicitJacs[j+i*(2+nEigenvals)] = Teuchos::rcp(new QCADT::ImplicitPSJacobian(nEigenvals,
-                                                  discretizationMap, fullPSMap, comm, dim, valleyDegen, temp,
+                                                  discretizationMap, fullPSMap, commT_, dim, valleyDegen, temp,
                                                   lengthUnitInMeters, energyUnitInElectronVolts,
                                                   effMass, conductionBandOffset));
         implicitJacs[j+i*(2+nEigenvals)]->initialize(Jac_Schrodinger, Mass, neg_eigenvals, eigenvecs);
