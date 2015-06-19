@@ -123,6 +123,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_enable_hwloc|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_kokkos_devel|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_slfad|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_slfad_size||g;" "$CONFIG_FILE"
 		;;
 	    openmp)
 		sed -i -e "s|lcm_enable_cuda|OFF|g;" "$CONFIG_FILE"
@@ -136,6 +137,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_enable_hwloc|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_kokkos_devel|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_slfad|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_slfad_size||g;" "$CONFIG_FILE"
 		;;
 	    pthreads)
 		sed -i -e "s|lcm_enable_cuda|OFF|g;" "$CONFIG_FILE"
@@ -149,6 +151,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_enable_hwloc|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_kokkos_devel|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_slfad|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_slfad_size||g;" "$CONFIG_FILE"
 		;;
 	    cuda)
 		sed -i -e "s|lcm_enable_cuda|ON|g;" "$CONFIG_FILE"
@@ -162,6 +165,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_enable_hwloc|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_kokkos_devel|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_enable_slfad|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_slfad_size|-D SLFAD_SIZE=48|g;" "$CONFIG_FILE"
 		;;
 	    *)
 		echo "Unrecognized architecture option"
