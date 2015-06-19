@@ -21,6 +21,7 @@ class LinearSystem
     LinearSystem(Teuchos::RCP<Discretization>& d);
     ~LinearSystem();
     void setWorksetSolutionInfo(PHAL::Workset& workset);
+    void setWorksetDirichletInfo(PHAL::Workset& workset);
     void completeJacobianFill();
     void writeLinearSystem(int ctr);
   private:

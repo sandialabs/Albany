@@ -157,4 +157,9 @@ void FieldManagerBundle::evaluateJacobian(PHAL::Workset& workset)
   }
 }
 
+void FieldManagerBundle::evaluateDirichletBC(PHAL::Workset& workset)
+{
+  dfm->evaluateFields<J>(workset);
+}
+
 }

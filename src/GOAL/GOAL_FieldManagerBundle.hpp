@@ -53,6 +53,7 @@ class FieldManagerBundle
     ~FieldManagerBundle();
     void writePHXGraphs();
     void evaluateJacobian(PHAL::Workset& workset);
+    void evaluateDirichletBC(PHAL::Workset& workset);
   private:
     void createFieldManagers();
     Teuchos::RCP<ProblemBundle> pb; 

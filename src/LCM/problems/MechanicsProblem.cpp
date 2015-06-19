@@ -325,7 +325,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 #if defined(ALBANY_GOAL)
   Teuchos::RCP<GOAL::BCManager> bcm =
     this->getApplication()->getBCManager();
-  if (bcm != Teuchos::null) {
+  if (Teuchos::nonnull(bcm)) {
     bcm->dirichletNames = dirichletNames;
     bcm->paramLib = this->paramLib;
   }

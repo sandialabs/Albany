@@ -18,11 +18,12 @@ namespace GOAL {
 using Teuchos::rcp;
 using Teuchos::RCP;
 using Teuchos::ArrayRCP;
-using Teuchos::rcp_dynamic_cast;
+using Teuchos::rcpFromRef;
 using Albany::Application;
 using Albany::AbstractProblem;
 using Albany::StateManager;
 using Albany::MeshSpecsStruct;
+using Albany::APFDiscretization;
 
 static RCP<Teuchos::ParameterList> getValidParams()
 {
@@ -88,6 +89,14 @@ static void setupInitialWorksetInfo(
   workset.accelerationTerms = false;
 }
 
+static void setupWorksetNodesetInfo(
+    PHAL::Workset& workset,
+    RCP<APFDiscretization> d)
+{
+  workset.nodeSets = rcpFromRef(d->getNodeSets());
+  workset.nodeSetCoords = rcpFromRef(d->getNodeSetCoords());
+}
+
 void MechAdjResponse::evaluateResponseT(
     const double currentTime,
     const Tpetra_Vector* xdotT,
@@ -113,8 +122,14 @@ void MechAdjResponse::evaluateResponseT(
   PHAL::Workset workset;
   setupInitialWorksetInfo(workset,currentTime);
   ls->setWorksetSolutionInfo(workset);
-  
   fmb->evaluateJacobian(workset);
+
+  PHAL::Workset dworkset;
+  setupInitialWorksetInfo(dworkset,currentTime);
+  setupWorksetNodesetInfo(dworkset,d->getAPFDisc());
+  ls->setWorksetDirichletInfo(workset);
+  fmb->evaluateDirichletBC(dworkset);
+
   ls->completeJacobianFill();
 
   if (writeLinearSystem)
