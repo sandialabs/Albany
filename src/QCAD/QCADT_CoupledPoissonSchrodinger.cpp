@@ -479,8 +479,12 @@ QCADT::CoupledPoissonSchrodinger::allocateVectors()
   }
   
   //All zero initial solutions for eigenvalues
-  Thyra::put_scalar(Teuchos::ScalarTraits<ST>::zero(), xT_vecs[1+nEigenvals].ptr()); 
-  Thyra::put_scalar(Teuchos::ScalarTraits<ST>::zero(), x_dotT_vecs[1+nEigenvals].ptr()); 
+  Teuchos::RCP<Tpetra_Vector> xT_eval = Teuchos::rcp(new Tpetra_Vector(dist_eigenval_map)); 
+  Teuchos::RCP<Tpetra_Vector> xdotT_eval = Teuchos::rcp(new Tpetra_Vector(dist_eigenval_map)); 
+  xT_eval->putScalar(0.0); 
+  xdotT_eval->putScalar(0.0); 
+  xT_vecs[1+nEigenvals] = Thyra::createVector(xT_eval); 
+  x_dotT_vecs[1+nEigenvals] = Thyra::createVector(xdotT_eval); 
 
   Teuchos::RCP<Thyra::DefaultProductVector<ST>> xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs());
   Teuchos::RCP<Thyra::DefaultProductVector<ST>> x_dotT_prod_vec = Thyra::defaultProductVector<ST>(space, x_dotT_vecs());
