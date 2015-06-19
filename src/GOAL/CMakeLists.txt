@@ -6,9 +6,10 @@
 
 # a posteriori goal-oriented error estimation
 
-SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/Apogee)
+SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/GOAL)
 
 SET(SOURCES
+  GOAL_BCManager.cpp
   GOAL_Discretization.cpp
   GOAL_FieldManagerBundle.cpp
   GOAL_LinearSystem.cpp
@@ -16,6 +17,7 @@ SET(SOURCES
   responses/GOAL_MechAdjResponse.cpp)
 
 SET(HEADERS
+  GOAL_BCManager.hpp
   GOAL_Discretization.hpp
   GOAL_FieldManagerBundle.hpp
   GOAL_LinearSystem.hpp
@@ -26,6 +28,7 @@ SET(HEADERS
 include_directories(
   ${Trilinos_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
+  ${Albany_SOURCE_DIR}/LCM/problems
   ${GOAL_DIR}/responses
   ${GOAL_DIR}/evaluators)
 

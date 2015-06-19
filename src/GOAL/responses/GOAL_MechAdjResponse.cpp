@@ -5,11 +5,12 @@
 //*****************************************************************//
 
 #include "GOAL_MechAdjResponse.hpp"
+#include "GOAL_BCManager.hpp"
 #include "GOAL_FieldManagerBundle.hpp"
 #include "GOAL_Discretization.hpp"
 #include "GOAL_LinearSystem.hpp"
 #include "PHAL_Utilities.hpp"
-#include "Albany_AbstractPUMIDiscretization.hpp"
+#include "Albany_APFDiscretization.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 namespace GOAL {
@@ -17,10 +18,12 @@ namespace GOAL {
 using Teuchos::rcp;
 using Teuchos::RCP;
 using Teuchos::ArrayRCP;
+using Teuchos::rcpFromRef;
 using Albany::Application;
 using Albany::AbstractProblem;
 using Albany::StateManager;
 using Albany::MeshSpecsStruct;
+using Albany::APFDiscretization;
 
 static RCP<Teuchos::ParameterList> getValidParams()
 {
@@ -47,6 +50,7 @@ MechAdjResponse::MechAdjResponse(
   evalCtr(0)
 {
   pb = rcp( new ProblemBundle(rp,app,prob,sm,ms) );
+  Teuchos::RCP<BCManager> bcm = app->getBCManager();
 
   RCP<const Teuchos::ParameterList> vp = getValidParams();
   pb->params.validateParameters(*vp,0);
@@ -55,7 +59,7 @@ MechAdjResponse::MechAdjResponse(
   writeLinearSystem = pb->params.get<bool>("Write Linear System",false);
   pb->enrich = enrich;
 
-  fmb = rcp( new FieldManagerBundle(pb) );
+  fmb = rcp( new FieldManagerBundle(bcm,pb) );
   if (writePHXGraphs)
     fmb->writePHXGraphs();
 }
@@ -85,6 +89,39 @@ static void setupInitialWorksetInfo(
   workset.accelerationTerms = false;
 }
 
+static void evaluateJacobian(
+    const double time,
+    RCP<LinearSystem>& ls,
+    RCP<FieldManagerBundle>& fmb)
+{
+  PHAL::Workset workset;
+  setupInitialWorksetInfo(workset,time);
+  ls->setWorksetSolutionInfo(workset);
+  fmb->evaluateJacobian(workset);
+}
+
+static void setupWorksetNodesetInfo(
+    PHAL::Workset& workset,
+    RCP<APFDiscretization> d)
+{
+  workset.nodeSets = rcpFromRef(d->getNodeSets());
+  workset.nodeSetCoords = rcpFromRef(d->getNodeSetCoords());
+}
+
+static void applyDirichletBC(
+    const double time,
+    RCP<Discretization>& d,
+    RCP<LinearSystem>& ls,
+    RCP<FieldManagerBundle>& fmb)
+{
+  PHAL::Workset workset;
+  setupInitialWorksetInfo(workset,time);
+  setupWorksetNodesetInfo(workset,d->getAPFDisc());
+  ls->exportJacobian();
+  ls->setWorksetDirichletInfo(workset);
+  fmb->evaluateDirichletBC(workset);
+}
+
 void MechAdjResponse::evaluateResponseT(
     const double currentTime,
     const Tpetra_Vector* xdotT,
@@ -107,15 +144,19 @@ void MechAdjResponse::evaluateResponseT(
 
   RCP<LinearSystem> ls = rcp(new LinearSystem(d));
 
-  PHAL::Workset workset;
-  setupInitialWorksetInfo(workset,currentTime);
-  ls->setWorksetSolutionInfo(workset);
-  
-  fmb->evaluateJacobian(workset);
+  evaluateJacobian(currentTime,ls,fmb);
+
+  applyDirichletBC(currentTime,d,ls,fmb);
+
   ls->completeJacobianFill();
+
+  if (writeLinearSystem)
+    ls->writeLinearSystem(evalCtr);
 
   if (pb->enrich)
     d->decreaseDiscretization();
+
+  evalCtr++;
 }
 
 }

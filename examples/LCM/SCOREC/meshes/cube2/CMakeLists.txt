@@ -19,3 +19,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube2-2.smb
                ${CMAKE_CURRENT_BINARY_DIR}/cube2-2.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube2-3.smb
                ${CMAKE_CURRENT_BINARY_DIR}/cube2-3.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube2-coarse-serial0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/cube2-coarse-serial0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube2-coarse0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/cube2-coarse0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube2-coarse1.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/cube2-coarse1.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube2-coarse2.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/cube2-coarse2.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube2-coarse3.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/cube2-coarse3.smb COPYONLY)

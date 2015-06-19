@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "GOAL_BCManager.hpp"
 #include "GOAL_FieldManagerBundle.hpp"
 #include "Albany_Application.hpp"
 #include "PHAL_Utilities.hpp"
@@ -13,6 +14,7 @@ namespace GOAL {
 using Teuchos::rcp;
 using Teuchos::RCP;
 using Teuchos::ArrayRCP;
+using Teuchos::rcpFromRef;
 using Albany::Application;
 using Albany::MeshSpecsStruct;
 using PHX::FieldManager;
@@ -48,8 +50,11 @@ static void enrichMeshSpecs(
   oldMs = newMs;
 }
 
-FieldManagerBundle::FieldManagerBundle(RCP<ProblemBundle>& bundle) :
-  pb(bundle)
+FieldManagerBundle::FieldManagerBundle(
+    RCP<BCManager>& mgr,
+    RCP<ProblemBundle>& bundle) :
+  pb(bundle),
+  bcm(mgr)
 {
   if (pb->enrich)
     enrichMeshSpecs(pb->meshSpecs);
@@ -103,9 +108,25 @@ static void createProblemFieldManagers(
     createProblemFieldManager(pb,pb->meshSpecs[ps],fm[ps]);
 }
 
+static void createDirichletFieldManager(
+    RCP<BCManager>& bcm,
+    RCP<ProblemBundle>& pb,
+    RCP<FieldManager<AlbanyTraits> >& dfm)
+{
+  Albany::BCUtils<Albany::DirichletTraits> du;
+  dfm = du.constructBCEvaluators(
+      pb->meshSpecs[0]->nsNames,
+      bcm->dirichletNames,
+      rcpFromRef(bcm->params),
+      bcm->paramLib);
+  setJacobianDerivDims(pb->application,pb->meshSpecs[0],dfm);
+  doPostReg<J>("Jacobian",dfm);
+}
+
 void FieldManagerBundle::createFieldManagers()
 {
   createProblemFieldManagers(pb,fm);
+  createDirichletFieldManager(bcm,pb,dfm);
 }
 
 template<typename EvalT>
@@ -124,6 +145,7 @@ void FieldManagerBundle::writePHXGraphs()
   int physSet = fm.size();
   for (int ps=0; ps < physSet; ++ps)
     writePhalanxGraph<J>(ps,"jac",fm[ps]);
+  writePhalanxGraph<J>(0,"dbc",dfm);
 }
 
 void FieldManagerBundle::evaluateJacobian(PHAL::Workset& workset)
@@ -136,6 +158,11 @@ void FieldManagerBundle::evaluateJacobian(PHAL::Workset& workset)
     pb->application->loadWorksetBucketInfo<J>(workset,ws);
     fm[wsPhysIndex[ws]]->evaluateFields<J>(workset);
   }
+}
+
+void FieldManagerBundle::evaluateDirichletBC(PHAL::Workset& workset)
+{
+  dfm->evaluateFields<J>(workset);
 }
 
 }

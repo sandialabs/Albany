@@ -16,8 +16,8 @@ class Field;
 
 namespace Albany {
 class StateManager;
-class PUMIMeshStruct;
-class AbstractPUMIDiscretization;
+class APFMeshStruct;
+class APFDiscretization;
 }
 
 namespace GOAL {
@@ -32,14 +32,14 @@ class Discretization
     void enrichDiscretization();
     void decreaseDiscretization();
     void fillSolution(Teuchos::RCP<Tpetra_Vector>& x);
-    Teuchos::RCP<Albany::AbstractPUMIDiscretization>
-      getPUMIDisc() { return disc; }
+    Teuchos::RCP<Albany::APFDiscretization>
+      getAPFDisc() { return disc; }
   private:
     apf::Mesh* mesh;
     std::vector<std::string> solNames;
     std::vector<int> solIndex;
     Teuchos::ArrayRCP<apf::Field*> solFields;
-    Teuchos::RCP<Albany::AbstractPUMIDiscretization> disc;
+    Teuchos::RCP<Albany::APFDiscretization> disc;
 };
 
 }
