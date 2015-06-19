@@ -171,7 +171,7 @@ void QCADT::ImplicitPSJacobian::apply(Tpetra_MultiVector const & X,
   }
   //(eigenvalue, Schrodinger) block
   else if (index_i_ == nEigenvals+1 && index_j_ >0 && index_j_ < nEigenvals + 1) {
-    std::vector<double> y_neg_evals_local(nEigenvals);
+    std::vector<ST> y_neg_evals_local(nEigenvals);
     for (int j=0; j<nEigenvals; j++) {
        Teuchos::RCP<const Tpetra_Vector> M_Psi_j = M_Psi->getVector(j); 
        Teuchos::RCP<const Tpetra_Vector> MT_Psi_j = MT_Psi->getVector(j); 
@@ -182,7 +182,7 @@ void QCADT::ImplicitPSJacobian::apply(Tpetra_MultiVector const & X,
        tempVec->dot(X, y_neg_evals_local_j_AV); 
     } 
     int my_nEigenvals = dist_evalMap->getNodeNumElements();
-    Teuchos::ArrayView<const int> eval_global_elements = dist_evalMap->getNodeElementList();
+    Teuchos::ArrayView<const GO> eval_global_elements = dist_evalMap->getNodeElementList();
     for (int i=0; i<my_nEigenvals; i++) { 
       const Teuchos::ArrayRCP<ST> Y_nonConstView = Y.get1dViewNonConst();
       Y_nonConstView[i] = y_neg_evals_local[eval_global_elements[i]];  
