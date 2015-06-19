@@ -778,7 +778,7 @@ IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
 ENDIF()
 
-# Toggle embedded ensemble capability  (Ensemble is a rename of MP)
+# Toggle embedded ensemble capability  (ENSEMBLE is a rename of MP)
 OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
 IF (ENABLE_ENSEMBLE)
   ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
