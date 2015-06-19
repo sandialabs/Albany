@@ -394,11 +394,12 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
 
   
   //------------------Setup nominal values----------------
+  //We are coupling 2+nEigenvals models: 1 Poisson eqn + nEigenvals Schrodinger eqns + 1 nEigenvals eigenvalue eqns
+  num_models_ = 2 + nEigenvals; 
+  dist_eigenval_map = Teuchos::rcp(new Tpetra_Map(nEigenvals, my_nEigenvals_, 0, myComm));
   nominal_values_ = this->createInArgsImpl();
   allocateVectors(); //sets x and x_dot in nominal_values_
 
-  //We are coupling 2+nEigenvals models: 1 Poisson eqn + nEigenvals Schrodinger eqns + 1 nEigenvals eigenvalue eqns
-  num_models_ = 2 + nEigenvals; 
   //set p_init
   for (int l = 0; l < num_param_vecs; ++l) {
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
@@ -451,7 +452,8 @@ QCADT::CoupledPoissonSchrodinger::allocateVectors()
     spaces[m] = Thyra::createVectorSpace<ST>(disc_map);
 
   //last space is eigenvalue space
-  spaces[1+nEigenvals] = Thyra::createVectorSpace<ST>(createEigenvalueMap()); 
+  spaces[1+nEigenvals] = Thyra::createVectorSpace<ST>(dist_eigenval_map); 
+
   
   Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const> space = Thyra::productVectorSpace<ST>(spaces);
   Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST>>> xT_vecs;
@@ -488,14 +490,6 @@ QCADT::CoupledPoissonSchrodinger::allocateVectors()
   
 }
 
-Teuchos::RCP<const Tpetra_Map>
-QCADT::CoupledPoissonSchrodinger::createEigenvalueMap() const 
-{
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  //Create map for eigenvalues -- FIXME: check with Erik N.
-  Teuchos::RCP<const Tpetra_Map> dist_eigenval_map = Teuchos::rcp(new const Tpetra_Map(nEigenvals, my_nEigenvals_, 0, myComm)); 
-}
-
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCADT::CoupledPoissonSchrodinger::get_x_space() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -523,7 +517,7 @@ QCADT::CoupledPoissonSchrodinger::createCombinedRangeSpace() const
     vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_map));
   }
   //Last map is eigenvalue map
-  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(createEigenvalueMap()));
+  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(dist_eigenval_map));
   range_space = Thyra::productVectorSpace<ST>(vs_array);
   return range_space;
 }
@@ -936,7 +930,6 @@ evalModelImpl(
 
   //
   // Communicate all the eigenvalues to every processor, since all parts of the mesh need them
-  Teuchos::RCP<const Tpetra_Map> dist_eigenval_map = createEigenvalueMap();  
   Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
   Teuchos::RCP<Tpetra_Map> local_eigenval_map = Teuchos::rcp(new Tpetra_Map(nEigenvals, 0, myComm, lg));
   Teuchos::RCP<Tpetra_Import> eigenval_importer = Teuchos::rcp(new Tpetra_Import(dist_eigenval_map, local_eigenval_map)); 

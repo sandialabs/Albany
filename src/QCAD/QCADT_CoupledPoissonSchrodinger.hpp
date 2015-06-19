@@ -65,7 +65,6 @@ namespace QCADT {
     Teuchos::RCP<Thyra::PreconditionerBase<ST> > create_W_prec() const;
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> get_W_factory() const;
     
-    Teuchos::RCP<const Tpetra_Map> createEigenvalueMap() const; 
     Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> createCombinedRangeSpace() const; 
 
 
@@ -124,6 +123,7 @@ namespace QCADT {
 
   private:
     Teuchos::RCP<const Tpetra_Map> disc_map, disc_overlap_map;
+    Teuchos::RCP<const Tpetra_Map> dist_eigenval_map;
     Teuchos::RCP<Tpetra_Map> combined_SP_map;
     Teuchos::RCP<const Tpetra_Vector> saved_initial_guess;
     Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_; 
