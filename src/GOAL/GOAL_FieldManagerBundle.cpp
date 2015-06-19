@@ -119,6 +119,8 @@ static void createDirichletFieldManager(
       bcm->dirichletNames,
       rcpFromRef(bcm->params),
       bcm->paramLib);
+  setJacobianDerivDims(pb->application,pb->meshSpecs[0],dfm);
+  doPostReg<J>("Jacobian",dfm);
 }
 
 void FieldManagerBundle::createFieldManagers()
@@ -143,6 +145,7 @@ void FieldManagerBundle::writePHXGraphs()
   int physSet = fm.size();
   for (int ps=0; ps < physSet; ++ps)
     writePhalanxGraph<J>(ps,"jac",fm[ps]);
+  writePhalanxGraph<J>(0,"dbc",dfm);
 }
 
 void FieldManagerBundle::evaluateJacobian(PHAL::Workset& workset)
