@@ -449,7 +449,7 @@ ENDIF()
 # Set optional build of CISM Interface for FELIX (Land Ice SciDAC project),
 # defaults to Disabled
 
-OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Source code" OFF)
+OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
   IF (ENABLE_ALBANY_EPETRA_EXE) 
     IF (ENABLE_CISM_EPETRA) 
@@ -662,21 +662,6 @@ ELSE()
   SET(ALBANY_CI FALSE)
 ENDIF()
 
-# optionally set global ordinal size to signed 64 bits
-OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
-IF (ENABLE_64BIT_INT)
-  ADD_DEFINITIONS(-DALBANY_64BIT_INT)
-  MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
-  SET(ALBANY_64BIT_INT TRUE)
-  # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
-  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
-ELSE()
-  MESSAGE("-- 64 bit GO is NOT Enabled.")
-  SET(ALBANY_64BIT_INT FALSE)
-  # Remove the CTestCustom.cmake file in the build directory if it exists
-  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
-ENDIF()
-
 # Set optional dependency on SCOREC PUMI,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
@@ -761,19 +746,6 @@ ELSE()
   ENDIF()
 ENDIF()
 
-# Toggle embedded ensemble capability  (Ensemble is a rename of MP)
-OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
-IF (ENABLE_ENSEMBLE)
-  ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
-  SET(ENSEMBLE_SIZE 32 CACHE INT "set Sacado ENSEMBLE MP::Vector size")
-  ADD_DEFINITIONS(-DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE})
-  MESSAGE("-- ENSEMBLE  is Enabled, compiling with -DALBANY_ENSEMBLE -DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE}")
-  SET(ALBANY_ENSEMBLE TRUE)
-ELSE()
-  MESSAGE("-- ENSEMBLE  is NOT Enabled.")
-  SET(ALBANY_ENSEMBLE FALSE)
-ENDIF()
-
 # Add option for CONTACT work, defaults to disabled
 OPTION(ENABLE_CONTACT "Flag to turn on CONTACT code in LCM" OFF)
 IF (ENABLE_CONTACT AND ENABLE_ALBANY_EPETRA_EXE)
@@ -806,6 +778,33 @@ IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
 ENDIF()
 
+# Toggle embedded ensemble capability  (Ensemble is a rename of MP)
+OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
+IF (ENABLE_ENSEMBLE)
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
+  SET(ENSEMBLE_SIZE 32 CACHE INT "set Sacado ENSEMBLE MP::Vector size")
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE})
+  MESSAGE("-- ENSEMBLE  is Enabled, compiling with -DALBANY_ENSEMBLE -DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE}")
+  SET(ALBANY_ENSEMBLE TRUE)
+ELSE()
+  MESSAGE("-- ENSEMBLE  is NOT Enabled.")
+  SET(ALBANY_ENSEMBLE FALSE)
+ENDIF()
+
+# optionally set global ordinal size to signed 64 bits
+OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
+IF (ENABLE_64BIT_INT)
+  ADD_DEFINITIONS(-DALBANY_64BIT_INT)
+  MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
+  SET(ALBANY_64BIT_INT TRUE)
+  # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
+  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+ELSE()
+  MESSAGE("-- 64 bit GO is NOT Enabled.")
+  SET(ALBANY_64BIT_INT FALSE)
+  # Remove the CTestCustom.cmake file in the build directory if it exists
+  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+ENDIF()
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)

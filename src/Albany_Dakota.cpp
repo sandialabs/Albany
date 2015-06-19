@@ -113,8 +113,6 @@ int Albany_Dakota(int argc, char *argv[])
 	    piroParams, mpParams, appComm, block_size,
 	    mpParams->get("Number of Spatial Processors", -1)));
 
-    
-
     // Create application & model evaluator
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model =
