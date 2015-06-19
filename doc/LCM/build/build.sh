@@ -230,7 +230,8 @@ case "$SCRIPT_NAME" in
     *mail*)
 	if [ -f "$TEST_LOG" ]; then
 	    SUCCESS_RATE=`grep "tests failed" "$TEST_LOG"`
-	    HEADER="LCM TESTS: $HOST, $TOOL_CHAIN $BUILD_TYPE, $SUCCESS_RATE"
+	    BUILD_ENV="$HOST, $ARCH_NAME $TOOL_CHAIN $BUILD_TYPE"
+	    HEADER="LCM TESTS: $BUILD_ENV, $SUCCESS_RATE"
 	    mail -r "$FROM" -s "$HEADER" "$TO" < "$TEST_LOG"
 	    STATUS=$?
 	    if [ $STATUS -ne 0 ]; then
