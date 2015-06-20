@@ -266,9 +266,10 @@ protected:
   bool have_mech_eq_;
 
   ///
-  /// Have mesh adaptation
+  /// Have mesh adaptation - both the "Adaptation" sublist exists and the user has specified that the method
+  ///    is "RPI Albany Size"
   ///
-  bool have_adaptation_;
+  bool have_sizefield_adaptation_;
 
   ///
   /// Have temperature equation
@@ -1115,7 +1116,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_mech_eq_ && have_adaptation_) { // Mesh size field
+  if (have_mech_eq_ && have_sizefield_adaptation_) { // Mesh size field
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Isotropic Mesh Size Field"));
     p->set<std::string>("IsoTropic MeshSizeField Name", "IsoMeshSizeField");

@@ -18,7 +18,7 @@ AAdapt::NonUnifRefSizeField::
 ~NonUnifRefSizeField() {
 }
 
-ma::Input *
+void
 AAdapt::NonUnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) {
 
      int num_iters = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
@@ -40,7 +40,7 @@ AAdapt::NonUnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList
 
      in->shouldFixShape = true;
 
-     return in;
+     ma::adapt(in);
 
 }
 

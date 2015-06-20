@@ -15,10 +15,35 @@ AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<Albany::APFDiscret
 }
 
 void
+AAdapt::UnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+{
+
+  ma::IsotropicFunction*
+    isf = dynamic_cast<ma::IsotropicFunction*>(&unifRefIsoFunc);
+  ma::Input *in = ma::configure(mesh_struct->getMesh(), isf);
+
+  in->maximumIterations = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
+  //do not snap on deformation problems even if the model supports it
+  in->shouldSnap = false;
+
+  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
+  if (loadBalancing) {
+    in->shouldRunPreZoltan = true;
+    in->shouldRunMidParma = true;
+    in->shouldRunPostParma = true;
+    in->maximumImbalance = lbMaxImbalance;
+  }
+
+  ma::adapt(in);
+
+}
+
+void
 AAdapt::UnifRefSizeField::copyInputFields()
 {
 
-  averageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
+  unifRefIsoFunc.averageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
 
 }
 
@@ -34,11 +59,7 @@ void
 AAdapt::UnifRefSizeField::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
-  elem_size = p->get<double>("Target Element Size", 0.7);
+  unifRefIsoFunc.elem_size = p->get<double>("Target Element Size", 0.7);
 
-}
-
-double AAdapt::UnifRefSizeField::getValue(ma::Entity* v) {
-  return elem_size * averageEdgeLength;
 }
 
