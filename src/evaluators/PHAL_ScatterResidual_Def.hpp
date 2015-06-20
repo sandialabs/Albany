@@ -699,7 +699,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p,
@@ -715,14 +715,11 @@ void ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
-  ScalarT *valptr;
 
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
+
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -730,18 +727,16 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-        else
-        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-        else
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
+        typename PHAL::Ref<ScalarT>::type
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
         for (int block=0; block<nblock; block++)
-          (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
+          (*f)[block][nodeID[node][this->offset + eq]] += valptr.coeff(block);
       }
     }
   }
-*/
 }
 
 // **********************************************************************
@@ -765,7 +760,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
-  ScalarT *valptr;
 
   int row, lcol, col;
   int nblock = 0;
@@ -777,31 +771,28 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-        else
-        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-        else
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
+        typename PHAL::Ref<ScalarT>::type
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
 
         if (f != Teuchos::null) {
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr.val().coeff(block));
         }
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (valptr.hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -815,7 +806,7 @@ evaluateFields(typename Traits::EvalData workset)
 
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
-                c = valptr->fastAccessDx(lcol).coeff(block);
+                c = valptr.fastAccessDx(lcol).coeff(block);
                 if (workset.is_adjoint) {
                   (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
                 }
@@ -829,7 +820,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-*/
 }
 
 // **********************************************************************
@@ -853,7 +843,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
-  ScalarT *valptr;
 
   int nblock = 0;
   if (f != Teuchos::null)
@@ -873,37 +862,35 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
+
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-        else
-        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-        else
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
+        typename PHAL::Ref<ScalarT>::type
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
         int row = nodeID[node][this->offset + eq];
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr.val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, valptr.dx(col).coeff(block));
 
         if (fp != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
+              (*fp)[block].SumIntoMyValue(row, col, valptr.dx(col+workset.param_offset).coeff(block));
       }
     }
   }
-*/
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -924,14 +911,11 @@ void ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
-  ScalarT *valptr;
 
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
+
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -939,17 +923,15 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-        else
-        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-        else
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
+        typename PHAL::Ref<ScalarT>::type
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
         for (int block=0; block<nblock; block++)
-          (*f)[block][nodeID[node][this->offset + eq]] += valptr->coeff(block);
+          (*f)[block][nodeID[node][this->offset + eq]] += valptr.coeff(block);
       }
     }
   }
-*/
 }
 
 // **********************************************************************
@@ -973,7 +955,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
-  ScalarT *valptr;
 
   int row, lcol, col;
   int nblock = 0;
@@ -985,31 +966,28 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-        else
-        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-        else
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
+        typename PHAL::Ref<ScalarT>::type
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
 
         if (f != Teuchos::null) {
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr.val().coeff(block));
         }
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (valptr.hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -1023,7 +1001,7 @@ evaluateFields(typename Traits::EvalData workset)
 
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
-                c = valptr->fastAccessDx(lcol).coeff(block);
+                c = valptr.fastAccessDx(lcol).coeff(block);
                 (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
               }
             } // column equations
@@ -1032,7 +1010,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-*/
 }
 
 // **********************************************************************
@@ -1056,7 +1033,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
-  ScalarT *valptr;
 
   int nblock = 0;
   if (f != Teuchos::null)
@@ -1073,41 +1049,37 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-        else
-        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-        else
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
+        typename PHAL::Ref<ScalarT>::type
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
         int row = nodeID[node][this->offset + eq];
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr.val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, valptr.dx(col).coeff(block));
 
         if (fp != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
+              (*fp)[block].SumIntoMyValue(row, col, valptr.dx(col+workset.param_offset).coeff(block));
       }
     }
   }
-*/
 }
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

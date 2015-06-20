@@ -10,7 +10,7 @@
 #include <string>
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "Sacado_ParameterRegistration.hpp"
+//#include "Sacado_ParameterRegistration.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -371,14 +371,6 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 }
 
 template<typename EvalT, typename Traits>
-typename PoissonSourceNeumannBase<EvalT, Traits>::ScalarT&
-PoissonSourceNeumannBase<EvalT, Traits>::
-getValue(const std::string &n) {
-  ScalarT zero = 0.0;
-  return zero;
-}
-
-template<typename EvalT, typename Traits>
 void PoissonSourceNeumannBase<EvalT, Traits>::
 calc_dudn_2DThomasFermi(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 			const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
@@ -698,7 +690,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 PoissonSourceNeumann<PHAL::AlbanyTraits::SGResidual, Traits>::
 PoissonSourceNeumann(Teuchos::ParameterList& p)
@@ -895,6 +887,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -1085,7 +1079,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 
 }

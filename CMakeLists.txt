@@ -449,7 +449,7 @@ ENDIF()
 # Set optional build of CISM Interface for FELIX (Land Ice SciDAC project),
 # defaults to Disabled
 
-OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Source code" OFF)
+OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
   IF (ENABLE_ALBANY_EPETRA_EXE) 
     IF (ENABLE_CISM_EPETRA) 
@@ -662,21 +662,6 @@ ELSE()
   SET(ALBANY_CI FALSE)
 ENDIF()
 
-# optionally set global ordinal size to signed 64 bits
-OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
-IF (ENABLE_64BIT_INT)
-  ADD_DEFINITIONS(-DALBANY_64BIT_INT)
-  MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
-  SET(ALBANY_64BIT_INT TRUE)
-  # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
-  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
-ELSE()
-  MESSAGE("-- 64 bit GO is NOT Enabled.")
-  SET(ALBANY_64BIT_INT FALSE)
-  # Remove the CTestCustom.cmake file in the build directory if it exists
-  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
-ENDIF()
-
 # Set optional dependency on SCOREC PUMI,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
@@ -731,25 +716,33 @@ ENDIF()
 
 # Set optional build of StochasticGalerkin and MultiPoint types
 # These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
+OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
 IF (ENABLE_SG_MP)
+  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
+          Use ENABLE_SG for Stochastic Galerkin
+          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
+ENDIF()
+
+# OPtional build with embedded Stochastic Galerkin evaluations
+OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
+IF (ENABLE_SG)
   if (1)
-    message ("-- WARNING: SG/MP is not working yet after the Kokkos merge.")
-    set (ALBANY_SG_MP FALSE)
+    message ("-- WARNING: SG is not working yet after the Kokkos merge. Disabling.")
+    set (ALBANY_SG FALSE)
     if (ENABLE_ASCR)
       set (ENABLE_ASCR FALSE)
     endif ()
-    message ("-- SG_MP     is NOT Enabled.")
+    message ("-- SG        is NOT Enabled.")
   else ()
-    ADD_DEFINITIONS(-DALBANY_SG_MP)
-    MESSAGE("-- SG_MP     is Enabled, compiling with -DALBANY_SG_MP")
-    SET(ALBANY_SG_MP TRUE)
+    ADD_DEFINITIONS(-DALBANY_SG)
+    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
+    SET(ALBANY_SG TRUE)
   endif ()
 ELSE()
-  MESSAGE("-- SG_MP     is NOT Enabled.")
-  SET(ALBANY_SG_MP FALSE)
+  MESSAGE("-- SG        is NOT Enabled.")
+  SET(ALBANY_SG FALSE)
   IF(ENABLE_ASCR)
-    MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG_MP to be ON\n")
+    MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG to be ON\n")
   ENDIF()
 ENDIF()
 
@@ -785,6 +778,33 @@ IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
 ENDIF()
 
+# Toggle embedded ensemble capability  (ENSEMBLE is a rename of MP)
+OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
+IF (ENABLE_ENSEMBLE)
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
+  SET(ENSEMBLE_SIZE 32 CACHE INT "set Sacado ENSEMBLE MP::Vector size")
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE})
+  MESSAGE("-- ENSEMBLE  is Enabled, compiling with -DALBANY_ENSEMBLE -DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE}")
+  SET(ALBANY_ENSEMBLE TRUE)
+ELSE()
+  MESSAGE("-- ENSEMBLE  is NOT Enabled.")
+  SET(ALBANY_ENSEMBLE FALSE)
+ENDIF()
+
+# optionally set global ordinal size to signed 64 bits
+OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
+IF (ENABLE_64BIT_INT)
+  ADD_DEFINITIONS(-DALBANY_64BIT_INT)
+  MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
+  SET(ALBANY_64BIT_INT TRUE)
+  # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
+  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+ELSE()
+  MESSAGE("-- 64 bit GO is NOT Enabled.")
+  SET(ALBANY_64BIT_INT FALSE)
+  # Remove the CTestCustom.cmake file in the build directory if it exists
+  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+ENDIF()
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)
@@ -920,10 +940,6 @@ ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 IF (ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: MOR               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-
-IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
-  MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")
-ENDIF(NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
 
 # Repeat this warning.
 IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 

@@ -13,7 +13,8 @@ cmake \
  -D ENABLE_LCM:BOOL=ON \
  -D ENABLE_QCAD:BOOL=OFF \
  -D ENABLE_MOR:BOOL=OFF \
- -D ENABLE_SG_MP:BOOL=OFF \
+ -D ENABLE_SG:BOOL=OFF \
+ -D ENABLE_ENSEMBLE:BOOL=OFF \
  -D ENABLE_FELIX:BOOL=OFF \
  -D ENABLE_LAME:BOOL=OFF \
  -D ENABLE_LAMENT:BOOL=OFF \
@@ -21,5 +22,5 @@ cmake \
  -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=lcm_enable_kokkos_devel \
  -D ALBANY_ENABLE_FORTRAN:BOOL=OFF \
  -D ENABLE_SLFAD:BOOL=lcm_enable_slfad \
- -D SLFAD_SIZE=27 \
-  lcm_package_dir
+ lcm_slfad_size \
+ lcm_package_dir

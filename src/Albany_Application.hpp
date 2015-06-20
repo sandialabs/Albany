@@ -174,13 +174,13 @@ namespace Albany {
     getStochasticExpansion();
 
     //! Intialize stochastic Galerkin method
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
-#endif //ALBANY_SG_MP
+#endif
 
     //! Compute global residual
     /*!
@@ -426,7 +426,7 @@ namespace Albany {
       Epetra_MultiVector* dg_dp);
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     //! Compute global residual for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
@@ -547,6 +547,8 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
 
+#endif 
+#ifdef ALBANY_ENSEMBLE 
     //! Compute global residual for stochastic Galerkin problem
     /*!
      * Set xdot to NULL for steady-state problems
@@ -666,7 +668,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
     //! Provide access to shapeParameters -- no AD
     PHAL::AlbanyTraits::Residual::ScalarT& getValue(const std::string &n);
@@ -781,7 +783,7 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_Vector> x,
       const Teuchos::Array<ParamVec>& p);
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -791,6 +793,8 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
       const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals);
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
@@ -801,7 +805,7 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals);
-#endif //ALBANY_SG_MP
+#endif
 
 #if defined(ALBANY_EPETRA)
     void setupTangentWorksetInfo(
@@ -833,7 +837,7 @@ namespace Albany {
       Teuchos::RCP<const Tpetra_MultiVector> VxT,
       Teuchos::RCP<const Tpetra_MultiVector> VpT);
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     void setupTangentWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -849,6 +853,8 @@ namespace Albany {
       const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
     void setupTangentWorksetInfo(
       PHAL::Workset& workset,
@@ -865,7 +871,7 @@ namespace Albany {
       const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
-#endif //ALBANY_SG_MP
+#endif
 
     void postRegSetup(std::string eval);
 

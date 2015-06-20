@@ -180,7 +180,7 @@ evaluateDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::SolutionAverageResponseFunction::
 evaluateSGResponse(
@@ -275,6 +275,8 @@ evaluateSGGradient(
   if (sg_dg_dp != NULL)
     sg_dg_dp->init(0.0);
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::SolutionAverageResponseFunction::
@@ -372,4 +374,4 @@ evaluateMPGradient(
   if (mp_dg_dp != NULL)
     mp_dg_dp->init(0.0);
 }
-#endif //ALBANY_SG_MP
+#endif

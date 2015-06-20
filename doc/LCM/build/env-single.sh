@@ -17,7 +17,7 @@ if [ -z "$PACKAGE" ]; then
 fi
 
 if [ -z "$ARCH" ]; then
-    echo "Specifiy architecture [serial|openmp|cuda]"
+    echo "Specifiy architecture [serial|openmp|pthreads|cuda]"
     exit 1
 fi
 
@@ -59,6 +59,10 @@ case "$ARCH" in
 	ARCH_STRING="OPENMP"
 	ARCH_NAME="Open MP"
 	;;
+    pthreads)
+	ARCH_STRING="PTHREADS"
+	ARCH_NAME="POSIX Threads"
+	;;
     cuda)
 	ARCH_STRING="CUDA"
 	ARCH_NAME="Cuda"
@@ -77,6 +81,9 @@ case "$TOOL_CHAIN" in
 		export OMPI_CXX=`which g++`
 		;;
 	    openmp)
+		export OMPI_CXX=`which g++`
+		;;
+	    pthreads)
 		export OMPI_CXX=`which g++`
 		;;
 	    cuda)

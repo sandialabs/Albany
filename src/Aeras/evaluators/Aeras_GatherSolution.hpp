@@ -187,7 +187,7 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 };
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE 
 // **************************************************************
 // Multi-point Residual 
 // **************************************************************
@@ -215,7 +215,7 @@ public:
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
 };
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

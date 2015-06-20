@@ -221,8 +221,9 @@ Note also that the architecture option refers to the thread
 parallelism model that the code will use by means of the Kokkos
 package in Trilinos. Currently the sopported models are: \verb+serial+
 that works for all supported compilers, \verb+openmp+ that works with
-the GCC and Intel toolchains, and \verb+cuda+ that is only supported
-for the GCC toolchain. The installation and configuration of the Cuda
+the GCC and Intel toolchains, \verb+pthreads+ that works for all
+supported compilers, and \verb+cuda+ that is only supported for the
+GCC toolchain. The installation and configuration of the Cuda
 framework is complex. Much more detailed information can be found at
 \verb+http://developer.nvidia.com/cuda+.
 

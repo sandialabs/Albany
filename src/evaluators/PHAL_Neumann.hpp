@@ -271,7 +271,7 @@ private:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::SGResidual,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -307,6 +307,8 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual 
@@ -346,7 +348,7 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
 };
-#endif //ALBANY_SG_MP
+#endif
 
 
 // **************************************************************

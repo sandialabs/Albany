@@ -12,6 +12,7 @@
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types
+#include "Stokhos_Sacado_Kokkos.hpp"
 #include "Sacado.hpp"
 #include "Sacado_MathFunctions.hpp"
 #include "Stokhos_Sacado_MathFunctions.hpp"
@@ -23,31 +24,45 @@
 #include "Sacado_ELRFad_SFad.hpp"
 #include "Sacado_CacheFad_DFad.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"
-#include "Sacado_ETV_Vector.hpp"
+#include "Sacado_MP_Vector.hpp"
 
 //amb Need to move to configuration.
 //#define ALBANY_SFAD_SIZE 27
 //#define ALBANY_SLFAD_SIZE 27
 
+//#define ALBANY_ENSEMBLE_SIZE 32  -- set in CMakeLists.txt
+
 //#define ALBANY_FAST_FELIX
 // Typedef AD types to standard names
 typedef double RealType;
+
+// SG data types
+typedef Stokhos::StandardStorage<int,double> StorageType;
+typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
+
+// Ensemble (a.k.a. MP) data types
+#ifndef ALBANY_ENSEMBLE_SIZE
+#define ALBANY_ENSEMBLE_SIZE 1
+#endif
+typedef Stokhos::StaticFixedStorage<int,double,ALBANY_ENSEMBLE_SIZE,Kokkos::Serial> MPStorageType;
+typedef Sacado::MP::Vector<MPStorageType> MPType;
+
+// Switch between dynamic and static FAD types
 #ifdef ALBANY_FAST_FELIX
   // Code templated on data type need to know if FadType and TanFadType
   // are the same or different typdefs
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-//  typedef Sacado::ELRFad::SLFad<double,16> FadType;
   typedef Sacado::Fad::SLFad<double, ALBANY_SLFAD_SIZE> FadType;
+  typedef Sacado::Fad::SLFad<SGType, ALBANY_SLFAD_SIZE> SGFadType;
+  typedef Sacado::Fad::SLFad<MPType, ALBANY_SLFAD_SIZE> MPFadType;
 #else
-  #define ALBANY_SFAD_SIZE 300
+#define ALBANY_SFAD_SIZE 300
   typedef Sacado::Fad::DFad<double> FadType;
+  typedef Sacado::Fad::DFad<SGType> SGFadType;
+  typedef Sacado::Fad::DFad<MPType> MPFadType;
 #endif
+
 typedef Sacado::Fad::DFad<double> TanFadType;
-typedef Stokhos::StandardStorage<int,double> StorageType;
-typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
-typedef Sacado::Fad::DFad<SGType> SGFadType;
-typedef Sacado::ETV::Vector<double,StorageType> MPType;
-typedef Sacado::Fad::DFad<MPType> MPFadType;
 
 //Tpetra includes
 #include "Teuchos_DefaultComm.hpp"

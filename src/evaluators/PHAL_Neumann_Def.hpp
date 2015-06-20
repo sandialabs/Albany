@@ -1178,7 +1178,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
-  ScalarT *valptr;
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
@@ -1190,10 +1189,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-
-      valptr = &(this->neumann)(cell, node, dim);
-     fT_nonconstView[nodeID[node][this->offset[dim]]] += *valptr;
-
+        fT_nonconstView[nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim);
     }
   }
 }
@@ -1219,7 +1215,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
-  ScalarT *valptr;
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
@@ -1235,18 +1230,16 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
       rowT[0] = nodeID[node][this->offset[dim]];
 
       int neq = nodeID[node].size();
 
       if (fT != Teuchos::null) {
-         fT->sumIntoLocalValue(rowT[0], valptr->val());
+         fT->sumIntoLocalValue(rowT[0], this->neumann(cell, node, dim).val());
       }
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -1257,7 +1250,7 @@ evaluateFields(typename Traits::EvalData workset)
 
             // Global column
             colT[0] =  nodeID[node_col][eq_col];
-            value[0] = valptr->fastAccessDx(lcol);   
+            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);   
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               JacT->sumIntoLocalValues(colT[0], rowT(), value());
@@ -1293,8 +1286,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
   
-   ScalarT *valptr;
-
   // Fill the local "neumann" array with cell contributions
 
   this->evaluateNeumannContribution(workset);
@@ -1305,21 +1296,19 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         int row = nodeID[node][this->offset[dim]];
 
         if (fT != Teuchos::null)
-          fT->sumIntoLocalValue(row, valptr->val());
+          fT->sumIntoLocalValue(row, this->neumann(cell, node, dim).val());
 
         if (JVT != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
 
-            JVT->sumIntoLocalValue(row, col, valptr->dx(col));
+            JVT->sumIntoLocalValue(row, col, this->neumann(cell, node, dim).dx(col));
 
         if (fpT != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
-            fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
+            fpT->sumIntoLocalValue(row, col, this->neumann(cell, node, dim).dx(col+workset.param_offset));
       }
   }
 }
@@ -1343,7 +1332,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1361,9 +1349,8 @@ evaluateFields(typename Traits::EvalData workset)
           double val = 0.0;
           for (std::size_t node = 0; node < this->numNodes; ++node) {
             for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-              valptr = &(this->neumann)(cell, node, dim);
               int eq = this->offset[dim];
-              val += valptr->dx(i)*local_Vp[node*neq+eq][col];
+              val += this->neumann(cell, node, dim).dx(i)*local_Vp[node*neq+eq][col];
             }
           }
           const LO row = wsElDofs((int)cell,i,0);
@@ -1384,12 +1371,11 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-          valptr = &(this->neumann)(cell, node, dim);
           const int row = nodeID[node][this->offset[dim]];
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
-              val += valptr->dx(i)*local_Vp[i][col];
+              val += this->neumann(cell, node, dim).dx(i)*local_Vp[i][col];
             fpVT->sumIntoLocalValue(row, col, val);
           }
         }
@@ -1402,7 +1388,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGResidual, Traits>::
 Neumann(Teuchos::ParameterList& p)
@@ -1418,7 +1404,6 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
-  ScalarT *valptr;
 
   int nblock = f->size();
 
@@ -1432,10 +1417,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         for (int block=0; block<nblock; block++)
-            (*f)[block][nodeID[node][this->offset[dim]]] += valptr->coeff(block);
+            (*f)[block][nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim).coeff(block);
 
     }
   }
@@ -1460,7 +1443,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1481,20 +1463,18 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         row = nodeID[node][this->offset[dim]];
         int neq = nodeID[node].size();
 
         if (f != Teuchos::null) {
 
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
         }
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -1509,7 +1489,7 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
 
-                c = valptr->fastAccessDx(lcol).coeff(block);
+                c = this->neumann(cell, node, dim).fastAccessDx(lcol).coeff(block);
                 if (workset.is_adjoint) {
 
                   (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
@@ -1547,7 +1527,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1572,25 +1551,25 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         int row = nodeID[node][this->offset[dim]];
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col).coeff(block));
 
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
+              (*fp)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col+workset.param_offset).coeff(block));
     }
   }
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -1609,7 +1588,6 @@ void Neumann<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1622,10 +1600,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         for (int block=0; block<nblock; block++)
-          (*f)[block][nodeID[node][this->offset[dim]]] += valptr->coeff(block);
+          (*f)[block][nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim).coeff(block);
 
     }
   }
@@ -1650,7 +1626,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1671,18 +1646,16 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         row = nodeID[node][this->offset[dim]];
         int neq = nodeID[node].size();
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -1697,7 +1670,7 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
 
-                c = valptr->fastAccessDx(lcol).coeff(block);
+                c = this->neumann(cell, node, dim).fastAccessDx(lcol).coeff(block);
                (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
 
              }
@@ -1727,7 +1700,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1751,28 +1723,26 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         int row = nodeID[node][this->offset[dim]];
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col).coeff(block));
 
         if (fp != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
+              (*fp)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col+workset.param_offset).coeff(block));
 
     }
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 
 // **********************************************************************

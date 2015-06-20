@@ -99,7 +99,7 @@ namespace Albany {
 
     //! \name Stochastic Galerkin evaluation functions
     //@{
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     //! Intialize stochastic Galerkin method
     virtual void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -155,14 +155,16 @@ namespace Albany {
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
     //@}
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
     //! \name Multi-point evaluation functions
     //@{
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     //! Evaluate multi-point response functions
     virtual void evaluateMPResponse(
       const double curr_time,
@@ -211,7 +213,7 @@ namespace Albany {
       Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
     //@}
   private:

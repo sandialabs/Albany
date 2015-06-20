@@ -17,7 +17,7 @@
     </ParameterList>
     <ParameterList name="FELIX Viscosity">
       <Parameter name="Type" type="string" value="Glen's Law"/>
-      <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0.3"/>
+      <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0.0"/>
       <Parameter name="Glen's Law A" type="double" value="0.0001"/>
       <Parameter name="Glen's Law n" type="double" value="3"/>
     </ParameterList>
@@ -97,6 +97,7 @@
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <ParameterList name="Linear Solver">
 	    <Parameter name="Write Linear System" type="bool" value="false"/>
+	    <Parameter name="Tolerance" type="double" value="1.0e-6"/>
 	  </ParameterList>
 	  <ParameterList name="Stratimikos Linear Solver">
 	    <ParameterList name="NOX Stratimikos Options">

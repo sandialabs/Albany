@@ -731,6 +731,9 @@ computeState(typename Traits::EvalData workset,
       if (delta_eqps > 0.0) {
         delta_eqps = 2.0 * (std::sqrt(delta_eqps)) / 3.0;
       } // Otherwise delta_eqps is - or BETTER be! - zero, so don't bother with the 2/3.
+      else { // On second thought, let's make SURE it's zero (and specifically not negative)...
+          delta_eqps = 0.0; // Ok, this is a little paranoid but what the hey? If the Al foil hat fits...
+      }
 // ccbatta 2015/06/09: The quantity Lp_np1 is actually of the form Lp * dt,
 //    i.e. it's a velocity gradient multiplied by the time step,
 //    since it's computed using DELTA_gamma, instead of gamma_dot.

@@ -34,6 +34,8 @@
 	<!--Stabilization Parameter -->
 	<Parameter name="Stabilization Parameter" type="double" value="2.0"/>
 	<!-- Hydorgen Transport Parameter -->
+        <!-- Initial Concentration for this block -->
+        <Parameter name="Initial Concentration" type="double" value="3.87e-5"/>
 	<ParameterList name="Transport Coefficients">
 	  <Parameter name="Partial Molar Volume" type="double" value="2.0"/>
 	  <Parameter name="Ideal Gas Constant" type="double" value="0.008314"/>
@@ -99,6 +101,8 @@
         </ParameterList>
 	<!--Stabilization Parameter -->
 	<Parameter name="Stabilization Parameter" type="double" value="2.0"/>
+        <!-- Initial Concentration for this block -->
+        <Parameter name="Initial Concentration" type="double" value="3.875e-5"/>
 	<!-- Hydorgen Transport Parameter -->
 	<ParameterList name="Transport Coefficients">
 	  <Parameter name="Partial Molar Volume" type="double" value="2.0"/>
