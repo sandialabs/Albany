@@ -531,8 +531,7 @@ namespace Aeras
     void computeGraphsQuads();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
-    void computeWorksetInfoLines();
-    void computeWorksetInfoQuads();
+    void computeWorksetInfo();
 
     //! Process spectral Albany mesh for NodeSets
     void computeNodeSetsLines();
@@ -587,6 +586,8 @@ namespace Aeras
     int spatial_dim; //how many spatial dimensions there are in the problem
 
     int points_per_edge; //number of points per edge (i.e., the degree of enrichment) -- read in from ParameterList.
+
+    int nodes_per_element; //number of nodes of an element
 
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;

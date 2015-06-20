@@ -97,11 +97,15 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   std::string element_name = ctd.name; 
   size_t len      = element_name.find("_");
   if (len != std::string::npos) element_name = element_name.substr(0,len);
-  if (element_name == "Line") 
+  if (element_name == "Line") { 
     spatial_dim = 1; 
+    nodes_per_element = points_per_edge;
+  }
   else if (element_name == "Quadrilateral" ||
-           element_name == "ShellQuadrilateral")  
+           element_name == "ShellQuadrilateral") {
     spatial_dim = 2;
+    nodes_per_element = points_per_edge*points_per_edge;
+  }
 #ifdef OUTPUT_TO_SCREEN 
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
@@ -2088,7 +2092,6 @@ void Aeras::SpectralDiscretization::computeGraphsQuads()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
 
-  const int nodes_per_element = points_per_edge*points_per_edge;
 #ifdef OUTPUT_TO_SCREEN
   *out << "nodes_per_element: " << nodes_per_element << std::endl;
 #endif
@@ -2155,25 +2158,12 @@ void Aeras::SpectralDiscretization::computeGraphsQuads()
   graphT->fillComplete();
 }
 
-void Aeras::SpectralDiscretization::computeWorksetInfoLines()
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
-  // FIXME, 4/21/15: fill in for line elements
-  // WFS, 6/3/15: I have filled in all of the other "Lines" methods,
-  // except for this one.  I need a refresher on exactly what it
-  // does...
-}
 
-void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
+void Aeras::SpectralDiscretization::computeWorksetInfo()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  int np  = points_per_edge;
-  int np2 = np * np;
-  int deg = np - 1;
 
   stk::mesh::Selector select_owned =
     stk::mesh::Selector(metaData.locally_owned_part());
@@ -2345,7 +2335,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
       // const stk::mesh::Entity * node_rels = bulkData.begin_nodes(element);
       Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
       // const int nodes_per_element = bulkData.num_nodes(element);
-      const int nodes_per_element = node_rels.size();
 
       wsElNodeEqID[b][i].resize(nodes_per_element);
       //wsElNodeID[b][i].resize(nodes_per_element);
@@ -2400,10 +2389,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
     }
   }
 
- // IK, 1/27/15: commented out the following as it has to do with
- // periodic BCs, which I think are not relevant for Aeras spectral
- // elements.
-/*
+  //The following is for periodic BCs.  This will only be relevant for the x-z hydrostatic equations.
   for (int d=0; d<stkMeshStruct->numDim; d++)
   {
   if (stkMeshStruct->PBCStruct.periodic[d])
@@ -2412,7 +2398,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
     {
       for (std::size_t i=0; i < buckets[b]->size(); i++)
       {
-        int nodes_per_element = buckets[b]->num_nodes(i);
         bool anyXeqZero=false;
         for (int j=0; j < nodes_per_element; j++)
           if (coords[b][i][j][d]==0.0)
@@ -2435,22 +2420,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
                     xleak[d]=stkMeshStruct->PBCStruct.scale[d];
                   else
                     xleak[k] = coords[b][i][j][k];
-                std::string transformType = stkMeshStruct->transformType;
-                double alpha = stkMeshStruct->felixAlpha;
-                // convert alpha, read in from ParameterList, to radians
-                alpha *= pi/180.;
-                if ((transformType == "ISMIP-HOM Test A" ||
-                     transformType == "ISMIP-HOM Test B" ||
-                     transformType == "ISMIP-HOM Test C" ||
-                     transformType == "ISMIP-HOM Test D"   ) && d==0)
-                {
-                  xleak[2] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
-                  Albany::StateArray::iterator sHeight =
-                    stateArrays.elemStateArrays[b].find("surface_height");
-                  if(sHeight != stateArrays.elemStateArrays[b].end())
-                    sHeight->second(int(i),j) -=
-                      stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
-                }
                 coords[b][i][j] = xleak; // replace ptr to coords
                 toDelete.push_back(xleak);
               }
@@ -2461,7 +2430,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
     }
   }
   }
- */
   typedef Albany::AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
   typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
@@ -3597,10 +3565,7 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
     Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 
-  if (spatial_dim == 1) 
-    computeWorksetInfoLines();
-  else if (spatial_dim == 2) 
-    computeWorksetInfoQuads();
+    computeWorksetInfo();
 
     // IKT, 2/16/15: moving computeGraphsQuads() to after
     // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
