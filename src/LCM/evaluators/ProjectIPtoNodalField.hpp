@@ -13,7 +13,6 @@
 #include <Phalanx_DataLayout.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include "Albany_ProblemUtils.hpp"
-#include "Adapt_NodalDataBase.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
@@ -98,8 +97,6 @@ private:
 
   Teuchos::RCP<ProjectIPtoNodalFieldManager> mgr_;
 
-  int num_fields_;
-
   bool output_to_exodus_;
   bool output_node_data_;
 
@@ -113,7 +110,7 @@ private:
   std::vector<typename EFieldLayout::Enum> ip_field_layouts_;
   std::vector<std::string> nodal_field_names_;
 
-  int num_vecs_, num_pts_, num_dims_, num_nodes_;
+  int ndb_start_, num_fields_, num_pts_, num_dims_, num_nodes_;
     
   std::vector<PHX::MDField<ScalarT> > ip_fields_;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;

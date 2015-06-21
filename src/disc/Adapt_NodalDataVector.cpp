@@ -140,12 +140,15 @@ void Adapt::NodalDataVector::saveNodalDataState() const
 }
 
 void Adapt::NodalDataVector::
-saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const
+saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
+                   const int start_col) const
 {
   // Save the nodal data arrays back to stk.
   for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
-       i != nodeVectorLayout.end(); ++i)
-    (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset);
+       i != nodeVectorLayout.end(); ++i) {
+    if (i->offset < start_col) continue;
+    (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset - start_col);
+  }
 }
 
 void Adapt::NodalDataVector::

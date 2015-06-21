@@ -33,6 +33,9 @@ public:
   class LumpedMassMatrix;
   Teuchos::RCP<MassMatrix> mass_matrix;
   Teuchos::RCP<Tpetra_MultiVector> ip_field;
+  // Start position in the nodal vector database, and number of vectors we're
+  // using.
+  int ndb_start, ndb_numvecs;
 
   ProjectIPtoNodalFieldManager () : nwrkr_(0), prectr_(0), postctr_(0) {}
 
@@ -263,6 +266,9 @@ initManager (Teuchos::ParameterList* const pl) {
     mgr_ = Teuchos::rcp(new ProjectIPtoNodalFieldManager());
     mgr_->mass_matrix = Teuchos::rcp(
       ProjectIPtoNodalFieldManager::MassMatrix::create(mass_matrix_type));
+    // Find out our starting position in the nodal database.
+    mgr_->ndb_start = p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+      getVecsize();
     ndb->registerManager(key, mgr_);
   }
   mgr_->registerWorker();
@@ -282,6 +288,9 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
                   dl->vertices_vector)
 #endif
 {
+  //todo Some of this doesn't need to be done for all RFs in the case of
+  // multiple EBs.
+
   this->addDependentField(wBF);
   this->addDependentField(BF);
 #ifdef PROJ_INTERP_TEST
@@ -371,9 +380,9 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
     0.0, false, output_to_exodus_);
 #endif
 
-  // Count the total number of vectors in the multivector.
-  num_vecs_ = p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
-    getVecsize();
+  mgr_->ndb_numvecs =
+    p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
+    mgr_->ndb_start;
 
   // Set up linear solver.
 #ifdef ALBANY_IFPACK2
@@ -404,8 +413,8 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
     linearSolverBuilder_.setParameterList(solver_list);
   }
 
-  lowsFactory_ = createLinearSolveStrategy(linearSolverBuilder_);
-  lowsFactory_->setVerbLevel(Teuchos::VERB_LOW);
+  this->lowsFactory_ = createLinearSolveStrategy(this->linearSolverBuilder_);
+  this->lowsFactory_->setVerbLevel(Teuchos::VERB_LOW);
 }
 
 template<typename Traits>
@@ -452,7 +461,7 @@ preEvaluate (typename Traits::PreEvalData workset) {
   }
   mgr_->ip_field = Teuchos::rcp(
     new Tpetra_MultiVector(mgr_->mass_matrix->matrix()->getRowMap(),
-                           num_vecs_, true));
+                           mgr_->ndb_numvecs, true));
 }
 
 template<typename Traits>
@@ -473,6 +482,7 @@ fillRHS (const typename Traits::EvalData workset) {
     int node_var_offset, node_var_ndofs;
     node_data->getNDofsAndOffset(nodal_field_names_[field], node_var_offset,
                                  node_var_ndofs);
+    node_var_offset -= mgr_->ndb_start;
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t node = 0; node < num_nodes_; ++node) {
         const GO global_row = wsElNodeID[cell][node];
@@ -583,50 +593,34 @@ postEvaluate (typename Traits::PostEvalData workset) {
     // Don't need the assemble form of the ip_field either.
     mgr_->ip_field = ipf;
   }
-
   // Create x in A x = b.
   Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_field = rcp(
     new Tpetra_MultiVector(mgr_->mass_matrix->matrix()->getDomainMap(),
                            mgr_->ip_field->getNumVectors()));
-
-  // Do the solve
-
-  // Create a Thyra linear operator (A) using the Tpetra::CrsMatrix (tpetra_A).
   const Teuchos::RCP<Tpetra_Operator> tpetra_A = mgr_->mass_matrix->matrix();
-
   const Teuchos::RCP<Thyra::LinearOpBase<ST> >
     A = Thyra::createLinearOp(tpetra_A);
-
-  // Create a BelosLinearOpWithSolve object from the Belos LOWS factory.
   Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST> >
     nsA = lowsFactory_->createOp();
-
-  // Initialize the BelosLinearOpWithSolve object with the Thyra linear operator.
   Thyra::initializeOp<ST>(*lowsFactory_, A, nsA.ptr());
-
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
     x = Thyra::createMultiVector(node_projected_ip_field),
     b = Thyra::createMultiVector(mgr_->ip_field);
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to
   // proceed.
-  Teuchos::Array<MT> norm_b(num_vecs_);
+  Teuchos::Array<MT> norm_b(mgr_->ip_field->getNumVectors());
   Thyra::norms_2(*b, norm_b());
   bool b_is_zero = true;
-  for (int i = 0; i < num_vecs_; ++i)
-    // I'm changing this to a check for exact 0 because (i) I don't think
-    // there's any way to know how to make this a check on a relative quantity
-    // and (ii) the exact-0 case is in fact what we're currently checking for.
+  for (int i = 0; i < mgr_->ip_field->getNumVectors(); ++i)
     if (norm_b[i] != 0) {
       b_is_zero = false;
       break;
     }
   if (b_is_zero) return;
 
-  // Solve A x = b.
   Thyra::SolveStatus<ST> solveStatus = Thyra::solve(*nsA, Thyra::NOTRANS, *b,
                                                     x.ptr());
-
 #ifdef ALBANY_DEBUG
   *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
 
@@ -639,17 +633,16 @@ postEvaluate (typename Traits::PostEvalData workset) {
 
   // Compute A*x - b = y - b.
   Thyra::update(-one, *b, y.ptr());
-  Teuchos::Array<MT> norm_res(num_vecs_);
+  Teuchos::Array<MT> norm_res(mgr_->ip_field->getNumVectors());
   Thyra::norms_2(*y, norm_res());
   // Print out the final relative residual norms.
   *out << "Final relative residual norms" << std::endl;
-  for (int i = 0; i < num_vecs_; ++i) {
+  for (int i = 0; i < mgr_->ip_field->getNumVectors(); ++i) {
     const double rel_res = norm_res[i] == 0 ? 0 : norm_res[i]/norm_b[i];
     *out << "RHS " << i+1 << " : "
          << std::setw(16) << std::right << rel_res << std::endl;
   }
 #endif
-
   { // Store the overlapped vector data back in stk.
     const Teuchos::RCP<const Tpetra_Map>
       ovl_map = (p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
@@ -662,7 +655,7 @@ postEvaluate (typename Traits::PostEvalData workset) {
       im = Teuchos::rcp(new Tpetra_Import(map, ovl_map));
     npif->doImport(*node_projected_ip_field, *im, Tpetra::ADD);
     p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
-      getNodalDataVector()->saveNodalDataState(npif);
+      getNodalDataVector()->saveNodalDataState(npif, mgr_->ndb_start);
   }
 }
 
