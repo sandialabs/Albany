@@ -9,12 +9,42 @@
 #include "Albany_Utils.hpp"
 #include "Adapt_NodalDataVector.hpp"
 
+class QCAD::ResponseSaveFieldManager : public Adapt::NodalDataBase::Manager {
+public:
+  ResponseSaveFieldManager () : nwrkr_(0), prectr_(0), postctr_(0) {}
+
+  void registerWorker () { ++nwrkr_; }
+  int nWorker () const { return nwrkr_; }
+
+  void initCounters () { prectr_ = postctr_ = 0; }
+  int incrPreCounter () { return ++prectr_; }
+  int incrPostCounter () { return ++postctr_; }
+  
+private:
+  int nwrkr_, prectr_, postctr_;
+};
+
 template<typename EvalT, typename Traits>
 QCAD::ResponseSaveField<EvalT, Traits>::
 ResponseSaveField(Teuchos::ParameterList& p,
 		  const Teuchos::RCP<Albany::Layouts>& dl) :
   weights("Weights", dl->qp_scalar)
 {
+  //! Register with state manager
+  pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
+
+  const std::string key = "ResponseSaveField" + PHX::typeAsString<EvalT>();
+  Teuchos::RCP<Adapt::NodalDataBase>
+    ndb = pStateMgr->getNodalDataBase();
+  if (ndb->isManagerRegistered(key))
+    mgr_ = Teuchos::rcp_dynamic_cast<ResponseSaveFieldManager>(
+      ndb->getManager(key));
+  else {
+    mgr_ = Teuchos::rcp(new ResponseSaveFieldManager());
+    ndb->registerManager(key, mgr_);
+  }
+  mgr_->registerWorker();
+
   //! get and validate Response parameter list
   Teuchos::ParameterList* plist = 
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -67,9 +97,6 @@ ResponseSaveField(Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addDependentField(weights);
 
-  //! Register with state manager
-  pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
-
   if(fieldIndices == "Cell,QuadPt") { //register a cell,qp state => cell-valued quantity
     if( outputCellAverage ) {
       pStateMgr->registerStateVariable(stateName, cell_dl, "ALL", "scalar", 0.0, false, outputToExodus);
@@ -106,14 +133,14 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseSaveField<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
+  const int ctr = mgr_->incrPreCounter();
+  const bool am_first = ctr == 1;
+  if ( ! am_first) return;
+
   if(fieldIndices == "Cell,Node") {
     Teuchos::RCP<Adapt::NodalDataVector> node_data =
       pStateMgr->getStateInfoStruct()->getNodalDataBase()
       ->getNodalDataVector();
-    //eb-hack Call initializeVectors just once. Protection is needed if there are
-    // multiple element blocks.
-    if (node_data->numPreEvaluateCalls() > 1) return;
-
     node_data->initializeVectors(0.0);
   }
 }
@@ -387,14 +414,16 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseSaveField<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+  const int ctr = mgr_->incrPostCounter();
+  const bool am_last = ctr == mgr_->nWorker();
+  if ( ! am_last) return;
+  mgr_->initCounters();
+
   if(fieldIndices == "Cell,Node") {
 
     // Get the node data block container.
     Teuchos::RCP<Adapt::NodalDataVector> node_data =
         pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-    //eb-hack Do the postEvaluate calculations just once even if there are
-    // multiple element blocks.
-    if ( ! node_data->isFinalPostEvaluateCall()) return;
   
     // Export the data from the local to overlapped decomposition.
     node_data->initializeExport();

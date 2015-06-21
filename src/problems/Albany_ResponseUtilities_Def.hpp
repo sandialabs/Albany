@@ -325,7 +325,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set<std::string>("Jacobian Det Name", "Jacobian Det");
 #endif
     RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev = rcp(
-      new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl));
+      new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

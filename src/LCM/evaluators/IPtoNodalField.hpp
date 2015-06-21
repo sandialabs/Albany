@@ -82,9 +82,6 @@ protected:
   bool output_to_exodus_;
   bool output_node_data_;
 
-  bool sep_by_eb_;
-  std::string eb_name_;
-
   Teuchos::RCP<PHX::Tag<ScalarT> > field_tag_;
   Albany::StateManager* p_state_mgr_;
 
@@ -115,6 +112,8 @@ public:
 // **************************************************************
 // Residual 
 // **************************************************************
+class IPtoNodalFieldManager;
+
 template<typename Traits>
 class IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>
 : public IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
@@ -125,6 +124,8 @@ public:
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
+private:
+  Teuchos::RCP<IPtoNodalFieldManager> mgr_;
 };
 }
 

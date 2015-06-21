@@ -16,6 +16,8 @@
 #include "Albany_StateManager.hpp"
 
 namespace QCAD {
+  class ResponseSaveFieldManager;
+
 /** 
  * \brief Response Description
  */
@@ -71,6 +73,7 @@ namespace QCAD {
     Albany::StateManager* pStateMgr;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
+    Teuchos::RCP<ResponseSaveFieldManager> mgr_;
   };
 
 	

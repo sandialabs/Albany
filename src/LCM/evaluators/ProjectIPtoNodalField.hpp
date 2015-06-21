@@ -63,7 +63,8 @@ class ProjectIPtoNodalField :
 {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl)
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs)
     : ProjectIPtoNodalFieldBase<EvalT, Traits>(dl)
   {}
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -84,7 +85,8 @@ class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits> :
 {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs);
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
   void preEvaluate(typename Traits::PreEvalData d);
@@ -116,9 +118,6 @@ private:
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
-  bool sep_by_eb_;
-  std::string eb_name_;
-
   Albany::StateManager* p_state_mgr_;
 
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
@@ -129,7 +128,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
 #endif
 
-  void initManager(Teuchos::ParameterList* const pl);
+  bool initManager(Teuchos::ParameterList* const pl);
   void fillRHS(const typename Traits::EvalData workset);
 };
 

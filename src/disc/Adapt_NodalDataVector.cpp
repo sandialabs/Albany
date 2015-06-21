@@ -144,9 +144,10 @@ saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
                    const int start_col) const
 {
   // Save the nodal data arrays back to stk.
+  const size_t nv = mv->getNumVectors();
   for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
        i != nodeVectorLayout.end(); ++i) {
-    if (i->offset < start_col) continue;
+    if (i->offset < start_col || i->offset >= start_col + nv) continue;
     (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset - start_col);
   }
 }
@@ -167,17 +168,4 @@ saveTpetraNodalDataVector (
 void Adapt::NodalDataVector::initializeVectors(ST value) {
   overlap_node_vec->putScalar(value);
   local_node_vec->putScalar(value);
-}
-
-void Adapt::NodalDataVector::initEvaluateCalls (const int num_eb) {
-  num_preeval_calls = 0;
-  num_posteval_calls = num_eb;
-}
-
-int Adapt::NodalDataVector::numPreEvaluateCalls () {
-  return ++num_preeval_calls;
-}
-
-int Adapt::NodalDataVector::isFinalPostEvaluateCall () {
-  return --num_posteval_calls == 0;
 }

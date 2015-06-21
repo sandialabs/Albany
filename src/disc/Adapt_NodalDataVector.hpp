@@ -91,16 +91,6 @@ class NodalDataVector {
 
     LO getVecSize() { return vectorsize; }
 
-    //eb-hack This interface, and the evaluator-based response functions that
-    // interact with Exodus files through this and the Vector version of this
-    // interface, need to be redesigned. There are a number of problems. For
-    // example, if there are multiple element blocks, multiple redundant calls
-    // are made to these methods in preEvaluate and postEvaluate, possibly with
-    // erroneous results.
-    void initEvaluateCalls(const int num_eb);
-    int numPreEvaluateCalls();
-    int isFinalPostEvaluateCall();
-
   private:
 
     NodalDataVector();

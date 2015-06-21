@@ -9,9 +9,9 @@
 #include "Albany_Utils.hpp"
 #include "Adapt_NodalDataVector.hpp"
 
+
 namespace LCM
 {
-
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 IPtoNodalFieldBase<EvalT, Traits>::
@@ -21,14 +21,6 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
     weights_("Weights", dl->qp_scalar),
     nodal_weights_name_("nodal_weights")
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    mesh_specs == NULL, std::logic_error,
-    "IPtoNodalFieldBase needs access to mesh_specs->ebName and "
-    "mesh_specs->sepEvalsByEB");
-
-  eb_name_ = mesh_specs->ebName;
-  sep_by_eb_ = mesh_specs->sepEvalsByEB;
-
   //! get and validate IPtoNodalField parameter list
   Teuchos::ParameterList* plist =
       p.get<Teuchos::ParameterList*>("Parameter List");
@@ -71,7 +63,7 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 
   // Surface element prefix, if any.
   bool const
-  is_surface_block = eb_name_ == "Surface Element";
+  is_surface_block = mesh_specs->ebName == "Surface Element";
 
   std::string const
   field_name_prefix = is_surface_block == true ? "surf_" : "";
@@ -160,6 +152,21 @@ postRegistrationSetup(typename Traits::SetupData d,
 // Specialization: Residual
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
+class IPtoNodalFieldManager : public Adapt::NodalDataBase::Manager {
+public:
+  IPtoNodalFieldManager () : nwrkr_(0), prectr_(0), postctr_(0) {}
+
+  void registerWorker () { ++nwrkr_; }
+  int nWorker () const { return nwrkr_; }
+
+  void initCounters () { prectr_ = postctr_ = 0; }
+  int incrPreCounter () { return ++prectr_; }
+  int incrPostCounter () { return ++postctr_; }
+  
+private:
+  int nwrkr_, prectr_, postctr_;
+};
+
 template<typename Traits>
 IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 IPtoNodalField(
@@ -168,6 +175,17 @@ IPtoNodalField(
     const Albany::MeshSpecsStruct* mesh_specs) :
     IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl, mesh_specs)
 {
+  static const char* key = "IPtoNodalField";
+  Teuchos::RCP<Adapt::NodalDataBase>
+    ndb = this->p_state_mgr_->getNodalDataBase();
+  if (ndb->isManagerRegistered(key))
+    mgr_ = Teuchos::rcp_dynamic_cast<IPtoNodalFieldManager>(
+      ndb->getManager(key));
+  else {
+    mgr_ = Teuchos::rcp(new IPtoNodalFieldManager());
+    ndb->registerManager(key, mgr_);
+  }
+  mgr_->registerWorker();
 }
 
 //------------------------------------------------------------------------------
@@ -175,13 +193,13 @@ template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
-          ->getNodalDataVector();
-  //eb-hack Call initializeVectors just once. Protection is needed if there are
-  // multiple element blocks.
-  if (node_data->numPreEvaluateCalls() > 1) return;
+  const int ctr = mgr_->incrPreCounter();
+  const bool am_first = ctr == 1;
+  if ( ! am_first) return;
 
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+       this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
+           ->getNodalDataVector();
   node_data->initializeVectors(0.0);
 }
 
@@ -271,13 +289,15 @@ template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  // Get the node data block container.
+  const int ctr = mgr_->incrPostCounter();
+  const bool am_last = ctr == mgr_->nWorker();
+  if ( ! am_last) return;
+  mgr_->initCounters();
+
+  // Get the node data vector container.
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
       this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
           ->getNodalDataVector();
-  //eb-hack Do the postEvaluate calculations just once even if there are
-  // multiple element blocks.
-  if ( ! node_data->isFinalPostEvaluateCall()) return;
 
   // Export the data from the local to overlapped decomposition.
   node_data->initializeExport();

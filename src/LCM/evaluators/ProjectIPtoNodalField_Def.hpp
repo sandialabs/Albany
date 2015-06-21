@@ -242,14 +242,15 @@ create (EMassMatrixType::Enum type) {
 }
 
 template<typename Traits>
-void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+bool ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 initManager (Teuchos::ParameterList* const pl) {
   // If later we have a reason for multiple ProjectIPtoNodalField response
   // functions, generalize the key to something that incorporates the data
   // associated with this instance.
   static const char* key = "ProjectIPtoNodalField";
   Teuchos::RCP<Adapt::NodalDataBase> ndb = p_state_mgr_->getNodalDataBase();
-  if (ndb->isManagerRegistered(key))
+  const bool isr = ndb->isManagerRegistered(key);
+  if (isr)
     mgr_ = Teuchos::rcp_dynamic_cast<ProjectIPtoNodalFieldManager>(
       ndb->getManager(key));
   else {
@@ -272,12 +273,14 @@ initManager (Teuchos::ParameterList* const pl) {
     ndb->registerManager(key, mgr_);
   }
   mgr_->registerWorker();
+  return ! isr;
 }
 
 template<typename Traits>
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 ProjectIPtoNodalField (Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl)
+                       const Teuchos::RCP<Albany::Layouts>& dl,
+                       const Albany::MeshSpecsStruct* mesh_specs)
   : ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(dl),
     wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
     BF(p.get<std::string>("BF Name"), dl->node_qp_scalar)
@@ -317,7 +320,8 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
   num_nodes_ = node_dl->dimension(1);
 
   p_state_mgr_ = p.get<Albany::StateManager*>("State Manager Ptr");
-  initManager(p.get<Teuchos::ParameterList*>("Parameter List"));
+  const bool
+    first = initManager(p.get<Teuchos::ParameterList*>("Parameter List"));
 
   // Number of Fields is read from the input file; this is the number of named
   // fields (scalar, vector, or tensor) to transfer.
@@ -331,7 +335,7 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
 
   // Surface element prefix, if any.
   const std::string
-    field_name_prefix = eb_name_ == "Surface Element" ? "surf_" : "";
+    field_name_prefix = mesh_specs->ebName == "Surface Element" ? "surf_" : "";
 
   for (int field = 0; field < num_fields_; ++field) {
     ip_field_names_[field] = field_name_prefix + plist->get<std::string>(
@@ -380,9 +384,10 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
     0.0, false, output_to_exodus_);
 #endif
 
-  mgr_->ndb_numvecs =
-    p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
-    mgr_->ndb_start;
+  if (first)
+    mgr_->ndb_numvecs =
+      p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
+      mgr_->ndb_start;
 
   // Set up linear solver.
 #ifdef ALBANY_IFPACK2
