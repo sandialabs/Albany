@@ -16,6 +16,8 @@
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
+//#define PROJ_INTERP_TEST
+
 namespace LCM {
 /*! 
  * \brief Evaluator to compute a nodal stress field from integration points.
@@ -105,6 +107,11 @@ protected:
 
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;
+
+#ifdef PROJ_INTERP_TEST
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
+#endif
 };
 
 template<typename EvalT, typename Traits>
@@ -120,15 +127,6 @@ public:
   void evaluateFields(typename Traits::EvalData d) {}
 };
 
-// **************************************************************
-// **************************************************************
-// * Specializations
-// **************************************************************
-// **************************************************************
-
-// **************************************************************
-// Residual 
-// **************************************************************
 template<typename Traits>
 class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,Traits>
   : public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {

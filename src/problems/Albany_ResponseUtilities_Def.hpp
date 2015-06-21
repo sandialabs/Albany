@@ -320,6 +320,10 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("BF Name", "BF");
     p->set<std::string>("Weighted BF Name", "wBF");
+#ifdef PROJ_INTERP_TEST
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Jacobian Det Name", "Jacobian Det");
+#endif
     RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev = rcp(
       new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);

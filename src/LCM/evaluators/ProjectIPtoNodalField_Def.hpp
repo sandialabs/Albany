@@ -67,7 +67,8 @@ Teuchos::RCP<Teuchos::ParameterList> getValidProjectIPtoNodalFieldParameters ()
   return valid_pl;
 }
 
-void setDefaultSolverParameters (Teuchos::ParameterList& pl)
+void setDefaultSolverParameters (Teuchos::ParameterList& pl,
+                                 const double solver_tol)
 {
   pl.set<std::string>("Linear Solver Type", "Belos");
 
@@ -78,7 +79,7 @@ void setDefaultSolverParameters (Teuchos::ParameterList& pl)
   Teuchos::ParameterList& solver = 
     belos_types.sublist("Solver Types").sublist("Block CG");
   solver.set<int>("Maximum Iterations", 1000);
-  solver.set<double>("Convergence Tolerance", 1e-12);
+  solver.set<double>("Convergence Tolerance", solver_tol);
 
 #ifdef ALBANY_IFPACK2
   pl.set<std::string>("Preconditioner Type", "Ifpack2");
@@ -234,7 +235,6 @@ create (EMassMatrixType::Enum type,
   }
 }
 
-//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ProjectIPtoNodalFieldBase<EvalT, Traits>::
 ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
@@ -242,6 +242,12 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
                            const Albany::MeshSpecsStruct* mesh_specs)
   : wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
     BF(p.get<std::string>("BF Name"), dl->node_qp_scalar)
+#ifdef PROJ_INTERP_TEST
+  , coords_qp_(p.get<std::string>("Coordinate Vector Name"),
+               dl->qp_gradient),
+    coords_verts_(p.get<std::string>("Coordinate Vector Name"),
+                  dl->vertices_vector)
+#endif
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     mesh_specs == NULL, std::logic_error,
@@ -252,6 +258,10 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
 
   this->addDependentField(wBF);
   this->addDependentField(BF);
+#ifdef PROJ_INTERP_TEST
+  this->addDependentField(coords_qp_);
+  this->addDependentField(coords_verts_);
+#endif
   this->setName("ProjectIPtoNodalField" + PHX::typeAsString<EvalT>());
 
   // Get and validate ProjectIPtoNodalField parameter list.
@@ -275,8 +285,7 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   // Register with state manager.
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
 
-  // loop over the number of fields and register
-  // Number of Fields is read off the input file - this is the number of named
+  // Number of Fields is read from the input file; this is the number of named
   // fields (scalar, vector, or tensor) to transfer.
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
 
@@ -321,13 +330,29 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
       0.0, false, output_to_exodus_);
   }
 
+#ifdef PROJ_INTERP_TEST
+  ip_field_names_.push_back("linear");
+  nodal_field_names_.push_back("proj_nodal_linear");
+  ip_field_layouts_.push_back(EFieldLayout::scalar);
+  ip_fields_.push_back(PHX::MDField<ScalarT>(ip_field_names_.back(),
+                                             dl->qp_scalar));
+  PHX::MDField<ScalarT>& f = ip_fields_.back();
+  typedef PHX::KokkosViewFactory<ScalarT, PHX::Device> ViewFactory;
+  std::vector<PHX::index_size_type> dims;
+  dims.push_back(100);
+  f.setFieldData(ViewFactory::buildView(f.fieldTag(), dims));
+  this->p_state_mgr_->registerNodalVectorStateVariable(
+    nodal_field_names_.back(), dl->node_node_scalar, dl->dummy, "all", "scalar",
+    0.0, false, output_to_exodus_);
+#endif
+
   // Count the total number of vectors in the multivector.
   num_vecs_ = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
     getVecsize();
 
   // Create field tag.
-  field_tag_ =
-    Teuchos::rcp(new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
+  field_tag_ = Teuchos::rcp(
+    new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
 
   // Set up linear solver.
 #ifdef ALBANY_IFPACK2
@@ -340,6 +365,10 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   }
 #endif // IFPACK2
 
+  Teuchos::ParameterList* upl =
+    p.get<Teuchos::ParameterList*>("Parameter List");
+  const double solver_tol = upl->isType<double>("Solver Tolerance") ?
+    upl->get<double>("Solver Tolerance") : 1e-12;
   { // Send parameters to the solver.
     Teuchos::RCP<Teuchos::ParameterList> solver_list =
       Teuchos::rcp(new Teuchos::ParameterList);
@@ -348,7 +377,7 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
       solver_list->setParameters(plist->sublist("Solver Options"));
     { // Set the rest of the parameters to their default values.
       Teuchos::ParameterList pl;
-      setDefaultSolverParameters(pl);
+      setDefaultSolverParameters(pl, solver_tol);
       solver_list->setParametersNotAlreadySet(pl);
     }
     this->linearSolverBuilder_.setParameterList(solver_list);
@@ -360,7 +389,6 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   this->addEvaluatedField(*field_tag_);
 }
 
-//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ProjectIPtoNodalFieldBase<EvalT, Traits>::
 postRegistrationSetup (typename Traits::SetupData d,
@@ -370,12 +398,12 @@ postRegistrationSetup (typename Traits::SetupData d,
   this->utils.setFieldData(wBF, fm);
   for (int field = 0; field < number_of_fields_; ++field)
     this->utils.setFieldData(ip_fields_[field], fm);
+#ifdef PROJ_INTERP_TEST
+  this->utils.setFieldData(coords_qp_, fm);
+  this->utils.setFieldData(coords_verts_, fm);
+#endif
 }
 
-//------------------------------------------------------------------------------
-// Specialization: Residual
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
 template<typename Traits>
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 ProjectIPtoNodalField (
@@ -386,10 +414,8 @@ ProjectIPtoNodalField (
 {
   Teuchos::ParameterList* pl =
     p.get<Teuchos::ParameterList*>("Parameter List");
-  if (!pl->isType<std::string>("Mass Matrix Type"))
+  if ( ! pl->isType<std::string>("Mass Matrix Type"))
     pl->set<std::string>("Mass Matrix Type", "Full");
-  if (!pl->isType<double>("Solver Tolerance"))
-    pl->set<double>("Solver Tolerance", 1e-12);
 
   { // Create the mass matrix of the desired type.
     EMassMatrixType::Enum mass_matrix_type;
@@ -406,7 +432,6 @@ ProjectIPtoNodalField (
   }
 }
 
-//------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate (typename Traits::PreEvalData workset)
@@ -445,7 +470,6 @@ preEvaluate (typename Traits::PreEvalData workset)
                            this->num_vecs_, true));
 }
 
-//------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 fillRHS (const typename Traits::EvalData workset)
@@ -456,20 +480,20 @@ fillRHS (const typename Traits::EvalData workset)
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >&
     wsElNodeID = workset.wsElNodeID;
 
-  const std::size_t
-    num_nodes = this->num_nodes_,
-    num_dims  = this->num_dims_,
-    num_pts   = this->num_pts_;
-
-  for (std::size_t field = 0; field < this->number_of_fields_; ++field) {
+  const int num_fields = this->number_of_fields_
+#ifdef PROJ_INTERP_TEST
+    + 1
+#endif
+    ;
+  for (int field = 0; field < num_fields; ++field) {
     int node_var_offset;
     int node_var_ndofs;
     node_data->getNDofsAndOffset(
       this->nodal_field_names_[field], node_var_offset, node_var_ndofs);
     for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t node = 0; node < num_nodes; ++node) {
+      for (std::size_t node = 0; node < this->num_nodes_; ++node) {
         const GO global_row = wsElNodeID[cell][node];
-        for (std::size_t qp = 0; qp < num_pts; ++qp) {
+        for (std::size_t qp = 0; qp < this->num_pts_; ++qp) {
           switch (this->ip_field_layouts_[field]) {
           case ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
             EFieldLayout::scalar:
@@ -479,23 +503,20 @@ fillRHS (const typename Traits::EvalData workset)
             break;
           case ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
             EFieldLayout::vector:
-            for (std::size_t dim0 = 0; dim0 < num_dims; ++dim0) {
+            for (std::size_t dim0 = 0; dim0 < this->num_dims_; ++dim0)
               this->source_load_vector_->sumIntoGlobalValue(
                 global_row, node_var_offset + dim0,
                 (this->ip_fields_[field](cell, qp, dim0) *
                  this->wBF(cell, node, qp)));
-            }
             break;
           case ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
             EFieldLayout::tensor:
-            for (std::size_t dim0 = 0; dim0 < num_dims; ++dim0) {
-              for (std::size_t dim1 = 0; dim1 < num_dims; ++dim1) {
+            for (std::size_t dim0 = 0; dim0 < this->num_dims_; ++dim0)
+              for (std::size_t dim1 = 0; dim1 < this->num_dims_; ++dim1)
                 this->source_load_vector_->sumIntoGlobalValue(
-                  global_row, node_var_offset + dim0*num_dims + dim1,
+                  global_row, node_var_offset + dim0*this->num_dims_ + dim1,
                   (this->ip_fields_[field](cell, qp, dim0, dim1) *
                    this->wBF(cell, node, qp)));
-              }
-            }
             break;
           }
         }
@@ -503,6 +524,13 @@ fillRHS (const typename Traits::EvalData workset)
     } // cell
   } // field
 }
+
+#ifdef PROJ_INTERP_TEST
+static double test_fn (const double x, const double y, const double z) {
+  //return 1.5*x - 0.8*y + 1.1*z;
+  return 1e5*x*x;
+}
+#endif
 
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
@@ -520,10 +548,19 @@ evaluateFields (typename Traits::EvalData workset)
   // and in this one only for the rhs and not the mass matrix. So there's a lot
   // of wasted work. (2) Later, x = sum_i x_i, and this accumulation involves
   // wasted writes the Exodus data structure holding data for writing.
-  if (!this->sep_by_eb_ || workset.EBName == this->eb_name_) fillRHS(workset);
+  if ( ! this->sep_by_eb_ || workset.EBName == this->eb_name_) {
+#ifdef PROJ_INTERP_TEST
+    PHX::MDField<RealType>& f = this->ip_fields_.back();
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell)
+      for (std::size_t qp = 0; qp < this->num_pts_; ++qp)
+        f(cell, qp) = test_fn(
+          this->coords_qp_(cell, qp, 0), this->coords_qp_(cell, qp, 1),
+          this->coords_qp_(cell, qp, 2));
+#endif
+    fillRHS(workset);
+  }
 }
 
-//------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate (typename Traits::PostEvalData workset)
