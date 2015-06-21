@@ -78,7 +78,6 @@ class NodalDataVector {
 
     void saveNodalDataState() const;
     void saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const;
-    void accumulateAndSaveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv);
 
   void saveTpetraNodalDataVector(
     const std::string& name,

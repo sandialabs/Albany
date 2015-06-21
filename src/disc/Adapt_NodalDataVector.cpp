@@ -139,16 +139,6 @@ void Adapt::NodalDataVector::saveNodalDataState() const
     (*nodeContainer)[i->name]->saveFieldVector(overlap_node_vec, i->offset);
 }
 
-//eb-hack Accumulate the overlapped vector. We don't know when the last
-// accumulation is done, so call saveFieldVector each time, even though doing so
-// performs wasted work.
-void Adapt::NodalDataVector::accumulateAndSaveNodalDataState(
-  const Teuchos::RCP<const Tpetra_MultiVector>& mv)
-{
-  overlap_node_vec->update(1, *mv, 1);
-  saveNodalDataState();
-}
-
 void Adapt::NodalDataVector::
 saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const
 {

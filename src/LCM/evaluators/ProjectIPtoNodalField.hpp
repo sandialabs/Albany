@@ -13,9 +13,11 @@
 #include <Phalanx_DataLayout.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include "Albany_ProblemUtils.hpp"
+#include "Adapt_NodalDataBase.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
+// Running this test all the time is generally quite cheap, so let's do that.
 #define PROJ_INTERP_TEST
 
 namespace LCM {
@@ -62,8 +64,7 @@ class ProjectIPtoNodalField :
 {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl,
-                        const Albany::MeshSpecsStruct* mesh_specs)
+                        const Teuchos::RCP<Albany::Layouts>& dl)
     : ProjectIPtoNodalFieldBase<EvalT, Traits>(dl)
   {}
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -76,14 +77,15 @@ public:
   void evaluateFields(typename Traits::EvalData d) {}
 };
 
+class ProjectIPtoNodalFieldManager;
+
 template<typename Traits>
 class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits> :
     public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>
 {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl,
-                        const Albany::MeshSpecsStruct* mesh_specs);
+                        const Teuchos::RCP<Albany::Layouts>& dl);
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
   void preEvaluate(typename Traits::PreEvalData d);
@@ -94,14 +96,7 @@ private:
   typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   typedef PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
 
-  // Declare a class hierarchy of mass matrix types. mass_matrix_ has to be in
-  // this specialization, at least for now, because its implementation of fill()
-  // is valid only for AlbanyTraits::Residual. Later we might move it up to the
-  // nonspecialized class and create separate fill() impls for each trait.
-  class MassMatrix;
-  class FullMassMatrix;
-  class LumpedMassMatrix;
-  Teuchos::RCP<MassMatrix> mass_matrix_;
+  Teuchos::RCP<ProjectIPtoNodalFieldManager> mgr_;
 
   int num_fields_;
 
@@ -111,8 +106,7 @@ private:
   // Represent the Field Layout by an enumerated type.
   struct EFieldLayout {
     enum Enum { scalar, vector, tensor };
-    static Enum fromString(const std::string& user_str)
-      throw (Teuchos::Exceptions::InvalidParameterValue);
+    static Enum fromString(const std::string& user_str);
   };
 
   std::vector<std::string> ip_field_names_;
@@ -130,8 +124,6 @@ private:
 
   Albany::StateManager* p_state_mgr_;
 
-  Teuchos::RCP<Tpetra_MultiVector> source_load_vector_;
-
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;
 
@@ -140,6 +132,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
 #endif
 
+  void initManager(Teuchos::ParameterList* const pl);
   void fillRHS(const typename Traits::EvalData workset);
 };
 
