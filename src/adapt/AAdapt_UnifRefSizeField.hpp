@@ -12,7 +12,7 @@
 
 namespace AAdapt {
 
-class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
+class UnifRefSizeField : public MeshSizeField {
 
   public:
 
@@ -20,7 +20,7 @@ class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
     ~UnifRefSizeField();
 
-    double getValue(ma::Entity* v);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
@@ -30,10 +30,22 @@ class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
     void freeInputFields() {}
     void freeSizeField() {}
 
-  private:
+    class UnifRefIsoFunc : public ma::IsotropicFunction
+    {
+      public:
+        virtual ~UnifRefIsoFunc(){}
 
-    double elem_size;
-    double averageEdgeLength;
+    /** \brief get the desired element size at this vertex */
+
+        virtual double getValue(ma::Entity* vert){
+            return elem_size * averageEdgeLength;
+        }
+
+        double elem_size;
+        double averageEdgeLength;
+
+    } unifRefIsoFunc;
+
 
 };
 

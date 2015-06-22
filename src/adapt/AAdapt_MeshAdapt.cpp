@@ -175,33 +175,12 @@ void AAdapt::MeshAdapt::beforeAdapt()
   szField->copyInputFields();
 }
 
-// Do some RTTI to figure out which ma::configure to call. I think this part is
-// why MeshAdapt(T) was templated on SizeField. I find that templating quite
-// unnatural and cumbersome (need to maintain ETI, for example), so I'm going to
-// switch to runtime polymorphism and pay the price right here.
-/*
-static ma::Input*
-configure (apf::Mesh2* mesh, const Teuchos::RCP<AAdapt::MeshSizeField>& sf) {
-  { ma::IsotropicFunction*
-      isf = dynamic_cast<ma::IsotropicFunction*>(sf.get());
-    if (isf) return ma::configure(mesh, isf); }
-  { ma::AnisotropicFunction*
-      asf = dynamic_cast<ma::AnisotropicFunction*>(sf.get());
-    if (asf) return ma::configure(mesh, asf); }
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "shouldn't be here");
-  return 0;
-}
-*/
-
 void AAdapt::MeshAdapt::adaptInPartition(
   const Teuchos::RCP<Teuchos::ParameterList>& adapt_params)
 {
   szField->computeError();
 
-//  ma::Input* input = configure(mesh, szField);
-  ma::Input* input = szField->configure(adapt_params);
-
-  ma::adapt(input);
+  szField->configure(adapt_params);
 
   szField->freeSizeField();
 }

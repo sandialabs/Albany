@@ -14,31 +14,44 @@ AAdapt::AlbanySizeField::AlbanySizeField(const Teuchos::RCP<Albany::APFDiscretiz
   MeshSizeField(disc) {
 }
 
-void
-AAdapt::AlbanySizeField::copyInputFields()
-{
-
-  averageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
-
-}
-
 AAdapt::AlbanySizeField::
 ~AlbanySizeField() {
 }
 
 void
-AAdapt::AlbanySizeField::computeError() {
+AAdapt::AlbanySizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+{
+
+  apf::Field* field = mesh_struct->getMesh()->findField("IsoMeshSizeField");
+  TEUCHOS_TEST_FOR_EXCEPTION(field == NULL, std::logic_error, "Cannot find IsoMeshSizeField");
+
+  ma::Input *in = ma::configure(mesh_struct->getMesh(), field);
+
+  in->maximumIterations = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
+  //do not snap on deformation problems even if the model supports it
+  in->shouldSnap = false;
+
+  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
+  if (loadBalancing) {
+    in->shouldRunPreZoltan = true;
+    in->shouldRunMidParma = true;
+    in->shouldRunPostParma = true;
+    in->maximumImbalance = lbMaxImbalance;
+  }
+
+  ma::adapt(in);
+
 }
 
-void
-AAdapt::AlbanySizeField::setParams(
-    const Teuchos::RCP<Teuchos::ParameterList>& p) {
-
-  elem_size = p->get<double>("Target Element Size", 0.7);
-
-}
-
+/*
 double AAdapt::AlbanySizeField::getValue(ma::Entity* v) {
-  return elem_size * averageEdgeLength;
+
+  // "field" is the L2 projected Albany size field calculated in an Albany evaluator.
+  // It is projected by "Project IP to Nodal Field" and named "IsoMeshSizeField" in the vtk output file
+
+  return apf::getScalar(field,v,0);
+
 }
+*/
 

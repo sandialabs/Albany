@@ -17,7 +17,7 @@ to perform the adaptation.
 
 namespace AAdapt {
 
-class AlbanySizeField : public ma::IsotropicFunction, public MeshSizeField {
+class AlbanySizeField : public MeshSizeField {
 
   public:
 
@@ -25,20 +25,13 @@ class AlbanySizeField : public ma::IsotropicFunction, public MeshSizeField {
 
     ~AlbanySizeField();
 
-    double getValue(ma::Entity* v);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
-    void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
-
-    void computeError();
-
-    void copyInputFields();
+    void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p){}
+    void computeError(){}
+    void copyInputFields() {}
     void freeInputFields() {}
     void freeSizeField() {}
-
-  private:
-
-    double elem_size;
-    double averageEdgeLength;
 
 };
 

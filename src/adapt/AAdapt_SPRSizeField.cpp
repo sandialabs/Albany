@@ -25,6 +25,31 @@ AAdapt::SPRSizeField::
 }
 
 void
+AAdapt::SPRSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+{
+
+  ma::IsotropicFunction*
+    isf = dynamic_cast<ma::IsotropicFunction*>(&sprIsoFunc);
+  ma::Input *in = ma::configure(mesh_struct->getMesh(), isf);
+
+  in->maximumIterations = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
+  //do not snap on deformation problems even if the model supports it
+  in->shouldSnap = false;
+
+  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
+  if (loadBalancing) {
+    in->shouldRunPreZoltan = true;
+    in->shouldRunMidParma = true;
+    in->shouldRunPostParma = true;
+    in->maximumImbalance = lbMaxImbalance;
+  }
+
+  ma::adapt(in);
+
+}
+
+void
 AAdapt::SPRSizeField::computeError() {
 
   if ( sv_name.length() > 0 )
@@ -45,10 +70,6 @@ AAdapt::SPRSizeField::setParams(
   esa[0][sv_name].dimensions(dims);
   num_qp = dims[1];
 
-}
-
-double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
-  return apf::getScalar(field,v,0);
 }
 
 void
@@ -92,7 +113,7 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
   apf::Field* f = mesh_struct->getMesh()->findField("solution");
   apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
-  field = spr::getSPRSizeField(sol_grad,rel_err);
+  sprIsoFunc.field = spr::getSPRSizeField(sol_grad,rel_err);
   apf::destroyField(sol_grad);
 
 }
@@ -101,6 +122,6 @@ void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
   apf::Field* eps = mesh_struct->getMesh()->findField("eps");
-  field = spr::getSPRSizeField(eps,rel_err);
+  sprIsoFunc.field = spr::getSPRSizeField(eps,rel_err);
 
 }

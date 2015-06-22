@@ -20,7 +20,7 @@ struct MeshSizeField {
 
   MeshSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
-  virtual ma::Input* configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+  virtual void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) = 0;
 
   virtual void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) = 0;
   virtual void computeError() = 0;

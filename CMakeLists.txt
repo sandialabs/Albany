@@ -769,7 +769,7 @@ may break other physics" OFF)
 OPTION(ENABLE_SLFAD "Flag to turn on Code Optimization for ALBANY that
 may break other physics" OFF)
 
-SET(SLFAD_SIZE 27 CACHE INT "set Sacado SLFad size")
+SET(SLFAD_SIZE 32 CACHE INT "set Sacado SLFad size")
 
 IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)

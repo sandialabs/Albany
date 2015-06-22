@@ -158,13 +158,11 @@ namespace Albany {
 #endif
 
     //@}
-#endif 
-#ifdef ALBANY_ENSEMBLE 
 
+#ifdef ALBANY_ENSEMBLE 
     //! \name Multi-point evaluation functions
     //@{
 
-#ifdef ALBANY_SG
     //! Evaluate multi-point response functions
     virtual void evaluateMPResponse(
       const double curr_time,

@@ -22,7 +22,7 @@ class NonUnifRefSizeField : public MeshSizeField {
 
     ~NonUnifRefSizeField();
 
-    ma::Input *configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 

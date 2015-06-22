@@ -12,14 +12,14 @@
 
 namespace AAdapt {
 
-class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
+class SPRSizeField : public MeshSizeField {
 
   public:
     SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
   
     ~SPRSizeField();
 
-    double getValue(ma::Entity* v);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     int getCubatureDegree(int num_qp);
 
@@ -31,9 +31,25 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
     void freeInputFields();
     void freeSizeField();
 
+    class SPRIsoFunc : public ma::IsotropicFunction
+    {
+      public:
+        virtual ~SPRIsoFunc(){}
+
+    /** \brief get the desired element size at this vertex */
+
+        virtual double getValue(ma::Entity* v){
+
+            return apf::getScalar(field,v,0);
+
+        } 
+
+        apf::Field* field;
+
+    } sprIsoFunc;
+
   private:
 
-    apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
     Teuchos::RCP<Albany::APFDiscretization> pumi_disc;

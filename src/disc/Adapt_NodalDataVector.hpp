@@ -77,8 +77,10 @@ class NodalDataVector {
     void exportAddNodalDataVector();
 
     void saveNodalDataState() const;
-    void saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const;
-    void accumulateAndSaveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv);
+    // In this version, mv may have fewer columns than there are vectors in the
+    // database. start_col indicates the offset into the database.
+    void saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
+                            const int start_col) const;
 
   void saveTpetraNodalDataVector(
     const std::string& name,
@@ -88,16 +90,6 @@ class NodalDataVector {
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
     LO getVecSize() { return vectorsize; }
-
-    //eb-hack This interface, and the evaluator-based response functions that
-    // interact with Exodus files through this and the Vector version of this
-    // interface, need to be redesigned. There are a number of problems. For
-    // example, if there are multiple element blocks, multiple redundant calls
-    // are made to these methods in preEvaluate and postEvaluate, possibly with
-    // erroneous results.
-    void initEvaluateCalls(const int num_eb);
-    int numPreEvaluateCalls();
-    int isFinalPostEvaluateCall();
 
   private:
 
