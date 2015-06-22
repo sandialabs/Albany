@@ -109,8 +109,8 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   blocked_op->beginBlockFill(block_dim, block_dim);
 
   //populate (Poisson,Poisson) block with Jac_Poisson
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> block00 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
-  blocked_op->setNonconstBlock(0, 0, block00);
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPP = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
+  blocked_op->setNonconstBlock(0, 0, blockPP);
 
   Teuchos::Array<ST> matrixEntriesT;
   Teuchos::Array<LO> matrixIndicesT; 
@@ -125,7 +125,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
  
   //populate (Poisson, Schrodinger) blocks with M*dn_dPsi[j]
   for (int j=1; j<block_dim-1; j++) {
-    Teuchos::RCP<Tpetra_CrsMatrix> block01_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph));
+    Teuchos::RCP<Tpetra_CrsMatrix> blockPS_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph));
     if (dn_dPsi != Teuchos::null) { //FIXME? Is this logic necessary? 
       //Get (j-1)st entry of dn_dPsi
       Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(j-1);
@@ -143,22 +143,54 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
         for (LO col=0; col<numEntriesT; col++) {
           val += matrixEntriesT[col]*dn_dPsi_j_constView[matrixIndicesT[col]]; 
         }
-        block01_crs->sumIntoLocalValues(row, Teuchos::arrayView(&colZero,1), Teuchos::arrayView(&val,1)); 
+        blockPS_crs->sumIntoLocalValues(row, Teuchos::arrayView(&colZero,1), Teuchos::arrayView(&val,1)); 
       }
     }
-    block01_crs->fillComplete();  
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> block01 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(block01_crs);
-    blocked_op->setNonconstBlock(0, j, block01); 
+    blockPS_crs->fillComplete();  
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPS = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockPS_crs);
+    blocked_op->setNonconstBlock(0, j, blockPS); 
   }
-  //populate (Poisson, eigenvalue block) TODO
+  //populate (Poisson, eigenvalue) block TODO
 
   //populate (Schrodinger, Poisson) blocks with M*psiVectors[i]
+  for (int i=1; i<block_dim-1; i++) {
+    Teuchos::RCP<Tpetra_CrsMatrix> blockSP_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph));
+    if (psiVectors != Teuchos::null) { 
+      //Get (i-1)st entry of psiVectors
+      Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i-1); 
+      const Teuchos::ArrayRCP<const ST> psiVectors_i_constView = psiVectors_i->get1dView(); 
+      //loop over rows of Mass
+      for (LO row = 0; row<Mass->getNodeNumRows(); row++) {
+        val = 0.0; 
+        //get number of entries in tow 
+        numEntriesT = Mass->getNumEntriesInLocalRow(row);
+        matrixEntriesT.resize(numEntriesT);
+        matrixIndicesT.resize(numEntriesT);
+        //get copy of row  
+        Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+        //loop over colums of mass and calculate Mass*psiVectors[i] for each row.
+        for (LO col=0; col<numEntriesT; col++) {
+          val += matrixEntriesT[col]*psiVectors_i_constView[matrixIndicesT[col]]; 
+        }
+        blockSP_crs->sumIntoLocalValues(row, Teuchos::arrayView(&colZero,1), Teuchos::arrayView(&val,1)); 
+      }
+    }
+    blockSP_crs->fillComplete();  
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSP = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSP_crs);
+    blocked_op->setNonconstBlock(i, 0, blockSP);
+  }
+  //Populate (Schrodinger, Schrodinger) block TODO 
+  //
+  //Populate (Schrodinger, eigenvalue) block TODO 
+  //
+  //Populate (Eigenvalue, Schrodinger) block TODO 
+
 
   //FIXME: This is temporary to debug other parts of the code!  Need to populate Jacobian correctly. 
-  for (int i=1; i<block_dim; i++) {
-    for (int j=1; j<block_dim; j++) { 
+  for (int i=block_dim-1; i<block_dim; i++) {
+    for (int j=block_dim-1; j<block_dim; j++) { 
         if (i == j) 
-          blocked_op->setNonconstBlock(i,j, block00); 
+          blocked_op->setNonconstBlock(i,j, blockPP); 
      }
    }
 /* 
