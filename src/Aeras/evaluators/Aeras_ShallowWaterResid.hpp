@@ -72,6 +72,7 @@ private:
 
   bool usePrescribedVelocity;
   bool useHyperViscosity;
+  bool plotVorticity;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
