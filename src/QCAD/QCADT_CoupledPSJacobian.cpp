@@ -26,14 +26,42 @@ mm_counter = 0;
 
 using Thyra::PhysicallyBlockedLinearOpBase;
 
-QCADT::CoupledPSJacobian::CoupledPSJacobian( int num_models, 
-    Teuchos::RCP<Teuchos_Comm const> const & commT)
+QCADT::CoupledPSJacobian::CoupledPSJacobian(int nEigenvals,
+                                            const Teuchos::RCP<const Tpetra_Map>& discretizationMap,
+                                            int dim, int valleyDegen, double temp,
+                                            double lengthUnitInMeters, double energyUnitInElectronVolts,
+                                            double effMass, double conductionBandOffset,
+                                            Teuchos::RCP<Tpetra_Vector> neg_eigenvals,
+                                            Teuchos::RCP<const Tpetra_MultiVector> eigenvecs, 
+                                            Teuchos::RCP<Teuchos_Comm const> const & commT): 
+    num_models_(nEigenvals+1), 
+    nEigenvals_(nEigenvals),
+    commT_(commT), 
+    neg_eigenvalues(neg_eigenvals), 
+    psiVectors(eigenvecs),
+    discMap(discretizationMap),
+    numDims(dim),
+    valleyDegenFactor(valleyDegen),
+    temperature(temp),
+    length_unit_in_m(lengthUnitInMeters),
+    energy_unit_in_eV(energyUnitInElectronVolts),
+    effmass(effMass),
+    offset_to_CB(conductionBandOffset) 
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
-  num_models_ = num_models; 
-  commT_ = commT;
+   int num_discMap_myEls = discMap->getNodeNumElements();
+   // dn_dPsi : vectors of dn/dPsi[i] values
+   dn_dPsi = Teuchos::rcp(new Tpetra_MultiVector(*psiVectors)); 
+   const Teuchos::ArrayRCP<const ST> neg_eigenvalues_constView = neg_eigenvalues->get1dView(); 
+   for (int i=0; i<nEigenvals; i++) {
+     Teuchos::RCP<Tpetra_Vector> dn_dPsi_i = dn_dPsi->getVectorNonConst(i); 
+     Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i); 
+     dn_dPsi_i->scale( n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, energy_unit_in_eV, effmass)
+                          * 2 * n_weight_factor( -neg_eigenvalues_constView[i], numDims, temperature, energy_unit_in_eV), 
+                          *psiVectors_i); 
+   }
 }
 
 QCADT::CoupledPSJacobian::~CoupledPSJacobian()
@@ -44,17 +72,9 @@ QCADT::CoupledPSJacobian::~CoupledPSJacobian()
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-QCADT::CoupledPSJacobian::getThyraCoupledJacobian(int nEigenvals,
-                                                  const Teuchos::RCP<const Tpetra_Map>& discretizationMap,
-                                           	  const Teuchos::RCP<const Tpetra_Map>& fullPSMap,
-                                           	  int dim, int valleyDegen, double temp,
-                                           	  double lengthUnitInMeters, double energyUnitInElectronVolts,
-                                           	  double effMass, double conductionBandOffset, 
-                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson, 
+QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson, 
                                                   Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger,
-                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass,
-                                                  Teuchos::RCP<Tpetra_Vector> neg_eigenvals, 
-                                                  Teuchos::RCP<const Tpetra_MultiVector> eigenvecs) const
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass) const
 {
 //FIXME: pass necessary variables for Jacobian blocks
 #ifdef OUTPUT_TO_SCREEN
@@ -88,10 +108,60 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(int nEigenvals,
   Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST>>blocked_op = Thyra::defaultBlockedLinearOp<ST>();
   blocked_op->beginBlockFill(block_dim, block_dim);
 
-  //populate (0,0) block with Jac_Poisson
+  //populate (Poisson,Poisson) block with Jac_Poisson
   Teuchos::RCP<Thyra::LinearOpBase<ST>> block00 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
   blocked_op->setNonconstBlock(0, 0, block00);
-  
+
+  Teuchos::Array<ST> matrixEntriesT;
+  Teuchos::Array<LO> matrixIndicesT; 
+  size_t numEntriesT;  
+  ST val;
+  LO colZero = 0;  
+  //create map of 1 column
+  Teuchos::RCP<Tpetra_Map> oneColMap = Teuchos::rcp(new Tpetra_Map(1, 0, commT_));
+  //create graph 
+  Teuchos::RCP<Tpetra_CrsGraph> graph = Teuchos::rcp(new Tpetra_CrsGraph(Mass->getMap(), 1));
+  graph->fillComplete();  
+ 
+  //populate (Poisson, Schrodinger) blocks with M*dn_dPsi[j]
+  for (int j=1; j<block_dim-1; j++) {
+    Teuchos::RCP<Tpetra_CrsMatrix> block01_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph));
+    if (dn_dPsi != Teuchos::null) { //FIXME? Is this logic necessary? 
+      //Get (j-1)st entry of dn_dPsi
+      Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(j-1);
+      const Teuchos::ArrayRCP<const ST> dn_dPsi_j_constView = dn_dPsi_j->get1dView(); 
+      //loop over rows of Mass
+      for (LO row = 0; row<Mass->getNodeNumRows(); row++) {
+        val = 0.0;
+        //get number of entries in tow 
+        numEntriesT = Mass->getNumEntriesInLocalRow(row);
+        matrixEntriesT.resize(numEntriesT);
+        matrixIndicesT.resize(numEntriesT);
+        //get copy of row  
+        Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+        //loop over colums of mass and calculate Mass*dn_dPsi[j] for each row.
+        for (LO col=0; col<numEntriesT; col++) {
+          val += matrixEntriesT[col]*dn_dPsi_j_constView[matrixIndicesT[col]]; 
+        }
+        block01_crs->sumIntoLocalValues(row, Teuchos::arrayView(&colZero,1), Teuchos::arrayView(&val,1)); 
+      }
+    }
+    block01_crs->fillComplete();  
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> block01 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(block01_crs);
+    blocked_op->setNonconstBlock(0, j, block01); 
+  }
+  //populate (Poisson, eigenvalue block) TODO
+
+  //populate (Schrodinger, Poisson) blocks with M*psiVectors[i]
+
+  //FIXME: This is temporary to debug other parts of the code!  Need to populate Jacobian correctly. 
+  for (int i=1; i<block_dim; i++) {
+    for (int j=1; j<block_dim; j++) { 
+        if (i == j) 
+          blocked_op->setNonconstBlock(i,j, block00); 
+     }
+   }
+/* 
   //populate remaining blocks
   Teuchos::Array<Teuchos::RCP<ImplicitPSJacobian> > implicitJacs; 
   implicitJacs.resize((2+nEigenvals)*(2+nEigenvals)); 
@@ -132,7 +202,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(int nEigenvals,
      block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j+(1+nEigenvals)*(2+nEigenvals)]);
      blocked_op->setNonconstBlock(1+nEigenvals,j, block);
    }
-
+*/
   // all done
   blocked_op->endBlockFill();
 #ifdef OUTPUT_TO_SCREEN

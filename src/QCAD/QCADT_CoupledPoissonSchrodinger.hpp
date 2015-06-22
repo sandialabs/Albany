@@ -124,6 +124,9 @@ namespace QCADT {
   private:
     Teuchos::RCP<const Tpetra_Map> disc_map, disc_overlap_map;
     Teuchos::RCP<const Tpetra_Map> dist_eigenval_map;
+    Teuchos::RCP<const Tpetra_Map> local_eigenval_map;
+    Teuchos::RCP<Tpetra_Vector> eigenvals;
+    Teuchos::RCP<Tpetra_MultiVector> x_schrodinger;
     Teuchos::RCP<Tpetra_Map> combined_SP_map;
     Teuchos::RCP<const Tpetra_Vector> saved_initial_guess;
     Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_; 
