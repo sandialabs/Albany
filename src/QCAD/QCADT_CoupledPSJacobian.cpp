@@ -62,6 +62,29 @@ QCADT::CoupledPSJacobian::CoupledPSJacobian(int nEigenvals,
                           * 2 * n_weight_factor( -neg_eigenvalues_constView[i], numDims, temperature, energy_unit_in_eV), 
                           *psiVectors_i); 
    }
+   // dn_dEval : vectors of dn/dEval[i]
+   dn_dEval = Teuchos::rcp(new Tpetra_MultiVector( discMap, nEigenvals ));
+   for (int i=0; i<nEigenvals; i++) {
+     double prefactor = n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, energy_unit_in_eV, effmass);
+     double dweight = dn_weight_factor(-neg_eigenvalues_constView[i], numDims, temperature, energy_unit_in_eV);
+     //DEBUG
+     //double eps = 1e-7;
+     //double dweight = (n_weight_factor( -(*neg_eigenvalues)[i] + eps, numDims, temperature, energy_unit_in_eV) - 
+     //n_weight_factor( -(*neg_eigenvalues)[i], numDims, temperature, energy_unit_in_eV)) / eps; 
+     //const double kbBoltz = 8.617343e-05;
+     //std::cout << "DEBUG: dn_dEval["<<i<<"] dweight arg = " <<  (*neg_eigenvalues)[i]/(kbBoltz*temperature) << std::endl;  
+     //in [eV]
+     //std::cout << "DEBUG: dn_dEval["<<i<<"] factor = " <<  prefactor * dweight << std::endl;  // in [eV]
+     //DEBUG
+     Teuchos::RCP<Tpetra_Vector> dn_dEval_i = dn_dEval->getVectorNonConst(i); 
+     Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i); 
+     for (int k=0; k<num_discMap_myEls; k++) {
+        const Teuchos::ArrayRCP<ST> dn_dEval_i_nonconstView = dn_dEval_i->get1dViewNonConst();
+        const Teuchos::ArrayRCP<const ST> psiVectors_i_constView = psiVectors_i->get1dView();
+        dn_dEval_i_nonconstView[k] =  prefactor * pow( psiVectors_i_constView[k], 2.0 ) * dweight;
+    //(*dn_dEval)(i)->Print( std::cout << "DEBUG: dn_dEval["<<i<<"]:" << std::endl );
+     }
+   }
 }
 
 QCADT::CoupledPSJacobian::~CoupledPSJacobian()
@@ -117,15 +140,16 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   size_t numEntriesT;  
   ST val;
   LO colZero = 0;  
-  //create map of 1 column
-  Teuchos::RCP<Tpetra_Map> oneColMap = Teuchos::rcp(new Tpetra_Map(1, 0, commT_));
-  //create graph 
-  Teuchos::RCP<Tpetra_CrsGraph> graph = Teuchos::rcp(new Tpetra_CrsGraph(Mass->getMap(), 1));
-  graph->fillComplete();  
+  //create graph for matrix with 1 column 
+  Teuchos::RCP<Tpetra_CrsGraph> graph1col = Teuchos::rcp(new Tpetra_CrsGraph(Mass->getMap(), 1));
+  graph1col->fillComplete(); 
+  //create graph for matrix with nEigenvals columns
+  Teuchos::RCP<Tpetra_CrsGraph> graphEvalsCols = Teuchos::rcp(new Tpetra_CrsGraph(Mass->getMap(), nEigenvals_)); 
+  graphEvalsCols->fillComplete();  
  
-  //populate (Poisson, Schrodinger) blocks with M*dn_dPsi[j]
+  //populate (Poisson, Schrodinger) blocks with M*dn_dPsi[j] -- nEvals matrices with 1 column
   for (int j=1; j<block_dim-1; j++) {
-    Teuchos::RCP<Tpetra_CrsMatrix> blockPS_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph));
+    Teuchos::RCP<Tpetra_CrsMatrix> blockPS_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph1col));
     if (dn_dPsi != Teuchos::null) { //FIXME? Is this logic necessary? 
       //Get (j-1)st entry of dn_dPsi
       Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(j-1);
@@ -150,11 +174,38 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPS = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockPS_crs);
     blocked_op->setNonconstBlock(0, j, blockPS); 
   }
-  //populate (Poisson, eigenvalue) block TODO
+  //populate (Poisson, eigenvalue) block with -M*col(dn/dEval[i]) -- 1 matrix with nEigenvals columns
+  Teuchos::RCP<Tpetra_CrsMatrix> blockPE_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graphEvalsCols));
+  for (int i=0; i<nEigenvals_; i++) {
+    if (dn_dEval != Teuchos::null) {
+      //get ith dn_dEval vector
+      Teuchos::RCP<const Tpetra_Vector> dn_dEval_i = dn_dEval->getVector(i); 
+      const Teuchos::ArrayRCP<const ST> dn_dEval_i_constView = dn_dEval_i->get1dView(); 
+      //loop over rows of Mass Matrix
+      for (LO row = 0; row<Mass->getNodeNumRows(); row++) {
+        val = 0.0;
+        //get number of entries in tow 
+        numEntriesT = Mass->getNumEntriesInLocalRow(row);
+        matrixEntriesT.resize(numEntriesT);
+        matrixIndicesT.resize(numEntriesT);
+        //get copy of row  
+        Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+        //loop over columns of mass and calculate -Mass*dn_dEval[i]
+        for (LO col=0; col<numEntriesT; col++) {
+          val += -1.0*matrixEntriesT[col]*dn_dEval_i_constView[matrixIndicesT[col]]; 
+        }
+        //Sum into ith column of blockPE_crs
+        blockPE_crs->sumIntoLocalValues(row, Teuchos::arrayView(&i,1), Teuchos::arrayView(&val,1)); 
+      }
+    }
+  }
+  blockPE_crs->fillComplete();  
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPE = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockPE_crs);
+  blocked_op->setNonconstBlock(0, block_dim-1, blockPE); 
 
-  //populate (Schrodinger, Poisson) blocks with M*psiVectors[i]
+  //populate (Schrodinger, Poisson) blocks with M*psiVectors[i] -- nEvals matrices with 1 column
   for (int i=1; i<block_dim-1; i++) {
-    Teuchos::RCP<Tpetra_CrsMatrix> blockSP_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph));
+    Teuchos::RCP<Tpetra_CrsMatrix> blockSP_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph1col));
     if (psiVectors != Teuchos::null) { 
       //Get (i-1)st entry of psiVectors
       Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i-1); 
@@ -181,7 +232,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   }
   //Populate (Schrodinger, Schrodinger) block TODO 
   //
-  //Populate (Schrodinger, eigenvalue) block TODO 
+  //Populate (Schrodinger, eigenvalue) block with delta(i,j)*M*Psi[i] 
   //
   //Populate (Eigenvalue, Schrodinger) block TODO 
 
@@ -213,7 +264,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j]);
     blocked_op->setNonconstBlock(0,j, block); 
   }
-  //(1:1+nEigenvalues, *) blocks
+  //(1:1+nEigenvals, *) blocks
   for (int i=1; i < 1+nEigenvals; i++) {
     for (int j=0; j<2+nEigenvals; j++) {
       Teuchos::RCP<Thyra::LinearOpBase<ST>>
