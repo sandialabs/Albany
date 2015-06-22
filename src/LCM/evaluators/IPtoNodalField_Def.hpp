@@ -200,6 +200,9 @@ preEvaluate(typename Traits::PreEvalData workset)
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
        this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
            ->getNodalDataVector();
+  //todo Fine-tune how IPtoNodalField initializes and saves its vectors. Right
+  //now, if it is listed after another RF that uses the nodal vector db (such as
+  //ProjectIPtoNodalField), then that RF's data are overwritten with 0s.
   node_data->initializeVectors(0.0);
 }
 
