@@ -94,7 +94,7 @@ ENDIF()
 ENDIF()
 
 # Topology Modification depends on LCM and STK
-IF(ALBANY_LCM AND ALBANY_HAVE_STK)
+IF(ALBANY_LCM AND ALBANY_HAVE_STK AND ALBANY_BGL)
 
 SET(SOURCES ${SOURCES}
     AAdapt_TopologyModificationT.cpp

@@ -7,7 +7,7 @@
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #if defined(HAVE_STK)
 #include "AAdapt_CopyRemeshT.hpp"
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(ALBANY_BGL)
 #include "AAdapt_TopologyModificationT.hpp"
 #endif
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
@@ -121,7 +121,7 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         commT_));
   } else
 
-# if defined(ALBANY_LCM)
+# if defined(ALBANY_LCM) && defined(ALBANY_BGL)
   if (method == "Topmod") {
     adapter_ = Teuchos::rcp(new AAdapt::TopologyModT(adaptParams_,
         paramLib_,

@@ -81,9 +81,15 @@ ENDIF ()
 
 if (SET_COMPILERS_AUTOMATICALLY)
   MESSAGE("Setting and checking of compilers:")
-  SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
-  SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
-  SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )   
+# Force the compilers to be the same as Trilinos
+# This syntax is needed when cross compiling or the compilers get checked
+# again by the Albany configure, and will probably fail, because the options
+# wont be right and the exes won't run on the host.
+  INCLUDE (CMakeForceCompiler)
+  SET(CMAKE_SYSTEM_NAME Generic)
+  CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} Generic)
+  CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} Generic)
+  CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} Generic)
 else()
   # Make sure the compilers match.
   MESSAGE("Checking compilers:")
@@ -134,6 +140,11 @@ IF (NOT CMAKE_CXX_FLAGS)
 ENDIF()
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
 #SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -DALBANY_MPI")
+
+if (SET_COMPILERS_AUTOMATICALLY)
+  SET(CMAKE_AR ${Trilinos_AR})
+  SET(CMAKE_LINKER ${Trilinos_LINKER})
+endif()
 
 IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
   SET(USING_INTEL TRUE)
@@ -374,6 +385,20 @@ IF (ENABLE_LCM)
 ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
+ENDIF()
+
+# set optional dependency on the BGL, defaults to Enabled
+# This option is added due to issued with compiling BGL with the intel compilers
+# see Trilinos bugzilla bug #6343
+#
+OPTION(ENABLE_BGL "Flag to turn on the Phalanx graphviz capabilities (dependent on BGL)" ON)
+IF (ENABLE_BGL)
+    ADD_DEFINITIONS(-DALBANY_BGL)
+    MESSAGE("-- BGL       is Enabled, compiling with -DALBANY_BGL")
+    SET(ALBANY_BGL TRUE)
+ELSE()
+  MESSAGE("-- BGL       is NOT Enabled. Graph visualization in Phalanx will not be available!")
+  SET(ALBANY_BGL FALSE)
 ENDIF()
 
 # set optional dependency on ATO, defaults to Disabled
