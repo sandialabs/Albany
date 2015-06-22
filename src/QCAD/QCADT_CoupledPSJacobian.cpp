@@ -11,6 +11,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
 #include "Thyra_DefaultBlockedLinearOp.hpp"
+#include "TpetraExt_MatrixMatrix_def.hpp"
 
 using Teuchos::getFancyOStream;
 using Teuchos::rcpFromRef;
@@ -124,7 +125,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     //
     //   Where:
     //       n = quantum density function which depends on dimension
-
+   
   int block_dim = num_models_; 
 
   // this operator will be square
@@ -139,41 +140,36 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   Teuchos::Array<LO> matrixIndicesT; 
   size_t numEntriesT;  
   ST val;
-  LO colZero = 0;  
-  //create graph for matrix with 1 column 
-  Teuchos::RCP<Tpetra_CrsGraph> graph1col = Teuchos::rcp(new Tpetra_CrsGraph(Mass->getMap(), 1));
-  graph1col->fillComplete(); 
   //create graph for matrix with nEigenvals columns
   Teuchos::RCP<Tpetra_CrsGraph> graphEvalsCols = Teuchos::rcp(new Tpetra_CrsGraph(Mass->getMap(), nEigenvals_)); 
   graphEvalsCols->fillComplete();  
+  //create graph for diagonal 
+  Teuchos::RCP<Tpetra_CrsGraph> graphDiag = Teuchos::rcp(new Tpetra_CrsGraph(Mass->getMap(), 1));
+  graphDiag->fillComplete(); 
  
-  //populate (Poisson, Schrodinger) blocks with M*dn_dPsi[j] -- nEvals matrices with 1 column
+  //populate (Poisson, Schrodinger) blocks with M*diag(dn_dPsi[j])
+  //fillComplete() Mass matrix -- necessary for Multiply command below
+  //Why is Mass not passed in fillCompleted? 
+  Mass->fillComplete(); 
   for (int j=1; j<block_dim-1; j++) {
-    Teuchos::RCP<Tpetra_CrsMatrix> blockPS_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph1col));
-    if (dn_dPsi != Teuchos::null) { //FIXME? Is this logic necessary? 
-      //Get (j-1)st entry of dn_dPsi
-      Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(j-1);
-      const Teuchos::ArrayRCP<const ST> dn_dPsi_j_constView = dn_dPsi_j->get1dView(); 
-      //loop over rows of Mass
-      for (LO row = 0; row<Mass->getNodeNumRows(); row++) {
-        val = 0.0;
-        //get number of entries in tow 
-        numEntriesT = Mass->getNumEntriesInLocalRow(row);
-        matrixEntriesT.resize(numEntriesT);
-        matrixIndicesT.resize(numEntriesT);
-        //get copy of row  
-        Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
-        //loop over colums of mass and calculate Mass*dn_dPsi[j] for each row.
-        for (LO col=0; col<numEntriesT; col++) {
-          val += matrixEntriesT[col]*dn_dPsi_j_constView[matrixIndicesT[col]]; 
-        }
-        blockPS_crs->sumIntoLocalValues(row, Teuchos::arrayView(&colZero,1), Teuchos::arrayView(&val,1)); 
-      }
+    Teuchos::RCP<Tpetra_CrsMatrix> blockPS_crs = Teuchos::rcp(new Tpetra_CrsMatrix(Mass->getMap(), Mass->getGlobalMaxNumRowEntries()));
+    //Get (j-1)st entry of dn_dPsi
+    Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(j-1);
+    const Teuchos::ArrayRCP<const ST> dn_dPsi_j_constView = dn_dPsi_j->get1dView(); 
+    //Create CrsMatrix whose diagonal is dn_dPsi_j
+    //IKT: Is there a Tpetra command to create diagonal CrsMatrix from Vector??
+    Teuchos::RCP<Tpetra_CrsMatrix> dn_dPsi_j_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graphDiag));
+    for (LO row = 0; row < dn_dPsi_j_crs->getNodeNumRows(); row++){
+      val = dn_dPsi_j_constView[row]; 
+      dn_dPsi_j_crs->replaceLocalValues(row, Teuchos::arrayView(&row,1), Teuchos::arrayView(&val,1)); 
     }
-    blockPS_crs->fillComplete();  
+    dn_dPsi_j_crs->fillComplete(); 
+    //blockPS_crs = M*diag(dn_dPsi[j]) 
+    Tpetra::MatrixMatrix::Multiply(*Mass, false, *dn_dPsi_j_crs, false, *blockPS_crs, true); 
     Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPS = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockPS_crs);
     blocked_op->setNonconstBlock(0, j, blockPS); 
   }
+  //FIXME, IKT, 6/22/15: check with Erik what does col mean.
   //populate (Poisson, eigenvalue) block with -M*col(dn/dEval[i]) -- 1 matrix with nEigenvals columns
   Teuchos::RCP<Tpetra_CrsMatrix> blockPE_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graphEvalsCols));
   for (int i=0; i<nEigenvals_; i++) {
@@ -203,36 +199,43 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   Teuchos::RCP<Thyra::LinearOpBase<ST>> blockPE = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockPE_crs);
   blocked_op->setNonconstBlock(0, block_dim-1, blockPE); 
 
-  //populate (Schrodinger, Poisson) blocks with M*psiVectors[i] -- nEvals matrices with 1 column
+  //populate (Schrodinger, Poisson) blocks with -M*diag(psiVectors[i]) 
   for (int i=1; i<block_dim-1; i++) {
-    Teuchos::RCP<Tpetra_CrsMatrix> blockSP_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graph1col));
-    if (psiVectors != Teuchos::null) { 
-      //Get (i-1)st entry of psiVectors
-      Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i-1); 
-      const Teuchos::ArrayRCP<const ST> psiVectors_i_constView = psiVectors_i->get1dView(); 
-      //loop over rows of Mass
-      for (LO row = 0; row<Mass->getNodeNumRows(); row++) {
-        val = 0.0; 
-        //get number of entries in tow 
-        numEntriesT = Mass->getNumEntriesInLocalRow(row);
-        matrixEntriesT.resize(numEntriesT);
-        matrixIndicesT.resize(numEntriesT);
-        //get copy of row  
-        Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
-        //loop over colums of mass and calculate -Mass*psiVectors[i] for each row.
-        for (LO col=0; col<numEntriesT; col++) {
-          val += -1*matrixEntriesT[col]*psiVectors_i_constView[matrixIndicesT[col]]; 
-        }
-        blockSP_crs->sumIntoLocalValues(row, Teuchos::arrayView(&colZero,1), Teuchos::arrayView(&val,1)); 
-      }
+    Teuchos::RCP<Tpetra_CrsMatrix> blockSP_crs = Teuchos::rcp(new Tpetra_CrsMatrix(Mass->getMap(), Mass->getGlobalMaxNumRowEntries()));
+    //Get (i-1)st entry of psiVectors
+    Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i-1); 
+    const Teuchos::ArrayRCP<const ST> psiVectors_i_constView = psiVectors_i->get1dView(); 
+    //Create CrsMatrix whose diagonal -psiVectors_i
+    //IKT: Is there a Tpetra command to create diagonal CrsMatrix from Vector??
+    Teuchos::RCP<Tpetra_CrsMatrix> psiVectors_i_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graphDiag));
+    for (LO row = 0; row < psiVectors_i_crs->getNodeNumRows(); row++){
+      val = -1.0*psiVectors_i_constView[row]; 
+      psiVectors_i_crs->replaceLocalValues(row, Teuchos::arrayView(&row,1), Teuchos::arrayView(&val,1)); 
     }
-    blockSP_crs->fillComplete();  
+    psiVectors_i_crs->fillComplete(); 
+    //blockSP_crs = =M*diag(psiVectors[i]) 
+    Tpetra::MatrixMatrix::Multiply(*Mass, false, *psiVectors_i_crs, false, *blockSP_crs, true); 
     Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSP = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSP_crs);
-    blocked_op->setNonconstBlock(i, 0, blockSP);
+    blocked_op->setNonconstBlock(i, 0, blockSP); 
   }
-  //Populate (Schrodinger, Schrodinger) block TODO 
+  //Populate (Schrodinger, Schrodinger) block with delta(i,j)*(H-eval[j]*M)
+  //Call fill complete on Jac_Schrodinger
+  //Jac_Schrodinger->fillComplete();  
+  const Teuchos::ArrayRCP<const ST> neg_eigenvalues_constView = neg_eigenvalues->get1dView();
+  for (int i=1; i<block_dim-1; i++) {
+    for (int j=1; j<block_dim-1; j++) {
+      //Create CrsMatrix to hold SS block
+      Teuchos::RCP<Tpetra_CrsMatrix> blockSS_crs = Teuchos::rcp(new Tpetra_CrsMatrix(Jac_Schrodinger->getMap(), 
+                                                                    Jac_Schrodinger->getGlobalMaxNumRowEntries()));
+      //blockSS_crs = H-eval[j]*M
+      Tpetra::MatrixMatrix::Add(*Jac_Schrodinger, false, 1.0, *Mass, false, neg_eigenvalues_constView[j-1], blockSS_crs); 
+      blockSS_crs->fillComplete(); 
+      Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSS = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSS_crs);
+      blocked_op->setNonconstBlock(i, j, blockSS); 
+    }
+  } 
   //
-  //Populate (Schrodinger, eigenvalue) block with delta(i,j)*M*Psi[i] -- nEvals matrices with nEvals columns
+  //Populate (Schrodinger, eigenvalue) block with delta(i,j)*M*Psi[j] 
   for (int i=1; i<block_dim-1; i++) {
     Teuchos::RCP<Tpetra_CrsMatrix> blockSE_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graphEvalsCols));
     for (int j=0; j<nEigenvals_; j++) {
@@ -249,7 +252,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
           matrixIndicesT.resize(numEntriesT);
           //get copy of row  
           Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
-          //loop over columns of mass and calculate Mass*dn_dEval[j]
+          //loop over columns of mass and calculate Mass*psiVectors[j]
           for (LO col=0; col<numEntriesT; col++) {
             val += matrixEntriesT[col]*psiVectors_j_constView[matrixIndicesT[col]]; 
           }
@@ -262,58 +265,11 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSE = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSE_crs);
     blocked_op->setNonconstBlock(i, 0, blockSE);
   }
-  //Populate (eigenvalue, Schrodinger) block TODO 
-
-
+  //Populate (eigenvalue, Schrodinger) block
+  //FIXME, IKT, 6/22/15: ask Erik what this block should be! 
   //FIXME: This is temporary to debug other parts of the code!  Need to populate Jacobian correctly. 
-  for (int i=block_dim-1; i<block_dim; i++) {
-    for (int j=block_dim-1; j<block_dim; j++) { 
-        if (i == j) 
-          blocked_op->setNonconstBlock(i,j, blockPP); 
-     }
-   }
-/* 
-  //populate remaining blocks
-  Teuchos::Array<Teuchos::RCP<ImplicitPSJacobian> > implicitJacs; 
-  implicitJacs.resize((2+nEigenvals)*(2+nEigenvals)); 
-  for (int i=0; i< 2+nEigenvals; i++) {
-    for (int j=0; j<2+nEigenvals; j++) {
-        implicitJacs[j+i*(2+nEigenvals)] = Teuchos::rcp(new QCADT::ImplicitPSJacobian(nEigenvals,
-                                                  discretizationMap, fullPSMap, commT_, dim, valleyDegen, temp,
-                                                  lengthUnitInMeters, energyUnitInElectronVolts,
-                                                  effMass, conductionBandOffset));
-        implicitJacs[j+i*(2+nEigenvals)]->initialize(Jac_Schrodinger, Mass, neg_eigenvals, eigenvecs);
-        implicitJacs[j+i*(2+nEigenvals)]->setIndices(i, j); 
-    }
-  }
-  //(0, *) blocks
-  for (int j=1; j<2+nEigenvals; j++) {
-    Teuchos::RCP<Thyra::LinearOpBase<ST>>
-        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j]);
-    blocked_op->setNonconstBlock(0,j, block); 
-  }
-  //(1:1+nEigenvals, *) blocks
-  for (int i=1; i < 1+nEigenvals; i++) {
-    for (int j=0; j<2+nEigenvals; j++) {
-      Teuchos::RCP<Thyra::LinearOpBase<ST>>
-          block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j+i*(2+nEigenvals)]);
-      blocked_op->setNonconstBlock(i,j, block); 
-    }
-  }
-  //(2+nEigenvals, *) blocks
-    for (int j=1; j<1+nEigenvals; j++) {
-      Teuchos::RCP<Thyra::LinearOpBase<ST>>
-          block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j+(1+nEigenvals)*(2+nEigenvals)]);
-      blocked_op->setNonconstBlock(1+nEigenvals,j, block); 
-    }
-  
-   //(2+nEigenvals, *) blocks
-   for (int j=1; j<1+nEigenvals; j++) {
-     Teuchos::RCP<Thyra::LinearOpBase<ST>>    
-     block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(implicitJacs[j+(1+nEigenvals)*(2+nEigenvals)]);
-     blocked_op->setNonconstBlock(1+nEigenvals,j, block);
-   }
-*/
+   blocked_op->setNonconstBlock(2,1, blockPP); 
+
   // all done
   blocked_op->endBlockFill();
 #ifdef OUTPUT_TO_SCREEN
