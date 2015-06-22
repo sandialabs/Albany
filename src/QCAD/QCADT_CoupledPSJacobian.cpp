@@ -219,9 +219,9 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
         matrixIndicesT.resize(numEntriesT);
         //get copy of row  
         Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
-        //loop over colums of mass and calculate Mass*psiVectors[i] for each row.
+        //loop over colums of mass and calculate -Mass*psiVectors[i] for each row.
         for (LO col=0; col<numEntriesT; col++) {
-          val += matrixEntriesT[col]*psiVectors_i_constView[matrixIndicesT[col]]; 
+          val += -1*matrixEntriesT[col]*psiVectors_i_constView[matrixIndicesT[col]]; 
         }
         blockSP_crs->sumIntoLocalValues(row, Teuchos::arrayView(&colZero,1), Teuchos::arrayView(&val,1)); 
       }
@@ -232,9 +232,37 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   }
   //Populate (Schrodinger, Schrodinger) block TODO 
   //
-  //Populate (Schrodinger, eigenvalue) block with delta(i,j)*M*Psi[i] 
-  //
-  //Populate (Eigenvalue, Schrodinger) block TODO 
+  //Populate (Schrodinger, eigenvalue) block with delta(i,j)*M*Psi[i] -- nEvals matrices with nEvals columns
+  for (int i=1; i<block_dim-1; i++) {
+    Teuchos::RCP<Tpetra_CrsMatrix> blockSE_crs = Teuchos::rcp(new Tpetra_CrsMatrix(graphEvalsCols));
+    for (int j=0; j<nEigenvals_; j++) {
+      if (dn_dEval != Teuchos::null) {
+        //get jth psiVectors vector
+        Teuchos::RCP<const Tpetra_Vector> psiVectors_j = psiVectors->getVector(j); 
+        const Teuchos::ArrayRCP<const ST> psiVectors_j_constView = psiVectors_j->get1dView(); 
+        //loop over rows of Mass Matrix
+        for (LO row = 0; row<Mass->getNodeNumRows(); row++) {
+          val = 0.0;
+          //get number of entries in tow 
+          numEntriesT = Mass->getNumEntriesInLocalRow(row);
+          matrixEntriesT.resize(numEntriesT);
+          matrixIndicesT.resize(numEntriesT);
+          //get copy of row  
+          Mass->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+          //loop over columns of mass and calculate Mass*dn_dEval[j]
+          for (LO col=0; col<numEntriesT; col++) {
+            val += matrixEntriesT[col]*psiVectors_j_constView[matrixIndicesT[col]]; 
+          }
+         //Sum into jth column of blockPE_crs
+         blockSE_crs->sumIntoLocalValues(row, Teuchos::arrayView(&j,1), Teuchos::arrayView(&val,1)); 
+        }
+      }
+    }
+    blockSE_crs->fillComplete();  
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> blockSE = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(blockSE_crs);
+    blocked_op->setNonconstBlock(i, 0, blockSE);
+  }
+  //Populate (eigenvalue, Schrodinger) block TODO 
 
 
   //FIXME: This is temporary to debug other parts of the code!  Need to populate Jacobian correctly. 
