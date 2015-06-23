@@ -783,6 +783,13 @@ Albany::StateManager::getAuxData()
   return auxData;
 }
 
+Teuchos::RCP<Tpetra_MultiVector>
+Albany::StateManager::getAuxDataT()
+{
+  return auxDataT;
+}
+
+
 void
 Albany::StateManager::setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data)
 {

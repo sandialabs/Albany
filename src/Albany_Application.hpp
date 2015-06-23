@@ -1203,6 +1203,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 #endif
+  workset.auxDataPtrT = stateMgr.getAuxDataT();
 
  
 //  workset.wsElNodeEqID_kokkos =

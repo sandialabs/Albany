@@ -19,7 +19,6 @@ SET(SOURCES
   evaluators/QCAD_StringFormulaEvaluator.cpp
   problems/QCAD_SchrodingerProblem.cpp
   problems/QCAD_PoissonProblem.cpp
-  QCADT_ImplicitPSJacobian.cpp
   QCADT_CoupledPSJacobian.cpp
   QCADT_CoupledPoissonSchrodinger.cpp
   ../problems/Albany_ThermoElectrostaticsProblem.cpp
@@ -44,7 +43,6 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 SET(HEADERS
-  QCADT_ImplicitPSJacobian.hpp
   QCADT_CoupledPSJacobian.hpp
   QCADT_CoupledPoissonSchrodinger.hpp
   evaluators/QCAD_Permittivity.hpp

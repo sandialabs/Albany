@@ -264,6 +264,7 @@ SET(SOURCES ${SOURCES}
   evaluators/Adapt_ElementSizeField.cpp
   evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_GatherAuxData.cpp
   )
  
 SET(SOURCES ${SOURCES}
@@ -275,7 +276,6 @@ IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} 
     evaluators/PHAL_GatherEigenvectors.cpp
     evaluators/PHAL_GatherEigenData.cpp
-    evaluators/PHAL_GatherAuxData.cpp
   )
 ENDIF() 
 
@@ -388,6 +388,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  evaluators/PHAL_GatherAuxData.hpp
+  evaluators/PHAL_GatherAuxData_Def.hpp
   )
   
 IF (ALBANY_EPETRA) 
@@ -400,8 +402,6 @@ IF (ALBANY_EPETRA)
     evaluators/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
-    evaluators/PHAL_GatherAuxData.hpp
-    evaluators/PHAL_GatherAuxData_Def.hpp
   )
 ENDIF()
 
