@@ -489,6 +489,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     composite =
         material_db_->getElementBlockParam<bool>(eb_name,
             "Use Composite Tet 10");
+  pFromProb->set<bool>("Use Composite Tet 10", composite);
 
   // set flag for small strain option
   bool small_strain(false);

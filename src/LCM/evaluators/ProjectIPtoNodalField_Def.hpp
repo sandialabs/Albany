@@ -7,18 +7,24 @@
 #include <fstream>
 #include <Teuchos_TestForException.hpp>
 #include <Teuchos_AbstractFactoryStd.hpp>
-#include "Albany_Utils.hpp"
 
-#include "Thyra_VectorBase.hpp"
+#include <Thyra_VectorBase.hpp>
 #include <Thyra_TpetraMultiVector.hpp>
 #include <Thyra_TpetraLinearOp.hpp>
-#include "Thyra_LinearOpWithSolveBase.hpp"
-
-#include "Adapt_NodalDataVector.hpp"
-
+#include <Thyra_LinearOpWithSolveBase.hpp>
 #ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif
+
+#include <Intrepid_CellTools.hpp>
+#include <Intrepid_FunctionSpaceTools.hpp>
+#include <Intrepid_FieldContainer.hpp>
+#include <Intrepid_DefaultCubatureFactory.hpp>
+#include <Shards_CellTopology.hpp>
+
+#include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Adapt_NodalDataVector.hpp"
 
 namespace LCM {
 
@@ -49,6 +55,104 @@ public:
 private:
   int nwrkr_, prectr_, postctr_;
 };
+
+typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> >
+        IntrepidBasis;
+
+class ProjectIPtoNodalFieldQuadrature {
+  typedef PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
+  PHX::MDField<RealType,Cell,Node,QuadPoint> bf_;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wbf_;
+
+  Teuchos::RCP<IntrepidBasis> intrepid_basis_;
+  CellTopologyData ctd_;
+  Teuchos::RCP<shards::CellTopology> cell_topo_;
+  Intrepid::FieldContainer<RealType> ref_points_, ref_weights_;
+
+public:
+  ProjectIPtoNodalFieldQuadrature(
+    Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl,
+    const CellTopologyData& ctd, const int degree);
+  void evaluateBasis(const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>&
+                     coords_verts);
+  const PHX::MDField<RealType,Cell,Node,QuadPoint>& bf () const
+  { return bf_; }
+  const PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>& wbf () const
+  { return wbf_; }
+};
+
+ProjectIPtoNodalFieldQuadrature::
+ProjectIPtoNodalFieldQuadrature (
+  Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl,
+  const CellTopologyData& ctd, const int degree)
+  : ctd_(ctd)
+{
+  cell_topo_ = Teuchos::rcp(new shards::CellTopology(&ctd_));
+  Intrepid::DefaultCubatureFactory<RealType> cub_factory;
+  Teuchos::RCP<Intrepid::Cubature<RealType> >
+    cubature = cub_factory.create(*cell_topo_, degree);
+  const int nqp = cubature->getNumPoints(), nd = cubature->getDimension();
+  ref_points_.resize(nqp, nd);
+  ref_weights_.resize(nqp);
+  cubature->getCubature(ref_points_, ref_weights_);
+
+  // Support composite Tet<10> in principle; however, I observe that there
+  // appears to be something wrong with the quadrature setup for composite
+  // Tet<10>, at least at degree 4 and higher. In particular, a linear function
+  // is *not* recovered.
+  const Teuchos::RCP<Teuchos::ParameterList>& pfp =
+    p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem",
+                                                  Teuchos::null);
+  const bool composite = pfp.is_null() ? false :
+    pfp->get<bool>("Use Composite Tet 10", false);
+  intrepid_basis_ = Albany::getIntrepidBasis(ctd, composite);
+
+  typedef PHX::MDALayout<Cell,Node,QuadPoint> Layout;
+  Teuchos::RCP<Layout> node_qp_scalar = Teuchos::rcp(
+    new Layout(dl->node_qp_scalar->dimension(0),
+               dl->node_qp_scalar->dimension(1), nqp));
+  bf_ = PHX::MDField<RealType,Cell,Node,QuadPoint>("my BF", node_qp_scalar);
+  wbf_ = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>("my wBF",
+                                                       node_qp_scalar);
+  bf_.setFieldData(
+    PHX::KokkosViewFactory<RealType,PHX::Device>::buildView(
+      bf_.fieldTag()));
+  wbf_.setFieldData(
+    PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(
+      wbf_.fieldTag()));
+}
+
+void ProjectIPtoNodalFieldQuadrature::
+evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
+  using namespace Intrepid;
+  typedef CellTools<RealType> CellTools;
+  const int nqp = ref_points_.dimension(0), nd = ref_points_.dimension(1),
+    nc = coord_vert.dimension(0), nn = coord_vert.dimension(1);
+  FieldContainer<RealType> jacobian(nc, nqp, nd, nd), jacobian_det(nc, nqp),
+    weighted_measure(nc, nqp), coord_qp(nc, nqp, nd), val_ref_points(nn, nqp);
+  CellTools::mapToPhysicalFrame(coord_qp, ref_points_, coord_vert, *cell_topo_);
+  CellTools::setJacobian(jacobian, ref_points_, coord_vert, *cell_topo_);
+  CellTools::setJacobianDet(jacobian_det, jacobian);
+  intrepid_basis_->getValues(val_ref_points, ref_points_,
+                             Intrepid::OPERATOR_VALUE);
+  FunctionSpaceTools::computeCellMeasure<RealType>(weighted_measure,
+                                                   jacobian_det, ref_weights_);
+  FunctionSpaceTools::HGRADtransformVALUE<RealType>(bf_, val_ref_points);
+  FunctionSpaceTools::multiplyMeasure<RealType>(wbf_, weighted_measure, bf_);
+}
+
+static Teuchos::RCP<ProjectIPtoNodalFieldQuadrature>
+initQuadMgr (Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl,
+             const Albany::MeshSpecsStruct* mesh_specs) {
+  const int min_quad_deg =
+    mesh_specs->ctd.node_count > mesh_specs->ctd.vertex_count ?
+    4 : 2;
+  if (mesh_specs->cubatureDegree >= min_quad_deg)
+    return Teuchos::null;
+  return Teuchos::rcp(
+    new ProjectIPtoNodalFieldQuadrature(p, dl, mesh_specs->ctd, min_quad_deg));
+}
 
 template<typename Traits>
 typename ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
@@ -283,13 +387,13 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
                        const Albany::MeshSpecsStruct* mesh_specs)
   : ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(dl),
     wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
-    BF(p.get<std::string>("BF Name"), dl->node_qp_scalar)
+    BF(p.get<std::string>("BF Name"), dl->node_qp_scalar),
 #ifdef PROJ_INTERP_TEST
-  , coords_qp_(p.get<std::string>("Coordinate Vector Name"),
+    coords_qp_(p.get<std::string>("Coordinate Vector Name"),
                dl->qp_gradient),
+#endif
     coords_verts_(p.get<std::string>("Coordinate Vector Name"),
                   dl->vertices_vector)
-#endif
 {
   //todo Some of this doesn't need to be done for all RFs in the case of
   // multiple EBs.
@@ -298,9 +402,11 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
   this->addDependentField(BF);
 #ifdef PROJ_INTERP_TEST
   this->addDependentField(coords_qp_);
-  this->addDependentField(coords_verts_);
 #endif
+  this->addDependentField(coords_verts_);
   this->setName("ProjectIPtoNodalField<Residual>");
+
+  quad_mgr_ = initQuadMgr(p, dl, mesh_specs);
 
   // Get and validate ProjectIPtoNodalField parameter list.
   Teuchos::ParameterList*
@@ -433,8 +539,8 @@ postRegistrationSetup (typename Traits::SetupData d,
     this->utils.setFieldData(ip_fields_[field], fm);
 #ifdef PROJ_INTERP_TEST
   this->utils.setFieldData(coords_qp_, fm);
-  this->utils.setFieldData(coords_verts_, fm);
 #endif
+  this->utils.setFieldData(coords_verts_, fm);
 }
 
 template<typename Traits>
@@ -521,6 +627,8 @@ fillRHS (const typename Traits::EvalData workset) {
 }
 
 #ifdef PROJ_INTERP_TEST
+// For Tet<10>, the rhs needs to be integrated with >= degree-3 quadrature to
+// recover a linear function exactly.
 static double test_fn (const double x, const double y, const double z) {
   return 1.5*x - 0.8*y + 1.1*z;
 }
@@ -529,7 +637,11 @@ static double test_fn (const double x, const double y, const double z) {
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields (typename Traits::EvalData workset) {
-  mgr_->mass_matrix->fill(workset, BF, wBF);
+  if (Teuchos::nonnull(quad_mgr_)) {
+    quad_mgr_->evaluateBasis(coords_verts_);
+    mgr_->mass_matrix->fill(workset, quad_mgr_->bf(), quad_mgr_->wbf());
+  } else
+    mgr_->mass_matrix->fill(workset, BF, wBF);
 #ifdef PROJ_INTERP_TEST
   PHX::MDField<RealType>& f = ip_fields_.back();
   for (unsigned int cell = 0; cell < workset.numCells; ++cell)
