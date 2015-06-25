@@ -253,6 +253,7 @@ if __name__ == "__main__":
                     temp = inFile.get_element_variable_values(blockID, varName, timeStep+1)
                     for value in temp:
                         eqps += value
+                eqps /= numElems
             elif fem_code == "LCM":
                 for gaussPt in range(1, 9):
                     varName = eqps__var_base + str(gaussPt)
