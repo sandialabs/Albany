@@ -79,17 +79,31 @@ IF (INSTALL_ALBANY)
   include(CMakePackageConfigHelpers)
 ENDIF ()
 
+option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
+if (ENABLE_CROSS_COMPILE)
+  set (Albany_CROSS_COMPILE ON)
+  message ("Building with cross-compiling tools.")
+else ()
+  set (Albany_CROSS_COMPILE OFF)
+endif ()
+
 if (SET_COMPILERS_AUTOMATICALLY)
   MESSAGE("Setting and checking of compilers:")
-# Force the compilers to be the same as Trilinos
-# This syntax is needed when cross compiling or the compilers get checked
-# again by the Albany configure, and will probably fail, because the options
-# wont be right and the exes won't run on the host.
-  INCLUDE (CMakeForceCompiler)
-  SET(CMAKE_SYSTEM_NAME Generic)
-  CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} Generic)
-  CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} Generic)
-  CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} Generic)
+  if (Albany_CROSS_COMPILE)
+    # Force the compilers to be the same as Trilinos (GAH experimental)
+    # This syntax is needed when cross compiling or the compilers get checked
+    # again by the Albany configure, and will probably fail, because the options
+    # won't be right and the exes won't run on the host.
+    INCLUDE (CMakeForceCompiler)
+    SET(CMAKE_SYSTEM_NAME Generic)
+    CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} Generic)
+    CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} Generic)
+    CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} Generic)
+  else ()
+    set (CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
+    set (CMAKE_C_COMPILER ${Trilinos_C_COMPILER})
+    set (CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
+  endif ()
 else()
   # Make sure the compilers match.
   MESSAGE("Checking compilers:")
