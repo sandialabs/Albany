@@ -1203,7 +1203,8 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 #endif
-  workset.auxDataPtrT = stateMgr.getAuxDataT();
+ //FIXME, 6/25: This line was causing link error.  Need to figure out why. 
+ // workset.auxDataPtrT = stateMgr.getAuxDataT();
 
  
 //  workset.wsElNodeEqID_kokkos =
