@@ -45,20 +45,20 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
   if (material.length() == 0) 
   {
     ebName = materialDB->getNodeSetParam<std::string>(nodeSetName,"elementBlock","");
-    if (ebName.length() == 0)
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, std::endl 
-	       << "Error! elementBlock must exist for nodeset of " << nodeSetName << std::endl);
-
-    if (p.isParameter("Schottky Barrier Height"))
+    if (ebName.length() > 0)
     {
-      sbHeight = p.get<double>("Schottky Barrier Height");  // [eV]
-      contactType = "Schottky Contact";
-    }
-    else
-      contactType = "Ohmic Contact"; 
+      if (p.isParameter("Schottky Barrier Height"))
+      {
+        sbHeight = p.get<double>("Schottky Barrier Height");  // [eV]
+        contactType = "Schottky Contact";
+      }
+      else
+        contactType = "Ohmic Contact"; 
 
-    // keep it for now
-    material = materialDB->getElementBlockParam<std::string>(ebName,"material","");
+      material = materialDB->getElementBlockParam<std::string>(ebName,"material","");
+    }
+    
+    // if ebName.length() == 0, contactType = "None" and material.length() == 0
   }
 
   // private scaling parameter (note: kbT is used in calculating qPhiRef below)
@@ -82,7 +82,7 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
       
       ScalarT Eg = Eg0 - alpha * std::pow(temperature,2.0) / (beta+temperature); // in [eV]
       ScalarT Eic = -Eg/2. + 3./4.*kbT*std::log(mdp/mdn);  // (Ei-Ec) in [eV]
-      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+      qPhiRef = Chi - Eic;  // qPhiRef is basically the difference between vacuum energy level and intrinsic Fermi level
     }
     else if (category == "Insulator") {
       double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
@@ -219,7 +219,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       }
       else 
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, std::endl 
-	          << "Error! elementBlock must exist for Ohmic Contact nodeset of " << nodeSetName << std::endl);
+	          << "Error! elementBlock must exist for Schottky Contact nodeset of " << nodeSetName << std::endl);
 
       // Temperature-dependent material parameters
       ScalarT Eg;  // band gap at T [K] in [eV]
