@@ -92,9 +92,9 @@ if __name__ == "__main__":
         print "  ERROR: ABORTING."
         sys.stdout.write("Done.\n")
         sys.exit(1)
-    print "  Found displacement variables " + displ_var_name[0] + ", " + displ_var_name[1] + ", " + displ_var_name[2]
+    print "  Found displacement variables " + displ_var_name[0] + ", " + displ_var_name[1] + ", " + displ_var_name[2] + "."
     sys.stdout.write("Done.\n")
-    print "Assuming this output was created by " + fem_code
+    print "Assuming this output was created by " + fem_code + "."
 
     sys.stdout.write("Looking for force node variables...\n")
     force_var_name = ["<NULL>" for x in range(3)]
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         force_var_name[1] = "force_y"
         force_var_name[2] = "force_z"
         flag_found_force = 1
-    if 'FORCE_X' in nodeVariableNames:
+    elif 'FORCE_X' in nodeVariableNames:
         force_var_name[0] = "FORCE_X"
         force_var_name[1] = "FORCE_Y"
         force_var_name[2] = "FORCE_Z"
@@ -120,19 +120,19 @@ if __name__ == "__main__":
         # sys.exit(1)
         flag_found_force = 0
     if flag_found_force:
-        print "  Found force variables " + force_var_name[0] + ", " + force_var_name[1] + ", " + force_var_name[2]
+        print "  Found force variables " + force_var_name[0] + ", " + force_var_name[1] + ", " + force_var_name[2] + "."
     sys.stdout.write("Done.\n")
 
     sys.stdout.write("Looking for EQPS element variable(s)...\n")
     if 'eqps_1' in elemVariableNames:
         flag_found_eqps = 1
-        print "  Found EQPS variable eqps_1"
-    if 'EQPS_1' in elemVariableNames:
+        print "  Found EQPS variable eqps_1."
+    elif 'EQPS_1' in elemVariableNames:
         flag_found_eqps = 1
-        print "  Found EQPS variable EQPS_1"
+        print "  Found EQPS variable EQPS_1."
     elif 'EQPS' in elemVariableNames:
         flag_found_eqps = 1
-        print "  Found EQPS variable EQPS"
+        print "  Found EQPS variable EQPS."
     else:
         print "  WARNING: Couldn't find EQPS variable(s)."
         # sys.exit(1)
@@ -213,8 +213,9 @@ if __name__ == "__main__":
         sys.exit(2)
     sys.stdout.write("Done.\n")
 
-    # In this particular case, we want to plot force-displacement curves
-    # where the forces and displacements are on a specific node set
+    sys.stdout.write("Loading element block ids...")
+    blockIDs = inFile.get_elem_blk_ids()
+    sys.stdout.write("done.\n")
 
     node_pos = {}
 
@@ -226,15 +227,15 @@ if __name__ == "__main__":
     if flag_found_nsets_DIR[0]:
         dataFile_X = open(outFileName + "_X-dir.txt", 'w')
         dataFile_X.write("# [1]Step  [2]Time  [3]" + str(displ_var_name[0]) + "  [4]" + str(force_var_name[0]) + "  [5]TrueStrain_Elastic  [6]TrueStrain_Plastic  [7]TrueStrain_Total  [8]AvgCauchyStress  [9]" + eqps_header_text + "  [10]" + eqps_header_text + "/TrueStrain_Plastic\n")
-        print "Created file " + outFileName + "_X-dir.txt"
+        print "Created file " + outFileName + "_X-dir.txt."
     if flag_found_nsets_DIR[1]:
         dataFile_Y = open(outFileName + "_Y-dir.txt", 'w')
         dataFile_Y.write("# [1]Step  [2]Time  [3]" + str(displ_var_name[1]) + "  [4]" + str(force_var_name[1]) + "  [5]TrueStrain_Elastic  [6]TrueStrain_Plastic  [7]TrueStrain_Total  [8]AvgCauchyStress  [9]" + eqps_header_text + "  [10]" + eqps_header_text + "/TrueStrain_Plastic\n")
-        print "Created file " + outFileName + "_Y-dir.txt"
+        print "Created file " + outFileName + "_Y-dir.txt."
     if flag_found_nsets_DIR[2]:
         dataFile_Z = open(outFileName + "_Z-dir.txt", 'w')
         dataFile_Z.write("# [1]Step  [2]Time  [3]" + str(displ_var_name[2]) + "  [4]" + str(force_var_name[2]) + "  [5]TrueStrain_Elastic  [6]TrueStrain_Plastic  [7]TrueStrain_Total  [8]AvgCauchyStress  [9]" + eqps_header_text + "  [10]" + eqps_header_text + "/TrueStrain_Plastic\n")
-        print "Created file " + outFileName + "_Z-dir.txt"
+        print "Created file " + outFileName + "_Z-dir.txt."
 
     elastic_modulus_DIR = [0.0 for x in range(3)]
     displ_DIR = [[0.0 for x in range(numNodes)] for x in range(3)]
@@ -247,17 +248,18 @@ if __name__ == "__main__":
         eqps = 0.0
         if flag_found_eqps:
             if fem_code == "Jas3D":
-                for elemNo in range(numElems):
-                    varName = eqps__var_base
-                    temp = inFile.get_element_variable_values(elemNo+1, varName, timeStep+1)
-                    eqps += temp[0]
-                eqps /= numElems
+                varName = eqps__var_base
+                for blockID in blockIDs:
+                    temp = inFile.get_element_variable_values(blockID, varName, timeStep+1)
+                    for value in temp:
+                        eqps += value
             elif fem_code == "LCM":
-                for elemNo in range(numElems):
-                    for gaussPt in range(1, 9):
-                        varName = eqps__var_base + str(gaussPt)
-                        temp = inFile.get_element_variable_values(elemNo+1, varName, timeStep+1)
-                        eqps += temp[0]
+                for gaussPt in range(1, 9):
+                    varName = eqps__var_base + str(gaussPt)
+                    for blockID in blockIDs:
+                        temp = inFile.get_element_variable_values(blockID, varName, timeStep+1)
+                        for value in temp:
+                            eqps += value
                 eqps /= 8.0*numElems
 
         for d in range(0, 3):
@@ -280,10 +282,11 @@ if __name__ == "__main__":
                     dir_text = "YY"
                 else:
                     dir_text = "ZZ"
-                for elemNo in range(numElems):
-                    varName = stres_var_base + dir_text
-                    temp = inFile.get_element_variable_values(elemNo+1, varName, timeStep+1)
-                    stress += temp[0]
+                varName = stres_var_base + dir_text
+                for blockID in blockIDs:
+                    temp = inFile.get_element_variable_values(blockID, varName, timeStep+1)
+                    for value in temp:
+                        stress += value
                 stress /= numElems
             elif fem_code == "LCM":
                 if d == 0:
@@ -292,11 +295,12 @@ if __name__ == "__main__":
                     cauchyIDs = [ "05", "14", "23", "32", "41", "50", "59", "68" ]
                 else:
                     cauchyIDs = [ "09", "18", "27", "36", "45", "54", "63", "72" ]
-                for elemNo in range(numElems):
-                    for cauchyID in cauchyIDs:
-                        varName = stres_var_base + cauchyID
-                        temp = inFile.get_element_variable_values(elemNo+1, varName, timeStep+1)
-                        stress += temp[0]
+                for cauchyID in cauchyIDs:
+                    varName = stres_var_base + cauchyID
+                    for blockID in blockIDs:
+                        temp = inFile.get_element_variable_values(blockID, varName, timeStep+1)
+                        for value in temp:
+                            stress += value
                 stress /= 8.0*numElems
 
             if d == 0:
@@ -344,10 +348,13 @@ if __name__ == "__main__":
             elif timeStep == 1:
                 elastic_strain_2 = strain
                 elastic_stress_2 = stress
-                elastic_modulus_DIR[d]  = (elastic_stress_2 - elastic_stress_1)/(elastic_strain_2 - elastic_strain_1)
+                if elastic_strain_2 == elastic_strain_1:
+                    elastic_modulus_DIR[d]  = (elastic_stress_2 - elastic_stress_1)
+		else:
+                    elastic_modulus_DIR[d]  = (elastic_stress_2 - elastic_stress_1)/(elastic_strain_2 - elastic_strain_1)
                 sys.stdout.write("\n  Found " + dir_text + "-direction elastic modulus = " + str(elastic_modulus_DIR[d]))
-		if d == 2:
-		    sys.stdout.write("\n")
+                if d == 2:
+                    sys.stdout.write("\n")
                 strain_elastic = stress/elastic_modulus_DIR[d]
                 strain_plastic = strain - strain_elastic
             else:
@@ -356,6 +363,7 @@ if __name__ == "__main__":
 
             if strain_plastic < 0.0:
                 strain_plastic = 0.0
+
             if strain_plastic == 0.0:
                 eqps_strain_ratio = 0.0
             else:
@@ -370,7 +378,7 @@ if __name__ == "__main__":
 
         if timeStep == 1:
             sys.stdout.write("Done.\n")
-	else:
+        else:
             sys.stdout.write("done.\n")
 
     if flag_found_nsets_DIR[0]:
