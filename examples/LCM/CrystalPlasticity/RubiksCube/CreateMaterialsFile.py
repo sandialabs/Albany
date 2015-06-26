@@ -217,9 +217,10 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
 
         # Integration scheme
         WriteParameter("Integration Scheme", "string", mat_params["integration_scheme"], mat_file, indent)
-        WriteParameter("Implicit Integration Relative Tolerance", "double", mat_params["implicit_integration_relative_tolerance"], mat_file, indent)
-        WriteParameter("Implicit Integration Absolute Tolerance", "double", mat_params["implicit_integration_absolute_tolerance"], mat_file, indent)
-        WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)
+        if mat_params["integration_scheme"] == "Implicit":
+            WriteParameter("Implicit Integration Relative Tolerance", "double", mat_params["implicit_integration_relative_tolerance"], mat_file, indent)
+            WriteParameter("Implicit Integration Absolute Tolerance", "double", mat_params["implicit_integration_absolute_tolerance"], mat_file, indent)
+            WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)
 
         # Specify output to exodus
         WriteParameter("Output Cauchy Stress", "bool", "true", mat_file, indent)
@@ -286,6 +287,7 @@ if __name__ == "__main__":
     num_blocks = int(sys.argv[3])
 
     # List of material parameters that are expected to be in the input file
+    # If it's set to None, then it is a required parameter
     mat_params = {}
     mat_params["C11"] = None
     mat_params["C12"] = None
@@ -296,9 +298,9 @@ if __name__ == "__main__":
     mat_params["hardening"] = None
     mat_params["hardening_exponent"] = None
     mat_params["integration_scheme"] = None
-    mat_params["implicit_integration_relative_tolerance"] = None
-    mat_params["implicit_integration_absolute_tolerance"] = None
-    mat_params["implicit_integration_max_iterations"] = None
+    mat_params["implicit_integration_relative_tolerance"] = "unspecified"
+    mat_params["implicit_integration_absolute_tolerance"] = "unspecified"
+    mat_params["implicit_integration_max_iterations"] = "unspecified"
 
     ParseMaterialParametersFile(mat_params_file_name, mat_params)
 
