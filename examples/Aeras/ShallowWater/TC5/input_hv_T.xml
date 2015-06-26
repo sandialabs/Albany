@@ -7,6 +7,7 @@
       <Parameter name="Use Hyperviscosity" type="bool" value="True"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="8e15"/>
+<!--      <Parameter name="Plot Vorticity" type="bool" value="true"/>-->
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
