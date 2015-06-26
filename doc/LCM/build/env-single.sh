@@ -75,43 +75,51 @@ esac
 
 case "$TOOL_CHAIN" in
     gcc)
-	export OMPI_CC=`which gcc`
+	if [ -z ${CC+x} ]; then CC=`which gcc`; fi
 	case "$ARCH" in
 	    serial)
-		export OMPI_CXX=`which g++`
+		if [ -z ${CXX+x} ]; then CXX=`which g++`; fi
 		;;
 	    openmp)
-		export OMPI_CXX=`which g++`
+		if [ -z ${CXX+x} ]; then CXX=`which g++`; fi
 		;;
 	    pthreads)
-		export OMPI_CXX=`which g++`
+		if [ -z ${CXX+x} ]; then CXX=`which g++`; fi
 		;;
 	    cuda)
-		export OMPI_CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper"
+		if [ -z ${CXX+x} ]; then
+		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		else
+		    export NVCC_WRAPPER_DEFAULT_COMPILER="$CXX";
+		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		fi
 		;;
 	    *)
 		echo "Unrecognized architecture option"
 		exit 1
 		;;
 	esac
-	export OMPI_FC=`which gfortran`
+	if [ -z ${FC+x} ]; then FC=`which gfortran`; fi
 	;;
     clang)
-	export OMPI_CC=`which clang`
-	export OMPI_CXX=`which clang++`
-	export OMPI_FC=`which gfortran`
+	if [ -z ${CC+x} ]; then CC=`which clang`; fi
+	if [ -z ${CXX+x} ]; then CXX=`which clang++`; fi
+	if [ -z ${FC+x} ]; then FC=`which gfortran`; fi
 	;;
     intel)
 	source $INTEL_DIR/bin/compilervars.sh intel64
-	export OMPI_CC=`which icc`
-	export OMPI_CXX=`which icpc`
-	export OMPI_FC=`which ifort`
+	if [ -z ${CC+x} ]; then CC=`which icc`; fi
+	if [ -z ${CXX+x} ]; then CXX=`which icpc`; fi
+	if [ -z ${FC+x} ]; then FC=`which ifort`; fi
 	;;
     *)
 	echo "Unrecognized tool chain option"
 	exit 1
 	;;
 esac
+export OMPI_CC="$CC"
+export OMPI_CXX="$CXX"
+export OMPI_FC="$FC"
 
 # This is here to add or change compiler flags in addition to those
 # specified by CMake during configuration. Right now they are empty

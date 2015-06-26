@@ -345,7 +345,6 @@ SET(CONFIGURE_OPTIONS
 # Try turning off more of Trilinos
   "-DTrilinos_ENABLE_OptiPack:BOOL=OFF"
   "-DTrilinos_ENABLE_GlobiPack:BOOL=OFF"
-  "-DTrilinos_ENABLE_Pamgen:BOOL=OFF"
   )
 
 IF(BUILD_TRILINOS)
