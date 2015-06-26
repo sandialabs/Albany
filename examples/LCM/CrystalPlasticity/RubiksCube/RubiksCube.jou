@@ -41,10 +41,10 @@ nodeset 3 surface with y_coord < -0.499999 and y_coord > -0.5000001
 nodeset 4 surface with y_coord >  0.499999 and y_coord <  0.5000001
 nodeset 5 surface with z_coord < -0.499999 and z_coord > -0.5000001
 nodeset 6 surface with z_coord >  0.499999 and z_coord <  0.5000001
-export genesis 'RubiksCube2.g' overwrite
+export genesis 'RubiksCube.g' overwrite
 refine vol all numsplit 1
-export genesis 'RubiksCube2_Mesh2.g' overwrite
+export genesis 'RubiksCube_Mesh2.g' overwrite
 refine vol all numsplit 1
-export genesis 'RubiksCube2_Mesh3.g' overwrite
+export genesis 'RubiksCube_Mesh3.g' overwrite
 refine vol all numsplit 1
-export genesis 'RubiksCube2_Mesh4.g' overwrite
+export genesis 'RubiksCube_Mesh4.g' overwrite

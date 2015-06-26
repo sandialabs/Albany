@@ -3,7 +3,7 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="MaterialDB Filename" type="string" value="RubiksCube_Implicit_Materials.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="RubiksCube_Explicit_Materials.xml"/>
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
@@ -21,8 +21,8 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube2.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="RubiksCube_Implicit2.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="RubiksCube_Explicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
@@ -39,7 +39,7 @@
       <ParameterList name="Stepper">
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="10000"/>
+        <Parameter name="Max Steps" type="int" value="100"/>
         <Parameter name="Max Value" type="double" value="1.0"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>

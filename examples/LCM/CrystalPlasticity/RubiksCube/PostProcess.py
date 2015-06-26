@@ -67,8 +67,8 @@ if __name__ == "__main__":
         displacement_x = inFile.get_node_variable_values('displacement_x', timeStep+1)
         force_x = inFile.get_node_variable_values('force_x', timeStep+1)
 
-        # The x-max face is nodeset_4
-        nodeSet = nodeSetNodes[4]
+        # The x-max face is nodeset_2
+        nodeSet = nodeSetNodes[2]
         displacement = 0.0
         force = 0.0
         for nodeId in nodeSet:
