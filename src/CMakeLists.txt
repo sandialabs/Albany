@@ -647,8 +647,12 @@ IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
   link_directories (${LAME_LIBRARY_DIR})
   set(LAME_LIB lame)
+  include_directories (${MATH_TOOLKIT_INCLUDE_DIR})
+  link_directories (${MATH_TOOLKIT_LIBRARY_DIR})
+  set(MATH_TOOLKIT_LIB math_toolkit)
 ELSE()
   set(LAME_LIB )
+  set(MATH_TOOLKIT_LIB )
 ENDIF()
 
 # LAMENT
@@ -754,6 +758,7 @@ set(ALL_LIBRARIES
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
+  ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}

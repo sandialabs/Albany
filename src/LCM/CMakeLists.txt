@@ -354,9 +354,9 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
   ENDIF()
 
   IF(ALBANY_STK_REBALANCE)
-    target_link_libraries(utLameStress_elastic albanySTKRebalance albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanySTKRebalance albanyLib ${MATH_TOOLKIT_LIB} ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ELSE ()
-    target_link_libraries(utLameStress_elastic albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanyLib ${MATH_TOOLKIT_LIB} ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ENDIF ()
 ENDIF ()
 
