@@ -60,6 +60,33 @@ void Coord2RBM(
       ii = 2; jj = 4+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
       break;
 
+    case 4:
+      for (ii=3;ii<4+NscalarDof;ii++) { /* lower half = [ 0 I ] */
+        for (jj=0;jj<4+NscalarDof;jj++) {
+          offset = dof+ii+jj*vec_leng;
+          rbm[offset] = (ii==jj) ? 1.0 : 0.0;
+        }
+      }
+      for (ii=0;ii<3+NscalarDof;ii++) { /* upper left = [ I ] */
+        for (jj=0;jj<3+NscalarDof;jj++) {
+          offset = dof+ii+jj*vec_leng;
+          rbm[offset] = (ii==jj) ? 1.0 : 0.0;
+        }
+      }
+      for (ii=0;ii<3;ii++) { /* upper right = [ Q ] -- xy rotation only */
+        jj = 3+NscalarDof; 
+        offset = dof+ii+jj*vec_leng;
+        // std::cout <<"jj " << jj << " " << ii + jj << std::endl;
+        if (ii == 0) 
+          rbm[offset] = y[node]; 
+        else if (ii == 1)
+          rbm[offset] = x[node]; 
+        else
+          rbm[offset] = 0.0;  
+      }
+      ii = 0; jj = 3+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+      break;
+
     case 2:
       for (ii=0;ii<2+NscalarDof;ii++) { /* upper left = [ I ] */
         for (jj=0;jj<2+NscalarDof;jj++) {
