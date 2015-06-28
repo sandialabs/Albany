@@ -60,33 +60,6 @@ void Coord2RBM(
       ii = 2; jj = 4+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
       break;
 
-    case 4:
-      for (ii=3;ii<4+NscalarDof;ii++) { /* lower half = [ 0 I ] */
-        for (jj=0;jj<4+NscalarDof;jj++) {
-          offset = dof+ii+jj*vec_leng;
-          rbm[offset] = (ii==jj) ? 1.0 : 0.0;
-        }
-      }
-      for (ii=0;ii<3+NscalarDof;ii++) { /* upper left = [ I ] */
-        for (jj=0;jj<3+NscalarDof;jj++) {
-          offset = dof+ii+jj*vec_leng;
-          rbm[offset] = (ii==jj) ? 1.0 : 0.0;
-        }
-      }
-      for (ii=0;ii<3;ii++) { /* upper right = [ Q ] -- xy rotation only */
-        jj = 3+NscalarDof; 
-        offset = dof+ii+jj*vec_leng;
-        // std::cout <<"jj " << jj << " " << ii + jj << std::endl;
-        if (ii == 0) 
-          rbm[offset] = y[node]; 
-        else if (ii == 1)
-          rbm[offset] = x[node]; 
-        else
-          rbm[offset] = 0.0;  
-      }
-      ii = 0; jj = 3+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
-      break;
-
     case 2:
       for (ii=0;ii<2+NscalarDof;ii++) { /* upper left = [ I ] */
         for (jj=0;jj<2+NscalarDof;jj++) {
@@ -127,6 +100,60 @@ void Coord2RBM(
   return;
 } /*Coord2RBM*/
 
+//IKT, 6/28/15: the following set RBMs for non-elasticity problems.
+void Coord2RBM_nonElasticity(
+  const LO Nnodes,
+  double const* const x, double const* const y, double const* const z,
+  const int Ndof, const int NscalarDof, const int NSdim,
+  double* const rbm)
+{
+  std::cout << "setting RBMs in Coord2RBM_nonElasticity!" << std::endl; 
+  LO vec_leng, offset;
+  int ii, jj, dof;
+
+  vec_leng = Nnodes*Ndof;
+  for (LO i = 0; i < Nnodes*Ndof*(NSdim + NscalarDof); i++)
+    rbm[i] = 0.0;
+
+  std::cout << "...case: " << Ndof - NscalarDof << std::endl; 
+  for (LO node = 0 ; node < Nnodes; node++) {
+    dof = node*Ndof;
+    switch( Ndof - NscalarDof ) {
+    case 4:
+      for (ii=0;ii<3;ii++) { /* upper right = [ Q ] -- xy rotation only */
+        jj = 3+NscalarDof; 
+        offset = dof+ii+jj*vec_leng;
+        // std::cout <<"jj " << jj << " " << ii + jj << std::endl;
+        if (ii == 0) 
+          rbm[offset] = y[node]; 
+        else if (ii == 1)
+          rbm[offset] = x[node]; 
+        else
+          rbm[offset] = 0.0;  
+      }
+      ii = 0; jj = 3+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+      /* There is no break here and that is on purpose */
+    case 3:
+      for (ii=0;ii<3+NscalarDof;ii++) { /* upper left = [ I ] */
+        for (jj=0;jj<3+NscalarDof;jj++) {
+          offset = dof+ii+jj*vec_leng;
+          rbm[offset] = (ii==jj) ? 1.0 : 0.0;
+        }
+      }
+      break;
+
+    default:
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Coord2RBM_nonElasticity: Ndof = " << Ndof << " not implemented\n");
+    } /*switch*/
+
+  } /*for (node = 0 ; node < Nnodes; node++)*/
+
+  return;
+} /*Coord2RBM_nonElasticity*/
+
 void subtractCentroid(
   const Teuchos::RCP<const Tpetra_Map>& node_map, const int ndim,
   std::vector<ST>& v)
@@ -159,7 +186,7 @@ void subtractCentroid(
 
 RigidBodyModes::RigidBodyModes(int numPDEs_)
   : numPDEs(numPDEs_), numElasticityDim(0), nullSpaceDim(0), numSpaceDim(0),
-    numScalar(0), mlUsed(false), mueLuUsed(false)
+    numScalar(0), mlUsed(false), mueLuUsed(false), setNonElastRBM(false)
 {}
 
 void RigidBodyModes::
@@ -217,12 +244,13 @@ double* RigidBodyModes::getCoordArray() { return &xyz[0]; }
 
 void RigidBodyModes::setParameters(
   const int numPDEs_, const int numElasticityDim_, const int numScalar_,
-  const int nullSpaceDim_)
+  const int nullSpaceDim_, const bool setNonElastRBM_)
 {
   numPDEs = numPDEs_;
   numElasticityDim = numElasticityDim_;
   numScalar = numScalar_;
   nullSpaceDim = nullSpaceDim_;
+  setNonElastRBM = setNonElastRBM_; 
 }
 
 void RigidBodyModes::
@@ -267,12 +295,15 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
 
   setCoordinates(node_map);
 
-  if (numElasticityDim > 0) {
+  if (numElasticityDim > 0 || setNonElastRBM == true ) {
     subtractCentroid(node_map, numSpaceDim, xyz);
     double *x, *y, *z;
     getCoordArrays(x, y, z);
     const LO numNodes = xyz.size() / numSpaceDim;
-    Coord2RBM(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
+    if (setNonElastRBM == true) 
+      Coord2RBM_nonElasticity(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
+    else
+      Coord2RBM(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
     if (isMLUsed()) {
       plist->set("null space: type", "pre-computed");
       plist->set("null space: dimension", nullSpaceDim + numScalar);
