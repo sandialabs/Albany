@@ -224,7 +224,10 @@ resize(const int numSpaceDim_, const LO numNodes)
   numSpaceDim = numSpaceDim_;
   xyz.resize(numSpaceDim * (numNodes == 0 ? 1 : numNodes));
   if(nullSpaceDim > 0)
-    rr.resize((nullSpaceDim + numScalar) * numPDEs * numNodes);
+    if (setNonElastRBM == true)
+      rr.resize((nullSpaceDim + numScalar) * numSpaceDim * numNodes);
+    else
+      rr.resize((nullSpaceDim + numScalar) * numPDEs * numNodes);
 }
 
 void RigidBodyModes::
@@ -300,15 +303,23 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
     double *x, *y, *z;
     getCoordArrays(x, y, z);
     const LO numNodes = xyz.size() / numSpaceDim;
+    std::cout << "numPDEs: " << numPDEs << std::endl; 
+    std::cout << "numSpaceDim: " << numSpaceDim << std::endl; 
     if (setNonElastRBM == true) 
-      Coord2RBM_nonElasticity(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
+      Coord2RBM_nonElasticity(numNodes, x, y, z, numSpaceDim, numScalar, nullSpaceDim, &rr[0]);
     else
       Coord2RBM(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
+    std::cout <<" after coord2rbm" << std::endl; 
+    std::cout << "nullSpaceDim + numScalar: " << nullSpaceDim + numScalar << std::endl; 
     if (isMLUsed()) {
       plist->set("null space: type", "pre-computed");
+      std::cout << "here 0" << std::endl; 
       plist->set("null space: dimension", nullSpaceDim + numScalar);
+      std::cout << "here 1" << std::endl; 
       plist->set("null space: vectors", &rr[0]);
-      plist->set("null space: add default vectors", false);      
+      std::cout << "here 2" << std::endl; 
+      plist->set("null space: add default vectors", false);     
+      std::cout << "here 3" << std::endl; 
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(
         soln_map.is_null(), std::logic_error,

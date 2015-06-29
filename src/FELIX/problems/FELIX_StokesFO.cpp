@@ -43,9 +43,9 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     setRBMs = true; 
     int numScalar = 0;
     if (numRBMs == 3) //3 RBMs corresponding to translations only  
-      rigidBodyModes->setParameters(numDim, numDim, numScalar, numDim, setRBMs);
+      rigidBodyModes->setParameters(neq, numDim, numScalar, numDim, setRBMs);
     else if (numRBMs == 4) //4 RBMs: 3 translations + xy rotation
-      rigidBodyModes->setParameters(numDim+1, numDim, numScalar, numDim+1, setRBMs);
+      rigidBodyModes->setParameters(neq, numDim, numScalar, numDim+1, setRBMs);
     else
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs " 
                                      << numRBMs << " is not valid!  Valid values are 0, 3 and 4.");
