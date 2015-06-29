@@ -61,7 +61,8 @@ fi
 
 NP=`nproc`
 toolchain="gcc"
-buildtype="debug"
+#buildtype="debug"
+buildtype="release"
 
 for target in trilinos albany; do
  dir=${target}-build-${toolchain}-${buildtype}
