@@ -3,7 +3,7 @@ import exodus
 import numpy
 import matplotlib.pyplot as plt
 
-file_name = "RubiksCube_Implicit2.exo"
+file_name = "RubiksCube_Implicit.exo"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "gamma_1_1"
 dep_var_name = "tau_hard_1_1"

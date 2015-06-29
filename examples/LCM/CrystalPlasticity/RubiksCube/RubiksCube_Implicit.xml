@@ -39,7 +39,7 @@
       <ParameterList name="Stepper">
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="100"/>
+        <Parameter name="Max Steps" type="int" value="500"/>
         <Parameter name="Max Value" type="double" value="1.0"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
