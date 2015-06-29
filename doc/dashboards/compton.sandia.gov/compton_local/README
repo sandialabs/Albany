@@ -1,0 +1,5 @@
+Note:
+
+This directory holds the dashboard scripts that run on compton.sandia.gov, that builds and runs the Albany_MIC
+tests and stores the results in the Testing directory. A server machine, cee-compute012, then scp's the results
+files and then posts those to the CDash server on the SRN, cdash.sandia.gov
