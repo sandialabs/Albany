@@ -30,6 +30,9 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  // typedef for automatic differentiation type used in internal Newton loop
+  // options are:  DFad (dynamically sized), SFad (static size), SLFad (bounded)
   typedef typename Sacado::Fad::DFad<ScalarT> Fad;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
