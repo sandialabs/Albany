@@ -62,6 +62,7 @@ cmake \
  -D Sacado_ENABLE_COMPLEX:BOOL=ON \
  -D Teuchos_ENABLE_COMPLEX:BOOL=ON \
  -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
+ -D Tpetra_INST_PTHREAD:BOOL=lcm_tpetra_inst_pthread \
 \
  -D TPL_ENABLE_HDF5:BOOL=OFF \
  -D TPL_ENABLE_HWLOC:STRING=lcm_enable_hwloc \
