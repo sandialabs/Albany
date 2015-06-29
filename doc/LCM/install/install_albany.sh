@@ -70,7 +70,7 @@ for target in trilinos albany; do
    echo "!!! $dir exists !!!"
  fi
  echo ">>> building ${target}-${toolchain}-${buildtype} with ${NP} processes <<<"
- ./clean-config-build.sh ${target} gcc debug $NP >& ${target}_build.log
+ ./clean-config-build.sh ${target} ${toolchain} ${buildtype} $NP >& ${target}_build.log
 done
 
 if [ -e albany-build-${toolchain}-${buildtype}/src/Albany ]; then
