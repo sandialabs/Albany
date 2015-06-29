@@ -64,7 +64,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="K_field_all_scaled_Harder.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="K_field_all_scaled_HarderT.e"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, CL, S, tauH, S}"/>
