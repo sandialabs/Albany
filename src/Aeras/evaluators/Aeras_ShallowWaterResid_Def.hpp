@@ -47,7 +47,9 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar), 
   gravity (Aeras::ShallowWaterConstants::self().gravity),
   hyperViscosity (p.get<std::string> ("Hyperviscosity Name"), dl->qp_vector),
-  Omega(2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.))
+  Omega(2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.)),
+  RRadius(1.0/Aeras::ShallowWaterConstants::self().earthRadius),
+  doNotDampRotation(true)
 {
 
   Teuchos::ParameterList* shallowWaterList = p.get<Teuchos::ParameterList*>("Shallow Water Problem");
@@ -932,7 +934,19 @@ evaluateFields(typename Traits::EvalData workset)
                   + k22*( uYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
                   + k32*( uZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uZgradNodes(qp,1)*wGradBF(cell,node,qp,1));
 
+            if(doNotDampRotation){
+               //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
 
+               Residual(cell,node,1) += 
+                  -hyperViscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wBF(cell,node,qp);
+
+               Residual(cell,node,2) +=
+                  -hyperViscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wBF(cell,node,qp);                 
+
+               Residual(cell,node,4) += -2.0*U(cell,qp,1)*wBF(cell,node,qp)*RRadius*RRadius;
+
+               Residual(cell,node,5) += -2.0*U(cell,qp,2)*wBF(cell,node,qp)*RRadius*RRadius;
+            }
           }
         }
       }
