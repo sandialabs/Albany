@@ -7,6 +7,7 @@
       <Parameter name="Use Hyperviscosity" type="bool" value="True"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="8e15"/>
+<!--      <Parameter name="Plot Vorticity" type="bool" value="true"/>-->
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
@@ -41,7 +42,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{939.515114659, 5960.00343284, 441330.14711}"/> 
+    <Parameter  name="Test Values" type="Array(double)" value="{939.515114672, 5960.00343284, 441330.14711}"/> 
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
