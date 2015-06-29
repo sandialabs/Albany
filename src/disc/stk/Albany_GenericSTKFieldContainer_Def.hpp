@@ -482,12 +482,12 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Ve
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    int node_lid = node_mapT->getLocalElement(node_gid);
 
-    for(std::size_t j = 0; j < num_vec_components; j++)
-
-      solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
-
+    if(node_mapT->getLocalElement(node_gid) != Teuchos::OrdinalTraits<LO>::invalid()){
+      int node_lid = node_mapT->getLocalElement(node_gid);
+      for(std::size_t j = 0; j < num_vec_components; j++)
+	solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
+    }
   }
 }
 
@@ -516,10 +516,11 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpet
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
     const GO node_gid = mesh.identifier(bucket[i]) - 1;
-    int node_lid = node_mapT->getLocalElement(node_gid);
 
-    solution_array(i) = solnT_constView[getDOF(node_lid, offset)];
-
+    if(node_mapT->getLocalElement(node_gid) != Teuchos::OrdinalTraits<LO>::invalid()){
+      int node_lid = node_mapT->getLocalElement(node_gid);
+      solution_array(i) = solnT_constView[getDOF(node_lid, offset)];
+    }
   }
 }
 

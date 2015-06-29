@@ -557,7 +557,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveResVectorT(const Tpetra_Ve
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
-  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  // Iterate over the nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
   stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, sel);
   this->numNodes = node_map->getNodeNumElements(); // Needed for the getDOF function to work correctly

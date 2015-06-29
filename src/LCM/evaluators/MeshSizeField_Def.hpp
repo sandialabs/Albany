@@ -17,10 +17,11 @@ inline ScalarT Sqr (const ScalarT& num) {
 namespace LCM {
 
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  IsoMeshSizeField<EvalT, Traits>::
+  template<typename Traits>
+  IsoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>::
   IsoMeshSizeField(const Teuchos::ParameterList& p,
          const Teuchos::RCP<Albany::Layouts>& dl) :
+    MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     isoMeshSizeField (p.get<std::string>("IsoTropic MeshSizeField Name"), dl->qp_scalar),
     cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
@@ -28,11 +29,20 @@ namespace LCM {
          Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis"))
 
   {
+
+    // Save the adaptation PL to pass back 
+
+    adapt_PL = p.get<Teuchos::ParameterList*>("Parameter List");
+
+    // Set the value to disable adaptation initially
+
+    adapt_PL->set<bool>("AdaptNow", false);
+
     this->addDependentField(currentCoords);
     
     this->addEvaluatedField(isoMeshSizeField);
     
-    this->setName("IsoMeshSizeField"+PHX::typeAsString<EvalT>());
+    this->setName("IsoMeshSizeField<Residual>");
     
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
@@ -57,8 +67,8 @@ namespace LCM {
   }
 
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void IsoMeshSizeField<EvalT, Traits>::
+  template<typename Traits>
+  void IsoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -67,8 +77,8 @@ namespace LCM {
   }
 
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void IsoMeshSizeField<EvalT, Traits>::
+  template<typename Traits>
+  void IsoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
     // Compute IsoMeshSizeField - element width is dx/dxi (sum_nodes_i x[i] * dphi[i]/dxi[j])
@@ -117,15 +127,17 @@ namespace LCM {
 
       }
     }
+
   }
   //----------------------------------------------------------------------------
 
 
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  AnisoMeshSizeField<EvalT, Traits>::
+  template<typename Traits>
+  AnisoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>::
   AnisoMeshSizeField(const Teuchos::ParameterList& p,
          const Teuchos::RCP<Albany::Layouts>& dl) :
+    MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     anisoMeshSizeField (p.get<std::string>("AnisoTropic MeshSizeField Name"), dl->qp_scalar),
     cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
@@ -133,11 +145,20 @@ namespace LCM {
          Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis"))
 
   {
+
+    // Save the adaptation PL to pass back 
+
+    adapt_PL = p.get<Teuchos::ParameterList*>("Parameter List");
+
+    // Set the value to disable adaptation initially
+
+    adapt_PL->set<bool>("AdaptNow", false);
+
     this->addDependentField(currentCoords);
     
     this->addEvaluatedField(anisoMeshSizeField);
     
-    this->setName("AnisoMeshSizeField"+PHX::typeAsString<EvalT>());
+    this->setName("AnisoMeshSizeField<Residual>");
     
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
@@ -161,8 +182,8 @@ namespace LCM {
   }
 
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void AnisoMeshSizeField<EvalT, Traits>::
+  template<typename Traits>
+  void AnisoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -171,8 +192,8 @@ namespace LCM {
   }
 
   //----------------------------------------------------------------------------
-  template<typename EvalT, typename Traits>
-  void AnisoMeshSizeField<EvalT, Traits>::
+  template<typename Traits>
+  void AnisoMeshSizeField<PHAL::AlbanyTraits::Residual, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
     // Compute IsoMeshSizeField tensor from displacement gradient

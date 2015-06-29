@@ -21,7 +21,7 @@ public:
 
   //! Set sizes of nullspace etc.
   void setParameters(const int numPDEs, const int numElasticityDim,
-                     const int numScalar, const int nullSpaceDim);
+                     const int numScalar, const int nullSpaceDim, const bool setNonElastRBM = false);
 
   //! Set Piro solver parameter list.
   void setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams);
@@ -58,7 +58,7 @@ public:
 
 private:
   int numPDEs, numElasticityDim, numScalar, nullSpaceDim, numSpaceDim;
-  bool mlUsed, mueLuUsed;
+  bool mlUsed, mueLuUsed, setNonElastRBM;
 
   Teuchos::RCP<Teuchos::ParameterList> plist;
 
