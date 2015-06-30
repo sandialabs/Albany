@@ -1,7 +1,8 @@
 #!/bin/bash
 
-function update_wiki {
+update_wiki () {
     cd "$LCM_DIR"
+    STATUS_LOG="$PACKAGE-$ARCH-$TOOL_CHAIN-$BUILD_TYPE-status.log"
     if [[ -f "$STATUS_LOG" && "$WIKI"=="1" ]]; then
 	SRC="Albany/doc/LCM/test/$WIKI_TEMPLATE"
 	DEST="$LCM_DIR/Albany.wiki/$WIKI_TEMPLATE"
@@ -64,7 +65,6 @@ case "$SCRIPT_NAME" in
 esac
 
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
-STATUS_LOG="albany-gcc-debug-status.log"
 # Packages in innermost loop so that test results are reported as soon
 # as they are available.
 for TOOL_CHAIN in $TOOL_CHAINS; do
