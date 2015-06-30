@@ -113,18 +113,34 @@ ComputeVolume(const double* p, double& v, double* dvdp)
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
   
-      for(int cell=0; cell<numCells; cell++){
-        double elVol = 0.0;
-        for(int qp=0; qp<numQPs; qp++){
-          double pVal = 0.0;
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+      if(functionIndex < 0){
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            elVol += pVal*weighted_measure[ws](cell,qp);
           }
-          elVol += topology->Penalize(functionIndex,pVal)*weighted_measure[ws](cell,qp);
+          localv += elVol;
         }
-        localv += elVol;
+      } else {
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            elVol += topology->Penalize(functionIndex,pVal)*weighted_measure[ws](cell,qp);
+          }
+          localv += elVol;
+        }
       }
     }
 
@@ -147,21 +163,42 @@ ComputeVolume(const double* p, double& v, double* dvdp)
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
     
-      for(int cell=0; cell<numCells; cell++){
-        double elVol = 0.0;
-        for(int qp=0; qp<numQPs; qp++){
-          double pVal = 0.0;
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+      if(functionIndex < 0){
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              odvdp[lid] += 1.0
+                            *basisAtQPs[physIndex](node,qp)
+                            *weighted_measure[ws](cell,qp);
+            }
           }
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            odvdp[lid] += topology->dPenalize(functionIndex,pVal)
-                          *basisAtQPs[physIndex](node,qp)
-                          *weighted_measure[ws](cell,qp);
+        }
+      } else {
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              odvdp[lid] += topology->dPenalize(functionIndex,pVal)
+                            *basisAtQPs[physIndex](node,qp)
+                            *weighted_measure[ws](cell,qp);
+            }
           }
         }
       }
@@ -235,7 +272,7 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   const Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
   if( wfParams.isType<int>("Volume") ){
     functionIndex = wfParams.get<int>("Volume");
-  } else functionIndex = 0;
+  } else functionIndex = -1;
 
   Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
   std::string derName = aggParams.get<std::string>("dFdTopology Name");
@@ -360,8 +397,11 @@ ATO::OptimizationProblem::InitTopOpt()
      (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
 
   }
-  overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
-  localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
+//  overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
+//  localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
+
+  overlapNodeMap = disc->getOverlapNodeMap();
+  localNodeMap = disc->getNodeMap();
 
   overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
   localVec   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));

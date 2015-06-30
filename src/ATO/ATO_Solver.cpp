@@ -362,6 +362,35 @@ ATO::Solver::InitializeTopology(double* p)
   }
 }
 
+/******************************************************************************/
+void
+ATO::Solver::ComputeObjective(const double* p, double& g, double* dgdp)
+/******************************************************************************/
+{
+
+  for(int i=0; i<_numPhysics; i++){
+
+    // copy data from p into each stateManager
+    if( _topology->getEntityType() == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( _topology->getEntityType() == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
+
+    // enforce PDE constraints
+    _subProblems[i].model->evalModel((*_subProblems[i].params_in),
+                                    (*_subProblems[i].responses_out));
+  }
+
+  _aggregator->Evaluate();
+  copyObjectiveFromStateMgr( g, dgdp );
+
+  _iteration++;
+
+  
+}
 
 /******************************************************************************/
 void

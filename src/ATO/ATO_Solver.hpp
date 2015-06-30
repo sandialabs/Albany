@@ -66,6 +66,7 @@ namespace ATO {
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
 
     virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
+    virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
     virtual void InitializeTopology(double* p)=0;
     virtual void ComputeVolume(double* p, const double* dgdp,
                                double& v, double threshhold, double minP=0.0)=0;
@@ -97,6 +98,7 @@ namespace ATO {
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 
     void ComputeObjective(double* p, double& g, double* dgdp=NULL);
+    void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
     void InitializeTopology(double* p);
 
     void ComputeVolume(double* p, const double* dgdp, 

@@ -21,6 +21,8 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
   std::string wcLayout = responseParams->get<std::string>("Work Conjugate Layout");
   
   Teuchos::RCP<PHX::DataLayout> layout;
+  if(gfLayout == "QP Tensor3") layout = dl->qp_tensor3;
+  else
   if(gfLayout == "QP Tensor") layout = dl->qp_tensor;
   else
   if(gfLayout == "QP Vector") layout = dl->qp_vector;
@@ -28,12 +30,14 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                std::endl <<
                                "Error!  Unknown Gradient Field Layout " << gfLayout <<
-                               "!" << std::endl << "Options are (QP Tensor, QP Vector)" <<
+                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
                                std::endl);
 
   PHX::MDField<ScalarT> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
   gradX = _gradX;
 
+  if(wcLayout == "QP Tensor3") layout = dl->qp_tensor3;
+  else
   if(wcLayout == "QP Tensor") layout = dl->qp_tensor;
   else
   if(wcLayout == "QP Vector") layout = dl->qp_vector;
@@ -41,7 +45,7 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                std::endl <<
                                "Error!  Unknown Work Conjugate Layout " << wcLayout <<
-                               "!" << std::endl << "Options are (QP Tensor, QP Vector)" <<
+                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
                                std::endl);
 
   PHX::MDField<ScalarT> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
@@ -167,8 +171,29 @@ evaluateFields(typename Traits::EvalData workset)
           dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
       }
     }
+  } else
+  if( size == 5 ){
+    for(int cell=0; cell<numCells; cell++){
+      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
+      for(int qp=0; qp<numQPs; qp++){
+        double topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        double P = topology->Penalize(functionIndex,topoVal);
+        double dP = topology->dPenalize(functionIndex,topoVal);
+        double dE = 0.0;
+        for(int i=0; i<numDims; i++)
+          for(int j=0; j<numDims; j++)
+            for(int k=0; k<numDims; k++)
+              dE += gradX(cell,qp,i,j,k)*workConj(cell,qp,i,j,k)/2.0;
+        dE *= qp_weights(cell,qp);
+        internalEnergy += P*dE;
+        for(int node=0; node<numNodes; node++)
+          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
+      }
+    }
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>4, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>5, Teuchos::Exceptions::InvalidParameter,
       "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
   }
 
