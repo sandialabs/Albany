@@ -243,7 +243,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   else 
   if( _topology->getEntityType() == "Distributed Parameter" )
     _aggregator->SetInputVariables(_subProblems, gMap, dgdpMap);
-  _aggregator->SetOutputVariables(gValue, overlapdgdpVec);
+  _aggregator->SetOutputVariables(gValue, dgdpVec);
+//_aggregator->SetOutputVariables(gValue, overlapdgdpVec);
 
   _aggregator->SetCommunicator(comm);
   
@@ -292,6 +293,8 @@ ATO::Solver::evalModel(const InArgs& inArgs,
     Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
     const Albany::WorksetArray<std::string>::type& 
       wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
     Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
     Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
     int numWorksets = dest.size();
@@ -311,16 +314,15 @@ ATO::Solver::evalModel(const InArgs& inArgs,
             }
         } else if( _topology->getEntityType() == "Distributed Parameter" ){
           Teuchos::RCP<DistParamLib> distParams = _subProblems[i].app->getDistParamLib();
-          const std::vector<Albany::IDArray>& 
-            wsElDofs = distParams->get(_topology->getName())->workset_elem_dofs();
           double* ltopo; topoVec->ExtractView(&ltopo);
           double matVal = _topology->getMaterialValue();
-          const Albany::IDArray& elDofs = wsElDofs[ws];
-          int numCells = elDofs.dimension(0);
-          int numNodes = elDofs.dimension(1);
+          const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& elNodeID = wsElNodeID[ws];
+          int numCells = elNodeID.size();
+          int numNodes = elNodeID[0].size();
           for(int cell=0; cell<numCells; cell++)
             for(int node=0; node<numNodes; node++){
-              int lid = elDofs(cell,node,0);
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = localNodeMap->LID(gid);
               if(lid != -1) ltopo[lid] = matVal;
             }
         }
@@ -442,24 +444,25 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
   const std::vector<Albany::IDArray>& 
     wsElDofs = distParams->get(_topology->getName())->workset_elem_dofs();
 
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
+
   // enforce fixed blocks
   double* ltopo; topoVec->ExtractView(&ltopo);
+  int numMyNodes = topoVec->MyLength();
+  for(int i=0; i<numMyNodes; i++) ltopo[i] = p[i];
+
   int numWorksets = wsElDofs.size();
+  double matVal = _topology->getMaterialValue();
   for(int ws=0; ws<numWorksets; ws++){
-    const Albany::IDArray& elDofs = wsElDofs[ws];
-    int numCells = elDofs.dimension(0);
-    int numNodes = elDofs.dimension(1);
-    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ) {
+    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& elNodeID = wsElNodeID[ws];
+      int numCells = elNodeID.size();
+      int numNodes = elNodeID[0].size();
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
-          int lid = elDofs(cell,node,0);
-          if(lid != -1) ltopo[lid] = p[lid];
-        }
-    } else {
-      double matVal = _topology->getMaterialValue();
-      for(int cell=0; cell<numCells; cell++)
-        for(int node=0; node<numNodes; node++){
-          int lid = elDofs(cell,node,0);
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = localNodeMap->LID(gid);
           if(lid != -1) ltopo[lid] = matVal;
         }
     }
@@ -654,13 +657,10 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
 
-  dgdpVec->PutScalar(0.0);
-  double* odgdp; overlapdgdpVec->ExtractView(&odgdp);
-
-  if( _topology->getEntityType() == "Distributed Parameter" )
-    *dgdpVec = *overlapdgdpVec;
-  else
+  if( _topology->getEntityType() == "State Variable" ) {
+    dgdpVec->PutScalar(0.0);
     dgdpVec->Export(*overlapdgdpVec, *exporter, Add);
+  }
 
   int numLocalNodes = dgdpVec->MyLength();
   double* lvec; dgdpVec->ExtractView(&lvec);
