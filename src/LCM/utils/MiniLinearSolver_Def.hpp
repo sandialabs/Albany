@@ -63,40 +63,78 @@ MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::MiniLinearSolver() :
 }
 
 template<typename Traits>
+template<Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
 solve(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
-  // system size
-  int numLocalVars = B.size();
+  auto const
+  dimension = b.get_dimension();
 
-  // data for the LAPACK call below
-  int info(0);
-  std::vector<int> IPIV(numLocalVars);
+  Intrepid::Vector<RealType, N>
+  f(dimension);
 
-  // fill B and dBdX
-  std::vector<RealType> F(numLocalVars);
-  std::vector<RealType> dFdX(numLocalVars * numLocalVars);
-  for (int i(0); i < numLocalVars; ++i)
-      {
-    F[i] = B[i].val();
-    for (int j(0); j < numLocalVars; ++j)
-        {
-      dFdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
+  Intrepid::Tensor<RealType, N>
+  DfDx(dimension);
+
+  for (auto i = 0; i < dimension; ++i) {
+    f(i) = b(i).val();
+
+    for (auto j = 0; j < dimension; ++j) {
+      DfDx(i, j) = A(i, j).val();
     }
   }
 
-  // call LAPACK
-  this->lapack.GESV(numLocalVars, 1, &dFdX[0], numLocalVars, &IPIV[0], &F[0],
-      numLocalVars, &info);
+  Intrepid::Vector<RealType, N> const
+  t = Intrepid::solve(DfDx, f);
 
-  // increment the solution
-  for (int i(0); i < numLocalVars; ++i)
-    X[i].val() -= F[i];
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).val() = t(i);
+  }
 
+  return;
+}
+
+template<typename Traits>
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  auto const
+  dimension = b.get_dimension();
+
+  auto const
+  order = b(0).size();
+
+  Intrepid::Vector<RealType, N>
+  f(dimension);
+
+  Intrepid::Tensor<RealType, N>
+  DfDx(dimension);
+
+  for (auto i = 0; i < dimension; ++i) {
+    f(i) = b(i).val();
+
+    for (auto j = 0; j < dimension; ++j) {
+      DfDx(i, j) = A(i, j).val();
+    }
+  }
+
+  Intrepid::Vector<RealType, N> const
+  t = Intrepid::solve(DfDx, f);
+
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).val() = t(i);
+  }
+
+  return;
 }
 
 template<typename Traits>

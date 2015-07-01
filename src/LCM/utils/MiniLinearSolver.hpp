@@ -86,6 +86,18 @@ public:
 
   MiniLinearSolver();
 
+  template<Intrepid::Index N>
+  void solve(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  template<Intrepid::Index N>
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+
   void solve(
       std::vector<ScalarT> & A,
       std::vector<ScalarT> & X,
