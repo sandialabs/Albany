@@ -74,6 +74,7 @@ buildProblem(
 
     constructNeumannEvaluators(meshSpecs[0]);
 
+  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
    setupTopOpt(meshSpecs,stateMgr);
 }
 

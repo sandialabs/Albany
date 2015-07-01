@@ -238,13 +238,14 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
 
   // pass subProblems to the aggregator
-  if( _topology->getEntityType() == "State Variable" )
+  if( _topology->getEntityType() == "State Variable" ){
     _aggregator->SetInputVariables(_subProblems);
-  else 
-  if( _topology->getEntityType() == "Distributed Parameter" )
+    _aggregator->SetOutputVariables(gValue, overlapdgdpVec);
+  } else 
+  if( _topology->getEntityType() == "Distributed Parameter" ){
     _aggregator->SetInputVariables(_subProblems, gMap, dgdpMap);
-  _aggregator->SetOutputVariables(gValue, dgdpVec);
-//_aggregator->SetOutputVariables(gValue, overlapdgdpVec);
+    _aggregator->SetOutputVariables(gValue, dgdpVec);
+  }
 
   _aggregator->SetCommunicator(comm);
   
