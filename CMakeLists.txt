@@ -49,6 +49,27 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
+# Compress Trilinos lists that are used
+#${Trilinos_INCLUDE_DIRS}
+#${Trilinos_TPL_INCLUDE_DIRS}
+#${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} ${Trilinos_EXTRA_LD_FLAGS}
+
+LIST(REVERSE Trilinos_INCLUDE_DIRS)
+LIST(REMOVE_DUPLICATES Trilinos_INCLUDE_DIRS)
+LIST(REVERSE Trilinos_INCLUDE_DIRS)
+
+LIST(REVERSE Trilinos_TPL_INCLUDE_DIRS)
+LIST(REMOVE_DUPLICATES Trilinos_TPL_INCLUDE_DIRS)
+LIST(REVERSE Trilinos_TPL_INCLUDE_DIRS)
+
+LIST(REVERSE Trilinos_LIBRARIES)
+LIST(REMOVE_DUPLICATES Trilinos_LIBRARIES)
+LIST(REVERSE Trilinos_LIBRARIES)
+
+LIST(REVERSE Trilinos_TPL_LIBRARIES)
+LIST(REMOVE_DUPLICATES Trilinos_TPL_LIBRARIES)
+LIST(REVERSE Trilinos_TPL_LIBRARIES)
+
 LIST(FIND Trilinos_PACKAGE_LIST STKClassic STKClassic_List_ID)
 IF (STKClassic_List_ID GREATER -1)
   MESSAGE(FATAL_ERROR "STKClassic is no longer used and conflicts with STKIo and STKMesh.")
@@ -79,11 +100,36 @@ IF (INSTALL_ALBANY)
   include(CMakePackageConfigHelpers)
 ENDIF ()
 
+option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
+if (ENABLE_CROSS_COMPILE)
+  set (Albany_CROSS_COMPILE ON)
+  message ("Building with cross-compiling tools.")
+else ()
+  set (Albany_CROSS_COMPILE OFF)
+endif ()
+
 if (SET_COMPILERS_AUTOMATICALLY)
   MESSAGE("Setting and checking of compilers:")
-  SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
-  SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
-  SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )   
+  if (Albany_CROSS_COMPILE)
+    # Force the compilers to be the same as Trilinos (GAH experimental)
+    # This syntax is needed when cross compiling or the compilers get checked
+    # again by the Albany configure, and will probably fail, because the options
+    # won't be right and the exes won't run on the host.
+    INCLUDE (CMakeForceCompiler)
+    SET(CMAKE_SYSTEM_NAME Generic)
+    CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} Generic)
+    CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} Generic)
+    CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} Generic)
+#    SET(CMAKE_SYSTEM_NAME ${Trilinos_SYSTEM_NAME})
+#    CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} ${Trilinos_CXX_COMPILER_ID})
+#    CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} ${Trilinos_C_COMPILER_ID})
+#    CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} ${Trilinos_Fortran_COMPILER_ID})
+#    SET(CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES ${Trilinos_Fortran_IMPLICIT_LINK_LIBRARIES})
+  else ()
+    set (CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
+    set (CMAKE_C_COMPILER ${Trilinos_C_COMPILER})
+    set (CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
+  endif ()
 else()
   # Make sure the compilers match.
   MESSAGE("Checking compilers:")
@@ -96,6 +142,9 @@ else()
   IF(NOT ${Trilinos_Fortran_COMPILER} STREQUAL ${CMAKE_Fortran_COMPILER})
     MESSAGE(FATAL_ERROR "Fortran compilers don't match (Trilinos: ${Trilinos_Fortran_COMPILER}, ${PROJECT_NAME}: ${CMAKE_Fortran_COMPILER}).")
   ENDIF()
+  SET(Trilinos_CXX_COMPILER_ID ${CMAKE_CXX_COMPILER_ID})
+  SET(Trilinos_C_COMPILER_ID ${CMAKE_C_COMPILER_ID})
+  SET(Trilinos_Fortran_COMPILER_ID ${CMAKE_Fortran_COMPILER_ID})
 endif()
 
 # Build Albany as shared libraries if Trilinos was compiled that way
@@ -135,12 +184,18 @@ ENDIF()
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
 #SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -DALBANY_MPI")
 
-IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
+if (SET_COMPILERS_AUTOMATICALLY)
+  SET(CMAKE_AR ${Trilinos_AR})
+  SET(CMAKE_LINKER ${Trilinos_LINKER})
+endif()
+
+MESSAGE("-- Using ${Trilinos_CXX_COMPILER_ID} Compiler.")
+
+IF(${Trilinos_CXX_COMPILER_ID} MATCHES "Intel")
   SET(USING_INTEL TRUE)
 # On Intel, turn of interprocedural optimization at linking to keep linker from hanging
 # This could possibly be removed with further study (GAH)
 #  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-ip")
-   MESSAGE("-- Using Intel Compiler.")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,488,161,47")
 ENDIF()
 
@@ -376,6 +431,20 @@ ELSE()
   SET(ALBANY_LCM FALSE)
 ENDIF()
 
+# set optional dependency on the BGL, defaults to Enabled
+# This option is added due to issued with compiling BGL with the intel compilers
+# see Trilinos bugzilla bug #6343
+#
+OPTION(ENABLE_BGL "Flag to turn on the Phalanx graphviz capabilities (dependent on BGL)" ON)
+IF (ENABLE_BGL)
+    ADD_DEFINITIONS(-DALBANY_BGL)
+    MESSAGE("-- BGL       is Enabled, compiling with -DALBANY_BGL")
+    SET(ALBANY_BGL TRUE)
+ELSE()
+  MESSAGE("-- BGL       is NOT Enabled. Graph visualization in Phalanx will not be available!")
+  SET(ALBANY_BGL FALSE)
+ENDIF()
+
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 IF (ENABLE_ATO)
@@ -525,6 +594,18 @@ IF(ENABLE_LAME)
   MESSAGE("-- LAME      is enabled, compiling with -DALBANY_LAME")
   ADD_DEFINITIONS(-DALBANY_LAME)
   SET(ALBANY_LAME TRUE)
+  # The Sierra math toolkit is needed for LAME
+  IF(NOT MATH_TOOLKIT_INCLUDE_DIR)
+    MESSAGE("\nError:  MATH_TOOLKIT_INCLUDE_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- MATH_TOOLKIT_INCLUDE_DIR ${MATH_TOOLKIT_INCLUDE_DIR}")
+  ENDIF()
+  IF(NOT MATH_TOOLKIT_LIBRARY_DIR)
+    MESSAGE("\nError:  MATH_TOOLKIT_LIBRARY_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- MATH_TOOLKIT_LIBRARY_DIR ${MATH_TOOLKIT_LIBRARY_DIR}")
+  ENDIF()
+  # LAME itself
   IF(NOT LAME_INCLUDE_DIR)
     MESSAGE("\nError:  LAME_INCLUDE_DIR not defined\n")
   ELSE()

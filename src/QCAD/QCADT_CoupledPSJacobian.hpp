@@ -21,7 +21,18 @@
 
 #include "Thyra_BlockedLinearOpBase.hpp"
 #include "Thyra_PhysicallyBlockedLinearOpBase.hpp"
-#include "QCADT_ImplicitPSJacobian.hpp"
+
+//Forward Prototypes for utility functions
+namespace QCADT {
+  double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, 
+                     double length_unit_in_m, double energy_unit_in_eV, double effmass);
+  double n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
+  double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
+  double compute_FDIntOneHalf(const double x);
+  double compute_dFDIntOneHalf(const double x);
+  double compute_FDIntMinusOneHalf(const double x);
+  double compute_dFDIntMinusOneHalf(const double x);
+}
 
 namespace QCADT {
 
@@ -32,26 +43,40 @@ namespace QCADT {
 
 class CoupledPSJacobian {
 public:
-  CoupledPSJacobian(int num_models, Teuchos::RCP<Teuchos_Comm const> const & commT);
+  CoupledPSJacobian(int nEigenvals,
+                    const Teuchos::RCP<const Tpetra_Map>& discretizationMap,
+                    int dim, int valleyDegen, double temp,
+                    double lengthUnitInMeters, double energyUnitInElectronVolts,
+                    double effMass, double conductionBandOffset, 
+                    Teuchos::RCP<Tpetra_Vector> neg_eigenvals,
+                    Teuchos::RCP<const Tpetra_MultiVector> eigenvecs,
+                    Teuchos::RCP<Teuchos_Comm const> const & commT);
 
   ~CoupledPSJacobian();
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(int nEigenvals,
-                                           	  const Teuchos::RCP<const Tpetra_Map>& discretizationMap,
-                                           	  const Teuchos::RCP<const Tpetra_Map>& fullPSMap,
-                                           	  int dim, int valleyDegen, double temp,
-                                           	  double lengthUnitInMeters, double energyUnitInElectronVolts,
-                                           	  double effMass, double conductionBandOffset, 
-                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson = Teuchos::null,
-                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger = Teuchos::null,
-                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass = Teuchos::null,
-                                                  Teuchos::RCP<Tpetra_Vector> neg_eigenvals = Teuchos::null, 
-                                                  Teuchos::RCP<const Tpetra_MultiVector> eigenvecs = Teuchos::null) const; 
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass) const; 
 
 private:
 
   Teuchos::RCP<Teuchos_Comm const> commT_;
   int num_models_; 
+  int nEigenvals_; 
+  Teuchos::RCP<Tpetra_MultiVector> dn_dPsi, dn_dEval;
+  Teuchos::RCP<Tpetra_Vector> neg_eigenvalues;
+  Teuchos::RCP<const Tpetra_MultiVector> psiVectors;
+  Teuchos::RCP<const Tpetra_Map> discMap;
+
+  // Values for computing the quantum density
+  int numDims;
+  int valleyDegenFactor;
+  double temperature;
+  double length_unit_in_m;
+  double energy_unit_in_eV;
+  double effmass;
+  double offset_to_CB;
+
 };
 
 }

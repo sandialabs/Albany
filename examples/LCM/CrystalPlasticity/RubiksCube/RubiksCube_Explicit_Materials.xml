@@ -141,10 +141,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -273,10 +270,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -405,10 +399,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -537,10 +528,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -669,10 +657,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -801,10 +786,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -933,10 +915,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1065,10 +1044,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1197,10 +1173,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1329,10 +1302,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1461,10 +1431,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1593,10 +1560,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1725,10 +1689,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1857,10 +1818,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -1989,10 +1947,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -2121,10 +2076,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -2253,10 +2205,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -2385,10 +2334,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -2517,10 +2463,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -2649,10 +2592,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -2781,10 +2721,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -2913,10 +2850,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -3045,10 +2979,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -3177,10 +3108,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -3309,10 +3237,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -3441,10 +3366,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
@@ -3573,10 +3495,7 @@
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
-      <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
+      <Parameter name="Integration Scheme" type="string" value="Explicit"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>

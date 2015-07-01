@@ -489,6 +489,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     composite =
         material_db_->getElementBlockParam<bool>(eb_name,
             "Use Composite Tet 10");
+  pFromProb->set<bool>("Use Composite Tet 10", composite);
 
   // set flag for small strain option
   bool small_strain(false);
@@ -1122,6 +1123,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("IsoTropic MeshSizeField Name", "IsoMeshSizeField");
     p->set<std::string>("Current Coordinates Name", "Current Coordinates");
     p->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+
+    // Get the Adaptation list and send to the evaluator
+    Teuchos::ParameterList& paramList = params->sublist("Adaptation");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
     p->set<const Teuchos::RCP<
       Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
     ev = Teuchos::rcp(

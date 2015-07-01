@@ -72,6 +72,7 @@ private:
 
   bool usePrescribedVelocity;
   bool useHyperViscosity;
+  bool plotVorticity;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
@@ -89,8 +90,10 @@ private:
 
   ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
   ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
- 
+
+  double RRadius;   // 1/radius_of_earth
   double AlphaAngle;
+  bool doNotDampRotation;
 
   int numNodes;
   int numQPs;

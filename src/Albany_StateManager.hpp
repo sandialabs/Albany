@@ -162,6 +162,7 @@ public:
   Teuchos::RCP<Epetra_MultiVector> getAuxData();
   void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
 #endif
+  Teuchos::RCP<Tpetra_MultiVector> getAuxDataT();
 
   void setEigenDataT(const Teuchos::RCP<Albany::EigendataStructT>& eigdata);
   void setAuxDataT(const Teuchos::RCP<Tpetra_MultiVector>& aux_data);

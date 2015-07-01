@@ -1011,9 +1011,15 @@ computeGlobalResidualImplT(
   // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
+  // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
-  disc->setResidualFieldT(*fT);
+  // Push the assembled residual values back into the overlap vector
+  Tpetra_Import tpetraImport(fT->getMap(), overlapped_fT->getMap());
+  overlapped_fT->doImport(*fT, tpetraImport, Tpetra::INSERT);
+
+  // Write the residual to the discretization, which will later (optionally) be written to the output file
+  disc->setResidualFieldT(*overlapped_fT);
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {

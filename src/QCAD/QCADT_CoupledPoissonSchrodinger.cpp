@@ -293,6 +293,8 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   //Save the discretization's maps for convenience (should be the same for Poisson and Schrodinger apps)
   disc_map = poissonApp->getMapT();
   disc_overlap_map =  poissonApp->getStateMgr().getDiscretization()->getOverlapMapT();
+  //Allocate Schrodinger solution 
+  x_schrodinger = Teuchos::rcp(new Tpetra_MultiVector(disc_map, nEigenvals));
 
   // Parameter vectors:  Parameter vectors of coupled PS model evaluator are just the parameter vectors
   //   of the Poisson then Schrodinger model evaluators (in order).
@@ -407,6 +409,9 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   //We are coupling 2+nEigenvals models: 1 Poisson eqn + nEigenvals Schrodinger eqns + 1 nEigenvals eigenvalue eqns
   num_models_ = 2 + nEigenvals; 
   dist_eigenval_map = Teuchos::rcp(new Tpetra_Map(nEigenvals, my_nEigenvals_, 0, myComm));
+  Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+  local_eigenval_map = Teuchos::rcp(new Tpetra_Map(nEigenvals, 0, myComm, lg));
+  eigenvals = Teuchos::rcp(new Tpetra_Vector(local_eigenval_map)); 
   nominal_values_ = this->createInArgsImpl();
   allocateVectors(); //sets x and x_dot in nominal_values_
 
@@ -635,11 +640,10 @@ QCADT::CoupledPoissonSchrodinger::create_W_op() const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  QCADT::CoupledPSJacobian psJac(num_models_, myComm); 
-  return psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map,
+  QCADT::CoupledPSJacobian psJac(nEigenvals, disc_map, 
                           numDims, valleyDegeneracyFactor, temperature,
-                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB, 
-                          Jac_Poisson, Jac_Schrodinger, Jac_Schrodinger); 
+                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB, eigenvals, x_schrodinger, myComm);
+  return psJac.getThyraCoupledJacobian(Jac_Poisson, Jac_Schrodinger, Jac_Schrodinger); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
@@ -913,7 +917,7 @@ evalModelImpl(
   int disc_nMyElements = disc_map->getNodeNumElements();
 
   Teuchos::RCP<const Tpetra_Vector> x_poisson, xdot_poisson, eigenvals_dist;
-  Teuchos::RCP<Tpetra_MultiVector> x_schrodinger, xdot_schrodinger;
+  Teuchos::RCP<Tpetra_MultiVector> xdot_schrodinger = Teuchos::rcp(new Tpetra_MultiVector(disc_map, nEigenvals));
   
   std::vector<const Tpetra_Vector*> xdot_schrodinger_vec(nEigenvals);
 
@@ -945,11 +949,8 @@ evalModelImpl(
 
   //
   // Communicate all the eigenvalues to every processor, since all parts of the mesh need them
-  Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-  Teuchos::RCP<Tpetra_Map> local_eigenval_map = Teuchos::rcp(new Tpetra_Map(nEigenvals, 0, myComm, lg));
   Teuchos::RCP<Tpetra_Import> eigenval_importer = Teuchos::rcp(new Tpetra_Import(dist_eigenval_map, local_eigenval_map)); 
 
-  Teuchos::RCP<Tpetra_Vector> eigenvals = Teuchos::rcp(new Tpetra_Vector(local_eigenval_map)); 
   eigenvals->doImport(*eigenvals_dist, *eigenval_importer, Tpetra::INSERT); 
 
   const Teuchos::ArrayRCP<const ST> eigenvals_constView = eigenvals->get1dView();
@@ -958,9 +959,7 @@ evalModelImpl(
   //
   // Get views into 'f' residual vector to use for separate poisson and schrodinger application object calls
   //
-  Teuchos::RCP<Tpetra_Vector>   f_poisson, f_norm_local, f_norm_dist;
-   const Teuchos::ArrayRCP<ST> f_norm_local_nonConstView = f_norm_local->get1dViewNonConst(); 
-   const Teuchos::ArrayRCP<ST> f_norm_dist_nonConstView = f_norm_dist->get1dViewNonConst(); 
+  Teuchos::RCP<Tpetra_Vector> f_poisson, f_norm_local, f_norm_dist; 
   Teuchos::RCP<Tpetra_MultiVector> f_schrodinger;
   std::vector<Tpetra_Vector*> f_schrodinger_vec(nEigenvals);
 
@@ -972,8 +971,11 @@ evalModelImpl(
     //Next nEigenvals models are Schrodinger
     for (int m=1; m < 1+nEigenvals; ++m) 
       f_schrodinger_vec[m-1] = Teuchos::rcp_dynamic_cast<ThyraVector>(
-        f_out->getNonconstVectorBlock(m-1),
-        true)->getTpetraVector().getRawPtr(); 
+        f_out->getNonconstVectorBlock(m),
+        true)->getTpetraVector().getRawPtr();  
+    //Last model is eigenvalue. 
+    f_norm_dist = Teuchos::rcp_dynamic_cast<ThyraVector>(
+        f_out->getNonconstVectorBlock(1+nEigenvals), true)->getTpetraVector(); 
     //   (later we sum all procs contributions together and copy into distributed f_norm_dist vector)
     f_norm_local = Teuchos::rcp(new Tpetra_Vector(local_eigenval_map));
   }
@@ -982,6 +984,8 @@ evalModelImpl(
     for(int i=0; i<nEigenvals; i++) f_schrodinger_vec[i] = NULL;
     f_norm_local = f_norm_dist = Teuchos::null;
   }
+  const Teuchos::ArrayRCP<ST> f_norm_local_nonConstView = f_norm_local->get1dViewNonConst(); 
+  const Teuchos::ArrayRCP<ST> f_norm_dist_nonConstView = f_norm_dist->get1dViewNonConst(); 
  
   // Create an eigendata struct for passing the eigenvectors to the poisson app
   //  -- note that this requires the *overlapped* eigenvectors
@@ -1103,11 +1107,10 @@ evalModelImpl(
       f_schrodinger_already_computed[0] = true;
     }    
     if (W_out != Teuchos::null) {
-      QCADT::CoupledPSJacobian psJac(num_models_, myComm);
-      W_out = psJac.getThyraCoupledJacobian(nEigenvals, disc_map, combined_SP_map, 
+      QCADT::CoupledPSJacobian psJac(nEigenvals, disc_map,
                           numDims, valleyDegeneracyFactor, temperature,
-                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB,
-                          W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs, eigenvals, x_schrodinger); 
+                          length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB, eigenvals, x_schrodinger, myComm);
+      W_out = psJac.getThyraCoupledJacobian(W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs); 
     } 
 
     /*

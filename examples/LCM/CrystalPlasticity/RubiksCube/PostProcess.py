@@ -12,8 +12,9 @@
 import sys
 sys.path.append('/ascldap/users/djlittl/Albany_TPL/trilinos/trilinos-votd/GCC_4.7.2_OPT/bin')
 import exodus
-
 import string
+import numpy
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
 
@@ -67,8 +68,8 @@ if __name__ == "__main__":
         displacement_x = inFile.get_node_variable_values('displacement_x', timeStep+1)
         force_x = inFile.get_node_variable_values('force_x', timeStep+1)
 
-        # The x-max face is nodeset_4
-        nodeSet = nodeSetNodes[4]
+        # The x-max face is nodeset_2
+        nodeSet = nodeSetNodes[2]
         displacement = 0.0
         force = 0.0
         for nodeId in nodeSet:
@@ -92,3 +93,13 @@ if __name__ == "__main__":
 
     print
     
+    fig, ax = plt.subplots()
+    ax.plot(nodeset_displacement[:],nodeset_force[:],color='blue',marker='o',label='1 elem/block')
+    plt.xlabel('displacement (mm)')
+    plt.ylabel('force (N)')
+    lg = plt.legend(loc = 4)
+    lg.draw_frame(False)
+    plt.tight_layout()
+    plt.show()
+    fig.savefig('load_displacment.pdf')
+

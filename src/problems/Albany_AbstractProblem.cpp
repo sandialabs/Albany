@@ -55,6 +55,8 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      Teuchos::rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Name", "", "String to designate Problem Class");
+  //The following is for FELIX problems.
+  validPL->set<int>("Number RBMs for ML", 0, "Number of RBMs provided to ML");
   validPL->set<int>("Number of Spatial Processors", -1, "Number of spatial processors in multi-level parallelism");
   validPL->set<bool>("Enable Cubit Shape Parameters", false, "Flag to enable shape change capability");
   validPL->set<std::string>("Cubit Base Filename", "", "Base name of three Cubit files");

@@ -61,23 +61,27 @@ fi
 
 NP=`nproc`
 toolchain="gcc"
-buildtype="debug"
+machinetype="serial"
+#buildtype="debug"
+buildtype="release"
 
 for target in trilinos albany; do
- dir=${target}-build-${toolchain}-${buildtype}
+ dir=${target}-build-${machinetype}-${toolchain}-${buildtype}
  if [ ! -d $dir ]; then
    echo "!!! $dir exists !!!"
  fi
- echo ">>> building ${target}-${toolchain}-${buildtype} with ${NP} processes <<<"
- ./clean-config-build.sh ${target} gcc debug $NP >& ${target}_build.log
+ echo ">>> building ${target}-${machinetype}-${toolchain}-${buildtype} with ${NP} processes <<<"
+ ./clean-config-build.sh ${target} ${machinetype} ${toolchain} ${buildtype} $NP >& ${target}_build.log
 done
 
-if [ -e albany-build-${toolchain}-${buildtype}/src/Albany ]; then
-  echo "=== build successful ==="
+dir="albany-build-${machinetype}-${toolchain}-${buildtype}"
+if [ -e $dir/src/Albany ]; then
+  echo "=== build in $dir successful ==="
 else
-  echo "!!! unsuccessful build, see logs !!!"
+  echo "!!! unsuccessful build in $dir, see logs !!!"
 fi
 
+echo "..........................................................................................."
 echo "to ensure proper git behavior as a developer/commiter add the following to your .gitconfig:"
 echo " \
 [branch]

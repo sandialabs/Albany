@@ -790,15 +790,9 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 
   if(container->hasResidualField()){
 
-    // Iterate over the on-processor nodes
-    stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-    container->saveResVectorT(residualT, locally_owned, node_mapT);
-
     // Write the overlapped data
-//    stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
-
-//    container->saveResVector(residual, select_owned_or_shared, overlap_node_map);
+    stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
+    container->saveResVectorT(residualT, select_owned_or_shared, overlap_node_mapT);
   }
 #endif
 }

@@ -264,6 +264,7 @@ SET(SOURCES ${SOURCES}
   evaluators/Adapt_ElementSizeField.cpp
   evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_GatherAuxData.cpp
   )
  
 SET(SOURCES ${SOURCES}
@@ -275,7 +276,6 @@ IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} 
     evaluators/PHAL_GatherEigenvectors.cpp
     evaluators/PHAL_GatherEigenData.cpp
-    evaluators/PHAL_GatherAuxData.cpp
   )
 ENDIF() 
 
@@ -388,6 +388,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  evaluators/PHAL_GatherAuxData.hpp
+  evaluators/PHAL_GatherAuxData_Def.hpp
   )
   
 IF (ALBANY_EPETRA) 
@@ -400,8 +402,6 @@ IF (ALBANY_EPETRA)
     evaluators/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
-    evaluators/PHAL_GatherAuxData.hpp
-    evaluators/PHAL_GatherAuxData_Def.hpp
   )
 ENDIF()
 
@@ -647,8 +647,12 @@ IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
   link_directories (${LAME_LIBRARY_DIR})
   set(LAME_LIB lame)
+  include_directories (${MATH_TOOLKIT_INCLUDE_DIR})
+  link_directories (${MATH_TOOLKIT_LIBRARY_DIR})
+  set(MATH_TOOLKIT_LIB math_toolkit)
 ELSE()
   set(LAME_LIB )
+  set(MATH_TOOLKIT_LIB )
 ENDIF()
 
 # LAMENT
@@ -754,6 +758,7 @@ set(ALL_LIBRARIES
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
+  ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}

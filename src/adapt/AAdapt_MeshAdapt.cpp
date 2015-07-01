@@ -123,8 +123,23 @@ bool AAdapt::MeshAdapt::queryAdaptationCriteria(
   const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
   int iter)
 {
-  if (adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0)
+  adapt_params_->set<int>("LastIter", iter);
+
+  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "None");
+
+  if (strategy.compare("Continuous") == 0)
     return iter > 1;
+
+  if (strategy.compare("PLDriven") == 0){
+    if(adapt_params_->get<bool>("AdaptNow", false)){
+
+      adapt_params_->set<bool>("AdaptNow", false);
+      return iter > 1;
+
+    }
+    return false;
+  }
+
   Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
   for (int i = 0; i < remesh_iter.size(); i++)
     if (iter == remesh_iter[i])
@@ -432,6 +447,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
 
   validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
+  validPL->set<bool>("AdaptNow", false, "Used to force an adaptation step");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");

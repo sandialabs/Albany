@@ -187,6 +187,8 @@ struct Workset {
   Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
   Teuchos::RCP<Epetra_MultiVector> auxDataPtr;
 #endif
+  //Teuchos::RCP<Albany::EigendataStructT> eigenDataPtrT;
+  Teuchos::RCP<Tpetra_MultiVector> auxDataPtrT;
 
   bool transientTerms;
   bool accelerationTerms;

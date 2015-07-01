@@ -5,7 +5,8 @@
 //*****************************************************************//
 
 // Define only if Zoltan is enabled
-#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN)
+// Only build if BGL is available
+#if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN) && defined(ALBANY_BGL)
 
 #include <algorithm>
 #include <cassert>

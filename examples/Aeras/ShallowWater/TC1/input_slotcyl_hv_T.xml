@@ -1,0 +1,133 @@
+<ParameterList>
+  <ParameterList name="Problem">
+    <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
+    <Parameter name="Solution Method" type="string" value="Transient"/>
+    <ParameterList name="Shallow Water Problem">
+      <Parameter name="Use Prescribed Velocity" type="bool" value="true"/>
+      <Parameter name="Use Hyperviscosity" type="bool" value="True"/>
+      <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
+      <Parameter name="Hyperviscosity Tau" type="double" value="1e17"/>
+    </ParameterList>
+    <ParameterList name="Dirichlet BCs">
+    </ParameterList>
+    
+    <ParameterList name="Initial Condition"> 
+       <Parameter name="Function" type="string" value="Aeras SlottedCylinder"/>
+       <Parameter name="Function Data" type="Array(double)"
+       value="{1.5707963}"/>
+       <!-- pi/2 = 1.5707963 -->
+    </ParameterList>
+    
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="3"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Response 1" type="string" value="Solution Max Value"/>
+      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+    </ParameterList>
+    <ParameterList name="Parameters">
+      <Parameter name="Number" type="int" value="0"/>
+      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF Depth"/>
+      <Parameter name="Parameter 1" type="string" value="Gravity"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Debug Output">
+     <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/-->
+     <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
+     <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
+     <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
+     <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="Exodus Aeras"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
+    <Parameter name="Cubature Degree" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
+    <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
+    <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
+    <Parameter name="Element Degree" type="int" value="2"/>
+    <Parameter name="Workset Size" type="int" value="-1"/>
+    <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_10_out.exo"/>
+    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+  </ParameterList>
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{11.413801089, 1029.42889083, 10520.4366039}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
+  </ParameterList>
+  <ParameterList name="Piro">
+    <ParameterList name="Rythmos">
+      <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
+      <Parameter name="Final Time" type="double" value="864"/>
+      <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
+      <!--Parameter name="Final Time" type="double" value="86400"/-->
+      <!-- change to 12*24*3600 to get full 12 days -->
+      <!--Parameter name="Max State Error" type="double" value="0.05"/>
+      <Parameter name="Alpha"           type="double" value="0.0"/-->
+      <ParameterList name="Rythmos Stepper">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="low"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Rythmos Integration Control">
+        <Parameter name="Take Variable Steps" type="bool" value="false"/>
+        <Parameter name="Number of Time Steps" type="int" value="5"/>
+      </ParameterList>
+      <ParameterList name="Rythmos Integrator">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="none"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
+	<ParameterList name="Linear Solver Types">
+	  <ParameterList name="Belos">
+	    <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+	    <ParameterList name="Solver Types">
+	      <ParameterList name="Block GMRES">
+ 		<Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
+		<Parameter name="Output Frequency" type="int" value="10"/>
+		<Parameter name="Output Style" type="int" value="1"/>
+		<Parameter name="Verbosity" type="int" value="0"/>
+		<Parameter name="Maximum Iterations" type="int" value="100"/>
+		<Parameter name="Block Size" type="int" value="1"/>
+		<Parameter name="Num Blocks" type="int" value="100"/>
+		<Parameter name="Flexible Gmres" type="bool" value="0"/>
+	      </ParameterList>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+	<Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+	<ParameterList name="Preconditioner Types">
+	  <ParameterList name="Ifpack2">
+	    <Parameter name="Prec Type" type="string" value="ILUT"/>
+	    <Parameter name="Overlap" type="int" value="1"/>
+	    <ParameterList name="Ifpack2 Settings">
+	      <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+	    </ParameterList>
+	  </ParameterList>
+	  <ParameterList name="ML">
+	    <Parameter name="Base Method Defaults" type="string" value="SA"/>
+	    <ParameterList name="ML Settings">
+	      <Parameter name="aggregation: type" type="string" value="Uncoupled"/>
+	      <Parameter name="coarse: max size" type="int" value="20"/>
+	      <Parameter name="coarse: pre or post" type="string" value="post"/>
+	      <Parameter name="coarse: sweeps" type="int" value="1"/>
+	      <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+	      <Parameter name="prec type" type="string" value="MGV"/>
+	      <Parameter name="smoother: type" type="string" value="Gauss-Seidel"/>
+	      <Parameter name="smoother: damping factor" type="double" value="0.66"/>
+	      <Parameter name="smoother: pre or post" type="string" value="both"/>
+	      <Parameter name="smoother: sweeps" type="int" value="1"/>
+	      <Parameter name="ML output" type="int" value="1"/>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

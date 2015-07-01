@@ -19,7 +19,7 @@ FELIX::StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_),
+  Albany::AbstractProblem(params_, paramLib_, numDim_),
   numDim(numDim_)
 {
   //Set # of PDEs per node based on the Equation Set.  
@@ -31,9 +31,25 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     neq = 1; //1 PDE/node for Poisson or FELIX X-Z physics
 
 
-
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
+
+  // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
+  //written by IK, Feb. 2012
+  //Check if we want to give ML RBMs (from parameterlist)
+  int numRBMs = params_->get<int>("Number RBMs for ML", 0); 
+  bool setRBMs = false;   
+  if (numRBMs > 0) {
+    setRBMs = true; 
+    int numScalar = 0;
+    if (numRBMs == 3) //3 RBMs corresponding to translations only  
+      rigidBodyModes->setParameters(neq, numDim, numScalar, numDim, setRBMs);
+    else if (numRBMs == 4) //4 RBMs: 3 translations + xy rotation
+      rigidBodyModes->setParameters(neq, numDim, numScalar, numDim+1, setRBMs);
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs " 
+                                     << numRBMs << " is not valid!  Valid values are 0, 3 and 4.");
+  }
 
   // Need to allocate a fields in mesh database
   this->requirements.push_back("surface_height");

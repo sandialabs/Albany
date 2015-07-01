@@ -32,9 +32,10 @@
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Number" type="int" value="3"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
-      <Parameter name="Response 1" type="string" value="Project IP to Nodal Field"/>
+      <Parameter name="Response 1" type="string" value="IP to Nodal Field"/>
+      <Parameter name="Response 2" type="string" value="Project IP to Nodal Field"/>
       <ParameterList name="ResponseParams 1">
         <Parameter name="Number of Fields" type="int" value="2"/>
         <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
@@ -42,7 +43,14 @@
         <Parameter name="IP Field Name 1" type="string" value="eqps"/>
         <Parameter name="IP Field Layout 1" type="string" value="Scalar"/>
         <Parameter name="Output to File" type="bool" value="true"/>
-        <Parameter name="Mass Matrix Type" type="string" value="Full"/>
+      </ParameterList>
+      <ParameterList name="ResponseParams 2">
+        <Parameter name="Number of Fields" type="int" value="2"/>
+        <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
+        <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
+        <Parameter name="IP Field Name 1" type="string" value="eqps"/>
+        <Parameter name="IP Field Layout 1" type="string" value="Scalar"/>
+        <Parameter name="Output to File" type="bool" value="true"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>

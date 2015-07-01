@@ -29,9 +29,13 @@ class AlbanySizeField : public MeshSizeField {
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p){}
     void computeError(){}
-    void copyInputFields() {}
-    void freeInputFields() {}
+    void copyInputFields();
+    void freeInputFields();
     void freeSizeField() {}
+
+  private:
+
+    Teuchos::RCP<Albany::APFDiscretization> apfDisc;
 
 };
 

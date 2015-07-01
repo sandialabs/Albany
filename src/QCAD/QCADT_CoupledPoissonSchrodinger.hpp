@@ -55,6 +55,8 @@ namespace QCADT {
     Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_g_space(int j) const;
 
     Teuchos::RCP<const Teuchos::Array<std::string> > get_p_names(int l) const;
+    Teuchos::ArrayView<const std::string> get_g_names(int j) const
+    { TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed"); }
 
     Thyra::ModelEvaluatorBase::InArgs<ST> getNominalValues() const;
 
@@ -124,6 +126,9 @@ namespace QCADT {
   private:
     Teuchos::RCP<const Tpetra_Map> disc_map, disc_overlap_map;
     Teuchos::RCP<const Tpetra_Map> dist_eigenval_map;
+    Teuchos::RCP<const Tpetra_Map> local_eigenval_map;
+    Teuchos::RCP<Tpetra_Vector> eigenvals;
+    Teuchos::RCP<Tpetra_MultiVector> x_schrodinger;
     Teuchos::RCP<Tpetra_Map> combined_SP_map;
     Teuchos::RCP<const Tpetra_Vector> saved_initial_guess;
     Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_; 

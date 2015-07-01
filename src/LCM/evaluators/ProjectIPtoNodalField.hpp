@@ -78,6 +78,7 @@ public:
 };
 
 class ProjectIPtoNodalFieldManager;
+class ProjectIPtoNodalFieldQuadrature;
 
 template<typename Traits>
 class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits> :
@@ -118,15 +119,18 @@ private:
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
+#ifdef PROJ_INTERP_TEST
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
+#endif
+  typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> >
+          IntrepidBasis;
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
+  Teuchos::RCP<ProjectIPtoNodalFieldQuadrature> quad_mgr_;
+
   Albany::StateManager* p_state_mgr_;
 
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;
-
-#ifdef PROJ_INTERP_TEST
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
-#endif
 
   bool initManager(Teuchos::ParameterList* const pl);
   void fillRHS(const typename Traits::EvalData workset);
