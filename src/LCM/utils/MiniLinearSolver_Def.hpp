@@ -8,18 +8,17 @@ namespace LCM
 {
 
 template<typename EvalT, typename Traits>
-MiniLinearSolver_Base<EvalT, Traits>::MiniLinearSolver_Base() :
-    lapack()
+MiniLinearSolver_Base<EvalT, Traits>::MiniLinearSolver_Base()
 {
 }
 
-// -----------------------------------------------------------------------------
+//
 // Specializations
-// -----------------------------------------------------------------------------
+//
 
-// -----------------------------------------------------------------------------
+//
 // Residual
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::MiniLinearSolver() :
     MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits>()
@@ -27,44 +26,36 @@ MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::MiniLinearSolver() :
 }
 
 template<typename Traits>
+template<Intrepid::Index N>
 void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
 solve(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+Intrepid::Tensor<ScalarT, N> const & A,
+Intrepid::Vector<ScalarT, N> const & b,
+Intrepid::Vector<ScalarT, N> & x)
 {
-  // system size
-  int numLocalVars = B.size();
-
-  // data for the LAPACK call below
-  int info(0);
-  std::vector<int> IPIV(numLocalVars);
-
-  // call LAPACK
-  this->lapack.GESV(numLocalVars, 1, &A[0], numLocalVars, &IPIV[0], &B[0],
-      numLocalVars, &info);
-
-  // increment the solution
-  for (int i(0); i < numLocalVars; ++i)
-    X[i] -= B[i];
+  x -= Intrepid::solve(A, b);
+  return;
 }
 
 template<typename Traits>
+template<Intrepid::Index N>
 void
+inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
 computeFadInfo(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+Intrepid::Tensor<ScalarT, N> const & A,
+Intrepid::Vector<ScalarT, N> const & b,
+Intrepid::Vector<ScalarT, N> & x)
 {
   // no-op
+  return;
 }
 
-// -----------------------------------------------------------------------------
+//
 // Jacobian
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::MiniLinearSolver() :
     MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits>()
@@ -156,9 +147,9 @@ computeFadInfo(
   }
 }
 
-// -----------------------------------------------------------------------------
+//
 // Tangent
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::MiniLinearSolver() :
     MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits>()
@@ -250,9 +241,9 @@ computeFadInfo(
   }
 }
 
-// -----------------------------------------------------------------------------
+//
 // DistParamDeriv
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::MiniLinearSolver() :
     MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>()
@@ -344,9 +335,9 @@ computeFadInfo(
   }
 }
 
-// -----------------------------------------------------------------------------
+//
 // Stochastic Galerkin Residual
-// -----------------------------------------------------------------------------
+//
 #ifdef ALBANY_SG
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits>::MiniLinearSolver():
@@ -393,9 +384,9 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Stochastic Galerkin types yet\n");
 }
 
-// -----------------------------------------------------------------------------
+//
 // Stochastic Galerkin Tangent
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, Traits>()
@@ -419,9 +410,9 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
 #endif 
 #ifdef ALBANY_ENSEMBLE 
 
-// -----------------------------------------------------------------------------
+//
 // Multi-Point Residual
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::MPResidual, Traits>()
@@ -443,9 +434,9 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
 }
 
-// -----------------------------------------------------------------------------
+//
 // Multi-Point Jacobian
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::MPJacobian, Traits>()
@@ -467,9 +458,9 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
 }
 
-// -----------------------------------------------------------------------------
+//
 // Multi-Point Tangent
-// -----------------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::MPTangent, Traits>()
@@ -491,6 +482,6 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
 }
 #endif
-// -----------------------------------------------------------------------------
+//
 }
 
