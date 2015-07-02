@@ -113,6 +113,8 @@ computeFadInfo(
   auto const
   order = b(0).size();
 
+  assert(order > 0);
+
   Intrepid::Vector<RealType, N>
   f(dimension);
 
