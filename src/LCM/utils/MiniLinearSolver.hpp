@@ -107,14 +107,14 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -287,7 +287,8 @@ public:
       std::vector<ScalarT> & B);
 };
 #endif
-}
+
+} // namespace LCM
 
 #include "MiniLinearSolver_Def.hpp"
 
