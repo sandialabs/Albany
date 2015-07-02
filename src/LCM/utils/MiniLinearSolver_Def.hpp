@@ -26,28 +26,26 @@ MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::MiniLinearSolver() :
 }
 
 template<typename Traits>
-template<Intrepid::Index N>
 void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
 solve(
-Intrepid::Tensor<ScalarT, N> const & A,
-Intrepid::Vector<ScalarT, N> const & b,
-Intrepid::Vector<ScalarT, N> & x)
+Intrepid::Tensor<ScalarT> const & A,
+Intrepid::Vector<ScalarT> const & b,
+Intrepid::Vector<ScalarT> & x)
 {
   x -= Intrepid::solve(A, b);
   return;
 }
 
 template<typename Traits>
-template<Intrepid::Index N>
 void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
 computeFadInfo(
-Intrepid::Tensor<ScalarT, N> const & A,
-Intrepid::Vector<ScalarT, N> const & b,
-Intrepid::Vector<ScalarT, N> & x)
+Intrepid::Tensor<ScalarT> const & A,
+Intrepid::Vector<ScalarT> const & b,
+Intrepid::Vector<ScalarT> & x)
 {
   // no-op
   return;
@@ -63,77 +61,35 @@ MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::MiniLinearSolver() :
 }
 
 template<typename Traits>
-template<Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
   auto const
-  dimension = b.get_dimension();
+  local_dim = b.get_dimension();
 
-  Intrepid::Vector<RealType, N>
-  f(dimension);
+  Intrepid::Vector<RealType>
+  f(local_dim);
 
-  Intrepid::Tensor<RealType, N>
-  DfDx(dimension);
+  Intrepid::Tensor<RealType>
+  DfDx(local_dim);
 
-  for (auto i = 0; i < dimension; ++i) {
+  for (auto i = 0; i < local_dim; ++i) {
     f(i) = b(i).val();
 
-    for (auto j = 0; j < dimension; ++j) {
+    for (auto j = 0; j < local_dim; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
 
-  Intrepid::Vector<RealType, N> const
+  Intrepid::Vector<RealType> const
   t = Intrepid::solve(DfDx, f);
 
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).val() = t(i);
-  }
-
-  return;
-}
-
-template<typename Traits>
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  dimension = b.get_dimension();
-
-  auto const
-  order = b(0).size();
-
-  assert(order > 0);
-
-  Intrepid::Vector<RealType, N>
-  f(dimension);
-
-  Intrepid::Tensor<RealType, N>
-  DfDx(dimension);
-
-  for (auto i = 0; i < dimension; ++i) {
-    f(i) = b(i).val();
-
-    for (auto j = 0; j < dimension; ++j) {
-      DfDx(i, j) = A(i, j).val();
-    }
-  }
-
-  Intrepid::Vector<RealType, N> const
-  t = Intrepid::solve(DfDx, f);
-
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).val() = t(i);
+  for (auto i = 0; i < local_dim; ++i) {
+    x(i).val() -= t(i);
   }
 
   return;
@@ -143,48 +99,51 @@ template<typename Traits>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
 computeFadInfo(
-    std::vector<ScalarT> & A,
-    std::vector<ScalarT> & X,
-    std::vector<ScalarT> & B)
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  // local system size
-  int numLocalVars = B.size();
-  int numGlobalVars = B[0].size();
-  TEUCHOS_TEST_FOR_EXCEPTION(numGlobalVars == 0, std::logic_error,
-      "In MiniLinearSolver<Jacobian> the numGLobalVars is zero where it should be positive\n");
+  auto const
+  local_dim = b.get_dimension();
 
-  // data for the LAPACK call below
-  int info(0);
-  std::vector<int> IPIV(numLocalVars);
+  auto const
+  global_dim = b[0].size();
+
+  assert(global_dim > 0);
+
+  Intrepid::Matrix<RealType>
+  DbDp(local_dim, global_dim);
 
   // extract sensitivities of objective function(s) wrt p
-  std::vector<RealType> dBdP(numLocalVars * numGlobalVars);
-  for (int i(0); i < numLocalVars; ++i) {
-    for (int j(0); j < numGlobalVars; ++j) {
-      dBdP[i + numLocalVars * j] = B[i].dx(j);
+  for (auto i = 0; i < local_dim; ++i) {
+    for (auto j = 0; j < global_dim; ++j) {
+      DbDp(i, j) = b(i).dx(j);
     }
   }
+
+  Intrepid::Tensor<RealType>
+  DbDx(local_dim);
 
   // extract the jacobian
-  std::vector<RealType> dBdX(A.size());
-  for (int i(0); i < numLocalVars; ++i) {
-    for (int j(0); j < numLocalVars; ++j) {
-      dBdX[i + numLocalVars * j] = A[i + numLocalVars * j].val();
+  for (auto i = 0; i < local_dim; ++i) {
+    for (auto j = 0; j < local_dim; ++j) {
+      DbDx(i, j) = A(i, j).val();
     }
   }
-  // call LAPACK to simultaneously solve for all dXdP
-  this->lapack.GESV(numLocalVars, numGlobalVars, &dBdX[0], numLocalVars,
-      &IPIV[0], &dBdP[0], numLocalVars, &info);
 
-  // unpack into globalX (recall that LAPACK stores dXdP in dBdP)
-  for (int i(0); i < numLocalVars; ++i)
-      {
-    X[i].resize(numGlobalVars);
-    for (int j(0); j < numGlobalVars; ++j)
-        {
-      X[i].fastAccessDx(j) = -dBdP[i + numLocalVars * j];
+  // Solve for all DxDp
+  Intrepid::Matrix<RealType>
+  DxDp = Intrepid::solve(DbDx, DbDp);
+
+  // Unpack into x.
+  for (auto i = 0; i < local_dim; ++i) {
+    x(i).resize(global_dim);
+    for (auto j = 0; j < global_dim; ++j) {
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
+
+  return;
 }
 
 //
