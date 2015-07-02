@@ -11,9 +11,12 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "ConstitutiveModelInterface.hpp"
+
+#ifdef ALBANY_ATO
 #include "ATO_OptimizationProblem.hpp"
 #include "ATO_Utils.hpp"
-#include "ConstitutiveModelInterface.hpp"
+#endif 
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -41,7 +44,9 @@ namespace Albany {
    * problem.
    */
   class HMCProblem : 
+#ifdef ALBANY_ATO
     public ATO::OptimizationProblem, 
+#endif
     public virtual Albany::AbstractProblem {
   public:
   
@@ -151,8 +156,10 @@ namespace Albany {
 #include "UpdateField.hpp"
 #include "ElasticityResid.hpp"
 #include "HMC_MicroResidual.hpp"
+#ifdef ALBANY_ATO
 #include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
+#endif
 
 #include "Time.hpp"
 #include "ConstitutiveModelParameters.hpp"
@@ -229,7 +236,9 @@ Albany::HMCProblem::constructEvaluators(
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+#ifdef ALBANY_ATO
    ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl);
+#endif
 
    // independent variables
    std::string strDisplacement("Displacement");
@@ -890,6 +899,7 @@ Albany::HMCProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+#ifdef ALBANY_ATO
   /******************************************************************************/
   /** Begin topology weighting **************************************************/
   /******************************************************************************/
@@ -982,6 +992,7 @@ Albany::HMCProblem::constructEvaluators(
   /******************************************************************************/
   /** End topology weighting ****************************************************/
   /******************************************************************************/
+#endif
     
 
 // Compute macro residual
@@ -1010,10 +1021,13 @@ Albany::HMCProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
 
     //Input
+#ifdef ALBANY_ATO
     if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
       p->set<std::string>("Stress Name", macroKinematicFieldName+"_Weighted");
     else
+#endif
       p->set<std::string>("Stress Name", macroKinematicFieldName);
+
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
@@ -1065,17 +1079,21 @@ Albany::HMCProblem::constructEvaluators(
     //Input: Micro stresses
     std::string ms = Albany::strint("Micro Stress",i);
 
+#ifdef ALBANY_ATO
     if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
       p->set<std::string>("Micro Stress Name", ms+"_Weighted");
     else
+#endif
       p->set<std::string>("Micro Stress Name", ms);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
 
     std::string ds = Albany::strint("Double Stress",i);
+#ifdef ALBANY_ATO
     if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
       p->set<std::string>("Double Stress Name", ds+"_Weighted");
     else
+#endif
       p->set<std::string>("Double Stress Name", ds);
     p->set< RCP<DataLayout> >("QP 3Tensor Data Layout", dl->qp_tensor3);
 
