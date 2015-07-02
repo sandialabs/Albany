@@ -9,7 +9,6 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include <Intrepid_MiniTensor.h>
-#include <Sacado.hpp>
 
 namespace LCM
 {
