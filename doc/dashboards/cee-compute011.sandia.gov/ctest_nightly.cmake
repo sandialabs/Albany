@@ -28,12 +28,12 @@ else ()
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS FALSE)
   set (BUILD_PERIDIGM FALSE)
-  set (BUILD_ALB32 FALSE)
+  set (BUILD_ALB32 TRUE)
   set (BUILD_TRILINOSCLANG11 FALSE)
   set (CLEAN_BUILD FALSE)
   set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS FALSE)
-  set (BUILD_INTEL_ALBANY TRUE)
+  set (BUILD_INTEL_ALBANY FALSE)
 endif ()
 
 # Begin User inputs:
@@ -661,12 +661,16 @@ if (BUILD_ALB32)
 
   # Configure the Albany 32 Bit build 
   # Builds everything!
-  #
 
   set_property (GLOBAL PROPERTY SubProject Albany32Bit)
   set_property (GLOBAL PROPERTY Label Albany32Bit)
 
-  set (ALB_LAME_DIR "/projects/albany/src/lame-4.24.1/")
+  set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include")
+  set (LAME_LIB_DIR "/projects/sierra/linux_rh6/install/master/lame/lib")
+  set (MATH_TOOLKIT_INC_DIR
+    "/projects/sierra/linux_rh6/install/master/math_toolkit/include")
+  set (MATH_TOOLKIT_LIB_DIR
+    "/projects/sierra/linux_rh6/install/master/math_toolkit/lib")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -684,9 +688,11 @@ if (BUILD_ALB32)
     "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=ON"
-    "-DLAME_INCLUDE_DIR:FILEPATH=${ALB_LAME_DIR}/include"
-    "-DLAME_LIBRARY_DIR:FILEPATH=${ALB_LAME_DIR}/build"
-    "-DENABLE_LAME:BOOL=OFF")
+    "-DLAME_INCLUDE_DIR:PATH=${LAME_INC_DIR}"
+    "-DLAME_LIBRARY_DIR:PATH=${LAME_LIB_DIR}"
+    "-DMATH_TOOLKIT_INCLUDE_DIR:PATH=${MATH_TOOLKIT_INC_DIR}"
+    "-DMATH_TOOLKIT_LIBRARY_DIR:PATH=${MATH_TOOLKIT_LIB_DIR}"
+    "-DENABLE_LAME:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
       "-DENABLE_SCOREC:BOOL=ON")
