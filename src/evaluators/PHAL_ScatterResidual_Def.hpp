@@ -956,12 +956,15 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
 
-  int row, lcol, col;
+  int row, lcol;
   int nblock = 0;
   if (f != Teuchos::null)
     nblock = f->size();
   int nblock_jac = Jac->size();
-  double c; // use double since it goes into CrsMatrix
+  const int neq = workset.wsElNodeEqID[0][0].size();
+  const int nunk = neq*this->numNodes;
+  Teuchos::Array<double> val(nunk); // use double since it goes into CrsMatrix
+  Teuchos::Array<int> col(nunk);
 
   int numDim=0;
   if(this->tensorRank==2)
@@ -979,7 +982,6 @@ evaluateFields(typename Traits::EvalData workset)
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
         row = nodeID[node][this->offset + eq];
-        int neq = nodeID[node].size();
 
         if (f != Teuchos::null) {
           for (int block=0; block<nblock; block++)
@@ -989,27 +991,41 @@ evaluateFields(typename Traits::EvalData workset)
         // Check derivative array is nonzero
         if (valptr.hasFastAccess()) {
 
-          // Loop over nodes in element
-          for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+          // Loop over blocks -- here we pull out one ensemble value at at
+          // a time some we can sum in a whole row at once.  This is much
+          // faster due to the search of column indices in SumIntoMyValues.
+          for (int block=0; block<nblock_jac; block++) {
 
-            // Loop over equations per node
-            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-              lcol = neq * node_col + eq_col;
+            // Loop over nodes in element
+            for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
 
-              // Global column
-              col =  nodeID[node_col][eq_col];
+              // Loop over equations per node
+              for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+                lcol = neq * node_col + eq_col;
 
-              // Sum Jacobian
-              for (int block=0; block<nblock_jac; block++) {
-                c = valptr.fastAccessDx(lcol).coeff(block);
-                (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
-              }
-            } // column equations
-          } // column nodes
-        } // has fast access
-      }
-    }
-  }
+                // Global column
+                col[lcol] =  nodeID[node_col][eq_col];
+
+                // Matrix value
+                val[lcol] = valptr.fastAccessDx(lcol).coeff(block);
+
+              } // column equations
+
+            } // column nodes
+
+            // Sum Jacobian
+            (*Jac)[block].SumIntoMyValues(row, nunk,
+                                          val.getRawPtr(), col.getRawPtr());
+
+          } // has fast access
+
+        } // block
+
+      } // row equations
+
+    } // row nodes
+
+  } // cells
 }
 
 // **********************************************************************
