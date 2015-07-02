@@ -24,8 +24,6 @@ public:
 
   MiniLinearSolver_Base();
 
-  Teuchos::LAPACK<int, RealType> lapack;
-
   void solve(
       Intrepid::Tensor<ScalarT> const & A,
       Intrepid::Vector<ScalarT> const & b,
