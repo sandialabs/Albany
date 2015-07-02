@@ -32,9 +32,9 @@ void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
 solve(
-Intrepid::Tensor<ScalarT> const & A,
-Intrepid::Vector<ScalarT> const & b,
-Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
   x -= Intrepid::solve(A, b);
   return;
@@ -45,11 +45,10 @@ void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
 computeFadInfo(
-Intrepid::Tensor<ScalarT> const & A,
-Intrepid::Vector<ScalarT> const & b,
-Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  // no-op
   return;
 }
 
@@ -241,6 +240,7 @@ computeFadInfo(
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
+
   return;
 }
 
@@ -248,8 +248,8 @@ computeFadInfo(
 // DistParamDeriv
 //
 template<typename Traits>
-MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>()
+MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::MiniLinearSolver()
+: MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>()
 {
   return;
 }
@@ -262,6 +262,31 @@ solve(
     Intrepid::Vector<ScalarT> const & b,
     Intrepid::Vector<ScalarT> & x)
 {
+  auto const
+  local_dim = b.get_dimension();
+
+  Intrepid::Vector<RealType>
+  Df(local_dim);
+
+  Intrepid::Tensor<RealType>
+  DfDx(local_dim);
+
+  for (auto i = 0; i < local_dim; ++i) {
+    Df(i) = b(i).val();
+
+    for (auto j = 0; j < local_dim; ++j) {
+      DfDx(i, j) = A(i, j).val();
+    }
+  }
+
+  Intrepid::Vector<RealType> const
+  Dx = Intrepid::solve(DfDx, Df);
+
+  for (auto i = 0; i < local_dim; ++i) {
+    x(i).val() -= Dx(i);
+  }
+
+  return;
 }
 
 template<typename Traits>
@@ -272,6 +297,47 @@ computeFadInfo(
     Intrepid::Vector<ScalarT> const & b,
     Intrepid::Vector<ScalarT> & x)
 {
+  auto const
+  local_dim = b.get_dimension();
+
+  auto const
+  global_dim = b[0].size();
+
+  assert(global_dim > 0);
+
+  Intrepid::Matrix<RealType>
+  DbDp(local_dim, global_dim);
+
+  // extract sensitivities of objective function(s) wrt p
+  for (auto i = 0; i < local_dim; ++i) {
+    for (auto j = 0; j < global_dim; ++j) {
+      DbDp(i, j) = b(i).dx(j);
+    }
+  }
+
+  Intrepid::Tensor<RealType>
+  DbDx(local_dim);
+
+  // extract the jacobian
+  for (auto i = 0; i < local_dim; ++i) {
+    for (auto j = 0; j < local_dim; ++j) {
+      DbDx(i, j) = A(i, j).val();
+    }
+  }
+
+  // Solve for all DxDp
+  Intrepid::Matrix<RealType>
+  DxDp = Intrepid::solve(DbDx, DbDp);
+
+  // Unpack into x.
+  for (auto i = 0; i < local_dim; ++i) {
+    x(i).resize(global_dim);
+    for (auto j = 0; j < global_dim; ++j) {
+      x(i).fastAccessDx(j) = -DxDp(i, j);
+    }
+  }
+
+  return;
 }
 
 //
@@ -281,46 +347,78 @@ computeFadInfo(
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, Traits>()
-{}
-
-template<typename Traits>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits>::
-solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Stochastic Galerkin types yet\n");
+  return;
 }
 
 template<typename Traits>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits>::
-computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
+solve(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Stochastic Galerkin types yet\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Stochastic Galerkin types yet\n");
+  return;
 }
 
-// ---------------------------------------------------------------------
+template<typename Traits>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Stochastic Galerkin types yet\n");
+  return;
+}
+
+//
 // Stochastic Galerkin Jacobian
-// ---------------------------------------------------------------------
+//
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, Traits>()
-{}
-
-template<typename Traits>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits>::
-solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Stochastic Galerkin types yet\n");
+  return;
 }
 
 template<typename Traits>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits>::
-computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
+solve(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Stochastic Galerkin types yet\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Stochastic Galerkin types yet\n");
+  return;
+}
+
+template<typename Traits>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Stochastic Galerkin types yet\n");
+  return;
 }
 
 //
@@ -329,48 +427,80 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, Traits>()
-{}
-
-template<typename Traits>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits>::
-solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Stochastic Galerkin types yet\n");
+  return;
 }
 
 template<typename Traits>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits>::
-computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
+solve(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Stochastic Galerkin types yet\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Stochastic Galerkin types yet\n");
+  return;
 }
-#endif 
+
+template<typename Traits>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Stochastic Galerkin types yet\n");
+  return;
+}
+#endif // ALBANY_SG
+
 #ifdef ALBANY_ENSEMBLE 
-
 //
 // Multi-Point Residual
 //
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::MPResidual, Traits>()
-{}
-
-template<typename Traits>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits>::
-solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
+  return;
 }
 
 template<typename Traits>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits>::
-computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
+solve(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Multi-Point types yet\n");
+  return;
+}
+
+template<typename Traits>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Multi-Point types yet\n");
+  return;
 }
 
 //
@@ -379,22 +509,38 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::MPJacobian, Traits>()
-{}
-
-template<typename Traits>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits>::
-solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
+  return;
 }
 
 template<typename Traits>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits>::
-computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
+solve(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Multi-Point types yet\n");
+  return;
+}
+
+template<typename Traits>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Multi-Point types yet\n");
+  return;
 }
 
 //
@@ -403,24 +549,39 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
 template<typename Traits>
 MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits>::MiniLinearSolver():
 MiniLinearSolver_Base<PHAL::AlbanyTraits::MPTangent, Traits>()
-{}
-
-template<typename Traits>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits>::
-solve(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
+  return;
 }
 
 template<typename Traits>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits>::
-computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<ScalarT> & B)
+solve(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"MiniLinearSolver has not been implemented for Multi-Point types yet\n");
-}
-#endif
-//
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Multi-Point types yet\n");
+  return;
 }
 
+template<typename Traits>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT> const & A,
+    Intrepid::Vector<ScalarT> const & b,
+    Intrepid::Vector<ScalarT> & x)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      true,
+      std::logic_error,
+      "MiniLinearSolver does not have Multi-Point types yet\n");
+  return;
+}
+#endif // ALBANY_ENSEMBLE
+
+} // namespace LCM
