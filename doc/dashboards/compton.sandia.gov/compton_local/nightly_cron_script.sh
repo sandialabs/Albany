@@ -6,10 +6,10 @@
 #
 # 00 00 * * * /home/gahanse/Codes/Albany/doc/dashboards/compton.sandia.gov/compton_local/nightly_cron_script.sh
 
-#SUBMIT_RESULTS=ON
-SUBMIT_RESULTS=OFF
-#THE_TEST_TYPE=Nightly
-THE_TEST_TYPE=Experimental
+SUBMIT_RESULTS=ON
+#SUBMIT_RESULTS=OFF
+THE_TEST_TYPE=Nightly
+#THE_TEST_TYPE=Experimental
 
 /usr/bin/modulecmd bash load cmake/3.0.2
 /usr/bin/modulecmd bash load boost/1.58.0/knc/intelmpi/4.1.1.036/intel/15.2.164
