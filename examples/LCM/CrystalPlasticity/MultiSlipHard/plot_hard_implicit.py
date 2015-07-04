@@ -3,7 +3,7 @@ import exodus
 import numpy
 import matplotlib.pyplot as plt
 
-file_name = "MultiSlipPlaneHard_Implicit.exo"
+file_name = "MultiSlipPlaneHard_Implicit_Active_Sets.exo"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "gamma_1_1"
 dep_var_name = "tau_hard_1_1"
@@ -100,13 +100,3 @@ lg = plt.legend(loc = 4)
 lg.draw_frame(False)
 plt.tight_layout()
 plt.show()
-
-
-# Exporting data to file
-output = open('true_stress_sim.dat','w')
-for i in range(len(eqps_var)):
-    if (ind_var[i] > 0.000001):
-         s = '{0}    {1} \n'.format(ind_var[i][0],dep_var_4[i][0])
-         print s
-         output.write(s)
-
