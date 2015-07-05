@@ -10,7 +10,7 @@
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
        evaluators/FELIX_ThicknessResid.cpp
-       evaluators/FELIX_StokesFOThicknessResid.cpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
        evaluators/FELIX_StokesL1L2Resid.cpp
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
@@ -26,6 +26,7 @@
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_GatherThickness.cpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
+       evaluators/FELIX_ScatterResidualH.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesFOThickness.cpp
@@ -52,8 +53,8 @@ ENDIF()
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
-       evaluators/FELIX_StokesFOThicknessResid_Def.hpp
-       evaluators/FELIX_StokesFOThicknessResid.hpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
        evaluators/FELIX_ThicknessResid_Def.hpp
        evaluators/FELIX_ThicknessResid.hpp
        evaluators/FELIX_StokesL1L2Resid_Def.hpp
@@ -83,6 +84,8 @@ ENDIF()
        evaluators/FELIX_GatherThickness_Def.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
+       evaluators/FELIX_ScatterResidualH.hpp
+       evaluators/FELIX_ScatterResidualH_Def.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesFOThickness.hpp
