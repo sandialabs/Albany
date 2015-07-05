@@ -47,6 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> H;
   PHX::MDField<ScalarT,Cell,Node> H0;
   PHX::MDField<ScalarT,Cell,Node,Dim> V;
+  Teuchos::RCP<PHX::MDField<ScalarT,Cell,Node> > SMB_ptr;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
@@ -54,20 +55,17 @@ private:
 
   int  cellDims, sideDims, numQPsSide, numNodes, cubatureDegree;
   double dt;
+  bool have_SMB;
+  std::string meshPart;
 
   std::size_t numQPs;
-  std::size_t numDims;
-  std::size_t numVecDims;
+  std::size_t numVecFODims;
 
-  PHX::MDField<ScalarT,Cell,Node,VecDim> velocity_field;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> surfaceVelocity_field;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> velocityRMS_field;
-  PHX::MDField<ScalarT,Cell,Node> basal_friction_field;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+
 
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureSide;
 
   // The basis

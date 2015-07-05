@@ -31,8 +31,16 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   dt = p.get<double>("Time Step");
 
-  Teuchos::ParameterList* plist =
-    p.get<Teuchos::ParameterList*>("Parameter List");
+  if (p.isType<const std::string>("Mesh Part"))
+    meshPart = p.get<const std::string>("Mesh Part");
+  else
+    meshPart = "upperside";
+
+  if(p.isParameter("SMB Name")) {
+   SMB_ptr = Teuchos::rcp(new PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("SMB Name"), dl->node_scalar));
+   have_SMB = true;
+  } else
+    have_SMB = false;
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
 
@@ -40,6 +48,8 @@ ThicknessResid(const Teuchos::ParameterList& p,
   this->addDependentField(H0);
   this->addDependentField(V);
   this->addDependentField(coordVec);
+  if(have_SMB)
+    this->addDependentField(*SMB_ptr);
 
   this->addEvaluatedField(Residual);
 
@@ -49,12 +59,10 @@ ThicknessResid(const Teuchos::ParameterList& p,
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
   numNodes = dims[1];
-  numVecDims  = std::min((size_t)dims[2], (size_t)2);
+  numVecFODims  = std::min((size_t)dims[2], (size_t)2);
 
   dl->qp_gradient->dimensions(dims);
-  numDims = cellDims = dims[2];
-
-
+  cellDims = dims[2];
 
   const CellTopologyData * const elem_top = &meshSpecs->ctd;
 
@@ -63,18 +71,16 @@ ThicknessResid(const Teuchos::ParameterList& p,
   cellType = Teuchos::rcp(new shards::CellTopology(elem_top));
 
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  cubatureCell = cubFactory.create(*cellType, 1); //meshSpecs->cubatureDegree);
-  cubatureDegree = plist->isParameter("Cubature Degree") ? plist->get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
+  cubatureDegree = p.isParameter("Cubature Degree") ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
   numNodes = intrepidBasis->getCardinality();
 
   physPointsCell.resize(1, numNodes, cellDims);
   dofCell.resize(1, numNodes);
-  dofCellVec.resize(1, numNodes, numVecDims);
+  dofCellVec.resize(1, numNodes, numVecFODims);
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX Thickness residual! " << std::endl;
-*out << " numDims = " << numDims << std::endl;
 *out << " numNodes = " << numNodes << std::endl; 
 #endif
 }
@@ -89,6 +95,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(H0,fm);
   this->utils.setFieldData(V,fm);
   this->utils.setFieldData(coordVec, fm);
+  if(have_SMB)
+    this->utils.setFieldData(*SMB_ptr, fm);
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -104,36 +112,28 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find("upperside");
-
+  Albany::SideSetList::const_iterator it = ssList.find(meshPart);
 
 
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
-
-    int numLayers = layeredMeshNumbering.numLayers;
-
     Intrepid::FieldContainer<ScalarT> H_Side;
+    Intrepid::FieldContainer<ScalarT> SMB_Side;
     Intrepid::FieldContainer<ScalarT> H0_Side;
     Intrepid::FieldContainer<ScalarT> V_Side;
 
-    std::map<LO, std::size_t> baseIds;
-
-
     // Loop over the sides that form the boundary condition
-    for (std::size_t side = 0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
-
-      baseIds.clear();
+    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
 
       // Get the data that corresponds to the side
-      const int elem_GID = sideSet[side].elem_GID;
-      const int elem_LID = sideSet[side].elem_LID;
-      const int elem_side = sideSet[side].side_local_id;
+      const int elem_GID = sideSet[iSide].elem_GID;
+      const int elem_LID = sideSet[iSide].elem_LID;
+      const int elem_side = sideSet[iSide].side_local_id;
 
-      sideType = Teuchos::rcp(new shards::CellTopology(cellType->getCellTopologyData()->side[elem_side].topology));
+      const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
+      sideType = Teuchos::rcp(new shards::CellTopology(side.topology));
+      int numSideNodes = sideType->getNodeCount();
       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
       cubatureSide = cubFactory.create(*sideType, cubatureDegree);
       sideDims = sideType->getDimension();
@@ -145,7 +145,7 @@ evaluateFields(typename Traits::EvalData workset)
       cubWeightsSide.resize(numQPsSide);
       physPointsSide.resize(1, numQPsSide, cellDims);
       dofSide.resize(1, numQPsSide);
-      dofSideVec.resize(1, numQPsSide, numVecDims);
+      dofSideVec.resize(1, numQPsSide, numVecFODims);
 
       // Do the BC one side at a time for now
       jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
@@ -163,27 +163,18 @@ evaluateFields(typename Traits::EvalData workset)
       cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
       H_Side.resize(numQPsSide);
+      SMB_Side.resize(numQPsSide);
       H0_Side.resize(numQPsSide);
-      V_Side.resize(numQPsSide, numVecDims);
+      V_Side.resize(numQPsSide, numVecFODims);
 
       // Copy the coordinate data over to a temp container
-     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
-
      for (std::size_t node = 0; node < numNodes; ++node) {
-        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
-        LO base_id, ilayer;
-        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        if(ilayer == numLayers)
-          baseIds[base_id] = node;
-
-        for (std::size_t dim = 0; dim < cellDims; ++dim)
-          physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
-
-        if(ilayer==numLayers)
-          physPointsCell(0, node, cellDims-1) = 0.0;
-        else
-          physPointsCell(0, node, cellDims-1) = -1.0;
-      }
+       for (std::size_t dim = 0; dim < cellDims; ++dim)
+         physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
+       physPointsCell(0, node, cellDims-1) = -1.0; //set z=-1 on internal cell nodes and z=0 side (see next lines).
+     }
+     for (int i = 0; i < numSideNodes; ++i)
+       physPointsCell(0, side.node[i], cellDims-1) = 0.0;  //set z=0 on side
 
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
       Intrepid::CellTools<RealType>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
@@ -219,9 +210,10 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       Intrepid::FieldContainer<ScalarT> H_Cell(numNodes);
+      Intrepid::FieldContainer<ScalarT> SMB_Cell(numNodes);
       Intrepid::FieldContainer<ScalarT> H0_Cell(numNodes);
-      Intrepid::FieldContainer<ScalarT> V_Cell(numNodes, numVecDims);
-      Intrepid::FieldContainer<ScalarT> gradH_Side(numQPsSide, numVecDims);
+      Intrepid::FieldContainer<ScalarT> V_Cell(numNodes, numVecFODims);
+      Intrepid::FieldContainer<ScalarT> gradH_Side(numQPsSide, numVecFODims);
       Intrepid::FieldContainer<ScalarT> divV_Side(numQPsSide);
 
       for (int i = 0; i < gradH_Side.size(); i++)
@@ -233,11 +225,12 @@ evaluateFields(typename Traits::EvalData workset)
       std::map<LO, std::size_t>::const_iterator it;
 
 
-      for (it = baseIds.begin(); it != baseIds.end(); ++it){
-        std::size_t node = it->second;
+      for (int i = 0; i < numSideNodes; ++i){
+        std::size_t node = side.node[i]; //it->second;
         H_Cell(node) = H(elem_LID, node);
         H0_Cell(node) = H0(elem_LID, node);
-        for (std::size_t dim = 0; dim < numVecDims; ++dim)
+        SMB_Cell(node) = have_SMB ? (*SMB_ptr)(elem_LID, node) : ScalarT(0.0);
+        for (std::size_t dim = 0; dim < numVecFODims; ++dim)
           V_Cell(node, dim) = V(elem_LID, node, dim);
       }
 
@@ -245,56 +238,50 @@ evaluateFields(typename Traits::EvalData workset)
       for (int qp = 0; qp < numQPsSide; qp++) {
         H_Side(qp) = 0.0;
         H0_Side(qp) = 0.0;
-        for (std::size_t dim = 0; dim < numVecDims; ++dim)
+        SMB_Side(qp) = 0.0;
+        for (std::size_t dim = 0; dim < numVecFODims; ++dim)
           V_Side(qp, dim) = 0.0;
       }
 
-//      std::cout << "At: "<<__LINE__ <<std::endl;
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      for (it = baseIds.begin(); it != baseIds.end(); ++it){
-        std::size_t node = it->second;
+      for (int i = 0; i < numSideNodes; ++i){
+        std::size_t node = side.node[i]; //it->second;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           const MeshScalarT& tmp = trans_basis_refPointsSide(0, node, qp);
-       //   if(fabs(tmp)<1e-5) continue;
           H_Side(qp) += H_Cell(node) * tmp;
+          SMB_Side(qp) += SMB_Cell(node) * tmp;
           H0_Side(qp) += H0_Cell(node) * tmp;
-          for (std::size_t dim = 0; dim < numVecDims; ++dim)
+          for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             V_Side(qp, dim) += V_Cell(node, dim) * tmp;
         }
       }
-  //    std::cout << "At: "<<__LINE__ <<std::endl;
 
       for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-        for (it = baseIds.begin(); it != baseIds.end(); ++it){
-          std::size_t node = it->second;
-          for (std::size_t dim = 0; dim < numVecDims; ++dim) {
+        for (int i = 0; i < numSideNodes; ++i){
+          std::size_t node = side.node[i]; //it->second;
+          for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
             const MeshScalarT& tmp = trans_gradBasis_refPointsSide(0, node, qp, dim);
-        //    if(fabs(tmp)<1e-7) continue;
             gradH_Side(qp, dim) += H0_Cell(node) * tmp;
             divV_Side(qp) += V_Cell(node, dim) * tmp;
           }
         }
       }
-    //  std::cout << "At: "<<__LINE__ <<std::endl;
 
-
-      for (it = baseIds.begin(); it != baseIds.end(); ++it){
-        std::size_t node = it->second;
+      for (int i = 0; i < numSideNodes; ++i){
+        std::size_t node = side.node[i]; //it->second;
         ScalarT res = 0;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-         // std::cout << "H- " << H_Side(qp) << std::endl;
           ScalarT divHV = divV_Side(qp)* H0_Side(qp);
-          for (std::size_t dim = 0; dim < numVecDims; ++dim)
+          for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             divHV += gradH_Side(qp, dim)*V_Side(qp,dim);
 
-          ScalarT tmp = H_Side(qp)-H0_Side(qp) + (dt/1000.0) * divHV;
+          //std::cout << "(" << 1.0/1000.0 * divHV << ", " << SMB_Side(qp)<< ")";
+          ScalarT tmp = H_Side(qp)-H0_Side(qp) + (dt/1000.0) * divHV - dt*SMB_Side(qp);
           res +=tmp * weighted_trans_basis_refPointsSide(0, node, qp);
         }
         Residual(elem_LID,node) = res;
       }
     }
- //   std::cout << std::endl;
- //   std::cout << std::endl;
   }
 }
 
