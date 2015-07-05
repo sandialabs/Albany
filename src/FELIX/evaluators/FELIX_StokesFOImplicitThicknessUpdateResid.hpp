@@ -4,13 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_STOKESFOTHICKRESID_HPP
-#define FELIX_STOKESFOTHICKRESID_HPP
+#ifndef FELIX_STOKESFOIPLICITTHICKNESSUPDATERESID_HPP
+#define FELIX_STOKESFOIPLICITTHICKNESSUPDATERESID_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "PHAL_Dimension.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace FELIX {
@@ -21,12 +22,12 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class StokesFOThicknessResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class StokesFOImplicitThicknessUpdateResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		        public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  StokesFOThicknessResid(const Teuchos::ParameterList& p,
+  StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -41,27 +42,17 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
-
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> H;
-   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradH0;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
-
-  enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
-  EQNTYPE eqn_type;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<ScalarT,Cell,Node> H;
+  PHX::MDField<ScalarT,Cell,Node> H0;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   std::size_t numNodes;
   std::size_t numQPs;
-  std::size_t numDims;
-  std::size_t vecDimFO;
-  bool enableTransient;
+
+  double rho, g;
 
 };
 }

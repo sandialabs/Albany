@@ -4,10 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "FELIX_StokesFOImplicitThicknessUpdateResid.hpp"
+
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_StokesFOThicknessResid.hpp"
-#include "FELIX_StokesFOThicknessResid_Def.hpp"
+#include "FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::StokesFOThicknessResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::StokesFOImplicitThicknessUpdateResid)
 

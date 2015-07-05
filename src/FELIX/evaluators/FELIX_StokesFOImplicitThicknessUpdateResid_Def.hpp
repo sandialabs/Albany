@@ -19,43 +19,41 @@ namespace FELIX {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-StokesFOThicknessResid<EvalT, Traits>::
-StokesFOThicknessResid(const Teuchos::ParameterList& p,
+StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
+StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
-  gradH0    (p.get<std::string> ("H0 Gradient QP Name"), dl->qp_gradient),
+  gradBF  (p.get<std::string> ("Gradient BF Name"),dl->node_qp_gradient),
+  H0    (p.get<std::string> ("H0 Name"), dl->node_scalar),
+  H    (p.get<std::string> ("H Variable Name"), dl->node_scalar),
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
 
-  Teuchos::ParameterList* list = 
-    p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::ParameterList* p_list =
+      p.get<Teuchos::ParameterList*>("Physical Parameter List");
 
-  std::string type = list->get("Type", "FELIX");
+  g = p_list->get("Gravity", 9.8);
+  rho = p_list->get("Ice Density", 910.0);
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
 
-  this->addDependentField(Ugrad);
-  this->addDependentField(gradH0);
+  this->addDependentField(H0);
+  this->addDependentField(H);
   this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-
+  this->addDependentField(gradBF);
   this->addEvaluatedField(Residual);
 
 
-  this->setName("StokesFOThicknessResid"+PHX::typeAsString<EvalT>());
+  this->setName("StokesFOImplicitThicknessUpdateResid"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
+  gradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
-  numDims  = dims[3];
 
 #ifdef OUTPUT_TO_SCREEN
-*out << " in FELIX Prolongate H residual! " << std::endl;
-*out << " numDims = " << numDims << std::endl;
+*out << " in FELIX StokesFOImplicitThicknessUpdate residual! " << std::endl;
 *out << " numQPs = " << numQPs << std::endl; 
 *out << " numNodes = " << numNodes << std::endl; 
 #endif
@@ -63,15 +61,14 @@ StokesFOThicknessResid(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void StokesFOThicknessResid<EvalT, Traits>::
+void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(Ugrad,fm);
-  this->utils.setFieldData(gradH0,fm);
+  this->utils.setFieldData(H0,fm);
+  this->utils.setFieldData(H,fm);
   this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
-
+  this->utils.setFieldData(gradBF,fm);
   this->utils.setFieldData(Residual,fm);
 }
 //**********************************************************************
@@ -80,7 +77,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void StokesFOThicknessResid<EvalT, Traits>::
+void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST; 
@@ -90,23 +87,26 @@ evaluateFields(typename Traits::EvalData workset)
 
   Intrepid::FieldContainer<ScalarT> res(numNodes,3);
 
+  double rho_g=rho*g;
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (int i = 0; i < res.size(); i++) res(i) = 0.0;
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT dHdx = Ugrad(cell,qp,2,0);
-      ScalarT dHdy = Ugrad(cell,qp,2,1);
-      ScalarT dHdz = Ugrad(cell,qp,2,2);
-      double rho_g=910.0*9.8;
+      ScalarT dHdiffdx = 0;//Ugrad(cell,qp,2,0);
+      ScalarT dHdiffdy = 0;//Ugrad(cell,qp,2,1);
       for (std::size_t node=0; node < numNodes; ++node) {
-           res(node,0) += rho_g*(dHdx - gradH0(cell,qp,0))*wBF(cell,node,qp);
-           res(node,1) += rho_g*(dHdy - gradH0(cell,qp,1))*wBF(cell,node,qp);
-           res(node,2) += dHdz*wGradBF(cell,node,qp,2);
+        dHdiffdx += (H(cell,node)-H0(cell,node)) * gradBF(cell,node, qp,0);
+        dHdiffdy += (H(cell,node)-H0(cell,node)) * gradBF(cell,node, qp,1);
+      }
+
+      for (std::size_t node=0; node < numNodes; ++node) {
+           res(node,0) += rho_g*dHdiffdx*wBF(cell,node,qp);
+           res(node,1) += rho_g*dHdiffdy*wBF(cell,node,qp);
       }
     }
     for (std::size_t node=0; node < numNodes; ++node) {
        Residual(cell,node,0) = res(node,0);
        Residual(cell,node,1) = res(node,1);
-       Residual(cell,node,2) = res(node,2);
     }
   }
 }
