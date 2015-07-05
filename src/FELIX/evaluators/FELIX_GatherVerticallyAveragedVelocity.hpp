@@ -49,6 +49,10 @@ protected:
   std::size_t vecDim;
   std::size_t vecDimFO;
   std::size_t numNodes;
+
+  std::string meshPart;
+
+  Teuchos::RCP<const CellTopologyData> cell_topo;
 };
 
 

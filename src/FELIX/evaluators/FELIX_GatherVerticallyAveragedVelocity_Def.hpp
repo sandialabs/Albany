@@ -28,6 +28,7 @@ GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   this->addEvaluatedField(averagedVel);
+  cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
 
   std::vector<PHX::DataLayout::size_type> dims;
 
@@ -35,6 +36,11 @@ GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   vecDim = dims[2];
   vecDimFO = std::min(std::size_t(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
+
+  if (p.isType<const std::string>("Mesh Part"))
+    meshPart = p.get<const std::string>("Mesh Part");
+  else
+    meshPart = "upperside";
 
   this->setName("GatherVerticallyAveragedVelocity"+PHX::typeAsString<EvalT>());
 }
@@ -73,7 +79,7 @@ evaluateFields(typename Traits::EvalData workset)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find("upperside");
+  Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
 
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
@@ -91,33 +97,31 @@ evaluateFields(typename Traits::EvalData workset)
     for(int i=1; i<numLayers; ++i)
       quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
 
-    std::map<LO, std::size_t> baseIds;
-    for (std::size_t side = 0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
-      baseIds.clear();
+    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
       // Get the data that corresponds to the side
-      const int elem_GID = sideSet[side].elem_GID;
-      const int elem_LID = sideSet[side].elem_LID;
-      const int elem_side = sideSet[side].side_local_id;
+      const int elem_GID = sideSet[iSide].elem_GID;
+      const int elem_LID = sideSet[iSide].elem_LID;
+      const int elem_side = sideSet[iSide].side_local_id;
+      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
+      int numSideNodes = side.topology->node_count;
+
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
-      for (std::size_t node = 0; node < this->numNodes; ++node) {
-        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
-        LO base_id, ilayer;
-        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        if(ilayer == numLayers)
-          baseIds[base_id] = node;
-      }
+
       //we only consider elements on the top.
-      std::map<LO, std::size_t>::const_iterator it = baseIds.begin();
-      for (int i=0; it != baseIds.end(); ++it, ++i){
+      LO baseId, ilayer;
+      for (int i = 0; i < numSideNodes; ++i) {
+        std::size_t node = side.node[i];
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il)
         {
-          LO inode = layeredMeshNumbering.getId(it->first, il);
+          LO inode = layeredMeshNumbering.getId(baseId, il);
           for(int comp=0; comp<this->vecDimFO; ++comp)
             avVel[comp] += xT_constView[solDOFManager.getLocalDOF(inode, comp)]*quadWeights[il];
         }
         for(int comp=0; comp<this->vecDimFO; ++comp)
-          this->averagedVel(elem_LID,it->second,comp) = avVel[comp];
+          this->averagedVel(elem_LID,node,comp) = avVel[comp];
       }
     }
   }
@@ -146,14 +150,9 @@ evaluateFields(typename Traits::EvalData workset)
   int numLayers = layeredMeshNumbering.numLayers;
 
   Kokkos::deep_copy(this->averagedVel.get_kokkos_view(), ScalarT(0.0));
-/*
-  for (std::size_t cell=0; cell < workset.numCells; ++cell )
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-      for(int comp=0; comp<this->vecDimFO; ++comp)
-        this->averagedVel(cell,node,comp) = FadType(3*this->vecDim*(numLayers+1), 0.0);
-*/
+
   const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find("upperside");
+  Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
 
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
@@ -163,7 +162,6 @@ evaluateFields(typename Traits::EvalData workset)
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
-    std::map<LO, std::size_t> baseIds;
 
     Teuchos::ArrayRCP<double> quadWeights(numLayers+1); //doing trapezoidal rule
 
@@ -171,36 +169,35 @@ evaluateFields(typename Traits::EvalData workset)
     for(int i=1; i<numLayers; ++i)
       quadWeights[i] = 0.5*(layers_ratio[i-1] + layers_ratio[i]);
 
-    for (std::size_t side = 0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
+    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
 
-      baseIds.clear();
       // Get the data that corresponds to the side
-      const int elem_GID = sideSet[side].elem_GID;
-      const int elem_LID = sideSet[side].elem_LID;
-      const int elem_side = sideSet[side].side_local_id;
+      const int elem_GID = sideSet[iSide].elem_GID;
+      const int elem_LID = sideSet[iSide].elem_LID;
+      const int elem_side = sideSet[iSide].side_local_id;
+      const CellTopologyData_Subcell& side =  this->cell_topo->side[elem_side];
+      int numSideNodes = side.topology->node_count;
+
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       std::vector<double> velx(this->numNodes,0), vely(this->numNodes,0);
-      for (std::size_t node = 0; node < this->numNodes; ++node) {
+
+      LO baseId, ilayer;
+      for (int i = 0; i < numSideNodes; ++i) {
+        std::size_t node = side.node[i];
         LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
-        LO base_id, ilayer;
-        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-        if(ilayer == numLayers)
-          baseIds[base_id] = node;
-      }
-      std::map<LO, std::size_t>::const_iterator it = baseIds.begin();
-      for (int i=0; it != baseIds.end(); ++it, ++i){
+        layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
         std::vector<double> avVel(this->vecDimFO,0);
         for(int il=0; il<numLayers+1; ++il)
         {
-          LO inode = layeredMeshNumbering.getId(it->first, il);
+          LO inode = layeredMeshNumbering.getId(baseId, il);
           for(int comp=0; comp<this->vecDimFO; ++comp)
             avVel[comp] += xT_constView[solDOFManager.getLocalDOF(inode, comp)]*quadWeights[il];
         }
 
         for(int comp=0; comp<this->vecDimFO; ++comp) {
-          this->averagedVel(elem_LID,it->second,comp) = FadType(baseIds.size()*this->vecDim*(numLayers+1), avVel[comp]);
+          this->averagedVel(elem_LID,node,comp) = FadType(numSideNodes*this->vecDim*(numLayers+1), avVel[comp]);
           for(int il=0; il<numLayers+1; ++il)
-            this->averagedVel(elem_LID,it->second,comp).fastAccessDx(baseIds.size()*this->vecDim*il+this->vecDim*i+comp) = quadWeights[il]*workset.j_coeff;
+            this->averagedVel(elem_LID,node,comp).fastAccessDx(numSideNodes*this->vecDim*il+this->vecDim*i+comp) = quadWeights[il]*workset.j_coeff;
         }
       }
     }
