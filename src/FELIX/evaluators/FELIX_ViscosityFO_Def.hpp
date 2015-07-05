@@ -52,9 +52,19 @@ ViscosityFO(const Teuchos::ParameterList& p,
   else
     flowRateType = "Uniform";
 
+  stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+  useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+
+  if(useStereographicMap)
+    U = PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>(p.get<std::string> ("QP Variable Name"), dl->qp_vector);
+
+
   homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 1.0);
   A = visc_list->get("Glen's Law A", 1.0); 
   n = visc_list->get("Glen's Law n", 3.0);  
+
+  coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (viscType == "Constant"){ 
@@ -85,6 +95,11 @@ ViscosityFO(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "Glen's law viscosity!" << std::endl;
 #endif
+    if (useStereographicMap) {
+      this->addDependentField(U);
+      this->addDependentField(coordVec);
+    }
+
     if (flowRateType == "Uniform")
     {
     	flowRate_type = UNIFORM;
@@ -124,8 +139,6 @@ ViscosityFO(const Teuchos::ParameterList& p,
     *out << "n: " << n << std::endl; 
 #endif 
   }
-  coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
 
   this->addDependentField(Ugrad);
   if (visc_type == EXPTRIG) this->addDependentField(coordVec);
@@ -158,6 +171,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 	  this->utils.setFieldData(temperature,fm);
   if (flowRate_type == FROMFILE || flowRate_type == FROMCISM)
 	  this->utils.setFieldData(flowFactorA,fm);
+  if (useStereographicMap) {
+    this->utils.setFieldData(U, fm);
+    this->utils.setFieldData(coordVec,fm);
+  }
 }
 
 //**********************************************************************
@@ -423,17 +440,45 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT ff = pow(10.0, -10.0*homotopyParam);
         ScalarT epsilonEqpSq = 0.0; //used to define the viscosity in non-linear Stokes 
         if (visc_type == GLENSLAW) {
-          for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-            for (std::size_t qp=0; qp < numQPs; ++qp) {
+          if(useStereographicMap) {
+            double R = stereographicMapList->get<double>("Earth Radius", 6371);
+            double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+            double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+            double R2 = std::pow(R,2);
+            for (std::size_t cell=0; cell < workset.numCells; ++cell) {
               //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-              typename PHAL::Ref<ScalarT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
-              typename PHAL::Ref<ScalarT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
-              epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
-              epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
-              for (int dim = 2; dim < numDims; ++dim) //3D case
-                epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
-              epsilonEqpSq += ff; //add regularization "fudge factor" 
-              mu(cell,qp) = flowFactorVec[cell]*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
+              for (std::size_t qp=0; qp < numQPs; ++qp) {
+                MeshScalarT x = coordVec(cell,qp,0)-x_0;
+                MeshScalarT y = coordVec(cell,qp,1)-y_0;
+                MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+                MeshScalarT invh_x = x/2.0/R2;
+                MeshScalarT invh_y = y/2.0/R2;
+
+                ScalarT eps00 = Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1); //epsilon_xx
+                ScalarT eps01 = (Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1))/2.0; //epsilon_xy
+                ScalarT eps02 = Ugrad(cell,qp,0,2)/2.0; //epsilon_xz
+                ScalarT eps11 = Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0); //epsilon_yy
+                ScalarT eps12 = Ugrad(cell,qp,1,2)/2.0; //epsilon_yz
+
+                epsilonEqpSq = eps00*eps00 + eps11*eps11 + eps00*eps11 + eps01*eps01 + eps02*eps02 + eps12*eps12;
+                epsilonEqpSq += ff; //add regularization "fudge factor"
+                mu(cell,qp) = flowFactorVec[cell]*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+              }
+            }
+          }
+          else {
+            for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+              for (std::size_t qp=0; qp < numQPs; ++qp) {
+                //evaluate non-linear viscosity, given by Glen's law, at quadrature points
+                typename PHAL::Ref<ScalarT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+                typename PHAL::Ref<ScalarT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+                epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
+                epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
+                for (int dim = 2; dim < numDims; ++dim) //3D case
+                  epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
+                epsilonEqpSq += ff; //add regularization "fudge factor"
+                mu(cell,qp) = flowFactorVec[cell]*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law
+              }
             }
           }
         } //endif visc_type == GLENSLAW

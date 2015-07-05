@@ -47,6 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> surface;
   Teuchos::Array<double> gravity;
 
   // Output:
@@ -70,6 +71,9 @@ private:
   //physical parameters
   double g; //gravity
   double rho; //ice density  
+
+  Teuchos::ParameterList* stereographicMapList;
+  bool useStereographicMap;
 };
 }
 

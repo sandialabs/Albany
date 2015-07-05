@@ -204,11 +204,13 @@ FELIX::StokesFO::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesFOProblemParams");
 
+  validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("Physical Parameters", false, "");
+  validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   return validPL;
 }
 

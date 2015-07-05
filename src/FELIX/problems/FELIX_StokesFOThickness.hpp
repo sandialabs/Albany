@@ -395,6 +395,10 @@ FELIX::StokesFOThickness::constructEvaluators(
 
   { // FO Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("StokesFO Resid"));
+
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
    
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -466,9 +470,13 @@ FELIX::StokesFOThickness::constructEvaluators(
   { // FELIX viscosity
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
 
+    Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
+
     //Input
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("QP Variable Name", "Velocity");
     p->set<std::string>("temperature Name", "temperature");
     p->set<std::string>("flow_factor Name", "flow_factor");
     
@@ -511,6 +519,9 @@ FELIX::StokesFOThickness::constructEvaluators(
 
   { // Body Force
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
+
+    Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
 
     //Input
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");

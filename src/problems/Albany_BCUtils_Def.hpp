@@ -474,6 +474,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
           }
 #ifdef ALBANY_FELIX
           else if(conditions[k] == "basal") {
+            Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             std::string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
             p->set<std::string> ("BetaXY", betaName);
@@ -485,6 +487,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
           else if(conditions[k] == "basal_scalar_field") {
+            Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             p->set<string>("Beta Field Name", "basal_friction");
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
@@ -492,6 +496,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
           else if(conditions[k] == "lateral") {
+            Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             std::string betaName = BCparams.get("BetaXY", "Constant");
             double g = params->get("Gravity", 9.8);
             double rho = params->get("Ice Density", 910.0);

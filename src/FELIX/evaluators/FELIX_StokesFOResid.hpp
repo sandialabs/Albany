@@ -49,6 +49,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+
   enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
   EQNTYPE eqn_type;
   
@@ -60,6 +62,8 @@ private:
   std::size_t numDims;
   std::size_t vecDimFO;
   bool enableTransient;
+  Teuchos::ParameterList* stereographicMapList;
+  bool useStereographicMap;
 
 };
 }
