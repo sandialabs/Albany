@@ -6,10 +6,12 @@
 #
 # 00 00 * * * /home/gahanse/Codes/Albany/doc/dashboards/compton.sandia.gov/compton_local/nightly_cron_script.sh
 
+#set -o xtrace
+
 SUBMIT_RESULTS=ON
 #SUBMIT_RESULTS=OFF
-THE_TEST_TYPE=Nightly
-#THE_TEST_TYPE=Experimental
+#THE_TEST_TYPE=Nightly
+THE_TEST_TYPE=Experimental
 
 TEST_DIR=/home/gahanse/nightly
 SCRIPT_DIR=/home/gahanse/Codes/Albany/doc/dashboards/compton.sandia.gov/compton_local
