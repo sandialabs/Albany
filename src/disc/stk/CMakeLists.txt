@@ -46,7 +46,9 @@ SET(HEADERS
 
 IF (ALBANY_FELIX) 
   SET(SOURCES ${SOURCES} Albany_ExtrudedSTKMeshStruct.cpp)
+  SET(SOURCES ${SOURCES} Albany_STKDiscretizationStokesH.cpp)
   SET(HEADERS ${HEADERS} Albany_ExtrudedSTKMeshStruct.hpp)
+  SET(HEADERS ${HEADERS} Albany_STKDiscretizationStokesH.hpp)
 ENDIF()
 
 IF (ALBANY_AERAS)
