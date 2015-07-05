@@ -52,6 +52,11 @@ protected:
   std::size_t vecDim;
   std::size_t numNodes;
   std::size_t offset; // Offset of first DOF being gathered
+
+  int HLevel;
+  std::string meshPart;
+
+  Teuchos::RCP<const CellTopologyData> cell_topo;
 };
 
 
@@ -120,6 +125,85 @@ class GatherThickness<PHAL::AlbanyTraits::DistParamDeriv,Traits>
 public:
 
   GatherThickness(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+};
+
+
+
+
+template<typename EvalT, typename Traits> class GatherThickness3D;
+
+
+
+template<typename Traits>
+class GatherThickness3D<PHAL::AlbanyTraits::Residual,Traits>
+    : public GatherThicknessBase<PHAL::AlbanyTraits::Residual,Traits> {
+
+public:
+
+  GatherThickness3D(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+};
+
+template<typename Traits>
+class GatherThickness3D<PHAL::AlbanyTraits::Jacobian,Traits>
+    : public GatherThicknessBase<PHAL::AlbanyTraits::Jacobian,Traits> {
+
+public:
+
+  GatherThickness3D(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+};
+
+template<typename Traits>
+class GatherThickness3D<PHAL::AlbanyTraits::Tangent,Traits>
+    : public GatherThicknessBase<PHAL::AlbanyTraits::Tangent,Traits> {
+
+public:
+
+  GatherThickness3D(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+};
+
+template<typename Traits>
+class GatherThickness3D<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+    : public GatherThicknessBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
+
+public:
+
+  GatherThickness3D(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
