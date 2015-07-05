@@ -20,6 +20,7 @@
 #include "PHAL_LoadStateField.hpp"
 #include "FELIX_GatherThickness.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
+#include "FELIX_ScatterResidualH.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -105,7 +106,7 @@ namespace FELIX {
 
 #include "FELIX_ThicknessResid.hpp"
 #include "FELIX_StokesFOResid.hpp"
-#include "FELIX_StokesFOThicknessResid.hpp"
+#include "FELIX_StokesFOImplicitThicknessUpdateResid.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #ifdef CISM_HAS_FELIX
 #include "FELIX_CismSurfaceGradFO.hpp"
@@ -124,7 +125,6 @@ FELIX::StokesFOThickness::constructEvaluators(
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-//  std::cout << __FILE__<<":"<<__LINE__<<std::endl;
 
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -214,7 +214,19 @@ FELIX::StokesFOThickness::constructEvaluators(
      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
-  // std::cout << __FILE__<<":"<<__LINE__<<std::endl;
+
+   bool have_SMB=false;
+   if(this->params->isSublist("Parameter Fields"))
+   {
+     Teuchos::ParameterList& params_list =  this->params->sublist("Parameter Fields");
+     if(params_list.get<int>("Register Surface Mass Balance",0)){
+       std::string stateName("surface_mass_balance");
+       RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+       ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+       have_SMB=true;
+     }
+   }
 
    {
      std::string stateName("basal_friction");
@@ -261,7 +273,6 @@ FELIX::StokesFOThickness::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
    }
-  // std::cout << __FILE__<<":"<<__LINE__<<std::endl;
 
 
 #if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
@@ -272,8 +283,6 @@ FELIX::StokesFOThickness::constructEvaluators(
     stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, "");
    }
 #endif
-
-  // std::cout << __FILE__<<":"<<__LINE__<<std::endl;
 
    // Define Field Names
 
@@ -301,34 +310,35 @@ FELIX::StokesFOThickness::constructEvaluators(
   {
 
       dof_names[0] = "U";
-      resid_names[0] = "ProlongateH Residual";
+      resid_names[0] = "StokesFOImplicitThicknessUpdate Residual";
+
+      {
+        RCP<ParameterList> p = rcp(new ParameterList("Gather Thickness3D"));
+        p->set<string>("Thickness Name", "thickness3D");
+        p->set<int>("Offset of First DOF", offset);
+        p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
+        ev = rcp(new GatherThickness3D<EvalT,AlbanyTraits>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
       fm0.template registerEvaluator<EvalT>
       (evalUtils_full.constructGatherSolutionEvaluator_noTransient(true, dof_names, 0));
 
       fm0.template registerEvaluator<EvalT>
         (evalUtils_full.constructDOFVecGradInterpolationEvaluator(dof_names[0], 0));
 
-      fm0.template registerEvaluator<EvalT>
-        (evalUtils_full.constructScatterResidualEvaluator(true, resid_names,0, "Scatter ProlongateH"));
+      {
+        RCP<ParameterList> p = rcp(new ParameterList("Scatter StokesFOImplicitThicknessUpdate"));
+        p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
+        p->set<int>("Tensor Rank", 1);
+        p->set<int>("Offset of First DOF", 0);
+        p->set<int>("H Offset", 2);
+        p->set<string>("Scatter Field Name", "Scatter StokesFOImplicitThicknessUpdate");
+        ev = rcp(new PHAL::ScatterResidualH3D<EvalT,AlbanyTraits>(*p,dl_full));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
 
-  /*
-  {
-    dof_names[0] = "Thickness";
-    resid_names[0] = "Thickness Residual";
-    fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
 
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
-
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
-
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructScatterResidualEvaluator(false, resid_names,offset, "Scatter Thickness"));
-    offset ++;
-  }*/
 
   {
     dof_names[0] = "Thickness";
@@ -339,6 +349,7 @@ FELIX::StokesFOThickness::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Gather Thickness"));
      p->set<string>("Thickness Name", dof_names[0]);
      p->set<int>("Offset of First DOF", offset);
+     p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
      ev = rcp(new GatherThickness<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
    }
@@ -346,14 +357,23 @@ FELIX::StokesFOThickness::constructEvaluators(
    {
       RCP<ParameterList> p = rcp(new ParameterList("Gather Averaged Velocity"));
       p->set<string>("Averaged Velocity Name", "Averaged Velocity");
+      p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
       ev = rcp(new GatherVerticallyAveragedVelocity<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
    }
 
 
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructScatterResidualEvaluator(false, resid_names,offset, "Scatter Thickness"));
+   {
+     RCP<ParameterList> p = rcp(new ParameterList("Scatter ResidualH"));
+     p->set< Teuchos::ArrayRCP<string> >("Residual Names", resid_names);
+     p->set<int>("Tensor Rank", 0);
+     p->set<int>("Offset of First DOF", offset);
+     p->set<string>("Scatter Field Name", "Scatter Thickness");
+     p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
+     ev = rcp(new PHAL::ScatterResidualH<EvalT,AlbanyTraits>(*p,dl));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
    offset ++;
    }
 
@@ -372,12 +392,6 @@ FELIX::StokesFOThickness::constructEvaluators(
   std::string sh = "surface_height";
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFGradInterpolationEvaluator_noDeriv(sh));
-
-  std::string th = "thickness";
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils_full.constructDOFGradInterpolationEvaluator_noDeriv(th));
-  std::cout << __FILE__<<":"<<__LINE__<<std::endl;
-
 
   { // FO Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("StokesFO Resid"));
@@ -402,31 +416,34 @@ FELIX::StokesFOThickness::constructEvaluators(
   }
 
   { // FO Stokes Resid
-    RCP<ParameterList> p = rcp(new ParameterList("StokesFO Resid"));
+    RCP<ParameterList> p = rcp(new ParameterList("StokesFOImplicitThicknessUpdate Resid"));
 
     //Input
-    p->set<std::string>("H0 Gradient QP Name", "thickness Gradient");
-    p->set<std::string>("Gradient QP Variable Name", "U Gradient");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("H0 Name", "thickness");
+    p->set<std::string>("H Variable Name", "thickness3D");
+    p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set<std::string>("Weighted BF Name", "wBF");
 
-    Teuchos::ParameterList& paramList = params->sublist("Equation Set");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters");
+    p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
 
     //Output
-    p->set<std::string>("Residual Name", "ProlongateH Residual");
+    p->set<std::string>("Residual Name", "StokesFOImplicitThicknessUpdate Residual");
 
-    ev = rcp(new FELIX::StokesFOThicknessResid<EvalT,AlbanyTraits>(*p, dl_full));
+    ev = rcp(new FELIX::StokesFOImplicitThicknessUpdateResid<EvalT,AlbanyTraits>(*p, dl_full));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { // FO Stokes Resid
+  { // H Resid
     RCP<ParameterList> p = rcp(new ParameterList("Thickness Resid"));
 
     //Input
     p->set<std::string>("Averaged Velocity Variable Name", "Averaged Velocity");
     p->set<std::string>("Thickness Variable Name", "Thickness");
     p->set<std::string>("Old Thickness Name", "thickness");
+
+    if(have_SMB)
+      p->set<std::string>("SMB Name", "surface_mass_balance");
 
     Teuchos::ParameterList& paramList = params->sublist("Equation Set");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -438,6 +455,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     //Output
     p->set<std::string>("Residual Name", "Thickness Residual");
 
+    p->set<int>("Cubature Degree",3);
 
     ev = rcp(new FELIX::ThicknessResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -526,7 +544,7 @@ FELIX::StokesFOThickness::constructEvaluators(
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> resFO_tag("Scatter StokesFO", dl->dummy);
     fm0.requireField<EvalT>(resFO_tag);
-    PHX::Tag<typename EvalT::ScalarT> resProH_tag("Scatter ProlongateH", dl_full->dummy);
+    PHX::Tag<typename EvalT::ScalarT> resProH_tag("Scatter StokesFOImplicitThicknessUpdate", dl_full->dummy);
     fm0.requireField<EvalT>(resProH_tag);
     PHX::Tag<typename EvalT::ScalarT> resThick_tag("Scatter Thickness", dl->dummy);
     fm0.requireField<EvalT>(resThick_tag);
