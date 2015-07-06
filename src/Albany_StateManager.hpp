@@ -24,6 +24,7 @@
 #include "Albany_EigendataInfoStruct.hpp"
 #include "Epetra_Vector.h"
 #endif
+#include "Albany_EigendataInfoStructT.hpp"
 #include "Adapt_NodalDataBase.hpp"
 
 namespace Albany {
@@ -149,7 +150,8 @@ public:
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() { return stateInfo->createNodalDataBase(); }
+  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase()
+  { return stateInfo->createNodalDataBase(); }
 
 #if defined(ALBANY_EPETRA)
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
@@ -160,7 +162,10 @@ public:
   Teuchos::RCP<Epetra_MultiVector> getAuxData();
   void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
 #endif
+  Teuchos::RCP<Tpetra_MultiVector> getAuxDataT();
 
+  void setEigenDataT(const Teuchos::RCP<Albany::EigendataStructT>& eigdata);
+  void setAuxDataT(const Teuchos::RCP<Tpetra_MultiVector>& aux_data);
   bool areStateVarsAllocated() const {return stateVarsAreAllocated;}
 
 private:
@@ -185,6 +190,8 @@ private:
   Teuchos::RCP<EigendataStruct> eigenData;
   Teuchos::RCP<Epetra_MultiVector> auxData;
 #endif
+  Teuchos::RCP<EigendataStructT> eigenDataT;
+  Teuchos::RCP<Tpetra_MultiVector> auxDataT;
 
 };
 

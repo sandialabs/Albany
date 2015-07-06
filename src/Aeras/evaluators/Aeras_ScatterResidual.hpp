@@ -186,16 +186,12 @@ public:
                               const Teuchos::RCP<Aeras::Layouts>& dl)
       : ScatterResidualBase<EvalT,Traits>(p,dl)
     {
-      //amb I'm commenting this out. If we throw here, we'll throw when SG_MP is
-      // compiled even if it's not used. It's sufficient to throw in
-      // evaluateFields to guard against actually using SG_MP.
-      //throw "Aeras::GatherSolution not implemented for all tempate specializations";
     };
   void evaluateFields(typename Traits::EvalData d)
     {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
 };
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE 
 // **************************************************************
 // Multi-point Residual 
 // **************************************************************
@@ -221,7 +217,7 @@ public:
                               const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
 };
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

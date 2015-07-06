@@ -31,7 +31,13 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
       app, mesh_specs[ebi].get());
 #endif
-  return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+  if(app->getProblemPL()->get("Name", "") == "FELIX Coupled FO H 3D")
+  { //all column is coupled
+    int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+    int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+    return app->getNumEquations()*side_node_count*numLevels;
+  }
+  else return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
@@ -134,6 +140,15 @@ template<> void myReduceAll<RealType> (
   Teuchos::reduceAll<int, RealType>(
     comm, reduct_type, v.size(), &send[0], &v[0]);
 }
+
+template<> void myReduceAll<MPType> (
+  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
+  std::vector<MPType>& v)
+{
+  std::vector<MPType> send(v);
+  Teuchos::reduceAll<int, MPType>(
+    comm, reduct_type, v.size(), &send[0], &v[0]);
+}
 } // namespace
 
 template<typename ScalarT>
@@ -166,8 +181,9 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   copy<ScalarT>(v, a);
 }
 
-#ifdef ALBANY_SG_MP
-# ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#ifdef ALBANY_SG
+# ifdef ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)                                \
@@ -176,7 +192,7 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   macro(SGFadType)                              \
   macro(MPType)                                 \
   macro(MPFadType)
-# else
+#  else
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)                                \
@@ -184,19 +200,52 @@ void broadcast (const Teuchos_Comm& comm, const int root_rank,
   macro(SGFadType)                              \
   macro(MPType)                                 \
   macro(MPFadType)
-# endif
-#else // ALBANY_SG_MP
-# ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#  endif
+# else //ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(TanFadType)                             \
+  macro(SGType)                                 \
+  macro(SGFadType)
+#  else
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(SGType)                                 \
+  macro(SGFadType)
+#  endif
+# endif //ALBANY_ENSEMBLE
+#else  //ALBANY_SG
+# ifdef ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(TanFadType)                             \
+  macro(MPType)                                 \
+  macro(MPFadType)
+#  else
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(MPType)                                 \
+  macro(MPFadType)
+#  endif
+# else //ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)                                \
   macro(TanFadType)
-# else
+#  else
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)
-# endif
-#endif // ALBANY_SG_MP
+#  endif
+# endif //ALBANY_ENSEMBLE
+#endif //ALBANY_SG
 
 #define eti(T)                                                          \
   template void reduceAll<T> (                                          \

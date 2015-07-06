@@ -9,6 +9,7 @@ SET(SOURCES
   evaluators/QCAD_Permittivity.cpp
   evaluators/QCAD_PoissonResid.cpp
   evaluators/QCAD_PoissonSource.cpp
+  evaluators/QCAD_PoissonSourceNeumann.cpp
   evaluators/QCAD_PoissonDirichlet.cpp
   evaluators/QCAD_PoissonNeumann.cpp
   evaluators/QCAD_ResponseRegionBoundary.cpp
@@ -18,6 +19,8 @@ SET(SOURCES
   evaluators/QCAD_StringFormulaEvaluator.cpp
   problems/QCAD_SchrodingerProblem.cpp
   problems/QCAD_PoissonProblem.cpp
+  QCADT_CoupledPSJacobian.cpp
+  QCADT_CoupledPoissonSchrodinger.cpp
   ../problems/Albany_ThermoElectrostaticsProblem.cpp
   ../evaluators/PHAL_JouleHeating.cpp
   ../evaluators/PHAL_TEProp.cpp
@@ -26,9 +29,7 @@ SET(SOURCES
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} 
     QCAD_Solver.cpp
-#   IK, 1/23/15: commenting out QCAD_SolverT for now as it was causing
-#   problems for those building shared b/c of multiply defined symbols
-#    QCAD_SolverT.cpp
+    QCADT_Solver.cpp
     QCAD_CoupledPoissonSchrodinger.cpp
     QCAD_CoupledPSJacobian.cpp
     QCAD_CoupledPSPreconditioner.cpp
@@ -42,12 +43,16 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 SET(HEADERS
+  QCADT_CoupledPSJacobian.hpp
+  QCADT_CoupledPoissonSchrodinger.hpp
   evaluators/QCAD_Permittivity.hpp
   evaluators/QCAD_Permittivity_Def.hpp
   evaluators/QCAD_PoissonResid.hpp
   evaluators/QCAD_PoissonResid_Def.hpp
   evaluators/QCAD_PoissonSource.hpp
   evaluators/QCAD_PoissonSource_Def.hpp
+  evaluators/QCAD_PoissonSourceNeumann.hpp
+  evaluators/QCAD_PoissonSourceNeumann_Def.hpp
   evaluators/QCAD_PoissonDirichlet.hpp
   evaluators/QCAD_PoissonDirichlet_Def.hpp
   evaluators/QCAD_PoissonNeumann.hpp
@@ -73,9 +78,7 @@ SET(HEADERS
 IF (ALBANY_EPETRA) 
   SET(HEADERS ${HEADERS} 
     QCAD_Solver.hpp
-#   IK, 1/23/15: commenting out QCAD_SolverT for now as it was causing
-#   problems for those building shared b/c of multiply defined symbols
-#    QCAD_SolverT.hpp
+    QCADT_Solver.hpp
     QCAD_CoupledPoissonSchrodinger.hpp
     QCAD_CoupledPSJacobian.hpp
     QCAD_CoupledPSPreconditioner.hpp

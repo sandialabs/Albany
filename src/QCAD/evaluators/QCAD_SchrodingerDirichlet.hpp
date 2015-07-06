@@ -112,7 +112,7 @@ public:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class SchrodingerDirichlet<PHAL::AlbanyTraits::SGResidual,Traits>
    : public SchrodingerDirichletBase<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -142,6 +142,8 @@ public:
   SchrodingerDirichlet(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual 
@@ -175,7 +177,7 @@ public:
   SchrodingerDirichlet(Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 };
-#endif //ALBANY_SG_MP
+#endif
 
 // **************************************************************
 // **************************************************************

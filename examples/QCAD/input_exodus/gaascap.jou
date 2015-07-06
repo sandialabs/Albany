@@ -1,0 +1,94 @@
+#     {wsub = 0.5}
+#     {tnGaAs = 0.005}
+#     {tnAlGaAs = 0.065}
+#     {tAlGaAs = 0.020}
+#     {tpGaAs = 1.610}
+
+# vertices for n-type GaAs
+create vertex {-wsub/2.0} 0 0
+create vertex {wsub/2.0} 0 0
+create vertex {wsub/2.0} {tnGaAs} 0
+create vertex {-wsub/2.0} {tnGaAs} 0
+
+# additional vertices for n-type Al0.27Ga0.73As
+create vertex {-wsub/2.0} {tnGaAs+tnAlGaAs} 0
+create vertex {wsub/2.0} {tnGaAs+tnAlGaAs} 0
+
+# additional vertiecs for undoped Al0.27Ga0.73As
+create vertex {wsub/2.0} {tnGaAs+tnAlGaAs+tAlGaAs} 0
+create vertex {-wsub/2.0} {tnGaAs+tnAlGaAs+tAlGaAs} 0
+
+# vertiecs for p-type GaAs
+create vertex {-wsub/2.0} {tnGaAs+tnAlGaAs+tAlGaAs+tpGaAs} 0
+create vertex {wsub/2.0} {tnGaAs+tnAlGaAs+tAlGaAs+tpGaAs} 0
+
+# create the n-type GaAs region
+create surface vertex 1 2 3 4
+
+# create the n-type Al0.27Ga0.73As region
+create surface vertex 3 4 5 6
+
+# create the undoped Al0.27Ga0.73As region
+create surface vertex 5 6 7 8
+
+# create the p-type GaAs region
+create surface vertex 7 8 9 10
+
+# merge all overlapped curves
+merge all
+
+# define nodesets for BCs
+nodeset 1 curve 1
+nodeset 1 name "nschottkygate"
+color nodeset 1 blue
+
+nodeset 2 curve 15
+nodeset 2 name "gaaspsub"
+color nodeset 2 red
+
+# define blocks (each block represents one material)
+block 1 surface 1
+block 1 name "gaas.ntype"
+block 1 element type quad4
+
+block 2 surface 2
+block 2 name "algaas.ntype"
+block 2 element type quad4
+
+block 3 surface 3
+block 3 name "algaas"
+block 3 element type quad4
+
+block 4 surface 4
+block 4 name "gaas.psubstrate"
+block 4 element type quad4
+
+# define meshing size at the y-direction 
+# y-mesh size in n-GaAs
+curve 2 4 size 0.2e-3
+
+# y-mesh size in n-AlGaAs
+curve 6 scheme dualbias fine size 0.2e-3 coarse size 1e-3 
+curve 8 scheme dualbias fine size 0.2e-3 coarse size 1e-3 
+
+# y-mesh size in undoped-AlGaAs
+curve 10 scheme dualbias fine size 0.2e-3 coarse size 1e-3 
+curve 12 scheme dualbias fine size 0.2e-3 coarse size 1e-3 
+
+# y-mesh size in p-GaAs
+# curve 14 scheme bias fine size 0.2e-3 coarse size 20e-3 start vertex 8
+# curve 16 scheme bias fine size 0.2e-3 coarse size 20e-3 start vertex 7
+curve 14 scheme dualbias fine size 0.2e-3 coarse size 20e-3 
+curve 16 scheme dualbias fine size 0.2e-3 coarse size 20e-3 
+
+# x-mesh size
+curve 1 interval 2
+
+mesh surface all
+merge all
+
+export mesh "gaascap.exo" dimension 2 block all overwrite
+
+
+
+

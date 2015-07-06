@@ -53,7 +53,8 @@ public:
   //! Return array of parameter names
   Teuchos::RCP<const Teuchos::Array<std::string> >
     get_p_names(int l) const;
-
+  Teuchos::ArrayView<const std::string> get_g_names(int j) const
+  { TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed"); }
 
   Thyra::ModelEvaluatorBase::InArgs<ST> getNominalValues() const;
 

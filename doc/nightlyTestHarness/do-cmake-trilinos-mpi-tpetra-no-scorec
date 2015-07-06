@@ -38,22 +38,19 @@ BUILD_DIR=`pwd`
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
-      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/atlas/liblapack.so.3 \
+      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include/openmpi-x86_64 \
+      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
 \
       -D TPL_ENABLE_HDF5:BOOL=ON \
-      -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
-      -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
+      -D HDF5_INCLUDE_DIRS:PATH=/usr/include \
+      -D HDF5_LIBRARY_DIRS:PATH=/usr/lib64 \
 \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
-      -D TPL_ENABLE_SuperLU:BOOL=OFF \
-      -D SuperLU_INCLUDE_DIRS:PATH=$SUPERLUDIR/SRC \
-      -D TPL_SuperLU_LIBRARIES:PATH=$SUPERLUDIR/lib/libsuperlu_4.3.a \
 \
       -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
@@ -95,6 +92,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
       -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+      -D Kokkos_ENABLE_Serial:BOOL=ON \
+      -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+      -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
@@ -133,6 +134,9 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+      -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
 \
       -D Trilinos_ENABLE_CXX11:BOOL=ON \
       -D Tpetra_ENABLE_CLASSIC_VBR:BOOL=ON \

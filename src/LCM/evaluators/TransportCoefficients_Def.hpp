@@ -126,7 +126,6 @@ namespace LCM {
   void TransportCoefficients<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     ScalarT theta_term(0.0);
 
     Albany::MDArray eqps;
@@ -292,7 +291,6 @@ namespace LCM {
         }
       }
     }
-#endif
   }
   //----------------------------------------------------------------------------
 }

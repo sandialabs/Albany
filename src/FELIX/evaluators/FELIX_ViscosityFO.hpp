@@ -48,12 +48,16 @@ private:
   ScalarT homotopyParam;
   ScalarT dummyParam;
 
+  bool useStereographicMap;
+  Teuchos::ParameterList* stereographicMapList;
+
   //coefficients for Glen's law
   double A; 
   double n; 
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<ScalarT,Cell> temperature;
   PHX::MDField<ScalarT,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...

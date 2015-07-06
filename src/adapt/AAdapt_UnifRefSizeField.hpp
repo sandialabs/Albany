@@ -8,37 +8,44 @@
 #ifndef AADAPT_UNIFREFSIZEFIELD_HPP
 #define AADAPT_UNIFREFSIZEFIELD_HPP
 
-#include "Albany_AbstractPUMIDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
+class UnifRefSizeField : public MeshSizeField {
 
   public:
-    UnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+
+    UnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~UnifRefSizeField();
 
-    double getValue(ma::Entity* v);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
     void computeError();
 
-    void copyInputFields() {}
+    void copyInputFields();
     void freeInputFields() {}
     void freeSizeField() {}
 
-  private:
+    class UnifRefIsoFunc : public ma::IsotropicFunction
+    {
+      public:
+        virtual ~UnifRefIsoFunc(){}
 
-    Teuchos::RCP<const Teuchos_Comm> commT;
+    /** \brief get the desired element size at this vertex */
 
-    double elem_size;
-    double initialAverageEdgeLength;
-    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
+        virtual double getValue(ma::Entity* vert){
+            return elem_size * averageEdgeLength;
+        }
+
+        double elem_size;
+        double averageEdgeLength;
+
+    } unifRefIsoFunc;
+
 
 };
 

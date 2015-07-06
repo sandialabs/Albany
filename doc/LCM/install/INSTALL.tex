@@ -63,6 +63,7 @@ libX11-devel
 cmake
 gcc-c++
 git
+hwloc-libs
 \end{verbatim}
 
 For example, to install the first package you should type:
@@ -192,28 +193,39 @@ export LD_LIBRARY_PATH=/usr/lib64/openmpi/lib:$LD_LIBRARY_PATH
 First, configure and compile Trilinos. Within the top-level \verb+LCM+
 directory type:
 \begin{verbatim}
-./config-build.sh trilinos [toolchain] [build_type] [#_processors]
+./config-build.sh trilinos [architecture] [toolchain] [build_type] [# processors]
 \end{verbatim}
 
 For example, if you want to use the \verb+GCC+ toolchain to build a
-release version of the code using 16 processors, type:
+serial release version of the code using 16 processors, type:
 \begin{verbatim}
-./config-build.sh trilinos gcc release 16
+./config-build.sh trilinos serial gcc release 16
 \end{verbatim}
 
 Finally, repeat the procedure for Albany:
 \begin{verbatim}
-./config-build.sh albany [toolchain] [build_type] [#_processors]
+./config-build.sh albany [architecture] [toolchain] [build_type] [# processors]
 \end{verbatim}
 
-For example, if you want to use the \verb+GCC+ toolchain to build a
-release version of the code using 16 processors, type:
+For example, if you want to use the GCC toolchain to build a
+serial release version of the code using 16 processors, type:
 \begin{verbatim}
-./config-build.sh albany gcc release 16
+./config-build.sh albany serial gcc release 16
 \end{verbatim}
 
-Note that to compile a version of Albany with a specific toolchain and
-build type, the corresponding version of Trilinos must exist.
+Note that to compile a version of Albany with a specific architecture,
+toolchain and build type, the corresponding version of Trilinos must
+exist.
+
+Note also that the architecture option refers to the thread
+parallelism model that the code will use by means of the Kokkos
+package in Trilinos. Currently the sopported models are: \verb+serial+
+that works for all supported compilers, \verb+openmp+ that works with
+the GCC and Intel toolchains, \verb+pthreads+ that works for all
+supported compilers, and \verb+cuda+ that is only supported for the
+GCC toolchain. The installation and configuration of the Cuda
+framework is complex. Much more detailed information can be found at
+\verb+http://developer.nvidia.com/cuda+.
 
 Currently the options for the toolchain are \verb+gcc+, \verb+clang+
 and \verb+intel+ if the Intel compilers are installed, and for build

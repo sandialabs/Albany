@@ -2,9 +2,10 @@
 
 SCRIPT_NAME=`basename $0`
 PACKAGE=$1
-TOOL_CHAIN=$2
-BUILD_TYPE=$3
-NUM_PROCS=$4
+ARCH=$2
+TOOL_CHAIN=$3
+BUILD_TYPE=$4
+NUM_PROCS=$5
 LCM_DIR=`pwd`
 TRILINOS="trilinos"
 INTEL_DIR=/opt/intel
@@ -12,6 +13,11 @@ INTEL_DIR=/opt/intel
 # Some basic error checking.
 if [ -z "$PACKAGE" ]; then
     echo "Specifiy package [trilinos|albany]"
+    exit 1
+fi
+
+if [ -z "$ARCH" ]; then
+    echo "Specifiy architecture [serial|openmp|pthreads|cuda]"
     exit 1
 fi
 
@@ -44,28 +50,76 @@ case "$PACKAGE" in
 	;;
 esac
 
+case "$ARCH" in
+    serial)
+	ARCH_STRING="SERIAL"
+	ARCH_NAME="Serial"
+	;;
+    openmp)
+	ARCH_STRING="OPENMP"
+	ARCH_NAME="Open MP"
+	;;
+    pthreads)
+	ARCH_STRING="PTHREADS"
+	ARCH_NAME="POSIX Threads"
+	;;
+    cuda)
+	ARCH_STRING="CUDA"
+	ARCH_NAME="Cuda"
+	;;
+    *)
+	echo "Unrecognized architecture option"
+	exit 1
+	;;
+esac
+
 case "$TOOL_CHAIN" in
     gcc)
-	export OMPI_CC=`which gcc`
-	export OMPI_CXX=`which g++`
-	export OMPI_FC=`which gfortran`
+	if [ -z ${CC+x} ]; then CC=`which gcc`; fi
+	case "$ARCH" in
+	    serial)
+		if [ -z ${CXX+x} ]; then CXX=`which g++`; fi
+		;;
+	    openmp)
+		if [ -z ${CXX+x} ]; then CXX=`which g++`; fi
+		;;
+	    pthreads)
+		if [ -z ${CXX+x} ]; then CXX=`which g++`; fi
+		;;
+	    cuda)
+		if [ -z ${CXX+x} ]; then
+		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		else
+		    export NVCC_WRAPPER_DEFAULT_COMPILER="$CXX";
+		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		fi
+		;;
+	    *)
+		echo "Unrecognized architecture option"
+		exit 1
+		;;
+	esac
+	if [ -z ${FC+x} ]; then FC=`which gfortran`; fi
 	;;
     clang)
-	export OMPI_CC=`which clang`
-	export OMPI_CXX=`which clang++`
-	export OMPI_FC=`which gfortran`
+	if [ -z ${CC+x} ]; then CC=`which clang`; fi
+	if [ -z ${CXX+x} ]; then CXX=`which clang++`; fi
+	if [ -z ${FC+x} ]; then FC=`which gfortran`; fi
 	;;
     intel)
 	source $INTEL_DIR/bin/compilervars.sh intel64
-	export OMPI_CC=`which icc`
-	export OMPI_CXX=`which icpc`
-	export OMPI_FC=`which ifort`
+	if [ -z ${CC+x} ]; then CC=`which icc`; fi
+	if [ -z ${CXX+x} ]; then CXX=`which icpc`; fi
+	if [ -z ${FC+x} ]; then FC=`which ifort`; fi
 	;;
     *)
 	echo "Unrecognized tool chain option"
 	exit 1
 	;;
 esac
+export OMPI_CC="$CC"
+export OMPI_CXX="$CXX"
+export OMPI_FC="$FC"
 
 # This is here to add or change compiler flags in addition to those
 # specified by CMake during configuration. Right now they are empty
@@ -132,12 +186,12 @@ esac
 
 # Setup flags with the info gathered above.
 CONFIG_FILE="$PACKAGE-config.sh"
-BUILD=$TOOL_CHAIN-$BUILD_TYPE
+BUILD=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
 PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
 # Install directory for trilinos only
 INSTALL_DIR="$LCM_DIR/$TRILINOS-install-$BUILD"
 BUILD_DIR="$LCM_DIR/$PACKAGE-build-$BUILD"
-PREFIX="$PACKAGE-$TOOL_CHAIN-$BUILD_TYPE"
+PREFIX="$PACKAGE-$BUILD"
 BUILD_LOG="$LCM_DIR/$PREFIX-build.log"
 ERROR_LOG="$LCM_DIR/$PREFIX-error.log"
 STATUS_LOG="$LCM_DIR/$PREFIX-status.log"

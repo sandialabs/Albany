@@ -154,7 +154,7 @@ getEvalType() const
 //  STOCHASTIC GALERKIN RESIDUAL
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 QCAD::EvaluatorTools<PHAL::AlbanyTraits::SGResidual,Traits>::
 EvaluatorTools()
@@ -258,6 +258,8 @@ getEvalType() const
   return "SGTangent";
 }
 
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 //   MULTI-POINT RESIDUAL
@@ -366,7 +368,7 @@ getEvalType() const
   return "MPTangent";
 }
 
-#endif //ALBANY_SG_MP
+#endif
 
 // **********************************************************************
 

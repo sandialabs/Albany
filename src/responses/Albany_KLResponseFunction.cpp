@@ -159,7 +159,7 @@ evaluateDerivativeT(const double current_time,
 			       gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::KLResponseFunction::
 init_sg(
@@ -256,6 +256,8 @@ evaluateSGDerivative(
     evaluateSGResponse(current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, 
 		       *sg_g);
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::KLResponseFunction::
@@ -322,7 +324,7 @@ evaluateMPDerivative(
 				 mp_p_vals, deriv_p, 
 				 mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dxdotdot, mp_dg_dp);
 }
-#endif //ALBANY_SG_MP
+#endif
 
 #if defined(ALBANY_EPETRA)
 bool

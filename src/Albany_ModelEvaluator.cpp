@@ -440,7 +440,7 @@ Albany::ModelEvaluator::createInArgs() const
   inArgs.setSupports(IN_ARG_beta,true);
   inArgs.set_Np(num_param_vecs+num_dist_param_vecs);
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   inArgs.setSupports(IN_ARG_x_sg,true);
   inArgs.setSupports(IN_ARG_x_dot_sg,true);
   inArgs.setSupports(IN_ARG_x_dotdot_sg,true);
@@ -449,6 +449,8 @@ Albany::ModelEvaluator::createInArgs() const
   inArgs.setSupports(IN_ARG_sg_basis,true);
   inArgs.setSupports(IN_ARG_sg_quadrature,true);
   inArgs.setSupports(IN_ARG_sg_expansion,true);
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   inArgs.setSupports(IN_ARG_x_mp,true);
   inArgs.setSupports(IN_ARG_x_dot_mp,true);
@@ -516,7 +518,7 @@ Albany::ModelEvaluator::createOutArgs() const
   }
 
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   // Stochastic
   outArgs.setSupports(OUT_ARG_f_sg,true);
   outArgs.setSupports(OUT_ARG_W_sg,true);
@@ -545,6 +547,8 @@ Albany::ModelEvaluator::createOutArgs() const
       outArgs.setSupports(OUT_ARG_DgDp_sg, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
   }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   // Multi-point
   outArgs.setSupports(OUT_ARG_f_mp,true);
@@ -865,7 +869,7 @@ f_out->Print(std::cout);
   //
   // Stochastic Galerkin
   //
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   InArgs::sg_const_vector_t x_sg = inArgs.get_x_sg();
   if (x_sg != Teuchos::null) {
     app->init_sg(inArgs.get_sg_basis(),
@@ -1001,6 +1005,8 @@ f_out->Print(std::cout);
                                 *g_sg);
     }
   }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   //
   // Multi-point evaluation
@@ -1133,5 +1139,5 @@ f_out->Print(std::cout);
                                 *g_mp);
     }
   }
-#endif //ALBANY_SG_MP
+#endif
 }

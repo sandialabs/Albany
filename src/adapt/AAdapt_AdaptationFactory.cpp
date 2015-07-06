@@ -10,7 +10,7 @@
 #include "AAdapt_AdaptationFactory.hpp"
 #if defined(HAVE_STK)
 #include "AAdapt_CopyRemesh.hpp"
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(ALBANY_BGL)
 #include "AAdapt_TopologyModification.hpp"
 #endif
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
@@ -53,7 +53,7 @@ AAdapt::AdaptationFactory::createAdapter() {
                                           commT_));
   }
 
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(ALBANY_BGL)
 
   else if(method == "Topmod") {
     strategy = rcp(new AAdapt::TopologyMod(adapt_params_,

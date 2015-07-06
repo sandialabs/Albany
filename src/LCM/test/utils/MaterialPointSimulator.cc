@@ -324,8 +324,16 @@ int main(int ac, char* av[])
             << std::endl;
 
   if (check_stability) {
+    
+    std::string parametrization_type = mpsParams.get<std::string>(
+      "Parametrization Type",
+      "Spherical");
+    std::cout << "Parametrization Type: " 
+	      << parametrization_type << std::endl;
+
     Teuchos::ParameterList bcPL;
     bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+    bcPL.set<std::string>("Parametrization Type Name", parametrization_type);
     bcPL.set<std::string>("Material Tangent Name", "Material Tangent");
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
@@ -481,6 +489,7 @@ int main(int ac, char* av[])
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
       new Albany::STKDiscretization(stkMeshStruct, commT));
+  discretization->updateMesh();
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
@@ -535,6 +544,12 @@ int main(int ac, char* av[])
   //
   // Setup loading scenario and instantiate evaluatFields
   //
+  PHX::MDField<ScalarT, Cell, QuadPoint> minDetA("Min detA", dl->qp_scalar);
+  double mu_0 = 0;
+  double mu_k = 0;
+  int bifurcationTime_rough = number_steps;
+  bool bifurcation_flag = false;
+
   for (int istep(0); istep <= number_steps; ++istep) {
 
     //std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
@@ -545,7 +560,7 @@ int main(int ac, char* av[])
     Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
 
     //std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
-    std::cout << "current F\n" << current_F << std::endl;
+    //std::cout << "current F\n" << current_F << std::endl;
 
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
@@ -579,7 +594,7 @@ int main(int ac, char* av[])
         stressField);
 
     // Check the computed stresses
-
+/*
     for (size_type cell = 0; cell < workset_size; ++cell) {
       for (size_type qp = 0; qp < num_pts; ++qp) {
         std::cout << "in MPS Stress tensor at cell " << cell
@@ -598,7 +613,7 @@ int main(int ac, char* av[])
 
       }
     }
-
+*/
     // Call the state field manager
     //std::cout << "+++ calling the stateFieldManager\n";
     stateFieldManager.preEvaluate<Residual>(workset);
@@ -610,6 +625,131 @@ int main(int ac, char* av[])
     // output to the exodus file
     discretization->writeSolutionT(*solution_vectorT, Teuchos::as<double>(istep));
 
-  }  // end loading steps
+    // Adaptive step for bifurcation check
+    if (check_stability) {
+      // get current minDet(A)
+      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(minDetA);
+    	
+      if (istep == 0) {
+	    mu_0 = minDetA(0,0);
+      }
+
+      if (minDetA(0, 0) < 0 && !bifurcation_flag) {
+        bifurcationTime_rough = istep;
+      	bifurcation_flag = true;
+      	mu_k = minDetA(0,0);
+
+  	    // adaptive step begin
+  	    std::cout << "Adaptive step begin" << std::endl;
+        // output results to txt file
+  	    std::string output_adaptive_file = mpsParams.get<std::string>(
+        "Adaptive Step Output File Name",
+        "output-adaptive.txt");
+      
+        // initialization
+  	    double tol = 1E-8;
+  	    double alpha_local = 1;
+  	    double alpha_local_step = 0.5;
+  	    int k = 1;
+  	    int maxIteration = 50;
+
+	    std::ofstream fout(output_adaptive_file);
+	    fout << "Tol                   : " << tol << std::endl;
+	    fout << "Bifurcation_time_rough: " << bifurcationTime_rough << std::endl;
+	    fout << "Min_det(A)_0          : " << mu_0 << std::endl;
+	    fout << "Min_det(A)_k          : " << mu_k << std::endl;
+	    fout << std::endl;
+  
+  	    fout.width(2);
+  	    fout << "k" ;
+  	    fout.width(15);
+  	    fout << "alpha_local";
+  	    fout.width(15);
+  	    fout << "mu_k";
+  	    fout.width(15);
+  	    fout << "mu_k/mu_0" << std::endl;
+
+        // small strain tensor
+        Intrepid::Tensor<ScalarT> current_strain;
+
+        // iteration begin
+        while ( (mu_k < 0) || (abs(mu_k / mu_0) > tol)) {
+
+          double alpha = (bifurcationTime_rough - 1 + alpha_local)
+            / number_steps;
+
+          Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
+          Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
+
+          for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+              def_grad[3 * i + j] = current_F(i, j);
+            }
+          }
+
+         // jacobian
+         detdefgrad[0] = Intrepid::det(current_F);
+
+         current_strain = 0.5 * (current_F + Intrepid::transpose(current_F)) 
+    	   - Intrepid::eye<ScalarT>(3);
+
+         for (int i = 0; i < 3; ++i) {
+           for (int j = 0; j < 3; ++j) {
+             strain[3 * i + j] = current_strain(i, j);
+           }
+         }
+
+         // Call the evaluators, evaluateFields() is the function that
+         // computes stress based on deformation gradient
+         fieldManager.preEvaluate<Residual>(workset);
+  	     fieldManager.evaluateFields<Residual>(workset);
+   	     fieldManager.postEvaluate<Residual>(workset);
+    
+         // Call the state field manager
+         //std::cout << "+++ calling the stateFieldManager\n";
+         stateFieldManager.preEvaluate<Residual>(workset);
+         stateFieldManager.evaluateFields<Residual>(workset);
+         stateFieldManager.postEvaluate<Residual>(workset);
+    
+         stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>
+           (minDetA);
+         
+         mu_k = minDetA(0, 0);
+    
+         fout.width(2);
+         fout << k;
+         fout.width(15);
+         fout << alpha_local;
+         fout.width(15);
+         fout << mu_k;
+         fout.width(15);
+         fout << mu_k/mu_0 << std::endl;
+
+         if (mu_k > 0) {
+           alpha_local += alpha_local_step;
+         } else {
+           alpha_local -= alpha_local_step;
+         }
+    
+         alpha_local_step /= 2;
+         k = k+1;
+    
+         if (k>=maxIteration) break;
+         
+         stateMgr.updateStates();
+        } // iteration end
+
+        fout << std::endl;
+        fout << "current strain: \n" << current_strain << std::endl;
+        fout << std::flush;
+        fout.close();
+
+        std::cout << "Adaptive step end" << std::endl;
+     
+      } // end adaptive step
+
+    } // end check bifurcation
+
+  } // end loading steps
 
 }

@@ -545,7 +545,7 @@ evaluateFields(typename Traits::EvalData workset)
   } 
 }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE
 // **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
@@ -717,6 +717,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
           const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          row = eqID[n]; 
           if (loadResid) {
             for (int block=0; block<nblock; block++)
               (*f)[block].SumIntoMyValue(eqID[n], 0, valptr.val().coeff(block));
@@ -739,6 +740,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          row = eqID[n]; 
           if (loadResid) {
             for (int block=0; block<nblock; block++)
               (*f)[block].SumIntoMyValue(eqID[n], 0, valptr.val().coeff(block));
@@ -761,6 +763,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 }

@@ -86,6 +86,9 @@ public:
   //! Retrieve the force for the given global degree of freedom (evaluateInternalForce() must be called prior to getForce()).
   double getForce(int globalAlbanyNodeId, int dof);
 
+  //! Computes a least squares fit of the displacement field for all particles within the horizon of the given node
+  double getDisplacementNeighborhoodFit(int globalAlbanyNodeId, double * coord, int dof);
+
   //! Retrieve the partial stress tensors for the quadrature points in the given element (evaluateInternalForce() must be called prior to getPartialStress()).
   void getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues);
 

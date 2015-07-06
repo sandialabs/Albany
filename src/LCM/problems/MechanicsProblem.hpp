@@ -266,6 +266,12 @@ protected:
   bool have_mech_eq_;
 
   ///
+  /// Have mesh adaptation - both the "Adaptation" sublist exists and the user has specified that the method
+  ///    is "RPI Albany Size"
+  ///
+  bool have_sizefield_adaptation_;
+
+  ///
   /// Have temperature equation
   ///
   bool have_temperature_eq_;
@@ -357,6 +363,7 @@ protected:
 #include "SurfaceVectorResidual.hpp"
 #include "CurrentCoords.hpp"
 #include "TvergaardHutchinson.hpp"
+#include "MeshSizeField.hpp"
 //#include "SurfaceCohesiveResidual.hpp"
 
 // Constitutive Model Interface and parameters
@@ -482,6 +489,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     composite =
         material_db_->getElementBlockParam<bool>(eb_name,
             "Use Composite Tet 10");
+  pFromProb->set<bool>("Use Composite Tet 10", composite);
 
   // set flag for small strain option
   bool small_strain(false);
@@ -1107,6 +1115,46 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = Teuchos::rcp(
         new LCM::CurrentCoords<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (have_mech_eq_ && have_sizefield_adaptation_) { // Mesh size field
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList("Isotropic Mesh Size Field"));
+    p->set<std::string>("IsoTropic MeshSizeField Name", "IsoMeshSizeField");
+    p->set<std::string>("Current Coordinates Name", "Current Coordinates");
+    p->set<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+
+    // Get the Adaptation list and send to the evaluator
+    Teuchos::ParameterList& paramList = params->sublist("Adaptation");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    p->set<const Teuchos::RCP<
+      Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis", intrepidBasis);
+    ev = Teuchos::rcp(
+        new LCM::IsoMeshSizeField<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // output mesh size field if requested
+/*
+    bool output_flag = false;
+    if (material_db_->isElementBlockParam(eb_name, "Output MeshSizeField"))
+      output_flag =
+          material_db_->getElementBlockParam<bool>(eb_name, "Output MeshSizeField");
+*/
+    bool output_flag = true;
+    if (output_flag) {
+        p = stateMgr.registerStateVariable("IsoMeshSizeField",
+            dl_->qp_scalar,
+            dl_->dummy,
+            eb_name,
+            "scalar",
+            1.0,
+            true,
+            output_flag);
+        ev = Teuchos::rcp(
+            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   if (have_temperature_eq_ || have_temperature_) {
@@ -2714,6 +2762,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
     p->set<RealType>("Stabilization Parameter", stab_param);
     p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    // Get material list prior to establishing a new parameter list
+    std::string matName = material_db_->getElementBlockParam<std::string>(
+        eb_name, "material");
+    Teuchos::ParameterList& param_list =
+        material_db_->getElementBlockSublist(eb_name, matName);
+
+    RealType decay_constant(0.0);
+    // Check if Tritium Sublist exists. If true, move forward
+    if (param_list.isSublist("Tritium Coefficients")) {
+
+      Teuchos::ParameterList& tritium_param = material_db_->
+          getElementBlockSublist(eb_name, matName).sublist(
+          "Tritium Coefficients");
+      decay_constant = tritium_param.get<RealType>("Tritium Decay Constant",0.0);
+    }
+    p->set<RealType>("Tritium Decay Constant", decay_constant);
 
     //Output
     p->set<std::string>("Residual Name", "Transport Residual");

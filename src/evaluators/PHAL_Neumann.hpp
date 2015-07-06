@@ -73,7 +73,9 @@ protected:
   //The following are for the lateral BC 
   double g; 
   double rho; 
-  double rho_w;  
+  double rho_w;
+  Teuchos::ParameterList* stereographicMapList;
+  bool useStereographicMap;
 
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
@@ -271,7 +273,7 @@ private:
 // **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::SGResidual,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -307,6 +309,8 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual 
@@ -346,7 +350,7 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
 };
-#endif //ALBANY_SG_MP
+#endif
 
 
 // **************************************************************

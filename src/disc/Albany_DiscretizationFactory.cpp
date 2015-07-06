@@ -26,6 +26,9 @@
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
 #endif
+#ifdef ALBANY_FELIX
+#include "Albany_STKDiscretizationStokesH.hpp"
+#endif
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
 #endif
@@ -34,11 +37,15 @@
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #endif
+#ifdef ALBANY_AMP
+#include "Albany_SimDiscretization.hpp"
+#include "Albany_SimMeshStruct.hpp"
+#endif
 #ifdef ALBANY_CATALYST
 #include "Albany_Catalyst_Decorator.hpp"
 #endif
 
-#if defined(ALBANY_LCM) && defined(HAVE_STK)
+#if defined(ALBANY_LCM) && defined(HAVE_STK) && defined(ALBANY_BGL)
 #include "Topology_Utils.h"
 #endif // ALBANY_LCM
 
@@ -85,7 +92,8 @@ void createInterfaceParts(
     Teuchos::RCP<Albany::AbstractMeshStruct> & mesh_struct
     )
 {
-#if defined(HAVE_STK) // LCM only used STK for adaptation here
+#if defined(HAVE_STK) && defined(ALBANY_BGL) // LCM only uses STK for adaptation here
+                                             // Top mod uses BGL
   bool const
   do_adaptation = adapt_params.is_null() == false;
 
@@ -293,7 +301,16 @@ Albany::DiscretizationFactory::createMeshSpecs() {
                                << " requested, but not compiled in" << std::endl);
 #endif
   }
-
+  else if (method == "Sim") {
+#ifdef ALBANY_AMP
+    meshStruct = Teuchos::rcp(new Albany::SimMeshStruct(discParams, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "Sim",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif
+  }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
@@ -396,7 +413,15 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 #if defined(HAVE_STK)
       case Albany::AbstractMeshStruct::STK_MS: {
         Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes));
+        Teuchos::RCP<Albany::STKDiscretization> disc;
+#ifdef ALBANY_FELIX
+        if (method == "Extruded")
+          disc = Teuchos::rcp(new Albany::STKDiscretizationStokesH(ms, commT, rigidBodyModes));
+        else
+#endif
+          disc = Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes));
+        disc->updateMesh();
+        return disc;
       }
       break;
 #endif
@@ -404,6 +429,13 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       case Albany::AbstractMeshStruct::PUMI_MS: {
         Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
         return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
+      }
+      break;
+#endif
+#ifdef ALBANY_AMP
+      case Albany::AbstractMeshStruct::SIM_MS: {
+        Teuchos::RCP<Albany::SimMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::SimMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::SimDiscretization(ms, commT, rigidBodyModes));
       }
       break;
 #endif

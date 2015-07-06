@@ -149,7 +149,8 @@ public:
       nodal_data_base = Teuchos::rcp(new Adapt::NodalDataBase);
     return nodal_data_base;
   }
-  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() { return nodal_data_base; }
+  const Teuchos::RCP<Adapt::NodalDataBase>& getNodalDataBase()
+  { return nodal_data_base; }
 
 private:
 

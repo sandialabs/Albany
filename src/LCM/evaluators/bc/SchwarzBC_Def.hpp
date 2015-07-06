@@ -12,7 +12,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#define DEBUG_LCM_SCHWARZ
+//#define DEBUG_LCM_SCHWARZ
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
@@ -27,8 +27,8 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
     coupled_apps_(app_->getApplications()),
-    coupled_app_name_(p.get<std::string>("Coupled Application", "self")),
-    coupled_block_name_(p.get<std::string>("Coupled Block"))
+    coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
+    coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
 {
   std::string const &
   nodeset_name = this->nodeSetID;
@@ -123,13 +123,19 @@ computeBCs(
   std::string const
   coupled_block_name = this_app.getCoupledBlockName(coupled_app_index);
 
+  bool const
+  use_block = coupled_block_name != "NONE";
+
   std::map<std::string, int> const &
   coupled_block_name_2_index = coupled_gms.ebNameToIndex;
 
   auto
   it = coupled_block_name_2_index.find(coupled_block_name);
 
-  if (it == coupled_block_name_2_index.end()) {
+  bool const
+  missing_block = it == coupled_block_name_2_index.end();
+
+  if (use_block == true && missing_block == true) {
     std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
     std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
     std::cerr << "Coupling application : " << this_app_name << '\n';
@@ -137,8 +143,10 @@ computeBCs(
     exit(1);
   }
 
+  // When ignoring the block, set the index to zero to get defaults
+  // corresponding to the first block.
   auto const
-  coupled_block_index = it->second;
+  coupled_block_index = use_block == true ? it->second : 0;
 
   CellTopologyData const
   coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
@@ -182,7 +190,7 @@ computeBCs(
   // to determine whether a node of this_app is inside an element of
   // coupled_app within that tolerance.
   double const
-  tolerance = 5.0e-2;
+  tolerance = 1.0e-3;
 
   double * const
   coord = ns_coord[ns_node];
@@ -223,12 +231,18 @@ computeBCs(
   Teuchos::ArrayRCP<ST const>
   coupled_solution_view = coupled_solution->get1dView();
 
+  Teuchos::RCP<Tpetra_Map const>
+  coupled_overlap_node_map = coupled_stk_disc->getOverlapNodeMapT();
+
   for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
 
     std::string const &
     coupled_element_block = coupled_ws_eb_names[workset];
 
-    if (coupled_element_block != coupled_block_name) continue;
+    bool const
+    block_names_differ = coupled_element_block != coupled_block_name;
+
+    if (use_block == true && block_names_differ == true) continue;
 
     auto const
     elements_per_workset = ws_elem_2_node_id[workset].size();
@@ -238,16 +252,20 @@ computeBCs(
       for (auto node = 0; node < coupled_vertex_count; ++node) {
 
         auto const
-        node_id = ws_elem_2_node_id[workset][element][node];
+        global_node_id = ws_elem_2_node_id[workset][element][node];
+
+        auto const
+        local_node_id =
+            coupled_overlap_node_map->getLocalElement(global_node_id);
 
         double * const
-        pcoord = &(coupled_coordinates[coupled_dimension * node_id]);
+        pcoord = &(coupled_coordinates[coupled_dimension * local_node_id]);
 
         coupled_element_vertices[node].fill(pcoord);
 
         for (auto i = 0; i < coupled_dimension; ++i) {
           coupled_element_solution[node](i) =
-              coupled_solution_view[coupled_dimension * node_id + i];
+              coupled_solution_view[coupled_dimension * local_node_id + i];
         } // dimension loop
 
       } // node loop
@@ -822,7 +840,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 //
 // Specialization: Stochastic Galerkin Residual
 //
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 SchwarzBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 SchwarzBC(Teuchos::ParameterList & p) :
@@ -1082,6 +1100,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   }
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 //
 // Specialization: Multi-point Residual
@@ -1347,6 +1367,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 } // namespace LCM

@@ -47,8 +47,9 @@
 #endif
 #endif
 
-//eb-hack
-#include "Adapt_NodalDataVector.hpp"
+#if defined (ALBANY_GOAL)
+#include "GOAL_BCManager.hpp"
+#endif
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -178,6 +179,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (Teuchos::nonnull(rc_mgr))
     problemFactory.setReferenceConfigurationManager(rc_mgr);
   problem = problemFactory.create();
+
+#if defined(ALBANY_GOAL)
+  bcMgr = GOAL::BCManager::create(*problemParams);
+#endif
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
@@ -707,7 +712,7 @@ getStochasticExpansion()
   return sg_expansion;
 }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::Application::
 init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -745,7 +750,7 @@ init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
   for (int i=0; i<responses.size(); i++)
     responses[i]->init_sg(basis, quad, expansion, multiComm);
 }
-#endif //ALBANY_SG_MP
+#endif
 
 namespace {
 //amb-nfm I think right now there is some confusion about nfm. Long ago, nfm was
@@ -1006,9 +1011,15 @@ computeGlobalResidualImplT(
   // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
+  // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
-  disc->setResidualFieldT(*fT);
+  // Push the assembled residual values back into the overlap vector
+  Tpetra_Import tpetraImport(fT->getMap(), overlapped_fT->getMap());
+  overlapped_fT->doImport(*fT, tpetraImport, Tpetra::INSERT);
+
+  // Write the residual to the discretization, which will later (optionally) be written to the output file
+  disc->setResidualFieldT(*overlapped_fT);
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
@@ -2089,17 +2100,6 @@ evaluateResponseT(int response_index,
                  const Teuchos::Array<ParamVec>& p,
                  Tpetra_Vector& gT)
 {
-  //eb-hack Initialize the vectors here so that we can accumulate the nodal
-  // state data state in ProjectIPtoNodalField.
-  try {
-    Teuchos::RCP<Adapt::NodalDataBase>
-      ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
-    if (!ndb.is_null()) {
-      ndb->getNodalDataVector()->initializeVectors(0);
-      ndb->getNodalDataVector()->initEvaluateCalls();
-    }
-  } catch (...) { /* No nodal data vector. */ }
-
   double t = current_time;
   if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -2209,7 +2209,7 @@ evaluateResponseDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::Application::
 computeGlobalSGResidual(
@@ -2900,7 +2900,8 @@ evaluateSGResponseDerivative(
     current_time, sg_xdot, sg_xdotdot, sg_x, p, sg_p_index, sg_p_vals, deriv_p,
     sg_g, sg_dg_dx, sg_dg_dxdot, sg_dg_dxdotdot, sg_dg_dp);
 }
-
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 void
 Albany::Application::
 computeGlobalMPResidual(
@@ -3601,7 +3602,7 @@ evaluateMPResponseDerivative(
     current_time, mp_xdot, mp_xdotdot, mp_x, p, mp_p_index, mp_p_vals, deriv_p,
     mp_g, mp_dg_dx, mp_dg_dxdot, mp_dg_dxdotdot, mp_dg_dp);
 }
-#endif //ALBANY_SG_MP
+#endif
 
 #if defined(ALBANY_EPETRA)
 void
@@ -3713,16 +3714,18 @@ void Albany::Application::registerShapeParameters()
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Jacobian, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits> * dT =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::Tangent, SPL_Traits>();
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGResidual, SPL_Traits> * dSGR =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGResidual, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGJacobian, SPL_Traits> * dSGJ =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::SGJacobian, SPL_Traits>();
+#endif 
+#ifdef ALBANY_ENSEMBLE 
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPResidual, SPL_Traits> * dMPR =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPResidual, SPL_Traits>();
   Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits> * dMPJ =
    new Albany::DummyParameterAccessor<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>();
-#endif //ALBANY_SG_MP
+#endif
 
   // Register Parameter for Residual fill using "this->getValue" but
   // create dummy ones for other type that will not be used.
@@ -3734,16 +3737,18 @@ void Albany::Application::registerShapeParameters()
       (shapeParamNames[i], dJ, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::Tangent, SPL_Traits>
       (shapeParamNames[i], dT, paramLib);
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::SGResidual, SPL_Traits>
       (shapeParamNames[i], dSGR, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::SGJacobian, SPL_Traits>
       (shapeParamNames[i], dSGJ, paramLib);
+#endif 
+#ifdef ALBANY_ENSEMBLE 
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::MPResidual, SPL_Traits>
       (shapeParamNames[i], dMPR, paramLib);
     new Sacado::ParameterRegistration<PHAL::AlbanyTraits::MPJacobian, SPL_Traits>
       (shapeParamNames[i], dMPJ, paramLib);
-#endif //ALBANY_SG_MP
+#endif
   }
 }
 
@@ -3848,7 +3853,7 @@ postRegSetup(std::string eval)
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
       }
   }
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   else if (eval=="SGResidual") {
     for (int ps=0; ps < fm.size(); ps++)
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(eval);
@@ -3859,23 +3864,53 @@ postRegSetup(std::string eval)
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGResidual>(eval);
   }
   else if (eval=="SGJacobian") {
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      // Deriv dimension for SGJacobian is retrieved through Jacobian eval type
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGJacobian>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
-    if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGJacobian>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
+      }
+    }
+    if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGJacobian>(derivative_dimensions);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>(eval);
+    }
   }
   else if (eval=="SGTangent") {
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      // Deriv dimension for SGTangent is retrieved through Tangent eval type
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGTangent>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
-    if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGTangent>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
+      }
+    }
+    if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGTangent>(derivative_dimensions);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>(eval);
+      }
   }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
   else if (eval=="MPResidual") {
     for (int ps=0; ps < fm.size(); ps++)
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(eval);
@@ -3886,24 +3921,52 @@ postRegSetup(std::string eval)
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPResidual>(eval);
   }
   else if (eval=="MPJacobian") {
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      // Deriv dimension for MPJacobian is retrieved through Jacobian eval type
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPJacobian>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
-    if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPJacobian>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
+      }
+    }
+    if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPJacobian>(derivative_dimensions);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>(eval);
+    }
   }
   else if (eval=="MPTangent") {
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      // Deriv dimension for MPTangent is retrieved through Tangent eval type
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPTangent>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
-    if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPTangent>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
+      }
+    }
+    if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPTangent>(derivative_dimensions);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>(eval);
+      }
   }
-#endif //ALBANY_SG_MP
+#endif
   else
     TEUCHOS_TEST_FOR_EXCEPTION(eval!="Known Evaluation Name",  std::logic_error,
                                "Error in setup call \n" << " Unrecognized name: " << eval << std::endl);
@@ -4016,6 +4079,7 @@ void Albany::Application::loadBasicWorksetInfo(
     workset.xdotdot     = solMgr->get_overlapped_xdotdot();
     workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+    workset.disc = disc;
     //workset.delta_time = delta_time;
     if (workset.xdot != Teuchos::null) workset.transientTerms = true;
     if (workset.xdotdot != Teuchos::null) workset.accelerationTerms = true;
@@ -4033,6 +4097,7 @@ void Albany::Application::loadBasicWorksetInfoT(
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
     workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+    workset.disc = disc;
     //workset.delta_time = delta_time;
     if (workset.xdotT != Teuchos::null) workset.transientTerms = true;
     if (workset.xdotdotT != Teuchos::null) workset.accelerationTerms = true;
@@ -4093,6 +4158,7 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.xdot = overlapped_xdot;
   workset.xdotdot = overlapped_xdotdot;
   workset.distParamLib = distParamLib;
+  workset.disc = disc;
 
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
@@ -4140,6 +4206,7 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.xdotT = overlapped_xdotT;
   workset.xdotdotT = overlapped_xdotdotT;
   workset.distParamLib = distParamLib;
+  workset.disc = disc;
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else
@@ -4155,7 +4222,7 @@ void Albany::Application::setupBasicWorksetInfoT(
 }
 
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4210,6 +4277,8 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.x_importer = importer;
 }
 
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4262,7 +4331,7 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.x_importer = importer;
 }
-#endif //ALBANY_SG_MP
+#endif
 
 #if defined(ALBANY_EPETRA)
 void Albany::Application::setupTangentWorksetInfo(
@@ -4473,7 +4542,7 @@ void Albany::Application::setupTangentWorksetInfoT(
 }
 
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4580,6 +4649,8 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.param_offset = param_offset;
 }
 
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset,
@@ -4686,7 +4757,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.num_cols_p = num_cols_p;
   workset.param_offset = param_offset;
 }
-#endif //ALBANY_SG_MP
+#endif
 
 #ifdef ALBANY_MOR
 #if defined(ALBANY_EPETRA)

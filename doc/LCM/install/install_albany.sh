@@ -24,10 +24,16 @@ if [ ! -d Trilinos ]; then
   #git clone git@github.com:trilinos/trilinos.git Trilinos
   git clone software.sandia.gov:/space/git/Trilinos Trilinos
   #git clone https://github.com/trilinos/trilinos.git Trilinos
+else
+  echo ">>> Trilinos exists, freshening it <<<"
+  (cd Trilinos; git pull)
 fi
 if [ ! -d Albany ]; then
   git clone git@github.com:gahansen/Albany.git Albany
   #git clone https://github.com/gahansen/Albany.git Albany
+else
+  echo ">>> Albany exists, freshening it <<<"
+  (cd Albany; git pull)
 fi
 
 ln -sf Albany/doc/LCM/build/*.sh .
@@ -55,24 +61,27 @@ fi
 
 NP=`nproc`
 toolchain="gcc"
-buildtype="debug"
+machinetype="serial"
+#buildtype="debug"
+buildtype="release"
 
 for target in trilinos albany; do
- dir=${target}-build-${toolchain}-${buildtype}
+ dir=${target}-build-${machinetype}-${toolchain}-${buildtype}
  if [ ! -d $dir ]; then
-   echo ">>> building ${target}-${toolchain}-${buildtype} with ${NP} processes <<<"
-   ./clean-config-build.sh ${target} gcc debug $NP >& ${target}_build.log
- else 
    echo "!!! $dir exists !!!"
  fi
+ echo ">>> building ${target}-${machinetype}-${toolchain}-${buildtype} with ${NP} processes <<<"
+ ./clean-config-build.sh ${target} ${machinetype} ${toolchain} ${buildtype} $NP >& ${target}_build.log
 done
 
-if [ -e albany-build-${toolchain}-${buildtype}/src/Albany ]; then
-  echo "=== build successful ==="
+dir="albany-build-${machinetype}-${toolchain}-${buildtype}"
+if [ -e $dir/src/Albany ]; then
+  echo "=== build in $dir successful ==="
 else
-  echo "!!! unsuccessful build, see logs !!!"
+  echo "!!! unsuccessful build in $dir, see logs !!!"
 fi
 
+echo "..........................................................................................."
 echo "to ensure proper git behavior as a developer/commiter add the following to your .gitconfig:"
 echo " \
 [branch]

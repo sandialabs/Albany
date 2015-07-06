@@ -94,7 +94,7 @@ evaluateFields(typename Traits::EvalData neumannWorkset)
 {
   ScalarT bcValue = 0.0; 
 
-  if (material.length() > 0)  
+  if (material.length() > 0)  //Only true for robin boundary condition, where user_value is the Dirichlet-type voltage value that must be offset due to material
   {
     std::string category = materialDB->getMaterialParam<std::string>(material,"Category");
 

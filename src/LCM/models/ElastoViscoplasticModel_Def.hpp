@@ -24,6 +24,11 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   eN_(p->get<RealType>("Void Nucleation Parameter eN", 0.0)),
   sN_(p->get<RealType>("Void Nucleation Parameter sN", 0.1)),
   fN_(p->get<RealType>("Void Nucleation Parameter fN", 0.0)),
+  eHN_(p->get<RealType>("Hydrogen Mean Strain Nucleation Parameter", 0.0)),
+  eHN_coeff_(p->get<RealType>("Mean Strain Hydrogen Linear Coefficient", 0.0)),
+  sHN_(p->get<RealType>("Hydrogen Nucleation Standard Deviation", 0.1)),
+  fHeN_(p->get<RealType>("Void Volume Fraction Nucleation Parameter", 0.0)),
+  fHeN_coeff_(p->get<RealType>("Void Volume Fraction He Linear Coefficient", 0.0)),
   fc_(p->get<RealType>("Critical Void Volume", 1.0)),
   ff_(p->get<RealType>("Failure Void Volume", 1.0)),
   q1_(p->get<RealType>("Yield Parameter q1", 1.0)),
@@ -201,6 +206,9 @@ computeState(typename Traits::EvalData workset,
   const RealType pi    = 3.141592653589793;
   const RealType radius_fac(3.0/(4.0*pi));
 
+  // void nucleation constants
+  ScalarT H_mean_eps_ss(eHN_), He_void_vol_frac_nuc(fHeN_);
+  
   // pre-define some tensors that will be re-used below
   //
   Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), bebar(num_dims_);
@@ -221,6 +229,7 @@ computeState(typename Traits::EvalData workset,
       //
       if (have_total_concentration_) {
         Y += alpha1_ * total_concentration_(cell,pt);
+        H_mean_eps_ss = eHN_ + eHN_coeff_ * total_concentration_(cell,pt);
       }
 
       // adjustment to the yield strength in the presence of helium
@@ -229,6 +238,7 @@ computeState(typename Traits::EvalData workset,
         if (total_bubble_density_(cell,pt) > 0.0 && bubble_volume_fraction_(cell,pt) > 0.0) {
           ScalarT Rb = std::cbrt(radius_fac * bubble_volume_fraction_(cell,pt)/total_bubble_density_(cell,pt)); 
           Y += alpha2_ * (Rb*Rb)/(Ra_*Ra_);
+          He_void_vol_frac_nuc = fHeN_ + fHeN_coeff_ * bubble_volume_fraction_(cell,pt);
         }
       }
 
@@ -298,7 +308,7 @@ computeState(typename Traits::EvalData workset,
         // Gurson quadratic yield surface
         //
         ScalarT Phi = 0.5 * Intrepid::dotdot(s,s) - psi * Ybar * Ybar / 3.0;
-        
+
         // check yield condition
         //
         if (Phi > std::numeric_limits<RealType>::epsilon()) {
@@ -440,10 +450,6 @@ computeState(typename Traits::EvalData workset,
               omega = 1.0 - tmp * tmp;
             }
 
-            // compute the hardening residual
-            //
-            Fad eps_resF = eps_ssF - eps_ss_old - (H - Rd*eps_ssF) * dgamF;
-
             // increment in equivalent plastic strain
             //
             Fad deq = dgamF * (q1_ * q2_ * pF * YbarF * fstarF * std::sinh(argF)) / (1.0 - fstarF) / YbarF;
@@ -451,11 +457,22 @@ computeState(typename Traits::EvalData workset,
               deq += dgamF * smag2 / (1.0 - fstarF) / YbarF;
             }
 
-            // void nculeation
+            // compute the hardening residual
+            //
+            Fad deps_ssF = (H - Rd*eps_ssF) * deq;
+            Fad eps_resF = eps_ssF - eps_ss_old - deps_ssF;
+
+            // void nucleation
             // 
             Fad eratio = -0.5 * ( eqpsF - eN_ ) * ( eqpsF - eN_ ) / sN_ / sN_;
             Fad Anuc = fN_ / sN_ / ( std::sqrt( 2.0 * pi ) ) * std::exp(eratio);
             Fad dfnuc = Anuc * deq;
+
+            // void nucleation with H, He
+            // 
+            Fad Heratio = -0.5 * ( eps_ssF - H_mean_eps_ss ) * ( eps_ssF - H_mean_eps_ss ) / sHN_ / sHN_;
+            Fad HAnuc = He_void_vol_frac_nuc / sHN_ / ( std::sqrt( 2.0 * pi ) ) * std::exp(Heratio);
+            Fad dHfnuc = HAnuc * deps_ssF;
 
             // void growth
             //
@@ -473,13 +490,14 @@ computeState(typename Traits::EvalData workset,
             RFad[0] = PhiF;
             RFad[1] = eps_resF;
             RFad[2] = (pF - p + dgamF * q1_ * q2_ * bulk * YbarF * fstarF * std::sinh(argF) ) / bulk;
-            RFad[3] = void_volume_fractionF - void_volume_fraction_old - dfg - dfnuc;
+            RFad[3] = void_volume_fractionF - void_volume_fraction_old - dfg - dfnuc - dHfnuc;
             RFad[4] = eqpsF - eqps_old - deq;
 
             // extract the values of the residuals
             //
-            for (int i = 0; i < num_vars; ++i)
+            for (int i = 0; i < num_vars; ++i) {
               R[i] = RFad[i].val();
+            }
 
             // compute the norm of the residual
             //
@@ -491,7 +509,7 @@ computeState(typename Traits::EvalData workset,
             RealType R4 = Sacado::ScalarValue<ScalarT>::eval(R[4]);
             RealType norm_res = std::sqrt(R0*R0 + R1*R1 + R2*R2 + R3*R3 + R4*R4);
             max_norm = std::max(norm_res, max_norm);
-
+            
             // check against too many iterations and failure
             //
             // if we have iterated the maximum number of times, just quit.

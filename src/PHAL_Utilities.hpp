@@ -26,6 +26,15 @@ template<typename EvalT>
 int getDerivativeDimensions (const Albany::Application* app,
                              const int element_block_idx);
 
+template<class ViewType>
+int getDerivativeDimensionsFromView (const ViewType &a){return 1;}
+
+template< class D, class E, class M, class L>
+int getDerivativeDimensionsFromView(const Kokkos::View<D,E,M,L, Kokkos::Impl::ViewSpecializeSacadoFad> &a){
+  return a.storage_size();
+}
+
+
 /* \brief Replace use of runtime MDField operator[]. This class uses only stack
  *        allocation.
  *

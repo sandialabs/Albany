@@ -92,6 +92,82 @@ private:
   std::size_t offset;
 };
 
+#ifdef ALBANY_SG
+template<typename Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>
+      : public PHX::EvaluatorWithBaseImpl<Traits>,
+        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
+
+public:
+
+  DOFGradInterpolation(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
+  typedef PHAL::AlbanyTraits::SGJacobian::MeshScalarT MeshScalarT;
+
+  // Input:
+  //! Values at nodes
+  PHX::MDField<ScalarT,Cell,Node> val_node;
+  //! Basis Functions
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+
+  // Output:
+  //! Values at quadrature points
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
+
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  std::size_t offset;
+};
+#endif
+
+#ifdef ALBANY_ENSEMBLE
+template<typename Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>
+      : public PHX::EvaluatorWithBaseImpl<Traits>,
+        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+
+public:
+
+  DOFGradInterpolation(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+  typedef PHAL::AlbanyTraits::MPJacobian::MeshScalarT MeshScalarT;
+
+  // Input:
+  //! Values at nodes
+  PHX::MDField<ScalarT,Cell,Node> val_node;
+  //! Basis Functions
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+
+  // Output:
+  //! Values at quadrature points
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
+
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  std::size_t offset;
+};
+#endif
+
 // Exact copy as above except data type is RealType instead of ScalarT
 // to interpolate quantities without derivative arrays
 template<typename EvalT, typename Traits>

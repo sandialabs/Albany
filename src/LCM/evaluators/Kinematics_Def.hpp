@@ -6,9 +6,11 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include <PHAL_Utilities.hpp>
 #include <Intrepid_MiniTensor.h>
-
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 #include <typeinfo>
 
 namespace LCM {
@@ -65,28 +67,6 @@ namespace LCM {
       this->addDependentField(u_);
     }
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    //Allocationg additional data for Kokkos functors
-    ddims_.push_back(24);
-    const int num_cells=dims[0];//
-    F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));   
-    strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    gradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    Itensor=PHX::MDField<ScalarT,Dim,Dim>("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-
-    F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
-    strain.setFieldData(ViewFactory::buildView(strain.fieldTag(),ddims_));
-    gradu.setFieldData(ViewFactory::buildView(gradu.fieldTag(),ddims_));
-    Itensor.setFieldData(ViewFactory::buildView(Itensor.fieldTag(),ddims_));
-
-   for (int i=0; i<num_dims_; i++){
-     for (int j=0; j<num_dims_; j++){
-        Itensor(i,j)=ScalarT(0.0);
-        if (i==j) Itensor(i,j)=ScalarT(1.0);
-     }
-   }
-
-#endif 
  }
 
   //----------------------------------------------------------------------------
@@ -103,6 +83,32 @@ namespace LCM {
     if (needs_vel_grad_) this->utils.setFieldData(vel_grad_,fm);
     if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(),fm);
     if (def_grad_rc_) this->utils.setFieldData(u_,fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+    int deriv_dims=PHAL::getDerivativeDimensionsFromView(strain_.get_kokkos_view());
+
+    ddims_.push_back(deriv_dims);
+    const int num_cells=strain_.dimension(0);
+
+    F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    gradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    Itensor=PHX::MDField<ScalarT,Dim,Dim>("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+
+    F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
+    strain.setFieldData(ViewFactory::buildView(strain.fieldTag(),ddims_));
+    gradu.setFieldData(ViewFactory::buildView(gradu.fieldTag(),ddims_));
+    Itensor.setFieldData(ViewFactory::buildView(Itensor.fieldTag(),ddims_));
+
+   for (int i=0; i<num_dims_; i++){
+     for (int j=0; j<num_dims_; j++){
+        Itensor(i,j)=ScalarT(0.0);
+        if (i==j) Itensor(i,j)=ScalarT(1.0);
+     }
+   }
+
+#endif
   }
 
 //----------------------------------------------------------------------------
@@ -457,9 +463,9 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
       }
     }
  #else
-
-
-
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
     if (weighted_average_) {
      if (needs_strain_) Kokkos::parallel_for(kinematic_weighted_average_needs_strain_Policy(0,workset.numCells),*this);
      else{ Kokkos::parallel_for(kinematic_weighted_average_Policy(0,workset.numCells),*this);}
@@ -468,6 +474,13 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
    if (needs_strain_) Kokkos::parallel_for(kinematic_needs_strain_Policy(0,workset.numCells),*this);
    else Kokkos::parallel_for(kinematic_Policy(0,workset.numCells),*this);
   }
+#ifdef ALBANY_TIMER
+  PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "Kinematics time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
 
 #endif
   }

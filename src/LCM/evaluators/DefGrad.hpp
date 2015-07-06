@@ -18,20 +18,20 @@
 namespace LCM {
 /** \brief Deformation Gradient
 
-    This evaluator computes the deformation gradient
+ This evaluator computes the deformation gradient
 
-*/
+ */
 
 template<typename EvalT, typename Traits>
-class DefGrad : public PHX::EvaluatorWithBaseImpl<Traits>,
-		public PHX::EvaluatorDerived<EvalT, Traits>  {
+class DefGrad: public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   DefGrad(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+      PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -41,12 +41,12 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
-  
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> GradU;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights;
+
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defgrad;
+  PHX::MDField<ScalarT, Cell, QuadPoint> J;
 
   unsigned int numQPs;
   unsigned int numDims;
@@ -57,7 +57,18 @@ private:
 
   //! stabilization parameter for the weighted average
   ScalarT alpha;
-  
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
+ public:
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct DefGrad_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, DefGrad_Tag> DefGrad_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const DefGrad_Tag& tag, const int& cell) const;
+
+
+#endif
 
 };
 

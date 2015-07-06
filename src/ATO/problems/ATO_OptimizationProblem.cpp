@@ -10,6 +10,10 @@
 #include "Epetra_Export.h"
 #include "Adapt_NodalDataVector.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_Integrator.hpp"
+#include <functional>
+
+#include <sstream>
 
 /******************************************************************************/
 ATO::OptimizationProblem::
@@ -56,35 +60,95 @@ ComputeVolume(const double* p, double& v, double* dvdp)
 /******************************************************************************/
 {
   double localv = 0.0;
-
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-    wsElNodeID = disc->getWsElNodeID();
+        wsElNodeID = disc->getWsElNodeID();
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
-
   int numWorksets = wsElNodeID.size();
 
+  if(strIntegrationMethod == "Conformal"){
 
-  for(int ws=0; ws<numWorksets; ws++){
-
-    int physIndex = wsPhysIndex[ws];
-    int numNodes  = basisAtQPs[physIndex].dimension(0);
-    int numCells  = weighted_measure[ws].dimension(0);
-    int numQPs    = weighted_measure[ws].dimension(1);
-    
-    for(int cell=0; cell<numCells; cell++){
-      double elVol = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-        double pVal = 0.0;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+          coords = disc->getCoords();
+  
+    Intrepid::FieldContainer<double> coordCon;
+    Intrepid::FieldContainer<double> topoVals;
+    std::vector<double> weights;
+    std::vector<std::vector<double> > refPoints;
+  
+    for(int ws=0; ws<numWorksets; ws++){
+  
+      int physIndex = wsPhysIndex[ws];
+      int numNodes  = basisAtQPs[physIndex].dimension(0);
+      int numCells  = weighted_measure[ws].dimension(0);
+      int numDims   = cubatures[physIndex]->getDimension();
+  
+      Integrator<double> myDicer(cellTypes[physIndex],intrepidBasis[physIndex]);
+  
+      coordCon.resize(numNodes, numDims);
+      topoVals.resize(numNodes);
+  
+      for(int cell=0; cell<numCells; cell++){
         for(int node=0; node<numNodes; node++){
+          for(int dim=0; dim<numDims; dim++)
+            coordCon(node,dim) = coords[ws][cell][node][dim];
           int gid = wsElNodeID[ws][cell][node];
           int lid = overlapNodeMap->LID(gid);
-          pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+          topoVals(node) = p[lid];
         }
-        elVol += topology->Penalize(functionIndex,pVal)*weighted_measure[ws](cell,qp);
+  
+        double weight=0.0;
+        ATO::Integrator<double>::Positive positive;
+        myDicer.getMeasure(weight, topoVals, coordCon, topology->getInterfaceValue(), positive);
+        localv += weight;
+
       }
-      localv += elVol;
     }
-  }
+  } else 
+  if(strIntegrationMethod == "Gauss Quadrature"){
+
+    for(int ws=0; ws<numWorksets; ws++){
+
+      int physIndex = wsPhysIndex[ws];
+      int numNodes  = basisAtQPs[physIndex].dimension(0);
+      int numCells  = weighted_measure[ws].dimension(0);
+      int numQPs    = weighted_measure[ws].dimension(1);
+  
+      if(functionIndex < 0){
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            elVol += pVal*weighted_measure[ws](cell,qp);
+          }
+          localv += elVol;
+        }
+      } else {
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            elVol += topology->Penalize(functionIndex,pVal)*weighted_measure[ws](cell,qp);
+          }
+          localv += elVol;
+        }
+      }
+    }
+
+  } else
+    TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+      "Error!  In ATO::OptimizationProblem setup:  Integration Method not recognized" << std::endl);
+
+
   comm->SumAll(&localv, &v, 1);
 
   if( dvdp != NULL ){
@@ -99,21 +163,42 @@ ComputeVolume(const double* p, double& v, double* dvdp)
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
     
-      for(int cell=0; cell<numCells; cell++){
-        double elVol = 0.0;
-        for(int qp=0; qp<numQPs; qp++){
-          double pVal = 0.0;
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+      if(functionIndex < 0){
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              odvdp[lid] += 1.0
+                            *basisAtQPs[physIndex](node,qp)
+                            *weighted_measure[ws](cell,qp);
+            }
           }
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            odvdp[lid] += topology->dPenalize(functionIndex,pVal)
-                          *basisAtQPs[physIndex](node,qp)
-                          *weighted_measure[ws](cell,qp);
+        }
+      } else {
+        for(int cell=0; cell<numCells; cell++){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++){
+            double pVal = 0.0;
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+            }
+            for(int node=0; node<numNodes; node++){
+              int gid = wsElNodeID[ws][cell][node];
+              int lid = overlapNodeMap->LID(gid);
+              odvdp[lid] += topology->dPenalize(functionIndex,pVal)
+                            *basisAtQPs[physIndex](node,qp)
+                            *weighted_measure[ws](cell,qp);
+            }
           }
         }
       }
@@ -187,13 +272,13 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   const Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
   if( wfParams.isType<int>("Volume") ){
     functionIndex = wfParams.get<int>("Volume");
-  } else functionIndex = 0;
+  } else functionIndex = -1;
 
   Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
   std::string derName = aggParams.get<std::string>("dFdTopology Name");
   std::string objName = aggParams.get<std::string>("Objective Name");
 
-
+  strIntegrationMethod = topology->getIntegrationMethod();
 
   int numPhysSets = meshSpecs.size();
 
@@ -233,7 +318,11 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
 
     stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
                                    "scalar", initValue, /*registerOldState=*/ false, false);
-    stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
+
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+    stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_scalar, "all",true,&entity);
+                                   
+    stateMgr->registerStateVariable(derName+"_node", dl->node_node_scalar, "all",
                                    "scalar", initValue, /*registerOldState=*/ false, true);
 
     if( topology->TopologyOutputFilter() >= 0 )
@@ -271,7 +360,7 @@ ATO::OptimizationProblem::InitTopOpt()
 
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
+//  const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
 
 
   Albany::StateArrays& stateArrays = stateMgr->getStateArrays();
@@ -307,21 +396,12 @@ ATO::OptimizationProblem::InitTopOpt()
     Intrepid::FunctionSpaceTools::computeCellMeasure<double>
      (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
 
-    // initialize topology of fixed blocks to have material
-    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
-      double matVal = topology->getMaterialValue();
-      Albany::MDArray& wsTopo = dest[ws][topology->getName()];
-      int numCells = wsTopo.dimension(0);
-      int numNodes = wsTopo.dimension(1);
-      for(int cell=0; cell<numCells; cell++)
-        for(int node=0; node<numNodes; node++){
-          wsTopo(cell,node) = matVal;
-        }
-    }
-
   }
-  overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
-  localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
+//  overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
+//  localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
+
+  overlapNodeMap = disc->getOverlapNodeMap();
+  localNodeMap = disc->getNodeMap();
 
   overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
   localVec   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));

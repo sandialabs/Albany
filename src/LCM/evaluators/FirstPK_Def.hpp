@@ -8,6 +8,10 @@
 #include <Phalanx_DataLayout.hpp>
 #include <Sacado_ParameterRegistration.hpp>
 #include <Teuchos_TestForException.hpp>
+#include <PHAL_Utilities.hpp>
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 
 namespace LCM
 {
@@ -62,28 +66,6 @@ FirstPK(Teuchos::ParameterList& p,
   Teuchos::RCP<ParamLib> paramLib =
       p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  //Allocationg additional data for Kokkos functors
-  ddims_.push_back(24);
-  const int derivative_dim=25;
-  const int num_cells=dims[0];
-  sig=PHX::MDField<ScalarT,Cell,Dim,Dim>("sig",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-  F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-  P=PHX::MDField<ScalarT,Cell,Dim,Dim>("P",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-  I=PHX::MDField<ScalarT,Dim,Dim>("I",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-
-  sig.setFieldData(ViewFactory::buildView(sig.fieldTag(),ddims_));
-  F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
-  P.setFieldData(ViewFactory::buildView(P.fieldTag(),ddims_));
-  I.setFieldData(ViewFactory::buildView(I.fieldTag(),ddims_));
-
-  for (int i=0; i<num_dims_; i++){
-     for (int j=0; j<num_dims_; j++){
-        I(i,j)=ScalarT(0.0);
-        if (i==j) I(i,j)=ScalarT(1.0);
-     }
-   }
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -102,6 +84,30 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (have_stab_pressure_) {
     this->utils.setFieldData(stab_pressure_, fm);
   }
+
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  int deriv_dims=PHAL::getDerivativeDimensionsFromView(stress_.get_kokkos_view());
+
+  ddims_.push_back(deriv_dims);
+  const int num_cells=stress_.dimension(0);
+  sig=PHX::MDField<ScalarT,Cell,Dim,Dim>("sig",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+  F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+  P=PHX::MDField<ScalarT,Cell,Dim,Dim>("P",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+  I=PHX::MDField<ScalarT,Dim,Dim>("I",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+
+  sig.setFieldData(ViewFactory::buildView(sig.fieldTag(),ddims_));
+  F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
+  P.setFieldData(ViewFactory::buildView(P.fieldTag(),ddims_));
+  I.setFieldData(ViewFactory::buildView(I.fieldTag(),ddims_));
+
+  for (int i=0; i<num_dims_; i++){
+     for (int j=0; j<num_dims_; j++){
+        I(i,j)=ScalarT(0.0);
+        if (i==j) I(i,j)=ScalarT(1.0);
+     }
+   }
+ #endif
+
 }
 //-----------------------------------------------------------------------------
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -454,6 +460,10 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
+
    if (have_stab_pressure_) 
      Kokkos::parallel_for(have_stab_pressure_Policy(0,workset.numCells),*this);
    if (have_pore_pressure_)
@@ -462,6 +472,13 @@ evaluateFields(typename Traits::EvalData workset)
      Kokkos::parallel_for(small_strain_Policy(0,workset.numCells),*this);
    else
      Kokkos::parallel_for(no_small_strain_Policy(0,workset.numCells),*this);
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "First_PK time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
 #endif
 }
 //------------------------------------------------------------------------------

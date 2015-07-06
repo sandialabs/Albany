@@ -49,6 +49,27 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
+# Compress Trilinos lists that are used
+#${Trilinos_INCLUDE_DIRS}
+#${Trilinos_TPL_INCLUDE_DIRS}
+#${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} ${Trilinos_EXTRA_LD_FLAGS}
+
+LIST(REVERSE Trilinos_INCLUDE_DIRS)
+LIST(REMOVE_DUPLICATES Trilinos_INCLUDE_DIRS)
+LIST(REVERSE Trilinos_INCLUDE_DIRS)
+
+LIST(REVERSE Trilinos_TPL_INCLUDE_DIRS)
+LIST(REMOVE_DUPLICATES Trilinos_TPL_INCLUDE_DIRS)
+LIST(REVERSE Trilinos_TPL_INCLUDE_DIRS)
+
+LIST(REVERSE Trilinos_LIBRARIES)
+LIST(REMOVE_DUPLICATES Trilinos_LIBRARIES)
+LIST(REVERSE Trilinos_LIBRARIES)
+
+LIST(REVERSE Trilinos_TPL_LIBRARIES)
+LIST(REMOVE_DUPLICATES Trilinos_TPL_LIBRARIES)
+LIST(REVERSE Trilinos_TPL_LIBRARIES)
+
 LIST(FIND Trilinos_PACKAGE_LIST STKClassic STKClassic_List_ID)
 IF (STKClassic_List_ID GREATER -1)
   MESSAGE(FATAL_ERROR "STKClassic is no longer used and conflicts with STKIo and STKMesh.")
@@ -79,11 +100,36 @@ IF (INSTALL_ALBANY)
   include(CMakePackageConfigHelpers)
 ENDIF ()
 
+option (ENABLE_CROSS_COMPILE "Flag to turn on cross-compiling tools" OFF)
+if (ENABLE_CROSS_COMPILE)
+  set (Albany_CROSS_COMPILE ON)
+  message ("Building with cross-compiling tools.")
+else ()
+  set (Albany_CROSS_COMPILE OFF)
+endif ()
+
 if (SET_COMPILERS_AUTOMATICALLY)
   MESSAGE("Setting and checking of compilers:")
-  SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
-  SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
-  SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )   
+  if (Albany_CROSS_COMPILE)
+    # Force the compilers to be the same as Trilinos (GAH experimental)
+    # This syntax is needed when cross compiling or the compilers get checked
+    # again by the Albany configure, and will probably fail, because the options
+    # won't be right and the exes won't run on the host.
+    INCLUDE (CMakeForceCompiler)
+    SET(CMAKE_SYSTEM_NAME Generic)
+    CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} Generic)
+    CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} Generic)
+    CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} Generic)
+#    SET(CMAKE_SYSTEM_NAME ${Trilinos_SYSTEM_NAME})
+#    CMAKE_FORCE_CXX_COMPILER(${Trilinos_CXX_COMPILER} ${Trilinos_CXX_COMPILER_ID})
+#    CMAKE_FORCE_C_COMPILER(${Trilinos_C_COMPILER} ${Trilinos_C_COMPILER_ID})
+#    CMAKE_FORCE_Fortran_COMPILER(${Trilinos_Fortran_COMPILER} ${Trilinos_Fortran_COMPILER_ID})
+#    SET(CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES ${Trilinos_Fortran_IMPLICIT_LINK_LIBRARIES})
+  else ()
+    set (CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
+    set (CMAKE_C_COMPILER ${Trilinos_C_COMPILER})
+    set (CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
+  endif ()
 else()
   # Make sure the compilers match.
   MESSAGE("Checking compilers:")
@@ -96,6 +142,9 @@ else()
   IF(NOT ${Trilinos_Fortran_COMPILER} STREQUAL ${CMAKE_Fortran_COMPILER})
     MESSAGE(FATAL_ERROR "Fortran compilers don't match (Trilinos: ${Trilinos_Fortran_COMPILER}, ${PROJECT_NAME}: ${CMAKE_Fortran_COMPILER}).")
   ENDIF()
+  SET(Trilinos_CXX_COMPILER_ID ${CMAKE_CXX_COMPILER_ID})
+  SET(Trilinos_C_COMPILER_ID ${CMAKE_C_COMPILER_ID})
+  SET(Trilinos_Fortran_COMPILER_ID ${CMAKE_Fortran_COMPILER_ID})
 endif()
 
 # Build Albany as shared libraries if Trilinos was compiled that way
@@ -128,19 +177,24 @@ IF (CMAKE_Fortran_COMPILER AND ALBANY_ENABLE_FORTRAN) # Enable Fortran if it is 
   ENABLE_LANGUAGE(Fortran)
 ENDIF()
 
+# Make Albany inherit Trilinos compiler flags. The most important are the
+# presence or absence of -NDEBUG (which can affect linking for complicated
+# reasons) and -std=c++11.
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Trilinos_CXX_COMPILER_FLAGS}")
 
-IF (NOT CMAKE_CXX_FLAGS)
-  SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS} )
-ENDIF()
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
-#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -DALBANY_MPI")
+if (SET_COMPILERS_AUTOMATICALLY)
+  SET(CMAKE_AR ${Trilinos_AR})
+  SET(CMAKE_LINKER ${Trilinos_LINKER})
+endif()
 
-IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
+MESSAGE("-- Using ${Trilinos_CXX_COMPILER_ID} Compiler.")
+
+IF(${Trilinos_CXX_COMPILER_ID} MATCHES "Intel")
   SET(USING_INTEL TRUE)
 # On Intel, turn of interprocedural optimization at linking to keep linker from hanging
 # This could possibly be removed with further study (GAH)
 #  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-ip")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,47")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,488,161,47")
 ENDIF()
 
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
@@ -375,6 +429,20 @@ ELSE()
   SET(ALBANY_LCM FALSE)
 ENDIF()
 
+# set optional dependency on the BGL, defaults to Enabled
+# This option is added due to issued with compiling BGL with the intel compilers
+# see Trilinos bugzilla bug #6343
+#
+OPTION(ENABLE_BGL "Flag to turn on the Phalanx graphviz capabilities (dependent on BGL)" ON)
+IF (ENABLE_BGL)
+    ADD_DEFINITIONS(-DALBANY_BGL)
+    MESSAGE("-- BGL       is Enabled, compiling with -DALBANY_BGL")
+    SET(ALBANY_BGL TRUE)
+ELSE()
+  MESSAGE("-- BGL       is NOT Enabled. Graph visualization in Phalanx will not be available!")
+  SET(ALBANY_BGL FALSE)
+ENDIF()
+
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 IF (ENABLE_ATO)
@@ -448,7 +516,7 @@ ENDIF()
 # Set optional build of CISM Interface for FELIX (Land Ice SciDAC project),
 # defaults to Disabled
 
-OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Source code" OFF)
+OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
   IF (ENABLE_ALBANY_EPETRA_EXE) 
     IF (ENABLE_CISM_EPETRA) 
@@ -524,6 +592,18 @@ IF(ENABLE_LAME)
   MESSAGE("-- LAME      is enabled, compiling with -DALBANY_LAME")
   ADD_DEFINITIONS(-DALBANY_LAME)
   SET(ALBANY_LAME TRUE)
+  # The Sierra math toolkit is needed for LAME
+  IF(NOT MATH_TOOLKIT_INCLUDE_DIR)
+    MESSAGE("\nError:  MATH_TOOLKIT_INCLUDE_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- MATH_TOOLKIT_INCLUDE_DIR ${MATH_TOOLKIT_INCLUDE_DIR}")
+  ENDIF()
+  IF(NOT MATH_TOOLKIT_LIBRARY_DIR)
+    MESSAGE("\nError:  MATH_TOOLKIT_LIBRARY_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- MATH_TOOLKIT_LIBRARY_DIR ${MATH_TOOLKIT_LIBRARY_DIR}")
+  ENDIF()
+  # LAME itself
   IF(NOT LAME_INCLUDE_DIR)
     MESSAGE("\nError:  LAME_INCLUDE_DIR not defined\n")
   ELSE()
@@ -590,6 +670,9 @@ ENDIF()
 # Set optional dependency on GOAL, defaults to Disabled
 OPTION(ENABLE_GOAL "Flag to turn on goal-oriented error estimation source code" OFF)
 IF (ENABLE_GOAL)
+  IF(NOT ENABLE_SCOREC)
+    MESSAGE(FATAL_ERROR "\nError: GOAL requires ENABLE_SCOREC to be ON\n")
+  ENDIF()
   ADD_DEFINITIONS(-DALBANY_GOAL)
   MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
   SET(ALBANY_GOAL TRUE)
@@ -601,12 +684,25 @@ ENDIF()
 # Set optional dependency on AMP, defaults to Disabled
 OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
 IF (ENABLE_AMP)
+  SET(ALBANY_APF TRUE)
   ADD_DEFINITIONS(-DALBANY_AMP)
   MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP")
   SET(ALBANY_AMP TRUE)
+  LIST(FIND Trilinos_PACKAGE_LIST WRAPSIM WRAPSIM_List_ID)
+  IF (NOT WRAPSIM_List_ID GREATER -1)
+    MESSAGE(FATAL_ERROR "\nError: AMP option requires WRAPSIM\n")
+  ENDIF()
 ELSE()
   MESSAGE("-- AMP       is NOT Enabled.")
   SET(ALBANY_AMP FALSE)
+ENDIF()
+
+# RPI APF mesh interface
+IF (ALBANY_APF)
+  ADD_DEFINITIONS(-DALBANY_APF)
+  MESSAGE("-- APF       is Enabled, compiling with -DALBANY_APF")
+ELSE()
+  MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
@@ -645,27 +741,15 @@ ELSE()
   SET(ALBANY_CI FALSE)
 ENDIF()
 
-# optionally set global ordinal size to signed 64 bits
-OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
-IF (ENABLE_64BIT_INT)
-  ADD_DEFINITIONS(-DALBANY_64BIT_INT)
-  MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
-  SET(ALBANY_64BIT_INT TRUE)
-  # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
-  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
-ELSE()
-  MESSAGE("-- 64 bit GO is NOT Enabled.")
-  SET(ALBANY_64BIT_INT FALSE)
-  # Remove the CTestCustom.cmake file in the build directory if it exists
-  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
-ENDIF()
-
 # Set optional dependency on SCOREC PUMI,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
-LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
-IF(ENABLE_SCOREC AND SCOREC_List_ID GREATER -1)
-#IF(SCOREC_List_ID GREATER -1)
+IF(ENABLE_SCOREC)
+  LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)
+  IF (NOT SCOREC_List_ID GREATER -1)
+    MESSAGE(FATAL_ERROR "\nError: ENABLE_SCOREC=ON but Trilinos installed no SCOREC package\n")
+  ENDIF()
+  SET(ALBANY_APF TRUE)
   IF(NOT ALBANY_ZOLTAN)
     MESSAGE(FATAL_ERROR "\nError:  SCOREC option requires ZOLTAN with PARMETIS built in\n")
   ENDIF()
@@ -678,7 +762,7 @@ IF(ENABLE_SCOREC AND SCOREC_List_ID GREATER -1)
     MESSAGE(FATAL_ERROR "\nError:  SCOREC option requires ZOLTAN with PARMETIS built in\n")
   ENDIF()
   MESSAGE("-- SCOREC    is enabled, compiling with -DALBANY_SCOREC")
-  ADD_DEFINITIONS(-DALBANY_SCOREC -DTRILINOS)
+  ADD_DEFINITIONS(-DALBANY_SCOREC)
   SET(ALBANY_SCOREC TRUE)
   MESSAGE("----> Mesh Model is enabled")
   ADD_DEFINITIONS(-DSCOREC_MESHMODEL)
@@ -711,25 +795,33 @@ ENDIF()
 
 # Set optional build of StochasticGalerkin and MultiPoint types
 # These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
+OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
 IF (ENABLE_SG_MP)
+  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
+          Use ENABLE_SG for Stochastic Galerkin
+          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
+ENDIF()
+
+# OPtional build with embedded Stochastic Galerkin evaluations
+OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
+IF (ENABLE_SG)
   if (1)
-    message ("-- WARNING: SG/MP is not working yet after the Kokkos merge.")
-    set (ALBANY_SG_MP FALSE)
+    message ("-- WARNING: SG is not working yet after the Kokkos merge. Disabling.")
+    set (ALBANY_SG FALSE)
     if (ENABLE_ASCR)
       set (ENABLE_ASCR FALSE)
     endif ()
-    message ("-- SG_MP     is NOT Enabled.")
+    message ("-- SG        is NOT Enabled.")
   else ()
-    ADD_DEFINITIONS(-DALBANY_SG_MP)
-    MESSAGE("-- SG_MP     is Enabled, compiling with -DALBANY_SG_MP")
-    SET(ALBANY_SG_MP TRUE)
+    ADD_DEFINITIONS(-DALBANY_SG)
+    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
+    SET(ALBANY_SG TRUE)
   endif ()
 ELSE()
-  MESSAGE("-- SG_MP     is NOT Enabled.")
-  SET(ALBANY_SG_MP FALSE)
+  MESSAGE("-- SG        is NOT Enabled.")
+  SET(ALBANY_SG FALSE)
   IF(ENABLE_ASCR)
-    MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG_MP to be ON\n")
+    MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG to be ON\n")
   ENDIF()
 ENDIF()
 
@@ -756,7 +848,7 @@ may break other physics" OFF)
 OPTION(ENABLE_SLFAD "Flag to turn on Code Optimization for ALBANY that
 may break other physics" OFF)
 
-SET(SLFAD_SIZE 27 CACHE INT "set Sacado SLFad size")
+SET(SLFAD_SIZE 32 CACHE INT "set Sacado SLFad size")
 
 IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
@@ -765,6 +857,33 @@ IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
 ENDIF()
 
+# Toggle embedded ensemble capability  (ENSEMBLE is a rename of MP)
+OPTION(ENABLE_ENSEMBLE "Flag to turn on Ensemble Code" OFF)
+IF (ENABLE_ENSEMBLE)
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE)
+  SET(ENSEMBLE_SIZE 32 CACHE INT "set Sacado ENSEMBLE MP::Vector size")
+  ADD_DEFINITIONS(-DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE})
+  MESSAGE("-- ENSEMBLE  is Enabled, compiling with -DALBANY_ENSEMBLE -DALBANY_ENSEMBLE_SIZE=${ENSEMBLE_SIZE}")
+  SET(ALBANY_ENSEMBLE TRUE)
+ELSE()
+  MESSAGE("-- ENSEMBLE  is NOT Enabled.")
+  SET(ALBANY_ENSEMBLE FALSE)
+ENDIF()
+
+# optionally set global ordinal size to signed 64 bits
+OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
+IF (ENABLE_64BIT_INT)
+  ADD_DEFINITIONS(-DALBANY_64BIT_INT)
+  MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
+  SET(ALBANY_64BIT_INT TRUE)
+  # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
+  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+ELSE()
+  MESSAGE("-- 64 bit GO is NOT Enabled.")
+  SET(ALBANY_64BIT_INT FALSE)
+  # Remove the CTestCustom.cmake file in the build directory if it exists
+  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+ENDIF()
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
 OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)
@@ -775,6 +894,17 @@ IF (ENABLE_CHECK_FPE)
 ELSE()
   MESSAGE("-- FPE checking              is NOT Enabled.")
   SET(ALBANY_CHECK_FPE FALSE)
+ENDIF()
+
+# Add option to set FTZ and DAZ
+OPTION(ENABLE_FLUSH_DENORMALS "Flag to turn on FTZ and DAZ" OFF)
+IF (ENABLE_FLUSH_DENORMALS)
+  ADD_DEFINITIONS(-DALBANY_FLUSH_DENORMALS)
+  MESSAGE("-- FTZ/DAZ flags             is Enabled, compiling with -DALBANY_FLUSH_DENORMALS")
+  SET(ALBANY_FLUSH_DENORMALS TRUE)
+ELSE()
+  MESSAGE("-- FTZ/DAZ flags             is NOT Enabled.")
+  SET(ALBANY_FLUSH_DENORMALS FALSE)
 ENDIF()
 
 #amb Default to on until the merge.
@@ -889,10 +1019,6 @@ ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 IF (ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: MOR               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-
-IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
-  MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")
-ENDIF(NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
 
 # Repeat this warning.
 IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 

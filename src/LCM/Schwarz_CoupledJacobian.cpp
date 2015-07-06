@@ -38,7 +38,8 @@ LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
 {
 }
 
-#define EXPLICIT_OFF_DIAGONAL
+//#define USE_OFF_DIAGONAL
+//#define EXPLICIT_OFF_DIAGONAL
 
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
@@ -82,7 +83,7 @@ const
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
       } else { // Off-diagonal blocks
-
+#if defined(USE_OFF_DIAGONAL)
 #if defined(EXPLICIT_OFF_DIAGONAL)
 
         Teuchos::RCP<Schwarz_BoundaryJacobian>
@@ -109,6 +110,7 @@ const
 #endif // EXPLICIT_OFF_DIAGONAL
 
         blocked_op->setNonconstBlock(i, j, block);
+#endif // USE_OFF_DIAGONAL
       }
     }
   }

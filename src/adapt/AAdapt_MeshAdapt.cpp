@@ -17,6 +17,8 @@
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
+#include "AAdapt_NonUnifRefSizeField.hpp"
+#include "AAdapt_AlbanySizeField.hpp"
 #ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
 #endif
@@ -33,7 +35,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   disc = StateMgr_.getDiscretization();
 
-  pumi_discretization = Teuchos::rcp_dynamic_cast<Albany::AbstractPUMIDiscretization>(disc);
+  pumi_discretization = Teuchos::rcp_dynamic_cast<Albany::PUMIDiscretization>(disc);
 
   Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
     pumi_discretization->getPUMIMeshStruct();
@@ -45,14 +47,16 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::UnifSizeField(pumi_discretization));
   else if (method == "RPI UnifRef Size")
     szField = Teuchos::rcp(new AAdapt::UnifRefSizeField(pumi_discretization));
+  else if (method == "RPI NonUnifRef Size")
+    szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
+  else if (method == "RPI Albany Size")
+    szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
 #ifdef SCOREC_SPR
   else if (method == "RPI SPR Size")
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
 #endif
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "should not be here");
-
-  num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
   // Save the initial output file name
   base_exo_filename = pumiMeshStruct->outputFileName;
@@ -119,8 +123,23 @@ bool AAdapt::MeshAdapt::queryAdaptationCriteria(
   const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
   int iter)
 {
-  if (adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0)
+  adapt_params_->set<int>("LastIter", iter);
+
+  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "None");
+
+  if (strategy.compare("Continuous") == 0)
     return iter > 1;
+
+  if (strategy.compare("PLDriven") == 0){
+    if(adapt_params_->get<bool>("AdaptNow", false)){
+
+      adapt_params_->set<bool>("AdaptNow", false);
+      return iter > 1;
+
+    }
+    return false;
+  }
+
   Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
   for (int i = 0; i < remesh_iter.size(); i++)
     if (iter == remesh_iter[i])
@@ -171,42 +190,12 @@ void AAdapt::MeshAdapt::beforeAdapt()
   szField->copyInputFields();
 }
 
-// Do some RTTI to figure out which ma::configure to call. I think this part is
-// why MeshAdapt(T) was templated on SizeField. I find that templating quite
-// unnatural and cumbersome (need to maintain ETI, for example), so I'm going to
-// switch to runtime polymorphism and pay the price right here.
-static ma::Input*
-configure (apf::Mesh2* mesh, const Teuchos::RCP<AAdapt::MeshSizeField>& sf) {
-  { ma::IsotropicFunction*
-      isf = dynamic_cast<ma::IsotropicFunction*>(sf.get());
-    if (isf) return ma::configure(mesh, isf); }
-  { ma::AnisotropicFunction*
-      asf = dynamic_cast<ma::AnisotropicFunction*>(sf.get());
-    if (asf) return ma::configure(mesh, asf); }
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "shouldn't be here");
-  return 0;
-}
-
 void AAdapt::MeshAdapt::adaptInPartition(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params)
 {
   szField->computeError();
 
-  ma::Input* input = configure(mesh, szField);
-  input->maximumIterations = num_iterations;
-  //do not snap on deformation problems even if the model supports it
-  input->shouldSnap = false;
-
-  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
-  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
-  if (loadBalancing) {
-    input->shouldRunPreZoltan = true;
-    input->shouldRunMidParma = true;
-    input->shouldRunPostParma = true;
-    input->maximumImbalance = lbMaxImbalance;
-  }
-
-  ma::adapt(input);
+  szField->configure(adapt_params);
 
   szField->freeSizeField();
 }
@@ -252,11 +241,11 @@ struct AdaptCallbackOf : public Parma_GroupCode
  */
 namespace al {
 void anlzCoords(
-  const Teuchos::RCP<const Albany::AbstractPUMIDiscretization>& pumi_disc);
+  const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc);
 void writeMesh(
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc);
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc);
 double findAlpha(
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
@@ -458,6 +447,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
 
   validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
+  validPL->set<bool>("AdaptNow", false, "Used to force an adaptation step");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
@@ -578,7 +568,7 @@ void dispExtremum (
 
 // For analysis.
 void anlzCoords (
-  const Teuchos::RCP<const Albany::AbstractPUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<const Albany::PUMIDiscretization>& pumi_disc)
 {
   // x = coords + displacement.
   const int dim = pumi_disc->getNumDim();
@@ -596,7 +586,7 @@ void anlzCoords (
 }
 
 void writeMesh (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
 {
   static int ncalls = 0;
   std::stringstream ss;
@@ -618,7 +608,7 @@ public:
   const Teuchos::ArrayRCP<const ST> soln_ol_data;
 
   CoordState (
-    const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc)
+    const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
     : soln_ol_(pumi_disc->getSolutionFieldT(true)),
       soln_nol(pumi_disc->getSolutionFieldT(false)),
       soln_ol_data(soln_ol_->get1dView())
@@ -639,7 +629,7 @@ public:
 };
 
 void updateCoordinates (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const CoordState& cs, const Teuchos::ArrayRCP<double>& x)
 {
   // Albany::PUMIDiscretization uses interleaved DOF and coordinates, so we
@@ -650,7 +640,7 @@ void updateCoordinates (
 }
 
 void updateRefConfig (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   const CoordState& cs)
 {
@@ -662,7 +652,7 @@ void updateRefConfig (
 }
 
 void updateSolution (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const double alpha, CoordState& cs)
 {
   // Set solution to (1 - alpha) solution.
@@ -685,7 +675,7 @@ void updateSolution (
 // reference configuration is updated, and the solution field is set to (1 -
 // alpha) [original solution].
 double findAlpha (
-  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,

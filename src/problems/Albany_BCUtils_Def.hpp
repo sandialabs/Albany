@@ -101,6 +101,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         bcs.push_back(ss);
       }
 
+
       // Add other functional boundary conditions here. Note that Torsion could fit into this framework
     }
   }
@@ -200,6 +201,39 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set< int > ("Equation Offset", 0);
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
+
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        std::stringstream ess;
+        ess << "Evaluator for " << ss;
+        evaluators_to_build[ess.str()] = p;
+
+        bcs.push_back(ss);
+      }
+    }
+  }
+
+  ///
+  /// Least squares fit of peridynamics neighbors BC
+  ////
+  for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    std::string ss = traits_type::constructBCName(nodeSetIDs[i], "lsfit");
+
+    if(BCparams.isSublist(ss)) {
+      // grab the sublist
+      ParameterList& sub_list = BCparams.sublist(ss);
+
+      if(sub_list.get<std::string>("BC Function") == "Displacement") {
+        RCP<ParameterList> p = rcp(new ParameterList);
+        p->set<int>("Type", traits_type::typePd);
+
+        // Fill up ParameterList with things DirichletBase wants
+        p->set< RCP<DataLayout> >("Data Layout", dummy);
+        p->set< std::string > ("Dirichlet Name", ss);
+        p->set< RealType >("Dirichlet Value", 0.0);
+        p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
+        //p->set< int >     ("Number of Equations", dirichletNames.size());
+        p->set< int > ("Equation Offset", 0);
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         std::stringstream ess;
@@ -440,6 +474,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
           }
 #ifdef ALBANY_FELIX
           else if(conditions[k] == "basal") {
+            Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             std::string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
             p->set<std::string> ("BetaXY", betaName);
@@ -451,6 +487,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
           else if(conditions[k] == "basal_scalar_field") {
+            Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             p->set<string>("Beta Field Name", "basal_friction");
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
@@ -458,6 +496,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
           else if(conditions[k] == "lateral") {
+            Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+            p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             std::string betaName = BCparams.get("BetaXY", "Constant");
             double g = params->get("Gravity", 9.8);
             double rho = params->get("Ice Density", 910.0);
@@ -755,7 +795,7 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map < std::string,
   PHX::Tag<AlbanyTraits::DistParamDeriv::ScalarT> dpd_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::DistParamDeriv>(dpd_tag0);
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::SGResidual>(sgres_tag0);
 
@@ -764,6 +804,8 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map < std::string,
 
   PHX::Tag<AlbanyTraits::SGTangent::ScalarT> sgtan_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::SGTangent>(sgtan_tag0);
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   PHX::Tag<AlbanyTraits::MPResidual::ScalarT> mpres_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::MPResidual>(mpres_tag0);
@@ -773,7 +815,7 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map < std::string,
 
   PHX::Tag<AlbanyTraits::MPTangent::ScalarT> mptan_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::MPTangent>(mptan_tag0);
-#endif //ALBANY_SG_MP
+#endif
 
   return fm;
 }
@@ -804,10 +846,12 @@ Albany::DirichletTraits::getValidBCParameters(
     std::string tt = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "twist");
     std::string ww = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
     std::string uu = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
+    std::string pd = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "lsfit");
     validPL->sublist(ss, false, "");
     validPL->sublist(tt, false, "");
     validPL->sublist(ww, false, "");
     validPL->sublist(uu, false, "");
+    validPL->sublist(pd, false, "");
   }
 
   return validPL;

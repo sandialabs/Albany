@@ -9,6 +9,7 @@
   SET(SOURCES 
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
+       evaluators/FELIX_ThicknessResid.cpp
        evaluators/FELIX_StokesL1L2Resid.cpp
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
@@ -22,11 +23,22 @@
        evaluators/FELIX_StokesFOBodyForce.cpp
        evaluators/FELIX_StokesL1L2BodyForce.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
+       
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
    )
 
+IF (ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES} 
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
+       evaluators/FELIX_GatherThickness.cpp
+       evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
+       evaluators/FELIX_ScatterResidualH.cpp
+       
+       problems/FELIX_StokesFOThickness.cpp
+   )
+ENDIF()
    
 IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS 
@@ -47,6 +59,8 @@ ENDIF()
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
+       evaluators/FELIX_ThicknessResid_Def.hpp
+       evaluators/FELIX_ThicknessResid.hpp
        evaluators/FELIX_StokesL1L2Resid_Def.hpp
        evaluators/FELIX_StokesL1L2Resid.hpp
        evaluators/FELIX_StokesMomentumResid_Def.hpp
@@ -70,10 +84,26 @@ ENDIF()
        evaluators/FELIX_StokesFOBodyForce_Def.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
+
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
   )
+  
+IF (ALBANY_EPETRA) 
+  SET(HEADERS ${HEADERS} 
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
+       evaluators/FELIX_GatherThickness.hpp
+       evaluators/FELIX_GatherThickness_Def.hpp
+       evaluators/FELIX_GatherVerticallyAveragedVelocity.hpp
+       evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
+       evaluators/FELIX_ScatterResidualH.hpp
+       evaluators/FELIX_ScatterResidualH_Def.hpp
+       
+       problems/FELIX_StokesFOThickness.hpp
+  )
+ENDIF()
   
 
 IF(ENABLE_MPAS_INTERFACE)

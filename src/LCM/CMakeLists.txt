@@ -74,12 +74,15 @@ file (GLOB utils-headers
 )
 
 #LCM utils/topology
-file (GLOB topology-sources
-  "${LCM_DIR}/utils/topology/*.cc"
-)
-file (GLOB topology-headers
-  "${LCM_DIR}/utils/topology/*.h"
-)
+  IF(ALBANY_BGL)
+  file (GLOB topology-sources
+    "${LCM_DIR}/utils/topology/*.cc"
+  )
+  file (GLOB topology-headers
+    "${LCM_DIR}/utils/topology/*.h"
+  )
+  ENDIF(ALBANY_BGL)
+
 ELSE()
   set(utils-headers ${utils-headers}
     ${LCM_DIR}/utils/LCM_Utils.h
@@ -147,6 +150,9 @@ IF(NOT ALBANY_HAVE_STK)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/SchwarzBC.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp)
 ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
@@ -221,7 +227,7 @@ IF ( INSTALL_ALBANY )
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 ENDIF()
 
-IF (LCM_TEST_EXES)
+IF (LCM_TEST_EXES AND ALBANY_BGL) 
   add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
   add_executable(MeshComponents test/utils/MeshComponents.cc)
   add_executable(NodeUpdate test/utils/NodeUpdate.cc)
@@ -348,9 +354,9 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
   ENDIF()
 
   IF(ALBANY_STK_REBALANCE)
-    target_link_libraries(utLameStress_elastic albanySTKRebalance albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanySTKRebalance albanyLib ${LAME_LIB} ${LAMENT_LIB} ${MATH_TOOLKIT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ELSE ()
-    target_link_libraries(utLameStress_elastic albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanyLib ${LAME_LIB} ${LAMENT_LIB} ${MATH_TOOLKIT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ENDIF ()
 ENDIF ()
 
@@ -374,7 +380,7 @@ IF(ALBANY_STK_REBALANCE)
 endif()
    
 #Linking tests
-IF (LCM_TEST_EXES)
+IF (LCM_TEST_EXES AND ALBANY_BGL)
   target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})

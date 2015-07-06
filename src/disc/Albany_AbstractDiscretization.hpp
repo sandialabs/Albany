@@ -25,6 +25,7 @@
 #include "Shards_Array.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_NodalDOFManager.hpp"
+#include "Albany_AbstractMeshStruct.hpp"
 
 namespace AAdapt { namespace rc { class Manager; } }
 
@@ -150,6 +151,9 @@ class AbstractDiscretization {
 
     //! Get Dof Manager of field field_name
     virtual const NodalDOFManager& getDOFManager(const std::string& field_name) const = 0;
+
+    //! Get Dof Manager of field field_name
+    virtual const NodalDOFManager& getOverlapDOFManager(const std::string& field_name) const = 0;
 #endif
 
     //! Retrieve coodinate ptr_field (ws, el, node)
@@ -239,6 +243,9 @@ class AbstractDiscretization {
     
     //! update the mesh
     virtual void updateMesh(bool shouldTransferIPData = false) = 0;
+
+    //! Get Numbering for layered mesh (mesh structred in one direction)
+    virtual Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() = 0;
 
 
   private:

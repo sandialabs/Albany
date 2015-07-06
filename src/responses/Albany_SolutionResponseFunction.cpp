@@ -313,7 +313,7 @@ evaluateDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::SolutionResponseFunction::
 init_sg(
@@ -418,6 +418,8 @@ evaluateSGGradient(const double current_time,
   if (sg_dg_dp)
     sg_dg_dp->init(0.0);
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::SolutionResponseFunction::
@@ -514,7 +516,7 @@ evaluateMPGradient(const double current_time,
   if (mp_dg_dp)
     mp_dg_dp->init(0.0);
 }
-#endif //ALBANY_SG_MP
+#endif
 
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_Map>

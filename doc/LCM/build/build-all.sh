@@ -1,5 +1,27 @@
 #!/bin/bash
 
+update_wiki () {
+    cd "$LCM_DIR"
+    STATUS_LOG="$PACKAGE-$ARCH-$TOOL_CHAIN-$BUILD_TYPE-status.log"
+    if [[ -f "$STATUS_LOG" && "$WIKI"=="1" ]]; then
+	SRC="Albany/doc/LCM/test/$WIKI_TEMPLATE"
+	DEST="$LCM_DIR/Albany.wiki/$WIKI_TEMPLATE"
+	cp -p "$SRC" "$DEST"
+	cd "$LCM_DIR/Trilinos"
+	TRILINOS_TAG=`git rev-parse HEAD`
+	sed -i -e "s|ttag|$TRILINOS_TAG|g;" "$DEST"
+	cd "$LCM_DIR/Albany"
+	ALBANY_TAG=`git rev-parse HEAD`
+	sed -i -e "s|atag|$ALBANY_TAG|g;" "$DEST"
+	MSG="Update latest known good commits"
+	cd "$LCM_DIR/Albany.wiki"
+	git add "$DEST"
+	git commit -m "$MSG"
+	git push
+	cd "$LCM_DIR"
+    fi
+}
+
 source ./env-all.sh
 
 cd "$LCM_DIR"
@@ -43,65 +65,62 @@ case "$SCRIPT_NAME" in
 esac
 
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
-STATUS_LOG="albany-gcc-debug-status.log"
 # Packages in innermost loop so that test results are reported as soon
 # as they are available.
 for TOOL_CHAIN in $TOOL_CHAINS; do
     for BUILD_TYPE in $BUILD_TYPES; do
-	for PACKAGE in $PACKAGES; do
-	    "$COMMAND" "$PACKAGE" "$TOOL_CHAIN" "$BUILD_TYPE" "$NUM_PROCS"
+	for ARCH in $ARCHS; do
+	    for PACKAGE in $PACKAGES; do
+		"$COMMAND" \
+		"$PACKAGE" "$ARCH" "$TOOL_CHAIN" "$BUILD_TYPE" "$NUM_PROCS"
+	    done
+	    # Update wiki after compiling Albany with gcc debug only.
+	    case "$PACKAGE" in
+		albany)
+		    case "$ARCH" in
+			serial)
+			    case "$BUILD_TYPE" in
+				debug)
+				    case "$TOOL_CHAIN" in
+					gcc)
+					    update_wiki
+					    ;;
+					clang)
+					    ;;
+					intel)
+					    ;;
+					*)
+					    echo "Unrecognized tool chain option"
+					    exit 1
+					    ;;
+				    esac
+				    ;;
+				release)
+				    ;;
+				*)
+				    echo "Unrecognized build type option"
+				    exit 1
+				    ;;
+			    esac
+			    ;;
+			openmp)
+			    ;;
+			cuda)
+			    ;;
+			*)
+			    echo "Unrecongnized architecture option"
+			    exit 1
+			    ;;
+		    esac
+		    ;;
+		trilinos)
+	            ;;
+		*)
+		    echo "Unrecognized package option"
+		    exit 1
+		    ;;
+	    esac
 	done
-	# Update wiki after compiling Albany with gcc debug only.
-	case "$PACKAGE" in
-	    albany)
-		case "$BUILD_TYPE" in
-		    debug)
-			case "$TOOL_CHAIN" in
-			    gcc)
-				cd "$LCM_DIR"
-				if [[ -f "$STATUS_LOG" && "$WIKI"=="1" ]]; then
-				    SRC="Albany/doc/LCM/test/$WIKI_TEMPLATE"
-				    DEST="$LCM_DIR/Albany.wiki/$WIKI_TEMPLATE"
-				    cp -p "$SRC" "$DEST"
-				    cd "$LCM_DIR/Trilinos"
-				    TRILINOS_TAG=`git rev-parse HEAD`
-				    sed -i -e "s|ttag|$TRILINOS_TAG|g;" "$DEST"
-				    cd "$LCM_DIR/Albany"
-				    ALBANY_TAG=`git rev-parse HEAD`
-				    sed -i -e "s|atag|$ALBANY_TAG|g;" "$DEST"
-				    MSG="Update latest known good commits"
-				    cd "$LCM_DIR/Albany.wiki"
-				    git add "$DEST"
-				    git commit -m "$MSG"
-				    git push
-				    cd "$LCM_DIR"
-				fi
-				;;
-			    clang)
-				;;
-			    intel)
-				;;
-			    *)
-				echo "Unrecognized tool chain option"
-				exit 1
-				;;
-			esac
-		        ;;
-		    release)
-		        ;;
-		    *)
-			echo "Unrecognized build type option"
-			exit 1
-			;;
-		esac
-		;;
-	    trilinos)
-	        ;;
-	    *)
-		echo "Unrecognized package option"
-		exit 1
-		;;
-	esac
     done
 done
 

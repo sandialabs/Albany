@@ -209,7 +209,7 @@ computeState(typename Traits::EvalData workset,
 
   Intrepid::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
 
-  volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
+  //volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_pts_; ++pt) {

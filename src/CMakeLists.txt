@@ -74,6 +74,7 @@ SET(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
+  Albany_EigendataInfoStructT.hpp
   )
 
 IF(ALBANY_EPETRA) 
@@ -263,6 +264,7 @@ SET(SOURCES ${SOURCES}
   evaluators/Adapt_ElementSizeField.cpp
   evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_GatherAuxData.cpp
   )
  
 SET(SOURCES ${SOURCES}
@@ -274,7 +276,6 @@ IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} 
     evaluators/PHAL_GatherEigenvectors.cpp
     evaluators/PHAL_GatherEigenData.cpp
-    evaluators/PHAL_GatherAuxData.cpp
   )
 ENDIF() 
 
@@ -387,6 +388,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  evaluators/PHAL_GatherAuxData.hpp
+  evaluators/PHAL_GatherAuxData_Def.hpp
   )
   
 IF (ALBANY_EPETRA) 
@@ -399,8 +402,6 @@ IF (ALBANY_EPETRA)
     evaluators/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
-    evaluators/PHAL_GatherAuxData.hpp
-    evaluators/PHAL_GatherAuxData_Def.hpp
   )
 ENDIF()
 
@@ -646,8 +647,12 @@ IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
   link_directories (${LAME_LIBRARY_DIR})
   set(LAME_LIB lame)
+  include_directories (${MATH_TOOLKIT_INCLUDE_DIR})
+  link_directories (${MATH_TOOLKIT_LIBRARY_DIR})
+  set(MATH_TOOLKIT_LIB math_toolkit)
 ELSE()
   set(LAME_LIB )
+  set(MATH_TOOLKIT_LIB )
 ENDIF()
 
 # LAMENT
@@ -676,12 +681,11 @@ ELSE()
   set(ALBANY_CI_LIB )
 ENDIF()
 
-# RPI SCOREC Adaptivity
-IF(ALBANY_SCOREC)
+# RPI APF mesh interface
+IF(ALBANY_APF)
   SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
   include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
 ELSE()
-  set(SCOREC_LIB )
   SET(ALBANY_PUMI_INCLUDE_DIRS )
 ENDIF()
 
@@ -702,7 +706,7 @@ SET(ALBANY_EXECUTABLES AlbanyT)
 IF (ALBANY_EPETRA) 
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
 ENDIF()
-if (ALBANY_SG_MP AND ALBANY_EPETRA)
+if (ALBANY_SG AND ALBANY_EPETRA)
 add_executable(AlbanySG Main_SGSolve.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
 endif()
@@ -754,10 +758,10 @@ set(ALL_LIBRARIES
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
+  ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
-  ${SCOREC_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   )
@@ -806,8 +810,8 @@ IF (ALBANY_AERAS)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} Aeras)
 ENDIF()
 
-# RPI SCOREC Adaptivity tools
-IF(ALBANY_SCOREC)
+# RPI APF mesh interface
+IF(ALBANY_APF)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
 ENDIF()
 

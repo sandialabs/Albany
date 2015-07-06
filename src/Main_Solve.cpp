@@ -47,6 +47,12 @@
 #include <xmmintrin.h>
 #endif
 
+//#define ALBANY_FLUSH_DENORMALS
+#ifdef ALBANY_FLUSH_DENORMALS
+#include <xmmintrin.h>
+#include <pmmintrin.h>
+#endif
+
 // Global variable that denotes this is not the Tpetra executable
 bool TpetraBuild = false;
 
@@ -129,6 +135,11 @@ int main(int argc, char *argv[]) {
 #endif
 
   Kokkos::initialize(argc, argv);
+
+#ifdef ALBANY_FLUSH_DENORMALS
+  _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+  _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+#endif
 
 #ifdef ALBANY_CHECK_FPE
    // Catch FPEs. Follow Main_SolveT.cpp's approach to checking for floating

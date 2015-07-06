@@ -12,6 +12,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
+#if 0
 #include "Teuchos_TypeNameTraits.hpp"
 
 namespace Teuchos {
@@ -20,6 +21,7 @@ namespace Teuchos {
 // without relying on the implementation details of the MPI library.
   TEUCHOS_TYPE_NAME_TRAITS_BUILTIN_TYPE_SPECIALIZATION(MPI_Comm);
 } // namespace Teuchos
+#endif
 
 Albany::MesoScaleLinkProblem::
 MesoScaleLinkProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,

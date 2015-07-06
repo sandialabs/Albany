@@ -5,11 +5,15 @@
 //*****************************************************************//
 #include "Teuchos_UnitTestRepository.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
+#include "Kokkos_Core.hpp"
 
 bool TpetraBuild = false;
 
 int main( int argc, char* argv[] )
 {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+  Kokkos::initialize();
+
   return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
+  Kokkos::finalize();
 }

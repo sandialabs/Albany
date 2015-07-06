@@ -8,21 +8,18 @@
 #ifndef AADAPT_SPRSIZEFIELD_HPP
 #define AADAPT_SPRSIZEFIELD_HPP
 
-#include "Albany_PUMIDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
+class SPRSizeField : public MeshSizeField {
 
   public:
-    SPRSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
   
     ~SPRSizeField();
 
-    double getValue(ma::Entity* v);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     int getCubatureDegree(int num_qp);
 
@@ -34,15 +31,28 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
     void freeInputFields();
     void freeSizeField();
 
+    class SPRIsoFunc : public ma::IsotropicFunction
+    {
+      public:
+        virtual ~SPRIsoFunc(){}
+
+    /** \brief get the desired element size at this vertex */
+
+        virtual double getValue(ma::Entity* v){
+
+            return apf::getScalar(field,v,0);
+
+        } 
+
+        apf::Field* field;
+
+    } sprIsoFunc;
+
   private:
 
-    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
-    apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
-    Teuchos::RCP<Albany::AbstractPUMIDiscretization> pumi_disc;
-
-    Teuchos::RCP<const Teuchos_Comm> commT;
+    Teuchos::RCP<Albany::APFDiscretization> pumi_disc;
 
     std::string sv_name;
     double rel_err;

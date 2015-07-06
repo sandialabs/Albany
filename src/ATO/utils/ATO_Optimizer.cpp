@@ -91,6 +91,7 @@ Optimizer(optimizerParams)
   f = 0.0;
   f_last = 0.0;
   dfdp = NULL;
+  dvdp = NULL;
 
   _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
   _volMaxIter    = optimizerParams.get<int>("Volume Enforcement Maximum Iterations");
@@ -98,6 +99,10 @@ Optimizer(optimizerParams)
   _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _moveLimit     = optimizerParams.get<double>("Move Limiter");
   _stabExponent  = optimizerParams.get<double>("Stabilization Parameter");
+
+  if( optimizerParams.isType<double>("Volume Enforcement Acceptable Tolerance") )
+    _volAccpTol    = optimizerParams.get<double>("Volume Enforcement Acceptable Tolerance");
+  else _volAccpTol = _volConvTol;
 }
 
 #ifdef ATO_USES_NLOPT
@@ -136,6 +141,7 @@ Optimizer_OC::~Optimizer_OC()
   if( p      ) delete [] p;
   if( p_last ) delete [] p_last;
   if( dfdp   ) delete [] dfdp;
+  if( dvdp   ) delete [] dvdp;
 }
 
 #ifdef ATO_USES_NLOPT
@@ -198,12 +204,15 @@ Optimizer_OC::Initialize()
   p      = new double[numOptDofs];
   p_last = new double[numOptDofs];
   dfdp   = new double[numOptDofs];
+  dvdp   = new double[numOptDofs];
 
   std::fill_n(p,      numOptDofs, topology->getInitialValue());
   std::fill_n(p_last, numOptDofs, 0.0);
   std::fill_n(dfdp,   numOptDofs, 0.0);
+  std::fill_n(dvdp,   numOptDofs, 0.0);
 
   solverInterface->ComputeVolume(_optVolume);
+  solverInterface->InitializeTopology(p);
 }
 
 /******************************************************************************/
@@ -212,11 +221,15 @@ Optimizer_OC::Optimize()
 /******************************************************************************/
 {
 
+  double vol=0.0;
+
   solverInterface->ComputeObjective(p, f, dfdp);
+  solverInterface->ComputeVolume(p, vol, dvdp);
   computeUpdatedTopology();
 
-  double pnorm = computeNorm(p, numOptDofs);
-  convergenceChecker->initNorm(f, pnorm);
+  double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
+  comm->SumAll(&f, &global_f, 1);
+  convergenceChecker->initNorm(global_f, pnorm);
 
   int iter=0;
   bool optimization_converged = false;
@@ -224,6 +237,7 @@ Optimizer_OC::Optimize()
 
     f_last = f;
     solverInterface->ComputeObjective(p, f, dfdp);
+    solverInterface->ComputeVolume(p, vol, dvdp);
     computeUpdatedTopology();
 
     if(comm->MyPID()==0.0){
@@ -259,6 +273,8 @@ bool
 ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPID )
 /******************************************************************************/
 {
+    if(iter == 0) return false;
+
     bool writeToCout = false;
     if(myPID == 0) writeToCout = true;
 
@@ -448,17 +464,12 @@ Optimizer_OC::computeUpdatedTopology()
 
   double vol = 0.0;
   do {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      niters > _volMaxIter, Teuchos::Exceptions::InvalidParameter, 
-      std::endl << "Enforcement of volume constraint failed:  Exceeded max iterations" 
-      << std::endl);
-
     vol = 0.0;
     vmid = (v2+v1)/2.0;
 
     // update topology
     for(int i=0; i<numOptDofs; i++) {
-      double be = -dfdp[i]/vmid;
+      double be = -dfdp[i]/dvdp[i]/vmid;
       double p_old = p_last[i];
       double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
       // limit change
@@ -475,7 +486,14 @@ Optimizer_OC::computeUpdatedTopology()
     if( (vol - _volConstraint*_optVolume) > 0.0 ) v1 = vmid;
     else v2 = vmid;
     niters++;
-  } while ( fabs(vol - _volConstraint*_optVolume) > _volConvTol*_optVolume );
+  } while ( niters < _volMaxIter && fabs(vol - _volConstraint*_optVolume) > _volConvTol*_optVolume );
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    ( fabs(vol - _volConstraint*_optVolume) > _volAccpTol*_optVolume ),
+    Teuchos::Exceptions::InvalidParameter, 
+    std::endl << "Enforcement of volume constraint failed:  Exceeded max iterations" 
+    << std::endl);
+
 }
 
 #ifdef ATO_USES_NLOPT
@@ -542,12 +560,12 @@ void
 Optimizer_NLopt::Optimize()
 /******************************************************************************/
 {
-  double f_init = 0.0;
   double* dfdp_init = new double[numOptDofs];
-  solverInterface->ComputeObjective(p, f_init, dfdp_init);
+  solverInterface->ComputeObjective(p, f, dfdp_init);
   delete [] dfdp_init;
-  double pnorm = computeNorm(p, numOptDofs);
-  convergenceChecker->initNorm(f_init, pnorm);
+  double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
+  comm->SumAll(&f, &global_f, 1);
+  convergenceChecker->initNorm(global_f, pnorm);
 
   double minf;
   int errorcode = nlopt_optimize(opt, p, &minf);

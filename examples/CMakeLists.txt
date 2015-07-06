@@ -77,7 +77,8 @@ if (ALBANY_ASCR)
   set(SerialAlbanySGCoupled.exe  ${AlbanySGCoupledPath})
 endif()
 
-  IF(ALBANY_HAVE_STK) # STK is needed for all these
+IF(ALBANY_HAVE_STK) # STK is needed for all these
+
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat1D)
   add_subdirectory(SteadyHeat2D)
@@ -105,18 +106,18 @@ endif()
     add_subdirectory(SteadyHeat2DInternalNeumann)
     add_subdirectory(SteadyHeat2DRobin)
     add_subdirectory(SteadyHeat2DSS)
-  ENDIF()
+  ENDIF(ALBANY_SEACAS)
 
   IF(ALBANY_ENABLE_CUBIT)
     add_subdirectory(CUTR_Heat1D)
     add_subdirectory(CUTR_Heat2D)
     add_subdirectory(CUTR_HeatStruct2D)
-  ENDIF()
-  ENDIF()
+  ENDIF(ALBANY_ENABLE_CUBIT)
+ENDIF(ALBANY_HAVE_STK)
 
-  IF(ALBANY_SCOREC)
-    add_subdirectory(Heat3DPUMI)
-  ENDIF()
+IF(ALBANY_SCOREC)
+  add_subdirectory(Heat3DPUMI)
+ENDIF()
 
 IF(ALBANY_HAVE_STK)
 # DEMO PDES ###############
@@ -138,20 +139,20 @@ IF(ALBANY_DEMO_PDES)
 #    add_subdirectory(NSRayleighBernard2DwithNeut)
     add_subdirectory(NSVortexShedding2D)
     add_subdirectory(PNP)
-  ENDIF()
+  ENDIF(ALBANY_SEACAS)
 
   if (ALBANY_ASCR)
     add_subdirectory(CoupledReactor)
     add_subdirectory(NSReactor)
-  endif()
+  endif(ALBANY_ASCR)
 
   IF(ALBANY_ENABLE_CUBIT)
     add_subdirectory(HTE3D)
-  ENDIF()
+  ENDIF(ALBANY_ENABLE_CUBIT)
 
 ENDIF(ALBANY_DEMO_PDES)
 
-ENDIF()
+ENDIF(ALBANY_HAVE_STK)
 
 # LCM ###############
 
@@ -204,6 +205,6 @@ IF(ALBANY_PERFORMANCE_TESTS)
   add_subdirectory(PerformanceTests)
 ENDIF()
 
-ENDIF()
+ENDIF(ALBANY_HAVE_STK)
 
 ###################

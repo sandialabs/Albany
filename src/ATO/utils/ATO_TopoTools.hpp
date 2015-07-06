@@ -35,10 +35,12 @@ public:
   const std::string& getOutputNames(){return name;}
   const Teuchos::Array<std::string>& getFixedBlocks(){return fixedBlocks;}
   double getInitialValue(){return initValue;}
-  double getMaterialValue(){return materialValue;}
   double getVoidValue(){return voidValue;}
+  double getInterfaceValue(){return interfaceValue;}
+  double getMaterialValue(){return materialValue;}
   const Teuchos::Array<double> getBounds(){return bounds;}
   std::string getEntityType(){return entityType;}
+  std::string getIntegrationMethod(){return integrationMethod;}
   int TopologyOutputFilter(){return topologyOutputFilter;}
   int SpatialFilterIndex(){return spatialFilterIndex;}
 private:
@@ -46,6 +48,7 @@ private:
   // general case, the topology may be defined by multiple fields.
   std::string name;
   std::string entityType;
+  std::string integrationMethod;
 
   // JR: There's probably a better way to do this.  
   typedef struct PenaltyFunction {
@@ -61,6 +64,7 @@ private:
 
   std::vector<std::string> outputNames;
   double initValue;
+  double interfaceValue;
   double materialValue;
   Teuchos::Array<double> bounds;
   double voidValue;

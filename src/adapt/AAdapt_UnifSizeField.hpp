@@ -7,21 +7,19 @@
 #ifndef AADAPT_UNIFSIZEFIELD_HPP
 #define AADAPT_UNIFSIZEFIELD_HPP
 
-#include "Albany_PUMIDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class UnifSizeField : public ma::IsotropicFunction, public MeshSizeField {
+class UnifSizeField : public MeshSizeField {
 
   public:
-    UnifSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+
+    UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~UnifSizeField();
 
-    double getValue(ma::Entity* v);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
@@ -31,11 +29,20 @@ class UnifSizeField : public ma::IsotropicFunction, public MeshSizeField {
     void freeInputFields() {}
     void freeSizeField() {}
 
-  private:
+    class UnifIsoFunc : public ma::IsotropicFunction
+    {
+      public:
+        virtual ~UnifIsoFunc(){}
 
-    Teuchos::RCP<const Teuchos_Comm> commT;
+    /** \brief get the desired element size at this vertex */
 
-    double elem_size;
+        virtual double getValue(ma::Entity* vert){
+           return elem_size;
+        } 
+
+        double elem_size;
+
+    } unifIsoFunc;
 
 };
 

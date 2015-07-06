@@ -9,6 +9,11 @@
 #include "MechanicsProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#if defined(ALBANY_GOAL)
+#include "Albany_Application.hpp"
+#include "GOAL_BCManager.hpp"
+#endif
+
 void
 Albany::MechanicsProblem::
 getVariableType(Teuchos::ParameterList& param_list,
@@ -64,6 +69,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     have_stab_pressure_eq_(false),
     have_peridynamics_(false),
     have_topmod_adaptation_(false),
+    have_sizefield_adaptation_(false),
     rc_mgr_(rc_mgr)
 {
 
@@ -75,6 +81,21 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Is contact specified?
   have_contact_ = params->isSublist("Contact");
+
+  // Is adaptation specified?
+  bool adapt_sublist_exists = params->isSublist("Adaptation");
+
+  if(adapt_sublist_exists){
+
+    Teuchos::ParameterList const &
+    adapt_params = params->sublist("Adaptation");
+
+    std::string const &
+    adaptation_method_name = adapt_params.get<std::string>("Method");
+
+    have_sizefield_adaptation_ = (adaptation_method_name == "RPI Albany Size");
+
+  }
 
   getVariableType(params->sublist("Displacement"),
       "DOF",
@@ -312,6 +333,15 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
       this->params, this->paramLib);
+
+#if defined(ALBANY_GOAL)
+  Teuchos::RCP<GOAL::BCManager> bcm =
+    this->getApplication()->getBCManager();
+  if (Teuchos::nonnull(bcm)) {
+    bcm->dirichletNames = dirichletNames;
+    bcm->paramLib = this->paramLib;
+  }
+#endif
 }
 //------------------------------------------------------------------------------
 // Traction BCs
@@ -334,6 +364,7 @@ constructNeumannEvaluators(
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset,
   // so ordering is important
+  
   std::vector<std::string> neumannNames(neq + 1);
   Teuchos::Array<Teuchos::Array<int> > offsets;
   offsets.resize(neq + 1);
@@ -341,17 +372,19 @@ constructNeumannEvaluators(
   neumannNames[0] = "sig_x";
   offsets[0].resize(1);
   offsets[0][0] = 0;
-  offsets[neq].resize(neq);
+  // The Neumann BC code uses offsets[neq].size() as num dim, so use num_dims_
+  // here rather than neq.
+  offsets[neq].resize(num_dims_);
   offsets[neq][0] = 0;
 
-  if (neq > 1) {
+  if (num_dims_ > 1) {
     neumannNames[1] = "sig_y";
     offsets[1].resize(1);
     offsets[1][0] = 1;
     offsets[neq][1] = 1;
   }
 
-  if (neq > 2) {
+  if (num_dims_ > 2) {
     neumannNames[2] = "sig_z";
     offsets[2].resize(1);
     offsets[2][0] = 2;
@@ -392,8 +425,8 @@ constructNeumannEvaluators(
       dl_,
       this->params,
       this->paramLib);
-
 }
+
 //------------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::MechanicsProblem::

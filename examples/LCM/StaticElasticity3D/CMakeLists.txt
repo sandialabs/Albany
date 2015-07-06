@@ -33,7 +33,7 @@ endif ()
 
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
-if (ALBANY_SG_MP)
+if (ALBANY_SG)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)
@@ -77,4 +77,16 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})
+endif ()
+
+# 7. Repeat process for Dakota problems if "dakota.in" exists
+if (ALBANY_ENSEMBLE)
+  if (ALBANY_DAKOTA)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_mp.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/dakota_mp.in COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMP.xml
+                   ${CMAKE_CURRENT_BINARY_DIR}/inputMP.xml COPYONLY)
+    get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota_Ensemble NAME)
+    add_test(${testName} ${AlbanyDakota.exe} inputMP.xml)
+  endif ()
 endif ()

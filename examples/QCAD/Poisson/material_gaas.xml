@@ -1,0 +1,147 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Silicon"/> !-->
+  <Parameter name="Reference Material" type="string" value="GaAs"/>
+
+  <ParameterList name="NodeSets">
+  
+    <ParameterList name="nschottkygate">
+      <Parameter name="elementBlock" type="string" value="gaas.ntype" />
+    </ParameterList>
+
+    <ParameterList name="gaaspsub">
+      <Parameter name="elementBlock" type="string" value="gaas.psubstrate" />
+    </ParameterList>
+    
+  </ParameterList>
+
+
+  <ParameterList name="ElementBlocks">
+    
+    <ParameterList name="gaas.ntype">
+      <Parameter name="material" type="string" value="GaAs" />
+      <Parameter name="Dopant Type" type="string" value="Donor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="1.5e18" />
+    </ParameterList>
+
+    <ParameterList name="gaas.psubstrate">
+      <Parameter name="material" type="string" value="GaAs" />
+      <Parameter name="Dopant Type" type="string" value="Acceptor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="1e15" />
+    </ParameterList>
+
+    <ParameterList name="algaas.ntype">
+      <Parameter name="material" type="string" value="Al0.27Ga0.73As" />
+      <Parameter name="Dopant Type" type="string" value="Donor" />
+      <Parameter name="Doping Profile" type="string" value="Constant" />
+      <Parameter name="Doping Value" type="double" value="3.1e17" />
+    </ParameterList>
+
+    <ParameterList name="algaas">
+      <Parameter name="material" type="string" value="Al0.27Ga0.73As" />
+      <Parameter name="Dopant Type" type="string" value="None" />
+    </ParameterList>
+    
+  </ParameterList>
+
+
+  <ParameterList name="Materials">
+
+    <!-- GaAs: CBM is Gamma valley, and VBM is also Gamma valley. 
+    Parameters values come from the http://www.ioffe.ru/SVA/NSM/Semicond/ website. -->
+    
+    <ParameterList name="GaAs">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="12.9" />
+
+      <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Gamma Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="1" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.063" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.063" />
+
+      <!-- Heavy/Light Hole effective mass in [m0]: actually mlh_t=0.18, mlh_l=0.29 -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.082" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.51" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(1,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 1 valley -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="0.063" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.53" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.07" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.519" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="5.405e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="204" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+    
+    </ParameterList>
+
+
+    <!-- Al0.27Ga0.73As: CBM is Gamma valley, and VBM is also Gamma valley. 
+    Parameters values come from the http://www.ioffe.ru/SVA/NSM/Semicond/ website. 
+    Dielectric constant = 12.90-2.84*x (x=Al%), 
+    Effective electron mass me = 0.063+0.083x,
+    Effective heavy hole mass mhl = 0.51+0.25x,
+    Effective light hold mass mlh = 0.082+0.068x,
+    Electron affinity chi = 4.07-1.1x,
+    Zero-K band gap Eg0 = 1.519+1.155x+0.37x^2,
+    Temp-dep band gap Eg = Eg0-5.41e-4*T^2/(T+204)   -->
+    
+    <ParameterList name="Al0.27Ga0.73As">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="12.13" />
+
+      <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Gamma Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="1" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.0854" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.0854" />
+
+      <!-- Heavy/Light Hole effective mass in [m0]: actually mlh_t=0.18, mlh_l=0.29 -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.1004" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.5775" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(1,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 1 valley -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="0.0854" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.6051" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="3.773" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.8578" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="5.41e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="204" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+        
+  </ParameterList>
+
+</ParameterList>

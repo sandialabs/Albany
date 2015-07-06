@@ -65,7 +65,9 @@ namespace ATO {
   public:
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
 
+    virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
     virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
+    virtual void InitializeTopology(double* p)=0;
     virtual void ComputeVolume(double* p, const double* dgdp,
                                double& v, double threshhold, double minP=0.0)=0;
     virtual void ComputeVolume(const double* p, double& v, double* dvdp=NULL)=0;
@@ -95,7 +97,9 @@ namespace ATO {
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 
+    void ComputeObjective(double* p, double& g, double* dgdp=NULL);
     void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
+    void InitializeTopology(double* p);
 
     void ComputeVolume(double* p, const double* dgdp, 
                        double& v, double threshhold, double minP=0.0);
@@ -107,6 +111,7 @@ namespace ATO {
 
     // data
     int  numDims;
+    int _iteration;
     int _num_parameters; // for sensitiviy analysis(?)
     int _num_responses;  //  ditto
     Teuchos::RCP<Epetra_LocalMap> _epetra_param_map;
@@ -118,6 +123,7 @@ namespace ATO {
     std::vector<int> _wsOffset;  //index offsets to map to/from workset to/from 1D array.
 
     bool _is_verbose;    // verbose or not for topological optimization solver
+    bool _is_restart;
 
     Teuchos::RCP<Aggregator> _aggregator;
     Teuchos::RCP<Optimizer> _optimizer;
@@ -158,6 +164,8 @@ namespace ATO {
 
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
+    void smoothTopology(double* p);
+    void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
     void copyObjectiveFromStateMgr( double& g, double* dgdp );
     void zeroSet();

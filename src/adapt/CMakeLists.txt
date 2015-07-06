@@ -94,7 +94,7 @@ ENDIF()
 ENDIF()
 
 # Topology Modification depends on LCM and STK
-IF(ALBANY_LCM AND ALBANY_HAVE_STK)
+IF(ALBANY_LCM AND ALBANY_HAVE_STK AND ALBANY_BGL)
 
 SET(SOURCES ${SOURCES}
     AAdapt_TopologyModificationT.cpp
@@ -147,8 +147,11 @@ IF(ALBANY_SCOREC)
 
 SET(SOURCES ${SOURCES}
     AAdapt_MeshAdapt.cpp
+    AAdapt_MeshSizeField.cpp
     AAdapt_UnifSizeField.cpp
     AAdapt_UnifRefSizeField.cpp
+    AAdapt_NonUnifRefSizeField.cpp
+    AAdapt_AlbanySizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
@@ -156,6 +159,8 @@ SET(HEADERS ${HEADERS}
     AAdapt_MeshAdapt.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
+    AAdapt_NonUnifRefSizeField.hpp
+    AAdapt_AlbanySizeField.hpp
    )
 
 IF(ENABLE_SPR)

@@ -19,8 +19,9 @@ namespace rc {
  *  every AD type Albany_DataTypes.hpp defines. Type is RealType, FadType, etc,
  *  and arg2 is a user's argument.
  */
-#ifdef ALBANY_SG_MP
-# ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#ifdef ALBANY_SG
+# ifdef ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
   macro(RealType, arg2)                                 \
   macro(FadType, arg2)                                  \
@@ -29,7 +30,7 @@ namespace rc {
   macro(SGFadType, arg2)                                \
   macro(MPType, arg2)                                   \
   macro(MPFadType, arg2)
-# else
+#  else
 #define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
   macro(RealType, arg2)                                 \
   macro(FadType, arg2)                                  \
@@ -37,24 +38,58 @@ namespace rc {
   macro(SGFadType, arg2)                                \
   macro(MPType, arg2)                                   \
   macro(MPFadType, arg2)
+#  endif
+# else
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
+  macro(RealType, arg2)                                 \
+  macro(FadType, arg2)                                  \
+  macro(TanFadType, arg2)                               \
+  macro(SGType, arg2)                                   \
+  macro(SGFadType, arg2)
+#  else
+#define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
+  macro(RealType, arg2)                                 \
+  macro(FadType, arg2)                                  \
+  macro(SGType, arg2)                                   \
+  macro(SGFadType, arg2)
+#  endif
 # endif
-#else // ALBANY_SG_MP
-# ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#else 
+# ifdef ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
+  macro(RealType, arg2)                                 \
+  macro(FadType, arg2)                                  \
+  macro(TanFadType, arg2)                               \
+  macro(MPType, arg2)                                   \
+  macro(MPFadType, arg2)
+#  else
+#define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
+  macro(RealType, arg2)                                 \
+  macro(FadType, arg2)                                  \
+  macro(MPType, arg2)                                   \
+  macro(MPFadType, arg2)
+#  endif
+# else
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
   macro(RealType, arg2)                                 \
   macro(FadType, arg2)                                  \
   macro(TanFadType, arg2)
-# else
+#  else
 #define aadapt_rc_apply_to_all_ad_types(macro, arg2)    \
   macro(RealType, arg2)                                 \
   macro(FadType, arg2)
+#  endif
 # endif
-#endif // ALBANY_SG_MP
+#endif 
 
 /*! aadapt_rc_apply_to_all_eval_types(macro) applies a macro to every evaluation
  *  type PHAL::AlbanyTraits defines.
  */
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
+# ifdef ALBANY_ENSEMBLE
 #define aadapt_rc_apply_to_all_eval_types(macro)        \
   macro(PHAL::AlbanyTraits::Residual)                   \
   macro(PHAL::AlbanyTraits::Jacobian)                   \
@@ -66,12 +101,33 @@ namespace rc {
   macro(PHAL::AlbanyTraits::MPResidual)                 \
   macro(PHAL::AlbanyTraits::MPJacobian)                 \
   macro(PHAL::AlbanyTraits::MPTangent)
+# else
+#define aadapt_rc_apply_to_all_eval_types(macro)        \
+  macro(PHAL::AlbanyTraits::Residual)                   \
+  macro(PHAL::AlbanyTraits::Jacobian)                   \
+  macro(PHAL::AlbanyTraits::Tangent)                    \
+  macro(PHAL::AlbanyTraits::DistParamDeriv)             \
+  macro(PHAL::AlbanyTraits::SGResidual)                 \
+  macro(PHAL::AlbanyTraits::SGJacobian)                 \
+  macro(PHAL::AlbanyTraits::SGTangent)
+# endif
 #else
+# ifdef ALBANY_ENSEMBLE
+#define aadapt_rc_apply_to_all_eval_types(macro)        \
+  macro(PHAL::AlbanyTraits::Residual)                   \
+  macro(PHAL::AlbanyTraits::Jacobian)                   \
+  macro(PHAL::AlbanyTraits::Tangent)                    \
+  macro(PHAL::AlbanyTraits::DistParamDeriv)             \
+  macro(PHAL::AlbanyTraits::MPResidual)                 \
+  macro(PHAL::AlbanyTraits::MPJacobian)                 \
+  macro(PHAL::AlbanyTraits::MPTangent)
+# else
 #define aadapt_rc_apply_to_all_eval_types(macro)        \
   macro(PHAL::AlbanyTraits::Residual)                   \
   macro(PHAL::AlbanyTraits::Jacobian)                   \
   macro(PHAL::AlbanyTraits::Tangent)                    \
   macro(PHAL::AlbanyTraits::DistParamDeriv)
+# endif
 #endif
 
 /*! Perform ETI for a class \code template<int rank> Class \endcode.

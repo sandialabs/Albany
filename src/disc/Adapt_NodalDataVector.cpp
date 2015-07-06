@@ -139,23 +139,17 @@ void Adapt::NodalDataVector::saveNodalDataState() const
     (*nodeContainer)[i->name]->saveFieldVector(overlap_node_vec, i->offset);
 }
 
-//eb-hack Accumulate the overlapped vector. We don't know when the last
-// accumulation is done, so call saveFieldVector each time, even though doing so
-// performs wasted work.
-void Adapt::NodalDataVector::accumulateAndSaveNodalDataState(
-  const Teuchos::RCP<const Tpetra_MultiVector>& mv)
-{
-  overlap_node_vec->update(1, *mv, 1);
-  saveNodalDataState();
-}
-
 void Adapt::NodalDataVector::
-saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const
+saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
+                   const int start_col) const
 {
   // Save the nodal data arrays back to stk.
+  const size_t nv = mv->getNumVectors();
   for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
-       i != nodeVectorLayout.end(); ++i)
-    (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset);
+       i != nodeVectorLayout.end(); ++i) {
+    if (i->offset < start_col || i->offset >= start_col + nv) continue;
+    (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset - start_col);
+  }
 }
 
 void Adapt::NodalDataVector::
@@ -174,16 +168,4 @@ saveTpetraNodalDataVector (
 void Adapt::NodalDataVector::initializeVectors(ST value) {
   overlap_node_vec->putScalar(value);
   local_node_vec->putScalar(value);
-}
-
-void Adapt::NodalDataVector::initEvaluateCalls () {
-  num_preeval_calls = num_posteval_calls = 0;
-}
-
-int Adapt::NodalDataVector::numPreEvaluateCalls () {
-  return ++num_preeval_calls;
-}
-
-int Adapt::NodalDataVector::numPostEvaluateCalls () {
-  return ++num_posteval_calls;
 }

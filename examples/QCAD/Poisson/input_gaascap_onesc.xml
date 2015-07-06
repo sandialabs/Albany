@@ -1,0 +1,208 @@
+<ParameterList>
+  <ParameterList name="Problem">
+    <Parameter name="Name" type="string" value="Poisson 2D" />
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+
+    <Parameter name="Length Unit In Meters" type="double" value="1e-6"/>
+    <Parameter name="Temperature" type="double" value="4"/>
+    <Parameter name="MaterialDB Filename" type="string" value="material_gaas.xml"/>
+
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS gaaspsub for DOF Phi" type="double" value="0.0" />
+      <Parameter name="DBC on NS nschottkygate for DOF Phi" type="double" value="0.5" />
+    </ParameterList>
+
+    <ParameterList name="Schottky Barrier">
+      <Parameter name="Schottky Barrier Height for NS nschottkygate" type="double" value="0.8" />
+    </ParameterList>
+
+    <ParameterList name="Poisson Source">
+      <Parameter name="Factor" type="double" value="1.0" />
+      <Parameter name="Device" type="string" value="elementblocks" />
+      <Parameter name="Carrier Statistics" type="string" value="Fermi-Dirac Statistics" />
+      <Parameter name="Incomplete Ionization" type="string" value="False" />
+    </ParameterList>
+
+    <ParameterList name="Permittivity">
+      <Parameter name="Permittivity Type" type="string" value="Block Dependent" />
+    </ParameterList>
+
+    <ParameterList name="Parameters">
+      <Parameter name="Number" type="int" value="2" />
+      <Parameter name="Parameter 0" type="string" value="DBC on NS gaaspsub for DOF Phi" />
+      <Parameter name="Parameter 1" type="string" value="Poisson Source Factor" />
+    </ParameterList>
+
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="8" />
+      <Parameter name="Response 0" type="string" value="Solution Average" />
+      
+      <Parameter name="Response 1" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 1">
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+      </ParameterList>
+      
+      <Parameter name="Response 2" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 2">
+        <Parameter name="Field Name" type="string" value="Electron Density" />
+      </ParameterList>
+      
+      <Parameter name="Response 3" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 3">
+        <Parameter name="Field Name" type="string" value="Hole Density" />
+      </ParameterList>
+      
+      <Parameter name="Response 4" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 4">
+        <Parameter name="Field Name" type="string" value="Electric Potential" />
+      </ParameterList>
+      
+      <Parameter name="Response 5" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 5">
+        <Parameter name="Field Name" type="string" value="Ionized Dopant" />
+      </ParameterList>
+      
+      <Parameter name="Response 6" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 6">
+        <Parameter name="Field Name" type="string" value="Conduction Band" />
+      </ParameterList>
+      
+      <Parameter name="Response 7" type="string" value="Save Field" />
+      <ParameterList name="ResponseParams 7">
+        <Parameter name="Field Name" type="string" value="Valence Band" />
+      </ParameterList>
+      
+    </ParameterList>
+  </ParameterList>
+
+
+  <ParameterList name="Discretization">
+    <Parameter name="Exodus Input File Name" type="string" value="../input_exodus/gaascap.exo" />
+    <Parameter name="Method" type="string" value="Ioss" />
+    <Parameter name="Exodus Output File Name" type="string" value="output/potential_gaascap_onesc.exo" />
+    <Parameter name="Use Serial Mesh" type="bool" value="true"/>
+  </ParameterList>
+
+
+  <ParameterList name="Regression Results">
+    <Parameter name="Number of Comparisons" type="int" value="1" />
+    <Parameter name="Test Values" type="Array(double)" value="{0.216608378279}" />
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
+    <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
+    <Parameter name="Sensitivity Test Values 0" type="Array(double)"
+     	       value="{0.0662989205275  -0.0337943122064}" />
+  </ParameterList>
+
+
+  <ParameterList name="Piro">
+    <ParameterList name="LOCA">
+      <ParameterList name="Stepper">
+	<ParameterList name="Eigensolver" />
+      </ParameterList>
+      <ParameterList name="Bifurcation" />
+      <ParameterList name="Step Size" />
+      <ParameterList name="Predictor">
+	<ParameterList name="First Step Predictor" />
+	<ParameterList name="Last Step Predictor" />
+      </ParameterList>
+      <ParameterList name="Constraints" />
+    </ParameterList>
+
+
+    <ParameterList name="NOX">
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based" />
+      <ParameterList name="Line Search">
+	<Parameter name="Method" type="string" value="Backtrack" />
+	<ParameterList name="Full Step">
+	  <Parameter name="Full Step" type="double" value="1.0" />
+	</ParameterList>
+      </ParameterList>
+
+      <ParameterList name="Direction">
+	<Parameter name="Method" type="string" value="Newton" />
+	<ParameterList name="Newton">
+	  <Parameter name="Forcing Term Method" type="string" value="Constant" />
+	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1" />
+
+	  <ParameterList name="Stratimikos Linear Solver">
+	    <ParameterList name="NOX Stratimikos Linear Solver">
+	    </ParameterList>
+
+	    <ParameterList name="Stratimikos">
+	      <Parameter name="Linear Solver Type" type="string" value="Belos" />
+	      <ParameterList name="Linear Solver Types">
+
+		<ParameterList name="AztecOO">
+		  <ParameterList name="Forward Solve">
+		    <ParameterList name="AztecOO Settings">
+		      <Parameter name="Aztec Solver" type="string" value="GMRES" />
+		      <Parameter name="Size of Krylov Subspace" type="int" value="500" />
+		      <Parameter name="Convergence Test" type="string" value="r0" />
+		      <Parameter name="Output Frequency" type="int" value="20" />
+		    </ParameterList>
+		    <Parameter name="Tolerance" type="double" value="1e-06" />
+		    <Parameter name="Max Iterations" type="int" value="800" />
+		  </ParameterList>
+		</ParameterList>
+
+		<ParameterList name="Belos">
+		  <Parameter name="Solver Type" type="string" value="Block GMRES" />
+		  <ParameterList name="Solver Types">
+		    <ParameterList name="Block GMRES">
+		      <Parameter name="Num Blocks" type="int" value="50" />
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-08" />
+		      <Parameter name="Output Style" type="int" value="1" />
+		      <Parameter name="Output Frequency" type="int" value="20" />
+		      <Parameter name="Maximum Iterations" type="int" value="200" />
+		      <Parameter name="Verbosity" type="int" value="33" />
+		      <Parameter name="Block Size" type="int" value="1" />
+		      <Parameter name="Flexible Gmres" type="bool" value="0" />
+		    </ParameterList>
+		  </ParameterList>
+		</ParameterList>
+	      </ParameterList>
+
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack" />
+	      <ParameterList name="Preconditioner Types">
+		<ParameterList name="Ifpack">
+		  <ParameterList name="Ifpack Settings">
+		    <Parameter name="fact: level-of-fill" type="int" value="3" />
+		    <Parameter name="fact: drop tolerance" type="double" value="0.0" />
+		    <Parameter name="fact: ilut level-of-fill" type="double" value="1.0" />
+		  </ParameterList>
+		  <Parameter name="Overlap" type="int" value="1" />
+		  <Parameter name="Prec Type" type="string" value="ILU" />
+		</ParameterList>
+	      </ParameterList>
+
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+      </ParameterList>
+
+      <ParameterList name="Printing">
+	<Parameter name="Output Information" type="int" value="103" />
+	<Parameter name="Output Precision" type="int" value="3" />
+      </ParameterList>
+
+      <ParameterList name="Solver Options">
+	<Parameter name="Status Test Check Type" type="string" value="Minimal" />
+      </ParameterList>
+
+      <ParameterList name="Status Tests">
+	<Parameter name="Test Type" type="string" value="Combo"/>
+	<Parameter name="Combo Type" type="string" value="OR"/>
+	<Parameter name="Number of Tests" type="int" value="2"/>
+	<ParameterList name="Test 0">
+	  <Parameter name="Test Type" type="string" value="NormF"/>
+	  <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+	</ParameterList>
+	<ParameterList name="Test 1">
+	  <Parameter name="Test Type" type="string" value="MaxIters"/>
+	  <Parameter name="Maximum Iterations" type="int" value="50"/>
+	</ParameterList>
+      </ParameterList>
+
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

@@ -129,7 +129,7 @@ private:
 // **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class ScatterScalarResponse<PHAL::AlbanyTraits::SGResidual,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -172,6 +172,8 @@ protected:
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual
@@ -218,7 +220,7 @@ protected:
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
 };
-#endif //ALBANY_SG_MP
+#endif
 
 // **************************************************************
 }

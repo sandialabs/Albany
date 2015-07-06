@@ -284,7 +284,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits, typename cfunc_traits>
 DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits, cfunc_traits>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
@@ -460,6 +460,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   }
 }
 
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -637,7 +639,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     }
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 } // namespace LCM
 

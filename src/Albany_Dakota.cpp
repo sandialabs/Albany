@@ -16,6 +16,7 @@
 #include "TriKota_Driver.hpp"
 #include "TriKota_DirectApplicInterface.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Teuchos_TestForException.hpp"
 
 // Standard use case for TriKota
 //   Dakota is run in library mode with its interface
@@ -100,10 +101,17 @@ int Albany_Dakota(int argc, char *argv[])
     ParameterList& appParams2 = slvrfctry->getParameters();
     RCP<ParameterList> piroParams =
       rcp(&(appParams2.sublist("Piro")),false);
+    // ALBANY_ENSEMBLE_SIZE set in Cmake -- defaults=32
+    int block_size = mpParams->get("Block Size", ALBANY_ENSEMBLE_SIZE);
+    TEUCHOS_TEST_FOR_EXCEPTION((block_size != ALBANY_ENSEMBLE_SIZE) ,
+      std::logic_error,
+      "Multi-Point Block Size " << block_size << 
+      " can no longer be set by user. Must be set at compile time with ENSEMBLE_SIZE: "
+      << ALBANY_ENSEMBLE_SIZE);
+    
     RCP<Piro::Epetra::StokhosMPSolver> mp_solver =
       rcp(new Piro::Epetra::StokhosMPSolver(
-	    piroParams, mpParams, appComm,
-	    mpParams->get("Block Size", 10),
+	    piroParams, mpParams, appComm, block_size,
 	    mpParams->get("Number of Spatial Processors", -1)));
 
     // Create application & model evaluator
