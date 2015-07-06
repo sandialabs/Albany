@@ -244,7 +244,8 @@ class AbstractDiscretization {
     //! update the mesh
     virtual void updateMesh(bool shouldTransferIPData = false) = 0;
 
-    virtual Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering(){return Teuchos::null;};
+    //! Get Numbering for layered mesh (mesh structred in one direction)
+    virtual Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() = 0;
 
 
   private:
