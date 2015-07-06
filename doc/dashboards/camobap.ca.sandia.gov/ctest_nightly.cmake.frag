@@ -109,8 +109,8 @@ if (DOWNLOAD)
   # Update Albany 
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoTpetra)
-  set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoTpetra)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoEpetra)
+  set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoEpetra)
 
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
@@ -139,7 +139,7 @@ if (BUILD_ALB64)
   #
 
   set_property (GLOBAL PROPERTY SubProject IKTAlbany64Bit)
-  set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoTpetra)
+  set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
 
   set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
@@ -384,8 +384,8 @@ if (BUILD_ALB32_NOEPETRA)
   # Builds everything!
   #
 
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoTpetra)
-  set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoTpetra)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoEpetra)
+  set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoEpetra)
 
   set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
@@ -413,12 +413,12 @@ if (BUILD_ALB32_NOEPETRA)
     "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
     "-DENABLE_LAME:BOOL=OFF")
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoTpetra")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoTpetra)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra)
   endif ()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoTpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -448,7 +448,7 @@ if (BUILD_ALB32_NOEPETRA)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoTpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -477,7 +477,7 @@ if (BUILD_ALB32_NOEPETRA)
   #
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoTpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
@@ -505,8 +505,8 @@ endif ()
 #
 
 if (BUILD_ALB64_NOEPETRA)
-  set_property (GLOBAL PROPERTY SubProject IKTAlbany64BitNoTpetra)
-  set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoTpetra)
+  set_property (GLOBAL PROPERTY SubProject IKTAlbany64BitNoEpetra)
+  set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
 
   set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
@@ -535,8 +535,8 @@ if (BUILD_ALB64_NOEPETRA)
     "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
     "-DENABLE_LAME:BOOL=OFF")
 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoTpetra")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoTpetra)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra)
   endif ()
 
   #
@@ -544,7 +544,7 @@ if (BUILD_ALB64_NOEPETRA)
   #
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoTpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -578,7 +578,7 @@ if (BUILD_ALB64_NOEPETRA)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoTpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -606,7 +606,7 @@ if (BUILD_ALB64_NOEPETRA)
   #
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoTpetra"
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
