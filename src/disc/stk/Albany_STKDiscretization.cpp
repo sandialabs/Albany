@@ -76,7 +76,7 @@ STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
-  Albany::STKDiscretization::updateMesh();
+//  Albany::STKDiscretization::updateMesh();  //Mauro: cannot call virtual function in constructor
 
 }
 
@@ -1038,7 +1038,7 @@ Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
 
 }
 
-inline GO Albany::STKDiscretization::gid(const stk::mesh::Entity node) const
+GO Albany::STKDiscretization::gid(const stk::mesh::Entity node) const
 { return bulkData.identifier(node)-1; }
 
 int Albany::STKDiscretization::getOwnedDOF(const int inode, const int eq) const

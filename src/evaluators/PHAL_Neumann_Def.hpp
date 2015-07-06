@@ -148,7 +148,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
-
+      stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+      useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+      if(useStereographicMap)
+        this->addDependentField(coordVec);
       // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
       bc_type = BASAL;
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
@@ -207,6 +210,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
 #endif
   }
   else if(inputConditions == "basal_scalar_field"){ // Basal boundary condition for FELIX, where the basal sliding coefficient is a scalar field
+      stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+      useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+
+      if(useStereographicMap)
+        this->addDependentField(coordVec);
 
       // User has specified scale to set BC d(flux)/dn = scale*beta*u, where beta is a scalar field
       bc_type = BASAL_SCALAR_FIELD;
@@ -227,7 +235,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
       this->addDependentField(dofVec);
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
-
+       stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+       useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+       if(useStereographicMap)
+         this->addDependentField(coordVec);
         // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
         bc_type = LATERAL;
         beta_type = LATERAL_BACKPRESSURE;
@@ -936,10 +947,32 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   }
   if (beta_type == SCALAR_FIELD) {//basal (robin) condition indepenent of space
       betaXY = 1.0;
-      for(int cell = 0; cell < numCells; cell++) {
-        for(int pt = 0; pt < numPoints; pt++) {
-          for(int dim = 0; dim < numDOFsSet; dim++) {
-            qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+    
+      if(useStereographicMap)
+      {
+        double R = stereographicMapList->get<double>("Earth Radius", 6371);
+        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+        double R2 = std::pow(R,2);
+
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+            MeshScalarT h2 = h*h;
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+      else {
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+            }
           }
         }
       }
@@ -1154,6 +1187,21 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
         ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);
         for(int dim = 0; dim < numDOFsSet; dim++)
           qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
+      }
+    }
+    if(useStereographicMap) {
+      double R = stereographicMapList->get<double>("Earth Radius", 6371);
+      double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+      double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+      double R2 = std::pow(R,2);
+      for(int cell = 0; cell < numCells; cell++) {
+        for(int pt = 0; pt < numPoints; pt++) {
+          MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+          MeshScalarT y = physPointsSide(cell,pt,1) -y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          for(int dim = 0; dim < numDOFsSet; dim++)
+            qp_data_returned(cell, pt, dim) *= h; 
+        }
       }
     }
   }

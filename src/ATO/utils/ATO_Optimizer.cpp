@@ -91,6 +91,7 @@ Optimizer(optimizerParams)
   f = 0.0;
   f_last = 0.0;
   dfdp = NULL;
+  dvdp = NULL;
 
   _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
   _volMaxIter    = optimizerParams.get<int>("Volume Enforcement Maximum Iterations");
@@ -140,6 +141,7 @@ Optimizer_OC::~Optimizer_OC()
   if( p      ) delete [] p;
   if( p_last ) delete [] p_last;
   if( dfdp   ) delete [] dfdp;
+  if( dvdp   ) delete [] dvdp;
 }
 
 #ifdef ATO_USES_NLOPT
@@ -202,10 +204,12 @@ Optimizer_OC::Initialize()
   p      = new double[numOptDofs];
   p_last = new double[numOptDofs];
   dfdp   = new double[numOptDofs];
+  dvdp   = new double[numOptDofs];
 
   std::fill_n(p,      numOptDofs, topology->getInitialValue());
   std::fill_n(p_last, numOptDofs, 0.0);
   std::fill_n(dfdp,   numOptDofs, 0.0);
+  std::fill_n(dvdp,   numOptDofs, 0.0);
 
   solverInterface->ComputeVolume(_optVolume);
   solverInterface->InitializeTopology(p);
@@ -217,7 +221,10 @@ Optimizer_OC::Optimize()
 /******************************************************************************/
 {
 
+  double vol=0.0;
+
   solverInterface->ComputeObjective(p, f, dfdp);
+  solverInterface->ComputeVolume(p, vol, dvdp);
   computeUpdatedTopology();
 
   double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
@@ -230,6 +237,7 @@ Optimizer_OC::Optimize()
 
     f_last = f;
     solverInterface->ComputeObjective(p, f, dfdp);
+    solverInterface->ComputeVolume(p, vol, dvdp);
     computeUpdatedTopology();
 
     if(comm->MyPID()==0.0){
@@ -265,6 +273,8 @@ bool
 ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPID )
 /******************************************************************************/
 {
+    if(iter == 0) return false;
+
     bool writeToCout = false;
     if(myPID == 0) writeToCout = true;
 
@@ -459,7 +469,7 @@ Optimizer_OC::computeUpdatedTopology()
 
     // update topology
     for(int i=0; i<numOptDofs; i++) {
-      double be = -dfdp[i]/vmid;
+      double be = -dfdp[i]/dvdp[i]/vmid;
       double p_old = p_last[i];
       double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
       // limit change
@@ -550,12 +560,11 @@ void
 Optimizer_NLopt::Optimize()
 /******************************************************************************/
 {
-  double f_init = 0.0;
   double* dfdp_init = new double[numOptDofs];
-  solverInterface->ComputeObjective(p, f_init, dfdp_init);
+  solverInterface->ComputeObjective(p, f, dfdp_init);
   delete [] dfdp_init;
   double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
-  comm->SumAll(&f_init, &global_f, 1);
+  comm->SumAll(&f, &global_f, 1);
   convergenceChecker->initNorm(global_f, pnorm);
 
   double minf;

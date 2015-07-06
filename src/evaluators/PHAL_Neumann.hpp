@@ -73,7 +73,9 @@ protected:
   //The following are for the lateral BC 
   double g; 
   double rho; 
-  double rho_w;  
+  double rho_w;
+  Teuchos::ParameterList* stereographicMapList;
+  bool useStereographicMap;
 
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 

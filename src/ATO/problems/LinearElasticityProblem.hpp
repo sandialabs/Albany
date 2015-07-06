@@ -278,14 +278,12 @@ Albany::LinearElasticityProblem::constructEvaluators(
     Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
     if( topology->getEntityType() == "Distributed Parameter" ){
       RCP<ParameterList> p = rcp(new ParameterList("Distributed Parameter"));
-
       p->set<std::string>("Parameter Name", topology->getName());
       ev = rcp(new PHAL::GatherScalarNodalParameter<EvalT,AlbanyTraits>(*p, dl) );
       fm0.template registerEvaluator<EvalT>(ev);
     }
   }
   
-  // ATO penalization ( generalize this from user input.  Currently hardwired for just "Stress". )
   if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
   { // foreach weighted variable
     RCP<ParameterList> p = rcp(new ParameterList("TopologyWeighting"));

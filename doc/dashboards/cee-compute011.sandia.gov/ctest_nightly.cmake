@@ -6,7 +6,9 @@ if (1)
 
   # What to build and test
   set (DOWNLOAD TRUE)
-  set (CLEAN_BUILD TRUE)
+  # See if we can get away with this for speed, at least until we get onto a
+  # machine that can support a lengthy nightly.
+  set (CLEAN_BUILD FALSE)
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
@@ -15,23 +17,25 @@ if (1)
   set (BUILD_TRILINOSCLANG11 TRUE)
   set (BUILD_ALB64CLANG11 TRUE)
   set (BUILD_ALBFUNCTOR TRUE)
+  set (BUILD_INTEL_TRILINOS TRUE)
+  set (BUILD_INTEL_ALBANY TRUE)
 else ()
-  set (CTEST_DO_SUBMIT OFF)
-  set (CTEST_TEST_TYPE Experimental)
   set (CTEST_DO_SUBMIT ON)
-  set (CTEST_TEST_TYPE Nightly)
+  set (CTEST_TEST_TYPE Experimental)
 
   # What to build and test
   set (BUILD_ALB64 FALSE)
   set (BUILD_ALB64CLANG11 FALSE)
   set (DOWNLOAD FALSE)
-  set (BUILD_SCOREC FALSE)
+  set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS FALSE)
   set (BUILD_PERIDIGM FALSE)
-  set (BUILD_ALB32 FALSE)
+  set (BUILD_ALB32 TRUE)
   set (BUILD_TRILINOSCLANG11 FALSE)
   set (CLEAN_BUILD FALSE)
-  set (BUILD_ALBFUNCTOR TRUE)
+  set (BUILD_ALBFUNCTOR FALSE)
+  set (BUILD_INTEL_TRILINOS FALSE)
+  set (BUILD_INTEL_ALBANY FALSE)
 endif ()
 
 # Begin User inputs:
@@ -42,6 +46,7 @@ set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
+set (PATH $ENV{PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
@@ -51,6 +56,9 @@ set (CTEST_BINARY_NAME build)
 set (PREFIX_DIR /projects/albany)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-gcc-4.8.2-RHEL6)
 set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2015.1.133)
+
+set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6)
+set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -194,11 +202,10 @@ ctest_start(${CTEST_TEST_TYPE})
 
 if (CTEST_DO_SUBMIT)
   ctest_submit (FILES "${CTEST_SCRIPT_DIRECTORY}/Project.xml"
-    RETURN_VALUE  HAD_ERROR
-    )
+    RETURN_VALUE HAD_ERROR)
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany Project.xml!")
+    message ("Cannot submit Albany Project.xml!")
   endif ()
 endif ()
 
@@ -442,6 +449,7 @@ set (COMMON_CONFIGURE_OPTIONS
   )
 
 if (BUILD_TRILINOS)
+  message ("state: BUILD_TRILINOS")
 
   #
   # Configure the Trilinos/SCOREC build
@@ -486,12 +494,12 @@ if (BUILD_TRILINOS)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Trilinos/SCOREC configure results!")
+      message ("Cannot submit Trilinos/SCOREC configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Trilinos/SCOREC build!")
+    message ("Cannot configure Trilinos/SCOREC build!")
   endif ()
 
   if (BUILD_SCOREC)
@@ -564,22 +572,24 @@ if (BUILD_TRILINOS)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Trilinos/SCOREC build results!")
+      message ("Cannot submit Trilinos/SCOREC build results!")
     endif ()
 
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Trilinos!")
+    message ("Cannot build Trilinos!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
+    message ("Encountered build errors in Trilinos build. Exiting!")
   endif ()
 
 endif ()
 
 if (BUILD_PERIDIGM)
+  message ("state: BUILD_PERIDIGM")
+
   set_property (GLOBAL PROPERTY SubProject Peridigm)
   set_property (GLOBAL PROPERTY Label Peridigm)
 
@@ -612,7 +622,7 @@ if (BUILD_PERIDIGM)
     ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Peridigm configure results.")
+      message ("Cannot submit Peridigm configure results.")
     endif ()
   endif ()
 
@@ -649,15 +659,20 @@ if (BUILD_PERIDIGM)
 endif ()
 
 if (BUILD_ALB32)
+  message ("state: BUILD_ALB32")
 
   # Configure the Albany 32 Bit build 
   # Builds everything!
-  #
 
   set_property (GLOBAL PROPERTY SubProject Albany32Bit)
   set_property (GLOBAL PROPERTY Label Albany32Bit)
 
-  set (ALB_LAME_DIR "/projects/albany/src/lame-4.24.1/")
+  set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include")
+  set (LAME_LIB_DIR "/projects/sierra/linux_rh6/install/master/lame/lib")
+  set (MATH_TOOLKIT_INC_DIR
+    "/projects/sierra/linux_rh6/install/master/math_toolkit/include")
+  set (MATH_TOOLKIT_LIB_DIR
+    "/projects/sierra/linux_rh6/install/master/math_toolkit/lib")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -665,8 +680,8 @@ if (BUILD_ALB32)
     "-DENABLE_CONTACT:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
@@ -676,9 +691,11 @@ if (BUILD_ALB32)
     "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=ON"
-    "-DLAME_INCLUDE_DIR:FILEPATH=${ALB_LAME_DIR}/include"
-    "-DLAME_LIBRARY_DIR:FILEPATH=${ALB_LAME_DIR}/build"
-    "-DENABLE_LAME:BOOL=ON")
+    "-DLAME_INCLUDE_DIR:PATH=${LAME_INC_DIR}"
+    "-DLAME_LIBRARY_DIR:PATH=${LAME_LIB_DIR}"
+    "-DMATH_TOOLKIT_INCLUDE_DIR:PATH=${MATH_TOOLKIT_INC_DIR}"
+    "-DMATH_TOOLKIT_LIBRARY_DIR:PATH=${MATH_TOOLKIT_LIB_DIR}"
+    "-DENABLE_LAME:BOOL=Off") #todo
   if (BUILD_SCOREC)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
       "-DENABLE_SCOREC:BOOL=ON")
@@ -707,12 +724,12 @@ if (BUILD_ALB32)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
+      message ("Cannot submit Albany configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany build!")
+    message ("Cannot configure Albany build!")
   endif ()
 
   #
@@ -736,16 +753,16 @@ if (BUILD_ALB32)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
+      message ("Cannot submit Albany build results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany!")
+    message ("Cannot build Albany!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+    message ("Encountered build errors in Albany build. Exiting!")
   endif ()
 
   #
@@ -766,7 +783,7 @@ if (BUILD_ALB32)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
+      message ("Cannot submit Albany test results!")
     endif ()
   endif ()
 
@@ -781,6 +798,8 @@ endif ()
 #
 
 if (BUILD_ALB64)
+  message ("state: BUILD_ALB64")
+
   set_property (GLOBAL PROPERTY SubProject Albany64Bit)
   set_property (GLOBAL PROPERTY Label Albany64Bit)
 
@@ -792,8 +811,8 @@ if (BUILD_ALB64)
     "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_QCAD:BOOL=OFF"
     "-DENABLE_MOR:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=ON")
@@ -828,12 +847,12 @@ if (BUILD_ALB64)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit configure results!")
+      message ("Cannot submit Albany 64 bit configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany 64 bit build!")
+    message ("Cannot configure Albany 64 bit build!")
   endif ()
 
   #
@@ -857,16 +876,16 @@ if (BUILD_ALB64)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit build results!")
+      message ("Cannot submit Albany 64 bit build results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany 64 bit!")
+    message ("Cannot build Albany 64 bit!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany 64 bit build. Exiting!")
+    message ("Encountered build errors in Albany 64 bit build. Exiting!")
   endif ()
   #
   # Run Albany 64 bit tests
@@ -885,7 +904,7 @@ if (BUILD_ALB64)
       )
 
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit test results!")
+      message ("Cannot submit Albany 64 bit test results!")
     endif ()
   endif ()
 endif ()
@@ -900,7 +919,7 @@ set (ENV{LD_LIBRARY_PATH}
   )
 
 if (BUILD_TRILINOSCLANG11)
-
+  message ("state: BUILD_TRILINOSCLANG11")
   #
   # Configure the Trilinos/SCOREC Clang build
   #
@@ -909,6 +928,7 @@ if (BUILD_TRILINOSCLANG11)
   set_property (GLOBAL PROPERTY Label TrilinosClang++11)
 
   set (CONFIGURE_OPTIONS
+    "${COMMON_CONFIGURE_OPTIONS}"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
     #
@@ -921,8 +941,9 @@ if (BUILD_TRILINOSCLANG11)
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
-    "${COMMON_CONFIGURE_OPTIONS}"
-    )
+    "-DBUILD_SHARED_LIBS:BOOL=OFF" #todo Get some TPLs going with which I can do a shared build.
+    "-DTPL_ENABLE_SuperLU:BOOL=OFF"
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON")
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildC11")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildC11)
@@ -937,16 +958,15 @@ if (BUILD_TRILINOSCLANG11)
 
   if (CTEST_DO_SUBMIT)
     ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
+      RETURN_VALUE  S_HAD_ERROR)
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit TrilinosClang++11 configure results!")
+      message ("Cannot submit TrilinosClang++11 configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure TrilinosClang++11 build!")
+    message ("Cannot configure TrilinosClang++11 build!")
   endif ()
 
   #set (CTEST_BUILD_TARGET all)
@@ -967,17 +987,17 @@ if (BUILD_TRILINOSCLANG11)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit TrilinoClang++11 build results!")
+      message ("Cannot submit TrilinoClang++11 build results!")
     endif ()
 
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Trilinos with Clang!")
+    message ("Cannot build Trilinos with Clang!")
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Trilinos Clang build. Exiting!")
+    message ("Encountered build errors in Trilinos Clang build. Exiting!")
   endif ()
 
 endif ()
@@ -987,6 +1007,7 @@ endif ()
 #
 
 if (BUILD_ALB64CLANG11)
+  message ("state: BUILD_ALB64CLANG11")
   set_property (GLOBAL PROPERTY SubProject Albany64BitClang++11)
   set_property (GLOBAL PROPERTY Label Albany64BitClang++11)
 
@@ -999,13 +1020,16 @@ if (BUILD_ALB64CLANG11)
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_SCOREC:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_QCAD:BOOL=OFF"
     "-DENABLE_MOR:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=ON"
     )
+  if (BUILD_SCOREC)
+    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON")
+  endif ()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64BitC11")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64BitC11)
@@ -1102,12 +1126,11 @@ if (BUILD_ALB64CLANG11)
 endif ()
 
 if (BUILD_ALBFUNCTOR)
+  message ("state: BUILD_ALBFUNCTOR")
   # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
 
   set_property (GLOBAL PROPERTY SubProject AlbanyFunctorDev)
   set_property (GLOBAL PROPERTY Label AlbanyFunctorDev)
-
-  set (ALB_LAME_DIR "/projects/albany/src/lame-4.24.1/")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -1118,10 +1141,9 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_ATO:BOOL=ON"
-    "-DENABLE_SCOREC:BOOL=OFF"
     "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_64BIT_INT:BOOL=OFF"
@@ -1129,6 +1151,10 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_CHECK_FPE:BOOL=ON")
+  if (BUILD_SCOREC)
+    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON")
+  endif ()
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev)
@@ -1198,6 +1224,201 @@ if (BUILD_ALBFUNCTOR)
 
       if (S_HAD_ERROR)
         message ("Cannot submit Albany test results!")
+      endif ()
+    endif ()
+  endif ()
+endif ()
+
+# Intel
+
+if (BUILD_INTEL_TRILINOS)
+  message ("state: BUILD_INTEL_TRILINOS")
+  set_property (GLOBAL PROPERTY SubProject TrilinosIntel)
+  set_property (GLOBAL PROPERTY Label TrilinosIntel)
+
+  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
+  set (ENV{PATH}
+    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/bin/intel64:${PATH})
+  set (ENV{LD_LIBRARY_PATH}
+    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/compiler/lib/intel64:/sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6/lib:${INITIAL_LD_LIBRARY_PATH})
+
+  set (LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
+  set (CONFIGURE_OPTIONS
+    "${COMMON_CONFIGURE_OPTIONS}"
+    "-DTPL_ENABLE_SuperLU:STRING=ON"
+    "-DTPL_ENABLE_MPI:BOOL=ON"
+    "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,/projects/albany/lib'"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
+    "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
+    "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
+    )
+
+  if (BUILD_SCOREC)
+    set (CONFIGURE_OPTIONS
+      "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
+      "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+      "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
+      "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
+      "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+      "${CONFIGURE_OPTIONS}")
+  endif ()
+
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TrilinosIntel")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TrilinosIntel)
+  endif ()
+
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/TrilinosIntel"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR)
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
+
+    if (S_HAD_ERROR)
+      message ("Cannot submit Trilinos/SCOREC configure results.")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot configure TrilinosIntel build.")
+    set (BUILD_INTEL_ALBANY FALSE)
+  endif ()
+
+  if (BUILD_INTEL_TRILINOS)
+    set (CTEST_BUILD_TARGET install)
+
+    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+    ctest_build (
+      BUILD "${CTEST_BINARY_DIRECTORY}/TrilinosIntel"
+      RETURN_VALUE HAD_ERROR
+      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
+      APPEND)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Build RETURN_VALUE S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit TrilinosIntel build results.")
+      endif ()
+
+    endif ()
+
+    if (HAD_ERROR)
+      message ("Cannot build Trilinos.")
+      set (BUILD_INTEL_ALBANY FALSE)
+    endif ()
+
+    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+      message ("Encountered build errors in Trilinos build. Exiting.")
+      set (BUILD_INTEL_ALBANY FALSE)
+    endif ()
+  endif ()
+endif ()
+
+if (BUILD_INTEL_ALBANY)
+  message ("state: BUILD_INTEL_ALBANY")
+  set_property (GLOBAL PROPERTY SubProject AlbanyIntel)
+  set_property (GLOBAL PROPERTY Label AlbanyIntel)
+
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_MOR:BOOL=ON"
+    "-DENABLE_FELIX:BOOL=ON"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_BGL:BOOL=OFF"
+    "-DENABLE_AMP:BOOL=OFF"
+    "-DENABLE_GOAL:BOOL=ON"
+    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_LAME:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=OFF")
+  if (BUILD_SCOREC)
+    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON")
+  endif ()
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyIntel")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyIntel)
+  endif ()
+
+  CTEST_CONFIGURE (
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyIntel"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    APPEND)
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
+    
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany configure results.")
+      set (BUILD_INTEL_ALBANY FALSE)
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot configure Albany build.")
+    set (BUILD_INTEL_ALBANY FALSE)
+  endif ()
+
+  if (BUILD_INTEL_ALBANY)
+    set (CTEST_BUILD_TARGET all)
+
+    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+    CTEST_BUILD (
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyIntel"
+      RETURN_VALUE HAD_ERROR
+      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
+      APPEND)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Build
+        RETURN_VALUE S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany build results.")
+        set (BUILD_INTEL_ALBANY FALSE)
+      endif ()
+    endif ()
+
+    if (HAD_ERROR)
+      message ("Cannot build Albany.")
+      set (BUILD_INTEL_ALBANY FALSE)
+    endif ()
+
+    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+      message ("Encountered build errors in Albany build.")
+      set (BUILD_INTEL_ALBANY FALSE)
+    endif ()
+  endif ()
+
+  if (BUILD_INTEL_ALBANY)
+    set (CTEST_TEST_TIMEOUT 120)
+    CTEST_TEST (
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyIntel"
+      RETURN_VALUE HAD_ERROR)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany test results.")
       endif ()
     endif ()
   endif ()

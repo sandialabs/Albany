@@ -4,11 +4,11 @@ SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
 SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 
 # What to build and test
-SET(DOWNLOAD_TRILINOS FALSE)
-SET(DOWNLOAD_ALBANY FALSE)
-SET(BUILD_TRILINOS FALSE)
+SET(DOWNLOAD_TRILINOS TRUE)
+SET(DOWNLOAD_ALBANY TRUE)
+SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
-SET(CLEAN_BUILD FALSE)
+SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
 set( CTEST_SITE             "compton.sandia.gov" ) # generally the output of hostname
@@ -245,9 +245,9 @@ SET(CONFIGURE_OPTIONS
   -DCMAKE_Fortran_COMPILER:FILEPATH=mpiifort
   -DCMAKE_AR:FILEPATH=/home/projects/x86-64/intel/compilers/2015/composer_xe_2015.2.164/bin/intel64_mic/xiar
   -DCMAKE_LINKER:FILEPATH=/home/projects/x86-64/intel/compilers/2015/composer_xe_2015.2.164/bin/intel64_mic/xild
-  "-DCMAKE_CXX_FLAGS:STRING='-O3 -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_C_FLAGS:STRING='-O3 -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -mmic -mkl -mt_mpi -DPREC_TIMER -fopenmp'"
+  "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp -Wl,-qdiag-warn=disable'"
+  "-DCMAKE_C_FLAGS:STRING='-O3 -w -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp -Wl,-qdiag-warn=disable'"
+  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -mmic -mkl -mt_mpi -DPREC_TIMER -fopenmp -Wl,-qdiag-warn=disable'"
   -DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON
   -DTpetra_INST_INT_LONG_LONG:BOOL=OFF
   -DTpetra_INST_INT_INT:BOOL=ON
@@ -341,6 +341,7 @@ SET(CONFIGURE_OPTIONS
 # Try turning off more of Trilinos
   -DTrilinos_ENABLE_OptiPack:BOOL=OFF
   -DTrilinos_ENABLE_GlobiPack:BOOL=OFF
+  -DBUILD_SHARED_LIBS:BOOL=OFF
   )
 
 IF(BUILD_TRILINOS)
@@ -473,9 +474,11 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_ASCR:BOOL=OFF"
   "-DENABLE_CHECK_FPE:BOOL=OFF"
   "-DENABLE_LAME:BOOL=OFF"
+  "-DENABLE_BGL:BOOL=OFF"
   "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
   "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
   "-DENABLE_CROSS_COMPILE:BOOL=ON"
+#  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
@@ -558,7 +561,7 @@ endif()
 #
 ##################################################################################################################
 
-IF(TURN_OFF_FOR_NOW)
+IF(FALSE)
 
 CTEST_TEST(
               BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
@@ -578,7 +581,8 @@ IF(CTEST_DO_SUBMIT)
     message(FATAL_ERROR "Cannot submit Albany test results!")
   endif()
 ENDIF()
-ENDIF(TURN_OFF_FOR_NOW)
+
+ENDIF(FALSE)
 
 ENDIF (BUILD_ALBANY)
 

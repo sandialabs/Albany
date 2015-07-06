@@ -41,7 +41,7 @@ namespace Albany {
     double restartDataTime() const {return -1.0; }
     
     //Is this necessary here? 
-    const bool getInterleavedOrdering() const {return this->interleavedOrdering;}
+//    bool getInterleavedOrdering() const {return this->interleavedOrdering;}
 
     private:
     //Ioss::Init::Initializer ioInit;

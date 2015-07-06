@@ -185,6 +185,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     for (int i = 0; i < numLayers+1; i++)
       levelsNormalizedThickness[i] = double(i) / numLayers;
 
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers);
+  for (int i = 0; i < numLayers; i++)
+    layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+
   /*std::cout<< "Levels: ";
   for (int i = 0; i < numLayers+1; i++)
     std::cout<< levelsNormalizedThickness[i] << " ";
@@ -357,6 +361,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   GO edgeColumnShift = (Ordering == 1) ? 1 : maxGlobalEdges2D;
   int lEdgeColumnShift = (Ordering == 1) ? 1 : edges2D.size();
   int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
+
+  this->layered_mesh_numbering = (Ordering==0) ?
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
 
   this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
@@ -699,7 +707,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Tpetra_Mu
       ifile >> numNodes >> numComponents;
       TEUCHOS_TEST_FOR_EXCEPTION(numNodes != contentVec.getLocalLength(), Teuchos::Exceptions::InvalidParameterValue,
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << contentVec.getLocalLength() << ")" << std::endl);
-      TEUCHOS_TEST_FOR_EXCEPTION(numComponents != contentVec.getNumVectors(), Teuchos::Exceptions::InvalidParameterValue,
+      TEUCHOS_TEST_FOR_EXCEPTION(numComponents > contentVec.getNumVectors(), Teuchos::Exceptions::InvalidParameterValue,
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of components in file " << fname << " (" << numComponents << ") is different from the number expected (" << contentVec.getNumVectors() << ")" << std::endl);
       for (int il = 0; il < numComponents; ++il) {
         Teuchos::ArrayRCP<ST> contentVec_nonConstView = contentVec.getVectorNonConst(il)->get1dViewNonConst();

@@ -30,7 +30,7 @@
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
       <Parameter name="Move Limiter" type="double" value="0.5" />
       <ParameterList name="Convergence Tests">
-        <Parameter name="Maximum Iterations" type="int" value="2" />
+        <Parameter name="Maximum Iterations" type="int" value="20" />
         <Parameter name="Combo Type" type="string" value="OR"/>
         <Parameter name="Relative Topology Change" type="double" value="5e-3" />
         <Parameter name="Relative Objective Change" type="double" value="1e-4" />

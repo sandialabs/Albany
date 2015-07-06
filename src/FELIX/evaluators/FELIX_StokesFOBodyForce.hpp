@@ -47,6 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> surface;
   Teuchos::Array<double> gravity;
 
   // Output:
@@ -59,7 +60,7 @@ private:
 
   std::size_t numQPs;
   std::size_t numDims;
-  std::size_t vecDim;
+  std::size_t vecDimFO;
   std::size_t numNodes;
 
   //Glen's law parameters
@@ -70,6 +71,9 @@ private:
   //physical parameters
   double g; //gravity
   double rho; //ice density  
+
+  Teuchos::ParameterList* stereographicMapList;
+  bool useStereographicMap;
 };
 }
 

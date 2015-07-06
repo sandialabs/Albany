@@ -177,12 +177,10 @@ IF (CMAKE_Fortran_COMPILER AND ALBANY_ENABLE_FORTRAN) # Enable Fortran if it is 
   ENABLE_LANGUAGE(Fortran)
 ENDIF()
 
-
-IF (NOT CMAKE_CXX_FLAGS)
-  SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS} )
-ENDIF()
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
-#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -DALBANY_MPI")
+# Make Albany inherit Trilinos compiler flags. The most important are the
+# presence or absence of -NDEBUG (which can affect linking for complicated
+# reasons) and -std=c++11.
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Trilinos_CXX_COMPILER_FLAGS}")
 
 if (SET_COMPILERS_AUTOMATICALLY)
   SET(CMAKE_AR ${Trilinos_AR})

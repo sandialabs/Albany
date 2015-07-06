@@ -5,7 +5,7 @@
 ##*****************************************************************//
 
 #This test is not currently appropriate for the BGQ
-IF(NOT ALBANY_PARALLEL_ONLY)
+IF(NOT ALBANY_PARALLEL_ONLY AND LCM_TEST_EXES AND ALBANY_BGL)
 
 set(runtest.py ${CMAKE_CURRENT_SOURCE_DIR}/runtest.py)
 

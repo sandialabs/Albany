@@ -294,6 +294,12 @@ namespace Aeras
     {
       return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
     }
+    
+    const Albany::NodalDOFManager& 
+    getOverlapDOFManager(const std::string& field_name) const
+    {
+      return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_dofManager;
+    }
 #endif
 
 
@@ -447,6 +453,12 @@ namespace Aeras
     const stk::mesh::BulkData& getSTKBulkData()
     {
       return bulkData;
+    }
+
+    Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering(){
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::SpectralDiscretization: getLayeredMeshNumbering() not implemented");
+      return Teuchos::null;
     }
 
   private:

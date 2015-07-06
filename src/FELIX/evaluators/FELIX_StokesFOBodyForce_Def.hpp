@@ -45,6 +45,10 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   g = p_list->get("Gravity", 9.8);
   rho = p_list->get("Ice Density", 910.0);  
   rho_g = rho*g; 
+
+  stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+  useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+
 #ifdef OUTPUT_TO_SCREEN
   *out << "rho, g: " << rho << ", " << g << std::endl; 
   *out << "alpha: " << alpha << std::endl;
@@ -60,6 +64,14 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("surface_height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
+
+    if(useStereographicMap) {
+      surface = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string>("surface_height Name"), dl->qp_scalar);
+      this->addDependentField(surface);
+      coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+                  p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
+      this->addDependentField(coordVec);
+    }
      bf_type = FO_INTERP_SURF_GRAD;
   }
 #ifdef CISM_HAS_FELIX
@@ -170,10 +182,9 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
-  dl->qp_vector->dimensions(dims);
-  vecDim  = dims[2];
-  dl->node_qp_scalar->dimensions(dims);
+  dl->node_vector->dimensions(dims);
   numNodes = dims[1];
+  vecDimFO = std::min(std::size_t(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
 
 
 //*out << " in FELIX Stokes FO source! " << std::endl;
@@ -214,6 +225,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
   else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
 	  this->utils.setFieldData(surfaceGrad,fm);
+	  if(useStereographicMap) {
+	    this->utils.setFieldData(coordVec,fm);
+	    this->utils.setFieldData(surface,fm);
+	  }
   }
 
   this->utils.setFieldData(force,fm); 
@@ -229,15 +244,36 @@ evaluateFields(typename Traits::EvalData workset)
  if (bf_type == NONE) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
      for (std::size_t qp=0; qp < numQPs; ++qp)       
-       for (std::size_t i=0; i < vecDim; ++i) 
+       for (std::size_t i=0; i < vecDimFO; ++i)
   	 force(cell,qp,i) = 0.0;
  }
  //source using the gradient of the interpolated surface height
  else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
-   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     for (std::size_t qp=0; qp < numQPs; ++qp) {
-       force(cell,qp,0) = rho_g*surfaceGrad(cell,qp,0);
-       force(cell,qp,1) = rho_g*surfaceGrad(cell,qp,1);
+   if(useStereographicMap) {
+     double R = stereographicMapList->get<double>("Earth Radius", 6371);
+     double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+     double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+     double R2 = std::pow(R,2);
+     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+       for (std::size_t qp=0; qp < numQPs; ++qp) {
+         MeshScalarT x = coordVec(cell,qp,0)-x_0;
+         MeshScalarT y = coordVec(cell,qp,1)-y_0;
+         MeshScalarT z = coordVec(cell,qp,2);
+         MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+         MeshScalarT h2 = h*h;
+         MeshScalarT h_x = -x/2.0/R2*h2;
+         MeshScalarT h_y = -y/2.0/R2*h2;
+         force(cell,qp,0) = rho_g*(h*surfaceGrad(cell,qp,0) + (surface(cell,qp) - z) *(h_x-h_y)); //it already includes the integral weight h^2
+         force(cell,qp,1) = rho_g*(h*surfaceGrad(cell,qp,1) + (surface(cell,qp) - z) *(h_y-h_x));
+       }
+     }
+   }
+   else {
+     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+       for (std::size_t qp=0; qp < numQPs; ++qp) {
+         force(cell,qp,0) = rho_g*surfaceGrad(cell,qp,0);
+         force(cell,qp,1) = rho_g*surfaceGrad(cell,qp,1);
+       }
      }
    }
  }

@@ -1,0 +1,5 @@
+Note:
+
+This directory holds the dashboard scripts that run on cee-compute012, that rcp the actual CDash results from compton
+(staging through software-login.sandia.gov)
+and then post those to the CDash server on the SRN, cdash.sandia.gov

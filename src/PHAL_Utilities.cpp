@@ -31,7 +31,13 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
       app, mesh_specs[ebi].get());
 #endif
-  return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+  if(app->getProblemPL()->get("Name", "") == "FELIX Coupled FO H 3D")
+  { //all column is coupled
+    int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+    int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+    return app->getNumEquations()*side_node_count*numLevels;
+  }
+  else return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 

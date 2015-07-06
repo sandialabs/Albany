@@ -9,8 +9,6 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include <Intrepid_MiniTensor.h>
-#include <Teuchos_LAPACK.hpp>
-#include <Sacado.hpp>
 
 namespace LCM
 {
@@ -26,19 +24,15 @@ public:
 
   MiniLinearSolver_Base();
 
-  Teuchos::LAPACK<int, RealType> lapack;
-
-  template<Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
-  template<Intrepid::Index N>
   void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -60,17 +54,15 @@ public:
 
   MiniLinearSolver();
 
-  template<Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
-  template<Intrepid::Index N>
   void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -86,27 +78,15 @@ public:
 
   MiniLinearSolver();
 
-  template<Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
-
-  template<Intrepid::Index N>
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
-
-  void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -123,14 +103,14 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -147,14 +127,14 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -172,14 +152,14 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -196,14 +176,14 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -220,18 +200,18 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif // ALBANY_SG
 
+#ifdef ALBANY_ENSEMBLE 
 //
 // Multi-Point Residual
 //
@@ -246,14 +226,14 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -270,14 +250,14 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
 
 //
@@ -293,17 +273,18 @@ public:
   MiniLinearSolver();
 
   void solve(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 
   void computeFadInfo(
-      std::vector<ScalarT> & A,
-      std::vector<ScalarT> & X,
-      std::vector<ScalarT> & B);
+      Intrepid::Tensor<ScalarT> const & A,
+      Intrepid::Vector<ScalarT> const & b,
+      Intrepid::Vector<ScalarT> & x);
 };
-#endif
-}
+#endif // ALBANY_ENSEMBLE
+
+} // namespace LCM
 
 #include "MiniLinearSolver_Def.hpp"
 

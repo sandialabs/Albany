@@ -26,6 +26,12 @@
 #include "Sacado_PCE_OrthogPoly.hpp"
 #include "Sacado_MP_Vector.hpp"
 
+// ETP:  Uncomment all three of these for enabling partial specializations
+// of Fad types for multipoint ensemble propagation.
+//#include "Sacado_Fad_DFad_MP_Vector.hpp"
+//#include "Sacado_Fad_SLFad_MP_Vector.hpp"
+//#include "Sacado_Fad_ViewFad_MP_Vector.hpp"
+
 //amb Need to move to configuration.
 //#define ALBANY_SFAD_SIZE 27
 //#define ALBANY_SLFAD_SIZE 27

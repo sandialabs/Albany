@@ -696,6 +696,11 @@ namespace Albany {
         return disc->getWsElNodeEqID().size();
     }
 
+    //! Const access to problem parameter list
+    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() const {
+        return problemParams;
+    }
+
     //! Access to problem parameter list
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
         return problemParams;

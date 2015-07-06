@@ -5,19 +5,11 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="MaterialDB Filename" type="string" value="MultiSlipPlaneHard_Material_Implicit.xml"/> -->
     <ParameterList name="Dirichlet BCs">
-      <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
-        <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.00, 3.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.00, 0.00}"/>
-      </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_12 for DOF X">
         <Parameter name="Number of points" type="int" value="4"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0,  3.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.3, 0.6,  0.9}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.5, 1.0,  1.5}"/>
       </ParameterList>
-      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_4 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_11 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_13 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_14 for DOF Z" type="double" value="0.0"/>
@@ -33,7 +25,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="SingleSlipPlane.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="MultiSlipPlaneHard.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="MultiSlipPlaneHard_Implicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
@@ -59,7 +51,7 @@
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
         <Parameter name="Max Steps" type="int" value="5000"/>
-        <Parameter name="Max Value" type="double" value="2.0"/>
+        <Parameter name="Max Value" type="double" value="0.05"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
         <ParameterList name="Eigensolver">
@@ -70,8 +62,8 @@
       </ParameterList>
       <ParameterList name="Step Size">
        <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.001"/>
-       <Parameter name="Max Step Size" type="double" value="0.01"/>
+       <Parameter name="Initial Step Size" type="double" value="0.002"/>
+       <Parameter name="Max Step Size" type="double" value="0.02"/>
        <Parameter name="Min Step Size" type="double" value="0.00001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
        <Parameter name="Aggressiveness" type="double" value="0.1"/>
@@ -124,10 +116,10 @@
               </ParameterList>
               <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
-                <ParameterList name="Ifpack">
+                <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="2"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
+                  <Parameter name="Prec Type" type="string" value="ILUT"/>
+                  <ParameterList name="Ifpack2 Settings">
                     <Parameter name="fact: drop tolerance" type="double" value="0"/>
                     <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
                     <Parameter name="fact: level-of-fill" type="int" value="1"/>
