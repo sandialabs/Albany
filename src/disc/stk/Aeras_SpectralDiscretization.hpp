@@ -294,6 +294,12 @@ namespace Aeras
     {
       return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
     }
+    
+    const Albany::NodalDOFManager& 
+    getOverlapDOFManager(const std::string& field_name) const
+    {
+      return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_dofManager;
+    }
 #endif
 
 
