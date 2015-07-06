@@ -455,6 +455,12 @@ namespace Aeras
       return bulkData;
     }
 
+    Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering(){
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::SpectralDiscretization: getLayeredMeshNumbering() not implemented");
+      return Teuchos::null;
+    }
+
   private:
 
     //! Private to prohibit copying
