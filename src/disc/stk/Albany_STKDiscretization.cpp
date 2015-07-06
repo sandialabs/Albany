@@ -76,7 +76,7 @@ STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
-//  Albany::STKDiscretization::updateMesh();
+//  Albany::STKDiscretization::updateMesh();  //Mauro: cannot call virtual function in constructor
 
 }
 
