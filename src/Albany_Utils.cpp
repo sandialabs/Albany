@@ -9,6 +9,10 @@
 #include <cstdlib>
 #include <stdexcept>
 
+// For vtune
+#include <sys/types.h>
+#include <unistd.h>
+
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
@@ -193,4 +197,58 @@
       os << std::endl;
     }
 
+  }
+
+  Albany::CmdLineArgs::CmdLineArgs(const std::string& default_xml_filename,
+                                   const std::string& default_xml_filename2,
+                                   const std::string& default_xml_filename3) :
+    xml_filename(default_xml_filename),
+    xml_filename2(default_xml_filename2),
+    xml_filename3(default_xml_filename3),
+    has_second_xml_file(false),
+    has_third_xml_file(false),
+    vtune(false) {}
+
+  void Albany::CmdLineArgs::parse_cmdline(int argc , char ** argv,
+                                          std::ostream& os) {
+    bool found_first_xml_file = false;
+    bool found_second_xml_file = false;
+    for (int arg=1; arg<argc; ++arg) {
+      if(!std::strcmp(argv[arg],"--help")) {
+        os << argv[0] << " [--vtune] [inputfile1.xml] [inputfile2.xml] [inputfile3.xml]\n";
+        std::exit(1);
+      }
+      else if (!std::strcmp(argv[arg],"--vtune")) {
+        vtune = true;
+      }
+      else {
+        if (!found_first_xml_file) {
+          xml_filename=argv[arg];
+          found_first_xml_file = true;
+        }
+        else if (!found_second_xml_file) {
+          xml_filename2=argv[arg];
+          found_second_xml_file = true;
+          has_second_xml_file = true;
+        }
+        else {
+          xml_filename3=argv[arg];
+          has_third_xml_file = true;
+        }
+      }
+    }
+  }
+
+  void Albany::connect_vtune(const int p_rank) {
+    std::stringstream cmd;
+    pid_t my_os_pid=getpid();
+    const std::string vtune_loc = "amplxe-cl";
+    const std::string output_dir = "./vtune/vtune.";
+    cmd << vtune_loc
+        << " -collect hotspots -result-dir " << output_dir << p_rank
+        << " -target-pid " << my_os_pid << " &";
+    if (p_rank == 0)
+      std::cout << cmd.str() << std::endl;
+    system(cmd.str().c_str());
+    system("sleep 10");
   }

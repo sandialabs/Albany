@@ -40,17 +40,9 @@ int main(int argc, char *argv[]) {
   // Command-line argument for input file
   //***********************************************************
 
-  std::string xmlfilename_coupled;
-  if(argc > 1){
-    if(!strcmp(argv[1],"--help")){
-      std::cout << "albany [inputfile.xml]" << std::endl;
-      std::exit(1);
-    }
-    else
-      xmlfilename_coupled = argv[1];
-  }
-  else
-    xmlfilename_coupled = "input.xml";
+  Albany::CmdLineArgs cmd;
+  cmd.parse_cmdline(argc, argv, *out);
+  std::string xmlfilename_coupled = cmd.xml_filename;
 
   try {
 
@@ -69,6 +61,10 @@ int main(int argc, char *argv[]) {
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+    // Connect vtune for performance profiling
+    if (cmd.vtune) {
+      Albany::connect_vtune(comm->getRank());
+    }
     Albany::SolverFactory coupled_slvrfctry(xmlfilename_coupled, comm);
     Teuchos::ParameterList& coupledParams = coupled_slvrfctry.getParameters();
     Teuchos::ParameterList& coupledSystemParams = 

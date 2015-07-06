@@ -39,34 +39,21 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  char * xmlfilename=0;
-  char * sg_xmlfilename=0;
-  char defaultfile[10]={"input.xml"};
-  char sg_defaultfile[12]={"inputSG.xml"};
+  Albany::CmdLineArgs cmd("input.xml", "inputSG.xml");
+  cmd.parse_cmdline(argc, argv, *out);
+  std::string xmlfilename;
+  std::string sg_xmlfilename;
   bool do_initial_guess;
-  if(argc>1){
-    if(!strcmp(argv[1],"--help")){
-      printf("albanySG [inputfile.xml inputfileSG.xml]\n");
-      exit(1);
-    }
-    else {
-      if (argc == 2) {
-	sg_xmlfilename = argv[1];
-	do_initial_guess = false;
-      }
-      else {
-	xmlfilename=argv[1];
-	sg_xmlfilename = argv[2];
-	do_initial_guess = true;
-      }
-    }
-  }
-  else {
-    xmlfilename=defaultfile;
-    sg_xmlfilename=sg_defaultfile;
+  if (cmd.has_second_xml_file) {
+    xmlfilename = cmd.xml_filename;
+    sg_xmlfilename = cmd.xml_filename2;
     do_initial_guess = true;
   }
-
+  else {
+    xmlfilename = "";
+    sg_xmlfilename = cmd.xml_filename;
+    do_initial_guess = false;
+  }
 
   try {
 
@@ -79,6 +66,11 @@ int main(int argc, char *argv[]) {
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     Teuchos::RCP<const Teuchos_Comm> tcomm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+
+    // Connect vtune for performance profiling
+    if (cmd.vtune) {
+      Albany::connect_vtune(tcomm->getRank());
+    }
 
     // Parse parameters
     Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, tcomm);

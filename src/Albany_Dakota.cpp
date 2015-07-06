@@ -37,17 +37,11 @@ int Albany_Dakota(int argc, char *argv[])
   *out << "\nStarting Albany_Dakota!" << endl;
 
   // Parse parameters
-  std::string xml_filename = "input.xml";
-  if(argc>1){
-    if(!std::strcmp(argv[1],"--help")){
-      *out << "albany [inputfile.xml]\n";
-      std::exit(1);
-    }
-    else
-      xml_filename=argv[1];
-  }
+  Albany::CmdLineArgs cmd;
+  cmd.parse_cmdline(argc, argv, *out);
+
   RCP<ParameterList> appParams =
-    Teuchos::getParametersFromXmlFile(xml_filename);
+    Teuchos::getParametersFromXmlFile(cmd.xml_filename);
   ParameterList& dakotaParams = appParams->sublist("Piro").sublist("Dakota");
   std::string dakota_input_file =
     dakotaParams.get("Input File", "dakota.in");
@@ -88,7 +82,12 @@ int Albany_Dakota(int argc, char *argv[])
       Albany::createEpetraCommFromMpiComm(analysis_comm);
   RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
   RCP<Albany::SolverFactory> slvrfctry =
-    rcp(new Albany::SolverFactory(xml_filename, appCommT));
+    rcp(new Albany::SolverFactory(cmd.xml_filename, appCommT));
+
+  // Connect vtune for performance profiling
+  if (cmd.vtune) {
+    Albany::connect_vtune(appCommT->getRank());
+  }
 
   // Construct a concrete Dakota interface with an EpetraExt::ModelEvaluator
   // trikota_interface is freed in the destructor for the Dakota interface class
