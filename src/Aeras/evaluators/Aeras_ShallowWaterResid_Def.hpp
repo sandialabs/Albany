@@ -374,6 +374,11 @@ compute_Residual0_useHyperViscosity(const int& cell) const
   for (int node=0; node < numNodes; ++node) 
       surf(node) = UNodal(cell,node,0);
 
+  for (std::size_t node=0; node < numNodes; ++node) 
+      surftilde(node) = UNodal(cell,node,3);
+
+  gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+  
   divergence(huAtNodes, cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
