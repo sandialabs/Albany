@@ -51,7 +51,7 @@
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
         <Parameter name="Max Steps" type="int" value="500"/>
-        <Parameter name="Max Value" type="double" value="0.05"/>
+        <Parameter name="Max Value" type="double" value="0.03"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
         <ParameterList name="Eigensolver">
@@ -66,7 +66,7 @@
        <Parameter name="Max Step Size" type="double" value="0.02"/>
        <Parameter name="Min Step Size" type="double" value="0.00001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Aggressiveness" type="double" value="0.5"/>
+       <Parameter name="Aggressiveness" type="double" value="0.2"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
