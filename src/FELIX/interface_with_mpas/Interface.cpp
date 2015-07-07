@@ -76,9 +76,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
 
-  if(deltat != 0) {
-    paramList->sublist("Problem").set("Time Step", deltat);
-  }
+  paramList->sublist("Problem").set("Time Step", deltat);
 
   Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->layered_mesh_numbering->layers_ratio;
   for (int i = 0; i < nLayers; i++) {
