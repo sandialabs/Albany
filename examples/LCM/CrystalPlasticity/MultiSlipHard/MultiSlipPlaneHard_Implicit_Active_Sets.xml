@@ -62,7 +62,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
        <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.002"/>
+       <Parameter name="Initial Step Size" type="double" value="0.0005"/>
        <Parameter name="Max Step Size" type="double" value="0.02"/>
        <Parameter name="Min Step Size" type="double" value="0.00001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
@@ -74,7 +74,7 @@
         <Parameter name="Method" type="string" value="Newton"/>
         <ParameterList name="Newton">
           <ParameterList name="Linear Solver">
-            <Parameter name="Tolerance" type="double" value="1e-12"/>
+            <Parameter name="Tolerance" type="double" value="1e-10"/>
           </ParameterList>
           <Parameter name="Forcing Term Method" type="string" value="Constant"/>
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
