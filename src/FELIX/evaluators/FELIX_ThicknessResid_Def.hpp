@@ -59,7 +59,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
   numNodes = dims[1];
-  numVecFODims  = std::min((size_t)dims[2], (size_t)2);
+  numVecFODims  = std::min(dims[2], PHX::DataLayout::size_type(2));
 
   dl->qp_gradient->dimensions(dims);
   cellDims = dims[2];

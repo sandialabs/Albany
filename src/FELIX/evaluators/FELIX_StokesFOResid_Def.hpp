@@ -86,7 +86,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   numDims  = dims[3];
 
   U.fieldTag().dataLayout().dimensions(dims);
-  vecDimFO = std::min(std::size_t(2), dims[2]);
+  vecDimFO = std::min(PHX::DataLayout::size_type(2), dims[2]);
 
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX Stokes FO residual! " << std::endl;

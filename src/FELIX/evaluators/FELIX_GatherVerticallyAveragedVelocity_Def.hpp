@@ -35,7 +35,7 @@ GatherVerticallyAveragedVelocityBase(const Teuchos::ParameterList& p,
   dl->node_gradient->dimensions(dims);
   numNodes = dims[1];
   vecDim = dims[2];
-  vecDimFO = std::min(std::size_t(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
+  vecDimFO = std::min(PHX::DataLayout::size_type(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
 
   if (p.isType<const std::string>("Mesh Part"))
     meshPart = p.get<const std::string>("Mesh Part");

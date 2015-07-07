@@ -184,7 +184,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   numDims = dims[2];
   dl->node_vector->dimensions(dims);
   numNodes = dims[1];
-  vecDimFO = std::min(std::size_t(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
+  vecDimFO = std::min(PHX::DataLayout::size_type(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
 
 
 //*out << " in FELIX Stokes FO source! " << std::endl;

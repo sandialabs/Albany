@@ -35,7 +35,7 @@ GatherThicknessBase(const Teuchos::ParameterList& p,
   dl->node_gradient->dimensions(dims);
   numNodes = dims[1];
   vecDim = dims[2];
-  vecDimFO = std::min(std::size_t(2), dims[2]); //this->vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
+  vecDimFO = std::min(PHX::DataLayout::size_type(2), dims[2]); //this->vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
 
   this->setName("GatherThickness"+PHX::typeAsString<EvalT>());
 
