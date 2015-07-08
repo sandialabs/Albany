@@ -21,7 +21,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube_Mesh3.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="RubiksCube_Implicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
@@ -51,7 +51,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
         <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.001"/>
+       <Parameter name="Initial Step Size" type="double" value="0.0005"/>
        <Parameter name="Max Step Size" type="double" value="0.02"/>
        <Parameter name="Min Step Size" type="double" value="0.00000001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
@@ -140,7 +140,7 @@
         </ParameterList>
         <ParameterList name="Test 1">
          <Parameter name="Test Type" type="string" value="MaxIters"/>
-         <Parameter name="Maximum Iterations" type="int" value="15"/>
+         <Parameter name="Maximum Iterations" type="int" value="10"/>
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="Combo"/>
