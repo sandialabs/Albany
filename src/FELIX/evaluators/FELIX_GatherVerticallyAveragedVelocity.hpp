@@ -133,6 +133,7 @@ private:
 };
 
 
+#ifdef ALBANY_ENSEMBLE
 template<typename Traits>
 class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPResidual,Traits>
     : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::MPResidual,Traits> {
@@ -186,8 +187,7 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
 };
-
-
+#endif
 
 }
 
