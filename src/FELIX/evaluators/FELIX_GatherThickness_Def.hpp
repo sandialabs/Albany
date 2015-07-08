@@ -203,15 +203,15 @@ GatherThickness<PHAL::AlbanyTraits::MPResidual, Traits>::
 GatherThickness(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
           : GatherThicknessBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
-    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
-}
+{}
 
 template<typename Traits>
 void GatherThickness<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{}
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
+    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
+}
 
 template<typename Traits>
 GatherThickness<PHAL::AlbanyTraits::MPJacobian, Traits>::
@@ -356,15 +356,15 @@ GatherThickness3D<PHAL::AlbanyTraits::MPResidual, Traits>::
 GatherThickness3D(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
           : GatherThicknessBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
-    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
-}
+            {}
 
 template<typename Traits>
 void GatherThickness3D<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{}
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
+    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
+}
 
 template<typename Traits>
 GatherThickness3D<PHAL::AlbanyTraits::MPJacobian, Traits>::

@@ -236,15 +236,15 @@ GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPResidual, Traits>::
 GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
           : GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
-}
+{}
 
 template<typename Traits>
 void GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{}
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
+}
 
 template<typename Traits>
 GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPJacobian, Traits>::
