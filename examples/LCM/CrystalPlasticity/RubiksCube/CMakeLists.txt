@@ -15,6 +15,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Explicit_Materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Explicit_Materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.g
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.g COPYONLY)
+if (FALSE)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.g.4.0
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.g.4.0 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.g.4.1
@@ -23,6 +24,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.g.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.g.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.g.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.g.4.3 COPYONLY)
+endif ()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PostProcess.py
