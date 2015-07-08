@@ -288,7 +288,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   if (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") {
     paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
-    paramList->sublist("Problem").set("Time Step", paramList->sublist("Problem").get("Time Step", 0)); //if it is not there set it to zero.
+    paramList->sublist("Problem").set("Time Step", paramList->sublist("Problem").get("Time Step", 0.0)); //if it is not there set it to zero.
   }
 
   Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
