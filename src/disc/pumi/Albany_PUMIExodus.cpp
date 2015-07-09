@@ -15,7 +15,11 @@
 #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
-#include <apfSTK.h>
+#if defined(HAVE_STK) && defined(ALBANY_SEACAS)
+# include <apfSTK.h>
+#else
+# include <apfAlbany.h>
+#endif
 
 #include <Albany_Utils.hpp>
 #include <Teuchos_RCP.hpp>
