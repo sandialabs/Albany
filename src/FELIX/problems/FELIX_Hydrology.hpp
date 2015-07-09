@@ -210,31 +210,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<const std::string>("Field Name","G");
   ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
-/*
-  // Effective pressure
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  p = stateMgr.registerStateVariable("effective_pressure", dl->node_scalar, elementBlockName, true, &entity);
-  if (PHX::typeAsString<EvalT>()==PHX::typeAsString<AlbanyTraits::Residual>())
-  {
-    p->set<const std::string>("Field Name","N");
-    p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dl->dummy);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
 
-    p = rcp(new Teuchos::ParameterList("Effective Pressure"));
-    p->set<std::string> ("Hydraulic Potential Variable Name", dof_names[0]);
-    p->set<std::string> ("Surface Height Variable Name","z_s");
-    p->set<std::string> ("Ice Thickness Variable Name","H");
-    p->set<std::string> ("Effective Pressure Name","N");
-
-    p->set<Teuchos::ParameterList*>("Physical Parameters",&params->sublist("FELIX Physical Parameters"));
-    ev = rcp(new FELIX::EffectivePressure<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    PHX::Tag<typename EvalT::ScalarT> eff_press_tag("N", dl->dummy);
-    fm0.requireField<EvalT>(eff_press_tag);
-  }
-*/
   // -------------------- Starting evaluators construction and registration ------------------------ //
 
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset);

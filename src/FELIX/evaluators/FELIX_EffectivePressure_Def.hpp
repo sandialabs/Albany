@@ -16,7 +16,7 @@ EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterLis
   phi       (p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar),
   H         (p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar),
   z_s       (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
-  N         (p.get<std::string> ("Effective Pressure Name"),dl->node_scalar)
+  N         (p.get<std::string> ("Effective Pressure Variable Name"),dl->node_scalar)
 {
   has_phi = p.isParameter("Has Hydraulic Potential") ? p.get<bool>("Has Hydraulic Potential") : false;
 
@@ -26,7 +26,7 @@ EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterLis
   }
   else
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (p.isParameter("Hydraulic-Over-Hydrostatic Potential Ratio"), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (!p.isParameter("Hydraulic-Over-Hydrostatic Potential Ratio"), std::logic_error,
                                 "Error! The parameter 'Hydraulic-Over-Hydrostatic Potential Ratio' must be specified if the Hydraulic Potential is not available.\n");
 
     alpha = p.get<double>("Hydraulic-Over-Hydrostatic Potential Ratio");

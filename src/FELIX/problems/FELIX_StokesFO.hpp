@@ -428,7 +428,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
     paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
   }
-  if (params->get("Ice-Hydrology Coupling",true) && std::is_same<EvalT,AlbanyTraits::Residual>::value)
+  if (params->get("Ice-Hydrology Coupling",false) && std::is_same<EvalT,AlbanyTraits::Residual>::value)
   {
     // If we are solving the StokesFO problem, in the big picture of the coupling
     // with the hydrology problem, we need to save some data on the 2D mesh
@@ -537,7 +537,7 @@ FELIX::StokesFO::buildEffectivePressureEvaluator ()
 {
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure"));
 
-  Teuchos::ParameterList& physics = this->params->sublist("Physical Parameters");
+  Teuchos::ParameterList& physics = this->params->sublist("FELIX Physical Parameters");
   Teuchos::ParameterList& paramList = this->params->sublist("FELIX Basal Friction Coefficient");
 
   // Input
@@ -586,7 +586,7 @@ FELIX::StokesFO::buildBasalFrictionCoefficientEvaluator ()
   p->set<std::string>("Effective Pressure Variable Name", "N");
 
   //Input physics parameters
-  Teuchos::ParameterList& physics = this->params->sublist("Physical Parameters");
+  Teuchos::ParameterList& physics = this->params->sublist("FELIX Physical Parameters");
 
   Teuchos::ParameterList& paramList = this->params->sublist("FELIX Basal Friction Coefficient");
   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);

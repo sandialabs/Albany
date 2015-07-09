@@ -16,10 +16,10 @@
 void
 FELIX::Stokes::
 getVariableType(Teuchos::ParameterList& paramList,
-		const std::string& defaultType,
-		FELIX::Stokes::NS_VAR_TYPE& variableType,
-		bool& haveVariable,
-		bool& haveEquation)
+    const std::string& defaultType,
+    FELIX::Stokes::NS_VAR_TYPE& variableType,
+    bool& haveVariable,
+    bool& haveEquation)
 {
   std::string type = paramList.get("Variable Type", defaultType);
   if (type == "None")
@@ -30,7 +30,7 @@ getVariableType(Teuchos::ParameterList& paramList,
     variableType = NS_VAR_TYPE_DOF;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-		       "Unknown variable type " << type << std::endl);
+           "Unknown variable type " << type << std::endl);
   haveVariable = (variableType != NS_VAR_TYPE_NONE);
   haveEquation = (variableType == NS_VAR_TYPE_DOF);
 }
@@ -58,14 +58,14 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
 
-  getVariableType(params->sublist("Flow"), "DOF", flowType, 
-		  haveFlow, haveFlowEq);
+  getVariableType(params->sublist("Flow"), "DOF", flowType,
+      haveFlow, haveFlowEq);
 
   if (haveFlowEq) {
     havePSPG = params->get("Have Pressure Stabilization", true);
   }
 
-  haveSource = true; 
+  haveSource = true;
 
 
 
@@ -84,7 +84,7 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Print out a summary of the problem
   *out << "Stokes problem:" << std::endl
        << "\tSpatial dimension:      " << numDim << std::endl
-       << "\tFlow variables:         " << variableTypeToString(flowType) 
+       << "\tFlow variables:         " << variableTypeToString(flowType)
        << std::endl
        << "\tPressure stabilization: " << havePSPG << std::endl;
 }
@@ -106,8 +106,8 @@ buildProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
-		  Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
+      Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
   //construct Neumann evaluators
   constructNeumannEvaluators(meshSpecs[0]);
@@ -155,7 +155,7 @@ FELIX::Stokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsSt
 
    // Note: we only enter this function if sidesets are defined in the mesh file
    // i.e. meshSpecs.ssNames.size() > 0
-   
+
     Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
    // Check to make sure that Neumann BCs are given in the input file
@@ -169,11 +169,11 @@ FELIX::Stokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsSt
    //
    // Currently we aren't exactly doing this right.  I think to do this
    // correctly we need different neumann evaluators for each DOF (velocity,
-   // pressure, temperature, flux) since velocity is a vector and the 
+   // pressure, temperature, flux) since velocity is a vector and the
    // others are scalars.  The dof_names stuff is only used
    // for robin conditions, so at this point, as long as we don't enable
    // robin conditions, this should work.
-   
+
    std::vector<std::string> nbcNames;
    Teuchos::RCP< Teuchos::Array<std::string> > dof_names =
      Teuchos::rcp(new Teuchos::Array<std::string>);
@@ -198,7 +198,7 @@ FELIX::Stokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsSt
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
-   std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, basal 
+   std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, basal
 
    // Note that sidesets are only supported for two and 3D currently
    //
@@ -211,7 +211,7 @@ FELIX::Stokes::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsSt
        std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
 
    condNames[1] = "dudn";
-   
+
    condNames[2] = "basal";
 
    nfm.resize(1);
@@ -238,6 +238,7 @@ FELIX::Stokes::getValidProblemParameters() const
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("Tau M", false, "");
   validPL->sublist("Body Force", false, "");
+  validPL->sublist("FELIX Physical Parameters", false, "");
 
   return validPL;
 }
