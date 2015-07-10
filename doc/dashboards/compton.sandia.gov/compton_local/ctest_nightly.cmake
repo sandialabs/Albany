@@ -245,9 +245,9 @@ SET(CONFIGURE_OPTIONS
   -DCMAKE_Fortran_COMPILER:FILEPATH=mpiifort
   -DCMAKE_AR:FILEPATH=/home/projects/x86-64/intel/compilers/2015/composer_xe_2015.2.164/bin/intel64_mic/xiar
   -DCMAKE_LINKER:FILEPATH=/home/projects/x86-64/intel/compilers/2015/composer_xe_2015.2.164/bin/intel64_mic/xild
-  "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_C_FLAGS:STRING='-O3 -w -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -mmic -mkl -mt_mpi -DPREC_TIMER -fopenmp'"
+  "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
+  "-DCMAKE_C_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
+  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DPREC_TIMER -fopenmp'"
   -DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON
   -DTpetra_INST_INT_LONG_LONG:BOOL=OFF
   -DTpetra_INST_INT_INT:BOOL=ON
@@ -306,7 +306,7 @@ SET(CONFIGURE_OPTIONS
   -DTPL_ENABLE_BLAS:BOOL=ON
   -DTPL_ENABLE_LAPACK:BOOL=ON
   -DBLAS_LIBRARY_DIRS:FILEPATH=${INTEL_DIR}
-  "-DTPL_BLAS_LIBRARIES:STRING='${INTEL_DIR}/libmkl_intel_lp64.a\\;${INTEL_DIR}/libmkl_intel_thread.a\\;${INTEL_DIR}/libmkl_core.a'"
+  "-DTPL_BLAS_LIBRARIES:STRING='${INTEL_DIR}/libmkl_intel_lp64.a\\;${INTEL_DIR}/libmkl_sequential.a\\;${INTEL_DIR}/libmkl_core.a'"
   -DLAPACK_LIBRARY_NAMES:STRING=
 #
   -DTPL_ENABLE_ParMETIS:STRING=ON
@@ -572,6 +572,4 @@ endif()
 
 ENDIF (BUILD_ALBANY)
 
-
 # Done!!!
-

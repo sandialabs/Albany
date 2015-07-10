@@ -60,13 +60,11 @@ else
 fi
 
 
-#/opt/local/slurm/default/bin/salloc -n 4 -N 4 -p stella bash -c \
-#"env MV2_USE_CUDA=1 DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /home/gahanse/bin/ctest -VV -S $SCRIPT_DIR/ctest_nightly.cmake" >> $LOG_FILE 2>&1
-
 #/usr/local/bin/salloc -n 4 -w compton37 bash -c \
-/usr/local/bin/salloc -w compton17 bash -c \
+#/usr/local/bin/salloc -w compton17 bash -c \
+bash -c \
 "env DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /home/projects/x86-64/cmake/3.0.2/bin/ctest -VV -S $SCRIPT_DIR/ctest_nightly.cmake" >> $LOG_FILE 2>&1
 
 if [ "$SUBMIT_RESULTS" = "ON" ]; then
-  /usr/bin/rsync -e '/usr/bin/ssh -i /home/gahanse/.ssh/id_rsa.pub' -avz -vvvv --delete $TEST_DIR/buildAlbany/nightly/Albany/ software-login.sandia.gov:/home/gahanse/Albany_compton >> $LOG_FILE 2>&1
+  /usr/bin/rsync -e '/usr/bin/ssh -i /home/gahanse/.ssh/id_rsa' -avz --rsync-path="/usr/bin/rsync" --delete $TEST_DIR/buildAlbany/nightly/Albany/ gahanse@software-login.sandia.gov:/home/gahanse/Albany_compton >> $LOG_FILE 2>&1
 fi
