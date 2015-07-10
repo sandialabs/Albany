@@ -204,7 +204,7 @@ Albany::PeridigmProblem::constructEvaluators(
      { //registering field for dirichlet boundary conditions
        std::string stateName("dirichlet_field");
        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
          stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
        }
      }
@@ -377,7 +377,7 @@ Albany::PeridigmProblem::constructEvaluators(
      { //registering field for dirichlet boundary conditions
         std::string stateName("dirichlet_field");
         if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
           stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
         }
       }
@@ -574,7 +574,7 @@ Albany::PeridigmProblem::constructEvaluators(
      { //registering field for dirichlet boundary conditions
         std::string stateName("dirichlet_field");
         if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
           stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
         }
       }
