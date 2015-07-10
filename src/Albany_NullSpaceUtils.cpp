@@ -115,10 +115,11 @@ void Coord2RBM_nonElasticity(
   for (LO i = 0; i < Nnodes*Ndof*(NSdim + NscalarDof); i++)
     rbm[i] = 0.0;
 
-  std::cout << "...case: " << Ndof - NscalarDof << std::endl; 
+  std::cout << "...Ndof: " << Ndof << std::endl; 
+  std::cout << "...case: " << NSdim - NscalarDof << std::endl; 
   for (LO node = 0 ; node < Nnodes; node++) {
     dof = node*Ndof;
-    switch( Ndof - NscalarDof ) {
+    switch( NSdim - NscalarDof ) {
     case 3:
       for (ii=0;ii<2;ii++) { /* upper right = [ Q ] -- xy rotation only */
         jj = 2+NscalarDof; 
@@ -302,7 +303,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
     getCoordArrays(x, y, z);
     const LO numNodes = xyz.size() / numSpaceDim;
     if (setNonElastRBM == true) 
-      Coord2RBM_nonElasticity(numNodes, x, y, z, nullSpaceDim, numScalar, nullSpaceDim, &rr[0]);
+      Coord2RBM_nonElasticity(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
     else
       Coord2RBM(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
     if (isMLUsed()) {
@@ -318,6 +319,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
       Teuchos::RCP<Tpetra_MultiVector> Rbm = Teuchos::rcp(
         new Tpetra_MultiVector(soln_map, rrAV, soln_map->getNodeNumElements(),
                                nullSpaceDim + numScalar));
+      Tpetra_MatrixMarket_Writer::writeDenseFile("rbm.mm", Rbm);
       plist->set("Nullspace", Rbm);
     }
   }
