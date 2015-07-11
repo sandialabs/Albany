@@ -137,24 +137,32 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT f1 = 1.0/(3.0 - 4.0*powder_hemispherical_reflectivity);
   ScalarT f2 = 2*powder_hemispherical_reflectivity*a*a/C;
   ScalarT f3 = 3.0*(1.0 - powder_hemispherical_reflectivity);
-// -----------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
 	  MeshScalarT X = coord_(cell,qp,0);
 	  MeshScalarT Y = coord_(cell,qp,1);
 	  MeshScalarT Z = coord_(cell,qp,2);
+//  Code for moving laser point
+    ScalarT LaserVelocity_x = 1.0;
+    ScalarT LaserVelocity_z = 0.0;
+    ScalarT Laser_Init_position_x = 0.0;
+    ScalarT Laser_Init_position_z = 0.0;
+    ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*time;
+    ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*time;
+    
 
 //  Note:(0.0003 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.
     ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*(0.0003-Y))-b1*exp(-2.0*a*beta*(0.0003-Y))) - B*(c2*exp(-2.0*a*(lambda - beta*(0.0003-Y)))-c1*exp(2.0*a*(lambda-beta*(0.0003-Y))))) + f3*(exp(-beta*(0.0003-Y))+powder_hemispherical_reflectivity*exp(beta*(0.0003-Y) - 2.0*lambda)));
     MeshScalarT* XX = &coord_(cell,qp,0);
-    ScalarT radius = sqrt((X - 0.00)*(X - 0.00) + (Z - 0.0)*(Z - 0.0));
+    ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Z - Laser_center_z)*(Z - Laser_center_z));
      if (radius < laser_beam_radius && beta*(0.0003-Y) <= lambda)
-	    laser_source_(cell,qp) =beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*depth_profile;
-     else laser_source_(cell,qp) =0.0;
+            laser_source_(cell,qp) =beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*depth_profile;
+     else   laser_source_(cell,qp) =0.0;
     }
   }
 }
-
 //**********************************************************************
 template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
