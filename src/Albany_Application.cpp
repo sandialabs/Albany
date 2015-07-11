@@ -1230,9 +1230,20 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   // Zero out Jacobian
-  overlapped_jacT->setAllToScalar(0.0);
   jacT->resumeFill();
   jacT->setAllToScalar(0.0);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if ( ! overlapped_jacT->isFillActive())
+    overlapped_jacT->resumeFill();
+#endif
+  overlapped_jacT->setAllToScalar(0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+    overlapped_jacT->fillComplete();
+  }
+#endif
 
   // Set data in Workset struct, and perform fill via field manager
   {

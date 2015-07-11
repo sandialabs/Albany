@@ -519,9 +519,6 @@ evaluateFields(typename Traits::EvalData workset)
    JacT = workset.JacT;
    Index=workset.wsElNodeEqID_kokkos;
 
-   if (!JacT->isFillComplete())
-      JacT->fillComplete();
-
    jacobian=JacT->getLocalMatrix();
 
    loadResid = Teuchos::nonnull(fT);
@@ -552,9 +549,6 @@ evaluateFields(typename Traits::EvalData workset)
         else
             Kokkos::parallel_for(ScatterRank2_no_adjoint_Policy(0,workset.numCells),*this);
    }
-
- if (JacT->isFillComplete())
-    JacT->resumeFill();
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
  auto elapsed = std::chrono::high_resolution_clock::now() - start;
