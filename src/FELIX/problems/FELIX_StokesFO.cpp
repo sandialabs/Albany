@@ -32,10 +32,27 @@ FELIX::StokesFO::StokesFO (const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
 
-  // Need to allocate a fields in mesh database
-  Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
-  for (int i(0); i<req.size(); ++i)
-    this->requirements.push_back(req[i]);
+  if (params->isParameter("RequiredFields"))
+  {
+    // Need to allocate a fields in mesh database
+    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
+    for (int i(0); i<req.size(); ++i)
+      this->requirements.push_back(req[i]);
+  }
+  else
+  {
+    this->requirements.push_back("surface_height");
+#ifdef CISM_HAS_FELIX
+    this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM
+    this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM
+#endif
+    this->requirements.push_back("temperature");
+    this->requirements.push_back("basal_friction");
+    this->requirements.push_back("thickness");
+    this->requirements.push_back("flow_factor");
+    this->requirements.push_back("surface_velocity");
+    this->requirements.push_back("surface_velocity_rms");
+  }
 }
 
 FELIX::StokesFO::~StokesFO()

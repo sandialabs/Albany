@@ -4,15 +4,12 @@
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
 
-    <Parameter name="Required Fields" type="Array(string)" value="{thickness,surface_height,flow_factor,temperature,surface_velocity,surface_velocity_rms}"/>
+    <ParameterList name="FELIX Physical Parameters">
+      <Parameter name="Water Density" type="double" value="1000"/>
+      <Parameter name="Ice Density" type="double" value="900"/>
+      <Parameter name="Gravity Acceleration" type="double" value="10"/>
+    </ParameterList>
 
-        <ParameterList name="FELIX Physical Parameters">
-            <Parameter name="Water Viscosity" type="double" value="1e-3"/>
-            <Parameter name="Water Density" type="double" value="1000"/>
-            <Parameter name="Ice Density" type="double" value="900"/>
-            <Parameter name="Ice Latent Heat" type="double" value="3e5"/>
-            <Parameter name="Gravity Acceleration" type="double" value="10"/>
-        </ParameterList>
     <!--ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS Bottom for DOF U0" type="double" value="0.0"/>
       <Parameter name="DBC on NS Bottom for DOF U1" type="double" value="0.0"/>

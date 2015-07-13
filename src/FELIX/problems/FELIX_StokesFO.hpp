@@ -412,7 +412,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters");
+    Teuchos::ParameterList& physParamList = params->sublist("FELIX Physical Parameters");
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
 
     //Output
