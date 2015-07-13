@@ -209,6 +209,9 @@ public:
   void
   splitOpenFaces();
 
+  void
+  insertSurfaceElements(std::set<EntityPair> const & fractured_faces);
+
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
   ///
