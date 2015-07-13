@@ -14,6 +14,7 @@ SET(SOURCES
   GOAL_FieldManagerBundle.cpp
   GOAL_LinearSystem.cpp
   evaluators/GOAL_MechanicsAdjoint.cpp
+  evaluators/GOAL_AverageSolution.cpp
   responses/GOAL_MechAdjResponse.cpp)
 
 SET(HEADERS
@@ -23,6 +24,8 @@ SET(HEADERS
   GOAL_LinearSystem.hpp
   evaluators/GOAL_MechanicsAdjoint.hpp
   evaluators/GOAL_MechanicsAdjoint_Def.hpp
+  evaluators/GOAL_AverageSolution.hpp
+  evaluators/GOAL_AverageSolution_Def.hpp
   responses/GOAL_MechAdjResponse.hpp)
 
 include_directories(
