@@ -502,11 +502,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
         //Now we have to stuff the vector in the mesh data
         for (int i(0); i<nodes.size(); ++i)
         {
-          node   = bulkData->get_entity(stk::topology::NODE_RANK, i + 1);
           nodeId = bulkData->identifier(nodes[i]) - 1;
           lid    = nodes_map->getLocalElement((GO)(nodeId));
 
-          values = stk::mesh::field_data(*field, node);
+          values = stk::mesh::field_data(*field, nodes[i]);
           values[0] = req_vec_view[lid];
         }
       }
@@ -547,11 +546,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
         //Now we have to stuff the vector in the mesh data
         for (int i(0); i<elems.size(); ++i)
         {
-          elem   = bulkData->get_entity(stk::topology::ELEM_RANK, i + 1);
           elemId = bulkData->identifier(elems[i]) - 1;
           lid    = elems_map->getLocalElement((GO)(elemId));
 
-          values = stk::mesh::field_data(*field, elem);
+          values = stk::mesh::field_data(*field, elems[i]);
           values[0] = req_vec_view[lid];
         }
       }
@@ -601,11 +599,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
         //Now we have to stuff the vector in the mesh data
         for (int i(0); i<nodes.size(); ++i)
         {
-          node   = bulkData->get_entity(stk::topology::NODE_RANK, i + 1);
           nodeId = bulkData->identifier(nodes[i]) - 1;
           lid    = nodes_map->getLocalElement((GO)(nodeId));
 
-          values = stk::mesh::field_data(*field, node);
+          values = stk::mesh::field_data(*field, nodes[i]);
 
           for (int iDim(0); iDim<fieldDim; ++iDim)
             values[iDim] = req_mvec_view[iDim][lid];
@@ -655,11 +652,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
         //Now we have to stuff the vector in the mesh data
         for (int i(0); i<elems.size(); ++i)
         {
-          elem   = bulkData->get_entity(stk::topology::ELEM_RANK, i + 1);
           elemId = bulkData->identifier(elems[i]) - 1;
           lid    = elems_map->getLocalElement((GO)(elemId));
 
-          values = stk::mesh::field_data(*field, node);
+          values = stk::mesh::field_data(*field, elems[i]);
 
           for (int iDim(0); iDim<fieldDim; ++iDim)
             values[iDim] = req_mvec_view[iDim][lid];
