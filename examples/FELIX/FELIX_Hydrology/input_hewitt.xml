@@ -18,6 +18,15 @@
             <Parameter name="NBC on SS SideSet0 for DOF Hydraulic Potential set neumann" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
         </ParameterList-->
 
+        <ParameterList name="Response Functions">
+          <Parameter name="Number" type="int" value="1"/>
+          <Parameter name="Response 0" type="string" value="Solution Max Value"/>
+          <ParameterList name="ResponseParams 1">
+            <Parameter name="Equation" type="int" value="1" />
+            <Parameter name="Num Equations" type="int" value="1" />
+          </ParameterList>
+        </ParameterList>
+
         <ParameterList name="FELIX Physical Parameters">
             <Parameter name="Water Viscosity" type="double" value="1e-3"/>
             <Parameter name="Water Density" type="double" value="1000"/>
@@ -36,6 +45,14 @@
         </ParameterList>
 
     </ParameterList> <!-- Problem -->
+
+    <ParameterList name="Regression Results">
+      <Parameter  name="Number of Comparisons" type="int" value="1"/>
+      <Parameter  name="Test Values" type="Array(double)" value="{8940176.73567}"/>
+      <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+      <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
+      <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
+    </ParameterList>
 
     <ParameterList name="Discretization">
         <Parameter name="Periodic_y BC" type="bool" value="true"/>
