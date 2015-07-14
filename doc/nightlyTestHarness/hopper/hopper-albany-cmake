@@ -15,6 +15,7 @@ cmake  \
     -D ENABLE_GPTL:BOOL=OFF \
     -D ENABLE_LCM:BOOL=OFF \
     -D ENABLE_FAST_FELIX:BOOL=ON \
+    -D ENABLE_64BIT_INT:BOOL=ON \
     -D GPTL_INCLUDE_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
     -D GPTL_LIBRARY_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
     -D Albany_BUILD_STATIC_EXE:BOOL=ON \
