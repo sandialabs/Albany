@@ -18,6 +18,7 @@ Albany::SimMeshStruct::SimMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
 		const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
+  SimUtil_start();
   Sim_readLicenseFile(0);
   SimPartitionedMesh_start(NULL, NULL);
   gmi_sim_start();
@@ -59,6 +60,7 @@ Albany::SimMeshStruct::~SimMeshStruct()
   gmi_sim_stop();
   SimPartitionedMesh_stop();
   Sim_unregisterAllKeys();
+  SimUtil_stop();
 }
 
 Albany::AbstractMeshStruct::msType
