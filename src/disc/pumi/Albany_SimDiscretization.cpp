@@ -18,11 +18,3 @@ Albany::SimDiscretization::SimDiscretization(
 Albany::SimDiscretization::~SimDiscretization()
 {
 }
-
-void Albany::SimDiscretization::
-createField(const char* name, int value_type)
-{
-  apf::Mesh* mesh = meshStruct->getMesh();
-  apf::Field* f = apf::createSIMField(mesh,name,value_type,mesh->getShape());
-  apf::zeroField(f);
-}

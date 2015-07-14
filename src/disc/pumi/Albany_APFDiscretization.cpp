@@ -1156,7 +1156,7 @@ copyNodalDataToAPF (const bool copy_all) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                  "dim is not in {1,2,3}");
     }
-    apf::Field* f = apf::createFieldOn(m, nd->name.c_str(), value_type);
+    apf::Field* f = meshStruct->createNodalField(nd->name.c_str(), value_type);
     setField(nd->name.c_str(), &nd->buffer[0], false, 0, nentries);
   }
 }

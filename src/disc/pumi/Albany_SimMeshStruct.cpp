@@ -69,6 +69,12 @@ Albany::SimMeshStruct::meshSpecsType()
   return SIM_MS;
 }
 
+apf::Field*
+Albany::SimMeshStruct::createNodalField(char const* name, int valueType)
+{
+  return apf::createSIMFieldOn(this->mesh, name, valueType);
+}
+
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::SimMeshStruct::getValidDiscretizationParameters() const
 {
