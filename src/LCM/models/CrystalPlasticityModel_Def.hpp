@@ -670,9 +670,9 @@ computeState(typename Traits::EvalData workset,
             // DJL need a graceful way to exit the constitutive model with an error if the maximum
             // number of iterations has been reached but the system has not converged
             std::cout
-                << "\n****WARNING: CrystalPlasticity model failed to converge in "
-                << iteration << " iterations!  Final residual value = "
-                << residual_val << ".\n" << std::endl;
+	      << "\n****WARNING: CrystalPlasticity model failed to converge in " << iteration << " iterations!"
+	      << "  Relative tolerance = " << residual_relative_tolerance << ", absolute tolerance = " << residual_absolute_tolerance
+	      << ", final residual value = " << residual_val << ".\n" << std::endl;
             converged = true;
           }
 
