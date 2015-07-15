@@ -20,7 +20,7 @@
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
-        <Parameter name="Output Filename" type="string" value="VectorPoisson_PeridigmResults"/>
+        <!--Parameter name="Output Filename" type="string" value="VectorPoisson_PeridigmResults"/-->
         <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Displacement" type="bool" value="true"/>
