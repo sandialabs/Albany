@@ -121,9 +121,9 @@ void Albany::PUMIMeshStruct::setMesh(apf::Mesh2* new_mesh)
 }
 
 apf::Field*
-Albany::SimMeshStruct::createNodalField(char const* name, int valueType)
+Albany::PUMIMeshStruct::createNodalField(char const* name, int valueType)
 {
-  return apf::createSIMFieldOn(this->mesh, name, valueType);
+  return apf::createFieldOn(this->mesh, name, valueType);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
