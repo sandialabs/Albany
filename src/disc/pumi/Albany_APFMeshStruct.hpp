@@ -74,6 +74,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     //! Process PUMI mesh for element block specific info
     void setupMeshBlkInfo();
 
+    virtual apf::Field* createNodalField(char const* name, int valueType) = 0;
+
     bool hasRestartSolution;
     double restartDataTime;
     int neq;

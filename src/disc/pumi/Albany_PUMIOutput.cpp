@@ -9,6 +9,9 @@
 #if defined(HAVE_STK)
 #include "Albany_PUMIExodus.hpp"
 #endif
+#if defined(ALBANY_AMP)
+#include "Albany_SimOutput.hpp"
+#endif
 
 Albany::PUMIOutput::~PUMIOutput() {
 }
@@ -21,6 +24,10 @@ Albany::PUMIOutput* Albany::PUMIOutput::create(
 #if defined(HAVE_STK)
   if (meshStruct->outputFileName.find("exo") != std::string::npos)
     return new PUMIExodus(meshStruct, comm);
+#endif
+#if defined(ALBANY_AMP)
+  if (meshStruct->outputFileName.find("sms") != std::string::npos)
+    return new SimOutput(meshStruct, comm);
 #endif
   if (meshStruct->outputFileName.find("vtk") != std::string::npos)
     return new PUMIVtk(meshStruct, comm);

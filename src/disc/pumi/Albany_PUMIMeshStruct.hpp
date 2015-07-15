@@ -27,6 +27,8 @@ class PUMIMeshStruct : public APFMeshStruct {
     // For RC: Recoverable.
     void setMesh(apf::Mesh2* new_mesh);
 
+    virtual apf::Field* createNodalField(char const* name, int valueType);
+
 private:
 
     Teuchos::RCP<const Teuchos::ParameterList>

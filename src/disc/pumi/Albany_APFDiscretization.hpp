@@ -182,8 +182,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
                         const std::vector<int>& indices,
                         ST* dataT, bool overlapped) const;
 
-    virtual void createField(const char* name, int value_type) = 0;
-
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str);
 

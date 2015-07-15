@@ -25,8 +25,6 @@ class PUMIDiscretization : public APFDiscretization {
     //! Destructor
     ~PUMIDiscretization();
 
-    void createField(const char* name, int value_type);
-
     // Retrieve mesh struct
     Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() {return pumiMeshStruct;}
 

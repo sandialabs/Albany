@@ -249,8 +249,8 @@ Albany::APFMeshStruct::setFieldAndBulkData(
       assert(neq == 4 || neq == 9);
       valueType = apf::MATRIX;
     }
-    apf::createFieldOn(mesh,residual_name,valueType);
-    apf::createFieldOn(mesh,solution_name,valueType);
+    this->createNodalField(residual_name,valueType);
+    this->createNodalField(solution_name,valueType);
   }
   else
     splitFields(solVectorLayout);
@@ -317,8 +317,8 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Error in input file: specification of solution vector layout is incorrect\n");
 
-    apf::createFieldOn(mesh,fieldLayout[i].c_str(),valueType);
-    apf::createFieldOn(mesh,fieldLayout[i].append("Res").c_str(),valueType);
+    this->createNodalField(fieldLayout[i].c_str(),valueType);
+    this->createNodalField(fieldLayout[i].append("Res").c_str(),valueType);
   }
 
 }

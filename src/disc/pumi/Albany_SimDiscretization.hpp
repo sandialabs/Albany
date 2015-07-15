@@ -24,8 +24,6 @@ class SimDiscretization : public APFDiscretization {
 
     //! Destructor
     ~SimDiscretization();
-
-    void createField(const char* name, int value_type);
 };
 
 }
