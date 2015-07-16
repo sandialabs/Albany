@@ -222,11 +222,14 @@ resize(const int numSpaceDim_, const LO numNodes)
 {
   numSpaceDim = numSpaceDim_;
   xyz.resize(numSpaceDim * (numNodes == 0 ? 1 : numNodes));
-  if(nullSpaceDim > 0)
-    if (setNonElastRBM == true)
+  if(nullSpaceDim > 0) {
+    if (setNonElastRBM == true) {
       rr.resize((nullSpaceDim + numScalar) * numSpaceDim * numNodes);
-    else
+    }
+    else {
       rr.resize((nullSpaceDim + numScalar) * numPDEs * numNodes);
+    }
+   }
 }
 
 void RigidBodyModes::
