@@ -20,7 +20,7 @@
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
-        <Parameter name="Output Filename" type="string" value="VectorPoisson_PeridigmResults"/>
+        <!--Parameter name="Output Filename" type="string" value="VectorPoisson_PeridigmResults"/-->
         <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Displacement" type="bool" value="true"/>
@@ -34,11 +34,11 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.00"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.01"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.00"/>
       <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.01"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.02"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.00"/>
       <Parameter name="DBC on NS nodelist_2 for DOF Z" type="double" value="0.03"/>
     </ParameterList>
   </ParameterList>
@@ -75,7 +75,7 @@
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
 		  <ParameterList name="Forward Solve"> 
@@ -105,7 +105,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="None"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="1"/>
@@ -137,7 +137,7 @@
 	      <Parameter name="Test Type" type="string" value="NormF"/>
 	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	      <Parameter name="Scale Type" type="string" value="Scaled"/>
-	      <Parameter name="Tolerance" type="double" value="1e-6"/>
+	      <Parameter name="Tolerance" type="double" value="1e-10"/>
 	    </ParameterList>
 	    <ParameterList name="Test 1">
 	      <Parameter name="Test Type" type="string" value="MaxIters"/>

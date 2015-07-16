@@ -1293,7 +1293,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
       }
     }
     {
-      const std::string& meshPart = "nodelist_11"; //TODO: make this general
+      const std::string& meshPart = "nodelist_2"; //TODO: make this general
       Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
       if(it != disc->getNodeSetGIDs().end()) {
         const std::vector<GO>& nsNodesGIDs = it->second;
@@ -1312,7 +1312,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
   }
 
   if (dirichletControlField != NULL) {
-    const std::string& meshPart = "nodelist_16"; //TODO: make this general
+    const std::string& meshPart = "nodelist_5"; //TODO: make this general
     Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
     if(it != disc->getNodeSetGIDs().end()) {
       const std::vector<GO>& nsNodesGIDs = it->second;

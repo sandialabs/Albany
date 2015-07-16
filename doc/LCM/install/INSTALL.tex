@@ -20,7 +20,7 @@
 \section{Introduction}
 This document describes the necessary steps to install Albany/LCM and
 Trilinos on a machine with Fedora Linux. The procedures described
-herein were tested using Fedora 21.
+herein were tested using Fedora 22 and Fedora 21.
 
 If you want a shortcut obtain the script \verb+install_albany.sh+
 (stored in \verb+Albany/doc/LCM/build+) and then try:
@@ -33,7 +33,8 @@ with help from this document you will be able to complete the install.
 
 \section{Required packages}
 After installing Fedora, the following packages should be installed
-using the {\tt yum} command:
+using the {\tt dnf} command in Fedora 22 or the {\tt yum} command in
+Fedora 21:
 \begin{verbatim}
 blas
 blas-devel
@@ -66,7 +67,11 @@ git
 hwloc-libs
 \end{verbatim}
 
-For example, to install the first package you should type:
+For example, to install the first package you should type in Fedora 22
+\begin{verbatim}
+sudo dnf install blas
+\end{verbatim}
+or in Fedora 21
 \begin{verbatim}
 sudo yum install blas
 \end{verbatim}

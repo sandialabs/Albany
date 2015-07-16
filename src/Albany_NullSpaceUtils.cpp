@@ -115,27 +115,26 @@ void Coord2RBM_nonElasticity(
   for (LO i = 0; i < Nnodes*Ndof*(NSdim + NscalarDof); i++)
     rbm[i] = 0.0;
 
-  std::cout << "...case: " << Ndof - NscalarDof << std::endl; 
+  std::cout << "...Ndof: " << Ndof << std::endl; 
+  std::cout << "...case: " << NSdim - NscalarDof << std::endl; 
   for (LO node = 0 ; node < Nnodes; node++) {
     dof = node*Ndof;
-    switch( Ndof - NscalarDof ) {
-    case 4:
-      for (ii=0;ii<3;ii++) { /* upper right = [ Q ] -- xy rotation only */
-        jj = 3+NscalarDof; 
+    switch( NSdim - NscalarDof ) {
+    case 3:
+      for (ii=0;ii<2;ii++) { /* upper right = [ Q ] -- xy rotation only */
+        jj = 2+NscalarDof; 
         offset = dof+ii+jj*vec_leng;
         // std::cout <<"jj " << jj << " " << ii + jj << std::endl;
         if (ii == 0) 
           rbm[offset] = y[node]; 
         else if (ii == 1)
           rbm[offset] = x[node]; 
-        else
-          rbm[offset] = 0.0;  
       }
-      ii = 0; jj = 3+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
+      ii = 0; jj = 2+NscalarDof; offset = dof+ii+jj*vec_leng; rbm[offset] *= -1.0;
       /* There is no break here and that is on purpose */
-    case 3:
-      for (ii=0;ii<3+NscalarDof;ii++) { /* upper left = [ I ] */
-        for (jj=0;jj<3+NscalarDof;jj++) {
+    case 2:
+      for (ii=0;ii<2+NscalarDof;ii++) { /* upper left = [ I ] */
+        for (jj=0;jj<2+NscalarDof;jj++) {
           offset = dof+ii+jj*vec_leng;
           rbm[offset] = (ii==jj) ? 1.0 : 0.0;
         }
@@ -223,11 +222,14 @@ resize(const int numSpaceDim_, const LO numNodes)
 {
   numSpaceDim = numSpaceDim_;
   xyz.resize(numSpaceDim * (numNodes == 0 ? 1 : numNodes));
-  if(nullSpaceDim > 0)
-    if (setNonElastRBM == true)
+  if(nullSpaceDim > 0) {
+    if (setNonElastRBM == true) {
       rr.resize((nullSpaceDim + numScalar) * numSpaceDim * numNodes);
-    else
+    }
+    else {
       rr.resize((nullSpaceDim + numScalar) * numPDEs * numNodes);
+    }
+   }
 }
 
 void RigidBodyModes::
@@ -304,7 +306,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
     getCoordArrays(x, y, z);
     const LO numNodes = xyz.size() / numSpaceDim;
     if (setNonElastRBM == true) 
-      Coord2RBM_nonElasticity(numNodes, x, y, z, numSpaceDim, numScalar, nullSpaceDim, &rr[0]);
+      Coord2RBM_nonElasticity(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
     else
       Coord2RBM(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
     if (isMLUsed()) {
@@ -320,6 +322,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
       Teuchos::RCP<Tpetra_MultiVector> Rbm = Teuchos::rcp(
         new Tpetra_MultiVector(soln_map, rrAV, soln_map->getNodeNumElements(),
                                nullSpaceDim + numScalar));
+      Tpetra_MatrixMarket_Writer::writeDenseFile("rbm.mm", Rbm);
       plist->set("Nullspace", Rbm);
     }
   }

@@ -25,19 +25,8 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  char * xmlfilename=0;
-  char defaultfile[20]={"inputAnalysis.xml"};
-  if(argc>1){
-    if(!strcmp(argv[1],"--help")){
-      printf("albanyAnalysis [inputfile.xml]\n");
-      exit(1);
-    }
-    else
-      xmlfilename=argv[1];
-  }
-  else
-    xmlfilename=defaultfile;
-
+  Albany::CmdLineArgs cmd("inputAnalysis.xml");
+  cmd.parse_cmdline(argc, argv, *out);
 
   try {
     Teuchos::RCP<Teuchos::Time> totalTime =
@@ -53,8 +42,13 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
 
+    // Connect vtune for performance profiling
+    if (cmd.vtune) {
+      Albany::connect_vtune(comm->getRank());
+    }
+
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
-      Teuchos::rcp(new Albany::SolverFactory(xmlfilename, comm));
+      Teuchos::rcp(new Albany::SolverFactory(cmd.xml_filename, comm));
 
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > appThyra = slvrfctry->createT(comm, comm);
 

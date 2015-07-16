@@ -5,7 +5,7 @@
 ##*****************************************************************//
 
 # This test is not currently set up to run on the BGQ...
-IF(NOT ALBANY_PARALLEL_ONLY)
+IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_LCM AND LCM_TEST_EXES AND ALBANY_BGL)
 
 # Create a symlink to the Partition executable
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink

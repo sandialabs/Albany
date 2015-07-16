@@ -120,6 +120,12 @@ void Albany::PUMIMeshStruct::setMesh(apf::Mesh2* new_mesh)
   mesh = new_mesh;
 }
 
+apf::Field*
+Albany::PUMIMeshStruct::createNodalField(char const* name, int valueType)
+{
+  return apf::createFieldOn(this->mesh, name, valueType);
+}
+
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
 {

@@ -747,7 +747,7 @@ void AAdapt::AerasHydrostatic::compute(double* solution, const double* X) {
   const double sinLambda = std::sin(lambda);
   const double cosLambda = std::cos(lambda);
 
-  const double u =  U1*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+  const double u =  U0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
   const double v = -U1*(sinLambda*sinAlpha);
 
 

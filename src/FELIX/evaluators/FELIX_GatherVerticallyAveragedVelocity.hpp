@@ -133,6 +133,61 @@ private:
 };
 
 
+#ifdef ALBANY_ENSEMBLE
+template<typename Traits>
+class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPResidual,Traits>
+    : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::MPResidual,Traits> {
+
+public:
+
+  GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
+};
+
+template<typename Traits>
+class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPJacobian,Traits>
+    : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::MPJacobian,Traits> {
+
+public:
+
+  GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+};
+
+template<typename Traits>
+class GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPTangent,Traits>
+    : public GatherVerticallyAveragedVelocityBase<PHAL::AlbanyTraits::MPTangent,Traits> {
+
+public:
+
+  GatherVerticallyAveragedVelocity(const Teuchos::ParameterList& p,
+                    const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+
+private:
+  typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
+};
+#endif
 
 }
 

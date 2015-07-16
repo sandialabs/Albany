@@ -182,8 +182,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
                         const std::vector<int>& indices,
                         ST* dataT, bool overlapped) const;
 
-    virtual void createField(const char* name, int value_type) = 0;
-
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str);
 
@@ -290,7 +288,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     }
 
     //! Get Numbering for layered mesh (mesh structred in one direction)
-    Teuchos::RCP<LayeredMeshNumbering<LO> > Albany::getLayeredMeshNumbering(){
+    Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::APFDiscretization: getLayeredMeshNumbering() not implemented");
       return Teuchos::null;

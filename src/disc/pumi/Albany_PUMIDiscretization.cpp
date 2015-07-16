@@ -19,11 +19,3 @@ Albany::PUMIDiscretization::PUMIDiscretization(
 Albany::PUMIDiscretization::~PUMIDiscretization()
 {
 }
-
-void Albany::PUMIDiscretization::
-createField(const char* name, int value_type)
-{
-  apf::Field* f =
-    apf::createFieldOn(meshStruct->getMesh(), name, value_type);
-  apf::zeroField(f);
-}

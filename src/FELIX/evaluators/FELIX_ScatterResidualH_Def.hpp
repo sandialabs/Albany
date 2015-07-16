@@ -151,7 +151,7 @@ ScatterResidualH(const Teuchos::ParameterList& p,
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 ScatterResidualH<PHAL::AlbanyTraits::SGResidual, Traits>::
 ScatterResidualH(const Teuchos::ParameterList& p,
@@ -185,9 +185,9 @@ ScatterResidualH(const Teuchos::ParameterList& p,
   : ScatterResidual<PHAL::AlbanyTraits::SGTangent,Traits>(p,dl)
 {
 }
+#endif
 
-
-
+#ifdef ALBANY_ENSEMBLE
 // **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
@@ -228,7 +228,7 @@ ScatterResidualH(const Teuchos::ParameterList& p,
 {
 }
 
-#endif //ALBANY_SG_MP
+#endif
 
 
 // **********************************************************************
@@ -341,7 +341,7 @@ ScatterResidualH3D(const Teuchos::ParameterList& p,
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 ScatterResidualH3D<PHAL::AlbanyTraits::SGResidual, Traits>::
 ScatterResidualH3D(const Teuchos::ParameterList& p,
@@ -375,9 +375,9 @@ ScatterResidualH3D(const Teuchos::ParameterList& p,
   : ScatterResidual<PHAL::AlbanyTraits::SGTangent,Traits>(p,dl)
 {
 }
+#endif
 
-
-
+#ifdef ALBANY_ENSEMBLE
 // **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
@@ -419,6 +419,6 @@ ScatterResidualH3D(const Teuchos::ParameterList& p,
 }
 
 
-#endif //ALBANY_SG_MP
+#endif
 }
 

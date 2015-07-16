@@ -86,18 +86,20 @@ inline int getValueType (const PHX::DataLayout& dl) {
 
 void AAdapt::MeshAdapt::initRcMgr () {
   if (rc_mgr.is_null()) return;
+  Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
+    pumi_discretization->getPUMIMeshStruct();
   // A field to store the reference configuration x (displacement). At each
   // adapatation, it will be interpolated to the new mesh.
   //rc-todo Always apf::VECTOR?
   //rc-todo Generalize to Albany::AbstractDiscretization.
-  pumi_discretization->createField("x_accum", apf::VECTOR);
+  pumiMeshStruct->createNodalField("x_accum", apf::VECTOR);
   if (rc_mgr->usingProjection()) {
     for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
            end = rc_mgr->fieldsEnd();
          it != end; ++it) {
       const int value_type = getValueType(*(*it)->layout);
       for (int i = 0; i < (*it)->num_g_fields; ++i) {
-        pumi_discretization->createField(
+        pumiMeshStruct->createNodalField(
           (*it)->get_g_name(i).c_str(), value_type);
       }
     }
@@ -108,7 +110,7 @@ void AAdapt::MeshAdapt::initRcMgr () {
   // Create a field that never changes. It's interp'ed from now mesh to the
   // next. In the initial configuration, each component is simply a
   // coordinate value.
-  pumi_discretization->createField("test_interp_field", apf::VECTOR);
+  pumiMeshStruct->createNodalField("test_interp_field", apf::VECTOR);
   const Teuchos::ArrayRCP<const double>&
     coords = pumi_discretization->getCoordinates();
   Teuchos::Array<double> f(coords.size());

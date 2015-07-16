@@ -90,7 +90,7 @@ public:
 // **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class ScatterResidualH<PHAL::AlbanyTraits::SGResidual,Traits>
   : public ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -121,6 +121,9 @@ public:
                               const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
+#endif
+
+#ifdef ALBANY_ENSEMBLE
 // **************************************************************
 // Multi-point Residual
 // **************************************************************
@@ -147,13 +150,13 @@ public:
 // Multi-point Tangent
 // **************************************************************
 template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
+class ScatterResidualH<PHAL::AlbanyTraits::MPTangent,Traits>
+  : public ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>  {
 public:
   ScatterResidualH(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 };
-#endif //ALBANY_SG_MP
+#endif
 
 // **************************************************************
 
@@ -213,7 +216,7 @@ public:
 // **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class ScatterResidualH3D<PHAL::AlbanyTraits::SGResidual,Traits>
   : public ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -243,7 +246,9 @@ public:
   ScatterResidualH3D(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 };
+#endif
 
+#ifdef ALBANY_ENSEMBLE
 // **************************************************************
 // Multi-point Residual
 // **************************************************************
@@ -270,13 +275,13 @@ public:
 // Multi-point Tangent
 // **************************************************************
 template<typename Traits>
-class ScatterResidual<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public ScatterResidualBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
+class ScatterResidualH3D<PHAL::AlbanyTraits::MPTangent,Traits>
+  : public ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>  {
 public:
   ScatterResidualH3D(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 };
-#endif //ALBANY_SG_MP
+#endif 
 
 }
 

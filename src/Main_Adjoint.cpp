@@ -32,33 +32,10 @@ int main(int argc, char *argv[]) {
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  char * xmlfilename=0;
-  char defaultfile[10]={"input.xml"};
-  if(argc>1){
-    if(!strcmp(argv[1],"--help")){
-      printf("albany [inputfile.xml]\n");
-      exit(1);
-    }
-    else
-      xmlfilename=argv[1];
-  }
-  else
-    xmlfilename=defaultfile;
-  
-  char * xmladjfilename=0;
-  char defaultadjfile[18]={"input_adjoint.xml"};
-  if(argc>1){
-    if(!strcmp(argv[1],"--help")){
-      printf("albany [inputadjfile.xml]\n");
-      exit(1);
-    }
-    else
-      xmladjfilename=argv[2];
-  }
-  else
-    xmladjfilename=defaultadjfile;
-
-
+  Albany::CmdLineArgs cmd("input.xml", "input_adjoint.xml");
+  cmd.parse_cmdline(argc, argv, *out);
+  std::string xmlfilename = cmd.xml_filename;
+  std::string xmladjfilename = cmd.xml_filename2;
 
   try {
 
@@ -71,6 +48,11 @@ int main(int argc, char *argv[]) {
 
     RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+
+    // Connect vtune for performance profiling
+    if (cmd.vtune) {
+      Albany::connect_vtune(comm->getRank());
+    }
 
     Albany::SolverFactory slvrfctry(xmlfilename, comm);
     RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);

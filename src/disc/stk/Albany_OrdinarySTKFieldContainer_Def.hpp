@@ -56,7 +56,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
 #endif
 
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
   // for whatever reason, its type is stk::mesh::Field<double, stk::mesh::Cartesian3d>
   // the read won't work if you try to read it as a SFT

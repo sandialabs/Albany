@@ -20,7 +20,7 @@
 
 #include <apf.h>
 #include <apfMesh2.h>
-#if defined(HAVE_STK)
+#if defined(HAVE_STK) && defined(ALBANY_SEACAS)
 #include <apfSTK.h>
 #else
 #include <apfAlbany.h>
@@ -73,6 +73,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
 
     //! Process PUMI mesh for element block specific info
     void setupMeshBlkInfo();
+
+    virtual apf::Field* createNodalField(char const* name, int valueType) = 0;
 
     bool hasRestartSolution;
     double restartDataTime;
