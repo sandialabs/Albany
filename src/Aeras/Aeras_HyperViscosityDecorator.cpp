@@ -62,6 +62,10 @@ HyperViscosityDecorator(
   Teuchos::ParameterList &app_parameters = solver_fact.getParameters();
   model_app_params = Teuchos::rcp(&(app_parameters), false);
   Teuchos::RCP<Teuchos::ParameterList> problem_params = Teuchos::sublist(model_app_params, "Problem");
+  Teuchos::ParameterList& parameter_params = problem_params->sublist("Parameters");
+  num_param_vecs_ = parameter_params.get("Number of Parameter Vectors", 0);
+  Teuchos::ParameterList& dist_parameter_params = problem_params->sublist("Distributed Parameters");
+  num_dist_param_vecs_ = dist_parameter_params.get("Number of Parameter Vectors", 0);
   model_problem_params = problem_params;
   std::string const &problem_name = problem_params->get("Name", "");
   std::string solution_method = problem_params->get("Solution Method", "Steady");
@@ -204,7 +208,7 @@ Aeras::HyperViscosityDecorator::get_W_factory() const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  return model_->get_W_factory(); 
+  return solver_factory_;  
 }
 
 
@@ -214,7 +218,23 @@ Aeras::HyperViscosityDecorator::createInArgs() const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  return model_->createInArgs(); 
+  Thyra::ModelEvaluatorBase::InArgsSetup<ST> result;
+  result.setModelEvalDescription(this->description());
+
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x, true);
+
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, true);
+  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+  //result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dotdot, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
+  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+  //result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_omega, true);
+
+  result.set_Np(num_param_vecs_+num_dist_param_vecs_);
+
+  return result;
 }
 
 
@@ -261,8 +281,69 @@ createOutArgsImpl() const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  return model_->createOutArgs(); 
+  Thyra::ModelEvaluatorBase::OutArgsSetup<ST> result;
+  result.setModelEvalDescription(this->description());
+
+  const int n_g = app_->getNumResponses();
+  result.set_Np_Ng(num_param_vecs_+num_dist_param_vecs_, n_g);
+
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
+
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
+  result.set_W_properties(
+      Thyra::ModelEvaluatorBase::DerivativeProperties(
+        Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
+        Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
+        true));
+
+  for (int l = 0; l < num_param_vecs_; ++l) {
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, l,
+        Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
+  }
+  for (int i=0; i<num_dist_param_vecs_; i++)
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, 
+        i+num_param_vecs_,
+        Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP);
+
+  for (int i = 0; i < n_g; ++i) {
+    Thyra::ModelEvaluatorBase::DerivativeSupport dgdx_support;
+    if (app_->getResponse(i)->isScalarResponse()) {
+      dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
+    } else {
+      dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
+    }
+
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx, i, dgdx_support);
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dot, i, dgdx_support);
+    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+    //result.setSupports(
+    //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
+
+    for (int l = 0; l < num_param_vecs_; l++)
+      result.setSupports(
+          Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, l,
+          Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
+    if (app_->getResponse(i)->isScalarResponse()) {
+      for (int j=0; j<num_dist_param_vecs_; j++)
+        result.setSupports(
+           Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j+num_param_vecs_,
+           Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
+    }
+    else {
+      for (int j=0; j<num_dist_param_vecs_; j++)
+        result.setSupports(
+           Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j+num_param_vecs_,
+           Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP);
+    }
+  }
+
+  return result;
 }
+
 
 /// Evaluate model on InArgs
 void

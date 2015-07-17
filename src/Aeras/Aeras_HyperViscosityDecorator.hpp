@@ -116,8 +116,11 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
 
-  int
-  num_models_;
+  int num_models_;
+
+  int num_param_vecs_; 
+  
+  int num_dist_param_vecs_; 
 
   //for setting get_W_factory() 
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
