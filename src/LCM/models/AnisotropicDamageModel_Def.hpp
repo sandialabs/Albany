@@ -238,7 +238,7 @@ computeState(typename Traits::EvalData workset,
           - 0.5 * mu * lnI3_m + 0.5 * mu * (I1_m - 3.0));
 
       // 2nd PK stress (undamaged) for M
-      S0_m = 0.5 * lame * lnI3_m * invC + mu * (I - invC);
+      S0_m = volume_fraction_m_ * (0.5 * lame * lnI3_m * invC + mu * (I - invC));
 
       // undamaged Cauchy stress for M
       sigma_m = (1.0 / J(cell, pt))
@@ -250,9 +250,10 @@ computeState(typename Traits::EvalData workset,
       // optional material tangent computation
 
       if(compute_tangent_) {
-        tangent_m = lame * Intrepid::tensor(invC, invC)
-          + mu_tilde * (Intrepid::tensor2(invC, invC)
-              + Intrepid::tensor3(invC, invC)); 
+        tangent_m = volume_fraction_m_ * 
+          ( lame * Intrepid::tensor(invC, invC)
+            + mu_tilde * (Intrepid::tensor2(invC, invC)
+              + Intrepid::tensor3(invC, invC)) ); 
       }// compute_tangent_
 
 
@@ -266,7 +267,7 @@ computeState(typename Traits::EvalData workset,
 
       // derivative of damage w.r.t alpha
       damage_deriv_m =
-          max_damage_m_ / saturation_m_ * std::exp(-alpha_m / saturation_m_);
+           max_damage_m_ / saturation_m_ * std::exp(-alpha_m / saturation_m_);
 
       // optional material tangent computation
       if(compute_tangent_) {
@@ -288,12 +289,12 @@ computeState(typename Traits::EvalData workset,
                  }
                 }
               
-                tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q)
-                  + S0_m(q,j) * I(i,p);
+                tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q) 
+                  + (1.0 - damage_m(cell, pt)) * S0_m(q,j) * I(i,p);
               }
             }
           }
-        }     
+        }    
 
       }// compute_tangent_
 
@@ -326,9 +327,9 @@ computeState(typename Traits::EvalData workset,
           * (std::exp(q_f2_ * (I4_f2 - 1) * (I4_f2 - 1)) - 1) / q_f2_);
 
       // undamaged stress (2nd PK stress)
-      S0_f1 = (4.0 * k_f1_ * (I4_f1 - 1.0)
+      S0_f1 = volume_fraction_f1_ * (4.0 * k_f1_ * (I4_f1 - 1.0)
           * std::exp(q_f1_ * (I4_f1 - 1) * (I4_f1 - 1))) * M1dyadM1;
-      S0_f2 = (4.0 * k_f2_ * (I4_f2 - 1.0)
+      S0_f2 = volume_fraction_f2_ * (4.0 * k_f2_ * (I4_f2 - 1.0)
           * std::exp(q_f2_ * (I4_f2 - 1) * (I4_f2 - 1))) * M2dyadM2;
 
       // Fiber undamaged Cauchy stress
@@ -338,11 +339,11 @@ computeState(typename Traits::EvalData workset,
           * Intrepid::dot(F, Intrepid::dot(S0_f2, Intrepid::transpose(F)));
 
       // undamaged tangent for fibers
-      coefficient_f1 = 8.0 * k_f1_
+      coefficient_f1 = volume_fraction_f1_ * 8.0 * k_f1_
           * (1.0 + 2.0 * q_f1_ * (I4_f1 - 1.0) * (I4_f1 - 1.0))
           * exp(q_f1_ * (I4_f1 - 1.0) * (I4_f1 - 1.0));
 
-      coefficient_f2 = 8.0 * k_f2_
+      coefficient_f2 = volume_fraction_f2_ * 8.0 * k_f2_
           * (1.0 + 2.0 * q_f2_ * (I4_f2 - 1.0) * (I4_f2 - 1.0))
           * exp(q_f2_ * (I4_f2 - 1.0) * (I4_f2 - 1.0));
 
@@ -368,11 +369,11 @@ computeState(typename Traits::EvalData workset,
 
       // derivative of damage w.r.t alpha
       damage_deriv_f1 =
-          max_damage_f1_ / saturation_f1_
+           max_damage_f1_ / saturation_f1_
               * std::exp(-alpha_f1 / saturation_f1_);
 
       damage_deriv_f2 =
-          max_damage_f2_ / saturation_f2_
+           max_damage_f2_ / saturation_f2_
               * std::exp(-alpha_f2 / saturation_f2_);
 
       // tangent for fibers including damage
@@ -404,10 +405,10 @@ computeState(typename Traits::EvalData workset,
                 }
 
                 tangentA_f1(i,j,p,q) = tangentA_f1(i,j,p,q)
-                  + S0_f1(q,j) * I(i,p);
+                  + (1.0 - damage_f1(cell, pt)) * S0_f1(q,j) * I(i,p);
               
                 tangentA_f2(i,j,p,q) = tangentA_f2(i,j,p,q)
-                  + S0_f2(q,j) * I(i,p);
+                  + (1.0 - damage_f2(cell, pt)) * S0_f2(q,j) * I(i,p);
               }
             }
           }
@@ -418,12 +419,9 @@ computeState(typename Traits::EvalData workset,
       // total Cauchy stress (M, Fibers)
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
-          stress(cell, pt, i, j) =
-              volume_fraction_m_ * (1.0 - damage_m(cell, pt)) * sigma_m(i, j)
-                  + volume_fraction_f1_ * (1. - damage_f1(cell, pt))
-                      * sigma_f1(i, j)
-                  + volume_fraction_f2_ * (1. - damage_f2(cell, pt))
-                      * sigma_f2(i, j);
+          stress(cell, pt, i, j) = (1.0 - damage_m(cell, pt)) * sigma_m(i, j)
+            + (1. - damage_f1(cell, pt)) * sigma_f1(i, j)
+            + (1. - damage_f2(cell, pt)) * sigma_f2(i, j);
         }
       }
 
@@ -435,17 +433,13 @@ computeState(typename Traits::EvalData workset,
               for (int l(0); l < num_dims_; ++l) {
                 // std::cout << "Tangent w.r.t. the deformation gradient" 
                 // << std::endl;
-                tangent(cell, pt, i, j, k, l) =
-                  volume_fraction_m_ * tangentA_m(i, j, k, l)
-                  + volume_fraction_f1_ * tangentA_f1(i, j, k, l)
-                  + volume_fraction_f2_ * tangentA_f2(i, j, k, l);
+                tangent(cell, pt, i, j, k, l) = tangentA_m(i, j, k, l)
+                  + tangentA_f1(i, j, k, l) + tangentA_f2(i, j, k, l);
 
                   //std::cout << "Tangent w.r.t. the right Cauchy-Green tensor" 
                   // << std::endl;
-                 // tangent(cell, pt, i, j, k, l) =
-                  //volume_fraction_m_ * tangent_m(i, j, k, l)
-                   // + volume_fraction_f1_ * tangent_f1(i, j, k, l)
-                   // + volume_fraction_f2_ * tangent_f2(i, j, k, l);
+                 // tangent(cell, pt, i, j, k, l) = tangent_m(i, j, k, l)
+                   // + tangent_f1(i, j, k, l) + tangent_f2(i, j, k, l);
               }//l
             }//k
           }//j
