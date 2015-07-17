@@ -709,20 +709,20 @@ namespace LCM {
     p_span =  domain_max - domain_min;
     
     ScalarT const
-    //p_min = p_mean - p_span / 2.0 * interval * p_number;
-    p_min = domain_min;
+    p_min = p_mean - p_span / 2.0 * interval * p_number;
+    //p_min = domain_min;
         
     ScalarT const
-    //p_max = p_mean + p_span / 2.0 * interval * p_number;
-    p_max = domain_min + p_span * interval * p_number;
+    p_max = p_mean + p_span / 2.0 * interval * p_number;
+    //p_max = domain_min + p_span * interval * p_number;
     
     // Initialize parametres
     ScalarT const
     p_surface = 1.0;
 
     Intrepid::Index const
-    //p_num_points = p_number * 2 + 1;
-    p_num_points = p_number + 1;
+    p_num_points = p_number * 2 + 1;
+    //p_num_points = p_number + 1;
 
     Intrepid::Index const
     p_surface_num_points = 1;

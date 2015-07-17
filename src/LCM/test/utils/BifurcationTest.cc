@@ -422,20 +422,21 @@ projective_get_normal(Intrepid::Vector<D2FadType, 3> & parameters)
   D2FadType const
   n = Intrepid::norm(normal);
      
-  if ( (n.val()).val()!=0 ) {
-    normal /= n;
-  }
-  else {
+  if ( (n.val()).val()==0 ) {
+
     Intrepid::Vector<DFadType, 3> Xfad;
     Intrepid::Vector<D2FadType, 3> Xfad2;
+    
     for ( int i = 0; i < 3; ++i ) {
       Xfad[i] = DFadType(3, i, 1.0/sqrt(3.0));
       Xfad2[i] = D2FadType(3, i, Xfad[i]);
       parameters[i] = Xfad2[i];
     }
+    
     normal[0] = Xfad2[0];
     normal[1] = Xfad2[1];
     normal[2] = Xfad2[2];
+    
   }
            
   return normal;
