@@ -9,6 +9,7 @@
 //
 
 #include <iostream>
+//#include <</span>sys/time.h>
 
 #include <Teuchos_GlobalMPISession.hpp>
 #include <Teuchos_CommandLineProcessor.hpp>
@@ -262,6 +263,8 @@ int main(int ac, char* av[])
   check_stability = mpsParams.get<bool>("Check Stability", false);
   paramList.set<bool>("Compute Tangent", check_stability);
 
+  std::cout << "Check stability = " << check_stability << std::endl;
+
   //---------------------------------------------------------------------------
   //std::cout << "// Constitutive Model Parameters"
             //<< std::endl;
@@ -324,16 +327,20 @@ int main(int ac, char* av[])
             << std::endl;
 
   if (check_stability) {
-    
     std::string parametrization_type = mpsParams.get<std::string>(
-      "Parametrization Type",
-      "Spherical");
-    std::cout << "Parametrization Type: " 
-	      << parametrization_type << std::endl;
+      "Parametrization Type", "Spherical");
+      
+    double parametrization_interval = mpsParams.get<double>(
+      "Parametrization Interval", 0.05);
+      
+    std::cout << "Parametrization Type: " << parametrization_type 
+      << "\nParametrization Interval: " 
+      << parametrization_interval << std::endl;
 
     Teuchos::ParameterList bcPL;
-    bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+    bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);    
     bcPL.set<std::string>("Parametrization Type Name", parametrization_type);
+    bcPL.set<double>("Parametrization Interval Name", parametrization_interval);
     bcPL.set<std::string>("Material Tangent Name", "Material Tangent");
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
@@ -545,6 +552,9 @@ int main(int ac, char* av[])
   // Setup loading scenario and instantiate evaluatFields
   //
   PHX::MDField<ScalarT, Cell, QuadPoint> minDetA("Min detA", dl->qp_scalar);
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> direction("Direction", dl->qp_vector);
+  
+  // Bifurcation check parameters
   double mu_0 = 0;
   double mu_k = 0;
   int bifurcationTime_rough = number_steps;
@@ -555,6 +565,7 @@ int main(int ac, char* av[])
     //std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
     // alpha \in [0,1]
     double alpha = double(istep) / number_steps;
+    
     //std::cout << "alpha: " << alpha << std::endl;
     Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
     Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
@@ -594,7 +605,7 @@ int main(int ac, char* av[])
         stressField);
 
     // Check the computed stresses
-/*
+    /*------------------------------------------------------------------------//
     for (size_type cell = 0; cell < workset_size; ++cell) {
       for (size_type qp = 0; qp < num_pts; ++qp) {
         std::cout << "in MPS Stress tensor at cell " << cell
@@ -613,7 +624,8 @@ int main(int ac, char* av[])
 
       }
     }
-*/
+    //------------------------------------------------------------------------*/
+    
     // Call the state field manager
     //std::cout << "+++ calling the stateFieldManager\n";
     stateFieldManager.preEvaluate<Residual>(workset);
@@ -625,127 +637,167 @@ int main(int ac, char* av[])
     // output to the exodus file
     discretization->writeSolutionT(*solution_vectorT, Teuchos::as<double>(istep));
 
-    // Adaptive step for bifurcation check
+    // if check for bifurcation, adaptive step
     if (check_stability) {
+    
       // get current minDet(A)
       stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(minDetA);
     	
       if (istep == 0) {
-	    mu_0 = minDetA(0,0);
+        mu_0 = minDetA(0,0);
       }
 
-      if (minDetA(0, 0) < 0 && !bifurcation_flag) {
+      if (minDetA(0,0) <= 0 && !bifurcation_flag) {
+        
+        mu_k = minDetA(0,0);      
         bifurcationTime_rough = istep;
-      	bifurcation_flag = true;
-      	mu_k = minDetA(0,0);
+        bifurcation_flag = true;
 
   	    // adaptive step begin
-  	    std::cout << "Adaptive step begin" << std::endl;
-        // output results to txt file
-  	    std::string output_adaptive_file = mpsParams.get<std::string>(
-        "Adaptive Step Output File Name",
-        "output-adaptive.txt");
-      
-        // initialization
+  	    std::cout << "\nAdaptive step begin - bifurcation time " 
+  	      << istep << std::endl;
+        // results file
+  	    //std::string output_adaptive_file = mpsParams.get<std::string>(
+          //"Adaptive Step Output File Name",
+          //"output-adaptive.txt");
+        
+        // initialization for adaptive step
   	    double tol = 1E-8;
-  	    double alpha_local = 1;
+  	    double alpha_local = 1.0;
   	    double alpha_local_step = 0.5;
+        
   	    int k = 1;
   	    int maxIteration = 50;
 
-	    std::ofstream fout(output_adaptive_file);
-	    fout << "Tol                   : " << tol << std::endl;
-	    fout << "Bifurcation_time_rough: " << bifurcationTime_rough << std::endl;
-	    fout << "Min_det(A)_0          : " << mu_0 << std::endl;
-	    fout << "Min_det(A)_k          : " << mu_k << std::endl;
-	    fout << std::endl;
+        //std::ofstream fout(output_adaptive_file);
+        //fout << "Tol                   : " << tol << std::endl;
+        //fout << "Bifurcation_time_rough: " << bifurcationTime_rough << std::endl;
+        //fout << "Min_det(A)_0          : " << mu_0 << std::endl;
+        //fout << "Min_det(A)_k          : " << mu_k << std::endl;
+        //fout << std::endl;
   
-  	    fout.width(2);
-  	    fout << "k" ;
-  	    fout.width(15);
-  	    fout << "alpha_local";
-  	    fout.width(15);
-  	    fout << "mu_k";
-  	    fout.width(15);
-  	    fout << "mu_k/mu_0" << std::endl;
+        //fout.width(2);
+        //fout << "k";
+        //fout.width(15);
+        //fout << "alpha_local";
+        //fout.width(15);
+        //fout << "mu_k";
+        //fout.width(15);
+        //fout << "mu_k/mu_0";
+        //fout.width(15);
+        //fout << "direction" << std::endl;
 
-        // small strain tensor
+    	// small strain tensor
         Intrepid::Tensor<ScalarT> current_strain;
 
         // iteration begin
-        while ( (mu_k < 0) || (abs(mu_k / mu_0) > tol)) {
+  	    while ( ((mu_k <= 0) || (abs(mu_k / mu_0) > tol)) ) {
 
-          double alpha = (bifurcationTime_rough - 1 + alpha_local)
+          alpha = double(bifurcationTime_rough - 1 + alpha_local) 
             / number_steps;
 
           Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-          Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
+          Intrepid::Tensor<ScalarT> current_F 
+            = Intrepid::exp(scaled_log_F_tensor);
+          
+          for (int i = 0; i < 3; ++i) {
+      	    for (int j = 0; j < 3; ++j) {
+              def_grad[3 * i + j] = current_F(i, j);
+      	    }
+          }
+
+          // jacobian
+          detdefgrad[0] = Intrepid::det(current_F);
+
+          current_strain = 0.5 * (current_F + Intrepid::transpose(current_F)) 
+      	    - Intrepid::eye<ScalarT>(3);
 
           for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
-              def_grad[3 * i + j] = current_F(i, j);
-            }
+              strain[3 * i + j] = current_strain(i, j);
+      	    }
           }
 
-         // jacobian
-         detdefgrad[0] = Intrepid::det(current_F);
+          // Call the evaluators, evaluateFields() is the function that
+          // computes stress based on deformation gradient
+          fieldManager.preEvaluate<Residual>(workset);
+          fieldManager.evaluateFields<Residual>(workset);
+          fieldManager.postEvaluate<Residual>(workset);
 
-         current_strain = 0.5 * (current_F + Intrepid::transpose(current_F)) 
-    	   - Intrepid::eye<ScalarT>(3);
-
-         for (int i = 0; i < 3; ++i) {
-           for (int j = 0; j < 3; ++j) {
-             strain[3 * i + j] = current_strain(i, j);
-           }
-         }
-
-         // Call the evaluators, evaluateFields() is the function that
-         // computes stress based on deformation gradient
-         fieldManager.preEvaluate<Residual>(workset);
-  	     fieldManager.evaluateFields<Residual>(workset);
-   	     fieldManager.postEvaluate<Residual>(workset);
+          /*--------------------------------------------//
+          struct timeval start, end;
+          gettimeofday( &start, NULL );
+          //-------------------------------------------*/
+          
+            // Call the state field manager
+            //std::cout << "+++ calling the stateFieldManager\n";
+            stateFieldManager.preEvaluate<Residual>(workset);
+            stateFieldManager.evaluateFields<Residual>(workset);
+            stateFieldManager.postEvaluate<Residual>(workset); 
+   	         	      
+          /*-------------------------------------------------------//
+          gettimeofday( &end, NULL );
+          int timeuse = 1000000 * ( end.tv_sec - start.tv_sec ) 
+            + end.tv_usec - start.tv_usec;
+          
+          std::cout << std::endl;
+          std::cout << "Time cost: " << timeuse << std::endl;
+          std::cout << std::endl;
+          //-------------------------------------------------------*/
     
-         // Call the state field manager
-         //std::cout << "+++ calling the stateFieldManager\n";
-         stateFieldManager.preEvaluate<Residual>(workset);
-         stateFieldManager.evaluateFields<Residual>(workset);
-         stateFieldManager.postEvaluate<Residual>(workset);
+          stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(
+            minDetA);
+            
+          stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(
+            direction);
+            
+          mu_k = minDetA(0,0);
     
-         stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>
-           (minDetA);
-         
-         mu_k = minDetA(0, 0);
-    
-         fout.width(2);
-         fout << k;
-         fout.width(15);
-         fout << alpha_local;
-         fout.width(15);
-         fout << mu_k;
-         fout.width(15);
-         fout << mu_k/mu_0 << std::endl;
+          //fout.precision(6);
+          //fout.width(2);
+          //fout << k;
+          //fout.width(15);
+          //fout << alpha_local;
+          //fout.width(15);
+          //fout << mu_k;
+          //fout.width(15);
+          //fout << mu_k/mu_0;
+    	  
+          //fout.width(15);
+          //fout << direction(0, 0, 0);
+          //fout.width(15);
+          //fout << direction(0, 0, 1);
+          //fout.width(15);
+          //fout << direction(0, 0, 2) << std::endl;
 
-         if (mu_k > 0) {
-           alpha_local += alpha_local_step;
-         } else {
-           alpha_local -= alpha_local_step;
-         }
-    
-         alpha_local_step /= 2;
-         k = k+1;
-    
-         if (k>=maxIteration) break;
-         
-         stateMgr.updateStates();
-        } // iteration end
+          if (mu_k > 0) {
+            alpha_local += alpha_local_step;
+          } else {
+            alpha_local -= alpha_local_step;
+          }
+          
+          alpha_local_step /= 2;
+                    
+          k = k+1;
+          
+          if (k >= maxIteration) {
+            std::cout << "Adaptive step for bifurcation check not converging after "
+              << k << " iterations" << std::endl;
+            break;
+          }
 
-        fout << std::endl;
-        fout << "current strain: \n" << current_strain << std::endl;
-        fout << std::flush;
-        fout.close();
+          stateMgr.updateStates();
+        
+        } // adaptive step iteration end
 
-        std::cout << "Adaptive step end" << std::endl;
-     
+        //fout << std::endl;
+        //fout << "current strain: \n" << current_strain << std::endl;
+        //fout << std::flush;
+        //fout.close();
+
+        std::cout << "\nAdaptive step end - bifurcation time " 
+          << (bifurcationTime_rough - 1 + alpha_local) << std::endl;
+
       } // end adaptive step
 
     } // end check bifurcation
