@@ -17,6 +17,7 @@
 # or g++ as their back-end compiler.  The defaults can be overwritten
 # by using the usual arguments (e.g., -arch=sm_30 -ccbin icpc).
 
+#default_arch="sm_37"
 default_arch="sm_35"
 #default_arch="sm_50"
 
@@ -56,6 +57,7 @@ replace_pragma_ident=0
 current_file_path="${@: -1}"
 current_file="${current_file_path##*/}"
 
+# Add specific files to avoid here
 use_base_compiler=""
 
 for c_name in $use_base_compiler
@@ -65,6 +67,26 @@ do
   then
      command="$default_compiler $@"
 #    echo "$current_file matches $c_name" >> /home/gahanse/Codes/Trilinos/build/MPI_CUDA/zzz
+     #Run compilation command
+     $command
+     error_code=$?
+
+     #Report error code
+     exit $nvcc_error_code
+  fi
+done
+
+# Add specific packages to avoid here
+use_base_compiler="seacas
+stk"
+
+for c_name in $use_base_compiler
+do
+#  echo $c_name >> /home/gahanse/Codes/Trilinos/build/MPI_CUDA/zzz
+  if [[ $current_file_path == */Trilinos/packages/$c_name* ]]
+  then
+     command="$default_compiler $@"
+    echo "$current_file_path matches $c_name"
      #Run compilation command
      $command
      error_code=$?
