@@ -148,6 +148,11 @@ void Albany::APFMeshStruct::init(
   // Build a map to get the EB name given the index
 
   int numEB = sets.models[d].size();
+
+  // getEBSizes will seg fault if at least one element block isn't defined in input. Lets exit a little more gracefully.
+  TEUCHOS_TEST_FOR_EXCEPTION(numEB == 0, std::logic_error,
+     "PUMI requires at least one element block to be defined in the input file.");
+
   std::vector<int> el_blocks;
   getEBSizes(mesh, sets, el_blocks);
 

@@ -67,7 +67,7 @@ protected:
   std::string betaName; //name of function betaXY to be used
   double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
  
   //The following are for the lateral BC 
@@ -126,6 +126,7 @@ protected:
   //Basal bc
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
    		       const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+   		       const Intrepid::FieldContainer<ScalarT>& thickness_side,
    		       const Intrepid::FieldContainer<ScalarT>& dof_side,
                        const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                        const shards::CellTopology & celltopo,

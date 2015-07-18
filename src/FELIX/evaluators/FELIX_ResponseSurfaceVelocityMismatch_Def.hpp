@@ -22,6 +22,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
   scaling = plist->get<double>("Scaling Coefficient", 1.0);
   alpha = plist->get<double>("Regularization Coefficient", 0.0);
+  asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
@@ -234,14 +235,13 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       int numCells = data.dimension(0); // How many cell's worth of data is being computed?
       int numPoints = data.dimension(1); // How many QPs per cell?
 
-      double factor = 10.0;
       for (int cell = 0; cell < numCells; cell++) {
         for (int pt = 0; pt < numPoints; pt++) {
-          ScalarT refVel0 = asinh(surfaceVelocityOnSide(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / factor);
-          ScalarT refVel1 = asinh(surfaceVelocityOnSide(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / factor);
-          ScalarT vel0 = asinh(dofSideVec(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / factor);
-          ScalarT vel1 = asinh(dofSideVec(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / factor);
-          data(cell, pt) = factor * factor * ((refVel0 - vel0) * (refVel0 - vel0) + (refVel1 - vel1) * (refVel1 - vel1));
+          ScalarT refVel0 = asinh(surfaceVelocityOnSide(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / asinh_scaling);
+          ScalarT refVel1 = asinh(surfaceVelocityOnSide(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / asinh_scaling);
+          ScalarT vel0 = asinh(dofSideVec(cell, pt, 0) / velocityRMSOnSide(cell, pt, 0) / asinh_scaling);
+          ScalarT vel1 = asinh(dofSideVec(cell, pt, 1) / velocityRMSOnSide(cell, pt, 1) / asinh_scaling);
+          data(cell, pt) = asinh_scaling * asinh_scaling * ((refVel0 - vel0) * (refVel0 - vel0) + (refVel1 - vel1) * (refVel1 - vel1));
         }
       }
 
@@ -350,7 +350,6 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       int numCells = data.dimension(0); // How many cell's worth of data is being computed?
       int numPoints = data.dimension(1); // How many QPs per cell?
 
-      double factor = 1.0;
       for (int cell = 0; cell < numCells; cell++) {
         for (int pt = 0; pt < numPoints; pt++) {
           ScalarT sum=0;
@@ -428,6 +427,7 @@ Teuchos::RCP<const Teuchos::ParameterList> FELIX::ResponseSurfaceVelocityMismatc
   validPL->set<std::string>("Field Name", "Solution", "Not used");
   validPL->set<double>("Regularization Coefficient", 1.0, "Regularization Coefficient");
   validPL->set<double>("Scaling Coefficient", 1.0, "Coefficient that scales the response");
+  validPL->set<double>("Asinh Scaling", 1.0, "Scaling s in asinh(s*x)/s. Used to penalize high values of velocity");
   validPL->set<int>("Cubature Degree", 3, "degree of cubature used to compute the velocity mismatch");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
