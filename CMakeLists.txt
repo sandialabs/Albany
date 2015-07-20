@@ -171,6 +171,11 @@ if (SET_COMPILERS_AUTOMATICALLY)
   PROJECT(Albany)
 endif()
 
+# AGS: Adding these lines so Ctest can be run to submit to cdash dashboard
+#   Uses CTestConfig.cmake file for Cdash info.
+ENABLE_TESTING()
+INCLUDE(CTest)
+
 set(ALBANY_ENABLE_FORTRAN ON CACHE BOOL "enable fortran" )
 
 IF (CMAKE_Fortran_COMPILER AND ALBANY_ENABLE_FORTRAN) # Enable Fortran if it is enabled in Trilinos.
@@ -1046,8 +1051,6 @@ endif(DOXYGEN_FOUND)
 ## End of CMake options to Albany
 
 add_subdirectory(src)
-
-enable_testing()
 
 #  Timeout real long running tests
 
