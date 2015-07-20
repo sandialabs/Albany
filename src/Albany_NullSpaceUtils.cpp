@@ -107,7 +107,7 @@ void Coord2RBM_nonElasticity(
   const int Ndof, const int NscalarDof, const int NSdim,
   double* const rbm)
 {
-  std::cout << "setting RBMs in Coord2RBM_nonElasticity!" << std::endl; 
+  //std::cout << "setting RBMs in Coord2RBM_nonElasticity!" << std::endl; 
   LO vec_leng, offset;
   int ii, jj, dof;
 
@@ -115,8 +115,8 @@ void Coord2RBM_nonElasticity(
   for (LO i = 0; i < Nnodes*Ndof*(NSdim + NscalarDof); i++)
     rbm[i] = 0.0;
 
-  std::cout << "...Ndof: " << Ndof << std::endl; 
-  std::cout << "...case: " << NSdim - NscalarDof << std::endl; 
+  //std::cout << "...Ndof: " << Ndof << std::endl; 
+  //std::cout << "...case: " << NSdim - NscalarDof << std::endl; 
   for (LO node = 0 ; node < Nnodes; node++) {
     dof = node*Ndof;
     switch( NSdim - NscalarDof ) {
