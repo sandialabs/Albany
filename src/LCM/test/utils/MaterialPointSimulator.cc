@@ -323,19 +323,17 @@ int main(int ac, char* av[])
   }
 
   //---------------------------------------------------------------------------
-  std::cout << "// Bifurcation Check Evaluator"
-            << std::endl;
-
   if (check_stability) {
     std::string parametrization_type = mpsParams.get<std::string>(
       "Parametrization Type", "Spherical");
       
     double parametrization_interval = mpsParams.get<double>(
       "Parametrization Interval", 0.05);
-      
+
+    std::cout << "Bifurcation Check in Material Point Simulator:"
+            << std::endl;      
     std::cout << "Parametrization Type: " << parametrization_type 
-      << "\nParametrization Interval: " 
-      << parametrization_interval << std::endl;
+            << std::endl;
 
     Teuchos::ParameterList bcPL;
     bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);    
@@ -654,8 +652,9 @@ int main(int ac, char* av[])
         bifurcation_flag = true;
 
   	    // adaptive step begin
-  	    std::cout << "\nAdaptive step begin - bifurcation time " 
+  	    std::cout << "\nAdaptive step begin - step " 
   	      << istep << std::endl;
+        
         // results file
   	    //std::string output_adaptive_file = mpsParams.get<std::string>(
           //"Adaptive Step Output File Name",
@@ -724,25 +723,25 @@ int main(int ac, char* av[])
           fieldManager.evaluateFields<Residual>(workset);
           fieldManager.postEvaluate<Residual>(workset);
 
-          /*--------------------------------------------//
+          //--------------------------------------------//
           struct timeval start, end;
           gettimeofday( &start, NULL );
           //-------------------------------------------*/
           
-            // Call the state field manager
-            //std::cout << "+++ calling the stateFieldManager\n";
-            stateFieldManager.preEvaluate<Residual>(workset);
-            stateFieldManager.evaluateFields<Residual>(workset);
-            stateFieldManager.postEvaluate<Residual>(workset); 
-   	         	      
-          /*-------------------------------------------------------//
+          // Call the state field manager
+          //std::cout << "+++ calling the stateFieldManager\n";
+          stateFieldManager.preEvaluate<Residual>(workset);
+          stateFieldManager.evaluateFields<Residual>(workset);
+          stateFieldManager.postEvaluate<Residual>(workset); 
+     	         	      
+          //-------------------------------------------------------//
           gettimeofday( &end, NULL );
           int timeuse = 1000000 * ( end.tv_sec - start.tv_sec ) 
             + end.tv_usec - start.tv_usec;
           
-          std::cout << std::endl;
-          std::cout << "Time cost: " << timeuse << std::endl;
-          std::cout << std::endl;
+          //std::cout << std::endl;
+          //std::cout << "Time cost: " << timeuse << std::endl;
+          //std::cout << std::endl;
           //-------------------------------------------------------*/
     
           stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(
@@ -795,12 +794,71 @@ int main(int ac, char* av[])
         //fout << std::flush;
         //fout.close();
 
-        std::cout << "\nAdaptive step end - bifurcation time " 
-          << (bifurcationTime_rough - 1 + alpha_local) << std::endl;
-
+        //std::cout << "\nAdaptive step end - bifurcation time " 
+          //<< (bifurcationTime_rough - 1 + alpha_local) << std::endl;
+                   
       } // end adaptive step
+      
+      /*--------------------------------------------//
+      //----------------------- Landscape file rename-------------------------//
+      if ( istep == 1 || istep == 10 || istep == 20 || bifurcation_flag ) {
+        std::string parametrization_type = mpsParams.get<std::string>(
+          "Parametrization Type",
+          "Spherical");
 
+        std::string oldName = parametrization_type + "-Sweep.txt";
+        std::string 
+        //newName = "LandscapeData/" + parametrization_type + "/Bifurcation.txt";
+        newName = "LandscapeData/" + parametrization_type 
+          + "/Sweep@" + std::to_string(istep) + ".txt";
+      
+        std::ifstream in(oldName);
+        std::ofstream out(newName);
+        char ch;
+        while (in.get(ch)) {
+          out.put(ch);
+        }
+        in.close();
+        out.close();
+      }
+      //-------------------------------------------*/
+        
     } // end check bifurcation
+    
+    //
+    if (bifurcation_flag) {
+
+     /*--------------------------------------------//
+    
+      // create MDFields
+      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim, Dim, Dim> tangent(
+        "Material Tangent",
+        dl->qp_tensor4);
+      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, 
+        Dim, Dim, Dim, Dim>(tangent);
+   
+      std::ofstream fout("TangentOperator.txt");
+      fout.precision(32);
+      
+      for (int i(0); i < 3; ++i) {
+        for (int j(0); j < 3; ++j) {
+          for (int k(0); k < 3; ++k) {
+            for (int l(0); l < 3; ++l) {
+              fout << tangent(0, 0, i, j, k, l) << std::endl;
+            }
+          }
+        }
+      }
+        
+      fout << std::endl;
+      fout << std::flush;
+      fout.close();
+    //-------------------------------------------*/
+         
+      break;
+    }
+    
+    //
 
   } // end loading steps
 

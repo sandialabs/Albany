@@ -1117,11 +1117,11 @@ int main(int ac, char* av[])
   // provided sweep is not used  
   std::random_device rd;
   std::mt19937 mt_eng(rd());
-  std::uniform_real_distribution<ScalarT> real_dist(0, 2);
+  std::uniform_real_distribution<ScalarT> real_dist(-1.0, 1.0);
   
   Intrepid::Vector<ScalarT, 2> arg_minimum;
-  arg_minimum(0) =  real_dist(mt_eng) - 1;
-  arg_minimum(1) =  real_dist(mt_eng) - 1;
+  arg_minimum(0) =  real_dist(mt_eng);
+  arg_minimum(1) =  real_dist(mt_eng);
   
   Intrepid::Vector<ScalarT> direction(1.0, 0.0, 0.0);
   ScalarT min_detA(1.0);

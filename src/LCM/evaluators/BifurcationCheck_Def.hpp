@@ -275,10 +275,10 @@ namespace LCM {
     sphere_grid.traverse(sphere_param);
 
     // Query the parametrization for the minimum and maximum found on the grid.
-    std::cout << "\n*** SPHERICAL PARAMETRIZATION ***\n";
-    std::cout << "Interval: " << parametrization_interval_ << std::endl;
-    std::cout << sphere_param.get_minimum() 
-    << "  " << sphere_param.get_normal_minimum() << std::endl;
+    //std::cout << "\n*** SPHERICAL PARAMETRIZATION ***\n";
+    //std::cout << "Interval: " << parametrization_interval_ << std::endl;
+    //std::cout << sphere_param.get_minimum() 
+    //<< "  " << sphere_param.get_normal_minimum() << std::endl;
 
     ScalarT min_detA = sphere_param.get_minimum();
     for (int i(0); i < 3; ++i) {
@@ -397,11 +397,11 @@ namespace LCM {
     stereographic_grid.traverse(stereographic_param);
 
     // Query the parametrization for the minimum and maximum found on the grid.
-    std::cout << "\n*** STEREOGRAPHIC PARAMETRIZATION ***\n";
-    std::cout << "Interval: " << parametrization_interval_ << std::endl;
-    std::cout << stereographic_param.get_minimum()
+    //std::cout << "\n*** STEREOGRAPHIC PARAMETRIZATION ***\n";
+    //std::cout << "Interval: " << parametrization_interval_ << std::endl;
+    //std::cout << stereographic_param.get_minimum()
     //<< "  " << stereographic_param.get_arg_minimum() << std::endl
-    << "  " << stereographic_param.get_normal_minimum() << std::endl;
+    //<< "  " << stereographic_param.get_normal_minimum() << std::endl;
 
     ScalarT min_detA = stereographic_param.get_minimum();
     for (int i(0); i < 3; ++i) {
@@ -540,10 +540,10 @@ namespace LCM {
     projective_grid.traverse(projective_param);
 
     // Query the parametrization for the minimum and maximum found on the grid.
-    std::cout << "\n*** PROJECTIVE PARAMETRIZATION ***\n";
-    std::cout << "Interval: " << parametrization_interval_ << std::endl;
-    std::cout << projective_param.get_minimum() 
-    << "  " << projective_param.get_normal_minimum() << std::endl;
+    //std::cout << "\n*** PROJECTIVE PARAMETRIZATION ***\n";
+    //std::cout << "Interval: " << parametrization_interval_ << std::endl;
+    //std::cout << projective_param.get_minimum() 
+    //<< "  " << projective_param.get_normal_minimum() << std::endl;
 
     ScalarT min_detA = projective_param.get_minimum();
     for (int i(0); i < 3; ++i) {
@@ -670,10 +670,10 @@ namespace LCM {
     tangent_grid.traverse(tangent_param);
 
     // Query the parametrization for the minimum and maximum found on the grid.
-    std::cout << "\n*** TANGENT PARAMETRIZATION ***\n";
-    std::cout << "Interval: " << parametrization_interval_ << std::endl;
-    std::cout << tangent_param.get_minimum()
-    << "  " << tangent_param.get_normal_minimum() << std::endl;
+    //std::cout << "\n*** TANGENT PARAMETRIZATION ***\n";
+    //std::cout << "Interval: " << parametrization_interval_ << std::endl;
+    //std::cout << tangent_param.get_minimum()
+    //<< "  " << tangent_param.get_normal_minimum() << std::endl;
 
     ScalarT min_detA = tangent_param.get_minimum();
     for (int i(0); i < 3; ++i) {
@@ -781,10 +781,10 @@ namespace LCM {
       cartesian1_grid.traverse(cartesian1_param);
     
       // Query the parametrization for the minimum and maximum found on the grid.
-      std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
-      std::cout << "Interval: " << parametrization_interval_ << std::endl;
-      std::cout << cartesian1_param.get_minimum() 
-        << "  " << cartesian1_param.get_normal_minimum() << std::endl;
+      //std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
+      //std::cout << "Interval: " << parametrization_interval_ << std::endl;
+      //std::cout << cartesian1_param.get_minimum() 
+       // << "  " << cartesian1_param.get_normal_minimum() << std::endl;
           
       min_detA = cartesian1_param.get_minimum();
       arg_minimum(0) = (cartesian1_param.get_arg_minimum())(1);
@@ -817,10 +817,10 @@ namespace LCM {
       cartesian2_grid.traverse(cartesian2_param);
 
       // Query the parametrization for the minimum and maximum found on the grid.
-      std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
-      std::cout << "Interval: " << parametrization_interval_ << std::endl;
-      std::cout << cartesian2_param.get_minimum() 
-        << "  " << cartesian2_param.get_normal_minimum() << std::endl;
+      //std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
+      //std::cout << "Interval: " << parametrization_interval_ << std::endl;
+      //std::cout << cartesian2_param.get_minimum() 
+       // << "  " << cartesian2_param.get_normal_minimum() << std::endl;
           
       min_detA = cartesian2_param.get_minimum();
       arg_minimum(0) = (cartesian2_param.get_arg_minimum())(0);
@@ -853,10 +853,10 @@ namespace LCM {
       cartesian3_grid.traverse(cartesian3_param);
 
       // Query the parametrization for the minimum and maximum found on the grid.
-      std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
-      std::cout << "Interval: " << parametrization_interval_ << std::endl;
-      std::cout << cartesian3_param.get_minimum() 
-        << "  " << cartesian3_param.get_normal_minimum() << std::endl;
+      //std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
+      //std::cout << "Interval: " << parametrization_interval_ << std::endl;
+      //std::cout << cartesian3_param.get_minimum() 
+        //<< "  " << cartesian3_param.get_normal_minimum() << std::endl;
           
       min_detA = cartesian3_param.get_minimum();
       arg_minimum(0) = (cartesian3_param.get_arg_minimum())(0);
