@@ -1,0 +1,7 @@
+#!/bin/bash
+# 15 04 * * 1-5   source /home/agsalin/.bashrc; cd /home/agsalin/pennTests; ./cronscript.penn
+
+wget https://raw.github.com/gahansen/Albany/master/doc/dashboards/penn.srn.sandia.gov/pennTestScript.sh
+wget https://raw.github.com/gahansen/Albany/master/doc/dashboards/penn.srn.sandia.gov/do-cmake-trilinos
+wget https://raw.github.com/gahansen/Albany/master/doc/dashboards/penn.srn.sandia.gov/do-cmake-albany
+./pennTestScript.sh
