@@ -97,7 +97,7 @@ protected:
   createOutArgsImpl() const;
   
   //! Evaluate model on InArgs
-  void evalModelImpl(
+  void evalModel(
       const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs,
       const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
 

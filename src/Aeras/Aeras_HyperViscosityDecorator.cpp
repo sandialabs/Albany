@@ -348,17 +348,41 @@ createOutArgsImpl() const
 /// Evaluate model on InArgs
 void
 Aeras::HyperViscosityDecorator::
-evalModelImpl(
+evalModel(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
 #endif
-  model_->evalModel(in_args, out_args);
-  //FIXME: get x from in_args.
-  //Set xtilde = Jac_Laplace*x 
+
+  //Input arguments 
+  Thyra::ModelEvaluatorBase::InArgs<ST> model_in_args = model_->createInArgs();
+  model_in_args.setArgs(in_args);  
+  Teuchos::RCP<const Thyra::VectorBase<ST>> xT = model_->getNominalValues().get_x(); 
+  Teuchos::RCP<const Thyra::VectorBase<ST>> x_dotT = model_->getNominalValues().get_x_dot(); 
+  model_in_args.set_x(xT); 
+  model_in_args.set_x_dot(x_dotT);
+  for (int i=0; i<num_param_vecs_; i++) 
+    model_in_args.set_p(i, in_args.get_p(i)); 
+  //FIXME for the following three
+  model_in_args.set_t(0.0); 
+  model_in_args.set_alpha(0.0); 
+  model_in_args.set_beta(0.0); 
+  //end input arguments
+  
+  // Output arguments
+  Thyra::ModelEvaluatorBase::OutArgs<ST> model_out_args = model_->createOutArgs();
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = Teuchos::nonnull(model_->create_W_op()) ?
+      model_->create_W_op():
+      Teuchos::null;
+  model_out_args.set_W_op(W_op); 
+  //end output arguments  
+   
+  model_->evalModel(model_in_args, model_out_args);
+  //FIXME
+  //Set xtildeT = Jac_Laplace*xT, where xT comes from in_args
   //Get f from out_args.
-  //Add tau*Jac_Laplace*xtilde to residual f
+  //Add tau*Jac_Laplace*xtildeT to residual f
 }
 
