@@ -128,7 +128,7 @@ namespace LCM {
 
         	  projection_residual_(cell, node) += refValues(node,pt)*
                 	       	                            (projected_tau_(cell,pt) -  tau)*
-                                                               refArea(cell,pt);
+                                                               refArea(cell,pt)*thickness;
 
         	 }
         	 projection_residual_(cell, topNode) =  projection_residual_(cell, node);
