@@ -830,6 +830,13 @@ ELSE()
   ENDIF()
 ENDIF()
 
+# Albany currently requires stokhos to be enabled, although in the future
+# this could become an option
+set(ALBANY_STOKHOS TRUE)
+IF (ALBANY_STOKHOS)
+  ADD_DEFINITIONS(-DALBANY_STOKHOS)
+ENDIF()
+
 # Add option for CONTACT work, defaults to disabled
 OPTION(ENABLE_CONTACT "Flag to turn on CONTACT code in LCM" OFF)
 IF (ENABLE_CONTACT AND ENABLE_ALBANY_EPETRA_EXE)
