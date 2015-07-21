@@ -4,7 +4,7 @@ source /home/agsalin/.bash_profile
 
 # Set these to whatever you like
 SCRIPTDIR=/home/agsalin/pennTests
-NIGHTLYDIR=/home/agsalin/pennTest/Results
+NIGHTLYDIR=/home/agsalin/pennTests/Results
 
 #set this correctly
 BOOSTDIR=/usr/local
