@@ -205,6 +205,7 @@
     xml_filename(default_xml_filename),
     xml_filename2(default_xml_filename2),
     xml_filename3(default_xml_filename3),
+    has_first_xml_file(false),
     has_second_xml_file(false),
     has_third_xml_file(false),
     vtune(false) {}
@@ -225,6 +226,7 @@
         if (!found_first_xml_file) {
           xml_filename=argv[arg];
           found_first_xml_file = true;
+          has_first_xml_file = true;
         }
         else if (!found_second_xml_file) {
           xml_filename2=argv[arg];

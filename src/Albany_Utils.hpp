@@ -76,6 +76,7 @@ namespace Albany {
     std::string xml_filename;
     std::string xml_filename2;
     std::string xml_filename3;
+    bool has_first_xml_file;
     bool has_second_xml_file;
     bool has_third_xml_file;
     bool vtune;

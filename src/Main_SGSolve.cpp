@@ -49,9 +49,14 @@ int main(int argc, char *argv[]) {
     sg_xmlfilename = cmd.xml_filename2;
     do_initial_guess = true;
   }
-  else {
+  else if (cmd.has_first_xml_file) {
     xmlfilename = "";
     sg_xmlfilename = cmd.xml_filename;
+    do_initial_guess = false;
+  }
+  else {
+    xmlfilename = "";
+    sg_xmlfilename = "inputSG.xml";
     do_initial_guess = false;
   }
 
@@ -77,6 +82,21 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams =
       Teuchos::rcp(&(albanyParams.sublist("Piro")),false);
+
+    // If SG is not enabled and user chose "Direct" or "AD",
+    // for "SG Method", change this "Global", which always works
+#ifndef ALBANY_SG
+    std::string sg_method =
+      piroParams->sublist("Stochastic Galerkin").get("SG Method", "Global");
+    if (sg_method == "Direct" || sg_method == "AD") {
+      piroParams->sublist("Stochastic Galerkin").set("SG Method", "Global");
+      *out << "**********************************************************\n"
+           << "* WARNING!  Direct SG method was chosen, however         *\n"
+           << "* ALBANY_SG is not enabled.  Changing to Global method.  *\n"
+           << "**********************************************************\n"
+           << std::endl;
+    }
+#endif
 
     // Create stochastic Galerkin solver
     Teuchos::RCP<Piro::Epetra::StokhosSolver> sg_solver =
