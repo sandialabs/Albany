@@ -10,7 +10,7 @@ IF(NOT ALBANY_PARALLEL_ONLY AND LCM_TEST_EXES AND ALBANY_BGL)
 set(runtest.py ${CMAKE_CURRENT_SOURCE_DIR}/runtest.py)
 
 add_subdirectory(AnisotropicHyperelasticDamage)
-add_subdirectory(AnisotropicDamage)
+add_subdirectory(AnisotropicDamage-Bifurcation)
 add_subdirectory(Gurson)
 add_subdirectory(Neohookean)
 

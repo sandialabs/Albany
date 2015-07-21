@@ -6,7 +6,7 @@
 #             Run on    2013/05/22   21:42:18 PDT
 #  *****************************************************************
 
-#  FILE 1: /home/qnchen/LCM/Albany/sandbox/LCMTest/MPS/Benchmark_AnisotropicDamageModel/UniaxialMPS/AnisotropicDamage-uniaxial.gold.exo
+#  FILE 1: ~/LCM/Albany/Sandbox/Bifurcation/BifurcationCheckExample/AD-Bifurcation-uniaxial.gold.exo
 #   Title: Sierra Output Default Title
 #          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 7, Sidesets = 6
 #          Vars: Global = 0, Nodal = 6, Element = 24, Nodeset = 0, Sideset = 0, Times = 21

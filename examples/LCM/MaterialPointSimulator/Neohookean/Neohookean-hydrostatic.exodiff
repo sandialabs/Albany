@@ -45,10 +45,6 @@ ELEMENT VARIABLES relative 1.e-6 floor 0.0
 	Cauchy_Stress_7   # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	Cauchy_Stress_8   # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	Cauchy_Stress_9   # min:               0 @ t1,b1,e1	max:         48307.1 @ t11,b1,e1
-	Direction_1       # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
-	Direction_2       # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Direction_3       # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Ellipticity_Flag  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	F_1               # min:               1 @ t1,b1,e1	max:             1.1 @ t11,b1,e1
 	F_2               # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	F_3               # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
