@@ -348,7 +348,7 @@ createOutArgsImpl() const
 /// Evaluate model on InArgs
 void
 Aeras::HyperViscosityDecorator::
-evalModel(
+evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
