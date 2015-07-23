@@ -84,6 +84,7 @@ HyperViscosityDecorator(
 
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "Finished creating Albany app and model!\n";
+  std::cout << "app name: " << app_->getProblemPL()->get("Name", "") << std::endl; 
 #endif
 
   //FIXME: create Stiffness and Mass matrix for Laplace operator problem and 
@@ -217,6 +218,7 @@ Aeras::HyperViscosityDecorator::createInArgs() const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  std::cout << "app name: " << app_->getProblemPL()->get("Name", "") << std::endl; 
 #endif
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> result;
   result.setModelEvalDescription(this->description());
@@ -280,6 +282,7 @@ createOutArgsImpl() const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  std::cout << "app name: " << app_->getProblemPL()->get("Name", "") << std::endl; 
 #endif
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> result;
   result.setModelEvalDescription(this->description());
@@ -354,35 +357,74 @@ evalModelImpl(
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
+  std::cout << "app name: " << app_->getProblemPL()->get("Name", "") << std::endl; 
 #endif
-
   //Input arguments 
   Thyra::ModelEvaluatorBase::InArgs<ST> model_in_args = model_->createInArgs();
-  model_in_args.setArgs(in_args);  
-  Teuchos::RCP<const Thyra::VectorBase<ST>> xT = model_->getNominalValues().get_x(); 
-  Teuchos::RCP<const Thyra::VectorBase<ST>> x_dotT = model_->getNominalValues().get_x_dot(); 
-  model_in_args.set_x(xT); 
-  model_in_args.set_x_dot(x_dotT);
-  for (int i=0; i<num_param_vecs_; i++) 
-    model_in_args.set_p(i, in_args.get_p(i)); 
-  //FIXME for the following three
-  model_in_args.set_t(0.0); 
-  model_in_args.set_alpha(0.0); 
-  model_in_args.set_beta(0.0); 
+  {
+    // Copy untouched supported inArgs content
+    if (model_in_args.supports(IN_ARG_t))     model_in_args.set_t(in_args.get_t());
+    if (model_in_args.supports(IN_ARG_alpha)) model_in_args.set_alpha(in_args.get_alpha());
+    if (model_in_args.supports(IN_ARG_beta))  model_in_args.set_beta(in_args.get_beta());
+    for (int l = 0; l < model_in_args.Np(); ++l) {
+       model_in_args.set_p(l, in_args.get_p(l));
+   }
+   Teuchos::RCP<const Thyra::VectorBase<ST>> xT = model_->getNominalValues().get_x(); 
+   Teuchos::RCP<const Thyra::VectorBase<ST>> x_dotT = model_->getNominalValues().get_x_dot(); 
+   model_in_args.set_x(xT); 
+   model_in_args.set_x_dot(x_dotT);
+  //model_in_args.setArgs(in_args);  
+
   //end input arguments
   
   // Output arguments
   Thyra::ModelEvaluatorBase::OutArgs<ST> model_out_args = model_->createOutArgs();
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = Teuchos::nonnull(model_->create_W_op()) ?
-      model_->create_W_op():
-      Teuchos::null;
-  model_out_args.set_W_op(W_op); 
+
+  const bool supports_residual = model_out_args.supports(OUT_ARG_f);
+  const bool requested_residual = supports_residual && nonnull(out_args.get_f());
+
+  const bool supports_jacobian = model_out_args.supports(OUT_ARG_W_op);
+  const bool requested_jacobian = supports_jacobian && nonnull(out_args.get_W_op());
+
+  bool requestedAnyDfDp = false;
+  for (int l = 0; l < out_args.Np(); ++l) {
+    const bool supportsDfDp = !out_args.supports(OUT_ARG_DfDp, l).none();
+    const bool requestedDfDp = supportsDfDp && (!out_args.get_DfDp(l).isEmpty());
+    if (requestedDfDp) {
+      requestedAnyDfDp = true;
+      break;
+    }
+  }
+  {
+    // Prepare forwarded outArgs content (g and DgDp)
+    for (int j = 0; j < out_args.Ng(); ++j) {
+      model_out_args.set_g(j, out_args.get_g(j));
+      for (int l = 0; l < in_args.Np(); ++l) {
+        if (!out_args.supports(OUT_ARG_DgDp, j, l).none()) {
+          model_out_args.set_DgDp(j, l, out_args.get_DgDp(j, l));
+        }
+      }
+    }
+  }
+  
+  if (requested_residual) {
+    Teuchos::RCP<Thyra::VectorBase<ST>> fT_out = out_args.get_f(); 
+    model_out_args.set_f(fT_out);
+    //FIXME: allocate fT_out 
+  } 
+  model_out_args.set_W_op(model_->create_W_op());
+  //model_out_args.setArgs(out_args);  
+
+  //FIXME: add sensitivities, responses 
+  
   //end output arguments  
    
   model_->evalModel(model_in_args, model_out_args);
   //FIXME
   //Set xtildeT = Jac_Laplace*xT, where xT comes from in_args
   //Get f from out_args.
-  //Add tau*Jac_Laplace*xtildeT to residual f
+ //Add tau*Jac_Laplace*xtildeT to residual f
 }
+}
+
 
