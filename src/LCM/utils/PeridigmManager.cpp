@@ -491,6 +491,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
 void LCM::PeridigmManager::obcOverlappingElementSearch()
 {
+  static bool searchComplete = false;
+  if(searchComplete){
+    std::cout << "DJL DEBUGGING PeridigmManager::obcOverlappingElementSearch() is being called more than once!" << std::endl;
+  }
+  searchComplete = true;
+
   obcDataPoints = Teuchos::rcp(new std::vector<OBCDataPoint>());
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
@@ -656,6 +662,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   // by the proximity search are within the element
   int neighborhoodListIndex = 0;
   typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
+
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
 
     // Get the elements nodes and cell topology
@@ -776,8 +783,9 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     return 0.0;
   }
 
-  if(obcFunctionalDerivWrtDisplacement != NULL)
-    obcFunctionalDerivWrtDisplacement->PutScalar(0);
+  if(obcFunctionalDerivWrtDisplacement != NULL){
+    obcFunctionalDerivWrtDisplacement->PutScalar(0.0);
+  }
 
   // Set up access to the current displacements of the nodes in the solid elements
   Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();
@@ -838,19 +846,17 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
       displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
     }
 
-
     if(obcFunctionalDerivWrtDisplacement != NULL) {
       Intrepid::FieldContainer<RealType> refPoint;
       refPoint.resize(numPoints, numDim);
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      //FIX select basis looking at celltopology
-      Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> > refBasis;
+      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > refBasis = Albany::getIntrepidBasis((*obcDataPoints)[iEvalPt].cellTopologyData);
       Intrepid::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
-      refBasis.getValues( basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
+      refBasis->getValues(basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
 
-
+      // Derivatives corresponding to nodal dof in Albany element
       double deriv[3];
       int globalNodeIds[3];
       for(int i=0 ; i<numNodes ; i++) {
@@ -858,14 +864,15 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
         for(int dim=0; dim<3; ++dim) {
           deriv[dim] = 2*displacementDiff[3*iEvalPt+dim]*basisOnRefPoint(i,0);
-          globalNodeIds[dim] =3*globalAlbanyNodeId+dim;
+          globalNodeIds[dim] = 3*globalAlbanyNodeId + dim;
         }
         obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
       }
 
+      // Derivatives corresponding to dof at peridigm node
       for(int dim=0; dim<3; ++dim) {
         deriv[dim] = -2*displacementDiff[3*iEvalPt+dim];
-        globalNodeIds[dim] = 3*(*obcDataPoints)[iEvalPt].peridigmGlobalId+dim;
+        globalNodeIds[dim] = 3*((*obcDataPoints)[iEvalPt].peridigmGlobalId) + dim;
       }
       obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
     }
