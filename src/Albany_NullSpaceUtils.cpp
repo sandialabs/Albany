@@ -261,7 +261,11 @@ void RigidBodyModes::setParameters(
 void RigidBodyModes::
 setCoordinates(const Teuchos::RCP<const Tpetra_Map>& node_map)
 {
+#ifdef CISM_HAS_FELIX
+  const LO numNodes = node_map->getNodeNumElements(); 
+#else
   const LO numNodes = xyz.size() / numSpaceDim;
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(
     node_map->getNodeNumElements() != numNodes,
     std::logic_error,
