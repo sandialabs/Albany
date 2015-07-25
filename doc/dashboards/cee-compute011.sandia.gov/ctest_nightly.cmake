@@ -20,7 +20,9 @@ if (1)
   set (BUILD_INTEL_TRILINOS TRUE)
   set (BUILD_INTEL_ALBANY TRUE)
 else ()
-  set (CTEST_DO_SUBMIT ON)
+  # This block is for testing. Set "if (1)" to "if (0)", and then freely mess
+  # around with the settings in this block.
+  set (CTEST_DO_SUBMIT OFF)
   set (CTEST_TEST_TYPE Experimental)
 
   # What to build and test
@@ -59,6 +61,14 @@ set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2015.1.133)
 
 set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6)
 set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
+
+set (USE_LAME ON)
+set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include")
+set (LAME_LIB_DIR "/projects/sierra/linux_rh6/install/master/lame/lib")
+set (MATH_TOOLKIT_INC_DIR
+  "/projects/sierra/linux_rh6/install/master/math_toolkit/include")
+set (MATH_TOOLKIT_LIB_DIR
+  "/projects/sierra/linux_rh6/install/master/math_toolkit/lib")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -449,7 +459,7 @@ set (COMMON_CONFIGURE_OPTIONS
   )
 
 if (BUILD_TRILINOS)
-  message ("state: BUILD_TRILINOS")
+  message ("ctest state: BUILD_TRILINOS")
 
   #
   # Configure the Trilinos/SCOREC build
@@ -588,7 +598,7 @@ if (BUILD_TRILINOS)
 endif ()
 
 if (BUILD_PERIDIGM)
-  message ("state: BUILD_PERIDIGM")
+  message ("ctest state: BUILD_PERIDIGM")
 
   set_property (GLOBAL PROPERTY SubProject Peridigm)
   set_property (GLOBAL PROPERTY Label Peridigm)
@@ -659,20 +669,13 @@ if (BUILD_PERIDIGM)
 endif ()
 
 if (BUILD_ALB32)
-  message ("state: BUILD_ALB32")
+  message ("ctest state: BUILD_ALB32")
 
   # Configure the Albany 32 Bit build 
   # Builds everything!
 
   set_property (GLOBAL PROPERTY SubProject Albany32Bit)
   set_property (GLOBAL PROPERTY Label Albany32Bit)
-
-  set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include")
-  set (LAME_LIB_DIR "/projects/sierra/linux_rh6/install/master/lame/lib")
-  set (MATH_TOOLKIT_INC_DIR
-    "/projects/sierra/linux_rh6/install/master/math_toolkit/include")
-  set (MATH_TOOLKIT_LIB_DIR
-    "/projects/sierra/linux_rh6/install/master/math_toolkit/lib")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -688,17 +691,12 @@ if (BUILD_ALB32)
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_ATO:BOOL=ON"
     "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
-    "-DLAME_INCLUDE_DIR:PATH=${LAME_INC_DIR}"
-    "-DLAME_LIBRARY_DIR:PATH=${LAME_LIB_DIR}"
-    "-DMATH_TOOLKIT_INCLUDE_DIR:PATH=${MATH_TOOLKIT_INC_DIR}"
-    "-DMATH_TOOLKIT_LIBRARY_DIR:PATH=${MATH_TOOLKIT_LIB_DIR}"
-    "-DENABLE_LAME:BOOL=Off") #todo
+    "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
   endif ()
   if (BUILD_PERIDIGM)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
@@ -798,7 +796,7 @@ endif ()
 #
 
 if (BUILD_ALB64)
-  message ("state: BUILD_ALB64")
+  message ("ctest state: BUILD_ALB64")
 
   set_property (GLOBAL PROPERTY SubProject Albany64Bit)
   set_property (GLOBAL PROPERTY Label Albany64Bit)
@@ -808,7 +806,6 @@ if (BUILD_ALB64)
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
-    "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
@@ -818,7 +815,8 @@ if (BUILD_ALB64)
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
   endif ()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64Bit")
@@ -919,7 +917,7 @@ set (ENV{LD_LIBRARY_PATH}
   )
 
 if (BUILD_TRILINOSCLANG11)
-  message ("state: BUILD_TRILINOSCLANG11")
+  message ("ctest state: BUILD_TRILINOSCLANG11")
   #
   # Configure the Trilinos/SCOREC Clang build
   #
@@ -941,7 +939,7 @@ if (BUILD_TRILINOSCLANG11)
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
-    "-DBUILD_SHARED_LIBS:BOOL=OFF" #todo Get some TPLs going with which I can do a shared build.
+    "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON")
 
@@ -1007,7 +1005,7 @@ endif ()
 #
 
 if (BUILD_ALB64CLANG11)
-  message ("state: BUILD_ALB64CLANG11")
+  message ("ctest state: BUILD_ALB64CLANG11")
   set_property (GLOBAL PROPERTY SubProject Albany64BitClang++11)
   set_property (GLOBAL PROPERTY Label Albany64BitClang++11)
 
@@ -1016,7 +1014,6 @@ if (BUILD_ALB64CLANG11)
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
-    "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
@@ -1028,7 +1025,8 @@ if (BUILD_ALB64CLANG11)
     )
   if (BUILD_SCOREC)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
   endif ()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64BitC11")
@@ -1126,7 +1124,7 @@ if (BUILD_ALB64CLANG11)
 endif ()
 
 if (BUILD_ALBFUNCTOR)
-  message ("state: BUILD_ALBFUNCTOR")
+  message ("ctest state: BUILD_ALBFUNCTOR")
   # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
 
   set_property (GLOBAL PROPERTY SubProject AlbanyFunctorDev)
@@ -1139,7 +1137,6 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_HYDRIDE:BOOL=ON"
     "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_ATO:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
@@ -1147,13 +1144,13 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_64BIT_INT:BOOL=OFF"
-    "-DENABLE_LAME:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
   endif ()
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev")
@@ -1214,7 +1211,7 @@ if (BUILD_ALBFUNCTOR)
   endif ()
 
   if (BUILD_ALBFUNCTOR)
-    set (CTEST_TEST_TIMEOUT 120)
+    set (CTEST_TEST_TIMEOUT 180)
     CTEST_TEST (
       BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
       RETURN_VALUE HAD_ERROR)
@@ -1232,7 +1229,7 @@ endif ()
 # Intel
 
 if (BUILD_INTEL_TRILINOS)
-  message ("state: BUILD_INTEL_TRILINOS")
+  message ("ctest state: BUILD_INTEL_TRILINOS")
   set_property (GLOBAL PROPERTY SubProject TrilinosIntel)
   set_property (GLOBAL PROPERTY Label TrilinosIntel)
 
@@ -1323,7 +1320,7 @@ if (BUILD_INTEL_TRILINOS)
 endif ()
 
 if (BUILD_INTEL_ALBANY)
-  message ("state: BUILD_INTEL_ALBANY")
+  message ("ctest state: BUILD_INTEL_ALBANY")
   set_property (GLOBAL PROPERTY SubProject AlbanyIntel)
   set_property (GLOBAL PROPERTY Label AlbanyIntel)
 
@@ -1335,7 +1332,6 @@ if (BUILD_INTEL_ALBANY)
     "-DENABLE_HYDRIDE:BOOL=ON"
     "-DENABLE_BGL:BOOL=OFF"
     "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_ATO:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
@@ -1343,12 +1339,17 @@ if (BUILD_INTEL_ALBANY)
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_64BIT_INT:BOOL=OFF"
-    "-DENABLE_LAME:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_CHECK_FPE:BOOL=OFF")
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_LAME:BOOL=${USE_LAME}"
+    "-DLAME_INCLUDE_DIR:PATH=${LAME_INC_DIR}"
+    "-DLAME_LIBRARY_DIR:PATH=${LAME_LIB_DIR}"
+    "-DMATH_TOOLKIT_INCLUDE_DIR:PATH=${MATH_TOOLKIT_INC_DIR}"
+    "-DMATH_TOOLKIT_LIBRARY_DIR:PATH=${MATH_TOOLKIT_LIB_DIR}")
   if (BUILD_SCOREC)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
   endif ()
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyIntel")
@@ -1409,7 +1410,7 @@ if (BUILD_INTEL_ALBANY)
   endif ()
 
   if (BUILD_INTEL_ALBANY)
-    set (CTEST_TEST_TIMEOUT 120)
+    #set (CTEST_TEST_TIMEOUT 120)
     CTEST_TEST (
       BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyIntel"
       RETURN_VALUE HAD_ERROR)
