@@ -243,6 +243,29 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+ Teuchos::RCP<Tpetra_Vector> fT;
+ Teuchos::ArrayRCP<ST> fT_nonconstView;
+ Teuchos::RCP<Tpetra_CrsMatrix> JacT;
+
+ typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+ LocalMatrixType jacobian;
+ Kokkos::View<int***, PHX::Device> Index;
+ bool is_adjoint;
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct Newmann_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, Newmann_Tag> Newmann_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+  void operator() (const Newmann_Tag& tag, const int& i) const;
+
+#endif
+
 };
 
 // **************************************************************
