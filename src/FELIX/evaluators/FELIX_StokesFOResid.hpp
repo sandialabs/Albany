@@ -65,6 +65,37 @@ private:
   Teuchos::ParameterList* stereographicMapList;
   bool useStereographicMap;
 
+
+//KOKKOS:
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  
+  struct FELIX_3D_Tag{};
+  struct POISSON_3D_Tag{};
+  struct FELIX_2D_Tag{};
+  struct FELIX_XZ_2D_Tag{};
+  struct POISSON_2D_Tag{};
+  
+  typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_3D_Tag> FELIX_3D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_3D_Tag> POISSON_3D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_2D_Tag> FELIX_2D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_XZ_2D_Tag> FELIX_XZ_2D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_2D_Tag> POISSON_2D_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FELIX_3D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const POISSON_3D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FELIX_2D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FELIX_XZ_2D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const POISSON_2D_Tag& tag, const int& cell) const; 
+
+#endif
 };
 }
 
