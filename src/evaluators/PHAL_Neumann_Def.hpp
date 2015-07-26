@@ -1333,13 +1333,65 @@ Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
+// **********************************************************************
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const Newmann_Tag& tag, const int& cell) const
+{
 
+  LO colT[1];
+  LO rowT;
+  ST value[1];
+  int lcol;
+  const int neq = Index.dimension(2);
+  const int nunk = neq*this->numNodes;
+  
+
+  for (std::size_t node = 0; node < this->numNodes; ++node)
+    for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+
+      int dim2=this->offset[dim];
+      rowT = Index(cell,node,dim2);
+
+      if (this->fT != Teuchos::null) {
+         this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
+      }
+
+        // Check derivative array is nonzero
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
+          // Loop over nodes in element
+          for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+        
+            // Loop over equations per node
+            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+             lcol = neq * node_col + eq_col;
+
+            // Global column
+            colT[0] =  Index(cell, node_col, eq_col);
+            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
+            if (is_adjoint) {
+              // Sum Jacobian transposed
+              jacobian.sumIntoValues(colT[0], &rowT,1, &value[0],true);
+            }
+            else {
+              // Sum Jacobian
+              jacobian.sumIntoValues(rowT, colT, nunk,value, true);
+            }
+          } // column equations
+        } // column nodes
+      } // has fast access
+    }
+          
+ }
+#endif
 // **********************************************************************
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -1347,7 +1399,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
-
   int lcol;
   Teuchos::Array<LO> rowT(1);
   Teuchos::Array<LO> colT(1);
@@ -1393,6 +1444,31 @@ evaluateFields(typename Traits::EvalData workset)
       } // has fast access
     }
   }
+#else
+  
+  fT = workset.fT;
+  fT_nonconstView = fT->get1dViewNonConst();
+  JacT = workset.JacT;
+
+
+  // Fill in "neumann" array
+  this->evaluateNeumannContribution(workset);
+ 
+ //  if ( !JacT->isFillActive())
+//    JacT->resumeFill();
+ 
+   jacobian=JacT->getLocalMatrix();
+
+   Index=workset.wsElNodeEqID_kokkos;
+
+   is_adjoint=workset.is_adjoint;
+
+   Kokkos::parallel_for(Newmann_Policy(0,workset.numCells),*this);
+
+//   if ( !JacT->isFillActive())
+//    JacT->fillComplete();
+
+#endif
 }
 
 // **********************************************************************
