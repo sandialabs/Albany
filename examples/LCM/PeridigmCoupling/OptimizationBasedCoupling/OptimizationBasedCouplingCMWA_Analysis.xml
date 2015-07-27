@@ -39,7 +39,7 @@
 	    <ParameterList name="My Group of Blocks">
 	      <Parameter name="Block Names" type="string" value="block_1"/>
 	      <Parameter name="Material" type="string" value="My Elastic Correspondence Material"/>
-              <Parameter name="Horizon" type="double" value="0.5"/>
+              <Parameter name="Horizon" type="double" value="0.2500001"/>
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
@@ -84,7 +84,7 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="CMWA_1.g"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OptimizationBasedCoupling_ok.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OptimizationBasedCoupling.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
@@ -92,8 +92,12 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.00143561949131}"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{65.1488253962}"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
+    <ParameterList name="Sensitivity Comparisons 0">
+      <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{38.5226990261}"/>
+    </ParameterList>
   </ParameterList>
 
   <ParameterList name="Piro">
