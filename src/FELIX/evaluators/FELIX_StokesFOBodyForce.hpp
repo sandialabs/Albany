@@ -127,6 +127,8 @@ private:
   
   double R, x_0, y_0, R2;
 
+  double rho_g_kernel;
+
   #endif
 
 };

@@ -211,14 +211,14 @@ operator() (const FO_INTERP_SURF_GRAD_Tag& tag, const int& cell) const{
          MeshScalarT h2 = h*h;
          MeshScalarT h_x = -x/2.0/R2*h2;
          MeshScalarT h_y = -y/2.0/R2*h2;
-         force(cell,qp,0) = rho_g*(h*surfaceGrad(cell,qp,0) + (surface(cell,qp) - z) *(h_x-h_y)); //it already includes the integral weight h^2
-         force(cell,qp,1) = rho_g*(h*surfaceGrad(cell,qp,1) + (surface(cell,qp) - z) *(h_y-h_x));
+         force(cell,qp,0) = rho_g_kernel*(h*surfaceGrad(cell,qp,0) + (surface(cell,qp) - z) *(h_x-h_y)); //it already includes the integral weight h^2
+         force(cell,qp,1) = rho_g_kernel*(h*surfaceGrad(cell,qp,1) + (surface(cell,qp) - z) *(h_y-h_x));
        }
    }
    else {
        for (int qp=0; qp < numQPs; ++qp) {
-         force(cell,qp,0) = rho_g*surfaceGrad(cell,qp,0);
-         force(cell,qp,1) = rho_g*surfaceGrad(cell,qp,1);
+         force(cell,qp,0) = rho_g_kernel*surfaceGrad(cell,qp,0);
+         force(cell,qp,1) = rho_g_kernel*surfaceGrad(cell,qp,1);
        }
    }
 
@@ -373,8 +373,8 @@ operator() (const FO_DOME_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp) {
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y = coordVec(cell,qp,1);
-       force(cell,qp,0) = -rho_g*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);
-       force(cell,qp,1) = -rho_g*y*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);
+       force(cell,qp,0) = -rho_g_kernel*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);
+       force(cell,qp,1) = -rho_g_kernel*y*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);
      }   
 }
 
@@ -396,11 +396,11 @@ operator() (const FO_XZMMS_Tag& tag, const int& cell) const{
        MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
        MeshScalarT phi1 = z - s; //phi1 = z-s
        //phi2 = 4*A*alpha^3*rho^3*g^3*x
-       MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;
+       MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g_kernel, 3)*x;
        //phi3 = 4*x^3*phi1^5*phi2^2
        MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2;
        //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
-       MeshScalarT phi4 = 8.0*alpha0*pow(x*phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta
+       MeshScalarT phi4 = 8.0*alpha0*pow(x*phi1,3)*phi2 - 2.0*H*alpha0*rho_g_kernel/beta
                         + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
        //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
        MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2
@@ -639,6 +639,8 @@ evaluateFields(typename Traits::EvalData workset)
    }
  }
 #else
+  rho_g_kernel=rho_g;
+
   if (bf_type == NONE) {
     force.deep_copy(0.0);
   }
