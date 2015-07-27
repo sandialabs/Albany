@@ -57,6 +57,18 @@ private:
   std::size_t numDims;
   std::size_t vecDim;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFVecGradInterpolation_Residual_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolation_Residual_Tag> DOFVecGradInterpolation_Residual_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFVecGradInterpolation_Residual_Tag& tag, const int& cell) const;
+
+#endif
+
 };
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
@@ -96,6 +108,21 @@ private:
   std::size_t numDims;
   std::size_t vecDim;
   std::size_t offset;
+
+//KOKKOS:
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+ 
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFVecGradInterpolation_Jacobian_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolation_Jacobian_Tag> DOFVecGradInterpolation_Jacobian_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFVecGradInterpolation_Jacobian_Tag& tag, const int& cell) const;
+
+  int num_dof, neq;
+
+#endif
 };
 
 #ifdef ALBANY_SG
