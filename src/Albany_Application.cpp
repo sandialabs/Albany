@@ -203,6 +203,8 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Transient;
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
+  else if(solutionMethod == "Aeras HyperViscosity2")
+    solMethod = Transient;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "

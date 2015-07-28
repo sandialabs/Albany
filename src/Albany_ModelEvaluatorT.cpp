@@ -524,6 +524,10 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
 
+  #ifdef OUTPUT_TO_SCREEN
+    std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  #endif
+
   Teuchos::TimeMonitor Timer(*timer); //start timer
   //
   // Get the input arguments

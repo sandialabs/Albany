@@ -102,12 +102,17 @@ protected:
       const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs,
       const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
 
+  //! Application object
+  Teuchos::RCP<Albany::Application> app;
+
+  Teuchos::RCP<Teuchos::Time> timer;
+
+  //! Sacado parameter vector
+  mutable Teuchos::Array<ParamVec> sacado_param_vec;
 
   //@}
 
 private:
-  //! Application object
-  Teuchos::RCP<Albany::Application> app;
 
   //! Number of parameter vectors
   int num_param_vecs;
@@ -120,8 +125,6 @@ private:
   //! List of free parameter names
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > param_names;
 
-  //! Sacado parameter vector
-  mutable Teuchos::Array<ParamVec> sacado_param_vec;
 
   //! Tpetra map for parameter vector
   Teuchos::Array<Teuchos::RCP<Tpetra_Map> > tpetra_param_map;
@@ -132,7 +135,6 @@ private:
   //! Tpetra response vector
   Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST> > > thyra_response_vec;
 
-  Teuchos::RCP<Teuchos::Time> timer;
   
   //! Number of distributed parameter vectors
   int num_dist_param_vecs;
