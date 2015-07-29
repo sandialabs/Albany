@@ -21,5 +21,5 @@ interface,
 
 responses,
         num_response_functions = 1
-        analytic_gradients
+        no_gradients
         no_hessians

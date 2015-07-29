@@ -1,10 +1,8 @@
-
 This documents lists to-dos to get Albany working when
 KOKKOS_UNDER_DEVELOPMENT is turned ON.
 
 Commented out ifdefs: 
 - src/Aeras/evaluators/Aeras_ComputeBasisFunctions*.hpp
-- src/Aeras/evaluators/Aeras_ShallowWaterResid*.hpp
 - src/LCM/models/J2Model_Def.hpp (kernel need to be re-written when MiniTensor
   is moved to Kokkos)
 - src/evaluators/PHAL_ComputeBasisFunctions*.hpp (kokkos kernels are implemented
@@ -15,48 +13,5 @@ Kokkos::vector)
 
 Failing tests when KOKKOS_UNDER_DEVELOPMENT is ON + SERIAL node: 
 The following tests FAILED:
-	 39 - Heat3DPamgen (Failed)
-	 40 - Heat3DPamgen_Tpetra (Timeout)
-	 41 - Heat2DMMCylWithSource (Failed)
-	 42 - Heat2DMMCylWithSource_Tpetra (Timeout)
-	 53 - SteadyHeat2DInternalNeumann (Failed)
-	 54 - SteadyHeat2DInternalNeumann_Tpetra (Timeout)
-	 74 - GPAM_Tpetra (Timeout)
-	 82 - NSVortexShedding2D_TransIRK (Timeout)
-	108 - HydrogenKfieldBC_Tpetra (Failed)
-	111 - Mechanics_SERIAL (Failed)
-	112 - Mechanics_Tpetra_SERIAL (Failed)
-	119 - MechanicsPorePressureSimple_Serial_Tpetra (Failed)
-	129 - MechanicsWithHydrogenOrthogonal_SERIAL_Tpetra (Failed)
-	130 - MechanicsWithHelium (Failed)
-	135 - MechanicsWithTemperature (Failed)
-	146 - BoreDemo (Failed)
-	147 - BoreDemo_Tpetra (Timeout)
-	218 - MechanicsTensileTet10_STK (Timeout)
-	219 - MechanicsTensileTet10_STK_Tpetra (Timeout)
-	223 - QCAD_Poisson_pmoscap (Failed)
-	224 - QCAD_Poisson_pmoscap_polygate (Failed)
-	226 - QCAD_Poisson_mosdot_2D (Failed)
-	227 - QCAD_Poisson_mosdot_2D_tri6 (Failed)
-	228 - QCAD_Poisson_mosdot_2D_qcad (Failed)
-	232 - QCAD_Poisson_pmoscap_Tpetra (Timeout)
-	233 - QCAD_Poisson_pmoscap_polygate_Tpetra (Timeout)
-	235 - QCAD_Poisson_mosdot_2D_tri6_Tpetra (Timeout)
-	254 - FO_GIS_Gis20km (Timeout)
-	261 - FO_MMS_SinCosGlen (Failed)
-	262 - FO_MMS_SinCosGlen_Tpetra (Failed)
-	263 - FO_MMS_SinCosZ3DPeriodicXY (Failed)
-	264 - FO_MMS_SinCosZ3DPeriodicXY_Tpetra (Failed)
-	265 - FO_MMS_SinExp_Neumann (Failed)
-	266 - FO_MMS_SinExp_Neumann_Tpetra (Failed)
-	267 - FO_MMS_CosExp_Basal (Failed)
-	268 - FO_MMS_CosExp_Basal_Tpetra (Failed)
-	269 - FO_MMS_FO_CosExp_BasalAll (Failed)
-	270 - FO_MMS_FO_CosExp_BasalAll_Tpetra (Failed)
-	271 - FO_Test_Dome (Failed)
-	284 - Stokes_MMS_SinSinPeriodicXY (Failed)
-	285 - Stokes_MMS_SinSinDirichlet (Failed)
-	290 - Stokes_ISMIP_TestA (Timeout)
-	300 - Aeras_HydrostaticGaussianBallTracerInShear (Timeout)
-
+                        34 - MPNIQuad2D_SG (Failed)
 

@@ -753,6 +753,16 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
     }
   }
 
+  // Store the volume of the sphere element
+  const Epetra_Vector& peridigmVolume = *(peridigm->getVolume());
+  const Epetra_BlockMap& peridigmVolumeMap = peridigmVolume.Map();
+  for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
+    int globalId = (*obcDataPoints)[i].peridigmGlobalId;
+    int localId = peridigmVolumeMap.LID(globalId);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(localId < 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), invalid local id!\n\n");
+    (*obcDataPoints)[i].sphereElementVolume = peridigmVolume[localId];
+  }
+
   // Create an Epetra_Vector for importing the displacements of the peridynamic nodes
   std::vector<int> tempGlobalIds(obcDataPoints->size());
   for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
@@ -880,19 +890,18 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
       // Derivatives corresponding to dof at peridigm node
       for(int dim=0; dim<3; ++dim) {
         deriv[dim] = -2*displacementDiff[3*iEvalPt+dim];
+	// Multiply by the sphere element volume
+	deriv[dim] *= (*obcDataPoints)[iEvalPt].sphereElementVolume;
         globalNodeIds[dim] = 3*((*obcDataPoints)[iEvalPt].peridigmGlobalId) + dim;
       }
       obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
-
     }
   }
 
+  // Assemble the derivative of the functional
   if(obcFunctionalDerivWrtDisplacement != NULL) {
     obcFunctionalDerivWrtDisplacement->Export(*obcFunctionalDerivWrtDisplacementOverlap, *overlapSolutionExporter, Add);
   }
-
-  double functionalValue(0.0);
-  displacementDiff.Norm2(&functionalValue);
 
   // Send displacement differences to Peridigm for output
   Teuchos::RCP< std::vector<PeridigmNS::Block> > peridigmBlocks = peridigm->getBlocks();
@@ -907,7 +916,18 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     }
   }
 
-  return pow(functionalValue,2);
+  // Multiply the functional vector by the sphere element volume
+  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints->size() ; iEvalPt++){
+    for(int dim=0; dim<3; ++dim) {
+      displacementDiff[3*iEvalPt+dim] *= (*obcDataPoints)[iEvalPt].sphereElementVolume;
+    }
+  }
+  // Evaluate the functional
+  double functionalValue(0.0);
+  displacementDiff.Norm2(&functionalValue);
+  functionalValue = functionalValue*functionalValue;
+
+  return functionalValue;
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
