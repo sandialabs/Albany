@@ -11,6 +11,7 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
+#include <Epetra_Export.h>
 
 const Teuchos::RCP<LCM::PeridigmManager>& LCM::PeridigmManager::self() {
   static Teuchos::RCP<PeridigmManager> peridigmManager;
@@ -783,9 +784,8 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     return 0.0;
   }
 
-  if(obcFunctionalDerivWrtDisplacement != NULL){
-    obcFunctionalDerivWrtDisplacement->PutScalar(0.0);
-  }
+
+
 
   // Set up access to the current displacements of the nodes in the solid elements
   Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();
@@ -801,6 +801,14 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     for(int dof=0 ; dof<3 ; dof++){
       (*obcDataPoints)[iEvalPt].currentCoords[dof] = (*obcPeridynamicNodeCurrentCoords)[3*localId+dof];
     }
+  }
+
+  // Creating Overlapped obcFunctionalDerivWrtDisplacement
+  Teuchos::RCP<Epetra_Vector> obcFunctionalDerivWrtDisplacementOverlap;
+  Teuchos::RCP<Epetra_Export> overlapSolutionExporter;
+  if(obcFunctionalDerivWrtDisplacement != NULL){
+    obcFunctionalDerivWrtDisplacementOverlap = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(*stkDisc->getOverlapMap()));
+    overlapSolutionExporter = Teuchos::rcp<Epetra_Export>(new Epetra_Export(*stkDisc->getOverlapMap(), obcFunctionalDerivWrtDisplacement->Map()));
   }
 
   // We're interested in a single point in a single element in a three-dimensional simulation
@@ -866,7 +874,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
           deriv[dim] = 2*displacementDiff[3*iEvalPt+dim]*basisOnRefPoint(i,0);
           globalNodeIds[dim] = 3*globalAlbanyNodeId + dim;
         }
-        obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
+        obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
       }
 
       // Derivatives corresponding to dof at peridigm node
@@ -874,8 +882,13 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
         deriv[dim] = -2*displacementDiff[3*iEvalPt+dim];
         globalNodeIds[dim] = 3*((*obcDataPoints)[iEvalPt].peridigmGlobalId) + dim;
       }
-      obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
+      obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+
     }
+  }
+
+  if(obcFunctionalDerivWrtDisplacement != NULL) {
+    obcFunctionalDerivWrtDisplacement->Export(*obcFunctionalDerivWrtDisplacementOverlap, *overlapSolutionExporter, Add);
   }
 
   double functionalValue(0.0);
@@ -1293,7 +1306,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* dirichletData = stk::mesh::field_data (*dirichletField, node);
 
           //set dirichletData as any function of the coordinates;
-          dirichletData[0] = 0.005 * (coord[0] - 1.66);
+          dirichletData[0] = 0+((coord[0] - 1.66) + coord[1] + coord[2]);
           //    dirichletData[1]= 0;
           //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
         }
@@ -1310,7 +1323,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= 0.005*(coord[0]-1.66);
+          dirichletData[0]= 0+((coord[0]-1.66)+ coord[1] + coord[2]);
       //    dirichletData[1]= 0;
       //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
         }
@@ -1329,7 +1342,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
         double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
         double* dirichletControlData = stk::mesh::field_data(*dirichletControlField, node);
         //set dirichletData as any function of the coordinates;
-        dirichletControlData[0]= 0;
+        dirichletControlData[0]= 0;//2+((coord[0]-1.66)) + coord[1] + coord[2]);
     //    dirichletData[1]= 0;
     //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
       }

@@ -1245,6 +1245,9 @@ computeGlobalJacobianImplT(const double alpha,
     // Makes getLocalMatrix() valid.
     overlapped_jacT->fillComplete();
   }
+  if ( ! overlapped_jacT->isFillActive())
+    overlapped_jacT->resumeFill();
+
 #endif
 
   // Set data in Workset struct, and perform fill via field manager
@@ -1318,6 +1321,13 @@ computeGlobalJacobianImplT(const double alpha,
 
   jacT->fillComplete();
 
+
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+  overlapped_jacT->fillComplete();
+  }
+#endif
   if (derivatives_check_ > 0)
     checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
                      derivatives_check_);

@@ -5,6 +5,8 @@ KOKKOS_UNDER_DEVELOPMENT is turned ON.
 Commented out ifdefs: 
 - src/Aeras/evaluators/Aeras_ComputeBasisFunctions*.hpp
 - src/Aeras/evaluators/Aeras_ShallowWaterResid*.hpp
+- src/LCM/models/J2Model_Def.hpp (kernel need to be re-written when MiniTensor
+  is moved to Kokkos)
 - src/evaluators/PHAL_ComputeBasisFunctions*.hpp (kokkos kernels are implemented
 for 3D only. Wait until Compute Basis functions kernels are implemented in
 Intrepid)

@@ -36,8 +36,6 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
   
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
 
 private:
  
@@ -74,6 +72,65 @@ private:
 
   Teuchos::ParameterList* stereographicMapList;
   bool useStereographicMap;
+
+  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct FO_INTERP_SURF_GRAD_Tag{}; 
+  struct FO_SURF_GRAD_PROVIDED_Tag{};
+  struct POISSON_Tag{};
+  struct FO_SINCOS2D_Tag{};
+  struct FO_COSEXP2D_Tag{};
+  struct FO_COSEXP2DFLIP_Tag{};
+  struct FO_COSEXP2DALL_Tag{};
+  struct FO_SINCOSZ_Tag{};
+  struct FO_SINEXP2D_Tag{};
+  struct FO_DOME_Tag{};
+  struct FO_XZMMS_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_INTERP_SURF_GRAD_Tag> FO_INTERP_SURF_GRAD_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_SURF_GRAD_PROVIDED_Tag> FO_SURF_GRAD_PROVIDED_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_Tag> POISSON_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_SINCOS2D_Tag> FO_SINCOS2D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_COSEXP2D_Tag> FO_COSEXP2D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_COSEXP2DFLIP_Tag> FO_COSEXP2DFLIP_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_COSEXP2DALL_Tag> FO_COSEXP2DALL_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_SINCOSZ_Tag> FO_SINCOSZ_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_SINEXP2D_Tag> FO_SINEXP2D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_DOME_Tag> FO_DOME_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FO_XZMMS_Tag> FO_XZMMS_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_INTERP_SURF_GRAD_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_SURF_GRAD_PROVIDED_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const POISSON_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_SINCOS2D_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_COSEXP2D_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_COSEXP2DFLIP_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_COSEXP2DALL_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_SINCOSZ_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_SINEXP2D_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_DOME_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FO_XZMMS_Tag& tag, const int& i) const;
+  
+  double R, x_0, y_0, R2;
+
+  double rho_g_kernel;
+
+  #endif
+
 };
 }
 

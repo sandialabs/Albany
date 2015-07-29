@@ -326,7 +326,6 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
       Teuchos::RCP<Tpetra_MultiVector> Rbm = Teuchos::rcp(
         new Tpetra_MultiVector(soln_map, rrAV, soln_map->getNodeNumElements(),
                                nullSpaceDim + numScalar));
-      Tpetra_MatrixMarket_Writer::writeDenseFile("rbm.mm", Rbm);
       plist->set("Nullspace", Rbm);
     }
   }
