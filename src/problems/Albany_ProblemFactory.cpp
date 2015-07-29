@@ -69,6 +69,10 @@
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
 
+#ifdef ALBANY_GOAL
+#include "GOAL/problems/GOAL_MechanicsProblem.hpp"
+#endif
+
 #ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
@@ -349,6 +353,11 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Phase 3D") {
     strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
+  }
+#endif
+#ifdef ALBANY_GOAL
+  else if (method == "GOAL Mechanics 3D") {
+    strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_HYDRIDE
