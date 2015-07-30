@@ -4,7 +4,7 @@
   </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
-    <Parameter name="Solution Method" type="string" value="Aeras HyperViscosity"/>
+    <Parameter name="Solution Method" type="string" value="Aeras HyperViscosity2"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
       <Parameter name="Use Hyperviscosity" type="bool" value="True"/>
