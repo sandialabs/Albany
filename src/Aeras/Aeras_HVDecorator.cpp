@@ -65,7 +65,9 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
     Teuchos::nonnull(this->getNominalValues().get_x_dot()) ?
     ConverterT::getConstTpetraVector(this->getNominalValues().get_x_dot()) :
     Teuchos::null;
-  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::null;
+  //IKT: it's important to make x_dotdotT non-null.  Otherwise 2nd derivative terms defining the laplace operator
+  //will not get set in PHAL_GatherSolution_Def.hpp. 
+  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
   const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
   app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
                                sacado_param_vec, fT.get(), *Op_crs);

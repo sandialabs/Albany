@@ -168,14 +168,28 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
   Teuchos::ArrayRCP<std::string> dof_names(1);
   Teuchos::ArrayRCP<std::string> dof_names_dot(1);
+  Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
   dof_names[0] = "Flow State";
   dof_names_dot[0] = dof_names[0]+"_dot";
+  dof_names_dotdot[0] = dof_names[0]+"_dotdot";
   resid_names[0] = "ShallowWater Residual";
+
+  //IKT: this is the equivalent of the supportsTransient flag in LCM. 
+  //It tells the code to build 2nd derivative terms, which we need for 
+  //explicit integration of the system with hyperviscosity.  
+  //TODO? set this to off when it's not needed (i.e., when no hyperviscosity 
+  //and/or implicit time stepping).
+  bool explicitHV = true;
 
   // Construct Standard FEM evaluators for Vector equation
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot));
+  if (explicitHV) fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names, Teuchos::null, dof_names_dotdot));
+   
+  if (explicitHV) fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
@@ -259,6 +273,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("QP Variable Name", dof_names[0]);
     p->set<std::string>("Nodal Variable Name", dof_names[0]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
+    p->set<std::string>("Time Dependent Variable Name", dof_names_dotdot[0]);
     p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     p->set<std::string>("Aeras Surface Height QP Variable Name", "Aeras Surface Height");
     p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");

@@ -29,6 +29,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
   Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
+  UDotDot     (p.get<std::string> ("Time Dependent Variable Name"), dl->qp_vector),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   mountainHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
@@ -124,6 +125,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->addDependentField(UNodal);
   this->addDependentField(Ugrad);
   this->addDependentField(UDot);
+  this->addDependentField(UDotDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(mountainHeight);
@@ -293,6 +295,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(UNodal,fm);
   this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(UDot,fm);
+  this->utils.setFieldData(UDotDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(mountainHeight,fm);
@@ -663,6 +666,13 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   PHAL::set(Residual, 0.0);
+  
+  double j_coeff = workset.j_coeff;
+  double m_coeff = workset.m_coeff;
+  double n_coeff = workset.n_coeff;
+#ifdef ALBANY_VERBOSE
+  std::cout << "j_coeff, m_coeff, n_coeff: " << j_coeff << ", " << m_coeff << ", " << n_coeff << std::endl;
+#endif 
 
 //Note that vars huAtNodes, div_hU, ... below are redefined locally here. 
 //Global vars with such names exist too (see constructor).
