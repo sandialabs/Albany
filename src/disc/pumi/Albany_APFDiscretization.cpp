@@ -87,6 +87,10 @@ Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct>
     else if (layout[i+1] == "V") {
       index = getNumDim();
       solIndex.push_back(index);
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true, std::logic_error,
+        "Layout '" << layout[i+1] << "' is not supported.");
     }
   }
 
@@ -269,9 +273,27 @@ void Albany::APFDiscretization::setField(
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = m->findField(name);
-  for (size_t i=0; i < nodes.getSize(); ++i) {
+
+  // PUMI internally tends to think of everything as 3D. For example, VTK output
+  // is 3D. To make sure output for a 2D problem is not polluted by a spurious Z
+  // component value (or similarly for 1D if we ever do 1D problems), explicitly
+  // make PUMI see a 0.
+  const int spdim = getNumDim();
+  // 9 components is the max number we ever need.
+  double data_buf[9] = {0};
+  // Determine the PUMI and Albany field sizes for this field.
+  const int
+    pumi_nc = apf::countComponents(f),
+    albany_nc = (spdim == 3 ? pumi_nc :
+                 (pumi_nc == 1 ? 1 :
+                  pumi_nc == 3 ? spdim :
+                  pumi_nc == 9 ? spdim*spdim :
+                  -1));
+  assert(albany_nc != -1);
+
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
-    GO node_gid = apf::getNumber(globalNumbering,node);
+    GO node_gid = apf::getNumber(globalNumbering, node);
     int node_lid;
     if (overlapped)
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
@@ -279,9 +301,18 @@ void Albany::APFDiscretization::setField(
       if ( ! m->isOwned(node.entity)) continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    int firstDOF = getDOF(node_lid,offset,nentries);
-    apf::setComponents(f,node.entity,node.node,&(data[firstDOF]));
+    const int first_dof = getDOF(node_lid, offset, nentries);
+
+    const double* datap = data + first_dof;
+    if (spdim < 3) {
+      for (int j = 0; j < albany_nc; ++j)
+        data_buf[j] = datap[j];
+      datap = data_buf;
+    }
+
+    apf::setComponents(f, node.entity, node.node, datap);
   }
+
   if ( ! overlapped)
     apf::synchronize(f);
 }
@@ -290,12 +321,13 @@ void Albany::APFDiscretization::setSplitFields(
   const std::vector<std::string>& names, const std::vector<int>& indices,
   const ST* data, bool overlapped)
 {
+  const int spdim = getNumDim();
   apf::Mesh* m = meshStruct->getMesh();
   int offset = 0;
   int indexSum = 0;
   for (std::size_t i=0; i < names.size(); ++i) {
-    assert(indexSum==offset);
-    this->setField(names[i].c_str(),data,overlapped,offset);
+    assert(spdim < 3 || indexSum == offset);
+    this->setField(names[i].c_str(), data, overlapped, indexSum);
     offset += apf::countComponents(m->findField(names[i].c_str()));
     indexSum += indices[i];
   }
@@ -326,13 +358,13 @@ void Albany::APFDiscretization::getSplitFields(
   const std::vector<std::string>& names, const std::vector<int>& indices, ST* data,
   bool overlapped) const
 {
+  const int spdim = getNumDim();
   apf::Mesh* m = meshStruct->getMesh();
   int offset = 0;
   int indexSum = 0;
   for (std::size_t i=0; i < names.size(); ++i) {
-    assert(indexSum==offset);
-
-    this->getField(names[i].c_str(),data,overlapped,offset);
+    assert(spdim < 3 || indexSum == offset);
+    this->getField(names[i].c_str(),data, overlapped, indexSum);
     offset += apf::countComponents(m->findField(names[i].c_str()));
     indexSum += indices[i];
   }
@@ -893,15 +925,16 @@ void Albany::APFDiscretization::copyQPTensorToAPF(
     PUMIQPData<double, 4>& state,
     apf::Field* f)
 {
+  const int spdim = getNumDim();
+  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
-      apf::Matrix3x3 v;
       for (std::size_t p=0; p < nqp; ++p) {
-        for (std::size_t i=0; i < 3; ++i)
-        for (std::size_t j=0; j < 3; ++j)
-          v[i][j] = ar(e,p,i,j);
+        for (std::size_t i=0; i < spdim; ++i)
+          for (std::size_t j=0; j < spdim; ++j)
+            v[i][j] = ar(e,p,i,j);
         apf::setMatrix(f,buck[e],p,v);
       }
     }
@@ -927,13 +960,14 @@ void Albany::APFDiscretization::copyQPVectorToAPF(
     PUMIQPData<double, 3>& state,
     apf::Field* f)
 {
+  const int spdim = getNumDim();
+  apf::Vector3 v(0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
-      apf::Vector3 v;
       for (std::size_t p=0; p < nqp; ++p) {
-        for (std::size_t i=0; i < 3; ++i)
+        for (std::size_t i=0; i < spdim; ++i)
           v[i] = ar(e,p,i);
         apf::setVector(f,buck[e],p,v);
       }
@@ -1011,15 +1045,16 @@ void Albany::APFDiscretization::copyQPVectorFromAPF(
     PUMIQPData<double, 3>& state,
     apf::Field* f)
 {
+  const int spdim = getNumDim();
   apf::Mesh2* m = meshStruct->getMesh();
+  apf::Vector3 v(0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
-      apf::Vector3 v;
       for (std::size_t p=0; p < nqp; ++p) {
         apf::getVector(f,buck[e],p,v);
-        for (std::size_t i=0; i < 3; ++i)
+        for (std::size_t i=0; i < spdim; ++i)
           ar(e,p,i) = v[i];
       }
     }
@@ -1031,16 +1066,17 @@ void Albany::APFDiscretization::copyQPTensorFromAPF(
     PUMIQPData<double, 4>& state,
     apf::Field* f)
 {
+  const int spdim = getNumDim();
   apf::Mesh2* m = meshStruct->getMesh();
+  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
   for (std::size_t b = 0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
     for (std::size_t e=0; e < buck.size(); ++e) {
-      apf::Matrix3x3 v;
       for (std::size_t p=0; p < nqp; ++p) {
         apf::getMatrix(f,buck[e],p,v);
-        for (std::size_t i=0; i < 3; ++i) {
-          for (std::size_t j=0; j < 3; ++j)
+        for (std::size_t i=0; i < spdim; ++i) {
+          for (std::size_t j=0; j < spdim; ++j)
             ar(e,p,i,j) = v[i][j];
         }
       }
@@ -1148,10 +1184,11 @@ copyNodalDataToAPF (const bool copy_all) {
     if ( ! copy_all && ! nd->output) continue;
 
     int value_type, nentries;
+    const int spdim = getNumDim();
     switch (nd->ndims()) {
     case 0: value_type = apf::SCALAR; nentries = 1; break;
-    case 1: value_type = apf::VECTOR; nentries = 3; break;
-    case 2: value_type = apf::MATRIX; nentries = 9; break;
+    case 1: value_type = apf::VECTOR; nentries = spdim; break;
+    case 2: value_type = apf::MATRIX; nentries = spdim*spdim; break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                  "dim is not in {1,2,3}");
