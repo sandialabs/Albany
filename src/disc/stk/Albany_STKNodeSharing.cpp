@@ -33,6 +33,7 @@
 
 #include <Albany_STKNodeSharing.hpp>
 #include <stk_util/parallel/ParallelComm.hpp>
+#include "Teuchos_TimeMonitor.hpp"
 
 //----------------------------------------------------------------------
 
@@ -40,6 +41,8 @@
 //              as part of Albany.
 
 void Albany::fix_node_sharing(stk::mesh::BulkData& bulk_data) {
+
+    TEUCHOS_FUNC_TIME_MONITOR("> Albany Setup: fix_node_sharing");
 
     stk::CommAll comm(bulk_data.parallel());
 
