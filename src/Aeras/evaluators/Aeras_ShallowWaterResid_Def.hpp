@@ -27,6 +27,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
   U        (p.get<std::string> ("QP Variable Name"), dl->qp_vector),
   UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
+  UDotDotNodal   (p.get<std::string> ("Time Dependent Nodal Variable Name"), dl->node_vector),
   Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
   UDotDot     (p.get<std::string> ("Time Dependent Variable Name"), dl->qp_vector),
@@ -126,6 +127,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->addDependentField(Ugrad);
   this->addDependentField(UDot);
   this->addDependentField(UDotDot);
+  this->addDependentField(UDotDotNodal);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(mountainHeight);
@@ -296,6 +298,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(UDot,fm);
   this->utils.setFieldData(UDotDot,fm);
+  this->utils.setFieldData(UDotDotNodal,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(mountainHeight,fm);

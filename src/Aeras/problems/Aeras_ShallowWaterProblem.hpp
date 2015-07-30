@@ -272,6 +272,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("QP Variable Name", dof_names[0]);
     p->set<std::string>("Nodal Variable Name", dof_names[0]);
+    p->set<std::string>("Time Dependent Nodal Variable Name", dof_names_dotdot[0]);
     p->set<std::string>("QP Time Derivative Variable Name", dof_names_dot[0]);
     p->set<std::string>("Time Dependent Variable Name", dof_names_dotdot[0]);
     p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
