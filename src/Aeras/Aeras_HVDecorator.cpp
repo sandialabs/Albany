@@ -11,7 +11,7 @@
 #include <sstream>
 
 //uncomment the following to write stuff out to matrix market to debug
-//#define WRITE_TO_MATRIX_MARKET
+#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static
@@ -35,7 +35,43 @@ Aeras::HVDecorator::HVDecorator(
 //Let's keep this for later
   Teuchos::ParameterList &coupled_system_params = appParams->sublist("Coupled System");
 
+//Create and store mass and Laplacian operators (in CrsMatrix form). 
+  mass_ = createOperator(1.0, 0.0, 0.0); 
+  laplace_ = createOperator(0.0, 0.0, 1.0);  
+#ifdef WRITE_TO_MATRIX_MARKET
+  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass_);
+  Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
+#endif
 }
+ 
+//IKT: the following function creates either the mass or Laplacian operator, to be 
+//stored as a member function and used in evalModelImpl to perform the update for the auxiliary 
+//utilde/htilde variables when integrating the hyperviscosity system in time using 
+//an explicit scheme. 
+Teuchos::RCP<Tpetra_CrsMatrix> 
+Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
+{
+  double curr_time = 0.0; 
+  const Teuchos::RCP<Tpetra_Operator> Op =
+    Teuchos::nonnull(this->create_W_op()) ?
+    ConverterT::getTpetraOperator(this->create_W_op()) :
+    Teuchos::null;
+  const Teuchos::RCP<Tpetra_CrsMatrix> Op_crs =
+    Teuchos::nonnull(Op) ?
+    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :
+    Teuchos::null;
+  const Teuchos::RCP<const Tpetra_Vector> xT = ConverterT::getConstTpetraVector(this->getNominalValues().get_x());
+  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
+    Teuchos::nonnull(this->getNominalValues().get_x_dot()) ?
+    ConverterT::getConstTpetraVector(this->getNominalValues().get_x_dot()) :
+    Teuchos::null;
+  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::null;
+  const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
+  app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
+                               sacado_param_vec, fT.get(), *Op_crs);
+  return Op_crs; 
+}
+
 
 //og: do I have to copy/paste this from AMET.cpp?
 namespace {
