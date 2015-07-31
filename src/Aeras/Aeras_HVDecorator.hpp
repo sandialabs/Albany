@@ -32,6 +32,11 @@ public:
 
 protected:
 
+  //! Evaluate model on InArgs
+  void evalModelImpl(
+      const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgs,
+      const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgs) const;
+
 private: 
   //Mass and Laplace operators
   Teuchos::RCP<Tpetra_CrsMatrix> mass_;  
