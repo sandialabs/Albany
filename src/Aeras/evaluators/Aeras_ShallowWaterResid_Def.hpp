@@ -76,6 +76,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
             << "  dim " << nDim << std::endl;
   std::cout << "FullCellTopology name is " << ctd->name << std::endl;
 #endif
+       
+
 
   qpToNodeMap.resize(nNodes); 
   nodeToQPMap.resize(nNodes); 
@@ -96,6 +98,9 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   }
   //Isoparametric quads
   else if (name == "Quadrilateral" || name == "ShellQuadrilateral") {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+       Teuchos::Exceptions::InvalidParameter,"Aeras::ShallowWaterResid no longer works with isoparameteric " << 
+           "Quads/ShellQuads! Please re-run with spectral elements (IKT, 7/30/2015)."); 
     if (nNodes == 4) {
       for(int i=0; i<nNodes; i++) {
         qpToNodeMap[i] = i; 
@@ -150,6 +155,12 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
+  
+  if (nNodes != numQPs) { 
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+         Teuchos::Exceptions::InvalidParameter, "Aeras::ShallowWaterResid must be run such that nNodes == numQPs!" 
+         <<  "This does now hold: numNodes = " <<  nNodes << ", numQPs = " << numQPs << "."); 
+  }
 
   refWeights        .resize               (numQPs);
   grad_at_cub_points.resize     (numNodes, numQPs, 2);
@@ -745,14 +756,15 @@ evaluateFields(typename Traits::EvalData workset)
     divergence(huAtNodes, cell, div_hU);
 
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-        
-      for (std::size_t node=0; node < numNodes; ++node) {
-
-        Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
-                              +  div_hU(qp)*wBF(cell, node, qp); 
-        if (useHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
-//for tensor HV, hyperViscosity is (cell, qp, 2,2)
-//so the code below is temporary 
+      std::size_t node = qp; 
+      Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
+                            +  div_hU(qp)*wBF(cell, node, qp); 
+    }
+    if (useHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
+      //for tensor HV, hyperViscosity is (cell, qp, 2,2)
+      //so the code below is temporary 
+      for (std::size_t qp=0; qp < numQPs; ++qp) {  
+        for (std::size_t node=0; node < numNodes; ++node) {
           Residual(cell,node,0) -= hyperViscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
                                 +  hyperViscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
         }
@@ -771,8 +783,12 @@ evaluateFields(typename Traits::EvalData workset)
       gradient(surf, cell, hgradNodes); 
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
+        std::size_t node = qp; 
+        Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp);
+      }
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t node=0; node < numNodes; ++node) {
-            Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
+            Residual(cell,node,3) += hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
                                   + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
         }
       }
@@ -782,10 +798,9 @@ evaluateFields(typename Traits::EvalData workset)
   if (usePrescribedVelocity) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t node=0; node < numNodes; ++node) {
-          Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
-          Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp); 
-        }
+        std::size_t node = qp; 
+        Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
+        Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp); 
       }
     }
   }
@@ -886,17 +901,19 @@ evaluateFields(typename Traits::EvalData workset)
       }
  
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t node=0; node < numNodes; ++node) {
-        
-          Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
-                                       + gradPotentialEnergy(qp,0)
-                                       - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
-                                      )*wBF(cell,node,qp); 
-          Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
-                                       + gradPotentialEnergy(qp,1)
-                                       + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
-                                      )*wBF(cell,node,qp); 
-          if (useHyperViscosity) {
+        size_t node = qp;  
+        Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
+                                     + gradPotentialEnergy(qp,0)
+                                     - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
+                                    )*wBF(cell,node,qp); 
+        Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
+                                     + gradPotentialEnergy(qp,1)
+                                     + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
+                                    )*wBF(cell,node,qp);
+      } 
+      if (useHyperViscosity) {
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          for (std::size_t node=0; node < numNodes; ++node) {
 
             ScalarT lam = sphere_coord(cell, qp, 0);
             ScalarT th = sphere_coord(cell, qp, 1);
