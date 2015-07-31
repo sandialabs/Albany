@@ -192,10 +192,19 @@ Albany::APFDiscretization::printCoords() const
 const Teuchos::ArrayRCP<double>&
 Albany::APFDiscretization::getCoordinates() const
 {
-  coordinates.resize(3 * numOverlapNodes);
+  const int spdim = getNumDim();
+  coordinates.resize(spdim * numOverlapNodes);
   apf::Field* f = meshStruct->getMesh()->getCoordinateField();
-  for (size_t i=0; i < nodes.getSize(); ++i)
-    apf::getComponents(f,nodes[i].entity,nodes[i].node,&(coordinates[3*i]));
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
+    if (spdim == 3)
+      apf::getComponents(f, nodes[i].entity, nodes[i].node, &coordinates[3*i]);
+    else {
+      double buf[3];
+      apf::getComponents(f, nodes[i].entity, nodes[i].node, buf);
+      double* const c = &coordinates[spdim*i];
+      for (int j = 0; j < spdim; ++j) c[j] = buf[j];
+    }
+  }
   return coordinates;
 }
 
@@ -203,9 +212,18 @@ void
 Albany::APFDiscretization::setCoordinates(
     const Teuchos::ArrayRCP<const double>& c)
 {
+  const int spdim = getNumDim();
+  double buf[3] = {0};
   apf::Field* f = meshStruct->getMesh()->getCoordinateField();
-  for (size_t i=0; i < nodes.getSize(); ++i)
-    apf::setComponents(f,nodes[i].entity,nodes[i].node,&(c[3*i]));
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
+    if (spdim == 3)
+      apf::setComponents(f, nodes[i].entity, nodes[i].node, &c[spdim*i]);
+    else {
+      const double* const cp = &c[spdim*i];
+      for (int j = 0; j < spdim; ++j) buf[j] = cp[j];
+      apf::setComponents(f, nodes[i].entity, nodes[i].node, buf);
+    }
+  }
 }
 
 void Albany::APFDiscretization::
@@ -268,6 +286,16 @@ Albany::APFDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
+inline int albanyCountComponents (const int spatial_dim, const int pumi_nc) {
+  if (spatial_dim == 3) return pumi_nc;
+  switch (pumi_nc) {
+  case 1: return 1;
+  case 3: return spatial_dim;
+  case 9: return spatial_dim*spatial_dim;
+  default: assert(0); return -1;
+  }
+}
+
 void Albany::APFDiscretization::setField(
   const char* name, const ST* data, bool overlapped, int offset, int nentries)
 {
@@ -278,18 +306,15 @@ void Albany::APFDiscretization::setField(
   // is 3D. To make sure output for a 2D problem is not polluted by a spurious Z
   // component value (or similarly for 1D if we ever do 1D problems), explicitly
   // make PUMI see a 0.
+  //   The following and similar patterns are used in get/setField,
+  // get/setCoordinates, and the QP data transfer routines.
   const int spdim = getNumDim();
   // 9 components is the max number we ever need.
   double data_buf[9] = {0};
   // Determine the PUMI and Albany field sizes for this field.
   const int
     pumi_nc = apf::countComponents(f),
-    albany_nc = (spdim == 3 ? pumi_nc :
-                 (pumi_nc == 1 ? 1 :
-                  pumi_nc == 3 ? spdim :
-                  pumi_nc == 9 ? spdim*spdim :
-                  -1));
-  assert(albany_nc != -1);
+    albany_nc = albanyCountComponents(spdim, pumi_nc);
 
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
@@ -338,7 +363,10 @@ void Albany::APFDiscretization::getField(
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = m->findField(name);
-  for (size_t i=0; i < nodes.getSize(); ++i) {
+  const int
+    spdim = getNumDim(),
+    albany_nc = albanyCountComponents(spdim, apf::countComponents(f));
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
     GO node_gid = apf::getNumber(globalNumbering,node);
     int node_lid;
@@ -349,8 +377,14 @@ void Albany::APFDiscretization::getField(
         continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    int firstDOF = getDOF(node_lid,offset,nentries);
-    apf::getComponents(f,node.entity,node.node,&(data[firstDOF]));
+    const int first_dof = getDOF(node_lid, offset, nentries);
+    if (spdim == 3)
+      apf::getComponents(f, node.entity, node.node, &data[first_dof]);
+    else {
+      double buf[4];
+      apf::getComponents(f, node.entity, node.node, buf);
+      for (int j = 0; j < albany_nc; ++j) data[first_dof + j] = buf[j];
+    }
   }
 }
 
@@ -814,7 +848,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
       coords[b][i].resize(nodes_per_element);
 
       // loop over local nodes
-
+      const int spdim = getNumDim();
       for (int j=0; j < nodes_per_element; j++) {
         const GO node_gid = nodeIDs[j];
         const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
@@ -822,7 +856,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "PUMI_Disc: node_lid out of range " << node_lid << std::endl);
 
-        coords[b][i][j] = &coordinates[node_lid * 3];
+        coords[b][i][j] = &coordinates[node_lid * spdim];
         wsElNodeEqID[b][i][j].resize(neq);
         wsElNodeID[b][i][j] = node_gid;
 
@@ -1253,7 +1287,9 @@ void Albany::APFDiscretization::computeNodeSets()
       dofLids.resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)
         dofLids[eq] = getDOF(node_lid, eq);
-      apf::getComponents(m->getCoordinateField(), e, node.node, node_coords);
+      double buf[3];
+      apf::getComponents(m->getCoordinateField(), e, node.node, buf);
+      for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
     }
   }
 }
@@ -1288,6 +1324,7 @@ Albany::APFDiscretization::attachQPData() {
   int order = meshStruct->cubatureDegree;
   int dim = meshStruct->getMesh()->getDimension();
   apf::FieldShape* fs = apf::getVoronoiShape(dim,order);
+  assert(fs);
   copyQPStatesToAPF(f,fs);
 }
 
