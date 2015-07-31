@@ -11,6 +11,7 @@
 
 namespace Albany {
 
+/*****************************************************************************/
 GOALMechanicsProblem::GOALMechanicsProblem(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<ParamLib>& paramLib,
@@ -28,25 +29,28 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   materialDB = LCM::createMaterialDatabase(params, commT);
 
   // print a summary of the problem
-  *out << "Hierarchic Mechanics Problem" << std::endl;
+  *out << "GOAL Mechanics Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
 }
 
+/*****************************************************************************/
 GOALMechanicsProblem::~GOALMechanicsProblem()
 {
 }
 
+/*****************************************************************************/
 void GOALMechanicsProblem::buildProblem(
     Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
     StateManager& stateMgr)
 {
+  *out << "Building primal problem pde instantiations\n";
+
   // get the number of physics sets
   int physSets = meshSpecs.size();
   fm.resize(physSets);
-  *out << "Number of physics sets: " << physSets << std::endl;
 
   // build evaluators for each physics set
-  for (int ps = 0; ps < physSets; ++ps)
+  for (int ps=0; ps < physSets; ++ps)
   {
     fm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(
@@ -57,6 +61,73 @@ void GOALMechanicsProblem::buildProblem(
   constructDirichletEvaluators(*meshSpecs[0]);
 }
 
+/*****************************************************************************/
+static void enrichMeshSpecs(
+    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > ms)
+{
+  int physSets = ms.size();
+  for (int ps=0; ps < physSets; ++ps)
+  {
+    const char* name = ms[ps]->ctd.name;
+    assert(strcmp(name, "Tetrahedron_4") == 0);
+    const CellTopologyData* ctd =
+      shards::getCellTopologyData<shards::Tetrahedron<10> >();
+    ms[ps]->ctd = *ctd;
+  }
+}
+
+/*****************************************************************************/
+static void decreaseMeshSpecs(
+    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > ms)
+{
+  int physSets = ms.size();
+  for (int ps=0; ps < physSets; ++ps)
+  {
+    const char* name = ms[ps]->ctd.name;
+    assert(strcmp(name, "Tetrahedron_10") == 0);
+    const CellTopologyData* ctd =
+      shards::getCellTopologyData<shards::Tetrahedron<4> >();
+    ms[ps]->ctd = *ctd;
+  }
+}
+
+/*****************************************************************************/
+void GOALMechanicsProblem::buildAdjointProblem(
+    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
+    StateManager& stateMgr,
+    const Teuchos::RCP<Teuchos::ParameterList>& params)
+{
+  *out << "Building adjoint problem pde instantiations\n";
+
+  // get the number of physics sets
+  int physSets = meshSpecs.size();
+  adjFM.resize(physSets);
+
+  // determine if the adjoint problem is enriched
+  enrichedAdjoint = params->get<bool>("Enriched Adjoint Solve", true);
+
+  // change the cell topolgy data if enrichment is chosen
+  if (enrichedAdjoint)
+    enrichMeshSpecs(meshSpecs);
+
+  // build evaluators for each physics set
+  for (int ps=0; ps < physSets; ++ps)
+  {
+    adjFM[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    buildEvaluators(
+        *adjFM[ps], *meshSpecs[ps], stateMgr, BUILD_RESPONSE_FM, params);
+  }
+
+  // construct quantity of interest evaluators
+
+  // construct dirichlet bc evaluators
+
+  // change the cell topology data back if necessary
+  if (enrichedAdjoint)
+    decreaseMeshSpecs(meshSpecs);
+}
+
+/*****************************************************************************/
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> > GOALMechanicsProblem::
 buildEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -72,6 +143,7 @@ buildEvaluators(
   return *op.tags;
 }
 
+/*****************************************************************************/
 void GOALMechanicsProblem::constructDirichletEvaluators(
     const Albany::MeshSpecsStruct& meshSpecs)
 {
@@ -86,22 +158,25 @@ void GOALMechanicsProblem::constructDirichletEvaluators(
       meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
 }
 
+/*****************************************************************************/
 void GOALMechanicsProblem::constructNeumannEvaluators(
     const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
   *out << "don't do that!" << std::endl;
 }
 
+/*****************************************************************************/
 Teuchos::RCP<const Teuchos::ParameterList> GOALMechanicsProblem::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> pl =
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
-  pl->set<int>("Shape Function Order", 2, "");
+  pl->set<bool>("Enriched Adjoint Solve", true, "");
   return pl;
 }
 
+/*****************************************************************************/
 void GOALMechanicsProblem::getAllocatedStates(
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
       <Intrepid::FieldContainer<RealType> > > > oldSt,

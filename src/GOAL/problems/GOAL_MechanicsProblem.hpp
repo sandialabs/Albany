@@ -19,7 +19,7 @@
 
 namespace Albany {
 
-//! mechanics problem with hierarchic shape functions
+//! mechanics problem
 class GOALMechanicsProblem: public Albany::AbstractProblem
 {
   public:
@@ -37,10 +37,16 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     //! return number of spatial dimensions
     int spatialDimension() const {return numDims;}
 
-    //! build the pde instantiations
+    //! build the pde instantiations for the primal problem
     void buildProblem(
         Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
         StateManager& stateMgr);
+
+    //! build the pde instantiations for the adjoint problem
+    void buildAdjointProblem(
+        Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
+        StateManager& stateMgr,
+        const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     //! build evaluators
     Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> > buildEvaluators(
@@ -86,6 +92,18 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     void constructNeumannEvaluators(
         const Teuchos::RCP<MeshSpecsStruct>& meshSpecs);
 
+    //! get the adjoint field manager
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
+      PHAL::AlbanyTraits> > > getAdjointFieldManager() {return adjFM;}
+
+    //! get the adjoint quantity of interest field manager
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
+      PHAL::AlbanyTraits> > > getAdjointQoIFieldManager() {return adjQFM;}
+
+    //! get the adjoint Dirichlet condition field manager
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+      getAdjointDirichletFieldManager() {return adjDFM;}
+
   protected:
 
     //! number of spatial dimensions
@@ -96,6 +114,20 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+
+    //! should the adjoint solve be enriched?
+    bool enrichedAdjoint;
+
+    //! field managers for adjoint volumetric fill
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
+      PHAL::AlbanyTraits> > > adjFM;
+
+    //! field manager for quantity of interest fill
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
+      PHAL::AlbanyTraits> > > adjQFM;
+
+    //! field manager for Dirichlet conditions fill
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > adjDFM;
 
     //! old state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
