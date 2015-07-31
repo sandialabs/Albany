@@ -8,6 +8,7 @@
 #include "LCM_Utils.h"
 #include "PHAL_AlbanyTraits.hpp"
 #include "GOAL_MechanicsProblem.hpp"
+#include "GOAL_ProblemUtils.hpp"
 
 namespace Albany {
 
@@ -62,36 +63,6 @@ void GOALMechanicsProblem::buildProblem(
 }
 
 /*****************************************************************************/
-static void enrichMeshSpecs(
-    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > ms)
-{
-  int physSets = ms.size();
-  for (int ps=0; ps < physSets; ++ps)
-  {
-    const char* name = ms[ps]->ctd.name;
-    assert(strcmp(name, "Tetrahedron_4") == 0);
-    const CellTopologyData* ctd =
-      shards::getCellTopologyData<shards::Tetrahedron<10> >();
-    ms[ps]->ctd = *ctd;
-  }
-}
-
-/*****************************************************************************/
-static void decreaseMeshSpecs(
-    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > ms)
-{
-  int physSets = ms.size();
-  for (int ps=0; ps < physSets; ++ps)
-  {
-    const char* name = ms[ps]->ctd.name;
-    assert(strcmp(name, "Tetrahedron_10") == 0);
-    const CellTopologyData* ctd =
-      shards::getCellTopologyData<shards::Tetrahedron<4> >();
-    ms[ps]->ctd = *ctd;
-  }
-}
-
-/*****************************************************************************/
 void GOALMechanicsProblem::buildAdjointProblem(
     Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
     StateManager& stateMgr,
@@ -108,7 +79,7 @@ void GOALMechanicsProblem::buildAdjointProblem(
 
   // change the cell topolgy data if enrichment is chosen
   if (enrichedAdjoint)
-    enrichMeshSpecs(meshSpecs);
+    GOAL::enrichMeshSpecs(meshSpecs);
 
   // build evaluators for each physics set
   for (int ps=0; ps < physSets; ++ps)
@@ -124,7 +95,7 @@ void GOALMechanicsProblem::buildAdjointProblem(
 
   // change the cell topology data back if necessary
   if (enrichedAdjoint)
-    decreaseMeshSpecs(meshSpecs);
+    GOAL::decreaseMeshSpecs(meshSpecs);
 }
 
 /*****************************************************************************/
