@@ -78,10 +78,11 @@ AAdapt::AlbanySizeField::copyInputFields() {
     if ( nd->name != "proj_nodal_IsoMeshSizeField") continue;
 
     int value_type, nentries;
+    const int spdim = mesh_struct->numDim;
     switch (nd->ndims()) {
     case 0: value_type = apf::SCALAR; nentries = 1; break;
-    case 1: value_type = apf::VECTOR; nentries = 3; break;
-    case 2: value_type = apf::MATRIX; nentries = 9; break;
+    case 1: value_type = apf::VECTOR; nentries = spdim; break;
+    case 2: value_type = apf::MATRIX; nentries = spdim*spdim; break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                  "dim is not in {1,2,3}");

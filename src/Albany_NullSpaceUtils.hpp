@@ -57,7 +57,7 @@ public:
   void setCoordinates(const Teuchos::RCP<const Tpetra_Map>& node_map);
 
 private:
-  int numPDEs, numElasticityDim, numScalar, nullSpaceDim, numSpaceDim;
+  int numPDEs, numElasticityDim, numScalar, nullSpaceDim, numSpaceDim, numNodes;
   bool mlUsed, mueLuUsed, setNonElastRBM;
 
   Teuchos::RCP<Teuchos::ParameterList> plist;

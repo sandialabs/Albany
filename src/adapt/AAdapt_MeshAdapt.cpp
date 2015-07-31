@@ -110,12 +110,13 @@ void AAdapt::MeshAdapt::initRcMgr () {
   // Create a field that never changes. It's interp'ed from now mesh to the
   // next. In the initial configuration, each component is simply a
   // coordinate value.
+  const int dim = pumi_discretization->getNumDim();
   pumiMeshStruct->createNodalField("test_interp_field", apf::VECTOR);
   const Teuchos::ArrayRCP<const double>&
     coords = pumi_discretization->getCoordinates();
   Teuchos::Array<double> f(coords.size());
   memcpy(&f[0], &coords[0], coords.size()*sizeof(double));
-  pumi_discretization->setField("test_interp_field", &f[0], true, 0, 3);
+  pumi_discretization->setField("test_interp_field", &f[0], true, 0, dim);
 #endif
 }
 
@@ -364,6 +365,11 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
   return success;
 }
 
+// Later: I'm keeping this loop because it's pretty effective at what it's
+// intended to do. However, if this loop has to execute more than one iteration,
+// it's almost certainly the case that we're already sunk. Iterating more than
+// once implies the displacement solution is turning an element inside
+// out. That's bad.
 bool AAdapt::MeshAdapt::
 adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
   const int
