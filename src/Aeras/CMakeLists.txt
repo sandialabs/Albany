@@ -147,11 +147,9 @@
   )
 
 SET(HEADERS ${HEADERS}
-    Aeras_HyperViscosityDecorator.hpp
     Aeras_HVDecorator.hpp
 )
 SET(SOURCES ${SOURCES}
-    Aeras_HyperViscosityDecorator.cpp
     Aeras_HVDecorator.cpp
 )
   

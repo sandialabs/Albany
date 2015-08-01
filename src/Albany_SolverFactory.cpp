@@ -63,7 +63,6 @@
 #endif
 
 #ifdef ALBANY_AERAS
-  #include "Aeras/Aeras_HyperViscosityDecorator.hpp"
   #include "Aeras/Aeras_HVDecorator.hpp"
 #endif
 
@@ -647,7 +646,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //    }
 
 #ifdef ALBANY_AERAS 
-  if (solutionMethod == "Aeras HyperViscosity2") {
+  if (solutionMethod == "Aeras HyperViscosity") {
     std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras HyperViscosity" << std::endl;
  
 ///// make a solver, repeated code
@@ -700,59 +699,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
   return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
 
-}//if Aeras HyperViscosity 2
+}//if Aeras HyperViscosity 
 #endif
 
-
-#ifdef ALBANY_AERAS
-  if (solutionMethod == "Aeras HyperViscosity") {
-
-    //files for each model).  This makes sense I think.  
-    const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-   
-    const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
-    // Create and setup the Piro solver factory
-    Piro::SolverFactory piroFactory;
-    // Setup linear solver
-    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-#ifdef ALBANY_IFPACK2
-    {
-#ifdef ALBANY_64BIT_INT
-      typedef Thyra::PreconditionerFactoryBase<ST> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
-#else
-      typedef Thyra::PreconditionerFactoryBase<double> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
-#endif
-      linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-    }
-#endif /* ALBANY_IFPACK2 */
-
-#ifdef ALBANY_MUELU
-#ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
-#endif
-#endif /* ALBANY_MUELU */
-
-    linearSolverBuilder.setParameterList(stratList);
-
-    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
-        createLinearSolveStrategy(linearSolverBuilder);
-    
-   const RCP<Aeras::HyperViscosityDecorator> model_with_solveT = rcp(new Aeras::HyperViscosityDecorator(appParams, solverComm, 
-                                                                         initial_guess, lowsFactory));
-
-    // WARNING: Aeras HyperViscosity does not contain a primary Albany::Application instance and so albanyApp is null.
-    //FIXME: create oberver correctly.  Right now it's null 
-    const RCP<Piro::ObserverBase<double> > observer; 
-    return piroFactory.createSolver<ST>(piroParams, model_with_solveT, observer);
-  }
-#endif /* Aeras HyperViscosity */
- 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
   if (solutionMethod == "Coupled Schwarz") {
 
