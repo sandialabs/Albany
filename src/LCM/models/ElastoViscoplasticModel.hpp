@@ -89,8 +89,19 @@ private:
   ElastoViscoplasticModel& operator=(const ElastoViscoplasticModel&);
 
   ///
-  /// Initial Void Volume
+  /// compute stresses
   ///
+  // template<typename ArgT>
+  // void
+  // computeStress(Intrepid::Tensor<ScalarT> const & F,
+  //     Intrepid::Tensor<ArgT> const & Fp,
+  //     Intrepid::Tensor<ArgT> & T,
+  //     Intrepid::Tensor<ArgT> & S,
+  //     std::vector<ArgT> & shear) const;
+
+  ///
+  /// Initial Void Volume
+  ///xs
   RealType f0_;
 
   ///
@@ -122,6 +133,11 @@ private:
   /// Hydrogen and Helium yield surface parameters
   ///
   RealType alpha1_, alpha2_, Ra_;
+
+  ///
+  /// Flow Rule Scale Factor
+  ///
+  RealType f_scale_;
 
   ///
   /// flag to print convergence
