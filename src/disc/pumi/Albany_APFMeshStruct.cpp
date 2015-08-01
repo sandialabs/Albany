@@ -244,6 +244,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   solVectorLayout =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
 
+  solutionInitialized = false;
+  residualInitialized = false;
+
   if (solVectorLayout.size() == 0) {
     int valueType;
     if (neq==1)
@@ -255,13 +258,13 @@ Albany::APFMeshStruct::setFieldAndBulkData(
       valueType = apf::MATRIX;
     }
     this->createNodalField(residual_name,valueType);
-    this->createNodalField(solution_name,valueType);
-  }
-  else
+    /* field may have been created by restart mechanism */
+    if (mesh->findField(solution_name))
+      solutionInitialized = true;
+    else
+      this->createNodalField(solution_name,valueType);
+  } else
     splitFields(solVectorLayout);
-
-  solutionInitialized = false;
-  residualInitialized = false;
 
   // Code to parse the vector of StateStructs and save the information
 
