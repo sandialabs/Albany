@@ -11,6 +11,7 @@
 #include <SimPartitionedMesh.h>
 #include <gmi_sim.h>
 #include <SimUtil.h>
+#include <SimField.h>
 #include <apfSIM.h>
 #include <PCU.h>
 
@@ -49,6 +50,17 @@ Albany::SimMeshStruct::SimMeshStruct(
   mesh = apf::createMesh(sim_mesh);
 
   APFMeshStruct::init(params, commT);
+
+  if (params->isParameter("Sim Restart File Name")) {
+    std::cerr << "reading solution from file!\n";
+    hasRestartSolution = true;
+    assert(!params->isParameter("Solution Vector Components"));
+    std::string field_file = params->get<std::string>("Sim Restart File Name");
+    pField sim_field = Field_load(field_file.c_str(), sim_mesh, 0, 0);
+    apf::wrapSIMField(mesh, sim_field);
+    restartDataTime = params->get<double>("Sim Restart Time", 0);
+    solutionInitialized = true;
+  }
 }
 
 Albany::SimMeshStruct::~SimMeshStruct()
@@ -87,6 +99,8 @@ Albany::SimMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Sim Input File Name", "", "File Name For Sim Mesh Input");
   validPL->set<std::string>("Sim Output File Name", "", "File Name For Sim Mesh Output");
   validPL->set<std::string>("Sim Model Input File Name", "", "File Name For Sim Mesh Output");
+  validPL->set<std::string>("Sim Restart File Name", "", "read initial solution field from this file");
+  validPL->set<double>("Sim Restart Time", 0, "simulation time to restart from");
 
   return validPL;
 }
