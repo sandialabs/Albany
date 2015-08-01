@@ -375,12 +375,10 @@ compute_Residual0(const int& cell) const
   divergence(huAtNodes, cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
-    for (int node=0; node < numNodes; ++node) {
-      Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
-                            +  div_hU(qp)*wBF(cell, node, qp); 
-    }
+    int node = qp; 
+    Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
+                          +  div_hU(qp)*wBF(cell, node, qp); 
   }
-
 }
 
 template<typename EvalT, typename Traits>
@@ -399,11 +397,14 @@ compute_Residual0_useHyperViscosity(const int& cell) const
   divergence(huAtNodes, cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
+    int node = qp; 
+    Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
+                          +  div_hU(qp)*wBF(cell, node, qp); 
+  }
+  for (int qp=0; qp < numQPs; ++qp) {
     for (int node=0; node < numNodes; ++node) {
-      Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
-                            +  div_hU(qp)*wBF(cell, node, qp)
-                            - hyperViscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                            - hyperViscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1); 
+      Residual(cell,node,0) -= hyperViscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                            + hyperViscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1); 
     }
   }
 }
@@ -419,8 +420,12 @@ compute_Residual3(const int& cell) const
   gradient<ScalarT>(surf, cell, hgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 
   for (std::size_t qp=0; qp < numQPs; ++qp) {
+    size_t node = qp;    
+    Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp);
+  }
+  for (std::size_t qp=0; qp < numQPs; ++qp) {
     for (std::size_t node=0; node < numNodes; ++node) {
-      Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
+      Residual(cell,node,3) += hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
                             + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
     }
  }
@@ -442,10 +447,9 @@ operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, cons
   compute_Residual0(cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
-    for (int node=0; node < numNodes; ++node) {
-      Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
-      Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp);
-    }
+    int node = qp; 
+    Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
+    Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp);
   }
 }
 
@@ -467,10 +471,9 @@ operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const
 
   //FIXME!
   for (int qp=0; qp < numQPs; ++qp) {
-    for (int node=0; node < numNodes; ++node) {
-      Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
-      Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp);
-    }
+    int node = qp; 
+    Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
+    Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp);
   }
 }
 
@@ -505,16 +508,15 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, c
    curl(cell);
 
    for (int qp=0; qp < numQPs; ++qp) {
-     for (int node=0; node < numNodes; ++node) {
-       Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
-                             + gradPotentialEnergy(qp,0)
-                             - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
-                             )*wBF(cell,node,qp); 
-       Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
-                             + gradPotentialEnergy(qp,1)
-                             + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
-                             )*wBF(cell,node,qp); 
-     }
+     int node = qp; 
+     Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
+                           + gradPotentialEnergy(qp,0)
+                           - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
+                           )*wBF(cell,node,qp); 
+     Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
+                           + gradPotentialEnergy(qp,1)
+                           + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
+                           )*wBF(cell,node,qp); 
    }
 }
 
@@ -585,21 +587,24 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
 //to avoid even more branching because of dimensions
 
   for (int qp=0; qp < numQPs; ++qp) {
-    for (int node=0; node < numNodes; ++node) {
-       
+    int node = qp;  
 
-       Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
-                             + gradPotentialEnergy(qp,0)
-                             - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
-                             )*wBF(cell,node,qp); 
+    Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
+                          + gradPotentialEnergy(qp,0)
+                          - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
+                          )*wBF(cell,node,qp); 
 
-       Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
-                             + gradPotentialEnergy(qp,1)
-                             + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
-                             )*wBF(cell,node,qp);
+    Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
+                          + gradPotentialEnergy(qp,1)
+                          + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
+                          )*wBF(cell,node,qp);
   
-      Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp);
-      Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp);
+    Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp);
+    Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp);
+  }
+
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int node=0; node < numNodes; ++node) {
 
       ScalarT lam = sphere_coord(cell, qp, 0);
       ScalarT th = sphere_coord(cell, qp, 1);
