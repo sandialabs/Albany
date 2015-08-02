@@ -33,6 +33,8 @@ protected:
   Teuchos::RCP<Albany::APFMeshStruct> mesh_struct;
   Teuchos::RCP<const Teuchos_Comm> commT;
 
+  void setMAInputParams(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_, ma::Input *in);
+
 };
 
 }

@@ -42,14 +42,7 @@ AAdapt::AlbanySizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& a
   //do not snap on deformation problems even if the model supports it
   in->shouldSnap = false;
 
-  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
-  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
-  if (loadBalancing) {
-    in->shouldRunPreZoltan = true;
-    in->shouldRunMidParma = true;
-    in->shouldRunPostParma = true;
-    in->maximumImbalance = lbMaxImbalance;
-  }
+  setMAInputParams(adapt_params_, in);
 
   ma::adapt(in);
 
