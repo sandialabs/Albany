@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
     if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
-      *out << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE = "
+      *out << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE = "
            << LCM::PeridigmManager::self()->obcEvaluateFunctional()  << "\n" << std::endl;
     }
 #endif
