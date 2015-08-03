@@ -239,7 +239,7 @@ namespace LCM {
       
         // Localization tensor
         Intrepid::Tensor<ScalarT, 3>
-        Q = Intrepid::dot(normal, Intrepid::dot(tangent, normal));
+        Q = Intrepid::dot2(normal, Intrepid::dot(tangent, normal));
         ScalarT determinant = Intrepid::det(Q);
         fout.width(15);
         fout << phi;
@@ -360,7 +360,7 @@ namespace LCM {
       
         // Localization tensor
         Intrepid::Tensor<ScalarT, 3>
-        Q = Intrepid::dot(normal, Intrepid::dot(tangent, normal));
+        Q = Intrepid::dot2(normal, Intrepid::dot(tangent, normal));
         ScalarT determinant = Intrepid::det(Q);
         fout.width(15);
         fout << x;
@@ -501,7 +501,7 @@ namespace LCM {
       
         // Localization tensor
         Intrepid::Tensor<ScalarT, 3>
-        Q = Intrepid::dot(normal, Intrepid::dot(tangent, normal));
+        Q = Intrepid::dot2(normal, Intrepid::dot(tangent, normal));
         ScalarT determinant = Intrepid::det(Q);
         fout.width(15);
         fout << x;
@@ -634,7 +634,7 @@ namespace LCM {
       
         // Localization tensor
         Intrepid::Tensor<ScalarT, 3>
-        Q = Intrepid::dot(normal, Intrepid::dot(tangent, normal));
+        Q = Intrepid::dot2(normal, Intrepid::dot(tangent, normal));
         ScalarT determinant = Intrepid::det(Q);
         fout.width(15);
         fout << x;
@@ -741,7 +741,7 @@ namespace LCM {
       
         // Localization tensor
         Intrepid::Tensor<ScalarT, 3>
-        Q = Intrepid::dot(normal, Intrepid::dot(tangent, normal));
+        Q = Intrepid::dot2(normal, Intrepid::dot(tangent, normal));
         ScalarT determinant = Intrepid::det(Q);
         fout.width(15);
         fout << x;
@@ -911,7 +911,7 @@ namespace LCM {
       
       n = spherical_get_normal(Xfad2);     
 
-      detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+      detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -1020,7 +1020,7 @@ namespace LCM {
       
       n = stereographic_get_normal(Xfad2);     
 
-      detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+      detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -1141,7 +1141,7 @@ namespace LCM {
       }
       n = projective_get_normal(Xfad2_sub);    
 
-      detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n))) 
+      detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n))) 
         + Xfad2[3] 
         * (Xfad2[0] * Xfad2[0] + Xfad2[1] * Xfad2[1] + Xfad2[2] * Xfad2[2] - 1);
      
@@ -1252,7 +1252,7 @@ namespace LCM {
       
       n = tangent_get_normal(Xfad2);     
 
-      detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+      detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -1374,7 +1374,7 @@ namespace LCM {
           break;
       }    
 
-      detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+      detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
       //std::cout << "parameters: " << parameters << std::endl;
       //std::cout << "determinant: " << (detA.val()).val() << std::endl;

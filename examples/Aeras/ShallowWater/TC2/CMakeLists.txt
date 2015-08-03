@@ -10,7 +10,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSpectralRythmosSolverT.xml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-if (NOT ALBANY_MOR) 
+if (NOT ALBANY_EPETRA) 
 add_test(Aeras_${testName}_Spectral_Large_Quad9_Tpetra ${AlbanyT.exe}
 inputSpectralT.xml) 
 add_test(Aeras_${testName}_Spectral_24Eles_Quad25_Tpetra ${AlbanyT.exe}
