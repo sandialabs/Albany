@@ -34,12 +34,13 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 
   bool plotVorticity = params_->sublist("Shallow Water Problem").get<bool>("Plot Vorticity", false); 
 
-  if (useImplHyperViscosity)
+  if (useImplHyperViscosity) {
     if (usePrescribedVelocity) //TC1 case: only 1 extra hyperviscosity dof 
       neq = 4; 
     //If we're using hyperviscosity for Shallow water equations, we have double the # of dofs. 
     else  
       neq = 2*neq; 
+  }
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //No need to plot vorticity when prescrVel == 1.

@@ -58,6 +58,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
   useImplHyperViscosity = shallowWaterList->get<bool>("Use Implicit Hyperviscosity", false); //Default: false
   
+  useExplHyperViscosity = shallowWaterList->get<bool>("Use Explicit Hyperviscosity", false); //Default: false
+  
   plotVorticity = shallowWaterList->get<bool>("Plot Vorticity", false); //Default: false 
 
  #define ALBANY_VERBOSE
@@ -757,6 +759,11 @@ evaluateFields(typename Traits::EvalData workset)
         surftilde(node) = UNodal(cell,node,3);
       gradient(surftilde, cell, htildegradNodes);
     }
+    if (useExplHyperViscosity) {
+      for (std::size_t node=0; node < numNodes; ++node) 
+        surftilde(node) = UDotDotNodal(cell,node,0);
+      gradient(surftilde, cell, htildegradNodes);
+    }
 
     divergence(huAtNodes, cell, div_hU);
 
@@ -764,6 +771,14 @@ evaluateFields(typename Traits::EvalData workset)
       std::size_t node = qp; 
       Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
                             +  div_hU(qp)*wBF(cell, node, qp); 
+    }
+    if (useExplHyperViscosity) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {  
+        for (std::size_t node=0; node < numNodes; ++node) {
+          Residual(cell,node,0) += n_coeff*sqrt(hyperviscosity(cell,qp,0))*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                + n_coeff*sqrt(hyperviscosity(cell,qp,0))*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1); 
+        }
+      }
     }
     if (useImplHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
       //for tensor HV, hyperViscosity is (cell, qp, 2,2)
