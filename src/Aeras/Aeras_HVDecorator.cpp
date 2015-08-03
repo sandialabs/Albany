@@ -304,7 +304,9 @@ Aeras::HVDecorator::evalModelImpl(
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, xtildeT);
   mm_counter++; 
 #endif  
-  //FIXME: add tau*xtildeT to fT_out. 
+  //FIXME: add xtildeT to fT_out. 
+  //IKT: I think this will just be: 
+  //fT_out->update(1.0, *xtildeT, 1.0); 
 
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {
