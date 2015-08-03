@@ -52,10 +52,10 @@ private:
   enum HVTYPE {CONSTANT};
   HVTYPE hvType;
 
-  bool useHyperViscosity; 
+  bool useHyperviscosity;
   double hvTau; 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> hyperViscosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> hyperviscosity;
 
   std::size_t numQPs, numDims, numNodes, vecDim, spatialDim;
           

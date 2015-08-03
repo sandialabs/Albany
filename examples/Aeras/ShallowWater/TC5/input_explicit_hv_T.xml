@@ -1,13 +1,17 @@
 <ParameterList>
-    <ParameterList name="Coupled System">
-    <Parameter name="Model XML Files" type="Array(string)" value="{input_hv_T.xml}"/>
-  </ParameterList>
+<!--    <ParameterList name="Coupled System"> -->
+<!--    <Parameter name="Model XML Files" type="Array(string)" value="{input_hv_T.xml}"/> -->
+<!--  </ParameterList> -->
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
     <Parameter name="Solution Method" type="string" value="Aeras HyperViscosity"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-      <Parameter name="Use Hyperviscosity" type="bool" value="True"/>
+      <!-- Explicit HV runs with "Solution Method" = "Aeras HyperViscosity" -->
+      <!-- and explicit timestepping. Note chat there are no checks on which --> 
+      <!-- time integration is used below. -->
+      <!-- Implitic HV runs with "Solution Method"="Transient". -->
+      <Parameter name="Use Explicit Hyperviscosity" type="bool" value="True"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="8e15"/>
 <!--      <Parameter name="Plot Vorticity" type="bool" value="true"/>-->
