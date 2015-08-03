@@ -47,10 +47,6 @@
 #endif
 #endif
 
-#if defined (ALBANY_GOAL)
-#include "GOAL_BCManager.hpp"
-#endif
-
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -179,10 +175,6 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (Teuchos::nonnull(rc_mgr))
     problemFactory.setReferenceConfigurationManager(rc_mgr);
   problem = problemFactory.create();
-
-#if defined(ALBANY_GOAL)
-  bcMgr = GOAL::BCManager::create(*problemParams);
-#endif
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);

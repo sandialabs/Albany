@@ -17,23 +17,19 @@
 
 namespace GOAL {
 
-class BCManager;
-struct ProblemBundle;
-class FieldManagerBundle;
-
-class MechAdjResponse :
+class AdjointResponse :
   public Albany::ScalarResponseFunction
 {
   public:
 
-    MechAdjResponse(
+    AdjointResponse(
         const Teuchos::RCP<Albany::Application>& app,
         const Teuchos::RCP<Albany::AbstractProblem>& prob,
         const Teuchos::RCP<Albany::StateManager>& sm,
         const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&  ms,
         Teuchos::ParameterList& rp);
 
-    virtual ~MechAdjResponse();
+    virtual ~AdjointResponse();
 
     virtual unsigned int numResponses() const {return 1;}
 
@@ -47,16 +43,20 @@ class MechAdjResponse :
 
   private:
 
-    MechAdjResponse(const MechAdjResponse&);
-    MechAdjResponse& operator=(const MechAdjResponse&);
+    AdjointResponse(const AdjointResponse&);
+    AdjointResponse& operator=(const AdjointResponse&);
 
-    Teuchos::RCP<ProblemBundle> pb;
-    Teuchos::RCP<FieldManagerBundle> fmb;
-
+    //! counter
     int evalCtr;
-    bool enrich;
-    bool writePHXGraphs;
-    bool writeLinearSystem;
+
+    //! Dirichlet field manager
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
+
+    //! Jacobian field managers
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
+
+    //! quantity of interest field managers
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > qfm;
 
   public:
 
@@ -77,7 +77,6 @@ class MechAdjResponse :
     virtual void evaluateMPTangent(const double alpha, const double beta, const double omega, const double current_time, bool sum_derivs, const Stokhos::ProductEpetraVector* mp_xdot, const Stokhos::ProductEpetraVector* mp_xdotdot, const Stokhos::ProductEpetraVector& mp_x, const Teuchos::Array<ParamVec>& p, const Teuchos::Array<int>& mp_p_index, const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals, ParamVec* deriv_p, const Epetra_MultiVector* Vx, const Epetra_MultiVector* Vxdot, const Epetra_MultiVector* Vxdotdot, const Epetra_MultiVector* Vp, Stokhos::ProductEpetraVector* mp_g, Stokhos::ProductEpetraMultiVector* mp_JV, Stokhos::ProductEpetraMultiVector* mp_gp) {}
     virtual void evaluateMPGradient( const double current_time, const Stokhos::ProductEpetraVector* mp_xdot, const Stokhos::ProductEpetraVector* mp_xdotdot, const Stokhos::ProductEpetraVector& mp_x, const Teuchos::Array<ParamVec>& p, const Teuchos::Array<int>& mp_p_index, const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals, ParamVec* deriv_p, Stokhos::ProductEpetraVector* mp_g, Stokhos::ProductEpetraMultiVector* mp_dg_dx, Stokhos::ProductEpetraMultiVector* mp_dg_dxdot, Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot, Stokhos::ProductEpetraMultiVector* mp_dg_dp) {}
 #endif
-
 
 };
 

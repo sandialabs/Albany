@@ -39,9 +39,6 @@
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
 #endif
-#ifdef ALBANY_GOAL
-#include "GOAL_MechanicsAdjoint.hpp"
-#endif
 
 template<typename EvalT, typename Traits>
 Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
@@ -330,16 +327,10 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #endif
 
 #ifdef ALBANY_GOAL
-  else if (responseName == "Mechanics Adjoint")
-  {
-    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
-    RCP<GOAL::MechanicsAdjoint<EvalT,Traits> > res_ev =
-      rcp(new GOAL::MechanicsAdjoint<EvalT,Traits>(*p, dl, meshSpecs));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
+  /* bng: required fields are added to the field manager fm in the GOAL
+     mechanics problem. Still, this block needs to because constructResponses()
+     is called and won't recognize responseName otherwise */
+  else if (responseName == "Adjoint") {}
 #endif
 
   else
