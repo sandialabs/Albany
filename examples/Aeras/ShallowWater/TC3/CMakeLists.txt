@@ -9,8 +9,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tc3_native.ncl
                ${CMAKE_CURRENT_BINARY_DIR}/tc3_native.ncl COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tc3_native_satellite.ncl
                ${CMAKE_CURRENT_BINARY_DIR}/tc3_native_satellite.ncl COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../grids/QUAD9/uniform_16_quad9.g
-               ${CMAKE_CURRENT_BINARY_DIR}/uniform_16_quad9.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../grids/QUAD4/uniform_16_quad4.g
+               ${CMAKE_CURRENT_BINARY_DIR}/uniform_16_quad4.g COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (NOT ALBANY_MOR) 
+add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe}
+inputT.xml)
+endif() 
