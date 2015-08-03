@@ -30,6 +30,8 @@ public:
 
   Teuchos::RCP<Tpetra_CrsMatrix> createOperator(double alpha, double beta, double omega); 
 
+  void applyLinvML(Teuchos::RCP<const Tpetra_Vector> x_in, Teuchos::RCP<Tpetra_Vector> x_out) const; 
+
 protected:
 
   //! Evaluate model on InArgs
@@ -40,7 +42,7 @@ protected:
 private: 
   //Mass and Laplace operators
   Teuchos::RCP<Tpetra_CrsMatrix> mass_;  
-  Teuchos::RCP<Tpetra_CrsMatrix> laplace_;  
+  Teuchos::RCP<Tpetra_CrsMatrix> laplace_; 
 
 };
 

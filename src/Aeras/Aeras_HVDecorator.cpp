@@ -9,6 +9,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
+#include "TpetraExt_MatrixMatrix.hpp"
 
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
@@ -37,7 +38,7 @@ Aeras::HVDecorator::HVDecorator(
 
 //Create and store mass and Laplacian operators (in CrsMatrix form). 
   mass_ = createOperator(1.0, 0.0, 0.0); 
-  laplace_ = createOperator(0.0, 0.0, 1.0);  
+  laplace_ = createOperator(0.0, 0.0, 1.0); 
 #ifdef WRITE_TO_MATRIX_MARKET
   Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass_);
   Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
@@ -51,6 +52,9 @@ Aeras::HVDecorator::HVDecorator(
 Teuchos::RCP<Tpetra_CrsMatrix> 
 Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   double curr_time = 0.0; 
   const Teuchos::RCP<Tpetra_Operator> Op =
     Teuchos::nonnull(this->create_W_op()) ?
@@ -72,6 +76,53 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
   app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
                                sacado_param_vec, fT.get(), *Op_crs);
   return Op_crs; 
+}
+
+//IKT: the following function returns laplace_*mass_^(-1)*laplace_*x_in.  It is to be called 
+//in evalModelImpl after the last computeGlobalResidualT call.
+//Note that it is more efficient to implement an apply method like is done here, than 
+//to form a sparse CrsMatrix laplace_*mass_^(-1)*laplace_ and store it.  
+void
+Aeras::HVDecorator::applyLinvML(Teuchos::RCP<const Tpetra_Vector> x_in, Teuchos::RCP<Tpetra_Vector> x_out)
+const
+{
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //initialize vector for inverse of mass diagonal
+  Teuchos::RCP<Tpetra_Vector> inv_mass_diag = Teuchos::rcp(new Tpetra_Vector(mass_->getRowMap(), true)); 
+  //get mass matrix's diagonal and put it in inv_mass_diag
+  mass_->getLocalDiagCopy(*inv_mass_diag); 
+  //inv_mass_diag->putScalar(1.0);  
+  //take reciprocal
+  inv_mass_diag->reciprocal(*inv_mass_diag);
+  Teuchos::RCP<Tpetra_Vector> x_temp1 = Teuchos::rcp(new Tpetra_Vector(x_in->getMap())); 
+  //x_temp1 = laplace_*x_in
+  laplace_->apply(*x_in, *x_temp1, Teuchos::NO_TRANS, 1.0, 0.0); 
+  Teuchos::RCP<Tpetra_Vector> x_temp2 = Teuchos::rcp(new Tpetra_Vector(x_in->getMap())); 
+  //x_temp2 = laplace_*inv_mass_diag 
+  laplace_->apply(*inv_mass_diag, *x_temp2, Teuchos::NO_TRANS, 1.0, 0.0); 
+  //x_out = xtemp2*xtemp1
+  x_out->elementWiseMultiply(1.0, *x_temp2, *x_temp1, 0.0); 
+  
+
+  //Teuchos::ArrayRCP<const ST> inv_mass_diag_constView = inv_mass_diag->get1dView(); 
+  /*//create CrsMatrix for Mass^(-1)
+  Teuchos::RCP<Tpetra_CrsMatrix> inv_mass = Teuchos::rcp(new Tpetra_CrsMatrix(mass_->getRowMap(), 1)); 
+  for (LO row=0; row<mass_->getNodeNumRows(); row++) {
+    ST val = inv_mass_diag_constView[row];  
+    inv_mass->sumIntoLocalValues(row, Teuchos::arrayView(&row,1), Teuchos::arrayView(&val,1)); 
+  }
+  inv_mass->fillComplete(); 
+  //allocate l_minv_l
+  Teuchos::RCP<Tpetra_CrsMatrix> l_minv_l = Teuchos::rcp(new Tpetra_CrsMatrix(laplace_->getRowMap(), laplace_->getGlobalMaxNumRowEntries()));
+  l_minv_l->fillComplete();  
+  //l_minv_l = mass_inv*laplace_ 
+  Tpetra::MatrixMatrix::Multiply(*inv_mass, false, *laplace_, false, *l_minv_l); 
+  //l_minv_l = laplace_*mass_inv
+  Tpetra::MatrixMatrix::Multiply(*laplace_, false, *l_minv_l, false, *l_minv_l);
+  return l_minv_l;  
+  */
 }
 
 
@@ -194,17 +245,6 @@ Aeras::HVDecorator::evalModelImpl(
         alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(),  *xT,
         sacado_param_vec, fT_out.get(), *W_op_out_crsT);
     f_already_computed = true;
-#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
-    //IK, 4/24/15: write mass matrix to matrix market file
-    //Warning: to read this in to MATLAB correctly, code must be run in serial.
-    //Otherwise Mass will have a distributed Map which would also need to be read in to MATLAB for proper
-    //reading in of Mass.
-    app->computeGlobalJacobianT(1.0, 0.0, 0.0, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
-                               sacado_param_vec, ftmp.get(), *Mass_crs);
-    Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", Mass_crs);
-    Tpetra_MatrixMarket_Writer::writeMapFile("rowmap.mm", *Mass_crs->getRowMap()); 
-    Tpetra_MatrixMarket_Writer::writeMapFile("colmap.mm", *Mass_crs->getColMap()); 
-#endif
   }
 
   // df/dp
@@ -250,6 +290,20 @@ Aeras::HVDecorator::evalModelImpl(
           sacado_param_vec, *fT_out);
     }
   }
+  //FIXME, IKT, 8/3/15: 
+  //This is where updating of auxiliary variables and residual fT_out will go.
+  Teuchos::RCP<Tpetra_Vector> xtildeT = Teuchos::rcp(new Tpetra_Vector(xT->getMap())); 
+  //compute xtildeT 
+  applyLinvML(xT, xtildeT); 
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket for debug
+  char name[100];  //create string for file name
+  sprintf(name, "xT_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, xT);
+  sprintf(name, "xtildeT_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, xtildeT);
+#endif  
+  //FIXME: add tau*xtildeT to fT_out. 
 
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {
