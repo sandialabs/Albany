@@ -4,7 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Aeras HyperViscosity"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="true"/>
-      <Parameter name="Use Implicit Hyperviscosity" type="bool" value="True"/>
+      <Parameter name="Use Explicit Hyperviscosity" type="bool" value="True"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="1e17"/>
     </ParameterList>
