@@ -7,33 +7,26 @@
 # a posteriori goal-oriented error estimation
 
 SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/GOAL)
+SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
 SET(SOURCES
-  GOAL_BCManager.cpp
-  GOAL_Discretization.cpp
-  GOAL_FieldManagerBundle.cpp
-  GOAL_LinearSystem.cpp
-  evaluators/GOAL_MechanicsAdjoint.cpp
-  evaluators/GOAL_AverageSolution.cpp
-  responses/GOAL_MechAdjResponse.cpp)
+  responses/GOAL_AdjointResponse.cpp
+  problems/GOAL_ProblemUtils.cpp
+  problems/GOAL_MechanicsProblem.cpp)
 
 SET(HEADERS
-  GOAL_BCManager.hpp
-  GOAL_Discretization.hpp
-  GOAL_FieldManagerBundle.hpp
-  GOAL_LinearSystem.hpp
-  evaluators/GOAL_MechanicsAdjoint.hpp
-  evaluators/GOAL_MechanicsAdjoint_Def.hpp
-  evaluators/GOAL_AverageSolution.hpp
-  evaluators/GOAL_AverageSolution_Def.hpp
-  responses/GOAL_MechAdjResponse.hpp)
+  responses/GOAL_AdjointResponse.hpp
+  problems/GOAL_ProblemUtils.hpp
+  problems/GOAL_MechanicsProblem.hpp)
 
 include_directories(
   ${Trilinos_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/LCM/problems
-  ${GOAL_DIR}/responses
-  ${GOAL_DIR}/evaluators)
+  ${LCM_DIR}/utils
+  ${LCM_DIR}/models
+  ${LCM_DIR}/problems
+  ${LCM_DIR}/evaluators
+  ${GOAL_DIR}/problems)
 
 add_library(GOAL ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 

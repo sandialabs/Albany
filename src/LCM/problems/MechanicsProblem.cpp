@@ -9,11 +9,6 @@
 #include "MechanicsProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#if defined(ALBANY_GOAL)
-#include "Albany_Application.hpp"
-#include "GOAL_BCManager.hpp"
-#endif
-
 void
 Albany::MechanicsProblem::
 getVariableType(Teuchos::ParameterList& param_list,
@@ -334,14 +329,6 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
       this->params, this->paramLib);
 
-#if defined(ALBANY_GOAL)
-  Teuchos::RCP<GOAL::BCManager> bcm =
-    this->getApplication()->getBCManager();
-  if (Teuchos::nonnull(bcm)) {
-    bcm->dirichletNames = dirichletNames;
-    bcm->paramLib = this->paramLib;
-  }
-#endif
 }
 //------------------------------------------------------------------------------
 // Traction BCs

@@ -534,7 +534,7 @@ spherical_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
       
     n = spherical_get_normal(Xfad2);     
 
-    detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -642,7 +642,7 @@ stereographic_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
       
     n = stereographic_get_normal(Xfad2);     
 
-    detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -762,7 +762,7 @@ projective_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
     }
     n = projective_get_normal(Xfad2_sub);    
 
-    detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n))) 
+    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n))) 
       + Xfad2[3] 
       * (Xfad2[0] * Xfad2[0] + Xfad2[1] * Xfad2[1] + Xfad2[2] * Xfad2[2] - 1);
      
@@ -872,7 +872,7 @@ tangent_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
       
     n = tangent_get_normal(Xfad2);     
 
-    detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -993,7 +993,7 @@ cartesian_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
         break;
     }    
 
-    detA = Intrepid::det(Intrepid::dot(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;

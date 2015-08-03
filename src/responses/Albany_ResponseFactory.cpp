@@ -32,7 +32,7 @@
 #endif
 
 #ifdef ALBANY_GOAL
-#include "GOAL_MechAdjResponse.hpp"
+#include "GOAL_AdjointResponse.hpp"
 #endif
 
 #include "Teuchos_TestForException.hpp"
@@ -198,9 +198,9 @@ createResponseFunction(
 #endif
 
 #ifdef ALBANY_GOAL
-  else if (name == "Mechanics Adjoint") {
+  else if (name == "Adjoint") {
     responseParams.set("Name", name);
-    responses.push_back( rcp( new GOAL::MechAdjResponse(
+    responses.push_back( rcp( new GOAL::AdjointResponse(
             app,prob,stateMgr,meshSpecs,responseParams)));
   }
 #endif
