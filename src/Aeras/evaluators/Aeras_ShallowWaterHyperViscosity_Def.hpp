@@ -22,12 +22,15 @@ template<typename EvalT, typename Traits>
 ShallowWaterHyperViscosity<EvalT, Traits>::
 ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
-  hyperViscosity (p.get<std::string> ("Hyperviscosity Name"), dl->qp_vector)
+  hyperviscosity (p.get<std::string> ("Hyperviscosity Name"), dl->qp_vector)
 {
   Teuchos::ParameterList* shallowWaterList =
    p.get<Teuchos::ParameterList*>("Parameter List");
 
-  useHyperViscosity = shallowWaterList->get<bool>("Use Hyperviscosity", false); //Default: false
+  useHyperviscosity =  ( shallowWaterList->get<bool>("Use Explicit Hyperviscosity", false) ||
+		  shallowWaterList->get<bool>("Use Implicit Hyperviscosity", false) );
+
+  //Default: false
   std::string hvTypeString = shallowWaterList->get<std::string>("Hyperviscosity Type", "Constant");
   hvTau = shallowWaterList->get<double>("Hyperviscosity Tau", 1.0);
 
@@ -41,7 +44,7 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
                                << std::endl);
   }
 
-  this->addEvaluatedField(hyperViscosity);
+  this->addEvaluatedField(hyperviscosity);
 
   std::vector<PHX::DataLayout::size_type> dims;
   
@@ -54,7 +57,7 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
  #define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
   std::cout << "In hyperviscosity constructor!" << std::endl;
-  std::cout << "useHyperviscosity? " << useHyperViscosity <<std::endl; 
+  std::cout << "useHyperviscosity? " << useHyperviscosity <<std::endl;
   std::cout << "hvTau: " << hvTau << std::endl;
   std::cout << "hvTypeString: " << hvTypeString << std::endl;  
   std::cout << "vecDim: " << vecDim << std::endl;  
@@ -69,7 +72,7 @@ void ShallowWaterHyperViscosity<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(hyperViscosity,fm);
+  this->utils.setFieldData(hyperviscosity,fm);
 }
 
 //**********************************************************************
@@ -89,11 +92,11 @@ void ShallowWaterHyperViscosity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  if (useHyperViscosity == false) { //no hyperviscosity
+  if (useHyperviscosity == false) { //no hyperviscosity
     for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for(std::size_t qp = 0; qp < numQPs; ++qp) {
         for (int i=0; i<vecDim; ++i) 
-           hyperViscosity(cell, qp, i) = 0.0;
+           hyperviscosity(cell, qp, i) = 0.0;
       }
     }       
   }
@@ -102,17 +105,17 @@ evaluateFields(typename Traits::EvalData workset)
     for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for(std::size_t qp = 0; qp < numQPs; ++qp) {
         for (int i=0; i<vecDim; ++i) 
-           hyperViscosity(cell, qp, i) = hvTau;       
+           hyperviscosity(cell, qp, i) = hvTau;
         }
       }
     }
   }
 #else
   if (useHyperViscosity == false) //no hyperviscosity 
-      hyperViscosity.deep_copy(0.0);
+      hyperviscosity.deep_copy(0.0);
   else {//hyperviscosity 
     if (hvType == CONSTANT) 
-      hyperViscosity.deep_copy(hvTau);
+      hyperviscosity.deep_copy(hvTau);
   }
 #endif
 

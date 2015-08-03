@@ -29,11 +29,12 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if (eqnSet == "Scalar") { modelDim=2; neq=1; } 
     else { modelDim=2; neq=3; } 
   }
-  bool useHyperViscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Hyperviscosity", false); 
+  bool useExplHyperViscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
+  bool useImplHyperViscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Implicit Hyperviscosity", false);
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 
   bool plotVorticity = params_->sublist("Shallow Water Problem").get<bool>("Plot Vorticity", false); 
 
-  if (useHyperViscosity)
+  if (useImplHyperViscosity)
     if (usePrescribedVelocity) //TC1 case: only 1 extra hyperviscosity dof 
       neq = 4; 
     //If we're using hyperviscosity for Shallow water equations, we have double the # of dofs. 

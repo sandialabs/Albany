@@ -66,14 +66,15 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperViscosity;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperviscosity;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
 
   bool usePrescribedVelocity;
-  bool useHyperViscosity;
+  bool useExplHyperViscosity;
+  bool useImplHyperViscosity;
   bool plotVorticity;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
