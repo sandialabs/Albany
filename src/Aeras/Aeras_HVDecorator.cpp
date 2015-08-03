@@ -302,6 +302,7 @@ Aeras::HVDecorator::evalModelImpl(
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, xT);
   sprintf(name, "xtildeT_%i.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, xtildeT);
+  mm_counter++; 
 #endif  
   //FIXME: add tau*xtildeT to fT_out. 
 
