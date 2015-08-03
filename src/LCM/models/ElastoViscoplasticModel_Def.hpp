@@ -285,11 +285,9 @@ computeState(typename Traits::EvalData workset,
         //
         Cpinv = Intrepid::inverse(Fpn) * Intrepid::transpose(Intrepid::inverse(Fpn));
 
-
         // calculate \f$ b^{e} = F {C^{p}}^{-1} F^{T} \f$
         //
         be = F * Cpinv * Intrepid::transpose(F);
-
 
         // calculate the determinant of the deformation gradient: \f$ J = det[F] \f$
         //
@@ -345,7 +343,7 @@ computeState(typename Traits::EvalData workset,
           //
           bool converged = false;
           int iter(0);
-          const int max_iter(100);
+          const int max_iter(30);
           RealType init_norm = Sacado::ScalarValue<ScalarT>::eval(Phi);
 
           // hardening and recovery parameters
@@ -382,7 +380,7 @@ computeState(typename Traits::EvalData workset,
           // ScalarT void_tr = void_volume_fraction_old + delta_time(0) * (dgam_tr * q1_ * q2_ * ( 1.0 - fstar ) * fstar * Ybar_tr * std::sinh(arg_tr));
           // ScalarT eqps_tr = eqps_old + delta_time(0) * (dgam_tr * ((q1_ * q2_ * p * Ybar_tr * fstar * std::sinh(arg_tr)) / (1.0 - fstar) / Ybar_tr + smag * smag / (1.0 - fstar) / Ybar_tr));
 
-          X[0] = 1.e-10;
+          X[0] = 0.0;
           X[1] = eps_ss_old;
           X[2] = p;
           X[3] = void_volume_fraction_old;
@@ -436,6 +434,7 @@ computeState(typename Traits::EvalData workset,
             Fad eqpsF = XFad[4];
 
             // filter voind volume fraction to be > 0.0
+            //if (dgamF.val() < 0.0) dgamF.val() = 0.0;
             if (void_volume_fractionF.val() < 0.0) void_volume_fractionF.val() = 0.0;
 
             // account for void coalescence
@@ -484,7 +483,15 @@ computeState(typename Traits::EvalData workset,
 
             // increment in equivalent plastic strain
             //
-            Fad sinh_argF = std::min(std::sinh(argF), max_value);
+            //Fad sinh_argF = std::copysign(std::min(std::abs(std::sinh(argF)), max_value), argF);
+            Fad sinh_argF = std::sinh(argF);
+            if (std::abs(sinh_argF) > max_value) {
+              sinh_argF = max_value;
+              if (std::sinh(argF) < 0.0) {
+                sinh_argF *= -1.0;
+              }
+            }
+
             Fad deq = dgamF * (q1_ * q2_ * pF * YbarF * fstarF * sinh_argF) / (1.0 - fstarF) / YbarF;
             if (smag != 0.0) {
               deq += dgamF * smag2 / (1.0 - fstarF) / YbarF;
@@ -588,16 +595,26 @@ computeState(typename Traits::EvalData workset,
               msg << "\nElastoViscoplastic convergence status\n"    << std::endl;
               msg << "       iter: " << iter            << "\n" << std::endl;
               msg << "       dgam: " << dgamF           << "\n" << std::endl;
+              msg << "     eps_ss: " << eps_ssF           << "\n" << std::endl;
+              msg << "    deps_ss: " << deps_ssF           << "\n" << std::endl;
+              msg << "        deq: " << deq           << "\n" << std::endl;
+              msg << "     kappaF: " << kappaF << "\n" << std::endl;
               msg << "   pressure: " << pF              << "\n" << std::endl;
               msg << "      p old: " << p               << "\n" << std::endl;
               msg << "          f: " << void_volume_fractionF << "\n" << std::endl;
               msg << "      fstar: " << fstarF          << "\n" << std::endl;
               msg << "       eqps: " << eqpsF           << "\n" << std::endl;
               msg << "  eqps_rate: " << eqps_rateF      << "\n" << std::endl;
+              msg << "  rate_term: " << rate_termF      << "\n" << std::endl;
               msg << "       psiF: " << psiF            << "\n" << std::endl;
               msg << "      YbarF: " << YbarF           << "\n" << std::endl;
               msg << "      smag2: " << smag2           << "\n" << std::endl;
               msg << "       argF: " << argF            << "\n" << std::endl;
+              msg << "  sinh_argF: " << sinh_argF << "\n" << std::endl;
+              msg << " sinh(argF): " << std::sinh(argF) << "\n" << std::endl;
+              msg << "  cosh_argF: " << cosh_argF << "\n" << std::endl;
+              msg << " cosh(argF): " << std::cosh(argF) << "\n" << std::endl;
+
               msg << "     Res[0]: " << RFad[0]         << "\n" << std::endl;
               msg << "     Res[1]: " << RFad[1]         << "\n" << std::endl;
               msg << "     Res[2]: " << RFad[2]         << "\n" << std::endl;
@@ -606,8 +623,10 @@ computeState(typename Traits::EvalData workset,
               msg << "    normRes: " << norm_res         << "\n" << std::endl;
               msg << "   initNorm: " << init_norm         << "\n" << std::endl;
               msg << "    RelNorm: " << norm_res/init_norm << "\n" << std::endl;
-              TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, 
-                                         msg.str());
+              //TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, 
+              //                           msg.str());
+              X[0] = X[1] = X[2] = X[3] = X[4] = 1./0.;
+              break;
             }
 
             // check for a sufficiently small residual

@@ -452,6 +452,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
   Teuchos::RCP<Teuchos::ParameterList>& validPL) const
 {
   Teuchos::Array<int> defaultArgs;
+  Teuchos::Array<std::string> defaultStArgs;
 
   validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
@@ -460,7 +461,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
-  validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
+  validPL->set<Teuchos::Array<std::string> >("Load Balancing", defaultStArgs, "Turn on predictive load balancing");
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
