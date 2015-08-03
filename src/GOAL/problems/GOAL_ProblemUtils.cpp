@@ -7,6 +7,7 @@
 #include "GOAL_ProblemUtils.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Shards_CellTopology.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace GOAL {
 
@@ -36,6 +37,13 @@ void decreaseMeshSpecs(
       shards::getCellTopologyData<shards::Tetrahedron<4> >();
     ms[ps]->ctd = *ctd;
   }
+}
+
+Teuchos::RCP<Teuchos::ParameterList> getAdjointDirichletBCs(
+    Teuchos::RCP<Teuchos::ParameterList>& bcs)
+{
+  Teuchos::RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList);
+  return Teuchos::null;
 }
 
 }

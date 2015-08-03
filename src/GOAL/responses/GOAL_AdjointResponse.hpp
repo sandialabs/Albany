@@ -46,8 +46,16 @@ class AdjointResponse :
     AdjointResponse(const AdjointResponse&);
     AdjointResponse& operator=(const AdjointResponse&);
 
+    //! counter
+    int evalCtr;
+
+    //! Dirichlet field manager
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
+
+    //! Jacobian field managers
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
+
+    //! quantity of interest field managers
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > qfm;
 
   public:

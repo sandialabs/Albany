@@ -59,7 +59,7 @@ void GOALMechanicsProblem::buildProblem(
   }
 
   // construct dirichlet bc evaluators
-  constructDirichletEvaluators(*meshSpecs[0]);
+  constructDirichletEvaluators(*meshSpecs[0], this->params);
 }
 
 /*****************************************************************************/
@@ -116,7 +116,8 @@ buildEvaluators(
 
 /*****************************************************************************/
 void GOALMechanicsProblem::constructDirichletEvaluators(
-    const Albany::MeshSpecsStruct& meshSpecs)
+    const Albany::MeshSpecsStruct& meshSpecs,
+    Teuchos::RCP<Teuchos::ParameterList>& bcs)
 {
   int idx = 0;
   std::vector<std::string> dirichletNames(neq);
@@ -126,7 +127,7 @@ void GOALMechanicsProblem::constructDirichletEvaluators(
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(
-      meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+      meshSpecs.nsNames, dirichletNames, bcs, this->paramLib);
 }
 
 /*****************************************************************************/

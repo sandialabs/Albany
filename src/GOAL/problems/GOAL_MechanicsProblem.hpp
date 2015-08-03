@@ -86,7 +86,8 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! setup for dirichlet bcs
     void constructDirichletEvaluators(
-        const MeshSpecsStruct& meshSpecs);
+        const MeshSpecsStruct& meshSpecs,
+        Teuchos::RCP<Teuchos::ParameterList>& params);
 
     //! setup for neumann bcs
     void constructNeumannEvaluators(

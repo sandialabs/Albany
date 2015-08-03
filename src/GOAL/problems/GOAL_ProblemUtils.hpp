@@ -14,6 +14,10 @@ namespace Albany {
 class MeshSpecsStruct;
 }
 
+namespace Teuchos {
+class ParameterList;
+}
+
 namespace GOAL {
 
 void enrichMeshSpecs(
@@ -21,6 +25,9 @@ void enrichMeshSpecs(
 
 void decreaseMeshSpecs(
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > ms);
+
+Teuchos::RCP<Teuchos::ParameterList> getAdjointDirichletBCs(
+    Teuchos::RCP<Teuchos::ParameterList>& bcs);
 
 }
 

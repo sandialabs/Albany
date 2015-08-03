@@ -6,17 +6,27 @@
 
 #include "GOAL_AdjointResponse.hpp"
 #include "GOAL_MechanicsProblem.hpp"
+#include "PHAL_Workset.hpp"
+#include "Teuchos_VerboseObject.hpp"
 
 namespace GOAL {
 
 using Teuchos::rcp;
 using Teuchos::RCP;
 using Teuchos::ArrayRCP;
+using Teuchos::rcp_dynamic_cast;
 
 using Albany::Application;
 using Albany::AbstractProblem;
 using Albany::StateManager;
 using Albany::MeshSpecsStruct;
+
+static void print(const char* msg)
+{
+  RCP<Teuchos::FancyOStream> out =
+    Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "GOAL: " << msg << std::endl;
+}
 
 AdjointResponse::AdjointResponse(
     const RCP<Application>& app,
@@ -27,8 +37,13 @@ AdjointResponse::AdjointResponse(
   ScalarResponseFunction(app->getComm())
 {
   RCP<Albany::GOALMechanicsProblem> problem = 
-    Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(prob);
+    rcp_dynamic_cast<Albany::GOALMechanicsProblem>(prob);
+
   problem->buildAdjointProblem(ms, *sm, rcp(&rp, false));
+
+  fm = problem->getAdjointFieldManager();
+  dfm = problem->getAdjointDirichletFieldManager();
+  qfm = problem->getAdjointQoIFieldManager();
 }
 
 AdjointResponse::~AdjointResponse()
@@ -43,6 +58,8 @@ void AdjointResponse::evaluateResponseT(
     const Teuchos::Array<ParamVec>& p,
     Tpetra_Vector& gT)
 {
+  if (evalCtr == 0) {evalCtr++; return;}
+  print("solving adjoint problem");
 }
 
 }
