@@ -161,8 +161,7 @@ namespace LCM
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
     Albany::MDArray volPlasticStrainold =
       (*workset.stateArrayPtr)[volPlasticStrain_string + "_old"];
-     
-      
+          
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int qp = 0; qp < num_pts_; ++qp) {
         // local parameters
@@ -230,7 +229,7 @@ namespace LCM
         // check yielding
         ScalarT f = compute_f(sigmaVal, alphaVal, kappaVal);
         XXVal = initialize(sigmaVal, alphaVal, kappaVal, dgammaVal);
-                            
+                                    
         // local Newton loop
         if (f > 1.e-11) { // plastic yielding
                   
@@ -253,8 +252,8 @@ namespace LCM
             for (int i = 0; i < 13; i++)
               normR += R[i] * R[i];
                       
-              normR = std::sqrt(normR);
-                      
+            normR = std::sqrt(normR);
+                                  
             if (iter == 0) normR0 = normR;
             if (normR0 != 0)
               conv = normR / normR0;
@@ -344,7 +343,7 @@ namespace LCM
               
         if(compute_tangent_) {
           Intrepid::Tensor4<ScalarT> Cep = compute_Cep(
-          Celastic, sigmaVal, alphaVal, kappaVal, dgammaVal);
+            Celastic, sigmaVal, alphaVal, kappaVal, dgammaVal);
                 
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
@@ -355,7 +354,7 @@ namespace LCM
               }
             }
           }
-                                    
+                                                                  
         }
               
       } //loop over qps
@@ -373,22 +372,21 @@ namespace LCM
     Intrepid::Tensor<T> & alpha, T & kappa)
   {
         
-  Intrepid::Tensor<T> xi = sigma - alpha;
+    Intrepid::Tensor<T> xi = sigma - alpha;
       
-  T I1 = Intrepid::trace(xi), p = I1 / 3.;
+    T I1 = Intrepid::trace(xi), p = I1 / 3.;
         
-  Intrepid::Tensor<T> s = xi - p * Intrepid::identity<T>(3);
+    Intrepid::Tensor<T> s = xi - p * Intrepid::identity<T>(3);
         
-  T J2 = 0.5 * Intrepid::dotdot(s, s);
+    T J2 = 0.5 * Intrepid::dotdot(s, s);
         
-  T J3 = Intrepid::det(s);
+    T J3 = Intrepid::det(s);
        
-  T Gamma = 1.0;
+    T Gamma = 1.0;
   
-  if (psi != 0 && J2 != 0)
-  
-    Gamma = 0.5 * (1. - 3.0 * std::sqrt(3.0) * J3 / 2. / std::pow(J2, 1.5)
-      + (1. + 3.0 * std::sqrt(3.0) * J3 / 2. / std::pow(J2, 1.5)) / psi);
+    if (psi != 0 && J2 != 0)  
+      Gamma = 0.5 * (1. - 3.0 * std::sqrt(3.0) * J3 / 2. / std::pow(J2, 1.5)
+        + (1. + 3.0 * std::sqrt(3.0) * J3 / 2. / std::pow(J2, 1.5)) / psi);
         
     T Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
       
@@ -560,11 +558,7 @@ namespace LCM
       Rfad[11] = dgamma * hkappa - kappa + kappaVal;
     else
       Rfad[11] = 0;
-        
-    // debugging
-    //	if(kappa_flag == false)Rfad[11] = -dgamma * hkappa - kappa + kappaVal;
-    //	else Rfad[11] = 0;
-       
+           
     Rfad[12] = f;
         
     // get ScalarT Residual
@@ -632,11 +626,13 @@ namespace LCM
   CapImplicitModel<EvalT, Traits>::compute_dfdsigma(std::vector<ScalarT> const & XX)
   {
     std::vector<DFadType> XXFad(13);
+    std::vector<ScalarT> XXtmp(13);
         
     for (int i = 0; i < 13; ++i) {
-      XXFad[i] = DFadType(13, i, XX[i]);
+      XXtmp[i] = Sacado::ScalarValue<ScalarT>::eval(XX[i]);
+      XXFad[i] = DFadType(13, i, XXtmp[i]);
     }
-            
+                
     Intrepid::Tensor<DFadType> sigma(3), alpha(3);
         
     sigma(0, 0) = XXFad[0];
@@ -681,74 +677,22 @@ namespace LCM
   }    
 
   template<typename EvalT, typename Traits>
-  Intrepid::Tensor<typename CapImplicitModel<EvalT, Traits>::ScalarT>
-  //Intrepid::Tensor<typename EvalT::ScalarT>
-  CapImplicitModel<EvalT, Traits>::compute_dfdalpha(std::vector<ScalarT> const & XX)
-  {
-    std::vector<DFadType> XXFad(13);
-        
-    for (int i = 0; i < 13; ++i) {
-      XXFad[i] = DFadType(13, i, XX[i]);
-    }
-            
-    Intrepid::Tensor<DFadType> sigma(3), alpha(3);
-
-    // NOTE: DFadType sigma and kappa may not be necessary
-    // since we only compute dfdsigma while keeping alpha and kappa constant          
-    sigma(0, 0) = XXFad[0];
-    sigma(0, 1) = XXFad[5];
-    sigma(0, 2) = XXFad[4];
-    sigma(1, 0) = XXFad[5];
-    sigma(1, 1) = XXFad[1];
-    sigma(1, 2) = XXFad[3];
-    sigma(2, 0) = XXFad[4];
-    sigma(2, 1) = XXFad[3];
-    sigma(2, 2) = XXFad[2];
-       
-    alpha(0, 0) = XXFad[6];
-    alpha(0, 1) = XXFad[10];
-    alpha(0, 2) = XXFad[9];
-    alpha(1, 0) = XXFad[10];
-    alpha(1, 1) = XXFad[7];
-    alpha(1, 2) = XXFad[8];
-    alpha(2, 0) = XXFad[9];
-    alpha(2, 1) = XXFad[8];
-    alpha(2, 2) = -XXFad[6] - XXFad[7];
-        
-    DFadType kappa = XXFad[11];
-       
-    DFadType f = compute_f(sigma, alpha, kappa);
-        
-    Intrepid::Tensor<ScalarT> dfdalpha(3);
-        
-    dfdalpha(0, 0) = f.dx(6);
-    dfdalpha(0, 1) = f.dx(10);
-    dfdalpha(0, 2) = f.dx(9);
-    dfdalpha(1, 0) = f.dx(10);
-    dfdalpha(1, 1) = f.dx(7);
-    dfdalpha(1, 2) = f.dx(8);
-    dfdalpha(2, 0) = f.dx(9);
-    dfdalpha(2, 1) = f.dx(8);
-    dfdalpha(2, 2) = -f.dx(6) - f.dx(7);
-        
-    return dfdalpha;
-  }
-
-  template<typename EvalT, typename Traits>
   typename CapImplicitModel<EvalT, Traits>::ScalarT
   //Intrepid::Tensor<typename EvalT::ScalarT>
   CapImplicitModel<EvalT, Traits>::compute_dfdkappa(std::vector<ScalarT> const & XX)
   {
     std::vector<DFadType> XXFad(13);
+    std::vector<ScalarT> XXtmp(13);
         
     for (int i = 0; i < 13; ++i) {
-      XXFad[i] = DFadType(13, i, XX[i]);
+      XXtmp[i] = Sacado::ScalarValue<ScalarT>::eval(XX[i]);
+      XXFad[i] = DFadType(13, i, XXtmp[i]);
     }
             
     Intrepid::Tensor<DFadType> sigma(3), alpha(3);
     
     // NOTE: DFadType sigma and alpha may not be necessary
-    // since we only compute dfdsigma while keeping alpha and kappa constant  
+    // since we only compute dfdkappa while keeping sigma and alpha constant  
     sigma(0, 0) = XXFad[0];
     sigma(0, 1) = XXFad[5];
     sigma(0, 2) = XXFad[4];
@@ -786,36 +730,38 @@ namespace LCM
   CapImplicitModel<EvalT, Traits>::compute_dgdsigma(std::vector<ScalarT> const & XX)
   {
     std::vector<DFadType> XXFad(13);
+    std::vector<ScalarT> XXtmp(13);
         
     for (int i = 0; i < 13; ++i) {
-      XXFad[i] = DFadType(13, i, XX[i]);
+      XXtmp[i] = Sacado::ScalarValue<ScalarT>::eval(XX[i]);
+      XXFad[i] = DFadType(13, i, XXtmp[i]);
     }
             
     Intrepid::Tensor<DFadType> sigma(3), alpha(3);
         
-    sigma(0, 0) = XX[0];
-    sigma(0, 1) = XX[5];
-    sigma(0, 2) = XX[4];
-    sigma(1, 0) = XX[5];
-    sigma(1, 1) = XX[1];
-    sigma(1, 2) = XX[3];
-    sigma(2, 0) = XX[4];
-    sigma(2, 1) = XX[3];
-    sigma(2, 2) = XX[2];
+    sigma(0, 0) = XXFad[0];
+    sigma(0, 1) = XXFad[5];
+    sigma(0, 2) = XXFad[4];
+    sigma(1, 0) = XXFad[5];
+    sigma(1, 1) = XXFad[1];
+    sigma(1, 2) = XXFad[3];
+    sigma(2, 0) = XXFad[4];
+    sigma(2, 1) = XXFad[3];
+    sigma(2, 2) = XXFad[2];
 
     // NOTE: DFadType alpha and kappa may not be necessary
     // since we only compute dfdsigma while keeping alpha and kappa constant         
-    alpha(0, 0) = XX[6];
-    alpha(0, 1) = XX[10];
-    alpha(0, 2) = XX[9];
-    alpha(1, 0) = XX[10];
-    alpha(1, 1) = XX[7];
-    alpha(1, 2) = XX[8];
-    alpha(2, 0) = XX[9];
-    alpha(2, 1) = XX[8];
-    alpha(2, 2) = -XX[6] - XX[7];
+    alpha(0, 0) = XXFad[6];
+    alpha(0, 1) = XXFad[10];
+    alpha(0, 2) = XXFad[9];
+    alpha(1, 0) = XXFad[10];
+    alpha(1, 1) = XXFad[7];
+    alpha(1, 2) = XXFad[8];
+    alpha(2, 0) = XXFad[9];
+    alpha(2, 1) = XXFad[8];
+    alpha(2, 2) = -XXFad[6] - XXFad[7];
         
-    DFadType kappa = XX[11];
+    DFadType kappa = XXFad[11];
         
     DFadType g = compute_g(sigma, alpha, kappa);
         
@@ -840,9 +786,13 @@ namespace LCM
   CapImplicitModel<EvalT, Traits>::compute_dgdsigma(std::vector<DFadType> const & XX)
   {
     std::vector<D2FadType> D2XX(13);
+    std::vector<DFadType> XXFadtmp(13);
+    std::vector<ScalarT> XXtmp(13);
       
     for (int i = 0; i < 13; ++i) {
-      D2XX[i] = D2FadType(13, i, XX[i]);
+      XXtmp[i] = Sacado::ScalarValue<ScalarT>::eval(XX[i].val());
+      XXFadtmp[i] = DFadType(13, i, XXtmp[i]);
+      D2XX[i] = D2FadType(13, i, XXFadtmp[i]);
     }
         
     Intrepid::Tensor<D2FadType> sigma(3), alpha(3);
@@ -981,7 +931,7 @@ namespace LCM
     XX = initialize(sigma, alpha, kappa, dgamma);
     
     dfdsigma = compute_dfdsigma(XX);
-    dfdalpha = compute_dfdalpha(XX);
+    dfdalpha = dfdsigma * (-1.0);
     dfdkappa = compute_dfdkappa(XX);
     dgdsigma = compute_dgdsigma(XX);
     
@@ -1003,9 +953,62 @@ namespace LCM
     
     // compute tangent   
     Cep = Celastic - 1.0 / chi * Intrepid::dotdot(Celastic, 
-      Intrepid::tensor(dgdsigma, Intrepid::dotdot(dfdsigma, Celastic)) ); 
+      Intrepid::tensor(dgdsigma, Intrepid::dotdot(dfdsigma, Celastic)) );
         
     return Cep;
+  } // end compute tangent function
+
+//-------------------- elasto-plastic perfect tangent modulus ----------------//    
+  template<typename EvalT, typename Traits>
+  Intrepid::Tensor4<typename CapImplicitModel<EvalT, Traits>::ScalarT>
+  CapImplicitModel<EvalT, Traits>::compute_Cepp(
+    Intrepid::Tensor4<ScalarT> & Celastic, Intrepid::Tensor<ScalarT> & sigma,
+    Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa, ScalarT & dgamma)
+  {
+    
+    if(dgamma == 0) return Celastic;
+    
+    // define variable
+    Intrepid::Tensor4<ScalarT> Cepp(num_dims_); 
+            
+    std::vector<ScalarT> XX(13); 
+    
+    Intrepid::Tensor<ScalarT> dfdsigma;
+    Intrepid::Tensor<ScalarT> dfdalpha;
+    Intrepid::Tensor<ScalarT> dgdsigma;
+    Intrepid::Tensor<ScalarT> halpha;
+    ScalarT hkappa;
+    ScalarT dfdkappa;    
+    ScalarT chi;
+    
+    // compute variable    
+    XX = initialize(sigma, alpha, kappa, dgamma);
+    
+    dfdsigma = compute_dfdsigma(XX);
+    dfdalpha = dfdsigma * (-1.0);
+    dfdkappa = compute_dfdkappa(XX);
+    dgdsigma = compute_dgdsigma(XX);
+    
+    ScalarT J2_alpha = 0.5 * Intrepid::dotdot(alpha, alpha);
+    halpha = compute_halpha(dgdsigma, J2_alpha);
+    
+    ScalarT I1_dgdsigma = Intrepid::trace(dgdsigma);
+    ScalarT dedkappa = compute_dedkappa(kappa);
+    hkappa = compute_hkappa(I1_dgdsigma, dedkappa);
+    
+    chi = Intrepid::dotdot(Intrepid::dotdot(dfdsigma, Celastic), dgdsigma);
+      
+    if ( chi == 0 ) {
+      std::cout <<  "Chi equals to 0 error during computing elasto-plastic tangent"
+        << std::endl;
+      chi = 1e-16;
+    }
+    
+    // compute tangent   
+    Cepp = Celastic - 1.0 / chi * Intrepid::dotdot(Celastic, 
+      Intrepid::tensor(dgdsigma, Intrepid::dotdot(dfdsigma, Celastic)) );
+        
+    return Cepp;
   } // end compute tangent function
     
 } // end LCM

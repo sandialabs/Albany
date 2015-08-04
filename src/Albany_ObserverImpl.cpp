@@ -59,7 +59,7 @@ void ObserverImpl::observeSolution (
 
       int myPID = nonOverlappedSolution.Map().Comm().MyPID();
       if(myPID == 0)
-        std::cout << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = "
+        std::cout << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = "
                   << obcFunctional << "\n" << std::endl;
     }
 #endif

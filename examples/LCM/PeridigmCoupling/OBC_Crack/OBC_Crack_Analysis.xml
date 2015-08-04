@@ -53,7 +53,7 @@
 	    <ParameterList name="My Group of Blocks">
 	      <Parameter name="Block Names" type="string" value="block_1"/>
 	      <Parameter name="Material" type="string" value="My Vector Poisson Material"/>
-              <Parameter name="Horizon" type="double" value="0.2500001"/>
+              <Parameter name="Horizon" type="double" value="0.12500001"/>
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
@@ -71,10 +71,10 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="-0.001"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="-0.005"/>
       <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.001"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.005"/>
       <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF X prescribe Field" type="string" value="dirichlet_control_field"/>
@@ -140,7 +140,7 @@
           <Parameter  name="Trust-Region Subproblem Solver Type" type="string" value="Truncated CG"/>
           <!-- Linesearch Parameters/-->
           <Parameter  name="Maximum Number of Function Evaluations" type="int" value="20"/> <!-- 60 -->
-          <Parameter  name="Sufficient Decrease Parameter" type="double" value="1.0e-4"/> <!-- 1.0e-4 -->
+          <Parameter  name="Sufficient Decrease Parameter" type="double" value="1.0e-20"/> <!-- 1.0e-4 -->
           <Parameter  name="Curvature Conditions Parameter" type="double" value="0.9"/> <!-- 0.9 -->
           <Parameter  name="Backtracking Rate" type="double" value="0.5"/>
           <Parameter  name="Initial Linesearch Parameter" type="double" value="1.0"/>
@@ -183,7 +183,7 @@
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		    </ParameterList>
 		    <Parameter name="Max Iterations" type="int" value="200"/>
-		    <Parameter name="Tolerance" type="double" value="1e-6"/>
+		    <Parameter name="Tolerance" type="double" value="1e-6"/> <!-- 1e-6 -->
 		  </ParameterList>
 		</ParameterList>
 

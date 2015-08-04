@@ -527,6 +527,7 @@ namespace {
 // move this implementation to Piro or (2) submit a bug report and remove this
 // implementation once the fix is in Teuchos::ParameterList.
 void renamePreconditionerParamList(
+  const Teuchos::RCP<Albany::Application>& app,
   const Teuchos::RCP<Teuchos::ParameterList>& stratParams, 
   const std::string &oldname, const std::string& newname)
 {
@@ -545,6 +546,10 @@ void renamePreconditionerParamList(
         ptypes.set(newname, mlist);
         // Remove the oldname sublist.
         ptypes.remove(oldname);
+
+         const Teuchos::RCP<Albany::RigidBodyModes>&
+            rbm = app->getProblem()->getNullSpace();
+         rbm->updatePL(sublist(sublist(stratParams, "Preconditioner Types"), newname));
       }
     }
   }      
@@ -670,7 +675,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
@@ -731,7 +736,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
@@ -798,7 +803,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else

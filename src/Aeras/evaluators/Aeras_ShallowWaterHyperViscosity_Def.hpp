@@ -111,7 +111,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-  if (useHyperViscosity == false) //no hyperviscosity 
+  if (useHyperviscosity == false) //no hyperviscosity 
       hyperviscosity.deep_copy(0.0);
   else {//hyperviscosity 
     if (hvType == CONSTANT) 
