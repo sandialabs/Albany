@@ -20,6 +20,7 @@
 #include "PHAL_Dimension.hpp"
 
 struct Parma_GroupCode;
+struct AdaptCallbackOf;
 
 namespace AAdapt {
 class MeshSizeField;
@@ -77,9 +78,9 @@ private:
                  Teuchos::RCP<Teuchos::FancyOStream>& output_stream);
   void beforeAdapt();
   bool adaptMeshWithRc(const double min_part_density,
-                       Parma_GroupCode& callback);
-  bool adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback);
-  void afterAdapt();
+                       AdaptCallbackOf& callback);
+  bool adaptMeshLoop(const double min_part_density, AdaptCallbackOf& callback);
+  void afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params);
 };
 
 class MeshAdaptT : public AbstractAdapterT {

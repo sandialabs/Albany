@@ -13,6 +13,7 @@
 #include <ma.h>
 #include <PCU.h>
 #include <parma.h>
+#include <apfZoltan.h>
 #include <apfMDS.h> // for createMdsMesh
 
 #include "AAdapt_UnifSizeField.hpp"
@@ -203,8 +204,70 @@ void AAdapt::MeshAdapt::adaptInPartition(
   szField->freeSizeField();
 }
 
-void AAdapt::MeshAdapt::afterAdapt()
+namespace {
+  void setUnitEntWeights(ma::Mesh* m, ma::Tag* weights, int dim)
+  {
+    ma::Entity* e;
+    double one = 1.0;
+    apf::MeshIterator* it = m->begin(dim);
+    while ((e = m->iterate(it)))
+      m->setDoubleTag(e,weights,&one);
+    m->end(it);
+  }
+
+  void runParmaVtxElm(ma::Mesh* m, double maxImb)
+  {
+    ma::Tag* weights = m->createDoubleTag("ma_weight",1);
+    setUnitEntWeights(m,weights,0);
+    setUnitEntWeights(m,weights,m->getDimension());
+    apf::Balancer* b = Parma_MakeVtxElmBalancer(m);
+    b->balance(weights,maxImb);
+    delete b;
+    apf::removeTagFromDimension(m,weights,0);
+    apf::removeTagFromDimension(m,weights,m->getDimension());
+    m->destroyTag(weights);
+  }
+
+  void runZoltanBal(ma::Mesh* m, double maxImb)
+  {
+    ma::Tag* weights = Parma_WeighByMemory(m);
+    apf::Balancer* b = makeZoltanBalancer(m, apf::GRAPH, apf::REPARTITION);
+    b->balance(weights,maxImb);
+    delete b;
+    apf::removeTagFromDimension(m,weights,m->getDimension());
+    m->destroyTag(weights);
+  }
+
+  struct albBalancer {
+    double imb;
+    std::string method;
+    void (*bal)(ma::Mesh* m, double maxImb);
+  };
+
+  albBalancer* postBalance(std::string method, double maxImb) {
+    albBalancer* b = new albBalancer;
+    b->imb = maxImb;
+    if(method == std::string("zoltan")) {
+      b->bal = runZoltanBal;
+    } else if(method == std::string("parma")) {
+      b->bal = runParmaVtxElm;
+    } else {
+      b->bal = NULL;
+    }
+    return b;
+  }
+}
+
+void AAdapt::MeshAdapt::afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
+  Teuchos::Array<std::string> defaultStArgs = 
+     Teuchos::tuple<std::string>("zoltan", "parma", "parma");
+  double maxImb = adapt_params_->get<double>("Maximum LB Imbalance", 1.30);
+
+  albBalancer* b = postBalance(defaultStArgs[2], maxImb);
+  b->bal(mesh, b->imb);
+  delete b;
+
   mesh->verify();
 
   szField->freeInputFields();
@@ -217,10 +280,9 @@ void AAdapt::MeshAdapt::afterAdapt()
     pumi_discretization->detachQPData();
 }
 
-template <class T>
 struct AdaptCallbackOf : public Parma_GroupCode
 {
-  T* adapter;
+  AAdapt::MeshAdapt* adapter;
   const Teuchos::RCP<Teuchos::ParameterList>* adapt_params;
   void run(int group) {
     adapter->adaptInPartition(*adapt_params);
@@ -278,7 +340,7 @@ bool AAdapt::MeshAdapt::adaptMesh(
   al::anlzCoords(pumi_discretization);
 #endif
 
-  AdaptCallbackOf<AAdapt::MeshAdapt > callback;
+  AdaptCallbackOf callback;
   callback.adapter = this;
   callback.adapt_params = &adapt_params_;
   const double
@@ -293,7 +355,7 @@ bool AAdapt::MeshAdapt::adaptMesh(
       beforeAdapt();
       adaptShrunken(pumi_discretization->getPUMIMeshStruct()->getMesh(),
                     min_part_density, callback);
-      afterAdapt();
+      afterAdapt(adapt_params_);
     }
     success = true;
   } else {
@@ -308,7 +370,7 @@ bool AAdapt::MeshAdapt::adaptMesh(
 }
 
 bool AAdapt::MeshAdapt::
-adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
+adaptMeshWithRc (const double min_part_density, AdaptCallbackOf& callback) {
   const bool overlapped = true;
 
   rc_mgr->beginAdapt();
@@ -371,7 +433,7 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
 // once implies the displacement solution is turning an element inside
 // out. That's bad.
 bool AAdapt::MeshAdapt::
-adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
+adaptMeshLoop (const double min_part_density, AdaptCallbackOf& callback) {
   const int
     n_max_outer_iterations = 10,
     n_max_inner_iterations_if_found = 20,
@@ -397,7 +459,7 @@ adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
       beforeAdapt();
       adaptShrunken(pumi_discretization->getPUMIMeshStruct()->getMesh(),
                     min_part_density, callback);
-      afterAdapt();
+      afterAdapt(*(callback.adapt_params));
     }
 
     // Resize x.
