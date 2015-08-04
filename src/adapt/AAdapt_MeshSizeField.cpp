@@ -80,6 +80,8 @@ void MeshSizeField::setMAInputParams(const Teuchos::RCP<Teuchos::ParameterList>&
        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                    "Error in input for \"Load Balancing\": cannot determine load balancing strategy." << std::endl);
 
+     in->shouldCoarsen = adapt_params_->get<bool>("Should Coarsen", true);
+
 }
 
 }
