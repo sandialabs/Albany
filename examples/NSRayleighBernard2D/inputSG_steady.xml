@@ -87,7 +87,7 @@
 		   value="Thermal Conductivity KL Random Variable 9"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number of Response Vectors" type="int" value="2"/>
+      <Parameter name="Number of Response Vectors" type="int" value="1"/>
       <ParameterList name="Response Vector 0">
 	<Parameter name="Name" type="string" value="Solution Average"/>
       </ParameterList>

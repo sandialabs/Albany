@@ -17,7 +17,7 @@
     <Parameter name="Method" type="string" value="Sim"/>
     <Parameter name="Sim Input File Name" type="string" value="cube-serial.sms"/>
     <Parameter name="Sim Model Input File Name" type="string" value="cube.smd"/>
-    <Parameter name="Sim Output File Name" type="string" value="serial_out.vtk"/>
+    <Parameter name="Sim Output File Name" type="string" value="serial_out.sms"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 98, 198, Element_Block_98, Element_Block_198}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{ 1, 192, Node_Set_1, Node_Set_2}"/>
   </ParameterList>

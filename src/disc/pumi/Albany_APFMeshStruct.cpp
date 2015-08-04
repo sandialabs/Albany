@@ -148,6 +148,11 @@ void Albany::APFMeshStruct::init(
   // Build a map to get the EB name given the index
 
   int numEB = sets.models[d].size();
+
+  // getEBSizes will seg fault if at least one element block isn't defined in input. Lets exit a little more gracefully.
+  TEUCHOS_TEST_FOR_EXCEPTION(numEB == 0, std::logic_error,
+     "PUMI requires at least one element block to be defined in the input file.");
+
   std::vector<int> el_blocks;
   getEBSizes(mesh, sets, el_blocks);
 
@@ -239,6 +244,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   solVectorLayout =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
 
+  solutionInitialized = false;
+  residualInitialized = false;
+
   if (solVectorLayout.size() == 0) {
     int valueType;
     if (neq==1)
@@ -249,14 +257,14 @@ Albany::APFMeshStruct::setFieldAndBulkData(
       assert(neq == 4 || neq == 9);
       valueType = apf::MATRIX;
     }
-    apf::createFieldOn(mesh,residual_name,valueType);
-    apf::createFieldOn(mesh,solution_name,valueType);
-  }
-  else
+    this->createNodalField(residual_name,valueType);
+    /* field may have been created by restart mechanism */
+    if (mesh->findField(solution_name))
+      solutionInitialized = true;
+    else
+      this->createNodalField(solution_name,valueType);
+  } else
     splitFields(solVectorLayout);
-
-  solutionInitialized = false;
-  residualInitialized = false;
 
   // Code to parse the vector of StateStructs and save the information
 
@@ -317,8 +325,8 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Error in input file: specification of solution vector layout is incorrect\n");
 
-    apf::createFieldOn(mesh,fieldLayout[i].c_str(),valueType);
-    apf::createFieldOn(mesh,fieldLayout[i].append("Res").c_str(),valueType);
+    this->createNodalField(fieldLayout[i].c_str(),valueType);
+    this->createNodalField(fieldLayout[i].append("Res").c_str(),valueType);
   }
 
 }

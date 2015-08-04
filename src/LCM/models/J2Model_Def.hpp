@@ -138,7 +138,7 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
 
-#if !defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+//#if !defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
@@ -300,7 +300,7 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
-#else
+/*#else
 #ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
 typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
@@ -311,7 +311,7 @@ computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elas
   else
      Kokkos::parallel_for(dont_have_temperature_Policy(0,workset.numCells),Kernel);
 #endif
-#endif
+#endif*/
 }
 //------------------------------------------------------------------------------
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

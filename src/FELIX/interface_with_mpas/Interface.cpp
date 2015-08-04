@@ -57,8 +57,10 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     const std::vector<double>& elevationData,
     const std::vector<double>& thicknessData,
     const std::vector<double>& betaData,
+    const std::vector<double>& smbData,
     const std::vector<double>& temperatureOnTetra,
-    std::vector<double>& velocityOnVertices) {
+    std::vector<double>& velocityOnVertices,
+    const double& deltat) {
 
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
   int numPrisms = nLayers * indexToTriangleID.size();
@@ -70,7 +72,16 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   int lElemColumnShift = (ordering == 1) ? 3 : 3 * indexToTriangleID.size();
   int elemLayerShift = (ordering == 0) ? 3 : 3 * nLayers;
 
+  int neq = meshStruct->neq;
+
   const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
+
+  paramList->sublist("Problem").set("Time Step", deltat);
+
+  Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->layered_mesh_numbering->layers_ratio;
+  for (int i = 0; i < nLayers; i++) {
+    layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+  }
 
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
@@ -89,6 +100,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
   ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "thickness");
+  ScalarFieldType* smbField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_mass_balance");
   VectorFieldType* dirichletField = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
   ScalarFieldType* basalFrictionField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "basal_friction");
 
@@ -102,13 +114,20 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
     coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers - il] * regulThk[ib];
 
-     double* sHeight = stk::mesh::field_data(*surfaceHeightField, node);
+    double* sHeight = stk::mesh::field_data(*surfaceHeightField, node);
     sHeight[0] = elevationData[ib];
     double* thickness = stk::mesh::field_data(*thicknessField, node);
     thickness[0] = thicknessData[ib];
+    if(smbField != NULL) {
+      double* smb = stk::mesh::field_data(*smbField, node);
+      smb[0] = smbData[ib];
+    }
     double* sol = stk::mesh::field_data(*solutionField, node);
     sol[0] = velocityOnVertices[j];
     sol[1] = velocityOnVertices[j + numVertices3D];
+    if(neq==3) {
+      sol[2] = thicknessData[ib];
+    }
     double* dirichletVel = stk::mesh::field_data(*dirichletField, node);
     dirichletVel[0]=velocityOnVertices[j]; //velocityOnVertices stores initial guess and dirichlet velocities.
     dirichletVel[1]=velocityOnVertices[j + numVertices3D];
@@ -134,7 +153,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
   }
 
-  meshStruct->setHasRestartSolution(!first_time_step);
+  meshStruct->setHasRestartSolution(true);//!first_time_step);
 
   if (!first_time_step) {
     meshStruct->setRestartDataTime(
@@ -171,20 +190,12 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
       Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
   Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
       thyraSensitivities);
-#ifdef MPAS_USE_EPETRA
-  const Epetra_Map& overlapMap(
-      *albanyApp->getDiscretization()->getOverlapMap());
-  Epetra_Import import(overlapMap, *albanyApp->getDiscretization()->getMap());
-  Epetra_Vector solution(overlapMap);
-  solution.Import(*albanyApp->getDiscretization()->getSolutionField(), import,
-      Insert);
-#else
+
   Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
   Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
   Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
   solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
   Teuchos::ArrayRCP<const ST> solution_constView = solution->get1dView();
-#endif
 
 
   for (UInt j = 0; j < numVertices3D; ++j) {
@@ -196,19 +207,8 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
     int lId0, lId1;
 
-#ifdef MPAS_USE_EPETRA
     if (interleavedOrdering) {
-      lId0 = overlapMap.LID(2 * gId);
-      lId1 = lId0 + 1;
-    } else {
-      lId0 = overlapMap.LID(gId);
-      lId1 = lId0 + numVertices3D;
-    }
-    velocityOnVertices[j] = solution[lId0];
-    velocityOnVertices[j + numVertices3D] = solution[lId1];
-#else
-    if (interleavedOrdering) {
-      lId0 = overlapMap->getLocalElement(2 * gId);
+      lId0 = overlapMap->getLocalElement(neq * gId);
       lId1 = lId0 + 1;
     } else {
       lId0 = overlapMap->getLocalElement(gId);
@@ -216,7 +216,6 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
-#endif
   }
 
   keptMesh = true;
@@ -287,6 +286,11 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   paramList->sublist("Problem").sublist("Physical Parameters").set("Ice Density", MPAS_rho_ice);
   paramList->sublist("Problem").sublist("Physical Parameters").set("Water Density", MPAS_rho_seawater);
 
+  if (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") {
+    paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
+    paramList->sublist("Problem").set("Time Step", paramList->sublist("Problem").get("Time Step", 0.0)); //if it is not there set it to zero.
+  }
+
   Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
   paramList->sublist("Problem").sublist("Neumann BCs").set("Cubature Degree", 3);
   paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS basalside for DOF all set basal_scalar_field", *inputArrayBasal);
@@ -298,6 +302,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   //Dirichlet BCs
   paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
   paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U1 prescribe Field", "dirichlet_field");
+  paramList->sublist("Discretization").set("Method", "Extruded");
 
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 
@@ -305,7 +310,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
   albanyApp->initialSetUp(paramList);
 
-  int neq = 2;
+  int neq = (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") ? 3 : 2;
 
   meshStruct = Teuchos::rcp(
       new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleID,

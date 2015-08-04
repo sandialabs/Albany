@@ -1035,10 +1035,10 @@ Topology::splitOpenFaces()
     point = *i;
 
     stk::mesh::Entity const *
-    segment_relations = get_bulk_data().begin_edges(point);
+    segment_relations = bulk_data.begin_edges(point);
 
     size_t const
-    num_segments = get_bulk_data().num_edges(point);
+    num_segments = bulk_data.num_edges(point);
 
     stk::mesh::EntityVector
     open_segments;
@@ -1120,10 +1120,10 @@ Topology::splitOpenFaces()
 
       // Collect open faces
       stk::mesh::Entity const *
-      face_relations = get_bulk_data().begin_faces(segment);
+      face_relations = bulk_data.begin_faces(segment);
 
       size_t const
-      num_faces = get_bulk_data().num_faces(segment);
+      num_faces = bulk_data.num_faces(segment);
 
       stk::mesh::EntityVector
       open_faces;
@@ -1286,6 +1286,25 @@ Topology::splitOpenFaces()
     outputToGraphviz(file_name);
   }
 #endif // DEBUG_LCM_TOPOLOGY
+
+  bool const
+  insert_surface_elements = false;
+
+  if (insert_surface_elements == true) {
+    insertSurfaceElements(fractured_faces);
+  }
+
+  return;
+}
+
+//
+//
+//
+void
+Topology::insertSurfaceElements(std::set<EntityPair> const & fractured_faces)
+{
+  stk::mesh::BulkData &
+  bulk_data = get_bulk_data();
 
   bulk_data.modification_begin();
 

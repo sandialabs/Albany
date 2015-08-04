@@ -48,7 +48,7 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT constant_value_;
+  ScalarT laser_power;
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;

@@ -16,6 +16,8 @@
 #include <apfShape.h>
 #include <ma.h>
 #include <PCU.h>
+#include <parma.h>
+#include <apfZoltan.h>
 
 class SizeFunction : public ma::IsotropicFunction {
   public:
@@ -24,6 +26,37 @@ class SizeFunction : public ma::IsotropicFunction {
   private:
     double size;
 };
+
+static void switchToOriginals(int npartitions)
+{
+  int self = PCU_Comm_Self();
+  int groupRank = self / npartitions;
+  int group = self % npartitions;
+  MPI_Comm groupComm;
+  MPI_Comm_split(MPI_COMM_WORLD, group, groupRank, &groupComm);
+  PCU_Switch_Comm(groupComm);
+}
+
+static void switchToAll()
+{
+  MPI_Comm prevComm = PCU_Get_Comm();
+  PCU_Switch_Comm(MPI_COMM_WORLD);
+  MPI_Comm_free(&prevComm);
+  PCU_Barrier();
+}
+
+
+static apf::Migration* getPlan(apf::Mesh* m, int npartitions)
+{
+  apf::Splitter* splitter = apf::makeZoltanSplitter(
+      m, apf::GRAPH, apf::PARTITION, false);
+  apf::MeshTag* weights = Parma_WeighByMemory(m);
+  apf::Migration* plan = splitter->split(weights, 1.05, npartitions);
+  apf::removeTagFromDimension(m, weights, m->getDimension());
+  m->destroyTag(weights);
+  delete splitter;
+  return plan;
+}
 
 Albany::PUMIMeshStruct::PUMIMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -55,8 +88,29 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 #endif
 
   if (params->isParameter("PUMI Input File Name")) {
+
     std::string mesh_file = params->get<std::string>("PUMI Input File Name");
-    mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
+    mesh = 0;
+    
+    // If we are running in parallel but have a single mesh file, split it and rebalance
+    bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
+    if (useSerialMesh && commT->getSize() > 1){ // do the equivalent of the SCOREC "split" utility
+       apf::Migration* plan = 0;
+       gmi_model* g = 0;
+       g = gmi_load(model_file.c_str());
+       bool isOriginal = ((PCU_Comm_Self() % commT->getSize()) == 0);
+       switchToOriginals(commT->getSize());
+       if (isOriginal) {
+         mesh = apf::loadMdsMesh(g, mesh_file.c_str());
+         plan = getPlan(mesh, commT->getSize());
+       }
+       switchToAll();
+       mesh = repeatMdsMesh(mesh, g, plan, commT->getSize());
+    }
+    else {
+      mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
+    }
+
   } else {
     int nex = params->get<int>("1D Elements", 0);
     int ney = params->get<int>("2D Elements", 0);
@@ -120,6 +174,12 @@ void Albany::PUMIMeshStruct::setMesh(apf::Mesh2* new_mesh)
   mesh = new_mesh;
 }
 
+apf::Field*
+Albany::PUMIMeshStruct::createNodalField(char const* name, int valueType)
+{
+  return apf::createFieldOn(this->mesh, name, valueType);
+}
+
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
 {
@@ -133,6 +193,8 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("PUMI Input File Name", "", "File Name For PUMI Mesh Input");
   validPL->set<std::string>("PUMI Output File Name", "", "File Name For PUMI Mesh Output");
   validPL->set<std::string>("Mesh Model Input File Name", "", "meshmodel geometry file");
+
+  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
 
   // Parameters to refine the mesh after input
   validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");

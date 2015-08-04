@@ -34,7 +34,7 @@
 		   value="Thermal Conductivity KL Random Variable 1"/>
     </ParameterList>    
     <ParameterList name="Response Functions">
-      <Parameter name="Number of Response Vectors" type="int" value="2"/>
+      <Parameter name="Number of Response Vectors" type="int" value="1"/>
       <ParameterList name="Response Vector 0">
 	<Parameter name="Name" type="string" value="Solution Average"/>
       </ParameterList>
@@ -64,7 +64,7 @@
     <Parameter name="Solver Type" type="string" value="NOX"/>
     <ParameterList name="Stochastic Galerkin">
       <ParameterList name="Response KL">
-        <Parameter name="ComputeKLOnResponse" type="bool" value="true"/>
+        <Parameter name="ComputeKLOnResponse" type="bool" value="false"/>
 	<Parameter name="NumKL" type="int" value="5"/>
       </ParameterList>
       <Parameter name="Save Moments" type="int" value="2"/>

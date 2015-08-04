@@ -31,7 +31,7 @@ namespace Albany {
 
 #if defined(ALBANY_EPETRA)
 
-  const Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
+  Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
   Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec);
   Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
@@ -70,5 +70,24 @@ namespace Albany {
   void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec);
   void printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
          const Teuchos::RCP<const Tpetra_MultiVector>& vec);
+
+  // Parses and stores command-line arguments
+  struct CmdLineArgs {
+    std::string xml_filename;
+    std::string xml_filename2;
+    std::string xml_filename3;
+    bool has_first_xml_file;
+    bool has_second_xml_file;
+    bool has_third_xml_file;
+    bool vtune;
+
+    CmdLineArgs(const std::string& default_xml_filename = "input.xml",
+                const std::string& default_xml_filename2 = "",
+                const std::string& default_xml_filename3 = "");
+    void parse_cmdline(int argc , char ** argv, std::ostream& os);
+  };
+
+  // Connect executable to vtune for profiling
+  void connect_vtune(const int p_rank);
 }
 #endif //ALBANY_UTILS

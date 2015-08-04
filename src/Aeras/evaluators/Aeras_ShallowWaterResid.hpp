@@ -52,8 +52,10 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;  //vecDim works but its really Dim+1
   PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDotDot;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
@@ -64,25 +66,26 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperViscosity;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperviscosity;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
 
   bool usePrescribedVelocity;
-  bool useHyperViscosity;
+  bool useExplHyperViscosity;
+  bool useImplHyperViscosity;
   bool plotVorticity;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Intrepid::FieldContainer<MeshScalarT>  nodal_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
-//#endif
+#endif
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
   PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
   PHX::MDField<ScalarT,Cell,Node> theta_nodal;
@@ -100,9 +103,8 @@ private:
   int numDims;
   int vecDim;
   int spatialDim;
-  //og: not used
-  //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
       std::size_t cell, Intrepid::FieldContainer<ScalarT>  & div);
 
@@ -121,7 +123,7 @@ private:
   std::vector<LO> qpToNodeMap; 
   std::vector<LO> nodeToQPMap; 
 
-/*#else
+#else
 public:
 
   Kokkos::View<MeshScalarT***, PHX::Device> nodal_jacobian;
@@ -148,15 +150,19 @@ public:
  PHX::MDField<ScalarT,QuadPoint, Dim> hgradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> htildegradNodes;
 
- PHX::MDField<ScalarT,Node> ucomp;
- PHX::MDField<ScalarT,Node> vcomp;
- PHX::MDField<ScalarT,Node> utildecomp;
- PHX::MDField<ScalarT,Node> vtildecomp;
+// PHX::MDField<ScalarT,Node> ucomp;
+// PHX::MDField<ScalarT,Node> vcomp;
+// PHX::MDField<ScalarT,Node> utildecomp;
+// PHX::MDField<ScalarT,Node> vtildecomp;
 
- PHX::MDField<ScalarT,QuadPoint, Dim> ugradNodes;
- PHX::MDField<ScalarT,QuadPoint, Dim> vgradNodes;
- PHX::MDField<ScalarT,QuadPoint, Dim> utildegradNodes;
- PHX::MDField<ScalarT,QuadPoint, Dim> vtildegradNodes;
+// PHX::MDField<ScalarT,QuadPoint, Dim> ugradNodes;
+// PHX::MDField<ScalarT,QuadPoint, Dim> vgradNodes;
+// PHX::MDField<ScalarT,QuadPoint, Dim> utildegradNodes;
+// PHX::MDField<ScalarT,QuadPoint, Dim> vtildegradNodes;
+
+ PHX::MDField<ScalarT,Node> uX, uY, uZ, utX, utY,utZ;
+ PHX::MDField<ScalarT,QuadPoint, Dim> uXgradNodes, uYgradNodes, uZgradNodes;
+ PHX::MDField<ScalarT,QuadPoint, Dim> utXgradNodes, utYgradNodes, utZgradNodes;
 
  PHX::MDField<ScalarT,Node, Dim> vcontra;
 
@@ -173,6 +179,8 @@ public:
 // KOKKOS_INLINE_FUNCTION
 // void gradient(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
 //      int cell, Intrepid::FieldContainer<ScalarT>  & gradField)const;
+
+
 
  KOKKOS_INLINE_FUNCTION
  void curl(const int &cell)const;
@@ -216,7 +224,7 @@ public:
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual3(const int& cell) const;
 
-#endif*/
+#endif
 };
 
 // Warning: these maps are a temporary fix, introduced by Steve Bova,

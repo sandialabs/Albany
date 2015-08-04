@@ -167,7 +167,11 @@ namespace Albany {
         {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;}
 
     const NodalDOFManager& getDOFManager(const std::string& field_name) const
-            {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
+      {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
+
+    const NodalDOFManager& getOverlapDOFManager(const std::string& field_name) const
+      {return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_dofManager;}
+
 #endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
@@ -252,9 +256,7 @@ namespace Albany {
     //! Locate nodal dofs in overlapping vectors using local indexing
     int getOverlapDOF(const int inode, const int eq) const;
 
-    //! Locate nodal dofs using global indexing
-    GO getGlobalDOF(const GO inode, const int eq) const;
-
+    Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() {return stkMeshStruct->layered_mesh_numbering;}
 
     //! used when NetCDF output on a latitude-longitude grid is requested.
     // Each struct contains a latitude/longitude index and it's parametric
@@ -275,8 +277,6 @@ namespace Albany {
 
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
-
-    inline GO gid(const stk::mesh::Entity node) const;
 
 #if defined(ALBANY_EPETRA)
     // Copy values from STK Mesh field to given Epetra_Vector
@@ -310,21 +310,20 @@ namespace Albany {
     //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
 
-    int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
 #if defined(ALBANY_EPETRA)
     void computeNodalEpetraMaps(bool overlapped);
 #endif
 
+    //! Process STK mesh for CRS Graphs
+    virtual void computeGraphs();
     //! Process STK mesh for Owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
     //! Process coords for ML
     void setupMLCoords();
     //! Process STK mesh for Overlap nodal quantitites
     void computeOverlapNodesAndUnknowns();
-    //! Process STK mesh for CRS Graphs
-    void computeGraphs();
     //! Process STK mesh for Workset/Bucket Info
     void computeWorksetInfo();
     //! Process STK mesh for NodeSets
@@ -342,8 +341,6 @@ namespace Albany {
 
     //! Find the local side id number within parent element
     unsigned determine_local_side_id( const stk::mesh::Entity elem , stk::mesh::Entity side );
-    //! Call stk_io for creating exodus output file
-    Teuchos::RCP<Teuchos::FancyOStream> out;
 
     //! Convert the stk mesh on this processor to a nodal graph using SEACAS
     void meshToGraph();
@@ -353,6 +350,15 @@ namespace Albany {
     double previous_time_label;
 
   protected:
+
+    GO gid(const stk::mesh::Entity node) const;
+
+    //! Locate nodal dofs using global indexing
+    GO getGlobalDOF(const GO inode, const int eq) const;
+
+    Teuchos::RCP<Teuchos::FancyOStream> out;
+
+    int nonzeroesPerRow(const int neq) const;
 
 
     //! Stk Mesh Objects

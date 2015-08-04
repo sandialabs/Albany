@@ -294,6 +294,8 @@ FELIX::StokesFO::constructEvaluators(
 
   std::string sh = "surface_height";
   fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(sh));
+  fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFGradInterpolationEvaluator_noDeriv(sh));
 
 
@@ -309,6 +311,11 @@ FELIX::StokesFO::constructEvaluators(
     p->set<std::string>("Body Force Name", "Body Force");
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+
+    Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
+
     Teuchos::ParameterList& paramList = params->sublist("Equation Set");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -324,9 +331,13 @@ FELIX::StokesFO::constructEvaluators(
     //Input
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("QP Variable Name", "Velocity");
     p->set<std::string>("temperature Name", "temperature");
     p->set<std::string>("flow_factor Name", "flow_factor");
     
+    Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -371,9 +382,13 @@ FELIX::StokesFO::constructEvaluators(
 #endif
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("surface_height Gradient Name", "surface_height Gradient");
+    p->set<std::string>("surface_height Name", "surface_height");
     
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
       
     Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters"); 
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);

@@ -11,6 +11,7 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
+#include <Epetra_Export.h>
 
 const Teuchos::RCP<LCM::PeridigmManager>& LCM::PeridigmManager::self() {
   static Teuchos::RCP<PeridigmManager> peridigmManager;
@@ -491,6 +492,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
 void LCM::PeridigmManager::obcOverlappingElementSearch()
 {
+  static bool searchComplete = false;
+  if(searchComplete){
+    std::cout << "DJL DEBUGGING PeridigmManager::obcOverlappingElementSearch() is being called more than once!" << std::endl;
+  }
+  searchComplete = true;
+
   obcDataPoints = Teuchos::rcp(new std::vector<OBCDataPoint>());
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
@@ -656,6 +663,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   // by the proximity search are within the element
   int neighborhoodListIndex = 0;
   typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
+
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
 
     // Get the elements nodes and cell topology
@@ -745,6 +753,16 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
     }
   }
 
+  // Store the volume of the sphere element
+  const Epetra_Vector& peridigmVolume = *(peridigm->getVolume());
+  const Epetra_BlockMap& peridigmVolumeMap = peridigmVolume.Map();
+  for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
+    int globalId = (*obcDataPoints)[i].peridigmGlobalId;
+    int localId = peridigmVolumeMap.LID(globalId);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(localId < 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), invalid local id!\n\n");
+    (*obcDataPoints)[i].sphereElementVolume = peridigmVolume[localId];
+  }
+
   // Create an Epetra_Vector for importing the displacements of the peridynamic nodes
   std::vector<int> tempGlobalIds(obcDataPoints->size());
   for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
@@ -776,8 +794,8 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     return 0.0;
   }
 
-  if(obcFunctionalDerivWrtDisplacement != NULL)
-    obcFunctionalDerivWrtDisplacement->PutScalar(0);
+
+
 
   // Set up access to the current displacements of the nodes in the solid elements
   Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();
@@ -795,6 +813,14 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     }
   }
 
+  // Creating Overlapped obcFunctionalDerivWrtDisplacement
+  Teuchos::RCP<Epetra_Vector> obcFunctionalDerivWrtDisplacementOverlap;
+  Teuchos::RCP<Epetra_Export> overlapSolutionExporter;
+  if(obcFunctionalDerivWrtDisplacement != NULL){
+    obcFunctionalDerivWrtDisplacementOverlap = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(*stkDisc->getOverlapMap()));
+    overlapSolutionExporter = Teuchos::rcp<Epetra_Export>(new Epetra_Export(*stkDisc->getOverlapMap(), obcFunctionalDerivWrtDisplacement->Map()));
+  }
+
   // We're interested in a single point in a single element in a three-dimensional simulation
   int numCells = 1;
   int numPoints = 1;
@@ -808,6 +834,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
   // Compute the difference in displacements at each peridynamic node
   Epetra_Vector displacementDiff(obcPeridynamicNodeCurrentCoords->Map());
+  Epetra_Vector displacementDiffScaled(obcPeridynamicNodeCurrentCoords->Map());
   for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints->size() ; iEvalPt++){
 
     for(int dof=0 ; dof<3 ; dof++){
@@ -836,8 +863,9 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     // the Peridigm displacement at the point
     for(int dof=0 ; dof<3 ; dof++){
       displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
+      // Multiply the displacement vector by the sphere element volume
+      displacementDiffScaled[3*iEvalPt+dof] = displacementDiff[3*iEvalPt+dof]*(*obcDataPoints)[iEvalPt].sphereElementVolume;
     }
-
 
     if(obcFunctionalDerivWrtDisplacement != NULL) {
       Intrepid::FieldContainer<RealType> refPoint;
@@ -845,34 +873,36 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      //FIX select basis looking at celltopology
-      Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> > refBasis;
+      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > refBasis = Albany::getIntrepidBasis((*obcDataPoints)[iEvalPt].cellTopologyData);
       Intrepid::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
-      refBasis.getValues( basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
+      refBasis->getValues(basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
 
-
+      // Derivatives corresponding to nodal dof in Albany element
       double deriv[3];
       int globalNodeIds[3];
       for(int i=0 ; i<numNodes ; i++) {
         int globalAlbanyNodeId = bulkData->identifier(nodes[i]) - 1;
 
         for(int dim=0; dim<3; ++dim) {
-          deriv[dim] = 2*displacementDiff[3*iEvalPt+dim]*basisOnRefPoint(i,0);
-          globalNodeIds[dim] =3*globalAlbanyNodeId+dim;
+          deriv[dim] = 2*displacementDiffScaled[3*iEvalPt+dim]*basisOnRefPoint(i,0);
+          globalNodeIds[dim] = 3*globalAlbanyNodeId + dim;
         }
-        obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
+        obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
       }
 
+      // Derivatives corresponding to dof at peridigm node
       for(int dim=0; dim<3; ++dim) {
-        deriv[dim] = -2*displacementDiff[3*iEvalPt+dim];
-        globalNodeIds[dim] = 3*(*obcDataPoints)[iEvalPt].peridigmGlobalId+dim;
+        deriv[dim] = -2*displacementDiffScaled[3*iEvalPt+dim];
+        globalNodeIds[dim] = 3*((*obcDataPoints)[iEvalPt].peridigmGlobalId) + dim;
       }
-      obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
+      obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
     }
   }
 
-  double functionalValue(0.0);
-  displacementDiff.Norm2(&functionalValue);
+  // Assemble the derivative of the functional
+  if(obcFunctionalDerivWrtDisplacement != NULL) {
+    obcFunctionalDerivWrtDisplacement->Export(*obcFunctionalDerivWrtDisplacementOverlap, *overlapSolutionExporter, Add);
+  }
 
   // Send displacement differences to Peridigm for output
   Teuchos::RCP< std::vector<PeridigmNS::Block> > peridigmBlocks = peridigm->getBlocks();
@@ -887,7 +917,11 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     }
   }
 
-  return pow(functionalValue,2);
+  // Evaluate the functional
+  double functionalValue(0.0);
+  displacementDiff.Dot(displacementDiffScaled, &functionalValue);
+
+  return functionalValue;
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
@@ -1286,14 +1320,12 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* dirichletData = stk::mesh::field_data (*dirichletField, node);
 
           //set dirichletData as any function of the coordinates;
-          dirichletData[0] = 0.005 * (coord[0] - 1.66);
-          //    dirichletData[1]= 0;
-          //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
+          dirichletData[0] = (coord[0] - 1.66);
         }
       }
     }
     {
-      const std::string& meshPart = "nodelist_11"; //TODO: make this general
+      const std::string& meshPart = "nodelist_2"; //TODO: make this general
       Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
       if(it != disc->getNodeSetGIDs().end()) {
         const std::vector<GO>& nsNodesGIDs = it->second;
@@ -1303,16 +1335,14 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= 0.005*(coord[0]-1.66);
-      //    dirichletData[1]= 0;
-      //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
+          dirichletData[0]= (coord[0]-1.66);
         }
       }
     }
   }
 
   if (dirichletControlField != NULL) {
-    const std::string& meshPart = "nodelist_16"; //TODO: make this general
+    const std::string& meshPart = "nodelist_5"; //TODO: make this general
     Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
     if(it != disc->getNodeSetGIDs().end()) {
       const std::vector<GO>& nsNodesGIDs = it->second;
@@ -1323,8 +1353,6 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
         double* dirichletControlData = stk::mesh::field_data(*dirichletControlField, node);
         //set dirichletData as any function of the coordinates;
         dirichletControlData[0]= 0;
-    //    dirichletData[1]= 0;
-    //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
       }
     }
   }

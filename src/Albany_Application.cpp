@@ -47,10 +47,6 @@
 #endif
 #endif
 
-#if defined (ALBANY_GOAL)
-#include "GOAL_BCManager.hpp"
-#endif
-
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -180,10 +176,6 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     problemFactory.setReferenceConfigurationManager(rc_mgr);
   problem = problemFactory.create();
 
-#if defined(ALBANY_GOAL)
-  bcMgr = GOAL::BCManager::create(*problemParams);
-#endif
-
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
 
@@ -203,6 +195,8 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Transient;
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
+  else if(solutionMethod == "Aeras HyperViscosity")
+    solMethod = Transient;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
@@ -1230,9 +1224,23 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   // Zero out Jacobian
-  overlapped_jacT->setAllToScalar(0.0);
   jacT->resumeFill();
   jacT->setAllToScalar(0.0);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if ( ! overlapped_jacT->isFillActive())
+    overlapped_jacT->resumeFill();
+#endif
+  overlapped_jacT->setAllToScalar(0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+    overlapped_jacT->fillComplete();
+  }
+  if ( ! overlapped_jacT->isFillActive())
+    overlapped_jacT->resumeFill();
+
+#endif
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -1305,6 +1313,13 @@ computeGlobalJacobianImplT(const double alpha,
 
   jacT->fillComplete();
 
+
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+  overlapped_jacT->fillComplete();
+  }
+#endif
   if (derivatives_check_ > 0)
     checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
                      derivatives_check_);
@@ -4079,6 +4094,7 @@ void Albany::Application::loadBasicWorksetInfo(
     workset.xdotdot     = solMgr->get_overlapped_xdotdot();
     workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+    workset.disc = disc;
     //workset.delta_time = delta_time;
     if (workset.xdot != Teuchos::null) workset.transientTerms = true;
     if (workset.xdotdot != Teuchos::null) workset.accelerationTerms = true;
@@ -4096,6 +4112,7 @@ void Albany::Application::loadBasicWorksetInfoT(
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
     workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+    workset.disc = disc;
     //workset.delta_time = delta_time;
     if (workset.xdotT != Teuchos::null) workset.transientTerms = true;
     if (workset.xdotdotT != Teuchos::null) workset.accelerationTerms = true;
@@ -4156,6 +4173,7 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.xdot = overlapped_xdot;
   workset.xdotdot = overlapped_xdotdot;
   workset.distParamLib = distParamLib;
+  workset.disc = disc;
 
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
@@ -4203,6 +4221,7 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.xdotT = overlapped_xdotT;
   workset.xdotdotT = overlapped_xdotdotT;
   workset.distParamLib = distParamLib;
+  workset.disc = disc;
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else

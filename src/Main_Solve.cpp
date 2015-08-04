@@ -154,19 +154,8 @@ int main(int argc, char *argv[]) {
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  std::string xmlfilename;
-  if(argc > 1){
-
-    if(!strcmp(argv[1],"--help")){
-      printf("albany [inputfile.xml]\n");
-      exit(1);
-    }
-    else
-      xmlfilename = argv[1];
-
-  }
-  else
-    xmlfilename = "input.xml";
+  Albany::CmdLineArgs cmd;
+  cmd.parse_cmdline(argc, argv, *out);
 
   try {
 
@@ -181,7 +170,12 @@ int main(int argc, char *argv[]) {
     RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
 
-    Albany::SolverFactory slvrfctry(xmlfilename, comm);
+    // Connect vtune for performance profiling
+    if (cmd.vtune) {
+      Albany::connect_vtune(comm->getRank());
+    }
+
+    Albany::SolverFactory slvrfctry(cmd.xml_filename, comm);
     RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(comm);
     RCP<Albany::Application> app;
     const RCP<Thyra::ModelEvaluator<double> > solver =
@@ -293,7 +287,7 @@ int main(int argc, char *argv[]) {
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
     if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
-      *out << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE = "
+      *out << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE = "
            << LCM::PeridigmManager::self()->obcEvaluateFunctional()  << "\n" << std::endl;
     }
 #endif

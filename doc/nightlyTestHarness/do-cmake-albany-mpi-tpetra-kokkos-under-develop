@@ -38,6 +38,7 @@ cmake \
       -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
       -D ENABLE_SLFAD:BOOL=ON \
       -D SLFAD_SIZE=1000 \
+      -D ENABLE_CHECK_FPE:BOOL=ON \
        ../
 
 #      -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11 -g" \

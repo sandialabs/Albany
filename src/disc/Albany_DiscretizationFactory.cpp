@@ -26,6 +26,9 @@
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
 #endif
+#ifdef ALBANY_FELIX
+#include "Albany_STKDiscretizationStokesH.hpp"
+#endif
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
 #endif
@@ -410,7 +413,15 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 #if defined(HAVE_STK)
       case Albany::AbstractMeshStruct::STK_MS: {
         Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes));
+        Teuchos::RCP<Albany::STKDiscretization> disc;
+#ifdef ALBANY_FELIX
+        if (method == "Extruded")
+          disc = Teuchos::rcp(new Albany::STKDiscretizationStokesH(ms, commT, rigidBodyModes));
+        else
+#endif
+          disc = Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes));
+        disc->updateMesh();
+        return disc;
       }
       break;
 #endif

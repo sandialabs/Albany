@@ -46,6 +46,7 @@ public:
 
   //! Data structure for Optimization-Based Coupling
   struct OBCDataPoint {
+    double sphereElementVolume;
     double initialCoords[3];
     double currentCoords[3];
     int peridigmGlobalId;

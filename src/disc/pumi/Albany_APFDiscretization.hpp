@@ -182,8 +182,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
                         const std::vector<int>& indices,
                         ST* dataT, bool overlapped) const;
 
-    virtual void createField(const char* name, int value_type) = 0;
-
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str);
 
@@ -265,6 +263,13 @@ class APFDiscretization : public Albany::AbstractDiscretization {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::APFDiscretization: getDOFManager(field_name) not implemented yet");
     }
+
+    //! Get Overlapped Dof Manager of field field_name
+    const Albany::NodalDOFManager& getOverlapDOFManager(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getOverlapDOFManager(field_name) not implemented yet");
+    }
+
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -280,6 +285,13 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Albany::APFDiscretization: getNodalParameterSIS() not implemented yet");
+    }
+
+    //! Get Numbering for layered mesh (mesh structred in one direction)
+    Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getLayeredMeshNumbering() not implemented");
+      return Teuchos::null;
     }
 
     //! There can be situations where we want to create a new apf::Mesh2 from

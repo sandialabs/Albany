@@ -22,7 +22,9 @@ IF(ALBANY_SEACAS)
   add_subdirectory(StabilizedTet4)
   add_subdirectory(KfieldBC)
   add_subdirectory(HeliumODEs)
-  add_subdirectory(HeliumDamage)
+  # JTO 8/1/2015
+  # deactivating HeliumDamage until model robustness issues are resolved  
+  # add_subdirectory(HeliumDamage)
   add_subdirectory(HydrogenKfieldBC)
   add_subdirectory(TorsionBC)
   add_subdirectory(Mechanics)

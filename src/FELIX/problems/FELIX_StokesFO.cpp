@@ -42,13 +42,11 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (numRBMs > 0) {
     setRBMs = true; 
     int numScalar = 0;
-    if (numRBMs == 3) //3 RBMs corresponding to translations only  
-      rigidBodyModes->setParameters(neq, numDim, numScalar, numDim, setRBMs);
-    else if (numRBMs == 4) //4 RBMs: 3 translations + xy rotation
-      rigidBodyModes->setParameters(neq, numDim, numScalar, numDim+1, setRBMs);
+    if (numRBMs == 2 || numRBMs == 3) 
+      rigidBodyModes->setParameters(neq, numDim, numScalar, numRBMs, setRBMs);
     else
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs " 
-                                     << numRBMs << " is not valid!  Valid values are 0, 3 and 4.");
+                                     << numRBMs << " is not valid!  Valid values are 0, 2 and 3.");
   }
 
   // Need to allocate a fields in mesh database
@@ -204,11 +202,13 @@ FELIX::StokesFO::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesFOProblemParams");
 
+  validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("Physical Parameters", false, "");
+  validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   return validPL;
 }
 

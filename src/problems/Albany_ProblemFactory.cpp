@@ -69,10 +69,17 @@
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
 
+#ifdef ALBANY_GOAL
+#include "GOAL/problems/GOAL_MechanicsProblem.hpp"
+#endif
+
 #ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
+#ifdef ALBANY_EPETRA
+#include "FELIX/problems/FELIX_StokesFOThickness.hpp"
+#endif
 #endif
 
 #ifdef ALBANY_AERAS
@@ -348,6 +355,11 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
   }
 #endif
+#ifdef ALBANY_GOAL
+  else if (method == "GOAL Mechanics 3D") {
+    strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 3, commT));
+  }
+#endif
 #ifdef ALBANY_HYDRIDE
   else if (method == "Hydride 2D") {
     strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, commT));
@@ -385,6 +397,13 @@ Albany::ProblemFactory::create()
   else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
     strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
   }
+  else if (method == "FELIX Coupled FO H 3D" ) {
+#ifdef ALBANY_EPETRA
+      strategy = rcp(new FELIX::StokesFOThickness(problemParams, paramLib, 3));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO H requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
+#endif
+    }
   else if (method == "FELIX Stokes L1L2 2D") {
     strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
   }

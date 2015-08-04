@@ -84,7 +84,6 @@ evaluateGradient(const double current_time,
   // Evaluate response g
   if ((g != NULL) || dg_dx != NULL) {
     LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
-    peridigmManager.obcOverlappingElementSearch();
     Epetra_Vector* dgdx0 = (dg_dx != NULL) ? (*dg_dx)(0) : NULL;
     double resp = peridigmManager.obcEvaluateFunctional((*dg_dx)(0));
     if (g != NULL)

@@ -24,6 +24,8 @@ class SimMeshStruct : public APFMeshStruct {
 
     msType meshSpecsType();
 
+    virtual apf::Field* createNodalField(char const* name, int valueType);
+
 private:
 
     Teuchos::RCP<const Teuchos::ParameterList>

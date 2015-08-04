@@ -25,6 +25,12 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
+  if(app->getProblemPL()->get("Name", "") == "FELIX Coupled FO H 3D")
+  { //all column is coupled
+    int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+    int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+    return app->getNumEquations()*side_node_count*numLevels;
+  }
 #ifdef ALBANY_AERAS
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
   app->getEnrichedMeshSpecs(); 

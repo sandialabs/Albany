@@ -4,7 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="true"/>
-      <Parameter name="Use Hyperviscosity" type="bool" value="False"/>
+      <Parameter name="Use Implicit Hyperviscosity" type="bool" value="False"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="0.1"/>
     </ParameterList>

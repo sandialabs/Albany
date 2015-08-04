@@ -69,7 +69,6 @@
 
 // Forward declarations.
 namespace AAdapt { namespace rc { class Manager; } }
-namespace GOAL { class BCManager; }
 
 namespace Albany {
 
@@ -696,6 +695,11 @@ namespace Albany {
         return disc->getWsElNodeEqID().size();
     }
 
+    //! Const access to problem parameter list
+    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() const {
+        return problemParams;
+    }
+
     //! Access to problem parameter list
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
         return problemParams;
@@ -994,13 +998,6 @@ namespace Albany {
     std::map<int, std::pair<std::string, std::string>>
     coupled_app_index_block_nodeset_names_map_;
 #endif //ALBANY_LCM
-
-#if defined(ALBANY_GOAL)
-  public:
-    Teuchos::RCP<GOAL::BCManager> getBCManager() { return bcMgr; }
-  private:
-    Teuchos::RCP<GOAL::BCManager> bcMgr;
-#endif
 
   protected:
 

@@ -148,7 +148,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
-
+      stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+      useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+      if(useStereographicMap)
+        this->addDependentField(coordVec);
       // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
       bc_type = BASAL;
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
@@ -173,7 +176,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
        dofVec = tmp;
 #ifdef ALBANY_FELIX
       beta_field = PHX::MDField<ScalarT,Cell,Node>(
-                    p.get<std::string>("Beta Field Name"), dl->node_scalar);
+        p.get<std::string>("Beta Field Name"), dl->node_scalar);
+      thickness_field = PHX::MDField<ScalarT,Cell,Node>(
+        p.get<std::string>("thickness Field Name"), dl->node_scalar);
 #endif
 
       betaName = p.get<std::string>("BetaXY");
@@ -198,15 +203,27 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = DOMEUQ;
       else if (betaName == "Scalar Field")
         beta_type = SCALAR_FIELD;
+      else if (betaName == "Exponent Of Scalar Field")
+        beta_type = EXP_SCALAR_FIELD;
+      else if (betaName == "Exponent Of Scalar Field Times Thickness")
+        beta_type = EXP_SCALAR_FIELD_THK;
       else if (betaName == "FELIX XZ MMS") 
         beta_type = FELIX_XZ_MMS; 
+      else TEUCHOS_TEST_FOR_EXCEPTION(true,Teuchos::Exceptions::InvalidParameter,
+        std::endl << "The BetaXY name: \"" << betaName << "\" is not a valid name" << std::endl);
 
       this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
       this->addDependentField(beta_field);
+      this->addDependentField(thickness_field);
 #endif
   }
   else if(inputConditions == "basal_scalar_field"){ // Basal boundary condition for FELIX, where the basal sliding coefficient is a scalar field
+      stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+      useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+
+      if(useStereographicMap)
+        this->addDependentField(coordVec);
 
       // User has specified scale to set BC d(flux)/dn = scale*beta*u, where beta is a scalar field
       bc_type = BASAL_SCALAR_FIELD;
@@ -227,7 +244,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
       this->addDependentField(dofVec);
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
-
+       stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+       useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+       if(useStereographicMap)
+         this->addDependentField(coordVec);
         // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
         bc_type = LATERAL;
         beta_type = LATERAL_BACKPRESSURE;
@@ -373,6 +393,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   {
     this->utils.setFieldData(dofVec,fm);
     this->utils.setFieldData(beta_field,fm);
+    if (inputConditions == "basal")
+      this->utils.setFieldData(thickness_field,fm);
   }
   else if(inputConditions == "lateral")
   {
@@ -516,21 +538,26 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     else if(bc_type == BASAL || bc_type == BASAL_SCALAR_FIELD) {
       Intrepid::FieldContainer<ScalarT> betaOnCell(1, numNodes);
+      Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
       for (std::size_t node=0; node < numNodes; ++node)
       {
         betaOnCell(0,node) = beta_field(elem_LID,node);
+        if(bc_type == BASAL)
+          thicknessOnCell(0,node) = thickness_field(elem_LID,node);
         for(int dim = 0; dim < numDOFsSet; dim++)
               dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
       }
 
       // This is needed, since evaluate currently sums into
       for (int i=0; i < numQPsSide ; i++) betaOnSide(0,i) = 0.0;
+      for (int i=0; i < numQPsSide ; i++) thicknessOnSide(0,i) = 0.0;
       for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
       for (std::size_t node=0; node < numNodes; ++node) {
          for (std::size_t qp=0; qp < numQPsSide; ++qp) {
                  betaOnSide(0, qp)  += betaOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
+                 thicknessOnSide(0, qp)  += thicknessOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
             for (int dim = 0; dim < numDOFsSet; dim++) {
                dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp);
             }
@@ -608,7 +635,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       case BASAL:
 
 #ifdef ALBANY_FELIX
-         calc_dudn_basal(data, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+         calc_dudn_basal(data, betaOnSide, thicknessOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
 #endif
          break;
 
@@ -891,6 +918,7 @@ template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                                   const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+                                  const Intrepid::FieldContainer<ScalarT>& thickness_side,
                                   const Intrepid::FieldContainer<ScalarT>& dof_side,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
@@ -936,10 +964,96 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   }
   if (beta_type == SCALAR_FIELD) {//basal (robin) condition indepenent of space
       betaXY = 1.0;
-      for(int cell = 0; cell < numCells; cell++) {
-        for(int pt = 0; pt < numPoints; pt++) {
-          for(int dim = 0; dim < numDOFsSet; dim++) {
-            qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+    
+      if(useStereographicMap)
+      {
+        double R = stereographicMapList->get<double>("Earth Radius", 6371);
+        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+        double R2 = std::pow(R,2);
+
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+            MeshScalarT h2 = h*h;
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+      else {
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+  }
+  else if (beta_type == EXP_SCALAR_FIELD) {//basal (robin) condition indepenent of space
+      betaXY = 1.0;
+
+      if(useStereographicMap)
+      {
+        double R = stereographicMapList->get<double>("Earth Radius", 6371);
+        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+        double R2 = std::pow(R,2);
+
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+            MeshScalarT h2 = h*h;
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+      else {
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+  }
+  else if (beta_type == EXP_SCALAR_FIELD_THK) {//basal (robin) condition indepenent of space
+      betaXY = 1.0;
+
+      if(useStereographicMap)
+      {
+        double R = stereographicMapList->get<double>("Earth Radius", 6371);
+        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+        double R2 = std::pow(R,2);
+
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+            MeshScalarT h2 = h*h;
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*thickness_side(cell, pt)*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+      else {
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*thickness_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+            }
           }
         }
       }
@@ -1156,6 +1270,21 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
       }
     }
+    if(useStereographicMap) {
+      double R = stereographicMapList->get<double>("Earth Radius", 6371);
+      double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+      double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+      double R2 = std::pow(R,2);
+      for(int cell = 0; cell < numCells; cell++) {
+        for(int pt = 0; pt < numPoints; pt++) {
+          MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+          MeshScalarT y = physPointsSide(cell,pt,1) -y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          for(int dim = 0; dim < numDOFsSet; dim++)
+            qp_data_returned(cell, pt, dim) *= h; 
+        }
+      }
+    }
   }
 }
 
@@ -1204,13 +1333,65 @@ Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
+// **********************************************************************
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const Newmann_Tag& tag, const int& cell) const
+{
 
+  LO colT[1];
+  LO rowT;
+  ST value[1];
+  int lcol;
+  const int neq = Index.dimension(2);
+  const int nunk = neq*this->numNodes;
+  
+
+  for (std::size_t node = 0; node < this->numNodes; ++node)
+    for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+
+      int dim2=this->offset[dim];
+      rowT = Index(cell,node,dim2);
+
+      if (this->fT != Teuchos::null) {
+         this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
+      }
+
+        // Check derivative array is nonzero
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
+          // Loop over nodes in element
+          for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+        
+            // Loop over equations per node
+            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+             lcol = neq * node_col + eq_col;
+
+            // Global column
+            colT[0] =  Index(cell, node_col, eq_col);
+            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
+            if (is_adjoint) {
+              // Sum Jacobian transposed
+              jacobian.sumIntoValues(colT[0], &rowT,1, &value[0],true);
+            }
+            else {
+              // Sum Jacobian
+              jacobian.sumIntoValues(rowT, colT, nunk,value, true);
+            }
+          } // column equations
+        } // column nodes
+      } // has fast access
+    }
+          
+ }
+#endif
 // **********************************************************************
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -1218,7 +1399,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
-
   int lcol;
   Teuchos::Array<LO> rowT(1);
   Teuchos::Array<LO> colT(1);
@@ -1264,6 +1444,31 @@ evaluateFields(typename Traits::EvalData workset)
       } // has fast access
     }
   }
+#else
+  
+  fT = workset.fT;
+  fT_nonconstView = fT->get1dViewNonConst();
+  JacT = workset.JacT;
+
+
+  // Fill in "neumann" array
+  this->evaluateNeumannContribution(workset);
+ 
+ //  if ( !JacT->isFillActive())
+//    JacT->resumeFill();
+ 
+   jacobian=JacT->getLocalMatrix();
+
+   Index=workset.wsElNodeEqID_kokkos;
+
+   is_adjoint=workset.is_adjoint;
+
+   Kokkos::parallel_for(Newmann_Policy(0,workset.numCells),*this);
+
+//   if ( !JacT->isFillActive())
+//    JacT->fillComplete();
+
+#endif
 }
 
 // **********************************************************************

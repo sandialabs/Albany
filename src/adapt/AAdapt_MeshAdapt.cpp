@@ -86,18 +86,20 @@ inline int getValueType (const PHX::DataLayout& dl) {
 
 void AAdapt::MeshAdapt::initRcMgr () {
   if (rc_mgr.is_null()) return;
+  Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
+    pumi_discretization->getPUMIMeshStruct();
   // A field to store the reference configuration x (displacement). At each
   // adapatation, it will be interpolated to the new mesh.
   //rc-todo Always apf::VECTOR?
   //rc-todo Generalize to Albany::AbstractDiscretization.
-  pumi_discretization->createField("x_accum", apf::VECTOR);
+  pumiMeshStruct->createNodalField("x_accum", apf::VECTOR);
   if (rc_mgr->usingProjection()) {
     for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
            end = rc_mgr->fieldsEnd();
          it != end; ++it) {
       const int value_type = getValueType(*(*it)->layout);
       for (int i = 0; i < (*it)->num_g_fields; ++i) {
-        pumi_discretization->createField(
+        pumiMeshStruct->createNodalField(
           (*it)->get_g_name(i).c_str(), value_type);
       }
     }
@@ -108,12 +110,13 @@ void AAdapt::MeshAdapt::initRcMgr () {
   // Create a field that never changes. It's interp'ed from now mesh to the
   // next. In the initial configuration, each component is simply a
   // coordinate value.
-  pumi_discretization->createField("test_interp_field", apf::VECTOR);
+  const int dim = pumi_discretization->getNumDim();
+  pumiMeshStruct->createNodalField("test_interp_field", apf::VECTOR);
   const Teuchos::ArrayRCP<const double>&
     coords = pumi_discretization->getCoordinates();
   Teuchos::Array<double> f(coords.size());
   memcpy(&f[0], &coords[0], coords.size()*sizeof(double));
-  pumi_discretization->setField("test_interp_field", &f[0], true, 0, 3);
+  pumi_discretization->setField("test_interp_field", &f[0], true, 0, dim);
 #endif
 }
 
@@ -362,6 +365,11 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
   return success;
 }
 
+// Later: I'm keeping this loop because it's pretty effective at what it's
+// intended to do. However, if this loop has to execute more than one iteration,
+// it's almost certainly the case that we're already sunk. Iterating more than
+// once implies the displacement solution is turning an element inside
+// out. That's bad.
 bool AAdapt::MeshAdapt::
 adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
   const int
@@ -444,15 +452,17 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
   Teuchos::RCP<Teuchos::ParameterList>& validPL) const
 {
   Teuchos::Array<int> defaultArgs;
+  Teuchos::Array<std::string> defaultStArgs;
 
   validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
   validPL->set<bool>("AdaptNow", false, "Used to force an adaptation step");
+  validPL->set<bool>("Should Coarsen", true, "Set to false to disable mesh coarsening operations.");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
-  validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
+  validPL->set<Teuchos::Array<std::string> >("Load Balancing", defaultStArgs, "Turn on predictive load balancing");
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");

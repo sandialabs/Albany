@@ -89,7 +89,7 @@ namespace FELIX {
     std::string sideSetID;
     Teuchos::Array<RealType> inputValues;
     ScalarT p_resp, p_reg, resp, reg;
-    double scaling, alpha;
+    double scaling, alpha, asinh_scaling;
   };
 	
 }

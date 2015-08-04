@@ -43,11 +43,13 @@ IF(ALBANY_AMP)
       ${SOURCES}
       Albany_SimMeshStruct.cpp
       Albany_SimDiscretization.cpp
+      Albany_SimOutput.cpp
      )
   SET(HEADERS
       ${HEADERS}
       Albany_SimMeshStruct.hpp
       Albany_SimDiscretization.hpp
+      Albany_SimOutput.hpp
      )
 ENDIF()
 

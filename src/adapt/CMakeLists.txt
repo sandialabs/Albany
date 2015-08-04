@@ -172,6 +172,12 @@ include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
 ENDIF()
 
+IF(ALBANY_AMP)
+SET(SOURCES ${SOURCES} AAdapt_SimAdapt.cpp)
+SET(HEADERS ${HEADERS} AAdapt_SimAdapt.hpp)
+include_directories(${ALBANY_PUMI_INCLUDE_DIRS})
+ENDIF()
+
 include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                     ${Albany_SOURCE_DIR} / src ${Albany_SOURCE_DIR} / src / evaluators
                     ${Albany_SOURCE_DIR} / src / problems ${Albany_SOURCE_DIR} / src / responses

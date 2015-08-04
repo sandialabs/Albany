@@ -4,11 +4,11 @@ SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
 SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 
 # What to build and test
-SET(DOWNLOAD_TRILINOS FALSE)
-SET(DOWNLOAD_ALBANY FALSE)
-SET(BUILD_TRILINOS FALSE)
+SET(DOWNLOAD_TRILINOS TRUE)
+SET(DOWNLOAD_ALBANY TRUE)
+SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
-SET(CLEAN_BUILD FALSE)
+SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
 set( CTEST_SITE             "compton.sandia.gov" ) # generally the output of hostname
@@ -236,7 +236,6 @@ ENDIF()
 SET(CONFIGURE_OPTIONS
   -Wno-dev
   -DTrilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=${TRILINOS_HOME}/sampleScripts/AlbanySettings.cmake
-  -DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC
   -DTrilinos_ENABLE_SCOREC:BOOL=ON
   -DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON
   -DCMAKE_BUILD_TYPE:STRING=NONE
@@ -245,9 +244,9 @@ SET(CONFIGURE_OPTIONS
   -DCMAKE_Fortran_COMPILER:FILEPATH=mpiifort
   -DCMAKE_AR:FILEPATH=/home/projects/x86-64/intel/compilers/2015/composer_xe_2015.2.164/bin/intel64_mic/xiar
   -DCMAKE_LINKER:FILEPATH=/home/projects/x86-64/intel/compilers/2015/composer_xe_2015.2.164/bin/intel64_mic/xild
-  "-DCMAKE_CXX_FLAGS:STRING='-O3 -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_C_FLAGS:STRING='-O3 -mmic -mkl -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -mmic -mkl -mt_mpi -DPREC_TIMER -fopenmp'"
+  "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
+  "-DCMAKE_C_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
+  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DPREC_TIMER -fopenmp'"
   -DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON
   -DTpetra_INST_INT_LONG_LONG:BOOL=OFF
   -DTpetra_INST_INT_INT:BOOL=ON
@@ -306,7 +305,7 @@ SET(CONFIGURE_OPTIONS
   -DTPL_ENABLE_BLAS:BOOL=ON
   -DTPL_ENABLE_LAPACK:BOOL=ON
   -DBLAS_LIBRARY_DIRS:FILEPATH=${INTEL_DIR}
-  "-DTPL_BLAS_LIBRARIES:STRING='${INTEL_DIR}/libmkl_intel_lp64.a\\;${INTEL_DIR}/libmkl_intel_thread.a\\;${INTEL_DIR}/libmkl_core.a'"
+  "-DTPL_BLAS_LIBRARIES:STRING='${INTEL_DIR}/libmkl_intel_lp64.a\\;${INTEL_DIR}/libmkl_sequential.a\\;${INTEL_DIR}/libmkl_core.a'"
   -DLAPACK_LIBRARY_NAMES:STRING=
 #
   -DTPL_ENABLE_ParMETIS:STRING=ON
@@ -341,6 +340,8 @@ SET(CONFIGURE_OPTIONS
 # Try turning off more of Trilinos
   -DTrilinos_ENABLE_OptiPack:BOOL=OFF
   -DTrilinos_ENABLE_GlobiPack:BOOL=OFF
+  -DTPL_FIND_SHARED_LIBS:BOOL=OFF
+  -DBUILD_SHARED_LIBS:BOOL=OFF
   )
 
 IF(BUILD_TRILINOS)
@@ -367,7 +368,7 @@ BUILD_TESTING:BOOL=OFF
 PRODUCT_REPO:STRING=${Trilinos_REPOSITORY_LOCATION}
 " )
 file(WRITE "${CTEST_BINARY_DIRECTORY}/TriBuild/CMakeCache.txt" "${CACHE_CONTENTS}")
-ENDIF()
+ENDIF(CLEAN_BUILD)
 
 
 CTEST_CONFIGURE(
@@ -386,16 +387,14 @@ IF(CTEST_DO_SUBMIT)
   if(S_HAD_ERROR)
     message(FATAL_ERROR "Cannot submit Trilinos configure results!")
   endif()
-ENDIF()
+ENDIF(CTEST_DO_SUBMIT)
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Trilinos build!")
 endif()
 
 # Save a copy of the Trilinos configure to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure_Trilinos.xml
-#               )
+# We don't copy anything if there is more than one - Trilinos configures first so there should not be
 
 FILE(GLOB CONFIG_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Configure.xml")
 LIST(LENGTH CONFIG_FILES CO_LIST_LEN)
@@ -424,16 +423,13 @@ IF(CTEST_DO_SUBMIT)
     message(FATAL_ERROR "Cannot submit Trilinos build results!")
   endif()
 
-ENDIF()
+ENDIF(CTEST_DO_SUBMIT)
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Trilinos!")
 endif()
 
 # Save a copy of the Trilinos build to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build_Trilinos.xml
-#               )
 
 FILE(GLOB BUILD_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Build.xml")
 LIST(LENGTH BUILD_FILES BU_LIST_LEN)
@@ -446,7 +442,7 @@ if(BUILD_LIBS_NUM_ERRORS GREATER 0)
         message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
 endif()
 
-ENDIF()
+ENDIF(BUILD_TRILINOS)
 
 IF (BUILD_ALBANY)
 
@@ -473,9 +469,11 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_ASCR:BOOL=OFF"
   "-DENABLE_CHECK_FPE:BOOL=OFF"
   "-DENABLE_LAME:BOOL=OFF"
+  "-DENABLE_BGL:BOOL=OFF"
   "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
   "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
   "-DENABLE_CROSS_COMPILE:BOOL=ON"
+#  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
@@ -492,7 +490,7 @@ BUILD_TESTING:BOOL=OFF
 PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
 " )
 file(WRITE "${CTEST_BINARY_DIRECTORY}/Albany/CMakeCache.txt" "${CACHE_CONTENTS}")
-ENDIF()
+ENDIF(CLEAN_BUILD)
 
 
 CTEST_CONFIGURE(
@@ -522,7 +520,7 @@ endif()
 #
 ###################################################################################################################
 
-SET(CTEST_BUILD_TARGET "all")
+SET(CTEST_BUILD_TARGET all)
 
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
@@ -533,55 +531,44 @@ CTEST_BUILD(
           APPEND
 )
 
-if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  S_HAD_ERROR
-    )
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+             RETURN_VALUE  S_HAD_ERROR
+  )
 
-    if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit Albany build results!")
-    endif()
-  ENDIF()
-
-  if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany!")
+  if(S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit Albany build results!")
   endif()
+ENDIF(CTEST_DO_SUBMIT)
 
-  message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
-
+if(HAD_ERROR)
+  message(FATAL_ERROR "Cannot build Albany!")
 endif()
-
 
 #
 # Run Albany tests
 #
 ##################################################################################################################
 
-IF(TURN_OFF_FOR_NOW)
+#CTEST_TEST(
+#              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+##              INCLUDE "SCOREC_ThermoMechanicalCan_thermomech_tpetra"
+##              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+##              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+##              INCLUDE_LABEL "CUDA_TEST"
+#              #NUMBER_FAILED  TEST_NUM_FAILED
+#)
 
-CTEST_TEST(
-              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-#              INCLUDE "SCOREC_ThermoMechanicalCan_thermomech_tpetra"
-#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-              INCLUDE_LABEL "CUDA_TEST"
-              #NUMBER_FAILED  TEST_NUM_FAILED
-)
+#IF(CTEST_DO_SUBMIT)
+#  CTEST_SUBMIT(PARTS Test
+#               RETURN_VALUE  HAD_ERROR
+#  )
 
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Test
-               RETURN_VALUE  HAD_ERROR
-  )
-
-  if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany test results!")
-  endif()
-ENDIF()
-ENDIF(TURN_OFF_FOR_NOW)
+#  if(HAD_ERROR)
+#    message(FATAL_ERROR "Cannot submit Albany test results!")
+#  endif()
+#ENDIF(CTEST_DO_SUBMIT)
 
 ENDIF (BUILD_ALBANY)
 
-
 # Done!!!
-

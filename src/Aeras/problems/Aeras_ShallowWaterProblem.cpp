@@ -29,19 +29,22 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if (eqnSet == "Scalar") { modelDim=2; neq=1; } 
     else { modelDim=2; neq=3; } 
   }
-  bool useHyperViscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Hyperviscosity", false); 
+  bool useExplHyperViscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
+  bool useImplHyperViscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Implicit Hyperviscosity", false);
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 
   bool plotVorticity = params_->sublist("Shallow Water Problem").get<bool>("Plot Vorticity", false); 
 
-  if (useHyperViscosity)
+  if (useImplHyperViscosity) {
     if (usePrescribedVelocity) //TC1 case: only 1 extra hyperviscosity dof 
       neq = 4; 
     //If we're using hyperviscosity for Shallow water equations, we have double the # of dofs. 
     else  
       neq = 2*neq; 
+  }
 
-
-///logic abound vorticity should be sorted. no need to plot vorticity when prescrVel == 1
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//No need to plot vorticity when prescrVel == 1.
+//Also, plotVorticity is ignored under Kokkos.
   if (plotVorticity)
      if(!usePrescribedVelocity){
        //one extra stationary equation for vorticity
@@ -49,7 +52,9 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
      }else{
        std::cout << "Prescribed Velocity is ON, in this case option PlotVorticity=true is ignored." << std::endl; 
      }
- 
+#endif 
+
+
   std::cout << "eqnSet, modelDim, neq: " << eqnSet << ", " << modelDim << ", " << neq << std::endl; 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);

@@ -25,6 +25,13 @@
 #include "Sacado_CacheFad_DFad.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"
 #include "Sacado_MP_Vector.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
+
+// ETP:  Uncomment all three of these for enabling partial specializations
+// of Fad types for multipoint ensemble propagation.
+#include "Sacado_Fad_DFad_MP_Vector.hpp"
+#include "Sacado_Fad_SLFad_MP_Vector.hpp"
+#include "Sacado_Fad_ViewFad_MP_Vector.hpp"
 
 //amb Need to move to configuration.
 //#define ALBANY_SFAD_SIZE 27
@@ -44,7 +51,7 @@ typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
 #ifndef ALBANY_ENSEMBLE_SIZE
 #define ALBANY_ENSEMBLE_SIZE 1
 #endif
-typedef Stokhos::StaticFixedStorage<int,double,ALBANY_ENSEMBLE_SIZE,Kokkos::Serial> MPStorageType;
+typedef Stokhos::StaticFixedStorage<int,double,ALBANY_ENSEMBLE_SIZE,PHX::Device> MPStorageType;
 typedef Sacado::MP::Vector<MPStorageType> MPType;
 
 // Switch between dynamic and static FAD types

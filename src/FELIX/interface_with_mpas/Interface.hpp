@@ -76,8 +76,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 void velocity_solver_solve_fo(int nLayers, int nGlobalVertices, int nGlobalTriangles,
     bool ordering, const std::vector<int>& indexToVertexID, const std::vector<int>& indexToTriangleID,
     double minBeta, const std::vector<double>& regulThk,  const std::vector<double>& levelsNormalizedThickness, const std::vector<double>& elevationData, const std::vector<double>& thicknessData,
-    const std::vector<double>& betaData, const std::vector<double>& temperatureOnTetra,
-    std::vector<double>& velocityOnVertices);
+    const std::vector<double>& betaData, const std::vector<double>& SMBData, const std::vector<double>& temperatureOnTetra,
+    std::vector<double>& velocityOnVertices, const double& deltat=0.0);
 
 
 // 3
