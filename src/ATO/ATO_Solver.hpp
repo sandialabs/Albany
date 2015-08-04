@@ -134,8 +134,21 @@ namespace ATO {
     Teuchos::RCP<SpatialFilter> _topologyFilter;
     Teuchos::RCP<SpatialFilter> _postTopologyFilter;
 
+
+    typedef struct HomogenizationSet { 
+      std::string name;
+      std::string type;
+      int responseIndex;
+      int homogDim; 
+      std::vector<Teuchos::RCP<Teuchos::ParameterList> > homogenizationAppParams;
+      std::vector<SolverSubSolver> homogenizationProblems;
+    } HomogenizationSet;
+
+    std::vector<HomogenizationSet> _homogenizationSets;
+
     std::vector<Teuchos::RCP<Teuchos::ParameterList> > _subProblemAppParams;
     std::vector<SolverSubSolver> _subProblems;
+
     OptimizationProblem* _atoProblem;
 
     Teuchos::RCP<const Epetra_Comm> _solverComm;
@@ -170,21 +183,26 @@ namespace ATO {
     void copyObjectiveFromStateMgr( double& g, double* dgdp );
     void zeroSet();
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-    Teuchos::RCP<Teuchos::ParameterList> 
-      createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
     Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
+
+    Teuchos::RCP<Teuchos::ParameterList> 
+      createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
     SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                                     const Epetra_Comm& comm,
 				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
+    Teuchos::RCP<Teuchos::ParameterList> 
+      createHomogenizationInputFile( 
+            const Teuchos::RCP<Teuchos::ParameterList>& appParams, 
+            const Teuchos::ParameterList& homog_subList, 
+            int homogProblemIndex, 
+            int homogSubIndex, 
+            int homogDim) const;
+
     SolverSubSolverData CreateSubSolverData(const ATO::SolverSubSolver& sub) const;
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    createElasticityInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-                               int numDims,
-                               const std::string& exoOutputFile ) const;
   };
 
   class SolverSubSolver {

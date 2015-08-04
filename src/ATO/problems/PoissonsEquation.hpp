@@ -227,7 +227,17 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     p->set<std::string>("Input Vector Name", gradPhiName);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<double>("Coefficient", params->get<double>("Isotropic Modulus"));
+    if( params->isType<int>("Add Cell Problem Forcing") )
+      p->set<int>("Cell Forcing Column", params->get<int>("Add Cell Problem Forcing") );
+
+    if( params->isSublist("Homogenized Constants") ){
+      Teuchos::ParameterList& homogParams = p->sublist("Homogenized Constants",false);
+      homogParams.setParameters(params->sublist("Homogenized Constants",true));
+      p->set<Albany::StateManager*>("State Manager", &stateMgr);
+      p->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
+    } else {
+      p->set<double>("Coefficient", params->get<double>("Isotropic Modulus"));
+    }
 
     //Output
     p->set<std::string>("Output Vector Name", kinVarName);
@@ -245,24 +255,22 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector, numDim);
   }
 
-  // Get distributed parameter
-  if(params->isType<Teuchos::RCP<ATO::Topology> >("Topology")){
+  /*******************************************************************************/
+  /** Begin topology weighting ***************************************************/
+  /*******************************************************************************/
+  if(params->isType<Teuchos::RCP<ATO::Topology> >("Topology"))
+  {
     Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
+
     if( topology->getEntityType() == "Distributed Parameter" ){
       RCP<ParameterList> p = rcp(new ParameterList("Distributed Parameter"));
-
       p->set<std::string>("Parameter Name", topology->getName());
       ev = rcp(new PHAL::GatherScalarNodalParameter<EvalT,AlbanyTraits>(*p, dl) );
       fm0.template registerEvaluator<EvalT>(ev);
     }
-  }
 
-  // ATO penalization
-  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
-  {
     RCP<ParameterList> p = rcp(new ParameterList("TopologyWeighting"));
 
-    Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
     p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);
 
     Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
@@ -283,6 +291,9 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     //if(some input stuff)
     atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName+"_Weighted", elementBlockName, dl->qp_vector, numDim);
   }
+  /*******************************************************************************/
+  /** End topology weighting *****************************************************/
+  /*******************************************************************************/
 
   { // Residual
     RCP<ParameterList> p = rcp(new ParameterList("Residual"));
@@ -290,7 +301,10 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     p->set<bool>("Disable Transient", true);
 
     //Input
-    p->set<std::string>("Vector Name", kinVarName+"_Weighted");
+    if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
+      p->set<std::string>("Vector Name", kinVarName+"_Weighted");
+    else
+      p->set<std::string>("Vector Name", kinVarName);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");

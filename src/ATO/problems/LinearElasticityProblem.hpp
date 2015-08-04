@@ -254,8 +254,18 @@ Albany::LinearElasticityProblem::constructEvaluators(
     p->set<std::string>("Strain Name", strainName);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
-    p->set<double>("Elastic Modulus", params->get<double>("Elastic Modulus"));
-    p->set<double>("Poissons Ratio",  params->get<double>("Poissons Ratio"));
+    if( params->isType<int>("Add Cell Problem Forcing") )
+      p->set<int>("Cell Forcing Column",params->get<int>("Add Cell Problem Forcing") );
+
+    if( params->isSublist("Homogenized Constants") ){
+      Teuchos::ParameterList& homogParams = p->sublist("Homogenized Constants",false);
+      homogParams.setParameters(params->sublist("Homogenized Constants",true));
+      p->set<Albany::StateManager*>("State Manager", &stateMgr);
+      p->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
+    } else {
+      p->set<double>("Elastic Modulus", params->get<double>("Elastic Modulus"));
+      p->set<double>("Poissons Ratio",  params->get<double>("Poissons Ratio"));
+    }
 
     //Output
     p->set<std::string>("Stress Name", stressName);
@@ -272,23 +282,22 @@ Albany::LinearElasticityProblem::constructEvaluators(
     //if(some input stuff)
     atoUtils.SaveCellStateField(fm0, stateMgr, stressName, elementBlockName, dl->qp_tensor, numDim);
   }
-
-  // Get distributed parameter
-  if(params->isType<Teuchos::RCP<ATO::Topology> >("Topology")){
+  /*******************************************************************************/
+  /** Begin topology weighting ***************************************************/
+  /*******************************************************************************/
+  if(params->isType<Teuchos::RCP<ATO::Topology> >("Topology"))
+  {
     Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
+    // Get distributed parameter
     if( topology->getEntityType() == "Distributed Parameter" ){
       RCP<ParameterList> p = rcp(new ParameterList("Distributed Parameter"));
       p->set<std::string>("Parameter Name", topology->getName());
       ev = rcp(new PHAL::GatherScalarNodalParameter<EvalT,AlbanyTraits>(*p, dl) );
       fm0.template registerEvaluator<EvalT>(ev);
     }
-  }
   
-  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
-  { // foreach weighted variable
     RCP<ParameterList> p = rcp(new ParameterList("TopologyWeighting"));
 
-    Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
     p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);
 
     Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
@@ -309,14 +318,20 @@ Albany::LinearElasticityProblem::constructEvaluators(
     //if(some input stuff)
     atoUtils.SaveCellStateField(fm0, stateMgr, stressName+"_Weighted", elementBlockName, dl->qp_tensor, numDim);
   }
+  /*******************************************************************************/
+  /** End topology weighting *****************************************************/
+  /*******************************************************************************/
 
-  { // Displacement Resid ( generalize )
+  { // Displacement Resid 
     RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
 
     p->set<bool>("Disable Transient", true);
 
     //Input
-    p->set<std::string>("Stress Name", stressName+"_Weighted");
+    if( params->isType<Teuchos::RCP<ATO::Topology> > ("Topology") )
+      p->set<std::string>("Stress Name", stressName+"_Weighted");
+    else 
+      p->set<std::string>("Stress Name", stressName);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");

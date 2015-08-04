@@ -132,6 +132,7 @@ createResponseFunction(
 	   name == "Stiffness Objective" ||
 	   name == "Internal Energy Objective" ||
 	   name == "Tensor PNorm Objective" ||
+	   name == "Homogenized Constants Response" ||
 	   name == "Modal Objective" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT") {
