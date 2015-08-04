@@ -135,7 +135,7 @@ namespace LCM {
 		  else if ( min_detA2 <= min_detA1 && min_detA2 <= min_detA3 ) {
 		  
 		    cartesian_newton_raphson(tangent, 
-		      arg_minimum1, 2, direction2, min_detA2);
+		      arg_minimum2, 2, direction2, min_detA2);
 		  
 		    min_detA = min_detA2;
 		    direction = direction2;
@@ -144,7 +144,7 @@ namespace LCM {
 		  else if ( min_detA3 <= min_detA1 && min_detA3 <= min_detA2 ) {
 		  
 		  	cartesian_newton_raphson(tangent, 
-		  	  arg_minimum1, 3, direction3, min_detA3);
+		  	  arg_minimum3, 3, direction3, min_detA3);
 		  
 		    min_detA = min_detA3;		  
 		    direction = direction3;
