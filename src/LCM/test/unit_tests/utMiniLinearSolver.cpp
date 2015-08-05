@@ -8,8 +8,6 @@
 #include <Sacado.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 
-using namespace std;
-
 namespace
 {
 
@@ -24,6 +22,7 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, Residual)
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Jacobian)
 {
 }
+
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Tangent)
 {
 }
