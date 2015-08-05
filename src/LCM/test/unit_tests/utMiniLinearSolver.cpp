@@ -32,10 +32,10 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
   Intrepid::Vector<RealType, dimension> const
   v(2.0, -2.0/5.0, 3.0/5.0);
 
-  Intrepid::Vector<RealType, dimension> const
-  x;
+  Intrepid::Vector<RealType, dimension>
+  x(0.0, 0.0, 0.0);
 
-  LCM::MiniLinearSolver<EvalT, Traits>
+  LCM::MiniLinearSolver<EvalT, Traits, dimension>
   solver;
 
   solver.solve(A, b, x);
