@@ -700,7 +700,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   modelWithSolveT =
       rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
 
-  const RCP<Piro::ObserverBase<double> > observer;// = rcp(new PiroObserverT(albanyApp));
+  const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
 
   return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
 
