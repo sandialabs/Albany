@@ -17,10 +17,33 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
   using EvalT = PHAL::AlbanyTraits::Residual;
   using ScalarT =  PHAL::AlbanyTraits::Residual::ScalarT;
 
-  Intrepid::Index
+  Intrepid::Index const
   dimension{3};
 
+  // Lehmer matrix
+  Intrepid::Tensor<RealType, dimension> const
+  A(1.0, 0.5, 1.0/3.0, 0.5, 1.0, 2.0/3.0, 1.0/3.0, 2.0/3.0, 1.0);
 
+  // RHS
+  Intrepid::Vector<RealType, dimension> const
+  b(2.0, 1.0, 1.0);
+
+  // Known solution
+  Intrepid::Vector<RealType, dimension> const
+  v(2.0, -2.0/5.0, 3.0/5.0);
+
+  Intrepid::Vector<RealType, dimension> const
+  x;
+
+  LCM::MiniLinearSolver<EvalT, Traits>
+  solver;
+
+  solver.solve(A, b, x);
+
+  RealType const
+  error = norm(x - v) / norm(v);
+
+  TEST_COMPARE(error, <=, Intrepid::machine_epsilon<RealType>());
 }
 
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Residual)
