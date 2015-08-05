@@ -153,9 +153,7 @@ bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iter)
 }
 
 
-void AAdapt::MeshAdapt::initAdapt(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-  Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+void AAdapt::MeshAdapt::initAdapt()
 {
   if (PCU_Comm_Self() == 0) {
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
@@ -195,12 +193,11 @@ void AAdapt::MeshAdapt::beforeAdapt()
   szField->copyInputFields();
 }
 
-void AAdapt::MeshAdapt::adaptInPartition(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params)
+void AAdapt::MeshAdapt::adaptInPartition()
 {
   szField->computeError();
 
-  szField->configure(adapt_params);
+  szField->configure(adapt_params_);
 
   szField->freeSizeField();
 }
@@ -259,7 +256,7 @@ namespace {
   }
 }
 
-void AAdapt::MeshAdapt::afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+void AAdapt::MeshAdapt::afterAdapt()
 {
   Teuchos::Array<std::string> defaultStArgs = 
      Teuchos::tuple<std::string>("zoltan", "parma", "parma");
@@ -284,9 +281,8 @@ void AAdapt::MeshAdapt::afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& a
 struct AdaptCallbackOf : public Parma_GroupCode
 {
   AAdapt::MeshAdapt* adapter;
-  const Teuchos::RCP<Teuchos::ParameterList>* adapt_params;
   void run(int group) {
-    adapter->adaptInPartition(*adapt_params);
+    adapter->adaptInPartition();
   }
 };
 
@@ -343,11 +339,10 @@ bool AAdapt::MeshAdapt::adaptMesh(
 
   AdaptCallbackOf callback;
   callback.adapter = this;
-  callback.adapt_params = &adapt_params_;
   const double
     min_part_density = adapt_params_->get<double>("Minimum Part Density", 1000);
 
-  initAdapt(adapt_params_, output_stream_);
+  initAdapt();
 
   bool success;
   if (rc_mgr.is_null()) {
@@ -356,7 +351,7 @@ bool AAdapt::MeshAdapt::adaptMesh(
       beforeAdapt();
       adaptShrunken(pumi_discretization->getPUMIMeshStruct()->getMesh(),
                     min_part_density, callback);
-      afterAdapt(adapt_params_);
+      afterAdapt();
     }
     success = true;
   } else {
@@ -371,7 +366,7 @@ bool AAdapt::MeshAdapt::adaptMesh(
 }
 
 bool AAdapt::MeshAdapt::
-adaptMeshWithRc (const double min_part_density, AdaptCallbackOf& callback) {
+adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
   const bool overlapped = true;
 
   rc_mgr->beginAdapt();
@@ -434,7 +429,7 @@ adaptMeshWithRc (const double min_part_density, AdaptCallbackOf& callback) {
 // once implies the displacement solution is turning an element inside
 // out. That's bad.
 bool AAdapt::MeshAdapt::
-adaptMeshLoop (const double min_part_density, AdaptCallbackOf& callback) {
+adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
   const int
     n_max_outer_iterations = 10,
     n_max_inner_iterations_if_found = 20,
@@ -460,7 +455,7 @@ adaptMeshLoop (const double min_part_density, AdaptCallbackOf& callback) {
       beforeAdapt();
       adaptShrunken(pumi_discretization->getPUMIMeshStruct()->getMesh(),
                     min_part_density, callback);
-      afterAdapt(*(callback.adapt_params));
+      afterAdapt();
     }
 
     // Resize x.

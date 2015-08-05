@@ -20,7 +20,6 @@
 #include "PHAL_Dimension.hpp"
 
 struct Parma_GroupCode;
-struct AdaptCallbackOf;
 
 namespace AAdapt {
 class MeshSizeField;
@@ -43,7 +42,7 @@ public:
     const Teuchos::RCP<const Tpetra_Vector>& solution,
     const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
 
-  void adaptInPartition(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+  void adaptInPartition();
 
   //! Each adapter must generate its list of valid parameters
   Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
@@ -74,13 +73,13 @@ private:
   void checkValidStateVariable(
     const Albany::StateManager& state_mgr,
     const std::string name);
-  void initAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params,
-                 Teuchos::RCP<Teuchos::FancyOStream>& output_stream);
+  void initAdapt();
+                
   void beforeAdapt();
   bool adaptMeshWithRc(const double min_part_density,
-                       AdaptCallbackOf& callback);
-  bool adaptMeshLoop(const double min_part_density, AdaptCallbackOf& callback);
-  void afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params);
+                       Parma_GroupCode& callback);
+  bool adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback);
+  void afterAdapt();
 };
 
 } //namespace AAdapt
