@@ -35,13 +35,16 @@
        <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="STK1D"/>
+    <Parameter name="Method" type="string" value="STK1D Aeras"/>
     <Parameter name="1D Elements" type="int" value="300"/>
     <Parameter name="1D Scale" type="double" value="300.0"/>
-    <Parameter name="Workset Size" type="int" value="1000"/>
+    <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
+    <Parameter name="Cubature Degree" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Element Degree" type="int" value="1"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/>
+    <!--Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/-->
   </ParameterList>
   <!--
   <ParameterList name="Regression Results">
@@ -127,13 +130,13 @@
             </ParameterList>
           </ParameterList>
         </ParameterList>
-        <Parameter name="Preconditioner Type" type="string" value="ML"/>
+        <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
         <ParameterList name="Preconditioner Types">
-          <ParameterList name="Ifpack">
-            <Parameter name="Prec Type" type="string" value="ILU"/>
+          <ParameterList name="Ifpack2">
+            <Parameter name="Prec Type" type="string" value="ILUT"/>
             <Parameter name="Overlap" type="int" value="1"/>
-            <ParameterList name="Ifpack Settings">
-              <Parameter name="fact: level-of-fill" type="int" value="1"/>
+            <ParameterList name="Ifpack2 Settings">
+              <Parameter name="fact: ilut level-of-fill" type="double" value="1.0"/>
             </ParameterList>
           </ParameterList>
           <ParameterList name="ML">
