@@ -165,7 +165,7 @@ namespace LCM {
         ellipticity_flag_(cell,pt) = ellipticity_flag;
         min_detA_(cell,pt) = min_detA;
         
-        std::cout << "\n" << min_detA << " @ " << direction << std::endl;
+        //std::cout << "\n" << min_detA << " @ " << direction << std::endl;
 
         for (int i(0); i < num_dims_; ++i) {
           direction_(cell,pt,i) = direction(i);
@@ -228,8 +228,9 @@ namespace LCM {
     //theta_num_points = p_number + 1;
     
     /*----------------------------- landscape data ---------------------------//
-    std::ofstream fout("/home/zlai/Documents/BifurcationCheck/Tests/"
-    "Anisotropic-Axial/Spherical-Sweep.txt");
+    std::string directory = "./LandscapeData/";
+    std::string filename = directory + "Spherical-Sweep.txt";
+    std::ofstream fout(filename);
     for (int i=0; i<=128; i++) {
       for (int j=0; j<=128; j++) {
         ScalarT phi = phi_min + i*(phi_max-phi_min)/128.0;
@@ -345,8 +346,9 @@ namespace LCM {
     //y_num_points = p_number + 1;
 
     /*----------------------------- landscape data ---------------------------//
-    std::ofstream fout("/home/zlai/Documents/BifurcationCheck/Tests/"
-    "Anisotropic-Axial/Stereographic-Sweep.txt");
+    std::string directory = "./LandscapeData/";
+    std::string filename = directory + "Stereographic-Sweep.txt";
+    std::ofstream fout(filename);
     for (int i=0; i<=128; i++) {
       for (int j=0; j<=128; j++) {
         ScalarT x = x_min + i*(x_max-x_min)/128.0;
@@ -478,8 +480,9 @@ namespace LCM {
     //z_num_points = p_number + 1;
     
     /*----------------------------- landscape data ---------------------------//
-    std::ofstream fout("/home/zlai/Documents/BifurcationCheck/Tests/"
-    "Anisotropic-Axial/Projective-Sweep.txt");
+    std::string directory = "./LandscapeData/";
+    std::string filename = directory + "Projective-Sweep.txt";
+    std::ofstream fout(filename);
     for (int i=0; i<=x_num_points; i++) {
       for (int j=0; j<=y_num_points; j++) {
         for (int k=0; k<=z_num_points; k++) {
@@ -608,8 +611,9 @@ namespace LCM {
     //y_num_points = p_number + 1;
     
     /*----------------------------- landscape data ---------------------------//
-    std::ofstream fout("/home/zlai/Documents/BifurcationCheck/Tests/"
-    "Anisotropic-Axial/Tangent-Sweep.txt");
+    std::string directory = "./LandscapeData/";
+    std::string filename = directory + "Tangent-Sweep.txt";
+    std::ofstream fout(filename);
     for (int i=0; i<=128; i++) {
       for (int j=0; j<=128; j++) {
         ScalarT x = x_min + i*(x_max-x_min)/128.0;
@@ -728,8 +732,9 @@ namespace LCM {
     p_surface_num_points = 1;
 
     /*----------------------------- landscape data ---------------------------//
-    std::ofstream fout("/home/zlai/Documents/BifurcationCheck/Tests/"
-    "Anisotropic-Axial/Cartesian-Sweep.txt");
+    std::string directory = "./LandscapeData/";
+    std::string filename = directory + "Cartesian-Sweep.txt";
+    std::ofstream fout(filename);
     for (int i=0; i<=128; i++) {
       for (int j=0; j<=128; j++) {
         ScalarT x = p_min + i*(p_max-p_min)/128;
@@ -738,6 +743,8 @@ namespace LCM {
 
         Intrepid::Vector<ScalarT, 3>
         normal(z, x, y);
+        
+        normal = Intrepid::unit(normal);
       
         // Localization tensor
         Intrepid::Tensor<ScalarT, 3>
@@ -1429,10 +1436,14 @@ namespace LCM {
       for (int i(0); i < 3; ++i)
         direction[i] = (n[i].val()).val();
       
+      ScalarT dirNorm = Intrepid::norm(direction);
+      for (int i(0); i < 3; ++i)
+        direction[i] /= dirNorm;
+      
       for (int i(0); i < 2; ++i)
         parameters[i] = X[i];
 
-      min_detA = (detA.val()).val();
+      min_detA = (detA.val()).val() / std::pow(dirNorm, 6);
       
     } else {
       std::cout << "Newnton's loop for bifurcation check fails to identify minimum det(A)" 
