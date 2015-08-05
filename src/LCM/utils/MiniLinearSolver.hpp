@@ -39,7 +39,7 @@ public:
 // Specializations
 //
 
-template<typename EvalT, typename Traits, Intrepid::Index N>
+template<typename EvalT, typename Traits, Intrepid::Index N = Intrepid::DYNAMIC>
 class MiniLinearSolver;
 
 //
