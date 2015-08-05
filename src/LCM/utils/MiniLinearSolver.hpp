@@ -16,7 +16,7 @@ namespace LCM
 ///
 /// Mini Linear Solver Base class
 ///
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, Intrepid::Index N = Intrepid::DYNAMIC>
 class MiniLinearSolver_Base
 {
 public:
@@ -24,7 +24,6 @@ public:
 
   MiniLinearSolver_Base();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -40,14 +39,15 @@ public:
 // Specializations
 //
 
-template<typename EvalT, typename Traits> class MiniLinearSolver;
+template<typename EvalT, typename Traits, Intrepid::Index N>
+class MiniLinearSolver;
 
 //
 // Residual
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits, N>
 {
 public:
 
@@ -55,7 +55,6 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -70,9 +69,9 @@ public:
 //
 // Jacobian
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits, N>
 {
 public:
 
@@ -80,7 +79,6 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -95,9 +93,9 @@ public:
 //
 // Tangent
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits, N>
 {
 public:
 
@@ -105,7 +103,6 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -120,9 +117,9 @@ public:
 //
 // Distribured Parameter Derivative
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>
 {
 public:
 
@@ -130,7 +127,6 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -156,7 +152,7 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
+  template <Intrepid::Index N>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -181,7 +177,7 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
+  template <Intrepid::Index N>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -206,7 +202,7 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
+  template <Intrepid::Index N>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -233,7 +229,7 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
+  template <Intrepid::Index N>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -258,7 +254,7 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
+  template <Intrepid::Index N>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
@@ -282,7 +278,7 @@ public:
 
   MiniLinearSolver();
 
-  template <Intrepid::Index N = Intrepid::DYNAMIC>
+  template <Intrepid::Index N>
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
