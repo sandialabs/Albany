@@ -45,9 +45,9 @@ void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits, N>::
 computeFadInfo(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   return;
 }
@@ -101,9 +101,9 @@ template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::
 computeFadInfo(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   auto const
   local_dim = b.get_dimension();
@@ -197,9 +197,9 @@ template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::
 computeFadInfo(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   auto const
   local_dim = b.get_dimension();
@@ -294,9 +294,9 @@ template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>::
 computeFadInfo(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   auto const
   local_dim = b.get_dimension();
