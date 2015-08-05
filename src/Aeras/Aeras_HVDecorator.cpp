@@ -294,6 +294,7 @@ Aeras::HVDecorator::evalModelImpl(
   Teuchos::RCP<Tpetra_Vector> xtildeT = Teuchos::rcp(new Tpetra_Vector(xT->getMap())); 
   //compute xtildeT 
   applyLinvML(xT, xtildeT); 
+
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket for debug
   char name[100];  //create string for file name
@@ -305,7 +306,14 @@ Aeras::HVDecorator::evalModelImpl(
 #endif  
   //FIXME: add xtildeT to fT_out. 
   //IKT: I think this will just be: 
-  //fT_out->update(1.0, *xtildeT, 1.0); 
+
+  //OG: I noticed 2 things: If not timestep, then inArgs.xdot is probably null, so the code
+  //crashes at fT_out->update(1.0, *xtildeT, 1.0);
+  //also, alpha=beta=0. There may be a better way to check this:
+  if( (beta != 0) && (alpha != 0) ){
+	  std::cout <<"in the if-statement for the update" <<std::endl;
+	  fT_out->update(1.0, *xtildeT, 1.0);
+  }
 
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {
