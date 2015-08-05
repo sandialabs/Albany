@@ -16,6 +16,11 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
   using Traits = PHAL::AlbanyTraits;
   using EvalT = PHAL::AlbanyTraits::Residual;
   using ScalarT =  PHAL::AlbanyTraits::Residual::ScalarT;
+
+  Intrepid::Index
+  dimension{3};
+
+
 }
 
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Residual)
