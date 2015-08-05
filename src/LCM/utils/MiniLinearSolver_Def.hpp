@@ -75,10 +75,10 @@ solve(
   auto const
   local_dim = b.get_dimension();
 
-  Intrepid::Vector<RealType>
+  Intrepid::Vector<RealType, N>
   Df(local_dim);
 
-  Intrepid::Tensor<RealType>
+  Intrepid::Tensor<RealType, N>
   DfDx(local_dim);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -89,7 +89,7 @@ solve(
     }
   }
 
-  Intrepid::Vector<RealType> const
+  Intrepid::Vector<RealType, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -172,10 +172,10 @@ solve(
   auto const
   local_dim = b.get_dimension();
 
-  Intrepid::Vector<RealType>
+  Intrepid::Vector<RealType, N>
   Df(local_dim);
 
-  Intrepid::Tensor<RealType>
+  Intrepid::Tensor<RealType, N>
   DfDx(local_dim);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -186,7 +186,7 @@ solve(
     }
   }
 
-  Intrepid::Vector<RealType> const
+  Intrepid::Vector<RealType, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -269,10 +269,10 @@ solve(
   auto const
   local_dim = b.get_dimension();
 
-  Intrepid::Vector<RealType>
+  Intrepid::Vector<RealType, N>
   Df(local_dim);
 
-  Intrepid::Tensor<RealType>
+  Intrepid::Tensor<RealType, N>
   DfDx(local_dim);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -283,7 +283,7 @@ solve(
     }
   }
 
-  Intrepid::Vector<RealType> const
+  Intrepid::Vector<RealType, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
   for (auto i = 0; i < local_dim; ++i) {
