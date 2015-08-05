@@ -13,18 +13,30 @@ namespace
 
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
 {
+  using Traits = PHAL::AlbanyTraits;
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT =  PHAL::AlbanyTraits::Residual::ScalarT;
 }
 
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Residual)
 {
+  using Traits = PHAL::AlbanyTraits;
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT =  PHAL::AlbanyTraits::Residual::ScalarT;
 }
 
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Jacobian)
 {
+  using Traits = PHAL::AlbanyTraits;
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT =  PHAL::AlbanyTraits::Residual::ScalarT;
 }
 
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Tangent)
 {
+  using Traits = PHAL::AlbanyTraits;
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT =  PHAL::AlbanyTraits::Residual::ScalarT;
 }
 
 } // anonymous namespace
