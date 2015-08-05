@@ -30,9 +30,12 @@
 
 AAdapt::MeshAdapt::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+          const Teuchos::RCP<ParamLib>& paramLib_,
           const Albany::StateManager& StateMgr_,
-          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_)
-  : remeshFileIndex(1), rc_mgr(refConfigMgr_)
+          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
+          const Teuchos::RCP<const Teuchos_Comm>& commT_)
+  : AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
+    remeshFileIndex(1), rc_mgr(refConfigMgr_)
 {
   disc = StateMgr_.getDiscretization();
 
@@ -123,9 +126,7 @@ void AAdapt::MeshAdapt::initRcMgr () {
 
 AAdapt::MeshAdapt::~MeshAdapt() {}
 
-bool AAdapt::MeshAdapt::queryAdaptationCriteria(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-  int iter)
+bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iter)
 {
   adapt_params_->set<int>("LastIter", iter);
 
@@ -333,8 +334,8 @@ void adaptShrunken(apf::Mesh2* m, double min_part_density,
                    Parma_GroupCode& callback);
 
 bool AAdapt::MeshAdapt::adaptMesh(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-  Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+  const Teuchos::RCP<const Tpetra_Vector>& solution,
+  const Teuchos::RCP<const Tpetra_Vector>&)
 {
 #ifdef AMBDEBUG
   al::anlzCoords(pumi_discretization);
@@ -510,9 +511,10 @@ void AAdapt::MeshAdapt::checkValidStateVariable(
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::MeshAdapt::getValidAdapterParameters(
-  Teuchos::RCP<Teuchos::ParameterList>& validPL) const
+AAdapt::MeshAdapt::getValidAdapterParameters() const
 {
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+    getGenericAdapterParams("ValidMeshAdaptParams");
   Teuchos::Array<int> defaultArgs;
   Teuchos::Array<std::string> defaultStArgs;
 
@@ -532,37 +534,6 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;
-}
-
-AAdapt::MeshAdaptT::
-MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-           const Teuchos::RCP<ParamLib>& paramLib_,
-           const Albany::StateManager& StateMgr_,
-           const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
-           const Teuchos::RCP<const Teuchos_Comm>& commT_)
-  : AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
-    meshAdapt(params_, StateMgr_, refConfigMgr_)
-{}
-
-bool AAdapt::MeshAdaptT::queryAdaptationCriteria(int iteration)
-{
-  return meshAdapt.queryAdaptationCriteria(this->adapt_params_,iteration);
-}
-
-bool AAdapt::MeshAdaptT::adaptMesh(
-  const Teuchos::RCP<const Tpetra_Vector>& solution,
-  const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution)
-{
-  return meshAdapt.adaptMesh(
-    this->adapt_params_,this->output_stream_);
-}
-
-Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::MeshAdaptT::getValidAdapterParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericAdapterParams("ValidMeshAdaptParams");
-  return meshAdapt.getValidAdapterParameters(validPL);
 }
 
 static double getAveragePartDensity(apf::Mesh* m)

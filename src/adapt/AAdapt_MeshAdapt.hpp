@@ -26,27 +26,27 @@ namespace AAdapt {
 class MeshSizeField;
 namespace rc { class Manager; }
 
-class MeshAdapt {
+class MeshAdapt : public AbstractAdapterT {
 public:
   MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+            const Teuchos::RCP<ParamLib>& paramLib_,
             const Albany::StateManager& StateMgr_,
-            const Teuchos::RCP<rc::Manager>& refConfigMgr_);
+            const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
+            const Teuchos::RCP<const Teuchos_Comm>& commT_);
   ~MeshAdapt();
 
   //! Check adaptation criteria to determine if the mesh needs adapting
-  bool queryAdaptationCriteria(
-    const Teuchos::RCP<Teuchos::ParameterList>& params,
-    int iter);
+  bool queryAdaptationCriteria(int iteration);
 
   //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-  bool adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-                 Teuchos::RCP<Teuchos::FancyOStream>& output_stream_);
+  bool adaptMesh(
+    const Teuchos::RCP<const Tpetra_Vector>& solution,
+    const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
 
   void adaptInPartition(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
   //! Each adapter must generate its list of valid parameters
-  Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters(
-    Teuchos::RCP<Teuchos::ParameterList>& validPL) const;
+  Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
 
 private:
 
@@ -81,23 +81,6 @@ private:
                        AdaptCallbackOf& callback);
   bool adaptMeshLoop(const double min_part_density, AdaptCallbackOf& callback);
   void afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params);
-};
-
-class MeshAdaptT : public AbstractAdapterT {
-public:
-  MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const Albany::StateManager& StateMgr_,
-             const Teuchos::RCP<rc::Manager>& refConfigMgr_,
-             const Teuchos::RCP<const Teuchos_Comm>& commT_);
-  virtual bool queryAdaptationCriteria(int iteration);
-  virtual bool adaptMesh(
-    const Teuchos::RCP<const Tpetra_Vector>& solution,
-    const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
-  virtual Teuchos::RCP<const Teuchos::ParameterList>
-  getValidAdapterParameters() const;
-private:
-  MeshAdapt meshAdapt;
 };
 
 } //namespace AAdapt

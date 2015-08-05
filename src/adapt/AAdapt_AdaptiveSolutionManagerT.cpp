@@ -145,7 +145,7 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
   // RCP needs to be non-owned because otherwise there is an RCP circle.
   if (first_three_chars == "RPI") {
     adapter_ = Teuchos::rcp(
-      new AAdapt::MeshAdaptT(adaptParams_, paramLib_, stateMgr_, rc_mgr,
+      new AAdapt::MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              commT_));
   } else
 #endif
