@@ -16,7 +16,7 @@ namespace LCM
 ///
 /// Mini Linear Solver Base class
 ///
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, Intrepid::Index N = Intrepid::DYNAMIC>
 class MiniLinearSolver_Base
 {
 public:
@@ -25,9 +25,9 @@ public:
   MiniLinearSolver_Base();
 
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -39,14 +39,15 @@ public:
 // Specializations
 //
 
-template<typename EvalT, typename Traits> class MiniLinearSolver;
+template<typename EvalT, typename Traits, Intrepid::Index N = Intrepid::DYNAMIC>
+class MiniLinearSolver;
 
 //
 // Residual
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits, N>
 {
 public:
 
@@ -55,9 +56,9 @@ public:
   MiniLinearSolver();
 
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -68,9 +69,9 @@ public:
 //
 // Jacobian
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits, N>
 {
 public:
 
@@ -79,9 +80,9 @@ public:
   MiniLinearSolver();
 
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -92,9 +93,9 @@ public:
 //
 // Tangent
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits, N>
 {
 public:
 
@@ -103,9 +104,9 @@ public:
   MiniLinearSolver();
 
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -116,9 +117,9 @@ public:
 //
 // Distribured Parameter Derivative
 //
-template<typename Traits>
-class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>
 {
 public:
 
@@ -127,9 +128,9 @@ public:
   MiniLinearSolver();
 
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -151,10 +152,11 @@ public:
 
   MiniLinearSolver();
 
+  template <Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -175,10 +177,11 @@ public:
 
   MiniLinearSolver();
 
+  template <Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -199,10 +202,11 @@ public:
 
   MiniLinearSolver();
 
+  template <Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -225,10 +229,11 @@ public:
 
   MiniLinearSolver();
 
+  template <Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -249,10 +254,11 @@ public:
 
   MiniLinearSolver();
 
+  template <Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,
@@ -272,10 +278,11 @@ public:
 
   MiniLinearSolver();
 
+  template <Intrepid::Index N>
   void solve(
-      Intrepid::Tensor<ScalarT> const & A,
-      Intrepid::Vector<ScalarT> const & b,
-      Intrepid::Vector<ScalarT> & x);
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT> const & A,

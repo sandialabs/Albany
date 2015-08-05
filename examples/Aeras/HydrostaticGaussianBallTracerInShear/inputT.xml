@@ -24,6 +24,14 @@
     </ParameterList>
 -->
   </ParameterList>
+  <ParameterList name="Debug Output">
+     <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/-->
+     <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
+     <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
+     <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
+     <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
+  </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
     <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD4/uniform_10_quad4.g"/>
