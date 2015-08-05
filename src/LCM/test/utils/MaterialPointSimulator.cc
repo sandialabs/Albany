@@ -655,11 +655,6 @@ int main(int ac, char* av[])
   	    std::cout << "\nAdaptive step begin - step " 
   	      << istep << std::endl;
         
-        // results file
-  	    //std::string output_adaptive_file = mpsParams.get<std::string>(
-          //"Adaptive Step Output File Name",
-          //"output-adaptive.txt");
-        
         // initialization for adaptive step
   	    double tol = 1E-8;
   	    double alpha_local = 1.0;
@@ -667,24 +662,6 @@ int main(int ac, char* av[])
         
   	    int k = 1;
   	    int maxIteration = 50;
-
-        //std::ofstream fout(output_adaptive_file);
-        //fout << "Tol                   : " << tol << std::endl;
-        //fout << "Bifurcation_time_rough: " << bifurcationTime_rough << std::endl;
-        //fout << "Min_det(A)_0          : " << mu_0 << std::endl;
-        //fout << "Min_det(A)_k          : " << mu_k << std::endl;
-        //fout << std::endl;
-  
-        //fout.width(2);
-        //fout << "k";
-        //fout.width(15);
-        //fout << "alpha_local";
-        //fout.width(15);
-        //fout << "mu_k";
-        //fout.width(15);
-        //fout << "mu_k/mu_0";
-        //fout.width(15);
-        //fout << "direction" << std::endl;
 
     	// small strain tensor
         Intrepid::Tensor<ScalarT> current_strain;
@@ -722,28 +699,13 @@ int main(int ac, char* av[])
           fieldManager.preEvaluate<Residual>(workset);
           fieldManager.evaluateFields<Residual>(workset);
           fieldManager.postEvaluate<Residual>(workset);
-
-          //--------------------------------------------//
-          struct timeval start, end;
-          gettimeofday( &start, NULL );
-          //-------------------------------------------*/
           
           // Call the state field manager
           //std::cout << "+++ calling the stateFieldManager\n";
           stateFieldManager.preEvaluate<Residual>(workset);
           stateFieldManager.evaluateFields<Residual>(workset);
-          stateFieldManager.postEvaluate<Residual>(workset); 
-     	         	      
-          //-------------------------------------------------------//
-          gettimeofday( &end, NULL );
-          int timeuse = 1000000 * ( end.tv_sec - start.tv_sec ) 
-            + end.tv_usec - start.tv_usec;
-          
-          //std::cout << std::endl;
-          //std::cout << "Time cost: " << timeuse << std::endl;
-          //std::cout << std::endl;
-          //-------------------------------------------------------*/
-    
+          stateFieldManager.postEvaluate<Residual>(workset);      	         	      
+   
           stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(
             minDetA);
             
@@ -751,23 +713,6 @@ int main(int ac, char* av[])
             direction);
             
           mu_k = minDetA(0,0);
-    
-          //fout.precision(6);
-          //fout.width(2);
-          //fout << k;
-          //fout.width(15);
-          //fout << alpha_local;
-          //fout.width(15);
-          //fout << mu_k;
-          //fout.width(15);
-          //fout << mu_k/mu_0;
-    	  
-          //fout.width(15);
-          //fout << direction(0, 0, 0);
-          //fout.width(15);
-          //fout << direction(0, 0, 1);
-          //fout.width(15);
-          //fout << direction(0, 0, 2) << std::endl;
 
           if (mu_k > 0) {
             alpha_local += alpha_local_step;
@@ -784,77 +729,20 @@ int main(int ac, char* av[])
               << k << " iterations" << std::endl;
             break;
           }
-
-          stateMgr.updateStates();
         
         } // adaptive step iteration end
 
-        //fout << std::endl;
-        //fout << "current strain: \n" << current_strain << std::endl;
-        //fout << std::flush;
-        //fout.close();
-
-        //std::cout << "\nAdaptive step end - bifurcation time " 
-          //<< (bifurcationTime_rough - 1 + alpha_local) << std::endl;
                    
       } // end adaptive step
-      
-      /*--------------------------------------------//
-      //----------------------- Landscape file rename-------------------------//
-      if ( istep == 1 || istep == 10 || istep == 20 || bifurcation_flag ) {
-        std::string parametrization_type = mpsParams.get<std::string>(
-          "Parametrization Type",
-          "Spherical");
-
-        std::string oldName = parametrization_type + "-Sweep.txt";
-        std::string 
-        //newName = "LandscapeData/" + parametrization_type + "/Bifurcation.txt";
-        newName = "LandscapeData/" + parametrization_type 
-          + "/Sweep@" + std::to_string(istep) + ".txt";
-      
-        std::ifstream in(oldName);
-        std::ofstream out(newName);
-        char ch;
-        while (in.get(ch)) {
-          out.put(ch);
-        }
-        in.close();
-        out.close();
-      }
-      //-------------------------------------------*/
         
     } // end check bifurcation
+ 
     
+    stateMgr.updateStates();
+             
     //
     if (bifurcation_flag) {
-
-     /*--------------------------------------------//
-    
-      // create MDFields
-      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim, Dim, Dim> tangent(
-        "Material Tangent",
-        dl->qp_tensor4);
-      stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, 
-        Dim, Dim, Dim, Dim>(tangent);
-   
-      std::ofstream fout("TangentOperator.txt");
-      fout.precision(32);
-      
-      for (int i(0); i < 3; ++i) {
-        for (int j(0); j < 3; ++j) {
-          for (int k(0); k < 3; ++k) {
-            for (int l(0); l < 3; ++l) {
-              fout << tangent(0, 0, i, j, k, l) << std::endl;
-            }
-          }
-        }
-      }
-        
-      fout << std::endl;
-      fout << std::flush;
-      fout.close();
-    //-------------------------------------------*/
-         
+      // break the loading step after adaptive time step loop   
       break;
     }
     
