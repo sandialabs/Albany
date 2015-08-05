@@ -111,10 +111,7 @@ namespace LCM
     // derivative
     Intrepid::Tensor<ScalarT>
     compute_dfdsigma(std::vector<ScalarT> const & XX);
-    
-    Intrepid::Tensor<ScalarT>
-    compute_dfdalpha(std::vector<ScalarT> const & XX);
-    
+        
     ScalarT
     compute_dfdkappa(std::vector<ScalarT> const & XX);
     
@@ -142,6 +139,9 @@ namespace LCM
     // elasto-plastic tangent modulus
     Intrepid::Tensor4<ScalarT>
     compute_Cep(Intrepid::Tensor4<ScalarT> & Celastic, Intrepid::Tensor<ScalarT> & sigma,
+        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa, ScalarT & dgamma);
+    Intrepid::Tensor4<ScalarT>
+    compute_Cepp(Intrepid::Tensor4<ScalarT> & Celastic, Intrepid::Tensor<ScalarT> & sigma,
         Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa, ScalarT & dgamma);
 
     // local temp variables

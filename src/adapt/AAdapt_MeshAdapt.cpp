@@ -457,6 +457,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
   validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
   validPL->set<bool>("AdaptNow", false, "Used to force an adaptation step");
+  validPL->set<bool>("Should Coarsen", true, "Set to false to disable mesh coarsening operations.");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");

@@ -600,6 +600,8 @@ namespace Aeras
     int points_per_edge; //number of points per edge (i.e., the degree of enrichment) -- read in from ParameterList.
 
     int nodes_per_element; //number of nodes of an element
+  
+    std::string element_name; //name of element
 
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;

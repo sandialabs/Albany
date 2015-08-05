@@ -66,6 +66,7 @@ buildProblem(
   if( haveSidesets )
     constructNeumannEvaluators(meshSpecs[0]);
 
+  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
    setupTopOpt(meshSpecs,stateMgr);
 
 }
@@ -180,6 +181,8 @@ Albany::LinearElasticityProblem::getValidProblemParameters() const
 
   validPL->set<double>("Elastic Modulus", 0.0);
   validPL->set<double>("Poissons Ratio", 0.0);
+  validPL->set<int>("Add Cell Problem Forcing", 0);
+  validPL->sublist("Homogenized Constants", false, "");
 
   Teuchos::RCP<ATO::Topology> emptyTopo;
   emptyTopo = Teuchos::null;

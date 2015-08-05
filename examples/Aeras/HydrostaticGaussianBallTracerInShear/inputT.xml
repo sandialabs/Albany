@@ -27,19 +27,20 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
     <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD4/uniform_10_quad4.g"/>
-    <!--Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/-->
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Element Degree" type="int" value="3"/>
-    <!--Parameter name="Exodus Write Interval" type="int" value="1"/>
-    <Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_out.exo"/>
+    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Cubature Degree" type="int" value="3"/>
+    <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{5380.26315789}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{5380.35101725}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -47,10 +48,15 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
+      <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
       <!--Parameter name="Num Time Steps" type="int" value="2000"/-->
-      <Parameter name="Num Time Steps" type="int" value="10"/>
+      <!--Parameter name="Num Time Steps" type="int" value="10"/-->
       <!-- Originally Num Time Steps was 10; reduced it for nightly tests (IK, 10/8/14) -->
       <!--Parameter name="Num Time Steps" type="double" value="10."/-->
+      <ParameterList name="Rythmos Integration Control">
+        <Parameter name="Take Variable Steps" type="bool" value="false"/>
+        <Parameter name="Number of Time Steps" type="int" value="1"/>
+      </ParameterList>
       <Parameter name="Final Time" type="double" value= "100."/>
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
@@ -58,8 +64,6 @@
 	<ParameterList name="VerboseObject">
 	  <Parameter name="Verbosity Level" type="string" value="low"/>
 	</ParameterList>
-      </ParameterList>
-      <ParameterList name="Rythmos Integration Control">
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">
@@ -90,7 +94,7 @@
 	  <ParameterList name="Ifpack2">
 	    <Parameter name="Prec Type" type="string" value="ILUT"/>
 	    <Parameter name="Overlap" type="int" value="0"/>
-	    <ParameterList name="Ifpack Settings">
+	    <ParameterList name="Ifpack2 Settings">
 	      <Parameter name="fact: ilut level-of-fill" type="double" value="1.0"/>
 	    </ParameterList>
 	  </ParameterList>

@@ -46,6 +46,13 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> outVector;
+
+  bool addCellForcing;
+  bool useHomogenizedConstants;
+  std::string homogenizedConstantsName;
+  int cellForcingColumn;
+
+  Intrepid::FieldContainer<RealType> subTensor;
 };
 }
 

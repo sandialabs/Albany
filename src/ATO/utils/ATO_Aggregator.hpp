@@ -62,8 +62,6 @@ protected:
   Teuchos::RCP<Albany::Application> outApp;
   Teuchos::RCP<const Epetra_Comm> comm;
 
-  bool shiftToZero;
-  bool scaleToOne;
   Teuchos::Array<double> normalize;
 };
 
