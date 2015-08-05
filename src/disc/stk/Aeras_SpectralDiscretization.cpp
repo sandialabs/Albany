@@ -2400,9 +2400,10 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       for (std::size_t i=0; i < buckets[b]->size(); i++)
       {
         bool anyXeqZero=false;
-        for (int j=0; j < nodes_per_element; j++)
+        for (int j=0; j < nodes_per_element; j++) {
           if (coords[b][i][j][d]==0.0)
             anyXeqZero=true;
+        }
         if (anyXeqZero)
         {
           bool flipZeroToScale=false;
@@ -3538,9 +3539,9 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     enrichMeshQuads();
 
 #ifdef OUTPUT_TO_SCREEN
-    printConnectivity(true);
-    commT->barrier();
-    printConnectivity();
+  printConnectivity(true);
+  commT->barrier();
+  printConnectivity();
 #endif
 
   if (spatial_dim == 1) 
@@ -3548,25 +3549,32 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOwnedNodesAndUnknownsQuads();
 
-    //write owned maps to matrix market file for debug
-    Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
-    Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
+  //write owned maps to matrix market file for debug
+  Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
+  Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
 
-    // IK, 1/23/15: I've commented out the guts of this function.  It is
-    // only needed for ML/MueLu and is not critical right now to get
-    // spectral elements to work.
-    setupMLCoords();
+  // IK, 1/23/15: I've commented out the guts of this function.  It is
+  // only needed for ML/MueLu and is not critical right now to get
+  // spectral elements to work.
+  setupMLCoords();
 
   if (spatial_dim == 1) 
     computeOverlapNodesAndUnknownsLines();
   else if (spatial_dim == 2) 
     computeOverlapNodesAndUnknownsQuads();
 
-    //write overlap maps to matrix market file for debug
-    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
-    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+  //write overlap maps to matrix market file for debug
+  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
+  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+    
+    // Note that getCoordinates has not been converted to use the
+    // enriched mesh, but I believe it's not used anywhere.
+  if (spatial_dim == 1) 
+    computeCoordsLines();
+  else if (spatial_dim == 2) 
+    computeCoordsQuads();
 
-    computeWorksetInfo();
+  computeWorksetInfo();
 
     // IKT, 2/16/15: moving computeGraphsQuads() to after
     // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
@@ -3576,12 +3584,6 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeGraphsQuads();
 
-    // Note that getCoordinates has not been converted to use the
-    // enriched mesh, but I believe it's not used anywhere.
-  if (spatial_dim == 1) 
-    computeCoordsLines();
-  else if (spatial_dim == 2) 
-    computeCoordsQuads();
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
   // enriched coordinates This function is not critical and only
