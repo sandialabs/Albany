@@ -28,13 +28,14 @@ MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::MiniLinearSolver() :
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   x -= Intrepid::solve(A, b);
   return;
@@ -63,12 +64,13 @@ MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::MiniLinearSolver() :
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   auto const
   local_dim = b.get_dimension();
@@ -159,12 +161,13 @@ MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::MiniLinearSolver() :
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A ,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   auto const
   local_dim = b.get_dimension();
@@ -255,12 +258,13 @@ MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::MiniLinearSolver()
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   auto const
   local_dim = b.get_dimension();
@@ -352,12 +356,13 @@ MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, Traits>()
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -392,12 +397,13 @@ MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, Traits>()
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -432,12 +438,13 @@ MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, Traits>()
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -474,12 +481,13 @@ MiniLinearSolver_Base<PHAL::AlbanyTraits::MPResidual, Traits>()
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -514,12 +522,13 @@ MiniLinearSolver_Base<PHAL::AlbanyTraits::MPJacobian, Traits>()
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
@@ -554,12 +563,13 @@ MiniLinearSolver_Base<PHAL::AlbanyTraits::MPTangent, Traits>()
 }
 
 template<typename Traits>
+template <Intrepid::Index N = Intrepid::DYNAMIC>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits>::
 solve(
-    Intrepid::Tensor<ScalarT> const & A,
-    Intrepid::Vector<ScalarT> const & b,
-    Intrepid::Vector<ScalarT> & x)
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       true,
