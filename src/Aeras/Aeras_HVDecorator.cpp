@@ -33,9 +33,6 @@ Aeras::HVDecorator::HVDecorator(
 
   std::cout << "In HVDecorator app name: " << app->getProblemPL()->get("Name", "") << std::endl;
 
-//Let's keep this for later
-  Teuchos::ParameterList &coupled_system_params = appParams->sublist("Coupled System");
-
 //Create and store mass and Laplacian operators (in CrsMatrix form). 
   mass_ = createOperator(1.0, 0.0, 0.0); 
   laplace_ = createOperator(0.0, 0.0, 1.0); 
@@ -99,11 +96,13 @@ const
   Teuchos::RCP<Tpetra_Vector> x_temp1 = Teuchos::rcp(new Tpetra_Vector(x_in->getMap())); 
   //x_temp1 = laplace_*x_in
   laplace_->apply(*x_in, *x_temp1, Teuchos::NO_TRANS, 1.0, 0.0); 
+
   Teuchos::RCP<Tpetra_Vector> x_temp2 = Teuchos::rcp(new Tpetra_Vector(x_in->getMap())); 
-  //x_temp2 = laplace_*inv_mass_diag 
-  laplace_->apply(*inv_mass_diag, *x_temp2, Teuchos::NO_TRANS, 1.0, 0.0); 
-  //x_out = xtemp2*xtemp1
-  x_out->elementWiseMultiply(1.0, *x_temp2, *x_temp1, 0.0); 
+  //x_temp2 = inv(M)*x_temp1
+  x_temp2->elementWiseMultiply(1.0, *inv_mass_diag, *x_temp1, 0.0);
+
+  //x_out = laplace*x_temp2 = laplace* inv(M) * laplace * x_in
+  laplace_->apply(*x_temp2, *x_out, Teuchos::NO_TRANS, 1.0, 0.0);
   
 
   //Teuchos::ArrayRCP<const ST> inv_mass_diag_constView = inv_mass_diag->get1dView(); 
