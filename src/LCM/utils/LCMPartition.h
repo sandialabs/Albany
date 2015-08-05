@@ -56,7 +56,7 @@ ScalarMap;
 ///
 /// Map for topologcal objects for which it is possible to associate points.
 ///
-typedef std::map<int, Intrepid::Vector<double> >
+typedef std::map<int, Intrepid::Vector<double>>
 PointMap;
 
 ///
@@ -161,7 +161,7 @@ template<typename Node>
 class KDTree {
 public:
 
-  KDTree(std::vector<Intrepid::Vector<double> > const & points,
+  KDTree(std::vector<Intrepid::Vector<double>> const & points,
       Intrepid::Index const number_centers);
 
   boost::shared_ptr<Node> &
@@ -185,7 +185,7 @@ private:
 ///
 template<typename Node>
 boost::shared_ptr<Node>
-BuildKDTree(std::vector<Intrepid::Vector<double> > const & points);
+BuildKDTree(std::vector<Intrepid::Vector<double>> const & points);
 
 ///
 /// Create KD tree node.
@@ -197,7 +197,7 @@ boost::shared_ptr<Node>
 CreateKDTreeNode(
     std::string const & name,
     boost::shared_ptr<Node> parent,
-    std::vector<Intrepid::Vector<double> > const & points,
+    std::vector<Intrepid::Vector<double>> const & points,
     std::set<Intrepid::Index> const & points_indices);
 
 ///
@@ -236,12 +236,12 @@ struct OutputVisitor {
 template<typename Node, typename Center>
 struct FilterVisitor {
 
-  std::vector<Intrepid::Vector<double> > & points;
+  std::vector<Intrepid::Vector<double>> & points;
 
   std::vector<Center> & centers;
 
   FilterVisitor(
-      std::vector<Intrepid::Vector<double> > & p,
+      std::vector<Intrepid::Vector<double>> & p,
       std::vector<Center> & c);
 
   void
@@ -346,7 +346,7 @@ public:
   ///
   /// \return Partition centroids
   ///
-  std::vector<Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   GetPartitionCentroids() const;
 
   ///
@@ -358,7 +358,7 @@ public:
   ///
   /// \return Bounding box for all nodes
   ///
-  std::pair<Intrepid::Vector<double>, Intrepid::Vector<double> >
+  std::pair<Intrepid::Vector<double>, Intrepid::Vector<double>>
   BoundingBox() const;
 
   ///
@@ -420,7 +420,7 @@ public:
   /// of points being inside or outside the domain.
   /// \return points inside the domain.
   ///
-  std::vector<Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   CreateGrid();
 
   ///
@@ -465,7 +465,7 @@ public:
   /// closest center to its centroid
   ///
   std::map<int, int>
-  PartitionByCenters(std::vector<Intrepid::Vector<double> > const & centers);
+  PartitionByCenters(std::vector<Intrepid::Vector<double>> const & centers);
 
   ///
   /// Partition mesh with the specified algorithm and length scale
@@ -706,7 +706,7 @@ private:
   // Background grid of the domain for fast determination
   // of whether a point is inside the domain or not.
   //
-  std::vector<std::vector<std::vector<bool> > >
+  std::vector<std::vector<std::vector<bool>> >
   cells_;
 
   //
@@ -823,7 +823,7 @@ private:
   // Given a connectivity array type, return local numbering of
   // proper faces
   //
-  std::vector<std::vector<int> >
+  std::vector<std::vector<int>>
   GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const;
 
 private:
