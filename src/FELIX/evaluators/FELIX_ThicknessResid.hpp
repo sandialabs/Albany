@@ -54,7 +54,7 @@ private:
 
 
   int  cellDims, sideDims, numQPsSide, numNodes, cubatureDegree;
-  double dt;
+  Teuchos::RCP<double> dt;
   bool have_SMB;
   std::string meshPart;
 

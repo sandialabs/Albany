@@ -26,6 +26,7 @@ Teuchos::RCP<Teuchos::ParameterList> paramList;
 Teuchos::RCP<const Teuchos_Comm> mpiCommT;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
+Teuchos::RCP<double> MPAS_dt;
 
 double MPAS_gravity(9.8), MPAS_rho_ice(910), MPAS_rho_seawater(1028);
 
@@ -76,7 +77,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
 
-  paramList->sublist("Problem").set("Time Step", deltat);
+  *MPAS_dt =  deltat;
 
   Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->layered_mesh_numbering->layers_ratio;
   for (int i = 0; i < nLayers; i++) {
@@ -288,7 +289,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   if (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") {
     paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
-    paramList->sublist("Problem").set("Time Step", paramList->sublist("Problem").get("Time Step", 0.0)); //if it is not there set it to zero.
+    MPAS_dt = Teuchos::rcp(new double(paramList->sublist("Problem").get("Time Step", 0.0)));
+    paramList->sublist("Problem").set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
   }
 
   Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));

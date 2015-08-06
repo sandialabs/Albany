@@ -29,7 +29,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
 
-  dt = p.get<double>("Time Step");
+  dt = p.get<Teuchos::RCP<double> >("Time Step Ptr");
 
   if (p.isType<const std::string>("Mesh Part"))
     meshPart = p.get<const std::string>("Mesh Part");
@@ -276,7 +276,7 @@ evaluateFields(typename Traits::EvalData workset)
             divHV += gradH_Side(qp, dim)*V_Side(qp,dim);
 
           //std::cout << "(" << 1.0/1000.0 * divHV << ", " << SMB_Side(qp)<< ")";
-          ScalarT tmp = H_Side(qp)-H0_Side(qp) + (dt/1000.0) * divHV - dt*SMB_Side(qp);
+          ScalarT tmp = H_Side(qp)-H0_Side(qp) + (*dt/1000.0) * divHV - *dt*SMB_Side(qp);
           res +=tmp * weighted_trans_basis_refPointsSide(0, node, qp);
         }
         Residual(elem_LID,node) = res;
