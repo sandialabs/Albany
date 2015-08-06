@@ -123,7 +123,7 @@ int main(int ac, char* av[])
 
   // create field name strings
   LCM::FieldNameMap field_name_map(false);
-  Teuchos::RCP<std::map<std::string, std::string> > fnm =
+  Teuchos::RCP<std::map<std::string, std::string>> fnm =
       field_name_map.getMap();
 
   //---------------------------------------------------------------------------
@@ -141,11 +141,11 @@ int main(int ac, char* av[])
   // to the def_grad field
   Teuchos::ParameterList setDefGradP("SetFieldDefGrad");
   setDefGradP.set<std::string>("Evaluated Field Name", "F");
-  setDefGradP.set<Teuchos::RCP<PHX::DataLayout> >(
+  setDefGradP.set<Teuchos::RCP<PHX::DataLayout>>(
       "Evaluated Field Data Layout",
       dl->qp_tensor);
-  setDefGradP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", def_grad);
-  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDefGrad = Teuchos::rcp(
+  setDefGradP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", def_grad);
+  Teuchos::RCP<LCM::SetField<Residual, Traits>> setFieldDefGrad = Teuchos::rcp(
       new LCM::SetField<Residual, Traits>(setDefGradP));
 
   //---------------------------------------------------------------------------
@@ -156,11 +156,11 @@ int main(int ac, char* av[])
   // to the detdefgrad field
   Teuchos::ParameterList setDetDefGradP("SetFieldDetDefGrad");
   setDetDefGradP.set<std::string>("Evaluated Field Name", "J");
-  setDetDefGradP.set<Teuchos::RCP<PHX::DataLayout> >(
+  setDetDefGradP.set<Teuchos::RCP<PHX::DataLayout>>(
       "Evaluated Field Data Layout",
       dl->qp_scalar);
-  setDetDefGradP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", detdefgrad);
-  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDetDefGrad =
+  setDetDefGradP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", detdefgrad);
+  Teuchos::RCP<LCM::SetField<Residual, Traits>> setFieldDetDefGrad =
       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
 
   //---------------------------------------------------------------------------
@@ -175,11 +175,11 @@ int main(int ac, char* av[])
   // to the strain field
   Teuchos::ParameterList setStrainP("SetFieldStrain");
   setStrainP.set<std::string>("Evaluated Field Name", "Strain");
-  setStrainP.set<Teuchos::RCP<PHX::DataLayout> >(
+  setStrainP.set<Teuchos::RCP<PHX::DataLayout>>(
       "Evaluated Field Data Layout",
       dl->qp_tensor);
-  setStrainP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", strain);
-  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldStrain = Teuchos::rcp(
+  setStrainP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", strain);
+  Teuchos::RCP<LCM::SetField<Residual, Traits>> setFieldStrain = Teuchos::rcp(
       new LCM::SetField<Residual, Traits>(setStrainP));
   //---------------------------------------------------------------------------
   // Instantiate a field manager
@@ -234,11 +234,11 @@ int main(int ac, char* av[])
     // to the detdefgrad field
     Teuchos::ParameterList setTempP("SetFieldTemperature");
     setTempP.set<std::string>("Evaluated Field Name", "Temperature");
-    setTempP.set<Teuchos::RCP<PHX::DataLayout> >(
+    setTempP.set<Teuchos::RCP<PHX::DataLayout>>(
         "Evaluated Field Data Layout",
         dl->qp_scalar);
-    setTempP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", temperature);
-    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldTemperature =
+    setTempP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", temperature);
+    Teuchos::RCP<LCM::SetField<Residual, Traits>> setFieldTemperature =
         Teuchos::rcp(new LCM::SetField<Residual, Traits>(setTempP));
     fieldManager.registerEvaluator<Residual>(setFieldTemperature);
     stateFieldManager.registerEvaluator<Residual>(setFieldTemperature);
@@ -250,10 +250,10 @@ int main(int ac, char* av[])
   delta_time[0] = step_size;;
   Teuchos::ParameterList setDTP("SetFieldTimeStep");
   setDTP.set<std::string>("Evaluated Field Name", "Delta Time");
-  setDTP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  setDTP.set<Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
                                              dl->workset_scalar);
-  setDTP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", delta_time);
-  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDT =
+  setDTP.set<Teuchos::ArrayRCP<ScalarT>>("Field Values", delta_time);
+  Teuchos::RCP<LCM::SetField<Residual, Traits>> setFieldDT =
     Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDTP));
   fieldManager.registerEvaluator<Residual>(setFieldDT);
   stateFieldManager.registerEvaluator<Residual>(setFieldDT);
@@ -269,7 +269,7 @@ int main(int ac, char* av[])
   //std::cout << "// Constitutive Model Parameters"
             //<< std::endl;
   Teuchos::ParameterList cmpPL;
-  paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >(
+  paramList.set<Teuchos::RCP<std::map<std::string, std::string>> >(
       "Name Map",
       fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
@@ -277,7 +277,7 @@ int main(int ac, char* av[])
     cmpPL.set<std::string>("Temperature Name", "Temperature");
     paramList.set<bool>("Have Temperature", true);
   }
-  Teuchos::RCP<LCM::ConstitutiveModelParameters<Residual, Traits> > CMP =
+  Teuchos::RCP<LCM::ConstitutiveModelParameters<Residual, Traits>> CMP =
       Teuchos::rcp(
           new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL, dl));
   fieldManager.registerEvaluator<Residual>(CMP);
@@ -291,21 +291,21 @@ int main(int ac, char* av[])
   if (have_temperature) {
     cmiPL.set<std::string>("Temperature Name", "Temperature");
   }
-  Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits> > CMI =
+  Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits>> CMI =
       Teuchos::rcp(
           new LCM::ConstitutiveModelInterface<Residual, Traits>(cmiPL, dl));
   fieldManager.registerEvaluator<Residual>(CMI);
   stateFieldManager.registerEvaluator<Residual>(CMI);
 
   // Set the evaluated fields as required
-  for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = CMI
+  for (std::vector<Teuchos::RCP<PHX::FieldTag>>::const_iterator it = CMI
       ->evaluatedFields().begin(); it != CMI->evaluatedFields().end(); ++it) {
     fieldManager.requireField<Residual>(**it);
   }
 
   // register state variables
   Teuchos::RCP<Teuchos::ParameterList> p;
-  Teuchos::RCP<PHX::Evaluator<Traits> > ev;
+  Teuchos::RCP<PHX::Evaluator<Traits>> ev;
   for (int sv(0); sv < CMI->getNumStateVars(); ++sv) {
     CMI->fillStateVariableStruct(sv);
     p = stateMgr.registerStateVariable(
@@ -343,7 +343,7 @@ int main(int ac, char* av[])
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
     bcPL.set<std::string>("Min detA Name", "Min detA");
-    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC = Teuchos::rcp(
+    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits>> BC = Teuchos::rcp(
         new LCM::BifurcationCheck<Residual, Traits>(bcPL, dl));
     fieldManager.registerEvaluator<Residual>(BC);
     stateFieldManager.registerEvaluator<Residual>(BC);
@@ -531,7 +531,7 @@ int main(int ac, char* av[])
     F_vector[4] = 1.0 + number_steps * step_size;
     F_vector[8] = 1.0 + number_steps * step_size;
   } else if (load_case == "general") {
-    F_vector = mpsParams.get<Teuchos::Array<double> >(
+    F_vector = mpsParams.get<Teuchos::Array<double>>(
         "Deformation Gradient Components").toVector();
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(

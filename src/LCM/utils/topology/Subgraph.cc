@@ -824,7 +824,7 @@ Subgraph::splitArticulation(Vertex articulation_vertex)
 
   // Vector for edges to be removed. Vertex is source and edgeId the
   // local id of the edge
-  std::vector<std::pair<Vertex, EdgeId> >
+  std::vector<std::pair<Vertex, EdgeId>>
   edges_to_remove;
 
   // Iterate over the in edges of the vertex to determine which will
@@ -865,7 +865,7 @@ Subgraph::splitArticulation(Vertex articulation_vertex)
   }
 
   // Remove all edges in vector removed and replace with new edges
-  for (std::vector<std::pair<Vertex, EdgeId> >::iterator
+  for (std::vector<std::pair<Vertex, EdgeId>>::iterator
       i = edges_to_remove.begin();
       i != edges_to_remove.end(); ++i) {
 

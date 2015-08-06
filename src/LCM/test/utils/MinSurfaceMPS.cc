@@ -104,7 +104,7 @@ int main (int ac, char* av[]){
 			mpsFile <<" "<<"N"<<" "<<"Z"<<endl; //Define the variable that holds the objective function. "N" means that it is unbounded
 
 			//Define the rows and their format
-			std::vector<std::vector<int> > edgesDirec =  topology.edgesDirections();
+			std::vector<std::vector<int>> edgesDirec =  topology.edgesDirections();
 			for (unsigned int i = 0; i< edgesDirec.size();i++)
 			{
 				mpsFile<<" "<<"E"<<" "<<"R"<<i+1<<endl;
@@ -112,7 +112,7 @@ int main (int ac, char* av[]){
 			//Define the number of columns
 			mpsFile << "COLUMNS" <<endl;
 			//Obtain the boundary operator and the areas of all faces
-			std::vector<std::vector<double> > outputForMpsFile = topology.outputForMpsFile();
+			std::vector<std::vector<double>> outputForMpsFile = topology.outputForMpsFile();
 			for (unsigned int i = 0; i < outputForMpsFile.size(); i+=4)
 			{
 				//The columns of the boundary operator need to be saved in order X1, X2, X3,...etc. Also their corresponding areas
@@ -140,7 +140,7 @@ int main (int ac, char* av[]){
 		}
 
 		//mNormal is a matrix containing all the normal vectors
-		std::vector<std::vector<double> > mNormals(numberNormals_,std::vector<double>(3,0));//numberNormals_
+		std::vector<std::vector<double>> mNormals(numberNormals_,std::vector<double>(3,0));//numberNormals_
 
 		if (normals_.is_open())
 		{
@@ -151,7 +151,7 @@ int main (int ac, char* av[]){
 		}
 
 		//Extract the numbers from the matrix that contains the normals
-		std::vector<std::vector<int> >BoundaryVector;
+		std::vector<std::vector<int>>BoundaryVector;
 		for(int i = 0; i < numberNormals_; i++)
 		{
 			std::string file_name = "MPS_"+file_name2+"_rhs_" + itoa(i+1) + ".txt"; //file_name2 comes from the second input in the command line
@@ -162,7 +162,7 @@ int main (int ac, char* av[]){
 				mpsFile <<"RHS"<<endl;
 
 				//Obtain the vector that defines the 1D boundary
-				std::vector<std::vector<int> >BoundaryVector;
+				std::vector<std::vector<int>>BoundaryVector;
 
 				std::vector<double> normalToPlane;
 				normalToPlane.push_back(mNormals.at(i).at(0));
@@ -170,7 +170,7 @@ int main (int ac, char* av[]){
 				normalToPlane.push_back(mNormals.at(i).at(2));
 
 				//Finds coordinates of 3 vectors normal to the normal vector.
-				std::vector<std::vector<double> > pointsOnPlane = topology.getCoordinatesOfTriangle(normalToPlane);
+				std::vector<std::vector<double>> pointsOnPlane = topology.getCoordinatesOfTriangle(normalToPlane);
 
 
 				//Finds the Node (stk::mesh::Entity of rank 0) that is closest to each of the points on the plane
@@ -178,7 +178,7 @@ int main (int ac, char* av[]){
 
 				//Finds the identifiers of the nodes (entity rank 0) along the shortest
 				//path connecting the three points
-				std::vector<std::vector<int> > ShortestPathFinal = topology.shortestpath(closestNodes);
+				std::vector<std::vector<int>> ShortestPathFinal = topology.shortestpath(closestNodes);
 				BoundaryVector = topology.boundaryVector(ShortestPathFinal);//.boundaryVectorOuterSurface
 				for (unsigned int i =0; i < BoundaryVector.size();i++)
 				{

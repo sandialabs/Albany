@@ -79,7 +79,7 @@ Topology::Topology(
   Albany::DiscretizationFactory
   disc_factory(params, communicatorT);
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
   mesh_specs = disc_factory.createMeshSpecs();
 
   Teuchos::RCP<Albany::StateInfoStruct>
@@ -468,7 +468,7 @@ Topology::getBoundaryEntityNodes(stk::mesh::Entity boundary_entity)
 //
 // Get nodal coordinates
 //
-std::vector<Intrepid::Vector<double> >
+std::vector<Intrepid::Vector<double>>
 Topology::getNodalCoordinates()
 {
   stk::mesh::Selector
@@ -485,7 +485,7 @@ Topology::getNodalCoordinates()
   EntityVectorIndex const
   number_nodes = entities.size();
 
-  std::vector<Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   coordinates(number_nodes);
 
   size_t const
@@ -772,7 +772,7 @@ Topology::get_normal(stk::mesh::Entity boundary_entity)
   size_t const
   dimension = get_space_dimension();
 
-  std::vector<Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   nodal_coords(num_corner_nodes);
 
   stk::mesh::EntityVector
