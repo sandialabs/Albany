@@ -269,7 +269,7 @@ int main(int ac, char* av[])
   //std::cout << "// Constitutive Model Parameters"
             //<< std::endl;
   Teuchos::ParameterList cmpPL;
-  paramList.set<Teuchos::RCP<std::map<std::string, std::string>> >(
+  paramList.set<Teuchos::RCP<std::map<std::string, std::string>>>(
       "Name Map",
       fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);

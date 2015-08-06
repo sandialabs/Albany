@@ -914,7 +914,7 @@ ConnectivityArray::ConnectivityArray(
   Albany::WorksetArray<
       Teuchos::ArrayRCP<
       Teuchos::ArrayRCP<
-      Teuchos::ArrayRCP<int>> >>::type const &
+      Teuchos::ArrayRCP<int>>>>::type const &
   element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
   Teuchos::ArrayRCP<double>
@@ -976,7 +976,7 @@ ConnectivityArray::ConnectivityArray(
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>::size_type
   element_number = 0;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>> >::size_type
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>::size_type
   workset = 0;
 
   for (workset = 0; workset < element_connectivity.size(); ++workset) {
@@ -2641,7 +2641,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
     }
 
     // Determine cluster of points for each generator
-    std::vector<std::vector<Intrepid::Vector<double>> >
+    std::vector<std::vector<Intrepid::Vector<double>>>
     clusters;
 
     clusters.resize(number_partitions);
