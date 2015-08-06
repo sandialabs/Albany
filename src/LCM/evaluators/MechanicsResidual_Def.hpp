@@ -64,7 +64,7 @@ MechanicsResidual(Teuchos::ParameterList& p,
   num_dims_ = dims[3];
 
   Teuchos::RCP<ParamLib> paramLib =
-      p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
 
   if (def_grad_rc_.init(p, "F")) this->addDependentField(def_grad_rc_());
 }

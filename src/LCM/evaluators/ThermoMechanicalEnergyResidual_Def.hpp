@@ -19,27 +19,27 @@ template<typename EvalT, typename Traits>
 ThermoMechanicalEnergyResidual<EvalT, Traits>::
 ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
   wBF         (p.get<std::string>                   ("Weighted BF Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
   Temperature (p.get<std::string>                   ("QP Variable Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
   Source      (p.get<std::string>                   ("Source Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   F           (p.get<std::string>                   ("Deformation Gradient Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   mechSource  (p.get<std::string>                   ("Mechanical Source Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   deltaTime   (p.get<std::string>                   ("Delta Time Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout") ),
   density     (p.get<RealType>("Density") ),
   Cv          (p.get<RealType>("Heat Capacity") ),
   TResidual   (p.get<std::string>                   ("Residual Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout") ),
   haveSource  (p.get<bool>("Have Source") )
 {
   this->addDependentField(wBF);
@@ -56,7 +56,7 @@ ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
   tempName = p.get<std::string>("QP Variable Name")+"_old";
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   worksetSize = dims[0];

@@ -34,13 +34,13 @@ J2FiberModel(Teuchos::ParameterList* p,
         sat_exp_(p->get<RealType>("Saturation Exponent", 1.0)),
         local_coord_flag_(p->get<bool>("Local Coordinate Flag", false)),
         direction_f1_(
-            p->get<Teuchos::Array<RealType> >("Fiber 1 Orientation Vector")
+            p->get<Teuchos::Array<RealType>>("Fiber 1 Orientation Vector")
                 .toVector()),
         direction_f2_(
-            p->get<Teuchos::Array<RealType> >("Fiber 2 Orientation Vector")
+            p->get<Teuchos::Array<RealType>>("Fiber 2 Orientation Vector")
                 .toVector()),
         ring_center_(
-            p->get<Teuchos::Array<RealType> >("Ring Center Vector").toVector())
+            p->get<Teuchos::Array<RealType>>("Ring Center Vector").toVector())
 {
   // define the dependent fields
   this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
@@ -167,8 +167,8 @@ J2FiberModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void J2FiberModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
 {
   // extract dependent MDFields
   PHX::MDField<ScalarT> def_grad = *dep_fields["F"];

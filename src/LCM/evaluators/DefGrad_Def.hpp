@@ -20,13 +20,13 @@ template<typename EvalT, typename Traits>
 DefGrad<EvalT, Traits>::
 DefGrad(const Teuchos::ParameterList& p) :
     GradU(p.get<std::string>("Gradient QP Variable Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")),
     weights(p.get<std::string>("Weights Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
     defgrad(p.get<std::string>("DefGrad Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")),
     J(p.get<std::string>("DetDefGrad Name"),
-        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")),
     weightedAverage(false),
     alpha(0.05)
 {
@@ -36,7 +36,7 @@ DefGrad(const Teuchos::ParameterList& p) :
     alpha = p.get<RealType>("Average J Stabilization Parameter");
 
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
 
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);

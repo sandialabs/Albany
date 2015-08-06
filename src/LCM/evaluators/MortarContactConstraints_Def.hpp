@@ -25,12 +25,12 @@ MortarContact(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
 
   meshSpecs         (p.get<const Albany::MeshSpecsStruct*>("Mesh Specs Struct")),
-  masterSideNames   (p.get<Teuchos::Array<std::string> >("Master Side Set Names")), 
-  slaveSideNames    (p.get<Teuchos::Array<std::string> >("Slave Side Set Names")), 
-  sideSetIDs        (p.get<Teuchos::Array<std::string> >("Sideset IDs")), //array of sidesets
+  masterSideNames   (p.get<Teuchos::Array<std::string>>("Master Side Set Names")), 
+  slaveSideNames    (p.get<Teuchos::Array<std::string>>("Slave Side Set Names")), 
+  sideSetIDs        (p.get<Teuchos::Array<std::string>>("Sideset IDs")), //array of sidesets
   coordVec          (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector), //Node coords
   M_operator        (p.get<std::string>("M Name"), dl->qp_scalar),  //M portion of G
-  constrainedFields (p.get<Teuchos::Array<std::string> >("Constrained Field Names")) //Names of fields to be constrained
+  constrainedFields (p.get<Teuchos::Array<std::string>>("Constrained Field Names")) //Names of fields to be constrained
 
 {
 
@@ -141,8 +141,8 @@ evaluateFields(typename Traits::EvalData workset)
                                       // ... probably will want to parse this in production code
       const bool on_boundary = false; // will eventually want to allow boundaries to be intersected by contact surfaces
       const int  contact_pair_id = 0; // will eventually want to allow multiple pairs
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > wsElNodeID = workset.wsElNodeID;
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > &wsElNodeEqID = workset.wsElNodeEqID[elem_LID];
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> &wsElNodeEqID = workset.wsElNodeEqID[elem_LID];
       for (std::size_t node=0; node < num_nodes; ++node) {
         ret = inserted_nodes.insert(wsElNodeID[elem_LID][node]);
         if (ret.second==true) { // this is a as yet unregistered node. add it
@@ -214,7 +214,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (this->tensorRank == 0) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
@@ -222,7 +222,7 @@ evaluateFields(typename Traits::EvalData workset)
   } else 
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
@@ -231,7 +231,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->tensorRank == 2) {
     int numDims = this->valTensor[0].dimension(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)

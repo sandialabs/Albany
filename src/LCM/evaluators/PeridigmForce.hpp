@@ -50,7 +50,7 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> residual;
   std::vector< LCM::PeridigmManager::OutputField > outputFieldInfo;
-  std::map< std::string, PHX::MDField<ScalarT> > outputFields;
+  std::map< std::string, PHX::MDField<ScalarT>> outputFields;
 
   unsigned int numQPs;
   unsigned int numDims;

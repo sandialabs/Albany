@@ -103,8 +103,8 @@ J2Model(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void J2Model<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
 {
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
@@ -708,8 +708,8 @@ operator() (const dont_have_temperature_Tag& tag, const int i) const
 template<typename EvalT, typename Traits>
 void J2Model<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
 {
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 #ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA

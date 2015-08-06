@@ -16,15 +16,15 @@ template<typename EvalT, typename Traits>
 MicroResidual<EvalT, Traits>::
 MicroResidual(const Teuchos::ParameterList& p) :
   microStress      (p.get<std::string>                   ("Micro Stress Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   doubleStress     (p.get<std::string>                   ("Double Stress Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP 3Tensor Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout>>("QP 3Tensor Data Layout") ),
   wGradBF          (p.get<std::string>                   ("Weighted Gradient BF Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   wBF              (p.get<std::string>                   ("Weighted BF Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
   ExResidual       (p.get<std::string>                   ("Residual Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("Node Tensor Data Layout") )
+                    p.get<Teuchos::RCP<PHX::DataLayout>>("Node Tensor Data Layout") )
 {
   this->addDependentField(microStress);
   this->addDependentField(doubleStress);
@@ -40,7 +40,7 @@ MicroResidual(const Teuchos::ParameterList& p) :
   if (enableTransient) {
     // One more field is required for transient capability
     Teuchos::RCP<PHX::DataLayout> tensor_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> epsDotDot_tmp
       (p.get<std::string>("Time Dependent Variable Name"), tensor_dl);
     epsDotDot = epsDotDot_tmp;

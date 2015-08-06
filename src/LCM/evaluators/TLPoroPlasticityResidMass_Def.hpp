@@ -18,39 +18,39 @@ namespace LCM {
   TLPoroPlasticityResidMass<EvalT, Traits>::
   TLPoroPlasticityResidMass(Teuchos::ParameterList& p) :
     wBF   (p.get<std::string>                   ("Weighted BF Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     elementLength (p.get<std::string>         ("Element Length Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Tdot   (p.get<std::string>                   ("QP Time Derivative Variable Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     porosity (p.get<std::string>                   ("Porosity Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     wGradBF  (p.get<std::string>                   ("Weighted Gradient BF Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
     TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
     Source      (p.get<std::string>                   ("Source Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     coordVec  (p.get<std::string>                   ("Coordinate Vector Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-    cubature   (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
-    cellType    (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("Coordinate Data Layout") ),
+    cubature   (p.get<Teuchos::RCP <Intrepid::Cubature<RealType>> >("Cubature")),
+    cellType    (p.get<Teuchos::RCP <shards::CellTopology>> ("Cell Type")),
     weights     (p.get<std::string>                   ("Weights Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     deltaTime (p.get<std::string>("Delta Time Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+         p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout")),
     TResidual  (p.get<std::string>                   ("Residual Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
     haveConvection(false),
     haveAbsorption(p.get<bool>("Have Absorption")),
@@ -83,15 +83,15 @@ namespace LCM {
     if (haveAbsorption) {
       Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>
         (p.get<std::string>("Absorption Name"),
-         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
       this->addDependentField(Absorption);
     }
 
     if (p.isType<std::string>("DefGrad Name")) {
       Teuchos::RCP<PHX::DataLayout> tensor_dl =
-        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
       Teuchos::RCP<PHX::DataLayout> scalar_dl =
-        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
 
       haveMechanics = true;
 
@@ -110,7 +110,7 @@ namespace LCM {
 
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
 
@@ -155,7 +155,7 @@ namespace LCM {
       if (haverhoCp) {
         PHX::MDField<ScalarT,Cell,QuadPoint>
           tmp(p.get<std::string>("Rho Cp Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
         rhoCp = tmp;
         this->addDependentField(rhoCp);
       }

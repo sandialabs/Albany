@@ -64,11 +64,11 @@ public:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   getUpperBounds() const;
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST> >
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
   create_W_op() const;
 
   /// Create preconditioner operator
-  Teuchos::RCP<Thyra::PreconditionerBase<ST> >
+  Teuchos::RCP<Thyra::PreconditionerBase<ST>>
   create_W_prec() const;
 
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
@@ -92,23 +92,23 @@ public:
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   getThyraDomainSpace() const;
   
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   getApps() const {return apps_;}  
 
 protected:
 
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> >
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
   range_space_;
   
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> >
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
   domain_space_;
 
   /// Create operator form of dg/dx for distributed responses
-  Teuchos::RCP<Thyra::LinearOpBase<ST> >
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
   create_DgDx_op_impl(int j) const;
 
   /// Create operator form of dg/dx_dot for distributed responses
-  Teuchos::RCP<Thyra::LinearOpBase<ST> >
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
   create_DgDx_dot_op_impl(int j) const;
 
   /// Create OutArgs
@@ -133,17 +133,17 @@ private:
   createInArgsImpl() const;
 
   //! List of free parameter names
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>> >
   param_names_;
   
   /// RCP to matDB object
-  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> >
+  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase>>
   material_dbs_;
 
-  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>> >
   models_;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
   Teuchos::RCP<Teuchos::Comm<int> const>
@@ -153,11 +153,11 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
   
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_maps_;
 
   //Teuchos array holding main diagonal jacobians (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
   jacs_;
 
   int
@@ -180,13 +180,13 @@ private:
   solver_factory_;
     
   //! Array of Sacado parameter vectors
-  mutable Teuchos::Array<Teuchos::Array<ParamVec> >
+  mutable Teuchos::Array<Teuchos::Array<ParamVec>>
   sacado_param_vecs_;
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> >
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
   solver_inargs_;
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST> >
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   solver_outargs_;
 
 };

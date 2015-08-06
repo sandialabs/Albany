@@ -97,7 +97,7 @@ void PeridigmForce<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::string blockName = workset.EBName;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > wsElNodeID = workset.wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>> wsElNodeID = workset.wsElNodeID;
 
   PeridigmManager& peridigmManager = *PeridigmManager::self();
 

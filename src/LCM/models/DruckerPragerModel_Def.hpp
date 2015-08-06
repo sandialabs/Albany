@@ -88,8 +88,8 @@ DruckerPragerModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void DruckerPragerModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
 {
   // extract dependent MDFields
   PHX::MDField<ScalarT> strain = *dep_fields["Strain"];

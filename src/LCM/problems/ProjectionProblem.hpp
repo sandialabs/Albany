@@ -66,14 +66,14 @@ public:
   virtual
   void
   buildProblem(
-      ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,
+      ArrayRCP<RCP<Albany::MeshSpecsStruct>> mesh_specs,
       StateManager & state_manager);
 
   ///
   /// Build evaluators
   ///
   virtual
-  Teuchos::Array<RCP<const PHX::FieldTag> >
+  Teuchos::Array<RCP<const PHX::FieldTag>>
   buildEvaluators(
       PHX::FieldManager<AlbanyTraits> & field_manager,
       Albany::MeshSpecsStruct const & mesh_specs,
@@ -92,8 +92,8 @@ public:
   ///
   void
   getAllocatedStates(
-      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType> > > > old_state,
-      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType> > > > new_state) const;
+      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >> old_state,
+      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >> new_state) const;
 
   ///
   /// Main problem setup routine. Not directly called,
@@ -158,10 +158,10 @@ protected:
   std::string
   insertion_criterion_;
 
-  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType> > > >
+  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >>
   old_state_;
 
-  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType> > > >
+  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >>
   new_state_;
 };
 
@@ -221,7 +221,7 @@ Albany::ProjectionProblem::constructEvaluators(
   RCP<shards::CellTopology>
   cell_type = rcp(new shards::CellTopology(&mesh_specs.ctd));
 
-  RCP<Intrepid::Basis<RealType, FieldContainer<RealType> > >
+  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>> >
   intrepid_basis = Albany::getIntrepidBasis(mesh_specs.ctd);
 
   int const
@@ -233,22 +233,22 @@ Albany::ProjectionProblem::constructEvaluators(
   Intrepid::DefaultCubatureFactory<RealType>
   cubature_factory;
 
-  RCP<Intrepid::Cubature<RealType> >
+  RCP<Intrepid::Cubature<RealType>>
   cubature = cubature_factory.create(*cell_type, mesh_specs.cubatureDegree);
 
   // Create intrepid basis and cubature for the face averaging. Not the best
   // way of defining the basis functions: requires to know the face type at
   // compile time
-  RCP<Intrepid::Basis<RealType, FieldContainer<RealType> > >
+  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>> >
   face_intrepid_basis;
 
   face_intrepid_basis = rcp(
       new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,
-      FieldContainer<RealType> >());
+      FieldContainer<RealType>>());
 
   // the quadrature is general to the
   // topology of the faces of the volume elements
-  RCP<Intrepid::Cubature<RealType> >
+  RCP<Intrepid::Cubature<RealType>>
   face_cubature = cubature_factory.create(
       cell_type->getCellTopologyData()->side->topology,
       mesh_specs.cubatureDegree);
@@ -412,14 +412,14 @@ Albany::ProjectionProblem::constructEvaluators(
     p->set<std::string>("Time Name", "Time");
     p->set<std::string>("Delta Time Name", " Delta Time");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Workset Scalar Data Layout",
         layout->workset_scalar);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::Time<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -453,7 +453,7 @@ Albany::ProjectionProblem::constructEvaluators(
     //Output
     p->set<std::string>("Strain Name", "Strain");
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::Strain<Evaluator, AlbanyTraits>(*p, layout));
 
     field_manager.template
@@ -483,18 +483,18 @@ Albany::ProjectionProblem::constructEvaluators(
 
     p->set<std::string>("QP Variable Name", "Elastic Modulus");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set<RCP<DataLayout> >("Node Data Layout", layout->node_scalar);
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-    p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
+    p->set<RCP<DataLayout>>("Node Data Layout", layout->node_scalar);
+    p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
+    p->set<RCP<DataLayout>>("QP Vector Data Layout", layout->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
     ParameterList &
     parameter_list = params->sublist("Elastic Modulus");
 
     p->set<ParameterList*>("Parameter List", &parameter_list);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::ElasticModulus<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -510,18 +510,18 @@ Albany::ProjectionProblem::constructEvaluators(
 
     p->set<std::string>("QP Variable Name", "Shear Modulus");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set<RCP<DataLayout> >("Node Data Layout", layout->node_scalar);
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-    p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
+    p->set<RCP<DataLayout>>("Node Data Layout", layout->node_scalar);
+    p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
+    p->set<RCP<DataLayout>>("QP Vector Data Layout", layout->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
     ParameterList &
     parameter_list = params->sublist("Shear Modulus");
 
     p->set<ParameterList*>("Parameter List", &parameter_list);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::ShearModulus<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -537,11 +537,11 @@ Albany::ProjectionProblem::constructEvaluators(
 
     p->set<std::string>("QP Variable Name", "Poissons Ratio");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set<RCP<DataLayout> >("Node Data Layout", layout->node_scalar);
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-    p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
+    p->set<RCP<DataLayout>>("Node Data Layout", layout->node_scalar);
+    p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
+    p->set<RCP<DataLayout>>("QP Vector Data Layout", layout->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
     ParameterList &
     parameter_list = params->sublist("Poissons Ratio");
@@ -551,7 +551,7 @@ Albany::ProjectionProblem::constructEvaluators(
     // Setting this turns on linear dependence of nu on T, nu = nu_ + dnudT*T)
     //p->set<std::string>("QP Projected Field Name", "Projected Field");
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::PoissonsRatio<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -575,7 +575,7 @@ Albany::ProjectionProblem::constructEvaluators(
       // Output
       p->set<std::string>("Stress Name", material_model_name_);
 
-      RCP<PHX::Evaluator<AlbanyTraits> >
+      RCP<PHX::Evaluator<AlbanyTraits>>
       evaluator = rcp(new LCM::Neohookean<Evaluator, AlbanyTraits>(*p, layout));
 
       field_manager.template
@@ -605,16 +605,16 @@ Albany::ProjectionProblem::constructEvaluators(
 
       //Input
       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
 
       p->set<std::string>("DefGrad Name", "Deformation Gradient");
-      p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+      p->set<RCP<DataLayout>>("QP Tensor Data Layout", layout->qp_tensor);
 
       //Output
       p->set<std::string>("Stress Name", material_model_name_);
 
-      RCP<PHX::Evaluator<AlbanyTraits> >
+      RCP<PHX::Evaluator<AlbanyTraits>>
       evaluator = rcp(new LCM::PisdWdF<Evaluator, AlbanyTraits>(*p));
 
       field_manager.template
@@ -644,18 +644,18 @@ Albany::ProjectionProblem::constructEvaluators(
 
       p->set<std::string>("QP Variable Name", "Hardening Modulus");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set<RCP<DataLayout> >("Node Data Layout", layout->node_scalar);
-      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-      p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
+      p->set<RCP<DataLayout>>("Node Data Layout", layout->node_scalar);
+      p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<RCP<DataLayout>>("QP Vector Data Layout", layout->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
       ParameterList &
       parameter_list = params->sublist("Hardening Modulus");
 
       p->set<ParameterList*>("Parameter List", &parameter_list);
 
-      RCP<PHX::Evaluator<AlbanyTraits> >
+      RCP<PHX::Evaluator<AlbanyTraits>>
       evaluator = rcp(new LCM::HardeningModulus<Evaluator, AlbanyTraits>(*p));
 
       field_manager.template
@@ -671,18 +671,18 @@ Albany::ProjectionProblem::constructEvaluators(
 
       p->set<std::string>("QP Variable Name", "Yield Strength");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set<RCP<DataLayout> >("Node Data Layout", layout->node_scalar);
-      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-      p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
+      p->set<RCP<DataLayout>>("Node Data Layout", layout->node_scalar);
+      p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<RCP<DataLayout>>("QP Vector Data Layout", layout->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
       ParameterList &
       parameter_list = params->sublist("Yield Strength");
 
       p->set<ParameterList*>("Parameter List", &parameter_list);
 
-      RCP<PHX::Evaluator<AlbanyTraits> >
+      RCP<PHX::Evaluator<AlbanyTraits>>
       evaluator = rcp(new LCM::YieldStrength<Evaluator, AlbanyTraits>(*p));
 
       field_manager.template registerEvaluator<Evaluator>(evaluator);
@@ -697,18 +697,18 @@ Albany::ProjectionProblem::constructEvaluators(
 
       p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set<RCP<DataLayout> >("Node Data Layout", layout->node_scalar);
-      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-      p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
+      p->set<RCP<DataLayout>>("Node Data Layout", layout->node_scalar);
+      p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<RCP<DataLayout>>("QP Vector Data Layout", layout->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
       ParameterList &
       parameter_list = params->sublist("Saturation Modulus");
 
       p->set<ParameterList*>("Parameter List", &parameter_list);
 
-      RCP<PHX::Evaluator<AlbanyTraits> >
+      RCP<PHX::Evaluator<AlbanyTraits>>
       evaluator = rcp(new LCM::SaturationModulus<Evaluator, AlbanyTraits>(*p));
 
       field_manager.template
@@ -723,18 +723,18 @@ Albany::ProjectionProblem::constructEvaluators(
 
       p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
       p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-      p->set<RCP<DataLayout> >("Node Data Layout", layout->node_scalar);
-      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
-      p->set<RCP<DataLayout> >("QP Vector Data Layout", layout->qp_vector);
+      p->set<RCP<DataLayout>>("Node Data Layout", layout->node_scalar);
+      p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<RCP<DataLayout>>("QP Vector Data Layout", layout->qp_vector);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
       ParameterList &
       parameter_list = params->sublist("Saturation Exponent");
 
       p->set<ParameterList*>("Parameter List", &parameter_list);
 
-      RCP<PHX::Evaluator<AlbanyTraits> >
+      RCP<PHX::Evaluator<AlbanyTraits>>
       evaluator = rcp(new LCM::SaturationExponent<Evaluator, AlbanyTraits>(*p));
 
       field_manager.template
@@ -756,15 +756,15 @@ Albany::ProjectionProblem::constructEvaluators(
 
         // Input
         p->set<std::string>("Fp Name", "Fp");
-        p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+        p->set<RCP<DataLayout>>("QP Tensor Data Layout", layout->qp_tensor);
         p->set<std::string>("BF Name", "BF");
 
-        p->set<RCP<DataLayout> >("Node QP Scalar Data Layout",
+        p->set<RCP<DataLayout>>("Node QP Scalar Data Layout",
             layout->node_qp_scalar);
 
         p->set<std::string>("Gradient BF Name", "Grad BF");
 
-        p->set<RCP<DataLayout> >("Node QP Vector Data Layout",
+        p->set<RCP<DataLayout>>("Node QP Vector Data Layout",
             layout->node_qp_vector);
 
         // Output
@@ -772,7 +772,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
         // Declare what state data will need to be saved
         // (name, layout, init_type)
-        RCP<PHX::Evaluator<AlbanyTraits> >
+        RCP<PHX::Evaluator<AlbanyTraits>>
         evaluator =
             rcp(new LCM::DislocationDensity<Evaluator, AlbanyTraits>(*p));
 
@@ -804,10 +804,10 @@ Albany::ProjectionProblem::constructEvaluators(
 
         // Input
         p->set<std::string>("DefGrad Name", "Deformation Gradient");
-        p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+        p->set<RCP<DataLayout>>("QP Tensor Data Layout", layout->qp_tensor);
 
         p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-        p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+        p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
 
         p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
         p->set<std::string>("Hardening Modulus Name", "Hardening Modulus");
@@ -823,7 +823,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
         // Declare what state data will need to be saved
         //(name, layout, init_type)
-        RCP<PHX::Evaluator<AlbanyTraits> >
+        RCP<PHX::Evaluator<AlbanyTraits>>
         evaluator = rcp(new LCM::J2Stress<Evaluator, AlbanyTraits>(*p));
 
         field_manager.template
@@ -887,16 +887,16 @@ Albany::ProjectionProblem::constructEvaluators(
 
       p->set<std::string>("Source Name", "Source");
       p->set<std::string>("QP Variable Name", "Projected Field");
-      p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+      p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
 
-      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
       ParameterList &
       parameter_list = params->sublist("Source Functions");
 
       p->set<ParameterList*>("Parameter List", &parameter_list);
 
-      RCP<PHX::Evaluator<AlbanyTraits> >
+      RCP<PHX::Evaluator<AlbanyTraits>>
       evaluator = rcp(new PHAL::Source<Evaluator, AlbanyTraits>(*p));
 
       field_manager.template
@@ -929,16 +929,16 @@ Albany::ProjectionProblem::constructEvaluators(
     p->set<bool>("weighted_Volume_Averaged_J Name", J_weighted_volume_average);
 
     p->set<std::string>("Weights Name", "Weights");
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+    p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+    p->set<RCP<DataLayout>>("QP Tensor Data Layout", layout->qp_tensor);
 
     //Outputs: F, J
     p->set<std::string>("DefGrad Name", "Deformation Gradient");
     p->set<std::string>("DetDefGrad Name", "Jacobian");
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+    p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::DefGrad<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -981,33 +981,33 @@ Albany::ProjectionProblem::constructEvaluators(
 
     // Input
     p->set<std::string>("Stress Name", material_model_name_);
-    p->set<RCP<DataLayout> >("QP Tensor Data Layout", layout->qp_tensor);
+    p->set<RCP<DataLayout>>("QP Tensor Data Layout", layout->qp_tensor);
 
     p->set<std::string>("DefGrad Name", "Deformation Gradient");
 
     p->set<std::string>("DetDefGrad Name", "Jacobian");
-    p->set<RCP<DataLayout> >("QP Scalar Data Layout", layout->qp_scalar);
+    p->set<RCP<DataLayout>>("QP Scalar Data Layout", layout->qp_scalar);
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Node QP Vector Data Layout",
         layout->node_qp_vector);
 
     p->set<std::string>("Weighted BF Name", "wBF");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Node QP Scalar Data Layout",
         layout->node_qp_scalar);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
     p->set<bool>("Disable Transient", true);
 
     //Output
     p->set<std::string>("Residual Name", "Displacement Residual");
-    p->set<RCP<DataLayout> >("Node Vector Data Layout", layout->node_vector);
+    p->set<RCP<DataLayout>>("Node Vector Data Layout", layout->node_vector);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::TLElasResid<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -1024,13 +1024,13 @@ Albany::ProjectionProblem::constructEvaluators(
     // Input
     p->set<std::string>("Weighted BF Name", "wBF");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Node QP Scalar Data Layout",
         projection_layout->node_qp_scalar);
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Node QP Vector Data Layout",
         projection_layout->node_qp_vector);
 
@@ -1039,24 +1039,24 @@ Albany::ProjectionProblem::constructEvaluators(
 
     p->set<std::string>("Projected Field Name", "Projected Field");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "QP Vector Data Layout",
         projection_layout->qp_vector);
 
     p->set<std::string>("Projection Field Name", projected_field_name_);
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "QP Tensor Data Layout",
         projection_layout->qp_tensor);
 
     // Output
     p->set<std::string>("Residual Name", "Projected Field Residual");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Node Vector Data Layout",
         projection_layout->node_vector);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::L2ProjectionResidual<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -1088,17 +1088,17 @@ Albany::ProjectionProblem::constructEvaluators(
     // Nodal coordinates in the reference configuration
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Vertex Vector Data Layout",
         layout->vertices_vector);
 
     p->set<std::string>("Face Average Name", "Face Average");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Face Vector Data Layout",
         projection_layout->face_vector);
 
-    p->set<RCP<shards::CellTopology> >("Cell Type", cell_type);
+    p->set<RCP<shards::CellTopology>>("Cell Type", cell_type);
 
     RealType const
     yield_strength = params->sublist("Yield Strength").get("Value", 0.0);
@@ -1117,18 +1117,18 @@ Albany::ProjectionProblem::constructEvaluators(
     // Output
     p->set<std::string>("Criteria Met Name", "Criteria Met");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Face Scalar Data Layout",
         projection_layout->face_scalar);
 
     // This is in here to trick the code to run the evaluator
     // does absolutely nothing
     p->set<std::string>("Temp2 Name", "Temp2");
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Cell Scalar Data Layout",
         projection_layout->cell_scalar);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::FaceFractureCriteria<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template
@@ -1160,32 +1160,32 @@ Albany::ProjectionProblem::constructEvaluators(
     // Nodal coordinates in the reference configuration
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Vertex Vector Data Layout",
         layout->vertices_vector);
 
     // The solution of the projection at the nodes
     p->set<std::string>("Projected Field Name", "Projected Field");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Node Vector Data Layout",
         projection_layout->node_vector);
 
     // the cubature and basis function information
-    p->set<RCP<Intrepid::Cubature<RealType> > >(
+    p->set<RCP<Intrepid::Cubature<RealType>> >(
         "Face Cubature",
         face_cubature);
 
-    p->set<RCP<Intrepid::Basis<RealType, FieldContainer<RealType> > > >(
+    p->set<RCP<Intrepid::Basis<RealType, FieldContainer<RealType>> >>(
         "Face Intrepid Basis",
         face_intrepid_basis);
 
-    p->set<RCP<shards::CellTopology> >("Cell Type", cell_type);
+    p->set<RCP<shards::CellTopology>>("Cell Type", cell_type);
 
     // Output
     p->set<std::string>("Face Average Name", "Face Average");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Face Vector Data Layout",
         projection_layout->face_vector);
 
@@ -1193,11 +1193,11 @@ Albany::ProjectionProblem::constructEvaluators(
     // does absolutely nothing
     p->set<std::string>("Temp Name", "Temp");
 
-    p->set<RCP<DataLayout> >(
+    p->set<RCP<DataLayout>>(
         "Cell Scalar Data Layout",
         projection_layout->cell_scalar);
 
-    RCP<PHX::Evaluator<AlbanyTraits> >
+    RCP<PHX::Evaluator<AlbanyTraits>>
     evaluator = rcp(new LCM::FaceAverage<Evaluator, AlbanyTraits>(*p));
 
     field_manager.template

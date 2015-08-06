@@ -81,7 +81,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 // NOTE default to coordinate axes and also construct 3rd direction if only 2 given
   orientation_.set_dimension(num_dims_);
   for (int i = 0; i < num_dims_; ++i) {
-    std::vector<RealType> b_temp = e_list.get<Teuchos::Array<RealType> >(
+    std::vector<RealType> b_temp = e_list.get<Teuchos::Array<RealType>>(
         Albany::strint("Basis Vector", i + 1)).toVector();
     RealType norm = 0.;
     for (int j = 0; j < num_dims_; ++j) {
@@ -108,14 +108,14 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
         Albany::strint("Slip System", num_ss + 1));
 
     // Obtain and normalize slip directions. Miller indices need to be normalized.
-    std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >(
+    std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType>>(
         "Slip Direction").toVector();
     Intrepid::Vector<RealType> s_temp_normalized(num_dims_, &s_temp[0]);
     s_temp_normalized = Intrepid::unit(s_temp_normalized);
     slip_systems_[num_ss].s_ = orientation_ * s_temp_normalized;
 
     // Obtain and normal slip normals. Miller indices need to be normalized.
-    std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >(
+    std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType>>(
         "Slip Normal").toVector();
     Intrepid::Vector<RealType> n_temp_normalized(num_dims_, &n_temp[0]);
     n_temp_normalized = Intrepid::unit(n_temp_normalized);
@@ -323,8 +323,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
 {
 
   bool print_debug = false;
@@ -365,7 +365,7 @@ computeState(typename Traits::EvalData workset,
 
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
   // extract slip on each slip system
-  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips;
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT>> > slips;
   std::vector<Albany::MDArray *> previous_slips;
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string g = Albany::strint("gamma", num_ss + 1, '_');
@@ -375,7 +375,7 @@ computeState(typename Traits::EvalData workset,
         &((*workset.stateArrayPtr)[gamma_string + "_old"]));
   }
   // extract slip rate on each slip system
-  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips_dot;
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT>> > slips_dot;
   std::vector<Albany::MDArray *> previous_slips_dot;
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string g_dot = Albany::strint("gamma_dot", num_ss + 1, '_');
@@ -385,7 +385,7 @@ computeState(typename Traits::EvalData workset,
         &((*workset.stateArrayPtr)[gamma_dot_string + "_old"]));
   }
   // extract hardening on each slip system
-  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > hards;
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT>> > hards;
   std::vector<Albany::MDArray *> previous_hards;
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string t_h = Albany::strint("tau_hard", num_ss + 1, '_');
@@ -395,7 +395,7 @@ computeState(typename Traits::EvalData workset,
         &((*workset.stateArrayPtr)[tau_hard_string + "_old"]));
   }
   // store shear on each slip system for output
-  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > shears;
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT>> > shears;
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string t = Albany::strint("tau", num_ss + 1, '_');
     std::string tau_string = (*field_name_map_)[t];

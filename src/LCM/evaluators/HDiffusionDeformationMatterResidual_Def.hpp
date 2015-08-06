@@ -20,43 +20,43 @@ namespace LCM {
   HDiffusionDeformationMatterResidual<EvalT, Traits>::
   HDiffusionDeformationMatterResidual(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>           ("Weighted BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
     wGradBF     (p.get<std::string>           ("Weighted Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
     GradBF      (p.get<std::string>           ("Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
     Dstar (p.get<std::string>                 ("Effective Diffusivity Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     DL   (p.get<std::string>                  ("Diffusion Coefficient Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Clattice (p.get<std::string>              ("QP Variable Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     eqps (p.get<std::string>                  ("eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     eqpsFactor (p.get<std::string>            ("Strain Rate Factor Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Ctrapped (p.get<std::string>              ("Trapped Concentration Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Ntrapped (p.get<std::string>              ("Trapped Solvent Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     CLGrad       (p.get<std::string>          ("Gradient QP Variable Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+                  p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
     stressGrad       (p.get<std::string>      ("Gradient Hydrostatic Stress Name"),
-                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+                      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
     DefGrad      (p.get<std::string>          ("Deformation Gradient Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                  p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     Pstress      (p.get<std::string>          ("Stress Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                  p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     weights       (p.get<std::string>         ("Weights Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     tauFactor  (p.get<std::string>            ("Tau Contribution Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     elementLength (p.get<std::string>         ("Element Length Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     deltaTime (p.get<std::string>             ("Delta Time Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>           ("Residual Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout") ),
      stab_param_(p.get<RealType>("Stabilization Parameter")),
      t_decay_constant_(p.get<RealType>("Tritium Decay Constant"))
   {
@@ -86,14 +86,14 @@ namespace LCM {
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
     numQPs  = dims[1];
     numDims = dims[2];
 
     Teuchos::RCP<PHX::DataLayout> node_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout");
     std::vector<PHX::DataLayout::size_type> ndims;
     node_dl->dimensions(ndims);
     worksetSize = dims[0];

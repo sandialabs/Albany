@@ -77,12 +77,12 @@ protected:
   int num_vertices_;
     
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
-  std::vector<PHX::MDField<ScalarT> > ip_fields_;
+  std::vector<PHX::MDField<ScalarT>> ip_fields_;
 
   bool output_to_exodus_;
   bool output_node_data_;
 
-  Teuchos::RCP<PHX::Tag<ScalarT> > field_tag_;
+  Teuchos::RCP<PHX::Tag<ScalarT>> field_tag_;
   Albany::StateManager* p_state_mgr_;
 
 };

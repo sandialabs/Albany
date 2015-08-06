@@ -16,15 +16,15 @@ template<typename EvalT, typename Traits>
 PeridigmPartialStressBase<EvalT, Traits>::
 PeridigmPartialStressBase(const Teuchos::ParameterList& p) :
   J           (p.get<std::string>                   ("DetDefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   defgrad     (p.get<std::string>                   ("DefGrad Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   stress      (p.get<std::string>                   ("Stress Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
@@ -70,7 +70,7 @@ evaluateFields(typename Traits::EvalData workset)
   PeridigmManager& peridigmManager = *PeridigmManager::self();
 
   // Container for the partial stress values at each quadrature point in an element
-  std::vector< std::vector<RealType> > partialStressValues;
+  std::vector< std::vector<RealType>> partialStressValues;
   partialStressValues.resize(this->numQPs);
   for(int i=0 ; i<this->numQPs ; ++i)
     partialStressValues[i].resize(9);

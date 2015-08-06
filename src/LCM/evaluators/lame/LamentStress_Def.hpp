@@ -18,13 +18,13 @@ template<typename EvalT, typename Traits>
 LamentStress<EvalT, Traits>::
 LamentStress(Teuchos::ParameterList& p) :
   defGradField(p.get<std::string>("DefGrad Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  lamentMaterialModel(Teuchos::RCP<lament::Material<ScalarT> >())
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
+  lamentMaterialModel(Teuchos::RCP<lament::Material<ScalarT>>())
 {
   // Pull out numQPs and numDims from a Layout
-  tensor_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+  tensor_dl = p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
@@ -57,7 +57,7 @@ LamentStress(Teuchos::ParameterList& p) :
 
     // If so, overwrite material model and data from database file
     if (dataFromDatabase) {
-       Teuchos::RCP<QCAD::MaterialDatabase> materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+       Teuchos::RCP<QCAD::MaterialDatabase> materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase>>("MaterialDB");
 
        lamentMaterialModelName = materialDB->getElementBlockParam<std::string>(ebName, "Lame Material Model");
        lamentMaterialParameters = materialDB->getElementBlockSublist(ebName, "Lame Material Parameters");
@@ -74,7 +74,7 @@ LamentStress(Teuchos::ParameterList& p) :
   lamentMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lamentMaterialModelName, lamentMaterialParameters);
 
   // Declare the state variables as evaluated fields (type is always double)
-  Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
   for(unsigned int i=0 ; i<lamentMaterialModelStateVariableNames.size() ; ++i){
     PHX::MDField<ScalarT,Cell,QuadPoint> lamentMaterialModelStateVariableField(lamentMaterialModelStateVariableNames[i], dataLayout);
     this->addEvaluatedField(lamentMaterialModelStateVariableField);
@@ -97,7 +97,7 @@ template<typename EvalT, typename Traits>
 void LamentStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<lament::matParams<ScalarT> > matp = Teuchos::rcp(new lament::matParams<ScalarT>());
+  Teuchos::RCP<lament::matParams<ScalarT>> matp = Teuchos::rcp(new lament::matParams<ScalarT>());
 
   // Get the old state data
   Albany::MDArray oldDefGrad = (*workset.stateArrayPtr)[defGradName];

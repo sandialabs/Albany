@@ -17,8 +17,8 @@ namespace LCM {
   SurfaceScalarGradientOperator(const Teuchos::ParameterList& p,
                                 const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>> >("Cubature")), 
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >>("Intrepid Basis")),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     val_node   (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),

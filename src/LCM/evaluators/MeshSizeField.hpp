@@ -45,7 +45,7 @@ namespace LCM {
 
   private:
 
-    Teuchos::RCP< PHX::Tag<typename EvalT::ScalarT> > field_tag_; 
+    Teuchos::RCP< PHX::Tag<typename EvalT::ScalarT>> field_tag_; 
 
   };
 
@@ -140,8 +140,8 @@ namespace LCM {
     Intrepid::FieldContainer<ScalarT> dxdxi;
     Intrepid::FieldContainer<ScalarT> dEDdxi;
 
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
 
     ///
     /// Number of integration points
@@ -252,8 +252,8 @@ namespace LCM {
     Intrepid::FieldContainer<RealType> refWeights;
     Intrepid::FieldContainer<ScalarT> dxdxi;
 
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
 
     ///
     /// Number of integration points

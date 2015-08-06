@@ -36,7 +36,7 @@ public:
   ConstitutiveDriverProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<ParamLib>& param_lib,
       const int num_dims,
-      Teuchos::RCP<const Teuchos::Comm<int> >& commT);
+      Teuchos::RCP<const Teuchos::Comm<int>>& commT);
 
   ///
   /// Destructor
@@ -45,7 +45,7 @@ public:
   ~ConstitutiveDriverProblem();
 
   ///
-  Teuchos::RCP<std::map<std::string, std::string> >
+  Teuchos::RCP<std::map<std::string, std::string>>
   constructFieldNameMap(bool surface_flag);
 
   ///
@@ -63,14 +63,14 @@ public:
   ///
   virtual
   void
-  buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+  buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
       meshSpecs,
       StateManager& stateMgr);
 
   ///
   /// Build evaluators
   ///
-  virtual Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+  virtual Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
   buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
       Albany::StateManager& stateMgr,
@@ -87,9 +87,9 @@ public:
   /// Retrieve the state data
   ///
   void
-  getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > >
+  getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> >
       old_state,
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > >
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> >
       new_state) const;
 
   //----------------------------------------------------------------------------
@@ -175,12 +175,12 @@ protected:
   ///
   /// old state data
   ///
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > old_state_;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> > old_state_;
 
   ///
   /// new state data
   ///
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > new_state_;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> > new_state_;
 
 };
 //------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Define Field Names
   // generate the field name map to deal with outputing surface element info
   LCM::FieldNameMap field_name_map(false);
-  Teuchos::RCP<std::map<std::string, std::string> > fnm =
+  Teuchos::RCP<std::map<std::string, std::string>> fnm =
     field_name_map.getMap();
   std::string cauchy = (*fnm)["Cauchy_Stress"];
   std::string firstPK = (*fnm)["FirstPK"];
@@ -277,7 +277,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string J = (*fnm)["J"];
   
   // Temporary variable used numerous times below
-  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits>> ev;
 
   // Register the solution and residual fields
   Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -288,7 +288,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   { // Gather Solution
     Teuchos::RCP<Teuchos::ParameterList> p = 
       Teuchos::rcp(new Teuchos::ParameterList("Gather Solution"));
-    p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
+    p->set< Teuchos::ArrayRCP<std::string>>("Solution Names", dof_names);
 
     p->set<int>("Tensor Rank", 2);
 
@@ -304,10 +304,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         new Teuchos::ParameterList("Time"));
     p->set<std::string>("Time Name", "Time");
     p->set<std::string>("Delta Time Name", "Delta Time");
-    p->set<Teuchos::RCP<PHX::DataLayout> >(
+    p->set<Teuchos::RCP<PHX::DataLayout>>(
         "Workset Scalar Data Layout",
         dl_->workset_scalar);
-    p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
     ev = Teuchos::rcp(new LCM::Time<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -352,7 +352,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // pass through material properties
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-    Teuchos::RCP<LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits> >
+    Teuchos::RCP<LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>>
     cmpEv = 
       Teuchos::rcp(new LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(cmpEv);
@@ -373,12 +373,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       param_list.set<bool>("Have Temperature", true);
     }
 
-    param_list.set<Teuchos::RCP<std::map<std::string, std::string> > >(
+    param_list.set<Teuchos::RCP<std::map<std::string, std::string>> >(
         "Name Map",
         fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-    Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits> >
+    Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>>
     cmiEv =
         Teuchos::rcp(new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(cmiEv);
@@ -407,7 +407,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("F Name", defgrad);
     p->set<std::string>("Prescribed F Name", "Prescribed F");
     p->set<std::string>("Stress Name", cauchy); 
-    Teuchos::RCP<LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits> >
+    Teuchos::RCP<LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>>
     cmdEv =
         Teuchos::rcp(new LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(cmdEv);
@@ -417,7 +417,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   { // Scatter Residual
     Teuchos::RCP<Teuchos::ParameterList> p = 
       Teuchos::rcp(new Teuchos::ParameterList("Scatter Residual"));
-    p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names);
+    p->set< Teuchos::ArrayRCP<std::string>>("Residual Names", resid_names);
     p->set<int>("Tensor Rank", 2);
     p->set<int>("Offset of First DOF", 0);
     p->set<bool>("Disable Transient", true);

@@ -106,17 +106,17 @@ namespace LCM {
     ///
     /// Dependent MDFields
     ///
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields_map_;
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields_map_;
 
     ///
     /// Evaluated MDFields
     ///
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields_map_;
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields_map_;
 
     ///
     /// Constitutive Model
     ///
-    Teuchos::RCP<LCM::ConstitutiveModel<EvalT,Traits> > model_;
+    Teuchos::RCP<LCM::ConstitutiveModel<EvalT,Traits>> model_;
 
     ///
     /// State Variable Registration Struct

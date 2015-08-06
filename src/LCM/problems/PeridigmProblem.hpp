@@ -30,7 +30,7 @@ namespace Albany {
     PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                     const Teuchos::RCP<ParamLib>& paramLib,
                     const int numEqm,
-                    Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
+                    Teuchos::RCP<const Teuchos::Comm<int>>& commT); 
 
     //! Destructor
     virtual ~PeridigmProblem();
@@ -39,10 +39,10 @@ namespace Albany {
     virtual int spatialDimension() const { return numDim; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs, StateManager& stateMgr);
+    virtual void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs, StateManager& stateMgr);
 
     // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
@@ -152,7 +152,7 @@ Albany::PeridigmProblem::constructEvaluators(
    dof_name_dotdot[0] = "Displacement_dotdot";
    residual_name[0] = "Residual";
 
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+   Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
    bool supportsTransient = true;
 
@@ -229,8 +229,8 @@ Albany::PeridigmProblem::constructEvaluators(
        RCP<ParameterList> p = rcp(new ParameterList("Time"));
        p->set<std::string>("Time Name", "Time");
        p->set<std::string>("Delta Time Name", "Delta Time");
-       p->set<RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
-       // p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+       // p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        p->set<bool>("Disable Transient", true);
        ev = rcp(new LCM::Time<EvalT, AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -312,7 +312,7 @@ Albany::PeridigmProblem::constructEvaluators(
        peridigmParameterList = *peridigmParams;
 
        // Required data layouts
-       p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);    
+       p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);    
 
        // Input
        p->set<string>("Reference Coordinates Name", "Coord Vec");
@@ -350,13 +350,13 @@ Albany::PeridigmProblem::constructEvaluators(
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for peridynamic partial stress." << std::endl;
 
      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
      const int numNodes = intrepidBasis->getCardinality();
      const int worksetSize = meshSpecs.worksetSize;
 
      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-     RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+     RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
      const int numDim = cubature->getDimension();
      const int numQPts = cubature->getNumPoints();
@@ -438,15 +438,15 @@ Albany::PeridigmProblem::constructEvaluators(
        (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
      // Temporary variable used numerous times below
-     Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+     Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
      { // Time
        RCP<ParameterList> p = rcp(new ParameterList);
 
        p->set<std::string>("Time Name", "Time");
        p->set<std::string>("Delta Time Name", "Delta Time");
-       p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        p->set<bool>("Disable Transient", true);
 
        ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
@@ -468,12 +468,12 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
        p->set<std::string>("Weights Name","Weights");
        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        //Outputs: F, J
        p->set<std::string>("DefGrad Name", "Deformation Gradient");
        p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
 
        ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -487,8 +487,8 @@ Albany::PeridigmProblem::constructEvaluators(
        peridigmParameterList = *peridigmParams;
 
        // Required data layouts
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        // Input
        p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
@@ -506,23 +506,23 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Input
        p->set<std::string>("Stress Name", "Stress");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        // \todo Is the required?
        p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dataLayout->qp_tensor also
 
        p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-       p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dataLayout->node_qp_vector);
+       p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dataLayout->node_qp_vector);
 
        // extra input for time dependent term
        p->set<std::string>("Weighted BF Name", "wBF");
-       p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
+       p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
        p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
        //Output
        p->set<std::string>("Residual Name", "Displacement Residual");
-       p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);
+       p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
        ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -545,13 +545,13 @@ Albany::PeridigmProblem::constructEvaluators(
    else if(materialModelName == "Classic Vector Poisson"){
       *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical Poisson Eq, material model = " << materialModelName << std::endl;
       RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-      RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+      RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
       const int numNodes = intrepidBasis->getCardinality();
       const int worksetSize = meshSpecs.worksetSize;
 
       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-      RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+      RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
       const int numDim = cubature->getDimension();
       const int numQPts = cubature->getNumPoints();
@@ -622,15 +622,15 @@ Albany::PeridigmProblem::constructEvaluators(
         (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
       // Temporary variable used numerous times below
-      Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+      Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
       { // Time
         RCP<ParameterList> p = rcp(new ParameterList);
 
         p->set<std::string>("Time Name", "Time");
         p->set<std::string>("Delta Time Name", "Delta Time");
-        p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
-        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
         p->set<bool>("Disable Transient", true);
 
         ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
@@ -645,15 +645,15 @@ Albany::PeridigmProblem::constructEvaluators(
 
         //Input
         p->set<std::string>("Stress Name", "Displacement Gradient"); //Passing Displacemet instead of Stress to get Laplacian
-        p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+        p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
         p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-        p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dataLayout->node_qp_vector);
+        p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dataLayout->node_qp_vector);
         p->set<bool>("Disable Transient", true);
 
         //Output
         p->set<std::string>("Residual Name", "Displacement Residual");
-        p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);
+        p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
         ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
@@ -676,13 +676,13 @@ Albany::PeridigmProblem::constructEvaluators(
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical elasticity, material model = " << materialModelName << std::endl;
 
      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
      const int numNodes = intrepidBasis->getCardinality();
      const int worksetSize = meshSpecs.worksetSize;
 
      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-     RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+     RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
      const int numDim = cubature->getDimension();
      const int numQPts = cubature->getNumPoints();
@@ -764,15 +764,15 @@ Albany::PeridigmProblem::constructEvaluators(
        (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
      // Temporary variable used numerous times below
-     Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+     Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
      { // Time
        RCP<ParameterList> p = rcp(new ParameterList);
 
        p->set<std::string>("Time Name", "Time");
        p->set<std::string>("Delta Time Name", "Delta Time");
-       p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        p->set<bool>("Disable Transient", true);
 
        ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
@@ -787,11 +787,11 @@ Albany::PeridigmProblem::constructEvaluators(
 
        p->set<std::string>("QP Variable Name", "Elastic Modulus");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dataLayout->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dataLayout->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Elastic Modulus");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -804,11 +804,11 @@ Albany::PeridigmProblem::constructEvaluators(
 
        p->set<std::string>("QP Variable Name", "Poissons Ratio");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dataLayout->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dataLayout->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Poissons Ratio");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -841,12 +841,12 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
        p->set<std::string>("Weights Name","Weights");
        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        //Outputs: F, J
        p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dataLayout->qp_tensor also
        p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
 
        ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -857,10 +857,10 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Input
        p->set<std::string>("Strain Name", "Strain");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
        
        p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dataLayout->qp_scalar also
 
@@ -879,23 +879,23 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Input
        p->set<std::string>("Stress Name", "Stress");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        // \todo Is the required?
        p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dataLayout->qp_tensor also
 
        p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-       p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dataLayout->node_qp_vector);
+       p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dataLayout->node_qp_vector);
 
        // extra input for time dependent term
        p->set<std::string>("Weighted BF Name", "wBF");
-       p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
+       p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
        p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
        //Output
        p->set<std::string>("Residual Name", "Displacement Residual");
-       p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);
+       p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
        ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);

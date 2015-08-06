@@ -23,10 +23,10 @@ SurfaceBasis(
     reference_coords_(
         p.get<std::string>("Reference Coordinates Name"),
         dl->vertices_vector),
-    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType>> >("Cubature")),
     intrepid_basis_(
         p.get<Teuchos::RCP<Intrepid::Basis<RealType,
-        Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
+        Intrepid::FieldContainer<RealType>> >>("Intrepid Basis")),
     ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     ref_dual_basis_(
@@ -203,7 +203,7 @@ computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid::Vector<ST> >
+    std::vector<Intrepid::Vector<ST>>
     midplane_nodes(num_surf_nodes_);
 
     for (int node(0); node < num_surf_nodes_; ++node) {

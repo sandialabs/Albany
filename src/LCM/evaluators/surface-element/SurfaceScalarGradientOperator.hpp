@@ -51,10 +51,10 @@ private:
   RealType thickness;
 
   /// Numerical integration rule
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
 
   /// for the parallel gradient term
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
   // nodal value used to construct in-plan gradient
   PHX::MDField<ScalarT,Cell,Node> val_node;
 

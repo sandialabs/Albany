@@ -69,7 +69,7 @@ private:
 
 
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;

@@ -32,10 +32,10 @@ AnisotropicDamageModel(Teuchos::ParameterList* p,
         max_damage_m_(p->get<RealType>("Matrix maximum damage", 1.0)),
         saturation_m_(p->get<RealType>("Matrix damage saturation", 0.0)),
         direction_f1_(
-            p->get<Teuchos::Array<RealType> >("Fiber 1 Orientation Vector")
+            p->get<Teuchos::Array<RealType>>("Fiber 1 Orientation Vector")
                 .toVector()),
         direction_f2_(
-            p->get<Teuchos::Array<RealType> >("Fiber 2 Orientation Vector")
+            p->get<Teuchos::Array<RealType>>("Fiber 2 Orientation Vector")
                 .toVector())
 {
   // define the dependent fields
@@ -141,8 +141,8 @@ AnisotropicDamageModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void AnisotropicDamageModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
 {
   //bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;

@@ -17,20 +17,20 @@ template<typename EvalT, typename Traits>
 EquivalentInclusionConductivity<EvalT, Traits>::
 EquivalentInclusionConductivity(Teuchos::ParameterList& p) :
   effectiveK(p.get<std::string>("QP Variable Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* elmd_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 
   Teuchos::RCP<ParamLib> paramLib = 
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   std::string type = elmd_list->get("Effective Thermal Conductivity Type", "Constant");
   if (type == "Constant") {
@@ -67,7 +67,7 @@ EquivalentInclusionConductivity(Teuchos::ParameterList& p) :
 
   if ( p.isType<std::string>("Porosity Name") ) {
       Teuchos::RCP<PHX::DataLayout> scalar_dl =
-        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
       PHX::MDField<ScalarT,Cell,QuadPoint>
         tporo(p.get<std::string>("Porosity Name"), scalar_dl);
       porosity = tporo;
@@ -80,7 +80,7 @@ EquivalentInclusionConductivity(Teuchos::ParameterList& p) :
 
   if ( p.isType<std::string>("Jacobian Name") ) {
       Teuchos::RCP<PHX::DataLayout> scalar_dl =
-        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
       PHX::MDField<ScalarT,Cell,QuadPoint>
         detf(p.get<std::string>("Jacobian Name"), scalar_dl);
       J = detf;

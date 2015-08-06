@@ -220,7 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
           ->getNodalDataVector();
   const Teuchos::RCP<Tpetra_MultiVector>& data =
     node_data->getLocalNodeVector();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > wsElNodeID = workset.wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_Map> local_node_map = node_data->getLocalMap();
 
   int num_nodes = this->num_nodes_;
@@ -308,7 +308,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   const Teuchos::RCP<Tpetra_MultiVector>& data =
     node_data->getOverlapNodeVector();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > wsElNodeID = workset.wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_Map> overlap_node_map = node_data ->getOverlapMap();
 
   const int num_nodes = overlap_node_map->getNodeNumElements();

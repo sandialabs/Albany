@@ -17,17 +17,17 @@ template<typename EvalT, typename Traits>
 FaceAverage<EvalT, Traits>::
 FaceAverage(const Teuchos::ParameterList& p) :
   coordinates(p.get<std::string>("Coordinate Vector Name"),
-    p.get<Teuchos::RCP<PHX::DataLayout> >("Vertex Vector Data Layout")),
+    p.get<Teuchos::RCP<PHX::DataLayout>>("Vertex Vector Data Layout")),
   projected(p.get<std::string>("Projected Field Name"),
-    p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout")),
-  cubature(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Face Cubature")),
+    p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout")),
+  cubature(p.get<Teuchos::RCP<Intrepid::Cubature<RealType>> >("Face Cubature")),
   intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis
-    <RealType, Intrepid::FieldContainer<RealType> > > >("Face Intrepid Basis")),
-  cellType(p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")),
+    <RealType, Intrepid::FieldContainer<RealType>> >>("Face Intrepid Basis")),
+  cellType(p.get<Teuchos::RCP<shards::CellTopology>>("Cell Type")),
   faceAve(p.get<std::string>("Face Average Name"),
-    p.get<Teuchos::RCP<PHX::DataLayout> >("Face Vector Data Layout")),
+    p.get<Teuchos::RCP<PHX::DataLayout>>("Face Vector Data Layout")),
   temp(p.get<std::string>("Temp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Cell Scalar Data Layout"))
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Cell Scalar Data Layout"))
 {
     this->addDependentField(coordinates);
     this->addDependentField(projected);
@@ -37,7 +37,7 @@ FaceAverage(const Teuchos::ParameterList& p) :
 
     // Get Dimensions
     Teuchos::RCP<PHX::DataLayout> vec_dl =
-      p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vec_dl->dimensions(dims);
 
@@ -50,7 +50,7 @@ FaceAverage(const Teuchos::ParameterList& p) :
      * get the spatial dimension from the coordinate vector.
      */
     Teuchos::RCP<PHX::DataLayout> vertex_dl =
-      p.get<Teuchos::RCP<PHX::DataLayout> >("Vertex Vector Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout>>("Vertex Vector Data Layout");
     vertex_dl->dimensions(dims);
     numDims = dims[2];
 

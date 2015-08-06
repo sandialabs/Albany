@@ -46,7 +46,7 @@ private:
   //! Length scale parameter for localization zone
   ScalarT thickness;
   //! Numerical integration rule
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
   //! Vector to take the jump of
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;

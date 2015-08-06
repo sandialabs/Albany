@@ -64,7 +64,7 @@ FirstPK(Teuchos::ParameterList& p,
   num_dims_ = dims[2];
 
   Teuchos::RCP<ParamLib> paramLib =
-      p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
 
 }
 

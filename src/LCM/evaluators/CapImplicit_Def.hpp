@@ -45,7 +45,7 @@ namespace LCM
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
-        Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+        Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     tensor_dl->dimensions(dims);
     numQPs = dims[1];

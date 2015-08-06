@@ -16,16 +16,16 @@ template<typename EvalT, typename Traits>
 PoissonsRatio<EvalT, Traits>::
 PoissonsRatio(Teuchos::ParameterList& p) :
   poissonsRatio(p.get<std::string>("QP Variable Name"),
-      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* pr_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
   
   Teuchos::RCP<ParamLib> paramLib = 
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
@@ -68,7 +68,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
 
   if ( p.isType<std::string>("QP Temperature Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
     PHX::MDField<ScalarT,Cell,QuadPoint>
       tmp(p.get<std::string>("QP Temperature Name"), scalar_dl);
     Temperature = tmp;

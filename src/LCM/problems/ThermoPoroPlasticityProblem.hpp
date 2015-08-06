@@ -41,11 +41,11 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
       StateManager& stateMgr);
 
     // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
@@ -57,8 +57,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-	 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> oldState_,
+	 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> newState_
 	 ) const;
 
   private:
@@ -94,8 +94,8 @@ namespace Albany {
 
     std::string matModel;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> newState;
   };
 }
 
@@ -169,14 +169,14 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
@@ -273,15 +273,15 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
    // Temporary variable used numerous times below
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+   Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
    { // Time
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Time Name", "Time");
      p->set<std::string>("Delta Time Name", " Delta Time");
-     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dl->workset_scalar);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      p->set<bool>("Disable Transient", true);
 
      ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
@@ -295,10 +295,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Stabilization Parameter");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Stabilization Parameter");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -311,10 +311,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Reference Temperature");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Reference Temperature");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
      double refT = paramList.get("Value", 0.0);
@@ -328,10 +328,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Skeleton Thermal Expansion");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Skeleton Thermal Expansion");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
      double skAlpha = paramList.get("Value", 0.0);
@@ -348,10 +348,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Pore-Fluid Thermal Expansion");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Pore-Fluid Thermal Expansion");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
      double fAlpha = paramList.get("Value", 0.0);
@@ -368,10 +368,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Skeleton Density");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Skeleton Density");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -383,10 +383,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Pore-Fluid Density");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Pore-Fluid Density");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -398,10 +398,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Skeleton Specific Heat");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Skeleton Specific Heat");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -413,10 +413,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList);
 
      p->set<std::string>("Material Property Name", "Pore-Fluid Specific Heat");
-     p->set< RCP<DataLayout> >("Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("Data Layout", dl->qp_scalar);
      p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Vector Data Layout", dl->qp_vector);
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set< RCP<DataLayout>>("Coordinate Vector Data Layout", dl->qp_vector);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Pore-Fluid Specific Heat");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -429,11 +429,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      //Input
      p->set<std::string>("Pore-Fluid Specific Heat Name", "Pore-Fluid Specific Heat");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
      p->set<std::string>("Skeleton Specific Heat Name", "Skeleton Specific Heat");
 
      p->set<std::string>("Pore-Fluid Density Name", "Pore-Fluid Density");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
      p->set<std::string>("Skeleton Density Name", "Skeleton Density");
      p->set<std::string>("DetDefGrad Name", "Jacobian");
 
@@ -454,7 +454,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      //Input
      p->set<std::string>("Pore-Fluid Thermal Expansion Name", "Pore-Fluid Thermal Expansion");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
      p->set<std::string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
 
      p->set<std::string>("Porosity Name", "Porosity");
@@ -497,7 +497,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Porosity Name", "Porosity");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Porosity");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
      double initPorosity = paramList.get("Value", 0.0);
@@ -527,11 +527,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Biot Coefficient Name", "Biot Coefficient");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Biot Coefficient");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
      double initBiotCoeff = paramList.get("Value", 1.0);
@@ -551,11 +551,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Biot Modulus Name", "Biot Modulus");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Biot Modulus");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -575,11 +575,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("QP Variable Name", "Thermal Conductivity");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Thermal Conductivity");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -592,17 +592,17 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Kozeny-Carman Permeability Name", "Kozeny-Carman Permeability");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Kozeny-Carman Permeability");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      // Setting this turns on Kozeny-Carman relation
      p->set<std::string>("Porosity Name", "Porosity");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      ev = rcp(new LCM::KCPermeability<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -618,11 +618,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("QP Variable Name", "Bulk Modulus");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Bulk Modulus");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -636,16 +636,16 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("QP Variable Name", "Elastic Modulus");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
      p->set<std::string>("Porosity Name", "Porosity"); // porosity is defined at Cubature points
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      ev = rcp(new LCM::ElasticModulus<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -656,11 +656,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("QP Variable Name", "Shear Modulus");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Shear Modulus");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -673,11 +673,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("QP Variable Name", "Poissons Ratio");
      p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -715,11 +715,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      //Input
      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
      p->set<std::string>("DefGrad Name", "Deformation Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
      //Output
      p->set<std::string>("Stress Name", matModel); //dl->qp_tensor also
@@ -737,11 +737,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
        p->set<std::string>("QP Variable Name", "Hardening Modulus");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = params->sublist("Hardening Modulus");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -754,11 +754,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
        p->set<std::string>("QP Variable Name", "Yield Strength");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = params->sublist("Yield Strength");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -771,11 +771,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
        p->set<std::string>("Saturation Modulus Name", "Saturation Modulus");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = params->sublist("Saturation Modulus");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -788,11 +788,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
        p->set<std::string>("Saturation Exponent Name", "Saturation Exponent");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = params->sublist("Saturation Exponent");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -806,11 +806,11 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
        //Input
        p->set<std::string>("Fp Name", "Fp");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
        p->set<std::string>("BF Name", "BF");
-       p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+       p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
        p->set<std::string>("Gradient BF Name", "Grad BF");
-       p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+       p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
 
        //Output
        p->set<std::string>("Dislocation Density Name", "G"); //dl->qp_tensor also
@@ -828,10 +828,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
            //Input
            p->set<std::string>("DefGrad Name", "Deformation Gradient");
-           p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+           p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
            p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-           p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+           p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
            p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
            p->set<std::string>("Hardening Modulus Name", "Hardening Modulus"); // dl->qp_scalar also
@@ -867,17 +867,17 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      //Input
      p->set<std::string>("Stress Name", matModel);
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
      p->set<std::string>("DefGrad Name", "Deformation Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
 
      p->set<std::string>("Biot Coefficient Name", "Biot Coefficient");  // dl->qp_scalar also
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("QP Variable Name", "Pore Pressure");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
 
      p->set<std::string>("DetDefGrad Name", "Jacobian");  // dl->qp_scalar also
@@ -903,9 +903,9 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Source Name", "Source");
      p->set<std::string>("QP Variable Name", "Pore Pressure");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
-     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+     p->set<RCP<ParamLib>>("Parameter Library", paramLib);
      Teuchos::ParameterList& paramList = params->sublist("Source Functions");
      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -920,14 +920,14 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      const bool weighted_Volume_Averaged_J = params->get("weighted_Volume_Averaged_J", false);
      p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
      p->set<std::string>("Weights Name","Weights");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
      p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
      //Outputs: F, J
      p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
      p->set<std::string>("DetDefGrad Name", "Jacobian");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -950,39 +950,39 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      //Input
      p->set<std::string>("Total Stress Name", "Total Stress");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
      p->set<std::string>("DefGrad Name", "Deformation Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
      p->set<std::string>("DetDefGrad Name", "Jacobian");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Skeleton Thermal Expansion Name", "Skeleton Thermal Expansion");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Bulk Modulus Name", "Bulk Modulus");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Temperature Name", "Temperature");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Reference Temperature Name", "Reference Temperature");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Weighted BF Name", "wBF");
-     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+     p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
 
      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+     p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
 
      p->set<bool>("Disable Transient", true);
 
 
      //Output
      p->set<std::string>("Residual Name", "Displacement Residual");
-     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+     p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);
 
      ev = rcp(new LCM::ThermoPoroPlasticityResidMomentum<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -1000,7 +1000,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      // Input from nodal points
      p->set<std::string>("Weighted BF Name", "wBF");
-     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+     p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
      p->set<bool>("Have Source", false);
      p->set<std::string>("Source Name", "Source");
@@ -1009,10 +1009,10 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      // Input from cubature points
      p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Pore-Fluid Density Name", "Pore-Fluid Density");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
@@ -1020,7 +1020,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      p->set<std::string>("QP Temperature Name", "Temperature");
 
      p->set<std::string>("Reference Temperature Name", "Reference Temperature");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Material Property Name", "Stabilization Parameter");
      p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
@@ -1035,25 +1035,25 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Gradient QP Variable Name", "Pore Pressure Gradient");
      p->set<std::string>("Temperature Gradient Name", "Temperature Gradient");
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+     p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
 
      p->set<std::string>("Weights Name","Weights");
 
      p->set<std::string>("Delta Time Name", " Delta Time");
-     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+     p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dl->workset_scalar);
 
      p->set<std::string>("DefGrad Name", "Deformation Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
      p->set<std::string>("DetDefGrad Name", "Jacobian");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      //Output
      p->set<std::string>("Residual Name", "Pore Pressure Residual");
-     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
 
      ev = rcp(new LCM::ThermoPoroPlasticityResidMass<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
@@ -1067,7 +1067,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      // Input from nodal points
      p->set<std::string>("Weighted BF Name", "wBF");
-     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+     p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
 
      p->set<bool>("Have Source", false);
      p->set<std::string>("Source Name", "Source");
@@ -1076,13 +1076,13 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      // Input from cubature points
      p->set<std::string>("QP Pore Pressure Name", "Pore Pressure");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Bulk Modulus Name", "Bulk Modulus");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("QP Temperature Name", "Temperature");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Mixture Specific Heat Name", "Mixture Specific Heat");
      p->set<std::string>("Pore-Fluid Specific Heat Name", "Pore-Fluid Specific Heat");
@@ -1100,34 +1100,34 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
 
      p->set<std::string>("Gradient QP Variable Name", "Temperature Gradient");
      p->set<std::string>("Pore Pressure Gradient Name", "Pore Pressure Gradient");
-     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+     p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+     p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
 
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<std::string>("Coordinate Vector Name","Coord Vec");
-     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+     p->set< RCP<DataLayout>>("Coordinate Data Layout", dl->vertices_vector);
+     p->set< RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+     p->set<RCP<shards::CellTopology>>("Cell Type", cellType);
 
      p->set<std::string>("Weights Name","Weights");
 
      p->set<std::string>("Delta Time Name", " Delta Time");
-     p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
+     p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dl->workset_scalar);
 
      p->set<std::string>("DefGrad Name", "Deformation Gradient");
-     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+     p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
      p->set<std::string>("DetDefGrad Name", "Jacobian");
-     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+     p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");
 
      //Output
      p->set<std::string>("Residual Name", "Temperature Residual");
-     p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+     p->set< RCP<DataLayout>>("Node Scalar Data Layout", dl->node_scalar);
 
      ev = rcp(new LCM::ThermoPoroPlasticityResidEnergy<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);

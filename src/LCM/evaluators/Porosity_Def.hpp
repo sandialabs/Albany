@@ -35,7 +35,7 @@ namespace LCM {
     numDims = dims[2];
 
     Teuchos::RCP<ParamLib> paramLib = 
-      p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+      p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
     std::string type = porosity_list->get("Porosity Type", "Constant");
     if (type == "Constant") {
@@ -76,7 +76,7 @@ namespace LCM {
     if ( p.isType<std::string>("Strain Name") ) {
 
       //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
-      //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+      //     p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
       //   PHX::MDField<ScalarT,Cell,QuadPoint>
       //     tmp(p.get<std::string>("QP Pore Pressure Name"), scalar_dl);
       //   porePressure = tmp;

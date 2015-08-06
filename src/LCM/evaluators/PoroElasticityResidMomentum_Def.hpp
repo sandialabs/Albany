@@ -16,11 +16,11 @@ template<typename EvalT, typename Traits>
 PoroElasticityResidMomentum<EvalT, Traits>::
 PoroElasticityResidMomentum(const Teuchos::ParameterList& p) :
   TotalStress      (p.get<std::string>                   ("Total Stress Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   ExResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") )
 {
   this->addDependentField(TotalStress);
   this->addDependentField(wGradBF);
@@ -33,9 +33,9 @@ PoroElasticityResidMomentum(const Teuchos::ParameterList& p) :
   if (enableTransient) {
     // Two more fields are required for transient capability
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout");
+       p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout");
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
 
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF_tmp
         (p.get<std::string>("Weighted BF Name"), node_qp_scalar_dl);

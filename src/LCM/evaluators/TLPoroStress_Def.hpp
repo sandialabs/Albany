@@ -18,21 +18,21 @@ template<typename EvalT, typename Traits>
 TLPoroStress<EvalT, Traits>::
 TLPoroStress(const Teuchos::ParameterList& p) :
   stress           (p.get<std::string>                   ("Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   defGrad           (p.get<std::string>                   ("DefGrad Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   J                 (p.get<std::string>                   ("DetDefGrad Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   biotCoefficient  (p.get<std::string>                   ("Biot Coefficient Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   porePressure    (p.get<std::string>                   ("QP Variable Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   totstress        (p.get<std::string>                   ("Total Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];

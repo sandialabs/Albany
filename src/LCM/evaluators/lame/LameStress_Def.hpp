@@ -16,13 +16,13 @@ template<typename EvalT, typename Traits>
 LameStressBase<EvalT, Traits>::
 LameStressBase(Teuchos::ParameterList& p) :
   defGradField(p.get<std::string>("DefGrad Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")),
   stressField(p.get<std::string>("Stress Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   lameMaterialModel(Teuchos::RCP<LameMaterial>())
 {
   // Pull out numQPs and numDims from a Layout
-  tensor_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+  tensor_dl = p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
@@ -54,7 +54,7 @@ LameStressBase(Teuchos::ParameterList& p) :
 
     // If so, overwrite material model and data from database file
     if (dataFromDatabase) {
-       Teuchos::RCP<QCAD::MaterialDatabase> materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+       Teuchos::RCP<QCAD::MaterialDatabase> materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase>>("MaterialDB");
 
        lameMaterialModelName = materialDB->getElementBlockParam<std::string>(ebName, "Lame Material Model");
        lameMaterialParameters = materialDB->getElementBlockSublist(ebName, "Lame Material Parameters");
@@ -71,7 +71,7 @@ LameStressBase(Teuchos::ParameterList& p) :
   lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModelName, lameMaterialParameters);
 
   // Declare the state variables as evaluated fields (type is always double)
-  Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+  Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
   for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
     PHX::MDField<ScalarT,Cell,QuadPoint> lameMaterialModelStateVariableField(lameMaterialModelStateVariableNames[i], dataLayout);
     this->addEvaluatedField(lameMaterialModelStateVariableField);
