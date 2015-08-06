@@ -62,6 +62,7 @@ namespace Aeras {
     const int points_per_edge;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
+    std::string element_name; 
      
 
     protected:
