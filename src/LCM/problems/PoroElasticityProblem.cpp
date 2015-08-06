@@ -167,8 +167,8 @@ Albany::PoroElasticityProblem::getValidProblemParameters() const
 
 void
 Albany::PoroElasticityProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
    ) const
 {
   oldState_ = oldState;

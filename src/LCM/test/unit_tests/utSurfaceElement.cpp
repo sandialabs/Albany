@@ -172,9 +172,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
   sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
   sbPL.set<std::string>("Reference Area Name", "Reference Area");
-  sbPL.set<RCP<Intrepid::Cubature<RealType>> >
+  sbPL.set<RCP<Intrepid::Cubature<RealType>>>
   ("Cubature", cubature);
-  sbPL.set<RCP<Intrepid::Basis<RealType, FC>> >
+  sbPL.set<RCP<Intrepid::Basis<RealType, FC>>>
   ("Intrepid Basis", intrepidBasis);
   RCP<LCM::SurfaceBasis<Residual, Traits>> sb =
       rcp(new LCM::SurfaceBasis<Residual, Traits>(sbPL, dl));
@@ -433,8 +433,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   sjPL.set<std::string>("Nodal Temperature Name", "Temperature");
   sjPL.set<std::string>("Jump of Temperature Name", "Scalar Jump");
   sjPL.set<std::string>("MidPlane Temperature Name", "Scalar Avg");
-  sjPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
-  sjPL.set<RCP<Intrepid::Basis<RealType, FC>> >
+  sjPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
+  sjPL.set<RCP<Intrepid::Basis<RealType, FC>>>
   ("Intrepid Basis", intrepidBasis);
   RCP<LCM::SurfaceScalarJump<Residual, Traits>> sj =
       rcp(new LCM::SurfaceScalarJump<Residual, Traits>(sjPL, dl));
@@ -654,8 +654,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   Teuchos::ParameterList svjPL;
   svjPL.set<std::string>("Vector Name", "Current Coordinates");
   svjPL.set<std::string>("Vector Jump Name", "Vector Jump");
-  svjPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
-  svjPL.set<RCP<Intrepid::Basis<RealType, FC>> >("Intrepid Basis",
+  svjPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
+  svjPL.set<RCP<Intrepid::Basis<RealType, FC>>>("Intrepid Basis",
       intrepidBasis);
   RCP<LCM::SurfaceVectorJump<Residual, Traits>> svj =
       rcp(new LCM::SurfaceVectorJump<Residual, Traits>(svjPL, dl));
@@ -832,8 +832,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   ssgPL.set<std::string>("Scalar Jump Name", "Jump");
   ssgPL.set<std::string>("Nodal Scalar Name", "Nodal Scalar");
   ssgPL.set<std::string>("Surface Scalar Gradient Name", "Surface Scalar Gradient");
-  ssgPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
-  ssgPL.set<RCP<Intrepid::Basis<RealType, FC>> >
+  ssgPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
+  ssgPL.set<RCP<Intrepid::Basis<RealType, FC>>>
   ("Intrepid Basis", intrepidBasis);
   ssgPL.set<double>("thickness", 0.1);
   RCP<LCM::SurfaceScalarGradient<Residual, Traits>> ssg =
@@ -1076,7 +1076,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   svgPL.set<std::string>("Weights Name", "Weights");
   svgPL.set<std::string>("Surface Vector Gradient Name", "F");
   svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
-  svgPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  svgPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
   svgPL.set<double>("thickness", 0.1);
   RCP<LCM::SurfaceVectorGradient<Residual, Traits>> svg =
       rcp(new LCM::SurfaceVectorGradient<Residual, Traits>(svgPL, dl));
@@ -1205,8 +1205,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   scrPL.set<std::string>("Reference Area Name", "Reference Area");
   scrPL.set<std::string>("Cohesive Traction Name", "Cohesive Traction");
   scrPL.set<std::string>("Surface Cohesive Residual Name", "Force");
-  scrPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
-  scrPL.set<RCP<Intrepid::Basis<RealType, FC>> >("Intrepid Basis",
+  scrPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
+  scrPL.set<RCP<Intrepid::Basis<RealType, FC>>>("Intrepid Basis",
       intrepidBasis);
   RCP<LCM::SurfaceCohesiveResidual<Residual, Traits>> scr =
       rcp(new LCM::SurfaceCohesiveResidual<Residual, Traits>(scrPL, dl));
@@ -1404,8 +1404,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
   sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
   sbPL.set<std::string>("Reference Area Name", "Reference Area");
-  sbPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
-  sbPL.set<RCP<Intrepid::Basis<RealType, FC>> >
+  sbPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
+  sbPL.set<RCP<Intrepid::Basis<RealType, FC>>>
   ("Intrepid Basis", intrepidBasis);
   RCP<LCM::SurfaceBasis<Residual, Traits>> sb =
       rcp(new LCM::SurfaceBasis<Residual, Traits>(sbPL, dl));
@@ -1415,8 +1415,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   Teuchos::ParameterList svjP;
   svjP.set<std::string>("Vector Name", "Current Coordinates");
   svjP.set<std::string>("Vector Jump Name", "Vector Jump");
-  svjP.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
-  svjP.set<RCP<Intrepid::Basis<RealType, FC>> >
+  svjP.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
+  svjP.set<RCP<Intrepid::Basis<RealType, FC>>>
   ("Intrepid Basis", intrepidBasis);
   RCP<LCM::SurfaceVectorJump<Residual, Traits>> svj =
       rcp(new LCM::SurfaceVectorJump<Residual, Traits>(svjP, dl));
@@ -1431,7 +1431,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   svgPL.set<std::string>("Weights Name", "Reference Area");
   svgPL.set<std::string>("Surface Vector Gradient Name", "F");
   svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
-  svgPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  svgPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
   svgPL.set<double>("thickness", thickness);
   RCP<LCM::SurfaceVectorGradient<Residual, Traits>> svg =
       rcp(new LCM::SurfaceVectorGradient<Residual, Traits>(svgPL, dl));
@@ -1454,7 +1454,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   prList.set("Poissons Ratio Type", "Constant");
   prList.set("Value", 0.0);
   Teuchos::ParameterList cmpPL;
-  paramList.set<Teuchos::RCP<std::map<std::string, std::string>> >
+  paramList.set<Teuchos::RCP<std::map<std::string, std::string>>>
     ("Name Map", fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   std::cout << paramList;
@@ -1480,8 +1480,8 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   svrPL.set<std::string>("Reference Normal Name", "Reference Normal");
   svrPL.set<std::string>("Reference Area Name", "Reference Area");
   svrPL.set<std::string>("Surface Vector Residual Name", "Force");
-  svrPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
-  svrPL.set<RCP<Intrepid::Basis<RealType, FC>> >
+  svrPL.set<RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
+  svrPL.set<RCP<Intrepid::Basis<RealType, FC>>>
   ("Intrepid Basis", intrepidBasis);
   RCP<LCM::SurfaceVectorResidual<Residual, Traits>> svr =
       rcp(new LCM::SurfaceVectorResidual<Residual, Traits>(svrPL, dl));

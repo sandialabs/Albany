@@ -263,8 +263,8 @@ Albany::ProjectionProblem::getValidProblemParameters() const
 
 void
 Albany::ProjectionProblem::getAllocatedStates(
-    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >> old_state,
-    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >> new_state) const
+    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> old_state,
+    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> new_state) const
 {
   old_state = old_state_;
   new_state = new_state_;

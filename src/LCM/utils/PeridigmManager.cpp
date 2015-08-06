@@ -873,7 +873,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > refBasis = Albany::getIntrepidBasis((*obcDataPoints)[iEvalPt].cellTopologyData);
+      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> refBasis = Albany::getIntrepidBasis((*obcDataPoints)[iEvalPt].cellTopologyData);
       Intrepid::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
       refBasis->getValues(basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
 
