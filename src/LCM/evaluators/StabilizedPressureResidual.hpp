@@ -92,7 +92,7 @@ private:
   ///
   /// Input: Weighted Basis Functions
   ///
-  PHX::MDField<MeshScalarT, Cell, Node> w_bf_;
+  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf_;
 
   ///
   /// Input: Weighted Basis Functions
