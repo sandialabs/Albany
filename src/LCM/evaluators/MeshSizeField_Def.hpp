@@ -24,9 +24,9 @@ namespace LCM {
     MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     isoMeshSizeField (p.get<std::string>("IsoTropic MeshSizeField Name"), dl->qp_scalar),
-    cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType>> >("Cubature")),
+    cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType>>>("Cubature")),
     intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, 
-         Intrepid::FieldContainer<RealType>> >> ("Intrepid Basis"))
+         Intrepid::FieldContainer<RealType>>>> ("Intrepid Basis"))
 
   {
 
@@ -140,9 +140,9 @@ namespace LCM {
     MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     anisoMeshSizeField (p.get<std::string>("AnisoTropic MeshSizeField Name"), dl->qp_scalar),
-    cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType>> >("Cubature")),
+    cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType>>>("Cubature")),
     intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, 
-         Intrepid::FieldContainer<RealType>> >> ("Intrepid Basis"))
+         Intrepid::FieldContainer<RealType>>>> ("Intrepid Basis"))
 
   {
 

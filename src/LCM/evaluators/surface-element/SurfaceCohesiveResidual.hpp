@@ -47,7 +47,7 @@ private:
   cubature_;
 
   // Finite element basis for the midplane
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
   intrepid_basis_;
 
   // Reference area

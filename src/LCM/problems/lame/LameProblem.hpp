@@ -132,7 +132,7 @@ Albany::LameProblem::constructEvaluators(
   string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();

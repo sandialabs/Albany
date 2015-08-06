@@ -47,7 +47,7 @@ private:
   //! Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
 
 
   //! Nodal value of scalar

@@ -350,7 +350,7 @@ Albany::PeridigmProblem::constructEvaluators(
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for peridynamic partial stress." << std::endl;
 
      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
      const int numNodes = intrepidBasis->getCardinality();
      const int worksetSize = meshSpecs.worksetSize;
@@ -545,7 +545,7 @@ Albany::PeridigmProblem::constructEvaluators(
    else if(materialModelName == "Classic Vector Poisson"){
       *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical Poisson Eq, material model = " << materialModelName << std::endl;
       RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-      RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+      RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
       const int numNodes = intrepidBasis->getCardinality();
       const int worksetSize = meshSpecs.worksetSize;
@@ -676,7 +676,7 @@ Albany::PeridigmProblem::constructEvaluators(
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical elasticity, material model = " << materialModelName << std::endl;
 
      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
      const int numNodes = intrepidBasis->getCardinality();
      const int worksetSize = meshSpecs.worksetSize;

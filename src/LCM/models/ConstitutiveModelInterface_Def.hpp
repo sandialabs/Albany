@@ -69,7 +69,7 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   }
 
   // register dependent fields
-  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> >::iterator it;
+  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>::iterator it;
   for (it = dep_fields_map_.begin();
       it != dep_fields_map_.end();
       ++it) {
@@ -174,7 +174,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   TEUCHOS_TEST_FOR_EXCEPTION(eval_fields_map_.size() == 0, std::logic_error,
       "something is wrong in the LCM::CMI");
   // dependent fields
-  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> >::iterator it;
+  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>::iterator it;
   for (it = dep_fields_map_.begin();
       it != dep_fields_map_.end();
       ++it) {

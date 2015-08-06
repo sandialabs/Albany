@@ -46,7 +46,7 @@ private:
 	//! Numerical integration rule
 	Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
 	//! Finite element basis for the midplane
-	Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
+	Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
 	// current basis vector of the surface element
 	PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
 	// displacement jump

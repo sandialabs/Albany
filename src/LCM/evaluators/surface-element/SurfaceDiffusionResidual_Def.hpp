@@ -15,8 +15,8 @@ namespace LCM {
   SurfaceDiffusionResidual(const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")),
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>> >("Cubature")),
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >>("Intrepid Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
     scalarGrad        (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
     scalarJump        (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),

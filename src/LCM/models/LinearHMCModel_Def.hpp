@@ -81,8 +81,8 @@ LinearHMCModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void LinearHMCModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   // extract independent MDFields
   PHX::MDField<ScalarT> macroStrain = *dep_fields[macroStrainName];

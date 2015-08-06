@@ -23,10 +23,10 @@ SurfaceBasis(
     reference_coords_(
         p.get<std::string>("Reference Coordinates Name"),
         dl->vertices_vector),
-    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType>> >("Cubature")),
+    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
     intrepid_basis_(
         p.get<Teuchos::RCP<Intrepid::Basis<RealType,
-        Intrepid::FieldContainer<RealType>> >>("Intrepid Basis")),
+        Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
     ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     ref_dual_basis_(

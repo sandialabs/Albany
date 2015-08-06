@@ -81,8 +81,8 @@ namespace Albany {
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> oldState_,
-			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> newState_
+    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
+			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
 			    ) const;
 
   private:
@@ -126,8 +126,8 @@ namespace Albany {
     std::string matModel; 
     Teuchos::RCP<Albany::Layouts> dl;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState;
 
     template <typename EvalT> 
     void registerStateVariables(
@@ -203,7 +203,7 @@ Albany::HMCProblem::constructEvaluators(
 #endif
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
@@ -844,7 +844,7 @@ Albany::HMCProblem::constructEvaluators(
     field_name_map(false);
     RCP<std::map<std::string, std::string>>
     fnm = field_name_map.getMap();
-    param_list.set<RCP<std::map<std::string, std::string>> >("Name Map", fnm);
+    param_list.set<RCP<std::map<std::string, std::string>>>("Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
     // end required
 

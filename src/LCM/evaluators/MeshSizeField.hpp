@@ -141,7 +141,7 @@ namespace LCM {
     Intrepid::FieldContainer<ScalarT> dEDdxi;
 
     Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
 
     ///
     /// Number of integration points
@@ -253,7 +253,7 @@ namespace LCM {
     Intrepid::FieldContainer<ScalarT> dxdxi;
 
     Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
 
     ///
     /// Number of integration points

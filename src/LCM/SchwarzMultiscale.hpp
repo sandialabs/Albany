@@ -133,14 +133,14 @@ private:
   createInArgsImpl() const;
 
   //! List of free parameter names
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>> >
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
   param_names_;
   
   /// RCP to matDB object
   Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase>>
   material_dbs_;
 
-  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>> >
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
   models_;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>

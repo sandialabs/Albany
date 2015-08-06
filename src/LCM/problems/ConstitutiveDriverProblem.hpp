@@ -87,9 +87,9 @@ public:
   /// Retrieve the state data
   ///
   void
-  getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> >
+  getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>>
       old_state,
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> >
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>>
       new_state) const;
 
   //----------------------------------------------------------------------------
@@ -175,12 +175,12 @@ protected:
   ///
   /// old state data
   ///
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> > old_state_;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> old_state_;
 
   ///
   /// new state data
   ///
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> > new_state_;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> new_state_;
 
 };
 //------------------------------------------------------------------------------
@@ -373,7 +373,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       param_list.set<bool>("Have Temperature", true);
     }
 
-    param_list.set<Teuchos::RCP<std::map<std::string, std::string>> >(
+    param_list.set<Teuchos::RCP<std::map<std::string, std::string>>>(
         "Name Map",
         fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);

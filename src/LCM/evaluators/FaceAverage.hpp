@@ -57,7 +57,7 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       //Numerical integration rule
       Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
       // FE basis
-      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > intrepidBasis;
+      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
       // The cell type
       Teuchos::RCP<shards::CellTopology> cellType;
 

@@ -32,7 +32,7 @@ ConstitutiveModel(Teuchos::ParameterList* p,
   num_pts_  = dims[1];
   num_dims_ = dims[2];
   field_name_map_ =
-      p->get<Teuchos::RCP<std::map<std::string, std::string>> >("Name Map");
+      p->get<Teuchos::RCP<std::map<std::string, std::string>>>("Name Map");
 
   if (p->isType<bool>("Have Temperature")) {
     if (p->get<bool>("Have Temperature")) {
@@ -206,8 +206,8 @@ class computeVolumeAverageKernel {
 template<typename EvalT, typename Traits>
 void ConstitutiveModel<EvalT, Traits>::
 computeVolumeAverage(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
 
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];

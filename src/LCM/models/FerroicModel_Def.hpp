@@ -192,8 +192,8 @@ FerroicModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   PHX::MDField<ScalarT> strain = *dep_fields[strainName];
@@ -605,8 +605,8 @@ Intrepid::Vector<ScalarT>& E, Intrepid::Vector<ScalarT>& linear_D)
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>> > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,

@@ -47,7 +47,7 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
 	coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
 				 p.get<Teuchos::RCP<PHX::DataLayout>>("Coordinate Data Layout") ),
-    cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType>> >("Cubature")),
+    cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType>>>("Cubature")),
 	cellType      (p.get<Teuchos::RCP <shards::CellTopology>> ("Cell Type")),
 	weights       (p.get<std::string>                   ("Weights Name"),
 		         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),

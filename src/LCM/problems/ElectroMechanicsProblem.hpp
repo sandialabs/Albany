@@ -89,9 +89,9 @@ public:
   /// Retrieve the state data
   ///
   void
-  getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> >
+  getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>>
       old_state,
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> >
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>>
       new_state) const;
 
   //----------------------------------------------------------------------------
@@ -172,12 +172,12 @@ protected:
   ///
   /// old state data
   ///
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> > old_state_;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> old_state_;
 
   ///
   /// new state data
   ///
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>> > new_state_;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>> new_state_;
 
   template <typename EvalT> 
   void registerStateVariables(
@@ -222,7 +222,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   typedef Teuchos::RCP<
-      Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >
+      Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
   IntrepidBasis;
 
   // Collect problem-specific response parameters
@@ -475,7 +475,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Temperature Name", temperature);
     param_list.set<bool>("Have Temperature", true);
   
-    param_list.set<Teuchos::RCP<std::map<std::string, std::string>> >( "Name Map", fnm);
+    param_list.set<Teuchos::RCP<std::map<std::string, std::string>>>( "Name Map", fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
     p->set<bool>("Volume Average Pressure", volume_average_pressure);
     if (volume_average_pressure) {

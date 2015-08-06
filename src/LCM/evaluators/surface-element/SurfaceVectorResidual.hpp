@@ -53,7 +53,7 @@ private:
 
   /// Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType,
-    Intrepid::FieldContainer<RealType>> >
+    Intrepid::FieldContainer<RealType>>>
   intrepid_basis_;
 
   /// First PK Stress

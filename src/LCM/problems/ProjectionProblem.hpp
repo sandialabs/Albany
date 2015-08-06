@@ -92,8 +92,8 @@ public:
   ///
   void
   getAllocatedStates(
-      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >> old_state,
-      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >> new_state) const;
+      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> old_state,
+      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> new_state) const;
 
   ///
   /// Main problem setup routine. Not directly called,
@@ -158,10 +158,10 @@ protected:
   std::string
   insertion_criterion_;
 
-  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >>
+  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>>
   old_state_;
 
-  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>> >>
+  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>>
   new_state_;
 };
 
@@ -221,7 +221,7 @@ Albany::ProjectionProblem::constructEvaluators(
   RCP<shards::CellTopology>
   cell_type = rcp(new shards::CellTopology(&mesh_specs.ctd));
 
-  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>> >
+  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>>>
   intrepid_basis = Albany::getIntrepidBasis(mesh_specs.ctd);
 
   int const
@@ -239,7 +239,7 @@ Albany::ProjectionProblem::constructEvaluators(
   // Create intrepid basis and cubature for the face averaging. Not the best
   // way of defining the basis functions: requires to know the face type at
   // compile time
-  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>> >
+  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>>>
   face_intrepid_basis;
 
   face_intrepid_basis = rcp(
@@ -1172,11 +1172,11 @@ Albany::ProjectionProblem::constructEvaluators(
         projection_layout->node_vector);
 
     // the cubature and basis function information
-    p->set<RCP<Intrepid::Cubature<RealType>> >(
+    p->set<RCP<Intrepid::Cubature<RealType>>>(
         "Face Cubature",
         face_cubature);
 
-    p->set<RCP<Intrepid::Basis<RealType, FieldContainer<RealType>> >>(
+    p->set<RCP<Intrepid::Basis<RealType, FieldContainer<RealType>>>>(
         "Face Intrepid Basis",
         face_intrepid_basis);
 

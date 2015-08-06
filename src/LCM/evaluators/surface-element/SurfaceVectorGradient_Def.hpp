@@ -17,7 +17,7 @@ namespace LCM {
   SurfaceVectorGradient(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>> >("Cubature")), 
+    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")), 
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),

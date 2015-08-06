@@ -58,8 +58,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> oldState_,
-	 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
+	 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
 	 ) const;
 
   private:
@@ -94,8 +94,8 @@ namespace Albany {
 
     std::string matModel;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState;
   };
 }
 
@@ -157,7 +157,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
    std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> >
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
@@ -730,7 +730,7 @@ Albany::UnSatPoroElasticityProblem::constructEvaluators(
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<std::string>("Coordinate Vector Name","Coord Vec");
      p->set< RCP<DataLayout>>("Coordinate Data Layout", dl->vertices_vector);
-     p->set< RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+     p->set< RCP<Intrepid::Cubature<RealType>>>("Cubature", cubature);
      p->set<RCP<shards::CellTopology>>("Cell Type", cellType);
 
      p->set<std::string>("Weights Name","Weights");
