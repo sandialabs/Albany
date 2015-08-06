@@ -706,7 +706,7 @@ private:
   // Background grid of the domain for fast determination
   // of whether a point is inside the domain or not.
   //
-  std::vector<std::vector<std::vector<bool>> >
+  std::vector<std::vector<std::vector<bool>>>
   cells_;
 
   //
