@@ -1,11 +1,8 @@
-//
-// $Id: FloatingPoint.h,v 1.1 2008/07/14 17:50:46 lxmota Exp $
-//
-// $Log: FloatingPoint.h,v $
-// Revision 1.1  2008/07/14 17:50:46  lxmota
-// Initial sources.
-//
-//
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 #if !defined(LCM_Utils_h)
 #define LCM_Utils_h
