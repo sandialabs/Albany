@@ -69,10 +69,10 @@ using Intrepid::eye;
 
   Teuchos::ParameterList tcPL;
   tcPL.set<std::string>("Evaluated Field Name", "Total Concentration");
-  tcPL.set<ArrayRCP<ScalarT> >("Field Values", total_concentration);
-  tcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  tcPL.set<ArrayRCP<ScalarT>>("Field Values", total_concentration);
+  tcPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->qp_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldTotalConcentration =
+  RCP<LCM::SetField<Residual, Traits>> setFieldTotalConcentration =
       rcp(new LCM::SetField<Residual, Traits>(tcPL));
 
   //--------------------------------------------------------------------------
@@ -82,10 +82,10 @@ using Intrepid::eye;
 
   Teuchos::ParameterList dtPL;
   dtPL.set<std::string>("Evaluated Field Name", "Delta Time");
-  dtPL.set<ArrayRCP<ScalarT> >("Field Values", delta_time);
-  dtPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  dtPL.set<ArrayRCP<ScalarT>>("Field Values", delta_time);
+  dtPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->workset_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldDeltaTime =
+  RCP<LCM::SetField<Residual, Traits>> setFieldDeltaTime =
       rcp(new LCM::SetField<Residual, Traits>(dtPL));
 
   //--------------------------------------------------------------------------
@@ -95,10 +95,10 @@ using Intrepid::eye;
 
   Teuchos::ParameterList dcPL;
   dcPL.set<std::string>("Evaluated Field Name", "Diffusion Coefficient");
-  dcPL.set<ArrayRCP<ScalarT> >("Field Values", diff_coeff);
-  dcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  dcPL.set<ArrayRCP<ScalarT>>("Field Values", diff_coeff);
+  dcPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->qp_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldDiffCoeff =
+  RCP<LCM::SetField<Residual, Traits>> setFieldDiffCoeff =
       rcp(new LCM::SetField<Residual, Traits>(dcPL));
 
   //--------------------------------------------------------------------------
@@ -127,7 +127,7 @@ using Intrepid::eye;
   mol_vol.set<double>("Value", 7.116);
   hoPL.set<Teuchos::ParameterList*>("Molar Volume", &mol_vol);
 
-  RCP<LCM::HeliumODEs<Residual, Traits> > HeODEs =
+  RCP<LCM::HeliumODEs<Residual, Traits>> HeODEs =
     rcp(new LCM::HeliumODEs<Residual, Traits>(hoPL, dl));
 
 
@@ -152,7 +152,7 @@ using Intrepid::eye;
   state_field_manager.registerEvaluator<Residual>(HeODEs);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       HeODEs->evaluatedFields().begin();
       it != HeODEs->evaluatedFields().end();
       it++)
@@ -165,7 +165,7 @@ using Intrepid::eye;
   // register the states
   //
   Teuchos::RCP<Teuchos::ParameterList> p;
-  Teuchos::RCP<PHX::Evaluator<Traits> > ev;
+  Teuchos::RCP<PHX::Evaluator<Traits>> ev;
   p = stateMgr.registerStateVariable("Total Concentration",
                           dl->qp_scalar,
                           dl->dummy,

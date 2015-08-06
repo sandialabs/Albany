@@ -81,11 +81,11 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   //     std::cout << "DJL DEBUGGING STK field " << *fields[i] << std::endl;
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
-      metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+      metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access coordinates field.\n\n");
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
-      metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+      metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::ELEMENT_RANK, "volume");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
@@ -163,7 +163,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numQPts = cubature->getNumPoints();
       numPartialStressIds += numQPts * elementsInElementBlock.size();
     }
@@ -321,7 +321,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
@@ -347,17 +347,17 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
 
       // Physical points, which are the physical (x, y, z) values of the quadrature points
-      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim>> physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
       physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
 
       // Reference points, which are the natural coordinates of the quadrature points
-      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim>> refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
       refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
 
       // Cell workset, which is the set of nodes for the given element
-      Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodes, numDim));
+      Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim>> cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodes, numDim));
       PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
       cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
 
@@ -501,11 +501,11 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   obcDataPoints = Teuchos::rcp(new std::vector<OBCDataPoint>());
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
-    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
-    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d>>(stk::topology::ELEMENT_RANK, "volume");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access volume field (volume field is expected because it is assumed that thre are sphere elements in the simulation).\n\n");
 
   // Create a selector to select everything in the universal part that is locally owned
@@ -873,7 +873,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > refBasis = Albany::getIntrepidBasis((*obcDataPoints)[iEvalPt].cellTopologyData);
+      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>> > refBasis = Albany::getIntrepidBasis((*obcDataPoints)[iEvalPt].cellTopologyData);
       Intrepid::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
       refBasis->getValues(basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
 
@@ -905,7 +905,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
   }
 
   // Send displacement differences to Peridigm for output
-  Teuchos::RCP< std::vector<PeridigmNS::Block> > peridigmBlocks = peridigm->getBlocks();
+  Teuchos::RCP< std::vector<PeridigmNS::Block>> peridigmBlocks = peridigm->getBlocks();
   for(unsigned int iBlock=0 ; iBlock<peridigmBlocks->size() ; iBlock++){
     std::string blockName = (*peridigmBlocks)[iBlock].getName();
     bool hasOBCFunctional = peridigm->hasBlockData(blockName, "OBC_Functional");
@@ -977,7 +977,7 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
 
       shards::CellTopology cellTopology(&it->cellTopologyData);
       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
@@ -993,17 +993,17 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
 
       // Physical points, which are the physical (x, y, z) values of the quadrature points
-      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim>> physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
       physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
 
       // Reference points, which are the natural coordinates of the quadrature points
-      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+      Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim>> refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
       refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
 
       // Cell workset, which is the set of nodes for the given element
-      Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodes, numDim));
+      Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim>> cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodes, numDim));
       PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
       cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
 
@@ -1229,7 +1229,7 @@ double LCM::PeridigmManager::getDisplacementNeighborhoodFit(int globalAlbanyNode
 }
 
 
-void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues)
+void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType>>& partialStressValues)
 {
   if(hasPeridynamics){
 

@@ -143,7 +143,7 @@ evaluateSGResponse(
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
-  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
   Stokhos::EpetraVectorOrthogPoly& sg_g)
 {}
 
@@ -160,7 +160,7 @@ evaluateSGTangent(
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
-  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
   ParamVec* deriv_p,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
@@ -180,7 +180,7 @@ evaluateSGGradient(
   const Stokhos::EpetraVectorOrthogPoly& sg_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& sg_p_index,
-  const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+  const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
   ParamVec* deriv_p,
   Stokhos::EpetraVectorOrthogPoly* sg_g,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
@@ -200,7 +200,7 @@ evaluateMPResponse(
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
-  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
   Stokhos::ProductEpetraVector& mp_g)
 {}
 
@@ -217,7 +217,7 @@ evaluateMPTangent(
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
-  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
   ParamVec* deriv_p,
   const Epetra_MultiVector* Vx,
   const Epetra_MultiVector* Vxdot,
@@ -237,7 +237,7 @@ evaluateMPGradient(
   const Stokhos::ProductEpetraVector& mp_x,
   const Teuchos::Array<ParamVec>& p,
   const Teuchos::Array<int>& mp_p_index,
-  const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+  const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
   ParamVec* deriv_p,
   Stokhos::ProductEpetraVector* mp_g,
   Stokhos::ProductEpetraMultiVector* mp_dg_dx,

@@ -14,7 +14,7 @@ Albany::ConstitutiveDriverProblem::
 ConstitutiveDriverProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                           const Teuchos::RCP<ParamLib>& param_lib,
                           const int num_dims,
-                          Teuchos::RCP<const Teuchos::Comm<int> >& commT) : 
+                          Teuchos::RCP<const Teuchos::Comm<int>>& commT) : 
   Albany::AbstractProblem(params, param_lib),
   have_temperature_(false),
   num_dims_(num_dims)
@@ -50,7 +50,7 @@ Albany::ConstitutiveDriverProblem::
 void
 Albany::ConstitutiveDriverProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs,
     Albany::StateManager& stateMgr)
 {
   // Construct All Phalanx Evaluators
@@ -68,7 +68,7 @@ buildProblem(
   }
 }
 //------------------------------------------------------------------------------
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 Albany::ConstitutiveDriverProblem::
 buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Albany::MeshSpecsStruct& meshSpecs,
@@ -108,8 +108,8 @@ getValidProblemParameters() const
 void
 Albany::ConstitutiveDriverProblem::
 getAllocatedStates(
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > old_state,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > new_state) const
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> old_state,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >> new_state) const
 {
   old_state = old_state_;
   new_state = new_state_;

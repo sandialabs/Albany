@@ -11,7 +11,7 @@ Albany::PeridigmProblem::
 PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const Teuchos::RCP<ParamLib>& paramLib_,
                 const int numDim_,
-                Teuchos::RCP<const Teuchos::Comm<int> >& commT):
+                Teuchos::RCP<const Teuchos::Comm<int>>& commT):
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false), haveMatDB(false), numDim(numDim_)
 {
@@ -54,7 +54,7 @@ Albany::PeridigmProblem::
 void
 Albany::PeridigmProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -68,7 +68,7 @@ buildProblem(
   constructDirichletEvaluators(*meshSpecs[0]);
 }
 
-Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
 Albany::PeridigmProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,

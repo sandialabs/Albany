@@ -48,7 +48,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<ParamLib>& param_lib,
     const int num_dims,
     const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-    Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
+    Teuchos::RCP<const Teuchos::Comm<int>>& commT) :
     Albany::AbstractProblem(params, param_lib),
     have_source_(false),
     thermal_source_(SOURCE_TYPE_NONE),
@@ -252,7 +252,7 @@ Albany::MechanicsProblem::
 void
 Albany::MechanicsProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs,
     Albany::StateManager& stateMgr)
 {
   // Construct All Phalanx Evaluators
@@ -276,7 +276,7 @@ buildProblem(
 
 }
 //------------------------------------------------------------------------------
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 Albany::MechanicsProblem::
 buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Albany::MeshSpecsStruct& meshSpecs,
@@ -353,7 +353,7 @@ constructNeumannEvaluators(
   // so ordering is important
   
   std::vector<std::string> neumannNames(neq + 1);
-  Teuchos::Array<Teuchos::Array<int> > offsets;
+  Teuchos::Array<Teuchos::Array<int>> offsets;
   offsets.resize(neq + 1);
 
   neumannNames[0] = "sig_x";
@@ -440,10 +440,10 @@ void
 Albany::MechanicsProblem::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>> >>
     new_state
     ) const
     {

@@ -98,10 +98,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // reference coordiantes field
   Teuchos::ParameterList rcPL;
   rcPL.set<std::string>("Evaluated Field Name", "Reference Coordinates");
-  rcPL.set<ArrayRCP<ScalarT> >("Field Values", referenceCoords);
-  rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  rcPL.set<ArrayRCP<ScalarT>>("Field Values", referenceCoords);
+  rcPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->vertices_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords =
+  RCP<LCM::SetField<Residual, Traits>> setFieldRefCoords =
       rcp(new LCM::SetField<Residual, Traits>(rcPL));
 
   //--------------------------------------------------------------------------
@@ -145,21 +145,21 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   // reference coordinates field
   Teuchos::ParameterList ccPL;
   ccPL.set<std::string>("Evaluated Field Name", "Current Coordinates");
-  ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
-  ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  ccPL.set<ArrayRCP<ScalarT>>("Field Values", currentCoords);
+  ccPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->node_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords =
+  RCP<LCM::SetField<Residual, Traits>> setFieldCurCoords =
       rcp(new LCM::SetField<Residual, Traits>(ccPL));
 
   //--------------------------------------------------------------------------
   // intrepid basis and cubature
-  RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
+  RCP<Intrepid::Basis<RealType, FC>> intrepidBasis;
   intrepidBasis =
       rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FC>());
   RCP<CT> cellType =
-      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP<Intrepid::Cubature<RealType> > cubature =
+  RCP<Intrepid::Cubature<RealType>> cubature =
       cubFactory.create(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -172,11 +172,11 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
   sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
   sbPL.set<std::string>("Reference Area Name", "Reference Area");
-  sbPL.set<RCP<Intrepid::Cubature<RealType> > >
+  sbPL.set<RCP<Intrepid::Cubature<RealType>> >
   ("Cubature", cubature);
-  sbPL.set<RCP<Intrepid::Basis<RealType, FC> > >
+  sbPL.set<RCP<Intrepid::Basis<RealType, FC>> >
   ("Intrepid Basis", intrepidBasis);
-  RCP<LCM::SurfaceBasis<Residual, Traits> > sb =
+  RCP<LCM::SurfaceBasis<Residual, Traits>> sb =
       rcp(new LCM::SurfaceBasis<Residual, Traits>(sbPL, dl));
 
   // Instantiate a field manager.
@@ -188,7 +188,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   fieldManager.registerEvaluator<Residual>(sb);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       sb->evaluatedFields().begin();
       it != sb->evaluatedFields().end();
       it++)
@@ -410,21 +410,21 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   // current scalar field
   Teuchos::ParameterList csPL;
   csPL.set<std::string>("Evaluated Field Name", "Temperature");
-  csPL.set<ArrayRCP<ScalarT> >("Field Values", currentScalar);
-  csPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  csPL.set<ArrayRCP<ScalarT>>("Field Values", currentScalar);
+  csPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->node_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldCurrentScalar =
+  RCP<LCM::SetField<Residual, Traits>> setFieldCurrentScalar =
       rcp(new LCM::SetField<Residual, Traits>(csPL));
 
   //--------------------------------------------------------------------------
   // intrepid basis and cubature
-  RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
+  RCP<Intrepid::Basis<RealType, FC>> intrepidBasis;
   intrepidBasis =
       rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FC>());
   RCP<CT> cellType =
-      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP<Intrepid::Cubature<RealType> > cubature =
+  RCP<Intrepid::Cubature<RealType>> cubature =
       cubFactory.create(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -433,10 +433,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   sjPL.set<std::string>("Nodal Temperature Name", "Temperature");
   sjPL.set<std::string>("Jump of Temperature Name", "Scalar Jump");
   sjPL.set<std::string>("MidPlane Temperature Name", "Scalar Avg");
-  sjPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-  sjPL.set<RCP<Intrepid::Basis<RealType, FC> > >
+  sjPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  sjPL.set<RCP<Intrepid::Basis<RealType, FC>> >
   ("Intrepid Basis", intrepidBasis);
-  RCP<LCM::SurfaceScalarJump<Residual, Traits> > sj =
+  RCP<LCM::SurfaceScalarJump<Residual, Traits>> sj =
       rcp(new LCM::SurfaceScalarJump<Residual, Traits>(sjPL, dl));
 
   // Instantiate a field manager.
@@ -447,7 +447,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   fieldManager.registerEvaluator<Residual>(sj);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       sj->evaluatedFields().begin(); it != sj->evaluatedFields().end(); it++)
     fieldManager.requireField<Residual>(**it);
 
@@ -633,20 +633,20 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   // currentCoords field
   Teuchos::ParameterList ccPL;
   ccPL.set<std::string>("Evaluated Field Name", "Current Coordinates");
-  ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
-  ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  ccPL.set<ArrayRCP<ScalarT>>("Field Values", currentCoords);
+  ccPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->node_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldCurrentCoords =
+  RCP<LCM::SetField<Residual, Traits>> setFieldCurrentCoords =
       rcp(new LCM::SetField<Residual, Traits>(ccPL));
 
   //--------------------------------------------------------------------------
   // intrepid basis and cubature
-  RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
+  RCP<Intrepid::Basis<RealType, FC>> intrepidBasis;
   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FC>());
   RCP<CT> cellType =
-      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP<Intrepid::Cubature<RealType> > cubature =
+  RCP<Intrepid::Cubature<RealType>> cubature =
       cubFactory.create(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -654,10 +654,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   Teuchos::ParameterList svjPL;
   svjPL.set<std::string>("Vector Name", "Current Coordinates");
   svjPL.set<std::string>("Vector Jump Name", "Vector Jump");
-  svjPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-  svjPL.set<RCP<Intrepid::Basis<RealType, FC> > >("Intrepid Basis",
+  svjPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  svjPL.set<RCP<Intrepid::Basis<RealType, FC>> >("Intrepid Basis",
       intrepidBasis);
-  RCP<LCM::SurfaceVectorJump<Residual, Traits> > svj =
+  RCP<LCM::SurfaceVectorJump<Residual, Traits>> svj =
       rcp(new LCM::SurfaceVectorJump<Residual, Traits>(svjPL, dl));
 
   // Instantiate a field manager.
@@ -668,7 +668,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   fieldManager.registerEvaluator<Residual>(svj);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       svj->evaluatedFields().begin();
       it != svj->evaluatedFields().end(); it++)
     fieldManager.requireField<Residual>(**it);
@@ -760,10 +760,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // reference dual basis
   Teuchos::ParameterList rdbPL;
   rdbPL.set<std::string>("Evaluated Field Name", "Reference Dual Basis");
-  rdbPL.set<ArrayRCP<ScalarT> >("Field Values", referenceDualBasis);
-  rdbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  rdbPL.set<ArrayRCP<ScalarT>>("Field Values", referenceDualBasis);
+  rdbPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->qp_tensor);
-  RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis =
+  RCP<LCM::SetField<Residual, Traits>> setFieldRefDualBasis =
       rcp(new LCM::SetField<Residual, Traits>(rdbPL));
 
   //----------------------------------------------------------------------------
@@ -777,9 +777,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // reference normal
   Teuchos::ParameterList rnPL;
   rnPL.set<std::string>("Evaluated Field Name", "Reference Normal");
-  rnPL.set<ArrayRCP<ScalarT> >("Field Values", refNormal);
-  rnPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal =
+  rnPL.set<ArrayRCP<ScalarT>>("Field Values", refNormal);
+  rnPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout", dl->qp_vector);
+  RCP<LCM::SetField<Residual, Traits>> setFieldRefNormal =
       rcp(new LCM::SetField<Residual, Traits>(rnPL));
 
   //--------------------------------------------------------------------------
@@ -793,10 +793,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // nodal scalar field
   Teuchos::ParameterList nsvPL;
   nsvPL.set<std::string>("Evaluated Field Name", "Nodal Scalar");
-  nsvPL.set<ArrayRCP<ScalarT> >("Field Values", nodalScalar);
-  nsvPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  nsvPL.set<ArrayRCP<ScalarT>>("Field Values", nodalScalar);
+  nsvPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->node_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldNodalScalar =
+  RCP<LCM::SetField<Residual, Traits>> setFieldNodalScalar =
       rcp(new LCM::SetField<Residual, Traits>(nsvPL));
 
   //--------------------------------------------------------------------------
@@ -809,19 +809,19 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   // jump
   Teuchos::ParameterList jPL;
   jPL.set<std::string>("Evaluated Field Name", "Jump");
-  jPL.set<ArrayRCP<ScalarT> >("Field Values", jump);
-  jPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldJump =
+  jPL.set<ArrayRCP<ScalarT>>("Field Values", jump);
+  jPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout", dl->qp_scalar);
+  RCP<LCM::SetField<Residual, Traits>> setFieldJump =
       rcp(new LCM::SetField<Residual, Traits>(jPL));
 
   //--------------------------------------------------------------------------
   // intrepid basis and cubature
-  RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
+  RCP<Intrepid::Basis<RealType, FC>> intrepidBasis;
   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FC>());
   RCP<CT> cellType =
-      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP<Intrepid::Cubature<RealType> > cubature =
+  RCP<Intrepid::Cubature<RealType>> cubature =
       cubFactory.create(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -832,11 +832,11 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   ssgPL.set<std::string>("Scalar Jump Name", "Jump");
   ssgPL.set<std::string>("Nodal Scalar Name", "Nodal Scalar");
   ssgPL.set<std::string>("Surface Scalar Gradient Name", "Surface Scalar Gradient");
-  ssgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-  ssgPL.set<RCP<Intrepid::Basis<RealType, FC> > >
+  ssgPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  ssgPL.set<RCP<Intrepid::Basis<RealType, FC>> >
   ("Intrepid Basis", intrepidBasis);
   ssgPL.set<double>("thickness", 0.1);
-  RCP<LCM::SurfaceScalarGradient<Residual, Traits> > ssg =
+  RCP<LCM::SurfaceScalarGradient<Residual, Traits>> ssg =
       rcp(new LCM::SurfaceScalarGradient<Residual, Traits>(ssgPL, dl));
 
   // instantiate a field manager.
@@ -850,7 +850,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   fieldManager.registerEvaluator<Residual>(ssg);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       ssg->evaluatedFields().begin();
       it != ssg->evaluatedFields().end(); it++)
     fieldManager.requireField<Residual>(**it);
@@ -977,9 +977,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // current basis
   Teuchos::ParameterList cbPL;
   cbPL.set<std::string>("Evaluated Field Name", "Current Basis");
-  cbPL.set<ArrayRCP<ScalarT> >("Field Values", currentBasis);
-  cbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-  RCP<LCM::SetField<Residual, Traits> > setFieldCurBasis =
+  cbPL.set<ArrayRCP<ScalarT>>("Field Values", currentBasis);
+  cbPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout", dl->qp_tensor);
+  RCP<LCM::SetField<Residual, Traits>> setFieldCurBasis =
       rcp(new LCM::SetField<Residual, Traits>(cbPL));
 
   //--------------------------------------------------------------------------
@@ -1004,10 +1004,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // reference dual basis
   Teuchos::ParameterList rdbPL;
   rdbPL.set<std::string>("Evaluated Field Name", "Reference Dual Basis");
-  rdbPL.set<ArrayRCP<ScalarT> >("Field Values", refDualBasis);
-  rdbPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  rdbPL.set<ArrayRCP<ScalarT>>("Field Values", refDualBasis);
+  rdbPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->qp_tensor);
-  RCP<LCM::SetField<Residual, Traits> > setFieldRefDualBasis =
+  RCP<LCM::SetField<Residual, Traits>> setFieldRefDualBasis =
       rcp(new LCM::SetField<Residual, Traits>(rdbPL));
 
   //-----------------------------------------------------------------------------------
@@ -1021,9 +1021,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // reference normal
   Teuchos::ParameterList rnPL;
   rnPL.set<std::string>("Evaluated Field Name", "Reference Normal");
-  rnPL.set<ArrayRCP<ScalarT> >("Field Values", refNormal);
-  rnPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldRefNormal =
+  rnPL.set<ArrayRCP<ScalarT>>("Field Values", refNormal);
+  rnPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout", dl->qp_vector);
+  RCP<LCM::SetField<Residual, Traits>> setFieldRefNormal =
       rcp(new LCM::SetField<Residual, Traits>(rnPL));
 
   //--------------------------------------------------------------------------
@@ -1037,9 +1037,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   //jump
   Teuchos::ParameterList jPL;
   jPL.set<std::string>("Evaluated Field Name", "Jump");
-  jPL.set<ArrayRCP<ScalarT> >("Field Values", jump);
-  jPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldJump =
+  jPL.set<ArrayRCP<ScalarT>>("Field Values", jump);
+  jPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout", dl->qp_vector);
+  RCP<LCM::SetField<Residual, Traits>> setFieldJump =
       rcp(new LCM::SetField<Residual, Traits>(jPL));
 
   //--------------------------------------------------------------------------
@@ -1051,19 +1051,19 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   // weights
   Teuchos::ParameterList wPL;
   wPL.set<std::string>("Evaluated Field Name", "Weights");
-  wPL.set<ArrayRCP<ScalarT> >("Field Values", weights);
-  wPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldWeights =
+  wPL.set<ArrayRCP<ScalarT>>("Field Values", weights);
+  wPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout", dl->qp_scalar);
+  RCP<LCM::SetField<Residual, Traits>> setFieldWeights =
       rcp(new LCM::SetField<Residual, Traits>(wPL));
 
   //--------------------------------------------------------------------------
   // intrepid basis and cubature
-  RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
+  RCP<Intrepid::Basis<RealType, FC>> intrepidBasis;
   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FC>());
   RCP<CT> cellType =
-      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP<Intrepid::Cubature<RealType> > cubature =
+  RCP<Intrepid::Cubature<RealType>> cubature =
       cubFactory.create(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -1076,9 +1076,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   svgPL.set<std::string>("Weights Name", "Weights");
   svgPL.set<std::string>("Surface Vector Gradient Name", "F");
   svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
-  svgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+  svgPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
   svgPL.set<double>("thickness", 0.1);
-  RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg =
+  RCP<LCM::SurfaceVectorGradient<Residual, Traits>> svg =
       rcp(new LCM::SurfaceVectorGradient<Residual, Traits>(svgPL, dl));
 
   // Instantiate a field manager.
@@ -1093,7 +1093,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   fieldManager.registerEvaluator<Residual>(svg);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       svg->evaluatedFields().begin();
       it != svg->evaluatedFields().end(); it++)
     fieldManager.requireField<Residual>(**it);
@@ -1168,9 +1168,9 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   // cohesiveTraction field
   Teuchos::ParameterList ctPL("SetFieldCohesiveTraction");
   ctPL.set<std::string>("Evaluated Field Name", "Cohesive Traction");
-  ctPL.set<ArrayRCP<ScalarT> >("Field Values", cohesiveTraction);
-  ctPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldCohesiveTraction =
+  ctPL.set<ArrayRCP<ScalarT>>("Field Values", cohesiveTraction);
+  ctPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout", dl->qp_vector);
+  RCP<LCM::SetField<Residual, Traits>> setFieldCohesiveTraction =
       rcp(new LCM::SetField<Residual, Traits>(ctPL));
 
   //--------------------------------------------------------------------------
@@ -1184,20 +1184,20 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   // reference area field
   Teuchos::ParameterList refAPL;
   refAPL.set<std::string>("Evaluated Field Name", "Reference Area");
-  refAPL.set<ArrayRCP<ScalarT> >("Field Values", refArea);
-  refAPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  refAPL.set<ArrayRCP<ScalarT>>("Field Values", refArea);
+  refAPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->qp_scalar);
-  RCP<LCM::SetField<Residual, Traits> > setFieldRefArea =
+  RCP<LCM::SetField<Residual, Traits>> setFieldRefArea =
       rcp(new LCM::SetField<Residual, Traits>(refAPL));
 
   //----------------------------------------------------------------------------
   // intrepid basis and cubature
-  RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
+  RCP<Intrepid::Basis<RealType, FC>> intrepidBasis;
   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FC>());
   RCP<CT> cellType =
-      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, 3);
+  RCP<Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, 3);
 
   //----------------------------------------------------------------------------
   // SurfaceCohesiveResidual evaluator
@@ -1205,10 +1205,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   scrPL.set<std::string>("Reference Area Name", "Reference Area");
   scrPL.set<std::string>("Cohesive Traction Name", "Cohesive Traction");
   scrPL.set<std::string>("Surface Cohesive Residual Name", "Force");
-  scrPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-  scrPL.set<RCP<Intrepid::Basis<RealType, FC> > >("Intrepid Basis",
+  scrPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  scrPL.set<RCP<Intrepid::Basis<RealType, FC>> >("Intrepid Basis",
       intrepidBasis);
-  RCP<LCM::SurfaceCohesiveResidual<Residual, Traits> > scr =
+  RCP<LCM::SurfaceCohesiveResidual<Residual, Traits>> scr =
       rcp(new LCM::SurfaceCohesiveResidual<Residual, Traits>(scrPL, dl));
 
   // Instantiate a field manager.
@@ -1220,7 +1220,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   fieldManager.registerEvaluator<Residual>(scr);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       scr->evaluatedFields().begin();
       it != scr->evaluatedFields().end(); it++)
     fieldManager.requireField<Residual>(**it);
@@ -1328,10 +1328,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   // reference coordiantes field
   Teuchos::ParameterList rcPL;
   rcPL.set<std::string>("Evaluated Field Name", "Reference Coordinates");
-  rcPL.set<ArrayRCP<ScalarT> >("Field Values", referenceCoords);
-  rcPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  rcPL.set<ArrayRCP<ScalarT>>("Field Values", referenceCoords);
+  rcPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->vertices_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldRefCoords =
+  RCP<LCM::SetField<Residual, Traits>> setFieldRefCoords =
       rcp(new LCM::SetField<Residual, Traits>(rcPL));
 
   //----------------------------------------------------------------------------
@@ -1374,20 +1374,20 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   // reference coordiantes field
   Teuchos::ParameterList ccPL;
   ccPL.set<std::string>("Evaluated Field Name", "Current Coordinates");
-  ccPL.set<ArrayRCP<ScalarT> >("Field Values", currentCoords);
-  ccPL.set<RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+  ccPL.set<ArrayRCP<ScalarT>>("Field Values", currentCoords);
+  ccPL.set<RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
       dl->node_vector);
-  RCP<LCM::SetField<Residual, Traits> > setFieldCurCoords =
+  RCP<LCM::SetField<Residual, Traits>> setFieldCurCoords =
       rcp(new LCM::SetField<Residual, Traits>(ccPL));
 
   //----------------------------------------------------------------------------
   // intrepid basis and cubature
-  RCP<Intrepid::Basis<RealType, FC> > intrepidBasis;
+  RCP<Intrepid::Basis<RealType, FC>> intrepidBasis;
   intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FC>());
   RCP<CT> cellType =
-      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4> >()));
+      rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP<Intrepid::Cubature<RealType> > cubature =
+  RCP<Intrepid::Cubature<RealType>> cubature =
       cubFactory.create(*cellType, 3);
 
   Intrepid::FieldContainer<double> refPoints(numQPts, 2);
@@ -1404,10 +1404,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
   sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
   sbPL.set<std::string>("Reference Area Name", "Reference Area");
-  sbPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-  sbPL.set<RCP<Intrepid::Basis<RealType, FC> > >
+  sbPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  sbPL.set<RCP<Intrepid::Basis<RealType, FC>> >
   ("Intrepid Basis", intrepidBasis);
-  RCP<LCM::SurfaceBasis<Residual, Traits> > sb =
+  RCP<LCM::SurfaceBasis<Residual, Traits>> sb =
       rcp(new LCM::SurfaceBasis<Residual, Traits>(sbPL, dl));
 
   //----------------------------------------------------------------------------
@@ -1415,10 +1415,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   Teuchos::ParameterList svjP;
   svjP.set<std::string>("Vector Name", "Current Coordinates");
   svjP.set<std::string>("Vector Jump Name", "Vector Jump");
-  svjP.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-  svjP.set<RCP<Intrepid::Basis<RealType, FC> > >
+  svjP.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  svjP.set<RCP<Intrepid::Basis<RealType, FC>> >
   ("Intrepid Basis", intrepidBasis);
-  RCP<LCM::SurfaceVectorJump<Residual, Traits> > svj =
+  RCP<LCM::SurfaceVectorJump<Residual, Traits>> svj =
       rcp(new LCM::SurfaceVectorJump<Residual, Traits>(svjP, dl));
 
   //----------------------------------------------------------------------------
@@ -1431,15 +1431,15 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   svgPL.set<std::string>("Weights Name", "Reference Area");
   svgPL.set<std::string>("Surface Vector Gradient Name", "F");
   svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
-  svgPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+  svgPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
   svgPL.set<double>("thickness", thickness);
-  RCP<LCM::SurfaceVectorGradient<Residual, Traits> > svg =
+  RCP<LCM::SurfaceVectorGradient<Residual, Traits>> svg =
       rcp(new LCM::SurfaceVectorGradient<Residual, Traits>(svgPL, dl));
 
   //----------------------------------------------------------------------------
   // create field name strings
   LCM::FieldNameMap field_name_map(false);
-  Teuchos::RCP<std::map<std::string, std::string> > fnm =
+  Teuchos::RCP<std::map<std::string, std::string>> fnm =
     field_name_map.getMap();
 
   //----------------------------------------------------------------------------
@@ -1454,18 +1454,18 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   prList.set("Poissons Ratio Type", "Constant");
   prList.set("Value", 0.0);
   Teuchos::ParameterList cmpPL;
-  paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >
+  paramList.set<Teuchos::RCP<std::map<std::string, std::string>> >
     ("Name Map", fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   std::cout << paramList;
-  RCP<LCM::ConstitutiveModelParameters<Residual, Traits> > CMP =
+  RCP<LCM::ConstitutiveModelParameters<Residual, Traits>> CMP =
       rcp(new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL, dl));
 
   //----------------------------------------------------------------------------
   // Constitutive Model Interface Evaluator
   Teuchos::ParameterList cmiPL;
   cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
-  Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits> > CMI =
+  Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits>> CMI =
       Teuchos::rcp(
           new LCM::ConstitutiveModelInterface<Residual, Traits>(cmiPL, dl));
 
@@ -1480,10 +1480,10 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   svrPL.set<std::string>("Reference Normal Name", "Reference Normal");
   svrPL.set<std::string>("Reference Area Name", "Reference Area");
   svrPL.set<std::string>("Surface Vector Residual Name", "Force");
-  svrPL.set<RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
-  svrPL.set<RCP<Intrepid::Basis<RealType, FC> > >
+  svrPL.set<RCP<Intrepid::Cubature<RealType>> >("Cubature", cubature);
+  svrPL.set<RCP<Intrepid::Basis<RealType, FC>> >
   ("Intrepid Basis", intrepidBasis);
-  RCP<LCM::SurfaceVectorResidual<Residual, Traits> > svr =
+  RCP<LCM::SurfaceVectorResidual<Residual, Traits>> svr =
       rcp(new LCM::SurfaceVectorResidual<Residual, Traits>(svrPL, dl));
 
   // Instantiate a field manager.
@@ -1500,7 +1500,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   fieldManager.registerEvaluator<Residual>(svr);
 
   // Set the evaluated fields as required fields
-  for (std::vector<RCP<PHX::FieldTag> >::const_iterator it =
+  for (std::vector<RCP<PHX::FieldTag>>::const_iterator it =
       svr->evaluatedFields().begin();
       it != svr->evaluatedFields().end(); it++)
     fieldManager.requireField<Residual>(**it);
@@ -1611,7 +1611,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
 
   //----------------------------------------------------------------------------
   // Record the expected current basis vectors
-  std::vector<Tensor<ScalarT> > expectedg(numQPts);
+  std::vector<Tensor<ScalarT>> expectedg(numQPts);
   expectedg[0] = Tensor<ScalarT>(0.0, 0.0, 0.5,
       0.5, 0.0, 0.0,
       0.0, 1.0, 0.0);
@@ -1625,7 +1625,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
 
   //----------------------------------------------------------------------------
   // Record the expected ref dual basis vectors
-  std::vector<Tensor<ScalarT> > expectedDG(numQPts);
+  std::vector<Tensor<ScalarT>> expectedDG(numQPts);
   expectedDG[0] = Tensor<ScalarT>(0.0, 0.0, 2.0,
       2.0, 0.0, 0.0,
       0.0, 1.0, 0.0);
@@ -1640,7 +1640,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
 
   //----------------------------------------------------------------------------
   // Record the expected reference Normal
-  std::vector<Vector<ScalarT> > expectedN(numQPts);
+  std::vector<Vector<ScalarT>> expectedN(numQPts);
   expectedN[0] = Vector<ScalarT>(0.0, 1.0, 0.0);
 
   // Check the reference normal
@@ -1662,7 +1662,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
 
   //----------------------------------------------------------------------------
   // Record the expected deformation gradient
-  std::vector<Tensor<ScalarT> > expectedF(numQPts);
+  std::vector<Tensor<ScalarT>> expectedF(numQPts);
   expectedF[0] = Tensor<ScalarT>(1.0, 0.0, 0.0,
       0.0, 2.0, 0.0,
       0.0, 0.0, 1.0);
@@ -1676,7 +1676,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
 
   //----------------------------------------------------------------------------
   // Record the expected stress
-  std::vector<Tensor<ScalarT> > expectedStress(numQPts);
+  std::vector<Tensor<ScalarT>> expectedStress(numQPts);
   expectedStress[0] = Tensor<ScalarT>(0.0, 0.0, 0.0,
       0.0, 300000.0, 0.0,
       0.0, 0.0, 0.0);
@@ -1692,7 +1692,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   //----------------------------------------------------------------------------
   // Record the expected nodal forces, which will be used to check the
   // computed force
-  std::vector<Vector<ScalarT> > expectedForce(numNodes);
+  std::vector<Vector<ScalarT>> expectedForce(numNodes);
   expectedForce[0] = Vector<ScalarT>(0.0, -75000., 0.0);
   expectedForce[1] = Vector<ScalarT>(0.0, -75000., 0.0);
   expectedForce[2] = Vector<ScalarT>(0.0, -75000., 0.0);
