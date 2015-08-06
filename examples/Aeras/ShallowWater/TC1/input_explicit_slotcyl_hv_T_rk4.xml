@@ -60,30 +60,61 @@
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
   </ParameterList>
   <ParameterList name="Piro">
-     <Parameter name="Solver Type" type="string" value="Rythmos"/>
-    <ParameterList name="Rythmos">
-      <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="864"/>
-      <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
-      <!--Parameter name="Final Time" type="double" value="86400"/-->
-      <!-- change to 12*24*3600 to get full 12 days -->
-      <!--Parameter name="Max State Error" type="double" value="0.05"/>
-      <Parameter name="Alpha"           type="double" value="0.0"/-->
-      <ParameterList name="Rythmos Stepper">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="low"/>
-	</ParameterList>
+      <Parameter name="Solver Type" type="string" value="Rythmos"/>
+    <ParameterList name="Rythmos Solver">
+
+      <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
+      <Parameter name="Lump Mass Matrix" type="bool" value="false"/>
+      
+      <ParameterList name="NonLinear Solver">
+         <ParameterList name="VerboseObject">
+            <Parameter name="Verbosity Level" type="string" value="low"/>
+         </ParameterList>
       </ParameterList>
-      <!--IKT: The following can be changed to Forward Euler, Explicit RK, etc.-->
-      <Parameter name="Stepper Type" type="string" value="Backward Euler"/>
-      <ParameterList name="Rythmos Integration Control">
-        <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="5"/>
-      </ParameterList>
-      <ParameterList name="Rythmos Integrator">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="none"/>
-	</ParameterList>
+      <ParameterList name="Rythmos">
+        
+         <ParameterList name="Integrator Settings">
+           <Parameter name="Final Time" type="double" value="86"/>
+           <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
+           <!--Parameter name="Final Time" type="double" value="86400"/-->
+           <!-- change to 12*24*3600 to get full 12 days -->
+           <ParameterList name="Integrator Selection">
+	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
+	     <ParameterList name="Default Integrator">
+                <ParameterList name="VerboseObject">
+                  <Parameter name="Verbosity Level" type="string" value="low"/>
+                </ParameterList>
+             </ParameterList>
+           </ParameterList>
+         </ParameterList>
+         
+         <ParameterList name="Stepper Settings">
+           <ParameterList name="Stepper Selection">
+              <!--IKT: the following can be changed to Forward Euler for example.  Implicit schemes will not work here 
+                   due to Thyra bug.-->
+              <Parameter name="Stepper Type" type="string" value="Explicit RK"/>
+           </ParameterList>
+           
+           <ParameterList name="Runge Kutta Butcher Tableau Selection">
+              <!--IKT: the following can be used to specify different type of RK4.  See around p. 55 of Rythmos manual.-->
+              <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="Explicit 2 Stage 2nd order by Runge"/-->
+              <Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="Explicit 4 Stage"/>
+           </ParameterList>
+         </ParameterList>
+
+         <ParameterList name="Integration Control Strategy Selection">
+           <Parameter name="Integration Control Strategy Type" type="string"
+                 value="Simple Integration Control Strategy"/>
+           <ParameterList name="Simple Integration Control Strategy">
+             <Parameter name="Take Variable Steps" type="bool" value="false"/>
+             <Parameter name="Fixed dt" type="double" value="10"/>
+             <ParameterList name="VerboseObject">
+               <Parameter name="Verbosity Level" type="string" value="low"/>
+             </ParameterList>
+           </ParameterList>
+         </ParameterList>
       </ParameterList>
       <ParameterList name="Stratimikos">
 	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
