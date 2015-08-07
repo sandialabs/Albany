@@ -26,7 +26,7 @@ PUMIVtk(const Teuchos::RCP<APFMeshStruct>& meshStruct,
     if (commT->getRank() == 0) { // Only PE 0 writes the collection file
       str.replace(found, 3, "pvd");
       const char* cstr = str.c_str();
-      vtu_collection_file.open(cstr, std::ios::out | std::ios::in);
+      vtu_collection_file.open(cstr, std::ios::out);
       vtu_collection_file << "<\?xml version=\"1.0\"\?>" << std::endl
                       << "  <VTKFile type=\"Collection\" version=\"0.1\">" << std::endl
                       << "    <Collection>" << std::endl;
