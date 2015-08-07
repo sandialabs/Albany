@@ -4,14 +4,26 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_MiniNonlinearSolver_h)
-#define LCM_MiniNonlinearSolver_h
+#if !defined(Intrepid_NonlinearSolver_h)
+#define Intrepid_NonlinearSolver_h
 
 #include <Intrepid_MiniTensor.h>
 
 namespace Intrepid
 {
 
+template <typename Residual, typename T, Index N>
+class NonlinearSolver
+{
+public:
+  using FAD = Sacado::Fad::DFad<T>;
+
+  Vector<T, N>
+  solve(Residual & residual, Vector<T, N> const & initial_guess);
+};
+
 } // namespace Intrepid
 
-#endif // LCM_MiniNonlinearSolver_h
+#include "MiniNonlinearSolver.t.h"
+
+#endif // Intrepid_NonlinearSolver_h
