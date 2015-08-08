@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ALBANY_MECHADJRESPONSE_HPP
-#define ALBANY_MECHADJRESPONSE_HPP
+#ifndef GOAL_ADJOINTRESPONSE_HPP
+#define GOAL_ADJOINTRESPONSE_HPP
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
