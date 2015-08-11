@@ -7,6 +7,9 @@
 #ifndef PARALLEL_SETFIELD_HPP
 #define PARALLEL_SETFIELD_HPP
 
+// Currently disabled until the PHX::MDField interface is fixed
+#if 0
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -49,4 +52,5 @@ private:
 };
 }
 
+#endif
 #endif

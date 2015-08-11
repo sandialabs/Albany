@@ -41,7 +41,7 @@ computeState(
   
   // Data may be set using CUDA UVM so we need to synchronize
   //transfer_time->start();
-  //Kokkos::fence();
+  Kokkos::fence();
   util::TimeGuard total_time_guard( kernel_time );
   //transfer_time->stop();
   Kokkos::parallel_for(workset.numCells, kern);

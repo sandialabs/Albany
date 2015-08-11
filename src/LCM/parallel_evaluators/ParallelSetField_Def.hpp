@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+// Currently disabled until the PHX::MDField interface is fixed
+#if 0
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -103,3 +106,4 @@ evaluateFields(typename Traits::EvalData workset)
 }
 }
 
+#endif
