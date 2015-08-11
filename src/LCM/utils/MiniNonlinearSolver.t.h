@@ -4,64 +4,148 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(Intrepid_NonlinearSolver_t_h)
-#define Intrepid_NonlinearSolver_t_h
-
-namespace Intrepid
+namespace LCM
 {
 
-template <typename Residual, typename T, Index N>
-Vector<T, N>
-NonlinearSolver<Residual, T, N>::solve(
-    Residual & residual,
-    Vector<T, N> const & initial_guess)
+template<typename EvalT, typename Traits, Intrepid::Index N>
+NewtonSolver_Base<EvalT, Traits, N>::NewtonSolver_Base()
 {
-  Index const
-  dimension = initial_guess.get_dimension();
-
-  Vector<T, N>
-  X = initial_guess;
-
-  Vector<FAD, N>
-  XD(dimension);
-
-  bool
-  converged = false;
-
-  T const
-  tolerance = 1.0e-10;
-
-  while (converged == false) {
-
-    for (Index i{0}; i < dimension; ++i) {
-      XD(i) = FAD(dimension, i, X(i));
-    }
-
-    Vector<FAD, N> const
-    RD = residual.compute(XD);
-
-    Vector<T, N> const
-    R = Sacado::Value<Vector<T, N>>::eval(RD);
-
-    Tensor<T, N>
-    dRdX(dimension);
-
-    for (Index i{0}; i < dimension; ++i) {
-      for (Index j{0}; j < dimension; ++j) {
-        dRdX(i, j) = RD(i).dx(j);
-      }
-    }
-
-    Vector<T, N> const
-    dX = - solve(dRdX, R);
-
-    X += dX;
-
-  }
-
-  return initial_guess;
+  return;
 }
 
-} // namespace Intrepid
+//
+// Specializations
+//
 
-#endif // Intrepid_NonlinearSolver_t_h
+//
+// Residual
+//
+template<typename Traits, Intrepid::Index N>
+NewtonSolver<PHAL::AlbanyTraits::Residual, Traits, N>::NewtonSolver() :
+    NewtonSolver_Base<PHAL::AlbanyTraits::Residual, Traits, N>()
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+inline
+NewtonSolver<PHAL::AlbanyTraits::Residual, Traits, N>::
+solve(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+inline
+NewtonSolver<PHAL::AlbanyTraits::Residual, Traits, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+//
+// Jacobian
+//
+template<typename Traits, Intrepid::Index N>
+NewtonSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::NewtonSolver() :
+    NewtonSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits, N>()
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+NewtonSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::
+solve(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+NewtonSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+//
+// Tangent
+//
+template<typename Traits, Intrepid::Index N>
+NewtonSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::NewtonSolver() :
+    NewtonSolver_Base<PHAL::AlbanyTraits::Tangent, Traits, N>()
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+NewtonSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::
+solve(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+NewtonSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+//
+// DistParamDeriv
+//
+template<typename Traits, Intrepid::Index N>
+NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>
+::NewtonSolver()
+: NewtonSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>()
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>::
+solve(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+template<typename Traits, Intrepid::Index N>
+void
+NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
+  return;
+}
+
+} // namespace LCM

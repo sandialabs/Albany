@@ -6,7 +6,5 @@
 
 #include "MiniNonlinearSolver.h"
 
-namespace Intrepid
-{
-
-} // namespace Intrepid
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::NewtonSolver_Base)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::NewtonSolver)
