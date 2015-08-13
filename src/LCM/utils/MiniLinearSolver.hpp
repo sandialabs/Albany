@@ -134,6 +134,77 @@ public:
       Intrepid::Vector<ScalarT, N> & x);
 };
 
+#ifdef ALBANY_SG
+//
+// SGResidual
+//
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::SGResidual::ScalarT;
+
+  MiniLinearSolver();
+
+  void solve(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+
+//
+// SGJacobian
+//
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::SGJacobian::ScalarT;
+
+  MiniLinearSolver();
+
+  void solve(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+
+//
+// SGTangent
+//
+template<typename Traits, Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::SGTangent::ScalarT;
+
+  MiniLinearSolver();
+
+  void solve(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+#endif
+
 #ifdef ALBANY_ENSEMBLE
 //
 // MPResidual
