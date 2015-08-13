@@ -28,12 +28,12 @@ NewtonSolver<PHAL::AlbanyTraits::Residual, Traits, N>::NewtonSolver() :
 }
 
 template<typename Traits, Intrepid::Index N>
+template <typename Residual>
 void
 inline
 NewtonSolver<PHAL::AlbanyTraits::Residual, Traits, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
+    Residual const & residual,
     Intrepid::Vector<ScalarT, N> & x)
 {
   return;
@@ -62,11 +62,12 @@ NewtonSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::NewtonSolver() :
 }
 
 template<typename Traits, Intrepid::Index N>
+template <typename Residual>
 void
+inline
 NewtonSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
+    Residual const & residual,
     Intrepid::Vector<ScalarT, N> & x)
 {
   return;
@@ -94,11 +95,12 @@ NewtonSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::NewtonSolver() :
 }
 
 template<typename Traits, Intrepid::Index N>
+template <typename Residual>
 void
+inline
 NewtonSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
+    Residual const & residual,
     Intrepid::Vector<ScalarT, N> & x)
 {
   return;
@@ -127,11 +129,12 @@ NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>
 }
 
 template<typename Traits, Intrepid::Index N>
+template <typename Residual>
 void
+inline
 NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
+    Residual const & residual,
     Intrepid::Vector<ScalarT, N> & x)
 {
   return;

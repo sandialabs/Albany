@@ -18,7 +18,7 @@ namespace LCM
 /// To use the solver framework, derive from this class and perform
 /// residual computations in the compute method.
 ///
-template <typename T, Intrepid::Index N  = Intrepid::DYNAMIC>
+template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
 class Residual_Base
 {
 public:
@@ -41,9 +41,9 @@ public:
 
   NewtonSolver_Base();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -117,9 +117,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -140,9 +140,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -163,9 +163,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -186,9 +186,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -199,21 +199,6 @@ public:
 
 
 } //namesapce LCM
-
-namespace Intrepid
-{
-
-template <typename Residual, typename T, Index N>
-class NonlinearSolver
-{
-public:
-  using FAD = Sacado::Fad::DFad<T>;
-
-  Vector<T, N>
-  solve(Residual & residual, Vector<T, N> const & initial_guess);
-};
-
-} // namespace Intrepid
 
 #include "MiniNonlinearSolver.t.h"
 
