@@ -13,9 +13,7 @@ namespace
 
 TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
 {
-  using Traits = PHAL::AlbanyTraits;
   using EvalT = PHAL::AlbanyTraits::Residual;
-  using ScalarT =  PHAL::AlbanyTraits::Residual::ScalarT;
 
   Intrepid::Index const
   dimension{3};
@@ -35,7 +33,7 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
   Intrepid::Vector<RealType, dimension>
   x(0.0, 0.0, 0.0);
 
-  LCM::MiniLinearSolver<EvalT, Traits, dimension>
+  LCM::MiniLinearSolver<EvalT, dimension>
   solver;
 
   solver.solve(A, b, x);

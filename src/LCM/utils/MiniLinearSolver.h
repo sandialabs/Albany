@@ -16,7 +16,7 @@ namespace LCM
 ///
 /// Mini Linear Solver Base class
 ///
-template<typename EvalT, typename Traits, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename EvalT, Intrepid::Index N = Intrepid::DYNAMIC>
 class MiniLinearSolver_Base
 {
 public:
@@ -39,15 +39,15 @@ public:
 // Specializations
 //
 
-template<typename EvalT, typename Traits, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename EvalT, Intrepid::Index N = Intrepid::DYNAMIC>
 class MiniLinearSolver;
 
 //
 // Residual
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Residual, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::Residual::ScalarT;
@@ -66,9 +66,9 @@ public:
 //
 // Jacobian
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::Jacobian::ScalarT;
@@ -87,9 +87,9 @@ public:
 //
 // Tangent
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::Tangent::ScalarT;
@@ -108,9 +108,9 @@ public:
 //
 // Distribured Parameter Derivative
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
@@ -130,9 +130,9 @@ public:
 //
 // SGResidual
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::SGResidual::ScalarT;
@@ -151,9 +151,9 @@ public:
 //
 // SGJacobian
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::SGJacobian::ScalarT;
@@ -172,9 +172,9 @@ public:
 //
 // SGTangent
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::SGTangent::ScalarT;
@@ -195,9 +195,9 @@ public:
 //
 // MPResidual
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPResidual, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPResidual, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::MPResidual::ScalarT;
@@ -216,9 +216,9 @@ public:
 //
 // MPJacobian
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPJacobian, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPJacobian, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::MPJacobian::ScalarT;
@@ -237,9 +237,9 @@ public:
 //
 // MPTangent
 //
-template<typename Traits, Intrepid::Index N>
-class MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits, N> :
-    public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPTangent, Traits, N>
+template<Intrepid::Index N>
+class MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, N> :
+    public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPTangent, N>
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::MPTangent::ScalarT;
