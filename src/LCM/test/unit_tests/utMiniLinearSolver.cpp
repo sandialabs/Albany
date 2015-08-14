@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include <Teuchos_UnitTestHarness.hpp>
-#include <MiniLinearSolver.hpp>
+#include <MiniLinearSolver.h>
 #include <Sacado.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 

@@ -254,7 +254,7 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
   add_executable(
     utMiniLinearSolver
     test/unit_tests/StandardUnitTestMain.cpp
-    test/unit_tests/utMiniLinearSolver.cpp
+    test/unit_tests/utMiniLinearSolver.cc
     )
 
   add_executable(
