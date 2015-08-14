@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_MiniLinearSolver_hpp)
-#define LCM_MiniLinearSolver_hpp
+#if !defined(LCM_MiniLinearSolver_h)
+#define LCM_MiniLinearSolver_h
 
 #include "PHAL_AlbanyTraits.hpp"
 #include <Intrepid_MiniTensor.h>
@@ -258,6 +258,6 @@ public:
 
 } // namespace LCM
 
-#include "MiniLinearSolver_Def.hpp"
+#include "MiniLinearSolver.t.h"
 
-#endif // LCM_MiniLinearSolver_hpp
+#endif // LCM_MiniLinearSolver_h

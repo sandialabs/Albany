@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "MiniLinearSolver.hpp"
+#include "MiniLinearSolver.h"
 
 // No ETI. Number of template parameters different from what this macro
 // expects.
