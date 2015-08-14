@@ -50,6 +50,9 @@ solve(
     Intrepid::Vector<ScalarT, N> const & b,
     Intrepid::Vector<ScalarT, N> & x)
 {
+  //
+  // First deal with values
+  //
   auto const
   local_dim = b.get_dimension();
 
@@ -74,20 +77,9 @@ solve(
     x(i).val() = Dx(i);
   }
 
-  return;
-}
-
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, N>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  local_dim = b.get_dimension();
-
+  //
+  // Then deal with derivatives
+  //
   auto const
   global_dim = b[0].size();
 
@@ -125,6 +117,17 @@ computeFadInfo(
     }
   }
 
+  return;
+}
+
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
   return;
 }
 
@@ -139,6 +142,9 @@ solve(
     Intrepid::Vector<ScalarT, N> const & b,
     Intrepid::Vector<ScalarT, N> & x)
 {
+  //
+  // First deal with values
+  //
   auto const
   local_dim = b.get_dimension();
 
@@ -163,20 +169,9 @@ solve(
     x(i).val() = Dx(i);
   }
 
-  return;
-}
-
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::Tangent, N>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  local_dim = b.get_dimension();
-
+  //
+  // Then deal with derivatives
+  //
   auto const
   global_dim = b[0].size();
 
@@ -214,6 +209,17 @@ computeFadInfo(
     }
   }
 
+  return;
+}
+
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::Tangent, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
   return;
 }
 
@@ -228,6 +234,9 @@ solve(
     Intrepid::Vector<ScalarT, N> const & b,
     Intrepid::Vector<ScalarT, N> & x)
 {
+  //
+  // First deal with values
+  //
   auto const
   local_dim = b.get_dimension();
 
@@ -252,20 +261,9 @@ solve(
     x(i).val() = Dx(i);
   }
 
-  return;
-}
-
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  local_dim = b.get_dimension();
-
+  //
+  // Then deal with derivatives
+  //
   auto const
   global_dim = b[0].size();
 
@@ -303,6 +301,17 @@ computeFadInfo(
     }
   }
 
+  return;
+}
+
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
   return;
 }
 
@@ -346,6 +355,9 @@ solve(
     Intrepid::Vector<ScalarT, N> const & b,
     Intrepid::Vector<ScalarT, N> & x)
 {
+  //
+  // First deal with values
+  //
   auto const
   local_dim = b.get_dimension();
 
@@ -370,20 +382,9 @@ solve(
     x(i).val() = Dx(i);
   }
 
-  return;
-}
-
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, N>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  local_dim = b.get_dimension();
-
+  //
+  // Then deal with derivatives
+  //
   auto const
   global_dim = b[0].size();
 
@@ -421,6 +422,17 @@ computeFadInfo(
     }
   }
 
+  return;
+}
+
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
   return;
 }
 
@@ -435,6 +447,9 @@ solve(
     Intrepid::Vector<ScalarT, N> const & b,
     Intrepid::Vector<ScalarT, N> & x)
 {
+  //
+  // First deal with values
+  //
   auto const
   local_dim = b.get_dimension();
 
@@ -459,20 +474,9 @@ solve(
     x(i).val() = Dx(i);
   }
 
-  return;
-}
-
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, N>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  local_dim = b.get_dimension();
-
+  //
+  // Then deal with derivatives
+  //
   auto const
   global_dim = b[0].size();
 
@@ -510,6 +514,17 @@ computeFadInfo(
     }
   }
 
+  return;
+}
+
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
   return;
 }
 #endif
@@ -554,6 +569,9 @@ solve(
     Intrepid::Vector<ScalarT, N> const & b,
     Intrepid::Vector<ScalarT, N> & x)
 {
+  //
+  // First deal with values
+  //
   auto const
   local_dim = b.get_dimension();
 
@@ -578,20 +596,9 @@ solve(
     x(i).val() = Dx(i);
   }
 
-  return;
-}
-
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, N>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  local_dim = b.get_dimension();
-
+  //
+  // Then deal with derivatives
+  //
   auto const
   global_dim = b[0].size();
 
@@ -629,6 +636,17 @@ computeFadInfo(
     }
   }
 
+  return;
+}
+
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
   return;
 }
 
@@ -643,6 +661,9 @@ solve(
     Intrepid::Vector<ScalarT, N> const & b,
     Intrepid::Vector<ScalarT, N> & x)
 {
+  //
+  // First deal with values
+  //
   auto const
   local_dim = b.get_dimension();
 
@@ -667,20 +688,9 @@ solve(
     x(i).val() = Dx(i);
   }
 
-  return;
-}
-
-template<Intrepid::Index N>
-void
-MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, N>::
-computeFadInfo(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  auto const
-  local_dim = b.get_dimension();
-
+  //
+  // Then deal with derivatives
+  //
   auto const
   global_dim = b[0].size();
 
@@ -718,6 +728,17 @@ computeFadInfo(
     }
   }
 
+  return;
+}
+
+template<Intrepid::Index N>
+void
+MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, N>::
+computeFadInfo(
+    Intrepid::Tensor<ScalarT, N> const & A,
+    Intrepid::Vector<ScalarT, N> const & b,
+    Intrepid::Vector<ScalarT, N> & x)
+{
   return;
 }
 #endif
