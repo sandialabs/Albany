@@ -22,17 +22,17 @@ class MiniLinearSolver_Base
 public:
   using ScalarT = typename EvalT::ScalarT;
 
-  MiniLinearSolver_Base();
+  virtual ~MiniLinearSolver_Base() {}
 
-  void solve(
+  virtual void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) {}
 
-  void computeFadInfo(
+  virtual void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) {}
 };
 
 //
@@ -52,17 +52,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::Residual::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -75,17 +73,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::Jacobian::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x)  override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -98,17 +94,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::Tangent::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -121,17 +115,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 #ifdef ALBANY_SG
@@ -145,17 +137,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::SGResidual::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -168,17 +158,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::SGJacobian::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -191,17 +179,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::SGTangent::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 #endif
 
@@ -216,17 +202,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::MPResidual::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -239,17 +223,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::MPJacobian::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -262,17 +244,15 @@ class MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits, N> :
 public:
   using ScalarT = PHAL::AlbanyTraits::MPTangent::ScalarT;
 
-  MiniLinearSolver();
-
   void solve(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 
   void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x);
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 #endif
 

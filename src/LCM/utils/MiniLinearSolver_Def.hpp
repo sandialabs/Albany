@@ -7,12 +7,6 @@
 namespace LCM
 {
 
-template<typename EvalT, typename Traits, Intrepid::Index N>
-MiniLinearSolver_Base<EvalT, Traits, N>::MiniLinearSolver_Base()
-{
-  return;
-}
-
 //
 // Specializations
 //
@@ -20,13 +14,6 @@ MiniLinearSolver_Base<EvalT, Traits, N>::MiniLinearSolver_Base()
 //
 // Residual
 //
-template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::Residual, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, Traits, N>()
-{
-  return;
-}
-
 template<typename Traits, Intrepid::Index N>
 void
 inline
@@ -55,13 +42,6 @@ computeFadInfo(
 //
 // Jacobian
 //
-template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits, N>()
-{
-  return;
-}
-
 template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, Traits, N>::
@@ -152,13 +132,6 @@ computeFadInfo(
 // Tangent
 //
 template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, Traits, N>()
-{
-  return;
-}
-
-template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Tangent, Traits, N>::
 solve(
@@ -247,14 +220,6 @@ computeFadInfo(
 //
 // DistParamDeriv
 //
-template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>
-::MiniLinearSolver()
-: MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>()
-{
-  return;
-}
-
 template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, N>::
@@ -346,13 +311,6 @@ computeFadInfo(
 // SGResidual
 //
 template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, Traits, N>()
-{
-  return;
-}
-
-template<typename Traits, Intrepid::Index N>
 void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, Traits, N>::
@@ -380,13 +338,6 @@ computeFadInfo(
 //
 // SGJacobian
 //
-template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, Traits, N>()
-{
-  return;
-}
-
 template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, Traits, N>::
@@ -476,13 +427,6 @@ computeFadInfo(
 //
 // SGTangent
 //
-template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, Traits, N>()
-{
-  return;
-}
-
 template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, Traits, N>::
@@ -575,13 +519,6 @@ computeFadInfo(
 // MPResidual
 //
 template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::MPResidual, Traits, N>()
-{
-  return;
-}
-
-template<typename Traits, Intrepid::Index N>
 void
 inline
 MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, Traits, N>::
@@ -609,13 +546,6 @@ computeFadInfo(
 //
 // MPJacobian
 //
-template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::MPJacobian, Traits, N>()
-{
-  return;
-}
-
 template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, Traits, N>::
@@ -705,13 +635,6 @@ computeFadInfo(
 //
 // MPTangent
 //
-template<typename Traits, Intrepid::Index N>
-MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits, N>::MiniLinearSolver() :
-    MiniLinearSolver_Base<PHAL::AlbanyTraits::MPTangent, Traits, N>()
-{
-  return;
-}
-
 template<typename Traits, Intrepid::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, Traits, N>::
