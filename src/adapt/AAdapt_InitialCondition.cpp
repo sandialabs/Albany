@@ -26,6 +26,9 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
   validPL->set<std::string>("Function", "", "");
   Teuchos::Array<double> defaultData;
   validPL->set<Teuchos::Array<double> >("Function Data", defaultData, "");
+  validPL->set<std::string >("Function Expression for DOF X", "None", "");
+  validPL->set<std::string >("Function Expression for DOF Y", "None", "");
+  validPL->set<std::string >("Function Expression for DOF Z", "None", "");
 
   // Validate element block constant data
 
@@ -47,6 +50,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > > coords,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams, const bool hasRestartSolution) {
+
   // Called twice, with x and xdot. Different param lists are sent in.
   icParams.validateParameters(*AAdapt::getValidInitialConditionParameters(wsEBNames), 0);
 
@@ -198,6 +202,36 @@ lid[5] = DOF[1],eq[2] (z eqn)
             for(int i = 0; i < numDim; i++)
               (*soln)[lid[j * numDim + i]] = X[i];
 
+        }
+      }
+    }
+
+  }
+
+  else if(name == "Expression Parser") {
+
+    std::string defaultExpression = "value = 0.0";
+
+    std::string expressionX = icParams.get("Function Expression for DOF X", defaultExpression);
+    std::string expressionY = icParams.get("Function Expression for DOF Y", defaultExpression);
+    std::string expressionZ = icParams.get("Function Expression for DOF Z", defaultExpression);
+
+    Teuchos::RCP<AAdapt::AnalyticFunction> initFunc = Teuchos::rcp(new AAdapt::ExpressionParser(neq, numDim, expressionX, expressionY, expressionZ));
+
+    // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
+    std::vector<double> x(neq);
+
+    for(int ws = 0; ws < wsElNodeEqID.size(); ws++) {
+      for(int el = 0; el < wsElNodeEqID[ws].size(); el++) {
+        for(int ln = 0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+          const double* X = coords[ws][el][ln];
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+
+          for(int i = 0; i < neq; i++) x[i] = (*soln)[lid[i]];
+
+          initFunc->compute(&x[0], X);
+
+          for(int i = 0; i < neq; i++)(*soln)[lid[i]] = x[i];
         }
       }
     }
@@ -382,6 +416,30 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
         }
       }
     }
+
+  }
+
+  else if(name == "Expression Parser") {
+
+    std::string defaultExpression = "value = 0.0";
+
+    std::string expressionX = icParams.get("Function Expression for DOF X", defaultExpression);
+    std::string expressionY = icParams.get("Function Expression for DOF Y", defaultExpression);
+    std::string expressionZ = icParams.get("Function Expression for DOF Z", defaultExpression);
+
+    Teuchos::RCP<AAdapt::AnalyticFunction> initFunc = Teuchos::rcp(new AAdapt::ExpressionParser(neq, numDim, expressionX, expressionY, expressionZ));
+
+    // Loop over all worksets, elements, all local nodes: compute soln as a function of coord
+    std::vector<double> x; x.resize(neq);
+    for (int ws=0; ws < wsElNodeEqID.size(); ws++) {
+      for (int el=0; el < wsElNodeEqID[ws].size(); el++) {
+        for (int ln=0; ln < wsElNodeEqID[ws][el].size(); ln++) {
+          const double* X = coords[ws][el][ln];
+          Teuchos::ArrayRCP<int> lid = wsElNodeEqID[ws][el][ln];
+          for (int i=0; i<neq; i++) x[i] = solnT_nonconstView[lid[i]];
+          initFunc->compute(&x[0],X);
+          for (int i=0; i<neq; i++) solnT_nonconstView[lid[i]] = x[i];
+    } } }
 
   }
 

@@ -18,7 +18,7 @@ namespace LCM
 /// To use the solver framework, derive from this class and perform
 /// residual computations in the compute method.
 ///
-template <typename T, Intrepid::Index N  = Intrepid::DYNAMIC>
+template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
 class Residual_Base
 {
 public:
@@ -41,9 +41,9 @@ public:
 
   NewtonSolver_Base();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -117,9 +117,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -140,9 +140,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -163,9 +163,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -186,9 +186,9 @@ public:
 
   NewtonSolver();
 
+  template <typename Residual>
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
+      Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
   void computeFadInfo(
@@ -197,23 +197,149 @@ public:
       Intrepid::Vector<ScalarT, N> & x);
 };
 
-
-} //namesapce LCM
-
-namespace Intrepid
-{
-
-template <typename Residual, typename T, Index N>
-class NonlinearSolver
+#ifdef ALBANY_SG
+//
+// SGResidual
+//
+template<typename Traits, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::SGResidual, Traits, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::SGResidual, Traits, N>
 {
 public:
-  using FAD = Sacado::Fad::DFad<T>;
+  using ScalarT = PHAL::AlbanyTraits::SGResidual::ScalarT;
 
-  Vector<T, N>
-  solve(Residual & residual, Vector<T, N> const & initial_guess);
+  NewtonSolver();
+
+  template <typename Residual>
+  void solve(
+      Residual const & residual,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
 };
 
-} // namespace Intrepid
+//
+// SGJacobian
+//
+template<typename Traits, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::SGJacobian, Traits, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::SGJacobian, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::SGJacobian::ScalarT;
+
+  NewtonSolver();
+
+  template <typename Residual>
+  void solve(
+      Residual const & residual,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+
+//
+// SGTangent
+//
+template<typename Traits, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::SGTangent, Traits, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::SGTangent, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::SGTangent::ScalarT;
+
+  NewtonSolver();
+
+  template <typename Residual>
+  void solve(
+      Residual const & residual,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+#endif
+
+#ifdef ALBANY_ENSEMBLE
+//
+// MPResidual
+//
+template<typename Traits, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::MPResidual, Traits, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::MPResidual, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::MPResidual::ScalarT;
+
+  NewtonSolver();
+
+  template <typename Residual>
+  void solve(
+      Residual const & residual,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+
+//
+// MPJacobian
+//
+template<typename Traits, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::MPJacobian, Traits, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::MPJacobian, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::MPJacobian::ScalarT;
+
+  NewtonSolver();
+
+  template <typename Residual>
+  void solve(
+      Residual const & residual,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+
+//
+// MPTangent
+//
+template<typename Traits, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::MPTangent, Traits, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::MPTangent, Traits, N>
+{
+public:
+  using ScalarT = PHAL::AlbanyTraits::MPTangent::ScalarT;
+
+  NewtonSolver();
+
+  template <typename Residual>
+  void solve(
+      Residual const & residual,
+      Intrepid::Vector<ScalarT, N> & x);
+
+  void computeFadInfo(
+      Intrepid::Tensor<ScalarT, N> const & A,
+      Intrepid::Vector<ScalarT, N> const & b,
+      Intrepid::Vector<ScalarT, N> & x);
+};
+#endif
+
+} //namesapce LCM
 
 #include "MiniNonlinearSolver.t.h"
 

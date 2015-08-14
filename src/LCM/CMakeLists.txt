@@ -25,9 +25,11 @@ SET(HEADERS )
 # LCM evaluators
 file (GLOB evaluator-sources
   "${LCM_DIR}/evaluators/*.cpp"
+  "${LCM_DIR}/parallel_evaluators/*.cpp"
 )
 file (GLOB evaluator-headers
   "${LCM_DIR}/evaluators/*.hpp"
+  "${LCM_DIR}/parallel_evaluators/*.hpp"
 )
 
 #LCM model evaluators 
@@ -57,9 +59,11 @@ file (GLOB bc-headers
 #LCM models
 file (GLOB models-sources
   "${LCM_DIR}/models/*.cpp"
+  "${LCM_DIR}/parallel_models/*.cpp"
 )
 file (GLOB models-headers
   "${LCM_DIR}/models/*.hpp"
+  "${LCM_DIR}/parallel_models/*.hpp"
 )
 
 IF(ALBANY_HAVE_STK)

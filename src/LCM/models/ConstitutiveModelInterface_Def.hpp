@@ -37,6 +37,8 @@
 #include "OrtizPandolfiModel.hpp"
 #include "ElastoViscoplasticModel.hpp"
 
+#include "../parallel_models/ParallelNeohookeanModel.hpp"
+
 namespace LCM
 {
 
@@ -288,6 +290,8 @@ initializeModel(Teuchos::ParameterList* p,
 
   if (model_name == "Neohookean") {
     model = rcp(new NeohookeanModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Parallel Neohookean") {
+    model = rcp(new ParallelNeohookeanModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Creep") {
     model = rcp(new CreepModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {

@@ -5,63 +5,56 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <Parameter name="Second Order" type="string" value="Velocity Verlet"/>
     <Parameter name="Perturb Dirichlet" type="double" value="1.0e-6"/>
+
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-<!--
       <Parameter name="DBC on NS nodelist_2 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
--->
-    </ParameterList>
-    <ParameterList name="Initial Condition">
-      <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0}"/>
     </ParameterList>
     <ParameterList name="Initial Condition Dot">
-      <Parameter name="Function" type="string" value="Constant"/>
-      <Parameter name="Function Data" type="Array(double)" value="{-0.02, 0.0, 0.0}"/>
+      <Parameter name="Function" type="string" value="Expression Parser"/>
+      <Parameter name="Function Expression for DOF X" type="string" value="if(x > -0.499){ value = -10.0; }else{ value = 0.0; }"/>
+      <Parameter name="Function Expression for DOF Y" type="string" value="value = 0.0"/>
+      <Parameter name="Function Expression for DOF Z" type="string" value="value = 0.0"/>
     </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="1.0"/>
+      <Parameter name="Value" type="double" value="1.0e9"/>
     </ParameterList>
     <ParameterList name="Poissons Ratio">
       <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="0.25"/>
     </ParameterList>
-<!--    <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF X"/>
-    </ParameterList>-->
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
   </ParameterList>
-  <!--</ParameterList>-->
+
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="WaveInBar.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="WaveInBar.e"/>
+    <Parameter name="Exodus Write Interval" type="int" value="15"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
-<!--  <ParameterList name="Regression Results">
+
+  <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0019693189}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.333333, 0.166666, 0.5}"/>
-    <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
-  </ParameterList> -->
+    <Parameter  name="Test Values" type="Array(double)" value="{-4.88494409008e-05}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-6"/>
+  </ParameterList>
+
   <ParameterList name="Piro">
     <ParameterList name="Velocity Verlet">
-      <Parameter name="Num Time Steps" type="int" value="40"/>
-      <Parameter name="Final Time" type="double" value="0.0001"/>
+      <Parameter name="Num Time Steps" type="int" value="1500"/>
+      <Parameter name="Final Time" type="double" value="0.00015"/>
       <Parameter name="Initial Time" type="double" value="0.0"/>
       <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
+      <Parameter name="Lump Mass Matrix" type="bool" value="true"/>
       <ParameterList name="Stratimikos">
 	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	<ParameterList name="Linear Solver Types">

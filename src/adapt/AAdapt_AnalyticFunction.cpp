@@ -1606,3 +1606,94 @@ void AAdapt::AerasRossbyHaurwitzWave::compute(double* solution, const double* X)
   return;
 
 }
+
+//*****************************************************************************
+//ExpressionParser
+
+AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::string expressionX_, std::string expressionY_, std::string expressionZ_)
+  : spatialDim(spatialDim_), neq(neq_), expressionX(expressionX_), expressionY(expressionY_), expressionZ(expressionZ_)
+{
+
+  TEUCHOS_TEST_FOR_EXCEPTION( neq!=3 || spatialDim!=3,
+			      std::logic_error,
+			      "Error! Invalid call AAdapt::ExpressionParser::ExpressionParser(), neq = " << neq
+			      << ", spatialDim = " << spatialDim << ".");
+
+  bool success;
+
+  // set up RTCompiler
+  rtcFunctionX.addVar("double", "x");
+  rtcFunctionX.addVar("double", "y");
+  rtcFunctionX.addVar("double", "z");
+  rtcFunctionX.addVar("double", "value");
+  success = rtcFunctionX.addBody(expressionX);
+  if(!success){
+    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+    msg += "**** " + rtcFunctionX.getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+
+  rtcFunctionY.addVar("double", "x");
+  rtcFunctionY.addVar("double", "y");
+  rtcFunctionY.addVar("double", "z");
+  rtcFunctionY.addVar("double", "value");
+  success = rtcFunctionY.addBody(expressionY);
+  if(!success){
+    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+    msg += "**** " + rtcFunctionY.getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+
+  rtcFunctionZ.addVar("double", "x");
+  rtcFunctionZ.addVar("double", "y");
+  rtcFunctionZ.addVar("double", "z");
+  rtcFunctionZ.addVar("double", "value");
+  success = rtcFunctionZ.addBody(expressionZ);
+  if(!success){
+    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+    msg += "**** " + rtcFunctionZ.getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+}
+
+void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
+
+  bool success;
+  double value;
+
+  for(int i=0 ; i<spatialDim ; i++){
+    success = rtcFunctionX.varValueFill(i, X[i]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
+  }
+  success = rtcFunctionX.varValueFill(spatialDim, 0.0);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
+  success = rtcFunctionX.execute();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.execute(), " + rtcFunctionX.getErrors());
+  solution[0] = rtcFunctionX.getValueOfVar("value");
+
+  for(int i=0 ; i<spatialDim ; i++){
+    success = rtcFunctionY.varValueFill(i, X[i]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+  }
+  success = rtcFunctionY.varValueFill(spatialDim, 0.0);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+  success = rtcFunctionY.execute();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.execute(), " + rtcFunctionY.getErrors());
+  solution[1] = rtcFunctionY.getValueOfVar("value");
+
+  for(int i=0 ; i<spatialDim ; i++){
+    success = rtcFunctionZ.varValueFill(i, X[i]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+  }
+  success = rtcFunctionZ.varValueFill(spatialDim, 0.0);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+  success = rtcFunctionZ.execute();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
+  solution[2] = rtcFunctionZ.getValueOfVar("value");
+
+//   std::cout << "DEBUG CHECK ExpressionParser " << expressionX << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[0] << std::endl;
+//   std::cout << "DEBUG CHECK ExpressionParser " << expressionY << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[1] << std::endl;
+//   std::cout << "DEBUG CHECK ExpressionParser " << expressionZ << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[2] << std::endl;
+
+  return;
+}

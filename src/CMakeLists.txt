@@ -92,6 +92,31 @@ IF(ALBANY_EPETRA)
   )
 ENDIF()
 
+#utility
+SET(SOURCES ${SOURCES}
+  utility/Counter.cpp
+  utility/CounterMonitor.cpp
+  utility/DisplayTable.cpp
+  utility/PerformanceContext.cpp
+  utility/TimeMonitor.cpp
+  utility/VariableMonitor.cpp
+  )
+SET(HEADERS ${HEADERS}
+  utility/Counter.hpp
+  utility/CounterMonitor.hpp
+  utility/DisplayTable.hpp
+  utility/MonitorBase.hpp
+  utility/PerformanceContext.hpp
+  utility/string.hpp
+  utility/TimeGuard.hpp
+  utility/TimeMonitor.hpp
+  utility/VariableMonitor.hpp
+  utility/math/Tensor.hpp
+  utility/math/TensorCommon.hpp
+  utility/math/TensorDetail.hpp
+  utility/math/TensorImpl.hpp
+  )
+
 #problems
 SET(SOURCES ${SOURCES}
   problems/Albany_AbstractProblem.cpp
