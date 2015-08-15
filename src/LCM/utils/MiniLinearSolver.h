@@ -21,6 +21,7 @@ class MiniLinearSolver_Base
 {
 public:
   using ScalarT = typename EvalT::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   virtual
   ~MiniLinearSolver_Base() {}
@@ -49,6 +50,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::Residual, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -66,6 +68,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -83,6 +86,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::Tangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -100,6 +104,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -118,6 +123,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::SGResidual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -135,6 +141,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::SGJacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -152,6 +159,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::SGTangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -171,6 +179,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::MPResidual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -188,6 +197,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::MPJacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(
@@ -205,6 +215,7 @@ class MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, N> :
 {
 public:
   using ScalarT = PHAL::AlbanyTraits::MPTangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   void
   solve(

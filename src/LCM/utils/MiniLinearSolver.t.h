@@ -43,10 +43,10 @@ solve(
   auto const
   local_dim = b.get_dimension();
 
-  Intrepid::Vector<RealType, N>
+  Intrepid::Vector<ValueT, N>
   Df(local_dim);
 
-  Intrepid::Tensor<RealType, N>
+  Intrepid::Tensor<ValueT, N>
   DfDx(local_dim);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -57,7 +57,7 @@ solve(
     }
   }
 
-  Intrepid::Vector<RealType, N> const
+  Intrepid::Vector<ValueT, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -72,7 +72,7 @@ solve(
 
   assert(global_dim > 0);
 
-  Intrepid::Matrix<RealType>
+  Intrepid::Matrix<ValueT>
   DbDp(local_dim, global_dim);
 
   // extract sensitivities of objective function(s) wrt p
@@ -82,7 +82,7 @@ solve(
     }
   }
 
-  Intrepid::Tensor<RealType>
+  Intrepid::Tensor<ValueT>
   DbDx(local_dim);
 
   // extract the jacobian
@@ -93,7 +93,7 @@ solve(
   }
 
   // Solve for all DxDp
-  Intrepid::Matrix<RealType>
+  Intrepid::Matrix<ValueT>
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
@@ -124,10 +124,10 @@ solve(
   auto const
   local_dim = b.get_dimension();
 
-  Intrepid::Vector<RealType, N>
+  Intrepid::Vector<ValueT, N>
   Df(local_dim);
 
-  Intrepid::Tensor<RealType, N>
+  Intrepid::Tensor<ValueT, N>
   DfDx(local_dim);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -138,7 +138,7 @@ solve(
     }
   }
 
-  Intrepid::Vector<RealType, N> const
+  Intrepid::Vector<ValueT, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -153,7 +153,7 @@ solve(
 
   assert(global_dim > 0);
 
-  Intrepid::Matrix<RealType>
+  Intrepid::Matrix<ValueT>
   DbDp(local_dim, global_dim);
 
   // extract sensitivities of objective function(s) wrt p
@@ -163,7 +163,7 @@ solve(
     }
   }
 
-  Intrepid::Tensor<RealType>
+  Intrepid::Tensor<ValueT>
   DbDx(local_dim);
 
   // extract the jacobian
@@ -174,7 +174,7 @@ solve(
   }
 
   // Solve for all DxDp
-  Intrepid::Matrix<RealType>
+  Intrepid::Matrix<ValueT>
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
@@ -205,10 +205,10 @@ solve(
   auto const
   local_dim = b.get_dimension();
 
-  Intrepid::Vector<RealType, N>
+  Intrepid::Vector<ValueT, N>
   Df(local_dim);
 
-  Intrepid::Tensor<RealType, N>
+  Intrepid::Tensor<ValueT, N>
   DfDx(local_dim);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -219,7 +219,7 @@ solve(
     }
   }
 
-  Intrepid::Vector<RealType, N> const
+  Intrepid::Vector<ValueT, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
   for (auto i = 0; i < local_dim; ++i) {
@@ -234,7 +234,7 @@ solve(
 
   assert(global_dim > 0);
 
-  Intrepid::Matrix<RealType>
+  Intrepid::Matrix<ValueT>
   DbDp(local_dim, global_dim);
 
   // extract sensitivities of objective function(s) wrt p
@@ -244,7 +244,7 @@ solve(
     }
   }
 
-  Intrepid::Tensor<RealType>
+  Intrepid::Tensor<ValueT>
   DbDx(local_dim);
 
   // extract the jacobian
@@ -255,7 +255,7 @@ solve(
   }
 
   // Solve for all DxDp
-  Intrepid::Matrix<RealType>
+  Intrepid::Matrix<ValueT>
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
