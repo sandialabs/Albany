@@ -10,9 +10,9 @@ namespace LCM
 //
 // Specializations
 //
-template<typename EvalT, typename Traits, typename Residual, Intrepid::Index N>
+template<typename EvalT, typename Residual, Intrepid::Index N>
 void
-NewtonSolver_Base<EvalT, Traits, Residual, N>::
+NewtonSolver_Base<EvalT, Residual, N>::
 solve(
     Residual const & residual,
     Intrepid::Vector<ScalarT, N> & x)

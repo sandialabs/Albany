@@ -10,8 +10,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include <Intrepid_MiniTensor.h>
 
-namespace LCM
-{
+namespace LCM{
 
 ///
 /// Residual interafce for mini nonlinear solver
@@ -33,7 +32,7 @@ public:
 ///
 /// Newton Solver Base class
 ///
-template<typename EvalT, typename Traits, typename Residual,
+template<typename EvalT, typename Residual,
 Intrepid::Index N = Intrepid::DYNAMIC>
 class NewtonSolver_Base
 {
@@ -104,44 +103,44 @@ protected:
 //
 // Specializations
 //
-template<typename EvalT, typename Traits,
-typename Residual, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename EvalT, typename Residual,
+Intrepid::Index N = Intrepid::DYNAMIC>
 class NewtonSolver;
 
 //
 // Residual
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::Residual, Traits, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::Residual, Traits, Residual, N>
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::Residual, Residual, N>
 {
 };
 
 //
 // Jacobian
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::Jacobian, Traits, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::Jacobian, Traits, Residual, N>
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::Jacobian, Residual, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::Jacobian, Residual, N>
 {
 };
 
 //
 // Tangent
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::Tangent, Traits, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::Tangent, Traits, Residual, N>
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::Tangent, Residual, N> :
+    public NewtonSolver_Base<PHAL::AlbanyTraits::Tangent, Residual, N>
 {
 };
 
 //
 // Distribured Parameter Derivative
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, Residual, N> :
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::DistParamDeriv,
-    Traits, Residual, N>
+    Residual, N>
 {
 };
 
@@ -149,30 +148,30 @@ class NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits, Residual, N> :
 //
 // SGResidual
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::SGResidual, Traits, Residual, N> :
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::SGResidual, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::SGResidual,
-    Traits, Residual, N>
+    Residual, N>
 {
 };
 
 //
 // SGJacobian
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::SGJacobian, Traits, Residual, N> :
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::SGJacobian, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::SGJacobian,
-    Traits, Residual, N>
+    Residual, N>
 {
 };
 
 //
 // SGTangent
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::SGTangent, Traits, Residual, N> :
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::SGTangent, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::SGTangent,
-    Traits, Residual, N>
+    Residual, N>
 {
 };
 #endif
@@ -181,30 +180,30 @@ class NewtonSolver<PHAL::AlbanyTraits::SGTangent, Traits, Residual, N> :
 //
 // MPResidual
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::MPResidual, Traits, Residual, N> :
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::MPResidual, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::MPResidual,
-    Traits, Residual, N>
+    Residual, N>
 {
 };
 
 //
 // MPJacobian
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::MPJacobian, Traits, Residual, N> :
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::MPJacobian, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::MPJacobian,
-    Traits, Residual, N>
+    Residual, N>
 {
 };
 
 //
 // MPTangent
 //
-template<typename Traits, typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::MPTangent, Traits, Residual, N> :
+template<typename Residual, Intrepid::Index N>
+class NewtonSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::MPTangent,
-    Traits, Residual, N>
+    Residual, N>
 {
 };
 #endif
