@@ -48,10 +48,6 @@ public:
       Residual const & residual,
       Intrepid::Vector<ScalarT, N> & x);
 
-  virtual void computeFadInfo(
-      Residual const & residual,
-      Intrepid::Vector<ScalarT, N> & x);
-
   virtual
   Intrepid::Index
   get_maximum_number_iterations() const final

@@ -91,16 +91,6 @@ solve(
   return;
 }
 
-template<typename EvalT, typename Traits, typename Residual, Intrepid::Index N>
-void
-NewtonSolver_Base<EvalT, Traits, Residual, N>::
-computeFadInfo(
-    Residual const & residual,
-    Intrepid::Vector<ScalarT, N> & x)
-{
-  return;
-}
-
 //
 // Residual
 //
