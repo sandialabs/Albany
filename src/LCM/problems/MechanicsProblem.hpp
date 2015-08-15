@@ -1920,6 +1920,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Biot Coefficient Name", biotCoeff);
     }
 
+    if (have_stab_pressure_eq_) {
+      p->set<bool>("Have Stabilized Pressure", true);
+      p->set<std::string>("Pressure Name", pressure);
+    }
+
     if (small_strain) {
       p->set<bool>("Small Strain", true);
     }
