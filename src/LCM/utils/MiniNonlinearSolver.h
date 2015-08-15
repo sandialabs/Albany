@@ -38,66 +38,25 @@ class NewtonSolver_Base
 {
 public:
   using ScalarT = typename EvalT::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>;
-  using FAD = typename Sacado::Fad::DFad<ValueT>;
-
-  virtual ~NewtonSolver_Base() {}
-
-  virtual void solve(
-      Residual const & residual,
-      Intrepid::Vector<ScalarT, N> & x);
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 
   virtual
+  ~NewtonSolver_Base() {}
+
+  virtual
+  void
+  solve(Residual const & residual, Intrepid::Vector<ScalarT, N> & x) {}
+
+public:
   Intrepid::Index
-  get_maximum_number_iterations() const final
-  {
-    return max_num_iter_;
-  }
-
-  virtual
-  ValueT
-  get_relative_tolerance() const final
-  {
-    return relative_tolerance_;
-  }
-
-  virtual
-  ValueT
-  get_absolute_tolerance() const final
-  {
-    return absolute_tolerance_;
-  }
-
-  virtual
-  void
-  set_maximum_number_iterations(Intrepid::Index const n) final
-  {
-    max_num_iter_ = n;
-  }
-
-  virtual
-  void
-  set_relative_tolerance(ValueT const eps) final
-  {
-    relative_tolerance_ = eps;
-  }
-
-  virtual
-  void
-  set_absolute_tolerance(ValueT const eps) final
-  {
-    absolute_tolerance_ = eps;
-  }
-
-protected:
-  Intrepid::Index
-  max_num_iter_{16};
+  maximum_number_iterations{16};
 
   ValueT
-  relative_tolerance_{1.0e-10};
+  relative_tolerance{1.0e-10};
 
   ValueT
-  absolute_tolerance_{1.0e-10};
+  absolute_tolerance{1.0e-10};
 };
 
 //
@@ -114,6 +73,15 @@ template<typename Residual, Intrepid::Index N>
 class NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::Residual, Residual, N>
 {
+public:
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  void
+  solve(
+      Residual const & residual,
+      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -123,6 +91,10 @@ template<typename Residual, Intrepid::Index N>
 class NewtonSolver<PHAL::AlbanyTraits::Jacobian, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::Jacobian, Residual, N>
 {
+public:
+  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 
 //
@@ -132,6 +104,9 @@ template<typename Residual, Intrepid::Index N>
 class NewtonSolver<PHAL::AlbanyTraits::Tangent, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::Tangent, Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 
 //
@@ -142,6 +117,9 @@ class NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::DistParamDeriv,
     Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 
 #ifdef ALBANY_SG
@@ -153,6 +131,9 @@ class NewtonSolver<PHAL::AlbanyTraits::SGResidual, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::SGResidual,
     Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::SGResidual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 
 //
@@ -163,6 +144,9 @@ class NewtonSolver<PHAL::AlbanyTraits::SGJacobian, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::SGJacobian,
     Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::SGJacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 
 //
@@ -173,6 +157,9 @@ class NewtonSolver<PHAL::AlbanyTraits::SGTangent, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::SGTangent,
     Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::SGTangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 #endif
 
@@ -185,6 +172,9 @@ class NewtonSolver<PHAL::AlbanyTraits::MPResidual, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::MPResidual,
     Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::MPResidual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 
 //
@@ -195,6 +185,9 @@ class NewtonSolver<PHAL::AlbanyTraits::MPJacobian, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::MPJacobian,
     Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::MPJacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 
 //
@@ -205,6 +198,9 @@ class NewtonSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
     public NewtonSolver_Base<PHAL::AlbanyTraits::MPTangent,
     Residual, N>
 {
+  using ScalarT = typename PHAL::AlbanyTraits::MPTangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 #endif
 
