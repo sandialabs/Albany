@@ -28,11 +28,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) {}
-
-  virtual void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) {}
 };
 
 //
@@ -56,11 +51,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -77,11 +67,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x)  override;
-
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -98,11 +83,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -116,11 +96,6 @@ public:
   using ScalarT = PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
 
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
@@ -141,11 +116,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -162,11 +132,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -180,11 +145,6 @@ public:
   using ScalarT = PHAL::AlbanyTraits::SGTangent::ScalarT;
 
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
@@ -206,11 +166,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -227,11 +182,6 @@ public:
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -245,11 +195,6 @@ public:
   using ScalarT = PHAL::AlbanyTraits::MPTangent::ScalarT;
 
   void solve(
-      Intrepid::Tensor<ScalarT, N> const & A,
-      Intrepid::Vector<ScalarT, N> const & b,
-      Intrepid::Vector<ScalarT, N> & x) override;
-
-  void computeFadInfo(
       Intrepid::Tensor<ScalarT, N> const & A,
       Intrepid::Vector<ScalarT, N> const & b,
       Intrepid::Vector<ScalarT, N> & x) override;
