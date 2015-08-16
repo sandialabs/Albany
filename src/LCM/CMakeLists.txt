@@ -252,9 +252,9 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
     )
 
   add_executable(
-    utMiniLinearSolver
+    utMiniSolvers
     test/unit_tests/StandardUnitTestMain.cpp
-    test/unit_tests/utMiniLinearSolver.cc
+    test/unit_tests/utMiniSolvers.cc
     )
 
   add_executable(
@@ -404,7 +404,7 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
   target_link_libraries(Test2_Subdivision ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(TopologyBase ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
-  target_link_libraries(utMiniLinearSolver ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_link_libraries(utMiniSolvers ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(utHeliumODEs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
 ENDIF()
