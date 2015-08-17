@@ -51,7 +51,6 @@ FirstPK(Teuchos::ParameterList& p,
 
   // deal with stabilized pressure
   if (have_stab_pressure_) {
-    // grab the pore pressure
     PHX::MDField<ScalarT, Cell, QuadPoint>
     tmp(p.get<std::string>("Pressure Name"), dl->qp_scalar);
     stab_pressure_ = tmp;
@@ -193,7 +192,7 @@ operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
         for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
              sig(cell,i,j)=stress_(cell, pt, i, j);
-             sig(cell,i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*trace(sig,cell)*I(i,j);
+             sig(cell,i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/num_dims_)*trace(sig,cell)*I(i,j);
              stress_(cell, pt, i, j) = sig(cell,i,j);
           }
         }
@@ -212,7 +211,7 @@ operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
               traceSig += sig[k][k];;
              }
     
-             sig[i][j]+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*traceSig*I(i,j);
+             sig[i][j]+= stab_pressure_(cell,pt)*I(i,j)-(1.0/num_dims_)*traceSig*I(i,j);
              stress_(cell, pt, i, j) = sig[i][j];
           }
         }
@@ -400,7 +399,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
         sig.fill(stress_,cell, pt,0,0);
-        sig += stab_pressure_(cell,pt)*I - (1.0/3.0)*Intrepid::trace(sig)*I;
+        sig += stab_pressure_(cell,pt)*I - (1.0/num_dims_)*Intrepid::trace(sig)*I;
 
         for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
