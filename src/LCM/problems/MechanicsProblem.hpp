@@ -2957,6 +2957,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     }
     p->set<RealType>("Stabilization Parameter", stab_param);
 
+    p->set<bool>("Small Strain", small_strain);
+
     //Output
     p->set<std::string>("Residual Name", "Pressure Residual");
     ev = Teuchos::rcp(
