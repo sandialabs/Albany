@@ -83,11 +83,13 @@ if __name__ == "__main__":
     outFileName = outFileLabel + '.txt'
     dataFile = open(outFileName, 'w')
     
+    max_displacement =  max(nodeset_displacement)
+
 #   only write data for last time step
     for nodeID in nodeSet:
          # convert to same units used in mathematica file
          # note: displacement is actually original coordinates! (I will change later)
-         dataFile.write(str.format('{0:.16f}',nodeset_displacement[Count]*10**-6/5.0) + "  " + str.format('{0:.16f}',nodeset_CL[Count]*10**6) + "\n")
+         dataFile.write(str.format('{0:.16f}',nodeset_displacement[Count]*10**-6/max_displacement) + "  " + str.format('{0:.16f}',nodeset_CL[Count]*10**6) + "\n")
          Count += 1
     dataFile.close()
     print "CL-displacement data for written to", outFileName
