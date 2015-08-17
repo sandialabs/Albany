@@ -46,17 +46,26 @@ public:
 
   virtual
   void
-  solve(Residual const & residual, Intrepid::Vector<ScalarT, N> & x) {}
+  solve(Residual & residual, Intrepid::Vector<FadT, N> & x) {}
 
 public:
   Intrepid::Index
-  maximum_number_iterations{16};
+  maximum_number_iterations{128};
+
+  Intrepid::Index
+  number_iterations{0};
 
   ValueT
   relative_tolerance{1.0e-10};
 
   ValueT
+  relative_error{1.0};
+
+  ValueT
   absolute_tolerance{1.0e-10};
+
+  ValueT
+  absolute_error{1.0};
 };
 
 //
@@ -80,8 +89,8 @@ public:
 
   void
   solve(
-      Residual const & residual,
-      Intrepid::Vector<ScalarT, N> & x) override;
+      Residual & residual,
+      Intrepid::Vector<FadT, N> & x) override;
 };
 
 //

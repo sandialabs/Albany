@@ -18,62 +18,54 @@ template<typename Residual, Intrepid::Index N>
 void
 NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
 solve(
-    Residual const & residual,
-    Intrepid::Vector<ScalarT, N> & x)
+    Residual & residual,
+    Intrepid::Vector<FadT, N> & x)
 {
   Intrepid::Index const
   dimension = x.get_dimension();
 
-  Intrepid::Vector<ValueT, N>
-  x_val = Sacado::Value<Intrepid::Vector<ScalarT, N>>::eval(x);
+  Intrepid::Vector<FadT, N>
+  r = residual.compute(x);
 
   Intrepid::Vector<ValueT, N>
-  r_val = residual.compute(x_val);
+  x_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(x);
+
+  Intrepid::Vector<ValueT, N>
+  r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
 
   ValueT const
   initial_norm = Intrepid::norm(r_val);
 
-  if (initial_norm <= this->absolute_tolerance) return;
+  this->number_iterations = 0;
 
-  Intrepid::Index
-  num_iter = 0;
+  if (initial_norm <= this->absolute_tolerance) return;
 
   bool
   converged = false;
 
-  Intrepid::Vector<FadT, N>
-  x_fad(dimension);
-
   while (converged == false) {
 
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      x_fad(i) = FadT(dimension, i, x_val(i));
-    }
+    r = residual.compute(x);
 
-    Intrepid::Vector<FadT, N> const
-    r_fad = residual.compute(x_fad);
+    r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
 
-    r_val = Sacado::Value<Intrepid::Vector<ScalarT, N>>::eval(r_fad);
+    this->absolute_error = Intrepid::norm(r_val);
 
-    ValueT const
-    residual_norm = Intrepid::norm(r_val);
-
-    ValueT const
-    relative_error = residual_norm / initial_norm;
+    this->relative_error = this->absolute_error / initial_norm;
 
     bool const
-    converged_relative = relative_error <= this->relative_tolerance;
+    converged_relative = this->relative_error <= this->relative_tolerance;
 
     bool const
-    converged_absolute = residual_norm <= this->absolute_tolerance;
+    converged_absolute = this->absolute_error <= this->absolute_tolerance;
 
     converged = converged_relative || converged_absolute;
 
     bool const
-    reached_max_iter = num_iter >= this->maximum_number_iterations;
+    is_max_iter = this->number_iterations >= this->maximum_number_iterations;
 
     bool const
-    end_solve = converged || reached_max_iter;
+    end_solve = converged || is_max_iter;
 
     if (end_solve == true) break;
 
@@ -82,14 +74,16 @@ solve(
 
     for (Intrepid::Index i{0}; i < dimension; ++i) {
       for (Intrepid::Index j{0}; j < dimension; ++j) {
-        DrDx(i, j) = r_fad(i).dx(j);
+        DrDx(i, j) = r(i).dx(j);
       }
     }
 
     Intrepid::Vector<ValueT, N> const
-    x_incr = - solve(DrDx, r_val);
+    x_incr = - Intrepid::solve(DrDx, r_val);
 
-    x_val += x_incr;
+    x += x_incr;
+
+    ++this->number_iterations;
   }
 
   return;
