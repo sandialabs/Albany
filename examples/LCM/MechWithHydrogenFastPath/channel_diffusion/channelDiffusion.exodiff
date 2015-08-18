@@ -1,0 +1,143 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.81) Modified: 2015-06-03
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2015/08/18   08:33:14 PDT
+#  *****************************************************************
+
+#  FILE 1: /home/jwfoulk/LCM/Albany/examples/LCM/MechWithHydrogenFastPath/channel_diffusion/channelDiffusion.gold.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 2, Nodes = 3624, Elements = 1650, Nodesets = 6, Sidesets = 0
+#          Vars: Global = 0, Nodal = 10, Element = 96, Nodeset = 0, Sideset = 0, Times = 11
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:              10 @ t11
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 1.0e-12
+	disp_x     # min:               0 @ t1,n1	max:               0 @ t1,n1
+	disp_y     # min:               0 @ t1,n1	max:               0 @ t1,n1
+	disp_z     # min:               0 @ t1,n1	max:               0 @ t1,n1
+	CL         # min:   3.8699777e-05 @ t1,n613	max:         0.00056 @ t1,n2
+	CLresid    # min:               0 @ t1,n303	max:    3.181878e-07 @ t2,n1813
+	force_x    # min:               0 @ t1,n1	max:               0 @ t1,n1
+	force_y    # min:               0 @ t1,n1	max:               0 @ t1,n1
+	force_z    # min:               0 @ t1,n1	max:               0 @ t1,n1
+	tauH       # min:               0 @ t1,n1	max:               0 @ t1,n1
+	tauHresid  # min:               0 @ t1,n1	max:               0 @ t1,n1
+
+ELEMENT VARIABLES relative 1.e-6 floor 1.0e-12
+	Cauchy_Stress_01  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_02  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_03  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_04  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_05  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_06  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_07  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_08  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_09  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_10  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_11  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_12  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_13  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_14  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_15  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_16  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_17  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_18  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_19  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_20  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_21  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_22  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_23  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_24  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_25  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_26  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_27  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_28  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_29  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_30  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_31  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_32  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_33  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_34  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_35  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_36  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_37  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_38  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_39  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_40  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_41  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_42  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_43  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_44  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_45  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_46  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_47  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_48  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_49  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_50  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_51  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_52  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_53  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_54  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_55  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_56  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_57  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_58  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_59  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_60  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_61  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_62  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_63  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_64  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_65  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_66  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_67  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_68  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_69  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_70  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_71  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Cauchy_Stress_72  # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_1            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_2            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_3            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_4            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_5            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_6            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_7            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_8            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_1     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_2     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_3     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_4     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_5     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_6     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_7     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_8     # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Transport_1       # min:   3.8699938e-05 @ t1,b1,e447	max:   0.00055992269 @ t11,b2,e1650
+	Transport_2       # min:   3.8699975e-05 @ t1,b1,e297	max:   0.00055992269 @ t11,b2,e1650
+	Transport_3       # min:   3.8699937e-05 @ t1,b1,e448	max:   0.00055971147 @ t11,b2,e1650
+	Transport_4       # min:   3.8699976e-05 @ t1,b1,e298	max:   0.00055971147 @ t11,b2,e1650
+	Transport_5       # min:   3.8699932e-05 @ t1,b1,e597	max:   0.00055992269 @ t11,b2,e1650
+	Transport_6       # min:   3.8699973e-05 @ t1,b1,e747	max:   0.00055992269 @ t11,b2,e1650
+	Transport_7       # min:   3.8699931e-05 @ t1,b1,e598	max:   0.00055971147 @ t11,b2,e1650
+	Transport_8       # min:   3.8699963e-05 @ t1,b1,e761	max:   0.00055971147 @ t11,b2,e1650
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

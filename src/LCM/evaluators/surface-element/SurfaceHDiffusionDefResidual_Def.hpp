@@ -318,8 +318,8 @@ namespace LCM {
                                              	pterm(cell,qp))*refValues(node,qp)*
 		    refArea(cell,qp)*thickness;//*temp;  GB changed 08/14/2015
 
-    		  //transport_residual_(cell,node)    -= stabilizationTerm;
-          //transport_residual_(cell,topNode) -= stabilizationTerm;
+    		  transport_residual_(cell,node)    -= stabilizationTerm;
+          transport_residual_(cell,topNode) -= stabilizationTerm;
         }
       }
     }
