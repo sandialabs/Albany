@@ -73,8 +73,8 @@ private:
 
 
   bool usePrescribedVelocity;
-  bool useExplHyperViscosity;
-  bool useImplHyperViscosity;
+  bool useExplHyperviscosity;
+  bool useImplHyperviscosity;
   bool plotVorticity;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;

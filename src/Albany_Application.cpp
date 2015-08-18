@@ -195,12 +195,12 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Transient;
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
-  else if(solutionMethod == "Aeras HyperViscosity")
+  else if(solutionMethod == "Aeras Hyperviscosity")
     solMethod = Transient;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
-            << "Continuation, or Eigensolve not : " << solutionMethod);
+            << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {

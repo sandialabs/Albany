@@ -651,8 +651,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //    }
 
 #ifdef ALBANY_AERAS 
-  if (solutionMethod == "Aeras HyperViscosity") {
-    std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras HyperViscosity" << std::endl;
+  if (solutionMethod == "Aeras Hyperviscosity") {
+    std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
  
 ///// make a solver, repeated code
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");

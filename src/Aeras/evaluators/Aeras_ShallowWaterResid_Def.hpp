@@ -56,12 +56,13 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
   usePrescribedVelocity = shallowWaterList->get<bool>("Use Prescribed Velocity", false); //Default: false
 
-  useImplHyperViscosity = shallowWaterList->get<bool>("Use Implicit Hyperviscosity", false); //Default: false
-  
-  useExplHyperViscosity = shallowWaterList->get<bool>("Use Explicit Hyperviscosity", false); //Default: false
+  useImplHyperviscosity = shallowWaterList->get<bool>("Use Implicit Hyperviscosity", false); //Default: false
+
+  useExplHyperviscosity = shallowWaterList->get<bool>("Use Explicit Hyperviscosity", false); //Default: false
   
   plotVorticity = shallowWaterList->get<bool>("Plot Vorticity", false); //Default: false 
 
+  //OG: temporary, because if tau=0, sqrt(hyperviscosity(:)) leads to nans in laplace.
   sHvTau = sqrt(shallowWaterList->get<double>("Hyperviscosity Tau", 0.0));
 
 
@@ -761,7 +762,7 @@ evaluateFields(typename Traits::EvalData workset)
     //This code should not be executed if hv coefficient is zero, the check
     //is in Albany_SolverFactory.
 
-    if (useExplHyperViscosity) {
+    if (useExplHyperviscosity) {
       //OG: maybe, int(n_coeff) == 1 ?
       if(n_coeff == 1){
 
@@ -787,7 +788,7 @@ evaluateFields(typename Traits::EvalData workset)
     }//end of Laplace forming
 
 
-    if (useImplHyperViscosity) {
+    if (useImplHyperviscosity) {
       for (std::size_t node=0; node < numNodes; ++node)
         surftilde(node) = UNodal(cell,node,3);
       gradient(surftilde, cell, htildegradNodes);
@@ -802,7 +803,7 @@ evaluateFields(typename Traits::EvalData workset)
                             +  div_hU(qp)*wBF(cell, node, qp);
     }
 
-    if (useImplHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
+    if (useImplHyperviscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
       //for tensor HV, hyperViscosity is (cell, qp, 2,2)
       //so the code below is temporary 
       for (std::size_t qp=0; qp < numQPs; ++qp) {  
@@ -815,7 +816,7 @@ evaluateFields(typename Traits::EvalData workset)
     
   }
 
-  if (useImplHyperViscosity) { //hyperviscosity residual(3) = htilde*phi + grad(h)*grad(phi)
+  if (useImplHyperviscosity) { //hyperviscosity residual(3) = htilde*phi + grad(h)*grad(phi)
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       surf.initialize();
@@ -860,7 +861,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       get_coriolis(cell, coriolis);
 
-      if(useImplHyperViscosity) {
+      if(useImplHyperviscosity) {
         uX.initialize();
         uY.initialize();
         uZ.initialize();
@@ -889,12 +890,12 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT utlambda;
         ScalarT uttheta;
 
-        if(useImplHyperViscosity) {
+        if(useImplHyperviscosity) {
           utlambda = UNodal(cell, node,4);
           uttheta  = UNodal(cell, node,5);
         } 
 
-        if(useImplHyperViscosity) {
+        if(useImplHyperviscosity) {
            ScalarT lam = lambda_nodal(cell, node);
            ScalarT th = theta_nodal(cell, node);
 
@@ -915,7 +916,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       
-      if (useImplHyperViscosity) {
+      if (useImplHyperviscosity) {
         gradient(uX, cell, uXgradNodes);
         gradient(uY, cell, uYgradNodes);
         gradient(uZ, cell, uZgradNodes);
@@ -931,7 +932,7 @@ evaluateFields(typename Traits::EvalData workset)
       curl(uAtNodes, cell, curlU);
 
       if(plotVorticity){
-        if(useImplHyperViscosity){
+        if(useImplHyperviscosity){
           for (std::size_t qp=0; qp < numQPs; ++qp)
             for (std::size_t node=0; node < numNodes; ++node) 
               Residual(cell,node,6) += (U(cell,qp,6) - curlU(qp))*wBF(cell,node,qp); 
@@ -953,7 +954,7 @@ evaluateFields(typename Traits::EvalData workset)
                                      + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
                                     )*wBF(cell,node,qp);
       } 
-      if (useImplHyperViscosity) {
+      if (useImplHyperviscosity) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t node=0; node < numNodes; ++node) {
 
@@ -1033,13 +1034,13 @@ a = Aeras::ShallowWaterConstants::self().earthRadius;
 myPi = Aeras::ShallowWaterConstants::self().pi;
 
   if (usePrescribedVelocity) {
-      if (useImplHyperViscosity)
+      if (useImplHyperviscosity)
         Kokkos::parallel_for(ShallowWaterResid_VecDim4_Policy(0,workset.numCells),*this); 
       else
         Kokkos::parallel_for(ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy(0,workset.numCells),*this); 
   }
   else {
-     if (useImplHyperViscosity)
+     if (useImplHyperviscosity)
        Kokkos::parallel_for(ShallowWaterResid_VecDim6_Policy(0,workset.numCells),*this);
      else
        Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
