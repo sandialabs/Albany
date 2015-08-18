@@ -1,0 +1,39 @@
+<ParameterList>
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="cube">
+      <Parameter name="material" type="string" value="Solid"/>
+    </ParameterList>
+    <ParameterList name="Upper_Region">
+      <Parameter name="material" type="string" value="Powder" />
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Materials">
+    <ParameterList name="Solid">
+      <Parameter name="Category" type="string" value="Solid" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.05"/>
+      </ParameterList>
+      <ParameterList name="Rho Cp">
+        <Parameter name="Rho Cp Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.01"/>
+      </ParameterList>
+      <ParameterList name="Source">
+        <Parameter name="Phase Source Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.0"/>
+      </ParameterList>
+      <ParameterList name="Laser Source">
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Porosity Value" type="double" value="0.5"/>
+        <Parameter name="Particle Dia Type" type="string" value="Constant"/>
+        <Parameter name="Particle Dia Value" type="double" value="0.5"/>
+        <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
+        <Parameter name="Laser Beam Radius Value" type="double" value="0.5"/>
+        <Parameter name="Laser Power Type" type="string" value="Constant"/>
+        <Parameter name="Laser Power Value" type="double" value="5.0"/>
+        <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
+        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.5"/>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

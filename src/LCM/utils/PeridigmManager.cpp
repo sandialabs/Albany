@@ -1320,7 +1320,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* dirichletData = stk::mesh::field_data (*dirichletField, node);
 
           //set dirichletData as any function of the coordinates;
-          dirichletData[0] = (coord[0] - 1.66);
+          dirichletData[0] = 0.001*(coord[0]/1.625);
         }
       }
     }
@@ -1335,7 +1335,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= (coord[0]-1.66);
+          dirichletData[0]= 0.001*(coord[0]/1.625);
         }
       }
     }

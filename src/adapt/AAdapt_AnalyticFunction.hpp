@@ -16,6 +16,7 @@
 #include <boost/random/variate_generator.hpp>
 
 #include "Teuchos_Array.hpp"
+#include "RTC_FunctionRTC.hh"
 
 namespace AAdapt {
 
@@ -372,6 +373,7 @@ class AerasTCGalewskyInit : public AnalyticFunction {
 };
   
 //-------------------------------------------------------------------
+
 class AerasTC4Init : public AnalyticFunction {
   public:
     AerasTC4Init(int neq_, int spatialDim_, Teuchos::Array<double> data_);
@@ -417,6 +419,8 @@ class AerasPlanarCosineBell : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+//----------------------------------------------------------------------------
+
 class AerasRossbyHaurwitzWave : public AnalyticFunction {
   public:
     AerasRossbyHaurwitzWave(int neq_, int spatialDim_, Teuchos::Array<double> data_);
@@ -426,6 +430,23 @@ class AerasRossbyHaurwitzWave : public AnalyticFunction {
     int neq;    // size of solution vector x
 
     Teuchos::Array<double> data;
+};
+
+//----------------------------------------------------------------------------
+
+class ExpressionParser : public AnalyticFunction {
+  public:
+    ExpressionParser(int neq_, int spatialDim_, std::string expressionX_, std::string expressionY_, std::string expressionZ_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    std::string expressionX;
+    std::string expressionY;
+    std::string expressionZ;
+    PG_RuntimeCompiler::Function rtcFunctionX;
+    PG_RuntimeCompiler::Function rtcFunctionY;
+    PG_RuntimeCompiler::Function rtcFunctionZ;
 };
 
 }

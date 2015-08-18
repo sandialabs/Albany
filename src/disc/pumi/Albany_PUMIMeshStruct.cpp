@@ -129,7 +129,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 
   bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
   if (isQuadMesh)
-    apf::changeMeshShape(mesh, apf::getLagrange(2), false);
+    apf::changeMeshShape(mesh, apf::getSerendipity(), false);
 
   // Resize mesh after input if indicated in the input file
   // User has indicated a desired element size in input file

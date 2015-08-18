@@ -1,0 +1,143 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.81) Modified: 2015-06-03
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2015/08/17   05:01:04 PDT
+#  *****************************************************************
+
+#  FILE 1: /home/jwfoulk/LCM/Albany/examples/LCM/MechanicsWithHydrogenBar/no_stabilization/blockDiffusionNoStab.gold.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 738, Elements = 320, Nodesets = 6, Sidesets = 0
+#          Vars: Global = 0, Nodal = 10, Element = 96, Nodeset = 0, Sideset = 0, Times = 16
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:             750 @ t16
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 5.0e-10
+	disp_x     # min:               0 @ t1,n1	max:           0.375 @ t16,n1
+	disp_y     # min:               0 @ t1,n1	max:     0.082650813 @ t16,n2
+	disp_z     # min:               0 @ t1,n1	max:     0.074543125 @ t16,n419
+	CL         # min:        3.87e-05 @ t1,n11	max:     7.77975e-05 @ t16,n10
+	CLresid    # min:               0 @ t1,n10	max:   2.3346449e-05 @ t16,n53
+	force_x    # min:               0 @ t1,n1	max:      0.32615723 @ t16,n51
+	force_y    # min:               0 @ t1,n1	max:   5.7139427e-15 @ t2,n66
+	force_z    # min:               0 @ t1,n1	max:   2.9869135e-15 @ t2,n637
+	tauH       # min:               0 @ t1,n1	max:       23.918197 @ t16,n419
+	tauHresid  # min:               0 @ t1,n1	max:   6.4208849e-17 @ t2,n341
+
+ELEMENT VARIABLES relative 1.e-6 floor 5.0e-10
+	Cauchy_Stress_01  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e16
+	Cauchy_Stress_02  # min:               0 @ t1,b1,e1	max:   1.8085345e-12 @ t2,b1,e149
+	Cauchy_Stress_03  # min:               0 @ t1,b1,e1	max:   1.4961515e-12 @ t2,b1,e200
+	Cauchy_Stress_04  # min:               0 @ t1,b1,e1	max:   1.8085345e-12 @ t2,b1,e149
+	Cauchy_Stress_05  # min:               0 @ t1,b1,e1	max:   4.0352166e-12 @ t2,b1,e319
+	Cauchy_Stress_06  # min:               0 @ t1,b1,e1	max:    1.705904e-12 @ t2,b1,e318
+	Cauchy_Stress_07  # min:               0 @ t1,b1,e1	max:   1.4961515e-12 @ t2,b1,e200
+	Cauchy_Stress_08  # min:               0 @ t1,b1,e1	max:    1.705904e-12 @ t2,b1,e318
+	Cauchy_Stress_09  # min:               0 @ t1,b1,e1	max:   1.0431656e-12 @ t2,b1,e145
+	Cauchy_Stress_10  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e281
+	Cauchy_Stress_11  # min:               0 @ t1,b1,e1	max:   1.8538797e-12 @ t2,b1,e264
+	Cauchy_Stress_12  # min:               0 @ t1,b1,e1	max:   1.5266888e-12 @ t2,b1,e240
+	Cauchy_Stress_13  # min:               0 @ t1,b1,e1	max:   1.8538797e-12 @ t2,b1,e264
+	Cauchy_Stress_14  # min:               0 @ t1,b1,e1	max:   3.8704595e-12 @ t2,b1,e201
+	Cauchy_Stress_15  # min:               0 @ t1,b1,e1	max:   1.6040847e-12 @ t2,b1,e310
+	Cauchy_Stress_16  # min:               0 @ t1,b1,e1	max:   1.5266888e-12 @ t2,b1,e240
+	Cauchy_Stress_17  # min:               0 @ t1,b1,e1	max:   1.6040847e-12 @ t2,b1,e310
+	Cauchy_Stress_18  # min:               0 @ t1,b1,e1	max:   1.4923618e-12 @ t2,b1,e137
+	Cauchy_Stress_19  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e24
+	Cauchy_Stress_20  # min:               0 @ t1,b1,e1	max:   1.7106903e-12 @ t2,b1,e149
+	Cauchy_Stress_21  # min:               0 @ t1,b1,e1	max:   1.1755948e-12 @ t2,b1,e177
+	Cauchy_Stress_22  # min:               0 @ t1,b1,e1	max:   1.7106903e-12 @ t2,b1,e149
+	Cauchy_Stress_23  # min:               0 @ t1,b1,e1	max:   3.9741543e-12 @ t2,b1,e319
+	Cauchy_Stress_24  # min:               0 @ t1,b1,e1	max:   1.6990097e-12 @ t2,b1,e319
+	Cauchy_Stress_25  # min:               0 @ t1,b1,e1	max:   1.1755948e-12 @ t2,b1,e177
+	Cauchy_Stress_26  # min:               0 @ t1,b1,e1	max:   1.6990097e-12 @ t2,b1,e319
+	Cauchy_Stress_27  # min:               0 @ t1,b1,e1	max:   1.0815793e-12 @ t2,b1,e153
+	Cauchy_Stress_28  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e257
+	Cauchy_Stress_29  # min:               0 @ t1,b1,e1	max:   1.8986543e-12 @ t2,b1,e174
+	Cauchy_Stress_30  # min:               0 @ t1,b1,e1	max:   1.2228943e-12 @ t2,b1,e289
+	Cauchy_Stress_31  # min:               0 @ t1,b1,e1	max:   1.8986543e-12 @ t2,b1,e174
+	Cauchy_Stress_32  # min:               0 @ t1,b1,e1	max:   4.1391335e-12 @ t2,b1,e193
+	Cauchy_Stress_33  # min:               0 @ t1,b1,e1	max:   1.6531112e-12 @ t2,b1,e319
+	Cauchy_Stress_34  # min:               0 @ t1,b1,e1	max:   1.2228943e-12 @ t2,b1,e289
+	Cauchy_Stress_35  # min:               0 @ t1,b1,e1	max:   1.6531112e-12 @ t2,b1,e319
+	Cauchy_Stress_36  # min:               0 @ t1,b1,e1	max:   1.8625101e-12 @ t2,b1,e137
+	Cauchy_Stress_37  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e16
+	Cauchy_Stress_38  # min:               0 @ t1,b1,e1	max:   1.8223001e-12 @ t2,b1,e157
+	Cauchy_Stress_39  # min:               0 @ t1,b1,e1	max:   1.3680875e-12 @ t2,b1,e184
+	Cauchy_Stress_40  # min:               0 @ t1,b1,e1	max:   1.8223001e-12 @ t2,b1,e157
+	Cauchy_Stress_41  # min:               0 @ t1,b1,e1	max:     4.03233e-12 @ t2,b1,e319
+	Cauchy_Stress_42  # min:               0 @ t1,b1,e1	max:   1.7075319e-12 @ t2,b1,e318
+	Cauchy_Stress_43  # min:               0 @ t1,b1,e1	max:   1.3680875e-12 @ t2,b1,e184
+	Cauchy_Stress_44  # min:               0 @ t1,b1,e1	max:   1.7075319e-12 @ t2,b1,e318
+	Cauchy_Stress_45  # min:               0 @ t1,b1,e1	max:   1.0427215e-12 @ t2,b1,e152
+	Cauchy_Stress_46  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e281
+	Cauchy_Stress_47  # min:               0 @ t1,b1,e1	max:   1.8741186e-12 @ t2,b1,e264
+	Cauchy_Stress_48  # min:               0 @ t1,b1,e1	max:   1.4562594e-12 @ t2,b1,e176
+	Cauchy_Stress_49  # min:               0 @ t1,b1,e1	max:   1.8741186e-12 @ t2,b1,e264
+	Cauchy_Stress_50  # min:               0 @ t1,b1,e1	max:   3.9153125e-12 @ t2,b1,e193
+	Cauchy_Stress_51  # min:               0 @ t1,b1,e1	max:   1.6040847e-12 @ t2,b1,e318
+	Cauchy_Stress_52  # min:               0 @ t1,b1,e1	max:   1.4562594e-12 @ t2,b1,e176
+	Cauchy_Stress_53  # min:               0 @ t1,b1,e1	max:   1.6040847e-12 @ t2,b1,e318
+	Cauchy_Stress_54  # min:               0 @ t1,b1,e1	max:   1.5147883e-12 @ t2,b1,e137
+	Cauchy_Stress_55  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e24
+	Cauchy_Stress_56  # min:               0 @ t1,b1,e1	max:   1.7230191e-12 @ t2,b1,e149
+	Cauchy_Stress_57  # min:               0 @ t1,b1,e1	max:   1.2464979e-12 @ t2,b1,e161
+	Cauchy_Stress_58  # min:               0 @ t1,b1,e1	max:   1.7230191e-12 @ t2,b1,e149
+	Cauchy_Stress_59  # min:               0 @ t1,b1,e1	max:   3.9630521e-12 @ t2,b1,e319
+	Cauchy_Stress_60  # min:               0 @ t1,b1,e1	max:   1.6805609e-12 @ t2,b1,e319
+	Cauchy_Stress_61  # min:               0 @ t1,b1,e1	max:   1.2464979e-12 @ t2,b1,e161
+	Cauchy_Stress_62  # min:               0 @ t1,b1,e1	max:   1.6805609e-12 @ t2,b1,e319
+	Cauchy_Stress_63  # min:               0 @ t1,b1,e1	max:   1.0642598e-12 @ t2,b1,e144
+	Cauchy_Stress_64  # min:               0 @ t1,b1,e1	max:       62.012271 @ t16,b1,e217
+	Cauchy_Stress_65  # min:               0 @ t1,b1,e1	max:    1.880014e-12 @ t2,b1,e174
+	Cauchy_Stress_66  # min:               0 @ t1,b1,e1	max:   1.2342412e-12 @ t2,b1,e168
+	Cauchy_Stress_67  # min:               0 @ t1,b1,e1	max:    1.880014e-12 @ t2,b1,e174
+	Cauchy_Stress_68  # min:               0 @ t1,b1,e1	max:   4.1611159e-12 @ t2,b1,e193
+	Cauchy_Stress_69  # min:               0 @ t1,b1,e1	max:    1.646951e-12 @ t2,b1,e319
+	Cauchy_Stress_70  # min:               0 @ t1,b1,e1	max:   1.2342412e-12 @ t2,b1,e168
+	Cauchy_Stress_71  # min:               0 @ t1,b1,e1	max:    1.646951e-12 @ t2,b1,e319
+	Cauchy_Stress_72  # min:               0 @ t1,b1,e1	max:   1.9069191e-12 @ t2,b1,e137
+	eqps_1            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_2            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_3            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_4            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_5            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_6            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_7            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	eqps_8            # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	HydroStress_1     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e16
+	HydroStress_2     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e8
+	HydroStress_3     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e16
+	HydroStress_4     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e16
+	HydroStress_5     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e8
+	HydroStress_6     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e16
+	HydroStress_7     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e24
+	HydroStress_8     # min:               0 @ t1,b1,e1	max:       23.918197 @ t16,b1,e24
+	Transport_1       # min:        3.87e-05 @ t1,b1,e18	max:   7.5120114e-05 @ t16,b1,e1
+	Transport_2       # min:        3.87e-05 @ t1,b1,e2	max:   7.5120114e-05 @ t16,b1,e1
+	Transport_3       # min:        3.87e-05 @ t1,b1,e1	max:   7.5120114e-05 @ t16,b1,e1
+	Transport_4       # min:        3.87e-05 @ t1,b1,e1	max:   7.5120114e-05 @ t16,b1,e1
+	Transport_5       # min:        3.87e-05 @ t1,b1,e1	max:   7.7080097e-05 @ t16,b1,e1
+	Transport_6       # min:        3.87e-05 @ t1,b1,e1	max:   7.7080097e-05 @ t16,b1,e1
+	Transport_7       # min:        3.87e-05 @ t1,b1,e11	max:   7.7080097e-05 @ t16,b1,e1
+	Transport_8       # min:        3.87e-05 @ t1,b1,e11	max:   7.7080097e-05 @ t16,b1,e1
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

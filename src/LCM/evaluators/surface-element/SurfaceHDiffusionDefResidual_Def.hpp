@@ -219,15 +219,16 @@ namespace LCM {
             for (int node(0); node < numPlaneNodes; ++node) {
               int topNode = node + numPlaneNodes;
               for (int pt=0; pt < numQPs; ++pt) {
+		temp = (dL_(cell,pt) + artificalDL(cell,pt)); // GB changed 08/14/2015
                 for (std::size_t dim=0; dim <numDims; ++dim){
 
                       transport_residual_(cell, node) +=  flux(cell, pt, dim)*dt*
                         	                                                       surface_Grad_BF(cell, node, pt, dim)*
-                        	                                                       refArea(cell,pt)*thickness;
+			refArea(cell,pt)*thickness*temp; //GB changed 08/14/2015
 
                       transport_residual_(cell, topNode) += flux(cell, pt, dim)*dt*
                     	                                                        	   surface_Grad_BF(cell, topNode, pt, dim)*
-                    	                                                        	   refArea(cell,pt)*thickness;
+			refArea(cell,pt)*thickness*temp; //GB changed 08/14/2015
                    }
           	 }
         }
@@ -242,13 +243,13 @@ namespace LCM {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
-            temp = 1.0/dL_(cell,pt) + artificalDL(cell,pt);
+            // temp = 1.0/(dL_(cell,pt) + artificalDL(cell,pt)); GB changed 08/14/2015
 
           // Local rate of change volumetric constraint term
              transientTerm = refValues(node,pt)*
                                           ( eff_diff_(cell,pt)*
                                           (transport_(cell, pt)-transportold(cell, pt) ))*
-                                          refArea(cell,pt)*thickness*temp;
+	       refArea(cell,pt)*thickness;//*temp; GB changed 08/14/2015
                
         	  transport_residual_(cell, node) +=  transientTerm;
 
@@ -259,24 +260,25 @@ namespace LCM {
             	transientTerm  = refValues(node,pt)*
                                             strain_rate_factor_(cell,pt)*
                                             (eqps_(cell,pt)- eqps_old(cell,pt))*
-                                            refArea(cell,pt)*thickness*temp;
+		  refArea(cell,pt)*thickness;//*temp; GB changed 08/14/2015
 
             	transport_residual_(cell, node) += transientTerm;
 
             	transport_residual_(cell, topNode) +=  transientTerm;
 
             	// hydrostatic stress term
+		 // MUST BE FIXED: Add C_inverse term into hydrostatic residual
         		for (int dim=0; dim < numDims; ++dim) {
 
         			    transport_residual_(cell, node) -= surface_Grad_BF(cell, node, pt, dim)*
         			    						  	  	                 convection_coefficient_(cell,pt)*transport_(cell,pt)*
         			    				                                 hydro_stress_gradient_(cell,pt, dim)*dt*
-        			    				       	   	   	   	   	   	   	 refArea(cell,pt)*thickness*temp;
+				      refArea(cell,pt)*thickness;//*temp; GB changed 08/14/2015
 
         				transport_residual_(cell, topNode) -= surface_Grad_BF(cell, topNode, pt, dim)*
         				                                                  convection_coefficient_(cell,pt)*transport_(cell,pt)*
         				                                                  hydro_stress_gradient_(cell,pt, dim)*dt*
-        		                                                          refArea(cell,pt)*thickness*temp;
+					  refArea(cell,pt)*thickness;//*temp; GB changed 08/14/2015
         		}
             }
         } // end integrartion point loop
@@ -314,7 +316,7 @@ namespace LCM {
     		  stabilizationTerm= stab_param_*eff_diff_(cell, qp)*
                                               (-transport_(cell, qp)+transportold(cell, qp)+
                                              	pterm(cell,qp))*refValues(node,qp)*
-                                             	refArea(cell,qp)*thickness*temp;
+		    refArea(cell,qp)*thickness;//*temp;  GB changed 08/14/2015
 
     		  //transport_residual_(cell,node)    -= stabilizationTerm;
           //transport_residual_(cell,topNode) -= stabilizationTerm;

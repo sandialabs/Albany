@@ -191,15 +191,16 @@ namespace LCM {
       for (int qp=0; qp < numQPs; ++qp) {
 
 
-  		  Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
-  		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
-  		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+	      Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+	      Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
+	      Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
 
   	      Intrepid::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+	      temp =  ( DL(cell,qp)  + artificalDL(cell,qp)  ); //**GB changed 08/14/2015
 
          for (int j=0; j<numDims; j++){
-        	 Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
+	   Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt*temp; // **GB changed 08/14/2015
         }
       }
     }
@@ -210,27 +211,28 @@ namespace LCM {
         for (int qp=0; qp < numQPs; ++qp) {
 
                    // Divide the equation by DL to avoid ill-conditioned tangent
-                   temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
+                   // temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  ); **GB changed 08/14/2015
 
                   // Transient Term
                   TResidual(cell,node) +=  Dstar(cell, qp)*
                 		                                     (Clattice(cell,qp)- Clattice_old(cell, qp) )*
-                                                             wBF(cell, node, qp)*temp;
+		    wBF(cell, node, qp);//*temp; GB changed 08/14/2015
 
                  // Strain Rate Term
                  TResidual(cell,node) +=  eqpsFactor(cell,qp)*
                                                            (eqps(cell,qp)- eqps_old(cell, qp))*
-                                                            wBF(cell, node, qp)*temp;
+		   wBF(cell, node, qp);//*temp; GB changed 08/14/2015
 
                  // Isotope decay term
                  TResidual(cell,node) += t_decay_constant_*(Clattice(cell,qp) + Ctrapped(cell,qp))
-                                         *wBF(cell,node,qp)*dt*temp;
+		   *wBF(cell,node,qp)*dt;//*temp; GB changed 08/14/2015
 
                  // hydrostatic stress term
+		 // Need to be done: Add C_inverse term into hydrostatic residual
                  for (int dim=0; dim < numDims; ++dim) {
                          TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*
                                                                   wGradBF(cell, node, qp, dim)*
-                                                                  stressGrad(cell, qp, dim)*dt*temp;
+			   stressGrad(cell, qp, dim)*dt;//*temp; GB changed 08/14/2015
                  }
             }
          }
@@ -270,8 +272,8 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
         for (int qp=0; qp < numQPs; ++qp) {
-          temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
-          TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*temp*
+          // temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  ); GB changed 08/14/2015
+          TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*//temp* GB changed 08/14/2015
                                                    (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp))*
                                                     wBF(cell, node, qp);
         }
