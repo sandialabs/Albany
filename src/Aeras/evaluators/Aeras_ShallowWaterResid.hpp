@@ -104,6 +104,9 @@ private:
   int vecDim;
   int spatialDim;
 
+  //OG: this is temporary
+  double sHvTau;
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
       std::size_t cell, Intrepid::FieldContainer<ScalarT>  & div);

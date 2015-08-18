@@ -62,6 +62,9 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   
   plotVorticity = shallowWaterList->get<bool>("Plot Vorticity", false); //Default: false 
 
+  sHvTau = sqrt(shallowWaterList->get<double>("Hyperviscosity Tau", 0.0));
+
+
  #define ALBANY_VERBOSE
   
   AlphaAngle = shallowWaterList->get<double>("Rotation Angle", 0.0); //Default: 0.0
@@ -692,7 +695,7 @@ evaluateFields(typename Traits::EvalData workset)
   double m_coeff = workset.m_coeff;
   double n_coeff = workset.n_coeff;
 #ifdef ALBANY_VERBOSE
-  std::cout << "j_coeff, m_coeff, n_coeff: " << j_coeff << ", " << m_coeff << ", " << n_coeff << std::endl;
+  std::cout << "In SW_resid: j_coeff, m_coeff, n_coeff: " << j_coeff << ", " << m_coeff << ", " << n_coeff << std::endl;
 #endif 
 
 //Note that vars huAtNodes, div_hU, ... below are redefined locally here. 
@@ -754,32 +757,51 @@ evaluateFields(typename Traits::EvalData workset)
       surf(node) = UNodal(cell,node,0);
     gradient(surf, cell, hgradNodes);
 
+    //In case of Explicit Hyperviscosity we form Laplace operator if omega=n=1 .
+    //This code should not be executed if hv coefficient is zero, the check
+    //is in Albany_SolverFactory.
+
+    if (useExplHyperViscosity) {
+      //OG: maybe, int(n_coeff) == 1 ?
+      if(n_coeff == 1){
+
+    	for (std::size_t node=0; node < numNodes; ++node)
+          surftilde(node) = UDotDotNodal(cell,node,0);
+        gradient(surftilde, cell, htildegradNodes);
+
+	    for (std::size_t qp=0; qp < numQPs; ++qp) {
+		  for (std::size_t node=0; node < numNodes; ++node) {
+
+			Residual(cell,node,0) += sHvTau*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                  +  sHvTau*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
+
+			//OG: This doesn't quite work when hvTau=0=hyperviscosity(:,:,:) .
+			//In case of hvTau = 0, sqrt(hyperviscosity(:))=[0 | nan nan ...] and laplace op. below contains nans as well.
+			//My best guess is that this is due to automatic differentiation.
+			//Residual(cell,node,0) += sqrt(hyperviscosity(cell,qp,0))*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
+            //                      +  sqrt(hyperviscosity(cell,qp,0))*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
+
+		  }
+	    }
+      }
+    }//end of Laplace forming
+
+
     if (useImplHyperViscosity) {
-      for (std::size_t node=0; node < numNodes; ++node) 
+      for (std::size_t node=0; node < numNodes; ++node)
         surftilde(node) = UNodal(cell,node,3);
       gradient(surftilde, cell, htildegradNodes);
     }
-    if (useExplHyperViscosity) {
-      for (std::size_t node=0; node < numNodes; ++node) 
-        surftilde(node) = UDotDotNodal(cell,node,0);
-      gradient(surftilde, cell, htildegradNodes);
-    }
+
 
     divergence(huAtNodes, cell, div_hU);
 
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      std::size_t node = qp; 
+      std::size_t node = qp;
       Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
-                            +  div_hU(qp)*wBF(cell, node, qp); 
+                            +  div_hU(qp)*wBF(cell, node, qp);
     }
-    if (useExplHyperViscosity) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {  
-        for (std::size_t node=0; node < numNodes; ++node) {
-          Residual(cell,node,0) += n_coeff*sqrt(hyperviscosity(cell,qp,0))*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                                + n_coeff*sqrt(hyperviscosity(cell,qp,0))*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1); 
-        }
-      }
-    }
+
     if (useImplHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
       //for tensor HV, hyperViscosity is (cell, qp, 2,2)
       //so the code below is temporary 

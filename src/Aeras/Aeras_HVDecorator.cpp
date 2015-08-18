@@ -40,6 +40,7 @@ Aeras::HVDecorator::HVDecorator(
   Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass_);
   Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
 #endif
+
 }
  
 //IKT: the following function creates either the mass or Laplacian operator, to be 
@@ -289,8 +290,7 @@ Aeras::HVDecorator::evalModelImpl(
           sacado_param_vec, *fT_out);
     }
   }
-  //FIXME, IKT, 8/3/15: 
-  //This is where updating of auxiliary variables and residual fT_out will go.
+
   Teuchos::RCP<Tpetra_Vector> xtildeT = Teuchos::rcp(new Tpetra_Vector(xT->getMap())); 
   //compute xtildeT 
   applyLinvML(xT, xtildeT); 
@@ -304,13 +304,10 @@ Aeras::HVDecorator::evalModelImpl(
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, xtildeT);
   mm_counter++; 
 #endif  
-  //FIXME: add xtildeT to fT_out. 
-  //IKT: I think this will just be: 
 
-  //OG: I noticed 2 things: If not timestep, then inArgs.xdot is probably null, so the code
-  //crashes at fT_out->update(1.0, *xtildeT, 1.0);
-  //also, alpha=beta=0. There may be a better way to check this:
-  if( (beta != 0) && (alpha != 0) ){
+  //std::cout <<"in HVDec evalModelImpl a, b= " << alpha << "  "<< beta <<std::endl;
+
+  if(Teuchos::nonnull(inArgsT.get_x_dot())){
 	  std::cout <<"in the if-statement for the update" <<std::endl;
 	  fT_out->update(1.0, *xtildeT, 1.0);
   }
