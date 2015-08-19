@@ -2956,7 +2956,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
               "Stabilization Parameter");
     }
     p->set<RealType>("Stabilization Parameter", stab_param);
-
     p->set<bool>("Small Strain", small_strain);
 
     //Output

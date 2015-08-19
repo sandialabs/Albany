@@ -142,69 +142,17 @@ trace (const ArrayT &A, const int cell) const
   return s;
 }
 
-/*//template<typename EvalT, typename Traits>
-template <class ArrayOut, class ArrayT>
-KOKKOS_INLINE_FUNCTION
-//void FirstPK<EvalT, Traits>::
-void piola (ArrayOut &C, const ArrayT &F, const ArrayT &A) 
-{
- 
-   const int num_dims_=A.dimension(0);
-   switch (num_dims_) {  
- 
-   default:
-     TEUCHOS_TEST_FOR_EXCEPTION( !( (num_dims_ == 2) || (num_dims_ == 3) ), std::invalid_argument,
-                                  ">>> ERROR (LCM FirstPK): piola function is defined only for rank-2 or 3 ."); 
-    break;
-
-   case 3:
-
-      C(0,0) = A(0,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + A(0,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + A(0,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
-      C(0,1) = A(0,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + A(0,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + A(0,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
-      C(0,2) = A(0,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1)) + A(0,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + A(0,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
-
-      C(1,0) = A(1,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + A(1,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + A(1,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
-      C(1,1) = A(1,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + A(1,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + A(1,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
-      C(1,2) = A(1,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1))+ A(1,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + A(1,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
-
-      C(2,0) = A(2,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + A(2,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2))+ A(2,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
-      C(2,1) = A(2,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2))+ A(2,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + A(2,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
-      C(2,2) = A(2,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1))+ A(2,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + A(2,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
-
-    break;
-
-   case 2:
-      C(0,0) = A(0,0)*F(1,1) - A(0,1)*F(0,1);
-      C(0,1) = -A(0,0)*F(1,0) + A(0,1)*F(0,0);
-
-      C(1,0) = A(1,0)*F(1,1) - A(1,1)*F(0,1);
-      C(1,1) = -A(1,0)*F(1,0) + A(1,1)*F(0,0);
-    break;
-   }
-}
-*/
 //Kokkos functors:
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
 operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
-/*  for (int pt = 0; pt < num_pts_; ++pt) {
-        for (int i = 0; i < num_dims_; i++) {
-          for (int j = 0; j < num_dims_; j++) {
-             sig(cell,i,j)=stress_(cell, pt, i, j);
-             sig(cell,i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/num_dims_)*trace(sig,cell)*I(i,j);
-             stress_(cell, pt, i, j) = sig(cell,i,j);
-          }
-        }
-      }
-*/
-
   ScalarT sig[3][3], traceSig;
   
   for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
-             sig[i][j]=stress_(cell, pt, i, j);
+             sig[i][j]=first_pk_stress_(cell, pt, i, j);
              traceSig=0.0;
  
              for (int k = 0; k < num_dims_; ++k) {
@@ -212,7 +160,7 @@ operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
              }
     
              sig[i][j]+= stab_pressure_(cell,pt)*I(i,j)-(1.0/num_dims_)*traceSig*I(i,j);
-             stress_(cell, pt, i, j) = sig[i][j];
+             first_pk_stress_(cell, pt, i, j) = sig[i][j];
           }
         }
       }
@@ -222,23 +170,13 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
 operator() (const have_pore_pressure_Tag& tag, const int& cell) const{
-/*  for (int pt = 0; pt < num_pts_; ++pt) {
-       for (int i = 0; i < num_dims_; i++) {
-          for (int j = 0; j < num_dims_; j++) {
-             sig(cell,i,j)=stress_(cell, pt, i, j);
-             sig(cell,i,j)-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
-             stress_(cell, pt, i, j)=sig(cell,i,j);
-          }
-        }
-      }
-*/
    ScalarT sig[3][3];   
     for (int pt = 0; pt < num_pts_; ++pt) {
        for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
-             sig[i][j]=stress_(cell, pt, i, j);
+             sig[i][j]=first_pk_stress_(cell, pt, i, j);
              sig[i][j]-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
-             stress_(cell, pt, i, j)=sig[i][j];
+             first_pk_stress_(cell, pt, i, j)=sig[i][j];
           }
         }
       }
@@ -263,73 +201,13 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
 operator() (const no_small_strain_Tag& tag, const int& cell) const{
-
-/*
-     for (int pt = 0; pt < num_pts_; ++pt) {
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {    
-            F(cell,i,j)=def_grad_(cell, pt,i,j);
-            sig(cell,i,j)=stress_(cell, pt,i,j);
-          }
-        } 
-        
-       //piola(P, F, sig);
-        {
-          switch (num_dims_) {
-
-           default:
-             Kokkos::abort("Error(LCM FirstPK): piola function is defined only for rank-2 or 3 .");
-           break;
-
-           case 3:
-
-           P(cell,0,0) = sig(cell,0,0)*(-F(cell,1,2)*F(cell,2,1) + F(cell,1,1)*F(cell,2,2)) + sig(cell,0,1)*( F(cell,0,2)*F(cell,2,1) - F(cell,0,1)*F(cell,2,2)) 
-                        + sig(cell,0,2)*(-F(cell,0,2)*F(cell,1,1) + F(cell,0,1)*F(cell,1,2));
-           P(cell,0,1) = sig(cell,0,0)*( F(cell,1,2)*F(cell,2,0) - F(cell,1,0)*F(cell,2,2)) + sig(cell,0,1)*(-F(cell,0,2)*F(cell,2,0) + F(cell,0,0)*F(cell,2,2)) 
-                        + sig(cell,0,2)*( F(cell,0,2)*F(cell,1,0) - F(cell,0,0)*F(cell,1,2));
-           P(cell,0,2) = sig(cell,0,0)*(-F(cell,1,1)*F(cell,2,0) + F(cell,1,0)*F(cell,2,1)) + sig(cell,0,1)*( F(cell,0,1)*F(cell,2,0) - F(cell,0,0)*F(cell,2,1)) 
-                        + sig(cell,0,2)*(-F(cell,0,1)*F(cell,1,0) + F(cell,0,0)*F(cell,1,1));
-
-           P(cell,1,0) = sig(cell,1,0)*(-F(cell,1,2)*F(cell,2,1) + F(cell,1,1)*F(cell,2,2)) + sig(cell,1,1)*( F(cell,0,2)*F(cell,2,1) - F(cell,0,1)*F(cell,2,2)) 
-                       + sig(cell,1,2)*(-F(cell,0,2)*F(cell,1,1) + F(cell,0,1)*F(cell,1,2));
-           P(cell,1,1) = sig(cell,1,0)*( F(cell,1,2)*F(cell,2,0) - F(cell,1,0)*F(cell,2,2)) + sig(cell,1,1)*(-F(cell,0,2)*F(cell,2,0) + F(cell,0,0)*F(cell,2,2)) 
-                        + sig(cell,1,2)*( F(cell,0,2)*F(cell,1,0) - F(cell,0,0)*F(cell,1,2));
-           P(cell,1,2) = sig(cell,1,0)*(-F(cell,1,1)*F(cell,2,0) + F(cell,1,0)*F(cell,2,1)) + sig(cell,1,1)*( F(cell,0,1)*F(cell,2,0) - F(cell,0,0)*F(cell,2,1))
-                        + sig(cell,1,2)*(-F(cell,0,1)*F(cell,1,0) + F(cell,0,0)*F(cell,1,1));
-
-           P(cell,2,0) = sig(cell,2,0)*(-F(cell,1,2)*F(cell,2,1) + F(cell,1,1)*F(cell,2,2))+ sig(cell,2,1)*( F(cell,0,2)*F(cell,2,1) - F(cell,0,1)*F(cell,2,2))
-                        + sig(cell,2,2)*(-F(cell,0,2)*F(cell,1,1) + F(cell,0,1)*F(cell,1,2));
-           P(cell,2,1) = sig(cell,2,0)*( F(cell,1,2)*F(cell,2,0) - F(cell,1,0)*F(cell,2,2))+ sig(cell,2,1)*(-F(cell,0,2)*F(cell,2,0) + F(cell,0,0)*F(cell,2,2)) 
-                        + sig(cell,2,2)*( F(cell,0,2)*F(cell,1,0) - F(cell,0,0)*F(cell,1,2));
-           P(cell,2,2) = sig(cell,2,0)*(-F(cell,1,1)*F(cell,2,0) + F(cell,1,0)*F(cell,2,1))+ sig(cell,2,1)*( F(cell,0,1)*F(cell,2,0) - F(cell,0,0)*F(cell,2,1)) 
-                        + sig(cell,2,2)*(-F(cell,0,1)*F(cell,1,0) + F(cell,0,0)*F(cell,1,1));
-
-           break;
-
-           case 2:
-           P(cell,0,0) = sig(cell,0,0)*F(cell,1,1) - sig(cell,0,1)*F(cell,0,1);
-           P(cell,0,1) = -sig(cell,0,0)*F(cell,1,0) + sig(cell,0,1)*F(cell,0,0);
-
-           P(cell,1,0) = sig(cell,1,0)*F(cell,1,1) - sig(cell,1,1)*F(cell,0,1);
-           P(cell,1,1) = -sig(cell,1,0)*F(cell,1,0) + sig(cell,1,1)*F(cell,0,0);
-            break;
-         }
-       }
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {
-            first_pk_stress_(cell,pt,i,j) = P(cell,i, j);
-          }
-        }
-      }
-*/
-
    ScalarT sig[3][3], F[3][3], P[3][3];
 
        for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
             F[i][j]=def_grad_(cell, pt,i,j);
-            sig[i][j]=stress_(cell, pt,i,j);
+            sig[i][j]=first_pk_stress_(cell, pt,i,j);
           }
         }
 
@@ -389,88 +267,75 @@ template<typename EvalT, typename Traits>
 void FirstPK<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //std::cout.precision(15);
-  // initilize Tensors
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  // initilize Tensors
   Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
-  if (have_stab_pressure_) {
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        sig.fill(stress_,cell, pt,0,0);
-        sig += stab_pressure_(cell,pt)*I - (1.0/num_dims_)*Intrepid::trace(sig)*I;
-
-        for (int i = 0; i < num_dims_; i++) {
-          for (int j = 0; j < num_dims_; j++) {
-            stress_(cell, pt, i, j) = sig(i, j);
-          }
-        }
-      }
+  // Copy stress_ to first_pk_stress_. Previously, stress_ itself was written
+  // to. That's a bug. Dependent variables can only be read.
+  for (int cell = 0; cell < workset.numCells; ++cell)
+    for (int pt = 0; pt < num_pts_; ++pt) {
+      sig.fill(stress_,cell,pt,0,0);
+      for (int dim0 = 0; dim0 < num_dims_; ++dim0)
+        for (int dim1 = 0; dim1 < num_dims_; ++dim1)
+          first_pk_stress_(cell,pt,dim0,dim1) = stress_(cell,pt,dim0,dim1);
     }
-  }
 
-  if (have_pore_pressure_) {
-    for (int cell = 0; cell < workset.numCells; ++cell) {
+  // Modify first_pk_stress_, which is still in the small-strain form, based on
+  // optional pressure modifications.
+  if (have_stab_pressure_) {
+    for (int cell = 0; cell < workset.numCells; ++cell)
       for (int pt = 0; pt < num_pts_; ++pt) {
-
+        sig.fill(first_pk_stress_, cell,pt,0,0);
+        sig += (stab_pressure_(cell,pt) - (1.0/num_dims_)*Intrepid::trace(sig))*I;
+        
+        for (int i = 0; i < num_dims_; i++)
+          for (int j = 0; j < num_dims_; j++)
+            first_pk_stress_(cell, pt, i, j) = sig(i, j);
+      }
+  }
+  if (have_pore_pressure_) {
+    for (int cell = 0; cell < workset.numCells; ++cell)
+      for (int pt = 0; pt < num_pts_; ++pt) {
         // Effective Stress theory
-        sig.fill(stress_,cell, pt,0,0);
+        sig.fill(first_pk_stress_, cell,pt,0,0);
         sig -= biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I;
 
-        for (int i = 0; i < num_dims_; i++) {
-          for (int j = 0; j < num_dims_; j++) {
-            stress_(cell, pt, i, j) = sig(i, j);
-          }
-        }
+        for (int i = 0; i < num_dims_; i++)
+          for (int j = 0; j < num_dims_; j++)
+            first_pk_stress_(cell, pt, i, j) = sig(i, j);
       }
-    }
   }
 
-  // for small deformation, trivially copy Cauchy stress into first PK
-  if (small_strain_) { 
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        sig.fill(stress_,cell,pt,0,0);
-        for (int dim0 = 0; dim0 < num_dims_; ++dim0) {
-          for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
-            first_pk_stress_(cell,pt,dim0,dim1) = stress_(cell,pt,dim0,dim1);
-          }
-        }
-      }
-    }
-  } else {
-    // for large deformation, map Cauchy stress to 1st PK stress
-    for (int cell = 0; cell < workset.numCells; ++cell) {
+  if ( ! small_strain_) {
+    // For large deformation, map Cauchy stress to 1st PK stress. In the
+    // small-strain case, this transformation is Identity.
+    for (int cell = 0; cell < workset.numCells; ++cell)
       for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill(def_grad_,cell, pt,0,0);
-        sig.fill(stress_,cell, pt,0,0);
-
-
+        sig.fill(first_pk_stress_, cell,pt,0,0);
+        
         // map Cauchy stress to 1st PK
         P = Intrepid::piola(F, sig);
-
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {
+        
+        for (int i = 0; i < num_dims_; ++i)
+          for (int j = 0; j < num_dims_; ++j)
             first_pk_stress_(cell,pt,i,j) = P(i, j);
-          }
-        }
       }
-    }
   }
 #else
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-   if (have_stab_pressure_) 
-     Kokkos::parallel_for(have_stab_pressure_Policy(0,workset.numCells),*this);
-   if (have_pore_pressure_)
-     Kokkos::parallel_for(have_pore_pressure_Policy(0,workset.numCells),*this);
-   if (small_strain_)
-     Kokkos::parallel_for(small_strain_Policy(0,workset.numCells),*this);
-   else
-     Kokkos::parallel_for(no_small_strain_Policy(0,workset.numCells),*this);
+  Kokkos::parallel_for(small_strain_Policy(0,workset.numCells),*this);
+  if (have_stab_pressure_) 
+    Kokkos::parallel_for(have_stab_pressure_Policy(0,workset.numCells),*this);
+  if (have_pore_pressure_)
+    Kokkos::parallel_for(have_pore_pressure_Policy(0,workset.numCells),*this);
+  if ( ! small_strain_)
+    Kokkos::parallel_for(no_small_strain_Policy(0,workset.numCells),*this);
 #ifdef ALBANY_TIMER
  PHX::Device::fence();
  auto elapsed = std::chrono::high_resolution_clock::now() - start;
