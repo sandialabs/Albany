@@ -216,8 +216,6 @@ constructEvaluators(
   ArrayRCP<std::string> dofDotDotNames(1);
   ArrayRCP<std::string> residNames(1);
   dofNames[0] = "Displacement";
-  dofDotNames[0] = "Velocity";
-  dofDotDotNames[0] = "Acceleration";
   residNames[0] = dofNames[0] + " Residual";
 
   // create a data layout
@@ -234,20 +232,14 @@ constructEvaluators(
   RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
 
   fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructGatherSolutionEvaluator_withAcceleration(
-        true, dofNames, dofDotNames, dofDotDotNames));
+      evalUtils.constructGatherSolutionEvaluator_noTransient(
+        true, dofNames));
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructDOFVecInterpolationEvaluator(dofNames[0]));
-
-  fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructDOFVecInterpolationEvaluator(dofDotNames[0]));
-
-  fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructDOFVecInterpolationEvaluator(dofDotDotNames[0]));
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructDOFVecGradInterpolationEvaluator(dofNames[0]));
@@ -266,8 +258,6 @@ constructEvaluators(
   RCP<ParameterList> pFromProb = rcp(
       new ParameterList("Response Parameters from Problem"));
   pFromProb->set<std::string>("x Field Name", "xField");
-  pFromProb->set<std::string>("xdot Field Name", "Velocity");
-  pFromProb->set<std::string>("xdotdot Field Name", "Acceleration");
 
   // define field names
   LCM::FieldNameMap FNM(false);
@@ -406,8 +396,8 @@ constructEvaluators(
     p->set<std::string>("Stress Name", firstPK);
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<std::string>("Acceleration Name", "Acceleration");
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<bool>("Disable Dynamics", true);
 
     // output
     p->set<std::string>("Residual Name", "Displacement Residual");
