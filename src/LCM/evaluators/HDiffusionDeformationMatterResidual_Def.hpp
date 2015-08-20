@@ -198,6 +198,7 @@ namespace LCM {
   	      Intrepid::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 	      temp =  ( DL(cell,qp)  + artificalDL(cell,qp)  ); //**GB changed 08/14/2015
+              // Note: Now temp is the diffusivity
 
          for (int j=0; j<numDims; j++){
 	   Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt*temp; // **GB changed 08/14/2015
@@ -212,7 +213,7 @@ namespace LCM {
 
                    // Divide the equation by DL to avoid ill-conditioned tangent
                    // temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  ); **GB changed 08/14/2015
-
+ 
                   // Transient Term
                   TResidual(cell,node) +=  Dstar(cell, qp)*
                 		                                     (Clattice(cell,qp)- Clattice_old(cell, qp) )*
@@ -229,10 +230,18 @@ namespace LCM {
 
                  // hydrostatic stress term
 		 // Need to be done: Add C_inverse term into hydrostatic residual
+		 // This is horribly inefficient - will refactor to a single loop 
+                     
+                 Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+                 Intrepid::Tensor<ScalarT> C_tensor = Intrepid::t_dot(F,F);
+                 Intrepid::Tensor<ScalarT> C_inv_tensor = Intrepid::inverse(C_tensor);
+                 Intrepid::Vector<ScalarT> stress_grad(numDims, stressGrad, cell, qp, 0);
+                 Intrepid::Vector<ScalarT> C_inv_stress_grad = Intrepid::dot(C_inv_tensor, stress_grad);
+
                  for (int dim=0; dim < numDims; ++dim) {
                          TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*
                                                                   wGradBF(cell, node, qp, dim)*
-			   stressGrad(cell, qp, dim)*dt;//*temp; GB changed 08/14/2015
+			   C_inv_stress_grad(dim)*dt;//*temp; GB changed 08/14/2015
                  }
             }
          }
