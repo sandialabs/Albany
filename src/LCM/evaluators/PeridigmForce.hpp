@@ -45,6 +45,8 @@ protected:
   RealType density;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> velocity;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> acceleration;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
