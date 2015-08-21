@@ -10,11 +10,13 @@ SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/GOAL)
 SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
 SET(SOURCES
+  GOAL_Discretization.cpp
   responses/GOAL_AdjointResponse.cpp
   problems/GOAL_ProblemUtils.cpp
   problems/GOAL_MechanicsProblem.cpp)
 
 SET(HEADERS
+  GOAL_Discretization.hpp
   responses/GOAL_AdjointResponse.hpp
   problems/GOAL_ProblemUtils.hpp
   problems/GOAL_MechanicsProblem.hpp)
