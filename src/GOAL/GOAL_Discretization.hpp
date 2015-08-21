@@ -29,7 +29,7 @@ class Discretization
     ~Discretization();
     void writeMesh(const char* n);
     void updateSolutionToMesh(const Tpetra_Vector& x);
-    void fillSolution(Teuchos::RCP<Tpetra_Vector>& x);
+    void getSolution(Teuchos::RCP<Tpetra_Vector>& x);
     void enrichDiscretization();
     void decreaseDiscretization();
     Teuchos::RCP<Albany::APFDiscretization> disc;

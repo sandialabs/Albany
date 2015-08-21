@@ -118,7 +118,7 @@ void Discretization::updateSolutionToMesh(
     disc->setSplitFields(solNames,solIndex,&(data[0]),false);
 }
 
-void Discretization::fillSolution(Teuchos::RCP<Tpetra_Vector>& x)
+void Discretization::getSolution(Teuchos::RCP<Tpetra_Vector>& x)
 {
   Teuchos::ArrayRCP<ST> data = x->get1dViewNonConst();
   for (int i=0; i < solFields.size(); ++i)
