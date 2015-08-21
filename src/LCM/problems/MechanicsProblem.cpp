@@ -24,6 +24,8 @@ getVariableType(Teuchos::ParameterList& param_list,
     variable_type = MECH_VAR_TYPE_CONSTANT;
   else if (type == "DOF")
     variable_type = MECH_VAR_TYPE_DOF;
+  else if (type == "Time Dependent")
+    variable_type = MECH_VAR_TYPE_TIMEDEP;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Unknown variable type " << type << '\n');
@@ -39,6 +41,8 @@ variableTypeToString(Albany::MechanicsProblem::MECH_VAR_TYPE variable_type)
     return "None";
   else if (variable_type == MECH_VAR_TYPE_CONSTANT)
     return "Constant";
+  else if (variable_type == MECH_VAR_TYPE_TIMEDEP)
+    return "Time Dependent";
   return "DOF";
 }
 

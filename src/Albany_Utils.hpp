@@ -89,5 +89,9 @@ namespace Albany {
 
   // Connect executable to vtune for profiling
   void connect_vtune(const int p_rank);
+
+  // Do a nice stack trace for debugging
+  void do_stack_trace();
+
 }
 #endif //ALBANY_UTILS
