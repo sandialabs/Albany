@@ -417,6 +417,10 @@ constructEvaluators(
   }
   else if (fmChoice == Albany::BUILD_RESPONSE_FM)
   {
+    // this may break other field manager scalar responses
+    PHX::Tag<typename EvalT::ScalarT> tag("Scatter", dl->dummy);
+    fm0.requireField<EvalT>(tag);
+
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);

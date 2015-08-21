@@ -74,13 +74,6 @@ void GOALMechanicsProblem::buildAdjointProblem(
   int physSets = meshSpecs.size();
   adjFM.resize(physSets);
 
-  // determine if the adjoint problem is enriched
-  enrichedAdjoint = params->get<bool>("Enriched Adjoint Solve", true);
-
-  // change the cell topolgy data if enrichment is chosen
-  if (enrichedAdjoint)
-    GOAL::enrichMeshSpecs(meshSpecs);
-
   // build evaluators for each physics set
   for (int ps=0; ps < physSets; ++ps)
   {
@@ -90,12 +83,10 @@ void GOALMechanicsProblem::buildAdjointProblem(
   }
 
   // construct quantity of interest evaluators
+  adjQFM = Teuchos::null;
 
   // construct dirichlet bc evaluators
-
-  // change the cell topology data back if necessary
-  if (enrichedAdjoint)
-    GOAL::decreaseMeshSpecs(meshSpecs);
+  adjDFM = Teuchos::null;
 }
 
 /*****************************************************************************/
