@@ -975,6 +975,16 @@ ELSE()
   SET(ALBANY_PERFORMANCE_TESTS FALSE)
 ENDIF()
 
+#Add option to build libraries but not link any executables (for FELIX uner MPAS)
+OPTION(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
+IF (ALBANY_LIBRARIES_ONLY)
+  MESSAGE("-- ALBANY_LIBRARIES_ONLY is ON")
+  IF (LCM_TEST_EXES)
+    SET (LCM_TEST_EXES FALSE)
+    MESSAGE("--->  Disabling LCM_TEST_EXES")
+  ENDIF()
+ENDIF()
+
 # Add option to include Dakota restart examples in the test suite
 IF (NOT APPLE)
 CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" ON
@@ -1091,5 +1101,11 @@ IF(ALBANY_MPI)
   ENDIF()
 ENDIF(ALBANY_MPI)
 
-add_subdirectory(examples)
+# Add Albany test -- in the "examples" directory
+IF (ALBANY_LIBRARIES_ONLY)
+  MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+ELSE()
+  add_subdirectory(examples)
+ENDIF()
+
 MESSAGE("\nAnd CMake says...:")
