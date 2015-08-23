@@ -18,13 +18,13 @@ template<typename EvalT, typename Traits>
 PeridigmForceBase<EvalT, Traits>::
 PeridigmForceBase(Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dataLayout) :
-  density              (p.get<RealType>    ("Density", 1.0)),
   referenceCoordinates (p.get<std::string> ("Reference Coordinates Name"), dataLayout->vertices_vector),
   currentCoordinates   (p.get<std::string> ("Current Coordinates Name"),   dataLayout->node_vector),
   velocity             (p.get<std::string> ("Velocity Name"),              dataLayout->node_vector),
   acceleration         (p.get<std::string> ("Acceleration Name"),          dataLayout->node_vector),
   force                (p.get<std::string> ("Force Name"),                 dataLayout->node_vector),
-  residual             (p.get<std::string> ("Residual Name"),              dataLayout->node_vector)
+  residual             (p.get<std::string> ("Residual Name"),              dataLayout->node_vector),
+  density              (p.get<RealType>("Density", 1.0))
 {
   peridigmParams = p.sublist("Peridigm Parameters", true);
 
@@ -92,9 +92,6 @@ template<typename EvalT, typename Traits>
 void PeridigmForceBase<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
-  std::cout << "DJL DEBUGGING m_coeff " << workset.m_coeff << ", j_coeff " << workset.j_coeff << ", n_coeff " << workset.n_coeff << std::endl;
-
   bool albanyIsCreatingMassMatrix = true;
   if(workset.m_coeff != 0.0){
     albanyIsCreatingMassMatrix = false;
@@ -123,7 +120,6 @@ evaluateFields(typename Traits::EvalData workset)
     this->residual(cell, 0, 1) = -1.0 * rho * volume * this->acceleration(cell, 0, 1);
     this->residual(cell, 0, 2) = -1.0 * rho * volume * this->acceleration(cell, 0, 2);
   }
-
 }
 
 //**********************************************************************

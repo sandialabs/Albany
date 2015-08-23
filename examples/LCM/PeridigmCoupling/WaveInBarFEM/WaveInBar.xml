@@ -13,13 +13,13 @@
     </ParameterList>
     <ParameterList name="Initial Condition Dot">
       <Parameter name="Function" type="string" value="Expression Parser"/>
-      <Parameter name="Function Expression for DOF X" type="string" value="if(x > -0.499){ value = -10.0; }else{ value = 0.0; }"/>
+      <Parameter name="Function Expression for DOF X" type="string" value="if( !(x > -0.01501) ){ value = -100.0; }else{ value = 0.0; }"/>
       <Parameter name="Function Expression for DOF Y" type="string" value="value = 0.0"/>
       <Parameter name="Function Expression for DOF Z" type="string" value="value = 0.0"/>
     </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-      <Parameter name="Value" type="double" value="1.0e9"/>
+      <Parameter name="Value" type="double" value="22.35e9"/>
     </ParameterList>
     <ParameterList name="Poissons Ratio">
       <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
@@ -31,7 +31,7 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="WaveInBar.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="WaveInBar.e"/>
-    <Parameter name="Exodus Write Interval" type="int" value="50"/>
+    <Parameter name="Exodus Write Interval" type="int" value="10"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
@@ -39,8 +39,8 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Velocity Verlet">
-      <Parameter name="Num Time Steps" type="int" value="1000"/>
-      <Parameter name="Final Time" type="double" value="0.0001"/>
+      <Parameter name="Num Time Steps" type="int" value="220"/>
+      <Parameter name="Final Time" type="double" value="0.00002"/>
       <Parameter name="Initial Time" type="double" value="0.0"/>
       <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
       <Parameter name="Lump Mass Matrix" type="bool" value="true"/>

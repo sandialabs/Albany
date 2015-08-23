@@ -14,13 +14,14 @@ namespace LCM {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ElasticityResid<EvalT, Traits>::
-ElasticityResid(const Teuchos::ParameterList& p) :
-  Stress      (p.get<std::string>                   ("Stress Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
-  wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
+ElasticityResid(Teuchos::ParameterList& p) :
+  Stress       (p.get<std::string>                   ("Stress Name"),
+	        p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
+  wGradBF      (p.get<std::string>                   ("Weighted Gradient BF Name"),
+	        p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   ExResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") )
+		p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") ),
+  density_     (p.get<RealType>("Density", 1.0)) /* DJL Need to read this in from the xml file */
 {
   this->addDependentField(Stress);
   this->addDependentField(wGradBF);
@@ -102,7 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
 	for (int qp=0; qp < numQPs; ++qp) {
 	  for (int i=0; i<numDims; i++) {
-	    ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
+	    ExResidual(cell,node,i) += density_ * uDotDot(cell, qp, i) * wBF(cell, node, qp);
 	  }
 	}
       }

@@ -25,7 +25,7 @@ class ElasticityResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  ElasticityResid(const Teuchos::ParameterList& p);
+  ElasticityResid(Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -46,6 +46,8 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;
+
+  RealType density_;
 
   int numNodes;
   int numQPs;
