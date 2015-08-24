@@ -121,7 +121,7 @@ TEUCHOS_UNIT_TEST(MiniNewtonSolver, Instantiation)
   ValueT const
   error = norm(x_val - solution) / norm(solution);
 
-  TEST_COMPARE(error, <=, solver.relative_tolerance);
+  TEST_COMPARE(error, <=, solver.getRelativeTolerance());
 }
 
 } // anonymous namespace

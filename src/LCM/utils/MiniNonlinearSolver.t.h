@@ -36,36 +36,33 @@ solve(
   ValueT const
   initial_norm = Intrepid::norm(r_val);
 
-  this->number_iterations = 0;
+  this->num_iter_ = 0;
 
-  if (initial_norm <= this->absolute_tolerance) return;
+  this->converged_ = initial_norm <= this->abs_tol_;
 
-  bool
-  converged = false;
-
-  while (converged == false) {
+  while (this->converged_ == false) {
 
     r = residual.compute(x);
 
     r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
 
-    this->absolute_error = Intrepid::norm(r_val);
+    this->abs_error_ = Intrepid::norm(r_val);
 
-    this->relative_error = this->absolute_error / initial_norm;
-
-    bool const
-    converged_relative = this->relative_error <= this->relative_tolerance;
+    this->rel_error_ = this->abs_error_ / initial_norm;
 
     bool const
-    converged_absolute = this->absolute_error <= this->absolute_tolerance;
-
-    converged = converged_relative || converged_absolute;
+    converged_relative = this->rel_error_ <= this->rel_tol_;
 
     bool const
-    is_max_iter = this->number_iterations >= this->maximum_number_iterations;
+    converged_absolute = this->abs_error_ <= this->abs_tol_;
+
+    this->converged_ = converged_relative || converged_absolute;
 
     bool const
-    end_solve = converged || is_max_iter;
+    is_max_iter = this->num_iter_ >= this->max_num_iter_;
+
+    bool const
+    end_solve = this->converged_ || is_max_iter;
 
     if (end_solve == true) break;
 
@@ -83,7 +80,7 @@ solve(
 
     x += x_incr;
 
-    ++this->number_iterations;
+    ++this->num_iter_;
   }
 
   return;

@@ -7,6 +7,7 @@
 #if !defined(Intrepid_NonlinearSolver_h)
 #define Intrepid_NonlinearSolver_h
 
+#include <utility>
 #include "PHAL_AlbanyTraits.hpp"
 #include <Intrepid_MiniTensor.h>
 
@@ -48,24 +49,67 @@ public:
   void
   solve(Residual & residual, Intrepid::Vector<FadT, N> & x) {}
 
-public:
-  Intrepid::Index
-  maximum_number_iterations{128};
+  template <typename T>
+  void setMaximumNumberIterations(T && mni)
+  {max_num_iter_ = std::forward<T>(mni);}
 
   Intrepid::Index
-  number_iterations{0};
+  getMaximumNumberIterations()
+  {return max_num_iter_;}
+
+  Intrepid::Index
+  getNumberIterations()
+  {return num_iter_;}
+
+  template <typename T>
+  void setRelativeTolerance(T && rt)
+  {rel_tol_ = std::forward<T>(rt);}
 
   ValueT
-  relative_tolerance{1.0e-10};
+  getRelativeTolerance() const
+  {return rel_tol_;}
 
   ValueT
-  relative_error{1.0};
+  getRelativeError() const
+  {return rel_error_;}
+
+  template <typename T>
+  void setAbsoluteTolerance(T && at)
+  {abs_tol_ = std::forward<T>(at);}
 
   ValueT
-  absolute_tolerance{1.0e-10};
+  getAbsoluteTolerance() const
+  {return abs_tol_;}
 
   ValueT
-  absolute_error{1.0};
+  getAbsoluteError() const
+  {return abs_error_;}
+
+  bool
+  isConverged() const
+  {return converged_;}
+
+protected:
+  Intrepid::Index
+  max_num_iter_{128};
+
+  Intrepid::Index
+  num_iter_{0};
+
+  ValueT
+  rel_tol_{1.0e-10};
+
+  ValueT
+  rel_error_{1.0};
+
+  ValueT
+  abs_tol_{1.0e-10};
+
+  ValueT
+  abs_error_{1.0};
+
+  bool
+  converged_{false};
 };
 
 //
