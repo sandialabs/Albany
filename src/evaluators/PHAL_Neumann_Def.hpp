@@ -205,6 +205,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = SCALAR_FIELD;
       else if (betaName == "Exponent Of Scalar Field")
         beta_type = EXP_SCALAR_FIELD;
+      else if (betaName == "Power Law Scalar Field")
+        beta_type = POWERLAW_SCALAR_FIELD;
       else if (betaName == "Exponent Of Scalar Field Times Thickness")
         beta_type = EXP_SCALAR_FIELD_THK;
       else if (betaName == "FELIX XZ MMS") 
@@ -1026,6 +1028,44 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
         }
       }
   }
+  else if (beta_type == POWERLAW_SCALAR_FIELD) {//basal (robin) condition indepenent of space
+        betaXY = 1.0;
+
+        if(useStereographicMap)
+        {
+          double R = stereographicMapList->get<double>("Earth Radius", 6371);
+          double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+          double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+          double R2 = std::pow(R,2);
+
+          for(int cell = 0; cell < numCells; cell++) {
+            for(int pt = 0; pt < numPoints; pt++) {
+              MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+              MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+              MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+              MeshScalarT h2 = h*h;
+              ScalarT vel=0;
+              for(int dim = 0; dim < numDOFsSet; dim++)
+                vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
+              for(int dim = 0; dim < numDOFsSet; dim++) {
+                qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*std::pow(vel+1e-6, (1./3.-1.)/2.)*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+              }
+            }
+          }
+        }
+        else {
+          for(int cell = 0; cell < numCells; cell++) {
+            for(int pt = 0; pt < numPoints; pt++) {
+              ScalarT vel=0;
+              for(int dim = 0; dim < numDOFsSet; dim++)
+                vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
+              for(int dim = 0; dim < numDOFsSet; dim++) {
+                qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*std::pow(vel+1e-6, (1./3.-1.)/2.)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+              }
+            }
+          }
+        }
+    }
   else if (beta_type == EXP_SCALAR_FIELD_THK) {//basal (robin) condition indepenent of space
       betaXY = 1.0;
 
