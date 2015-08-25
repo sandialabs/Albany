@@ -8,7 +8,6 @@
 
 add_subdirectory(meshes)
 add_subdirectory(Elasticity)
-add_subdirectory(Elasticity2D)
 add_subdirectory(ElastAdapt)
 add_subdirectory(J2Tet10)
 add_subdirectory(J2Adapt)
