@@ -31,7 +31,7 @@ int getDerivativeDimensionsFromView (const ViewType &a){return 1;}
 
 template< class D, class E, class M, class L>
 int getDerivativeDimensionsFromView(const Kokkos::View<D,E,M,L, Kokkos::Impl::ViewSpecializeSacadoFad> &a){
-  return a.storage_size();
+  return a.storage_size() - 1;
 }
 
 
