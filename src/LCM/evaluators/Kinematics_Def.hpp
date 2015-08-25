@@ -278,22 +278,16 @@ compute_weighted_average(const int cell) const{
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void Kinematics<EvalT, Traits>::
-compute_strain(const int cell) const{
-     for (int pt(0); pt < num_pts_; ++pt) {
-         // tgradu=transpose(gradu);
-          for (int i=0; i<num_dims_; i++){
-            for (int j=0; j<num_dims_; j++){
-                F(cell,i,j)=grad_u_(cell, pt,i,j);
-                strain(cell,i,j) = 0.5 * (gradu(cell,i,j) + gradu(cell,j,i));
-            }
-          }
-          for (int i(0); i < num_dims_; ++i) {
-            for (int j(0); j < num_dims_; ++j) {
-              strain_(cell,pt,i,j) = strain(cell,i,j);
-            }
-          }
-        }
+void Kinematics<EvalT, Traits>::compute_strain (const int cell) const {
+  for (int pt = 0; pt < num_pts_; ++pt) {
+    for (int i = 0; i < num_dims_; ++i)
+      for (int j = i; j < num_dims_; ++j)
+        strain_(cell, pt, i, j) = 0.5 * (grad_u_(cell, pt, i, j) +
+                                         grad_u_(cell, pt, j, i));
+    for (int i = 1; i < num_dims_; ++i)
+      for (int j = 0; j < i; ++j)
+        strain_(cell, pt, i, j) = strain_(cell, pt, j, i);
+  }
 }
 
 template<typename EvalT, typename Traits>
@@ -338,12 +332,14 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
 #endif
 //----------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-void Kinematics<EvalT, Traits>::
+bool Kinematics<EvalT, Traits>::
 check_det (typename Traits::EvalData workset, int cell, int pt) {
   Intrepid::Tensor<ScalarT> F(num_dims_);
   F.fill(def_grad_, cell, pt, 0, 0);
   j_(cell, pt) = Intrepid::det(F);
+  bool neg_det = false;
   if (pt == 0 && j_(cell, pt) < 1e-16) {
+    neg_det = true;
     std::cout << "amb: (neg det) rcu Kinematics check_det " << j_(cell,pt)
               << " " << cell << " " << pt << "\nF_incr = [" << F << "];\n";
     const Teuchos::ArrayRCP<GO>& gid = workset.wsElNodeID[cell];
@@ -368,6 +364,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
     std::cout << "];\n";
 #endif
   }
+  return neg_det;
 }
 
   template<typename EvalT, typename Traits>
@@ -393,6 +390,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
         }
       }
     } else {
+      bool first = true;
       for (int cell = 0; cell < workset.numCells; ++cell)
         for (int pt = 0; pt < num_pts_; ++pt) {
           gradu.fill(grad_u_,cell,pt,0,0);
@@ -400,7 +398,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
           for (int i = 0; i < num_dims_; ++i)
             for (int j = 0; j < num_dims_; ++j)
               def_grad_(cell,pt,i,j) = F(i,j);
-          check_det(workset, cell, pt);
+          if (first && check_det(workset, cell, pt)) first = false;
           // F[n,0] = F[n,n-1] F[n-1,0].
           def_grad_rc_.multiplyInto<ScalarT>(def_grad_, cell, pt);
           F.fill(def_grad_,cell,pt,0,0);
