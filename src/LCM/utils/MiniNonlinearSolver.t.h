@@ -154,6 +154,9 @@ solve(
 
   this->converged_ = initial_norm <= this->abs_tol_;
 
+  ValueT
+  step_length = this->initial_step_length_;
+
   while (this->converged_ == false) {
 
     r = residual.compute(x);
@@ -204,14 +207,41 @@ solve(
     Intrepid::Vector<ValueT, N> const
     rp_val = residual.compute(xp_val);
 
-    ValueT const
-    f_xp = Intrepid::norm(rp_val);
+    // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
 
     ValueT const
-    m_0 = f_x;
+    nr = Intrepid::norm_square(r_val);
 
     ValueT const
-    m_p = f_x;
+    nrp = Intrepid::norm_square(rp_val);
+
+    ValueT const
+    nrKp = Intrepid::norm_square(r_val + Intrepid::dot(DrDx, p));
+
+    ValueT const
+    reduction = (nr - nrp) / (nr - nrKp);
+
+    // Determine whether the trust region should be increased, decreased
+    // or left the same.
+
+    ValueT const
+    np = Intrepid::norm(p);
+
+    if (reduction < 0.25) {
+
+      step_length = 0.25 * np;
+
+    } else {
+
+      if (reduction > 0.75 && np == step_length) {
+        step_length = std::min(2.0 * step_length, this->max_step_length_);
+      }
+
+    }
+
+    if (reduction > this->min_reduction_) {
+      x += p;
+    }
 
     ++this->num_iter_;
   }

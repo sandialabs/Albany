@@ -258,7 +258,7 @@ class NewtonSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
 #endif
 
 ///
-/// TrustRegion Solver Base class. See Nocedal's algorithm 4.1.
+/// TrustRegion Solver Base class. See Nocedal's algorithm 11.5.
 ///
 template<typename EvalT, typename Residual,
 Intrepid::Index N = Intrepid::DYNAMIC>
