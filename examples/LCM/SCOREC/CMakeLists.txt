@@ -8,6 +8,7 @@
 
 add_subdirectory(meshes)
 add_subdirectory(Elasticity)
+add_subdirectory(Elasticity2D)
 add_subdirectory(ElastAdapt)
 add_subdirectory(J2Tet10)
 add_subdirectory(J2Adapt)
@@ -16,3 +17,4 @@ add_subdirectory(ThermoMechanicalCan)
 if(ENABLE_GOAL)
   add_subdirectory(GOAL)
 endif() 
+add_subdirectory(RCU)
