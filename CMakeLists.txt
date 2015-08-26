@@ -699,12 +699,24 @@ ELSE()
   MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
+
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
-  ADD_DEFINITIONS(-DALBANY_MOR)
-  MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
-  SET(ALBANY_MOR TRUE)
+  #Check if RBGen library has been built as a part of Anasazi.  
+  #If it has not, turn MOR off despite what user requested and print message explaining that MOR requires RBGen library. 
+  LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
+  IF (rbgen_List_ID GREATER -1)
+    MESSAGE("-- Looking for rbgen library: -- found!  Continuing.")
+    ADD_DEFINITIONS(-DALBANY_MOR)
+    MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
+    SET(ALBANY_MOR TRUE)
+  ELSE()
+    MESSAGE("---- Looking for rbgen library: -- NOT found!") 
+    MESSAGE("-- MOR requires RBGen library.  To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
+    MESSAGE("-- MOR       is NOT Enabled.")
+    SET(ALBANY_MOR FALSE)
+  ENDIF()
 ELSE()
   MESSAGE("-- MOR       is NOT Enabled.")
   SET(ALBANY_MOR FALSE)

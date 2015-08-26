@@ -12,7 +12,7 @@
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
 \author{The Albany/LCM team\thanks{Original version by Juli\'an R\'imoli}}
-\title{Instructions for Installing Albany/LCM and Trilinos on Fedora 21}
+\title{Instructions for Installing Albany/LCM and Trilinos on Fedora 21/22}
 \begin{document}
 
 \maketitle
@@ -63,6 +63,7 @@ cmake
 gcc-c++
 git
 hwloc-libs
+hwloc-devel
 \end{verbatim}
 
 For example, to install the first package you should type in Fedora 22
@@ -157,8 +158,7 @@ just change the email addresses for tests reports at the end of
 read only:
 \begin{verbatim}
 cd ~/LCM
-chmod +x *.sh
-chmod -r *.sh
+chmod 0555 *.sh
 \end{verbatim}
 
 The \verb+build.sh+ and \verb+build-all.sh+ scripts perform different
