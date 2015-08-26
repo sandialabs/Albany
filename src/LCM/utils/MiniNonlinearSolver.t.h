@@ -157,6 +157,11 @@ solve(
   ValueT
   step_length = this->initial_step_length_;
 
+  Intrepid::Tensor<ValueT, N>
+  I = Intrepid::identity<ValueT, N>(dimension);
+
+
+  // Outer solution loop
   while (this->converged_ == false) {
 
     r = residual.compute(x);
@@ -192,22 +197,51 @@ solve(
       }
     }
 
-    Intrepid::Vector<ValueT, N> const
-    p = Intrepid::solve(DrDx, r_val);
+    // Determine size of trust region. Exact algorithm, Nocedal 4.4
+    ValueT
+    lambda = 1.0;
+
+    Intrepid::Tensor<ValueT, N>
+    K(dimension);
+
+    Intrepid::Tensor<ValueT, N>
+    L(dimension);
 
     Intrepid::Vector<ValueT, N>
-    x_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(x);
+    p_val;
 
-    ValueT const
-    f_x = this->abs_error_;
+    Intrepid::Vector<ValueT, N>
+    q_val;
 
-    Intrepid::Vector<ValueT, N> const
-    xp_val = x_val + p;
+    for (auto i{0}; i < this->max_num_trust_region_iter_; ++i) {
 
-    Intrepid::Vector<ValueT, N> const
-    rp_val = residual.compute(xp_val);
+      K = DrDx + lambda * I;
+
+      L = Intrepid::cholesky(K).first;
+
+      p_val = - Intrepid::solve(K, r_val);
+
+      q_val = Intrepid::solve(L, p_val);
+
+      ValueT const
+      nps = Intrepid::norm_square(p_val);
+
+      ValueT const
+      nqs = Intrepid::norm_square(q_val);
+
+      lambda += nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+
+    }
+
+    Intrepid::Vector<FadT, N> const
+    xp = x + p_val;
+
+    Intrepid::Vector<FadT, N> const
+    rp = residual.compute(xp);
 
     // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
+    Intrepid::Vector<ValueT, N>
+    rp_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(rp);
 
     ValueT const
     nr = Intrepid::norm_square(r_val);
@@ -216,7 +250,7 @@ solve(
     nrp = Intrepid::norm_square(rp_val);
 
     ValueT const
-    nrKp = Intrepid::norm_square(r_val + Intrepid::dot(DrDx, p));
+    nrKp = Intrepid::norm_square(r_val + Intrepid::dot(DrDx, p_val));
 
     ValueT const
     reduction = (nr - nrp) / (nr - nrKp);
@@ -225,7 +259,7 @@ solve(
     // or left the same.
 
     ValueT const
-    np = Intrepid::norm(p);
+    np = Intrepid::norm(p_val);
 
     if (reduction < 0.25) {
 
@@ -240,7 +274,7 @@ solve(
     }
 
     if (reduction > this->min_reduction_) {
-      x += p;
+      x = xp;
     }
 
     ++this->num_iter_;
