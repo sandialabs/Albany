@@ -49,7 +49,10 @@ public:
 
   using ValueT = typename Sacado::ValueType<T>::type;
 
-  GaussianResidual(ValueT const a, ValueT const b) : a_(a), b_(b) {}
+  GaussianResidual(
+      ValueT const a,
+      ValueT const b,
+      ValueT const c) : a_(a), b_(b), c_{c} {}
 
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) override
@@ -61,16 +64,16 @@ public:
     r(dimension);
 
     T const
-    xa = (x(0) - a_) / 10.0;
+    xa = (x(0) - a_) / c_;
 
     T const
-    xb = (x(1) - b_) / 10.0;
+    xb = (x(1) - b_) / c_;
 
     T const
     e = std::exp(- xa * xa - xb * xb);
 
-    r(0) = -2.0 * xa * e;
-    r(1) = -2.0 * xb * e;
+    r(0) = 2.0 * xa * e / c_;
+    r(1) = 2.0 * xb * e / c_;
 
     return r;
   }
@@ -82,6 +85,40 @@ private:
 
   ValueT const
   b_{0.0};
+
+  ValueT const
+  c_{0.0};
+
+};
+
+template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class QuadraticResidual : public LCM::Residual_Base<T, N>
+{
+public:
+
+  using ValueT = typename Sacado::ValueType<T>::type;
+
+  QuadraticResidual(ValueT const c) : c_(c) {}
+
+  Intrepid::Vector<T, N>
+  compute(Intrepid::Vector<T, N> const & x) override
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    r(0) = 2.0 * c_ * x(0);
+    r(1) = 2.0 * c_ * x(1);
+
+    return r;
+  }
+
+
+private:
+  ValueT const
+  c_{0.0};
 
 };
 
@@ -100,7 +137,7 @@ TEUCHOS_UNIT_TEST(MiniNewtonSolver, Instantiation)
   using GR = GaussianResidual<FadT, dimension>;
 
   GR
-  residual(solution(0), solution(1));
+  residual(solution(0), solution(1), 10.0);
 
   LCM::NewtonSolver<PHAL::AlbanyTraits::Residual, GR, dimension>
   solver;
@@ -139,7 +176,7 @@ TEUCHOS_UNIT_TEST(MiniTrustRegionSolver, Instantiation)
   using GR = GaussianResidual<FadT, dimension>;
 
   GR
-  residual(solution(0), solution(1));
+  residual(solution(0), solution(1), 10.0);
 
   LCM::TrustRegionSolver<PHAL::AlbanyTraits::Residual, GR, dimension>
   solver;

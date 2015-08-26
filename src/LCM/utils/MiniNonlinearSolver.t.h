@@ -19,19 +19,19 @@ void
 NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
 solve(
     Residual & residual,
-    Intrepid::Vector<FadT, N> & x)
+    Intrepid::Vector<FadT, N> & soln_prev)
 {
   Intrepid::Index const
-  dimension = x.get_dimension();
+  dimension = soln_prev.get_dimension();
 
   Intrepid::Vector<FadT, N>
-  r = residual.compute(x);
+  resi_prev = residual.compute(soln_prev);
 
   Intrepid::Vector<ValueT, N>
-  r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
+  resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
 
   ValueT const
-  initial_norm = Intrepid::norm(r_val);
+  initial_norm = Intrepid::norm(resi_prev_val);
 
   this->num_iter_ = 0;
 
@@ -39,11 +39,11 @@ solve(
 
   while (this->converged_ == false) {
 
-    r = residual.compute(x);
+    resi_prev = residual.compute(soln_prev);
 
-    r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
+    resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
 
-    this->abs_error_ = Intrepid::norm(r_val);
+    this->abs_error_ = Intrepid::norm(resi_prev_val);
 
     this->rel_error_ = this->abs_error_ / initial_norm;
 
@@ -64,18 +64,18 @@ solve(
     if (end_solve == true) break;
 
     Intrepid::Tensor<ValueT, N>
-    DrDx(dimension);
+    Hessian(dimension);
 
     for (Intrepid::Index i{0}; i < dimension; ++i) {
       for (Intrepid::Index j{0}; j < dimension; ++j) {
-        DrDx(i, j) = r(i).dx(j);
+        Hessian(i, j) = resi_prev(i).dx(j);
       }
     }
 
     Intrepid::Vector<ValueT, N> const
-    x_incr = - Intrepid::solve(DrDx, r_val);
+    soln_incr = - Intrepid::solve(Hessian, resi_prev_val);
 
-    x += x_incr;
+    soln_prev += soln_incr;
 
     ++this->num_iter_;
   }
@@ -136,23 +136,19 @@ void
 TrustRegionSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
 solve(
     Residual & residual,
-    Intrepid::Vector<FadT, N> & x)
+    Intrepid::Vector<FadT, N> & soln_prev)
 {
   Intrepid::Index const
-  dimension = x.get_dimension();
+  dimension = soln_prev.get_dimension();
 
   Intrepid::Vector<FadT, N>
-  r = residual.compute(x);
+  resi_prev = residual.compute(soln_prev);
 
   Intrepid::Vector<ValueT, N>
-  r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
+  resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
 
   ValueT const
-  initial_norm = Intrepid::norm(r_val);
-
-  this->num_iter_ = 0;
-
-  this->converged_ = initial_norm <= this->abs_tol_;
+  initial_norm = Intrepid::norm(resi_prev_val);
 
   ValueT
   step_length = this->initial_step_length_;
@@ -160,15 +156,18 @@ solve(
   Intrepid::Tensor<ValueT, N>
   I = Intrepid::identity<ValueT, N>(dimension);
 
+  this->num_iter_ = 0;
+
+  this->converged_ = initial_norm <= this->abs_tol_;
 
   // Outer solution loop
   while (this->converged_ == false) {
 
-    r = residual.compute(x);
+    resi_prev = residual.compute(soln_prev);
 
-    r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
+    resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
 
-    this->abs_error_ = Intrepid::norm(r_val);
+    this->abs_error_ = Intrepid::norm(resi_prev_val);
 
     this->rel_error_ = this->abs_error_ / initial_norm;
 
@@ -189,17 +188,17 @@ solve(
     if (end_solve == true) break;
 
     Intrepid::Tensor<ValueT, N>
-    DrDx(dimension);
+    Hessian(dimension);
 
     for (Intrepid::Index i{0}; i < dimension; ++i) {
       for (Intrepid::Index j{0}; j < dimension; ++j) {
-        DrDx(i, j) = r(i).dx(j);
+        Hessian(i, j) = resi_prev(i).dx(j);
       }
     }
 
-    // Determine size of trust region. Exact algorithm, Nocedal 4.4
+    // Restrict step to size of trust region. Exact algorithm, Nocedal 4.4
     ValueT
-    lambda = 1.0;
+    lambda = 0.0;
 
     Intrepid::Tensor<ValueT, N>
     K(dimension);
@@ -208,73 +207,81 @@ solve(
     L(dimension);
 
     Intrepid::Vector<ValueT, N>
-    p_val;
+    step;
 
     Intrepid::Vector<ValueT, N>
-    q_val;
+    q;
 
-    for (Intrepid::Index i{0}; i < this->max_num_trust_region_iter_; ++i) {
+    for (Intrepid::Index i{0}; i < this->max_num_restrict_iter_; ++i) {
 
-      K = DrDx + lambda * I;
+      K = Hessian + lambda * I;
 
       L = Intrepid::cholesky(K).first;
 
-      p_val = - Intrepid::solve(K, r_val);
+      step = - Intrepid::solve(K, resi_prev_val);
 
-      q_val = Intrepid::solve(L, p_val);
-
-      ValueT const
-      nps = Intrepid::norm_square(p_val);
+      q = Intrepid::solve(L, step);
 
       ValueT const
-      nqs = Intrepid::norm_square(q_val);
+      nps = Intrepid::norm_square(step);
 
-      lambda += nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+      ValueT const
+      nqs = Intrepid::norm_square(q);
+
+      ValueT const
+      lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+
+      lambda += std::max(lambda_incr, 0.0);
 
     }
 
     Intrepid::Vector<FadT, N> const
-    xp = x + p_val;
+    soln_next = soln_prev + step;
 
     Intrepid::Vector<FadT, N> const
-    rp = residual.compute(xp);
+    resi_next = residual.compute(soln_next);
 
     // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
     Intrepid::Vector<ValueT, N>
-    rp_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(rp);
+    resi_next_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_next);
 
     ValueT const
-    nr = Intrepid::norm_square(r_val);
+    nr = Intrepid::norm_square(resi_prev_val);
 
     ValueT const
-    nrp = Intrepid::norm_square(rp_val);
+    nrp = Intrepid::norm_square(resi_next_val);
 
     ValueT const
-    nrKp = Intrepid::norm_square(r_val + Intrepid::dot(DrDx, p_val));
+    nrKp = Intrepid::norm_square(resi_prev_val + Intrepid::dot(Hessian, step));
 
     ValueT const
     reduction = (nr - nrp) / (nr - nrKp);
 
     // Determine whether the trust region should be increased, decreased
     // or left the same.
-
     ValueT const
-    np = Intrepid::norm(p_val);
+    computed_length = Intrepid::norm(step);
 
     if (reduction < 0.25) {
 
-      step_length = 0.25 * np;
+      step_length = 0.25 * computed_length;
 
     } else {
 
-      if (reduction > 0.75 && np == step_length) {
+      bool const
+      at_boundary_region = std::abs(computed_length - step_length) <= 1.0e-3;
+
+      bool const
+      increase_step_length = reduction > 0.75 && at_boundary_region;
+
+      if (increase_step_length == true) {
         step_length = std::min(2.0 * step_length, this->max_step_length_);
       }
 
     }
 
     if (reduction > this->min_reduction_) {
-      x = xp;
+      soln_prev = soln_next;
     }
 
     ++this->num_iter_;

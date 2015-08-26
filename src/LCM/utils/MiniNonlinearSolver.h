@@ -285,12 +285,12 @@ public:
   {return max_num_iter_;}
 
   template <typename T>
-  void setMaximumNumberTrustRegionIterations(T && mntri)
-  {max_num_trust_region_iter_ = std::forward<T>(mntri);}
+  void setMaximumNumberRestrictIterations(T && mntri)
+  {max_num_restrict_iter_ = std::forward<T>(mntri);}
 
   Intrepid::Index
-  getMaximumNumberTrustRegionIterations()
-  {return max_num_trust_region_iter_;}
+  getMaximumNumberRestrictIterations()
+  {return max_num_restrict_iter_;}
 
   Intrepid::Index
   getNumberIterations()
@@ -353,7 +353,7 @@ protected:
   max_num_iter_{128};
 
   Intrepid::Index
-  max_num_trust_region_iter_{4};
+  max_num_restrict_iter_{4};
 
   Intrepid::Index
   num_iter_{0};
