@@ -394,13 +394,14 @@ ELSE()
 ENDIF()
 
 # set optional dependency on RBGen, for reduced basis computation
-LIST(FIND Trilinos_PACKAGE_LIST RBGen RBGen_List_ID)
+LIST(FIND Trilinos_LIBRARIES rbgen RBGen_List_ID)
 IF (RBGen_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_RBGEN)
-  MESSAGE("-- Looking for RBGen:              Found, compiling with -DALBANY_RBGEN")
+  MESSAGE("-- Looking for rbgen library:      Found, compiling with -DALBANY_RBGEN")
   SET(ALBANY_RBGEN TRUE)
 ELSE()
-  MESSAGE("-- Looking for RBGen:              NOT found.")
+  MESSAGE("-- Looking for rbgen library:      NOT found.")
+  MESSAGE("      -- To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
   SET(ALBANY_RBGEN FALSE)
 ENDIF()
 

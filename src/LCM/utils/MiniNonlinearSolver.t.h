@@ -213,7 +213,7 @@ solve(
     Intrepid::Vector<ValueT, N>
     q_val;
 
-    for (auto i{0}; i < this->max_num_trust_region_iter_; ++i) {
+    for (Intrepid::Index i{0}; i < this->max_num_trust_region_iter_; ++i) {
 
       K = DrDx + lambda * I;
 
