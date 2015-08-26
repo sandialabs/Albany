@@ -85,8 +85,8 @@ namespace LCM {
     if (def_grad_rc_) this->utils.setFieldData(u_,fm);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
-    int deriv_dims=PHAL::getDerivativeDimensionsFromView(strain_.get_kokkos_view());
+    const int deriv_dims = PHAL::getDerivativeDimensionsFromView(
+      grad_u_.get_kokkos_view());
 
     ddims_.push_back(deriv_dims);
     const int num_cells=strain_.dimension(0);
