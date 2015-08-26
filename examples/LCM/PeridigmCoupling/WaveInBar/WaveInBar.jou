@@ -1,0 +1,11 @@
+
+reset
+create brick x 1.0 y 0.05 z 0.05
+block 1 volume 1
+nodeset 1 surface 4
+nodeset 2 curve 7
+nodeset 3 curve 9
+nodeset 4 volume 1
+volume all size 0.025
+mesh volume all
+export genesis 'WaveInBar.g' overwrite

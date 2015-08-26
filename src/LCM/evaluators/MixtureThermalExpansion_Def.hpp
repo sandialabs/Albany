@@ -16,17 +16,17 @@ template<typename EvalT, typename Traits>
 MixtureThermalExpansion<EvalT, Traits>::
 MixtureThermalExpansion(const Teuchos::ParameterList& p) :
   biotCoefficient       (p.get<std::string>     ("Biot Coefficient Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   porosity       (p.get<std::string>                   ("Porosity Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   alphaSkeleton  (p.get<std::string>                   ("Skeleton Thermal Expansion Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   alphaPoreFluid       (p.get<std::string>      ("Pore-Fluid Thermal Expansion Name"),
-	       	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   J           (p.get<std::string>                   ("DetDefGrad Name"),
-	       	  	   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       	  	   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   mixtureThermalExpansion      (p.get<std::string>    ("Mixture Thermal Expansion Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") )
 {
   this->addDependentField(biotCoefficient);
   this->addDependentField(porosity);
@@ -39,7 +39,7 @@ MixtureThermalExpansion(const Teuchos::ParameterList& p) :
   this->setName("Mixture Thermal Expansion"+PHX::typeAsString<EvalT>());
 
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   scalar_dl->dimensions(dims);
   numQPs  = dims[1];

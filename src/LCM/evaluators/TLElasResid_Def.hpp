@@ -18,17 +18,17 @@ template<typename EvalT, typename Traits>
 TLElasResid<EvalT, Traits>::
 TLElasResid(const Teuchos::ParameterList& p) :
   stress      (p.get<std::string>                   ("Stress Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   J           (p.get<std::string>                   ("DetDefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   defgrad     (p.get<std::string>                   ("DefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
   Residual    (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") )
 {
   this->addDependentField(stress);
   this->addDependentField(J);
@@ -53,7 +53,7 @@ TLElasResid(const Teuchos::ParameterList& p) :
   JF_invT.resize(worksetSize, numQPs, numDims, numDims);
   P.resize(worksetSize, numQPs, numDims, numDims);
 
-  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
+  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib>>("Parameter Library");
 
   matModel = p.get<std::string>("Stress Name");
 

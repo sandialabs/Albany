@@ -16,9 +16,9 @@ template<typename EvalT, typename Traits>
 Time<EvalT, Traits>::
 Time(Teuchos::ParameterList& p) :
   time      (p.get<std::string>("Time Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+	     p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout")),
   deltaTime (p.get<std::string>("Delta Time Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+	     p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout")),
   timeValue(0.0)
 {
   if (p.isType<bool>("Disable Transient"))
@@ -27,7 +27,7 @@ Time(Teuchos::ParameterList& p) :
 
   // Add Time as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib = 
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
   this->registerSacadoParameter("Time", paramLib);
 
   this->addEvaluatedField(time);

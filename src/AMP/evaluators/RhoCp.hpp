@@ -11,14 +11,12 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
-//------------------------------------------------------------------------------------------
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
-//------------------------------------------------------------------------------------------
+#include "Albany_Layouts.hpp"
 
 namespace AMP {
 ///
@@ -54,8 +52,8 @@ private:
   ScalarT constant_value_;
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> coord_;
-  PHX::MDField<ScalarT,Cell,Node> rho_cp_;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;

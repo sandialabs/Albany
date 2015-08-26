@@ -6,7 +6,7 @@
 
 #include "Albany_DataTypes.hpp"
 
-#include <BelosSolverFactory.hpp>
+#include <BelosBlockCGSolMgr.hpp>
 #include <BelosTpetraAdapter.hpp>
 #include <Ifpack2_RILUK.hpp>
 
@@ -21,7 +21,6 @@ solve (const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
   typedef Tpetra_MultiVector MV;
   typedef Tpetra_Operator Op;
   typedef Belos::SolverManager<RealType, MV, Op> SolverManager;
-  typedef Belos::SolverFactory<RealType, MV, Op> SolverFactory;
   typedef Belos::LinearProblem<RealType, MV, Op> LinearProblem;
 
   const int nrhs = b->getNumVectors();
@@ -44,10 +43,9 @@ solve (const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
   problem->setRightPrec(P);
   problem->setProblem();
 
-  Teuchos::RCP<SolverManager>
-    solver = SolverFactory().create("Block CG", Teuchos::rcp(&pl, false));
-  solver->setProblem(problem);
-  solver->solve();
+  Belos::BlockCGSolMgr<RealType, MV, Op>
+    solver(problem, Teuchos::rcp(&pl, false));
+  solver.solve();
 
   return x;
 }

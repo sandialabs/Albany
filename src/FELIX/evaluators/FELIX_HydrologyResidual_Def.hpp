@@ -39,8 +39,8 @@ HydrologyResidual<EvalT, Traits>::HydrologyResidual (const Teuchos::ParameterLis
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("Physical Parameters");
 
   mu_w         = physical_params.get<double>("Water Viscosity");
-  rho_i        = physical_params.get<double>("Ice Density");
-  rho_w        = physical_params.get<double>("Water Density");
+  rho_i        = physical_params.get<double>("Ice Density", 910.0);
+  rho_w        = physical_params.get<double>("Water Density", 1028.0);
 
   if (hydrology_params.get<bool>("Has Melt Opening",false))
   {

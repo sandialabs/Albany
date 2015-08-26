@@ -9,7 +9,7 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <Parameter name="Piro Defaults Filename" type="string" value="../default_piro_params.xml"/>
 
-    <ParameterList name="Parameters" />
+    <!-- <ParameterList name="Parameters" /> -->
     <ParameterList name="Response Functions" />
 
     <!-- <ParameterList name="Response Functions">
@@ -60,7 +60,7 @@
     </ParameterList>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="11" />
+      <Parameter name="Number" type="int" value="12" />
       <Parameter name="Response 0" type="string" value="Solution Average" />
       
       <Parameter name="Response 1" type="string" value="Save Field" />
@@ -81,29 +81,21 @@
         <Parameter name="Field Name" type="string" value="Charge Density" />
         <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
       </ParameterList>
-      
-      <Parameter name="Response 4" type="string" value="Field Value" />
+
+      <Parameter name="Response 4" type="string" value="Field Integral" />
       <ParameterList name="ResponseParams 4">
-        <Parameter name="Operation" type="string" value="Minimize" />
-        <Parameter name="Operation Field Name" type="string" value="Charge Density" />
-        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+        <Parameter name="Field Name" type="string" value="Charge Density" />
+	<ParameterList name="XY Polygon">
+	  <Parameter name="Number of Points" type="int" value="4" />
+	  <Parameter name="Point 0" type="Array(double)" value="{-4,0}" />
+	  <Parameter name="Point 1" type="Array(double)" value="{4,0}" />
+	  <Parameter name="Point 2" type="Array(double)" value="{4,-5}" />
+	  <Parameter name="Point 3" type="Array(double)" value="{-4,-5}" />
+	</ParameterList>
       </ParameterList>
 
-      <Parameter name="Response 5" type="string" value="Field Value" />
+      <Parameter name="Response 5" type="string" value="Saddle Value" />
       <ParameterList name="ResponseParams 5">
-        <Parameter name="Return Field Name" type="string" value="Charge Density" />
-        <Parameter name="Operation" type="string" value="Minimize" />
-        <Parameter name="Operation Vector Field Name" type="string" value="Potential Gradient" />
-        <Parameter name="Operate on y-component" type="bool" value="0" />
-        <Parameter name="x min" type="double" value="-2.5" />
-        <Parameter name="x max" type="double" value="2.5" />
-        <Parameter name="y min" type="double" value="-1.5" />
-        <Parameter name="y max" type="double" value="0.0" />
-      </ParameterList>
-
-
-      <Parameter name="Response 6" type="string" value="Saddle Value" />
-      <ParameterList name="ResponseParams 6">
 	<Parameter name="Debug Mode" type="int" value="1" />
 
         <Parameter name="Field Name" type="string" value="Potential" />
@@ -126,14 +118,14 @@
 	<Parameter name="End Point"   type="Array(double)" value="{+2.5, 0}" />
       </ParameterList>
 
-      <Parameter name="Response 7" type="string" value="Center Of Mass" />
-      <ParameterList name="ResponseParams 7">
+      <Parameter name="Response 6" type="string" value="Center Of Mass" />
+      <ParameterList name="ResponseParams 6">
         <Parameter name="Field Name" type="string" value="Charge Density" />
         <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
       </ParameterList>
 
-      <Parameter name="Response 8" type="string" value="Region Boundary" />
-      <ParameterList name="ResponseParams 8">
+      <Parameter name="Response 7" type="string" value="Region Boundary" />
+      <ParameterList name="ResponseParams 7">
         <Parameter name="Quantum Element Blocks Only" type="bool" value="1" /> 
 	<!--
         <Parameter name="Element Block Names" type="string" value="silicon.quantum" /> -->
@@ -141,8 +133,8 @@
         <Parameter name="Output Filename" type="string" value="quanumRegionBd.out" />
       </ParameterList>
       
-      <Parameter name="Response 9" type="string" value="Region Boundary" />
-      <ParameterList name="ResponseParams 9">
+      <Parameter name="Response 8" type="string" value="Region Boundary" />
+      <ParameterList name="ResponseParams 8">
         <Parameter name="Level Set Field Name" type="string" value="Charge Density" /> 
         <!-- <Parameter name="Level Set Field Minimum" type="double" value="-3e14" /> --> 
         <Parameter name="Level Set Field Maximum" type="double" value="-1e14" /> 
@@ -153,29 +145,51 @@
         <Parameter name="Output Filename" type="string" value="levelSetRegionBd.out" />
       </ParameterList>
 
-      <Parameter name="Response 10" type="string" value="Field Average" />
-      <ParameterList name="ResponseParams 10">
+      <Parameter name="Response 9" type="string" value="Field Average" />
+      <ParameterList name="ResponseParams 9">
         <Parameter name="Field Name" type="string" value="Charge Density" /> 
         <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
         <Parameter name="Level Set Field Name" type="string" value="Charge Density" /> 
 	<Parameter name="Level Set Field Maximum" type="double" value="-1e14" /> 
       </ParameterList>
 
+      <Parameter name="Response 10" type="string" value="Field Value" />
+      <ParameterList name="ResponseParams 10">
+        <Parameter name="Operation" type="string" value="Minimize" />
+        <Parameter name="Operation Field Name" type="string" value="Charge Density" />
+        <Parameter name="Element Block Name" type="string" value="silicon.quantum" />
+      </ParameterList>
+
+      <Parameter name="Response 11" type="string" value="Field Value" />
+      <ParameterList name="ResponseParams 11">
+        <Parameter name="Return Field Name" type="string" value="Charge Density" />
+        <Parameter name="Operation" type="string" value="Minimize" />
+        <Parameter name="Operation Vector Field Name" type="string" value="Potential Gradient" />
+        <Parameter name="Operate on y-component" type="bool" value="0" />
+        <Parameter name="x min" type="double" value="-2.5" />
+        <Parameter name="x max" type="double" value="2.5" />
+        <Parameter name="y min" type="double" value="-1.5" />
+        <Parameter name="y max" type="double" value="0.0" />
+      </ParameterList>
+
     </ParameterList>
   </ParameterList>
   </ParameterList>
 
-    <ParameterList name="Discretization">
+  <ParameterList name="Discretization">
     <Parameter name="Exodus Input File Name" type="string" value="../input_exodus/mosdot_2D.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="output/potential_mosdot_2D.exo" />
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
   </ParameterList>
 
+  <ParameterList name="Debug Output" >
+    <Parameter name="Poisson XML Input" type="string" value="debugInput.xml" />
+  </ParameterList>
 
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="1" />
-    <Parameter name="Test Values" type="Array(double)" value="{0.293478735219}" />
+    <Parameter name="Number of Comparisons" type="int" value="28" />
+    <Parameter name="Test Values" type="Array(double)" value="{0.293478735219,0,0,-5373005.59959,-5373005.59959,-1.91652312315e+13,-0.424266274754,2.5,0,0,2.56953028563e-05,-0.308236969257,0,1,0,0,-1.66813673792e+14,2.4,-1.934141516544e+14,-1.934141516544e+14,0.2,-0.25,0,-1.934141516544e+14,2.718394475089e-07,0.2,-0.25,0}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-3" />
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1" />
     <Parameter name="Sensitivity Test Values 0" type="Array(double)"

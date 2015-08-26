@@ -128,7 +128,7 @@ namespace QCAD {
     int numNodes;
   };
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   template<typename Traits>
   class FieldValueScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian,Traits> :
     public PHAL::ScatterScalarResponseBase<PHAL::AlbanyTraits::SGJacobian,Traits> {
@@ -170,6 +170,8 @@ namespace QCAD {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
   };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   template<typename Traits>
   class FieldValueScatterScalarResponse<PHAL::AlbanyTraits::MPJacobian,Traits> :
@@ -212,7 +214,7 @@ namespace QCAD {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > nodeID;
     int numNodes;
   };
-#endif //ALBANY_SG_MP
+#endif
 
 /**
  * \brief Response Description

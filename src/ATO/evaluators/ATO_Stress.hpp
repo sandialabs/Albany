@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Intrepid_FieldContainer.hpp"
 
 namespace ATO {
 /** \brief Computes stress
@@ -47,6 +48,13 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+
+  bool addCellForcing;
+  bool useHomogenizedConstants;
+  std::string homogenizedConstantsName;
+  int cellForcingColumn;
+
+  Intrepid::FieldContainer<RealType> subTensor;
 };
 }
 

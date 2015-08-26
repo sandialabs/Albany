@@ -58,7 +58,7 @@ namespace Albany {
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -87,7 +87,7 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdotT,
 		     Tpetra_MultiVector* dg_dpT);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative dg/dp
     virtual void
     evaluateDistParamDeriv(
@@ -108,7 +108,7 @@ namespace Albany {
     //! Private to prohibit copying
     SolutionFileResponseFunction& operator=(const SolutionFileResponseFunction&);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Reference Vector
     Epetra_Vector* RefSoln;
 #endif
@@ -117,7 +117,7 @@ namespace Albany {
 
     bool solutionLoaded;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Basic idea borrowed from EpetraExt - TO DO: put it back there?
     int MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epetra_Vector * & A);
     int MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map, Epetra_MultiVector * & A);
@@ -131,7 +131,7 @@ namespace Albany {
 //	namespace SolutionFileResponseFunction {
 	
 	  struct NormTwo {
-#ifdef ALBANY_EPETRA	
+#if defined(ALBANY_EPETRA)	
 	    double Norm(const Epetra_Vector& vec){ double norm; vec.Norm2(&norm); return norm * norm;}
 #endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.norm2(); return normT * normT;}
@@ -140,7 +140,7 @@ namespace Albany {
 	
 	  struct NormInf {
 	
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 	    double Norm(const Epetra_Vector& vec){ double norm; vec.NormInf(&norm); return norm;}
 #endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.normInf(); return normT;}

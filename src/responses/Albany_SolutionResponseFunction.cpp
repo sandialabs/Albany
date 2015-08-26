@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_SolutionResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_CrsMatrix.h"
 #endif
 #include <algorithm>
@@ -31,7 +31,7 @@ SolutionResponseFunction(
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionResponseFunction::
 setup()
@@ -86,7 +86,7 @@ Albany::SolutionResponseFunction::
 {
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::SolutionResponseFunction::
 responseMap() const
@@ -102,7 +102,7 @@ responseMapT() const
   return culled_mapT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_Operator>
 Albany::SolutionResponseFunction::
 createGradientOp() const
@@ -174,7 +174,7 @@ evaluateTangentT(const double alpha,
     gpT->putScalar(0.0);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionResponseFunction::
 evaluateGradient(const double current_time,
@@ -296,7 +296,7 @@ evaluateGradientT(const double current_time,
     dg_dpT->putScalar(0.0);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionResponseFunction::
 evaluateDistParamDeriv(
@@ -313,7 +313,7 @@ evaluateDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::SolutionResponseFunction::
 init_sg(
@@ -418,6 +418,8 @@ evaluateSGGradient(const double current_time,
   if (sg_dg_dp)
     sg_dg_dp->init(0.0);
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::SolutionResponseFunction::
@@ -514,9 +516,9 @@ evaluateMPGradient(const double current_time,
   if (mp_dg_dp)
     mp_dg_dp->init(0.0);
 }
-#endif //ALBANY_SG_MP
+#endif
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_Map>
 Albany::SolutionResponseFunction::
 buildCulledMap(const Epetra_Map& x_map,
@@ -582,7 +584,7 @@ buildCulledMapT(const Tpetra_Map& x_mapT,
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionResponseFunction::
 cullSolution(const Epetra_MultiVector& x, Epetra_MultiVector& x_culled) const

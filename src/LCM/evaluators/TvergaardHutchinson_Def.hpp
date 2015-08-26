@@ -14,8 +14,8 @@ namespace LCM{
   TvergaardHutchinson<EvalT, Traits>::
   TvergaardHutchinson(const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl) :
-    cubature        (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-    intrepidBasis   (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
+    cubature        (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
+    intrepidBasis   (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
     jump(p.get<std::string>("Vector Jump Name"),dl->qp_vector),
     currentBasis(p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     cohesiveTraction(p.get<std::string>("Cohesive Traction Name"),dl->qp_vector),

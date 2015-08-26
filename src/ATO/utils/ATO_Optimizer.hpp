@@ -69,9 +69,11 @@ class Optimizer_OC : public Optimizer {
   double f;
   double f_last;
   double* dfdp;
+  double* dvdp;
   int numOptDofs;
 
   double _volConvTol;
+  double _volAccpTol;
   double _volMaxIter;
   double _initLambda;
   double _moveLimit;

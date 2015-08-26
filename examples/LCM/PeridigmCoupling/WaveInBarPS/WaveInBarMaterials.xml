@@ -1,0 +1,21 @@
+<ParameterList>
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="My Peridynamic Partial Stress Material" />
+    </ParameterList>
+
+  </ParameterList>
+  
+  <ParameterList name="Materials">
+
+    <ParameterList name="My Peridynamic Partial Stress Material">
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="Peridynamic Partial Stress"/>
+      </ParameterList>
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>

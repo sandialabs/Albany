@@ -3,6 +3,8 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_topography.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_topography.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_xz_matlab.m
@@ -15,7 +17,7 @@ add_test(Aeras_${testName} ${Albany.exe})
 endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
-if (ALBANY_SG_MP)
+if (ALBANY_STOKHOS)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)

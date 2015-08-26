@@ -48,7 +48,7 @@ namespace HMC {
     /// Input: macro stress and micro stresses
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> macroStress;
-    Teuchos::ArrayRCP< Teuchos::RCP<HMC2Tensor> > microStress;
+    Teuchos::ArrayRCP< Teuchos::RCP<HMC2Tensor>> microStress;
 
     ///
     /// Output: total stress

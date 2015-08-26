@@ -44,8 +44,10 @@ namespace PHAL {
 #ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
   template<> struct Ref<TanFadType> : RefKokkos<TanFadType> {};
 #endif
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   template<> struct Ref<SGFadType> : RefKokkos<SGFadType> {};
+#endif 
+#ifdef ALBANY_ENSEMBLE 
   template<> struct Ref<MPFadType> : RefKokkos<MPFadType> {};
 #endif
 
@@ -73,16 +75,19 @@ namespace PHAL {
                                      > {};
     struct DistParamDeriv : EvaluationType<TanFadType, RealType> {};
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     struct SGResidual : EvaluationType<SGType,    RealType> {};
     struct SGJacobian : EvaluationType<SGFadType, RealType> {};
     struct SGTangent  : EvaluationType<SGFadType, RealType> {};
+#endif 
+#ifdef ALBANY_ENSEMBLE 
     struct MPResidual : EvaluationType<MPType,    RealType> {};
     struct MPJacobian : EvaluationType<MPFadType, RealType> {};
     struct MPTangent  : EvaluationType<MPFadType, RealType> {};
-#endif //ALBANY_SG_MP
+#endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
+#ifdef ALBANY_ENSEMBLE 
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 SGResidual, SGJacobian, SGTangent,
                                 MPResidual, MPJacobian, MPTangent> EvalTypes;
@@ -90,9 +95,22 @@ namespace PHAL {
                                SGResidual, SGJacobian, SGTangent,
                                MPResidual, MPJacobian, MPTangent> BEvalTypes;
 #else
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+                                SGResidual, SGJacobian, SGTangent> EvalTypes;
+    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+                               SGResidual, SGJacobian, SGTangent> BEvalTypes;
+#endif
+#else
+#ifdef ALBANY_ENSEMBLE 
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+                                MPResidual, MPJacobian, MPTangent> EvalTypes;
+    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+                               MPResidual, MPJacobian, MPTangent> BEvalTypes;
+#else
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> EvalTypes;
     typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
-#endif //ALBANY_SG_MP
+#endif
+#endif
 
     // ******************************************************************
     // *** Data Types
@@ -115,7 +133,7 @@ namespace PHAL {
     // DistParamDeriv (default scalar type is Fad<double>)
     typedef Sacado::mpl::vector<TanFadType,RealType> DistParamDerivDataTypes;
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     // SG Residual (default scalar type is SGType)
     typedef Sacado::mpl::vector<SGType,RealType> SGResidualDataTypes;
 
@@ -124,6 +142,8 @@ namespace PHAL {
 
     // SG Tangent (default scalar type is Fad<SGType>)
     typedef Sacado::mpl::vector<SGFadType,RealType> SGTangentDataTypes;
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
     // MP Residual (default scalar type is MPType)
     typedef Sacado::mpl::vector<MPType,RealType> MPResidualDataTypes;
@@ -133,10 +153,11 @@ namespace PHAL {
 
     // MP Tangent (default scalar type is Fad<MPType>)
     typedef Sacado::mpl::vector<MPFadType,RealType> MPTangentDataTypes;
-#endif //ALBANY_SG_MP
+#endif
 
     // Maps the key EvalType a vector of DataTypes
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
+#ifdef ALBANY_ENSEMBLE 
     typedef boost::mpl::map<
       boost::mpl::pair<Residual, ResidualDataTypes>,
       boost::mpl::pair<Jacobian, JacobianDataTypes>,
@@ -154,9 +175,32 @@ namespace PHAL {
       boost::mpl::pair<Residual, ResidualDataTypes>,
       boost::mpl::pair<Jacobian, JacobianDataTypes>,
       boost::mpl::pair<Tangent,  TangentDataTypes>,
+      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
+      boost::mpl::pair<SGResidual, SGResidualDataTypes>,
+      boost::mpl::pair<SGJacobian, SGJacobianDataTypes>,
+      boost::mpl::pair<SGTangent,  MPTangentDataTypes >
+    >::type EvalToDataMap;
+#endif
+#else
+#ifdef ALBANY_ENSEMBLE 
+    typedef boost::mpl::map<
+      boost::mpl::pair<Residual, ResidualDataTypes>,
+      boost::mpl::pair<Jacobian, JacobianDataTypes>,
+      boost::mpl::pair<Tangent,  TangentDataTypes>,
+      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
+      boost::mpl::pair<MPResidual, MPResidualDataTypes>,
+      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>,
+      boost::mpl::pair<MPTangent,  MPTangentDataTypes >
+    >::type EvalToDataMap;
+#else
+    typedef boost::mpl::map<
+      boost::mpl::pair<Residual, ResidualDataTypes>,
+      boost::mpl::pair<Jacobian, JacobianDataTypes>,
+      boost::mpl::pair<Tangent,  TangentDataTypes>,
       boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>
     >::type EvalToDataMap;
-#endif //ALBANY_SG_MP
+#endif
+#endif
 
     // ******************************************************************
     // *** Allocator Type
@@ -198,7 +242,7 @@ namespace PHX {
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::DistParamDeriv>()
   { return "<DistParamDeriv>"; }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGResidual>()
   { return "<SGResidual>"; }
 
@@ -207,6 +251,8 @@ namespace PHX {
 
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGTangent>()
   { return "<SGTangent>"; }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPResidual>()
   { return "<MPResidual>"; }
@@ -216,7 +262,7 @@ namespace PHX {
 
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPTangent>()
   { return "<MPTangent>"; }
-#endif //ALBANY_SG_MP
+#endif
 }
 
 // Define macro for explicit template instantiation
@@ -229,22 +275,25 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name) \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>;
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::SGResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::SGJacobian, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name) \
   template class name<PHAL::AlbanyTraits::SGTangent, PHAL::AlbanyTraits>;
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name) \
   template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>;
-#endif //ALBANY_SG_MP
+#endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
+#ifdef ALBANY_ENSEMBLE
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
@@ -261,8 +310,29 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name)
+#endif
+#else
+#ifdef ALBANY_ENSEMBLE
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name)
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)
-#endif //ALBANY_SG_MP
+#endif
+#endif
 
 #include "PHAL_Workset.hpp"
 

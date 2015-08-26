@@ -17,8 +17,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_restart.xml
 
 if (ALBANY_EPETRA) 
 add_test(FELIX_FO_Dome_Ascii ${SerialAlbany.exe} input_fo_dome_ascii.xml)
-add_test(FELIX_FO_Dome_Restart ${SerialAlbany.exe} input_fo_dome_restart.xml)
-set_tests_properties(FELIX_FO_Dome_Restart  PROPERTIES DEPENDS FELIX_FO_Dome_Ascii)
+
+IF (ALBANY_SEACSAS)
+  add_test(FELIX_FO_Dome_Restart ${SerialAlbany.exe} input_fo_dome_restart.xml)
+  set_tests_properties(FELIX_FO_Dome_Restart  PROPERTIES DEPENDS FELIX_FO_Dome_Ascii)
+ENDIF()
+
 endif()
 
 

@@ -6,6 +6,7 @@
 
 #include <Intrepid_MiniTensor.h>
 #include <Phalanx_FieldManager.hpp>
+#include <Teuchos_CommHelpers.hpp>
 
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #include "AAdapt_RC_DataTypes.hpp"
@@ -16,7 +17,7 @@
 #include "AAdapt_RC_Manager.hpp"
 
 #ifdef AMBDEBUG
-//#define amb_test_projector
+#define amb_test_projector
 //#define amb_do_check
 #define pr(msg) lpr(0,msg)
 //#define pr(msg) std::cerr << "amb: (rc) " << msg << std::endl;
@@ -497,6 +498,27 @@ bool Projector::is_filled (int wi) {
 }
 
 namespace testing {
+class ProjectorTester {
+  struct Impl;
+  Teuchos::RCP<Impl> d;
+public:
+  ProjectorTester();
+  void init(const Teuchos::RCP<const Tpetra_Map>& node_map,
+            const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+  void eval(const PHAL::Workset& workset,
+            const Manager::BasisField& bf, const Manager::BasisField& wbf,
+            const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+            const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp);
+  void fillRhs(const PHAL::Workset& workset, const Manager::BasisField& wbf,
+               const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+               const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp);
+  void project();
+  void interp(const PHAL::Workset& workset, const Manager::BasisField& bf,
+              const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+              const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp);
+  void finish(const PHAL::Workset& workset);
+};
+
 void testProjector(
   const Projector& pc, const PHAL::Workset& workset,
   const Manager::BasisField& bf, const Manager::BasisField& wbf,
@@ -509,6 +531,9 @@ struct Manager::Impl {
   Teuchos::RCP<AdaptiveSolutionManagerT> sol_mgr_;
   Teuchos::RCP<Tpetra_Vector> x_;
   Teuchos::RCP<Projector> proj_;
+#ifdef amb_test_projector
+  Teuchos::RCP<testing::ProjectorTester> proj_tester_;
+#endif
 
 private:
   typedef unsigned int WsIdx;
@@ -573,10 +598,11 @@ public:
            ++it)
         for (WsIdx wi = 0; wi < is_g_.size(); ++wi)
           transformStateArray(it->first, wi, Direction::G2g);
-    else
+    else {
       for (Map::iterator it = field_map_.begin(); it != field_map_.end();
            ++it)
         proj_->project(*it->second);
+    }
   }
 
   void endAdapt (const Teuchos::RCP<const Tpetra_Map>& node_map,
@@ -594,12 +620,20 @@ public:
             new Tpetra_MultiVector(ol_node_map, f.data_->mv[i]->getNumVectors(),
                                    true));
       }
+#ifdef amb_test_projector
+      proj_tester_->init(node_map, ol_node_map);
+#endif
     }
   }
 
   void initProjector (const Teuchos::RCP<const Tpetra_Map>& node_map,
                       const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
-    if (Teuchos::nonnull(proj_)) proj_->init(node_map, ol_node_map);
+    if (Teuchos::nonnull(proj_)) {
+      proj_->init(node_map, ol_node_map);
+#ifdef amb_test_projector
+      proj_tester_->init(node_map, ol_node_map);
+#endif
+    }
   }
 
   void interpQpField (PHX::MDField<RealType>& f_G_qp,
@@ -704,7 +738,13 @@ private:
   void init (const bool use_projection, const bool do_transform) {
     transform_ = do_transform;
     building_sfm_ = false;
-    if (use_projection) proj_ = Teuchos::rcp(new Projector());
+    if (use_projection) {
+      proj_ = Teuchos::rcp(new Projector());
+#ifdef amb_test_projector
+      if (proj_tester_.is_null())
+        proj_tester_ = Teuchos::rcp(new testing::ProjectorTester());
+#endif
+    }
   }
 
   void registerStateVariable (
@@ -865,14 +905,13 @@ writeQpField (const PHX::MDField<RealType>& f, const PHAL::Workset& workset,
 void Manager::endQpWrite () { /* Do nothing. */ }
 
 void Manager::
-testProjector (const PHAL::Workset& workset,
-               const BasisField& bf, const BasisField& wbf,
-               const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
-               const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp) {
-#if defined AMBDEBUG and defined amb_test_projector
-  if (impl_->numWorksets() == 1)
-    testing::testProjector(*impl_->proj_, workset, bf, wbf, coord_vert,
-                           coord_qp);
+testProjector (
+  const PHAL::Workset& workset, const BasisField& bf, const BasisField& wbf,
+  const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
+  const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp)
+{
+#ifdef amb_test_projector
+  impl_->proj_tester_->eval(workset, bf, wbf, coord_vert, coord_qp);
 #endif
 }
 
@@ -1002,10 +1041,14 @@ Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
 #undef lpij
 }
 
-// This tests whether q == interp(M \ b(q)). q is a linear function of space and
-// that lives on the integration points. M is the mass matrix. b(q) is the
-// integral over each element. q* = M \ b(q) is the L_2 projection onto the
-// nodal points. interp(q*) is the interpolation back to the integration points.
+// The following methods test whether q == interp(M \ b(q)). q is a linear
+// function of space and that lives on the integration points. M is the mass
+// matrix. b(q) is the integral over each element. q* = M \ b(q) is the L_2
+// projection onto the nodal points. interp(q*) is the interpolation back to the
+// integration points.
+//   This first method runs from start to finish but works for only one workset
+// and in serial. I'll probably remove this one at some point.
+//   ProjectorTester works in all cases.
 void testProjector (
   const Projector& pc, const PHAL::Workset& workset,
   const Manager::BasisField& bf, const Manager::BasisField& wbf,
@@ -1117,7 +1160,6 @@ void testProjector (
     transformStateArray(wi, Direction::g2G, f.data_->transformation, mda[0],
                         mda[1]);
 
-    
     { // Compare with true values at IP.
       double err1[9], errmax[9], scale[9];
       for (int k = 0; k < 9; ++k) { err1[k] = errmax[k] = scale[k] = 0; }
@@ -1137,6 +1179,223 @@ void testProjector (
                scale[k]);
       std::cout << "\n";
     }
+  }
+}
+
+struct ProjectorTester::Impl {
+  enum { ntests = 2 };
+  bool projected, finished;
+  Projector p;
+  struct Point {
+    RealType x[3];
+    bool operator< (const Point& p) const {
+      for (int i = 0; i < 3; ++i) {
+        if (x[i] < p.x[i]) return true;
+        if (x[i] > p.x[i]) return false;
+      }
+      return false;
+    }
+  };
+  struct FValues { RealType f[9]; };
+  typedef std::map<Point, FValues> Map;
+  struct TestData {
+    Manager::Field f;
+    Map f_true_qp, f_interp_qp;
+  };
+  TestData td[ntests];
+};
+
+ProjectorTester::ProjectorTester () {
+  pr("ProjectorTester::ProjectorTester");
+  d = Teuchos::rcp(new Impl());
+  for (int test = 0; test < Impl::ntests; ++test) {
+    Impl::TestData& td = d->td[test];
+    Manager::Field& f = td.f;
+    f.name = "";
+    f.data_ = Teuchos::rcp(new Manager::Field::Data());
+    if (test == 0) {
+      f.data_->transformation = Transformation::none;
+      f.num_g_fields = 1;
+    } else {
+      f.data_->transformation = Transformation::right_polar_LieR_LieS;
+      f.num_g_fields = 2;
+    }
+  }
+}
+
+void ProjectorTester::
+init (const Teuchos::RCP<const Tpetra_Map>& node_map,
+      const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
+  d->p.init(node_map, ol_node_map);
+  d->projected = d->finished = false;
+}
+
+// Figure out what needs to be done given the current state.
+void ProjectorTester::
+eval (const PHAL::Workset& workset,
+      const Manager::BasisField& bf, const Manager::BasisField& wbf,
+      const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+      const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp) {
+  if (d->finished) return;
+  const int num_qp = coord_qp.dimension(1), num_dim = coord_qp.dimension(2);
+  if (workset.numCells > 0 && num_qp > 0) {
+    Impl::Point p;
+    for (int i = 0; i < 3; ++i) p.x[i] = coord_qp(0, 0, i);
+    Impl::Map::const_iterator it = d->td[0].f_true_qp.find(p);
+    if (it == d->td[0].f_true_qp.end()) {
+      d->p.fillMassMatrix(workset, bf, wbf);
+      fillRhs(workset, wbf, coord_vert, coord_qp);
+    } else {
+      if ( ! d->projected) {
+        project();
+        d->projected = true;
+      }
+      it = d->td[0].f_interp_qp.find(p);
+      if (it == d->td[0].f_interp_qp.end())
+        interp(workset, bf, coord_vert, coord_qp);
+      else {
+        finish(workset);
+        d->finished = true;
+      }
+    }
+  }
+}
+
+void ProjectorTester::
+fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
+         const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+         const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp) {
+  const int num_qp = coord_qp.dimension(1), num_dim = coord_qp.dimension(2);
+  
+  typedef PHX::MDALayout<Cell, QuadPoint, Dim, Dim> Layout;
+  Teuchos::RCP<Layout> layout = Teuchos::rcp(
+    new Layout(workset.numCells, num_qp, num_dim, num_dim));
+  PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
+  f_mdf.setFieldData(
+    PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag()));
+
+  for (int test = 0; test < Impl::ntests; ++test) {
+    Impl::TestData& td = d->td[test];
+    Manager::Field& f = td.f;
+    f.layout = layout;
+    
+    // Fill f_mdf and f_true_qp.
+    loop(f_mdf, cell, 0) loop(f_mdf, qp, 1) {
+      Impl::Point p;
+      for (int i = 0; i < 3; ++i) p.x[i] = coord_qp(cell, qp, i);
+      Impl::FValues fv;
+      if (test == 0)
+        for (int k = 0; k < 9; ++k) fv.f[k] = eval_f(p.x[0], p.x[1], p.x[2], k);
+      else {
+        // I don't have a bounding box, so come up with something reasonable.
+        RealType alpha[3] = {0, 0, 0};
+        alpha[0] = (100 + p.x[0])/200;
+        const Intrepid::Tensor<RealType> F = eval_F(alpha);
+        loop(f_mdf, i, 2) loop(f_mdf, j, 3) fv.f[num_dim*i + j] = F(i,j);
+      }
+      td.f_true_qp[p] = fv;
+      loop(f_mdf, i, 2) loop(f_mdf, j, 3)
+        f_mdf(cell, qp, i, j) = fv.f[num_dim*i + j];
+    }
+
+    d->p.fillRhs(f_mdf, f, workset, wbf);
+  }
+}
+
+void ProjectorTester::project () {
+  for (int test = 0; test < Impl::ntests; ++test) d->p.project(d->td[test].f);
+}
+
+void ProjectorTester::
+interp (const PHAL::Workset& workset, const Manager::BasisField& bf,
+        const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+        const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp) {
+  const int num_qp = coord_qp.dimension(1), num_dim = coord_qp.dimension(2);
+
+  // Quick exit if we've already done this workset.
+  if (workset.numCells > 0 && num_qp > 0) {
+    Impl::Point p;
+    for (int i = 0; i < 3; ++i) p.x[i] = coord_qp(0, 0, i);
+    const Impl::Map::const_iterator it = d->td[0].f_interp_qp.find(p);
+    if (it != d->td[0].f_interp_qp.end()) return;
+  }
+
+  std::vector<Albany::MDArray> mda;
+  std::vector<double> mda_data[2];
+  for (int i = 0; i < 2; ++i) {
+    typedef Albany::MDArray::size_type size_t;
+    mda_data[i].resize(workset.numCells * num_qp * num_dim * num_dim);
+    shards::Array<RealType, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> a;
+    a.assign(&mda_data[i][0], workset.numCells, num_qp, num_dim, num_dim);
+    mda.push_back(a);
+  }
+
+  for (int test = 0; test < Impl::ntests; ++test) {
+    Impl::TestData& td = d->td[test];
+    Manager::Field& f = td.f;
+    // Interpolate to IP.
+    d->p.interp(f, workset, bf, mda[0], mda[1]);
+    transformStateArray(workset.wsIndex, Direction::g2G,
+                        f.data_->transformation, mda[0], mda[1]);
+    // Record for later comparison.
+    loop(mda[0], cell, 0) loop(mda[0], qp, 1) {
+      Impl::Point p;
+      for (int i = 0; i < 3; ++i) p.x[i] = coord_qp(cell, qp, i);
+      Impl::FValues fv;
+      loop(mda[0], i, 2) loop(mda[0], j, 3)
+        fv.f[num_dim*i + j] = mda[0](cell, qp, i, j);
+      td.f_interp_qp[p] = fv;
+    }
+  }
+}
+
+void ProjectorTester::finish (const PHAL::Workset& workset) {
+  for (int test = 0; test < Impl::ntests; ++test) {
+    Impl::TestData& td = d->td[test];
+    // Compare with true values at IP.
+    double err1[9], errmax[9], scale[9];
+    for (int k = 0; k < 9; ++k) { err1[k] = errmax[k] = scale[k] = 0; }
+    for (Impl::Map::const_iterator it = td.f_true_qp.begin();
+         it != td.f_true_qp.end(); ++it) {
+      const Impl::Point& p = it->first;
+      const Impl::FValues& fv_true = it->second;
+      const Impl::Map::const_iterator it_interp = td.f_interp_qp.find(p);
+      if (it_interp == td.f_interp_qp.end()) {
+        pr("ProjectorTester::finish(): Failed to find matching f_interp_qp.");
+        pr(p.x[0] << " " << p.x[1] << " " << p.x[2]);
+        break;
+      }
+      const Impl::FValues& fv_interp = it_interp->second;
+      for (int k = 0; k < 9; ++k) {
+        const double d = std::abs(fv_true.f[k] - fv_interp.f[k]);
+        err1[k] += d;
+        errmax[k] = std::max(errmax[k], d);
+        scale[k] = std::max(scale[k], std::abs(fv_true.f[k]));
+      }
+    }
+
+    double gerr1[9], gerrmax[9], gscale[9];
+    int gn;
+    const Teuchos::RCP<const Teuchos::Comm<int> >
+      comm = Teuchos::DefaultComm<int>::getComm();
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 9, err1, gerr1);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 9, errmax, gerrmax);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, 9, scale, gscale);
+    const int n = td.f_true_qp.size();
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &n, &gn);
+
+    if (comm->getRank() == 0) {
+      printf("err ip (test %d):", test);
+      for (int k = 0; k < 9; ++k)
+        printf(" %1.2e %1.2e (%1.2e)", gerr1[k]/(gn*gscale[k]),
+               gerrmax[k]/gscale[k], gscale[k]);
+      std::cout << "\n";
+    }
+
+    // Reset for next one.
+    td.f_true_qp.clear();
+    td.f_interp_qp.clear();
+    td.f.data_->mv[0] = td.f.data_->mv[1] = Teuchos::null;
   }
 }
 } // namespace testing

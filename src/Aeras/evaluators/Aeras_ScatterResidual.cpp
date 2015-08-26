@@ -10,4 +10,5 @@
 #include "Aeras_ScatterResidual_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::ScatterResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::ScatterResidualBase)
 

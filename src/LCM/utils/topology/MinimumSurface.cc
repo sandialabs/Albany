@@ -37,7 +37,7 @@ namespace LCM {
 // three points in the input vector
 //
 std::vector<stk::mesh::Entity> Topology::getClosestNodes(
-    std::vector<std::vector<double> > points)
+    std::vector<std::vector<double>> points)
 {
   std::vector<stk::mesh::Entity> closestNodes;
   stk::mesh::Entity nodeA;
@@ -101,7 +101,7 @@ std::vector<stk::mesh::Entity> Topology::getClosestNodes(
 //        lie over the surface of the mesh
 //
 std::vector<stk::mesh::Entity> Topology::getClosestNodesOnSurface(
-    std::vector<std::vector<double> > points)
+    std::vector<std::vector<double>> points)
 {
 
   // Obtain all the nodes that lie over the surface
@@ -246,7 +246,7 @@ double Topology::getDistanceNodeAndPoint(
 // 	equilateral triangle.  This triangle lies on the plane that
 // 	intersects the ellipsoid.
 //
-std::vector<std::vector<double> > Topology::getCoordinatesOfTriangle(
+std::vector<std::vector<double>> Topology::getCoordinatesOfTriangle(
     const std::vector<double> normalToPlane)
 {
   // vectorA, vectorB, and vectorC are vectors of magnitude R (radius
@@ -397,7 +397,7 @@ std::vector<std::vector<double> > Topology::getCoordinatesOfTriangle(
   vectorC.push_back(yC * radius + yCenter);
   vectorC.push_back(zC * radius + zCenter);
 
-  std::vector<std::vector<double> > VectorOfPoints;
+  std::vector<std::vector<double>> VectorOfPoints;
   VectorOfPoints.push_back(vectorA);
   VectorOfPoints.push_back(vectorB);
   VectorOfPoints.push_back(vectorC);
@@ -565,7 +565,7 @@ std::vector<stk::mesh::Entity> Topology::meshEdgesShortestPath()
 //        three input nodes and the edges that belong to the outer
 //        surface
 //
-std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
+std::vector<std::vector<int>> Topology::shortestpathOnBoundaryFaces(
     const std::vector<stk::mesh::Entity> & nodes,
     const std::vector<stk::mesh::Entity> & MeshEdgesShortestPath)
 {
@@ -650,7 +650,7 @@ std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
     FV_0.push_back(i);
   }
   //Define the vector that holds the shortest path
-  std::vector<std::vector<int> > ShortestPathFinal;
+  std::vector<std::vector<int>> ShortestPathFinal;
   ShortestPathFinal.push_back(FV_0);
 
   //Compute the  shortest path between nodes[1] and nodes[2]
@@ -715,7 +715,7 @@ std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
   }
   ShortestPathFinal.push_back(FV_2);
 
-  std::vector<std::vector<int> > ShortestPathOutput;
+  std::vector<std::vector<int>> ShortestPathOutput;
 
   for (int j = 0; j < 3; j++) {
     for (unsigned int k = 0; k < (ShortestPathFinal[j].size() - 1); k++) {
@@ -733,7 +733,7 @@ std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
 // \brief Returns the shortest path between three input nodes
 //
 //
-std::vector<std::vector<int> > Topology::shortestpath(
+std::vector<std::vector<int>> Topology::shortestpath(
     const std::vector<stk::mesh::Entity> & nodes)
 {
   typedef float Weight;
@@ -854,7 +854,7 @@ std::vector<std::vector<int> > Topology::shortestpath(
     FV_0.push_back(i);
   }
   //Define the vector that holds the shortest path
-  std::vector<std::vector<int> > ShortestPathFinal;
+  std::vector<std::vector<int>> ShortestPathFinal;
   ShortestPathFinal.push_back(FV_0);
 
   //Compute the  shortest path between nodes[1] and nodes[2]
@@ -919,7 +919,7 @@ std::vector<std::vector<int> > Topology::shortestpath(
   }
   ShortestPathFinal.push_back(FV_2);
 
-  std::vector<std::vector<int> > ShortestPathOutput;
+  std::vector<std::vector<int>> ShortestPathOutput;
 
   for (int j = 0; j < 3; j++) {
     for (unsigned int k = 0; k < (ShortestPathFinal[j].size() - 1); k++) {
@@ -936,7 +936,7 @@ std::vector<std::vector<int> > Topology::shortestpath(
 //
 // \brief Returns the directions of all the edges of the input mesh
 //
-std::vector<std::vector<int> > Topology::edgesDirections()
+std::vector<std::vector<int>> Topology::edgesDirections()
 {
   //Get all of the edges
   std::vector<stk::mesh::Entity> setOfEdges = getEntitiesByRank(
@@ -955,7 +955,7 @@ std::vector<std::vector<int> > Topology::edgesDirections()
 
   //edgesDirec will be the vector of vectors that is returned, it will be Nx2,
   //where N is the number of edges, and each edge has two nodes
-  std::vector<std::vector<int> > edgesDirec(setOfEdges.size());
+  std::vector<std::vector<int>> edgesDirec(setOfEdges.size());
   std::map<stk::mesh::Entity, int>::const_iterator mapIter;
 
   //Iterate through the map, at each row of edgesDirec save the
@@ -977,7 +977,7 @@ std::vector<std::vector<int> > Topology::edgesDirections()
 //
 // \brief Returns the directions of all the boundary edges of the input mesh
 //
-std::vector<std::vector<int> > Topology::edgesDirectionsOuterSurface()
+std::vector<std::vector<int>> Topology::edgesDirectionsOuterSurface()
 {
 
   //Obtain all the faces of the mesh
@@ -1029,7 +1029,7 @@ std::vector<std::vector<int> > Topology::edgesDirectionsOuterSurface()
 
   //edgesDirec will be the vector of vectors that is returned, it will be Nx2,
   //where N is the number of edges, and each edge has two nodes
-  std::vector<std::vector<int> > edgesDirec(setOfEdges.size());
+  std::vector<std::vector<int>> edgesDirec(setOfEdges.size());
   std::map<stk::mesh::Entity, int>::const_iterator mapIter;
 
   //Iterate through the map, at each row of edgesDirec save the
@@ -1051,7 +1051,7 @@ std::vector<std::vector<int> > Topology::edgesDirectionsOuterSurface()
 //
 // \brief Returns the directions of all of the faces of the input mesh
 //
-std::vector<std::vector<int> > Topology::facesDirections()
+std::vector<std::vector<int>> Topology::facesDirections()
 {
   //Get the faces
   std::vector<stk::mesh::Entity> setOfFaces = getEntitiesByRank(
@@ -1071,7 +1071,7 @@ std::vector<std::vector<int> > Topology::facesDirections()
   //facesDirec will be the vector of vectors that is returned, it will
   //be Nx4, where N is the number of faces, and each face has three
   //nodes with the first node being repeated for a total of 4
-  std::vector<std::vector<int> > facesDirec(setOfFaces.size());
+  std::vector<std::vector<int>> facesDirec(setOfFaces.size());
 
   //Iterate through the map, at each row of facesDirec save the integers that
   //identify the directions of the face
@@ -1147,14 +1147,14 @@ std::vector<double> Topology::facesAreas()
 // \brief Returns the boundary operator of the input mesh.
 //        matrix that has nonzeros only
 //
-std::vector<std::vector<int> > Topology::boundaryOperator()
+std::vector<std::vector<int>> Topology::boundaryOperator()
 {
-  std::vector<std::vector<int> > edgesDirec = edgesDirections();
-  std::vector<std::vector<int> > facesDirec = facesDirections();
+  std::vector<std::vector<int>> edgesDirec = edgesDirections();
+  std::vector<std::vector<int>> facesDirec = facesDirections();
   std::vector<stk::mesh::Entity> meshFaces = getEntitiesByRank(
       get_bulk_data(),
       stk::topology::FACE_RANK);
-  std::vector<std::vector<int> > boundaryOp;
+  std::vector<std::vector<int>> boundaryOp;
 
   //Iterate through every row of facesDirec
   for (unsigned int i = 0; i < facesDirec.size(); i++) {
@@ -1216,18 +1216,18 @@ std::vector<std::vector<int> > Topology::boundaryOperator()
 // \brief returns the boundary operator along with the faces areas
 //        to create the columns of an mps file
 //
-std::vector<std::vector<double> > Topology::outputForMpsFile()
+std::vector<std::vector<double>> Topology::outputForMpsFile()
 {
   //Obtain the areas of all the faces of the mesh
   std::vector<double> FacesAreas = facesAreas();
 
   //Define the boundary operator
-  std::vector<std::vector<int> > edgesDirec = edgesDirections();
-  std::vector<std::vector<int> > facesDirec = facesDirections();
+  std::vector<std::vector<int>> edgesDirec = edgesDirections();
+  std::vector<std::vector<int>> facesDirec = facesDirections();
   std::vector<stk::mesh::Entity> meshFaces = getEntitiesByRank(
       get_bulk_data(),
       stk::topology::FACE_RANK);
-  std::vector<std::vector<double> > matrixForMpsFile;
+  std::vector<std::vector<double>> matrixForMpsFile;
 
   //Iterate through every row of facesDirec
   for (unsigned int i = 0; i < facesDirec.size(); i++) {
@@ -1285,14 +1285,14 @@ std::vector<std::vector<double> > Topology::outputForMpsFile()
 //        surface of the input mesh. The input to this function is a
 //        shortest path (composed by egdes) between three nodes
 //
-std::vector<std::vector<int> > Topology::boundaryVector(
-    std::vector<std::vector<int> > & shortPath)
+std::vector<std::vector<int>> Topology::boundaryVector(
+    std::vector<std::vector<int>> & shortPath)
 {
-  std::vector<std::vector<int> > edgesDirec = edgesDirections();
+  std::vector<std::vector<int>> edgesDirec = edgesDirections();
 
   //Define the Matrix that will hold the edges that build the 1D
   //boundary and their respective position
-  std::vector<std::vector<int> > rVector;
+  std::vector<std::vector<int>> rVector;
 
   //Iterate through all the edges of edgesDirections
   for (unsigned int i = 0; i < edgesDirec.size(); i++) {
@@ -1338,15 +1338,15 @@ std::vector<std::vector<int> > Topology::boundaryVector(
 //        function is a shortest path (composed by edges) between
 //        three nodes
 //
-std::vector<std::vector<int> > Topology::boundaryVectorOuterSurface(
-    std::vector<std::vector<int> > & shortPath)
+std::vector<std::vector<int>> Topology::boundaryVectorOuterSurface(
+    std::vector<std::vector<int>> & shortPath)
 {
 
-  std::vector<std::vector<int> > edgesDirec = edgesDirectionsOuterSurface();
+  std::vector<std::vector<int>> edgesDirec = edgesDirectionsOuterSurface();
 
   //Define the Matrix that will hold the edges that build the 1D
   //boundary and their respective position
-  std::vector<std::vector<int> > rVector;
+  std::vector<std::vector<int>> rVector;
 
   //Iterate through all the edges of edgesDirections
   for (unsigned int i = 0; i < edgesDirec.size(); i++) {

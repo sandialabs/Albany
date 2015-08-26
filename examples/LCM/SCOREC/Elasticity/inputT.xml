@@ -31,13 +31,11 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="FMDB"/>
-    <Parameter name="FMDB Input File Name" type="string" value="../meshes/cube/cube.smb"/>
+    <Parameter name="Method" type="string" value="PUMI"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/cube/cube.smb"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/cube/cube.dmg"/>
-    <Parameter name="FMDB Output File Name" type="string" value="unitCubeTractionOutT.vtk"/>
-    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{95, eb_1}"/>
-    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x3:{85, 83, 43, ns_1, ns_2, ns_3}"/>
-    <Parameter name="Side Set Associations" type="TwoDArray(string)" value="2x1:{81, ss_1}"/>
+    <Parameter name="PUMI Output File Name" type="string" value="unitCubeTractionOutT.vtk"/>
+    <Parameter name="Model Associations File Name" type="string" value="traction_assoc.txt"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>

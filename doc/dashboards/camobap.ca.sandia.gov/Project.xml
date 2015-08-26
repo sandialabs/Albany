@@ -1,0 +1,12 @@
+<Project name="Albany">
+  <SubProject name="IKTAlbany32BitNoEpetra">
+  </SubProject>
+  <SubProject name="IKTAlbany32Bit">
+  </SubProject>
+  <SubProject name="IKTAlbany64BitNoEpetra">
+  </SubProject>
+  <SubProject name="IKTAlbany64Bit">
+  </SubProject>
+  <SubProject name="IKTAlbanyFunctor">
+  </SubProject>
+</Project>

@@ -4,15 +4,15 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
-# SCOREC FMDB
-
-IF(ALBANY_SCOREC)
-  add_subdirectory(fmdb)
+IF(ALBANY_APF)
+  add_subdirectory(pumi)
 ENDIF()
 
 if(ALBANY_CATALYST)
   add_subdirectory(catalyst)
 endif()
 
-add_subdirectory(stk)
+IF(ALBANY_HAVE_STK)
+  add_subdirectory(stk)
+ENDIF()
 

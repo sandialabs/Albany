@@ -34,8 +34,8 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	displacement_y	 absolute 9.2879257e-09	# min: 0 @ t1,n1 max: 0.00092879257 @ t1,n76
 	displacement_z	 absolute 9.2879257e-09	# min: 0 @ t1,n52 max: 0.00092879257 @ t1,n8
 	force_x	 absolute 903.89058	# min: 7.4505806e-09 @ t1,n19 max: 90389058 @ t1,n138
-	force_y	 absolute 1.663947e-8	# min: 3.4389457e-08 @ t1,n63 max: 1.663947e-05 @ t1,n53
-	force_z	 absolute 1.5327501e-8	# min: 3.3903875e-08 @ t1,n2 max: 1.5327501e-05 @ t1,n54
+	force_y	 absolute 1.0e-4
+	force_z	 absolute 1.0e-4
 
 # No ELEMENT VARIABLES
 

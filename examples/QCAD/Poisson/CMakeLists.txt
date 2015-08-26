@@ -2,6 +2,8 @@
 # Copy files used by multiple tests
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material_gaas.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/material_gaas.xml COPYONLY)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/output)
 
 # Get testRoot as QCAD_<the directory name>
@@ -16,6 +18,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_polygate.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap_polygate.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gaascap_onesc.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_gaascap_onesc.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pndiode.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pndiode.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_2D.xml
@@ -60,10 +64,11 @@ ENDIF()
 # Create tests with this name and standard executable
 add_test(${testRoot}_pmoscap ${Albany.exe} input_pmoscap.xml)
 add_test(${testRoot}_pmoscap_polygate ${Albany.exe} input_pmoscap_polygate.xml)
+add_test(${testRoot}_gaascap_onesc ${Albany.exe} input_gaascap_onesc.xml)
 add_test(${testRoot}_pndiode ${Albany.exe} input_pndiode.xml)
-#add_test(${testRoot}_mosdot_2D ${Albany.exe} input_mosdot_2D.xml)
+add_test(${testRoot}_mosdot_2D ${Albany.exe} input_mosdot_2D.xml)
 add_test(${testRoot}_mosdot_2D_tri6 ${Albany.exe} input_mosdot_2D_tri6.xml)
-#add_test(${testRoot}_mosdot_2D_qcad ${Albany.exe} input_mosdot_2D_qcad.xml)
+add_test(${testRoot}_mosdot_2D_qcad ${Albany.exe} input_mosdot_2D_qcad.xml)
 add_test(${testRoot}_mosdot_3D ${Albany.exe} input_mosdot_3D.xml)
 add_test(${testRoot}_mosdot_3D_tet10 ${Albany.exe} input_mosdot_3D_tet10.xml)
 

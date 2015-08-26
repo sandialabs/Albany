@@ -49,6 +49,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+
   enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
   EQNTYPE eqn_type;
   
@@ -58,9 +60,42 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
-  std::size_t vecDim;
+  std::size_t vecDimFO;
   bool enableTransient;
+  Teuchos::ParameterList* stereographicMapList;
+  bool useStereographicMap;
 
+
+//KOKKOS:
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  
+  struct FELIX_3D_Tag{};
+  struct POISSON_3D_Tag{};
+  struct FELIX_2D_Tag{};
+  struct FELIX_XZ_2D_Tag{};
+  struct POISSON_2D_Tag{};
+  
+  typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_3D_Tag> FELIX_3D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_3D_Tag> POISSON_3D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_2D_Tag> FELIX_2D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_XZ_2D_Tag> FELIX_XZ_2D_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_2D_Tag> POISSON_2D_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FELIX_3D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const POISSON_3D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FELIX_2D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const FELIX_XZ_2D_Tag& tag, const int& cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const POISSON_2D_Tag& tag, const int& cell) const; 
+
+#endif
 };
 }
 

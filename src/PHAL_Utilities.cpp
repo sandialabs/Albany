@@ -25,22 +25,46 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
+  if(app->getProblemPL()->get("Name", "") == "FELIX Coupled FO H 3D")
+  { //all column is coupled
+    int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+    int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+    return app->getNumEquations()*side_node_count*numLevels;
+  }
+#ifdef ALBANY_AERAS
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->getEnrichedMeshSpecs(); 
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+      app, mesh_specs[ebi].get());
+#endif
+  return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
  const Albany::Application* app, const int ebi)
 {
+#ifdef ALBANY_AERAS
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->getEnrichedMeshSpecs(); 
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+      app, mesh_specs[ebi].get());
+#endif
+  return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
  const Albany::Application* app, const int ebi)
 {
+#ifdef ALBANY_AERAS
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->getEnrichedMeshSpecs(); 
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+      app, mesh_specs[ebi].get());
+#endif
+  return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 namespace {
@@ -116,6 +140,15 @@ template<> void myReduceAll<RealType> (
   Teuchos::reduceAll<int, RealType>(
     comm, reduct_type, v.size(), &send[0], &v[0]);
 }
+
+template<> void myReduceAll<MPType> (
+  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
+  std::vector<MPType>& v)
+{
+  std::vector<MPType> send(v);
+  Teuchos::reduceAll<int, MPType>(
+    comm, reduct_type, v.size(), &send[0], &v[0]);
+}
 } // namespace
 
 template<typename ScalarT>
@@ -134,42 +167,23 @@ void reduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   ScalarT& a)
 {
-  typedef typename ScalarT::value_type ValueT;
-  const int sz = a.size();
-  // Pack into a vector of values.
-  std::vector<ValueT> pack;
-  pack.push_back(a.val());
-  for (int j = 0; j < sz; ++j)
-    pack.push_back(a.fastAccessDx(j));
-  // reduceAll the package.
-  switch (reduct_type) {
-  case Teuchos::REDUCE_SUM: {
-    std::vector<ValueT> send(pack);
-    Teuchos::reduceAll<int, ValueT>(
-      comm, reduct_type, pack.size(), &send[0], &pack[0]);
-  } break;
-  default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
-  }
-  // Unpack.
-  int slot = 0;
-  a.val() = pack[slot++];
-  for (int j = 0; j < sz; ++j)
-    a.fastAccessDx(j) = pack[slot++];
+  ScalarT b = a;
+  Teuchos::reduceAll(comm, reduct_type, 1, &a, &b);
+  a = b;
 }
 
-template<>
-void reduceAll<RealType> (
-  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
-  RealType& a)
-{
-  RealType send = a;
-  Teuchos::reduceAll<int, RealType>(
-    comm, reduct_type, send, Teuchos::Ptr<RealType>(&a));
+template<typename ScalarT>
+void broadcast (const Teuchos_Comm& comm, const int root_rank,
+                PHX::MDField<ScalarT>& a) {
+  std::vector<ScalarT> v;
+  copy<ScalarT>(a, v);
+  Teuchos::broadcast<int, ScalarT>(comm, root_rank, v.size(), &v[0]);
+  copy<ScalarT>(v, a);
 }
 
-//amb This should go somewhere useful.
-#ifdef ALBANY_SG_MP
-# ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#ifdef ALBANY_SG
+# ifdef ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)                                \
@@ -178,7 +192,7 @@ void reduceAll<RealType> (
   macro(SGFadType)                              \
   macro(MPType)                                 \
   macro(MPFadType)
-# else
+#  else
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)                                \
@@ -186,19 +200,52 @@ void reduceAll<RealType> (
   macro(SGFadType)                              \
   macro(MPType)                                 \
   macro(MPFadType)
-# endif
-#else // ALBANY_SG_MP
-# ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#  endif
+# else //ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(TanFadType)                             \
+  macro(SGType)                                 \
+  macro(SGFadType)
+#  else
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(SGType)                                 \
+  macro(SGFadType)
+#  endif
+# endif //ALBANY_ENSEMBLE
+#else  //ALBANY_SG
+# ifdef ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(TanFadType)                             \
+  macro(MPType)                                 \
+  macro(MPFadType)
+#  else
+#define apply_to_all_ad_types(macro)            \
+  macro(RealType)                               \
+  macro(FadType)                                \
+  macro(MPType)                                 \
+  macro(MPFadType)
+#  endif
+# else //ALBANY_ENSEMBLE
+#  ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)                                \
   macro(TanFadType)
-# else
+#  else
 #define apply_to_all_ad_types(macro)            \
   macro(RealType)                               \
   macro(FadType)
-# endif
-#endif // ALBANY_SG_MP
+#  endif
+# endif //ALBANY_ENSEMBLE
+#endif //ALBANY_SG
 
 #define eti(T)                                                          \
   template void reduceAll<T> (                                          \
@@ -208,6 +255,11 @@ apply_to_all_ad_types(eti)
 #define eti(T)                                                  \
   template void reduceAll<T> (                                  \
     const Teuchos_Comm&, const Teuchos::EReductionType, T&);
+apply_to_all_ad_types(eti)
+#undef eti
+#define eti(T)                                                          \
+  template void broadcast<T> (                                          \
+    const Teuchos_Comm&, const int root_rank, PHX::MDField<T>&);
 apply_to_all_ad_types(eti)
 #undef eti
 #undef apply_to_all_ad_types

@@ -38,7 +38,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   // The input.xml argument for the above string
   inputConditions = p.get< std::string >("Neumann Input Conditions");
-
+ 
   // The DOF offsets are contained in the Equation Offset array. The length of this array are the
   // number of DOFs we will set each call
   numDOFsSet = offset.size();
@@ -148,7 +148,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
-
+      stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+      useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+      if(useStereographicMap)
+        this->addDependentField(coordVec);
       // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
       bc_type = BASAL;
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
@@ -173,7 +176,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
        dofVec = tmp;
 #ifdef ALBANY_FELIX
       beta_field = PHX::MDField<ScalarT,Cell,Node>(
-                    p.get<std::string>("Beta Field Name"), dl->node_scalar);
+        p.get<std::string>("Beta Field Name"), dl->node_scalar);
+      thickness_field = PHX::MDField<ScalarT,Cell,Node>(
+        p.get<std::string>("thickness Field Name"), dl->node_scalar);
 #endif
 
       betaName = p.get<std::string>("BetaXY");
@@ -198,15 +203,29 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = DOMEUQ;
       else if (betaName == "Scalar Field")
         beta_type = SCALAR_FIELD;
-      else if (betaName == "FELIX XZ MMS")
-        beta_type = FELIX_XZ_MMS;
+      else if (betaName == "Exponent Of Scalar Field")
+        beta_type = EXP_SCALAR_FIELD;
+      else if (betaName == "Power Law Scalar Field")
+        beta_type = POWERLAW_SCALAR_FIELD;
+      else if (betaName == "Exponent Of Scalar Field Times Thickness")
+        beta_type = EXP_SCALAR_FIELD_THK;
+      else if (betaName == "FELIX XZ MMS") 
+        beta_type = FELIX_XZ_MMS; 
+      else TEUCHOS_TEST_FOR_EXCEPTION(true,Teuchos::Exceptions::InvalidParameter,
+        std::endl << "The BetaXY name: \"" << betaName << "\" is not a valid name" << std::endl);
 
       this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
       this->addDependentField(beta_field);
+      this->addDependentField(thickness_field);
 #endif
   }
   else if(inputConditions == "basal_scalar_field"){ // Basal boundary condition for FELIX, where the basal sliding coefficient is a scalar field
+      stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+      useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+
+      if(useStereographicMap)
+        this->addDependentField(coordVec);
 
       // User has specified scale to set BC d(flux)/dn = scale*beta*u, where beta is a scalar field
       bc_type = BASAL_SCALAR_FIELD;
@@ -224,13 +243,13 @@ NeumannBase(const Teuchos::ParameterList& p) :
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
       this->addDependentField(beta_field);
 #endif
-      thickness_field = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string>("thickness Field Name"), dl->node_scalar);
-
-      this->addDependentField(thickness_field);
       this->addDependentField(dofVec);
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
-
+       stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+       useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
+       if(useStereographicMap)
+         this->addDependentField(coordVec);
         // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
         bc_type = LATERAL;
         beta_type = LATERAL_BACKPRESSURE;
@@ -246,10 +265,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
 
-      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1.
-      for (int i = numInputs; i < 5; i++)
+      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1. 
+      for (int i = numInputs; i < 5; i++) 
         robin_vals[i] = 0.0;
-
+        
       //The following should really go to 1 but above backward compatibility line keeps this at length 5.
       for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
@@ -297,32 +316,33 @@ NeumannBase(const Teuchos::ParameterList& p) :
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
 
-  const CellTopologyData * const side_top = elem_top->side[0].topology;
-
-  if(strncasecmp(side_top->name, "Line", 4) == 0)
-
-    side_type = LINE;
-
-  else if(strncasecmp(side_top->name, "Tri", 3) == 0)
-
-    side_type = TRI;
-
-  else if(strncasecmp(side_top->name, "Quad", 4) == 0)
-
-    side_type = QUAD;
-
-  else
-
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-             "PHAL_Neumann: side type : " << side_top->name << " is not supported." << std::endl);
-
-
-  sideType = Teuchos::rcp(new shards::CellTopology(side_top));
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
-  cubatureSide = cubFactory.create(*sideType, cubatureDegree);
 
-  sideDims = sideType->getDimension();
-  numQPsSide = cubatureSide->getNumPoints();
+  int numSidesOnElem = elem_top->side_count;
+  sideType.resize(numSidesOnElem);
+  cubatureSide.resize(numSidesOnElem);
+  side_type.resize(numSidesOnElem);
+
+  // Build containers that depend on side topology
+  int maxSideDim(0), maxNumQpSide(0);
+  const char* sideTypeName;
+
+  for(int i=0; i<numSidesOnElem; ++i) {
+    sideType[i] = Teuchos::rcp(new shards::CellTopology(elem_top->side[i].topology));
+    cubatureSide[i] = cubFactory.create(*sideType[i], cubatureDegree);
+    maxSideDim = std::max( maxSideDim, (int)sideType[i]->getDimension());
+    maxNumQpSide = std::max(maxNumQpSide, (int)cubatureSide[i]->getNumPoints());
+    sideTypeName = sideType[i]->getName();
+    if(strncasecmp(sideTypeName, "Line", 4) == 0)
+      side_type[i] = LINE;
+    else if(strncasecmp(sideTypeName, "Tri", 3) == 0)
+      side_type[i] = TRI;
+    else if(strncasecmp(sideTypeName, "Quad", 4) == 0)
+      side_type[i] = QUAD;
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "PHAL_Neumann: side type : " << sideTypeName << " is not supported." << std::endl);
+  }
 
   numNodes = intrepidBasis->getCardinality();
 
@@ -334,33 +354,32 @@ NeumannBase(const Teuchos::ParameterList& p) :
   cellDims = dim[2];
 
   // Allocate Temporary FieldContainers
-  cubPointsSide.resize(numQPsSide, sideDims);
-  refPointsSide.resize(numQPsSide, cellDims);
-  cubWeightsSide.resize(numQPsSide);
-  physPointsSide.resize(1, numQPsSide, cellDims);
-  dofSide.resize(1, numQPsSide);
-  dofSideVec.resize(1, numQPsSide, numDOFsSet);
-
-  // Do the BC one side at a time for now
-  jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-  jacobianSide_det.resize(1, numQPsSide);
-
-  weighted_measure.resize(1, numQPsSide);
-  basis_refPointsSide.resize(numNodes, numQPsSide);
-  trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-  weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-
   physPointsCell.resize(1, numNodes, cellDims);
   dofCell.resize(1, numNodes);
   dofCellVec.resize(1, numNodes, numDOFsSet);
   neumann.resize(containerSize, numNodes, numDOFsSet);
-  data.resize(1, numQPsSide, numDOFsSet);
 
-  // Pre-Calculate reference element quantitites
-  cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
+  // Allocate Temporary FieldContainers based on max sizes of sides. Need to be resized later for each side.
+  cubPointsSide.resize(maxNumQpSide, maxSideDim);
+  refPointsSide.resize(maxNumQpSide, cellDims);
+  cubWeightsSide.resize(maxNumQpSide);
+  physPointsSide.resize(1, maxNumQpSide, cellDims);
+  dofSide.resize(1, maxNumQpSide);
+  dofSideVec.resize(1, maxNumQpSide, numDOFsSet);
+
+  // Do the BC one side at a time for now
+  jacobianSide.resize(1, maxNumQpSide, cellDims, cellDims);
+  jacobianSide_det.resize(1, maxNumQpSide);
+
+  weighted_measure.resize(1, maxNumQpSide);
+  basis_refPointsSide.resize(numNodes, maxNumQpSide);
+  trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
+  weighted_trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
+
+  data.resize(1, maxNumQpSide, numDOFsSet);
+
 
   this->setName(name);
-
 }
 
 //**********************************************************************
@@ -372,16 +391,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm);
   if (inputConditions == "robin") this->utils.setFieldData(dof,fm);
 #ifdef ALBANY_FELIX
-  else if (inputConditions == "basal")
+  else if (inputConditions == "basal" || inputConditions == "basal_scalar_field")
   {
     this->utils.setFieldData(dofVec,fm);
     this->utils.setFieldData(beta_field,fm);
-  }
-  else if (inputConditions == "basal_scalar_field")
-  {
-    this->utils.setFieldData(dofVec,fm);
-    this->utils.setFieldData(beta_field,fm);
-    this->utils.setFieldData(thickness_field,fm);
+    if (inputConditions == "basal")
+      this->utils.setFieldData(thickness_field,fm);
   }
   else if(inputConditions == "lateral")
   {
@@ -423,11 +438,11 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
                                   // once we move logic to BCUtils
 
-  const std::vector<Albany::SideStruct>& sideSet = it->second;
+  Intrepid::FieldContainer<ScalarT> betaOnSide;
+  Intrepid::FieldContainer<ScalarT> thicknessOnSide;
+  Intrepid::FieldContainer<ScalarT> elevationOnSide;
 
-  Intrepid::FieldContainer<ScalarT> betaOnSide(1,numQPsSide);
-  Intrepid::FieldContainer<ScalarT> thicknessOnSide(1,numQPsSide);
-  Intrepid::FieldContainer<ScalarT> elevationOnSide(1,numQPsSide);
+  const std::vector<Albany::SideStruct>& sideSet = it->second;
 
   // Loop over the sides that form the boundary condition
 
@@ -438,6 +453,34 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     const int elem_GID = sideSet[side].elem_GID;
     const int elem_LID = sideSet[side].elem_LID;
     const int elem_side = sideSet[side].side_local_id;
+
+    int sideDims = sideType[elem_side]->getDimension();
+    int numQPsSide = cubatureSide[elem_side]->getNumPoints();
+
+
+    //need to resize containers because they depend on side topology
+    cubPointsSide.resize(numQPsSide, sideDims);
+    refPointsSide.resize(numQPsSide, cellDims);
+    cubWeightsSide.resize(numQPsSide);
+    physPointsSide.resize(1, numQPsSide, cellDims);
+    dofSide.resize(1, numQPsSide);
+    dofSideVec.resize(1, numQPsSide, numDOFsSet);
+
+    // Do the BC one side at a time for now
+    jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
+    jacobianSide_det.resize(1, numQPsSide);
+
+    weighted_measure.resize(1, numQPsSide);
+    basis_refPointsSide.resize(numNodes, numQPsSide);
+    trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
+    weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
+    data.resize(1, numQPsSide, numDOFsSet);
+
+    betaOnSide.resize(1,numQPsSide);
+    thicknessOnSide.resize(1,numQPsSide);
+    elevationOnSide.resize(1,numQPsSide);
+
+    cubatureSide[elem_side]->getCubature(cubPointsSide, cubWeightsSide);
 
     // Copy the coordinate data over to a temp container
 
@@ -497,21 +540,26 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     else if(bc_type == BASAL || bc_type == BASAL_SCALAR_FIELD) {
       Intrepid::FieldContainer<ScalarT> betaOnCell(1, numNodes);
+      Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
       for (std::size_t node=0; node < numNodes; ++node)
       {
         betaOnCell(0,node) = beta_field(elem_LID,node);
+        if(bc_type == BASAL)
+          thicknessOnCell(0,node) = thickness_field(elem_LID,node);
         for(int dim = 0; dim < numDOFsSet; dim++)
               dofCellVec(0,node,dim) = dofVec(elem_LID,node,this->offset[dim]);
       }
 
       // This is needed, since evaluate currently sums into
       for (int i=0; i < numQPsSide ; i++) betaOnSide(0,i) = 0.0;
+      for (int i=0; i < numQPsSide ; i++) thicknessOnSide(0,i) = 0.0;
       for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
       for (std::size_t node=0; node < numNodes; ++node) {
          for (std::size_t qp=0; qp < numQPsSide; ++qp) {
                  betaOnSide(0, qp)  += betaOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
+                 thicknessOnSide(0, qp)  += thicknessOnCell(0, node) * trans_basis_refPointsSide(0, node, qp);
             for (int dim = 0; dim < numDOFsSet; dim++) {
                dofSideVec(0, qp, dim)  += dofCellVec(0, node, dim) * trans_basis_refPointsSide(0, node, qp);
             }
@@ -523,8 +571,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
         //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 #ifdef ALBANY_FELIX
-    else if(bc_type == LATERAL)
-    {
+    else if(bc_type == LATERAL) {
           Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
           Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
           for (std::size_t node=0; node < numNodes; ++node)
@@ -590,7 +637,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       case BASAL:
 
 #ifdef ALBANY_FELIX
-         calc_dudn_basal(data, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+         calc_dudn_basal(data, betaOnSide, thicknessOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
 #endif
          break;
 
@@ -827,7 +874,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   // Calculate proper areas
 
-  switch(side_type){
+  switch(side_type[local_side_id]){
 
     case LINE:
 
@@ -845,7 +892,7 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-             "Need to supply area function for boundary type: " << side_type << std::endl);
+             "Need to supply area function for boundary type: " << side_type[local_side_id] << std::endl);
       break;
 
   }
@@ -871,6 +918,7 @@ template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
                                   const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+                                  const Intrepid::FieldContainer<ScalarT>& thickness_side,
                                   const Intrepid::FieldContainer<ScalarT>& dof_side,
                           const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
@@ -916,10 +964,134 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   }
   if (beta_type == SCALAR_FIELD) {//basal (robin) condition indepenent of space
       betaXY = 1.0;
-      for(int cell = 0; cell < numCells; cell++) {
-        for(int pt = 0; pt < numPoints; pt++) {
-          for(int dim = 0; dim < numDOFsSet; dim++) {
-            qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+    
+      if(useStereographicMap)
+      {
+        double R = stereographicMapList->get<double>("Earth Radius", 6371);
+        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+        double R2 = std::pow(R,2);
+
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+            MeshScalarT h2 = h*h;
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+      else {
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+  }
+  else if (beta_type == EXP_SCALAR_FIELD) {//basal (robin) condition indepenent of space
+      betaXY = 1.0;
+
+      if(useStereographicMap)
+      {
+        double R = stereographicMapList->get<double>("Earth Radius", 6371);
+        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+        double R2 = std::pow(R,2);
+
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+            MeshScalarT h2 = h*h;
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+      else {
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+  }
+  else if (beta_type == POWERLAW_SCALAR_FIELD) {//basal (robin) condition indepenent of space
+        betaXY = 1.0;
+
+        if(useStereographicMap)
+        {
+          double R = stereographicMapList->get<double>("Earth Radius", 6371);
+          double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+          double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+          double R2 = std::pow(R,2);
+
+          for(int cell = 0; cell < numCells; cell++) {
+            for(int pt = 0; pt < numPoints; pt++) {
+              MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+              MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+              MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+              MeshScalarT h2 = h*h;
+              ScalarT vel=0;
+              for(int dim = 0; dim < numDOFsSet; dim++)
+                vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
+              for(int dim = 0; dim < numDOFsSet; dim++) {
+                qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*std::pow(vel+1e-6, (1./3.-1.)/2.)*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+              }
+            }
+          }
+        }
+        else {
+          for(int cell = 0; cell < numCells; cell++) {
+            for(int pt = 0; pt < numPoints; pt++) {
+              ScalarT vel=0;
+              for(int dim = 0; dim < numDOFsSet; dim++)
+                vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
+              for(int dim = 0; dim < numDOFsSet; dim++) {
+                qp_data_returned(cell, pt, dim) = betaXY*basalFriction_side(cell, pt)*std::pow(vel+1e-6, (1./3.-1.)/2.)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+              }
+            }
+          }
+        }
+    }
+  else if (beta_type == EXP_SCALAR_FIELD_THK) {//basal (robin) condition indepenent of space
+      betaXY = 1.0;
+
+      if(useStereographicMap)
+      {
+        double R = stereographicMapList->get<double>("Earth Radius", 6371);
+        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+        double R2 = std::pow(R,2);
+
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
+            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+            MeshScalarT h2 = h*h;
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*thickness_side(cell, pt)*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
+            }
+          }
+        }
+      }
+      else {
+        for(int cell = 0; cell < numCells; cell++) {
+          for(int pt = 0; pt < numPoints; pt++) {
+            for(int dim = 0; dim < numDOFsSet; dim++) {
+              qp_data_returned(cell, pt, dim) = betaXY*std::exp(basalFriction_side(cell, pt))*thickness_side(cell, pt)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+            }
           }
         }
       }
@@ -1009,10 +1181,10 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
  //Robin/Neumann bc for FELIX FO XZ MMS test case
  else if (beta_type == FELIX_XZ_MMS) {
     //parameter values are hard-coded here...
-    MeshScalarT H = 1.0;
-    double alpha0 = 4.0e-5;
+    MeshScalarT H = 1.0; 
+    double alpha0 = 4.0e-5; 
     double beta0 = 1;
-    double rho_g = 910.0*9.8;
+    double rho_g = 910.0*9.8; 
     double s0 = 2.0;
     double A = 1e-4; //CAREFUL! A is hard-coded here, needs to match input file!!
     for(int cell = 0; cell < numCells; cell++) {
@@ -1023,17 +1195,17 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
           MeshScalarT phi1 = z - s; //phi1 = z-s
           //phi2 = 4*A*alpha^3*rho^3*g^3*x
-          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;
+          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;  
           //phi3 = 4*x^3*phi1^5*phi2^2
-          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2;
+          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2; 
           //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
           MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta0 + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
           //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
-          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2
-                           + 6.0*phi2*(pow(phi1,4) - pow(H,4));
+          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 
+                           + 6.0*phi2*(pow(phi1,4) - pow(H,4)); 
           //mu = 1/2*(A*phi4^2 + A*x*phi1*phi3)^(-1/3) -- this is mu but with A factored out
-           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0);
-           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny
+           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0); 
+           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny 
            //              + (2*H*alpha*rho*g*x - beta0*x^2*phi2*(phi1^4 - H^4)*alpha;
           qp_data_returned(cell, pt, dim) = beta*dof_side(cell,pt,dim)
                                            + 4.0*phi4*mu*alpha*side_normals(cell,pt,0)
@@ -1136,6 +1308,21 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
       }
     }
+    if(useStereographicMap) {
+      double R = stereographicMapList->get<double>("Earth Radius", 6371);
+      double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+      double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+      double R2 = std::pow(R,2);
+      for(int cell = 0; cell < numCells; cell++) {
+        for(int pt = 0; pt < numPoints; pt++) {
+          MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
+          MeshScalarT y = physPointsSide(cell,pt,1) -y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          for(int dim = 0; dim < numDOFsSet; dim++)
+            qp_data_returned(cell, pt, dim) *= h; 
+        }
+      }
+    }
   }
 }
 
@@ -1158,7 +1345,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
-  ScalarT *valptr;
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
@@ -1170,10 +1356,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-
-      valptr = &(this->neumann)(cell, node, dim);
-     fT_nonconstView[nodeID[node][this->offset[dim]]] += *valptr;
-
+        fT_nonconstView[nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim);
     }
   }
 }
@@ -1188,22 +1371,72 @@ Neumann(Teuchos::ParameterList& p)
   : NeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
+// **********************************************************************
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const Newmann_Tag& tag, const int& cell) const
+{
 
+  LO colT[1];
+  LO rowT;
+  ST value[1];
+  int lcol;
+  const int neq = Index.dimension(2);
+  const int nunk = neq*this->numNodes;
+  
+
+  for (std::size_t node = 0; node < this->numNodes; ++node)
+    for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
+
+      int dim2=this->offset[dim];
+      rowT = Index(cell,node,dim2);
+
+      if (this->fT != Teuchos::null) {
+         this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
+      }
+
+        // Check derivative array is nonzero
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
+          // Loop over nodes in element
+          for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+        
+            // Loop over equations per node
+            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+             lcol = neq * node_col + eq_col;
+
+            // Global column
+            colT[0] =  Index(cell, node_col, eq_col);
+            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
+            if (is_adjoint) {
+              // Sum Jacobian transposed
+              jacobian.sumIntoValues(colT[0], &rowT,1, &value[0],true);
+            }
+            else {
+              // Sum Jacobian
+              jacobian.sumIntoValues(rowT, colT, nunk,value, true);
+            }
+          } // column equations
+        } // column nodes
+      } // has fast access
+    }
+          
+ }
+#endif
 // **********************************************************************
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
-  ScalarT *valptr;
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
-
   int lcol;
   Teuchos::Array<LO> rowT(1);
   Teuchos::Array<LO> colT(1);
@@ -1215,18 +1448,16 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
       rowT[0] = nodeID[node][this->offset[dim]];
 
       int neq = nodeID[node].size();
 
       if (fT != Teuchos::null) {
-         fT->sumIntoLocalValue(rowT[0], valptr->val());
+         fT->sumIntoLocalValue(rowT[0], this->neumann(cell, node, dim).val());
       }
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -1237,7 +1468,7 @@ evaluateFields(typename Traits::EvalData workset)
 
             // Global column
             colT[0] =  nodeID[node_col][eq_col];
-            value[0] = valptr->fastAccessDx(lcol);
+            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);   
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               JacT->sumIntoLocalValues(colT[0], rowT(), value());
@@ -1251,6 +1482,31 @@ evaluateFields(typename Traits::EvalData workset)
       } // has fast access
     }
   }
+#else
+  
+  fT = workset.fT;
+  fT_nonconstView = fT->get1dViewNonConst();
+  JacT = workset.JacT;
+
+
+  // Fill in "neumann" array
+  this->evaluateNeumannContribution(workset);
+ 
+ //  if ( !JacT->isFillActive())
+//    JacT->resumeFill();
+ 
+   jacobian=JacT->getLocalMatrix();
+
+   Index=workset.wsElNodeEqID_kokkos;
+
+   is_adjoint=workset.is_adjoint;
+
+   Kokkos::parallel_for(Newmann_Policy(0,workset.numCells),*this);
+
+//   if ( !JacT->isFillActive())
+//    JacT->fillComplete();
+
+#endif
 }
 
 // **********************************************************************
@@ -1272,9 +1528,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
-
-   ScalarT *valptr;
-
+  
   // Fill the local "neumann" array with cell contributions
 
   this->evaluateNeumannContribution(workset);
@@ -1285,21 +1539,19 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         int row = nodeID[node][this->offset[dim]];
 
         if (fT != Teuchos::null)
-          fT->sumIntoLocalValue(row, valptr->val());
+          fT->sumIntoLocalValue(row, this->neumann(cell, node, dim).val());
 
         if (JVT != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
 
-            JVT->sumIntoLocalValue(row, col, valptr->dx(col));
+            JVT->sumIntoLocalValue(row, col, this->neumann(cell, node, dim).dx(col));
 
         if (fpT != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
-            fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
+            fpT->sumIntoLocalValue(row, col, this->neumann(cell, node, dim).dx(col+workset.param_offset));
       }
   }
 }
@@ -1323,7 +1575,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1341,9 +1592,8 @@ evaluateFields(typename Traits::EvalData workset)
           double val = 0.0;
           for (std::size_t node = 0; node < this->numNodes; ++node) {
             for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-              valptr = &(this->neumann)(cell, node, dim);
               int eq = this->offset[dim];
-              val += valptr->dx(i)*local_Vp[node*neq+eq][col];
+              val += this->neumann(cell, node, dim).dx(i)*local_Vp[node*neq+eq][col];
             }
           }
           const LO row = wsElDofs((int)cell,i,0);
@@ -1364,12 +1614,11 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-          valptr = &(this->neumann)(cell, node, dim);
           const int row = nodeID[node][this->offset[dim]];
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
-              val += valptr->dx(i)*local_Vp[i][col];
+              val += this->neumann(cell, node, dim).dx(i)*local_Vp[i][col];
             fpVT->sumIntoLocalValue(row, col, val);
           }
         }
@@ -1382,7 +1631,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 Neumann<PHAL::AlbanyTraits::SGResidual, Traits>::
 Neumann(Teuchos::ParameterList& p)
@@ -1398,7 +1647,6 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
-  ScalarT *valptr;
 
   int nblock = f->size();
 
@@ -1412,10 +1660,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         for (int block=0; block<nblock; block++)
-            (*f)[block][nodeID[node][this->offset[dim]]] += valptr->coeff(block);
+            (*f)[block][nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim).coeff(block);
 
     }
   }
@@ -1440,7 +1686,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1461,20 +1706,18 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         row = nodeID[node][this->offset[dim]];
         int neq = nodeID[node].size();
 
         if (f != Teuchos::null) {
 
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
         }
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -1489,7 +1732,7 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
 
-                c = valptr->fastAccessDx(lcol).coeff(block);
+                c = this->neumann(cell, node, dim).fastAccessDx(lcol).coeff(block);
                 if (workset.is_adjoint) {
 
                   (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
@@ -1527,7 +1770,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1552,25 +1794,25 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         int row = nodeID[node][this->offset[dim]];
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col).coeff(block));
 
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
+              (*fp)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col+workset.param_offset).coeff(block));
     }
   }
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -1589,7 +1831,6 @@ void Neumann<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1602,10 +1843,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         for (int block=0; block<nblock; block++)
-          (*f)[block][nodeID[node][this->offset[dim]]] += valptr->coeff(block);
+          (*f)[block][nodeID[node][this->offset[dim]]] += this->neumann(cell, node, dim).coeff(block);
 
     }
   }
@@ -1630,7 +1869,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1651,18 +1889,16 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         row = nodeID[node][this->offset[dim]];
         int neq = nodeID[node].size();
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
+        if (this->neumann(cell, node, dim).hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -1677,7 +1913,7 @@ evaluateFields(typename Traits::EvalData workset)
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
 
-                c = valptr->fastAccessDx(lcol).coeff(block);
+                c = this->neumann(cell, node, dim).fastAccessDx(lcol).coeff(block);
                (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
 
              }
@@ -1707,7 +1943,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
-  ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1731,28 +1966,26 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-
         int row = nodeID[node][this->offset[dim]];
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, this->neumann(cell, node, dim).val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col).coeff(block));
 
         if (fp != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
+              (*fp)[block].SumIntoMyValue(row, col, this->neumann(cell, node, dim).dx(col+workset.param_offset).coeff(block));
 
     }
   }
 }
-#endif //ALBANY_SG_MP
+#endif
 
 
 // **********************************************************************

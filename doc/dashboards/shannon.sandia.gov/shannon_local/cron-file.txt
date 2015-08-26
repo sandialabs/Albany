@@ -1,0 +1,9 @@
+MAILTO=""
+# Note: Shannon runs UTC time, so start the nightly at 0700 UTC (midnight
+# local if we are MDT)
+# Minicontact Dashboard
+00 08 * * * /home/gahanse/Codes/minicontact-kokkos-son/doc/dashboards/shannon.sandia.gov/shannon_local/nightly_cron_script.sh
+# Note: Shannon runs UTC time, so start the nightly at 0700 UTC (midnight local if we are MDT)
+# Albany CUVM Dashboard
+00 04 * * * /home/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/shannon_local/nightly_cron_script.sh
+

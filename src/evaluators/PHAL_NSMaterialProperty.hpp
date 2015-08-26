@@ -19,28 +19,28 @@
 #include "Teuchos_TwoDArray.hpp"
 
 namespace PHAL {
-/** 
+/**
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
  * KL expansion.
  */
 
 template<typename EvalT, typename Traits>
-class NSMaterialProperty : 
+class NSMaterialProperty :
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>,
   public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-  
+
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   NSMaterialProperty(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
   ScalarT& getValue(const std::string &n);
 
 private:
@@ -60,11 +60,12 @@ private:
     SCALAR_CONSTANT,
     VECTOR_CONSTANT,
     TENSOR_CONSTANT,
-    KL_RAND_FIELD, 
+    KL_RAND_FIELD,
     EXP_KL_RAND_FIELD,
     SQRT_TEMP,
     INV_SQRT_TEMP,
-    NEUTRON_DIFFUSION
+    NEUTRON_DIFFUSION,
+    TIME_DEP_SCALAR
   };
   MAT_PROP_TYPE matPropType;
 
@@ -80,6 +81,11 @@ private:
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
   Teuchos::Array<MeshScalarT> point;
+
+  // Time Dependent value
+  std::vector< RealType > timeValues;
+  std::vector< RealType > depValues;
+
 };
 }
 

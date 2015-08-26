@@ -185,7 +185,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        }
      }
      //Create array w/ global element IDs
-     globalElesID = new GO[NumEles];
+     globalElesID.resize(NumEles);
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumEles; i++) {
           globalElesID[i] = i;
@@ -210,7 +210,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        }
      }
      //Create array w/ global node IDs
-     globalNodesID = new GO[NumNodes];
+     globalNodesID.resize(NumNodes);
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumNodes; i++) {
           globalNodesID[i] = i;
@@ -234,7 +234,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
      }
-     basalFacesID = new GO[NumBasalFaces];
+     basalFacesID.resize(NumBasalFaces);
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumBasalFaces; i++) {
           basalFacesID[i] = i;
@@ -302,13 +302,9 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        }
      }
 
-  Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles);
-  Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes);
-  Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces);
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); //Distribute the elements according to the global element IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT)); //Distribute the nodes according to the global node IDs
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT)); //Distribute the elements according to the basal face IDs
-
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesID(), 0, commT)); //Distribute the elements according to the global element IDs
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesID(), 0, commT)); //Distribute the nodes according to the global node IDs
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesID(), 0, commT)); //Distribute the elements according to the basal face IDs
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -398,9 +394,6 @@ Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
   if (have_sh) delete [] sh;
   if (have_bf) delete [] bf;
   delete [] eles;
-  delete [] globalElesID;
-  delete [] globalNodesID;
-  delete [] basalFacesID;
 }
 
 void

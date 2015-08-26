@@ -78,7 +78,7 @@ evaluateTangentT(const double alpha,
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionMaxValueResponseFunction::
 evaluateGradient(const double current_time,
@@ -170,7 +170,7 @@ evaluateGradientT(const double current_time,
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::SolutionMaxValueResponseFunction::
@@ -189,7 +189,7 @@ evaluateDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionMaxValueResponseFunction::
 computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)

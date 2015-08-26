@@ -9,39 +9,41 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+//#define PRINT_DEBUG
+
 namespace LCM {
 
 //----------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 SurfaceVectorResidual<EvalT, Traits>::
-SurfaceVectorResidual(Teuchos::ParameterList& p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
-    thickness
+SurfaceVectorResidual(Teuchos::ParameterList & p,
+    Teuchos::RCP<Albany::Layouts> const & dl) :
+    thickness_
     (p.get<double>("thickness")),
 
-    cubature
-    (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+    cubature_
+    (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
 
-    intrepidBasis
+    intrepid_basis_
     (p.get<Teuchos::RCP<Intrepid::Basis<RealType,
-        Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
+        Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
 
-    stress
+    stress_
     (p.get<std::string>("Stress Name"), dl->qp_tensor),
 
-    currentBasis
+    current_basis_
     (p.get<std::string>("Current Basis Name"), dl->qp_tensor),
 
-    refDualBasis
+    ref_dual_basis_
     (p.get<std::string>("Reference Dual Basis Name"), dl->qp_tensor),
 
-    refNormal
+    ref_normal_
     (p.get<std::string>("Reference Normal Name"), dl->qp_vector),
 
-    refArea
+    ref_area_
     (p.get<std::string>("Reference Area Name"), dl->qp_scalar),
 
-    force
+    force_
     (p.get<std::string>("Surface Vector Residual Name"), dl->node_vector),
 
     use_cohesive_traction_
@@ -53,12 +55,12 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
     have_topmod_adaptation_
     (p.get<bool>("Use Adaptive Insertion", false))
 {
-  this->addDependentField(currentBasis);
-  this->addDependentField(refDualBasis);
-  this->addDependentField(refNormal);
-  this->addDependentField(refArea);
+  this->addDependentField(current_basis_);
+  this->addDependentField(ref_dual_basis_);
+  this->addDependentField(ref_normal_);
+  this->addDependentField(ref_area_);
 
-  this->addEvaluatedField(force);
+  this->addEvaluatedField(force_);
 
   this->setName("Surface Vector Residual" + PHX::typeAsString<EvalT>());
 
@@ -71,7 +73,7 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
     traction_ = ct;
     this->addDependentField(traction_);
   } else {
-    this->addDependentField(stress);
+    this->addDependentField(stress_);
   }
 
   if (have_topmod_adaptation_ == true) {
@@ -84,54 +86,59 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
     sigma(p.get<std::string>("Cauchy Stress Name"), dl->qp_tensor);
 
-    Cauchy_stress_ = sigma;
+    cauchy_stress_ = sigma;
 
-    this->addEvaluatedField(Cauchy_stress_);
+    this->addEvaluatedField(cauchy_stress_);
   }
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::DataLayout::size_type>
+  dims;
+
   dl->node_vector->dimensions(dims);
-  worksetSize = dims[0];
-  numNodes = dims[1];
-  numDims = dims[2];
+  workset_size_ = dims[0];
+  num_nodes_ = dims[1];
+  num_dims_ = dims[2];
 
-  numQPs = cubature->getNumPoints();
+  num_qps_ = cubature_->getNumPoints();
 
-  numPlaneNodes = numNodes / 2;
-  numPlaneDims = numDims - 1;
+  num_surf_nodes_ = num_nodes_ / 2;
+  num_plane_dims_ = num_dims_ - 1;
 
   // Allocate Temporary FieldContainers
-  refValues.resize(numPlaneNodes, numQPs);
-  refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-  refPoints.resize(numQPs, numPlaneDims);
-  refWeights.resize(numQPs);
+  ref_values_.resize(num_surf_nodes_, num_qps_);
+  ref_grads_.resize(num_surf_nodes_, num_qps_, num_plane_dims_);
+  ref_points_.resize(num_qps_, num_plane_dims_);
+  ref_weights_.resize(num_qps_);
 
   // Pre-Calculate reference element quantitites
-  cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(
+      ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+
+  intrepid_basis_->getValues(
+      ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 }
 
 //----------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void SurfaceVectorResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
-    PHX::FieldManager<Traits>& fm)
+    PHX::FieldManager<Traits> & fm)
 {
-  this->utils.setFieldData(currentBasis, fm);
-  this->utils.setFieldData(refDualBasis, fm);
-  this->utils.setFieldData(refNormal, fm);
-  this->utils.setFieldData(refArea, fm);
-  this->utils.setFieldData(force, fm);
+  this->utils.setFieldData(current_basis_, fm);
+  this->utils.setFieldData(ref_dual_basis_, fm);
+  this->utils.setFieldData(ref_normal_, fm);
+  this->utils.setFieldData(ref_area_, fm);
+  this->utils.setFieldData(force_, fm);
 
   if (use_cohesive_traction_) {
     this->utils.setFieldData(traction_, fm);
   } else {
-    this->utils.setFieldData(stress, fm);
+    this->utils.setFieldData(stress_, fm);
   }
 
   if (have_topmod_adaptation_)
-    this->utils.setFieldData(Cauchy_stress_, fm);
+    this->utils.setFieldData(cauchy_stress_, fm);
 }
 
 //----------------------------------------------------------------------------
@@ -140,72 +147,80 @@ void SurfaceVectorResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // define and initialize tensors/vectors
-  Intrepid::Vector<ScalarT> f_plus(0, 0, 0), f_minus(0, 0, 0);
-  ScalarT dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
+  Intrepid::Vector<ScalarT>
+  f_plus(0, 0, 0), f_minus(0, 0, 0);
 
-  // manually fill the permutation tensor
-  Intrepid::Tensor3<MeshScalarT> e(3, Intrepid::ZEROS);
-  e(0, 1, 2) = e(1, 2, 0) = e(2, 0, 1) = 1.0;
-  e(0, 2, 1) = e(1, 0, 2) = e(2, 1, 0) = -1.0;
+  ScalarT
+  dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
   // 2nd-order identity tensor
-  const Intrepid::Tensor<MeshScalarT> I = Intrepid::identity<MeshScalarT>(3);
+  Intrepid::Tensor<MeshScalarT> const
+  I = Intrepid::identity<MeshScalarT>(3);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
-    for (int node(0); node < numPlaneNodes; ++node) {
+    for (int bottom_node(0); bottom_node < num_surf_nodes_; ++bottom_node) {
 
-      force(cell, node, 0) = 0.0;
-      force(cell, node, 1) = 0.0;
-      force(cell, node, 2) = 0.0;
-      int topNode = node + numPlaneNodes;
-      force(cell, topNode, 0) = 0.0;
-      force(cell, topNode, 1) = 0.0;
-      force(cell, topNode, 2) = 0.0;
+      force_(cell, bottom_node, 0) = 0.0;
+      force_(cell, bottom_node, 1) = 0.0;
+      force_(cell, bottom_node, 2) = 0.0;
 
-      for (int pt(0); pt < numQPs; ++pt) {
+      int
+      top_node = bottom_node + num_surf_nodes_;
+
+      force_(cell, top_node, 0) = 0.0;
+      force_(cell, top_node, 1) = 0.0;
+      force_(cell, top_node, 2) = 0.0;
+
+      for (int pt(0); pt < num_qps_; ++pt) {
         // deformed bases
-        Intrepid::Vector<ScalarT> g_0(3, currentBasis, cell, pt, 0, 0);
-        Intrepid::Vector<ScalarT> g_1(3, currentBasis, cell, pt, 1, 0);
-        Intrepid::Vector<ScalarT> n(3, currentBasis, cell, pt, 2, 0);
+        Intrepid::Vector<ScalarT> g_0(3, current_basis_, cell, pt, 0, 0);
+        Intrepid::Vector<ScalarT> g_1(3, current_basis_, cell, pt, 1, 0);
+        Intrepid::Vector<ScalarT> n(3, current_basis_, cell, pt, 2, 0);
         // ref bases
-        Intrepid::Vector<MeshScalarT> G0(3, refDualBasis, cell, pt, 0, 0);
-        Intrepid::Vector<MeshScalarT> G1(3, refDualBasis, cell, pt, 1, 0);
-        Intrepid::Vector<MeshScalarT> G2(3, refDualBasis, cell, pt, 2, 0);
+        Intrepid::Vector<MeshScalarT> G0(3, ref_dual_basis_, cell, pt, 0, 0);
+        Intrepid::Vector<MeshScalarT> G1(3, ref_dual_basis_, cell, pt, 1, 0);
+        Intrepid::Vector<MeshScalarT> G2(3, ref_dual_basis_, cell, pt, 2, 0);
         // ref normal
-        Intrepid::Vector<MeshScalarT> N(3, refNormal, cell, pt, 0);
+        Intrepid::Vector<MeshScalarT> N(3, ref_normal_, cell, pt, 0);
 
         // compute dFdx_plus_or_minus
-        f_plus.clear();
-        f_minus.clear();
+        f_plus.fill(Intrepid::ZEROS);
+        f_minus.fill(Intrepid::ZEROS);
 
         // h * P * dFperpdx --> +/- \lambda * P * N
         if (use_cohesive_traction_) {
-          Intrepid::Vector<ScalarT> T(3, traction_, cell, pt, 0);
-          f_plus = refValues(node, pt) * T;
-          f_minus = -refValues(node, pt) * T;
-        } else {
-          Intrepid::Tensor<ScalarT> P(3, stress, cell, pt, 0, 0);
 
-          f_plus = refValues(node, pt) * P * N;
-          f_minus = -refValues(node, pt) * P * N;
+          Intrepid::Vector<ScalarT>
+          T(3, traction_, cell, pt, 0);
+
+          f_plus = ref_values_(bottom_node, pt) * T;
+          f_minus = -ref_values_(bottom_node, pt) * T;
+        } else {
+
+          Intrepid::Tensor<ScalarT>
+          P(3, stress_, cell, pt, 0, 0);
+
+          f_plus = ref_values_(bottom_node, pt) * P * N;
+          f_minus = -ref_values_(bottom_node, pt) * P * N;
 
           if (compute_membrane_forces_) {
-            for (int m(0); m < numDims; ++m) {
-              for (int i(0); i < numDims; ++i) {
-                for (int L(0); L < numDims; ++L) {
+            for (int m(0); m < num_dims_; ++m) {
+              for (int i(0); i < num_dims_; ++i) {
+                for (int L(0); L < num_dims_; ++L) {
 
                   // tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
-                  tmp1 = 0.5 * I(m, i) * (refGrads(node, pt, 0) * G0(L) +
-                      refGrads(node, pt, 1) * G1(L));
+                  tmp1 = 0.5 * I(m, i)
+                      * (ref_grads_(bottom_node, pt, 0) * G0(L) +
+                          ref_grads_(bottom_node, pt, 1) * G1(L));
 
                   // tmp2 = (1/2) * dndxbar * G^{3}
                   dndxbar = 0.0;
-                  for (int r(0); r < numDims; ++r) {
-                    for (int s(0); s < numDims; ++s) {
-                      //dndxbar(m, i) += e(i, r, s)
-                      dndxbar += e(i, r, s)
-                          * (g_1(r) * refGrads(node, pt, 0) -
-                              g_0(r) * refGrads(node, pt, 1))
+                  for (int r(0); r < num_dims_; ++r) {
+                    for (int s(0); s < num_dims_; ++s) {
+
+                      dndxbar += Intrepid::levi_civita<MeshScalarT>(i, r, s)
+                          * (g_1(r) * ref_grads_(bottom_node, pt, 0) -
+                              g_0(r) * ref_grads_(bottom_node, pt, 1))
                           * (I(m, s) - n(m) * n(s)) /
                           Intrepid::norm(Intrepid::cross(g_0, g_1));
                     }
@@ -219,8 +234,8 @@ evaluateFields(typename Traits::EvalData workset)
                   dFdx_minus = tmp1 + tmp2;
 
                   //F = h * P:dFdx
-                  f_plus(i) += thickness * P(m, L) * dFdx_plus;
-                  f_minus(i) += thickness * P(m, L) * dFdx_minus;
+                  f_plus(i) += thickness_ * P(m, L) * dFdx_plus;
+                  f_minus(i) += thickness_ * P(m, L) * dFdx_minus;
 
                 }
               }
@@ -229,29 +244,41 @@ evaluateFields(typename Traits::EvalData workset)
         }
 
         // area (Reference) = |Jacobian| * weights
-        force(cell, topNode, 0) += f_plus(0) * refArea(cell, pt);
-        force(cell, topNode, 1) += f_plus(1) * refArea(cell, pt);
-        force(cell, topNode, 2) += f_plus(2) * refArea(cell, pt);
+        force_(cell, top_node, 0) += f_plus(0) * ref_area_(cell, pt);
+        force_(cell, top_node, 1) += f_plus(1) * ref_area_(cell, pt);
+        force_(cell, top_node, 2) += f_plus(2) * ref_area_(cell, pt);
 
-        force(cell, node, 0) += f_minus(0) * refArea(cell, pt);
-        force(cell, node, 1) += f_minus(1) * refArea(cell, pt);
-        force(cell, node, 2) += f_minus(2) * refArea(cell, pt);
+        force_(cell, bottom_node, 0) += f_minus(0) * ref_area_(cell, pt);
+        force_(cell, bottom_node, 1) += f_minus(1) * ref_area_(cell, pt);
+        force_(cell, bottom_node, 2) += f_minus(2) * ref_area_(cell, pt);
 
       } // end of pt
+
+#if defined(PRINT_DEBUG)
+      std::cout << "\nCELL: " << cell << " TOP NODE: " << top_node;
+      std::cout << " BOTTOM NODE: " << bottom_node << '\n';
+      std::cout << "force(0) +:" << force_(cell, top_node, 0) << '\n';
+      std::cout << "force(1) +:" << force_(cell, top_node, 1) << '\n';
+      std::cout << "force(2) +:" << force_(cell, top_node, 2) << '\n';
+      std::cout << "force(0) -:" << force_(cell, bottom_node, 0) << '\n';
+      std::cout << "force(1) -:" << force_(cell, bottom_node, 1) << '\n';
+      std::cout << "force(2) -:" << force_(cell, bottom_node, 2) << '\n';
+#endif //PRINT_DEBUG
+
     } // end of numPlaneNodes
   } // end of cell
 
   // This is here just to satisfy projection operators from QPs to nodes
   if (have_topmod_adaptation_ == true) {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < numQPs; ++pt) {
-        for (int i = 0; i < numDims; ++i) {
-          for (int j = 0; j < numDims; ++j) {
+      for (std::size_t pt = 0; pt < num_qps_; ++pt) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
             if (use_cohesive_traction_) {
-              Cauchy_stress_(cell, pt, i, j) =
-                  traction_(cell, pt, i) * refNormal(cell, pt, j);
+              cauchy_stress_(cell, pt, i, j) =
+                  traction_(cell, pt, i) * ref_normal_(cell, pt, j);
             } else {
-              Cauchy_stress_(cell, pt, i, j) = stress(cell, pt, i, j);
+              cauchy_stress_(cell, pt, i, j) = stress_(cell, pt, i, j);
             }
           }
         }

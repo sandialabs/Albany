@@ -10,6 +10,7 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorPNormResponse.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.cpp
@@ -43,6 +44,8 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorPNormResponse_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorPNormResponse.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress_Def.hpp
@@ -60,6 +63,9 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/PoissonsEquation.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_OptimizationProblem.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Integrator.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Integrator_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp

@@ -15,7 +15,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Vector.h"
 #endif
 
@@ -102,7 +102,7 @@ class DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>
 // **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class DirichletField<PHAL::AlbanyTraits::SGResidual, Traits>
     : public DirichletField_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -135,6 +135,8 @@ class DirichletField<PHAL::AlbanyTraits::SGTangent, Traits>
     typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
     void evaluateFields(typename Traits::EvalData d);
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual
@@ -171,7 +173,7 @@ class DirichletField<PHAL::AlbanyTraits::MPTangent, Traits>
     typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
     void evaluateFields(typename Traits::EvalData d);
 };
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

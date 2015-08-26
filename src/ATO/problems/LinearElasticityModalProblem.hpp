@@ -217,7 +217,7 @@ Albany::LinearElasticityModalProblem::constructEvaluators(
 
    // Register eigenvector gather evaluator
    // TEV this should probably not happen if not modal analysis
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   { // Gather Eigenvectors
      int nEigenvectors = 1;
      RCP<ParameterList> p = rcp(new ParameterList);

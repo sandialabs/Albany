@@ -83,6 +83,10 @@ namespace QCAD {
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
     void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
+    Teuchos::RCP< Teuchos::ParameterList > 
+    getPoissonSourceNeumannEvaluatorParams(const Teuchos::RCP<const Albany::MeshSpecsStruct>& meshSpecs);
+
+
   protected:
 
     //! Boundary conditions on source term
@@ -121,7 +125,7 @@ namespace QCAD {
 #include "QCAD_PoissonSource.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "QCAD_PoissonResid.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "QCAD_ResponseSaddleValue.hpp"
 #include "PHAL_GatherEigenvectors.hpp"
 #endif
@@ -214,7 +218,7 @@ QCAD::PoissonProblem::constructEvaluators(
        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
   }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   { // Gather Eigenvectors
     RCP<ParameterList> p = rcp(new ParameterList);
     p->set<string>("Eigenvector field name root", "Evec");
@@ -374,6 +378,16 @@ QCAD::PoissonProblem::constructEvaluators(
     pFromProb->set<double>("Length unit in m", length_unit_in_m);
     pFromProb->set<double>("Temperature", temperature); 
     pFromProb->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+
+    //Add Poisson Source Neumann evaluator so that output fields can be processed in responses
+    //Albany::MeshSpecsStruct meshSpecsCopy = meshSpecs; //copy so we can get a non-const ptr to make into an RCP below
+    RCP<const Albany::MeshSpecsStruct> meshSpecsRCP = rcp(&meshSpecs,false);
+    RCP<ParameterList> pPSN = this->getPoissonSourceNeumannEvaluatorParams( meshSpecsRCP );
+    if(pPSN != Teuchos::null) {
+      pPSN->set<bool>("Response Only",true); //response-only mode so evaluator doesn't seg-fault trying to do Neumann residual access.
+      ev = rcp(new QCAD::PoissonSourceNeumann<EvalT,AlbanyTraits>(*pPSN));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, pFromProb, stateMgr);

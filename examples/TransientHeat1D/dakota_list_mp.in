@@ -1,0 +1,23 @@
+#  DAKOTA INPUT FILE
+
+method,
+        list_parameter_study
+           list_of_points = 1.0 0.0 0.0
+                            1.0 1.0 0.0
+                            0.0 0.0 0.0
+variables,
+        continuous_design = 3 
+           descriptors  'T0' 'T1' 'QNLF' 
+interface,
+        direct
+          asynch
+          evaluation_concurrency = 3
+          analysis_driver = 'Albany_Dakota'
+#          processors_per_analysis = 2
+          evaluation_servers = 1
+
+responses,
+        num_response_functions = 1
+        no_gradients
+        #analytic_gradients
+        no_hessians

@@ -32,7 +32,7 @@ namespace PHAL {
 
 
 template<typename EvalT, typename Traits>
-class NeumannBase :
+class NeumannBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
@@ -59,21 +59,23 @@ protected:
   const Teuchos::RCP<Albany::Layouts>& dl;
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 
-  int  cellDims, sideDims, numQPs, numQPsSide, numNodes;
+  int  cellDims,  numQPs, numNodes;
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
-  //The following are for the basal BC
+  //The following are for the basal BC 
   std::string betaName; //name of function betaXY to be used
-  double L;           //length scale for ISMIP-HOM Test cases
+  double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
-
-  //The following are for the lateral BC
-  double g;
-  double rho;
+ 
+  //The following are for the lateral BC 
+  double g; 
+  double rho; 
   double rho_w;
+  Teuchos::ParameterList* stereographicMapList;
+  bool useStereographicMap;
 
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
@@ -123,8 +125,9 @@ protected:
 
   //Basal bc
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-               const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-               const Intrepid::FieldContainer<ScalarT>& dof_side,
+   		       const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+   		       const Intrepid::FieldContainer<ScalarT>& thickness_side,
+   		       const Intrepid::FieldContainer<ScalarT>& dof_side,
                        const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                        const shards::CellTopology & celltopo,
                        const int cellDims,
@@ -161,9 +164,9 @@ protected:
   PHX::MDField<ScalarT,Cell,Node> thickness_field;
   PHX::MDField<ScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
-  Teuchos::RCP<shards::CellTopology> sideType;
+  Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureSide;
+  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::Cubature<RealType> > > cubatureSide;
 
   // The basis
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
@@ -188,7 +191,7 @@ protected:
 
   Intrepid::FieldContainer<ScalarT> dofCellVec;
   Intrepid::FieldContainer<ScalarT> dofSideVec;
-
+  
   Intrepid::FieldContainer<ScalarT> data;
 
   // Output:
@@ -200,7 +203,7 @@ protected:
   std::string name;
 
   NEU_TYPE bc_type;
-  SIDE_TYPE side_type;
+  Teuchos::Array<SIDE_TYPE> side_type;
   ScalarT const_val;
   ScalarT robin_vals[5]; // (dof_value, coeff multiplying difference (dof - dof_value), jump)
   std::vector<ScalarT> dudx;
@@ -219,7 +222,7 @@ template<typename EvalT, typename Traits> class Neumann;
 
 
 // **************************************************************
-// Residual
+// Residual 
 // **************************************************************
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::Residual,Traits>
@@ -242,6 +245,29 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+ Teuchos::RCP<Tpetra_Vector> fT;
+ Teuchos::ArrayRCP<ST> fT_nonconstView;
+ Teuchos::RCP<Tpetra_CrsMatrix> JacT;
+
+ typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+ LocalMatrixType jacobian;
+ Kokkos::View<int***, PHX::Device> Index;
+ bool is_adjoint;
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct Newmann_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, Newmann_Tag> Newmann_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+  void operator() (const Newmann_Tag& tag, const int& i) const;
+
+#endif
+
 };
 
 // **************************************************************
@@ -271,9 +297,9 @@ private:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual
+// Stochastic Galerkin Residual 
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::SGResidual,Traits>
   : public NeumannBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -309,9 +335,11 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
-// Multi-point Residual
+// Multi-point Residual 
 // **************************************************************
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::MPResidual,Traits>
@@ -348,7 +376,7 @@ public:
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
 };
-#endif //ALBANY_SG_MP
+#endif
 
 
 // **************************************************************
@@ -365,12 +393,12 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
 
 public:
-
+  
   NeumannAggregator(const Teuchos::ParameterList& p);
-
+  
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm) {};
-
+  
   void evaluateFields(typename Traits::EvalData d) {};
 
 };

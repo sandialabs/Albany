@@ -2,32 +2,11 @@
   <ParameterList name="Coupled System">
     <Parameter name="Model XML Files" type="Array(string)" value="{ inputT0.xml, inputT1.xml }"/>
   </ParameterList>
-
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
-
-    <!-- Declare your Physics (What you intend to model)! -->
-    <!--Parameter name="Name" type="string" value="Mechanics 3D"/-->
-    <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Solution Method" type="string" value="Coupled Schwarz"/>
     <!-- Have Phalanx output a graph of the used evaluators -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <!-- XML filename with material definitions -->
-    <!--Parameter name="MaterialDB Filename" type="string" value="2materials.xml"/-->
-
-    <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
-    <ParameterList name="Dirichlet BCs">
-      <!-- Uniaxial Extension Boundary Conditions on a Cube -->
-      <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
-        <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.5,  1.1}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.05, 0.11}"/>
-      </ParameterList>
-      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_4 for DOF Y" type="double" value="0.0"/>
-    </ParameterList>
-
     <!-- PARAMETER -->
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
@@ -39,28 +18,12 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
   </ParameterList>
-
-  <!-- MESHING, done here, or input from file. If the latter, the domain decomposition must
-       already be performed for parallel jobs. Here, a cube is meshed in 3D -->
-  <ParameterList name="Discretization">
-    <Parameter name="Workset Size" type="int" value="1"/> <!-- Sets the number of elements per workset -->
-    <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="2hex.g"/>
-    <!--Parameter name="Exodus Output File Name" type="string" value="2hex_tpetra.e"/-->
-    <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-  </ParameterList>
   <!-- RGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0111855}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{3.00294319291e-20}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
-    <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
   </ParameterList>
-
   <ParameterList name="Piro">
     <Parameter name="Solver Type" type="string" value="NOX"/>
     <!-- LOCA is used for stability analysis, continuation -->

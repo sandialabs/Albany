@@ -16,9 +16,13 @@
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
+// Running this test all the time is generally quite cheap, so let's do that.
+#define PROJ_INTERP_TEST
+
 namespace LCM {
 /*! 
- * \brief Evaluator to compute a nodal stress field from integration points.
+ * \brief Evaluator to compute a nodal stress field from integration
+ *        points. Only the Residual evaluation type is implemented.
  *
  * This class implements the method described in Section 3.1 of
  *     Jiao, Xiangmin, and Michael T. Heath. "Common‐refinement‐based data
@@ -31,45 +35,70 @@ namespace LCM {
  *   The graph describing the mass matrix's structure is created in Albany::
  * STKDiscretization::meshToGraph().
  */
+
 template<typename EvalT, typename Traits>
-class ProjectIPtoNodalFieldBase : 
+class ProjectIPtoNodalFieldBase :
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  ProjectIPtoNodalFieldBase(const Teuchos::RCP<Albany::Layouts>& dl) {
+    field_tag_ = Teuchos::rcp(
+      new PHX::Tag<typename EvalT::ScalarT>("Project IP to Nodal Field",
+                                            dl->dummy));
+    this->addEvaluatedField(*field_tag_);
+  }
+  Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const
+  { return field_tag_; }
+  Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const
+  { return field_tag_; }
 
-  ///
-  /// Constructor
-  ///
-  ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
-                            const Teuchos::RCP<Albany::Layouts>& dl,
-                            const Albany::MeshSpecsStruct* mesh_specs);
-  
-  ///
-  /// Phalanx method to allocate space
-  ///
+private:
+  Teuchos::RCP< PHX::Tag<typename EvalT::ScalarT>> field_tag_;  
+};
+
+template<typename EvalT, typename Traits>
+class ProjectIPtoNodalField :
+    public ProjectIPtoNodalFieldBase<EvalT, Traits>
+{
+public:
+  ProjectIPtoNodalField(Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs)
+    : ProjectIPtoNodalFieldBase<EvalT, Traits>(dl)
+  {}
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm) {}
+  void preEvaluate(typename Traits::PreEvalData d) {}
+  void postEvaluate(typename Traits::PostEvalData d) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Should never be called.");
+  }
+  void evaluateFields(typename Traits::EvalData d) {}
+};
+
+class ProjectIPtoNodalFieldManager;
+class ProjectIPtoNodalFieldQuadrature;
+
+template<typename Traits>
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits> :
+    public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>
+{
+public:
+  ProjectIPtoNodalField(Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs);
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
+  void preEvaluate(typename Traits::PreEvalData d);
+  void postEvaluate(typename Traits::PostEvalData d);
+  void evaluateFields(typename Traits::EvalData d);
 
-  ///
-  /// These functions are defined in the specializations
-  ///
-  void preEvaluate(typename Traits::PreEvalData d) = 0;
-  void postEvaluate(typename Traits::PostEvalData d) = 0;
-  void evaluateFields(typename Traits::EvalData d) = 0;
+private:
+  typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  typedef PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
 
-  Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
-    return field_tag_;
-  }
-
-  Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
-    return field_tag_;
-  }
-    
-protected:
-  int number_of_fields_;
+  Teuchos::RCP<ProjectIPtoNodalFieldManager> mgr_;
 
   bool output_to_exodus_;
   bool output_node_data_;
@@ -77,82 +106,33 @@ protected:
   // Represent the Field Layout by an enumerated type.
   struct EFieldLayout {
     enum Enum { scalar, vector, tensor };
-    static Enum fromString(const std::string& user_str)
-      throw (Teuchos::Exceptions::InvalidParameterValue);
+    static Enum fromString(const std::string& user_str);
   };
 
   std::vector<std::string> ip_field_names_;
   std::vector<typename EFieldLayout::Enum> ip_field_layouts_;
   std::vector<std::string> nodal_field_names_;
 
-  int num_vecs_;
-  int num_pts_;
-  int num_dims_;
-  int num_nodes_;
-  int num_vertices_;
+  int ndb_start_, num_fields_, num_pts_, num_dims_, num_nodes_;
     
-  std::vector<PHX::MDField<ScalarT> > ip_fields_;
+  std::vector<PHX::MDField<ScalarT>> ip_fields_;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
-  bool sep_by_eb_;
-  std::string eb_name_;
+#ifdef PROJ_INTERP_TEST
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
+#endif
+  typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>
+          IntrepidBasis;
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
+  Teuchos::RCP<ProjectIPtoNodalFieldQuadrature> quad_mgr_;
 
-  Teuchos::RCP< PHX::Tag<ScalarT> > field_tag_;
   Albany::StateManager* p_state_mgr_;
 
-  Teuchos::RCP<Tpetra_MultiVector> source_load_vector_;
-
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
-  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;
-};
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory_;
 
-template<typename EvalT, typename Traits>
-class ProjectIPtoNodalField
-  : public ProjectIPtoNodalFieldBase<EvalT, Traits> {
-public:
-  ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl,
-                        const Albany::MeshSpecsStruct* mesh_specs)
-    : ProjectIPtoNodalFieldBase<EvalT, Traits>(p, dl, mesh_specs) {}
-  void preEvaluate(typename Traits::PreEvalData d) {}
-  void postEvaluate(typename Traits::PostEvalData d) {}
-  void evaluateFields(typename Traits::EvalData d) {}
-};
-
-// **************************************************************
-// **************************************************************
-// * Specializations
-// **************************************************************
-// **************************************************************
-
-// **************************************************************
-// Residual 
-// **************************************************************
-template<typename Traits>
-class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,Traits>
-  : public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
-public:
-  ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl,
-                        const Albany::MeshSpecsStruct* mesh_specs);
-  void preEvaluate(typename Traits::PreEvalData d);
-  void postEvaluate(typename Traits::PostEvalData d);
-  void evaluateFields(typename Traits::EvalData d);
-
-  static ProjectIPtoNodalField* create(
-    Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
-
-private:
-  // Declare a class hierarchy of mass matrix types. mass_matrix_ has to be in
-  // this specialization, at least for now, because its implementation of fill()
-  // is valid only for AlbanyTraits::Residual. Later we might move it up to the
-  // nonspecialized class and create separate fill() impls for each trait.
-  class MassMatrix;
-  class FullMassMatrix;
-  class LumpedMassMatrix;
-  Teuchos::RCP<MassMatrix> mass_matrix_;
-
+  bool initManager(Teuchos::ParameterList* const pl);
   void fillRHS(const typename Traits::EvalData workset);
 };
 

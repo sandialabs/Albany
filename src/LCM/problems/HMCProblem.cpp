@@ -1,12 +1,18 @@
 #include "HMCProblem.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
+#ifdef ALBANY_ATO
+#include "ATO_TopoTools.hpp"
+#endif
 
 Albany::HMCProblem::
 HMCProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		  const Teuchos::RCP<ParamLib>& paramLib_,
 		  const int numDim_,
-                  Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
+                  Teuchos::RCP<const Teuchos::Comm<int>>& commT) :
+#ifdef ALBANY_ATO
+  ATO::OptimizationProblem(params_, paramLib_, numDim_+params_->get("Additional Scales",1)*numDim_*numDim_),
+#endif
   Albany::AbstractProblem(params_, paramLib_, numDim_+params_->get("Additional Scales",1)*numDim_*numDim_),
   haveSource(false),
   numDim(numDim_),
@@ -24,7 +30,7 @@ HMCProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
   TEUCHOS_TEST_FOR_EXCEPTION(!validMaterialDB,
                              std::logic_error,
-                             "HMC Problem Requires a Material Database");
+                             "Mechanics Problem Requires a Material Database");
 
 
 // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
@@ -52,7 +58,7 @@ Albany::HMCProblem::
 void
 Albany::HMCProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -72,9 +78,13 @@ buildProblem(
 
     constructNeumannEvaluators(meshSpecs[0]);
 
+#ifdef ALBANY_ATO
+  if( params->isType<Teuchos::RCP<ATO::Topology>>("Topology") )
+   setupTopOpt(meshSpecs,stateMgr);
+#endif
 }
 
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 Albany::HMCProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -125,7 +135,7 @@ Albany::HMCProblem::constructNeumannEvaluators(
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
    std::vector<std::string> neumannNames(neq + 1);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
+   Teuchos::Array<Teuchos::Array<int>> offsets;
    offsets.resize(neq + 1);
 
    neumannNames[0] = "sig_x";
@@ -186,6 +196,17 @@ Albany::HMCProblem::getValidProblemParameters() const
   validPL->set<int>("Additional Scales", false, "1");
   validPL->set<std::string>("MaterialDB Filename","materials.xml",
                             "Filename of material database xml file");
+  validPL->sublist("Hierarchical Elasticity Model", false, "");
+
+#ifdef ALBANY_ATO
+  Teuchos::RCP<ATO::Topology> emptyTopo;
+  emptyTopo = Teuchos::null;
+  validPL->set<Teuchos::RCP<ATO::Topology>>("Topology", emptyTopo);
+#endif
+  validPL->sublist("Topology Parameters", false, "");
+  validPL->sublist("Objective Aggregator", false, "");
+  validPL->sublist("Apply Topology Weight Functions", false, "");
+
   return validPL;
 }
 
@@ -213,8 +234,8 @@ parseMaterialModel(Teuchos::RCP<Teuchos::ParameterList>& p,
 
 void
 Albany::HMCProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
    ) const
 {
   oldState_ = oldState;

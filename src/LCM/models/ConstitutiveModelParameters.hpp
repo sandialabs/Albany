@@ -102,7 +102,7 @@ namespace LCM {
     ///
     /// map of strings to specify parameter names to MDFields
     ///
-    std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > field_map_;
+    std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint>> field_map_;
 
     ///
     /// map of flags to specify if a parameter is constant
@@ -126,10 +126,10 @@ namespace LCM {
     std::map<std::string, RealType> exp_param_map_;
     
     //! map of strings to exponential random fields
-    std::map<std::string, Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > > exp_rf_kl_map_;
+    std::map<std::string, Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>>> exp_rf_kl_map_;
 
     //! map of strings to Arrays of values of the random variables
-    std::map<std::string, Teuchos::Array<ScalarT> > rv_map_;
+    std::map<std::string, Teuchos::Array<ScalarT>> rv_map_;
 
     //! storing the DataLayouts
     const Teuchos::RCP<Albany::Layouts>& dl_;

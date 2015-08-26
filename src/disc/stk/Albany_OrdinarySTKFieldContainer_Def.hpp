@@ -35,7 +35,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   solution_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                                      params_->get<std::string>("Exodus Solution Name", "solution"));
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   residual_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                                      params_->get<std::string>("Exodus Residual Name", "residual"));
 #endif
@@ -43,20 +43,20 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   stk::mesh::put_field(*this->coordinates_field , metaData_->universal_part(), numDim_);
   stk::mesh::put_field(*solution_field , metaData_->universal_part(), neq_);
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   stk::mesh::put_field(*residual_field , metaData_->universal_part() , neq_);
 #endif
 
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
   stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
 #endif
 
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
   // for whatever reason, its type is stk::mesh::Field<double, stk::mesh::Cartesian3d>
   // the read won't work if you try to read it as a SFT
@@ -107,7 +107,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
       *this->refine_field,
       this->metaData->universal_part());
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // Fracture state used for adaptive insertion.
   // It exists for all entities except cells (elements).
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK; rank < stk::topology::ELEMENT_RANK; ++rank) {
@@ -123,7 +123,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK; rank < stk::topology::ELEMENT_RANK; ++rank) {
     stk::io::set_field_role(*this->fracture_state[rank], Ioss::Field::MESH);
   }
@@ -132,7 +132,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vector& soln,
     stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
@@ -180,7 +180,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vect
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::fillVector(Epetra_Vector& field_vector, const std::string&  field_name,
     stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
@@ -279,7 +279,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetr
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vector& res,
     stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {

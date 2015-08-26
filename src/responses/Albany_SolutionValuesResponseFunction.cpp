@@ -8,7 +8,7 @@
 
 #include "Albany_SolutionCullingStrategy.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 //#include "Epetra_ImportWithAlternateMap.hpp"
 #include "Epetra_Import.h"
 #endif
@@ -49,7 +49,7 @@ public:
     return Teuchos::null;
   }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   void print (const Epetra_Vector& g, const Teuchos::Array<int>& eq_gids) {
     print(Teuchos::arrayView(g.Values(), g.MyLength()), eq_gids);
   }
@@ -133,7 +133,7 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
   sol_printer_ = SolutionPrinter::create(app_, responseParams);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionValuesResponseFunction::
 setup()
@@ -157,14 +157,14 @@ numResponses() const
 {
   if (Teuchos::nonnull(solutionImporterT_))
     return solutionImporterT_->getTargetMap()->getNodeNumElements();
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if (Teuchos::nonnull(solutionImporter_))
     return solutionImporter_->TargetMap().NumMyElements();
 #endif
   return 0u;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionValuesResponseFunction::
 evaluateResponse(const double /*current_time*/,
@@ -196,7 +196,7 @@ evaluateResponseT(const double /*current_time*/,
     sol_printer_->print(gT, cullingStrategy_->selectedGIDsT(app_->getMapT()));
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionValuesResponseFunction::
 evaluateTangent(const double /*alpha*/,
@@ -282,7 +282,7 @@ evaluateTangentT(const double /*alpha*/,
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionValuesResponseFunction::
 evaluateGradient(const double /*current_time*/,
@@ -332,7 +332,7 @@ evaluateGradient(const double /*current_time*/,
 }
 #endif
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::SolutionValuesResponseFunction::
@@ -400,7 +400,7 @@ evaluateGradientT(const double /*current_time*/,
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionValuesResponseFunction::
 updateSolutionImporter()
@@ -426,7 +426,7 @@ updateSolutionImporterT()
     solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(solutionMapT, targetMapT));
   }
 }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionValuesResponseFunction::
 ImportWithAlternateMap(

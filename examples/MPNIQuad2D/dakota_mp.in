@@ -1,25 +1,21 @@
 #  DAKOTA INPUT FILE
 
-strategy,
-        single_method #graphics
 method,
-        nond_polynomial_chaos
-           expansion_order = 5
-           collocation_ratio = 2
-           use_derivatives
-           #sparse_grid_level = 3
-           #non_nested
+        polynomial_chaos
+           quadrature_order = 5
+
 variables,
         uniform_uncertain     = 2 
            uuv_lower_bounds   = -1.0 -1.0 #-1.0 -1.0 -1.0 -1.0 -1.0 
            uuv_upper_bounds   =  1.0  1.0 # 1.0  1.0  1.0  1.0  1.0 
-           uuv_descriptor     =  'a'  'a' # 'a'  'a'  'a'  'a'  'a' 
+           uuv_descriptor     =  'a'  'b' # 'a'  'a'  'a'  'a'  'a' 
 interface,
         direct
           asynch
           analysis_driver = 'Albany_Dakota'
 #          processors_per_analysis = 2
           evaluation_servers = 1
+          evaluation_concurrency = 4
 
 responses,
         num_response_functions = 1

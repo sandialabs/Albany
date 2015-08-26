@@ -35,7 +35,7 @@ namespace LCM {
     alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0))
   {
     field_name_map_ =
-      p.get<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map");
+      p.get<Teuchos::RCP<std::map<std::string, std::string>>>("Name Map");
 
     // get the material parameter list
     Teuchos::ParameterList* mat_params = 
@@ -126,7 +126,6 @@ namespace LCM {
   void TransportCoefficients<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     ScalarT theta_term(0.0);
 
     Albany::MDArray eqps;
@@ -292,7 +291,6 @@ namespace LCM {
         }
       }
     }
-#endif
   }
   //----------------------------------------------------------------------------
 }

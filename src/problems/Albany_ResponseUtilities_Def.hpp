@@ -11,7 +11,7 @@
 #include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PHAL_ResponseFieldIntegral.hpp"
 #endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
@@ -21,22 +21,20 @@
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #endif
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   #include "QCAD_ResponseSaddleValue.hpp"
   #include "QCAD_ResponseRegionBoundary.hpp"
 #endif
 #endif
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 #include "IPtoNodalField.hpp"
 #include "ProjectIPtoNodalField.hpp"
-#endif
-#ifdef ALBANY_SEE
-#include "LinearAdjointSolve.hpp"
 #endif
 #ifdef ALBANY_ATO
 #include "ATO_StiffnessObjective.hpp"
 #include "ATO_InternalEnergyResponse.hpp"
 #include "ATO_TensorPNormResponse.hpp"
+#include "ATO_HomogenizedConstantsResponse.hpp"
 #include "ATO_ModalObjective.hpp"
 #endif
 #ifdef ALBANY_AERAS
@@ -131,7 +129,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #ifdef ALBANY_QCAD
   else if (responseName == "Saddle Value")
   {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Weights Name",   "Weights");
@@ -149,7 +147,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
   else if (responseName == "Region Boundary")
   {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     RCP<QCAD::ResponseRegionBoundary<EvalT,Traits> > res_ev =
       rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
@@ -165,7 +163,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
   else if (responseName == "PHAL Field Integral")
   {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     RCP<PHAL::ResponseFieldIntegral<EvalT,Traits> > res_ev =
       rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
@@ -186,7 +184,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-  
+
 #ifdef ALBANY_AERAS
   else if (responseName == "Aeras Shallow Water L2 Error")
   {
@@ -224,7 +222,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Modal Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::ModalObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::ModalObjective<EvalT,Traits>(*p, dl));
@@ -244,7 +242,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Stiffness Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl));
@@ -264,7 +262,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Tensor PNorm Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::TensorPNormResponse<EvalT,Traits> > res_ev =
       rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl));
@@ -281,10 +279,30 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #endif
   }
 
+  else if (responseName == "Homogenized Constants Response")
+  {
+#ifdef ALBANY_ATO
+#if defined(ALBANY_EPETRA)
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    RCP<ATO::HomogenizedConstantsResponse<EvalT,Traits> > res_ev =
+      rcp(new ATO::HomogenizedConstantsResponse<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#endif
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  Response function " << responseName <<
+      " not available!" << std::endl << "Albany/ATO not enabled." <<
+      std::endl);
+#endif
+  }
+
   else if (responseName == "Internal Energy Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
       rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl));
@@ -301,7 +319,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #endif
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   else if (responseName == "IP to Nodal Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
@@ -320,6 +338,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("BF Name", "BF");
     p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev = rcp(
       new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
@@ -328,20 +347,11 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 #endif
 
-
-#ifdef ALBANY_SEE
-  else if (responseName == "Linear Adjoint Solve")
-  {
-    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
-    p->set<std::string>("BF Name", "BF");
-    p->set<std::string>("Weighted BF Name",  "wBF");
-    RCP<SEE::LinearAdjointSolve<EvalT,Traits> > res_ev =
-      rcp(new SEE::LinearAdjointSolve<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
+#ifdef ALBANY_GOAL
+  /* bng: required fields are added to the field manager fm in the GOAL
+     mechanics problem. Still, this block needs to because constructResponses()
+     is called and won't recognize responseName otherwise */
+  else if (responseName == "Adjoint") {}
 #endif
 
   else

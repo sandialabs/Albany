@@ -47,7 +47,7 @@ LinearHMCModel(Teuchos::ParameterList* p,
     strainDifferenceName[i] = sdname.str();
     this->dep_field_map_.insert(std::make_pair(sdname.str(), dl->qp_tensor));
     std::stringstream sgradname;
-    sgradname << "Microstrain_" << i << " Gradient";
+    sgradname << "Microstrain " << i << " Gradient";
     microStrainGradientName[i] = sgradname.str();
     this->dep_field_map_.insert(std::make_pair(sgradname.str(), dl->qp_tensor3));
   }
@@ -81,13 +81,13 @@ LinearHMCModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void LinearHMCModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   // extract independent MDFields
   PHX::MDField<ScalarT> macroStrain = *dep_fields[macroStrainName];
-  std::vector< PHX::MDField<ScalarT> > strainDifference(numMicroScales);
-  std::vector< PHX::MDField<ScalarT> > microStrainGradient(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> strainDifference(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> microStrainGradient(numMicroScales);
   for(int i=0; i<numMicroScales; i++){
     strainDifference[i] = *dep_fields[strainDifferenceName[i]];
     microStrainGradient[i] = *dep_fields[microStrainGradientName[i]];
@@ -95,8 +95,8 @@ computeState(typename Traits::EvalData workset,
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> macroStress = *eval_fields[macroStressName];
-  std::vector< PHX::MDField<ScalarT> > microStress(numMicroScales);
-  std::vector< PHX::MDField<ScalarT> > doubleStress(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> microStress(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> doubleStress(numMicroScales);
   for(int i=0; i<numMicroScales; i++){
     microStress[i] = *eval_fields[microStressName[i]];
     doubleStress[i] = *eval_fields[doubleStressName[i]];

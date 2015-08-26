@@ -10,6 +10,10 @@
 #include <Phalanx_DataLayout.hpp>
 #include <Sacado_ParameterRegistration.hpp>
 
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
+
 namespace LCM
 {
 
@@ -60,7 +64,7 @@ MechanicsResidual(Teuchos::ParameterList& p,
   num_dims_ = dims[3];
 
   Teuchos::RCP<ParamLib> paramLib =
-      p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
 
   if (def_grad_rc_.init(p, "F")) this->addDependentField(def_grad_rc_());
 }
@@ -241,7 +245,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-
+#ifdef ALBANY_TIMER
+ auto start = std::chrono::high_resolution_clock::now();
+#endif
   if (have_body_force_) {
    if (workset.transientTerms && enable_dynamics_)
      Kokkos::parallel_for(residual_haveBodyForce_and_dynamic_Policy(0,workset.numCells),*this);//call residual_haveBodyForce_and_dynamic kernel
@@ -254,6 +260,13 @@ evaluateFields(typename Traits::EvalData workset)
     else 
       Kokkos::parallel_for(residual_Policy(0,workset.numCells),*this);
   }
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "MechanicsResidual time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
 
 #endif
 }

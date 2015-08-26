@@ -81,7 +81,7 @@ Teuchos::RCP<Epetra_MultiVector> tailViewImpl(const Teuchos::RCP<const Epetra_Mu
 {
   if (Teuchos::nonnull(mv)) {
     const int remainderVecCount = mv->NumVectors() - 1;
-    return rangeViewImpl(mv, 0, remainderVecCount);
+    return rangeViewImpl(mv, 1, remainderVecCount);
   } else {
     return Teuchos::null;
   }

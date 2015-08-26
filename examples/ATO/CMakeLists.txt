@@ -4,9 +4,15 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+add_subdirectory(DistParam_2D)
+add_subdirectory(RegHeaviside_2D)
 add_subdirectory(Mitchell_2D)
 add_subdirectory(Mitchell_3D)
 add_subdirectory(MultiLoadSet)
 add_subdirectory(Filtered_2D)
 add_subdirectory(Thermal_Mech_2D)
 add_subdirectory(Thermal_MultiMech_3D)
+add_subdirectory(FixedBlocks)
+add_subdirectory(Restart)
+add_subdirectory(Homogenize_2D)
+add_subdirectory(MultiPhys_Homogenize_2D)

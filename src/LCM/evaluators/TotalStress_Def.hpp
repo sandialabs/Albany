@@ -16,17 +16,17 @@ template<typename EvalT, typename Traits>
 TotalStress<EvalT, Traits>::
 TotalStress(const Teuchos::ParameterList& p) :
   effStress           (p.get<std::string>                   ("Effective Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   biotCoefficient  (p.get<std::string>                   ("Biot Coefficient Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   porePressure    (p.get<std::string>                   ("QP Variable Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   stress           (p.get<std::string>                   ("Total Stress Name"),
-	            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") )
 {
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];

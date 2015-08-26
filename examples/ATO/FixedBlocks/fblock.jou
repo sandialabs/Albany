@@ -1,0 +1,23 @@
+## /projects/cubit/claro.Lin64.15.0/bin/cubitx
+## Cubit Version 15.0
+## Cubit Build 398681
+## Revised 2015-06-01 11:45:38 -0600 (Mon, 01 Jun 2015)
+## Running 06/10/2015 11:57:33 AM
+## Command Options:
+create brick x 1.5 y 1 z 0.5
+webcut body all with plane xplane offset 0.5
+webcut body all with plane xplane offset -0.5
+webcut body all with plane yplane offset 0.25
+webcut body all with plane yplane offset -0.25
+imprint all
+merge all
+body all size 0.1
+mesh volume all
+block 1 volume 6 9 3
+block 2 volume 5 8 2 7
+block 3 volume 4
+block 4 volume 1
+nodeset 1 surface 56 84 80
+sideset 2 surface 36
+sideset 3 surface 60
+export mesh "fblock.gen" overwrite

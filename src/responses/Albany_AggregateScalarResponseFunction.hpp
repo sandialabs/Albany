@@ -25,7 +25,7 @@ namespace Albany {
       const Teuchos::RCP<const Teuchos_Comm>& commT,
       const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Setup response function
     virtual void setup();
 #endif
@@ -68,7 +68,7 @@ namespace Albany {
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
   
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -99,7 +99,7 @@ namespace Albany {
 
   private:
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate Multi Vector distributed derivative dg_dp
     virtual void
     evaluateDistParamDeriv(

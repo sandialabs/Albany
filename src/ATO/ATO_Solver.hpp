@@ -65,7 +65,9 @@ namespace ATO {
   public:
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
 
+    virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
     virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
+    virtual void InitializeTopology(double* p)=0;
     virtual void ComputeVolume(double* p, const double* dgdp,
                                double& v, double threshhold, double minP=0.0)=0;
     virtual void ComputeVolume(const double* p, double& v, double* dvdp=NULL)=0;
@@ -95,7 +97,9 @@ namespace ATO {
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 
+    void ComputeObjective(double* p, double& g, double* dgdp=NULL);
     void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
+    void InitializeTopology(double* p);
 
     void ComputeVolume(double* p, const double* dgdp, 
                        double& v, double threshhold, double minP=0.0);
@@ -107,6 +111,7 @@ namespace ATO {
 
     // data
     int  numDims;
+    int _iteration;
     int _num_parameters; // for sensitiviy analysis(?)
     int _num_responses;  //  ditto
     Teuchos::RCP<Epetra_LocalMap> _epetra_param_map;
@@ -118,6 +123,7 @@ namespace ATO {
     std::vector<int> _wsOffset;  //index offsets to map to/from workset to/from 1D array.
 
     bool _is_verbose;    // verbose or not for topological optimization solver
+    bool _is_restart;
 
     Teuchos::RCP<Aggregator> _aggregator;
     Teuchos::RCP<Optimizer> _optimizer;
@@ -128,8 +134,21 @@ namespace ATO {
     Teuchos::RCP<SpatialFilter> _topologyFilter;
     Teuchos::RCP<SpatialFilter> _postTopologyFilter;
 
+
+    typedef struct HomogenizationSet { 
+      std::string name;
+      std::string type;
+      int responseIndex;
+      int homogDim; 
+      std::vector<Teuchos::RCP<Teuchos::ParameterList> > homogenizationAppParams;
+      std::vector<SolverSubSolver> homogenizationProblems;
+    } HomogenizationSet;
+
+    std::vector<HomogenizationSet> _homogenizationSets;
+
     std::vector<Teuchos::RCP<Teuchos::ParameterList> > _subProblemAppParams;
     std::vector<SolverSubSolver> _subProblems;
+
     OptimizationProblem* _atoProblem;
 
     Teuchos::RCP<const Epetra_Comm> _solverComm;
@@ -158,25 +177,32 @@ namespace ATO {
 
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
+    void smoothTopology(double* p);
+    void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
     void copyObjectiveFromStateMgr( double& g, double* dgdp );
     void zeroSet();
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
-    Teuchos::RCP<Teuchos::ParameterList> 
-      createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
     Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
+
+    Teuchos::RCP<Teuchos::ParameterList> 
+      createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
     SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                                     const Epetra_Comm& comm,
 				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
+    Teuchos::RCP<Teuchos::ParameterList> 
+      createHomogenizationInputFile( 
+            const Teuchos::RCP<Teuchos::ParameterList>& appParams, 
+            const Teuchos::ParameterList& homog_subList, 
+            int homogProblemIndex, 
+            int homogSubIndex, 
+            int homogDim) const;
+
     SolverSubSolverData CreateSubSolverData(const ATO::SolverSubSolver& sub) const;
 
-    Teuchos::RCP<Teuchos::ParameterList>
-    createElasticityInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-                               int numDims,
-                               const std::string& exoOutputFile ) const;
   };
 
   class SolverSubSolver {

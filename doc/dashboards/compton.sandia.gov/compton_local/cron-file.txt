@@ -1,0 +1,7 @@
+MAILTO=""
+# Note: Compon runs MDT time, so start the nightly at 0000 MDT (midnight local)
+# Albany MIC Dashboard
+00 00 * * * /home/gahanse/Codes/Albany/doc/dashboards/compton.sandia.gov/compton_local/nightly_cron_script.sh
+
+# Minicontact Dashboard
+00 03 * * * /home/gahanse/Codes/minicontact-kokkos-son/doc/dashboards/compton.sandia.gov/compton_local/nightly_cron_script.sh

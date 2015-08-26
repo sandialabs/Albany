@@ -16,13 +16,13 @@ template<typename EvalT, typename Traits>
 ElasticityDispErrResid<EvalT, Traits>::
 ElasticityDispErrResid(const Teuchos::ParameterList& p) :
   ErrorStress  (p.get<std::string>                   ("Error Stress Name"),
-	              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   wGradBF      (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	              p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+	              p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   DispResid    (p.get<std::string>                   ("Displacement Residual Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
+                p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") ),
   ExResidual   (p.get<std::string>                   ("Residual Name"),
-	              p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+	              p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") )
 {
   this->addDependentField(ErrorStress);
   this->addDependentField(wGradBF);

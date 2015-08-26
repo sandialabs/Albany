@@ -1,0 +1,4 @@
+- Fix problem with calculation of workset size when the adaptation block
+is present.
+- Fix skipping of projection to nodes in surface elements as it is done for
+nodal averages (Project IP to Nodal Field vs IP to Nodal Field).

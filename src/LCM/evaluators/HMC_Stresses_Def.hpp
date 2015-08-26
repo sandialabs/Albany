@@ -20,9 +20,9 @@ template<typename EvalT, typename Traits>
 Stresses<EvalT, Traits>::
 Stresses(const Teuchos::ParameterList& p) :
   strain             (p.get<std::string>                   ("Strain Name"),
-                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP 2Tensor Data Layout") ),
+                      p.get<Teuchos::RCP<PHX::DataLayout>>("QP 2Tensor Data Layout") ),
   stress             (p.get<std::string>                   ("Stress Name"),
-                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP 2Tensor Data Layout") ),
+                      p.get<Teuchos::RCP<PHX::DataLayout>>("QP 2Tensor Data Layout") ),
   numMicroScales     (p.get<int>("Additional Scales")),
   C11                (p.get<RealType>("C11")),
   C33                (p.get<RealType>("C33")),
@@ -42,19 +42,19 @@ Stresses(const Teuchos::ParameterList& p) :
     std::stringstream sdname;
     sdname << "Strain Difference " << i << " Name";
     strainDifference[i] = Teuchos::rcp(new HMC2Tensor(p.get<std::string>          (sdname.str()),
-                                             p.get<Teuchos::RCP<PHX::DataLayout> >("QP 2Tensor Data Layout") ) );
+                                             p.get<Teuchos::RCP<PHX::DataLayout>>("QP 2Tensor Data Layout") ) );
     std::stringstream sdgradname;
     sdgradname << "Micro Strain Gradient " << i << " Name";
     microStrainGradient[i] = Teuchos::rcp(new HMC3Tensor(p.get<std::string>          (sdgradname.str()),
-                                                p.get<Teuchos::RCP<PHX::DataLayout> >("QP 3Tensor Data Layout") ) );
+                                                p.get<Teuchos::RCP<PHX::DataLayout>>("QP 3Tensor Data Layout") ) );
     std::stringstream msname;
     msname << "Micro Stress " << i << " Name";
     microStress[i] = Teuchos::rcp(new HMC2Tensor(p.get<std::string>          (msname.str()),
-                                        p.get<Teuchos::RCP<PHX::DataLayout> >("QP 2Tensor Data Layout") ) );
+                                        p.get<Teuchos::RCP<PHX::DataLayout>>("QP 2Tensor Data Layout") ) );
     std::stringstream dsname;
     dsname << "Double Stress " << i << " Name";
     doubleStress[i] = Teuchos::rcp(new HMC3Tensor(p.get<std::string>          (dsname.str()),
-                                         p.get<Teuchos::RCP<PHX::DataLayout> >("QP 3Tensor Data Layout") ) );
+                                         p.get<Teuchos::RCP<PHX::DataLayout>>("QP 3Tensor Data Layout") ) );
   }
 
   lengthScale.resize(numMicroScales);
@@ -69,7 +69,7 @@ Stresses(const Teuchos::ParameterList& p) :
 
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP 2Tensor Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP 2Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];

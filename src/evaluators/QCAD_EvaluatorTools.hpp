@@ -76,7 +76,7 @@ namespace QCAD
   };
 
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   // Stochastic Galerkin Residual
   template<typename Traits>
   class EvaluatorTools<PHAL::AlbanyTraits::SGResidual, Traits>
@@ -120,6 +120,8 @@ namespace QCAD
     std::string getEvalType() const;
   };
 
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   // Multi-point residual
   template<typename Traits>
@@ -163,7 +165,7 @@ namespace QCAD
     double getMeshDoubleValue(const MeshScalarT& t) const;
     std::string getEvalType() const;
   };
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

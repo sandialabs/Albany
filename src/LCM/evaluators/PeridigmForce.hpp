@@ -42,15 +42,18 @@ protected:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  RealType density;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> velocity;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> acceleration;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> residual;
   std::vector< LCM::PeridigmManager::OutputField > outputFieldInfo;
-  std::map< std::string, PHX::MDField<ScalarT> > outputFields;
+  std::map< std::string, PHX::MDField<ScalarT>> outputFields;
+
+  RealType density;
 
   unsigned int numQPs;
   unsigned int numDims;
@@ -76,6 +79,15 @@ class PeridigmForce<PHAL::AlbanyTraits::Residual, Traits> : public PeridigmForce
 public:
   PeridigmForce(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dataLayout)
     : PeridigmForceBase<PHAL::AlbanyTraits::Residual,Traits>(p, dataLayout) {};
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// Template Specialization: DistParamDeriv Evaluation
+template<typename Traits>
+class PeridigmForce<PHAL::AlbanyTraits::DistParamDeriv, Traits> : public PeridigmForceBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  PeridigmForce(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dataLayout)
+    : PeridigmForceBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p, dataLayout) {};
   void evaluateFields(typename Traits::EvalData d);
 };
 

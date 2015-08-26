@@ -19,23 +19,23 @@ template<typename EvalT, typename Traits>
 ThermoPoroPlasticityResidMomentum<EvalT, Traits>::
 ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
   TotalStress      (p.get<std::string>           ("Total Stress Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   J           (p.get<std::string>                   ("DetDefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   Bulk          (p.get<std::string>                   ("Bulk Modulus Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   Temp         (p.get<std::string>                   ("Temperature Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   TempRef      (p.get<std::string>                   ("Reference Temperature Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   alphaSkeleton           (p.get<std::string>        ("Skeleton Thermal Expansion Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   defgrad     (p.get<std::string>                   ("DefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   ExResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") )
 {
   this->addDependentField(TotalStress);
   this->addDependentField(wGradBF);
@@ -54,9 +54,9 @@ ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
   if (enableTransient) {
     // Two more fields are required for transient capability
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout");
+       p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout");
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
 
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF_tmp
         (p.get<std::string>("Weighted BF Name"), node_qp_scalar_dl);

@@ -26,7 +26,7 @@ GatherSphereVolume(const Teuchos::ParameterList& p,
 template<typename EvalT, typename Traits>
 GatherSphereVolume<EvalT, Traits>::
 GatherSphereVolume(const Teuchos::ParameterList& p) :
-  sphereVolume(p.get<std::string> ("Sphere Volume Name"),p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") ),
+  sphereVolume(p.get<std::string> ("Sphere Volume Name"),p.get<Teuchos::RCP<PHX::DataLayout>>("Data Layout") ),
   numVertices(0), worksetSize(0)
 {
   this->addEvaluatedField(sphereVolume);

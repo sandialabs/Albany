@@ -1,0 +1,29 @@
+# Here is a script for configuring Trilinos using cmake
+# that includes the packages needed for Albany.
+# Any environment variables (e.g. $BOOST_DIR) are
+# set in the customization file, e.g. set_andy_env.in
+#
+# Uncomment for local build
+# TRILINSTALLDIR=/ascldap/users/gahanse/Codes/AlbanyBuild/Results/Trilinos/build/install
+# TRILINSTALLDIR=/home/agsalin/NightlyTests/Results/Trilinos/build/install
+
+BUILD_DIR=`pwd`
+rm CMakeCache.txt; rm -rf CMakeFiles
+
+cmake \
+      -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINSTALLDIR" \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+      -D ENABLE_FELIX:BOOL=ON \
+      -D ENABLE_LCM:BOOL=ON \
+      -D ENABLE_QCAD:BOOL=ON \
+      -D ENABLE_AERAS:BOOL=ON \
+      -D ENABLE_ASCR:BOOL=OFF \
+      -D ENABLE_HYDRIDE:BOOL=ON \
+      -D ENABLE_SG_MP:BOOL=OFF \
+      -D ENABLE_ATO:BOOL=ON \
+      -D ENABLE_PERFORMANCE_TESTS:BOOL=ON \
+   -D ENABLE_ENSEMBLE=ON \
+   -D ENSEMBLE_SIZE=16 \
+   -D MAKECOMMAND="make -j 20" \
+..
+

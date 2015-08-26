@@ -17,13 +17,13 @@ MortarContactResidualBase<EvalT, Traits>::
 MortarContactResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
 
-  meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
+  meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct>>("Mesh Specs Struct")),
   // The array of names of all the master side sets in the problem
-  masterSideNames (p.get<Teuchos::ArrayRCP<std::string> >("Master Side Set Names")), 
-  slaveSideNames (p.get<Teuchos::ArrayRCP<std::string> >("Slave Side Set Names")), 
+  masterSideNames (p.get<Teuchos::ArrayRCP<std::string>>("Master Side Set Names")), 
+  slaveSideNames (p.get<Teuchos::ArrayRCP<std::string>>("Slave Side Set Names")), 
 
   // The array of sidesets to process
-  sideSetIDs (p.get<Teuchos::ArrayRCP<std::string> >("Sideset IDs")), 
+  sideSetIDs (p.get<Teuchos::ArrayRCP<std::string>>("Sideset IDs")), 
 
   // Node coords
   coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector) 
@@ -42,7 +42,7 @@ MortarContactResidualBase(const Teuchos::ParameterList& p,
   // Get the array of residual quantities that we need to project into the integration space
   // These are the physics residuals that this class evaluates
   const Teuchos::ArrayRCP<std::string>& names =
-    p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
+    p.get< Teuchos::ArrayRCP<std::string>>("Residual Names");
 
   tensorRank = p.get<int>("Tensor Rank");
 
@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (this->tensorRank == 0) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
@@ -210,7 +210,7 @@ evaluateFields(typename Traits::EvalData workset)
   } else 
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
@@ -219,7 +219,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (this->tensorRank == 2) {
     int numDims = this->valTensor[0].dimension(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
@@ -275,7 +275,7 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
 
     for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -355,7 +355,7 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -422,7 +422,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (trans) {
     const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = local_Vp.size()/numFields;
       for (int i=0; i<num_deriv; i++) {
@@ -451,9 +451,9 @@ evaluateFields(typename Traits::EvalData workset)
   else {
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID =
         workset.wsElNodeEqID[cell];
-      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double>>& local_Vp =
         workset.local_Vp[cell];
       const int num_deriv = local_Vp.size();
 
@@ -484,7 +484,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 MortarContactResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 MortarContactResidual(const Teuchos::ParameterList& p,
@@ -517,7 +517,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
@@ -564,7 +564,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
+  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>> Jac =
     workset.sg_Jac;
   ScalarT *valptr;
 
@@ -580,7 +580,7 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
@@ -680,7 +680,7 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -710,6 +710,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #endif
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Residual
@@ -747,7 +749,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
@@ -793,7 +795,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix>> Jac =
     workset.mp_Jac;
   ScalarT *valptr;
 
@@ -809,7 +811,7 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
@@ -904,7 +906,7 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -934,7 +936,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #endif
 }
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

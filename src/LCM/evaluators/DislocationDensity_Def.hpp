@@ -16,13 +16,13 @@ template<typename EvalT, typename Traits>
 DislocationDensity<EvalT, Traits>::
 DislocationDensity(const Teuchos::ParameterList& p) :
   Fp            (p.get<std::string>                   ("Fp Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
   BF            (p.get<std::string>                   ("BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
   GradBF        (p.get<std::string>                   ("Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   G             (p.get<std::string>                   ("Dislocation Density Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") )
 {
   this->addDependentField(Fp);
   this->addDependentField(BF);
@@ -30,7 +30,7 @@ DislocationDensity(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(G);
 
   // Get Dimensions
-  Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
+  Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dim;
   vector_dl->dimensions(dim);
 

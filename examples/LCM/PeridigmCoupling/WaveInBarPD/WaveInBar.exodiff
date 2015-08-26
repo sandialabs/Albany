@@ -1,0 +1,58 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.81) Modified: 2015-06-03
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2015/08/20   17:05:39 MDT
+#  *****************************************************************
+
+#  FILE 1: /scratch/djlittl/Albany/examples/LCM/PeridigmCoupling/WaveInBarPD/WaveInBar.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 525, Elements = 525, Nodesets = 1, Sidesets = 0
+#          Vars: Global = 0, Nodal = 7, Element = 13, Nodeset = 0, Sideset = 0, Times = 23
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:           2e-05 @ t23
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	displacement_x   absolute 4.089355600000e-10    # min:               0 @ t1,n1	max:   0.00040893556 @ t19,n438
+	displacement_y   absolute 4.286343200000e-11    # min:               0 @ t1,n1	max:   4.2863432e-05 @ t4,n22
+	displacement_z   absolute 4.286343200000e-11    # min:               0 @ t1,n1	max:   4.2863432e-05 @ t4,n16
+	dirichlet_field  absolute 1.230769200000e-11    # min:               0 @ t1,n1	max:   1.2307692e-05 @ t1,n469
+	force_x          absolute 1.715905200000e-03    # min:               0 @ t1,n1	max:       1715.9052 @ t14,n513
+	force_y          absolute 1.091357100000e-03    # min:               0 @ t1,n1	max:       1091.3571 @ t7,n474
+	force_z          absolute 1.091357100000e-03    # min:               0 @ t1,n1	max:       1091.3571 @ t7,n470
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Peridigm_Dilatation           absolute 1.793813700000e-08    # min:               0 @ t1,b1,e1	max:     0.017938137 @ t9,b1,e451
+	Peridigm_Displacement_1       absolute 4.089355600000e-10    # min:               0 @ t1,b1,e1	max:   0.00040893556 @ t19,b1,e438
+	Peridigm_Displacement_2       absolute 4.286343200000e-11    # min:               0 @ t1,b1,e1	max:   4.2863432e-05 @ t4,b1,e22
+	Peridigm_Displacement_3       absolute 4.286343200000e-11    # min:               0 @ t1,b1,e1	max:   4.2863432e-05 @ t4,b1,e16
+	Peridigm_Force_1              absolute 0.000000000000e+00    # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Peridigm_Force_2              absolute 0.000000000000e+00    # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Peridigm_Force_3              absolute 0.000000000000e+00    # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Peridigm_Number_Of_Neighbors  absolute 1.180000000000e-04    # min:              28 @ t1,b1,e426	max:             118 @ t1,b1,e13
+	Peridigm_Radius               absolute 1.240701000000e-09    # min:     0.001240701 @ t1,b1,e332	max:     0.001240701 @ t1,b1,e38
+	Peridigm_Velocity_1           absolute 9.567906400000e-05    # min:               0 @ t1,b1,e1	max:       95.679064 @ t2,b1,e463
+	Peridigm_Velocity_2           absolute 3.950343800000e-05    # min:               0 @ t1,b1,e1	max:       39.503438 @ t6,b1,e452
+	Peridigm_Velocity_3           absolute 3.950343800000e-05    # min:               0 @ t1,b1,e1	max:       39.503438 @ t6,b1,e456
+	Peridigm_Weighted_Volume      absolute 2.150400000000e-17    # min:         4.8e-12 @ t1,b1,e450	max:      2.1504e-11 @ t1,b1,e88
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
+

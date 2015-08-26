@@ -13,22 +13,49 @@ from subprocess import Popen
 
 def runtest(albany_command, xml_file_name):
 
-    result = 0
+    # When run as part of ctest, the albany_command string is a set of commands
+    # separated by semicolons.  This will not be the case if this script
+    # is run outside ctest.
 
+    # To mimic the ctest behavior, tests may be run from inside the test
+    # directory like so:
+    # python ../run_exodiff_test.py "mpirun;-np;4;/scratch/djlittl/Albany/GCC_4.7.2_OPT/src/AlbanyT" RubiksCube.xml
+
+    result = 0
     base_name = xml_file_name[:-4]
 
     # parse the Albany command and append the xml file name
     command = string.splitfields(albany_command, ";")
     command.append(xml_file_name)
 
-    # open log file    
-    log_file_name = base_name + ".log"
+    # determine the number of processors
+    num_processors = 1
+    if "-np" in command:
+        index = command.index("-np")
+        num_processors = int(command[index+1])
+
+    # open the log file
+    log_file_name = base_name + "_np" + str(num_processors) + ".log"
     if os.path.exists(log_file_name):
         os.remove(log_file_name)
     logfile = open(log_file_name, 'w')
 
+    logfile.write("\nrun_exodiff_test.py command: " + str(command) + "\n\n")
+    logfile.flush()
+
+    # give the final exodus output file an extension that reflects the number of processors
+    # this avoids overwriting results from previous versions of the given test run on a
+    # different number of processors
+    exodus_extension = "exo"
+    if num_processors > 1:
+        exodus_extension = "np" + str(num_processors) + ".exo"
+
     # remove old output files, if any
-    files_to_remove = glob.glob(base_name+".exo")
+    exodus_files = glob.glob(base_name + "*." + exodus_extension) + glob.glob(base_name + "*.exo.*")
+    files_to_remove = []
+    for file_name in exodus_files:
+        if "gold" not in file_name:
+            files_to_remove.append(file_name)
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
@@ -39,11 +66,21 @@ def runtest(albany_command, xml_file_name):
     if return_code != 0:
         result = return_code
 
+    # run epu
+    if num_processors > 1:
+        command = ["./epu", "-extension", "exo", "-output_extension", exodus_extension, "-p", str(num_processors), base_name]
+        p = Popen(command, stdout=logfile, stderr=logfile)
+        return_code = p.wait()
+        if return_code != 0:
+            result = return_code
+
+    exodus_extension = "." + exodus_extension
+
     # run exodiff
     command = ["./exodiff", "-stat", "-f", \
                    base_name+".exodiff", \
                    base_name+".gold.exo", \
-                   base_name+".exo"]
+                   base_name+exodus_extension]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

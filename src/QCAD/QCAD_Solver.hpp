@@ -105,7 +105,11 @@ namespace QCAD {
     void fillSingleSubSolverParams(const InArgs& inArgs, const std::string& name, 
 				   QCAD::SolverSubSolver& subSolver, int nLeaveOffEnd=0) const;
 
-    SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
+    void writeSingleSubSolverParamsToFile(const InArgs& inArgs, const std::string& name,
+					  const std::string& filename) const;
+
+    SolverSubSolver CreateSubSolver(const std::string& name,
+				    const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
 				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null) const;
 
     SolverSubSolverData CreateSubSolverData(const QCAD::SolverSubSolver& sub) const;
@@ -119,6 +123,8 @@ namespace QCAD {
 			Teuchos::RCP<Teuchos::FancyOStream> out) const;
     
   private:
+    std::map<std::string, QCAD::SolverSubSolver> persistent_subSolvers;
+
     int numDims;
     std::string problemNameBase;
     std::string defaultSubSolver;
@@ -134,6 +140,13 @@ namespace QCAD {
 
     std::string iterationMethod;
     int  nEigenvectors; //used in Poisson-CI coupling
+
+    bool bDiscretizationDependsOnParameters;
+    std::string discretizationCreateCmd;
+    std::string baseOutputExodusFilename;
+    Teuchos::RCP<int> currentEvalIndex;
+    Teuchos::RCP<Epetra_LocalMap> dummy_soln_map;
+    Teuchos::RCP<Epetra_Vector> dummy_soln_vec;
 
     int num_p, num_g;
     Teuchos::RCP<Epetra_LocalMap> epetra_param_map;
@@ -173,10 +186,14 @@ namespace QCAD {
     void fillSingleSubSolverParams(double parameterValue, const std::string& subSolverName,
 				   SolverSubSolver& subSolver) const;
 
+    void writeSingleSubSolverParamsToFile(double parameterValue, const std::string& subSolverName,
+					  std::fstream& file) const;
+
     void fillSubSolverParams(double parameterValue, 
 			     const std::map<std::string, SolverSubSolver>& subSolvers) const;
 
-    double getInitialParam(const std::map<std::string, SolverSubSolverData>& subSolversData) const;
+    double getInitialParam(const std::map<std::string, SolverSubSolverData>& subSolversData,
+			   const std::vector<double>& geoParamInitialVals) const;
 
     std::string getTargetName() const { return targetName; }
     std::vector<int> getTargetIndices() const { return targetIndices; }

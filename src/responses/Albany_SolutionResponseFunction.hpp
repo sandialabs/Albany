@@ -15,7 +15,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Array.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_CrsGraph.h"
@@ -37,7 +37,7 @@ namespace Albany {
     //! Destructor
     virtual ~SolutionResponseFunction();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Setup response function
     virtual void setup();
 #endif
@@ -45,7 +45,7 @@ namespace Albany {
     //! Setup response function
     virtual void setupT();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
 #endif
@@ -54,7 +54,7 @@ namespace Albany {
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
     //! Create operator for gradient
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
 #endif
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
@@ -91,7 +91,7 @@ namespace Albany {
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -121,7 +121,7 @@ namespace Albany {
       Tpetra_Operator* dg_dxdotdotT,
       Tpetra_MultiVector* dg_dpT);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative = dg/dp
     virtual void
     evaluateDistParamDeriv(
@@ -138,7 +138,7 @@ namespace Albany {
     //! \name Stochastic Galerkin evaluation functions
     //@{
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     //! Intialize stochastic Galerkin method
     virtual void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -194,14 +194,14 @@ namespace Albany {
       Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
       Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdotdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
     //@}
 
     //! \name Multi-point evaluation functions
     //@{
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE
     //! Evaluate multi-point response functions
     virtual void evaluateMPResponse(
       const double curr_time,
@@ -250,7 +250,7 @@ namespace Albany {
       Stokhos::ProductEpetraOperator* mp_dg_dxdot,
       Stokhos::ProductEpetraOperator* mp_dg_dxdotdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
     //@}
 
@@ -264,7 +264,7 @@ namespace Albany {
 
   protected:
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Map> 
     buildCulledMap(const Epetra_Map& x_map, 
 		   const Teuchos::Array<int>& keepDOF) const;
@@ -274,7 +274,7 @@ namespace Albany {
     buildCulledMapT(const Tpetra_Map& x_mapT, 
 		   const Teuchos::Array<int>& keepDOF) const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void cullSolution(const Epetra_MultiVector& x, 
 		      Epetra_MultiVector& x_culled) const;
 #endif
@@ -291,7 +291,7 @@ namespace Albany {
     //! Mask for DOFs to keep
     Teuchos::Array<int> keepDOF;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Epetra map for response
     Teuchos::RCP<const Epetra_Map> culled_map;
 #endif
@@ -299,7 +299,7 @@ namespace Albany {
     //! Tpetra map for response
     Teuchos::RCP<const Tpetra_Map> culled_mapT;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Importer mapping between full and culled solution
     Teuchos::RCP<Epetra_Import> importer; 
 #endif
@@ -307,7 +307,7 @@ namespace Albany {
     //! Tpetra importer mapping between full and culled solution
     Teuchos::RCP<Tpetra_Import> importerT;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Graph of gradient operator
     Teuchos::RCP<Epetra_CrsGraph> gradient_graph;
 #endif    

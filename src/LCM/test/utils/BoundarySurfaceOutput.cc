@@ -89,7 +89,7 @@ int main(int ac, char* av[])
   }
 
   //mNormal is a matrix containing all the normal vectors
-  std::vector<std::vector<double> > mNormals(
+  std::vector<std::vector<double>> mNormals(
       numberNormals_,
       std::vector<double>(3, 0));
 
@@ -100,7 +100,7 @@ int main(int ac, char* av[])
   }
 
   //Extract the numbers from the matrix that contains the normals
-  std::vector<std::vector<int> > BoundaryVector;
+  std::vector<std::vector<int>> BoundaryVector;
   for (int i = 0; i < numberNormals_; i++) {
     std::string file_name = "Boundary_" + file_name2 + "_" + itoa(i + 1)
         + ".msh"; //file_name2 comes from the second input in the command line
@@ -108,7 +108,7 @@ int main(int ac, char* av[])
     ofstream mshFile(file_name.c_str(), std::ofstream::out);
     if (mshFile.is_open()) {
       //Obtain the vector that defines the 1D boundary
-      std::vector<std::vector<int> > BoundaryVector;
+      std::vector<std::vector<int>> BoundaryVector;
 
       std::vector<double> normalToPlane;
       normalToPlane.push_back(mNormals.at(i).at(0));
@@ -116,7 +116,7 @@ int main(int ac, char* av[])
       normalToPlane.push_back(mNormals.at(i).at(2));
 
       //Finds coordinates of 3 vectors normal to the normal vector.
-      std::vector<std::vector<double> > pointsOnPlane = topology
+      std::vector<std::vector<double>> pointsOnPlane = topology
           .getCoordinatesOfTriangle(normalToPlane);
 
       //Finds the Node (stk::mesh::Entity of rank 0) that is closest to each of the points on the plane
@@ -125,7 +125,7 @@ int main(int ac, char* av[])
 
       //Finds the identifiers of the nodes (entity rank 0) along the shortest
       //path connecting the three points
-      std::vector<std::vector<int> > ShortestPathFinal = topology.shortestpath(
+      std::vector<std::vector<int>> ShortestPathFinal = topology.shortestpath(
           closestNodes);
 
       //THE CODE WRITTEN BELOW IS TO CREATE THE .msh FILE UTILISED BY VTK
