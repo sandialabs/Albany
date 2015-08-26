@@ -54,10 +54,6 @@
       <Parameter name="Parameter Vector Index" type="int" value="0"/>
       <Parameter name="Response Vector Index" type="int" value="0"/>
       <Parameter name="Use Multi-Point" type="bool" value="false"/>
-      <ParameterList name="Multi-Point">
-        <Parameter name="Block Size" type="int" value="32"/>
-        <Parameter name="Number of Spatial Processors" type="int" value="-1"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Rythmos Solver">
@@ -73,7 +69,7 @@
       <ParameterList name="Rythmos">
      
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="1.00"/>
+           <Parameter name="Final Time" type="double" value="0.002"/>
            <!-- change to 1.037e6 to get full revolution -->
            <ParameterList name="Integrator Selection">
              <Parameter name="Integrator Type" type="string" value="Default Integrator"/>

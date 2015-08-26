@@ -49,10 +49,6 @@
       <Parameter name="Parameter Vector Index" type="int" value="0"/>
       <Parameter name="Response Vector Index" type="int" value="0"/>
       <Parameter name="Use Multi-Point" type="bool" value="true"/>
-      <ParameterList name="Multi-Point">
-        <Parameter name="Block Size" type="int" value="3"/>
-        <Parameter name="Number of Spatial Processors" type="int" value="-1"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Rythmos">
