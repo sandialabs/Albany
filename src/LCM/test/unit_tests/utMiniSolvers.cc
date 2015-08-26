@@ -43,13 +43,13 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
 }
 
 template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class NewtonResidual : public LCM::Residual_Base<T, N>
+class GaussianResidual : public LCM::Residual_Base<T, N>
 {
 public:
 
   using ValueT = typename Sacado::ValueType<T>::type;
 
-  NewtonResidual(ValueT const a, ValueT const b) : a_(a), b_(b) {}
+  GaussianResidual(ValueT const a, ValueT const b) : a_(a), b_(b) {}
 
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) override
@@ -97,12 +97,51 @@ TEUCHOS_UNIT_TEST(MiniNewtonSolver, Instantiation)
   Intrepid::Vector<ValueT, dimension>
   solution(2.0, 1.0);
 
-  using NR = NewtonResidual<FadT, dimension>;
+  using GR = GaussianResidual<FadT, dimension>;
 
-  NR
+  GR
   residual(solution(0), solution(1));
 
-  LCM::NewtonSolver<PHAL::AlbanyTraits::Residual, NR, dimension>
+  LCM::NewtonSolver<PHAL::AlbanyTraits::Residual, GR, dimension>
+  solver;
+
+  Intrepid::Vector<FadT, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = FadT(dimension, i, 0.0);
+  }
+
+  solver.solve(residual, x);
+
+  Intrepid::Vector<ValueT, dimension>
+  x_val = Sacado::Value<Intrepid::Vector<FadT, dimension>>::eval(x);
+
+  ValueT const
+  error = norm(x_val - solution) / norm(solution);
+
+  TEST_COMPARE(error, <=, solver.getRelativeTolerance());
+}
+
+TEUCHOS_UNIT_TEST(MiniTrustRegionSolver, Instantiation)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  Intrepid::Index const
+  dimension{2};
+
+  Intrepid::Vector<ValueT, dimension>
+  solution(2.0, 1.0);
+
+  using GR = GaussianResidual<FadT, dimension>;
+
+  GR
+  residual(solution(0), solution(1));
+
+  LCM::TrustRegionSolver<PHAL::AlbanyTraits::Residual, GR, dimension>
   solver;
 
   Intrepid::Vector<FadT, dimension>
