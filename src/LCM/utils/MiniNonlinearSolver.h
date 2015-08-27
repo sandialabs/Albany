@@ -285,12 +285,12 @@ public:
   {return max_num_iter_;}
 
   template <typename T>
-  void setMaximumNumberTrustRegionIterations(T && mntri)
-  {max_num_trust_region_iter_ = std::forward<T>(mntri);}
+  void setMaximumNumberRestrictIterations(T && mntri)
+  {max_num_restrict_iter_ = std::forward<T>(mntri);}
 
   Intrepid::Index
-  getMaximumNumberTrustRegionIterations()
-  {return max_num_trust_region_iter_;}
+  getMaximumNumberRestrictIterations()
+  {return max_num_restrict_iter_;}
 
   Intrepid::Index
   getNumberIterations()
@@ -353,7 +353,7 @@ protected:
   max_num_iter_{128};
 
   Intrepid::Index
-  max_num_trust_region_iter_{4};
+  max_num_restrict_iter_{4};
 
   Intrepid::Index
   num_iter_{0};
@@ -527,6 +527,258 @@ class TrustRegionSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
   using FadT = typename Sacado::Fad::DFad<ValueT>;
 };
 #endif
+
+///
+/// ConjugateGradient Solver Base class.
+/// For now the Gram-Schmidt method is fixed to Polak-Ribiere
+/// and preconditioning with the Hessian.
+///
+template<typename EvalT, typename Residual,
+Intrepid::Index N = Intrepid::DYNAMIC>
+class ConjugateGradientSolver_Base
+{
+public:
+  using ScalarT = typename EvalT::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  virtual
+  ~ConjugateGradientSolver_Base() {}
+
+  virtual
+  void
+  solve(Residual & residual, Intrepid::Vector<FadT, N> & x) {}
+
+  template <typename T>
+  void setMaximumNumberIterations(T && mni)
+  {max_num_iter_ = std::forward<T>(mni);}
+
+  Intrepid::Index
+  getMaximumNumberIterations()
+  {return max_num_iter_;}
+
+  template <typename T>
+  void setMaximumNumberSecantIterations(T && mntri)
+  {max_num_secant_iter_ = std::forward<T>(mntri);}
+
+  Intrepid::Index
+  getMaximumNumberSecantIterations()
+  {return max_num_secant_iter_;}
+
+  Intrepid::Index
+  getNumberIterations()
+  {return num_iter_;}
+
+  template <typename T>
+  void setRestartDirectionsInterval(T && msl)
+  {restart_directions_interval_ = std::forward<T>(msl);}
+
+  Intrepid::Index
+  getRestartDirectionsInterval() const
+  {return restart_directions_interval_;}
+
+  template <typename T>
+  void setRelativeTolerance(T && rt)
+  {rel_tol_ = std::forward<T>(rt);}
+
+  ValueT
+  getRelativeTolerance() const
+  {return rel_tol_;}
+
+  ValueT
+  getRelativeError() const
+  {return rel_error_;}
+
+  template <typename T>
+  void setAbsoluteTolerance(T && at)
+  {abs_tol_ = std::forward<T>(at);}
+
+  ValueT
+  getAbsoluteTolerance() const
+  {return abs_tol_;}
+
+  ValueT
+  getAbsoluteError() const
+  {return abs_error_;}
+
+  bool
+  isConverged() const
+  {return converged_;}
+
+protected:
+  Intrepid::Index
+  max_num_iter_{128};
+
+  Intrepid::Index
+  max_num_secant_iter_{4};
+
+  Intrepid::Index
+  num_iter_{0};
+
+  Intrepid::Index
+  restart_directions_interval_{32};
+
+  ValueT
+  rel_tol_{1.0e-10};
+
+  ValueT
+  rel_error_{1.0};
+
+  ValueT
+  abs_tol_{1.0e-10};
+
+  ValueT
+  abs_error_{1.0};
+
+  bool
+  converged_{false};
+};
+
+//
+// Specializations
+//
+template<typename EvalT, typename Residual,
+Intrepid::Index N = Intrepid::DYNAMIC>
+class ConjugateGradientSolver;
+
+//
+// Residual
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::Residual, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::Residual, Residual, N>
+{
+public:
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  void
+  solve(
+      Residual & residual,
+      Intrepid::Vector<FadT, N> & x) override;
+};
+
+//
+// Jacobian
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::Jacobian, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::Jacobian, Residual, N>
+{
+public:
+  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+
+//
+// Tangent
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::Tangent, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::Tangent, Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+
+//
+// Distribured Parameter Derivative
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::DistParamDeriv, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::DistParamDeriv,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+
+#ifdef ALBANY_SG
+//
+// SGResidual
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::SGResidual, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::SGResidual,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::SGResidual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+
+//
+// SGJacobian
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::SGJacobian, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::SGJacobian,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::SGJacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+
+//
+// SGTangent
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::SGTangent, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::SGTangent,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::SGTangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+#endif
+
+#ifdef ALBANY_ENSEMBLE
+//
+// MPResidual
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::MPResidual, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::MPResidual,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::MPResidual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+
+//
+// MPJacobian
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::MPJacobian, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::MPJacobian,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::MPJacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+
+//
+// MPTangent
+//
+template<typename Residual, Intrepid::Index N>
+class ConjugateGradientSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
+    public ConjugateGradientSolver_Base<PHAL::AlbanyTraits::MPTangent,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::MPTangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+};
+#endif
+
 } //namesapce LCM
 
 #include "MiniNonlinearSolver.t.h"
