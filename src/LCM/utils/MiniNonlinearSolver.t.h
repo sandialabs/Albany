@@ -19,19 +19,19 @@ void
 NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
 solve(
     Residual & residual,
-    Intrepid::Vector<FadT, N> & soln_prev)
+    Intrepid::Vector<FadT, N> & soln)
 {
   Intrepid::Index const
-  dimension = soln_prev.get_dimension();
+  dimension = soln.get_dimension();
 
   Intrepid::Vector<FadT, N>
-  resi_prev = residual.compute(soln_prev);
+  resi = residual.compute(soln);
 
   Intrepid::Vector<ValueT, N>
-  resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
+  resi_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi);
 
   ValueT const
-  initial_norm = Intrepid::norm(resi_prev_val);
+  initial_norm = Intrepid::norm(resi_val);
 
   this->num_iter_ = 0;
 
@@ -39,11 +39,11 @@ solve(
 
   while (this->converged_ == false) {
 
-    resi_prev = residual.compute(soln_prev);
+    resi = residual.compute(soln);
 
-    resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
+    resi_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi);
 
-    this->abs_error_ = Intrepid::norm(resi_prev_val);
+    this->abs_error_ = Intrepid::norm(resi_val);
 
     this->rel_error_ = this->abs_error_ / initial_norm;
 
@@ -68,14 +68,14 @@ solve(
 
     for (Intrepid::Index i{0}; i < dimension; ++i) {
       for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = resi_prev(i).dx(j);
+        Hessian(i, j) = resi(i).dx(j);
       }
     }
 
     Intrepid::Vector<ValueT, N> const
-    soln_incr = - Intrepid::solve(Hessian, resi_prev_val);
+    soln_incr = - Intrepid::solve(Hessian, resi_val);
 
-    soln_prev += soln_incr;
+    soln += soln_incr;
 
     ++this->num_iter_;
   }
@@ -136,19 +136,19 @@ void
 TrustRegionSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
 solve(
     Residual & residual,
-    Intrepid::Vector<FadT, N> & soln_prev)
+    Intrepid::Vector<FadT, N> & soln)
 {
   Intrepid::Index const
-  dimension = soln_prev.get_dimension();
+  dimension = soln.get_dimension();
 
   Intrepid::Vector<FadT, N>
-  resi_prev = residual.compute(soln_prev);
+  resi = residual.compute(soln);
 
   Intrepid::Vector<ValueT, N>
-  resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
+  resi_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi);
 
   ValueT const
-  initial_norm = Intrepid::norm(resi_prev_val);
+  initial_norm = Intrepid::norm(resi_val);
 
   ValueT
   step_length = this->initial_step_length_;
@@ -163,11 +163,11 @@ solve(
   // Outer solution loop
   while (this->converged_ == false) {
 
-    resi_prev = residual.compute(soln_prev);
+    resi = residual.compute(soln);
 
-    resi_prev_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_prev);
+    resi_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi);
 
-    this->abs_error_ = Intrepid::norm(resi_prev_val);
+    this->abs_error_ = Intrepid::norm(resi_val);
 
     this->rel_error_ = this->abs_error_ / initial_norm;
 
@@ -192,7 +192,7 @@ solve(
 
     for (Intrepid::Index i{0}; i < dimension; ++i) {
       for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = resi_prev(i).dx(j);
+        Hessian(i, j) = resi(i).dx(j);
       }
     }
 
@@ -218,7 +218,7 @@ solve(
 
       L = Intrepid::cholesky(K).first;
 
-      step = - Intrepid::solve(K, resi_prev_val);
+      step = - Intrepid::solve(K, resi_val);
 
       q = Intrepid::solve(L, step);
 
@@ -236,7 +236,7 @@ solve(
     }
 
     Intrepid::Vector<FadT, N> const
-    soln_next = soln_prev + step;
+    soln_next = soln + step;
 
     Intrepid::Vector<FadT, N> const
     resi_next = residual.compute(soln_next);
@@ -246,13 +246,13 @@ solve(
     resi_next_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi_next);
 
     ValueT const
-    nr = Intrepid::norm_square(resi_prev_val);
+    nr = Intrepid::norm_square(resi_val);
 
     ValueT const
     nrp = Intrepid::norm_square(resi_next_val);
 
     ValueT const
-    nrKp = Intrepid::norm_square(resi_prev_val + Intrepid::dot(Hessian, step));
+    nrKp = Intrepid::norm_square(resi_val + Intrepid::dot(Hessian, step));
 
     ValueT const
     reduction = (nr - nrp) / (nr - nrKp);
@@ -281,7 +281,7 @@ solve(
     }
 
     if (reduction > this->min_reduction_) {
-      soln_prev = soln_next;
+      soln = soln_next;
     }
 
     ++this->num_iter_;
@@ -330,4 +330,132 @@ solve(
 //
 
 #endif // ALBANY_ENSEMBLE
+
+//
+// Specializations for Conjugate Gradient solver
+//
+
+//
+// Residual
+//
+template<typename Residual, Intrepid::Index N>
+void
+ConjugateGradientSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
+solve(
+    Residual & residual,
+    Intrepid::Vector<FadT, N> & soln)
+{
+  Intrepid::Index const
+  dimension = soln.get_dimension();
+
+  Intrepid::Vector<FadT, N>
+  resi = residual.compute(soln);
+
+  Intrepid::Vector<ValueT, N>
+  resi_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi);
+
+  Intrepid::Tensor<ValueT, N>
+  Hessian(dimension);
+
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    for (Intrepid::Index j{0}; j < dimension; ++j) {
+      Hessian(i, j) = resi(i).dx(j);
+    }
+  }
+
+  Intrepid::Vector<ValueT, N>
+  precon_resi_val = Intrepid::solve(Hessian, resi_val);
+
+  Intrepid::Vector<ValueT, N>
+  search_direction = precon_resi_val;
+
+  ValueT
+  precon_prod = Intrepid::dot(resi_val, precon_resi_val);
+
+  ValueT
+  resi_prod = Intrepid::dot(resi_val, resi_val);
+
+  ValueT const
+  initial_norm = std::sqrt(resi_prod);
+
+  this->num_iter_ = 0;
+
+  this->converged_ = initial_norm <= this->abs_tol_;
+
+  while (this->converged_ == false) {
+
+    resi = residual.compute(soln);
+
+    resi_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(resi);
+
+    this->abs_error_ = Intrepid::norm(resi_val);
+
+    this->rel_error_ = this->abs_error_ / initial_norm;
+
+    bool const
+    converged_relative = this->rel_error_ <= this->rel_tol_;
+
+    bool const
+    converged_absolute = this->abs_error_ <= this->abs_tol_;
+
+    this->converged_ = converged_relative || converged_absolute;
+
+    bool const
+    is_max_iter = this->num_iter_ >= this->max_num_iter_;
+
+    bool const
+    end_solve = this->converged_ || is_max_iter;
+
+    if (end_solve == true) break;
+
+    ValueT
+    dir_prod = Intrepid::dot(search_direction, search_direction);
+
+    ++this->num_iter_;
+  }
+
+  return;
+}
+
+//
+// Jacobian
+//
+
+//
+// Tangent
+//
+
+//
+// DistParamDeriv
+//
+
+#ifdef ALBANY_SG
+//
+// SGResidual
+//
+
+//
+// SGJacobian
+//
+
+//
+// SGTangent
+//
+#endif // ALBANY_SG
+
+#ifdef ALBANY_ENSEMBLE
+//
+// MPResidual
+//
+
+//
+// MPJacobian
+//
+
+//
+// MPTangent
+//
+
+#endif // ALBANY_ENSEMBLE
+
 } // namespace LCM
