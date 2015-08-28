@@ -34,12 +34,20 @@
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
+
+    <ParameterList name="Adaptation">
+      <Parameter name="Method"                              type="string" value="Sim"/>
+      <Parameter name="Remesh Strategy"                     type="string" value="Continuous"/>
+      <Parameter name="Error Bound"                         type="double" value="0.06"/>
+    </ParameterList>
+
   </ParameterList>
+
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Sim"/>
     <Parameter name="Workset Size" type="int" value="50"/> 
     <Parameter name="Sim Model Input File Name" type="string" value="../meshes/cube.smd"/>
-    <Parameter name="Sim Input File Name" type="string" value="../meshes/cube.sms"/>
+    <Parameter name="Sim Input File Name" type="string" value="../meshes/cube_finer.sms"/>
     <Parameter name="Sim Output File Name" type="string" value="out.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{95,cube}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{85,81,xmin,xmax}"/>
@@ -68,11 +76,11 @@
 	<!-- The number of steps in the problem -->
 	<Parameter  name="Max Steps" type="int" value="20"/>         
 	<!-- Final value of the parameter -->
-	<Parameter  name="Max Value" type="double" value="0.1"/>
+	<Parameter  name="Max Value" type="double" value="0.03"/>
     <Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="0"/>
 	<!-- Initial value of the parameter -->
 	<Parameter  name="Min Value" type="double" value="0.0"/>
-        <Parameter  name="Initial Value" type="double" value="0.0"/>
+        <Parameter  name="Initial Value" type="double" value="0.01"/>
       </ParameterList>
 
       <ParameterList name="Step Size">
