@@ -2805,7 +2805,7 @@ void Aeras::SpectralDiscretization::createOutputMesh()
           stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
           wsElNodeID,
           coords,
-          points_per_edge));
+          points_per_edge, element_name));
     Teuchos::RCP<Albany::StateInfoStruct> sis =
       Teuchos::rcp(new Albany::StateInfoStruct);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -3615,11 +3615,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     computeSideSetsLines();
   }
 
-  if (spatial_dim == 2)
-  {
+  //if (spatial_dim == 2)
+  //{
      createOutputMesh(); 
      setupExodusOutput();
-  }
+  //}
 
   // Build the node graph needed for the mass matrix for solution
   // transfer and projection operations

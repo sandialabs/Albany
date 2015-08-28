@@ -49,7 +49,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                                              const int numDim_, const int worksetSize_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
-                                             const int points_per_edge_):
+                                             const int points_per_edge_, const std::string element_name_):
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false), 
@@ -64,11 +64,15 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 
   contigIDs = params->get("Contiguous IDs", true);
   
-  //IKT, 8/5/15, FIXME: have separate validateParameters for "Line" elements.  
-  params->validateParameters(*getValidDiscretizationParameters(),0);
+  element_name = element_name_; 
+
+#ifdef OUTPUT_TO_SCREEN
+  *out << "element_name: " << element_name << "\n"; 
+#endif
 
   //just creating 1 element block.  May want to change later...
   std::string ebn="Element Block 0";
+  std::cout << "ELEMENT_RANK: " << stk::topology::ELEMENT_RANK << std::endl; 
   partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
   ebNameToIndex[ebn] = 0;
   std::vector<std::string> nsNames;
@@ -77,8 +81,19 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
+  
 
-  stk::mesh::set_cell_topology<shards::ShellQuadrilateral<4> >(*partVec[0]);
+  if (element_name == "ShellQuadrilateral") { 
+    params->validateParameters(*getValidDiscretizationParametersQuads(),0);
+    stk::mesh::set_cell_topology<shards::ShellQuadrilateral<4> >(*partVec[0]);
+  }
+  else if (element_name == "Line") {
+    //IKT, 8/28/15, FIXME: implement separate validateParameters for "Line" elements.
+    //This will be different than quads b/c lines are based on STK instead of Ioss. 
+    //params->validateParameters(*getValidDiscretizationParametersLines(),0);
+    stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
+  }
+
 
   int cub = params->get("Cubature Degree",3);
   //FIXME: hard-coded for now that all the elements are in 1 workset
@@ -92,7 +107,6 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   *out << "numDim, cub, worksetSize, points_per_edge, ctd name: " << numDim << ", " 
        << cub << ", " << worksetSize << ", " << points_per_edge << ", " << ctd.name << "\n";
 #endif
-  element_name = ctd.name; 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
@@ -134,7 +148,7 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
-  if (element_name == "ShellQuadrilateral_4") { //Quads 
+  if (element_name == "ShellQuadrilateral") { //Quads 
 #ifdef OUTPUT_TO_SCREEN
     std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl; 
     for (int ws = 0; ws < wsElNodeID.size(); ws++){           
@@ -227,7 +241,7 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
       }
     }    
   }
-  else { //Lines
+  else if (element_name == "Line") { //Lines (for xz hydrostatic) 
     //IKT, 8/5/15, FIXME: fill in! 
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Aeras::SpectralOutputSTKMeshStruct setFieldAndBulkData() method not yet implemented for Line elements!" << std::endl);
@@ -239,7 +253,7 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
 
 Teuchos::RCP<const Teuchos::ParameterList>
-Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParameters() const
+Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersQuads() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
@@ -253,4 +267,13 @@ Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParameters() const
 
 
   return validPL;
+}
+
+Teuchos::RCP<const Teuchos::ParameterList>
+Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersLines() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+    this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
+  //IKT, FIXME, 8/28/15: Fill in! 
+  return validPL; 
 }
