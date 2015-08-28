@@ -10,13 +10,14 @@ cd /global/homes/i/ikalash/nightlyEdisonCDash
 
 source edison_modules.sh 
 
-#rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/repos
-#rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/build
+rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/repos
+rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/build
 rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/ctest_nightly.cmake.work
-#rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/nightly_log*
-#rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/results*
+rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/nightly_log*
+rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/results*
+rm -rf /global/homes/i/ikalash/nightlyEdisonCDash/test_summary.txt
 
-cat albanyFELIX ctest_nightly.cmake.frag >& ctest_nightly.cmake  
+cat trilinosFELIX ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 #export PATH=$PATH:/usr/lib64/openmpi/bin:/home/ikalash/Install/ParaView-4.3.1-Linux-64bit/bin:/home/ikalash/Install:/home/ikalash/Install/Cubit:/home/ikalash/Install/R2015a/bin:/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install
 
@@ -24,12 +25,9 @@ cat albanyFELIX ctest_nightly.cmake.frag >& ctest_nightly.cmake
 
 now=$(date +"%m_%d_%Y-%H_%M")
 #LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
-LOG_FILE=/global/homes/i/ikalash/nightlyEdisonCDash/nightly_log_edisonAlbany.txt
+LOG_FILE=/global/homes/i/ikalash/nightlyEdisonCDash/nightly_log_edisonTrilinos.txt
 
 eval "env  TEST_DIRECTORY=/global/homes/i/ikalash/nightlyEdisonCDash SCRIPT_DIRECTORY=/global/homes/i/ikalash/nightlyEdisonCDash ctest -VV -S /global/homes/i/ikalash/nightlyEdisonCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
-
-cp -r build/AlbanyFELIXInstall/bin/* /project/projectdirs/piscees/nightlyEdisonCDashExe
-chmod -R 0755 /project/projectdirs/piscees/nightlyEdisonCDashExe
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.

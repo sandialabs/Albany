@@ -532,6 +532,8 @@ class TrustRegionSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
 /// ConjugateGradient Solver Base class.
 /// For now the Gram-Schmidt method is fixed to Polak-Ribiere
 /// and preconditioning with the Hessian.
+/// This is taken from J.R. Shewchuck "painless" conjugate gradient
+/// manuscript that is all over the place on the net.
 ///
 template<typename EvalT, typename Residual,
 Intrepid::Index N = Intrepid::DYNAMIC>
@@ -557,6 +559,14 @@ public:
   getMaximumNumberIterations()
   {return max_num_iter_;}
 
+  ValueT
+  getInitialSecantStepLength() const
+  {return initial_secant_step_length_;}
+
+  template <typename T>
+  void setInitialSecantStepLength(T && issl)
+  {initial_secant_step_length_ = std::forward<T>(issl);}
+
   template <typename T>
   void setMaximumNumberSecantIterations(T && mntri)
   {max_num_secant_iter_ = std::forward<T>(mntri);}
@@ -564,6 +574,14 @@ public:
   Intrepid::Index
   getMaximumNumberSecantIterations()
   {return max_num_secant_iter_;}
+
+  template <typename T>
+  void setSecantTolerance(T && st)
+  {secant_tol_ = std::forward<T>(st);}
+
+  ValueT
+  getSecantTolerance() const
+  {return secant_tol_;}
 
   Intrepid::Index
   getNumberIterations()
@@ -610,13 +628,19 @@ protected:
   max_num_iter_{128};
 
   Intrepid::Index
-  max_num_secant_iter_{4};
+  max_num_secant_iter_{16};
 
   Intrepid::Index
   num_iter_{0};
 
   Intrepid::Index
   restart_directions_interval_{32};
+
+  ValueT
+  initial_secant_step_length_{0.9};
+
+  ValueT
+  secant_tol_{1.0e-6};
 
   ValueT
   rel_tol_{1.0e-10};
