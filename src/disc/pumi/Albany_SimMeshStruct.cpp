@@ -21,6 +21,7 @@ Albany::SimMeshStruct::SimMeshStruct(
 {
   SimUtil_start();
   Sim_readLicenseFile(0);
+  MS_init();
   SimPartitionedMesh_start(NULL, NULL);
   gmi_sim_start();
   gmi_register_sim();
@@ -57,9 +58,16 @@ Albany::SimMeshStruct::SimMeshStruct(
     assert(!params->isParameter("Solution Vector Components"));
     std::string field_file = params->get<std::string>("Sim Restart File Name");
     pField sim_field = Field_load(field_file.c_str(), sim_mesh, 0, 0);
-    apf::wrapSIMField(mesh, sim_field);
+    apf::Field* field = apf::wrapSIMField(mesh, sim_field);
+    std::string name = apf::getName(field);
+    if (name != Albany::APFMeshStruct::solution_name) {
+      std::cerr << "renaming restart field \"" << name << "\" to \""
+        << Albany::APFMeshStruct::solution_name << "\"\n";
+      apf::renameField(field, Albany::APFMeshStruct::solution_name);
+    }
     restartDataTime = params->get<double>("Sim Restart Time", 0);
     solutionInitialized = true;
+    apf::writeVtkFiles("restarted", mesh);
   }
 }
 
@@ -71,6 +79,7 @@ Albany::SimMeshStruct::~SimMeshStruct()
   PCU_Comm_Free();
   gmi_sim_stop();
   SimPartitionedMesh_stop();
+  MS_exit();
   Sim_unregisterAllKeys();
   SimUtil_stop();
 }
