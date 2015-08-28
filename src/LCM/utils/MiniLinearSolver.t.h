@@ -72,16 +72,6 @@ solve(
 
   assert(global_dim > 0);
 
-  Intrepid::Matrix<ValueT>
-  DbDp(local_dim, global_dim);
-
-  // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < global_dim; ++j) {
-      DbDp(i, j) = b(i).dx(j);
-    }
-  }
-
   Intrepid::Tensor<ValueT>
   DbDx(local_dim);
 
@@ -92,17 +82,7 @@ solve(
     }
   }
 
-  // Solve for all DxDp
-  Intrepid::Matrix<ValueT>
-  DxDp = Intrepid::solve(DbDx, DbDp);
-
-  // Unpack into x.
-  for (auto i = 0; i < local_dim; ++i) {
-    x(i).resize(global_dim);
-    for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
