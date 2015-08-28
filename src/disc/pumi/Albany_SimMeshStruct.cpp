@@ -21,6 +21,7 @@ Albany::SimMeshStruct::SimMeshStruct(
 {
   SimUtil_start();
   Sim_readLicenseFile(0);
+  MS_init();
   SimPartitionedMesh_start(NULL, NULL);
   gmi_sim_start();
   gmi_register_sim();
@@ -71,6 +72,7 @@ Albany::SimMeshStruct::~SimMeshStruct()
   PCU_Comm_Free();
   gmi_sim_stop();
   SimPartitionedMesh_stop();
+  MS_exit();
   Sim_unregisterAllKeys();
   SimUtil_stop();
 }
