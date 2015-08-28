@@ -100,7 +100,7 @@ solve(
   for (auto i = 0; i < local_dim; ++i) {
     x(i).resize(global_dim);
     for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = DxDp(i, j);
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
 
@@ -181,7 +181,7 @@ solve(
   for (auto i = 0; i < local_dim; ++i) {
     x(i).resize(global_dim);
     for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = DxDp(i, j);
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
 
@@ -262,7 +262,7 @@ solve(
   for (auto i = 0; i < local_dim; ++i) {
     x(i).resize(global_dim);
     for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = DxDp(i, j);
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
 
@@ -359,7 +359,7 @@ solve(
   for (auto i = 0; i < local_dim; ++i) {
     x(i).resize(global_dim);
     for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = DxDp(i, j);
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
 
@@ -440,7 +440,7 @@ solve(
   for (auto i = 0; i < local_dim; ++i) {
     x(i).resize(global_dim);
     for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = DxDp(i, j);
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
 
@@ -539,7 +539,7 @@ solve(
   for (auto i = 0; i < local_dim; ++i) {
     x(i).resize(global_dim);
     for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = DxDp(i, j);
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
 
@@ -620,7 +620,7 @@ solve(
   for (auto i = 0; i < local_dim; ++i) {
     x(i).resize(global_dim);
     for (auto j = 0; j < global_dim; ++j) {
-      x(i).fastAccessDx(j) = DxDp(i, j);
+      x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
 
