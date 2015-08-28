@@ -200,4 +200,43 @@ TEUCHOS_UNIT_TEST(MiniTrustRegionSolver, Instantiation)
   TEST_COMPARE(error, <=, solver.getRelativeTolerance());
 }
 
+TEUCHOS_UNIT_TEST(MiniConjugateGradientSolver, Instantiation)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  Intrepid::Index const
+  dimension{2};
+
+  Intrepid::Vector<ValueT, dimension>
+  solution(2.0, 1.0);
+
+  using GR = GaussianResidual<FadT, dimension>;
+
+  GR
+  residual(solution(0), solution(1), 10.0);
+
+  LCM::ConjugateGradientSolver<PHAL::AlbanyTraits::Residual, GR, dimension>
+  solver;
+
+  Intrepid::Vector<FadT, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = FadT(dimension, i, 0.0);
+  }
+
+  solver.solve(residual, x);
+
+  Intrepid::Vector<ValueT, dimension>
+  x_val = Sacado::Value<Intrepid::Vector<FadT, dimension>>::eval(x);
+
+  ValueT const
+  error = norm(x_val - solution) / norm(solution);
+
+  TEST_COMPARE(error, <=, solver.getRelativeTolerance());
+}
+
 } // anonymous namespace
