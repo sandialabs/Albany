@@ -112,6 +112,7 @@ typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
 typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
 typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
 typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
+typedef Tpetra::RowMatrix<ST, LO, GO, KokkosNode>   Tpetra_RowMatrix;
 typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
 typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
