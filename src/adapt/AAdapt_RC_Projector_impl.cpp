@@ -30,8 +30,8 @@ solve (const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
   if (P.is_null()) {
     Teuchos::ParameterList pl;
     pl.set<int>("fact: iluk level-of-fill", 0);
-    Teuchos::RCP< Ifpack2::RILUK<Tpetra_CrsMatrix> >
-      prec = Teuchos::rcp(new Ifpack2::RILUK<Tpetra_CrsMatrix>(A));
+    Teuchos::RCP< Ifpack2::RILUK<Tpetra_RowMatrix> >
+      prec = Teuchos::rcp(new Ifpack2::RILUK<Tpetra_RowMatrix>(A));
     prec->setParameters(pl);
     prec->initialize();
     prec->compute();
