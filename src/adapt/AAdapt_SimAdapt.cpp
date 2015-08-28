@@ -39,6 +39,11 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
+  std::stringstream ss;
+  static int i = 0;
+  ss << "size_" << i++ << '_';
+  std::string s = ss.str();
+  apf::writeVtkFiles(s.c_str(), apf_m);
   pParMesh sim_pm = apf_msim->getMesh();
   pMSAdapt adapter = MSA_new(sim_pm, 1);
   apf::MeshEntity* v;
@@ -49,9 +54,13 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   }
   apf_m->end(it);
   apf::destroyField(size_fld);
-  MSA_adapt(adapter, NULL);
+  pProgress progress = Progress_new();
+  MSA_adapt(adapter, progress);
+  Progress_delete(progress);
   MSA_delete(adapter);
   apf_m->verify();
+  apf::writeVtkFiles("adapted", apf_m);
+  abort();
   sim_disc->updateMesh(should_transfer_ip_data);
   if (should_transfer_ip_data)
     sim_disc->detachQPData();
