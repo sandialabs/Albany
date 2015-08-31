@@ -39,7 +39,7 @@
 
 
 //uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 
 //Constructor 
@@ -87,9 +87,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
     stk::mesh::set_cell_topology<shards::ShellQuadrilateral<4> >(*partVec[0]);
   }
   else if (element_name == "Line") {
-    //IKT, 8/28/15, FIXME: implement separate validateParameters for "Line" elements.
-    //This will be different than quads b/c lines are based on STK instead of Ioss. 
-    //params->validateParameters(*getValidDiscretizationParametersLines(),0);
+    params->validateParameters(*getValidDiscretizationParametersLines(),0);
     //IKT, 8/28/15: FIXME: the following causes an exception to be thrown in STK.  Need to figure out why. 
     stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
   }
@@ -306,8 +304,11 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 Teuchos::RCP<const Teuchos::ParameterList>
 Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersQuads() const
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
+    this->getValidGenericSTKParameters("Valid Aeras_DiscParams_Exodus");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
   Teuchos::Array<std::string> emptyStringArray;
@@ -323,8 +324,20 @@ Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersQuads() cons
 Teuchos::RCP<const Teuchos::ParameterList>
 Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersLines() const
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
-  //IKT, FIXME, 8/28/15: Fill in! 
+    this->getValidGenericSTKParameters("Valid Aeras_DiscParams_STK1D");
+  validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimension");
+  //IKT, 8/31/15: why are Periodic_y BC and Periodic_z BC needed in valid parameterlist when we will 
+  //always have 1D mesh? 
+  validPL->set<bool>("Periodic_y BC", false, "Flag to indicate periodic mesh in y-dimension");
+  validPL->set<bool>("Periodic_z BC", false, "Flag to indicate periodic mesh in z-dimension");
+  validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
+  validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
+  // Multiple element blocks parameters
+  validPL->set<int>("Element Blocks", 1, "Number of elements blocks");
+ 
   return validPL; 
 }
