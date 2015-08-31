@@ -100,11 +100,13 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   if (element_name == "Line") { 
     spatial_dim = 1; 
     nodes_per_element = points_per_edge;
+    ElemType = LINE; 
   }
   else if (element_name == "Quadrilateral" ||
            element_name == "ShellQuadrilateral") {
     spatial_dim = 2;
     nodes_per_element = points_per_edge*points_per_edge;
+    ElemType = QUAD; 
   }
 #ifdef OUTPUT_TO_SCREEN 
   *out << "points_per_edge: " << points_per_edge << std::endl;
@@ -660,8 +662,8 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
   //Need to figure out what is going on.  
   //Also I don't get why writeSolutionT and the observer get called at all when there is no "Exodus Output Line" 
   //in the input file.  I believe in this case there routines should not be called.
-  //For now, the following is a way to turn off output to Exodus for spectral elements. 
-  if (element_name != "Line") {
+  //For now, the following is a way to turn off output to Exodus for spectral elements.
+  if (ElemType != LINE) { 
     writeSolutionToMeshDatabaseT(solnT, time, overlapped);
     writeSolutionToFileT(solnT, time, overlapped);
   }
@@ -2805,7 +2807,7 @@ void Aeras::SpectralDiscretization::createOutputMesh()
           stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
           wsElNodeID,
           coords,
-          points_per_edge));
+          points_per_edge, element_name));
     Teuchos::RCP<Albany::StateInfoStruct> sis =
       Teuchos::rcp(new Albany::StateInfoStruct);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -3615,11 +3617,8 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     computeSideSetsLines();
   }
 
-  if (spatial_dim == 2)
-  {
-     createOutputMesh(); 
-     setupExodusOutput();
-  }
+   createOutputMesh(); 
+   setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution
   // transfer and projection operations

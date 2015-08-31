@@ -147,9 +147,10 @@ Albany::PeridigmProblem::constructEvaluators(
 
    // Construct evaluators
 
-   Teuchos::ArrayRCP<std::string> dof_name(1), dof_name_dotdot(1), residual_name(1);
+   Teuchos::ArrayRCP<std::string> dof_name(1), dof_name_dot(1), dof_name_dotdot(1), residual_name(1);
    dof_name[0] = "Displacement";
-   dof_name_dotdot[0] = "Displacement_dotdot";
+   dof_name_dot[0] = Teuchos::null; // Non-null triggers "Enable Transient" in PHAL_GatherSolution
+   dof_name_dotdot[0] = "Acceleration"; // Non-null triggers "Enable Acceleration" in PHAL_GatherSolution
    residual_name[0] = "Residual";
 
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
@@ -158,15 +159,14 @@ Albany::PeridigmProblem::constructEvaluators(
 
    // --------- Option 1: Peridynamics ---------
 
-
-    //Finding whether basal dirichlet_control_field is a distributed parameter
-    std::map<std::string, std::string> controlParameterMap;
-    const std::string emptyString("");
-    if(this->params->isSublist("Distributed Parameters")) {
-      Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
-      Teuchos::ParameterList* param_list;
-      int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
-      for(int p_index=0; p_index< numParams; ++p_index) {
+   //Finding whether basal dirichlet_control_field is a distributed parameter
+   std::map<std::string, std::string> controlParameterMap;
+   const std::string emptyString("");
+   if(this->params->isSublist("Distributed Parameters")) {
+     Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
+     Teuchos::ParameterList* param_list;
+     int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
+     for(int p_index=0; p_index< numParams; ++p_index) {
        std::string parameter_sublist_name = Albany::strint("Distributed Parameter", p_index);
        if(dist_params_list.isSublist(parameter_sublist_name)) {
          param_list = &dist_params_list.sublist(parameter_sublist_name);
@@ -190,11 +190,15 @@ Albany::PeridigmProblem::constructEvaluators(
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
 
+     // if(supportsTransient){
+     //   fm0.template registerEvaluator<EvalT>(evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dotdot[0]));    
+     // }
+
      { // Solution vector, which is the nodal displacements
        if(!supportsTransient)
 	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
        else
-	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator(true, dof_name, dof_name_dotdot));
+	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_name, dof_name_dot, dof_name_dotdot));
      }
 
      { // Gather Coord Vec
@@ -248,7 +252,7 @@ Albany::PeridigmProblem::constructEvaluators(
      { // Current Coordinates
        RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
        p->set<std::string>("Reference Coordinates Name", "Coord Vec");
-       p->set<std::string>("Displacement Name", "Displacement");
+       p->set<std::string>("Displacement Name", dof_name[0]);
        p->set<std::string>("Current Coordinates Name", "Current Coordinates");
        ev = rcp(new LCM::CurrentCoords<EvalT, AlbanyTraits>(*p, dataLayout));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -317,11 +321,13 @@ Albany::PeridigmProblem::constructEvaluators(
        // Input
        p->set<string>("Reference Coordinates Name", "Coord Vec");
        p->set<string>("Current Coordinates Name", "Current Coordinates");
+       p->set<string>("Velocity Name", dof_name_dot[0]);
+       p->set<string>("Acceleration Name", dof_name_dotdot[0]);
        p->set<string>("Sphere Volume Name", "Sphere Volume");
 
        // Output
        p->set<string>("Force Name", "Force");
-       p->set<string>("Residual Name", "Residual");
+       p->set<string>("Residual Name", residual_name[0]);
 
        ev = rcp(new LCM::PeridigmForce<EvalT, AlbanyTraits>(*p, dataLayout));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -393,38 +399,30 @@ Albany::PeridigmProblem::constructEvaluators(
         }
       }
 
-     // Displacement Fields
-
-     Teuchos::ArrayRCP<std::string> dof_names(1);
-     dof_names[0] = "Displacement";
-     Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
-     if (supportsTransient)
-       dof_names_dotdot[0] = dof_names[0]+"_dotdot";
-     Teuchos::ArrayRCP<std::string> resid_names(1);
-     resid_names[0] = dof_names[0]+" Residual";
-
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dot[0]));
+       fm0.template registerEvaluator<EvalT>
+	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dotdot[0]));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names, Teuchos::null, dof_names_dotdot));
+	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_name, Teuchos::null, dof_name_dotdot));
      }
      else{
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
+	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names));
+       (evalUtils.constructScatterResidualEvaluator(true, residual_name));
 
      // Standard FEM stuff
 
@@ -517,11 +515,13 @@ Albany::PeridigmProblem::constructEvaluators(
        // extra input for time dependent term
        p->set<std::string>("Weighted BF Name", "wBF");
        p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
-       p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
+       p->set<std::string>("Time Dependent Variable Name", "Acceleration");
+       p->set<std::string>("xdot Field Name", dof_name_dot[0]);
+       p->set<std::string>("xdotdot Field Name", dof_name_dotdot[0]);
        p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
        //Output
-       p->set<std::string>("Residual Name", "Displacement Residual");
+       p->set<std::string>("Residual Name", residual_name[0]);
        p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
        ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
@@ -588,27 +588,17 @@ Albany::PeridigmProblem::constructEvaluators(
         }
       }
 
-          // Displacement Fields
-
-      Teuchos::ArrayRCP<std::string> dof_names(1);
-      dof_names[0] = "Displacement";
-      Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
-      if (supportsTransient)
-        dof_names_dotdot[0] = dof_names[0]+"_dotdot";
-      Teuchos::ArrayRCP<std::string> resid_names(1);
-      resid_names[0] = dof_names[0]+" Residual";
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFVecInterpolationEvaluator(dof_name[0]));
 
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+        (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_name[0]));
 
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
 
       fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
-
-      fm0.template registerEvaluator<EvalT>
-        (evalUtils.constructScatterResidualEvaluator(true, resid_names));
+        (evalUtils.constructScatterResidualEvaluator(true, residual_name));
 
       // Standard FEM stuff
 
@@ -652,7 +642,7 @@ Albany::PeridigmProblem::constructEvaluators(
         p->set<bool>("Disable Transient", true);
 
         //Output
-        p->set<std::string>("Residual Name", "Displacement Residual");
+        p->set<std::string>("Residual Name", residual_name[0]);
         p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
         ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
@@ -719,38 +709,28 @@ Albany::PeridigmProblem::constructEvaluators(
         }
       }
 
-     // Displacement Fields
-
-     Teuchos::ArrayRCP<std::string> dof_names(1);
-     dof_names[0] = "Displacement";
-     Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
-     if (supportsTransient)
-       dof_names_dotdot[0] = dof_names[0]+"_dotdot";
-     Teuchos::ArrayRCP<std::string> resid_names(1);
-     resid_names[0] = dof_names[0]+" Residual";
-
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dotdot[0]));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names, Teuchos::null, dof_names_dotdot));
+	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_name, Teuchos::null, dof_name_dotdot));
      }
      else{
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
+	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names));
+       (evalUtils.constructScatterResidualEvaluator(true, residual_name));
 
      // Standard FEM stuff
 
@@ -890,11 +870,11 @@ Albany::PeridigmProblem::constructEvaluators(
        // extra input for time dependent term
        p->set<std::string>("Weighted BF Name", "wBF");
        p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
-       p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
+       p->set<std::string>("Time Dependent Variable Name", "Acceleration");
        p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
        //Output
-       p->set<std::string>("Residual Name", "Displacement Residual");
+       p->set<std::string>("Residual Name", residual_name[0]);
        p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
        ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));

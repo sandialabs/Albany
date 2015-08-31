@@ -56,8 +56,20 @@ template<typename EvalT, typename Traits>
 void PeridigmPartialStressBase<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION("PeridigmPartialStressBase::evaluateFields not implemented for this template type",
-                             Teuchos::Exceptions::InvalidParameter, "Need specialization.");
+  bool albanyIsCreatingMassMatrix = true;
+  if(workset.m_coeff != 0.0){
+    albanyIsCreatingMassMatrix = false;
+  }
+  if(workset.j_coeff != 0.0){
+    albanyIsCreatingMassMatrix = false;
+  }
+  if(workset.n_coeff != -1.0){
+    albanyIsCreatingMassMatrix = false;
+  }
+  if(!albanyIsCreatingMassMatrix){
+    TEUCHOS_TEST_FOR_EXCEPTION("PeridigmPartialStressBase::evaluateFields not implemented for this template type.",
+			       Teuchos::Exceptions::InvalidParameter, "Need specialization.");
+  }
 }
 
 //**********************************************************************

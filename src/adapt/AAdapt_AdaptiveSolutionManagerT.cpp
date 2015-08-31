@@ -20,6 +20,9 @@
 #ifdef ALBANY_SCOREC
 #include "AAdapt_MeshAdapt.hpp"
 #endif
+#ifdef ALBANY_AMP
+#include "AAdapt_SimAdapt.hpp"
+#endif
 #include "AAdapt_RC_Manager.hpp"
 
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
@@ -147,6 +150,12 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              commT_));
+  } else
+#endif
+#ifdef ALBANY_AMP
+  if (method == "Sim") {
+    adapter_ = Teuchos::rcp(
+      new AAdapt::SimAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
   } else
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)

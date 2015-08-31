@@ -146,7 +146,8 @@ protected:
   {
     MECH_VAR_TYPE_NONE,      //! Variable does not appear
     MECH_VAR_TYPE_CONSTANT,  //! Variable is a constant
-    MECH_VAR_TYPE_DOF        //! Variable is a degree-of-freedom
+    MECH_VAR_TYPE_DOF,       //! Variable is a degree-of-freedom
+    MECH_VAR_TYPE_TIMEDEP    //! Variable is stepped by LOCA in time
   };
 
   // Source function type
@@ -835,6 +836,20 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Temperature");
+
+    // This evaluator is called to set a constant temperature when "Variable Type"
+    // is set to "Constant." It is also called when "Variable Type" is set to
+    // "Time Dependent." There are two "Type" variables in the PL - "Type" and
+    // "Variable Type". For the last case, lets set "Type" to "Time Dependent" to hopefully
+    // make the evaluator call a little more general (GAH)
+
+    std::string temp_type = paramList.get<std::string>("Variable Type", "None");
+    if ( temp_type == "Time Dependent"){
+
+      paramList.set<std::string>("Type", temp_type);
+
+    }
+
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = Teuchos::rcp(
@@ -2956,7 +2971,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
               "Stabilization Parameter");
     }
     p->set<RealType>("Stabilization Parameter", stab_param);
-
     p->set<bool>("Small Strain", small_strain);
 
     //Output

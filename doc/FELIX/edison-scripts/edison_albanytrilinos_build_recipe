@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# This was run on edison in AlbanyTrilinos_08242015 dirs under piscees and acme projects
+#   Things to potentially edit: 
+#   1. Below, switch Trilinos & Albany to specific hash (uncomment git reset --hard commands)
+#   2. In edison-albany-cmake, choose ALBANY_LIBRARIES_ONLY=ON/OFF
+#   3. In edison-albany-cmake, choose ALBANY_LIBRARIES_ONLY=ON/OFF
+#
+echo "Make sure to first do:  source edison_modules.sh\n"
+
+# Get public Trilinos and back up to hash of 8/24/2105
+echo "git clone https://software.sandia.gov/trilinos/repositories/publicTrilinos Trilinos"
+git clone https://software.sandia.gov/trilinos/repositories/publicTrilinos Trilinos
+cd Trilinos
+# Uncomment this line to get 08242015 version
+# git reset --hard 3695fa7
+cd ..
+
+# Get public Albany and back up to hash of 8/24/2105
+echo "git clone git@github.com:gahansen/Albany"
+git clone git@github.com:gahansen/Albany
+cd Albany
+# Uncomment this line to get 08242015 version
+# git reset --hard dd26468
+cd ..
+
+source edison_modules.sh
+mkdir Trilinos/build
+cp edison-trilinos-cmake Trilinos/build
+cd Trilinos/build
+./edison-trilinos-cmake
+make -j 20 install
+cd ../..
+
+
+mkdir Albany/build
+cp edison-albany-cmake Albany/build
+cd Albany/build
+./edison-albany-cmake
+make -j 20 install
+cd ../..
+
+

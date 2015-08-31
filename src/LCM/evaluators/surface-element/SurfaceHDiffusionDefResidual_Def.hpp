@@ -266,18 +266,24 @@ namespace LCM {
 
             	transport_residual_(cell, topNode) +=  transientTerm;
 
-            	// hydrostatic stress term
-		 // MUST BE FIXED: Add C_inverse term into hydrostatic residual
+            // hydrostatic stress term
+		        // MUST BE FIXED: Add C_inverse term into hydrostatic residual - added but need to do this nicely. 
         		for (int dim=0; dim < numDims; ++dim) {
 
+                                    Intrepid::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
+                                    Intrepid::Tensor<ScalarT> C_tensor = Intrepid::t_dot(F,F);
+                                    Intrepid::Tensor<ScalarT> C_inv_tensor = Intrepid::inverse(C_tensor);
+                                    Intrepid::Vector<ScalarT> hydro_stress_grad(numDims, hydro_stress_gradient_,cell, pt,0);
+                                    Intrepid::Vector<ScalarT> C_inv_hydro_stress_grad = Intrepid::dot(C_inv_tensor, hydro_stress_grad);
+
         			    transport_residual_(cell, node) -= surface_Grad_BF(cell, node, pt, dim)*
-        			    						  	  	                 convection_coefficient_(cell,pt)*transport_(cell,pt)*
-        			    				                                 hydro_stress_gradient_(cell,pt, dim)*dt*
+        			    				              convection_coefficient_(cell,pt)*transport_(cell,pt)*
+        			    				              hydro_stress_gradient_(cell,pt, dim)*dt*
 				      refArea(cell,pt)*thickness;//*temp; GB changed 08/14/2015
 
         				transport_residual_(cell, topNode) -= surface_Grad_BF(cell, topNode, pt, dim)*
         				                                                  convection_coefficient_(cell,pt)*transport_(cell,pt)*
-        				                                                  hydro_stress_gradient_(cell,pt, dim)*dt*
+        				                                                  C_inv_hydro_stress_grad(dim)*dt*
 					  refArea(cell,pt)*thickness;//*temp; GB changed 08/14/2015
         		}
             }

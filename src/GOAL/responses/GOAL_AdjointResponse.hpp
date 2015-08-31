@@ -49,6 +49,9 @@ class AdjointResponse :
     //! counter
     int evalCtr;
 
+    //! Albany application
+    Teuchos::RCP<Albany::Application> application;
+
     //! Dirichlet field manager
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
 

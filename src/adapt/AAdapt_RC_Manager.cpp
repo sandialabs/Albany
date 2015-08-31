@@ -529,6 +529,7 @@ void testProjector(
 
 struct Manager::Impl {
   Teuchos::RCP<AdaptiveSolutionManagerT> sol_mgr_;
+  Teuchos::RCP<Albany::StateManager> state_mgr_;
   Teuchos::RCP<Tpetra_Vector> x_;
   Teuchos::RCP<Projector> proj_;
 #ifdef amb_test_projector
@@ -540,7 +541,6 @@ private:
   typedef std::pair< std::string, Teuchos::RCP<Field> > Pair;
   typedef std::map< std::string, Teuchos::RCP<Field> > Map;
 
-  Teuchos::RCP<Albany::StateManager> state_mgr_;
   Map field_map_;
   std::vector< Teuchos::RCP<Field> > fields_;
   bool building_sfm_, transform_;
@@ -817,24 +817,31 @@ void Manager::init_x_if_not (const Teuchos::RCP<const Tpetra_Map>& map) {
   impl_->x_->putScalar(0);
 }
 
+static void update_x (
+  const Teuchos::ArrayRCP<double>& x, const Teuchos::ArrayRCP<const double>& s,
+  const Teuchos::RCP<Albany::AbstractDiscretization>& disc)
+{
+  const int spdim = disc->getNumDim(), neq = disc->getNumEq();
+  for (int i = 0; i < x.size(); i += neq)
+    for (int j = 0; j < spdim; ++j)
+      x[i+j] += s[i+j];  
+}
+
 void Manager::update_x (const Tpetra_Vector& soln_nol) {
-  impl_->x_->update(1, soln_nol, 1);
+  // By convention (e.g., in MechanicsProblem), the displacement DOFs are before
+  // any other DOFs.
+  const Teuchos::ArrayRCP<double>& x = impl_->x_->get1dViewNonConst();
+  const Teuchos::ArrayRCP<const double>& s = soln_nol.get1dView();
+  AAdapt::rc::update_x(x, s, impl_->state_mgr_->getDiscretization());
 }
 
 Teuchos::RCP<const Tpetra_Vector> Manager::
 add_x (const Teuchos::RCP<const Tpetra_Vector>& a) const {
   Teuchos::RCP<Tpetra_Vector>
     c = Teuchos::rcp(new Tpetra_Vector(*a, Teuchos::Copy));
-  c->update(1, *impl_->x_, 1);
-  return c;
-}
-
-Teuchos::RCP<const Tpetra_Vector> Manager::
-add_x_ol (const Teuchos::RCP<const Tpetra_Vector>& a_ol) const {
-  Teuchos::RCP<Tpetra_Vector>
-    c = Teuchos::rcp(new Tpetra_Vector(a_ol->getMap()));
-  c->doImport(*impl_->x_, *impl_->sol_mgr_->get_importerT(), Tpetra::INSERT);
-  c->update(1, *a_ol, 1);
+  const Teuchos::ArrayRCP<double>& x = c->get1dViewNonConst();
+  const Teuchos::ArrayRCP<const double>& s = impl_->x_->get1dView();
+  AAdapt::rc::update_x(x, s, impl_->state_mgr_->getDiscretization());
   return c;
 }
 

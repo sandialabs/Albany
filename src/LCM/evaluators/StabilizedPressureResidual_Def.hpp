@@ -74,17 +74,15 @@ template<typename EvalT, typename Traits>
 void StabilizedPressureResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::Vector<ScalarT> p_grad(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_);
-  // small strain version needs no pull back
 
   if (small_strain_) {
+    // small strain version needs no pull back
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
         residual_(cell, node) = 0.0;
       }
       for (int pt = 0; pt < num_pts_; ++pt) {
-        p_grad.fill( pressure_grad_,cell,pt,0 );
         sigma.fill( stress_,cell,pt,0,0);
         ScalarT dUdJ = (1.0/num_dims_) * Intrepid::trace(sigma);
         for (int node = 0; node < num_nodes_; ++node) {
@@ -114,7 +112,6 @@ evaluateFields(typename Traits::EvalData workset)
         residual_(cell, node) = 0.0;
       }
       for (int pt = 0; pt < num_pts_; ++pt) {
-        p_grad.fill( pressure_grad_,cell,pt,0 );
         sigma.fill( stress_,cell,pt,0,0);
         ScalarT dUdJ = (1.0/num_dims_) * Intrepid::trace(sigma);
         for (int node = 0; node < num_nodes_; ++node) {

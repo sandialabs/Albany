@@ -394,13 +394,14 @@ ELSE()
 ENDIF()
 
 # set optional dependency on RBGen, for reduced basis computation
-LIST(FIND Trilinos_PACKAGE_LIST RBGen RBGen_List_ID)
+LIST(FIND Trilinos_LIBRARIES rbgen RBGen_List_ID)
 IF (RBGen_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_RBGEN)
-  MESSAGE("-- Looking for RBGen:              Found, compiling with -DALBANY_RBGEN")
+  MESSAGE("-- Looking for rbgen library:      Found, compiling with -DALBANY_RBGEN")
   SET(ALBANY_RBGEN TRUE)
 ELSE()
-  MESSAGE("-- Looking for RBGen:              NOT found.")
+  MESSAGE("-- Looking for rbgen library:      NOT found.")
+  MESSAGE("      -- To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
   SET(ALBANY_RBGEN FALSE)
 ENDIF()
 
@@ -699,12 +700,24 @@ ELSE()
   MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
+
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
-  ADD_DEFINITIONS(-DALBANY_MOR)
-  MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
-  SET(ALBANY_MOR TRUE)
+  #Check if RBGen library has been built as a part of Anasazi.  
+  #If it has not, turn MOR off despite what user requested and print message explaining that MOR requires RBGen library. 
+  LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
+  IF (rbgen_List_ID GREATER -1)
+    MESSAGE("-- Looking for rbgen library: -- found!  Continuing.")
+    ADD_DEFINITIONS(-DALBANY_MOR)
+    MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
+    SET(ALBANY_MOR TRUE)
+  ELSE()
+    MESSAGE("---- Looking for rbgen library: -- NOT found!") 
+    MESSAGE("-- MOR requires RBGen library.  To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
+    MESSAGE("-- MOR       is NOT Enabled.")
+    SET(ALBANY_MOR FALSE)
+  ENDIF()
 ELSE()
   MESSAGE("-- MOR       is NOT Enabled.")
   SET(ALBANY_MOR FALSE)
@@ -975,6 +988,16 @@ ELSE()
   SET(ALBANY_PERFORMANCE_TESTS FALSE)
 ENDIF()
 
+#Add option to build libraries but not link any executables (for FELIX uner MPAS)
+OPTION(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
+IF (ALBANY_LIBRARIES_ONLY)
+  MESSAGE("-- ALBANY_LIBRARIES_ONLY is ON")
+  IF (LCM_TEST_EXES)
+    SET (LCM_TEST_EXES FALSE)
+    MESSAGE("--->  Disabling LCM_TEST_EXES")
+  ENDIF()
+ENDIF()
+
 # Add option to include Dakota restart examples in the test suite
 IF (NOT APPLE)
 CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" ON
@@ -1091,5 +1114,11 @@ IF(ALBANY_MPI)
   ENDIF()
 ENDIF(ALBANY_MPI)
 
-add_subdirectory(examples)
+# Add Albany test -- in the "examples" directory
+IF (ALBANY_LIBRARIES_ONLY)
+  MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+ELSE()
+  add_subdirectory(examples)
+ENDIF()
+
 MESSAGE("\nAnd CMake says...:")
