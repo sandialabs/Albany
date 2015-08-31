@@ -64,10 +64,8 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 
   contigIDs = params->get("Contiguous IDs", true);
   
-  element_name = element_name_; 
-
 #ifdef OUTPUT_TO_SCREEN
-  *out << "element_name: " << element_name << "\n"; 
+  *out << "element_name: " << element_name_ << "\n"; 
 #endif
 
   //just creating 1 element block.  May want to change later...
@@ -82,14 +80,16 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 #endif
   
 
-  if (element_name == "ShellQuadrilateral") { 
+  if (element_name_ == "ShellQuadrilateral") { 
     params->validateParameters(*getValidDiscretizationParametersQuads(),0);
     stk::mesh::set_cell_topology<shards::ShellQuadrilateral<4> >(*partVec[0]);
+    ElemType = QUAD; 
   }
-  else if (element_name == "Line") {
+  else if (element_name_ == "Line") {
     params->validateParameters(*getValidDiscretizationParametersLines(),0);
     //IKT, 8/28/15: FIXME: the following causes an exception to be thrown in STK.  Need to figure out why. 
     stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
+    ElemType = LINE; 
   }
 
 
@@ -146,7 +146,7 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
-  if (element_name == "ShellQuadrilateral") { //Quads 
+  if (ElemType == QUAD) { //Quads 
 #ifdef OUTPUT_TO_SCREEN
     std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl; 
     for (int ws = 0; ws < wsElNodeID.size(); ws++){           
@@ -239,7 +239,7 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
       }
     }    
   }
-  else if (element_name == "Line") { //Lines (for xz hydrostatic) 
+  else if (ElemType == LINE) { //Lines (for xz hydrostatic) 
     //IKT, 8/28/15: the following code needs testing 
 #ifdef OUTPUT_TO_SCREEN
     std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl; 

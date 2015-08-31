@@ -578,6 +578,10 @@ namespace Aeras
 
     double previous_time_label;
 
+    //Create enum type for the different kinds of elements (currently lines and quads) 
+    enum elemType {LINE, QUAD};
+    elemType ElemType;
+
   protected:
 
     Teuchos::RCP<Teuchos::ParameterList> discParams;
