@@ -72,7 +72,6 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 
   //just creating 1 element block.  May want to change later...
   std::string ebn="Element Block 0";
-  std::cout << "ELEMENT_RANK: " << stk::topology::ELEMENT_RANK << std::endl; 
   partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
   ebNameToIndex[ebn] = 0;
   std::vector<std::string> nsNames;
@@ -91,6 +90,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
     //IKT, 8/28/15, FIXME: implement separate validateParameters for "Line" elements.
     //This will be different than quads b/c lines are based on STK instead of Ioss. 
     //params->validateParameters(*getValidDiscretizationParametersLines(),0);
+    //IKT, 8/28/15: FIXME: the following causes an exception to be thrown in STK.  Need to figure out why. 
     stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
   }
 
@@ -242,9 +242,60 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
     }    
   }
   else if (element_name == "Line") { //Lines (for xz hydrostatic) 
-    //IKT, 8/5/15, FIXME: fill in! 
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Aeras::SpectralOutputSTKMeshStruct setFieldAndBulkData() method not yet implemented for Line elements!" << std::endl);
+    //IKT, 8/28/15: the following code needs testing 
+#ifdef OUTPUT_TO_SCREEN
+    std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl; 
+    for (int ws = 0; ws < wsElNodeID.size(); ws++){           
+      for (int e = 0; e < wsElNodeID[ws].size(); e++){        
+        std::cout << "Spectral Mesh Element " << e << ": Nodes = ";
+        for (size_t inode = 0; inode < points_per_edge; ++inode)
+          std::cout << wsElNodeID[ws][e][inode] << " ";
+              std::cout << std::endl;
+      }
+    }
+#endif
+    int count = 0;  
+    int numOutputEles = wsElNodeID.size()*(points_per_edge-1);
+    for (int ws = 0; ws < wsElNodeID.size(); ws++){             // workset
+      for (int e = 0; e < wsElNodeID[ws].size(); e++){          // cell
+        for (int i=0; i<points_per_edge-1; i++) {           //Each spectral element broken into (points_per_edge-1) linear elements
+          //Set connectivity for new mesh  
+          const unsigned int elem_GID = count + numOutputEles*commT->getRank();
+          count++; 
+          stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+          singlePartVec[0] = partVec[ebNo];
+          //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based 
+          stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
+          stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK, 
+                                    1+wsElNodeID[ws][e][i], nodePartVec);
+          stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK, 
+                                    1+wsElNodeID[ws][e][i+1], nodePartVec);
+#ifdef OUTPUT_TO_SCREEN
+          std::cout << "ws, e, i " << ws << ", " << e << ", " << i  << std::endl; 
+          std::cout << "Output Mesh elem_GID, node0, node1: " << elem_GID << ", " 
+                    << wsElNodeID[ws][e][i] << ", " 
+                    << wsElNodeID[ws][e][i+1] << std::endl; 
+#endif 
+          bulkData->declare_relation(elem, node0, 0);
+          bulkData->declare_relation(elem, node1, 1);
+
+          //Set coordinates of new mesh
+          double* coord;
+          //set node 0 in STK linear mesh 
+          coord = stk::mesh::field_data(*coordinates_field, node0);
+#ifdef OUTPUT_TO_SCREEN
+          std::cout << "Output mesh node0 x-coord: " << coords[ws][e][i][0] << std::endl;  
+#endif 
+          coord[0] = coords[ws][e][i][0];
+          //set node 1 in STK linear mesh 
+          coord = stk::mesh::field_data(*coordinates_field, node1);
+#ifdef OUTPUT_TO_SCREEN
+          std::cout << "Output mesh node1 x-coord: " << coords[ws][e][i+1][0] << std::endl;  
+#endif 
+          coord[0] = coords[ws][e][i+1][0];
+        }
+      }
+    }    
   }
 
   Albany::fix_node_sharing(*bulkData);

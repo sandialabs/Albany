@@ -3615,11 +3615,8 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     computeSideSetsLines();
   }
 
-  //if (spatial_dim == 2)
-  //{
-     createOutputMesh(); 
-     setupExodusOutput();
-  //}
+   createOutputMesh(); 
+   setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution
   // transfer and projection operations
