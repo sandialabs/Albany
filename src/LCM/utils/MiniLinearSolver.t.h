@@ -67,11 +67,6 @@ solve(
   //
   // Then deal with derivatives
   //
-  auto const
-  order = b[0].size();
-
-  assert(order > 0);
-
   Intrepid::Tensor<ValueT>
   DbDx(dimension);
 
@@ -128,21 +123,6 @@ solve(
   //
   // Then deal with derivatives
   //
-  auto const
-  order = b[0].size();
-
-  assert(order > 0);
-
-  Intrepid::Matrix<ValueT>
-  DbDp(dimension, order);
-
-  // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DbDp(i, j) = b(i).dx(j);
-    }
-  }
-
   Intrepid::Tensor<ValueT>
   DbDx(dimension);
 
@@ -153,17 +133,7 @@ solve(
     }
   }
 
-  // Solve for all DxDp
-  Intrepid::Matrix<ValueT>
-  DxDp = Intrepid::solve(DbDx, DbDp);
-
-  // Unpack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -209,21 +179,6 @@ solve(
   //
   // Then deal with derivatives
   //
-  auto const
-  order = b[0].size();
-
-  assert(order > 0);
-
-  Intrepid::Matrix<ValueT>
-  DbDp(dimension, order);
-
-  // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DbDp(i, j) = b(i).dx(j);
-    }
-  }
-
   Intrepid::Tensor<ValueT>
   DbDx(dimension);
 
@@ -234,17 +189,7 @@ solve(
     }
   }
 
-  // Solve for all DxDp
-  Intrepid::Matrix<ValueT>
-  DxDp = Intrepid::solve(DbDx, DbDp);
-
-  // Unpack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -306,21 +251,6 @@ solve(
   //
   // Then deal with derivatives
   //
-  auto const
-  order = b[0].size();
-
-  assert(order > 0);
-
-  Intrepid::Matrix<SGType>
-  DbDp(dimension, order);
-
-  // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DbDp(i, j) = b(i).dx(j);
-    }
-  }
-
   Intrepid::Tensor<SGType>
   DbDx(dimension);
 
@@ -331,17 +261,7 @@ solve(
     }
   }
 
-  // Solve for all DxDp
-  Intrepid::Matrix<SGType>
-  DxDp = Intrepid::solve(DbDx, DbDp);
-
-  // Unpack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -387,21 +307,6 @@ solve(
   //
   // Then deal with derivatives
   //
-  auto const
-  order = b[0].size();
-
-  assert(order > 0);
-
-  Intrepid::Matrix<SGType>
-  DbDp(dimension, order);
-
-  // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DbDp(i, j) = b(i).dx(j);
-    }
-  }
-
   Intrepid::Tensor<SGType>
   DbDx(dimension);
 
@@ -412,17 +317,7 @@ solve(
     }
   }
 
-  // Solve for all DxDp
-  Intrepid::Matrix<SGType>
-  DxDp = Intrepid::solve(DbDx, DbDp);
-
-  // Unpack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -486,21 +381,6 @@ solve(
   //
   // Then deal with derivatives
   //
-  auto const
-  order = b[0].size();
-
-  assert(order > 0);
-
-  Intrepid::Matrix<MPType>
-  DbDp(dimension, order);
-
-  // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DbDp(i, j) = b(i).dx(j);
-    }
-  }
-
   Intrepid::Tensor<MPType>
   DbDx(dimension);
 
@@ -511,17 +391,7 @@ solve(
     }
   }
 
-  // Solve for all DxDp
-  Intrepid::Matrix<MPType>
-  DxDp = Intrepid::solve(DbDx, DbDp);
-
-  // Unpack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -567,21 +437,6 @@ solve(
   //
   // Then deal with derivatives
   //
-  auto const
-  order = b[0].size();
-
-  assert(order > 0);
-
-  Intrepid::Matrix<MPType>
-  DbDp(dimension, order);
-
-  // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DbDp(i, j) = b(i).dx(j);
-    }
-  }
-
   Intrepid::Tensor<MPType>
   DbDx(dimension);
 
@@ -592,17 +447,7 @@ solve(
     }
   }
 
-  // Solve for all DxDp
-  Intrepid::Matrix<MPType>
-  DxDp = Intrepid::solve(DbDx, DbDp);
-
-  // Unpack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
