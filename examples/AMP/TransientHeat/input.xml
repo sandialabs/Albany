@@ -39,6 +39,7 @@
     <Parameter name="Method" type="string" value="Sim" />
     <Parameter name="Workset Size" type="int" value="50" />
     <Parameter name="Sim Model Input File Name" type="string" value="../meshes/cube.smd" />
+    <Parameter name="Parasolid Model Input File Name" type="string" value="../meshes/cube.xmt_txt" />
     <Parameter name="Sim Input File Name" type="string" value="../meshes/cube_finer.sms" />
     <Parameter name="Sim Output File Name" type="string" value="out.vtk" />
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{95,cube}" />
