@@ -87,6 +87,8 @@ const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
+
+  //OG store the inverse of diagonal?
   //initialize vector for inverse of mass diagonal
   Teuchos::RCP<Tpetra_Vector> inv_mass_diag = Teuchos::rcp(new Tpetra_Vector(mass_->getRowMap(), true)); 
   //get mass matrix's diagonal and put it in inv_mass_diag
@@ -304,8 +306,6 @@ Aeras::HVDecorator::evalModelImpl(
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, xtildeT);
   mm_counter++; 
 #endif  
-
-  //std::cout <<"in HVDec evalModelImpl a, b= " << alpha << "  "<< beta <<std::endl;
 
   if(Teuchos::nonnull(inArgsT.get_x_dot())){
 	  std::cout <<"in the if-statement for the update" <<std::endl;

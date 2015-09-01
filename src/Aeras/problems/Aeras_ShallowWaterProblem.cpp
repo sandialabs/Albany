@@ -29,6 +29,9 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if (eqnSet == "Scalar") { modelDim=2; neq=1; } 
     else { modelDim=2; neq=3; } 
   }
+
+  //OG: FIXME: Here (or/and in SW_Resid) should be a check for the case when both Explicit and Implicit HV are on.
+  //Should not be allowed.
   bool useExplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
   bool useImplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Implicit Hyperviscosity", false);
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 

@@ -784,9 +784,23 @@ evaluateFields(typename Traits::EvalData workset)
 
 		  }
 	    }
-      }
-    }//end of Laplace forming
+      }//end if ncoeff==1
 
+      //OG: this is a patch to fix vorticity field Residual(..,..,3)
+      //for backward Euler. This adds a nontrivial block to the mass matrix that is stored to compute
+      //a hyperviscosity  update for residual, LM^{-1}L. Since L contains zero block for vorticity
+      //variable, the residual does not change with this modification. But nans in M^{-1} are avoided.
+      //This if-statement may not be the best to detect the stage of computing M.
+	  if((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)&&(!usePrescribedVelocity)){
+		for (std::size_t qp=0; qp < numQPs; ++qp) {
+		  for (std::size_t node=0; node < numNodes; ++node) {
+		     Residual(cell,node,3) += UDot(cell,qp,3);
+		  }
+		}
+	  }
+
+
+    }//end of Laplace forming for h field
 
     if (useImplHyperviscosity) {
       for (std::size_t node=0; node < numNodes; ++node)
@@ -861,6 +875,20 @@ evaluateFields(typename Traits::EvalData workset)
 
       get_coriolis(cell, coriolis);
 
+      if((useExplHyperviscosity)&&(n_coeff == 1)) {
+        uX.initialize();
+        uY.initialize();
+        uZ.initialize();
+        utX.initialize();
+        utY.initialize();
+        utZ.initialize();
+        uXgradNodes.initialize();
+        uYgradNodes.initialize();
+        uZgradNodes.initialize();
+        utXgradNodes.initialize();
+        utYgradNodes.initialize();
+        utZgradNodes.initialize();
+      }
       if(useImplHyperviscosity) {
         uX.initialize();
         uY.initialize();
@@ -876,6 +904,7 @@ evaluateFields(typename Traits::EvalData workset)
         utZgradNodes.initialize();
       }
 
+
       for (std::size_t node=0; node < numNodes; ++node) {
         ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap[node]);
         ScalarT ulambda = UNodal(cell, node,1);
@@ -890,10 +919,35 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT utlambda;
         ScalarT uttheta;
 
+        if((useExplHyperviscosity)&&(n_coeff == 1)) {
+          utlambda = UDotDotNodal(cell, node,1);
+          uttheta  = UDotDotNodal(cell, node,2);
+        }
+
         if(useImplHyperviscosity) {
           utlambda = UNodal(cell, node,4);
           uttheta  = UNodal(cell, node,5);
         } 
+
+        if((useExplHyperviscosity)&&(n_coeff == 1)) {
+           ScalarT lam = lambda_nodal(cell, node);
+           ScalarT th = theta_nodal(cell, node);
+
+           ScalarT k11 = -sin(lam);
+           ScalarT k12 = -sin(th)*cos(lam);
+           ScalarT k21 =  cos(lam);
+           ScalarT k22 = -sin(th)*sin(lam);
+           ScalarT k32 =  cos(th);
+
+           uX(node) = k11*ulambda + k12*utheta;
+           uY(node) = k21*ulambda + k22*utheta;
+           uZ(node) = k32*utheta;
+
+           utX(node) = k11*utlambda + k12*uttheta;
+           utY(node) = k21*utlambda + k22*uttheta;
+           utZ(node) = k32*uttheta;
+
+        }
 
         if(useImplHyperviscosity) {
            ScalarT lam = lambda_nodal(cell, node);
@@ -914,9 +968,20 @@ evaluateFields(typename Traits::EvalData workset)
            utZ(node) = k32*uttheta;
 
         }
+
       }
       
-      if (useImplHyperviscosity) {
+      if ((useExplHyperviscosity)&&(n_coeff == 1)) {
+        gradient(uX, cell, uXgradNodes);
+        gradient(uY, cell, uYgradNodes);
+        gradient(uZ, cell, uZgradNodes);
+
+        gradient(utX, cell, utXgradNodes);
+        gradient(utY, cell, utYgradNodes);
+        gradient(utZ, cell, utZgradNodes);
+      }
+
+      if (useImplHyperviscosity){
         gradient(uX, cell, uXgradNodes);
         gradient(uY, cell, uYgradNodes);
         gradient(uZ, cell, uZgradNodes);
@@ -1026,8 +1091,78 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
         }
-      }
-    } // end cell loop
+      }//end if ImplHV
+
+
+
+      if ((useExplHyperviscosity)&&(n_coeff == 1)) {
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+            for (std::size_t node=0; node < numNodes; ++node) {
+
+              ScalarT lam = sphere_coord(cell, qp, 0);
+              ScalarT th = sphere_coord(cell, qp, 1);
+
+  //K = -sin L    -sin T cos L
+  //     cos L    -sin T sin L
+  //     0         cos T
+  //K^{-1} = K^T
+              ScalarT k11 = -sin(lam);
+              ScalarT k12 = -sin(th)*cos(lam);
+              ScalarT k21 =  cos(lam);
+              ScalarT k22 = -sin(th)*sin(lam);
+              ScalarT k32 =  cos(th);
+
+  //Do not delete:
+  //Consider
+  //V - tensor in tensor HV formulation, not hyperviscosity coefficient,
+  //assume V = [v11 v12; v21 v22] then expressions below, for Residual(cell,node,1)
+  //would take form
+  /*     k11*( (v11*utXgradNodes(qp,0) + v12*utXgradNodes(qp,1))*wGradBF(cell,node,qp,0) +
+               (v21*utXgradNodes(qp,0) + v22*utXgradNodes(qp,1))*wGradBF(cell,node,qp,1)
+             )
+       + k21*( (v11*utYgradNodes(qp,0) + v12*utYgradNodes(qp,1))*wGradBF(cell,node,qp,0) +
+               (v21*utYgradNodes(qp,0) + v22*utYgradNodes(qp,1))*wGradBF(cell,node,qp,1)
+             )
+  */
+
+
+              Residual(cell,node,1) +=
+                    sHvTau*(
+                        k11*( utXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+                      + k21*( utYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+                      //k31 = 0
+                    );
+
+
+              Residual(cell,node,2) +=
+                    sHvTau*(
+                        k12*( utXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+                      + k22*( utYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+                      + k32*( utZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utZgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+                    );
+
+              if(plotVorticity) Residual(cell,node,3) += 0.0;
+/*
+              if(doNotDampRotation){
+                 //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
+
+                 Residual(cell,node,1) +=
+                    -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wBF(cell,node,qp);
+
+                 Residual(cell,node,2) +=
+                    -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wBF(cell,node,qp);
+
+                 Residual(cell,node,4) += -2.0*U(cell,qp,1)*wBF(cell,node,qp)*RRadius*RRadius;
+
+                 Residual(cell,node,5) += -2.0*U(cell,qp,2)*wBF(cell,node,qp)*RRadius*RRadius;
+              } */
+            }
+          }
+        }//end if ExplHV
+
+
+
+    } // end workset cell loop
   } //end if !prescribedVelocities
 #else
 a = Aeras::ShallowWaterConstants::self().earthRadius;

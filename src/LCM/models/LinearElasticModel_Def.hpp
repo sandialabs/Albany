@@ -96,7 +96,7 @@ computeState(typename Traits::EvalData workset,
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         sigma.fill(stress,cell,pt,0,0);
-        ScalarT three_kappa = 3.0 * elastic_modulus(cell,pt) / (1.0 - 2.0*poissons_ratio(cell,pt));
+        ScalarT three_kappa = elastic_modulus(cell,pt) / (1.0 - 2.0*poissons_ratio(cell,pt));
         sigma -= three_kappa * expansion_coeff_ 
           * (temperature_(cell,pt) - ref_temperature_) * I;
 
