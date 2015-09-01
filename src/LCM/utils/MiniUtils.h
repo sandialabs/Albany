@@ -25,6 +25,9 @@ computeFADInfo(
     Intrepid::Tensor<S, N> const & DrDx,
     Intrepid::Vector<T, N> & x)
 {
+  // Check whether dealing with AD type.
+  if (Sacado::IsADType<T>::value == false) return;
+
   //Deal with derivative information
   auto const
   dimension = r.get_dimension();

@@ -41,18 +41,18 @@ solve(
   // First deal with values
   //
   auto const
-  local_dim = b.get_dimension();
+  dimension = b.get_dimension();
 
   Intrepid::Vector<ValueT, N>
-  Df(local_dim);
+  Df(dimension);
 
   Intrepid::Tensor<ValueT, N>
-  DfDx(local_dim);
+  DfDx(dimension);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     Df(i) = b(i).val();
 
-    for (auto j = 0; j < local_dim; ++j) {
+    for (auto j = 0; j < dimension; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
@@ -60,7 +60,7 @@ solve(
   Intrepid::Vector<ValueT, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
   }
 
@@ -68,16 +68,16 @@ solve(
   // Then deal with derivatives
   //
   auto const
-  global_dim = b[0].size();
+  order = b[0].size();
 
-  assert(global_dim > 0);
+  assert(order > 0);
 
   Intrepid::Tensor<ValueT>
-  DbDx(local_dim);
+  DbDx(dimension);
 
   // extract the jacobian
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < local_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < dimension; ++j) {
       DbDx(i, j) = A(i, j).val();
     }
   }
@@ -102,18 +102,18 @@ solve(
   // First deal with values
   //
   auto const
-  local_dim = b.get_dimension();
+  dimension = b.get_dimension();
 
   Intrepid::Vector<ValueT, N>
-  Df(local_dim);
+  Df(dimension);
 
   Intrepid::Tensor<ValueT, N>
-  DfDx(local_dim);
+  DfDx(dimension);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     Df(i) = b(i).val();
 
-    for (auto j = 0; j < local_dim; ++j) {
+    for (auto j = 0; j < dimension; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
@@ -121,7 +121,7 @@ solve(
   Intrepid::Vector<ValueT, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
   }
 
@@ -129,26 +129,26 @@ solve(
   // Then deal with derivatives
   //
   auto const
-  global_dim = b[0].size();
+  order = b[0].size();
 
-  assert(global_dim > 0);
+  assert(order > 0);
 
   Intrepid::Matrix<ValueT>
-  DbDp(local_dim, global_dim);
+  DbDp(dimension, order);
 
   // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < order; ++j) {
       DbDp(i, j) = b(i).dx(j);
     }
   }
 
   Intrepid::Tensor<ValueT>
-  DbDx(local_dim);
+  DbDx(dimension);
 
   // extract the jacobian
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < local_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < dimension; ++j) {
       DbDx(i, j) = A(i, j).val();
     }
   }
@@ -158,9 +158,9 @@ solve(
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
-  for (auto i = 0; i < local_dim; ++i) {
-    x(i).resize(global_dim);
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).resize(order);
+    for (auto j = 0; j < order; ++j) {
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
@@ -183,18 +183,18 @@ solve(
   // First deal with values
   //
   auto const
-  local_dim = b.get_dimension();
+  dimension = b.get_dimension();
 
   Intrepid::Vector<ValueT, N>
-  Df(local_dim);
+  Df(dimension);
 
   Intrepid::Tensor<ValueT, N>
-  DfDx(local_dim);
+  DfDx(dimension);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     Df(i) = b(i).val();
 
-    for (auto j = 0; j < local_dim; ++j) {
+    for (auto j = 0; j < dimension; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
@@ -202,7 +202,7 @@ solve(
   Intrepid::Vector<ValueT, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
   }
 
@@ -210,26 +210,26 @@ solve(
   // Then deal with derivatives
   //
   auto const
-  global_dim = b[0].size();
+  order = b[0].size();
 
-  assert(global_dim > 0);
+  assert(order > 0);
 
   Intrepid::Matrix<ValueT>
-  DbDp(local_dim, global_dim);
+  DbDp(dimension, order);
 
   // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < order; ++j) {
       DbDp(i, j) = b(i).dx(j);
     }
   }
 
   Intrepid::Tensor<ValueT>
-  DbDx(local_dim);
+  DbDx(dimension);
 
   // extract the jacobian
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < local_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < dimension; ++j) {
       DbDx(i, j) = A(i, j).val();
     }
   }
@@ -239,9 +239,9 @@ solve(
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
-  for (auto i = 0; i < local_dim; ++i) {
-    x(i).resize(global_dim);
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).resize(order);
+    for (auto j = 0; j < order; ++j) {
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
@@ -280,18 +280,18 @@ solve(
   // First deal with values
   //
   auto const
-  local_dim = b.get_dimension();
+  dimension = b.get_dimension();
 
   Intrepid::Vector<SGType, N>
-  Df(local_dim);
+  Df(dimension);
 
   Intrepid::Tensor<SGType, N>
-  DfDx(local_dim);
+  DfDx(dimension);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     Df(i) = b(i).val();
 
-    for (auto j = 0; j < local_dim; ++j) {
+    for (auto j = 0; j < dimension; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
@@ -299,7 +299,7 @@ solve(
   Intrepid::Vector<SGType, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
   }
 
@@ -307,26 +307,26 @@ solve(
   // Then deal with derivatives
   //
   auto const
-  global_dim = b[0].size();
+  order = b[0].size();
 
-  assert(global_dim > 0);
+  assert(order > 0);
 
   Intrepid::Matrix<SGType>
-  DbDp(local_dim, global_dim);
+  DbDp(dimension, order);
 
   // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < order; ++j) {
       DbDp(i, j) = b(i).dx(j);
     }
   }
 
   Intrepid::Tensor<SGType>
-  DbDx(local_dim);
+  DbDx(dimension);
 
   // extract the jacobian
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < local_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < dimension; ++j) {
       DbDx(i, j) = A(i, j).val();
     }
   }
@@ -336,9 +336,9 @@ solve(
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
-  for (auto i = 0; i < local_dim; ++i) {
-    x(i).resize(global_dim);
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).resize(order);
+    for (auto j = 0; j < order; ++j) {
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
@@ -361,18 +361,18 @@ solve(
   // First deal with values
   //
   auto const
-  local_dim = b.get_dimension();
+  dimension = b.get_dimension();
 
   Intrepid::Vector<SGType, N>
-  Df(local_dim);
+  Df(dimension);
 
   Intrepid::Tensor<SGType, N>
-  DfDx(local_dim);
+  DfDx(dimension);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     Df(i) = b(i).val();
 
-    for (auto j = 0; j < local_dim; ++j) {
+    for (auto j = 0; j < dimension; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
@@ -380,7 +380,7 @@ solve(
   Intrepid::Vector<SGType, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
   }
 
@@ -388,26 +388,26 @@ solve(
   // Then deal with derivatives
   //
   auto const
-  global_dim = b[0].size();
+  order = b[0].size();
 
-  assert(global_dim > 0);
+  assert(order > 0);
 
   Intrepid::Matrix<SGType>
-  DbDp(local_dim, global_dim);
+  DbDp(dimension, order);
 
   // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < order; ++j) {
       DbDp(i, j) = b(i).dx(j);
     }
   }
 
   Intrepid::Tensor<SGType>
-  DbDx(local_dim);
+  DbDx(dimension);
 
   // extract the jacobian
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < local_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < dimension; ++j) {
       DbDx(i, j) = A(i, j).val();
     }
   }
@@ -417,9 +417,9 @@ solve(
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
-  for (auto i = 0; i < local_dim; ++i) {
-    x(i).resize(global_dim);
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).resize(order);
+    for (auto j = 0; j < order; ++j) {
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
@@ -460,18 +460,18 @@ solve(
   // First deal with values
   //
   auto const
-  local_dim = b.get_dimension();
+  dimension = b.get_dimension();
 
   Intrepid::Vector<MPType, N>
-  Df(local_dim);
+  Df(dimension);
 
   Intrepid::Tensor<MPType, N>
-  DfDx(local_dim);
+  DfDx(dimension);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     Df(i) = b(i).val();
 
-    for (auto j = 0; j < local_dim; ++j) {
+    for (auto j = 0; j < dimension; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
@@ -479,7 +479,7 @@ solve(
   Intrepid::Vector<MPType, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
   }
 
@@ -487,26 +487,26 @@ solve(
   // Then deal with derivatives
   //
   auto const
-  global_dim = b[0].size();
+  order = b[0].size();
 
-  assert(global_dim > 0);
+  assert(order > 0);
 
   Intrepid::Matrix<MPType>
-  DbDp(local_dim, global_dim);
+  DbDp(dimension, order);
 
   // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < order; ++j) {
       DbDp(i, j) = b(i).dx(j);
     }
   }
 
   Intrepid::Tensor<MPType>
-  DbDx(local_dim);
+  DbDx(dimension);
 
   // extract the jacobian
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < local_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < dimension; ++j) {
       DbDx(i, j) = A(i, j).val();
     }
   }
@@ -516,9 +516,9 @@ solve(
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
-  for (auto i = 0; i < local_dim; ++i) {
-    x(i).resize(global_dim);
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).resize(order);
+    for (auto j = 0; j < order; ++j) {
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
@@ -541,18 +541,18 @@ solve(
   // First deal with values
   //
   auto const
-  local_dim = b.get_dimension();
+  dimension = b.get_dimension();
 
   Intrepid::Vector<MPType, N>
-  Df(local_dim);
+  Df(dimension);
 
   Intrepid::Tensor<MPType, N>
-  DfDx(local_dim);
+  DfDx(dimension);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     Df(i) = b(i).val();
 
-    for (auto j = 0; j < local_dim; ++j) {
+    for (auto j = 0; j < dimension; ++j) {
       DfDx(i, j) = A(i, j).val();
     }
   }
@@ -560,7 +560,7 @@ solve(
   Intrepid::Vector<MPType, N> const
   Dx = Intrepid::solve(DfDx, Df);
 
-  for (auto i = 0; i < local_dim; ++i) {
+  for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
   }
 
@@ -568,26 +568,26 @@ solve(
   // Then deal with derivatives
   //
   auto const
-  global_dim = b[0].size();
+  order = b[0].size();
 
-  assert(global_dim > 0);
+  assert(order > 0);
 
   Intrepid::Matrix<MPType>
-  DbDp(local_dim, global_dim);
+  DbDp(dimension, order);
 
   // extract sensitivities of objective function(s) wrt p
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < order; ++j) {
       DbDp(i, j) = b(i).dx(j);
     }
   }
 
   Intrepid::Tensor<MPType>
-  DbDx(local_dim);
+  DbDx(dimension);
 
   // extract the jacobian
-  for (auto i = 0; i < local_dim; ++i) {
-    for (auto j = 0; j < local_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < dimension; ++j) {
       DbDx(i, j) = A(i, j).val();
     }
   }
@@ -597,9 +597,9 @@ solve(
   DxDp = Intrepid::solve(DbDx, DbDp);
 
   // Unpack into x.
-  for (auto i = 0; i < local_dim; ++i) {
-    x(i).resize(global_dim);
-    for (auto j = 0; j < global_dim; ++j) {
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).resize(order);
+    for (auto j = 0; j < order; ++j) {
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
