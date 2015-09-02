@@ -34,16 +34,10 @@ public:
 ///
 /// Newton Mini Solver class
 ///
-template<
-  template<typename S, Intrepid::Index N = Intrepid::DYNAMIC> class Residual,
-  typename T,
-  Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
 class NewtonMiniSolver
 {
 public:
-  using AD = typename Sacado::Fad::DFad<T>;
-  //using RES_VAL = typename Residual<T, N>;
-  //using RES_FAD = typename Residual<AD, N>;
 
   NewtonMiniSolver()
   {
@@ -51,7 +45,7 @@ public:
   }
 
   void
-  solve(Intrepid::Vector<T, N> & x);
+  solve(Residual & residual, Intrepid::Vector<T, N> & x);
 
   void setMaximumNumberIterations(T && mni)
   {max_num_iter_ = std::forward<T>(mni);}

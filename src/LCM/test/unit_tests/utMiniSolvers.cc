@@ -155,6 +155,74 @@ private:
 
 };
 
+template <typename S>
+class SquareRootMiniResidual
+{
+public:
+
+  SquareRootMiniResidual(S const c) : c_(c)
+  {
+    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
+  }
+
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  Intrepid::Vector<T, N>
+  compute(Intrepid::Vector<T, N> const & x)
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == 1);
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    r(0) = x(0) * x(0) - c_;
+
+    return r;
+  }
+
+private:
+  S const
+  c_{0.0};
+};
+
+TEUCHOS_UNIT_TEST(NewtonMiniSolver, SquareRoot)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  Intrepid::Index const
+  dimension{1};
+
+  using Residual = SquareRootMiniResidual<ValueT>;
+
+  ValueT const
+  square = 2.0;
+
+  Residual
+  residual(square);
+
+  LCM::NewtonMiniSolver<Residual, ValueT, dimension>
+  solver;
+
+  Intrepid::Vector<ValueT, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = 1.0;
+  }
+
+  solver.solve(residual, x);
+
+  ValueT const
+  error = std::abs(norm_square(x) - square);
+
+  TEST_COMPARE(error, <=, solver.getAbsoluteTolerance());
+}
+
 TEUCHOS_UNIT_TEST(MiniNewtonSolver, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
