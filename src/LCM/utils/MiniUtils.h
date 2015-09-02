@@ -12,6 +12,23 @@
 namespace LCM
 {
 
+///
+/// Residual interface for mini nonlinear solver
+/// To use the solver framework, derive from this class and perform
+/// residual computations in the compute method.
+///
+template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class Residual_Base
+{
+public:
+  virtual
+  Intrepid::Vector<T, N>
+  compute(Intrepid::Vector<T, N> const & x) = 0;
+
+  virtual
+  ~Residual_Base() {}
+};
+
 //
 // Deal with derivative information for all the mini solvers.
 // Call this when a converged solution is obtained on a system that is

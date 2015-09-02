@@ -10,25 +10,9 @@
 #include <utility>
 #include "PHAL_AlbanyTraits.hpp"
 #include <Intrepid_MiniTensor.h>
+#include "MiniUtils.h"
 
 namespace LCM{
-
-///
-/// Residual interafce for mini nonlinear solver
-/// To use the solver framework, derive from this class and perform
-/// residual computations in the compute method.
-///
-template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class Residual_Base
-{
-public:
-  virtual
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) = 0;
-
-  virtual
-  ~Residual_Base() {}
-};
 
 ///
 /// Newton Solver Base class
