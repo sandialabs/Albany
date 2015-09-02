@@ -8,7 +8,6 @@
 #define LCM_MiniLinearSolver_h
 
 #include "PHAL_AlbanyTraits.hpp"
-#include <Intrepid_MiniTensor.h>
 #include "MiniUtils.h"
 
 namespace LCM

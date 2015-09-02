@@ -7,9 +7,7 @@
 #if !defined(Intrepid_NonlinearSolver_h)
 #define Intrepid_NonlinearSolver_h
 
-#include <utility>
 #include "PHAL_AlbanyTraits.hpp"
-#include <Intrepid_MiniTensor.h>
 #include "MiniUtils.h"
 
 namespace LCM{

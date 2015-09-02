@@ -7,6 +7,8 @@
 #if !defined(LCM_MiniUtils_h)
 #define LCM_MiniUtils_h
 
+#include <utility>
+
 #include <Intrepid_MiniTensor.h>
 
 namespace LCM
@@ -27,6 +29,88 @@ public:
 
   virtual
   ~Residual_Base() {}
+};
+
+///
+/// Newton Mini Solver class
+///
+template<
+  template<typename S, Intrepid::Index N = Intrepid::DYNAMIC> class Residual,
+  typename T,
+  Intrepid::Index N = Intrepid::DYNAMIC>
+class NewtonMiniSolver
+{
+public:
+  using AD = typename Sacado::Fad::DFad<T>;
+  //using RES_VAL = typename Residual<T, N>;
+  //using RES_FAD = typename Residual<AD, N>;
+
+  NewtonMiniSolver()
+  {
+    STATIC_ASSERT(Sacado::IsADType<T>::value == false, no_fad_allowed);
+  }
+
+  void
+  solve(Intrepid::Vector<T, N> & x);
+
+  void setMaximumNumberIterations(T && mni)
+  {max_num_iter_ = std::forward<T>(mni);}
+
+  Intrepid::Index
+  getMaximumNumberIterations()
+  {return max_num_iter_;}
+
+  Intrepid::Index
+  getNumberIterations()
+  {return num_iter_;}
+
+  void setRelativeTolerance(T && rt)
+  {rel_tol_ = std::forward<T>(rt);}
+
+  T
+  getRelativeTolerance() const
+  {return rel_tol_;}
+
+  T
+  getRelativeError() const
+  {return rel_error_;}
+
+  void setAbsoluteTolerance(T && at)
+  {abs_tol_ = std::forward<T>(at);}
+
+  T
+  getAbsoluteTolerance() const
+  {return abs_tol_;}
+
+  T
+  getAbsoluteError() const
+  {return abs_error_;}
+
+  bool
+  isConverged() const
+  {return converged_;}
+
+protected:
+  Intrepid::Index
+  max_num_iter_{128};
+
+  Intrepid::Index
+  num_iter_{0};
+
+  T
+  rel_tol_{1.0e-10};
+
+  T
+  rel_error_{1.0};
+
+  T
+  abs_tol_{1.0e-10};
+
+  T
+  abs_error_{1.0};
+
+  bool
+  converged_{false};
 };
 
 //
@@ -81,5 +165,7 @@ computeFADInfo(
 }
 
 } // namespace LCM
+
+#include "MiniUtils.t.h"
 
 #endif // LCM_MiniUtils_h
