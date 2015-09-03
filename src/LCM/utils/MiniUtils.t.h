@@ -61,7 +61,10 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
   resi = residual.compute(soln);
 
   Intrepid::Vector<AD, N>
-  soln_ad(dimension), resi_ad(dimension);
+  soln_ad(dimension);
+
+  Intrepid::Vector<AD, N>
+  resi_ad(dimension);
 
   for (Intrepid::Index i{0}; i < dimension; ++i) {
     soln_ad(i) = AD(dimension, i, soln(i));
@@ -140,7 +143,10 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
   resi = residual.compute(soln);
 
   Intrepid::Vector<AD, N>
-  soln_ad(dimension), resi_ad(dimension);
+  soln_ad(dimension);
+
+  Intrepid::Vector<AD, N>
+  resi_ad(dimension);
 
   for (Intrepid::Index i{0}; i < dimension; ++i) {
     soln_ad(i) = AD(dimension, i, soln(i));
@@ -281,6 +287,182 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
 
     if (reduction > this->min_reduction_) {
       soln_ad = soln_ad_next;
+    }
+
+    ++this->num_iter_;
+  }
+
+  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
+
+  return;
+}
+
+//
+//
+//
+template<typename Residual, typename T, Intrepid::Index N>
+void
+ConjugateGradientMethod<Residual, T, N>::
+solve(Residual & residual, Intrepid::Vector<T, N> & soln)
+{
+  using AD = typename Sacado::Fad::DFad<T>;
+
+  Intrepid::Index const
+  dimension = soln.get_dimension();
+
+  Intrepid::Vector<AD, N>
+  soln_ad(dimension);
+
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    soln_ad(i) = AD(dimension, i, soln(i));
+  }
+
+  Intrepid::Vector<AD, N>
+  resi_ad = - residual.compute(soln_ad);
+
+  Intrepid::Tensor<T, N>
+  Hessian(dimension);
+
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    for (Intrepid::Index j{0}; j < dimension; ++j) {
+      Hessian(i, j) = resi_ad(i).dx(j);
+    }
+  }
+
+  Intrepid::Vector<T, N>
+  resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
+
+  Intrepid::Vector<T, N>
+  precon_resi = Intrepid::solve(Hessian, resi);
+
+  Intrepid::Vector<T, N>
+  search_direction = precon_resi;
+
+  T
+  projection_new = Intrepid::dot(resi, search_direction);
+
+  T const
+  initial_norm = Intrepid::norm(resi);
+
+  this->num_iter_ = 0;
+
+  Intrepid::Index
+  restart_directions_counter = 0;
+
+  this->converged_ = initial_norm <= this->abs_tol_;
+
+  while (this->converged_ == false) {
+
+    resi_ad = - residual.compute(soln_ad);
+
+    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
+
+    this->abs_error_ = Intrepid::norm(resi);
+
+    this->rel_error_ = this->abs_error_ / initial_norm;
+
+    bool const
+    converged_relative = this->rel_error_ <= this->rel_tol_;
+
+    bool const
+    converged_absolute = this->abs_error_ <= this->abs_tol_;
+
+    this->converged_ = converged_relative || converged_absolute;
+
+    bool const
+    is_max_iter = this->num_iter_ >= this->max_num_iter_;
+
+    bool const
+    end_solve = this->converged_ || is_max_iter;
+
+    if (end_solve == true) break;
+
+    T
+    projection_search = Intrepid::dot(search_direction, search_direction);
+
+    T
+    step_length = - this->initial_secant_step_length_;
+
+    Intrepid::Vector<AD, N> const
+    trial_soln_ad =
+        soln_ad + this->initial_secant_step_length_ * search_direction;
+
+    Intrepid::Vector<AD, N> const
+    trial_gradient_ad = residual.compute(trial_soln_ad);
+
+    Intrepid::Vector<T, N> const
+    trial_gradient =
+        Sacado::Value<Intrepid::Vector<AD, N>>::eval(trial_gradient_ad);
+
+    T
+    projection_prev = Intrepid::dot(trial_gradient, search_direction);
+
+    // Secant line search.
+
+    for (Intrepid::Index i{0}; i < this->max_num_secant_iter_; ++i) {
+
+      Intrepid::Vector<AD, N> const
+      gradient_ad = residual.compute(soln_ad);
+
+      Intrepid::Vector<T, N> const
+      gradient = Sacado::Value<Intrepid::Vector<AD, N>>::eval(gradient_ad);
+
+      T const
+      projection = Intrepid::dot(gradient, search_direction);
+
+      step_length *= projection / (projection_prev - projection);
+
+      soln_ad += step_length * search_direction;
+
+      projection_prev = projection;
+
+      bool const
+      secant_converged = step_length * step_length * projection_search <=
+        this->secant_tol_ * this->secant_tol_;
+
+      if (secant_converged == true) break;
+
+    }
+
+    resi_ad = - residual.compute(soln_ad);
+
+    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
+
+    for (Intrepid::Index i{0}; i < dimension; ++i) {
+      for (Intrepid::Index j{0}; j < dimension; ++j) {
+        Hessian(i, j) = resi_ad(i).dx(j);
+      }
+    }
+
+    T const
+    projection_old = projection_new;
+
+    T const
+    projection_mid = Intrepid::dot(resi, precon_resi);
+
+    precon_resi = Intrepid::solve(Hessian, resi);
+
+    projection_new = Intrepid::dot(resi, precon_resi);
+
+    T const
+    gram_schmidt_factor = (projection_new - projection_mid) / projection_old;
+
+    ++restart_directions_counter;
+
+    bool const
+    restart_directions =
+        restart_directions_counter == this->restart_directions_interval_ ||
+        gram_schmidt_factor <= 0.0;
+
+    if (restart_directions == true) {
+
+      search_direction = precon_resi;
+      restart_directions_counter = 0;
+
+    } else {
+
+      search_direction = precon_resi + gram_schmidt_factor * search_direction;
+
     }
 
     ++this->num_iter_;
