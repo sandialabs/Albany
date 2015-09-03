@@ -10,7 +10,7 @@ namespace LCM
 //
 //
 //
-template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename Residual, typename T, Intrepid::Index N>
 std::unique_ptr<NonlinearMethod_Base<Residual, T, N>>
 nonlinearMethodFactory(NonlinearMethod const method_type)
 {
