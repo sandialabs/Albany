@@ -223,6 +223,52 @@ TEUCHOS_UNIT_TEST(NewtonMiniSolver, SquareRoot)
   TEST_COMPARE(error, <=, solver.getAbsoluteTolerance());
 }
 
+#if 0
+TEUCHOS_UNIT_TEST(MiniNonLinearNewtonSolver, SquareRoot)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  Intrepid::Index const
+  dimension{1};
+
+  using Residual = SquareRootMiniResidual<ValueT>;
+
+  ValueT const
+  square = 2.0;
+
+  Residual
+  residual(square);
+
+  LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, Residual, dimension>
+  solver(LCM::NonlinearMethod::NEWTON);
+
+  Intrepid::Vector<ValueT, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = 1.0;
+  }
+
+  solver.solve(residual, x);
+
+  ValueT const
+  error = std::abs(norm_square(x) - square);
+
+  using NMS = LCM::NewtonMiniSolver<Residual, ValueT, dimension>;
+
+  NMS &
+  nms = static_cast<NMS &>(solver.getNonlinearMethod());
+
+  ValueT const
+  absolute_tolerance = nms.getAbsoluteTolerance();
+
+  TEST_COMPARE(error, <=, absolute_tolerance);
+}
+#endif
+
 TEUCHOS_UNIT_TEST(MiniNewtonSolver, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;

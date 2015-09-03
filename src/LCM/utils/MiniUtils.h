@@ -15,6 +15,11 @@ namespace LCM
 {
 
 ///
+/// Types of nonlinear method for LCM nonlinear mini solvers.
+///
+enum class NonlinearMethod {NEWTON, TRUST_REGION, CONJUGATE_GRADIENT};
+
+///
 /// Residual interface for mini nonlinear solver
 /// To use the solver framework, derive from this class and perform
 /// residual computations in the compute method.
@@ -55,12 +60,23 @@ public:
 };
 
 ///
+/// Nonlinear mini solvers
+///
+template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+std::unique_ptr<MiniSolver<Residual, T, N>>
+nonlinearMethodFactory(NonlinearMethod const method_type);
+
+///
 /// Newton Mini Solver class
 ///
 template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
 class NewtonMiniSolver : public MiniSolver<Residual, T, N>
 {
 public:
+
+  virtual
+  ~NewtonMiniSolver()
+  {}
 
   virtual
   void

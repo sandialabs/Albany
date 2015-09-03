@@ -7,6 +7,8 @@
 #if !defined(Intrepid_NonlinearSolver_h)
 #define Intrepid_NonlinearSolver_h
 
+#include <memory>
+
 #include "PHAL_AlbanyTraits.hpp"
 #include "MiniUtils.h"
 
@@ -21,6 +23,12 @@ class MiniNonlinearSolver_Base
 {
 public:
   using ScalarT = typename EvalT::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  MiniNonlinearSolver_Base(NonlinearMethod const method_type) :
+    nonlinear_method_(*nonlinearMethodFactory<Residual, ValueT, N>(method_type))
+  {
+  }
 
   virtual
   ~MiniNonlinearSolver_Base() {}
@@ -29,7 +37,16 @@ public:
   void
   solve(Residual & residual, Intrepid::Vector<ScalarT, N> & x) {}
 
+  virtual
+  MiniSolver<Residual, ValueT, N> &
+  getNonlinearMethod() final
+  {
+    return nonlinear_method_;
+  }
+
 protected:
+  MiniSolver<Residual, ValueT, N> &
+  nonlinear_method_;
 };
 
 //
@@ -49,6 +66,10 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, Residual, N> :
 public:
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
 
+  MiniNonlinearSolver(NonlinearMethod const method_type) :
+    MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Residual, Residual, N>(method_type)
+  {
+  }
   void
   solve(Residual & residual, Intrepid::Vector<ScalarT, N> & x) override;
 };
