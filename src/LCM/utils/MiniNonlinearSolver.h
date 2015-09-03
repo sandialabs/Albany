@@ -13,6 +13,149 @@
 namespace LCM{
 
 ///
+/// MiniNonlinear Solver Base class
+///
+template<typename EvalT, typename Residual,
+Intrepid::Index N = Intrepid::DYNAMIC>
+class MiniNonlinearSolver_Base
+{
+public:
+  using ScalarT = typename EvalT::ScalarT;
+
+  virtual
+  ~MiniNonlinearSolver_Base() {}
+
+  virtual
+  void
+  solve(Residual & residual, Intrepid::Vector<ScalarT, N> & x) {}
+
+protected:
+};
+
+//
+// Specializations
+//
+template<typename EvalT, typename Residual,
+Intrepid::Index N = Intrepid::DYNAMIC>
+class MiniNonlinearSolver;
+
+//
+// Residual
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Residual, Residual, N>
+{
+public:
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+
+  void
+  solve(Residual & residual, Intrepid::Vector<ScalarT, N> & x) override;
+};
+
+//
+// Jacobian
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::Jacobian, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Jacobian, Residual, N>
+{
+public:
+  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+};
+
+//
+// Tangent
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Tangent, Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
+};
+
+//
+// Distribured Parameter Derivative
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
+};
+
+#ifdef ALBANY_SG
+//
+// SGResidual
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::SGResidual, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::SGResidual,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::SGResidual::ScalarT;
+};
+
+//
+// SGJacobian
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::SGJacobian, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::SGJacobian,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::SGJacobian::ScalarT;
+};
+
+//
+// SGTangent
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::SGTangent, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::SGTangent,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::SGTangent::ScalarT;
+};
+#endif
+
+#ifdef ALBANY_ENSEMBLE
+//
+// MPResidual
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::MPResidual, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::MPResidual,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::MPResidual::ScalarT;
+};
+
+//
+// MPJacobian
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::MPJacobian, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::MPJacobian,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::MPJacobian::ScalarT;
+};
+
+//
+// MPTangent
+//
+template<typename Residual, Intrepid::Index N>
+class MiniNonlinearSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
+    public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::MPTangent,
+    Residual, N>
+{
+  using ScalarT = typename PHAL::AlbanyTraits::MPTangent::ScalarT;
+};
+#endif
+
+///
 /// Newton Solver Base class
 ///
 template<typename EvalT, typename Residual,
