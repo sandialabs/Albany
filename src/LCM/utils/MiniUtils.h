@@ -32,20 +32,39 @@ public:
 };
 
 ///
-/// Newton Mini Solver class
+/// Mini Solver Base Class
 ///
 template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class NewtonMiniSolver
+class MiniSolver
 {
 public:
 
-  NewtonMiniSolver()
+  MiniSolver()
   {
     STATIC_ASSERT(Sacado::IsADType<T>::value == false, no_fad_allowed);
   }
 
+  virtual
+  ~MiniSolver()
+  {}
+
+  virtual
   void
-  solve(Residual & residual, Intrepid::Vector<T, N> & x);
+  solve(Residual & residual, Intrepid::Vector<T, N> & x) = 0;
+
+};
+
+///
+/// Newton Mini Solver class
+///
+template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class NewtonMiniSolver : public MiniSolver<Residual, T, N>
+{
+public:
+
+  virtual
+  void
+  solve(Residual & residual, Intrepid::Vector<T, N> & x) override;
 
   void setMaximumNumberIterations(T && mni)
   {max_num_iter_ = std::forward<T>(mni);}
