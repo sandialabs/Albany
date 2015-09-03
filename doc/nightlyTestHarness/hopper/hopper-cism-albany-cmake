@@ -37,7 +37,7 @@ cmake \
   -D CMAKE_C_COMPILER=cc \
   -D CMAKE_Fortran_COMPILER=ftn \
 \
-  -D CMAKE_CXX_FLAGS:STRING="-O2 -static std=gnu++11" \
+  -D CMAKE_CXX_FLAGS:STRING="-O2 -static -std=gnu++11" \
   -D BUILD_SHARED_LIBS:BOOL=OFF \
   -D CISM_STATIC_LINKING:BOOL=ON \
   -D CISM_Fortran_FLAGS="-ffree-line-length-none" \
