@@ -11,10 +11,10 @@ namespace LCM
 //
 //
 template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-std::unique_ptr<MiniSolver<Residual, T, N>>
+std::unique_ptr<NonlinearMethod_Base<Residual, T, N>>
 nonlinearMethodFactory(NonlinearMethod const method_type)
 {
-  std::unique_ptr<MiniSolver<Residual, T, N>>
+  std::unique_ptr<NonlinearMethod_Base<Residual, T, N>>
   method = nullptr;
 
   switch (method_type) {
@@ -28,7 +28,7 @@ nonlinearMethodFactory(NonlinearMethod const method_type)
     break;
 
   case NonlinearMethod::NEWTON:
-    method = new NewtonMiniSolver<Residual, T, N>();
+    method = new NewtonMethod<Residual, T, N>();
     break;
 
   case NonlinearMethod::TRUST_REGION:
@@ -47,7 +47,7 @@ nonlinearMethodFactory(NonlinearMethod const method_type)
 //
 template<typename Residual, typename T, Intrepid::Index N>
 void
-NewtonMiniSolver<Residual, T, N>::solve(
+NewtonMethod<Residual, T, N>::solve(
     Residual & residual,
     Intrepid::Vector<T, N> & soln)
 {

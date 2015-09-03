@@ -187,7 +187,7 @@ private:
   c_{0.0};
 };
 
-TEUCHOS_UNIT_TEST(NewtonMiniSolver, SquareRoot)
+TEUCHOS_UNIT_TEST(NewtonMethod, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
@@ -204,7 +204,7 @@ TEUCHOS_UNIT_TEST(NewtonMiniSolver, SquareRoot)
   Residual
   residual(square);
 
-  LCM::NewtonMiniSolver<Residual, ValueT, dimension>
+  LCM::NewtonMethod<Residual, ValueT, dimension>
   solver;
 
   Intrepid::Vector<ValueT, dimension>
@@ -223,7 +223,6 @@ TEUCHOS_UNIT_TEST(NewtonMiniSolver, SquareRoot)
   TEST_COMPARE(error, <=, solver.getAbsoluteTolerance());
 }
 
-#if 0
 TEUCHOS_UNIT_TEST(MiniNonLinearNewtonSolver, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
@@ -241,8 +240,11 @@ TEUCHOS_UNIT_TEST(MiniNonLinearNewtonSolver, SquareRoot)
   Residual
   residual(square);
 
+  LCM::NewtonMethod<Residual, ValueT, dimension>
+  newton_method;
+
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, Residual, dimension>
-  solver(LCM::NonlinearMethod::NEWTON);
+  solver(newton_method);
 
   Intrepid::Vector<ValueT, dimension>
   x;
@@ -257,17 +259,11 @@ TEUCHOS_UNIT_TEST(MiniNonLinearNewtonSolver, SquareRoot)
   ValueT const
   error = std::abs(norm_square(x) - square);
 
-  using NMS = LCM::NewtonMiniSolver<Residual, ValueT, dimension>;
-
-  NMS &
-  nms = static_cast<NMS &>(solver.getNonlinearMethod());
-
   ValueT const
-  absolute_tolerance = nms.getAbsoluteTolerance();
+  absolute_tolerance = newton_method.getAbsoluteTolerance();
 
   TEST_COMPARE(error, <=, absolute_tolerance);
 }
-#endif
 
 TEUCHOS_UNIT_TEST(MiniNewtonSolver, SquareRoot)
 {

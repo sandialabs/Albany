@@ -37,20 +37,20 @@ public:
 };
 
 ///
-/// Mini Solver Base Class
+/// Nonlinear Method Base Class
 ///
 template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class MiniSolver
+class NonlinearMethod_Base
 {
 public:
 
-  MiniSolver()
+  NonlinearMethod_Base()
   {
     STATIC_ASSERT(Sacado::IsADType<T>::value == false, no_fad_allowed);
   }
 
   virtual
-  ~MiniSolver()
+  ~NonlinearMethod_Base()
   {}
 
   virtual
@@ -60,22 +60,22 @@ public:
 };
 
 ///
-/// Nonlinear mini solvers
+/// Nonlinear method factory
 ///
 template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-std::unique_ptr<MiniSolver<Residual, T, N>>
+std::unique_ptr<NonlinearMethod_Base<Residual, T, N>>
 nonlinearMethodFactory(NonlinearMethod const method_type);
 
 ///
-/// Newton Mini Solver class
+/// Newton Method class
 ///
 template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class NewtonMiniSolver : public MiniSolver<Residual, T, N>
+class NewtonMethod : public NonlinearMethod_Base<Residual, T, N>
 {
 public:
 
   virtual
-  ~NewtonMiniSolver()
+  ~NewtonMethod()
   {}
 
   virtual
