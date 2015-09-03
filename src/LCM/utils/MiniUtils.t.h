@@ -286,6 +286,8 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
     ++this->num_iter_;
   }
 
+  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
+
   return;
 }
 
