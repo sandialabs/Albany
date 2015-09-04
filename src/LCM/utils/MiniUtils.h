@@ -20,12 +20,10 @@ namespace LCM
 enum class NonlinearMethod {NEWTON, TRUST_REGION, CONJUGATE_GRADIENT};
 
 ///
-/// Residual interface for mini nonlinear solver
-/// To use the solver framework, derive from this class and perform
-/// residual computations in the compute method.
+/// Nonlinear system (NLS) interface for mini nonlinear solver
 ///
 template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class Residual_Base
+class NonlinearSystem_Base
 {
 public:
   virtual
@@ -33,13 +31,13 @@ public:
   compute(Intrepid::Vector<T, N> const & x) = 0;
 
   virtual
-  ~Residual_Base() {}
+  ~NonlinearSystem_Base() {}
 };
 
 ///
 /// Nonlinear Method Base Class
 ///
-template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
 class NonlinearMethod_Base
 {
 public:
@@ -54,22 +52,22 @@ public:
 
   virtual
   void
-  solve(Residual & residual, Intrepid::Vector<T, N> & x) = 0;
+  solve(NLS & nls, Intrepid::Vector<T, N> & x) = 0;
 
 };
 
 ///
 /// Nonlinear method factory
 ///
-template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-std::unique_ptr<NonlinearMethod_Base<Residual, T, N>>
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+std::unique_ptr<NonlinearMethod_Base<NLS, T, N>>
 nonlinearMethodFactory(NonlinearMethod const method_type);
 
 ///
 /// Newton Method class
 ///
-template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class NewtonMethod : public NonlinearMethod_Base<Residual, T, N>
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class NewtonMethod : public NonlinearMethod_Base<NLS, T, N>
 {
 public:
 
@@ -78,7 +76,7 @@ public:
 
   virtual
   void
-  solve(Residual & residual, Intrepid::Vector<T, N> & x) override;
+  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -146,8 +144,8 @@ private:
 ///
 /// Trust Region method class.  See Nocedal's algorithm 11.5.
 ///
-template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class TrustRegionMethod : public NonlinearMethod_Base<Residual, T, N>
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class TrustRegionMethod : public NonlinearMethod_Base<NLS, T, N>
 {
 public:
 
@@ -156,7 +154,7 @@ public:
 
   virtual
   void
-  solve(Residual & residual, Intrepid::Vector<T, N> & x) override;
+  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -272,8 +270,8 @@ private:
 /// This is taken from J.R. Shewchuck "painless" conjugate gradient
 /// manuscript that is all over the place on the net.
 ///
-template<typename Residual, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class ConjugateGradientMethod : public NonlinearMethod_Base<Residual, T, N>
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class ConjugateGradientMethod : public NonlinearMethod_Base<NLS, T, N>
 {
 public:
 
@@ -282,7 +280,7 @@ public:
 
   virtual
   void
-  solve(Residual & residual, Intrepid::Vector<T, N> & x) override;
+  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)

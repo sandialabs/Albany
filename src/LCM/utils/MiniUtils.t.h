@@ -10,11 +10,11 @@ namespace LCM
 //
 //
 //
-template<typename Residual, typename T, Intrepid::Index N>
-std::unique_ptr<NonlinearMethod_Base<Residual, T, N>>
+template<typename NLS, typename T, Intrepid::Index N>
+std::unique_ptr<NonlinearMethod_Base<NLS, T, N>>
 nonlinearMethodFactory(NonlinearMethod const method_type)
 {
-  std::unique_ptr<NonlinearMethod_Base<Residual, T, N>>
+  std::unique_ptr<NonlinearMethod_Base<NLS, T, N>>
   method = nullptr;
 
   switch (method_type) {
@@ -28,15 +28,15 @@ nonlinearMethodFactory(NonlinearMethod const method_type)
     break;
 
   case NonlinearMethod::NEWTON:
-    method = new NewtonMethod<Residual, T, N>();
+    method = new NewtonMethod<NLS, T, N>();
     break;
 
   case NonlinearMethod::TRUST_REGION:
-    method = new TrustRegionMethod<Residual, T, N>();
+    method = new TrustRegionMethod<NLS, T, N>();
     break;
 
   case NonlinearMethod::CONJUGATE_GRADIENT:
-    method = new ConjugateGradientMethod<Residual, T, N>();
+    method = new ConjugateGradientMethod<NLS, T, N>();
     break;
 
   }
@@ -47,10 +47,10 @@ nonlinearMethodFactory(NonlinearMethod const method_type)
 //
 //
 //
-template<typename Residual, typename T, Intrepid::Index N>
+template<typename NLS, typename T, Intrepid::Index N>
 void
-NewtonMethod<Residual, T, N>::
-solve(Residual & residual, Intrepid::Vector<T, N> & soln)
+NewtonMethod<NLS, T, N>::
+solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -58,7 +58,7 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
   dimension = soln.get_dimension();
 
   Intrepid::Vector<T, N>
-  resi = residual.compute(soln);
+  resi = nls.compute(soln);
 
   Intrepid::Vector<AD, N>
   soln_ad(dimension);
@@ -79,7 +79,7 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
 
   while (this->converged_ == false) {
 
-    resi_ad = residual.compute(soln_ad);
+    resi_ad = nls.compute(soln_ad);
 
     resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
 
@@ -129,10 +129,10 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
 //
 //
 //
-template<typename Residual, typename T, Intrepid::Index N>
+template<typename NLS, typename T, Intrepid::Index N>
 void
-TrustRegionMethod<Residual, T, N>::
-solve(Residual & residual, Intrepid::Vector<T, N> & soln)
+TrustRegionMethod<NLS, T, N>::
+solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -140,7 +140,7 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
   dimension = soln.get_dimension();
 
   Intrepid::Vector<T, N>
-  resi = residual.compute(soln);
+  resi = nls.compute(soln);
 
   Intrepid::Vector<AD, N>
   soln_ad(dimension);
@@ -168,7 +168,7 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
   // Outer solution loop
   while (this->converged_ == false) {
 
-    resi_ad = residual.compute(soln_ad);
+    resi_ad = nls.compute(soln_ad);
 
     resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
 
@@ -244,7 +244,7 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
     soln_ad_next = soln_ad + step;
 
     Intrepid::Vector<AD, N> const
-    resi_ad_next = residual.compute(soln_ad_next);
+    resi_ad_next = nls.compute(soln_ad_next);
 
     // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
     Intrepid::Vector<T, N>
@@ -300,10 +300,10 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
 //
 //
 //
-template<typename Residual, typename T, Intrepid::Index N>
+template<typename NLS, typename T, Intrepid::Index N>
 void
-ConjugateGradientMethod<Residual, T, N>::
-solve(Residual & residual, Intrepid::Vector<T, N> & soln)
+ConjugateGradientMethod<NLS, T, N>::
+solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -318,14 +318,17 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
   }
 
   Intrepid::Vector<AD, N>
-  resi_ad = - residual.compute(soln_ad);
+  gradient_ad = nls.compute(soln_ad);
+
+  Intrepid::Vector<AD, N>
+  resi_ad = - gradient_ad;
 
   Intrepid::Tensor<T, N>
   Hessian(dimension);
 
   for (Intrepid::Index i{0}; i < dimension; ++i) {
     for (Intrepid::Index j{0}; j < dimension; ++j) {
-      Hessian(i, j) = resi_ad(i).dx(j);
+      Hessian(i, j) = gradient_ad(i).dx(j);
     }
   }
 
@@ -353,7 +356,9 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
 
   while (this->converged_ == false) {
 
-    resi_ad = - residual.compute(soln_ad);
+    gradient_ad = nls.compute(soln_ad);
+
+    resi_ad = - gradient_ad;
 
     resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
 
@@ -388,7 +393,7 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
         soln_ad + this->initial_secant_step_length_ * search_direction;
 
     Intrepid::Vector<AD, N> const
-    trial_gradient_ad = residual.compute(trial_soln_ad);
+    trial_gradient_ad = nls.compute(trial_soln_ad);
 
     Intrepid::Vector<T, N> const
     trial_gradient =
@@ -401,8 +406,7 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
 
     for (Intrepid::Index i{0}; i < this->max_num_secant_iter_; ++i) {
 
-      Intrepid::Vector<AD, N> const
-      gradient_ad = residual.compute(soln_ad);
+      gradient_ad = nls.compute(soln_ad);
 
       Intrepid::Vector<T, N> const
       gradient = Sacado::Value<Intrepid::Vector<AD, N>>::eval(gradient_ad);
@@ -424,13 +428,15 @@ solve(Residual & residual, Intrepid::Vector<T, N> & soln)
 
     }
 
-    resi_ad = - residual.compute(soln_ad);
+    gradient_ad = nls.compute(soln_ad);
+
+    resi_ad = - gradient_ad;
 
     resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
 
     for (Intrepid::Index i{0}; i < dimension; ++i) {
       for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = resi_ad(i).dx(j);
+        Hessian(i, j) = gradient_ad(i).dx(j);
       }
     }
 
