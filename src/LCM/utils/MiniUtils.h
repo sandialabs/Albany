@@ -20,6 +20,19 @@ namespace LCM
 enum class NonlinearMethod {NEWTON, TRUST_REGION, CONJUGATE_GRADIENT};
 
 ///
+/// Deal with derivative information for all the mini solvers.
+/// Call this when a converged solution is obtained on a system that is
+/// typed on a FAD type.
+/// Assuming that T is a FAD type and S is a simple type.
+///
+template<typename T, typename S, Intrepid::Index N>
+void
+computeFADInfo(
+    Intrepid::Vector<T, N> const & r,
+    Intrepid::Tensor<S, N> const & DrDx,
+    Intrepid::Vector<T, N> & x);
+
+///
 /// Nonlinear system (NLS) interface for mini nonlinear solver
 ///
 template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
@@ -388,57 +401,6 @@ private:
   bool
   converged_{false};
 };
-
-///
-/// Deal with derivative information for all the mini solvers.
-/// Call this when a converged solution is obtained on a system that is
-/// typed on a FAD type.
-/// Assuming that T is a FAD type and S is a simple type.
-///
-template<typename T, typename S, Intrepid::Index N>
-void
-computeFADInfo(
-    Intrepid::Vector<T, N> const & r,
-    Intrepid::Tensor<S, N> const & DrDx,
-    Intrepid::Vector<T, N> & x)
-{
-  // Check whether dealing with AD type.
-  if (Sacado::IsADType<T>::value == false) return;
-
-  //Deal with derivative information
-  auto const
-  dimension = r.get_dimension();
-
-  assert(dimension > 0);
-
-  auto const
-  order = r[0].size();
-
-  assert(order > 0);
-
-  // Extract sensitivities of r wrt p
-  Intrepid::Matrix<S>
-  DrDp(dimension, order);
-
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DrDp(i, j) = r(i).dx(j);
-    }
-  }
-
-  // Solve for all DxDp
-  Intrepid::Matrix<S>
-  DxDp = Intrepid::solve(DrDx, DrDp);
-
-  // Pack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
-
-}
 
 } // namespace LCM
 
