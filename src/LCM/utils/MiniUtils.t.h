@@ -127,7 +127,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 }
 
 //
-//
+// Trust Region method.  See Nocedal's algorithm 11.5.
 //
 template<typename NLS, typename T, Intrepid::Index N>
 void

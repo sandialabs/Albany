@@ -14,12 +14,12 @@ namespace LCM
 //
 // Residual
 //
-template<typename Residual, Intrepid::Index N>
+template<typename NLS, Intrepid::Index N>
 void
-MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
-solve(Residual & residual, Intrepid::Vector<ScalarT, N> & soln)
+MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, N>::
+solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
-  this->nonlinear_method_.solve(residual, soln);
+  this->nonlinear_method_.solve(nls, soln);
   return;
 }
 
