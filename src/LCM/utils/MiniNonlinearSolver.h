@@ -105,6 +105,15 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N> :
     public MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Tangent, NLS, N>
 {
   using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  MiniNonlinearSolver(NonlinearMethod_Base<NLS, ValueT, N> & nlm) :
+    MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Tangent, NLS, N>(nlm)
+  {
+  }
+
+  void
+  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -116,6 +125,15 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N> :
     NLS, N>
 {
   using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  MiniNonlinearSolver(NonlinearMethod_Base<NLS, ValueT, N> & nlm) :
+    MiniNonlinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, NLS, N>(nlm)
+  {
+  }
+
+  void
+  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 #ifdef ALBANY_SG
