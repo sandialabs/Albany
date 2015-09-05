@@ -95,7 +95,7 @@ public:
 };
 
 //
-// Distribured Parameter Derivative
+// Distributed Parameter Derivative
 //
 template<Intrepid::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N> :

@@ -606,4 +606,38 @@ TEUCHOS_UNIT_TEST(NonLinearSolverConjugateGradientMethod, SquareRoot)
   TEST_COMPARE(error, <=, absolute_tolerance);
 }
 
+//
+// Define some nonlinear functions (NLF) to test nonlinear optimization methods.
+//
+template <typename S>
+class CubicFn
+{
+public:
+
+  CubicFn(S const c) : c_(c)
+  {
+    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
+  }
+
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  compute(Intrepid::Vector<T, N> const & x)
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == 1);
+
+    T
+    f = x(0) * x(0) * x(0) / 3.0 - c_ * x(0);
+
+    return f;
+  }
+
+private:
+  S const
+  c_{0.0};
+};
+
+
 } // anonymous namespace

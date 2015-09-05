@@ -97,7 +97,7 @@ public:
 };
 
 // -----------------------------------------------------------------------------
-// Distribured Parameter Derivative
+// Distributed Parameter Derivative
 // -----------------------------------------------------------------------------
 template<typename Traits>
 class LocalNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, Traits> :

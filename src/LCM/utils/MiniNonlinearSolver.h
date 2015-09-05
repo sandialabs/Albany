@@ -117,7 +117,7 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N> :
 };
 
 //
-// Distribured Parameter Derivative
+// Distributed Parameter Derivative
 //
 template<typename NLS, Intrepid::Index N>
 class MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N> :
