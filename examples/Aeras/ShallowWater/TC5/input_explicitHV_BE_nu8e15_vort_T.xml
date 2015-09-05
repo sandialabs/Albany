@@ -14,7 +14,7 @@
       <Parameter name="Use Explicit Hyperviscosity" type="bool" value="True"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="8e15"/>
-<!--      <Parameter name="Plot Vorticity" type="bool" value="true"/>-->
+      <Parameter name="Plot Vorticity" type="bool" value="true"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
@@ -45,11 +45,14 @@
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_16_out.exo"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="20"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{939.515114672, 5960.00343284, 441330.14711}"/> 
+    <Parameter  name="Test Values" type="Array(double)" value="{
+                        1409.2719193,
+                    5965.84961034,
+                    441330.153945    }"/> 
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -59,7 +62,7 @@
      <Parameter name="Solver Type" type="string" value="Rythmos"/>
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="270"/>
+      <Parameter name="Final Time" type="double" value="8000"/>
       <!--Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/-->
       <ParameterList name="Rythmos Stepper">
@@ -69,7 +72,7 @@
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="3"/>
+        <Parameter name="Number of Time Steps" type="int" value="20"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">

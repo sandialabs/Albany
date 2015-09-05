@@ -1,20 +1,13 @@
 <ParameterList>
-<!--    <ParameterList name="Coupled System"> -->
-<!--    <Parameter name="Model XML Files" type="Array(string)" value="{input_hv_T.xml}"/> -->
-<!--  </ParameterList> -->
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
-    <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/>
+    <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-      <!-- Explicit HV runs with "Solution Method" = "Aeras Hyperviscosity" -->
-      <!-- and explicit timestepping. Note chat there are no checks on which --> 
-      <!-- time integration is used below. -->
-      <!-- Implitic HV runs with "Solution Method"="Transient". -->
-      <Parameter name="Use Explicit Hyperviscosity" type="bool" value="True"/>
+      <Parameter name="Use Implicit Hyperviscosity" type="bool" value="True"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="8e15"/>
-<!--      <Parameter name="Plot Vorticity" type="bool" value="true"/>-->
+      <Parameter name="Plot Vorticity" type="bool" value="true"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
@@ -45,21 +38,21 @@
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_16_out.exo"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="20"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{939.515114672, 5960.00343284, 441330.14711}"/> 
+    <Parameter  name="Test Values" type="Array(double)" value="{
+   805.298239912,                    5965.84961741,                    441330.153955}"/> 
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
   </ParameterList>
   <ParameterList name="Piro">
-     <Parameter name="Solver Type" type="string" value="Rythmos"/>
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="270"/>
+      <Parameter name="Final Time" type="double" value="8000"/>
       <!--Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/-->
       <ParameterList name="Rythmos Stepper">
@@ -69,7 +62,7 @@
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="3"/>
+        <Parameter name="Number of Time Steps" type="int" value="20"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">

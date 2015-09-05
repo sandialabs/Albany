@@ -325,11 +325,16 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
 	  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
 
-	  stk::mesh::Entity node;
+    stk::mesh::Entity node;
 	  if(il == 0)
 		  node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, singlePartVec);
 	  else
 		  node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, nodePartVec);
+
+    std::vector<int> sharing_procs;
+    procsSharingVertex(ib, sharing_procs);
+    for(int iproc=0; iproc<sharing_procs.size(); ++iproc)
+      bulkData->add_node_sharing(node, sharing_procs[iproc]);
 
     double* coord = stk::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
@@ -442,7 +447,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   	  }
   }
 
-  Albany::fix_node_sharing(*bulkData);
+  //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 
@@ -511,6 +516,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
 		  node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, singlePartVec);
 	  else
 		  node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, nodePartVec);
+
+    std::vector<int> sharing_procs;
+    procsSharingVertex(ib, sharing_procs);
+    for(int iproc=0; iproc<sharing_procs.size(); ++iproc)
+      bulkData->add_node_sharing(node, sharing_procs[iproc]);
 
       double* coord = stk::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
@@ -691,7 +701,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	}
   }
 
-  Albany::fix_node_sharing(*bulkData);
+  //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 

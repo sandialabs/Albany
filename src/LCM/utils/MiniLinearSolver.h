@@ -8,7 +8,6 @@
 #define LCM_MiniLinearSolver_h
 
 #include "PHAL_AlbanyTraits.hpp"
-#include <Intrepid_MiniTensor.h>
 #include "MiniUtils.h"
 
 namespace LCM
@@ -96,7 +95,7 @@ public:
 };
 
 //
-// Distribured Parameter Derivative
+// Distributed Parameter Derivative
 //
 template<Intrepid::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N> :
