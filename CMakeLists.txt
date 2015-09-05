@@ -509,6 +509,11 @@ ENDIF()
 # defaults to Disabled
 
 OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
+IF (ENABLE_CISM_REDUCED_COMM) 
+  ADD_DEFINITIONS(-DREDUCED_COMM)
+  MESSAGE("---> CISM_REDUCED_COMM     is Enabled, compiling with -DREDUCED_COMM.  CISM-Albany will use reduced communicator.")
+ENDIF() 
+
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
   IF (ENABLE_ALBANY_EPETRA_EXE) 
     IF (ENABLE_CISM_EPETRA) 
