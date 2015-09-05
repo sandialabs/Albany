@@ -3,7 +3,10 @@
 //#define WRITE_TO_MATRIX_MARKET 
 
 //uncomment the following if you want to exclude procs with 0 elements from solve.
-#define REDUCED_COMM
+//#define REDUCED_COMM
+
+//uncomment the following if you want to use Epetra
+//#define CISM_USE_EPETRA
 
 #include <iostream>
 #include <fstream>
