@@ -50,7 +50,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
                                              const int points_per_edge_, const std::string element_name_):
-  GenericSTKMeshStruct(params,Teuchos::null,3),
+  GenericSTKMeshStruct(params,Teuchos::null, numDim_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false), 
   numDim(numDim_),
