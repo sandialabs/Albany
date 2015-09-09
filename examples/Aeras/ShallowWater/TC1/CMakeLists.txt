@@ -5,6 +5,14 @@
 #               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_homme_comp_BDF2_np4_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_homme_comp_BDF2_np4_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_homme_comp_BDF2_np7_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_homme_comp_BDF2_np7_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_homme_comp_RK3TVD_np4_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_homme_comp_RK3TVD_np4_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_homme_comp_RK3TVD_np7_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_homme_comp_RK3TVD_np7_T.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_explicit_slotcyl_hv_T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_explicit_slotcyl_hv_T.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_explicit_slotcyl_hv_T_rk4.xml
