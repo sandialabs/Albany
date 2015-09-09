@@ -87,7 +87,6 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   }
   else if (element_name_ == "Line") {
     params->validateParameters(*getValidDiscretizationParametersLines(),0);
-    //IKT, 8/28/15: FIXME: the following causes an exception to be thrown in STK.  Need to figure out why. 
     stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
     ElemType = LINE; 
   }
