@@ -117,13 +117,13 @@
             </ParameterList>
           </ParameterList>
         </ParameterList>
-        <Parameter name="Preconditioner Type" type="string" value="ML"/>
+        <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
         <ParameterList name="Preconditioner Types">
-          <ParameterList name="Ifpack">
-            <Parameter name="Prec Type" type="string" value="ILU"/>
+          <ParameterList name="Ifpack2">
+            <Parameter name="Prec Type" type="string" value="ILUT"/>
             <Parameter name="Overlap" type="int" value="1"/>
-            <ParameterList name="Ifpack Settings">
-              <Parameter name="fact: level-of-fill" type="int" value="1"/>
+            <ParameterList name="Ifpack2 Settings">
+              <Parameter name="fact: ilut level-of-fill" type="double" value="1.0"/>
             </ParameterList>
           </ParameterList>
           <ParameterList name="ML">
