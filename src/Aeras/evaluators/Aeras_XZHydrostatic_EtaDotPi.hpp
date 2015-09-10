@@ -51,10 +51,12 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
 
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > Tracer;
-  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > etadotdTracer;
+  //std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > etadotdTracer;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > dedotpiTracerde;
 
   const Teuchos::ArrayRCP<std::string> tracerNames;
-  const Teuchos::ArrayRCP<std::string> etadotdtracerNames;
+  //const Teuchos::ArrayRCP<std::string> etadotdtracerNames;
+  const Teuchos::ArrayRCP<std::string> dedotpitracerdeNames;
 
   const int numQPs;
   const int numDims;

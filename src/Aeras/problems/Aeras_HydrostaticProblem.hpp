@@ -776,6 +776,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
 
     {//Level u*Tracer
       RCP<ParameterList> p = rcp(new ParameterList("UTracer"));
+      p->set<string>("Velx Name",    "Velx");
       p->set<string>("PiVelx",       "PiVelx");
       p->set<string>("Tracer",       dof_names_tracers[t]);
       p->set<string>("UTracer",  "U"+dof_names_tracers[t]);
