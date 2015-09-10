@@ -5,6 +5,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_topography.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_topography.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_xz_matlab.m
