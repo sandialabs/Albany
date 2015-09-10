@@ -64,14 +64,14 @@ public:
   virtual
   void
   computeState(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields){
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields){
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
  }
 
@@ -89,8 +89,19 @@ private:
   ElastoViscoplasticModel& operator=(const ElastoViscoplasticModel&);
 
   ///
-  /// Initial Void Volume
+  /// compute stresses
   ///
+  // template<typename ArgT>
+  // void
+  // computeStress(Intrepid::Tensor<ScalarT> const & F,
+  //     Intrepid::Tensor<ArgT> const & Fp,
+  //     Intrepid::Tensor<ArgT> & T,
+  //     Intrepid::Tensor<ArgT> & S,
+  //     std::vector<ArgT> & shear) const;
+
+  ///
+  /// Initial Void Volume
+  ///xs
   RealType f0_;
 
   ///
@@ -122,6 +133,11 @@ private:
   /// Hydrogen and Helium yield surface parameters
   ///
   RealType alpha1_, alpha2_, Ra_;
+
+  ///
+  /// Flow Rule Scale Factor
+  ///
+  RealType f_scale_;
 
   ///
   /// flag to print convergence

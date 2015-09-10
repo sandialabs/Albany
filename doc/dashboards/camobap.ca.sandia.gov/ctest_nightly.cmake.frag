@@ -141,8 +141,8 @@ if (BUILD_ALB64)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany64Bit)
   set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
 
-  set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
-  set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (CISMDIR "/home/ikalash/cism-piscees")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -264,8 +264,8 @@ if (BUILD_ALB32)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany32Bit)
   set_property (GLOBAL PROPERTY Label IKTAlbany32Bit)
 
-  set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
-  set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (CISMDIR "/home/ikalash/cism-piscees")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -387,8 +387,8 @@ if (BUILD_ALB32_NOEPETRA)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoEpetra)
   set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoEpetra)
 
-  set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
-  set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (CISMDIR "/home/ikalash/cism-piscees")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -508,8 +508,8 @@ if (BUILD_ALB64_NOEPETRA)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany64BitNoEpetra)
   set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
 
-  set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
-  set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (CISMDIR "/home/ikalash/cism-piscees")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -638,8 +638,8 @@ if (BUILD_ALBFUNCTOR)
   set_property (GLOBAL PROPERTY SubProject IKTAlbanyFunctor)
   set_property (GLOBAL PROPERTY Label IKTAlbanyFunctor)
 
-  set (CISMDIR "/home/ikalash/Desktop/cism-piscees")
-  set (TRILINSTALLDIR "/home/ikalash/Desktop/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (CISMDIR "/home/ikalash/cism-piscees")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -648,21 +648,23 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
     "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_MOR:BOOL=ON"
+    "-DENABLE_MOR:BOOL=OFF"
     "-DENABLE_ATO:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_DAKOTA_RESTART_EXAMPLES=OFF"
+    "-DENABLE_ENSEMBLE:BOOL=ON"
+    "-DENSEMBLE_SIZE:INT=32"
     "-DENABLE_64BIT_INT:BOOL=OFF"
     "-DENABLE_LAME:BOOL=OFF")
   

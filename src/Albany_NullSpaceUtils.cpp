@@ -107,7 +107,7 @@ void Coord2RBM_nonElasticity(
   const int Ndof, const int NscalarDof, const int NSdim,
   double* const rbm)
 {
-  std::cout << "setting RBMs in Coord2RBM_nonElasticity!" << std::endl; 
+  //std::cout << "setting RBMs in Coord2RBM_nonElasticity!" << std::endl; 
   LO vec_leng, offset;
   int ii, jj, dof;
 
@@ -115,8 +115,8 @@ void Coord2RBM_nonElasticity(
   for (LO i = 0; i < Nnodes*Ndof*(NSdim + NscalarDof); i++)
     rbm[i] = 0.0;
 
-  std::cout << "...Ndof: " << Ndof << std::endl; 
-  std::cout << "...case: " << NSdim - NscalarDof << std::endl; 
+  //std::cout << "...Ndof: " << Ndof << std::endl; 
+  //std::cout << "...case: " << NSdim - NscalarDof << std::endl; 
   for (LO node = 0 ; node < Nnodes; node++) {
     dof = node*Ndof;
     switch( NSdim - NscalarDof ) {
@@ -157,7 +157,7 @@ void subtractCentroid(
   const Teuchos::RCP<const Tpetra_Map>& node_map, const int ndim,
   std::vector<ST>& v)
 {
-  const int nnodes = v.size() / ndim;
+  const int nnodes = node_map->getNodeNumElements();
 
   ST centroid[3]; // enough for up to 3d
   {
@@ -218,9 +218,11 @@ updatePL(const Teuchos::RCP<Teuchos::ParameterList>& mlParams)
 }
 
 void RigidBodyModes::
-resize(const int numSpaceDim_, const LO numNodes)
+resize(const int numSpaceDim_, const LO numNodes_)
 {
   numSpaceDim = numSpaceDim_;
+  numNodes = numNodes_;
+  //todo Is this really necessary?
   xyz.resize(numSpaceDim * (numNodes == 0 ? 1 : numNodes));
   if(nullSpaceDim > 0) {
     if (setNonElastRBM == true) {
@@ -235,13 +237,12 @@ resize(const int numSpaceDim_, const LO numNodes)
 void RigidBodyModes::
 getCoordArrays(double*& xx, double*& yy, double*& zz)
 {
-  const LO nn = xyz.size() / numSpaceDim;
   xx = &xyz[0];
   yy = zz = NULL;
   if (numSpaceDim > 1) {
-    yy = &xyz[0] + nn;
+    yy = &xyz[0] + numNodes;
     if (numSpaceDim > 2)
-      zz = &xyz[0] + 2*nn;
+      zz = &xyz[0] + 2*numNodes;
   }
 }
   
@@ -261,7 +262,6 @@ void RigidBodyModes::setParameters(
 void RigidBodyModes::
 setCoordinates(const Teuchos::RCP<const Tpetra_Map>& node_map)
 {
-  const LO numNodes = xyz.size() / numSpaceDim;
   TEUCHOS_TEST_FOR_EXCEPTION(
     node_map->getNodeNumElements() != numNodes,
     std::logic_error,
@@ -304,7 +304,6 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
     subtractCentroid(node_map, numSpaceDim, xyz);
     double *x, *y, *z;
     getCoordArrays(x, y, z);
-    const LO numNodes = xyz.size() / numSpaceDim;
     if (setNonElastRBM == true) 
       Coord2RBM_nonElasticity(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
     else
@@ -322,7 +321,6 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
       Teuchos::RCP<Tpetra_MultiVector> Rbm = Teuchos::rcp(
         new Tpetra_MultiVector(soln_map, rrAV, soln_map->getNodeNumElements(),
                                nullSpaceDim + numScalar));
-      Tpetra_MatrixMarket_Writer::writeDenseFile("rbm.mm", Rbm);
       plist->set("Nullspace", Rbm);
     }
   }

@@ -42,14 +42,7 @@ AAdapt::AlbanySizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& a
   //do not snap on deformation problems even if the model supports it
   in->shouldSnap = false;
 
-  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
-  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
-  if (loadBalancing) {
-    in->shouldRunPreZoltan = true;
-    in->shouldRunMidParma = true;
-    in->shouldRunPostParma = true;
-    in->maximumImbalance = lbMaxImbalance;
-  }
+  setMAInputParams(adapt_params_, in);
 
   ma::adapt(in);
 
@@ -78,10 +71,11 @@ AAdapt::AlbanySizeField::copyInputFields() {
     if ( nd->name != "proj_nodal_IsoMeshSizeField") continue;
 
     int value_type, nentries;
+    const int spdim = mesh_struct->numDim;
     switch (nd->ndims()) {
     case 0: value_type = apf::SCALAR; nentries = 1; break;
-    case 1: value_type = apf::VECTOR; nentries = 3; break;
-    case 2: value_type = apf::MATRIX; nentries = 9; break;
+    case 1: value_type = apf::VECTOR; nentries = spdim; break;
+    case 2: value_type = apf::MATRIX; nentries = spdim*spdim; break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                  "dim is not in {1,2,3}");

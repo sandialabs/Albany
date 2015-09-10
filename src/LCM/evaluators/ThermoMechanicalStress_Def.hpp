@@ -20,39 +20,39 @@ namespace LCM {
   ThermoMechanicalStress<EvalT, Traits>::ThermoMechanicalStress(
       const Teuchos::ParameterList& p) :
       F_array(p.get<std::string>("DefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), J_array(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")), J_array(
           p.get<std::string>("DetDefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), shearModulus(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), shearModulus(
           p.get<std::string>("Shear Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), bulkModulus(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), bulkModulus(
           p.get<std::string>("Bulk Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), temperature(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), temperature(
           p.get<std::string>("Temperature Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), yieldStrength(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), yieldStrength(
           p.get<std::string>("Yield Strength Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), hardeningModulus(
           p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satMod(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), satMod(
           p.get<std::string>("Saturation Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satExp(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), satExp(
           p.get<std::string>("Saturation Exponent Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), deltaTime(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), deltaTime(
           p.get<std::string>("Delta Time Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")), stress(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout")), stress(
           p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), Fp(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")), Fp(
           p.get<std::string>("Fp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), eqps(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")), eqps(
           p.get<std::string>("eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), mechSource(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), mechSource(
           p.get<std::string>("Mechanical Source Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), thermalExpansionCoeff(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), thermalExpansionCoeff(
           p.get<RealType>("Thermal Expansion Coefficient")), refTemperature(
           p.get<RealType>("Reference Temperature"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
-        Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+        Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     tensor_dl->dimensions(dims);
     numQPs = dims[1];

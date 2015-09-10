@@ -16,15 +16,15 @@ namespace LCM {
   L2ProjectionResidual<EvalT, Traits>::
   L2ProjectionResidual(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>                ("Weighted BF Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
     wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
     projectedField (p.get<std::string>               ("Projected Field Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
     Pfield      (p.get<std::string>               ("Projection Field Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     TResidual   (p.get<std::string>                ("Residual Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") ),
 		 haveMechSource(false),
 		 haveSource(false)
   {
@@ -42,7 +42,7 @@ namespace LCM {
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
 

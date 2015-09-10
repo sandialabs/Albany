@@ -24,9 +24,17 @@
     </ParameterList>
 -->
   </ParameterList>
+  <ParameterList name="Debug Output">
+     <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/-->
+     <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
+     <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
+     <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
+     <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
+  </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="./uniform_10_quad9.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD9/uniform_10_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
@@ -38,7 +46,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{5380.26315789}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{5380.35101725}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -47,7 +55,7 @@
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
       <!--Parameter name="Num Time Steps" type="int" value="2000"/-->
-      <Parameter name="Num Time Steps" type="int" value="10"/>
+      <Parameter name="Num Time Steps" type="int" value="1"/>
       <!-- Originally Num Time Steps was 10; reduced it for nightly tests (IK, 10/8/14) -->
       <!--Parameter name="Num Time Steps" type="double" value="10."/-->
       <Parameter name="Final Time" type="double" value= "100."/>

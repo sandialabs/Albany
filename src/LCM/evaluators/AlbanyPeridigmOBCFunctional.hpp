@@ -102,9 +102,9 @@ namespace Albany {
 #ifdef ALBANY_SG
     //! Intialize stochastic Galerkin method
     virtual void init_sg(
-      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
-      const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
-      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
+      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double>>& basis,
+      const Teuchos::RCP<const Stokhos::Quadrature<int,double>>& quad,
+      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double>>& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm) {}
 
     //! Evaluate stochastic Galerkin response
@@ -115,7 +115,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       Stokhos::EpetraVectorOrthogPoly& sg_g);
 
     //! Evaluate stochastic Galerkin tangent
@@ -130,7 +130,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
@@ -148,7 +148,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       ParamVec* deriv_p,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
@@ -171,7 +171,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       Stokhos::ProductEpetraVector& mp_g);
 
     //! Evaluate multi-point tangent
@@ -186,7 +186,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
@@ -204,7 +204,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       ParamVec* deriv_p,
       Stokhos::ProductEpetraVector* mp_g,
       Stokhos::ProductEpetraMultiVector* mp_dg_dx,

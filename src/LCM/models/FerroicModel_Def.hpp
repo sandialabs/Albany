@@ -43,8 +43,8 @@ FerroicModel(Teuchos::ParameterList* p,
     R(0,0) = 1.0; R(1,1) = 1.0; R(2,2) = 1.0;
   }
 
-  if(p->isType<Teuchos::Array<RealType> >("Bin Fractions") )
-    initialBinFractions = p->get<Teuchos::Array<RealType> >("Bin Fractions");
+  if(p->isType<Teuchos::Array<RealType>>("Bin Fractions") )
+    initialBinFractions = p->get<Teuchos::Array<RealType>>("Bin Fractions");
   else 
     initialBinFractions.resize(0);
 
@@ -104,7 +104,7 @@ FerroicModel(Teuchos::ParameterList* p,
     const Teuchos::ParameterList& cParams = p->get<Teuchos::ParameterList>("Critical Values");
     int transitionIndex = 0;
     for(int i=0; i<nVariants; i++){
-      Teuchos::Array<RealType> array = cParams.get<Teuchos::Array<RealType> >(Albany::strint("Variant",i+1));
+      Teuchos::Array<RealType> array = cParams.get<Teuchos::Array<RealType>>(Albany::strint("Variant",i+1));
       TEUCHOS_TEST_FOR_EXCEPTION(array.size()!=nVariants, std::invalid_argument,
          ">>> ERROR (FerroicModel): List of critical values for variant " << i+1 << " is wrong length");
       for(int j=0; j<nVariants; j++){
@@ -192,8 +192,8 @@ FerroicModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   PHX::MDField<ScalarT> strain = *dep_fields[strainName];
@@ -204,7 +204,7 @@ computeState(typename Traits::EvalData workset,
 
 
   int nVariants = crystalVariants.size();
-  Teuchos::Array<PHX::MDField<ScalarT> > newBinFractions(nVariants);
+  Teuchos::Array<PHX::MDField<ScalarT>> newBinFractions(nVariants);
   Teuchos::Array<Albany::MDArray> oldBinFractions(nVariants);
   for(int i=0; i<nVariants; i++){
     oldBinFractions[i] = (*workset.stateArrayPtr)[binNames[i] + "_old"];
@@ -605,8 +605,8 @@ Intrepid::Vector<ScalarT>& E, Intrepid::Vector<ScalarT>& linear_D)
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
@@ -666,18 +666,18 @@ void parseBasis(const Teuchos::ParameterList& pBasis,
            Intrepid::Tensor<RealType>& R)
 /******************************************************************************/
 {
-  if(pBasis.isType<Teuchos::Array<RealType> >("X axis")){
-    Teuchos::Array<RealType> Xhat = pBasis.get<Teuchos::Array<RealType> >("X axis");
+  if(pBasis.isType<Teuchos::Array<RealType>>("X axis")){
+    Teuchos::Array<RealType> Xhat = pBasis.get<Teuchos::Array<RealType>>("X axis");
     R(0,0) = Xhat[0]; R(0,1) = Xhat[1]; R(0,2) = Xhat[2];
 //    R(0,0) = Xhat[0]; R(1,0) = Xhat[1]; R(2,0) = Xhat[2];
   }
-  if(pBasis.isType<Teuchos::Array<RealType> >("Y axis")){
-    Teuchos::Array<RealType> Yhat = pBasis.get<Teuchos::Array<RealType> >("Y axis");
+  if(pBasis.isType<Teuchos::Array<RealType>>("Y axis")){
+    Teuchos::Array<RealType> Yhat = pBasis.get<Teuchos::Array<RealType>>("Y axis");
     R(1,0) = Yhat[0]; R(1,1) = Yhat[1]; R(1,2) = Yhat[2];
 //    R(0,1) = Yhat[0]; R(1,1) = Yhat[1]; R(2,1) = Yhat[2];
   }
-  if(pBasis.isType<Teuchos::Array<RealType> >("Z axis")){
-    Teuchos::Array<RealType> Zhat = pBasis.get<Teuchos::Array<RealType> >("Z axis");
+  if(pBasis.isType<Teuchos::Array<RealType>>("Z axis")){
+    Teuchos::Array<RealType> Zhat = pBasis.get<Teuchos::Array<RealType>>("Z axis");
     R(2,0) = Zhat[0]; R(2,1) = Zhat[1]; R(2,2) = Zhat[2];
 //    R(0,2) = Zhat[0]; R(1,2) = Zhat[1]; R(2,2) = Zhat[2];
   }
@@ -702,7 +702,7 @@ Transition(Teuchos::RCP<CrystalVariant> from_,
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 FerroicModel<EvalT, Traits>::
-CrystalVariant::CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase> >& phases, 
+CrystalVariant::CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase>>& phases, 
                                Teuchos::ParameterList& vParam)
 /******************************************************************************/
 {
@@ -732,9 +732,9 @@ CrystalVariant::CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase> >& phas
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
     ">>> ERROR (FerroicModel): Crystal variants require a crystallograph basis.");
 
-  if(vParam.isType<Teuchos::Array<RealType> >("Spontaneous Polarization")){
+  if(vParam.isType<Teuchos::Array<RealType>>("Spontaneous Polarization")){
     Teuchos::Array<RealType> 
-      inVals = vParam.get<Teuchos::Array<RealType> >("Spontaneous Polarization");
+      inVals = vParam.get<Teuchos::Array<RealType>>("Spontaneous Polarization");
       TEUCHOS_TEST_FOR_EXCEPTION(inVals.size() != THREE_D, std::invalid_argument,
       ">>> ERROR (FerroicModel): Expected 3 terms 'Spontaneous Polarization' vector.");
       spontEDisp.set_dimension(THREE_D);
@@ -743,9 +743,9 @@ CrystalVariant::CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase> >& phas
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
     ">>> ERROR (FerroicModel): Crystal variants require a 'Spontaneous Polarization'.");
 
-  if(vParam.isType<Teuchos::Array<RealType> >("Spontaneous Strain")){
+  if(vParam.isType<Teuchos::Array<RealType>>("Spontaneous Strain")){
     Teuchos::Array<RealType> 
-      inVals = vParam.get<Teuchos::Array<RealType> >("Spontaneous Strain");
+      inVals = vParam.get<Teuchos::Array<RealType>>("Spontaneous Strain");
       TEUCHOS_TEST_FOR_EXCEPTION(inVals.size() != 6, std::invalid_argument,
       ">>> ERROR (FerroicModel): Expected 6 voigt terms 'Spontaneous Strain' tensor.");
       spontStrain.set_dimension(THREE_D);

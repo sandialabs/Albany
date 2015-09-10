@@ -25,7 +25,7 @@ class PUMIVtk : public PUMIOutput {
 
   private:
 
-    std::ofstream vtu_collection_file;
+    std::fstream vtu_collection_file;
 
     Teuchos::RCP<APFMeshStruct> mesh_struct;
 
@@ -33,6 +33,8 @@ class PUMIVtk : public PUMIOutput {
     std::string outputFileName;
 
     int remeshFileIndex;
+
+    long ofilepos;
 
     //! Epetra communicator
     Teuchos::RCP<const Teuchos_Comm> commT;

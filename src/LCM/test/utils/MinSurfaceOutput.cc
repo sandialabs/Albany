@@ -69,7 +69,7 @@ int main(int ac, char* av[])
   using namespace std;
 
   //Obtain the number of columns of the boundary operator
-  std::vector<std::vector<int> > facesDirec = topology.facesDirections();
+  std::vector<std::vector<int>> facesDirec = topology.facesDirections();
   cout << "The number of columns of the boundary operator is: "
       << facesDirec.size() * 2 << endl;
 
@@ -123,7 +123,7 @@ int main(int ac, char* av[])
 
   //Create a matrix that contains the boundary nodes of each Entity
   //This is also the connectivity matrix
-  std::vector<std::vector<int> > boundaryNodes_;
+  std::vector<std::vector<int>> boundaryNodes_;
   std::vector<stk::mesh::Entity>::const_iterator I_entities;
   for (I_entities = EntitiesMinSurface.begin();
       I_entities != EntitiesMinSurface.end(); I_entities++) {
@@ -177,7 +177,7 @@ int main(int ac, char* av[])
   //Create a set based on boundaryNodes. This is to avoid having
   //repeated node identifiers
   std::set<int> boundaryNodes;
-  std::vector<std::vector<int> >::const_iterator I_rows;
+  std::vector<std::vector<int>>::const_iterator I_rows;
   std::vector<int>::const_iterator I_cols;
   for (I_rows = boundaryNodes_.begin(); I_rows != boundaryNodes_.end();
       I_rows++) {

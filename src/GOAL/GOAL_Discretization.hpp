@@ -29,17 +29,15 @@ class Discretization
     ~Discretization();
     void writeMesh(const char* n);
     void updateSolutionToMesh(const Tpetra_Vector& x);
+    void getSolution(Teuchos::RCP<Tpetra_Vector>& x);
     void enrichDiscretization();
     void decreaseDiscretization();
-    void fillSolution(Teuchos::RCP<Tpetra_Vector>& x);
-    Teuchos::RCP<Albany::APFDiscretization>
-      getAPFDisc() { return disc; }
+    Teuchos::RCP<Albany::APFDiscretization> disc;
   private:
     apf::Mesh* mesh;
     std::vector<std::string> solNames;
     std::vector<int> solIndex;
     Teuchos::ArrayRCP<apf::Field*> solFields;
-    Teuchos::RCP<Albany::APFDiscretization> disc;
 };
 
 }

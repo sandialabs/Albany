@@ -171,6 +171,11 @@ if (SET_COMPILERS_AUTOMATICALLY)
   PROJECT(Albany)
 endif()
 
+# AGS: Adding these lines so Ctest can be run to submit to cdash dashboard
+#   Uses CTestConfig.cmake file for Cdash info.
+ENABLE_TESTING()
+INCLUDE(CTest)
+
 set(ALBANY_ENABLE_FORTRAN ON CACHE BOOL "enable fortran" )
 
 IF (CMAKE_Fortran_COMPILER AND ALBANY_ENABLE_FORTRAN) # Enable Fortran if it is enabled in Trilinos.
@@ -389,13 +394,14 @@ ELSE()
 ENDIF()
 
 # set optional dependency on RBGen, for reduced basis computation
-LIST(FIND Trilinos_PACKAGE_LIST RBGen RBGen_List_ID)
+LIST(FIND Trilinos_LIBRARIES rbgen RBGen_List_ID)
 IF (RBGen_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_RBGEN)
-  MESSAGE("-- Looking for RBGen:              Found, compiling with -DALBANY_RBGEN")
+  MESSAGE("-- Looking for rbgen library:      Found, compiling with -DALBANY_RBGEN")
   SET(ALBANY_RBGEN TRUE)
 ELSE()
-  MESSAGE("-- Looking for RBGen:              NOT found.")
+  MESSAGE("-- Looking for rbgen library:      NOT found.")
+  MESSAGE("      -- To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
   SET(ALBANY_RBGEN FALSE)
 ENDIF()
 
@@ -427,20 +433,6 @@ IF (ENABLE_LCM)
 ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
-ENDIF()
-
-# set optional dependency on the BGL, defaults to Enabled
-# This option is added due to issued with compiling BGL with the intel compilers
-# see Trilinos bugzilla bug #6343
-#
-OPTION(ENABLE_BGL "Flag to turn on the Phalanx graphviz capabilities (dependent on BGL)" ON)
-IF (ENABLE_BGL)
-    ADD_DEFINITIONS(-DALBANY_BGL)
-    MESSAGE("-- BGL       is Enabled, compiling with -DALBANY_BGL")
-    SET(ALBANY_BGL TRUE)
-ELSE()
-  MESSAGE("-- BGL       is NOT Enabled. Graph visualization in Phalanx will not be available!")
-  SET(ALBANY_BGL FALSE)
 ENDIF()
 
 # set optional dependency on ATO, defaults to Disabled
@@ -517,13 +509,21 @@ ENDIF()
 # defaults to Disabled
 
 OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
+OPTION(ENABLE_CISM_REDUCED_COMM "Flag to turn on reduced communicator for CISM-Albany runs" ON)
+OPTION(ENABLE_CISM_EPETRA "Flag to turn on Epetra for CISM-Albany" OFF)
+
+
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
+  IF (ENABLE_CISM_REDUCED_COMM) 
+    ADD_DEFINITIONS(-DREDUCED_COMM)
+    MESSAGE("---> CISM_REDUCED_COMM     is Enabled, compiling with -DREDUCED_COMM.  CISM-Albany will use reduced communicator.")
+  ENDIF()
   IF (ENABLE_ALBANY_EPETRA_EXE) 
     IF (ENABLE_CISM_EPETRA) 
       ADD_DEFINITIONS(-DCISM_USE_EPETRA) 
-      MESSAGE("-- CISM_EPETRA     is Enabled, compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Epetra software stack.")
+      MESSAGE("---> CISM_EPETRA     is Enabled, compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Epetra software stack.")
      ELSE()
-      MESSAGE("-- CISM_EPETRA     is Disabled, NOT compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Tpetra software stack.")
+      MESSAGE("---> CISM_EPETRA     is Disabled, NOT compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Tpetra software stack.")
     ENDIF()
   ENDIF()
   IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE OR ENABLE_DEMO_PDES)
@@ -532,18 +532,18 @@ Albany was built with LCM, LAME, HYDRIDE or ENABLE_DEMO_PDES.  Turn these off to
 cism_driver.")
   ENDIF ()
   ADD_DEFINITIONS(-DCISM_HAS_FELIX)
-  MESSAGE("-- CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_FELIX")
+  MESSAGE("---> CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_FELIX")
   SET(CISM_HAS_FELIX TRUE)
   IF (NOT CISM_INCLUDE_DIR)
     MESSAGE("\nError:  CISM_INCLUDE_DIR not defined\n")
   ELSE()
-    MESSAGE("-- CISM_INCLUDE_DIR ${CISM_INCLUDE_DIR}")
+    MESSAGE("---> CISM_INCLUDE_DIR ${CISM_INCLUDE_DIR}")
   ENDIF()
 ELSEIF(ENABLE_CISM_INTERFACE AND (NOT ENABLE_FELIX))
   MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires ENABLE_FELIX
 to be ON\n")
 ELSE()
-  MESSAGE("-- CISM_INTERFACE     is NOT Enabled.")
+  MESSAGE("---> CISM_INTERFACE     is NOT Enabled.")
   SET(CISM_HAS_FELIX FALSE)
 ENDIF()
 
@@ -554,9 +554,9 @@ IF (ENABLE_MPAS_INTERFACE AND ENABLE_FELIX)
   IF (ENABLE_ALBANY_EPETRA_EXE) 
     IF (ENABLE_MPAS_EPETRA) 
       ADD_DEFINITIONS(-DMPAS_USE_EPETRA) 
-      MESSAGE("-- MPAS_EPETRA     is Enabled, compiling with -DMPAS_USE_EPETRA.  MPAS-Albany will run with Epetra software stack.")
+      MESSAGE("---> MPAS_EPETRA     is Enabled, compiling with -DMPAS_USE_EPETRA.  MPAS-Albany will run with Epetra software stack.")
      ELSE()
-      MESSAGE("-- MPAS_EPETRA     is Disabled, NOT compiling with -DMPAS_USE_EPETRA.  MPAS-Albany will run with Tpetra software stack.")
+      MESSAGE("---> MPAS_EPETRA     is Disabled, NOT compiling with -DMPAS_USE_EPETRA.  MPAS-Albany will run with Tpetra software stack.")
     ENDIF()
   ENDIF()
   ADD_DEFINITIONS(-DMPAS_HAS_FELIX)
@@ -565,13 +565,13 @@ IF (ENABLE_MPAS_INTERFACE AND ENABLE_FELIX)
   IF (NOT MPAS_INCLUDE_DIR)
     MESSAGE("\nError:  MPAS_INCLUDE_DIR not defined\n")
   ELSE()
-    MESSAGE("-- MPAS_INCLUDE_DIR ${MPAS_INCLUDE_DIR}")
+    MESSAGE("---> MPAS_INCLUDE_DIR ${MPAS_INCLUDE_DIR}")
   ENDIF()
 ELSEIF(ENABLE_MPAS_INTERFACE AND (NOT ENABLE_FELIX))
   MESSAGE(FATAL_ERROR "\nError:  ENABLE_MPAS_INTERFACE requires ENABLE_FELIX
 to be ON\n")
 ELSE()
-  MESSAGE("-- MPAS_INTERFACE     is NOT Enabled.")
+  MESSAGE("---> MPAS_INTERFACE     is NOT Enabled.")
   SET(MPAS_HAS_FELIX FALSE)
 ENDIF()
 
@@ -673,6 +673,9 @@ IF (ENABLE_GOAL)
   IF(NOT ENABLE_SCOREC)
     MESSAGE(FATAL_ERROR "\nError: GOAL requires ENABLE_SCOREC to be ON\n")
   ENDIF()
+  IF(NOT ENABLE_LCM)
+    MESSAGE(FATAL_ERROR "\nError: GOAL requires ENABLE_LCM to be ON\n")
+  ENDIF()
   ADD_DEFINITIONS(-DALBANY_GOAL)
   MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
   SET(ALBANY_GOAL TRUE)
@@ -705,12 +708,24 @@ ELSE()
   MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
+
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
-  ADD_DEFINITIONS(-DALBANY_MOR)
-  MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
-  SET(ALBANY_MOR TRUE)
+  #Check if RBGen library has been built as a part of Anasazi.  
+  #If it has not, turn MOR off despite what user requested and print message explaining that MOR requires RBGen library. 
+  LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
+  IF (rbgen_List_ID GREATER -1)
+    MESSAGE("-- Looking for rbgen library: -- found!  Continuing.")
+    ADD_DEFINITIONS(-DALBANY_MOR)
+    MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
+    SET(ALBANY_MOR TRUE)
+  ELSE()
+    MESSAGE("---- Looking for rbgen library: -- NOT found!") 
+    MESSAGE("-- MOR requires RBGen library.  To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
+    MESSAGE("-- MOR       is NOT Enabled.")
+    SET(ALBANY_MOR FALSE)
+  ENDIF()
 ELSE()
   MESSAGE("-- MOR       is NOT Enabled.")
   SET(ALBANY_MOR FALSE)
@@ -793,38 +808,6 @@ ELSE()
   SET(ALBANY_CATALYST FALSE)
 ENDIF()
 
-# Set optional build of StochasticGalerkin and MultiPoint types
-# These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
-IF (ENABLE_SG_MP)
-  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
-          Use ENABLE_SG for Stochastic Galerkin
-          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
-ENDIF()
-
-# OPtional build with embedded Stochastic Galerkin evaluations
-OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
-IF (ENABLE_SG)
-  if (1)
-    message ("-- WARNING: SG is not working yet after the Kokkos merge. Disabling.")
-    set (ALBANY_SG FALSE)
-    if (ENABLE_ASCR)
-      set (ENABLE_ASCR FALSE)
-    endif ()
-    message ("-- SG        is NOT Enabled.")
-  else ()
-    ADD_DEFINITIONS(-DALBANY_SG)
-    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
-    SET(ALBANY_SG TRUE)
-  endif ()
-ELSE()
-  MESSAGE("-- SG        is NOT Enabled.")
-  SET(ALBANY_SG FALSE)
-  IF(ENABLE_ASCR)
-    MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG to be ON\n")
-  ENDIF()
-ENDIF()
-
 # Add option for CONTACT work, defaults to disabled
 OPTION(ENABLE_CONTACT "Flag to turn on CONTACT code in LCM" OFF)
 IF (ENABLE_CONTACT AND ENABLE_ALBANY_EPETRA_EXE)
@@ -839,10 +822,10 @@ ELSE()
   ENDIF()
 ENDIF()
 
-## Other Miscellaneous Albany Options here:
-MESSAGE("\nMiscellaneous Albany Options:")
+## Other Albany Template Options here:
+MESSAGE("\nAlbany Templated Data Type Options:")
 
-# Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
+# Set FAD data type to static SLFAD if requested.
 OPTION(ENABLE_FAST_FELIX "Flag to turn on Code Optimization for FELIX that
 may break other physics" OFF)
 OPTION(ENABLE_SLFAD "Flag to turn on Code Optimization for ALBANY that
@@ -853,8 +836,36 @@ SET(SLFAD_SIZE 32 CACHE INT "set Sacado SLFad size")
 IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_SLFAD_SIZE=${SLFAD_SIZE})
-  MESSAGE("-- FAST_FELIX               is Enabled: MIGHT BREAK OTHER PHYSICS!!")
-  MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
+  MESSAGE("-- FADType   is SLFAD, compiling with -DALBANY_FAST_FELIX -DALBANY_SLFAD_SIZE=${SLFAD_SIZE}")  
+  MESSAGE("---> WARNING: problems with elemental DOFs > ${SLFAD_SIZE} will fail.")  
+ELSE()
+  MESSAGE("-- FADType   is DFAD (default).")
+ENDIF()
+
+# Set optional build of StochasticGalerkin and MultiPoint types
+# These are required for embedded UQ, but slow compilation considerably
+OPTION(ENABLE_SG_MP "DEPRECATED Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
+IF (ENABLE_SG_MP)
+  MESSAGE(FATAL_ERROR "\nENABLE_SG_MP configure option no longer exists.
+          Use ENABLE_SG for Stochastic Galerkin
+          Use ENABLE_ENSEMBLE for Ensemble (a.k.a. MP) capability")
+ENDIF()
+
+# OPtional build with embedded Stochastic Galerkin evaluations
+OPTION(ENABLE_SG "Flag to turn on SG Stochastic Galerkin Code" OFF)
+IF (ENABLE_SG)
+  if (1)
+    set (ALBANY_SG FALSE)
+    message ("-- SG        is NOT Enabled.")
+    message ("---> WARNING: SG is not working yet after the Kokkos merge. Disabling.")
+  else ()
+    ADD_DEFINITIONS(-DALBANY_SG)
+    MESSAGE("-- SG        is Enabled, compiling with -DALBANY_SG")
+    SET(ALBANY_SG TRUE)
+  endif ()
+ELSE()
+  MESSAGE("-- SG        is NOT Enabled.")
+  SET(ALBANY_SG FALSE)
 ENDIF()
 
 # Toggle embedded ensemble capability  (ENSEMBLE is a rename of MP)
@@ -870,6 +881,16 @@ ELSE()
   SET(ALBANY_ENSEMBLE FALSE)
 ENDIF()
 
+# Albany currently requires stokhos to be enabled, although in the future
+# this could become an option
+set(ALBANY_STOKHOS TRUE)
+IF (ALBANY_STOKHOS)
+  ADD_DEFINITIONS(-DALBANY_STOKHOS)
+ENDIF()
+
+## Other Miscellaneous Albany Options here:
+MESSAGE("\nMiscellaneous Albany Options:")
+
 # optionally set global ordinal size to signed 64 bits
 OPTION(ENABLE_64BIT_INT "Flag to set global ordinal size to signed 64 bit int" OFF)
 IF (ENABLE_64BIT_INT)
@@ -883,6 +904,20 @@ ELSE()
   SET(ALBANY_64BIT_INT FALSE)
   # Remove the CTestCustom.cmake file in the build directory if it exists
   #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+ENDIF()
+
+# set optional dependency on the BGL, defaults to Enabled
+# This option is added due to issued with compiling BGL with the intel compilers
+# see Trilinos bugzilla bug #6343
+#
+OPTION(ENABLE_BGL "Flag to turn on the Phalanx graphviz capabilities (dependent on BGL)" ON)
+IF (ENABLE_BGL)
+    ADD_DEFINITIONS(-DALBANY_BGL)
+    MESSAGE("-- BGL       is Enabled, compiling with -DALBANY_BGL")
+    SET(ALBANY_BGL TRUE)
+ELSE()
+  MESSAGE("-- BGL       is NOT Enabled. Graph visualization in Phalanx will not be available!")
+  SET(ALBANY_BGL FALSE)
 ENDIF()
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
@@ -961,12 +996,14 @@ ELSE()
   SET(ALBANY_PERFORMANCE_TESTS FALSE)
 ENDIF()
 
-option(ENABLE_KOKKOS "Turn on Kokkos" ON)
-IF(NOT ENABLE_KOKKOS)
-  ADD_DEFINITIONS(-DNO_KOKKOS_ALBANY)
-  MESSAGE("-- Kokkos                    is NOT Enabled.")
-ELSE()
-  MESSAGE("-- Kokkos                    is Enabled.")
+#Add option to build libraries but not link any executables (for FELIX uner MPAS)
+OPTION(ALBANY_LIBRARIES_ONLY "Flag to only build libraries and not link executables" OFF)
+IF (ALBANY_LIBRARIES_ONLY)
+  MESSAGE("-- ALBANY_LIBRARIES_ONLY is ON")
+  IF (LCM_TEST_EXES)
+    SET (LCM_TEST_EXES FALSE)
+    MESSAGE("--->  Disabling LCM_TEST_EXES")
+  ENDIF()
 ENDIF()
 
 # Add option to include Dakota restart examples in the test suite
@@ -1047,8 +1084,6 @@ endif(DOXYGEN_FOUND)
 
 add_subdirectory(src)
 
-enable_testing()
-
 #  Timeout real long running tests
 
 IF(ALBANY_CTEST_TIMEOUT)
@@ -1087,5 +1122,11 @@ IF(ALBANY_MPI)
   ENDIF()
 ENDIF(ALBANY_MPI)
 
-add_subdirectory(examples)
+# Add Albany test -- in the "examples" directory
+IF (ALBANY_LIBRARIES_ONLY)
+  MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
+ELSE()
+  add_subdirectory(examples)
+ENDIF()
+
 MESSAGE("\nAnd CMake says...:")

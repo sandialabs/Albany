@@ -56,7 +56,7 @@ private:
   int nwrkr_, prectr_, postctr_;
 };
 
-typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> >
+typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>
         IntrepidBasis;
 
 class ProjectIPtoNodalFieldQuadrature {
@@ -89,7 +89,7 @@ ProjectIPtoNodalFieldQuadrature (
 {
   cell_topo_ = Teuchos::rcp(new shards::CellTopology(&ctd_));
   Intrepid::DefaultCubatureFactory<RealType> cub_factory;
-  Teuchos::RCP<Intrepid::Cubature<RealType> >
+  Teuchos::RCP<Intrepid::Cubature<RealType>>
     cubature = cub_factory.create(*cell_topo_, degree);
   const int nqp = cubature->getNumPoints(), nd = cubature->getDimension();
   ref_points_.resize(nqp, nd);
@@ -101,7 +101,7 @@ ProjectIPtoNodalFieldQuadrature (
   // Tet<10>, at least at degree 4 and higher. In particular, a linear function
   // is *not* recovered.
   const Teuchos::RCP<Teuchos::ParameterList>& pfp =
-    p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem",
+    p.get< Teuchos::RCP<Teuchos::ParameterList>>("Parameters From Problem",
                                                   Teuchos::null);
   const bool composite = pfp.is_null() ? false :
     pfp->get<bool>("Use Composite Tet 10", false);
@@ -581,7 +581,7 @@ fillRHS (const typename Traits::EvalData workset) {
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
     p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
     getNodalDataVector();
-  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >&
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>&
     wsElNodeID = workset.wsElNodeID;
 
   const int num_fields = num_fields_
@@ -715,12 +715,12 @@ postEvaluate (typename Traits::PostEvalData workset) {
     new Tpetra_MultiVector(mgr_->mass_matrix->matrix()->getDomainMap(),
                            mgr_->ip_field->getNumVectors()));
   const Teuchos::RCP<Tpetra_Operator> tpetra_A = mgr_->mass_matrix->matrix();
-  const Teuchos::RCP<Thyra::LinearOpBase<ST> >
+  const Teuchos::RCP<Thyra::LinearOpBase<ST>>
     A = Thyra::createLinearOp(tpetra_A);
-  Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST> >
+  Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST>>
     nsA = lowsFactory_->createOp();
   Thyra::initializeOp<ST>(*lowsFactory_, A, nsA.ptr());
-  Teuchos::RCP< Thyra::MultiVectorBase<ST> >
+  Teuchos::RCP< Thyra::MultiVectorBase<ST>>
     x = Thyra::createMultiVector(node_projected_ip_field),
     b = Thyra::createMultiVector(mgr_->ip_field);
 
@@ -742,7 +742,7 @@ postEvaluate (typename Traits::PostEvalData workset) {
   *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
 
   // Compute residual and ST check convergence.
-  Teuchos::RCP< Thyra::MultiVectorBase<ST> >
+  Teuchos::RCP< Thyra::MultiVectorBase<ST>>
     y = Thyra::createMembers(x->range(), x->domain());
 
   // Compute y = A*x, where x is the solution from the linear solver.

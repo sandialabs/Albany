@@ -25,7 +25,7 @@ endif()
 set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "TEST DISABLED!!! NOT CONSERVING ENERGY")
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
-if (ALBANY_SG)
+if (ALBANY_STOKHOS)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)

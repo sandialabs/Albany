@@ -94,22 +94,25 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   // = 2: no enrichment)
   points_per_edge = stkMeshStruct->points_per_edge;
   CellTopologyData ctd = stkMeshStruct->getMeshSpecs()[0]->ctd;
-  std::string element_name = ctd.name; 
+  element_name = ctd.name; 
   size_t len      = element_name.find("_");
   if (len != std::string::npos) element_name = element_name.substr(0,len);
   if (element_name == "Line") { 
     spatial_dim = 1; 
     nodes_per_element = points_per_edge;
+    ElemType = LINE; 
   }
   else if (element_name == "Quadrilateral" ||
            element_name == "ShellQuadrilateral") {
     spatial_dim = 2;
     nodes_per_element = points_per_edge*points_per_edge;
+    ElemType = QUAD; 
   }
 #ifdef OUTPUT_TO_SCREEN 
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
-  *out << "spatial_dim: " << spatial_dim << std::endl;  
+  *out << "spatial_dim: " << spatial_dim << std::endl; 
+  *out << "nodes_per_element: " << nodes_per_element << std::endl;  
 #endif
   Aeras::SpectralDiscretization::updateMesh();
 }
@@ -654,8 +657,16 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  writeSolutionToMeshDatabaseT(solnT, time, overlapped);
-  writeSolutionToFileT(solnT, time, overlapped);
+  //IKT, 8/5/15, FIXME: this is a HACK! 
+  //There is something wrong with trying to output the solution to Exodus file for line elements.
+  //Need to figure out what is going on.  
+  //Also I don't get why writeSolutionT and the observer get called at all when there is no "Exodus Output Line" 
+  //in the input file.  I believe in this case there routines should not be called.
+  //For now, the following is a way to turn off output to Exodus for spectral elements.
+  if (ElemType != LINE) { 
+    writeSolutionToMeshDatabaseT(solnT, time, overlapped);
+    writeSolutionToFileT(solnT, time, overlapped);
+  }
 }
 
 void
@@ -2399,9 +2410,10 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       for (std::size_t i=0; i < buckets[b]->size(); i++)
       {
         bool anyXeqZero=false;
-        for (int j=0; j < nodes_per_element; j++)
+        for (int j=0; j < nodes_per_element; j++) {
           if (coords[b][i][j][d]==0.0)
             anyXeqZero=true;
+        }
         if (anyXeqZero)
         {
           bool flipZeroToScale=false;
@@ -2795,7 +2807,7 @@ void Aeras::SpectralDiscretization::createOutputMesh()
           stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
           wsElNodeID,
           coords,
-          points_per_edge));
+          points_per_edge, element_name));
     Teuchos::RCP<Albany::StateInfoStruct> sis =
       Teuchos::rcp(new Albany::StateInfoStruct);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -3537,9 +3549,9 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     enrichMeshQuads();
 
 #ifdef OUTPUT_TO_SCREEN
-    printConnectivity(true);
-    commT->barrier();
-    printConnectivity();
+  printConnectivity(true);
+  commT->barrier();
+  printConnectivity();
 #endif
 
   if (spatial_dim == 1) 
@@ -3547,25 +3559,32 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOwnedNodesAndUnknownsQuads();
 
-    //write owned maps to matrix market file for debug
-    Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
-    Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
+  //write owned maps to matrix market file for debug
+  Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
+  Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
 
-    // IK, 1/23/15: I've commented out the guts of this function.  It is
-    // only needed for ML/MueLu and is not critical right now to get
-    // spectral elements to work.
-    setupMLCoords();
+  // IK, 1/23/15: I've commented out the guts of this function.  It is
+  // only needed for ML/MueLu and is not critical right now to get
+  // spectral elements to work.
+  setupMLCoords();
 
   if (spatial_dim == 1) 
     computeOverlapNodesAndUnknownsLines();
   else if (spatial_dim == 2) 
     computeOverlapNodesAndUnknownsQuads();
 
-    //write overlap maps to matrix market file for debug
-    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
-    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+  //write overlap maps to matrix market file for debug
+  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
+  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+    
+    // Note that getCoordinates has not been converted to use the
+    // enriched mesh, but I believe it's not used anywhere.
+  if (spatial_dim == 1) 
+    computeCoordsLines();
+  else if (spatial_dim == 2) 
+    computeCoordsQuads();
 
-    computeWorksetInfo();
+  computeWorksetInfo();
 
     // IKT, 2/16/15: moving computeGraphsQuads() to after
     // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
@@ -3575,12 +3594,6 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeGraphsQuads();
 
-    // Note that getCoordinates has not been converted to use the
-    // enriched mesh, but I believe it's not used anywhere.
-  if (spatial_dim == 1) 
-    computeCoordsLines();
-  else if (spatial_dim == 2) 
-    computeCoordsQuads();
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
   // enriched coordinates This function is not critical and only
@@ -3604,11 +3617,8 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     computeSideSetsLines();
   }
 
-  if (spatial_dim == 2)
-  {
-     createOutputMesh(); 
-     setupExodusOutput();
-  }
+   createOutputMesh(); 
+   setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution
   // transfer and projection operations

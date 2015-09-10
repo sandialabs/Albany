@@ -26,6 +26,7 @@ Teuchos::RCP<Teuchos::ParameterList> paramList;
 Teuchos::RCP<const Teuchos_Comm> mpiCommT;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
+Teuchos::RCP<double> MPAS_dt;
 
 double MPAS_gravity(9.8), MPAS_rho_ice(910), MPAS_rho_seawater(1028);
 
@@ -76,7 +77,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
 
-  paramList->sublist("Problem").set("Time Step", deltat);
+  *MPAS_dt =  deltat;
 
   Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->layered_mesh_numbering->layers_ratio;
   for (int i = 0; i < nLayers; i++) {
@@ -275,34 +276,62 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& dirichletNodesIds,
     const std::vector<int>& floating2dEdgesIds) {
 
-  std::cout<<std::endl;
   slvrfctry = Teuchos::rcp(
       new Albany::SolverFactory("albany_input.xml", mpiCommT));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
 
   //Physical Parameters
-  paramList->sublist("Problem").sublist("Physical Parameters").set("Gravity", MPAS_gravity);
-  paramList->sublist("Problem").sublist("Physical Parameters").set("Ice Density", MPAS_rho_ice);
-  paramList->sublist("Problem").sublist("Physical Parameters").set("Water Density", MPAS_rho_seawater);
-
-  if (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") {
-    paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
-    paramList->sublist("Problem").set("Time Step", paramList->sublist("Problem").get("Time Step", 0.0)); //if it is not there set it to zero.
+  if(!paramList->sublist("Problem").isSublist("Physical Parameters")) {
+    paramList->sublist("Problem").sublist("Physical Parameters").set("Gravity", MPAS_gravity);
+    paramList->sublist("Problem").sublist("Physical Parameters").set("Ice Density", MPAS_rho_ice);
+    paramList->sublist("Problem").sublist("Physical Parameters").set("Water Density", MPAS_rho_seawater);
+  }
+  else {
+    std::cout<<"\nWARNING: Using Physical Parameters (gravity, ice/ocean densities) provided in Albany input file. In order to use those provided by MPAS, remove \"Physical Parameters\" sublist from Albany input file.\n"<<std::endl;
   }
 
-  Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
-  paramList->sublist("Problem").sublist("Neumann BCs").set("Cubature Degree", 3);
-  paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS basalside for DOF all set basal_scalar_field", *inputArrayBasal);
+  MPAS_dt = Teuchos::rcp(new double(0.0));
+  if (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") {
+    paramList->sublist("Problem").sublist("Parameter Fields").set("Register Surface Mass Balance", 1);
+    *MPAS_dt = paramList->sublist("Problem").get("Time Step", 0.0);
+    paramList->sublist("Problem").set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
+  }
 
-  //Lateral floating ice BCs
-  Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, MPAS_rho_ice/MPAS_rho_seawater));
-  paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS floatinglateralside for DOF all set lateral", *inputArrayLateral);
+  if(!paramList->sublist("Problem").isSublist("Neumann BCs")) {
+    paramList->sublist("Problem").sublist("Neumann BCs").set("Cubature Degree", 3);
+    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
+    paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS basalside for DOF all set basal_scalar_field", *inputArrayBasal);
+    //Lateral floating ice BCs
+    Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, MPAS_rho_ice/MPAS_rho_seawater));
+    paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS floatinglateralside for DOF all set lateral", *inputArrayLateral);
+  }
+  else {
+    std::cout<<"\nWARNING: Using Neumann BCs options provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
+  }
 
   //Dirichlet BCs
-  paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
-  paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U1 prescribe Field", "dirichlet_field");
-  paramList->sublist("Discretization").set("Method", "Extruded");
+  if(!paramList->sublist("Problem").isSublist("Dirichlet BCs")) {
+    paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
+    paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U1 prescribe Field", "dirichlet_field");
+    paramList->sublist("Discretization").set("Method", "Extruded");
+  }
+  else {
+    std::cout<<"\nWARNING: Using Dirichlet BCs options provided in Albany input file. In order to use those provided by MPAS, remove \"Dirichlet BCs\" sublist from Albany input file.\n"<<std::endl;
+  }
+
+  //Viscosity Options
+  if(!paramList->sublist("Problem").isSublist("FELIX Viscosity")) {
+    paramList->sublist("Problem").sublist("FELIX Viscosity").set("Type", "Glen's Law");
+    paramList->sublist("Problem").sublist("FELIX Viscosity").set("Glen's Law Homotopy Parameter", "1e-6");
+    paramList->sublist("Problem").sublist("FELIX Viscosity").set("Glen's Law n", "3.0");
+    paramList->sublist("Problem").sublist("FELIX Viscosity").set("Flow Rate Type", "Temperature Based");
+  }
+  else {
+    std::cout<<"\nWARNING: Using Viscosity options provided in Albany input file. In order to use those provided by MPAS, remove \"FELIX Viscosity\" sublist from Albany input file.\n"<<std::endl;
+  }
+
+  paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
 
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 

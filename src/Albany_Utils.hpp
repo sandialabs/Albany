@@ -76,6 +76,7 @@ namespace Albany {
     std::string xml_filename;
     std::string xml_filename2;
     std::string xml_filename3;
+    bool has_first_xml_file;
     bool has_second_xml_file;
     bool has_third_xml_file;
     bool vtune;
@@ -88,5 +89,9 @@ namespace Albany {
 
   // Connect executable to vtune for profiling
   void connect_vtune(const int p_rank);
+
+  // Do a nice stack trace for debugging
+  void do_stack_trace();
+
 }
 #endif //ALBANY_UTILS

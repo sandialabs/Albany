@@ -406,6 +406,12 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     else
       node = bulkData->declare_entity(stk::topology::NODE_RANK, il * vertexColumnShift + vertexLayerShift * node2dId + 1, nodePartVec);
 
+    std::vector<int> sharing_procs;
+    bulkData2D.comm_shared_procs( bulkData2D.entity_key(node2d), sharing_procs );
+    for(int iproc=0; iproc<sharing_procs.size(); ++iproc)
+      bulkData->add_node_sharing(node, sharing_procs[iproc]);
+
+
     double* coord = stk::mesh::field_data(*coordinates_field, node);
     double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
     coord[0] = coord2d[0];
@@ -658,7 +664,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     }
   }
   
-  Albany::fix_node_sharing(*bulkData);
+  //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
 }

@@ -1,16 +1,12 @@
-//*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
-//    This Software is released under the BSD license detailed     //
-//    in the file "license.txt" in the top-level Albany directory  //
-//*****************************************************************//
-
 #include "GOAL_Discretization.hpp"
-#include "apf.h"
-#include "apfMesh.h"
-#include "apfShape.h"
+
 #include "Albany_StateManager.hpp"
 #include "Albany_APFMeshStruct.hpp"
 #include "Albany_APFDiscretization.hpp"
+
+#include <apf.h>
+#include <apfMesh.h>
+#include <apfShape.h>
 
 namespace GOAL {
 
@@ -122,7 +118,7 @@ void Discretization::updateSolutionToMesh(
     disc->setSplitFields(solNames,solIndex,&(data[0]),false);
 }
 
-void Discretization::fillSolution(Teuchos::RCP<Tpetra_Vector>& x)
+void Discretization::getSolution(Teuchos::RCP<Tpetra_Vector>& x)
 {
   Teuchos::ArrayRCP<ST> data = x->get1dViewNonConst();
   for (int i=0; i < solFields.size(); ++i)

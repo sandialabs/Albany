@@ -63,7 +63,7 @@
 #endif
 
 #ifdef ALBANY_AERAS
-  #include "Aeras/Aeras_HyperViscosityDecorator.hpp"
+  #include "Aeras/Aeras_HVDecorator.hpp"
 #endif
 
 //#include "Thyra_EpetraModelEvaluator.hpp"
@@ -527,6 +527,7 @@ namespace {
 // move this implementation to Piro or (2) submit a bug report and remove this
 // implementation once the fix is in Teuchos::ParameterList.
 void renamePreconditionerParamList(
+  const Teuchos::RCP<Albany::Application>& app,
   const Teuchos::RCP<Teuchos::ParameterList>& stratParams, 
   const std::string &oldname, const std::string& newname)
 {
@@ -545,6 +546,10 @@ void renamePreconditionerParamList(
         ptypes.set(newname, mlist);
         // Remove the oldname sublist.
         ptypes.remove(oldname);
+
+         const Teuchos::RCP<Albany::RigidBodyModes>&
+            rbm = app->getProblem()->getNullSpace();
+         rbm->updatePL(sublist(sublist(stratParams, "Preconditioner Types"), newname));
       }
     }
   }      
@@ -646,12 +651,17 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //    }
 
 #ifdef ALBANY_AERAS 
-  if (solutionMethod == "Aeras HyperViscosity") {
-    std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras HyperViscosity" << std::endl;
- 
-    //files for each model).  This makes sense I think.  
+  if (solutionMethod == "Aeras Hyperviscosity") {
+    std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
+    //Check if HV coefficient tau is zero of "Explicit HV" is false. Then there is no need for Aeras HVDecorator.
+
+    bool useExplHyperviscosity = problemParams->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
+    double tau = problemParams->sublist("Shallow Water Problem").get<double>("Hyperviscosity Tau", 0.0);
+
+    if( (useExplHyperviscosity) && (tau != 0.0) ){
+
+///// make a solver, repeated code
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-   
     const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
     // Create and setup the Piro solver factory
     Piro::SolverFactory piroFactory;
@@ -671,7 +681,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
@@ -680,20 +690,31 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_MUELU */
 
     linearSolverBuilder.setParameterList(stratList);
+    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory = createLinearSolveStrategy(linearSolverBuilder);
 
-    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
-        createLinearSolveStrategy(linearSolverBuilder);
-    
-   const RCP<Aeras::HyperViscosityDecorator> model_with_solveT = rcp(new Aeras::HyperViscosityDecorator(appParams, solverComm, 
-                                                                         initial_guess, lowsFactory));
+///// create an app and a model evaluator
 
-    // WARNING: Aeras HyperViscosity does not contain a primary Albany::Application instance and so albanyApp is null.
-    //FIXME: create oberver correctly.  Right now it's null 
-    const RCP<Piro::ObserverBase<double> > observer; 
-    return piroFactory.createSolver<ST>(piroParams, model_with_solveT, observer);
-  }
-#endif
+    RCP<Albany::Application> app;
+
+    app = rcp(new Albany::Application(appComm, appParams, initial_guess));
+    RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelHV(new Aeras::HVDecorator(app, appParams));
+
+    albanyApp = app;
+
+    RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
  
+    modelWithSolveT =
+      rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
+
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+
+    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+
+    }//if useExplHV=true and tau <>0.
+
+  }//if Aeras HyperViscosity
+#endif
+
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
   if (solutionMethod == "Coupled Schwarz") {
 
@@ -723,7 +744,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
@@ -747,7 +768,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
     }
-#endif
+#endif /* LCM and Schwarz */
 
   RCP<Albany::Application> app = albanyApp;
   const RCP<Thyra::ModelEvaluator<ST> > modelT =
@@ -790,7 +811,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else

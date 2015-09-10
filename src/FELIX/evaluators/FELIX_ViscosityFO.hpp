@@ -130,6 +130,8 @@ public:
   KOKKOS_INLINE_FUNCTION
   void glenslaw_xz (const ScalarT &flowFactorVec, const int& cell) const;
 
+  double R, x_0, y_0, R2;
+
 #endif
  
 };

@@ -58,7 +58,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
 
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int>>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
   double* coord;
@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<std::vector<int>>& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
   double* coord;
@@ -228,7 +228,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();                                       
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -307,7 +307,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
   int num_cols = fpVT->getNumVectors();
 
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   // For (df/dp)^T*V we zero out corresponding entries in V

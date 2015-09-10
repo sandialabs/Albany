@@ -9,11 +9,6 @@
 #include "MechanicsProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#if defined(ALBANY_GOAL)
-#include "Albany_Application.hpp"
-#include "GOAL_BCManager.hpp"
-#endif
-
 void
 Albany::MechanicsProblem::
 getVariableType(Teuchos::ParameterList& param_list,
@@ -29,6 +24,8 @@ getVariableType(Teuchos::ParameterList& param_list,
     variable_type = MECH_VAR_TYPE_CONSTANT;
   else if (type == "DOF")
     variable_type = MECH_VAR_TYPE_DOF;
+  else if (type == "Time Dependent")
+    variable_type = MECH_VAR_TYPE_TIMEDEP;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Unknown variable type " << type << '\n');
@@ -44,6 +41,8 @@ variableTypeToString(Albany::MechanicsProblem::MECH_VAR_TYPE variable_type)
     return "None";
   else if (variable_type == MECH_VAR_TYPE_CONSTANT)
     return "Constant";
+  else if (variable_type == MECH_VAR_TYPE_TIMEDEP)
+    return "Time Dependent";
   return "DOF";
 }
 
@@ -53,7 +52,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<ParamLib>& param_lib,
     const int num_dims,
     const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-    Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
+    Teuchos::RCP<const Teuchos::Comm<int>>& commT) :
     Albany::AbstractProblem(params, param_lib),
     have_source_(false),
     thermal_source_(SOURCE_TYPE_NONE),
@@ -257,7 +256,7 @@ Albany::MechanicsProblem::
 void
 Albany::MechanicsProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs,
     Albany::StateManager& stateMgr)
 {
   // Construct All Phalanx Evaluators
@@ -281,7 +280,7 @@ buildProblem(
 
 }
 //------------------------------------------------------------------------------
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 Albany::MechanicsProblem::
 buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Albany::MeshSpecsStruct& meshSpecs,
@@ -334,14 +333,6 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
       this->params, this->paramLib);
 
-#if defined(ALBANY_GOAL)
-  Teuchos::RCP<GOAL::BCManager> bcm =
-    this->getApplication()->getBCManager();
-  if (Teuchos::nonnull(bcm)) {
-    bcm->dirichletNames = dirichletNames;
-    bcm->paramLib = this->paramLib;
-  }
-#endif
 }
 //------------------------------------------------------------------------------
 // Traction BCs
@@ -366,7 +357,7 @@ constructNeumannEvaluators(
   // so ordering is important
   
   std::vector<std::string> neumannNames(neq + 1);
-  Teuchos::Array<Teuchos::Array<int> > offsets;
+  Teuchos::Array<Teuchos::Array<int>> offsets;
   offsets.resize(neq + 1);
 
   neumannNames[0] = "sig_x";
@@ -453,10 +444,10 @@ void
 Albany::MechanicsProblem::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
     new_state
     ) const
     {

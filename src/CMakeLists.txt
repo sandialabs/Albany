@@ -92,6 +92,31 @@ IF(ALBANY_EPETRA)
   )
 ENDIF()
 
+#utility
+SET(SOURCES ${SOURCES}
+  utility/Counter.cpp
+  utility/CounterMonitor.cpp
+  utility/DisplayTable.cpp
+  utility/PerformanceContext.cpp
+  utility/TimeMonitor.cpp
+  utility/VariableMonitor.cpp
+  )
+SET(HEADERS ${HEADERS}
+  utility/Counter.hpp
+  utility/CounterMonitor.hpp
+  utility/DisplayTable.hpp
+  utility/MonitorBase.hpp
+  utility/PerformanceContext.hpp
+  utility/string.hpp
+  utility/TimeGuard.hpp
+  utility/TimeMonitor.hpp
+  utility/VariableMonitor.hpp
+  utility/math/Tensor.hpp
+  utility/math/TensorCommon.hpp
+  utility/math/TensorDetail.hpp
+  utility/math/TensorImpl.hpp
+  )
+
 #problems
 SET(SOURCES ${SOURCES}
   problems/Albany_AbstractProblem.cpp
@@ -695,7 +720,9 @@ if(ALBANY_CATALYST)
   include_directories(${ALBANY_CATALYST_INCLUDE_DIRS})
 endif()
 
+
 # Now build executables from this library, tailored main()s, and Trilinos
+IF (NOT ALBANY_LIBRARIES_ONLY) 
 
 IF (ALBANY_EPETRA) 
   add_executable(Albany Main_Solve.cpp)
@@ -706,7 +733,7 @@ SET(ALBANY_EXECUTABLES AlbanyT)
 IF (ALBANY_EPETRA) 
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
 ENDIF()
-if (ALBANY_SG AND ALBANY_EPETRA)
+if (ALBANY_STOKHOS AND ALBANY_EPETRA)
 add_executable(AlbanySG Main_SGSolve.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
 endif()
@@ -751,6 +778,9 @@ IF (ALBANY_MESHDB_TOOLS)
   add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
 ENDIF()
+
+ENDIF (NOT ALBANY_LIBRARIES_ONLY) 
+# End declaration of executables
 
 set(ALL_LIBRARIES
   ${Peridigm_LIBRARIES}
@@ -857,6 +887,8 @@ endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+
+MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 
 IF (Albany_BUILD_STATIC_EXE)
   FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})

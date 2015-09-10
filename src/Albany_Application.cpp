@@ -47,10 +47,6 @@
 #endif
 #endif
 
-#if defined (ALBANY_GOAL)
-#include "GOAL_BCManager.hpp"
-#endif
-
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -180,10 +176,6 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     problemFactory.setReferenceConfigurationManager(rc_mgr);
   problem = problemFactory.create();
 
-#if defined(ALBANY_GOAL)
-  bcMgr = GOAL::BCManager::create(*problemParams);
-#endif
-
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
 
@@ -203,10 +195,12 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Transient;
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
+  else if(solutionMethod == "Aeras Hyperviscosity")
+    solMethod = Transient;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
-            << "Continuation, or Eigensolve not : " << solutionMethod);
+            << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
@@ -782,8 +776,8 @@ void dfm_set (
   Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
 {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
-  workset.transientTerms = ! Teuchos::nonnull(xd);
-  workset.accelerationTerms = ! Teuchos::nonnull(xdd);
+  workset.transientTerms = Teuchos::nonnull(xd);
+  workset.accelerationTerms = Teuchos::nonnull(xdd);
 }
 
 // For the perturbation xd,
@@ -803,7 +797,7 @@ void dfm_set (
 //   The purpose of this derivative checker is to help find programming errors
 // in the Jacobian. Automatic differentiation largely or entirely prevents math
 // errors, but other kinds of programming errors (uninitialized memory,
-// accidentaly omission of a FadType, etc.) can cause errors. The common symptom
+// accidental omission of a FadType, etc.) can cause errors. The common symptom
 // of such an error is that the residual is correct, and therefore so is the
 // solution, but convergence to the solution is not quadratic.
 //   A complementary method to check for errors in the Jacobian is to use
@@ -1243,6 +1237,9 @@ computeGlobalJacobianImplT(const double alpha,
     // Makes getLocalMatrix() valid.
     overlapped_jacT->fillComplete();
   }
+  if ( ! overlapped_jacT->isFillActive())
+    overlapped_jacT->resumeFill();
+
 #endif
 
   // Set data in Workset struct, and perform fill via field manager
@@ -1316,6 +1313,13 @@ computeGlobalJacobianImplT(const double alpha,
 
   jacT->fillComplete();
 
+
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (overlapped_jacT->isFillActive()) {
+    // Makes getLocalMatrix() valid.
+  overlapped_jacT->fillComplete();
+  }
+#endif
   if (derivatives_check_ > 0)
     checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
                      derivatives_check_);

@@ -11,6 +11,7 @@
 #include <SimPartitionedMesh.h>
 #include <gmi_sim.h>
 #include <SimUtil.h>
+#include <SimField.h>
 #include <apfSIM.h>
 #include <PCU.h>
 
@@ -20,6 +21,7 @@ Albany::SimMeshStruct::SimMeshStruct(
 {
   SimUtil_start();
   Sim_readLicenseFile(0);
+  MS_init();
   SimPartitionedMesh_start(NULL, NULL);
   gmi_sim_start();
   gmi_register_sim();
@@ -49,6 +51,24 @@ Albany::SimMeshStruct::SimMeshStruct(
   mesh = apf::createMesh(sim_mesh);
 
   APFMeshStruct::init(params, commT);
+
+  if (params->isParameter("Sim Restart File Name")) {
+    std::cerr << "reading solution from file!\n";
+    hasRestartSolution = true;
+    assert(!params->isParameter("Solution Vector Components"));
+    std::string field_file = params->get<std::string>("Sim Restart File Name");
+    pField sim_field = Field_load(field_file.c_str(), sim_mesh, 0, 0);
+    apf::Field* field = apf::wrapSIMField(mesh, sim_field);
+    std::string name = apf::getName(field);
+    if (name != Albany::APFMeshStruct::solution_name) {
+      std::cerr << "renaming restart field \"" << name << "\" to \""
+        << Albany::APFMeshStruct::solution_name << "\"\n";
+      apf::renameField(field, Albany::APFMeshStruct::solution_name);
+    }
+    restartDataTime = params->get<double>("Sim Restart Time", 0);
+    solutionInitialized = true;
+    apf::writeVtkFiles("restarted", mesh);
+  }
 }
 
 Albany::SimMeshStruct::~SimMeshStruct()
@@ -59,6 +79,7 @@ Albany::SimMeshStruct::~SimMeshStruct()
   PCU_Comm_Free();
   gmi_sim_stop();
   SimPartitionedMesh_stop();
+  MS_exit();
   Sim_unregisterAllKeys();
   SimUtil_stop();
 }
@@ -87,6 +108,8 @@ Albany::SimMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Sim Input File Name", "", "File Name For Sim Mesh Input");
   validPL->set<std::string>("Sim Output File Name", "", "File Name For Sim Mesh Output");
   validPL->set<std::string>("Sim Model Input File Name", "", "File Name For Sim Mesh Output");
+  validPL->set<std::string>("Sim Restart File Name", "", "read initial solution field from this file");
+  validPL->set<double>("Sim Restart Time", 0, "simulation time to restart from");
 
   return validPL;
 }

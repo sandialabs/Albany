@@ -31,7 +31,7 @@ namespace Albany {
     LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                 const Teuchos::RCP<ParamLib>& paramLib,
                 const int numEqm,
-                Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
+                Teuchos::RCP<const Teuchos::Comm<int>>& commT); 
 
     //! Destructor
     virtual ~LameProblem();
@@ -41,11 +41,11 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
       StateManager& stateMgr);
 
     // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
@@ -132,14 +132,14 @@ Albany::LameProblem::constructEvaluators(
   string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
@@ -195,7 +195,7 @@ Albany::LameProblem::constructEvaluators(
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
   // Temporary variable used numerous times below
-  Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+  Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
   if (haveSource) { // Source
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -205,9 +205,9 @@ Albany::LameProblem::constructEvaluators(
 
     p->set<string>("Source Name", "Source");
     p->set<string>("Variable Name", "Displacement");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Source Functions");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -242,14 +242,14 @@ Albany::LameProblem::constructEvaluators(
     p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
     // Integration weights for each quadrature point
     p->set<string>("Weights Name","Weights");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
     //Output
     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -267,7 +267,7 @@ Albany::LameProblem::constructEvaluators(
         p->set<string>("Element Block Name", meshSpecs.ebName);
 
     if(haveMatDB)
-      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+      p->set< RCP<QCAD::MaterialDatabase>>("MaterialDB", materialDB);
 
     // Materials specification
     Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
@@ -275,7 +275,7 @@ Albany::LameProblem::constructEvaluators(
 
     // Input
     p->set<string>("Strain Name", "Strain");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
     p->set<string>("DefGrad Name", "Deformation Gradient"); // dl->qp_tensor also
 
@@ -283,7 +283,7 @@ Albany::LameProblem::constructEvaluators(
     p->set<string>("Stress Name", "Stress"); // dl->qp_tensor also
 
     // A LAME material model may register additional state variables (type is always double)
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
 #ifdef ALBANY_LAME
     ev = rcp(new LCM::LameStress<EvalT,AlbanyTraits>(*p));
@@ -326,26 +326,26 @@ Albany::LameProblem::constructEvaluators(
 
     //Input
     p->set<string>("Stress Name", "Stress");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
     // \todo Is the required?
     p->set<string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
     p->set<string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
     // extra input for time dependent term
     p->set<string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("Time Dependent Variable Name", "Displacement_dotdot");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
     //Output
     p->set<string>("Residual Name", "Displacement Residual");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+    p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);
 
     //ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
     ev = rcp(new LCM::TLElasResid<EvalT,AlbanyTraits>(*p));

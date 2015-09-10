@@ -67,7 +67,7 @@ protected:
   std::string betaName; //name of function betaXY to be used
   double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
  
   //The following are for the lateral BC 
@@ -126,6 +126,7 @@ protected:
   //Basal bc
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
    		       const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+   		       const Intrepid::FieldContainer<ScalarT>& thickness_side,
    		       const Intrepid::FieldContainer<ScalarT>& dof_side,
                        const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                        const shards::CellTopology & celltopo,
@@ -242,6 +243,29 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+ Teuchos::RCP<Tpetra_Vector> fT;
+ Teuchos::ArrayRCP<ST> fT_nonconstView;
+ Teuchos::RCP<Tpetra_CrsMatrix> JacT;
+
+ typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+ LocalMatrixType jacobian;
+ Kokkos::View<int***, PHX::Device> Index;
+ bool is_adjoint;
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct Newmann_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, Newmann_Tag> Newmann_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+  void operator() (const Newmann_Tag& tag, const int& i) const;
+
+#endif
+
 };
 
 // **************************************************************

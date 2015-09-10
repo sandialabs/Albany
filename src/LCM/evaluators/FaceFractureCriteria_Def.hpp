@@ -18,17 +18,17 @@ namespace LCM {
   FaceFractureCriteria<EvalT, Traits>::FaceFractureCriteria(
       const Teuchos::ParameterList& p) :
       coord(p.get<std::string>("Coordinate Vector Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Vertex Vector Data Layout")), faceAve(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Vertex Vector Data Layout")), faceAve(
           p.get<std::string>("Face Average Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Face Vector Data Layout")), yieldStrength(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Face Vector Data Layout")), yieldStrength(
           p.get<RealType>("Yield Name")), fractureLimit(
           p.get<RealType>("Fracture Limit Name")), criterion(
           p.get<std::string>("Insertion Criteria Name")), cellType(
-          p.get<Teuchos::RCP<shards::CellTopology> >("Cell Type")), criteriaMet(
+          p.get<Teuchos::RCP<shards::CellTopology>>("Cell Type")), criteriaMet(
           p.get<std::string>("Criteria Met Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Face Scalar Data Layout")), temp(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Face Scalar Data Layout")), temp(
           p.get<std::string>("Temp2 Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("Cell Scalar Data Layout"))
+          p.get<Teuchos::RCP<PHX::DataLayout>>("Cell Scalar Data Layout"))
   {
     this->addDependentField(coord);
     this->addDependentField(faceAve);
@@ -38,7 +38,7 @@ namespace LCM {
 
     // Get Dimensions
     Teuchos::RCP<PHX::DataLayout> vec_dl =
-        p.get<Teuchos::RCP<PHX::DataLayout> >("Face Vector Data Layout");
+        p.get<Teuchos::RCP<PHX::DataLayout>>("Face Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vec_dl->dimensions(dims);
 
@@ -51,7 +51,7 @@ namespace LCM {
      * get the spatial dimension from the coordinate vector.
      */
     Teuchos::RCP<PHX::DataLayout> vertex_dl = p.get<
-        Teuchos::RCP<PHX::DataLayout> >("Vertex Vector Data Layout");
+        Teuchos::RCP<PHX::DataLayout>>("Vertex Vector Data Layout");
     vertex_dl->dimensions(dims);
     numDims = dims[2];
 

@@ -9,7 +9,7 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputUnifT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/inputUnifT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 
@@ -21,6 +21,6 @@ set(testName "SCOREC_${testRoot}")
 IF(ENABLE_MESHMODEL)
   IF(ALBANY_IFPACK2)
     add_test(NAME ${testName}_Tpetra COMMAND ${AlbanyT.exe} inputT.xml)
-    add_test(NAME ${testName}_Unif_Tpetra COMMAND ${AlbanyT.exe} inputT.xml)
+    add_test(NAME ${testName}_Unif_Tpetra COMMAND ${AlbanyT.exe} inputUnifT.xml)
   ENDIF()
 ENDIF()

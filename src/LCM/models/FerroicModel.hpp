@@ -54,15 +54,15 @@ public:
   virtual
   void
   computeState(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   //Kokkos
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
 private:
   
@@ -153,7 +153,7 @@ private:
   
   class CrystalVariant {
    public:
-    CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase> >& phases, Teuchos::ParameterList& p);
+    CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase>>& phases, Teuchos::ParameterList& p);
     Intrepid::Tensor4<RealType> C;
     Intrepid::Tensor3<RealType> h;
     Intrepid::Tensor<RealType> beta;
@@ -172,9 +172,9 @@ private:
   };
 
   Teuchos::Array<RealType> initialBinFractions;
-  Teuchos::Array<Teuchos::RCP<CrystalPhase> > crystalPhases;
-  Teuchos::Array<Teuchos::RCP<CrystalVariant> > crystalVariants;
-  Teuchos::Array<Teuchos::RCP<Transition> > transitions;
+  Teuchos::Array<Teuchos::RCP<CrystalPhase>> crystalPhases;
+  Teuchos::Array<Teuchos::RCP<CrystalVariant>> crystalVariants;
+  Teuchos::Array<Teuchos::RCP<Transition>> transitions;
   Teuchos::Array<ScalarT> tBarrier;
   RealType alphaParam, gammaParam;
   Intrepid::FieldContainer<RealType> aMatrix;

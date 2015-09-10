@@ -51,7 +51,12 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Validate Problem parameters
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
   _numPhysics = problemParams.get<int>("Number of Subproblems", 1);
+
+  int numHomogProblems = problemParams.get<int>("Number of Homogenization Problems", 0);
+  _homogenizationSets.resize(numHomogProblems);
+
   problemParams.validateParameters(*getValidProblemParameters(),0);
+
 
   // Parse topology
   Teuchos::ParameterList& topoParams = problemParams.get<Teuchos::ParameterList>("Topology");
@@ -144,7 +149,56 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       atoProblem == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Requested subproblem does not support topologies." << std::endl);
   }
+  
+  ///*** PROCESS HOMOGENIZATION SUBPROBLEM(S) ***///
 
+  for(int iProb=0; iProb<numHomogProblems; iProb++){
+    HomogenizationSet& hs = _homogenizationSets[iProb];
+    std::stringstream homogStream;
+    homogStream << "Homogenization Problem " << iProb;
+    Teuchos::ParameterList& 
+      homogParams = problemParams.get<Teuchos::ParameterList>(homogStream.str());
+    hs.homogDim = homogParams.get<int>("Number of Spatial Dimensions");
+    
+    // parse the name and type of the homogenized constants
+    Teuchos::ParameterList& responsesList = homogParams.sublist("Problem").sublist("Response Functions");
+    int nResponses = responsesList.get<int>("Number of Response Vectors");
+    bool responseFound = false;
+    for(int iResponse=0; iResponse<nResponses; iResponse){
+      Teuchos::ParameterList& responseList = responsesList.sublist(Albany::strint("Response Vector",iResponse));
+      std::string rname = responseList.get<std::string>("Name");
+      if(rname == "Homogenized Constants Response"){
+        hs.name = responseList.get<std::string>("Homogenized Constants Name");
+        hs.type = responseList.get<std::string>("Homogenized Constants Type");
+        responseFound = true; break;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION (responseFound == false,
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error! Could not find viable homogenization response." << std::endl);
+
+    int nHomogSubProblems = 0;
+    if( hs.type == "4th Rank Voigt" ){
+      for(int i=1; i<=hs.homogDim; i++) nHomogSubProblems += i;
+    } else
+    if( hs.type == "2nd Rank Tensor" ){
+      nHomogSubProblems = hs.homogDim;
+    } else
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error! Unknown type (" << hs.type << ").  " << 
+        std::endl << "Options are '4th Rank Voigt' or '2nd Rank Tensor'" << std::endl);
+
+    hs.homogenizationAppParams.resize(nHomogSubProblems);
+    hs.homogenizationProblems.resize(nHomogSubProblems);
+ 
+    for(int iSub=0; iSub<nHomogSubProblems; iSub++){
+
+      hs.homogenizationAppParams[iSub] = createHomogenizationInputFile(appParams, homogParams, iProb, iSub, hs.homogDim);
+      hs.homogenizationProblems[iSub] = CreateSubSolver( hs.homogenizationAppParams[iSub], *_solverComm);
+    }
+
+
+  }
 
 
 
@@ -201,15 +255,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   
   
   
-  // initialize topology from input mesh if requested
-//  if(_topology->hasInitialField()){
-//    Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
-//    disc->getField(topoVec, _topology->getInitialFieldName());
-//    disc->getField(*topoVec, "Rho_node");
-//  }
-  
-
-                                            
                                             //* target *//   //* source *//
   importer = Teuchos::rcp(new Epetra_Import(*overlapNodeMap, *localNodeMap));
 
@@ -286,6 +331,58 @@ ATO::Solver::evalModel(const InArgs& inArgs,
                        const OutArgs& outArgs ) const
 /******************************************************************************/
 {
+  int numHomogenizationSets = _homogenizationSets.size();
+  for(int iHomog=0; iHomog<numHomogenizationSets; iHomog++){
+    const HomogenizationSet& hs = _homogenizationSets[iHomog];
+    int numColumns = hs.homogenizationProblems.size();
+    for(int i=0; i<numColumns; i++){
+
+      // enforce PDE constraints
+      hs.homogenizationProblems[i].model->evalModel((*hs.homogenizationProblems[i].params_in),
+                                                    (*hs.homogenizationProblems[i].responses_out));
+    }
+
+    if(numColumns > 0){
+      // collect homogenized values
+      Intrepid::FieldContainer<RealType> Cvals(numColumns,numColumns);
+      for(int i=0; i<numColumns; i++){
+        Teuchos::RCP<const Epetra_Vector> g = hs.homogenizationProblems[i].responses_out->get_g(hs.responseIndex);
+        for(int j=0; j<numColumns; j++){
+          Cvals(i,j) = (*g)[j];
+        }
+      }
+      if(_solverComm->MyPID() == 0){
+        Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+        *out << "*****************************************" << std::endl;
+        *out << " Homogenized parameters (" << hs.name << ") are: " << std::endl; 
+        for(int i=0; i<numColumns; i++){
+          for(int j=0; j<numColumns; j++){
+            *out << std::setprecision(10) << 1.0/2.0*(Cvals(i,j)+Cvals(j,i)) << " ";
+          }
+          *out << std::endl;
+        }
+        *out << "*****************************************" << std::endl;
+      }
+
+      for(int iPhys=0; iPhys<_numPhysics; iPhys++){
+        Albany::StateManager& stateMgr = _subProblems[iPhys].app->getStateMgr();
+        Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+        Albany::StateArrayVec& src = stateArrays.elemStateArrays;
+        int numWorksets = src.size();
+
+        for(int ws=0; ws<numWorksets; ws++){
+          for(int i=0; i<numColumns; i++){
+            for(int j=i; j<numColumns; j++){
+              std::stringstream valname;
+              valname << hs.name << " " << i+1 << j+1;
+              Albany::MDArray& wsC = src[ws][valname.str()]; 
+              if( wsC.size() != 0 ) wsC(0) = (Cvals(j,i)+Cvals(i,j))/2.0;
+            }
+          }
+        }
+      }
+    }
+  }
 
   // initialize topology of fixed blocks to have material
   const Teuchos::Array<std::string>& fixedBlocks = _topology->getFixedBlocks();
@@ -963,6 +1060,149 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
 }
 
 /******************************************************************************/
+Teuchos::RCP<Teuchos::ParameterList> 
+ATO::Solver::createHomogenizationInputFile( 
+    const Teuchos::RCP<Teuchos::ParameterList>& appParams, 
+    const Teuchos::ParameterList& homog_subList, 
+    int homogProblemIndex, 
+    int homogSubIndex, 
+    int homogDim) const
+/******************************************************************************/
+{   
+
+  const Teuchos::ParameterList& homog_problem_subList = 
+    homog_subList.sublist("Problem");
+
+  // Create input parameter list for app which mimics a separate input file
+  std::stringstream appStream;
+  appStream << "Parameters for Homogenization Subapplication " << homogSubIndex;
+  Teuchos::RCP<Teuchos::ParameterList> homog_appParams = Teuchos::createParameterList(appStream.str());
+
+  // get reference to Problem ParameterList in new input file and initialize it 
+  // from Parameters in homogenization base problem
+  Teuchos::ParameterList& homog_probParams = homog_appParams->sublist("Problem",false);
+  homog_probParams.setParameters(homog_problem_subList);
+
+  // set up BCs (this is a pretty bad klugde till periodic BC's are available)
+  Teuchos::ParameterList& Params = homog_probParams.sublist("Dirichlet BCs",false);
+
+  homog_probParams.set("Add Cell Problem Forcing",homogSubIndex);
+
+  const Teuchos::ParameterList& bcIdParams = homog_subList.sublist("Cell BCs");
+  Teuchos::Array<std::string> dofs = bcIdParams.get<Teuchos::Array<std::string> >("DOF Names");
+  std::string dofsType = bcIdParams.get<std::string>("DOF Type");
+  bool isVector;
+  if( dofsType == "Scalar" ){
+    isVector = false;
+    TEUCHOS_TEST_FOR_EXCEPTION(dofs.size() != 1, Teuchos::Exceptions::InvalidParameter, 
+                               std::endl << "Error: Expected DOF Names array to be length 1." << std::endl);
+  } else
+  if( dofsType == "Vector" ){
+    isVector = true;
+    TEUCHOS_TEST_FOR_EXCEPTION(dofs.size() != homogDim, Teuchos::Exceptions::InvalidParameter, 
+                               std::endl << "Error: Expected DOF Names array to be length " << homogDim << "." << std::endl);
+  } else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                     std::endl << "Homogenization DOFs must be of type Scalar or Vector (not " << dofsType << ")." << std::endl);
+
+  if(homogDim == 1){
+    int negX = bcIdParams.get<int>("Negative X Face");
+    int posX = bcIdParams.get<int>("Positive X Face");
+    std::stringstream nameNegX; nameNegX << "DBC on NS nodelist_" << negX << " for DOF " << dofs[0]; Params.set(nameNegX.str(),0.0);
+    std::stringstream namePosX; namePosX << "DBC on NS nodelist_" << posX << " for DOF " << dofs[0]; Params.set(namePosX.str(),0.0);
+  } else 
+  if(homogDim == 2){
+    int negX = bcIdParams.get<int>("Negative X Face");
+    int posX = bcIdParams.get<int>("Positive X Face");
+    int negY = bcIdParams.get<int>("Negative Y Face");
+    int posY = bcIdParams.get<int>("Positive Y Face");
+    if( homogSubIndex < 2 ){
+      std::stringstream nameNegX; nameNegX << "DBC on NS nodelist_" << negX << " for DOF " << dofs[0]; Params.set(nameNegX.str(),0.0);
+      std::stringstream namePosX; namePosX << "DBC on NS nodelist_" << posX << " for DOF " << dofs[0]; Params.set(namePosX.str(),0.0);
+      if( isVector ){
+        std::stringstream nameNegY; nameNegY << "DBC on NS nodelist_" << negY << " for DOF " << dofs[1]; Params.set(nameNegY.str(),0.0);
+        std::stringstream namePosY; namePosY << "DBC on NS nodelist_" << posY << " for DOF " << dofs[1]; Params.set(namePosY.str(),0.0);
+      } else {
+        std::stringstream nameNegY; nameNegY << "DBC on NS nodelist_" << negY << " for DOF " << dofs[0]; Params.set(nameNegY.str(),0.0);
+        std::stringstream namePosY; namePosY << "DBC on NS nodelist_" << posY << " for DOF " << dofs[0]; Params.set(namePosY.str(),0.0);
+      }
+    } else {
+      std::stringstream nameNegY; nameNegY << "DBC on NS nodelist_" << negY << " for DOF " << dofs[0]; Params.set(nameNegY.str(),0.0);
+      std::stringstream namePosY; namePosY << "DBC on NS nodelist_" << posY << " for DOF " << dofs[0]; Params.set(namePosY.str(),0.0);
+      if( isVector ){
+        std::stringstream nameNegX; nameNegX << "DBC on NS nodelist_" << negX << " for DOF " << dofs[1]; Params.set(nameNegX.str(),0.0);
+        std::stringstream namePosX; namePosX << "DBC on NS nodelist_" << posX << " for DOF " << dofs[1]; Params.set(namePosX.str(),0.0);
+      } else {
+        std::stringstream nameNegX; nameNegX << "DBC on NS nodelist_" << negX << " for DOF " << dofs[0]; Params.set(nameNegX.str(),0.0);
+        std::stringstream namePosX; namePosX << "DBC on NS nodelist_" << posX << " for DOF " << dofs[0]; Params.set(namePosX.str(),0.0);
+      }
+    }
+  } else 
+  if(homogDim == 3){
+    int negX = bcIdParams.get<int>("Negative X Face");
+    int posX = bcIdParams.get<int>("Positive X Face");
+    int negY = bcIdParams.get<int>("Negative Y Face");
+    int posY = bcIdParams.get<int>("Positive Y Face");
+    int negZ = bcIdParams.get<int>("Negative Z Face");
+    int posZ = bcIdParams.get<int>("Positive Z Face");
+    if( homogSubIndex < 3 ){
+      std::stringstream nameNegX; nameNegX << "DBC on NS nodelist_" << negX << " for DOF " << dofs[0]; Params.set(nameNegX.str(),0.0);
+      std::stringstream namePosX; namePosX << "DBC on NS nodelist_" << posX << " for DOF " << dofs[0]; Params.set(namePosX.str(),0.0);
+      if( isVector ){
+        std::stringstream nameNegY; nameNegY << "DBC on NS nodelist_" << negY << " for DOF " << dofs[1]; Params.set(nameNegY.str(),0.0);
+        std::stringstream namePosY; namePosY << "DBC on NS nodelist_" << posY << " for DOF " << dofs[1]; Params.set(namePosY.str(),0.0);
+        std::stringstream nameNegZ; nameNegZ << "DBC on NS nodelist_" << negZ << " for DOF " << dofs[2]; Params.set(nameNegZ.str(),0.0);
+        std::stringstream namePosZ; namePosZ << "DBC on NS nodelist_" << posZ << " for DOF " << dofs[2]; Params.set(namePosZ.str(),0.0);
+      } else {
+        std::stringstream nameNegY; nameNegY << "DBC on NS nodelist_" << negY << " for DOF " << dofs[0]; Params.set(nameNegY.str(),0.0);
+        std::stringstream namePosY; namePosY << "DBC on NS nodelist_" << posY << " for DOF " << dofs[0]; Params.set(namePosY.str(),0.0);
+        std::stringstream nameNegZ; nameNegZ << "DBC on NS nodelist_" << negZ << " for DOF " << dofs[0]; Params.set(nameNegZ.str(),0.0);
+        std::stringstream namePosZ; namePosZ << "DBC on NS nodelist_" << posZ << " for DOF " << dofs[0]; Params.set(namePosZ.str(),0.0);
+      }
+    } else {
+      std::stringstream nameNegYX; nameNegYX << "DBC on NS nodelist_" << negY << " for DOF " << dofs[0]; Params.set(nameNegYX.str(),0.0);
+      std::stringstream namePosYX; namePosYX << "DBC on NS nodelist_" << posY << " for DOF " << dofs[0]; Params.set(namePosYX.str(),0.0);
+      std::stringstream nameNegZX; nameNegZX << "DBC on NS nodelist_" << negZ << " for DOF " << dofs[0]; Params.set(nameNegZX.str(),0.0);
+      std::stringstream namePosZX; namePosZX << "DBC on NS nodelist_" << posZ << " for DOF " << dofs[0]; Params.set(namePosZX.str(),0.0);
+      if( isVector ){
+        std::stringstream nameNegXY; nameNegXY << "DBC on NS nodelist_" << negX << " for DOF " << dofs[1]; Params.set(nameNegXY.str(),0.0);
+        std::stringstream namePosXY; namePosXY << "DBC on NS nodelist_" << posX << " for DOF " << dofs[1]; Params.set(namePosXY.str(),0.0);
+        std::stringstream nameNegZY; nameNegZY << "DBC on NS nodelist_" << negZ << " for DOF " << dofs[1]; Params.set(nameNegZY.str(),0.0);
+        std::stringstream namePosZY; namePosZY << "DBC on NS nodelist_" << posZ << " for DOF " << dofs[1]; Params.set(namePosZY.str(),0.0);
+        std::stringstream nameNegXZ; nameNegXZ << "DBC on NS nodelist_" << negX << " for DOF " << dofs[2]; Params.set(nameNegXZ.str(),0.0);
+        std::stringstream namePosXZ; namePosXZ << "DBC on NS nodelist_" << posX << " for DOF " << dofs[2]; Params.set(namePosXZ.str(),0.0);
+        std::stringstream nameNegYZ; nameNegYZ << "DBC on NS nodelist_" << negY << " for DOF " << dofs[2]; Params.set(nameNegYZ.str(),0.0);
+        std::stringstream namePosYZ; namePosYZ << "DBC on NS nodelist_" << posY << " for DOF " << dofs[2]; Params.set(namePosYZ.str(),0.0);
+      } else {
+        std::stringstream nameNegXY; nameNegXY << "DBC on NS nodelist_" << negX << " for DOF " << dofs[0]; Params.set(nameNegXY.str(),0.0);
+        std::stringstream namePosXY; namePosXY << "DBC on NS nodelist_" << posX << " for DOF " << dofs[0]; Params.set(namePosXY.str(),0.0);
+      }
+    }
+  }
+
+  
+
+  // Discretization sublist processing
+  const Teuchos::ParameterList& discList = homog_subList.sublist("Discretization");
+  Teuchos::ParameterList& homog_discList = homog_appParams->sublist("Discretization", false);
+  homog_discList.setParameters(discList);
+  // find the output file name and append "homog_n_" to it. This only checks for exodus output.
+  if( homog_discList.isType<std::string>("Exodus Output File Name") ){
+    std::stringstream newname;
+    newname << "homog_" << homogProblemIndex << "_" << homogSubIndex << "_" 
+            << homog_discList.get<std::string>("Exodus Output File Name");
+    homog_discList.set("Exodus Output File Name",newname.str());
+  }
+
+  // Piro sublist processing
+  homog_appParams->set("Piro",appParams->sublist("Piro"));
+
+  
+  
+  return homog_appParams;
+}
+
+/******************************************************************************/
 Teuchos::RCP<const Teuchos::ParameterList>
 ATO::Solver::getValidProblemParameters() const
 /******************************************************************************/
@@ -973,6 +1213,7 @@ ATO::Solver::getValidProblemParameters() const
 
   // Basic set-up
   validPL->set<int>("Number of Subproblems", 1, "Number of PDE constraint problems");
+  validPL->set<int>("Number of Homogenization Problems", 0, "Number of homogenization problems");
   validPL->set<bool>("Verbose Output", false, "Enable detailed output mode");
   validPL->set<std::string>("Name", "", "String to designate Problem");
 
@@ -981,17 +1222,19 @@ ATO::Solver::getValidProblemParameters() const
     std::stringstream physStream; physStream << "Physics Problem " << i;
     validPL->sublist(physStream.str(), false, "");
   }
+  
+  int numHomogProblems = _homogenizationSets.size();
+  for(int i=0; i<numHomogProblems; i++){
+    std::stringstream homogStream; homogStream << "Homogenization Problem " << i;
+    validPL->sublist(homogStream.str(), false, "");
+  }
 
-  // Specify aggregator
   validPL->sublist("Objective Aggregator", false, "");
 
-  // Specify optimizer
   validPL->sublist("Topological Optimization", false, "");
 
-  // Specify topology
   validPL->sublist("Topology", false, "");
 
-  // Specify responses
   validPL->sublist("Spatial Filters", false, "");
 
   // Physics solver options

@@ -33,7 +33,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
 
   // get the Parameter Library
   Teuchos::RCP<ParamLib> paramLib =
-      p.get<Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // get the material parameter list
   Teuchos::ParameterList* mat_params =
@@ -149,7 +149,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
 
   // register evaluated fields
   typename
-  std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+  std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it;
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
@@ -166,7 +166,7 @@ void ConstitutiveModelParameters<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it;
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
@@ -293,7 +293,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
 
-  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it;
 
   for (it = field_map_.begin();
       it != field_map_.end();
@@ -344,7 +344,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
-    typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it; 
+    typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it; 
 
    for (it = field_map_.begin(); it != field_map_.end();    ++it) {
 
@@ -403,7 +403,7 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string &n)
       return constant_value_map_[it->first];
     }
   }
-  typename std::map<std::string, Teuchos::Array<ScalarT> >::iterator it2;
+  typename std::map<std::string, Teuchos::Array<ScalarT>>::iterator it2;
   for (int i(0); i < rv_map_[it2->first].size(); ++i) {
     if (n == Albany::strint(n + " KL Random Variable", i))
       return rv_map_[it2->first][i];

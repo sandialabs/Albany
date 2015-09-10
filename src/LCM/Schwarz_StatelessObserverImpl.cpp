@@ -17,7 +17,7 @@ namespace LCM {
 
 StatelessObserverImpl::
 StatelessObserverImpl(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps)
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> &apps)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -47,7 +47,7 @@ getTimeParamValueOrDefault(RealType default_value) const
 void StatelessObserverImpl::observeSolutionT(
     double stamp,
     Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> non_overlapped_solutionT,
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > non_overlapped_solution_dotT)
+    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector>> non_overlapped_solution_dotT)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";

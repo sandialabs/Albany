@@ -55,7 +55,7 @@ Albany::ElasticityProblem::
 void
 Albany::ElasticityProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -77,7 +77,7 @@ buildProblem(
 
 }
 
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 Albany::ElasticityProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -128,7 +128,7 @@ Albany::ElasticityProblem::constructNeumannEvaluators(
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
    std::vector<std::string> neumannNames(neq + 1);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
+   Teuchos::Array<Teuchos::Array<int>> offsets;
    offsets.resize(neq + 1);
 
    neumannNames[0] = "sig_x";
@@ -242,8 +242,8 @@ Albany::ElasticityProblem::getValidProblemParameters() const
 
 void
 Albany::ElasticityProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
    ) const
 {
   oldState_ = oldState;

@@ -99,12 +99,14 @@ protected:
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
+#include "PHAL_SaveStateField.hpp"
 
 #include "RhoCp.hpp"
 #include "ThermalCond.hpp"
 #include "PhaseSource.hpp"
 #include "LaserSource.hpp"
 #include "PhaseResidual.hpp"
+#include "AMP_Time.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -194,6 +196,29 @@ Albany::PhaseProblem::constructEvaluators(
     (evalUtils.constructComputeBasisFunctionsEvaluator(
       elem_type,intrepid_basis,elem_cubature));
 
+  { // Time
+    RCP<ParameterList> p = rcp(new ParameterList("Time"));
+   
+    // Input
+    p->set<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout",
+        dl_->workset_scalar);
+    p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
+    p->set<bool>("Disable Transient", true);
+
+    // Output
+    p->set<std::string>("Time Name", "Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
+   
+    // Register evaluator
+    ev = Teuchos::rcp(new AMP::Time<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Register state variable
+    p = stateMgr.registerStateVariable("Time", dl_->workset_scalar,
+        dl_->dummy, eb_name, "scalar", 0.0, true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // Thermal Conductivity
     RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity"));

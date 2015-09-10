@@ -17,8 +17,8 @@ RigidContactBC_Base<EvalT, Traits>::
 RigidContactBC_Base(Teuchos::ParameterList& p) :
   PHAL::Neumann<EvalT, Traits>(p) {
 
-  timeValues = p.get<Teuchos::Array<RealType> >("Time Values").toVector();
-  BCValues = p.get<Teuchos::TwoDArray<RealType> >("BC Values");
+  timeValues = p.get<Teuchos::Array<RealType>>("Time Values").toVector();
+  BCValues = p.get<Teuchos::TwoDArray<RealType>>("BC Values");
 
   if(this->bc_type == PHAL::NeumannBase<EvalT, Traits>::COORD)
 

@@ -46,6 +46,7 @@ public:
 
   //! Data structure for Optimization-Based Coupling
   struct OBCDataPoint {
+    double sphereElementVolume;
     double initialCoords[3];
     double currentCoords[3];
     int peridigmGlobalId;
@@ -90,10 +91,10 @@ public:
   double getDisplacementNeighborhoodFit(int globalAlbanyNodeId, double * coord, int dof);
 
   //! Retrieve the partial stress tensors for the quadrature points in the given element (evaluateInternalForce() must be called prior to getPartialStress()).
-  void getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues);
+  void getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType>>& partialStressValues);
 
   //! Accessor for the list of solid elements in the overlap region for optimization-based coupling.
-  Teuchos::RCP< std::vector<OBCDataPoint> > getOBCDataPoints(){
+  Teuchos::RCP< std::vector<OBCDataPoint>> getOBCDataPoints(){
     return obcDataPoints;
   }
 
@@ -148,11 +149,11 @@ private:
 
   std::vector<int> sphereElementGlobalNodeIds;
 
-  std::map< int, std::vector<int> > worksetLocalIdToGlobalId;
+  std::map< int, std::vector<int>> worksetLocalIdToGlobalId;
 
-  std::map< int, std::vector<int> > albanyPartialStressElementGlobalIdToPeridigmGlobalIds;
+  std::map< int, std::vector<int>> albanyPartialStressElementGlobalIdToPeridigmGlobalIds;
 
-  Teuchos::RCP< std::vector<OBCDataPoint> > obcDataPoints;
+  Teuchos::RCP< std::vector<OBCDataPoint>> obcDataPoints;
 
   Teuchos::RCP<Epetra_Vector> obcPeridynamicNodeCurrentCoords;
 

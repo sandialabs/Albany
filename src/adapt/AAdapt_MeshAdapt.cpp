@@ -13,6 +13,7 @@
 #include <ma.h>
 #include <PCU.h>
 #include <parma.h>
+#include <apfZoltan.h>
 #include <apfMDS.h> // for createMdsMesh
 
 #include "AAdapt_UnifSizeField.hpp"
@@ -29,9 +30,12 @@
 
 AAdapt::MeshAdapt::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+          const Teuchos::RCP<ParamLib>& paramLib_,
           const Albany::StateManager& StateMgr_,
-          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_)
-  : remeshFileIndex(1), rc_mgr(refConfigMgr_)
+          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
+          const Teuchos::RCP<const Teuchos_Comm>& commT_)
+  : AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
+    remeshFileIndex(1), rc_mgr(refConfigMgr_)
 {
   disc = StateMgr_.getDiscretization();
 
@@ -110,20 +114,19 @@ void AAdapt::MeshAdapt::initRcMgr () {
   // Create a field that never changes. It's interp'ed from now mesh to the
   // next. In the initial configuration, each component is simply a
   // coordinate value.
+  const int dim = pumi_discretization->getNumDim();
   pumiMeshStruct->createNodalField("test_interp_field", apf::VECTOR);
   const Teuchos::ArrayRCP<const double>&
     coords = pumi_discretization->getCoordinates();
   Teuchos::Array<double> f(coords.size());
   memcpy(&f[0], &coords[0], coords.size()*sizeof(double));
-  pumi_discretization->setField("test_interp_field", &f[0], true, 0, 3);
+  pumi_discretization->setField("test_interp_field", &f[0], true, 0, dim);
 #endif
 }
 
 AAdapt::MeshAdapt::~MeshAdapt() {}
 
-bool AAdapt::MeshAdapt::queryAdaptationCriteria(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-  int iter)
+bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iter)
 {
   adapt_params_->set<int>("LastIter", iter);
 
@@ -150,9 +153,7 @@ bool AAdapt::MeshAdapt::queryAdaptationCriteria(
 }
 
 
-void AAdapt::MeshAdapt::initAdapt(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-  Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+void AAdapt::MeshAdapt::initAdapt()
 {
   if (PCU_Comm_Self() == 0) {
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
@@ -192,18 +193,79 @@ void AAdapt::MeshAdapt::beforeAdapt()
   szField->copyInputFields();
 }
 
-void AAdapt::MeshAdapt::adaptInPartition(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params)
+void AAdapt::MeshAdapt::adaptInPartition()
 {
   szField->computeError();
 
-  szField->configure(adapt_params);
+  szField->configure(adapt_params_);
 
   szField->freeSizeField();
 }
 
+namespace {
+  void setUnitEntWeights(ma::Mesh* m, ma::Tag* weights, int dim)
+  {
+    ma::Entity* e;
+    double one = 1.0;
+    apf::MeshIterator* it = m->begin(dim);
+    while ((e = m->iterate(it)))
+      m->setDoubleTag(e,weights,&one);
+    m->end(it);
+  }
+
+  void runParmaVtxElm(ma::Mesh* m, double maxImb)
+  {
+    ma::Tag* weights = m->createDoubleTag("ma_weight",1);
+    setUnitEntWeights(m,weights,0);
+    setUnitEntWeights(m,weights,m->getDimension());
+    apf::Balancer* b = Parma_MakeVtxElmBalancer(m);
+    b->balance(weights,maxImb);
+    delete b;
+    apf::removeTagFromDimension(m,weights,0);
+    apf::removeTagFromDimension(m,weights,m->getDimension());
+    m->destroyTag(weights);
+  }
+
+  void runZoltanBal(ma::Mesh* m, double maxImb)
+  {
+    ma::Tag* weights = Parma_WeighByMemory(m);
+    apf::Balancer* b = makeZoltanBalancer(m, apf::GRAPH, apf::REPARTITION);
+    b->balance(weights,maxImb);
+    delete b;
+    apf::removeTagFromDimension(m,weights,m->getDimension());
+    m->destroyTag(weights);
+  }
+
+  struct albBalancer {
+    double imb;
+    std::string method;
+    void (*bal)(ma::Mesh* m, double maxImb);
+  };
+
+  albBalancer* postBalance(std::string method, double maxImb) {
+    albBalancer* b = new albBalancer;
+    b->imb = maxImb;
+    if(method == std::string("zoltan")) {
+      b->bal = runZoltanBal;
+    } else if(method == std::string("parma")) {
+      b->bal = runParmaVtxElm;
+    } else {
+      b->bal = NULL;
+    }
+    return b;
+  }
+}
+
 void AAdapt::MeshAdapt::afterAdapt()
 {
+  Teuchos::Array<std::string> defaultStArgs = 
+     Teuchos::tuple<std::string>("zoltan", "parma", "parma");
+  double maxImb = adapt_params_->get<double>("Maximum LB Imbalance", 1.30);
+
+  albBalancer* b = postBalance(defaultStArgs[2], maxImb);
+  b->bal(mesh, b->imb);
+  delete b;
+
   mesh->verify();
 
   szField->freeInputFields();
@@ -216,13 +278,11 @@ void AAdapt::MeshAdapt::afterAdapt()
     pumi_discretization->detachQPData();
 }
 
-template <class T>
 struct AdaptCallbackOf : public Parma_GroupCode
 {
-  T* adapter;
-  const Teuchos::RCP<Teuchos::ParameterList>* adapt_params;
+  AAdapt::MeshAdapt* adapter;
   void run(int group) {
-    adapter->adaptInPartition(*adapt_params);
+    adapter->adaptInPartition();
   }
 };
 
@@ -270,20 +330,19 @@ void adaptShrunken(apf::Mesh2* m, double min_part_density,
                    Parma_GroupCode& callback);
 
 bool AAdapt::MeshAdapt::adaptMesh(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-  Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+  const Teuchos::RCP<const Tpetra_Vector>& solution,
+  const Teuchos::RCP<const Tpetra_Vector>&)
 {
 #ifdef AMBDEBUG
   al::anlzCoords(pumi_discretization);
 #endif
 
-  AdaptCallbackOf<AAdapt::MeshAdapt > callback;
+  AdaptCallbackOf callback;
   callback.adapter = this;
-  callback.adapt_params = &adapt_params_;
   const double
     min_part_density = adapt_params_->get<double>("Minimum Part Density", 1000);
 
-  initAdapt(adapt_params_, output_stream_);
+  initAdapt();
 
   bool success;
   if (rc_mgr.is_null()) {
@@ -301,7 +360,7 @@ bool AAdapt::MeshAdapt::adaptMesh(
 
 #ifdef AMBDEBUG
   al::anlzCoords(pumi_discretization);
-  //al::writeMesh(pumi_discretization);
+  al::writeMesh(pumi_discretization);
 #endif
   return success;
 }
@@ -325,7 +384,7 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
         Teuchos::Array<double> data(n * ncol);
         // non-interleaved -> interleaved ordering.
         //rcu-todo Figure out these ordering details. What sets the ordering
-        // requirements? Can we changed by field at runtime?
+        // requirements? Can we change by field at runtime?
         for (int c = 0; c < ncol; ++c) {
           Teuchos::ArrayRCP<RealType>
             v = mv->getVectorNonConst(c)->getDataNonConst();
@@ -364,6 +423,11 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
   return success;
 }
 
+// Later: I'm keeping this loop because it's pretty effective at what it's
+// intended to do. However, if this loop has to execute more than one iteration,
+// it's almost certainly the case that we're already sunk. Iterating more than
+// once implies the displacement solution is turning an element inside
+// out. That's bad.
 bool AAdapt::MeshAdapt::
 adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
   const int
@@ -442,19 +506,22 @@ void AAdapt::MeshAdapt::checkValidStateVariable(
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::MeshAdapt::getValidAdapterParameters(
-  Teuchos::RCP<Teuchos::ParameterList>& validPL) const
+AAdapt::MeshAdapt::getValidAdapterParameters() const
 {
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+    getGenericAdapterParams("ValidMeshAdaptParams");
   Teuchos::Array<int> defaultArgs;
+  Teuchos::Array<std::string> defaultStArgs;
 
   validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
   validPL->set<bool>("AdaptNow", false, "Used to force an adaptation step");
+  validPL->set<bool>("Should Coarsen", true, "Set to false to disable mesh coarsening operations.");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
-  validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
+  validPL->set<Teuchos::Array<std::string> >("Load Balancing", defaultStArgs, "Turn on predictive load balancing");
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
@@ -462,37 +529,6 @@ AAdapt::MeshAdapt::getValidAdapterParameters(
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;
-}
-
-AAdapt::MeshAdaptT::
-MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-           const Teuchos::RCP<ParamLib>& paramLib_,
-           const Albany::StateManager& StateMgr_,
-           const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
-           const Teuchos::RCP<const Teuchos_Comm>& commT_)
-  : AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
-    meshAdapt(params_, StateMgr_, refConfigMgr_)
-{}
-
-bool AAdapt::MeshAdaptT::queryAdaptationCriteria(int iteration)
-{
-  return meshAdapt.queryAdaptationCriteria(this->adapt_params_,iteration);
-}
-
-bool AAdapt::MeshAdaptT::adaptMesh(
-  const Teuchos::RCP<const Tpetra_Vector>& solution,
-  const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution)
-{
-  return meshAdapt.adaptMesh(
-    this->adapt_params_,this->output_stream_);
-}
-
-Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::MeshAdaptT::getValidAdapterParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericAdapterParams("ValidMeshAdaptParams");
-  return meshAdapt.getValidAdapterParameters(validPL);
 }
 
 static double getAveragePartDensity(apf::Mesh* m)
@@ -580,8 +616,10 @@ void anlzCoords (
     soln = pumi_disc->getSolutionFieldT(true);
   const Teuchos::ArrayRCP<const ST> soln_data = soln->get1dView();
   const Teuchos::ArrayRCP<double> x(coords.size());
-  for (std::size_t i = 0; i < coords.size(); ++i)
-    x[i] = coords[i] + soln_data[i];
+  const int spdim = pumi_disc->getNumDim(), neq = pumi_disc->getNumEq();
+  for (std::size_t i = 0, j = 0; i < coords.size(); i += spdim, j += neq)
+    for (int k = 0; k < spdim; ++k)
+      x[i+k] = coords[i+k] + soln_data[j+k];
   // Display min and max extent in each axis-aligned dimension.
   dispExtremum<mymin>(x, dim, "min", Teuchos::REDUCE_MIN);
   dispExtremum<mymax>(x, dim, "max", Teuchos::REDUCE_MAX);
@@ -590,6 +628,7 @@ void anlzCoords (
 void writeMesh (
   const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
 {
+  return;
   static int ncalls = 0;
   std::stringstream ss;
   ss << "mesh_" << ncalls << ".vtk";
@@ -636,8 +675,10 @@ void updateCoordinates (
 {
   // Albany::PUMIDiscretization uses interleaved DOF and coordinates, so we
   // can sum coords and soln_data straightforwardly.
-  for (std::size_t i = 0; i < cs.coords.size(); ++i)
-    x[i] = cs.coords[i] + cs.soln_ol_data[i];
+  const int spdim = pumi_disc->getNumDim(), neq = pumi_disc->getNumEq();
+  for (std::size_t i = 0, j = 0; i < cs.coords.size(); i += spdim, j += neq)
+    for (int k = 0; k < spdim; ++k)
+      x[i+k] = cs.coords[i+k] + cs.soln_ol_data[j+k];
   pumi_disc->setCoordinates(x);
 }
 
@@ -694,6 +735,9 @@ double findAlpha (
   for (int it = 0 ;; ) {
     cs.set_alpha(alpha);
     updateCoordinates(pumi_disc, cs, x);
+#ifdef AMBDEBUG
+    if (it == 0) al::writeMesh(pumi_disc);
+#endif
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(

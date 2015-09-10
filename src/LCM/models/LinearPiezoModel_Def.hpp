@@ -41,16 +41,16 @@ LinearPiezoModel(Teuchos::ParameterList* p,
   R.set_dimension(num_dims_); R.clear();
   if(p->isType<Teuchos::ParameterList>("Material Basis")){
     const Teuchos::ParameterList& pBasis = p->get<Teuchos::ParameterList>("Material Basis");
-    if(pBasis.isType<Teuchos::Array<double> >("X axis")){
-      Teuchos::Array<double> Xhat = pBasis.get<Teuchos::Array<double> >("X axis");
+    if(pBasis.isType<Teuchos::Array<double>>("X axis")){
+      Teuchos::Array<double> Xhat = pBasis.get<Teuchos::Array<double>>("X axis");
       R(0,0) = Xhat[0]; R(1,0) = Xhat[1]; R(2,0) = Xhat[2];
     }
-    if(pBasis.isType<Teuchos::Array<double> >("Y axis")){
-      Teuchos::Array<double> Yhat = pBasis.get<Teuchos::Array<double> >("Y axis");
+    if(pBasis.isType<Teuchos::Array<double>>("Y axis")){
+      Teuchos::Array<double> Yhat = pBasis.get<Teuchos::Array<double>>("Y axis");
       R(0,1) = Yhat[0]; R(1,1) = Yhat[1]; R(2,1) = Yhat[2];
     }
-    if(pBasis.isType<Teuchos::Array<double> >("Z axis")){
-      Teuchos::Array<double> Zhat = pBasis.get<Teuchos::Array<double> >("Z axis");
+    if(pBasis.isType<Teuchos::Array<double>>("Z axis")){
+      Teuchos::Array<double> Zhat = pBasis.get<Teuchos::Array<double>>("Z axis");
       R(0,2) = Zhat[0]; R(1,2) = Zhat[1]; R(2,2) = Zhat[2];
     }
   } else {
@@ -122,8 +122,8 @@ LinearPiezoModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void LinearPiezoModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   PHX::MDField<ScalarT> strain = *dep_fields[strainName];
@@ -191,8 +191,8 @@ computeState(typename Traits::EvalData workset,
 template<typename EvalT, typename Traits>
 void LinearPiezoModel<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,

@@ -69,7 +69,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   
   // Grab the vector off node GIDs for this Node Set ID from the std::map
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -116,7 +116,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
  
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -204,7 +204,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();                                       
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -277,7 +277,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   // so is still here, just commented out for future reference.
   //
 
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -350,7 +350,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     dirichletWorkset.sg_f;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
     dirichletWorkset.sg_x;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
  const std::vector<double*>& nsNodeCoords =
    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -392,12 +392,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > jac =
+  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>> jac =
     dirichletWorkset.sg_Jac;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
     dirichletWorkset.sg_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -474,7 +474,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     dirichletWorkset.sg_x;
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -546,7 +546,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     dirichletWorkset.mp_f;
   Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
     dirichletWorkset.mp_x;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -588,12 +588,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
   Teuchos::RCP<Stokhos::ProductEpetraVector> f =
     dirichletWorkset.mp_f;
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > jac =
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix>> jac =
     dirichletWorkset.mp_Jac;
   Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
     dirichletWorkset.mp_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -670,7 +670,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     dirichletWorkset.mp_x;
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes =
+  const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;

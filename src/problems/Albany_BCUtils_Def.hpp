@@ -480,6 +480,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             double L = BCparams.get("L", 1.0);
             p->set<std::string> ("BetaXY", betaName);
             p->set<string>("Beta Field Name", "basal_friction");
+            p->set<std::string>("thickness Field Name", "thickness");
             p->set<double> ("L", L);
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);

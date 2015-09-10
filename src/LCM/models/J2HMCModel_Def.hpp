@@ -208,13 +208,13 @@ J2HMCModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   // extract increments
-  std::vector< PHX::MDField<ScalarT> > delta_strainDifference(numMicroScales);
-  std::vector< PHX::MDField<ScalarT> > delta_microStrainGradient(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> delta_strainDifference(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> delta_microStrainGradient(numMicroScales);
   PHX::MDField<ScalarT> delta_macroStrain = *dep_fields[delta_macroStrainName];
   for(int i=0; i<numMicroScales; i++){
     delta_strainDifference[i]    = *dep_fields[delta_strainDifferenceName[i]];
@@ -223,8 +223,8 @@ computeState(typename Traits::EvalData workset,
 
   // extract states to be updated (i.e., state at N+1):
   PHX::MDField<ScalarT> updated_macroStress = *eval_fields[updated_macroStressName];
-  std::vector< PHX::MDField<ScalarT> > updated_microStress(numMicroScales);
-  std::vector< PHX::MDField<ScalarT> > updated_doubleStress(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> updated_microStress(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> updated_doubleStress(numMicroScales);
   for(int i=0; i<numMicroScales; i++){
     updated_microStress[i]  = *eval_fields[updated_microStressName[i]];
     updated_doubleStress[i] = *eval_fields[updated_doubleStressName[i]];
@@ -240,10 +240,10 @@ computeState(typename Traits::EvalData workset,
   // extract states to be updated (i.e., state at N+1):
   PHX::MDField<ScalarT> updated_macroBackStress = *eval_fields[updated_macroBackStressName];
   PHX::MDField<ScalarT> updated_macroAlpha = *eval_fields[updated_macroAlphaName];
-  std::vector< PHX::MDField<ScalarT> > updated_microBackStress(numMicroScales);
-  std::vector< PHX::MDField<ScalarT> > updated_doubleBackStress(numMicroScales);
-  std::vector< PHX::MDField<ScalarT> > updated_microAlpha(numMicroScales);
-  std::vector< PHX::MDField<ScalarT> > updated_doubleAlpha(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> updated_microBackStress(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> updated_doubleBackStress(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> updated_microAlpha(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> updated_doubleAlpha(numMicroScales);
   for(int i=0; i<numMicroScales; i++){
     updated_microBackStress[i]  = *eval_fields[updated_microBackStressName[i]];
     updated_doubleBackStress[i] = *eval_fields[updated_doubleBackStressName[i]];
@@ -263,8 +263,8 @@ computeState(typename Traits::EvalData workset,
 template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
@@ -280,13 +280,13 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
                    PHX::MDField<ScalarT> &                new_macroBackStress, 
                    PHX::MDField<ScalarT> &                new_macroAlpha, 
 // micro
-                   std::vector< PHX::MDField<ScalarT> > & trial_microStress,
-                   std::vector< PHX::MDField<ScalarT> > & new_microBackStress,
-                   std::vector< PHX::MDField<ScalarT> > & new_microAlpha,
+                   std::vector< PHX::MDField<ScalarT>> & trial_microStress,
+                   std::vector< PHX::MDField<ScalarT>> & new_microBackStress,
+                   std::vector< PHX::MDField<ScalarT>> & new_microAlpha,
 // double
-                   std::vector< PHX::MDField<ScalarT> > & trial_doubleStress,
-                   std::vector< PHX::MDField<ScalarT> > & new_doubleBackStress,
-                   std::vector< PHX::MDField<ScalarT> > & new_doubleAlpha)
+                   std::vector< PHX::MDField<ScalarT>> & trial_doubleStress,
+                   std::vector< PHX::MDField<ScalarT>> & new_doubleBackStress,
+                   std::vector< PHX::MDField<ScalarT>> & new_doubleAlpha)
 /******************************************************************************/
 {
   // macro 
@@ -295,12 +295,12 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> macroBackStress(num_dims_);
 
   std::vector<ScalarT> microAlpha(numMicroScales);
-  std::vector<Intrepid::Tensor<ScalarT> > elTrialMicroStress(numMicroScales);
-  std::vector<Intrepid::Tensor<ScalarT> > microBackStress(numMicroScales);
+  std::vector<Intrepid::Tensor<ScalarT>> elTrialMicroStress(numMicroScales);
+  std::vector<Intrepid::Tensor<ScalarT>> microBackStress(numMicroScales);
 
   std::vector<ScalarT> doubleAlpha(numMicroScales);
-  std::vector<Intrepid::Tensor3<ScalarT> > elTrialDoubleStress(numMicroScales);
-  std::vector<Intrepid::Tensor3<ScalarT> > doubleBackStress(numMicroScales);
+  std::vector<Intrepid::Tensor3<ScalarT>> elTrialDoubleStress(numMicroScales);
+  std::vector<Intrepid::Tensor3<ScalarT>> doubleBackStress(numMicroScales);
 
   for(int i=0; i<numMicroScales; i++){
     elTrialMicroStress[i].set_dimension(num_dims_);
@@ -532,11 +532,11 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
   Intrepid::Tensor<ScalarT> & elTrialMacroStress,
   Intrepid::Tensor<ScalarT> & macroBackStress, 
   ScalarT & alpha,
-  std::vector<Intrepid::Tensor<ScalarT> > & elTrialMicroStress,
-  std::vector<Intrepid::Tensor<ScalarT> > & microBackStress, 
+  std::vector<Intrepid::Tensor<ScalarT>> & elTrialMicroStress,
+  std::vector<Intrepid::Tensor<ScalarT>> & microBackStress, 
   std::vector<ScalarT> & microAlpha,
-  std::vector<Intrepid::Tensor3<ScalarT> > & elTrialDoubleStress,
-  std::vector<Intrepid::Tensor3<ScalarT> > & doubleBackStress, 
+  std::vector<Intrepid::Tensor3<ScalarT>> & elTrialDoubleStress,
+  std::vector<Intrepid::Tensor3<ScalarT>> & doubleBackStress, 
   std::vector<ScalarT> & doubleAlpha)
 /******************************************************************************/
 {
@@ -788,12 +788,12 @@ yieldFunction( std::vector<typename EvalT::ScalarT>&      Fval,
                Intrepid::Tensor<ScalarT>&                 macStress, 
                ScalarT&                                   macroAlpha,
                Intrepid::Tensor<ScalarT>&                 macroBackStress,
-               std::vector< Intrepid::Tensor<ScalarT> >&  micStress,
+               std::vector< Intrepid::Tensor<ScalarT>>&  micStress,
                std::vector<ScalarT>&                      microAlpha,
-               std::vector< Intrepid::Tensor<ScalarT> >&  microBackStress,
-               std::vector< Intrepid::Tensor3<ScalarT> >& doubleStress,
+               std::vector< Intrepid::Tensor<ScalarT>>&  microBackStress,
+               std::vector< Intrepid::Tensor3<ScalarT>>& doubleStress,
                std::vector<ScalarT>&                      doubleAlpha,
-               std::vector< Intrepid::Tensor3<ScalarT> >& doubleBackStress)
+               std::vector< Intrepid::Tensor3<ScalarT>>& doubleBackStress)
 /******************************************************************************/
 {
 
@@ -832,12 +832,12 @@ void J2HMCModel<EvalT, Traits>::
 computeTrialState( typename Traits::EvalData workset,
                    /* increments */
                    PHX::MDField<ScalarT> &                delta_macroStrain,
-                   std::vector< PHX::MDField<ScalarT> > & delta_strainDifference,
-                   std::vector< PHX::MDField<ScalarT> > & delta_microStrainGradient,
+                   std::vector< PHX::MDField<ScalarT>> & delta_strainDifference,
+                   std::vector< PHX::MDField<ScalarT>> & delta_microStrainGradient,
                    /* updated state */
                    PHX::MDField<ScalarT> &                updated_macroStress,
-                   std::vector< PHX::MDField<ScalarT> > & updated_microStress,
-                   std::vector< PHX::MDField<ScalarT> > & updated_doubleStress)
+                   std::vector< PHX::MDField<ScalarT>> & updated_microStress,
+                   std::vector< PHX::MDField<ScalarT>> & updated_doubleStress)
 /******************************************************************************/
 {
 
@@ -1071,8 +1071,8 @@ initializeElasticConstants()
 template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 computeVolumeAverage(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
 

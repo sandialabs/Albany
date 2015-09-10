@@ -453,8 +453,13 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
-    p->set<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
-    p->set<double>("Time Step", this->params->get<double>("Time Step"));
+    p->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
+    if(this->params->isParameter("Time Step Ptr"))
+      p->set<RCP<double> >("Time Step Ptr", this->params->get<Teuchos::RCP<double> >("Time Step Ptr"));
+    else {
+      RCP<double> dt = rcp(new double(this->params->get<double>("Time Step")));
+      p->set<RCP<double> >("Time Step Ptr", dt);
+    }
 
     //Output
     p->set<std::string>("Residual Name", "Thickness Residual");

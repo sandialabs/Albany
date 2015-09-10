@@ -1,9 +1,7 @@
 
 reset
-create brick x 1.0 y 0.1 z 0.1
-webcut volume 1 with plane xplane offset {-0.5 + 0.025} merge
+create brick x 1.0 y 0.05 z 0.05
 block 1 volume 1
-block 2 volume 2
 nodeset 1 surface 4
 nodeset 2 curve 7
 nodeset 3 curve 9

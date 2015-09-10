@@ -5,7 +5,3 @@
 ##*****************************************************************//
 
 # AMP ##################
-
-add_subdirectory(meshes)
-add_subdirectory(PhaseSteady)
-add_subdirectory(PhaseTransient)

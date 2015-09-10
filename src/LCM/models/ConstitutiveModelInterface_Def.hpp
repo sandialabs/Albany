@@ -37,6 +37,8 @@
 #include "OrtizPandolfiModel.hpp"
 #include "ElastoViscoplasticModel.hpp"
 
+#include "../parallel_models/ParallelNeohookeanModel.hpp"
+
 namespace LCM
 {
 
@@ -57,19 +59,19 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   this->initializeModel(plist,dl);
 
   // construct the dependent fields
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout> >
+  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
   dependent_map = model_->getDependentFieldMap();
-  typename std::map<std::string, Teuchos::RCP<PHX::DataLayout> >::iterator miter;
+  typename std::map<std::string, Teuchos::RCP<PHX::DataLayout>>::iterator miter;
   for (miter = dependent_map.begin();
       miter != dependent_map.end();
       ++miter) {
-    Teuchos::RCP<PHX::MDField<ScalarT> > temp_field =
+    Teuchos::RCP<PHX::MDField<ScalarT>> temp_field =
         Teuchos::rcp(new PHX::MDField<ScalarT>(miter->first, miter->second));
     dep_fields_map_.insert(std::make_pair(miter->first, temp_field));
   }
 
   // register dependent fields
-  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > >::iterator it;
+  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>::iterator it;
   for (it = dep_fields_map_.begin();
       it != dep_fields_map_.end();
       ++it) {
@@ -143,12 +145,12 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   }
 
   // construct the evaluated fields
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout> >
+  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
   eval_map = model_->getEvaluatedFieldMap();
   for (miter = eval_map.begin();
       miter != eval_map.end();
       ++miter) {
-    Teuchos::RCP<PHX::MDField<ScalarT> > temp_field =
+    Teuchos::RCP<PHX::MDField<ScalarT>> temp_field =
         Teuchos::rcp(new PHX::MDField<ScalarT>(miter->first, miter->second));
     eval_fields_map_.insert(std::make_pair(miter->first, temp_field));
   }
@@ -174,7 +176,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   TEUCHOS_TEST_FOR_EXCEPTION(eval_fields_map_.size() == 0, std::logic_error,
       "something is wrong in the LCM::CMI");
   // dependent fields
-  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > >::iterator it;
+  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>::iterator it;
   for (it = dep_fields_map_.begin();
       it != dep_fields_map_.end();
       ++it) {
@@ -281,13 +283,15 @@ initializeModel(Teuchos::ParameterList* p,
   std::string const
   error_msg = "Undefined material model name";
 
-  Teuchos::RCP<ConstitutiveModel<EvalT, Traits> >
+  Teuchos::RCP<ConstitutiveModel<EvalT, Traits>>
   model = Teuchos::null;
 
   using Teuchos::rcp;
 
   if (model_name == "Neohookean") {
     model = rcp(new NeohookeanModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Parallel Neohookean") {
+    model = rcp(new ParallelNeohookeanModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Creep") {
     model = rcp(new CreepModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {

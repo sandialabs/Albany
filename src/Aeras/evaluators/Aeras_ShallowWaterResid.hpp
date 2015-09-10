@@ -52,8 +52,10 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;  //vecDim works but its really Dim+1
   PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDotDot;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
@@ -64,14 +66,15 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperViscosity;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperviscosity;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
 
   bool usePrescribedVelocity;
-  bool useHyperViscosity;
+  bool useExplHyperviscosity;
+  bool useImplHyperviscosity;
   bool plotVorticity;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
@@ -100,6 +103,9 @@ private:
   int numDims;
   int vecDim;
   int spatialDim;
+
+  //OG: this is temporary
+  double sHvTau;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,

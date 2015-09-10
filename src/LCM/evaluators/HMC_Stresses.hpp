@@ -44,8 +44,8 @@ private:
   // Input:
   HMC2Tensor strain;
 
-  Teuchos::ArrayRCP< Teuchos::RCP<HMC2Tensor> > strainDifference;
-  Teuchos::ArrayRCP< Teuchos::RCP<HMC3Tensor> > microStrainGradient;
+  Teuchos::ArrayRCP< Teuchos::RCP<HMC2Tensor>> strainDifference;
+  Teuchos::ArrayRCP< Teuchos::RCP<HMC3Tensor>> microStrainGradient;
   std::vector<RealType> lengthScale;
   std::vector<RealType> betaParameter;
 
@@ -58,8 +58,8 @@ private:
   // Output:
   HMC2Tensor stress;
 
-  Teuchos::ArrayRCP< Teuchos::RCP<HMC2Tensor> > microStress;
-  Teuchos::ArrayRCP< Teuchos::RCP<HMC3Tensor> > doubleStress;
+  Teuchos::ArrayRCP< Teuchos::RCP<HMC2Tensor>> microStress;
+  Teuchos::ArrayRCP< Teuchos::RCP<HMC3Tensor>> doubleStress;
 };
 }
 

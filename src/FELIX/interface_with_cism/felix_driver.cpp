@@ -3,7 +3,10 @@
 //#define WRITE_TO_MATRIX_MARKET 
 
 //uncomment the following if you want to exclude procs with 0 elements from solve.
-#define REDUCED_COMM
+//#define REDUCED_COMM
+
+//uncomment the following if you want to use Epetra
+//#define CISM_USE_EPETRA
 
 #include <iostream>
 #include <fstream>
@@ -669,7 +672,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 #endif
 
     Teuchos::ParameterList solveParams;
-    solveParams.set("Compute Sensitivities", true);
+    solveParams.set("Compute Sensitivities", false);
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);

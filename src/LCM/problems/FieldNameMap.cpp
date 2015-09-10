@@ -12,7 +12,7 @@ namespace LCM {
   //----------------------------------------------------------------------------
   FieldNameMap::FieldNameMap(bool surface_flag)
   {
-    Teuchos::RCP<std::map<std::string, std::string> > name_map =
+    Teuchos::RCP<std::map<std::string, std::string>> name_map =
       Teuchos::rcp( new std::map<std::string, std::string> );
 
     name_map->insert( std::make_pair("Cauchy_Stress","Cauchy_Stress") );

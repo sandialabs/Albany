@@ -178,19 +178,19 @@ interfaceCellTopogyFromBulkCellTopogy(
 
   if (bulk_cell_topology_name == "Triangle_3") {
 
-    ctd = shards::getCellTopologyData<shards::Quadrilateral<4> >();
+    ctd = shards::getCellTopologyData<shards::Quadrilateral<4>>();
 
   } else if (bulk_cell_topology_name == "Quadrilateral_4") {
 
-    ctd = shards::getCellTopologyData<shards::Quadrilateral<4> >();
+    ctd = shards::getCellTopologyData<shards::Quadrilateral<4>>();
 
   } else if (bulk_cell_topology_name == "Tetrahedron_4") {
 
-    ctd = shards::getCellTopologyData<shards::Wedge<6> >();
+    ctd = shards::getCellTopologyData<shards::Wedge<6>>();
 
   } else if (bulk_cell_topology_name == "Hexahedron_8") {
 
-    ctd = shards::getCellTopologyData<shards::Hexahedron<8> >();
+    ctd = shards::getCellTopologyData<shards::Hexahedron<8>>();
 
   } else {
 

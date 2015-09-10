@@ -148,6 +148,11 @@ void Albany::APFMeshStruct::init(
   // Build a map to get the EB name given the index
 
   int numEB = sets.models[d].size();
+
+  // getEBSizes will seg fault if at least one element block isn't defined in input. Lets exit a little more gracefully.
+  TEUCHOS_TEST_FOR_EXCEPTION(numEB == 0, std::logic_error,
+     "PUMI requires at least one element block to be defined in the input file.");
+
   std::vector<int> el_blocks;
   getEBSizes(mesh, sets, el_blocks);
 
@@ -239,6 +244,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   solVectorLayout =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
 
+  solutionInitialized = false;
+  residualInitialized = false;
+
   if (solVectorLayout.size() == 0) {
     int valueType;
     if (neq==1)
@@ -250,13 +258,13 @@ Albany::APFMeshStruct::setFieldAndBulkData(
       valueType = apf::MATRIX;
     }
     this->createNodalField(residual_name,valueType);
-    this->createNodalField(solution_name,valueType);
-  }
-  else
+    /* field may have been created by restart mechanism */
+    if (mesh->findField(solution_name))
+      solutionInitialized = true;
+    else
+      this->createNodalField(solution_name,valueType);
+  } else
     splitFields(solVectorLayout);
-
-  solutionInitialized = false;
-  residualInitialized = false;
 
   // Code to parse the vector of StateStructs and save the information
 

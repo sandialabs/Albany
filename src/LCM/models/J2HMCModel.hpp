@@ -54,21 +54,21 @@ public:
   virtual
   void
   computeState(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   //Kokkos
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   void
   computeVolumeAverage(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
 private:
   
@@ -79,12 +79,12 @@ private:
   computeTrialState( typename Traits::EvalData workset,
                    /* increments */
                    PHX::MDField<ScalarT> &                delta_macroStrain,
-                   std::vector< PHX::MDField<ScalarT> > & delta_strainDifference,
-                   std::vector< PHX::MDField<ScalarT> > & delta_microStrainGradient,
+                   std::vector< PHX::MDField<ScalarT>> & delta_strainDifference,
+                   std::vector< PHX::MDField<ScalarT>> & delta_microStrainGradient,
                    /* updated state */
                    PHX::MDField<ScalarT> &                updated_macroStress,
-                   std::vector< PHX::MDField<ScalarT> > & updated_microStress,
-                   std::vector< PHX::MDField<ScalarT> > & updated_doubleStress);
+                   std::vector< PHX::MDField<ScalarT>> & updated_microStress,
+                   std::vector< PHX::MDField<ScalarT>> & updated_doubleStress);
 
 
 void 
@@ -94,13 +94,13 @@ radialReturn( typename Traits::EvalData workset,
              PHX::MDField<ScalarT> &                new_macroBackStress, 
              PHX::MDField<ScalarT> &                new_macroAlpha, 
 // micro
-             std::vector< PHX::MDField<ScalarT> > & trial_microStress,
-             std::vector< PHX::MDField<ScalarT> > & new_microBackStress,
-             std::vector< PHX::MDField<ScalarT> > & new_microAlpha,
+             std::vector< PHX::MDField<ScalarT>> & trial_microStress,
+             std::vector< PHX::MDField<ScalarT>> & new_microBackStress,
+             std::vector< PHX::MDField<ScalarT>> & new_microAlpha,
 // double
-             std::vector< PHX::MDField<ScalarT> > & trial_doubleStress,
-             std::vector< PHX::MDField<ScalarT> > & new_doubleBackStress,
-             std::vector< PHX::MDField<ScalarT> > & new_doubleAlpha);
+             std::vector< PHX::MDField<ScalarT>> & trial_doubleStress,
+             std::vector< PHX::MDField<ScalarT>> & new_doubleBackStress,
+             std::vector< PHX::MDField<ScalarT>> & new_doubleAlpha);
 
 void 
 computeResidualandJacobian(
@@ -108,11 +108,11 @@ computeResidualandJacobian(
   std::vector<ScalarT> & X, std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
   Intrepid::Tensor<ScalarT> & elTrialMacroStress,
   Intrepid::Tensor<ScalarT> & macroBackStress, ScalarT & alpha,
-  std::vector<Intrepid::Tensor<ScalarT> > & elTrialMicroStress,
-  std::vector<Intrepid::Tensor<ScalarT> > & microBackStress,
+  std::vector<Intrepid::Tensor<ScalarT>> & elTrialMicroStress,
+  std::vector<Intrepid::Tensor<ScalarT>> & microBackStress,
   std::vector<ScalarT> & microAlpha,
-  std::vector<Intrepid::Tensor3<ScalarT> > & elTrialDoubleStress,
-  std::vector<Intrepid::Tensor3<ScalarT> > & doubleBackStress,
+  std::vector<Intrepid::Tensor3<ScalarT>> & elTrialDoubleStress,
+  std::vector<Intrepid::Tensor3<ScalarT>> & doubleBackStress,
   std::vector<ScalarT> & doubleAlpha);
 
 template <typename T> T devMag( const Intrepid::Tensor<T> & );
@@ -126,12 +126,12 @@ yieldFunction( std::vector<typename EvalT::ScalarT>&      Fvals,
                Intrepid::Tensor<ScalarT>&                 macStress,
                ScalarT&                                   macroAlpha,
                Intrepid::Tensor<ScalarT>&                 macroBackStress,
-               std::vector< Intrepid::Tensor<ScalarT> >&  micStress,
+               std::vector< Intrepid::Tensor<ScalarT>>&  micStress,
                std::vector<ScalarT>&                      microAlpha,
-               std::vector< Intrepid::Tensor<ScalarT> >&  microBackStress,
-               std::vector< Intrepid::Tensor3<ScalarT> >& doubleStress,
+               std::vector< Intrepid::Tensor<ScalarT>>&  microBackStress,
+               std::vector< Intrepid::Tensor3<ScalarT>>& doubleStress,
                std::vector<ScalarT>&                      doubleAlpha,
-               std::vector< Intrepid::Tensor3<ScalarT> >& doubleBackStress);
+               std::vector< Intrepid::Tensor3<ScalarT>>& doubleBackStress);
 
 void initializeElasticConstants();
 
@@ -171,8 +171,8 @@ dotdotdot(
   std::vector<RealType> doubleIsotropicModulus;
 
   Intrepid::Tensor4<ScalarT> macroCelastic;
-  std::vector<Intrepid::Tensor4<ScalarT> > microCelastic;
-  std::vector<Intrepid::Tensor4<ScalarT> > doubleCelastic;
+  std::vector<Intrepid::Tensor4<ScalarT>> microCelastic;
+  std::vector<Intrepid::Tensor4<ScalarT>> doubleCelastic;
   ///
   /// model parameters
   ///

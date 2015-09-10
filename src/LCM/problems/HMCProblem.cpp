@@ -9,7 +9,7 @@ Albany::HMCProblem::
 HMCProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		  const Teuchos::RCP<ParamLib>& paramLib_,
 		  const int numDim_,
-                  Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
+                  Teuchos::RCP<const Teuchos::Comm<int>>& commT) :
 #ifdef ALBANY_ATO
   ATO::OptimizationProblem(params_, paramLib_, numDim_+params_->get("Additional Scales",1)*numDim_*numDim_),
 #endif
@@ -58,7 +58,7 @@ Albany::HMCProblem::
 void
 Albany::HMCProblem::
 buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
   Albany::StateManager& stateMgr)
 {
   /* Construct All Phalanx Evaluators */
@@ -79,12 +79,12 @@ buildProblem(
     constructNeumannEvaluators(meshSpecs[0]);
 
 #ifdef ALBANY_ATO
-  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
+  if( params->isType<Teuchos::RCP<ATO::Topology>>("Topology") )
    setupTopOpt(meshSpecs,stateMgr);
 #endif
 }
 
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 Albany::HMCProblem::
 buildEvaluators(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -135,7 +135,7 @@ Albany::HMCProblem::constructNeumannEvaluators(
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important
    std::vector<std::string> neumannNames(neq + 1);
-   Teuchos::Array<Teuchos::Array<int> > offsets;
+   Teuchos::Array<Teuchos::Array<int>> offsets;
    offsets.resize(neq + 1);
 
    neumannNames[0] = "sig_x";
@@ -201,7 +201,7 @@ Albany::HMCProblem::getValidProblemParameters() const
 #ifdef ALBANY_ATO
   Teuchos::RCP<ATO::Topology> emptyTopo;
   emptyTopo = Teuchos::null;
-  validPL->set<Teuchos::RCP<ATO::Topology> >("Topology", emptyTopo);
+  validPL->set<Teuchos::RCP<ATO::Topology>>("Topology", emptyTopo);
 #endif
   validPL->sublist("Topology Parameters", false, "");
   validPL->sublist("Objective Aggregator", false, "");
@@ -234,8 +234,8 @@ parseMaterialModel(Teuchos::RCP<Teuchos::ParameterList>& p,
 
 void
 Albany::HMCProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
    ) const
 {
   oldState_ = oldState;

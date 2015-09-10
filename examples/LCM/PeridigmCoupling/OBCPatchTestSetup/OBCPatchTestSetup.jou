@@ -1,0 +1,26 @@
+
+reset
+
+#{BAR_LENGTH=1.5}
+#{BAR_WIDTH=0.5}
+#{HORIZON=BAR_WIDTH/2}
+#{ELEMENT_SIZE=HORIZON/2}
+#{OVERLAP=0.5}
+
+create brick x {BAR_LENGTH} y {BAR_WIDTH} z {BAR_WIDTH}
+volume 1 move x {BAR_LENGTH/2.0} y {BAR_WIDTH/2.0} z {BAR_WIDTH/2.0}
+volume 1 copy move x {BAR_LENGTH-OVERLAP} y 0.0 z 0.0
+webcut volume 1 with plane xplane offset {2*HORIZON} imprint merge
+volume all size {ELEMENT_SIZE}
+mesh volume all
+block 1 volume 1 3
+block 2 volume 2
+nodeset 1 volume    3  # left end of pd bar
+nodeset 2 curve     9  # z axis on pd end
+nodeset 3 curve     7  # y axis on pd end
+nodeset 11 surface 12  # right end of fem bar
+nodeset 12 curve   22  # z axis on fem end
+nodeset 13 curve   17  # y axis on fem end
+export genesis 'OBCPatchTestSetup_AllHex.g' overwrite
+
+# spheregen.py --ignore-blocks 2 -o OBCPatchTestSetup.g OBCPatchTestSetup_AllHex.g

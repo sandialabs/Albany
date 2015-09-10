@@ -578,6 +578,10 @@ namespace Aeras
 
     double previous_time_label;
 
+    //Create enum type for the different kinds of elements (currently lines and quads) 
+    enum elemType {LINE, QUAD};
+    elemType ElemType;
+
   protected:
 
     Teuchos::RCP<Teuchos::ParameterList> discParams;
@@ -600,6 +604,8 @@ namespace Aeras
     int points_per_edge; //number of points per edge (i.e., the degree of enrichment) -- read in from ParameterList.
 
     int nodes_per_element; //number of nodes of an element
+  
+    std::string element_name; //name of element
 
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;

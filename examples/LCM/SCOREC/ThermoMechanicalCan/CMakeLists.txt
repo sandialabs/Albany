@@ -9,6 +9,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTimeDepTemperatureT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTimeDepTemperatureT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.xml COPYONLY)
 
@@ -23,5 +25,7 @@ IF(ENABLE_MESHMODEL)
     set_tests_properties(SCOREC_${testName}_mech_tpetra PROPERTIES LABELS CUDA_TEST)
     add_test (SCOREC_${testName}_thermomech_tpetra ${AlbanyT.exe} MechanicsWithTemperatureT.xml)
     set_tests_properties(SCOREC_${testName}_thermomech_tpetra PROPERTIES LABELS CUDA_TEST)
+    add_test (SCOREC_${testName}_timedep_thermomech_tpetra ${AlbanyT.exe} MechanicsTimeDepTemperatureT.xml)
+    set_tests_properties(SCOREC_${testName}_timedep_thermomech_tpetra PROPERTIES LABELS CUDA_TEST)
   ENDIF()
 ENDIF()

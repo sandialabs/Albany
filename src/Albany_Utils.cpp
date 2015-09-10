@@ -13,6 +13,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+// For stack trace
+#include <execinfo.h>
+#include <stdio.h>
+
+
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
@@ -205,6 +210,7 @@
     xml_filename(default_xml_filename),
     xml_filename2(default_xml_filename2),
     xml_filename3(default_xml_filename3),
+    has_first_xml_file(false),
     has_second_xml_file(false),
     has_third_xml_file(false),
     vtune(false) {}
@@ -225,6 +231,7 @@
         if (!found_first_xml_file) {
           xml_filename=argv[arg];
           found_first_xml_file = true;
+          has_first_xml_file = true;
         }
         else if (!found_second_xml_file) {
           xml_filename2=argv[arg];
@@ -252,3 +259,15 @@
     system(cmd.str().c_str());
     system("sleep 10");
   }
+
+  void Albany::do_stack_trace() {
+
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+  }
+  

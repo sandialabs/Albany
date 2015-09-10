@@ -147,10 +147,10 @@
   )
 
 SET(HEADERS ${HEADERS}
-    Aeras_HyperViscosityDecorator.hpp
+    Aeras_HVDecorator.hpp
 )
 SET(SOURCES ${SOURCES}
-    Aeras_HyperViscosityDecorator.cpp
+    Aeras_HVDecorator.cpp
 )
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

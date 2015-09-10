@@ -16,20 +16,20 @@ template<typename EvalT, typename Traits>
 BiotModulus<EvalT, Traits>::
 BiotModulus(Teuchos::ParameterList& p) :
   biotModulus(p.get<std::string>("Biot Modulus Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* elmd_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
 
   Teuchos::RCP<ParamLib> paramLib = 
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   std::string type = elmd_list->get("Biot Modulus Type", "Constant");
   if (type == "Constant") {
@@ -65,7 +65,7 @@ BiotModulus(Teuchos::ParameterList& p) :
 
   if ( p.isType<std::string>("Porosity Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
      PHX::MDField<ScalarT,Cell,QuadPoint>
        tp(p.get<std::string>("Porosity Name"), scalar_dl);
      porosity = tp;
@@ -84,7 +84,7 @@ BiotModulus(Teuchos::ParameterList& p) :
 
   if ( p.isType<std::string>("Biot Coefficient Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
-       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
      PHX::MDField<ScalarT,Cell,QuadPoint>
        btp(p.get<std::string>("Biot Coefficient Name"), scalar_dl);
      biotCoefficient = btp;

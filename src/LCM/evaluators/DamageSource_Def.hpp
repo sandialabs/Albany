@@ -18,31 +18,31 @@ template<typename EvalT, typename Traits>
 DamageSource<EvalT, Traits>::
 DamageSource(Teuchos::ParameterList& p) :
   bulkModulus (p.get<std::string>("Bulk Modulus Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   dp          (p.get<std::string>("DP Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   seff        (p.get<std::string>("Effective Stress Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   energy      (p.get<std::string>("Energy Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   J           (p.get<std::string>("DetDefGrad Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   damageLS    (p.get<std::string>("Damage Length Scale Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   gc          (p.get<double>("gc Name")),
   damage      (p.get<std::string>("Damage Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   source      (p.get<std::string>("Damage Source Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") )
 {
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   scalar_dl->dimensions(dims);
   numQPs  = dims[1];
 
   Teuchos::RCP<ParamLib> paramLib = 
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // add dependent fields
   this->addDependentField(bulkModulus);

@@ -1,0 +1,188 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="Metal"/>
+    </ParameterList> <!-- Block 2 END -->
+    
+    <ParameterList name="block_2">
+      <Parameter name="material" type="string" value="Fast Metal"/>
+    </ParameterList>
+    <!-- Block 1 END -->
+    
+  </ParameterList> <!-- Element Blocks END -->
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Hyper">
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="Neohookean"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="200.0E9"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.3"/>
+      </ParameterList>
+    </ParameterList>  <!-- Hyper END -->
+
+    <ParameterList name="AnisoHyperDamage">
+      <ParameterList name="Material Model">
+        <!-- AHD := Anisotropic Hyperelastic Damage -->
+        <Parameter name="Model Name" type="string" value="AHD"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100.0E3"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.45"/>
+      </ParameterList>
+      <!-- Fiber 1 parameters -->
+      <Parameter name="Fiber 1 k" type="double" value="1.0e4"/>
+      <Parameter name="Fiber 1 q" type="double" value="1.0e2"/>
+      <Parameter name="Fiber 1 volume fraction" type="double" value="0.30"/>
+      <Parameter name="Fiber 1 maximum damage" type="double" value="1.0"/>
+      <Parameter name="Fiber 1 damage saturation" type="double" value="1.0E4"/>
+      <!-- Fiber 2 parameters -->
+      <Parameter name="Fiber 2 k" type="double" value="1.0e4"/>
+      <Parameter name="Fiber 2 q" type="double" value="1.0e2"/>
+      <Parameter name="Fiber 2 volume fraction" type="double" value="0.30"/>
+      <Parameter name="Fiber 2 maximum damage" type="double" value="1.0"/>
+      <Parameter name="Fiber 2 damage saturation" type="double" value="1.0E4"/>
+      <!-- Matrix damage parameters -->
+      <Parameter name="Matrix volume fraction" type="double" value="0.40"/>
+      <Parameter name="Matrix maximum damage" type="double" value="0.1"/>
+      <Parameter name="Matrix damage saturation" type="double" value="1.0E4"/>
+
+      <Parameter name="Fiber 1 Orientation Vector" type="Array(double)" value="{0.0, 1.0, 0.0}"/>
+      <Parameter name="Fiber 2 Orientation Vector" type="Array(double)" value="{0.0, 1.0, 0.0}"/>
+ 
+      <Parameter name="Use Local Coordinate System" type="bool" value="false"/>
+
+    </ParameterList> <!-- AnisoHyperDamage END -->
+
+    <ParameterList name="Metal">
+    <!-- MATERIAL MODEL/PROPERTIES -->
+        <ParameterList name="Material Model"> 
+         <Parameter name="Model Name" type="string" value="J2"/>
+        </ParameterList>
+
+	<!--Stabilization Parameter -->
+        <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
+        <!-- Hydrogen Transport Parameters -->
+        <Parameter name="Initial Concentration" type="double" value="3.87e-5"/>
+        <ParameterList name="Transport Coefficients">
+          <Parameter name="Partial Molar Volume" type="double" value="2.0"/>
+          <Parameter name="Ideal Gas Constant" type="double" value="0.008314"/>
+          <Parameter name="Pre-exponential Factor" type="double" value="5.4e5"/>
+          <Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9"/>
+          <Parameter name="Trap Binding Energy" type="double" value="9.65"/>
+          <Parameter name="Number of Lattice Sites" type="double" value="0.1405283867341203"/>
+          <Parameter name="Reference Total Concentration" type="double" value="3.87e-5"/>
+          <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
+          <Parameter name="A Constant" type="double" value="8.6"/>
+          <Parameter name="B Constant" type="double" value="1.5"/>
+          <Parameter name="C Constant" type="double" value="6.96"/>
+          <Parameter name="Avogadro's Number" type="double" value="6.0221413e11"/>
+        </ParameterList>
+	
+        <ParameterList name="Yield Strength">
+          <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="500.0"/>
+          <Parameter name="dYdT Value" type="double" value="0.000"/>
+        </ParameterList>
+	
+        <ParameterList name="Hardening Modulus">
+          <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="0.0"/>
+          <Parameter name="dHdT Value" type="double" value="0.000"/>
+        </ParameterList>
+	
+        <ParameterList name="Elastic Modulus">
+          <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="1.96e2"/>
+        </ParameterList>
+	
+        <ParameterList name="Poissons Ratio">
+          <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="0.3"/>
+        </ParameterList>
+	
+	<Parameter name="Saturation Modulus" type="double" value="2.07"/>
+        <Parameter name="Saturation Exponent" type="double" value="1.0"/>>
+	
+        <!-- Output Flags -->
+        <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+        <Parameter name="Output Total Concentration" type="bool" value="true"/>
+        <Parameter name="Output eqps" type="bool" value="true"/>
+	
+    </ParameterList> <!-- Metal END -->
+   
+    <ParameterList name="Fast Metal">
+    <!-- MATERIAL MODEL/PROPERTIES -->
+        <ParameterList name="Material Model"> 
+         <Parameter name="Model Name" type="string" value="J2"/>
+        </ParameterList>
+
+	<!--Stabilization Parameter -->
+        <Parameter name="Stabilization Parameter" type="double" value="2.0"/>
+        <!-- Hydrogen Transport Parameters -->
+        <Parameter name="Initial Concentration" type="double" value="3.87e-5"/>
+        <ParameterList name="Transport Coefficients">
+          <Parameter name="Partial Molar Volume" type="double" value="2.0"/>
+          <Parameter name="Ideal Gas Constant" type="double" value="0.008314"/>
+          <Parameter name="Pre-exponential Factor" type="double" value="5.4e10"/>
+          <Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9"/>
+          <Parameter name="Trap Binding Energy" type="double" value="9.65"/>
+          <Parameter name="Number of Lattice Sites" type="double" value="0.1405283867341203"/>
+          <Parameter name="Reference Total Concentration" type="double" value="3.87e-5"/>
+          <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
+          <Parameter name="A Constant" type="double" value="8.6"/>
+          <Parameter name="B Constant" type="double" value="1.5"/>
+          <Parameter name="C Constant" type="double" value="6.96"/>
+          <Parameter name="Avogadro's Number" type="double" value="6.0221413e11"/>
+        </ParameterList>
+	
+        <ParameterList name="Yield Strength">
+          <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="500.0"/>
+          <Parameter name="dYdT Value" type="double" value="0.000"/>
+        </ParameterList>
+	
+        <ParameterList name="Hardening Modulus">
+          <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="0.0"/>
+          <Parameter name="dHdT Value" type="double" value="0.000"/>
+        </ParameterList>
+	
+        <ParameterList name="Elastic Modulus">
+          <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="1.96e2"/>
+        </ParameterList>
+	
+        <ParameterList name="Poissons Ratio">
+          <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+          <Parameter name="Value" type="double" value="0.3"/>
+        </ParameterList>
+	
+	<Parameter name="Saturation Modulus" type="double" value="2.07"/>
+        <Parameter name="Saturation Exponent" type="double" value="1.0"/>>
+	
+        <!-- Output Flags -->
+        <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+	<Parameter name="Output Total Concentration" type="bool" value="true"/>
+        <Parameter name="Output eqps" type="bool" value="true"/>
+	
+    </ParameterList> <!-- Fast Metal END -->
+
+  </ParameterList> <!-- Materials END -->
+
+</ParameterList> <!-- FILE END -->
+
+

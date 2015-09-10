@@ -29,16 +29,21 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     if (eqnSet == "Scalar") { modelDim=2; neq=1; } 
     else { modelDim=2; neq=3; } 
   }
-  bool useHyperViscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Hyperviscosity", false); 
+
+  //OG: FIXME: Here (or/and in SW_Resid) should be a check for the case when both Explicit and Implicit HV are on.
+  //Should not be allowed.
+  bool useExplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
+  bool useImplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Implicit Hyperviscosity", false);
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 
   bool plotVorticity = params_->sublist("Shallow Water Problem").get<bool>("Plot Vorticity", false); 
 
-  if (useHyperViscosity)
+  if (useImplHyperviscosity) {
     if (usePrescribedVelocity) //TC1 case: only 1 extra hyperviscosity dof 
       neq = 4; 
     //If we're using hyperviscosity for Shallow water equations, we have double the # of dofs. 
     else  
       neq = 2*neq; 
+  }
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //No need to plot vorticity when prescrVel == 1.

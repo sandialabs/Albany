@@ -25,7 +25,7 @@
 
       <ParameterList name="Material Point Simulator">
         <!-- Bifurcation check -->
-        <Parameter name="Check Stability" type="bool" value="true"/>
+        <Parameter name="Check Stability" type="bool" value="false"/>
         
         <!-- Loading Parameters -->
         <Parameter name="Loading Case Name" type="string" value="general"/>

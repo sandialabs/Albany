@@ -20,43 +20,43 @@ namespace LCM {
   HDiffusionDeformationMatterResidual<EvalT, Traits>::
   HDiffusionDeformationMatterResidual(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>           ("Weighted BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
     wGradBF     (p.get<std::string>           ("Weighted Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
     GradBF      (p.get<std::string>           ("Gradient BF Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
     Dstar (p.get<std::string>                 ("Effective Diffusivity Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+           p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     DL   (p.get<std::string>                  ("Diffusion Coefficient Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Clattice (p.get<std::string>              ("QP Variable Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     eqps (p.get<std::string>                  ("eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     eqpsFactor (p.get<std::string>            ("Strain Rate Factor Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Ctrapped (p.get<std::string>              ("Trapped Concentration Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Ntrapped (p.get<std::string>              ("Trapped Solvent Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+              p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     CLGrad       (p.get<std::string>          ("Gradient QP Variable Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+                  p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
     stressGrad       (p.get<std::string>      ("Gradient Hydrostatic Stress Name"),
-                      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+                      p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
     DefGrad      (p.get<std::string>          ("Deformation Gradient Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                  p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     Pstress      (p.get<std::string>          ("Stress Name"),
-                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                  p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     weights       (p.get<std::string>         ("Weights Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     tauFactor  (p.get<std::string>            ("Tau Contribution Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     elementLength (p.get<std::string>         ("Element Length Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     deltaTime (p.get<std::string>             ("Delta Time Name"),
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+               p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout")),
     TResidual   (p.get<std::string>           ("Residual Name"),
-                 p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+                 p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout") ),
      stab_param_(p.get<RealType>("Stabilization Parameter")),
      t_decay_constant_(p.get<RealType>("Tritium Decay Constant"))
   {
@@ -86,14 +86,14 @@ namespace LCM {
     this->addEvaluatedField(TResidual);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
     numQPs  = dims[1];
     numDims = dims[2];
 
     Teuchos::RCP<PHX::DataLayout> node_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout");
     std::vector<PHX::DataLayout::size_type> ndims;
     node_dl->dimensions(ndims);
     worksetSize = dims[0];
@@ -191,15 +191,17 @@ namespace LCM {
       for (int qp=0; qp < numQPs; ++qp) {
 
 
-  		  Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
-  		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
-  		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+	      Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+	      Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
+	      Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
 
   	      Intrepid::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+	      temp =  ( DL(cell,qp)  + artificalDL(cell,qp)  ); //**GB changed 08/14/2015
+              // Note: Now temp is the diffusivity
 
          for (int j=0; j<numDims; j++){
-        	 Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
+	   Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt*temp; // **GB changed 08/14/2015
         }
       }
     }
@@ -210,27 +212,36 @@ namespace LCM {
         for (int qp=0; qp < numQPs; ++qp) {
 
                    // Divide the equation by DL to avoid ill-conditioned tangent
-                   temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
-
+                   // temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  ); **GB changed 08/14/2015
+ 
                   // Transient Term
                   TResidual(cell,node) +=  Dstar(cell, qp)*
                 		                                     (Clattice(cell,qp)- Clattice_old(cell, qp) )*
-                                                             wBF(cell, node, qp)*temp;
+		    wBF(cell, node, qp);//*temp; GB changed 08/14/2015
 
                  // Strain Rate Term
                  TResidual(cell,node) +=  eqpsFactor(cell,qp)*
                                                            (eqps(cell,qp)- eqps_old(cell, qp))*
-                                                            wBF(cell, node, qp)*temp;
+		   wBF(cell, node, qp);//*temp; GB changed 08/14/2015
 
                  // Isotope decay term
                  TResidual(cell,node) += t_decay_constant_*(Clattice(cell,qp) + Ctrapped(cell,qp))
-                                         *wBF(cell,node,qp)*dt*temp;
+		   *wBF(cell,node,qp)*dt;//*temp; GB changed 08/14/2015
 
                  // hydrostatic stress term
+		 // Need to be done: Add C_inverse term into hydrostatic residual
+		 // This is horribly inefficient - will refactor to a single loop 
+                     
+                 Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+                 Intrepid::Tensor<ScalarT> C_tensor = Intrepid::t_dot(F,F);
+                 Intrepid::Tensor<ScalarT> C_inv_tensor = Intrepid::inverse(C_tensor);
+                 Intrepid::Vector<ScalarT> stress_grad(numDims, stressGrad, cell, qp, 0);
+                 Intrepid::Vector<ScalarT> C_inv_stress_grad = Intrepid::dot(C_inv_tensor, stress_grad);
+
                  for (int dim=0; dim < numDims; ++dim) {
                          TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*
                                                                   wGradBF(cell, node, qp, dim)*
-                                                                  stressGrad(cell, qp, dim)*dt*temp;
+			   C_inv_stress_grad(dim)*dt;//*temp; GB changed 08/14/2015
                  }
             }
          }
@@ -270,8 +281,8 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
         for (int qp=0; qp < numQPs; ++qp) {
-          temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
-          TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*temp*
+          // temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  ); GB changed 08/14/2015
+          TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*//temp* GB changed 08/14/2015
                                                    (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp))*
                                                     wBF(cell, node, qp);
         }

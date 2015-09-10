@@ -54,7 +54,7 @@ public:
   { return field_tag_; }
 
 private:
-  Teuchos::RCP< PHX::Tag<typename EvalT::ScalarT> > field_tag_;  
+  Teuchos::RCP< PHX::Tag<typename EvalT::ScalarT>> field_tag_;  
 };
 
 template<typename EvalT, typename Traits>
@@ -115,14 +115,14 @@ private:
 
   int ndb_start_, num_fields_, num_pts_, num_dims_, num_nodes_;
     
-  std::vector<PHX::MDField<ScalarT> > ip_fields_;
+  std::vector<PHX::MDField<ScalarT>> ip_fields_;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
 #ifdef PROJ_INTERP_TEST
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
 #endif
-  typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> >
+  typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>
           IntrepidBasis;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
   Teuchos::RCP<ProjectIPtoNodalFieldQuadrature> quad_mgr_;
@@ -130,7 +130,7 @@ private:
   Albany::StateManager* p_state_mgr_;
 
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
-  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory_;
 
   bool initManager(Teuchos::ParameterList* const pl);
   void fillRHS(const typename Traits::EvalData workset);

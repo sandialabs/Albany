@@ -15,8 +15,8 @@ LCM::
 Schwarz_BoundaryJacobian::
 Schwarz_BoundaryJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & comm,
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
-    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca,
+    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
     int const this_app_index,
     int const coupled_app_index) :
         commT_(comm),

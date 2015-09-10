@@ -27,7 +27,7 @@ namespace LCM {
     ///
     /// Return the map
     ///
-    Teuchos::RCP<std::map<std::string, std::string> >
+    Teuchos::RCP<std::map<std::string, std::string>>
     getMap() { return field_name_map_; }
 
   private:
@@ -49,7 +49,7 @@ namespace LCM {
     ///
     /// Map data variable
     ///
-    Teuchos::RCP<std::map<std::string, std::string> > field_name_map_;
+    Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
   };
 }
 #endif

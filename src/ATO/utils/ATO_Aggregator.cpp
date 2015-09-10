@@ -63,13 +63,13 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
   outputObjectiveName = aggregatorParams.get<std::string>("Objective Name");
   outputDerivativeName = aggregatorParams.get<std::string>("dFdTopology Name");
 
-  if(aggregatorParams.isType<bool>("Shift to Zero"))
-    shiftToZero = aggregatorParams.get<bool>("Shift to Zero");
-  else shiftToZero = false;
 
-  if(aggregatorParams.isType<bool>("Scale to One"))
-    scaleToOne = aggregatorParams.get<bool>("Scale to One");
-  else scaleToOne = false;
+  if( aggregatorParams.isType<bool>("Normalize") ){
+    if( aggregatorParams.get<bool>("Normalize") == false){
+      int nObjs = aggregatedObjectivesNames.size();
+      normalize.resize(nObjs,1.0);
+    }
+  }
 
   comm = Teuchos::null;
 }
