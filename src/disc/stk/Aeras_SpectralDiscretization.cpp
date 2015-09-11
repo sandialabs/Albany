@@ -657,16 +657,10 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  //IKT, 8/5/15, FIXME: this is a HACK! 
-  //There is something wrong with trying to output the solution to Exodus file for line elements.
-  //Need to figure out what is going on.  
-  //Also I don't get why writeSolutionT and the observer get called at all when there is no "Exodus Output Line" 
-  //in the input file.  I believe in this case there routines should not be called.
-  //For now, the following is a way to turn off output to Exodus for spectral elements.
-  if (ElemType != LINE) { 
-    writeSolutionToMeshDatabaseT(solnT, time, overlapped);
-    writeSolutionToFileT(solnT, time, overlapped);
-  }
+  //IKT, 9/11/15, FIXME: apparently, writeSolutionT and the observer get called at all when there is no "Exodus Output Line" 
+  //in the input file.  I believe in this case there routines should not be called.  Needs to be debugged.
+  writeSolutionToMeshDatabaseT(solnT, time, overlapped);
+  writeSolutionToFileT(solnT, time, overlapped);
 }
 
 void
