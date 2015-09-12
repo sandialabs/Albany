@@ -249,7 +249,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
       }
     }
 
-    // Restrict step to size of trust region. Exact algorithm, Nocedal 4.4
+    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
     T
     lambda = 0.0;
 
