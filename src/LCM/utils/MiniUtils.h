@@ -182,7 +182,7 @@ public:
   {return max_num_iter_;}
 
   void
-  setMaximumNumberRestrictIterations(T const mntri)
+  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
   Intrepid::Index
@@ -434,6 +434,30 @@ public:
   {return num_iter_;}
 
   void
+  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
+  {max_num_restrict_iter_ = mntri;}
+
+  Intrepid::Index
+  getMaximumNumberRestrictIterations()
+  {return max_num_restrict_iter_;}
+
+  void
+  setMaximumStepLength(T const msl)
+  {max_step_length_ = msl;}
+
+  T
+  getMaximumStepLength() const
+  {return max_step_length_;}
+
+  void
+  setInitialStepLength(T const isl)
+  {initial_step_length_ = isl;}
+
+  T
+  getInitialStepLength() const
+  {return initial_step_length_;}
+
+  void
   setRelativeTolerance(T const rt)
   {rel_tol_ = rt;}
 
@@ -467,6 +491,15 @@ private:
 
   Intrepid::Index
   num_iter_{0};
+
+  Intrepid::Index
+  max_num_restrict_iter_{4};
+
+  T
+  max_step_length_{1.0};
+
+  T
+  initial_step_length_{1.0};
 
   T
   rel_tol_{1.0e-10};

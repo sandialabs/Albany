@@ -599,6 +599,51 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
       }
     }
 
+    T
+    step_length = this->initial_step_length_;
+
+    Intrepid::Tensor<T, N>
+    I = Intrepid::identity<T, N>(dimension);
+
+    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+    T
+    lambda = 0.0;
+
+    Intrepid::Tensor<T, N>
+    K(dimension);
+
+    Intrepid::Tensor<T, N>
+    L(dimension);
+
+    Intrepid::Vector<T, N>
+    step;
+
+    Intrepid::Vector<T, N>
+    q;
+
+    for (Intrepid::Index i{0}; i < this->max_num_restrict_iter_; ++i) {
+
+      K = Hessian + lambda * I;
+
+      L = Intrepid::cholesky(K).first;
+
+      step = - Intrepid::solve(K, resi);
+
+      q = Intrepid::solve(L, step);
+
+      T const
+      nps = Intrepid::norm_square(step);
+
+      T const
+      nqs = Intrepid::norm_square(q);
+
+      T const
+      lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+
+      lambda += std::max(lambda_incr, 0.0);
+
+    }
+
     Intrepid::Vector<T, N> const
     soln_incr = - Intrepid::solve(Hessian, resi);
 
