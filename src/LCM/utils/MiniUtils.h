@@ -40,16 +40,15 @@ computeFADInfo(
 ///
 /// Nonlinear system (NLS) interface for mini nonlinear solver
 ///
-template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template <typename S>
 class NonlinearSystem_Base
 {
 public:
-  virtual
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) = 0;
+  NonlinearSystem_Base()
+  {
+    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
+  }
 
-  virtual
-  ~NonlinearSystem_Base() {}
 };
 
 ///
