@@ -17,7 +17,12 @@ namespace LCM
 ///
 /// Types of nonlinear method for LCM nonlinear mini solvers.
 ///
-enum class NonlinearMethod {NEWTON, TRUST_REGION, CONJUGATE_GRADIENT};
+enum class NonlinearMethod
+{
+  NEWTON,
+  TRUST_REGION,
+  CONJUGATE_GRADIENT,
+  REGULARIZED_LINE_SEARCH};
 
 ///
 /// Deal with derivative information for all the mini solvers.
@@ -35,16 +40,15 @@ computeFADInfo(
 ///
 /// Nonlinear system (NLS) interface for mini nonlinear solver
 ///
-template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template <typename S>
 class NonlinearSystem_Base
 {
 public:
-  virtual
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) = 0;
+  NonlinearSystem_Base()
+  {
+    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
+  }
 
-  virtual
-  ~NonlinearSystem_Base() {}
 };
 
 ///
@@ -178,7 +182,7 @@ public:
   {return max_num_iter_;}
 
   void
-  setMaximumNumberRestrictIterations(T const mntri)
+  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
   Intrepid::Index
@@ -385,6 +389,117 @@ private:
 
   T
   secant_tol_{1.0e-6};
+
+  T
+  rel_tol_{1.0e-10};
+
+  T
+  rel_error_{1.0};
+
+  T
+  abs_tol_{1.0e-10};
+
+  T
+  abs_error_{1.0};
+
+  bool
+  converged_{false};
+};
+
+///
+/// LineSearchRegularized Method class. See Nocedal's 2nd Ed Algorithm 11.4
+///
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class LineSearchRegularizedMethod : public NonlinearMethod_Base<NLS, T, N>
+{
+public:
+
+  virtual
+  ~LineSearchRegularizedMethod() {}
+
+  virtual
+  void
+  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+
+  void
+  setMaximumNumberIterations(Intrepid::Index const mni)
+  {max_num_iter_ = mni;}
+
+  Intrepid::Index
+  getMaximumNumberIterations()
+  {return max_num_iter_;}
+
+  Intrepid::Index
+  getNumberIterations()
+  {return num_iter_;}
+
+  void
+  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
+  {max_num_restrict_iter_ = mntri;}
+
+  Intrepid::Index
+  getMaximumNumberRestrictIterations()
+  {return max_num_restrict_iter_;}
+
+  void
+  setMaximumStepLength(T const msl)
+  {max_step_length_ = msl;}
+
+  T
+  getMaximumStepLength() const
+  {return max_step_length_;}
+
+  void
+  setInitialStepLength(T const isl)
+  {initial_step_length_ = isl;}
+
+  T
+  getInitialStepLength() const
+  {return initial_step_length_;}
+
+  void
+  setRelativeTolerance(T const rt)
+  {rel_tol_ = rt;}
+
+  T
+  getRelativeTolerance() const
+  {return rel_tol_;}
+
+  T
+  getRelativeError() const
+  {return rel_error_;}
+
+  void
+  setAbsoluteTolerance(T const at)
+  {abs_tol_ = at;}
+
+  T
+  getAbsoluteTolerance() const
+  {return abs_tol_;}
+
+  T
+  getAbsoluteError() const
+  {return abs_error_;}
+
+  bool
+  isConverged() const
+  {return converged_;}
+
+private:
+  Intrepid::Index
+  max_num_iter_{128};
+
+  Intrepid::Index
+  num_iter_{0};
+
+  Intrepid::Index
+  max_num_restrict_iter_{4};
+
+  T
+  max_step_length_{1.0};
+
+  T
+  initial_step_length_{1.0};
 
   T
   rel_tol_{1.0e-10};

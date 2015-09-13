@@ -39,6 +39,10 @@ nonlinearMethodFactory(NonlinearMethod const method_type)
     method = new ConjugateGradientMethod<NLS, T, N>();
     break;
 
+  case NonlinearMethod::REGULARIZED_LINE_SEARCH:
+    method = new LineSearchRegularizedMethod<NLS, T, N>();
+    break;
+
   }
 
   return method;
@@ -249,7 +253,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
       }
     }
 
-    // Restrict step to size of trust region. Exact algorithm, Nocedal 4.4
+    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
     T
     lambda = 0.0;
 
@@ -525,6 +529,133 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
   soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
 
   return;
+}
+
+//
+//
+//
+template<typename NLS, typename T, Intrepid::Index N>
+void
+LineSearchRegularizedMethod<NLS, T, N>::
+solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+{
+  using AD = typename Sacado::Fad::DFad<T>;
+
+  Intrepid::Index const
+  dimension = soln.get_dimension();
+
+  Intrepid::Vector<T, N>
+  resi = nls.compute(soln);
+
+  Intrepid::Vector<AD, N>
+  soln_ad(dimension);
+
+  Intrepid::Vector<AD, N>
+  resi_ad(dimension);
+
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    soln_ad(i) = AD(dimension, i, soln(i));
+  }
+
+  T const
+  initial_norm = Intrepid::norm(resi);
+
+  this->num_iter_ = 0;
+
+  this->converged_ = initial_norm <= this->abs_tol_;
+
+  while (this->converged_ == false) {
+
+    resi_ad = nls.compute(soln_ad);
+
+    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
+
+    this->abs_error_ = Intrepid::norm(resi);
+
+    this->rel_error_ = this->abs_error_ / initial_norm;
+
+    bool const
+    converged_relative = this->rel_error_ <= this->rel_tol_;
+
+    bool const
+    converged_absolute = this->abs_error_ <= this->abs_tol_;
+
+    this->converged_ = converged_relative || converged_absolute;
+
+    bool const
+    is_max_iter = this->num_iter_ >= this->max_num_iter_;
+
+    bool const
+    end_solve = this->converged_ || is_max_iter;
+
+    if (end_solve == true) break;
+
+    Intrepid::Tensor<T, N>
+    Hessian(dimension);
+
+    for (Intrepid::Index i{0}; i < dimension; ++i) {
+      for (Intrepid::Index j{0}; j < dimension; ++j) {
+        Hessian(i, j) = resi_ad(i).dx(j);
+      }
+    }
+
+    T
+    step_length = this->initial_step_length_;
+
+    Intrepid::Tensor<T, N>
+    I = Intrepid::identity<T, N>(dimension);
+
+    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+    T
+    lambda = 0.0;
+
+    Intrepid::Tensor<T, N>
+    K(dimension);
+
+    Intrepid::Tensor<T, N>
+    L(dimension);
+
+    Intrepid::Vector<T, N>
+    step;
+
+    Intrepid::Vector<T, N>
+    q;
+
+    for (Intrepid::Index i{0}; i < this->max_num_restrict_iter_; ++i) {
+
+      K = Hessian + lambda * I;
+
+      L = Intrepid::cholesky(K).first;
+
+      step = - Intrepid::solve(K, resi);
+
+      q = Intrepid::solve(L, step);
+
+      T const
+      nps = Intrepid::norm_square(step);
+
+      T const
+      nqs = Intrepid::norm_square(q);
+
+      T const
+      lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+
+      lambda += std::max(lambda_incr, 0.0);
+
+    }
+
+    Intrepid::Vector<T, N> const
+    soln_incr = - Intrepid::solve(Hessian, resi);
+
+    soln_ad += soln_incr;
+
+    ++this->num_iter_;
+  }
+
+  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
+
+  return;
+
 }
 
 } // namespace LCM
