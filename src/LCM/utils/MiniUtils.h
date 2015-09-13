@@ -17,7 +17,12 @@ namespace LCM
 ///
 /// Types of nonlinear method for LCM nonlinear mini solvers.
 ///
-enum class NonlinearMethod {NEWTON, TRUST_REGION, CONJUGATE_GRADIENT};
+enum class NonlinearMethod
+{
+  NEWTON,
+  TRUST_REGION,
+  CONJUGATE_GRADIENT,
+  REGULARIZED_LINE_SEARCH};
 
 ///
 /// Deal with derivative information for all the mini solvers.
@@ -385,6 +390,84 @@ private:
 
   T
   secant_tol_{1.0e-6};
+
+  T
+  rel_tol_{1.0e-10};
+
+  T
+  rel_error_{1.0};
+
+  T
+  abs_tol_{1.0e-10};
+
+  T
+  abs_error_{1.0};
+
+  bool
+  converged_{false};
+};
+
+///
+/// LineSearchRegularized Method class. See Nocedal's 2nd Ed Algorithm 11.4
+///
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+class LineSearchRegularizedMethod : public NonlinearMethod_Base<NLS, T, N>
+{
+public:
+
+  virtual
+  ~LineSearchRegularizedMethod() {}
+
+  virtual
+  void
+  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+
+  void
+  setMaximumNumberIterations(Intrepid::Index const mni)
+  {max_num_iter_ = mni;}
+
+  Intrepid::Index
+  getMaximumNumberIterations()
+  {return max_num_iter_;}
+
+  Intrepid::Index
+  getNumberIterations()
+  {return num_iter_;}
+
+  void
+  setRelativeTolerance(T const rt)
+  {rel_tol_ = rt;}
+
+  T
+  getRelativeTolerance() const
+  {return rel_tol_;}
+
+  T
+  getRelativeError() const
+  {return rel_error_;}
+
+  void
+  setAbsoluteTolerance(T const at)
+  {abs_tol_ = at;}
+
+  T
+  getAbsoluteTolerance() const
+  {return abs_tol_;}
+
+  T
+  getAbsoluteError() const
+  {return abs_error_;}
+
+  bool
+  isConverged() const
+  {return converged_;}
+
+private:
+  Intrepid::Index
+  max_num_iter_{128};
+
+  Intrepid::Index
+  num_iter_{0};
 
   T
   rel_tol_{1.0e-10};
