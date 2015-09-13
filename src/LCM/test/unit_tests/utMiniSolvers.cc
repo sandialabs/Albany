@@ -503,7 +503,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverNewtonMethod, SquareRoot)
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
   solver(newton_method);
 
-  Intrepid::Vector<ValueT, dimension>
+  Intrepid::Vector<ScalarT, dimension>
   x;
 
   // Initial guess
@@ -545,7 +545,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverTrustRegionMethod, SquareRoot)
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
   solver(trust_region_method);
 
-  Intrepid::Vector<ValueT, dimension>
+  Intrepid::Vector<ScalarT, dimension>
   x;
 
   // Initial guess
@@ -587,7 +587,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverConjugateGradientMethod, SquareRoot)
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
   solver(conjugate_gradient_method);
 
-  Intrepid::Vector<ValueT, dimension>
+  Intrepid::Vector<ScalarT, dimension>
   x;
 
   // Initial guess
