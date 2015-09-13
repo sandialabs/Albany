@@ -22,7 +22,7 @@ enum class NonlinearMethod
   NEWTON,
   TRUST_REGION,
   CONJUGATE_GRADIENT,
-  REGULARIZED_LINE_SEARCH};
+  LINE_SEARCH_REGULARIZED};
 
 ///
 /// Deal with derivative information for all the mini solvers.

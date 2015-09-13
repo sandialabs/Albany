@@ -39,7 +39,7 @@ nonlinearMethodFactory(NonlinearMethod const method_type)
     method = new ConjugateGradientMethod<NLS, T, N>();
     break;
 
-  case NonlinearMethod::REGULARIZED_LINE_SEARCH:
+  case NonlinearMethod::LINE_SEARCH_REGULARIZED:
     method = new LineSearchRegularizedMethod<NLS, T, N>();
     break;
 
