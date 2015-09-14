@@ -17,7 +17,7 @@ namespace LCM
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   this->nonlinear_method_.solve(nls, soln);
   return;
@@ -29,7 +29,7 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Jacobian, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -82,7 +82,7 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -135,7 +135,7 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>

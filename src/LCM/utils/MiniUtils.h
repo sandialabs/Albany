@@ -58,7 +58,7 @@ public:
 ///
 template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
 Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
-computeHessian(NLS & nls, Intrepid::Vector<T, N> & x);
+computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x);
 
 ///
 /// Nonlinear Method Base Class
@@ -78,7 +78,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) = 0;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) = 0;
 
 };
 
@@ -102,7 +102,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -180,7 +180,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -306,7 +306,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -428,7 +428,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)

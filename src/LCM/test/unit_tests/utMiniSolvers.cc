@@ -57,7 +57,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -86,7 +86,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -122,7 +122,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -609,7 +609,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();

@@ -101,7 +101,7 @@ computeFADInfo(
 //
 template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
 Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
-computeHessian(NLS & nls, Intrepid::Vector<T, N> & x)
+computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x)
 {
   using S = typename Sacado::ValueType<T>::type;
   using AD = typename Sacado::Fad::DFad<S>;
@@ -141,7 +141,7 @@ computeHessian(NLS & nls, Intrepid::Vector<T, N> & x)
 template<typename NLS, typename T, Intrepid::Index N>
 void
 NewtonMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -223,7 +223,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 template<typename NLS, typename T, Intrepid::Index N>
 void
 TrustRegionMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -394,7 +394,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 template<typename NLS, typename T, Intrepid::Index N>
 void
 ConjugateGradientMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -576,7 +576,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 template<typename NLS, typename T, Intrepid::Index N>
 void
 LineSearchRegularizedMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
