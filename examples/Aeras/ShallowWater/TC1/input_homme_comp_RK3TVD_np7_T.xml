@@ -48,7 +48,7 @@
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>
     <Parameter  name="Test Values" type="Array(double)" value="{   15.3063405503,  1339.89636103, 10704.4167321}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
