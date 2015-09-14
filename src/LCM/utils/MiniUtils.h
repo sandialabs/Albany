@@ -52,6 +52,15 @@ public:
 };
 
 ///
+/// Utility function to compute Hessian of a nonlinear system.
+/// The returned Hessian has the underlying value type of the
+/// type of the evaluation vector.
+///
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
+computeHessian(NLS & nls, Intrepid::Vector<T, N> & x);
+
+///
 /// Nonlinear Method Base Class
 ///
 template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
