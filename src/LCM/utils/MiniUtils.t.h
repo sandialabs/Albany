@@ -332,7 +332,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
   resi = - gradient;
 
   Intrepid::Tensor<T, N>
-  Hessian = computeHessian(nls, gradient);
+  Hessian = computeHessian(nls, soln);
 
   Intrepid::Vector<T, N>
   precon_resi = Intrepid::solve(Hessian, resi);
@@ -363,30 +363,25 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
     T
     projection_search = Intrepid::dot(search_direction, search_direction);
 
-    T
-    step_length = - getInitialSecantStepLength();
-
-    trial_soln = soln + getInitialSecantStepLength() * search_direction;
-
-    trial_gradient = nls.compute(trial_soln);
-
-    T
-    projection_prev = Intrepid::dot(trial_gradient, search_direction);
-
-    // Secant line search.
+    // Newton line search.
 
     for (Intrepid::Index i{0}; i < getMaximumNumberSecantIterations(); ++i) {
 
       gradient = nls.compute(soln);
 
+      Hessian = computeHessian(nls, soln);
+
       T const
       projection = Intrepid::dot(gradient, search_direction);
 
-      step_length *= projection / (projection_prev - projection);
+      T const
+      contraction =
+          Intrepid::dot(search_direction, Intrepid::dot(Hessian, search_direction));
+
+      T const
+      step_length = - projection / contraction;
 
       soln += step_length * search_direction;
-
-      projection_prev = projection;
 
       bool const
       secant_converged = step_length * step_length * projection_search <=
@@ -406,7 +401,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
     T const
     projection_mid = Intrepid::dot(resi, precon_resi);
 
-    Hessian = computeHessian(nls, gradient);
+    Hessian = computeHessian(nls, soln);
 
     precon_resi = Intrepid::solve(Hessian, resi);
 
