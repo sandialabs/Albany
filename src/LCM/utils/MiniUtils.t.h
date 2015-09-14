@@ -99,7 +99,7 @@ computeFADInfo(
 //
 // Hessian of nonlinear system
 //
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Intrepid::Index N>
 Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
 computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x)
 {
