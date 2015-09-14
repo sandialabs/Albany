@@ -70,10 +70,34 @@ class Integrator
     std::vector<int> mapToBase;
   } MiniPoly;
 
+  typedef struct Simplex {
+    Simplex(){}
+    Simplex(int n){points.resize(n,Vector3D(Intrepid::ZEROS));fieldvals.resize(n);}
+    std::vector<Vector3D> points;
+    std::vector<T> fieldvals;
+  } Simplex;
+
   Teuchos::RCP<shards::CellTopology> cellTopology;
 
   T getTriMeasure(const std::vector< Vector3D >& points,
                   const Tri& tri);
+
+  T Volume(Simplex& simplex);
+
+  T Volume(Simplex& simplex, const Intrepid::FieldContainer<T>& coordCon);
+
+  void Project(
+       const Intrepid::FieldContainer<T>& topoVals, 
+       std::vector<Simplex>& implicitPolys);
+
+  template<typename C>
+  void Dice(const std::vector<Simplex>& implicitPolys, const T zeroVal, 
+       const C comparison, std::vector<Simplex>& explicitPolys);
+
+  void SortMap(const std::vector<Vector3D>& points, std::vector<int>& map);
+
+  void Refine( std::vector<Simplex>& inpolys,
+               std::vector<Simplex>& outpolys);
 
   template<typename C>
   void getSurfaceTris(std::vector< Vector3D >& points,
@@ -105,6 +129,10 @@ class Integrator
                    const Vector3D& c3);
 
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basis;
+
+  Intrepid::FieldContainer<RealType> parentCoords;
+
+  std::vector< std::vector<Simplex> > refinement;
 };
 
 }
