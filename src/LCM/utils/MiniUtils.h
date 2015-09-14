@@ -81,11 +81,11 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) = 0;
 
   void
-  setMaximumNumberIterations(Intrepid::Index const mni)
+  setMaxNumIterations(Intrepid::Index const mni)
   {max_num_iter_ = mni;}
 
   Intrepid::Index
-  getMaximumNumberIterations()
+  getMaxNumIterations()
   {return max_num_iter_;}
 
   Intrepid::Index
@@ -226,19 +226,19 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
-  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
+  setMaxNumRestrictIterations(Intrepid::Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
   Intrepid::Index
-  getMaximumNumberRestrictIterations()
+  getMaxNumRestrictIterations()
   {return max_num_restrict_iter_;}
 
   void
-  setMaximumStepLength(T const msl)
+  setMaxStepLength(T const msl)
   {max_step_length_ = msl;}
 
   T
-  getMaximumStepLength() const
+  getMaxStepLength() const
   {return max_step_length_;}
 
   void
@@ -291,11 +291,11 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
-  setMaximumNumberLineSearchIterations(T const n)
+  setMaxNumLineSearchIterations(T const n)
   {max_num_line_search_iter_ = n;}
 
   Intrepid::Index
-  getMaximumNumberLineSearchIterations()
+  getMaxNumLineSearchIterations()
   {return max_num_line_search_iter_;}
 
   void
@@ -341,19 +341,19 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
-  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
+  setMaxNumRestrictIterations(Intrepid::Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
   Intrepid::Index
-  getMaximumNumberRestrictIterations()
+  getMaxNumRestrictIterations()
   {return max_num_restrict_iter_;}
 
   void
-  setMaximumStepLength(T const msl)
+  setMaxStepLength(T const msl)
   {max_step_length_ = msl;}
 
   T
-  getMaximumStepLength() const
+  getMaxStepLength() const
   {return max_step_length_;}
 
   void

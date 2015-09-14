@@ -236,7 +236,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
     T
     lambda = 0.0;
 
-    for (Intrepid::Index i{0}; i < getMaximumNumberRestrictIterations(); ++i) {
+    for (Intrepid::Index i{0}; i < getMaxNumRestrictIterations(); ++i) {
 
       K = Hessian + lambda * I;
 
@@ -294,7 +294,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
       increase_step_length = reduction > 0.75 && at_boundary_region;
 
       if (increase_step_length == true) {
-        step_length = std::min(2.0 * step_length, getMaximumStepLength());
+        step_length = std::min(2.0 * step_length, getMaxStepLength());
       }
 
     }
@@ -365,7 +365,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
     // Newton line search.
 
-    for (Intrepid::Index i{0}; i < getMaximumNumberLineSearchIterations(); ++i) {
+    for (Intrepid::Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
 
       gradient = nls.compute(soln);
 
