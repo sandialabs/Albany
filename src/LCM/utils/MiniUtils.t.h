@@ -39,7 +39,7 @@ nonlinearMethodFactory(NonlinearMethod const method_type)
     method = new ConjugateGradientMethod<NLS, T, N>();
     break;
 
-  case NonlinearMethod::REGULARIZED_LINE_SEARCH:
+  case NonlinearMethod::LINE_SEARCH_REGULARIZED:
     method = new LineSearchRegularizedMethod<NLS, T, N>();
     break;
 
@@ -97,12 +97,51 @@ computeFADInfo(
 }
 
 //
+// Hessian of nonlinear system
+//
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
+computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x)
+{
+  using S = typename Sacado::ValueType<T>::type;
+  using AD = typename Sacado::Fad::DFad<S>;
+
+  Intrepid::Index const
+  dimension = x.get_dimension();
+
+  Intrepid::Vector<S, N>
+  x_val = Sacado::Value<Intrepid::Vector<AD, N>>::eval(x);
+
+  Intrepid::Vector<AD, N>
+  x_ad(dimension);
+
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x_ad(i) = AD(dimension, i, x_val(i));
+  }
+
+  Intrepid::Vector<AD, N>
+  r_ad = nls.compute(x_ad);
+
+  Intrepid::Tensor<S, N>
+  Hessian(dimension);
+
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    for (Intrepid::Index j{0}; j < dimension; ++j) {
+      Hessian(i, j) = r_ad(i).dx(j);
+    }
+  }
+
+  return Hessian;
+}
+
+
+//
 //
 //
 template<typename NLS, typename T, Intrepid::Index N>
 void
 NewtonMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -184,7 +223,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 template<typename NLS, typename T, Intrepid::Index N>
 void
 TrustRegionMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -355,7 +394,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 template<typename NLS, typename T, Intrepid::Index N>
 void
 ConjugateGradientMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -537,7 +576,7 @@ solve(NLS & nls, Intrepid::Vector<T, N> & soln)
 template<typename NLS, typename T, Intrepid::Index N>
 void
 LineSearchRegularizedMethod<NLS, T, N>::
-solve(NLS & nls, Intrepid::Vector<T, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 

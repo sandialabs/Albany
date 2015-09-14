@@ -22,7 +22,7 @@ enum class NonlinearMethod
   NEWTON,
   TRUST_REGION,
   CONJUGATE_GRADIENT,
-  REGULARIZED_LINE_SEARCH};
+  LINE_SEARCH_REGULARIZED};
 
 ///
 /// Deal with derivative information for all the mini solvers.
@@ -46,10 +46,19 @@ class NonlinearSystem_Base
 public:
   NonlinearSystem_Base()
   {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
+    STATIC_ASSERT(Sacado::IsADType<S>::value == false, NO_FAD_ALLOWED);
   }
 
 };
+
+///
+/// Utility function to compute Hessian of a nonlinear system.
+/// The returned Hessian has the underlying value type of the
+/// type of the evaluation vector.
+///
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
+computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x);
 
 ///
 /// Nonlinear Method Base Class
@@ -61,7 +70,7 @@ public:
 
   NonlinearMethod_Base()
   {
-    STATIC_ASSERT(Sacado::IsADType<T>::value == false, no_fad_allowed);
+    STATIC_ASSERT(Sacado::IsADType<T>::value == false, NO_FAD_ALLOWED);
   }
 
   virtual
@@ -69,7 +78,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) = 0;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) = 0;
 
 };
 
@@ -93,7 +102,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -171,7 +180,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -297,7 +306,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)
@@ -419,7 +428,7 @@ public:
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
   setMaximumNumberIterations(Intrepid::Index const mni)

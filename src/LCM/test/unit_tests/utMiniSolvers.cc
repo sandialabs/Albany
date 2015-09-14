@@ -49,18 +49,15 @@ TEUCHOS_UNIT_TEST(LinearSolver, Instantiation)
 // Define some nonlinear systems (NLS) to test nonlinear solution methods.
 //
 template <typename S>
-class SquareRootNLS
+class SquareRootNLS : public LCM::NonlinearSystem_Base<S>
 {
 public:
 
-  SquareRootNLS(S const c) : c_(c)
-  {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
-  }
+  SquareRootNLS(S const c) : c_(c) {}
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -81,18 +78,15 @@ private:
 };
 
 template <typename S>
-class QuadraticNLS
+class QuadraticNLS : public LCM::NonlinearSystem_Base<S>
 {
 public:
 
-  QuadraticNLS(S const a, S const b, S const c) :  a_(a), b_(b), c_(c)
-  {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
-  }
+  QuadraticNLS(S const a, S const b, S const c) :  a_(a), b_(b), c_(c) {}
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -120,18 +114,15 @@ private:
 };
 
 template <typename S>
-class GaussianNLS
+class GaussianNLS  : public LCM::NonlinearSystem_Base<S>
 {
 public:
 
-  GaussianNLS(S const a, S const b, S const c) : a_(a), b_(b), c_(c)
-  {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
-  }
+  GaussianNLS(S const a, S const b, S const c) : a_(a), b_(b), c_(c) {}
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -503,7 +494,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverNewtonMethod, SquareRoot)
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
   solver(newton_method);
 
-  Intrepid::Vector<ValueT, dimension>
+  Intrepid::Vector<ScalarT, dimension>
   x;
 
   // Initial guess
@@ -545,7 +536,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverTrustRegionMethod, SquareRoot)
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
   solver(trust_region_method);
 
-  Intrepid::Vector<ValueT, dimension>
+  Intrepid::Vector<ScalarT, dimension>
   x;
 
   // Initial guess
@@ -587,7 +578,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverConjugateGradientMethod, SquareRoot)
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
   solver(conjugate_gradient_method);
 
-  Intrepid::Vector<ValueT, dimension>
+  Intrepid::Vector<ScalarT, dimension>
   x;
 
   // Initial guess
@@ -614,14 +605,11 @@ class CubicFn
 {
 public:
 
-  CubicFn(S const c) : c_(c)
-  {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
-  }
+  CubicFn(S const c) : c_(c) {}
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
-  compute(Intrepid::Vector<T, N> const & x)
+  compute(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
