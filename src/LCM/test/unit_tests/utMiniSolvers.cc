@@ -605,10 +605,7 @@ class CubicFn
 {
 public:
 
-  CubicFn(S const c) : c_(c)
-  {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
-  }
+  CubicFn(S const c) : c_(c) {}
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T

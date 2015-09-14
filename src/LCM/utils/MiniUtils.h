@@ -46,7 +46,7 @@ class NonlinearSystem_Base
 public:
   NonlinearSystem_Base()
   {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, no_fad_allowed);
+    STATIC_ASSERT(Sacado::IsADType<S>::value == false, NO_FAD_ALLOWED);
   }
 
 };
@@ -61,7 +61,7 @@ public:
 
   NonlinearMethod_Base()
   {
-    STATIC_ASSERT(Sacado::IsADType<T>::value == false, no_fad_allowed);
+    STATIC_ASSERT(Sacado::IsADType<T>::value == false, NO_FAD_ALLOWED);
   }
 
   virtual
