@@ -290,14 +290,6 @@ public:
   void
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
-  T
-  getInitialSecantStepLength() const
-  {return initial_secant_step_length_;}
-
-  void
-  setInitialSecantStepLength(T const issl)
-  {initial_secant_step_length_ = issl;}
-
   void
   setMaximumNumberSecantIterations(T const mntri)
   {max_num_secant_iter_ = mntri;}
@@ -328,9 +320,6 @@ private:
 
   Intrepid::Index
   restart_directions_interval_{32};
-
-  T
-  initial_secant_step_length_{0.9};
 
   T
   secant_tol_{1.0e-6};
