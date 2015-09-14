@@ -145,6 +145,47 @@ public:
   {return converged_;}
 
 private:
+  void
+  initConvergenceCriterion(T const in)
+  {initial_norm_ = in;}
+
+  void
+  updateConvergenceCriterion(T const abs_error)
+  {
+    abs_error_ = abs_error;
+    rel_error_ = abs_error_ / initial_norm_;
+
+    bool const
+    converged_absolute = abs_error_ <= abs_tol_;
+
+    bool const
+    converged_relative = rel_error_ <= rel_tol_;
+
+    converged_ = converged_absolute || converged_relative;
+  }
+
+  bool
+  continueSolve()
+  {
+    bool const
+    is_max_iter = num_iter_ >= max_num_iter_;
+
+    bool const
+    end_solve = is_max_iter == true || converged_ == true;
+
+    bool const
+    continue_solve = end_solve == false;
+
+    return continue_solve;
+  }
+
+  void
+  increaseIterationCounter()
+  {
+    ++num_iter_;
+  }
+
+private:
   Intrepid::Index
   max_num_iter_{128};
 
@@ -162,6 +203,9 @@ private:
 
   T
   abs_error_{1.0};
+
+  T
+  initial_norm_{1.0};
 
   bool
   converged_{false};

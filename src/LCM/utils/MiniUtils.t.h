@@ -110,7 +110,7 @@ computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x)
   dimension = x.get_dimension();
 
   Intrepid::Vector<S, N>
-  x_val = Sacado::Value<Intrepid::Vector<AD, N>>::eval(x);
+  x_val = Sacado::Value<Intrepid::Vector<T, N>>::eval(x);
 
   Intrepid::Vector<AD, N>
   x_ad(dimension);
@@ -143,75 +143,33 @@ void
 NewtonMethod<NLS, T, N>::
 solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
-  using AD = typename Sacado::Fad::DFad<T>;
-
-  Intrepid::Index const
-  dimension = soln.get_dimension();
-
   Intrepid::Vector<T, N>
   resi = nls.compute(soln);
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  Intrepid::Vector<AD, N>
-  resi_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln(i));
-  }
 
   T const
   initial_norm = Intrepid::norm(resi);
 
-  this->num_iter_ = 0;
+  initConvergenceCriterion(initial_norm);
+  updateConvergenceCriterion(initial_norm);
 
-  this->converged_ = initial_norm <= this->abs_tol_;
-
-  while (this->converged_ == false) {
-
-    resi_ad = nls.compute(soln_ad);
-
-    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
-
-    this->abs_error_ = Intrepid::norm(resi);
-
-    this->rel_error_ = this->abs_error_ / initial_norm;
-
-    bool const
-    converged_relative = this->rel_error_ <= this->rel_tol_;
-
-    bool const
-    converged_absolute = this->abs_error_ <= this->abs_tol_;
-
-    this->converged_ = converged_relative || converged_absolute;
-
-    bool const
-    is_max_iter = this->num_iter_ >= this->max_num_iter_;
-
-    bool const
-    end_solve = this->converged_ || is_max_iter;
-
-    if (end_solve == true) break;
+  while (continueSolve() == true) {
 
     Intrepid::Tensor<T, N>
-    Hessian(dimension);
-
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = resi_ad(i).dx(j);
-      }
-    }
+    Hessian = computeHessian(nls, soln);
 
     Intrepid::Vector<T, N> const
     soln_incr = - Intrepid::solve(Hessian, resi);
 
-    soln_ad += soln_incr;
+    soln += soln_incr;
 
-    ++this->num_iter_;
+    resi = nls.compute(soln);
+
+    T const
+    norm_resi = Intrepid::norm(resi);
+
+    updateConvergenceCriterion(norm_resi);
+    increaseIterationCounter();
   }
-
-  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
 
   return;
 
