@@ -291,20 +291,20 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
-  setMaximumNumberSecantIterations(T const mntri)
-  {max_num_secant_iter_ = mntri;}
+  setMaximumNumberLineSearchIterations(T const n)
+  {max_num_line_search_iter_ = n;}
 
   Intrepid::Index
-  getMaximumNumberSecantIterations()
-  {return max_num_secant_iter_;}
+  getMaximumNumberLineSearchIterations()
+  {return max_num_line_search_iter_;}
 
   void
-  setSecantTolerance(T const st)
-  {secant_tol_ = st;}
+  setLineSearchTolerance(T const st)
+  {line_search_tol_ = st;}
 
   T
-  getSecantTolerance() const
-  {return secant_tol_;}
+  getLineSearchTolerance() const
+  {return line_search_tol_;}
 
   void
   setRestartDirectionsInterval(Intrepid::Index const rdi)
@@ -316,13 +316,13 @@ public:
 
 private:
   Intrepid::Index
-  max_num_secant_iter_{16};
+  max_num_line_search_iter_{16};
 
   Intrepid::Index
   restart_directions_interval_{32};
 
   T
-  secant_tol_{1.0e-6};
+  line_search_tol_{1.0e-6};
 };
 
 ///

@@ -365,7 +365,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
     // Newton line search.
 
-    for (Intrepid::Index i{0}; i < getMaximumNumberSecantIterations(); ++i) {
+    for (Intrepid::Index i{0}; i < getMaximumNumberLineSearchIterations(); ++i) {
 
       gradient = nls.compute(soln);
 
@@ -385,7 +385,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
       bool const
       secant_converged = step_length * step_length * projection_search <=
-      getSecantTolerance() * getSecantTolerance();
+      getLineSearchTolerance() * getLineSearchTolerance();
 
       if (secant_converged == true) break;
 
