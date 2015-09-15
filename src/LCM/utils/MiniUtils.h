@@ -52,6 +52,15 @@ public:
 };
 
 ///
+/// Utility function to compute residual of a nonlinear system.
+/// The returned residual has the underlying value type of the
+/// type of the evaluation vector.
+///
+template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+Intrepid::Vector<typename Sacado::ValueType<T>::type, N>
+computeResidual(NLS const & nls, Intrepid::Vector<T, N> const & x);
+
+///
 /// Utility function to compute Hessian of a nonlinear system.
 /// The returned Hessian has the underlying value type of the
 /// type of the evaluation vector.

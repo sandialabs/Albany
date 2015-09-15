@@ -97,6 +97,27 @@ computeFADInfo(
 }
 
 //
+// Residual of nonlinear system
+//
+template<typename NLS, typename T, Intrepid::Index N>
+Intrepid::Vector<typename Sacado::ValueType<T>::type, N>
+computeResidual(NLS const & nls, Intrepid::Vector<T, N> const & x)
+{
+  using S = typename Sacado::ValueType<T>::type;
+
+  Intrepid::Index const
+  dimension = x.get_dimension();
+
+  Intrepid::Vector<S, N>
+  x_val = Sacado::Value<Intrepid::Vector<T, N>>::eval(x);
+
+  Intrepid::Vector<S, N>
+  r_val = nls.compute(x_val);
+
+  return r_val;
+}
+
+//
 // Hessian of nonlinear system
 //
 template<typename NLS, typename T, Intrepid::Index N>
