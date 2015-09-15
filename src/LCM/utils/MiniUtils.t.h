@@ -99,7 +99,7 @@ computeFADInfo(
 //
 // Hessian of nonlinear system
 //
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Intrepid::Index N>
 Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
 computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x)
 {
@@ -110,7 +110,7 @@ computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x)
   dimension = x.get_dimension();
 
   Intrepid::Vector<S, N>
-  x_val = Sacado::Value<Intrepid::Vector<AD, N>>::eval(x);
+  x_val = Sacado::Value<Intrepid::Vector<T, N>>::eval(x);
 
   Intrepid::Vector<AD, N>
   x_ad(dimension);
@@ -134,7 +134,6 @@ computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x)
   return Hessian;
 }
 
-
 //
 //
 //
@@ -143,78 +142,42 @@ void
 NewtonMethod<NLS, T, N>::
 solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
-  using AD = typename Sacado::Fad::DFad<T>;
-
   Intrepid::Index const
   dimension = soln.get_dimension();
+
+  Intrepid::Tensor<T, N>
+  Hessian(dimension);
+
+  Intrepid::Vector<T, N>
+  step(dimension);
 
   Intrepid::Vector<T, N>
   resi = nls.compute(soln);
 
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  Intrepid::Vector<AD, N>
-  resi_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln(i));
-  }
-
   T const
   initial_norm = Intrepid::norm(resi);
 
-  this->num_iter_ = 0;
+  this->initConvergenceCriterion(initial_norm);
+  this->updateConvergenceCriterion(initial_norm);
 
-  this->converged_ = initial_norm <= this->abs_tol_;
+  while (this->continueSolve() == true) {
 
-  while (this->converged_ == false) {
+    Hessian = computeHessian(nls, soln);
 
-    resi_ad = nls.compute(soln_ad);
+    step = - Intrepid::solve(Hessian, resi);
 
-    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
+    soln += step;
 
-    this->abs_error_ = Intrepid::norm(resi);
+    resi = nls.compute(soln);
 
-    this->rel_error_ = this->abs_error_ / initial_norm;
+    T const
+    norm_resi = Intrepid::norm(resi);
 
-    bool const
-    converged_relative = this->rel_error_ <= this->rel_tol_;
-
-    bool const
-    converged_absolute = this->abs_error_ <= this->abs_tol_;
-
-    this->converged_ = converged_relative || converged_absolute;
-
-    bool const
-    is_max_iter = this->num_iter_ >= this->max_num_iter_;
-
-    bool const
-    end_solve = this->converged_ || is_max_iter;
-
-    if (end_solve == true) break;
-
-    Intrepid::Tensor<T, N>
-    Hessian(dimension);
-
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = resi_ad(i).dx(j);
-      }
-    }
-
-    Intrepid::Vector<T, N> const
-    soln_incr = - Intrepid::solve(Hessian, resi);
-
-    soln_ad += soln_incr;
-
-    ++this->num_iter_;
+    this->updateConvergenceCriterion(norm_resi);
+    this->increaseIterationCounter();
   }
 
-  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
-
   return;
-
 }
 
 //
@@ -225,90 +188,55 @@ void
 TrustRegionMethod<NLS, T, N>::
 solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
-  using AD = typename Sacado::Fad::DFad<T>;
-
   Intrepid::Index const
   dimension = soln.get_dimension();
 
+  Intrepid::Tensor<T, N>
+  Hessian(dimension);
+
+  Intrepid::Tensor<T, N>
+  K(dimension);
+
+  Intrepid::Tensor<T, N>
+  L(dimension);
+
+  Intrepid::Vector<T, N>
+  step(dimension);
+
+  Intrepid::Vector<T, N>
+  q(dimension);
+
+  Intrepid::Vector<T, N>
+  soln_next(dimension);
+
+  Intrepid::Vector<T, N>
+  resi_next(dimension);
+
+  Intrepid::Tensor<T, N> const
+  I = Intrepid::identity<T, N>(dimension);
+
   Intrepid::Vector<T, N>
   resi = nls.compute(soln);
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  Intrepid::Vector<AD, N>
-  resi_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln(i));
-  }
 
   T const
   initial_norm = Intrepid::norm(resi);
 
   T
-  step_length = this->initial_step_length_;
+  step_length = getInitialStepLength();
 
-  Intrepid::Tensor<T, N>
-  I = Intrepid::identity<T, N>(dimension);
-
-  this->num_iter_ = 0;
-
-  this->converged_ = initial_norm <= this->abs_tol_;
+  this->initConvergenceCriterion(initial_norm);
+  this->updateConvergenceCriterion(initial_norm);
 
   // Outer solution loop
-  while (this->converged_ == false) {
+  while (this->continueSolve() == true) {
 
-    resi_ad = nls.compute(soln_ad);
-
-    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
-
-    this->abs_error_ = Intrepid::norm(resi);
-
-    this->rel_error_ = this->abs_error_ / initial_norm;
-
-    bool const
-    converged_relative = this->rel_error_ <= this->rel_tol_;
-
-    bool const
-    converged_absolute = this->abs_error_ <= this->abs_tol_;
-
-    this->converged_ = converged_relative || converged_absolute;
-
-    bool const
-    is_max_iter = this->num_iter_ >= this->max_num_iter_;
-
-    bool const
-    end_solve = this->converged_ || is_max_iter;
-
-    if (end_solve == true) break;
-
-    Intrepid::Tensor<T, N>
-    Hessian(dimension);
-
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = resi_ad(i).dx(j);
-      }
-    }
+    Hessian = computeHessian(nls, soln);
 
     // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
     T
     lambda = 0.0;
 
-    Intrepid::Tensor<T, N>
-    K(dimension);
-
-    Intrepid::Tensor<T, N>
-    L(dimension);
-
-    Intrepid::Vector<T, N>
-    step;
-
-    Intrepid::Vector<T, N>
-    q;
-
-    for (Intrepid::Index i{0}; i < this->max_num_restrict_iter_; ++i) {
+    for (Intrepid::Index i{0}; i < getMaxNumRestrictIterations(); ++i) {
 
       K = Hessian + lambda * I;
 
@@ -331,16 +259,11 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
     }
 
-    Intrepid::Vector<AD, N> const
-    soln_ad_next = soln_ad + step;
+    soln_next = soln + step;
 
-    Intrepid::Vector<AD, N> const
-    resi_ad_next = nls.compute(soln_ad_next);
+    resi_next = nls.compute(soln_next);
 
     // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
-    Intrepid::Vector<T, N>
-    resi_next = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad_next);
-
     T const
     nr = Intrepid::norm_square(resi);
 
@@ -371,19 +294,22 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
       increase_step_length = reduction > 0.75 && at_boundary_region;
 
       if (increase_step_length == true) {
-        step_length = std::min(2.0 * step_length, this->max_step_length_);
+        step_length = std::min(2.0 * step_length, getMaxStepLength());
       }
 
     }
 
-    if (reduction > this->min_reduction_) {
-      soln_ad = soln_ad_next;
+    if (reduction > getMinumumReduction()) {
+      soln = soln_next;
+      resi = nls.compute(soln);
     }
 
-    ++this->num_iter_;
-  }
+    T const
+    norm_resi = Intrepid::norm(resi);
 
-  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
+    this->updateConvergenceCriterion(norm_resi);
+    this->increaseIterationCounter();
+  }
 
   return;
 }
@@ -396,35 +322,17 @@ void
 ConjugateGradientMethod<NLS, T, N>::
 solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
-  using AD = typename Sacado::Fad::DFad<T>;
-
   Intrepid::Index const
   dimension = soln.get_dimension();
 
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln(i));
-  }
-
-  Intrepid::Vector<AD, N>
-  gradient_ad = nls.compute(soln_ad);
-
-  Intrepid::Vector<AD, N>
-  resi_ad = - gradient_ad;
-
-  Intrepid::Tensor<T, N>
-  Hessian(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    for (Intrepid::Index j{0}; j < dimension; ++j) {
-      Hessian(i, j) = gradient_ad(i).dx(j);
-    }
-  }
+  Intrepid::Vector<T, N>
+  gradient = nls.compute(soln);
 
   Intrepid::Vector<T, N>
-  resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
+  resi = - gradient;
+
+  Intrepid::Tensor<T, N>
+  Hessian = computeHessian(nls, soln);
 
   Intrepid::Vector<T, N>
   precon_resi = Intrepid::solve(Hessian, resi);
@@ -432,110 +340,68 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
   Intrepid::Vector<T, N>
   search_direction = precon_resi;
 
+  Intrepid::Vector<T, N>
+  trial_soln(dimension);
+
+  Intrepid::Vector<T, N>
+  trial_gradient(dimension);
+
   T
   projection_new = Intrepid::dot(resi, search_direction);
 
   T const
   initial_norm = Intrepid::norm(resi);
 
-  this->num_iter_ = 0;
-
   Intrepid::Index
   restart_directions_counter = 0;
 
-  this->converged_ = initial_norm <= this->abs_tol_;
+  this->initConvergenceCriterion(initial_norm);
+  this->updateConvergenceCriterion(initial_norm);
 
-  while (this->converged_ == false) {
+  while (this->continueSolve() == true) {
 
-    gradient_ad = nls.compute(soln_ad);
+    // Newton line search.
 
-    resi_ad = - gradient_ad;
-
-    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
-
-    this->abs_error_ = Intrepid::norm(resi);
-
-    this->rel_error_ = this->abs_error_ / initial_norm;
-
-    bool const
-    converged_relative = this->rel_error_ <= this->rel_tol_;
-
-    bool const
-    converged_absolute = this->abs_error_ <= this->abs_tol_;
-
-    this->converged_ = converged_relative || converged_absolute;
-
-    bool const
-    is_max_iter = this->num_iter_ >= this->max_num_iter_;
-
-    bool const
-    end_solve = this->converged_ || is_max_iter;
-
-    if (end_solve == true) break;
-
-    T
+    T const
     projection_search = Intrepid::dot(search_direction, search_direction);
 
-    T
-    step_length = - this->initial_secant_step_length_;
+    for (Intrepid::Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
 
-    Intrepid::Vector<AD, N> const
-    trial_soln_ad =
-        soln_ad + this->initial_secant_step_length_ * search_direction;
+      gradient = nls.compute(soln);
 
-    Intrepid::Vector<AD, N> const
-    trial_gradient_ad = nls.compute(trial_soln_ad);
-
-    Intrepid::Vector<T, N> const
-    trial_gradient =
-        Sacado::Value<Intrepid::Vector<AD, N>>::eval(trial_gradient_ad);
-
-    T
-    projection_prev = Intrepid::dot(trial_gradient, search_direction);
-
-    // Secant line search.
-
-    for (Intrepid::Index i{0}; i < this->max_num_secant_iter_; ++i) {
-
-      gradient_ad = nls.compute(soln_ad);
-
-      Intrepid::Vector<T, N> const
-      gradient = Sacado::Value<Intrepid::Vector<AD, N>>::eval(gradient_ad);
+      Hessian = computeHessian(nls, soln);
 
       T const
       projection = Intrepid::dot(gradient, search_direction);
 
-      step_length *= projection / (projection_prev - projection);
+      T const
+      contraction =
+          Intrepid::dot(search_direction, Intrepid::dot(Hessian, search_direction));
 
-      soln_ad += step_length * search_direction;
+      T const
+      step_length = - projection / contraction;
 
-      projection_prev = projection;
+      soln += step_length * search_direction;
 
       bool const
-      secant_converged = step_length * step_length * projection_search <=
-        this->secant_tol_ * this->secant_tol_;
+      line_search_converged = step_length * step_length * projection_search <=
+      getLineSearchTolerance() * getLineSearchTolerance();
 
-      if (secant_converged == true) break;
+      if (line_search_converged == true) break;
 
     }
 
-    gradient_ad = nls.compute(soln_ad);
+    gradient = nls.compute(soln);
 
-    resi_ad = - gradient_ad;
-
-    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
-
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = gradient_ad(i).dx(j);
-      }
-    }
+    resi = - gradient;
 
     T const
     projection_old = projection_new;
 
     T const
     projection_mid = Intrepid::dot(resi, precon_resi);
+
+    Hessian = computeHessian(nls, soln);
 
     precon_resi = Intrepid::solve(Hessian, resi);
 
@@ -548,7 +414,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
     bool const
     restart_directions =
-        restart_directions_counter == this->restart_directions_interval_ ||
+        restart_directions_counter == getRestartDirectionsInterval() ||
         gram_schmidt_factor <= 0.0;
 
     if (restart_directions == true) {
@@ -562,10 +428,12 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
     }
 
-    ++this->num_iter_;
-  }
+    T const
+    norm_resi = Intrepid::norm(resi);
 
-  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
+    this->updateConvergenceCriterion(norm_resi);
+    this->increaseIterationCounter();
+  }
 
   return;
 }
@@ -578,123 +446,122 @@ void
 LineSearchRegularizedMethod<NLS, T, N>::
 solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 {
-  using AD = typename Sacado::Fad::DFad<T>;
-
   Intrepid::Index const
   dimension = soln.get_dimension();
+
+  Intrepid::Tensor<T, N>
+  Hessian(dimension);
 
   Intrepid::Vector<T, N>
   resi = nls.compute(soln);
 
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
+  Intrepid::Tensor<T, N>
+  K(dimension);
 
-  Intrepid::Vector<AD, N>
-  resi_ad(dimension);
+  Intrepid::Tensor<T, N>
+  L(dimension);
 
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln(i));
-  }
+  Intrepid::Vector<T, N>
+  step(dimension);
+
+  Intrepid::Vector<T, N>
+  q(dimension);
+
+  Intrepid::Tensor<T, N> const
+  I = Intrepid::identity<T, N>(dimension);
 
   T const
   initial_norm = Intrepid::norm(resi);
 
-  this->num_iter_ = 0;
+  T const
+  step_length = getInitialStepLength();
 
-  this->converged_ = initial_norm <= this->abs_tol_;
+  this->initConvergenceCriterion(initial_norm);
+  this->updateConvergenceCriterion(initial_norm);
 
-  while (this->converged_ == false) {
+  while (this->continueSolve() == true) {
 
-    resi_ad = nls.compute(soln_ad);
-
-    resi = Sacado::Value<Intrepid::Vector<AD, N>>::eval(resi_ad);
-
-    this->abs_error_ = Intrepid::norm(resi);
-
-    this->rel_error_ = this->abs_error_ / initial_norm;
+    Hessian = computeHessian(nls, soln);
 
     bool const
-    converged_relative = this->rel_error_ <= this->rel_tol_;
+    ill_conditioned = Intrepid::cond(Hessian) <= getHessianConditionTolerance();
 
-    bool const
-    converged_absolute = this->abs_error_ <= this->abs_tol_;
+    if (ill_conditioned == true) {
 
-    this->converged_ = converged_relative || converged_absolute;
+      // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+      T
+      lambda = 0.0;
 
-    bool const
-    is_max_iter = this->num_iter_ >= this->max_num_iter_;
+      for (Intrepid::Index i{0}; i < getMaxNumRestrictIterations(); ++i) {
 
-    bool const
-    end_solve = this->converged_ || is_max_iter;
+        K = Hessian + lambda * I;
 
-    if (end_solve == true) break;
+        L = Intrepid::cholesky(K).first;
 
-    Intrepid::Tensor<T, N>
-    Hessian(dimension);
+        step = - Intrepid::solve(K, resi);
 
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      for (Intrepid::Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = resi_ad(i).dx(j);
+        q = Intrepid::solve(L, step);
+
+        T const
+        nps = Intrepid::norm_square(step);
+
+        T const
+        nqs = Intrepid::norm_square(q);
+
+        T const
+        lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+
+        lambda += std::max(lambda_incr, 0.0);
+
       }
-    }
 
-    T
-    step_length = this->initial_step_length_;
+    } else {
 
-    Intrepid::Tensor<T, N>
-    I = Intrepid::identity<T, N>(dimension);
-
-    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
-    T
-    lambda = 0.0;
-
-    Intrepid::Tensor<T, N>
-    K(dimension);
-
-    Intrepid::Tensor<T, N>
-    L(dimension);
-
-    Intrepid::Vector<T, N>
-    step;
-
-    Intrepid::Vector<T, N>
-    q;
-
-    for (Intrepid::Index i{0}; i < this->max_num_restrict_iter_; ++i) {
-
-      K = Hessian + lambda * I;
-
-      L = Intrepid::cholesky(K).first;
-
-      step = - Intrepid::solve(K, resi);
-
-      q = Intrepid::solve(L, step);
-
-      T const
-      nps = Intrepid::norm_square(step);
-
-      T const
-      nqs = Intrepid::norm_square(q);
-
-      T const
-      lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
-
-      lambda += std::max(lambda_incr, 0.0);
+      // Standard Newton step
+      step = - Intrepid::solve(Hessian, resi);
 
     }
 
-    Intrepid::Vector<T, N> const
-    soln_incr = - Intrepid::solve(Hessian, resi);
+    // Newton line search.
 
-    soln_ad += soln_incr;
+    T const
+    projection_step = Intrepid::dot(step, step);
 
-    ++this->num_iter_;
+    for (Intrepid::Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
+
+      resi = nls.compute(soln);
+
+      Hessian = computeHessian(nls, soln);
+
+      T const
+      projection = Intrepid::dot(resi, step);
+
+      T const
+      contraction = Intrepid::dot(step, Intrepid::dot(Hessian, step));
+
+      T const
+      ls_length = - projection / contraction;
+
+      soln += ls_length * step;
+
+      bool const
+      line_search_converged = ls_length * ls_length * projection_step <=
+      getLineSearchTolerance() * getLineSearchTolerance();
+
+      if (line_search_converged == true) break;
+
+    }
+
+    resi = nls.compute(soln);
+
+    T const
+    norm_resi = Intrepid::norm(resi);
+
+    this->updateConvergenceCriterion(norm_resi);
+    this->increaseIterationCounter();
   }
 
-  soln = Sacado::Value<Intrepid::Vector<AD, N>>::eval(soln_ad);
-
   return;
-
 }
 
 } // namespace LCM

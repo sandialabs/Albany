@@ -80,6 +80,111 @@ public:
   void
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) = 0;
 
+  void
+  setMaxNumIterations(Intrepid::Index const mni)
+  {max_num_iter_ = mni;}
+
+  Intrepid::Index
+  getMaxNumIterations()
+  {return max_num_iter_;}
+
+  Intrepid::Index
+  getNumberIterations()
+  {return num_iter_;}
+
+  void
+  setRelativeTolerance(T const rt)
+  {rel_tol_ = rt;}
+
+  T
+  getRelativeTolerance() const
+  {return rel_tol_;}
+
+  T
+  getRelativeError() const
+  {return rel_error_;}
+
+  void
+  setAbsoluteTolerance(T const at)
+  {abs_tol_ = at;}
+
+  T
+  getAbsoluteTolerance() const
+  {return abs_tol_;}
+
+  T
+  getAbsoluteError() const
+  {return abs_error_;}
+
+  bool
+  isConverged() const
+  {return converged_;}
+
+protected:
+  void
+  initConvergenceCriterion(T const in)
+  {initial_norm_ = in;}
+
+  void
+  updateConvergenceCriterion(T const abs_error)
+  {
+    abs_error_ = abs_error;
+    rel_error_ = abs_error_ / initial_norm_;
+
+    bool const
+    converged_absolute = abs_error_ <= abs_tol_;
+
+    bool const
+    converged_relative = rel_error_ <= rel_tol_;
+
+    converged_ = converged_absolute || converged_relative;
+  }
+
+  bool
+  continueSolve() const
+  {
+    bool const
+    is_max_iter = num_iter_ >= max_num_iter_;
+
+    bool const
+    end_solve = is_max_iter == true || converged_ == true;
+
+    bool const
+    continue_solve = end_solve == false;
+
+    return continue_solve;
+  }
+
+  void
+  increaseIterationCounter()
+  {
+    ++num_iter_;
+  }
+
+protected:
+  Intrepid::Index
+  max_num_iter_{128};
+
+  Intrepid::Index
+  num_iter_{0};
+
+  T
+  rel_tol_{1.0e-10};
+
+  T
+  rel_error_{1.0};
+
+  T
+  abs_tol_{1.0e-10};
+
+  T
+  abs_error_{1.0};
+
+  T
+  initial_norm_{1.0};
+
+  bool
+  converged_{false};
 };
 
 ///
@@ -103,68 +208,6 @@ public:
   virtual
   void
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
-
-  void
-  setMaximumNumberIterations(Intrepid::Index const mni)
-  {max_num_iter_ = mni;}
-
-  Intrepid::Index
-  getMaximumNumberIterations()
-  {return max_num_iter_;}
-
-  Intrepid::Index
-  getNumberIterations()
-  {return num_iter_;}
-
-  void
-  setRelativeTolerance(T const rt)
-  {rel_tol_ = rt;}
-
-  T
-  getRelativeTolerance() const
-  {return rel_tol_;}
-
-  T
-  getRelativeError() const
-  {return rel_error_;}
-
-  void
-  setAbsoluteTolerance(T const at)
-  {abs_tol_ = at;}
-
-  T
-  getAbsoluteTolerance() const
-  {return abs_tol_;}
-
-  T
-  getAbsoluteError() const
-  {return abs_error_;}
-
-  bool
-  isConverged() const
-  {return converged_;}
-
-private:
-  Intrepid::Index
-  max_num_iter_{128};
-
-  Intrepid::Index
-  num_iter_{0};
-
-  T
-  rel_tol_{1.0e-10};
-
-  T
-  rel_error_{1.0};
-
-  T
-  abs_tol_{1.0e-10};
-
-  T
-  abs_error_{1.0};
-
-  bool
-  converged_{false};
 };
 
 ///
@@ -183,31 +226,19 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
-  setMaximumNumberIterations(Intrepid::Index const mni)
-  {max_num_iter_ = mni;}
-
-  Intrepid::Index
-  getMaximumNumberIterations()
-  {return max_num_iter_;}
-
-  void
-  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
+  setMaxNumRestrictIterations(Intrepid::Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
   Intrepid::Index
-  getMaximumNumberRestrictIterations()
+  getMaxNumRestrictIterations()
   {return max_num_restrict_iter_;}
 
-  Intrepid::Index
-  getNumberIterations()
-  {return num_iter_;}
-
   void
-  setMaximumStepLength(T const msl)
+  setMaxStepLength(T const msl)
   {max_step_length_ = msl;}
 
   T
-  getMaximumStepLength() const
+  getMaxStepLength() const
   {return max_step_length_;}
 
   void
@@ -226,43 +257,9 @@ public:
   getMinumumReduction() const
   {return min_reduction_;}
 
-  void
-  setRelativeTolerance(T const rt)
-  {rel_tol_ = rt;}
-
-  T
-  getRelativeTolerance() const
-  {return rel_tol_;}
-
-  T
-  getRelativeError() const
-  {return rel_error_;}
-
-  void
-  setAbsoluteTolerance(T const at)
-  {abs_tol_ = at;}
-
-  T
-  getAbsoluteTolerance() const
-  {return abs_tol_;}
-
-  T
-  getAbsoluteError() const
-  {return abs_error_;}
-
-  bool
-  isConverged() const
-  {return converged_;}
-
 private:
   Intrepid::Index
-  max_num_iter_{128};
-
-  Intrepid::Index
   max_num_restrict_iter_{4};
-
-  Intrepid::Index
-  num_iter_{0};
 
   T
   max_step_length_{1.0};
@@ -272,21 +269,6 @@ private:
 
   T
   min_reduction_{0.25};
-
-  T
-  rel_tol_{1.0e-10};
-
-  T
-  rel_error_{1.0};
-
-  T
-  abs_tol_{1.0e-10};
-
-  T
-  abs_error_{1.0};
-
-  bool
-  converged_{false};
 };
 
 ///
@@ -309,40 +291,20 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
-  setMaximumNumberIterations(Intrepid::Index const mni)
-  {max_num_iter_ = mni;}
+  setMaxNumLineSearchIterations(T const n)
+  {max_num_line_search_iter_ = n;}
 
   Intrepid::Index
-  getMaximumNumberIterations()
-  {return max_num_iter_;}
+  getMaxNumLineSearchIterations()
+  {return max_num_line_search_iter_;}
+
+  void
+  setLineSearchTolerance(T const st)
+  {line_search_tol_ = st;}
 
   T
-  getInitialSecantStepLength() const
-  {return initial_secant_step_length_;}
-
-  void
-  setInitialSecantStepLength(T const issl)
-  {initial_secant_step_length_ = issl;}
-
-  void
-  setMaximumNumberSecantIterations(T const mntri)
-  {max_num_secant_iter_ = mntri;}
-
-  Intrepid::Index
-  getMaximumNumberSecantIterations()
-  {return max_num_secant_iter_;}
-
-  void
-  setSecantTolerance(T const st)
-  {secant_tol_ = st;}
-
-  T
-  getSecantTolerance() const
-  {return secant_tol_;}
-
-  Intrepid::Index
-  getNumberIterations()
-  {return num_iter_;}
+  getLineSearchTolerance() const
+  {return line_search_tol_;}
 
   void
   setRestartDirectionsInterval(Intrepid::Index const rdi)
@@ -352,67 +314,15 @@ public:
   getRestartDirectionsInterval() const
   {return restart_directions_interval_;}
 
-  void
-  setRelativeTolerance(T const rt)
-  {rel_tol_ = rt;}
-
-  T
-  getRelativeTolerance() const
-  {return rel_tol_;}
-
-  T
-  getRelativeError() const
-  {return rel_error_;}
-
-  void
-  setAbsoluteTolerance(T const at)
-  {abs_tol_ = at;}
-
-  T
-  getAbsoluteTolerance() const
-  {return abs_tol_;}
-
-  T
-  getAbsoluteError() const
-  {return abs_error_;}
-
-  bool
-  isConverged() const
-  {return converged_;}
-
 private:
   Intrepid::Index
-  max_num_iter_{128};
-
-  Intrepid::Index
-  max_num_secant_iter_{16};
-
-  Intrepid::Index
-  num_iter_{0};
+  max_num_line_search_iter_{16};
 
   Intrepid::Index
   restart_directions_interval_{32};
 
   T
-  initial_secant_step_length_{0.9};
-
-  T
-  secant_tol_{1.0e-6};
-
-  T
-  rel_tol_{1.0e-10};
-
-  T
-  rel_error_{1.0};
-
-  T
-  abs_tol_{1.0e-10};
-
-  T
-  abs_error_{1.0};
-
-  bool
-  converged_{false};
+  line_search_tol_{1.0e-6};
 };
 
 ///
@@ -431,31 +341,19 @@ public:
   solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
 
   void
-  setMaximumNumberIterations(Intrepid::Index const mni)
-  {max_num_iter_ = mni;}
-
-  Intrepid::Index
-  getMaximumNumberIterations()
-  {return max_num_iter_;}
-
-  Intrepid::Index
-  getNumberIterations()
-  {return num_iter_;}
-
-  void
-  setMaximumNumberRestrictIterations(Intrepid::Index const mntri)
+  setMaxNumRestrictIterations(Intrepid::Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
   Intrepid::Index
-  getMaximumNumberRestrictIterations()
+  getMaxNumRestrictIterations()
   {return max_num_restrict_iter_;}
 
   void
-  setMaximumStepLength(T const msl)
+  setMaxStepLength(T const msl)
   {max_step_length_ = msl;}
 
   T
-  getMaximumStepLength() const
+  getMaxStepLength() const
   {return max_step_length_;}
 
   void
@@ -467,40 +365,30 @@ public:
   {return initial_step_length_;}
 
   void
-  setRelativeTolerance(T const rt)
-  {rel_tol_ = rt;}
+  setHessianConditionTolerance(T const tol)
+  {hessian_cond_tol_ = tol;}
 
   T
-  getRelativeTolerance() const
-  {return rel_tol_;}
-
-  T
-  getRelativeError() const
-  {return rel_error_;}
+  getHessianConditionTolerance() const
+  {return hessian_cond_tol_;}
 
   void
-  setAbsoluteTolerance(T const at)
-  {abs_tol_ = at;}
+  setMaxNumLineSearchIterations(T const n)
+  {max_num_line_search_iter_ = n;}
+
+  Intrepid::Index
+  getMaxNumLineSearchIterations()
+  {return max_num_line_search_iter_;}
+
+  void
+  setLineSearchTolerance(T const st)
+  {line_search_tol_ = st;}
 
   T
-  getAbsoluteTolerance() const
-  {return abs_tol_;}
-
-  T
-  getAbsoluteError() const
-  {return abs_error_;}
-
-  bool
-  isConverged() const
-  {return converged_;}
+  getLineSearchTolerance() const
+  {return line_search_tol_;}
 
 private:
-  Intrepid::Index
-  max_num_iter_{128};
-
-  Intrepid::Index
-  num_iter_{0};
-
   Intrepid::Index
   max_num_restrict_iter_{4};
 
@@ -511,19 +399,13 @@ private:
   initial_step_length_{1.0};
 
   T
-  rel_tol_{1.0e-10};
+  hessian_cond_tol_{1.0e+08};
+
+  Intrepid::Index
+  max_num_line_search_iter_{16};
 
   T
-  rel_error_{1.0};
-
-  T
-  abs_tol_{1.0e-10};
-
-  T
-  abs_error_{1.0};
-
-  bool
-  converged_{false};
+  line_search_tol_{1.0e-6};
 };
 
 } // namespace LCM
