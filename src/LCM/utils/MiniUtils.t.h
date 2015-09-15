@@ -384,10 +384,10 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
       soln += step_length * search_direction;
 
       bool const
-      secant_converged = step_length * step_length * projection_search <=
+      line_search_converged = step_length * step_length * projection_search <=
       getLineSearchTolerance() * getLineSearchTolerance();
 
-      if (secant_converged == true) break;
+      if (line_search_converged == true) break;
 
     }
 
@@ -457,6 +457,18 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
   Intrepid::Vector<T, N>
   resi = nls.compute(soln);
+
+  Intrepid::Tensor<T, N>
+  K(dimension);
+
+  Intrepid::Tensor<T, N>
+  L(dimension);
+
+  Intrepid::Vector<T, N>
+  step(dimension);
+
+  Intrepid::Vector<T, N>
+  q(dimension);
 
   T const
   initial_norm = Intrepid::norm(resi);
