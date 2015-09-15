@@ -652,7 +652,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
 #ifdef ALBANY_AERAS 
   if (solutionMethod == "Aeras Hyperviscosity") {
-    std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
+    //std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
     //Check if HV coefficient tau is zero of "Explicit HV" is false. Then there is no need for Aeras HVDecorator.
 
     bool useExplHyperviscosity = problemParams->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);

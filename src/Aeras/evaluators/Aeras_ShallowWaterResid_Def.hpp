@@ -66,7 +66,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   sHvTau = sqrt(shallowWaterList->get<double>("Hyperviscosity Tau", 0.0));
 
 
- #define ALBANY_VERBOSE
+ //#define ALBANY_VERBOSE
   
   AlphaAngle = shallowWaterList->get<double>("Rotation Angle", 0.0); //Default: 0.0
 

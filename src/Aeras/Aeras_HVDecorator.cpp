@@ -19,7 +19,7 @@ static
 int mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-#define OUTPUT_TO_SCREEN 
+//#define OUTPUT_TO_SCREEN 
 
 Aeras::HVDecorator::HVDecorator(
     const Teuchos::RCP<Albany::Application>& app_,
