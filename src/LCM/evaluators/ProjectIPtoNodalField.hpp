@@ -132,7 +132,8 @@ private:
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory_;
 
-  bool initManager(Teuchos::ParameterList* const pl);
+  bool initManager(Teuchos::ParameterList* const pl,
+                   const std::string& key_suffix);
   void fillRHS(const typename Traits::EvalData workset);
 };
 
