@@ -72,7 +72,7 @@ class NodalDataVector {
 
     void initializeVectors(ST value);
 
-    void initializeExport();
+    Teuchos::RCP<const Tpetra_Import> initializeExport();
 
     void exportAddNodalDataVector();
 

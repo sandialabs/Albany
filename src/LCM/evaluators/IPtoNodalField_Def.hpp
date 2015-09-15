@@ -9,17 +9,36 @@
 #include "Albany_Utils.hpp"
 #include "Adapt_NodalDataVector.hpp"
 
-
 namespace LCM
 {
+class IPtoNodalFieldManager : public Adapt::NodalDataBase::Manager {
+public:
+  IPtoNodalFieldManager () : nwrkr_(0), prectr_(0), postctr_(0) {}
+
+  void registerWorker () { ++nwrkr_; }
+  int nWorker () const { return nwrkr_; }
+
+  void initCounters () { prectr_ = postctr_ = 0; }
+  int incrPreCounter () { return ++prectr_; }
+  int incrPostCounter () { return ++postctr_; }
+
+  // Start position in the nodal vector database, and number of vectors we're
+  // using.
+  int ndb_start, ndb_numvecs;
+  // Multivector that will go into the nodal database.
+  Teuchos::RCP<Tpetra_MultiVector> nodal_field;
+  
+private:
+  int nwrkr_, prectr_, postctr_;
+};
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 IPtoNodalFieldBase<EvalT, Traits>::
 IPtoNodalFieldBase(Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl,
     const Albany::MeshSpecsStruct* mesh_specs) :
-    weights_("Weights", dl->qp_scalar),
-    nodal_weights_name_("nodal_weights")
+    weights_("Weights", dl->qp_scalar)
 {
   //! get and validate IPtoNodalField parameter list
   Teuchos::ParameterList* plist =
@@ -41,32 +60,47 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   num_nodes_ = node_dl->dimension(1);
   num_vertices_ = vert_vector_dl->dimension(2);
 
-  //! Register with state manager
-  this->p_state_mgr_ = p.get<Albany::StateManager*>("State Manager Ptr");
-
-  // register the nodal weights
-  this->addDependentField(weights_);
-  this->p_state_mgr_->registerNodalVectorStateVariable(nodal_weights_name_,
-      dl->node_node_scalar,
-      dl->dummy, "all",
-      "scalar", 0.0, false,
-      true);
-
-  // loop over the number of fields and register
-  number_of_fields_ = plist->get<int>("Number of Fields", 0);
-
-  // resize field vectors
-  ip_field_names_.resize(number_of_fields_);
-  ip_field_layouts_.resize(number_of_fields_);
-  nodal_field_names_.resize(number_of_fields_);
-  ip_fields_.resize(number_of_fields_);
-
   // Surface element prefix, if any.
   bool const
   is_surface_block = mesh_specs->ebName == "Surface Element";
 
   std::string const
   field_name_prefix = is_surface_block == true ? "surf_" : "";
+
+  //! Register with state manager
+  this->p_state_mgr_ = p.get<Albany::StateManager*>("State Manager Ptr");
+
+  // loop over the number of fields and register
+  number_of_fields_ = plist->get<int>("Number of Fields", 0);
+
+  // Initialize manager.
+  bool first;
+  {
+    const std::string key_suffix = field_name_prefix +
+      (number_of_fields_ > 0 ?
+       plist->get<std::string>(Albany::strint("IP Field Name", 0)) :
+       "");
+    const std::string key = "IPtoNodalField_" + key_suffix;
+    const Teuchos::RCP<Adapt::NodalDataBase>
+      ndb = this->p_state_mgr_->getNodalDataBase();
+    first = ! ndb->isManagerRegistered(key);
+    if (first) {
+      this->mgr_ = Teuchos::rcp(new IPtoNodalFieldManager());
+      // Find out our starting position in the nodal database.
+      this->mgr_->ndb_start = ndb->getVecsize();
+      ndb->registerManager(key, this->mgr_);
+    } else {
+      this->mgr_ = Teuchos::rcp_dynamic_cast<IPtoNodalFieldManager>(
+        ndb->getManager(key));
+    }
+    this->mgr_->registerWorker();
+  }
+
+  // resize field vectors
+  ip_field_names_.resize(number_of_fields_);
+  ip_field_layouts_.resize(number_of_fields_);
+  nodal_field_names_.resize(number_of_fields_);
+  ip_fields_.resize(number_of_fields_);
 
   for (int field(0); field < number_of_fields_; ++field) {
 
@@ -129,6 +163,23 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
     }
   }
 
+  // Register the nodal weights. Need a unique name so it doesn't conflict with
+  // the weights vector of another IPtoNodalField response function. Even though
+  // the weight vectors would be the same, coordination would be required to
+  // prevent multiple sums.
+  nodal_weights_name_ = "nw_" + ip_field_names_[0];
+  this->addDependentField(weights_);
+  this->p_state_mgr_->registerNodalVectorStateVariable(nodal_weights_name_,
+      dl->node_node_scalar,
+      dl->dummy, "all",
+      "scalar", 0.0, false,
+      true);
+
+  if (first)
+    this->mgr_->ndb_numvecs =
+      p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
+      this->mgr_->ndb_start;
+
   // Create field tag
   field_tag_ =
       Teuchos::rcp(new PHX::Tag<ScalarT>("IP to Nodal Field", dl->dummy));
@@ -152,21 +203,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 // Specialization: Residual
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-class IPtoNodalFieldManager : public Adapt::NodalDataBase::Manager {
-public:
-  IPtoNodalFieldManager () : nwrkr_(0), prectr_(0), postctr_(0) {}
-
-  void registerWorker () { ++nwrkr_; }
-  int nWorker () const { return nwrkr_; }
-
-  void initCounters () { prectr_ = postctr_ = 0; }
-  int incrPreCounter () { return ++prectr_; }
-  int incrPostCounter () { return ++postctr_; }
-  
-private:
-  int nwrkr_, prectr_, postctr_;
-};
-
 template<typename Traits>
 IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 IPtoNodalField(
@@ -174,36 +210,21 @@ IPtoNodalField(
     const Teuchos::RCP<Albany::Layouts>& dl,
     const Albany::MeshSpecsStruct* mesh_specs) :
     IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl, mesh_specs)
-{
-  static const char* key = "IPtoNodalField";
-  Teuchos::RCP<Adapt::NodalDataBase>
-    ndb = this->p_state_mgr_->getNodalDataBase();
-  if (ndb->isManagerRegistered(key))
-    mgr_ = Teuchos::rcp_dynamic_cast<IPtoNodalFieldManager>(
-      ndb->getManager(key));
-  else {
-    mgr_ = Teuchos::rcp(new IPtoNodalFieldManager());
-    ndb->registerManager(key, mgr_);
-  }
-  mgr_->registerWorker();
-}
+{}
 
 //------------------------------------------------------------------------------
 template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  const int ctr = mgr_->incrPreCounter();
+  const int ctr = this->mgr_->incrPreCounter();
   const bool am_first = ctr == 1;
   if ( ! am_first) return;
 
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-       this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
-           ->getNodalDataVector();
-  //todo Fine-tune how IPtoNodalField initializes and saves its vectors. Right
-  //now, if it is listed after another RF that uses the nodal vector db (such as
-  //ProjectIPtoNodalField), then that RF's data are overwritten with 0s.
-  node_data->initializeVectors(0.0);
+  const Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->
+    getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+  this->mgr_->nodal_field = Teuchos::rcp(
+    new Tpetra_MultiVector(node_data->getLocalMap(), this->mgr_->ndb_numvecs, true));
 }
 
 //------------------------------------------------------------------------------
@@ -215,13 +236,12 @@ evaluateFields(typename Traits::EvalData workset)
   // and summed
 
   // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
-          ->getNodalDataVector();
-  const Teuchos::RCP<Tpetra_MultiVector>& data =
-    node_data->getLocalNodeVector();
+  const Teuchos::RCP<Tpetra_MultiVector>& data = this->mgr_->nodal_field;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
-  Teuchos::RCP<const Tpetra_Map> local_node_map = node_data->getLocalMap();
+  Teuchos::RCP<const Tpetra_Map> local_node_map = data->getMap();
+
+  const Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->
+    getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
 
   int num_nodes = this->num_nodes_;
   int num_dims = this->num_dims_;
@@ -234,6 +254,7 @@ evaluateFields(typename Traits::EvalData workset)
       this->nodal_weights_name_,
       node_weight_offset,
       node_weight_ndofs);
+  node_weight_offset -= this->mgr_->ndb_start;
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes; ++node) {
       const GO global_row = wsElNodeID[cell][node];
@@ -253,6 +274,7 @@ evaluateFields(typename Traits::EvalData workset)
         this->nodal_field_names_[field],
         node_var_offset,
         node_var_ndofs);
+    node_var_offset -= this->mgr_->ndb_start;
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes; ++node) {
         const GO global_row = wsElNodeID[cell][node];
@@ -287,15 +309,16 @@ evaluateFields(typename Traits::EvalData workset)
     } // end cell loop
   } // end field loop
 }
+
 //------------------------------------------------------------------------------
 template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  const int ctr = mgr_->incrPostCounter();
-  const bool am_last = ctr == mgr_->nWorker();
+  const int ctr = this->mgr_->incrPostCounter();
+  const bool am_last = ctr == this->mgr_->nWorker();
   if ( ! am_last) return;
-  mgr_->initCounters();
+  this->mgr_->initCounters();
 
   // Get the node data vector container.
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
@@ -303,13 +326,13 @@ postEvaluate(typename Traits::PostEvalData workset)
           ->getNodalDataVector();
 
   // Export the data from the local to overlapped decomposition.
-  node_data->initializeExport();
-  node_data->exportAddNodalDataVector();
+  const Teuchos::RCP<const Tpetra_Import> importer = node_data->initializeExport();
+  const Teuchos::RCP<const Tpetra_Map> overlap_node_map = node_data->getOverlapMap();
+  const Teuchos::RCP<Tpetra_MultiVector> data = Teuchos::rcp(
+    new Tpetra_MultiVector(overlap_node_map, this->mgr_->ndb_numvecs, true));
+  data->doImport(*this->mgr_->nodal_field, *importer, Tpetra::ADD);
 
-  const Teuchos::RCP<Tpetra_MultiVector>& data =
-    node_data->getOverlapNodeVector();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
-  Teuchos::RCP<const Tpetra_Map> overlap_node_map = node_data ->getOverlapMap();
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>> wsElNodeID = workset.wsElNodeID;
 
   const int num_nodes = overlap_node_map->getNodeNumElements();
   const int blocksize = node_data->getVecSize();
@@ -321,6 +344,7 @@ postEvaluate(typename Traits::PostEvalData workset)
       this->nodal_weights_name_,
       node_weight_offset,
       node_weight_ndofs);
+  node_weight_offset -= this->mgr_->ndb_start;
 
   // Divide the overlap field through by the weights.
   Teuchos::ArrayRCP<const ST> weights = data->getData(node_weight_offset);
@@ -331,6 +355,7 @@ postEvaluate(typename Traits::PostEvalData workset)
         this->nodal_field_names_[field],
         node_var_offset,
         node_var_ndofs);
+    node_var_offset -= this->mgr_->ndb_start;
 
     for (int k = 0; k < node_var_ndofs; ++k) {
       Teuchos::ArrayRCP<ST> v = data->getDataNonConst(node_var_offset + k);
@@ -339,8 +364,8 @@ postEvaluate(typename Traits::PostEvalData workset)
     }
   }
 
-  // Store the overlapped vector data back in stk in the field "field_name".
-  node_data->saveNodalDataState();
+  // Store the overlapped vector data in stk.
+  node_data->saveNodalDataState(data, this->mgr_->ndb_start);
 }
 
 //------------------------------------------------------------------------------
