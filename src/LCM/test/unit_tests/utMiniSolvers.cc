@@ -14,7 +14,7 @@ namespace
 //
 // Simple test of the linear mini solver.
 //
-TEUCHOS_UNIT_TEST(LinearSolver, Instantiation)
+TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 {
   Intrepid::Index const
   dimension{3};
@@ -401,6 +401,41 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Quadratic)
   TEST_COMPARE(error, <=, method.getRelativeTolerance());
 }
 
+TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Quadratic)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  using NLS = QuadraticNLS<RealType>;
+
+  Intrepid::Vector<RealType, dimension> const
+  minimum(4.0, 3.0);
+
+  RealType const
+  scaling = 0.125;
+
+  NLS
+  nonlinear_system(minimum(0), minimum(1), scaling);
+
+  LCM::LineSearchRegularizedMethod<NLS, RealType, dimension>
+  method;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = 1.0;
+  }
+
+  method.solve(nonlinear_system, x);
+
+  RealType const
+  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
+
+  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+}
+
 //
 // Gaussian NLS
 //
@@ -509,11 +544,46 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Gaussian)
   TEST_COMPARE(error, <=, method.getRelativeTolerance());
 }
 
+TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Gaussian)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  using NLS = GaussianNLS<RealType>;
+
+  Intrepid::Vector<RealType, dimension> const
+  minimum(4.0, 3.0);
+
+  RealType const
+  scaling = 0.125;
+
+  NLS
+  nonlinear_system(minimum(0), minimum(1), scaling);
+
+  LCM::LineSearchRegularizedMethod<NLS, RealType, dimension>
+  method;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = 1.0;
+  }
+
+  method.solve(nonlinear_system, x);
+
+  RealType const
+  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
+
+  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+}
+
 //
 // Test the LCM nonlinear mini solver with the corresponding solution
 // methods.
 //
-TEUCHOS_UNIT_TEST(NonLinearSolverNewtonMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
@@ -555,7 +625,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverNewtonMethod, SquareRoot)
   TEST_COMPARE(error, <=, absolute_tolerance);
 }
 
-TEUCHOS_UNIT_TEST(NonLinearSolverTrustRegionMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(MiniNonLinearSolverTrustRegionMethod, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
@@ -597,7 +667,7 @@ TEUCHOS_UNIT_TEST(NonLinearSolverTrustRegionMethod, SquareRoot)
   TEST_COMPARE(error, <=, absolute_tolerance);
 }
 
-TEUCHOS_UNIT_TEST(NonLinearSolverConjugateGradientMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(MiniNonLinearSolverConjugateGradientMethod, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
@@ -615,6 +685,48 @@ TEUCHOS_UNIT_TEST(NonLinearSolverConjugateGradientMethod, SquareRoot)
   nonlinear_system(square);
 
   LCM::ConjugateGradientMethod<NLS, ValueT, dimension>
+  conjugate_gradient_method;
+
+  LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
+  solver(conjugate_gradient_method);
+
+  Intrepid::Vector<ScalarT, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = 1.0;
+  }
+
+  solver.solve(nonlinear_system, x);
+
+  ValueT const
+  error = std::abs(norm_square(x) - square);
+
+  ValueT const
+  absolute_tolerance = conjugate_gradient_method.getAbsoluteTolerance();
+
+  TEST_COMPARE(error, <=, absolute_tolerance);
+}
+
+TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using FadT = typename Sacado::Fad::DFad<ValueT>;
+
+  Intrepid::Index const
+  dimension{1};
+
+  using NLS = SquareRootNLS<ValueT>;
+
+  ValueT const
+  square = 2.0;
+
+  NLS
+  nonlinear_system(square);
+
+  LCM::LineSearchRegularizedMethod<NLS, ValueT, dimension>
   conjugate_gradient_method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
