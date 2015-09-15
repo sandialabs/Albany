@@ -149,7 +149,7 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
   Hessian(dimension);
 
   Intrepid::Vector<T, N>
-  soln_incr(dimension);
+  step(dimension);
 
   Intrepid::Vector<T, N>
   resi = nls.compute(soln);
@@ -164,9 +164,9 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
     Hessian = computeHessian(nls, soln);
 
-    soln_incr = - Intrepid::solve(Hessian, resi);
+    step = - Intrepid::solve(Hessian, resi);
 
-    soln += soln_incr;
+    soln += step;
 
     resi = nls.compute(soln);
 
@@ -360,10 +360,10 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
   while (this->continueSolve() == true) {
 
-    T
-    projection_search = Intrepid::dot(search_direction, search_direction);
-
     // Newton line search.
+
+    T const
+    projection_search = Intrepid::dot(search_direction, search_direction);
 
     for (Intrepid::Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
 
@@ -453,9 +453,6 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
   Hessian(dimension);
 
   Intrepid::Vector<T, N>
-  soln_incr(dimension);
-
-  Intrepid::Vector<T, N>
   resi = nls.compute(soln);
 
   Intrepid::Tensor<T, N>
@@ -470,8 +467,14 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
   Intrepid::Vector<T, N>
   q(dimension);
 
+  Intrepid::Tensor<T, N> const
+  I = Intrepid::identity<T, N>(dimension);
+
   T const
   initial_norm = Intrepid::norm(resi);
+
+  T const
+  step_length = getInitialStepLength();
 
   this->initConvergenceCriterion(initial_norm);
   this->updateConvergenceCriterion(initial_norm);
@@ -480,9 +483,74 @@ solve(NLS const & nls, Intrepid::Vector<T, N> & soln)
 
     Hessian = computeHessian(nls, soln);
 
-    soln_incr = - Intrepid::solve(Hessian, resi);
+    bool const
+    ill_conditioned = Intrepid::cond(Hessian) <= getHessianConditionTolerance();
 
-    soln += soln_incr;
+    if (ill_conditioned == true) {
+
+      // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+      T
+      lambda = 0.0;
+
+      for (Intrepid::Index i{0}; i < getMaxNumRestrictIterations(); ++i) {
+
+        K = Hessian + lambda * I;
+
+        L = Intrepid::cholesky(K).first;
+
+        step = - Intrepid::solve(K, resi);
+
+        q = Intrepid::solve(L, step);
+
+        T const
+        nps = Intrepid::norm_square(step);
+
+        T const
+        nqs = Intrepid::norm_square(q);
+
+        T const
+        lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+
+        lambda += std::max(lambda_incr, 0.0);
+
+      }
+
+    } else {
+
+      // Standard Newton step
+      step = - Intrepid::solve(Hessian, resi);
+
+    }
+
+    // Newton line search.
+
+    T const
+    projection_step = Intrepid::dot(step, step);
+
+    for (Intrepid::Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
+
+      resi = nls.compute(soln);
+
+      Hessian = computeHessian(nls, soln);
+
+      T const
+      projection = Intrepid::dot(resi, step);
+
+      T const
+      contraction = Intrepid::dot(step, Intrepid::dot(Hessian, step));
+
+      T const
+      ls_length = - projection / contraction;
+
+      soln += ls_length * step;
+
+      bool const
+      line_search_converged = ls_length * ls_length * projection_step <=
+      getLineSearchTolerance() * getLineSearchTolerance();
+
+      if (line_search_converged == true) break;
+
+    }
 
     resi = nls.compute(soln);
 

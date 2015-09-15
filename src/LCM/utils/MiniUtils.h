@@ -364,6 +364,30 @@ public:
   getInitialStepLength() const
   {return initial_step_length_;}
 
+  void
+  setHessianConditionTolerance(T const tol)
+  {hessian_cond_tol_ = tol;}
+
+  T
+  getHessianConditionTolerance() const
+  {return hessian_cond_tol_;}
+
+  void
+  setMaxNumLineSearchIterations(T const n)
+  {max_num_line_search_iter_ = n;}
+
+  Intrepid::Index
+  getMaxNumLineSearchIterations()
+  {return max_num_line_search_iter_;}
+
+  void
+  setLineSearchTolerance(T const st)
+  {line_search_tol_ = st;}
+
+  T
+  getLineSearchTolerance() const
+  {return line_search_tol_;}
+
 private:
   Intrepid::Index
   max_num_restrict_iter_{4};
@@ -373,6 +397,15 @@ private:
 
   T
   initial_step_length_{1.0};
+
+  T
+  hessian_cond_tol_{1.0e+08};
+
+  Intrepid::Index
+  max_num_line_search_iter_{16};
+
+  T
+  line_search_tol_{1.0e-6};
 };
 
 } // namespace LCM

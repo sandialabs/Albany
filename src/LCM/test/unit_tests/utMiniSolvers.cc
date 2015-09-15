@@ -161,6 +161,10 @@ private:
 //
 // Test the solution methods by themselves.
 //
+
+//
+// Square root NLS
+//
 TEUCHOS_UNIT_TEST(NewtonMethod, SquareRoot)
 {
   Intrepid::Index const
@@ -257,6 +261,41 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, SquareRoot)
   TEST_COMPARE(error, <=, method.getAbsoluteTolerance());
 }
 
+TEUCHOS_UNIT_TEST(LineSearchRegularized, SquareRoot)
+{
+  Intrepid::Index const
+  dimension{1};
+
+  using NLS = SquareRootNLS<RealType>;
+
+  RealType const
+  square = 2.0;
+
+  NLS
+  nonlinear_system(square);
+
+  LCM::LineSearchRegularizedMethod<NLS, RealType, dimension>
+  method;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  // Initial guess
+  for (Intrepid::Index i{0}; i < dimension; ++i) {
+    x(i) = 1.0;
+  }
+
+  method.solve(nonlinear_system, x);
+
+  RealType const
+  error = std::abs(norm_square(x) - square);
+
+  TEST_COMPARE(error, <=, method.getAbsoluteTolerance());
+}
+
+//
+// Quadratic NLS
+//
 TEUCHOS_UNIT_TEST(NewtonMethod, Quadratic)
 {
   Intrepid::Index const
@@ -362,6 +401,9 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Quadratic)
   TEST_COMPARE(error, <=, method.getRelativeTolerance());
 }
 
+//
+// Gaussian NLS
+//
 TEUCHOS_UNIT_TEST(NewtonMethod, Gaussian)
 {
   Intrepid::Index const
