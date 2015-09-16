@@ -392,8 +392,9 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0_useHyperViscosity(const int& cell) const
 {
-  for (int node=0; node < numNodes; ++node) 
-      surf(node) = UNodal(cell,node,0);
+//surf is not used here
+//  for (int node=0; node < numNodes; ++node)
+//      surf(node) = UNodal(cell,node,0);
 
   for (std::size_t node=0; node < numNodes; ++node) 
       surftilde(node) = UNodal(cell,node,3);
@@ -605,8 +606,8 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
                           + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
                           )*wBF(cell,node,qp);
   
-    Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp);
-    Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp);
+//    Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp);
+//    Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp);
   }
 
   for (int qp=0; qp < numQPs; ++qp) {
@@ -1175,9 +1176,9 @@ myPi = Aeras::ShallowWaterConstants::self().pi;
         Kokkos::parallel_for(ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy(0,workset.numCells),*this); 
   }
   else {
-     if (useImplHyperviscosity)
+     if (useImplHyperviscosity){
        Kokkos::parallel_for(ShallowWaterResid_VecDim6_Policy(0,workset.numCells),*this);
-     else
+     }else
        Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
   }
 
