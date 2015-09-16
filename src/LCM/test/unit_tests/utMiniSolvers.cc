@@ -49,7 +49,7 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 // Define some nonlinear systems (NLS) to test nonlinear solution methods.
 //
 template <typename S>
-class SquareRootNLS : public LCM::NonlinearSystem_Base<S>
+class SquareRootNLS : public Intrepid::NonlinearSystem_Base<S>
 {
 public:
 
@@ -78,7 +78,7 @@ private:
 };
 
 template <typename S>
-class QuadraticNLS : public LCM::NonlinearSystem_Base<S>
+class QuadraticNLS : public Intrepid::NonlinearSystem_Base<S>
 {
 public:
 
@@ -114,7 +114,7 @@ private:
 };
 
 template <typename S>
-class GaussianNLS  : public LCM::NonlinearSystem_Base<S>
+class GaussianNLS  : public Intrepid::NonlinearSystem_Base<S>
 {
 public:
 
@@ -178,7 +178,7 @@ TEUCHOS_UNIT_TEST(NewtonMethod, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::NewtonMethod<NLS, RealType, dimension>
+  Intrepid::NewtonMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -210,7 +210,7 @@ TEUCHOS_UNIT_TEST(TrustRegionMethod, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::TrustRegionMethod<NLS, RealType, dimension>
+  Intrepid::TrustRegionMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -242,7 +242,7 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::ConjugateGradientMethod<NLS, RealType, dimension>
+  Intrepid::ConjugateGradientMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -274,7 +274,7 @@ TEUCHOS_UNIT_TEST(LineSearchRegularized, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::LineSearchRegularizedMethod<NLS, RealType, dimension>
+  Intrepid::LineSearchRegularizedMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -312,7 +312,7 @@ TEUCHOS_UNIT_TEST(NewtonMethod, Quadratic)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::NewtonMethod<NLS, RealType, dimension>
+  Intrepid::NewtonMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -347,7 +347,7 @@ TEUCHOS_UNIT_TEST(TrustRegionMethod, Quadratic)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::TrustRegionMethod<NLS, RealType, dimension>
+  Intrepid::TrustRegionMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -382,7 +382,7 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Quadratic)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::ConjugateGradientMethod<NLS, RealType, dimension>
+  Intrepid::ConjugateGradientMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -417,7 +417,7 @@ TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Quadratic)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::LineSearchRegularizedMethod<NLS, RealType, dimension>
+  Intrepid::LineSearchRegularizedMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -455,7 +455,7 @@ TEUCHOS_UNIT_TEST(NewtonMethod, Gaussian)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::NewtonMethod<NLS, RealType, dimension>
+  Intrepid::NewtonMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -490,7 +490,7 @@ TEUCHOS_UNIT_TEST(TrustRegionMethod, Gaussian)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::TrustRegionMethod<NLS, RealType, dimension>
+  Intrepid::TrustRegionMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -525,7 +525,7 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Gaussian)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::ConjugateGradientMethod<NLS, RealType, dimension>
+  Intrepid::ConjugateGradientMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -560,7 +560,7 @@ TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Gaussian)
   NLS
   nonlinear_system(minimum(0), minimum(1), scaling);
 
-  LCM::LineSearchRegularizedMethod<NLS, RealType, dimension>
+  Intrepid::LineSearchRegularizedMethod<NLS, RealType, dimension>
   method;
 
   Intrepid::Vector<RealType, dimension>
@@ -600,7 +600,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::NewtonMethod<NLS, ValueT, dimension>
+  Intrepid::NewtonMethod<NLS, ValueT, dimension>
   newton_method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
@@ -642,7 +642,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverTrustRegionMethod, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::TrustRegionMethod<NLS, ValueT, dimension>
+  Intrepid::TrustRegionMethod<NLS, ValueT, dimension>
   trust_region_method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
@@ -684,7 +684,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverConjugateGradientMethod, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::ConjugateGradientMethod<NLS, ValueT, dimension>
+  Intrepid::ConjugateGradientMethod<NLS, ValueT, dimension>
   conjugate_gradient_method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
@@ -726,7 +726,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
   NLS
   nonlinear_system(square);
 
-  LCM::LineSearchRegularizedMethod<NLS, ValueT, dimension>
+  Intrepid::LineSearchRegularizedMethod<NLS, ValueT, dimension>
   conjugate_gradient_method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>

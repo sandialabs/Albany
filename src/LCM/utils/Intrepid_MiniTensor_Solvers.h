@@ -4,18 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_MiniUtils_h)
-#define LCM_MiniUtils_h
+#if !defined(Intrepid_MiniTensor_Solvers_h)
+#define Intrepid_MiniTensor_Solvers_h
 
 #include <utility>
 
 #include <Intrepid_MiniTensor.h>
 
-namespace LCM
+namespace Intrepid
 {
 
 ///
-/// Types of nonlinear method for LCM nonlinear mini solvers.
+/// Types of nonlinear method for Intrepid nonlinear mini solvers.
 ///
 enum class NonlinearMethod
 {
@@ -30,12 +30,12 @@ enum class NonlinearMethod
 /// typed on a FAD type.
 /// Assuming that T is a FAD type and S is a simple type.
 ///
-template<typename T, typename S, Intrepid::Index N>
+template<typename T, typename S, Index N>
 void
 computeFADInfo(
-    Intrepid::Vector<T, N> const & r,
-    Intrepid::Tensor<S, N> const & DrDx,
-    Intrepid::Vector<T, N> & x);
+    Vector<T, N> const & r,
+    Tensor<S, N> const & DrDx,
+    Vector<T, N> & x);
 
 ///
 /// Nonlinear system (NLS) interface for mini nonlinear solver
@@ -56,23 +56,23 @@ public:
 /// The returned residual has the underlying value type of the
 /// type of the evaluation vector.
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-Intrepid::Vector<typename Sacado::ValueType<T>::type, N>
-computeResidual(NLS const & nls, Intrepid::Vector<T, N> const & x);
+template<typename NLS, typename T, Index N = DYNAMIC>
+Vector<typename Sacado::ValueType<T>::type, N>
+computeResidual(NLS const & nls, Vector<T, N> const & x);
 
 ///
 /// Utility function to compute Hessian of a nonlinear system.
 /// The returned Hessian has the underlying value type of the
 /// type of the evaluation vector.
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-Intrepid::Tensor<typename Sacado::ValueType<T>::type, N>
-computeHessian(NLS const & nls, Intrepid::Vector<T, N> const & x);
+template<typename NLS, typename T, Index N = DYNAMIC>
+Tensor<typename Sacado::ValueType<T>::type, N>
+computeHessian(NLS const & nls, Vector<T, N> const & x);
 
 ///
 /// Nonlinear Method Base Class
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Index N = DYNAMIC>
 class NonlinearMethod_Base
 {
 public:
@@ -87,17 +87,17 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Intrepid::Vector<T, N> & x) = 0;
+  solve(NLS const & nls, Vector<T, N> & x) = 0;
 
   void
-  setMaxNumIterations(Intrepid::Index const mni)
+  setMaxNumIterations(Index const mni)
   {max_num_iter_ = mni;}
 
-  Intrepid::Index
+  Index
   getMaxNumIterations()
   {return max_num_iter_;}
 
-  Intrepid::Index
+  Index
   getNumberIterations()
   {return num_iter_;}
 
@@ -171,10 +171,10 @@ protected:
   }
 
 protected:
-  Intrepid::Index
+  Index
   max_num_iter_{128};
 
-  Intrepid::Index
+  Index
   num_iter_{0};
 
   T
@@ -199,14 +199,14 @@ protected:
 ///
 /// Nonlinear method factory
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Index N = DYNAMIC>
 std::unique_ptr<NonlinearMethod_Base<NLS, T, N>>
 nonlinearMethodFactory(NonlinearMethod const method_type);
 
 ///
 /// Newton Method class
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Index N = DYNAMIC>
 class NewtonMethod : public NonlinearMethod_Base<NLS, T, N>
 {
 public:
@@ -216,13 +216,13 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Vector<T, N> & x) override;
 };
 
 ///
 /// Trust Region method class.  See Nocedal's algorithm 11.5.
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Index N = DYNAMIC>
 class TrustRegionMethod : public NonlinearMethod_Base<NLS, T, N>
 {
 public:
@@ -232,13 +232,13 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Vector<T, N> & x) override;
 
   void
-  setMaxNumRestrictIterations(Intrepid::Index const mntri)
+  setMaxNumRestrictIterations(Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
-  Intrepid::Index
+  Index
   getMaxNumRestrictIterations()
   {return max_num_restrict_iter_;}
 
@@ -267,7 +267,7 @@ public:
   {return min_reduction_;}
 
 private:
-  Intrepid::Index
+  Index
   max_num_restrict_iter_{4};
 
   T
@@ -287,7 +287,7 @@ private:
 /// This is taken from J.R. Shewchuck "painless" conjugate gradient
 /// manuscript that is all over the place on the net.
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Index N = DYNAMIC>
 class ConjugateGradientMethod : public NonlinearMethod_Base<NLS, T, N>
 {
 public:
@@ -297,13 +297,13 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Vector<T, N> & x) override;
 
   void
   setMaxNumLineSearchIterations(T const n)
   {max_num_line_search_iter_ = n;}
 
-  Intrepid::Index
+  Index
   getMaxNumLineSearchIterations()
   {return max_num_line_search_iter_;}
 
@@ -316,18 +316,18 @@ public:
   {return line_search_tol_;}
 
   void
-  setRestartDirectionsInterval(Intrepid::Index const rdi)
+  setRestartDirectionsInterval(Index const rdi)
   {restart_directions_interval_ = rdi;}
 
-  Intrepid::Index
+  Index
   getRestartDirectionsInterval() const
   {return restart_directions_interval_;}
 
 private:
-  Intrepid::Index
+  Index
   max_num_line_search_iter_{16};
 
-  Intrepid::Index
+  Index
   restart_directions_interval_{32};
 
   T
@@ -337,7 +337,7 @@ private:
 ///
 /// LineSearchRegularized Method class. See Nocedal's 2nd Ed Algorithm 11.4
 ///
-template<typename NLS, typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+template<typename NLS, typename T, Index N = DYNAMIC>
 class LineSearchRegularizedMethod : public NonlinearMethod_Base<NLS, T, N>
 {
 public:
@@ -347,13 +347,13 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Intrepid::Vector<T, N> & x) override;
+  solve(NLS const & nls, Vector<T, N> & x) override;
 
   void
-  setMaxNumRestrictIterations(Intrepid::Index const mntri)
+  setMaxNumRestrictIterations(Index const mntri)
   {max_num_restrict_iter_ = mntri;}
 
-  Intrepid::Index
+  Index
   getMaxNumRestrictIterations()
   {return max_num_restrict_iter_;}
 
@@ -385,7 +385,7 @@ public:
   setMaxNumLineSearchIterations(T const n)
   {max_num_line_search_iter_ = n;}
 
-  Intrepid::Index
+  Index
   getMaxNumLineSearchIterations()
   {return max_num_line_search_iter_;}
 
@@ -398,7 +398,7 @@ public:
   {return line_search_tol_;}
 
 private:
-  Intrepid::Index
+  Index
   max_num_restrict_iter_{4};
 
   T
@@ -410,15 +410,15 @@ private:
   T
   hessian_cond_tol_{1.0e+08};
 
-  Intrepid::Index
+  Index
   max_num_line_search_iter_{16};
 
   T
   line_search_tol_{1.0e-6};
 };
 
-} // namespace LCM
+} // namespace Intrepid
 
-#include "MiniUtils.t.h"
+#include "Intrepid_MiniTensor_Solvers.t.h"
 
-#endif // LCM_MiniUtils_h
+#endif // Intrepid_MiniTensor_Solvers_h
