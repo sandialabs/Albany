@@ -7,8 +7,6 @@
 #if !defined(Intrepid_NonlinearSolver_h)
 #define Intrepid_NonlinearSolver_h
 
-#include <memory>
-
 #include "PHAL_AlbanyTraits.hpp"
 #include "Intrepid_MiniTensor_Solvers.h"
 
