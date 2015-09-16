@@ -149,7 +149,8 @@ public:
     //cs = isConverged() == true ? "\U0001F60A" : "\U0001F623";
 
     os << "\n\n";
-    os << boost::core::demangle(name) << '\n';
+    os << name << '\n';
+//    os << boost::core::demangle(name) << '\n';
     os << "Converged                : " << cs << '\n';
     os << "Maximum Number Iterations: " << getMaxNumIterations() << '\n';
     os << "Number Iterations Taken  : " << getNumIterations() << '\n';
