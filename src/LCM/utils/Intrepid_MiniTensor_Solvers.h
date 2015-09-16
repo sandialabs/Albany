@@ -53,20 +53,16 @@ public:
 
 ///
 /// Utility function to compute residual of a nonlinear system.
-/// The returned residual has the underlying value type of the
-/// type of the evaluation vector.
 ///
 template<typename NLS, typename T, Index N = DYNAMIC>
-Vector<typename Sacado::ValueType<T>::type, N>
+Vector<T, N>
 computeResidual(NLS const & nls, Vector<T, N> const & x);
 
 ///
 /// Utility function to compute Hessian of a nonlinear system.
-/// The returned Hessian has the underlying value type of the
-/// type of the evaluation vector.
 ///
 template<typename NLS, typename T, Index N = DYNAMIC>
-Tensor<typename Sacado::ValueType<T>::type, N>
+Tensor<T, N>
 computeHessian(NLS const & nls, Vector<T, N> const & x);
 
 ///

@@ -100,28 +100,20 @@ computeFADInfo(
 // Residual of nonlinear system
 //
 template<typename NLS, typename T, Index N>
-Vector<typename Sacado::ValueType<T>::type, N>
+Vector<T, N>
 computeResidual(NLS const & nls, Vector<T, N> const & x)
 {
-  using S = typename Sacado::ValueType<T>::type;
+  Vector<T, N>
+  r = nls.compute(x);
 
-  Index const
-  dimension = x.get_dimension();
-
-  Vector<S, N>
-  x_val = Sacado::Value<Vector<T, N>>::eval(x);
-
-  Vector<S, N>
-  r_val = nls.compute(x_val);
-
-  return r_val;
+  return r;
 }
 
 //
 // Hessian of nonlinear system
 //
 template<typename NLS, typename T, Index N>
-Tensor<typename Sacado::ValueType<T>::type, N>
+Tensor<T, N>
 computeHessian(NLS const & nls, Vector<T, N> const & x)
 {
   using S = typename Sacado::ValueType<T>::type;
@@ -143,7 +135,7 @@ computeHessian(NLS const & nls, Vector<T, N> const & x)
   Vector<AD, N>
   r_ad = nls.compute(x_ad);
 
-  Tensor<S, N>
+  Tensor<T, N>
   Hessian(dimension);
 
   for (Index i{0}; i < dimension; ++i) {

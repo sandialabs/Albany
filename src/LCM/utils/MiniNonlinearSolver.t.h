@@ -46,31 +46,14 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
   }
 
   // Get the Hessian evaluated at the solution.
-  using AD = typename Sacado::Fad::DFad<ValueT>;
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln_val(i));
-  }
-
-  Intrepid::Vector<AD, N>
-  resi_ad = nls.compute(soln_ad);
-
   Intrepid::Tensor<ValueT, N>
-  DrDx(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    for (Intrepid::Index j{0}; j < dimension; ++j) {
-      DrDx(i, j) = resi_ad(i).dx(j);
-    }
-  }
+  DrDx = Intrepid::computeHessian(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = nls.compute(soln);
+  resi = Intrepid::computeResidual(nls, soln);
 
+  // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
 
   return;
@@ -99,31 +82,14 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
   }
 
   // Get the Hessian evaluated at the solution.
-  using AD = typename Sacado::Fad::DFad<ValueT>;
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln_val(i));
-  }
-
-  Intrepid::Vector<AD, N>
-  resi_ad = nls.compute(soln_ad);
-
   Intrepid::Tensor<ValueT, N>
-  DrDx(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    for (Intrepid::Index j{0}; j < dimension; ++j) {
-      DrDx(i, j) = resi_ad(i).dx(j);
-    }
-  }
+  DrDx = Intrepid::computeHessian(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = nls.compute(soln);
+  resi = Intrepid::computeResidual(nls, soln);
 
+  // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
 
   return;
@@ -152,31 +118,14 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
   }
 
   // Get the Hessian evaluated at the solution.
-  using AD = typename Sacado::Fad::DFad<ValueT>;
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln_val(i));
-  }
-
-  Intrepid::Vector<AD, N>
-  resi_ad = nls.compute(soln_ad);
-
   Intrepid::Tensor<ValueT, N>
-  DrDx(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    for (Intrepid::Index j{0}; j < dimension; ++j) {
-      DrDx(i, j) = resi_ad(i).dx(j);
-    }
-  }
+  DrDx = Intrepid::computeHessian(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = nls.compute(soln);
+  resi = Intrepid::computeResidual(nls, soln);
 
+  // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
 
   return;
