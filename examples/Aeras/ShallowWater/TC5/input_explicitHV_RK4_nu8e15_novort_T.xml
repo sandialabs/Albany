@@ -4,7 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="false"/>
-      <Parameter name="Use Explicit Hyperviscosity" type="bool" value="false"/>
+      <Parameter name="Use Explicit Hyperviscosity" type="bool" value="true"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="8e15"/>
       <Parameter name="Plot Vorticity" type="bool" value="false"/>
@@ -51,15 +51,15 @@
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="rk4.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="explicit_RK4_nu8e15_novort.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="20"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
     <Parameter  name="Test Values" type="Array(double)" value="{ 
-                    1879.02808908,
-                    5966.61297043,
-                    441329.92294}"/>
+                    1879.02961268,
+                    5966.51346932,
+                    441330.228473 }"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>

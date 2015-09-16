@@ -31,7 +31,7 @@ if (NOT ALBANY_EPETRA)
 #add_test(Aeras_${testName}_HV_Tpetra ${AlbanyT.exe} input_hv_T.xml)
 
 add_test(Aeras_${testName}_explicitHV_BE_nu8e15_vort_Tpetra ${AlbanyT.exe} input_explicitHV_BE_nu8e15_vort_T.xml)
-add_test(Aeras_${testName}_explicitHV_RK4_nu8e15_vort_Tpetra ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
+add_test(Aeras_${testName}_explicitHV_RK4_nu8e15_novort_Tpetra ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
 add_test(Aeras_${testName}_implicitHV_BE_nu8e15_vort_Tpetra ${AlbanyT.exe} input_implicitHV_BE_nu8e15_vort_T.xml)
 
 endif()
