@@ -49,7 +49,8 @@ buildProblem(
   if( haveSidesets )
     constructNeumannEvaluators(meshSpecs[0]);
 
-   setupTopOpt(meshSpecs,stateMgr);
+  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
+    setupTopOpt(meshSpecs,stateMgr);
 
 }
 
@@ -141,6 +142,8 @@ Albany::PoissonsEquationProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidPoissonsEquationProblemParams");
 
   validPL->set<double>("Isotropic Modulus", 0.0);
+  validPL->set<int>("Add Cell Problem Forcing", 0);
+  validPL->sublist("Homogenized Constants", false, "");
 
   Teuchos::RCP<ATO::Topology> emptyTopo;
   emptyTopo = Teuchos::null;

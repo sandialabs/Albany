@@ -8,6 +8,10 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSprT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSprT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSprT_postParma.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputSprT_postParma.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSprT_postZoltan.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputSprT_postZoltan.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingSerialT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingSerialT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingT.xml
@@ -27,6 +31,8 @@ set(testName "SCOREC_${testRoot}")
 IF(ENABLE_MESHMODEL)
   IF(ALBANY_IFPACK2)
     add_test(NAME ${testName}_SPR_Tpetra COMMAND ${AlbanyT.exe} inputSprT.xml)
+    add_test(NAME ${testName}_SPR_Tpetra_postParma COMMAND ${AlbanyT.exe} inputSprT_postParma.xml)
+    add_test(NAME ${testName}_SPR_Tpetra_postZoltan COMMAND ${AlbanyT.exe} inputSprT_postZoltan.xml)
     add_test(NAME ${testName}_Necking_SERIAL_Tpetra COMMAND ${SerialAlbanyT.exe} inputNeckingSerialT.xml)
     add_test(NAME ${testName}_Necking_Tpetra COMMAND ${AlbanyT.exe} inputNeckingT.xml)
 #    add_test(NAME ${testName}_Shear_Tpetra COMMAND ${AlbanyT.exe} inputShearT.xml)

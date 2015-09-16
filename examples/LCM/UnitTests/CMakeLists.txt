@@ -2,10 +2,10 @@
 IF(NOT ALBANY_PARALLEL_ONLY)
 
 # add the individual unit tests
-IF(ALBANY_LCM)
+IF(ALBANY_LCM AND LCM_TEST_EXES AND ALBANY_BGL)
   add_test(utLocalNonlinearSolver ${Albany_BINARY_DIR}/src/LCM/utLocalNonlinearSolver)
-#  add_test(utLocalization ${Albany_BINARY_DIR}/src/LCM/utLocalization)
   add_test(utSurfaceElement ${Albany_BINARY_DIR}/src/LCM/utSurfaceElement)
+  add_test(utHeliumODEs ${Albany_BINARY_DIR}/src/LCM/utHeliumODEs)
   IF(ALBANY_LAME)
     add_test(utLameStress_elastic ${Albany_BINARY_DIR}/src/LCM/utLameStress_elastic)
   ENDIF() 

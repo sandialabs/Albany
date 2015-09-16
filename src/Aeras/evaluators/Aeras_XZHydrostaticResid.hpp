@@ -61,6 +61,19 @@ private:
   const int numQPs;
   const int numDims;
   const int numLevels;
+
+//Kokkos
+public:
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+ struct Residual_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, Residual_Tag> Atmosphere_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const Residual_Tag& tag, const int& cell) const;
+
+#endif
+
 };
 }
 

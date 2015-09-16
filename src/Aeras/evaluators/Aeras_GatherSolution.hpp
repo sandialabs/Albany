@@ -48,11 +48,20 @@ public:
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
   
 protected:
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<ScalarT> > val_dot;
+#else
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<ScalarT> > val_dot;
 
-//  std::vector< PHX::MDField<ScalarT> > val;
-//  std::vector< PHX::MDField<ScalarT> > val_dot;
-  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val;
-  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_dot;
+  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_kokkosvec;
+  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_dot_kokkosvec;
+
+  typename Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device >::t_dev d_val; //=val_kokkosvec.template view<executionSpace>();
+  typename Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device >::t_dev d_val_dot; //=val_dot_kokkosvec.template view<executionSpace>();
+#endif
   const int numNodes;
   const int numDims;
   const int numLevels;
@@ -64,7 +73,7 @@ protected:
   int numTracerVar;
 };
 
-//template<typename EvalT, typename Traits> class GatherSolution;
+//tmeemplate<typename EvalT, typename Traits> class GatherSolution;
 
 // **************************************************************
 // GENERIC: SG and MP specialization not implemented   
@@ -103,6 +112,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (const int &cell) const;
 #endif
+
 };
 
 // **************************************************************
@@ -146,6 +156,7 @@ public:
   void gather_solution_transientTerms(const int &cell, const int &node, const int &neq, const int &num_dof, const int &firstunk) const;
 
 #endif
+
 };
 
 
@@ -176,7 +187,7 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 };
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE 
 // **************************************************************
 // Multi-point Residual 
 // **************************************************************
@@ -204,7 +215,7 @@ public:
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
 };
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

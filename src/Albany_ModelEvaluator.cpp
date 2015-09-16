@@ -34,6 +34,18 @@ Albany::ModelEvaluator::ModelEvaluator(
 {
   Teuchos::RCP<Teuchos::FancyOStream> out =
     Teuchos::VerboseObjectBase::getDefaultOStream();
+//IKT, 5/18/15:
+//Test for Spectral elements requested, which do not work now with Albany executable.
+#ifdef ALBANY_AERAS 
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    std::string& method = discParams.get("Method", "STK1D");
+    if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras"){
+       TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Albany executable does not support discretization method " << method
+                               << "!  Please re-run with AlbanyT executable." << std::endl);
+    }
+#endif
 
   // Parameters (e.g., for sensitivities, SG expansions, ...)
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
@@ -107,29 +119,48 @@ Albany::ModelEvaluator::ModelEvaluator(
   distParamLib = app->getDistParamLib();
   Teuchos::ParameterList& distParameterParams =
     problemParams.sublist("Distributed Parameters");
+  Teuchos::ParameterList* param_list;
   num_dist_param_vecs =
     distParameterParams.get("Number of Parameter Vectors", 0);
   dist_param_names.resize(num_dist_param_vecs);
   *out << "Number of distributed parameters vectors  = " << num_dist_param_vecs
        << std::endl;
+  const std::string* p_name_ptr;
+  const std::string emptyString("");
   for (int i=0; i<num_dist_param_vecs; i++) {
-    std::string name =
-      distParameterParams.get<std::string>(Albany::strint("Parameter",i));
+    const std::string& p_sublist_name = Albany::strint("Distributed Parameter",i);
+    param_list = distParameterParams.isSublist(p_sublist_name) ? &distParameterParams.sublist(p_sublist_name) : NULL;
+
+    p_name_ptr = &distParameterParams.get<std::string>(Albany::strint("Parameter",i),emptyString);
+
+    if(param_list != NULL) {
+    const std::string& name_from_list = param_list->get<std::string>("Name",emptyString);
+
+    p_name_ptr = (*p_name_ptr != emptyString) ? p_name_ptr : &name_from_list;
+
     TEUCHOS_TEST_FOR_EXCEPTION(
-      !distParamLib->has(name),
+        (*p_name_ptr != name_from_list) && (name_from_list != emptyString),
+        Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error!  In Albany::ModelEvaluator constructor:  Provided two different names for same parameter in Distributed Parameters list: \"" <<
+          *p_name_ptr << "\" and \"" << name_from_list << "\"" << std::endl);
+    }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !distParamLib->has(*p_name_ptr),
       Teuchos::Exceptions::InvalidParameter,
       std::endl << "Error!  In Albany::ModelEvaluator constructor:  " <<
-      "Invalid distributed parameter name " << name << std::endl);
-    dist_param_names[i] = name;
+      "Invalid distributed parameter name \"" << *p_name_ptr << "\""<<std::endl);
+
+    dist_param_names[i] = *p_name_ptr;
     //set parameters bonuds
-    std::string paramList_name = Albany::strint("Distributed Parameter",i);
-    if(distParameterParams.isSublist(paramList_name)) {
-      Teuchos::RCP<const DistParam> distParam = distParamLib->get(name);
-      Teuchos::ParameterList& distParameteri = distParameterParams.sublist(paramList_name);
-      if(distParameteri.isParameter("Lower Bound") && (distParam->lower_bounds_vector() != Teuchos::null))
-        distParam->lower_bounds_vector()->putScalar(distParameteri.get<double>("Lower Bound", std::numeric_limits<double>::min()));
-      if(distParameteri.isParameter("Upper Bound") && (distParam->upper_bounds_vector() != Teuchos::null))
-        distParam->upper_bounds_vector()->putScalar(distParameteri.get<double>("Upper Bound", std::numeric_limits<double>::max()));
+    if(param_list) {
+      Teuchos::RCP<const DistParam> distParam = distParamLib->get(*p_name_ptr);
+      if(param_list->isParameter("Lower Bound") && (distParam->lower_bounds_vector() != Teuchos::null))
+        distParam->lower_bounds_vector()->putScalar(param_list->get<double>("Lower Bound", std::numeric_limits<double>::min()));
+      if(param_list->isParameter("Upper Bound") && (distParam->upper_bounds_vector() != Teuchos::null))
+        distParam->upper_bounds_vector()->putScalar(param_list->get<double>("Upper Bound", std::numeric_limits<double>::max()));
+      if(param_list->isParameter("Initial Uniform Value") && (distParam->vector() != Teuchos::null))
+        distParam->vector()->putScalar(param_list->get<double>("Uniform Value"));
     }
   }
 
@@ -409,7 +440,7 @@ Albany::ModelEvaluator::createInArgs() const
   inArgs.setSupports(IN_ARG_beta,true);
   inArgs.set_Np(num_param_vecs+num_dist_param_vecs);
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   inArgs.setSupports(IN_ARG_x_sg,true);
   inArgs.setSupports(IN_ARG_x_dot_sg,true);
   inArgs.setSupports(IN_ARG_x_dotdot_sg,true);
@@ -418,6 +449,8 @@ Albany::ModelEvaluator::createInArgs() const
   inArgs.setSupports(IN_ARG_sg_basis,true);
   inArgs.setSupports(IN_ARG_sg_quadrature,true);
   inArgs.setSupports(IN_ARG_sg_expansion,true);
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   inArgs.setSupports(IN_ARG_x_mp,true);
   inArgs.setSupports(IN_ARG_x_dot_mp,true);
@@ -485,7 +518,7 @@ Albany::ModelEvaluator::createOutArgs() const
   }
 
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   // Stochastic
   outArgs.setSupports(OUT_ARG_f_sg,true);
   outArgs.setSupports(OUT_ARG_W_sg,true);
@@ -514,6 +547,8 @@ Albany::ModelEvaluator::createOutArgs() const
       outArgs.setSupports(OUT_ARG_DgDp_sg, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
   }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   // Multi-point
   outArgs.setSupports(OUT_ARG_f_mp,true);
@@ -834,7 +869,7 @@ f_out->Print(std::cout);
   //
   // Stochastic Galerkin
   //
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   InArgs::sg_const_vector_t x_sg = inArgs.get_x_sg();
   if (x_sg != Teuchos::null) {
     app->init_sg(inArgs.get_sg_basis(),
@@ -970,6 +1005,8 @@ f_out->Print(std::cout);
                                 *g_sg);
     }
   }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
   //
   // Multi-point evaluation
@@ -1102,5 +1139,5 @@ f_out->Print(std::cout);
                                 *g_mp);
     }
   }
-#endif //ALBANY_SG_MP
+#endif
 }

@@ -17,13 +17,12 @@
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Piro_PerformSolve.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
-#include <Ionit_Initializer.h>
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #ifdef CISM_USE_EPETRA
 #include "Thyra_EpetraThyraWrappers.hpp"
 #endif
 //#include "Teuchos_TestForException.hpp"
-
+#include "Kokkos_Core.hpp"
 
 #ifdef WRITE_TO_MATRIX_MARKET
 #ifdef CISM_USE_EPETRA
@@ -82,7 +81,9 @@ int * global_node_id_owned_map_Ptr;
 int * global_element_conn_active_Ptr; 
 int * global_element_id_active_owned_map_Ptr; 
 int * global_basal_face_conn_active_Ptr; 
+int * global_top_face_conn_active_Ptr; 
 int * global_basal_face_id_active_owned_map_Ptr; 
+int * global_top_face_id_active_owned_map_Ptr; 
 int * global_west_face_conn_active_Ptr; 
 int * global_west_face_id_active_owned_map_Ptr; 
 int * global_east_face_conn_active_Ptr; 
@@ -240,7 +241,9 @@ extern "C" void felix_driver_();
 
 //What is exec_mode??
 void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const char * input_fname)
-{ 
+{
+   if (first_time_step) 
+     Kokkos::initialize();  
     // ---------------------------------------------
     //get communicator / communicator info from CISM
     //TO DO: ifdef to check if CISM and Albany have MPI?  
@@ -361,7 +364,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     global_element_conn_active_Ptr = ftg_ptr -> getInt4Var("global_element_conn_active","connectivity");  
     global_element_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_element_id_active_owned_map","connectivity");  
     global_basal_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_basal_face_conn_active","connectivity");  
+    global_top_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_top_face_conn_active","connectivity");  
     global_basal_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_basal_face_id_active_owned_map","connectivity");  
+    global_top_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_top_face_id_active_owned_map","connectivity");  
     global_west_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_west_face_conn_active","connectivity");  
     global_west_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_west_face_id_active_owned_map","connectivity");  
     global_east_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_east_face_conn_active","connectivity");  
@@ -421,7 +426,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //std::cout << "DEBUG: global_node_id_owned_map_Ptr: " << global_node_id_owned_map_Ptr << std::endl; 
     //std::cout << "DEBUG: global_element_conn_active_Ptr: " << global_element_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_basal_face_conn_active_Ptr: " << global_basal_face_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_top_face_conn_active_Ptr: " << global_top_face_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr: " << global_basal_face_id_active_owned_map_Ptr << std::endl;
+    //std::cout << "DEBUG: global_top_face_id_active_owned_map_Ptr: " << global_top_face_id_active_owned_map_Ptr << std::endl;
     //std::cout << "DEBUG: global_west_face_conn_active_Ptr: " << global_west_face_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_west_face_id_active_owned_map_Ptr: " << global_west_face_id_active_owned_map_Ptr << std::endl;
     //std::cout << "DEBUG: global_east_face_conn_active_Ptr: " << global_east_face_conn_active_Ptr << std::endl; 
@@ -460,9 +467,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
  
    //IK, 11/20/14: pass gravity, ice density, and water density values to Albany.  These are needed 
    //in the PHAL_Neumann and FELIX_StokesFOBodyForce evaluators.  
-    parameterList->sublist("Problem").sublist("Physical Parameters").set("Gravity", gravity);
-    parameterList->sublist("Problem").sublist("Physical Parameters").set("Ice Density", rho_ice);
-    parameterList->sublist("Problem").sublist("Physical Parameters").set("Water Density", rho_seawater);
+    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Gravity", gravity);
+    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Ice Density", rho_ice);
+    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Water Density", rho_seawater);
  
     //IK, 11/17/14: if ds/dx, ds/dy are passed from CISM, use these in body force; 
     //otherwise calculate ds/dx from s by interpolation within Albany 
@@ -479,7 +486,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                                                            global_element_id_active_owned_map_Ptr, 
                                                            global_element_conn_active_Ptr, 
                                                            global_basal_face_id_active_owned_map_Ptr, 
+                                                           global_top_face_id_active_owned_map_Ptr, 
                                                            global_basal_face_conn_active_Ptr,
+                                                           global_top_face_conn_active_Ptr,
                                                            global_west_face_id_active_owned_map_Ptr, 
                                                            global_west_face_conn_active_Ptr,
                                                            global_east_face_id_active_owned_map_Ptr, 
@@ -955,6 +964,15 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
 
     first_time_step = false;
+    meshStruct = Teuchos::null;
+    albanyApp = Teuchos::null;
+    solver = Teuchos::null;
+#ifdef CISM_USE_EPETRA
+    mpiComm = Teuchos::null; 
+    reducedMpiComm = Teuchos::null;
+#endif
+    if (cur_time_yr == final_time) 
+      Kokkos::finalize(); 
 }
   
 
@@ -964,6 +982,13 @@ void felix_driver_finalize(int ftg_obj_index)
 {
   if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
     std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
+    mpiCommT = Teuchos::null; 
+    reducedMpiCommT = Teuchos::null;
+    parameterList = Teuchos::null;
+    discParams = Teuchos::null;
+    slvrfctry = Teuchos::null;
+    node_map = Teuchos::null; 
+    
     //Should something happen here?? 
     std::cout << "done cleaning up!" << std::endl << std::endl; 
   }

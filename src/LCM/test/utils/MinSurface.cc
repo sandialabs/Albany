@@ -25,7 +25,7 @@ int main(int ac, char* av[])
 {
 
   typedef adjacency_list<listS, vecS, undirectedS, no_property,
-      property<edge_weight_t, int> > graph_t;
+      property<edge_weight_t, int>> graph_t;
   typedef graph_traits<graph_t>::vertex_descriptor vertex_descriptor;
   typedef stk::mesh::Entity Entity;
   typedef std::pair<int, int> Edge;

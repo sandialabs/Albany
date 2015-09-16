@@ -48,7 +48,7 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField;
 
   // The LAMENT material model
-  Teuchos::RCP<lament::Material<ScalarT> > lamentMaterialModel;
+  Teuchos::RCP<lament::Material<ScalarT>> lamentMaterialModel;
 
   // The LAMENT material model name
   std::string lamentMaterialModelName;
@@ -57,7 +57,7 @@ protected:
   std::vector<std::string> lamentMaterialModelStateVariableNames;
 
   // Vector of the fields corresponding to the LAMENT material model state variables
-  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > lamentMaterialModelStateVariableFields;
+  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint>> lamentMaterialModelStateVariableFields;
 };
 
 }

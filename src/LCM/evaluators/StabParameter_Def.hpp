@@ -20,14 +20,14 @@ template<typename EvalT, typename Traits>
 StabParameter<EvalT, Traits>::
 StabParameter(Teuchos::ParameterList& p) :
    stabParameter            (p.get<std::string>("Stabilization Parameter Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
 {
   Teuchos::ParameterList* elmd_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
 
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-  p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
+  p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
 
@@ -37,7 +37,7 @@ StabParameter(Teuchos::ParameterList& p) :
   numDims = dims[3];
 
   Teuchos::RCP<ParamLib> paramLib = 
-    p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+    p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   std::string type = elmd_list->get("Stabilization Parameter Type", "Constant");
   if (type == "Constant") {
@@ -64,14 +64,14 @@ StabParameter(Teuchos::ParameterList& p) :
 	//  is_constant = false;
 
  //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
- //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+ //     p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
  //   PHX::MDField<ScalarT,Cell,QuadPoint>
  //     tmp(p.get<std::string>("QP Pore Pressure Name"), scalar_dl);
  //   porePressure = tmp;
   //  this->addDependentField(porePressure);
 
 	  Teuchos::RCP<PHX::DataLayout> vector_dl =
-	        p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+	        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
 	  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>
 	        ts(p.get<std::string>("Gradient QP Variable Name"), vector_dl);
 	       TGrad = ts;
@@ -84,14 +84,14 @@ StabParameter(Teuchos::ParameterList& p) :
 	//  is_constant = false;
 
    //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
-   //     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+   //     p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
    //   PHX::MDField<ScalarT,Cell,QuadPoint>
    //     tmp(p.get<std::string>("QP Pore Pressure Name"), scalar_dl);
    //   porePressure = tmp;
     //  this->addDependentField(porePressure);
 
   	  Teuchos::RCP<PHX::DataLayout> node_vector_dl =
-  	        p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
+  	        p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
   	  PHX::MDField<MeshScalarT,Cell,Node, QuadPoint,Dim>
   	        ts(p.get<std::string>("Gradient BF Name"), node_vector_dl);
   	       GradBF = ts;
@@ -103,7 +103,7 @@ StabParameter(Teuchos::ParameterList& p) :
   if ( p.isType<std::string>("Diffusive Parameter Name") ) {
 	  is_constant = false;
        Teuchos::RCP<PHX::DataLayout> scalar_dl =
-         p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
+         p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
        PHX::MDField<ScalarT,Cell,QuadPoint>
          btp(p.get<std::string>("Diffusive Parameter Name"), scalar_dl);
        diffusionParameter = btp;

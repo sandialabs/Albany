@@ -1,0 +1,79 @@
+#     {wsub = 20}
+#     {tsub = 5}
+#     {tox = 3}
+#     {whole = 14}
+#     {tgate = 1}
+#     {tgateox = 1}
+
+# Silicon substrate
+brick x {wsub} y {tsub} z {wsub}
+move volume 1 y {-0.5*tsub}
+
+# SiO2
+brick x {wsub} y {tox} z {wsub}
+move volume 2 y {0.5*tox}
+
+# Gate - then subtract from Si02 region
+brick x {wsub} y {tgate} z {wsub}
+volume 3 copy move y {0.5*tgate + tgateox}
+subtract volume 4 from volume 2
+move volume 3 y {0.5*tgate + tgateox}
+
+# Hole/Plug in gate - copy, then subtract, then move original into place
+brick x {whole} y {tgate} z {whole}
+volume 7 copy move y {0.5*tgate + tgateox}
+
+subtract volume 8 from volume 3
+move volume 7 y {0.5*tgate + tgateox}
+
+# unite plug and Si02 region
+#split body 2
+#unite volume 5 6 7
+
+# merge all overlapped curves
+imprint all
+merge all
+
+# define nodesets for BCs
+nodeset 1 surface in volume 3
+nodeset 1 name "gate"
+color nodeset 1 red
+
+nodeset 2 surface 3
+nodeset 2 name "substrate"
+color nodeset 1 blue
+
+nodeset 3 surface 11
+nodeset 3 name "topgate"
+color nodeset 1 green
+
+sideset 1 surface 5
+sideset 1 name "topofsilicon"
+
+# define blocks (each block represents one material)
+block 1 volume 1
+block 1 name "silicon.insulator"
+
+block 2 volume 5 6 7
+block 2 name "sio2"
+
+block 3 volume 3
+block 3 name "polysilicon"
+
+# set mesh size
+volume 1 3 5 6 7 size 1
+volume all scheme auto
+
+#mesh volumes
+set default element hex
+mesh volume all
+
+# refine mesh in Silicon near the Silicon/SiO2 interface
+#refine surface 37 numsplit 1 bias 1.2 depth 3 smooth
+
+# merge all overlapped elements
+merge all
+
+# dimension size is assumed in [um]
+# output the Exodus II mesh
+export mesh "mosdot_3D_withSS.exo" dimension 3 block all overwrite

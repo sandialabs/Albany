@@ -195,7 +195,7 @@ namespace LCM {
     ///
     /// Map of field names
     ///
-    Teuchos::RCP<std::map<std::string, std::string> > field_name_map_;
+    Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
   };
 }
 

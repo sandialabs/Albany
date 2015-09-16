@@ -22,8 +22,8 @@ namespace LCM {
   SurfaceL2ProjectionResidual(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")),
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
     surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -128,7 +128,7 @@ namespace LCM {
 
         	  projection_residual_(cell, node) += refValues(node,pt)*
                 	       	                            (projected_tau_(cell,pt) -  tau)*
-                                                               refArea(cell,pt);
+                                                               refArea(cell,pt)*thickness;
 
         	 }
         	 projection_residual_(cell, topNode) =  projection_residual_(cell, node);

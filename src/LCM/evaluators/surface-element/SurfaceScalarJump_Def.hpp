@@ -14,8 +14,8 @@ template<typename EvalT, typename Traits>
 SurfaceScalarJump<EvalT, Traits>::
 SurfaceScalarJump(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  cubature      (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis"))
+  cubature      (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")), 
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis"))
 //  scalar        (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
 //  scalarJump    (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
  // scalarAverage (p.get<std::string>("Scalar Average Name"),dl->qp_scalar)

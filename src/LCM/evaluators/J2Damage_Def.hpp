@@ -17,39 +17,39 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   J2Damage<EvalT, Traits>::J2Damage(const Teuchos::ParameterList& p) :
       defgrad(p.get<std::string>("DefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), J(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")), J(
           p.get<std::string>("DetDefGrad Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), bulkModulus(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), bulkModulus(
           p.get<std::string>("Bulk Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), shearModulus(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), shearModulus(
           p.get<std::string>("Shear Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), yieldStrength(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), yieldStrength(
           p.get<std::string>("Yield Strength Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), hardeningModulus(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), hardeningModulus(
           p.get<std::string>("Hardening Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satMod(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), satMod(
           p.get<std::string>("Saturation Modulus Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), satExp(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), satExp(
           p.get<std::string>("Saturation Exponent Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), damage(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), damage(
           p.get<std::string>("Damage Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), stress(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), stress(
           p.get<std::string>("Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), dp(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")), dp(
           p.get<std::string>("DP Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), seff(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), seff(
           p.get<std::string>("Effective Stress Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), energy(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), energy(
           p.get<std::string>("Energy Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")), Fp(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout")), Fp(
           p.get<std::string>("Fp Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")), eqps(
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout")), eqps(
           p.get<std::string>("Eqps Name"),
-          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
+          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"))
   {
     // Pull out numQPs and numDims from a Layout
     Teuchos::RCP<PHX::DataLayout> tensor_dl = p.get<
-        Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+        Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     tensor_dl->dimensions(dims);
     numQPs = dims[1];

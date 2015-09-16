@@ -14,8 +14,8 @@ TimeDepBC_Base<EvalT, Traits>::TimeDepBC_Base(Teuchos::ParameterList& p)
   : offset(p.get<int>("Equation Offset")),
     PHAL::Dirichlet<EvalT, Traits>(p)
 {
-  timeValues = p.get<Teuchos::Array<RealType> >("Time Values").toVector();
-  BCValues = p.get<Teuchos::Array<RealType> >("BC Values").toVector();
+  timeValues = p.get<Teuchos::Array<RealType>>("Time Values").toVector();
+  BCValues = p.get<Teuchos::Array<RealType>>("BC Values").toVector();
 
   TEUCHOS_TEST_FOR_EXCEPTION( !(timeValues.size() == BCValues.size()),
                               Teuchos::Exceptions::InvalidParameter,

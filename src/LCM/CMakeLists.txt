@@ -25,9 +25,11 @@ SET(HEADERS )
 # LCM evaluators
 file (GLOB evaluator-sources
   "${LCM_DIR}/evaluators/*.cpp"
+  "${LCM_DIR}/parallel_evaluators/*.cpp"
 )
 file (GLOB evaluator-headers
   "${LCM_DIR}/evaluators/*.hpp"
+  "${LCM_DIR}/parallel_evaluators/*.hpp"
 )
 
 #LCM model evaluators 
@@ -57,11 +59,14 @@ file (GLOB bc-headers
 #LCM models
 file (GLOB models-sources
   "${LCM_DIR}/models/*.cpp"
+  "${LCM_DIR}/parallel_models/*.cpp"
 )
 file (GLOB models-headers
   "${LCM_DIR}/models/*.hpp"
+  "${LCM_DIR}/parallel_models/*.hpp"
 )
 
+IF(ALBANY_HAVE_STK)
 #LCM utils
 file (GLOB utils-sources
   "${LCM_DIR}/utils/*.cpp"
@@ -73,12 +78,25 @@ file (GLOB utils-headers
 )
 
 #LCM utils/topology
-file (GLOB topology-sources
-  "${LCM_DIR}/utils/topology/*.cc"
-)
-file (GLOB topology-headers
-  "${LCM_DIR}/utils/topology/*.h"
-)
+  IF(ALBANY_BGL)
+  file (GLOB topology-sources
+    "${LCM_DIR}/utils/topology/*.cc"
+  )
+  file (GLOB topology-headers
+    "${LCM_DIR}/utils/topology/*.h"
+  )
+  ENDIF(ALBANY_BGL)
+
+ELSE()
+  set(utils-headers ${utils-headers}
+    ${LCM_DIR}/utils/LCM_Utils.h
+    ${LCM_DIR}/utils/Projection.hpp
+  )
+  set(utils-sources ${utils-sources}
+    ${LCM_DIR}/utils/LCM_Utils.cc
+    ${LCM_DIR}/utils/Projection.cpp
+  )
+ENDIF()
 
 set(SOURCES ${SOURCES}
   ${problem-sources}
@@ -106,12 +124,15 @@ IF(NOT ALBANY_PERIDIGM)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmForce.cpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmPartialStress.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/AlbanyPeridigmOBCFunctional.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/problems/PeridigmProblem.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/utils/PeridigmManager.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce_Def.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress_Def.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/AlbanyPeridigmOBCFunctional_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/AlbanyPeridigmOBCFunctional.hpp)
 ENDIF()
 
 IF(NOT ALBANY_CONTACT)
@@ -121,6 +142,21 @@ IF(NOT ALBANY_CONTACT)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactConstraints.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints_Def.hpp)
+ENDIF()
+
+IF(NOT ALBANY_HAVE_STK)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/Schwarz_BoundaryJacobian.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/Schwarz_BoundaryJacobian.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/Schwarz_CoupledJacobian.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/Schwarz_CoupledJacobian.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/SchwarzMultiscale.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/SchwarzMultiscale.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/SchwarzBC.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp)
 ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
@@ -169,7 +205,7 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
-  ${ALBANY_FMDB_INCLUDE_DIRS}
+  ${ALBANY_PUMI_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
 
@@ -195,7 +231,7 @@ IF ( INSTALL_ALBANY )
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 ENDIF()
 
-IF (LCM_TEST_EXES)
+IF (LCM_TEST_EXES AND ALBANY_BGL) 
   add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
   add_executable(MeshComponents test/utils/MeshComponents.cc)
   add_executable(NodeUpdate test/utils/NodeUpdate.cc)
@@ -216,9 +252,21 @@ IF (LCM_TEST_EXES)
     )
 
   add_executable(
+    utMiniSolvers
+    test/unit_tests/StandardUnitTestMain.cpp
+    test/unit_tests/utMiniSolvers.cc
+    )
+
+  add_executable(
     utSurfaceElement
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utSurfaceElement.cpp
+    )
+
+  add_executable(
+    utHeliumODEs
+    test/unit_tests/StandardUnitTestMain.cpp
+    test/unit_tests/utHeliumODEs.cpp
     )
 ENDIF()
 
@@ -316,22 +364,22 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
   ENDIF()
 
   IF(ALBANY_STK_REBALANCE)
-    target_link_libraries(utLameStress_elastic albanySTKRebalance albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanySTKRebalance albanyLib ${LAME_LIB} ${LAMENT_LIB} ${MATH_TOOLKIT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ELSE ()
-    target_link_libraries(utLameStress_elastic albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanyLib ${LAME_LIB} ${LAMENT_LIB} ${MATH_TOOLKIT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ENDIF ()
 ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS albanyLib albanyAdapt fmdb albanySTK LCM albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt pumi albanySTK LCM albanyLib)
   ELSE()
     SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK LCM albanyLib)
   ENDIF()
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib fmdb albanySTK albanyLib)
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib pumi albanySTK albanyLib)
   ELSE()
     SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanySTK albanyLib )
   ENDIF()
@@ -342,7 +390,7 @@ IF(ALBANY_STK_REBALANCE)
 endif()
    
 #Linking tests
-IF (LCM_TEST_EXES)
+IF (LCM_TEST_EXES AND ALBANY_BGL)
   target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
@@ -356,5 +404,7 @@ IF (LCM_TEST_EXES)
   target_link_libraries(Test2_Subdivision ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(TopologyBase ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_link_libraries(utMiniSolvers ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_link_libraries(utHeliumODEs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
 ENDIF()

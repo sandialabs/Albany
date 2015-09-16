@@ -67,7 +67,7 @@ namespace Albany {
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -96,7 +96,7 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdotT,
 		     Tpetra_MultiVector* dg_dpT);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative dg/dp, in MultiVector form
     virtual void
     evaluateDistParamDeriv(
@@ -112,7 +112,7 @@ namespace Albany {
     //! \name Stochastic Galerkin evaluation functions
     //@{
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     //! Intialize stochastic Galerkin method
     virtual void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -168,14 +168,14 @@ namespace Albany {
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
     //@}
 
     //! \name Multi-point evaluation functions
     //@{
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE
     //! Evaluate multi-point response functions
     virtual void evaluateMPResponse(
       const double curr_time,
@@ -224,7 +224,7 @@ namespace Albany {
       Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
     //@}
 

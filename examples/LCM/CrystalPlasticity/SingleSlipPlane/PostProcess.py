@@ -13,9 +13,18 @@ import sys
 sys.path.append('/ascldap/users/djlittl/Albany_TPL/trilinos/trilinos-votd/GCC_4.7.2_OPT/bin')
 import exodus
 
+import string
+
 if __name__ == "__main__":
 
-    inFile = exodus.exodus('SingleSlipPlane.exo', mode='r')
+    if len(sys.argv) != 2:
+        print "\nUsage:  PostProcess.py <exodus_file_name>\n"
+        sys.exit(1)
+
+    inFileName = sys.argv[1]
+    inFile = exodus.exodus(inFileName, mode='r')
+
+    outFileLabel = string.splitfields(inFileName, '.')[0] + "_"
 
     # Print database parameters from inFile
     print " "
@@ -86,17 +95,19 @@ if __name__ == "__main__":
 
     print
 
-    block1DataFile = open('block_1_force_displacement.txt', 'w')
+    outFileName = outFileLabel + 'block_1_force_displacement.txt'
+    block1DataFile = open(outFileName, 'w')
     for timeStep in range(numTimeSteps):
         block1DataFile.write(str(block_1_displacement[timeStep]) + "  " + str(block_1_force[timeStep]) + "\n")
     block1DataFile.close()
-    print "Force-displacement data for block_1 written to block_1_force_displacement.txt"
-    
-    block2DataFile = open('block_2_force_displacement.txt', 'w')
+    print "Force-displacement data for block_1 written to", outFileName
+
+    outFileName = outFileLabel + 'block_2_force_displacement.txt'    
+    block2DataFile = open(outFileName, 'w')
     for timeStep in range(numTimeSteps):
         block2DataFile.write(str(block_2_displacement[timeStep]) + "  " + str(block_2_force[timeStep]) + "\n")
     block2DataFile.close()
-    print "Force-displacement data for block_2 written to block_2_force_displacement.txt"
+    print "Force-displacement data for block_2 written to", outFileName
 
     print
     

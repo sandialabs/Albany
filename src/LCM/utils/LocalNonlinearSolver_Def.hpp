@@ -347,7 +347,7 @@ computeFadInfo(
 // -----------------------------------------------------------------------------
 // Stochastic Galerkin Residual
 // -----------------------------------------------------------------------------
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 LocalNonlinearSolver<PHAL::AlbanyTraits::SGResidual, Traits>::LocalNonlinearSolver():
 LocalNonlinearSolver_Base<PHAL::AlbanyTraits::SGResidual, Traits>()
@@ -416,6 +416,8 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Stochastic Galerkin types yet\n");
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // -----------------------------------------------------------------------------
 // Multi-Point Residual
@@ -488,7 +490,7 @@ computeFadInfo(std::vector<ScalarT> & A, std::vector<ScalarT> & X, std::vector<S
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"LocalNonlinearSolver has not been implemented for Multi-Point types yet\n");
 }
-#endif //ALBANY_SG_MP
+#endif
 // -----------------------------------------------------------------------------
 }
 

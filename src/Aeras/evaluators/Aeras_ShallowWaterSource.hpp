@@ -78,11 +78,11 @@ private:
           
           
   KOKKOS_INLINE_FUNCTION
-  ScalarT dbubf(const ScalarT lat) const;
+  ScalarT dbubf(const ScalarT &lat) const;
   KOKKOS_INLINE_FUNCTION
-  ScalarT bubfnc(const ScalarT lat) const;
+  ScalarT bubfnc(const ScalarT &lat) const;
   KOKKOS_INLINE_FUNCTION
-  ScalarT d2bubf(const ScalarT lat) const;
+  ScalarT d2bubf(const ScalarT &lat) const;
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 

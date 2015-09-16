@@ -76,7 +76,7 @@ namespace LameUtils {
   //! Instantiate a lament::MaterialModel<ADType> given the model name and a set of material parameters.
   template <typename ScalarT>
   inline
-  Teuchos::RCP<lament::Material<ScalarT> > constructLamentMaterialModel(const std::string& lameMaterialModelName,
+  Teuchos::RCP<lament::Material<ScalarT>> constructLamentMaterialModel(const std::string& lameMaterialModelName,
 									const Teuchos::ParameterList& lameMaterialParameters){
     
     // Strings should be all upper case with spaces replaced with underscores
@@ -88,7 +88,7 @@ namespace LameUtils {
     LameMatProps props;
     parameterListToMatProps(lameMaterialParameters, props);
 
-    Teuchos::RCP<lament::Material<ScalarT> > materialModel;
+    Teuchos::RCP<lament::Material<ScalarT>> materialModel;
 
     if(materialModelName == "ELASTIC_NEW")
       materialModel = Teuchos::rcp(new lament::ElasticNew<ScalarT>(props));

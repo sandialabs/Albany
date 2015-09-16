@@ -24,7 +24,7 @@ namespace PHAL {
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -68,7 +68,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 };
-#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -123,6 +123,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 };
 #endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+*/
 }
 
 #endif

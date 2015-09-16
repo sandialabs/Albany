@@ -29,11 +29,11 @@ class SurfaceVectorResidual: public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  SurfaceVectorResidual(Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  SurfaceVectorResidual(Teuchos::ParameterList & p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm);
+      PHX::FieldManager<Traits> & vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -43,61 +43,97 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  //! Length scale parameter for localization zone
-  ScalarT thickness;
-  //! Numerical integration rule
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-  //! Finite element basis for the midplane
+  /// Length scale parameter for localization zone
+  ScalarT
+  thickness_;
+
+  /// Numerical integration rule
+  Teuchos::RCP<Intrepid::Cubature<RealType>>
+  cubature_;
+
+  /// Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType,
-    Intrepid::FieldContainer<RealType> > > intrepidBasis;
-  //! First PK Stress
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
-  //! Current configuration basis
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> currentBasis;
-  //! Reference configuration dual basis
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
-  //! Reference configuration normal
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
-  //! Reference configuration area
-  PHX::MDField<MeshScalarT, Cell, QuadPoint> refArea;
-  //! Determinant of deformation gradient
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> detF_;
+    Intrepid::FieldContainer<RealType>>>
+  intrepid_basis_;
 
-  //! Reference Cell FieldContainers
-  Intrepid::FieldContainer<RealType> refValues;
-  Intrepid::FieldContainer<RealType> refGrads;
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
+  /// First PK Stress
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+  stress_;
 
-  ///
+  /// Current configuration basis
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+  current_basis_;
+
+  /// Reference configuration dual basis
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>
+  ref_dual_basis_;
+
+  /// Reference configuration normal
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
+  ref_normal_;
+
+  /// Reference configuration area
+  PHX::MDField<MeshScalarT, Cell, QuadPoint>
+  ref_area_;
+
+  /// Determinant of deformation gradient
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
+  detF_;
+
+  /// Reference Cell FieldContainers
+  Intrepid::FieldContainer<RealType>
+  ref_values_;
+
+  Intrepid::FieldContainer<RealType>
+  ref_grads_;
+
+  Intrepid::FieldContainer<RealType>
+  ref_points_;
+
+  Intrepid::FieldContainer<RealType>
+  ref_weights_;
+
   /// Optional Cohesive Traction
-  ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> traction_;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
+  traction_;
 
-  //! Cauchy Stress
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Cauchy_stress_;
+  /// Cauchy Stress
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+  cauchy_stress_;
+
   // Output:
-  PHX::MDField<ScalarT, Cell, Node, Dim> force;
+  PHX::MDField<ScalarT, Cell, Node, Dim>
+  force_;
 
-  unsigned int worksetSize;
-  unsigned int numNodes;
-  unsigned int numQPs;
-  unsigned int numDims;
-  unsigned int numPlaneNodes;
-  unsigned int numPlaneDims;
+  unsigned int
+  workset_size_;
 
-  ///
+  unsigned int
+  num_nodes_;
+
+  unsigned int
+  num_qps_;
+
+  unsigned int
+  num_dims_;
+
+  unsigned int
+  num_surf_nodes_;
+
+  unsigned int
+  num_plane_dims_;
+
   /// Cohesive Flag
-  ///
-  bool use_cohesive_traction_;
+  bool
+  use_cohesive_traction_;
 
-  ///
   /// Membrane Forces Flag
-  ///
-  bool compute_membrane_forces_;
+  bool
+  compute_membrane_forces_;
 
-  // Topology modification for adaptive insertion flag.
-  bool have_topmod_adaptation_;
+  /// Topology modification for adaptive insertion flag.
+  bool
+  have_topmod_adaptation_;
 };
 }
 

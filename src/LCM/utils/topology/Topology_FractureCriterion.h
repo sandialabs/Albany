@@ -272,7 +272,7 @@ private:
   double
   beta_;
 
-  std::map<stk::mesh::EntityId, Intrepid::Vector<double> >
+  std::map<stk::mesh::EntityId, Intrepid::Vector<double>>
   normals_;
 };
 

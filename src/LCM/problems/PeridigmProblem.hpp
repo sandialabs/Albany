@@ -30,7 +30,7 @@ namespace Albany {
     PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                     const Teuchos::RCP<ParamLib>& paramLib,
                     const int numEqm,
-                    Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
+                    Teuchos::RCP<const Teuchos::Comm<int>>& commT); 
 
     //! Destructor
     virtual ~PeridigmProblem();
@@ -39,10 +39,10 @@ namespace Albany {
     virtual int spatialDimension() const { return numDim; }
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs, StateManager& stateMgr);
+    virtual void buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs, StateManager& stateMgr);
 
     // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
@@ -84,6 +84,7 @@ namespace Albany {
     std::string mtrlDbFilename;
     Teuchos::RCP<QCAD::MaterialDatabase> materialDataBase;
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
+    std::set<std::string> registered_distributedFields;
   };
 
 }
@@ -146,16 +147,35 @@ Albany::PeridigmProblem::constructEvaluators(
 
    // Construct evaluators
 
-   Teuchos::ArrayRCP<std::string> dof_name(1), dof_name_dotdot(1), residual_name(1);
+   Teuchos::ArrayRCP<std::string> dof_name(1), dof_name_dot(1), dof_name_dotdot(1), residual_name(1);
    dof_name[0] = "Displacement";
-   dof_name_dotdot[0] = "Displacement_dotdot";
+   dof_name_dot[0] = Teuchos::null; // Non-null triggers "Enable Transient" in PHAL_GatherSolution
+   dof_name_dotdot[0] = "Acceleration"; // Non-null triggers "Enable Acceleration" in PHAL_GatherSolution
    residual_name[0] = "Residual";
 
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+   Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
    bool supportsTransient = true;
 
    // --------- Option 1: Peridynamics ---------
+
+   //Finding whether basal dirichlet_control_field is a distributed parameter
+   std::map<std::string, std::string> controlParameterMap;
+   const std::string emptyString("");
+   if(this->params->isSublist("Distributed Parameters")) {
+     Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
+     Teuchos::ParameterList* param_list;
+     int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
+     for(int p_index=0; p_index< numParams; ++p_index) {
+       std::string parameter_sublist_name = Albany::strint("Distributed Parameter", p_index);
+       if(dist_params_list.isSublist(parameter_sublist_name)) {
+         param_list = &dist_params_list.sublist(parameter_sublist_name);
+         const std::string& name = param_list->get<std::string>("Name", emptyString);
+         const std::string& meshPart = param_list->get<std::string>("Mesh Part",emptyString);
+         controlParameterMap.insert(std::make_pair(name, meshPart));
+       }
+     }
+   }
 
    if(materialModelName == "Peridynamics"){
 
@@ -170,16 +190,39 @@ Albany::PeridigmProblem::constructEvaluators(
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
 
+     // if(supportsTransient){
+     //   fm0.template registerEvaluator<EvalT>(evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dotdot[0]));    
+     // }
+
      { // Solution vector, which is the nodal displacements
        if(!supportsTransient)
 	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
        else
-	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator(true, dof_name, dof_name_dotdot));
+	 fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_name, dof_name_dot, dof_name_dotdot));
      }
 
      { // Gather Coord Vec
        fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherCoordinateVectorEvaluator());
      }
+
+     { //registering field for dirichlet boundary conditions
+       std::string stateName("dirichlet_field");
+       if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
+         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+         stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
+       }
+     }
+
+     {
+        Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+        std::map<std::string, std::string>::const_iterator it=controlParameterMap.begin();
+        for(; it!=controlParameterMap.end(); ++it) {
+          if(registered_distributedFields.insert(it->first).second) {//make sure the field has not been already registered
+            stateMgr.registerStateVariable(it->first, dataLayout->node_scalar, elementBlockName, true, &entity, it->second);
+            fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherScalarNodalParameter(it->first));
+          }
+        }
+      }
 
      if (haveSource) { // Source
        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -190,8 +233,8 @@ Albany::PeridigmProblem::constructEvaluators(
        RCP<ParameterList> p = rcp(new ParameterList("Time"));
        p->set<std::string>("Time Name", "Time");
        p->set<std::string>("Delta Time Name", "Delta Time");
-       p->set<RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
-       // p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+       // p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        p->set<bool>("Disable Transient", true);
        ev = rcp(new LCM::Time<EvalT, AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -209,7 +252,7 @@ Albany::PeridigmProblem::constructEvaluators(
      { // Current Coordinates
        RCP<ParameterList> p = rcp(new ParameterList("Current Coordinates"));
        p->set<std::string>("Reference Coordinates Name", "Coord Vec");
-       p->set<std::string>("Displacement Name", "Displacement");
+       p->set<std::string>("Displacement Name", dof_name[0]);
        p->set<std::string>("Current Coordinates Name", "Current Coordinates");
        ev = rcp(new LCM::CurrentCoords<EvalT, AlbanyTraits>(*p, dataLayout));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -224,44 +267,44 @@ Albany::PeridigmProblem::constructEvaluators(
 
      { // Save Variables to Exodus
        const Teuchos::ParameterList& outputVariables = peridigmParams->sublist("Output").sublist("Output Variables");     
-       LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+       LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
        // peridigmManger::setOutputVariableList() records the variables that will be output to Exodus, determines
        // if they are node, element, or global variables, and determines if they are scalar, vector, etc.
        peridigmManager.setOutputFields(outputVariables);
        std::vector<LCM::PeridigmManager::OutputField> outputFields = peridigmManager.getOutputFields();
        for(unsigned int i=0 ; i<outputFields.size() ; ++i){
-	 std::string albanyName = outputFields[i].albanyName;       
-	 std::string initType = outputFields[i].initType;
-	 std::string relation = outputFields[i].relation;
-	 int length = outputFields[i].length;
+         std::string albanyName = outputFields[i].albanyName;
+         std::string initType = outputFields[i].initType;
+         std::string relation = outputFields[i].relation;
+         int length = outputFields[i].length;
 
-	 Teuchos::RCP<PHX::DataLayout> layout;
-	 if(relation == "node" && length == 1)
-	   layout = dataLayout->node_scalar;
-	 else if(relation == "node" && length == 3)
-	   layout = dataLayout->node_vector;
-	 else if(relation == "node" && length == 9)
-	   layout = dataLayout->node_tensor;
-	 else if(relation == "element" && length == 1)
-	   layout = dataLayout->qp_scalar;
-	 else if(relation == "element" && length == 3)
-	   layout = dataLayout->qp_vector;
-	 else if(relation == "element" && length == 9)
-	   layout = dataLayout->qp_tensor;
-	 else
-	   TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::constructEvaluators(), invalid output varialble type.\n");
+         Teuchos::RCP<PHX::DataLayout> layout;
+         if(relation == "node" && length == 1)
+           layout = dataLayout->node_scalar;
+         else if(relation == "node" && length == 3)
+           layout = dataLayout->node_vector;
+         else if(relation == "node" && length == 9)
+           layout = dataLayout->node_tensor;
+         else if(relation == "element" && length == 1)
+           layout = dataLayout->qp_scalar;
+         else if(relation == "element" && length == 3)
+           layout = dataLayout->qp_vector;
+         else if(relation == "element" && length == 9)
+           layout = dataLayout->qp_tensor;
+         else
+           TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::constructEvaluators(), invalid output varialble type.\n");
 
-	 RCP<ParameterList> p = rcp(new ParameterList("Save " + albanyName));
-	 p = stateMgr.registerStateVariable(albanyName,
-					    layout,
-					    dataLayout->dummy,
-					    elementBlockName,
-					    initType,
-					    0.0,
-					    false,
-					    true);
-	 ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
-	 fm0.template registerEvaluator<EvalT>(ev);
+         RCP<ParameterList> p = rcp(new ParameterList("Save " + albanyName));
+         p = stateMgr.registerStateVariable(albanyName,
+                    layout,
+                    dataLayout->dummy,
+                    elementBlockName,
+                    initType,
+                    0.0,
+                    false,
+                    true);
+         ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
+         fm0.template registerEvaluator<EvalT>(ev);
        }
      }
 
@@ -273,16 +316,18 @@ Albany::PeridigmProblem::constructEvaluators(
        peridigmParameterList = *peridigmParams;
 
        // Required data layouts
-       p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);    
+       p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);    
 
        // Input
        p->set<string>("Reference Coordinates Name", "Coord Vec");
        p->set<string>("Current Coordinates Name", "Current Coordinates");
+       p->set<string>("Velocity Name", dof_name_dot[0]);
+       p->set<string>("Acceleration Name", dof_name_dotdot[0]);
        p->set<string>("Sphere Volume Name", "Sphere Volume");
 
        // Output
        p->set<string>("Force Name", "Force");
-       p->set<string>("Residual Name", "Residual");
+       p->set<string>("Residual Name", residual_name[0]);
 
        ev = rcp(new LCM::PeridigmForce<EvalT, AlbanyTraits>(*p, dataLayout));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -304,20 +349,20 @@ Albany::PeridigmProblem::constructEvaluators(
 
    } // ---- End Peridynamics Evaluators ----
 
-   // --------- Option 2:  Classical Elasticity ---------   
+   // --------- Option 2:  Peridynamic Partial Stress ---------
 
    else if(materialModelName == "Peridynamic Partial Stress"){
 
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for peridynamic partial stress." << std::endl;
 
      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
      const int numNodes = intrepidBasis->getCardinality();
      const int worksetSize = meshSpecs.worksetSize;
 
      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-     RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+     RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
      const int numDim = cubature->getDimension();
      const int numQPts = cubature->getNumPoints();
@@ -335,38 +380,49 @@ Albany::PeridigmProblem::constructEvaluators(
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
 
-     // Displacement Fields
+     { //registering field for dirichlet boundary conditions
+        std::string stateName("dirichlet_field");
+        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+          stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
+        }
+      }
 
-     Teuchos::ArrayRCP<std::string> dof_names(1);
-     dof_names[0] = "Displacement";
-     Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
-     if (supportsTransient)
-       dof_names_dotdot[0] = dof_names[0]+"_dotdot";
-     Teuchos::ArrayRCP<std::string> resid_names(1);
-     resid_names[0] = dof_names[0]+" Residual";
+     {
+        Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+        std::map<std::string, std::string>::const_iterator it=controlParameterMap.begin();
+        for(; it!=controlParameterMap.end(); ++it) {
+          if(registered_distributedFields.insert(it->first).second) {//make sure the field has not been already registered
+            stateMgr.registerStateVariable(it->first, dataLayout->node_scalar, elementBlockName, true, &entity, it->second);
+            fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherScalarNodalParameter(it->first));
+          }
+        }
+      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dot[0]));
+       fm0.template registerEvaluator<EvalT>
+	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dotdot[0]));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names, Teuchos::null, dof_names_dotdot));
+	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_name, Teuchos::null, dof_name_dotdot));
      }
      else{
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
+	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names));
+       (evalUtils.constructScatterResidualEvaluator(true, residual_name));
 
      // Standard FEM stuff
 
@@ -380,15 +436,15 @@ Albany::PeridigmProblem::constructEvaluators(
        (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
      // Temporary variable used numerous times below
-     Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+     Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
      { // Time
        RCP<ParameterList> p = rcp(new ParameterList);
 
        p->set<std::string>("Time Name", "Time");
        p->set<std::string>("Delta Time Name", "Delta Time");
-       p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        p->set<bool>("Disable Transient", true);
 
        ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
@@ -410,12 +466,12 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
        p->set<std::string>("Weights Name","Weights");
        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        //Outputs: F, J
        p->set<std::string>("DefGrad Name", "Deformation Gradient");
        p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
 
        ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -429,8 +485,8 @@ Albany::PeridigmProblem::constructEvaluators(
        peridigmParameterList = *peridigmParams;
 
        // Required data layouts
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        // Input
        p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
@@ -448,23 +504,25 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Input
        p->set<std::string>("Stress Name", "Stress");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        // \todo Is the required?
        p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dataLayout->qp_tensor also
 
        p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-       p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dataLayout->node_qp_vector);
+       p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dataLayout->node_qp_vector);
 
        // extra input for time dependent term
        p->set<std::string>("Weighted BF Name", "wBF");
-       p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
-       p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
+       p->set<std::string>("Time Dependent Variable Name", "Acceleration");
+       p->set<std::string>("xdot Field Name", dof_name_dot[0]);
+       p->set<std::string>("xdotdot Field Name", dof_name_dotdot[0]);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
        //Output
-       p->set<std::string>("Residual Name", "Displacement Residual");
-       p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);
+       p->set<std::string>("Residual Name", residual_name[0]);
+       p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
        ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -482,20 +540,139 @@ Albany::PeridigmProblem::constructEvaluators(
 
    }  // ---- End Partial Stress Evaluators ----
 
-   // --------- Option 3:  Classical Elasticity ---------   
+   // --------- Option 3:  Classic Vector Poisson ---------   
 
+   else if(materialModelName == "Classic Vector Poisson"){
+      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical Poisson Eq, material model = " << materialModelName << std::endl;
+      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+      RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+
+      const int numNodes = intrepidBasis->getCardinality();
+      const int worksetSize = meshSpecs.worksetSize;
+
+      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+      RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+
+      const int numDim = cubature->getDimension();
+      const int numQPts = cubature->getNumPoints();
+      const int numVertices = cellType->getNodeCount();
+
+      *out << "Field Dimensions: Workset=" << worksetSize
+      << ", Vertices= " << numVertices
+      << ", Nodes= " << numNodes
+      << ", QuadPts= " << numQPts
+      << ", Dim= " << numDim << std::endl;
+
+      // Construct standard FEM evaluators with standard field names
+      RCP<Albany::Layouts> dataLayout = rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
+      TEUCHOS_TEST_FOR_EXCEPTION(dataLayout->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
+         "Data Layout Usage in Peridigm problems assume vecDim = numDim");
+      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
+
+      { //registering field for dirichlet boundary conditions
+        std::string stateName("dirichlet_field");
+        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
+           Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+           stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
+        }
+      }
+
+      {
+        Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+        std::map<std::string, std::string>::const_iterator it=controlParameterMap.begin();
+        for(; it!=controlParameterMap.end(); ++it) {
+         if(registered_distributedFields.insert(it->first).second) {//make sure the field has not been already registered
+           stateMgr.registerStateVariable(it->first, dataLayout->node_scalar, elementBlockName, true, &entity, it->second);
+           fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherScalarNodalParameter(it->first));
+          }
+        }
+      }
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFVecInterpolationEvaluator(dof_name[0]));
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_name[0]));
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructScatterResidualEvaluator(true, residual_name));
+
+      // Standard FEM stuff
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructGatherCoordinateVectorEvaluator());
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+      // Temporary variable used numerous times below
+      Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
+
+      { // Time
+        RCP<ParameterList> p = rcp(new ParameterList);
+
+        p->set<std::string>("Time Name", "Time");
+        p->set<std::string>("Delta Time Name", "Delta Time");
+        p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+        p->set<bool>("Disable Transient", true);
+
+        ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+        p = stateMgr.registerStateVariable("Time",dataLayout->workset_scalar, dataLayout->dummy, elementBlockName, "scalar", 0.0, true);
+        ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      { // Displacement Resid
+        RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
+
+        //Input
+        p->set<std::string>("Stress Name", "Displacement Gradient"); //Passing Displacemet instead of Stress to get Laplacian
+        p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
+
+        p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+        p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dataLayout->node_qp_vector);
+        p->set<bool>("Disable Transient", true);
+
+        //Output
+        p->set<std::string>("Residual Name", residual_name[0]);
+        p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
+
+        ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+      if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
+        PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dataLayout->dummy);
+        fm0.requireField<EvalT>(res_tag);
+        return res_tag.clone();
+      }
+      else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+        Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dataLayout);
+        return respUtils.constructResponses(fm0, *responseList, stateMgr);
+      }
+   } // ---- End Classic Vector Poisson Evaluators ----
+ 
+   // --------- Option 3:  Classic Elasticity --------- 
    else if(materialModelName != "Peridynamics" && materialModelName != "Peridynamics Partial Stress"){
 
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for classical elasticity, material model = " << materialModelName << std::endl;
 
      RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+     RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
      const int numNodes = intrepidBasis->getCardinality();
      const int worksetSize = meshSpecs.worksetSize;
 
      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-     RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+     RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
      const int numDim = cubature->getDimension();
      const int numQPts = cubature->getNumPoints();
@@ -513,38 +690,47 @@ Albany::PeridigmProblem::constructEvaluators(
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
 
-     // Displacement Fields
+     { //registering field for dirichlet boundary conditions
+        std::string stateName("dirichlet_field");
+        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+          stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
+        }
+      }
 
-     Teuchos::ArrayRCP<std::string> dof_names(1);
-     dof_names[0] = "Displacement";
-     Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
-     if (supportsTransient)
-       dof_names_dotdot[0] = dof_names[0]+"_dotdot";
-     Teuchos::ArrayRCP<std::string> resid_names(1);
-     resid_names[0] = dof_names[0]+" Residual";
+     {
+        Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+        std::map<std::string, std::string>::const_iterator it=controlParameterMap.begin();
+        for(; it!=controlParameterMap.end(); ++it) {
+          if(registered_distributedFields.insert(it->first).second) {//make sure the field has not been already registered
+            stateMgr.registerStateVariable(it->first, dataLayout->node_scalar, elementBlockName, true, &entity, it->second);
+            fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherScalarNodalParameter(it->first));
+          }
+        }
+      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+	 (evalUtils.constructDOFVecInterpolationEvaluator(dof_name_dotdot[0]));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_name[0]));
 
      if(supportsTransient){
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_names, Teuchos::null, dof_names_dotdot));
+	 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(true, dof_name, Teuchos::null, dof_name_dotdot));
      }
      else{
        fm0.template registerEvaluator<EvalT>
-	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
+	 (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_name));
      }
 
      fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructScatterResidualEvaluator(true, resid_names));
+       (evalUtils.constructScatterResidualEvaluator(true, residual_name));
 
      // Standard FEM stuff
 
@@ -558,15 +744,15 @@ Albany::PeridigmProblem::constructEvaluators(
        (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
      // Temporary variable used numerous times below
-     Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+     Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
      { // Time
        RCP<ParameterList> p = rcp(new ParameterList);
 
        p->set<std::string>("Time Name", "Time");
        p->set<std::string>("Delta Time Name", "Delta Time");
-       p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dataLayout->workset_scalar);
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dataLayout->workset_scalar);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        p->set<bool>("Disable Transient", true);
 
        ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
@@ -581,11 +767,11 @@ Albany::PeridigmProblem::constructEvaluators(
 
        p->set<std::string>("QP Variable Name", "Elastic Modulus");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dataLayout->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dataLayout->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Elastic Modulus");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -598,11 +784,11 @@ Albany::PeridigmProblem::constructEvaluators(
 
        p->set<std::string>("QP Variable Name", "Poissons Ratio");
        p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-       p->set< RCP<DataLayout> >("Node Data Layout", dataLayout->node_scalar);
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("Node Data Layout", dataLayout->node_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
-       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+       p->set<RCP<ParamLib>>("Parameter Library", paramLib);
        Teuchos::ParameterList& paramList = materialDataBase->getElementBlockSublist(elementBlockName, "Poissons Ratio");
        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -635,12 +821,12 @@ Albany::PeridigmProblem::constructEvaluators(
        p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
        p->set<std::string>("Weights Name","Weights");
        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        //Outputs: F, J
        p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dataLayout->qp_tensor also
        p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
 
        ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);
@@ -651,10 +837,10 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Input
        p->set<std::string>("Strain Name", "Strain");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-       p->set< RCP<DataLayout> >("QP Scalar Data Layout", dataLayout->qp_scalar);
+       p->set< RCP<DataLayout>>("QP Scalar Data Layout", dataLayout->qp_scalar);
        
        p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dataLayout->qp_scalar also
 
@@ -673,23 +859,23 @@ Albany::PeridigmProblem::constructEvaluators(
 
        //Input
        p->set<std::string>("Stress Name", "Stress");
-       p->set< RCP<DataLayout> >("QP Tensor Data Layout", dataLayout->qp_tensor);
+       p->set< RCP<DataLayout>>("QP Tensor Data Layout", dataLayout->qp_tensor);
 
        // \todo Is the required?
        p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dataLayout->qp_tensor also
 
        p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-       p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dataLayout->node_qp_vector);
+       p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dataLayout->node_qp_vector);
 
        // extra input for time dependent term
        p->set<std::string>("Weighted BF Name", "wBF");
-       p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
-       p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
-       p->set< RCP<DataLayout> >("QP Vector Data Layout", dataLayout->qp_vector);
+       p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dataLayout->node_qp_scalar);
+       p->set<std::string>("Time Dependent Variable Name", "Acceleration");
+       p->set< RCP<DataLayout>>("QP Vector Data Layout", dataLayout->qp_vector);
 
        //Output
-       p->set<std::string>("Residual Name", "Displacement Residual");
-       p->set< RCP<DataLayout> >("Node Vector Data Layout", dataLayout->node_vector);
+       p->set<std::string>("Residual Name", residual_name[0]);
+       p->set< RCP<DataLayout>>("Node Vector Data Layout", dataLayout->node_vector);
 
        ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
        fm0.template registerEvaluator<EvalT>(ev);

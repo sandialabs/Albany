@@ -142,7 +142,7 @@ public:
   stk::mesh::EntityVector
   getBoundaryEntityNodes(stk::mesh::Entity boundary_entity);
 
-  std::vector<Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   getNodalCoordinates();
 
   ///
@@ -208,6 +208,9 @@ public:
   ///
   void
   splitOpenFaces();
+
+  void
+  insertSurfaceElements(std::set<EntityPair> const & fractured_faces);
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
@@ -384,7 +387,7 @@ public:
   /// \brief Finds the closest nodes(Entities of rank 0) to each of
   /// the three points in the input vector.  stk::mesh::EntityVector
   std::vector<stk::mesh::Entity>
-  getClosestNodes(std::vector<std::vector<double> > points);
+  getClosestNodes(std::vector<std::vector<double>> points);
 
   ///
   /// \brief Finds the closest nodes(Entities of rank 0) to each
@@ -392,7 +395,7 @@ public:
   ///        lie over the surface of the mesh
   ///
   std::vector<stk::mesh::Entity>
-  getClosestNodesOnSurface(std::vector<std::vector<double> > points);
+  getClosestNodesOnSurface(std::vector<std::vector<double>> points);
 
   ///
   /// \brief calculates the distance between a node and a point
@@ -405,7 +408,7 @@ public:
   ///        equilateral triangle.  This triangle lies on the plane
   ///        that intersects the ellipsoid.
   ///
-  std::vector<std::vector<double> >
+  std::vector<std::vector<double>>
   getCoordinatesOfTriangle(std::vector<double> const normalToPlane);
 
   ///
@@ -440,7 +443,7 @@ public:
   ///        three input nodes and the edges that belong to the outer
   ///        surface
   ///
-  std::vector<std::vector<int> >
+  std::vector<std::vector<int>>
   shortestpathOnBoundaryFaces(
       std::vector<stk::mesh::Entity> const & nodes,
       std::vector<stk::mesh::Entity> const & MeshEdgesShortestPath);
@@ -448,27 +451,27 @@ public:
   ///
   /// \brief Returns the shortest path between three input nodes
   ///
-  std::vector<std::vector<int> >
+  std::vector<std::vector<int>>
   shortestpath(std::vector<stk::mesh::Entity> const & nodes);
 
   ///
   /// \brief Returns the directions of all the edges of the input mesh
   ///
-  std::vector<std::vector<int> >
+  std::vector<std::vector<int>>
   edgesDirections();
 
   ///
   /// \brief Returns the directions of all the boundary edges of the
   /// input mesh
   ///
-  std::vector<std::vector<int> >
+  std::vector<std::vector<int>>
   edgesDirectionsOuterSurface();
 
   ///
   /// \brief Returns the directions of all of the faces of the input
   /// mesh
   ///
-  std::vector<std::vector<int> >
+  std::vector<std::vector<int>>
   facesDirections();
 
   ///
@@ -482,14 +485,14 @@ public:
   /// \brief Returns the boundary operator of the input mesh.
   ///        matrix that has nonzeros only
   ///
-  std::vector<std::vector<int> >
+  std::vector<std::vector<int>>
   boundaryOperator();
 
   ///
   /// \brief returns the boundary operator along with the faces areas
   ///        to create the columns of an mps file
   ///
-  std::vector<std::vector<double> >
+  std::vector<std::vector<double>>
   outputForMpsFile();
 
   ///
@@ -497,8 +500,8 @@ public:
   ///        surface of the input mesh. The input to this function is
   ///        a shortest path (composed by egdes) between three nodes
   ///
-  std::vector<std::vector<int> >
-  boundaryVector(std::vector<std::vector<int> > & shortPath);
+  std::vector<std::vector<int>>
+  boundaryVector(std::vector<std::vector<int>> & shortPath);
 
   ///
   /// \brief Returns the 1-D boundary required to compute the minimum
@@ -506,8 +509,8 @@ public:
   ///        this function is a shortest path (composed by edges)
   ///        between three nodes
   ///
-  std::vector<std::vector<int> >
-  boundaryVectorOuterSurface(std::vector<std::vector<int> > & shortPath);
+  std::vector<std::vector<int>>
+  boundaryVectorOuterSurface(std::vector<std::vector<int>> & shortPath);
 
   ///
   /// \brief Returns the corresponding entities of rank 2 that build

@@ -17,23 +17,23 @@ namespace LCM {
   LatticeDefGrad<EvalT, Traits>::
   LatticeDefGrad(const Teuchos::ParameterList& p) :
     weights       (p.get<std::string>                   ("Weights Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     defgrad       (p.get<std::string>                  ("DefGrad Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     J             (p.get<std::string>                   ("DetDefGrad Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     JH             (p.get<std::string>                   ("DetDefGradH Name"),
-                    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                    p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     CtotalRef     (p.get<std::string>                   ("Stress Free Total Concentration Name"),
-                   p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                   p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Ctotal     (p.get<std::string>                   ("Total Concentration Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+                p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     VH     (p.get<std::string>                   ("Partial Molar Volume Name"),
-            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     VM     (p.get<std::string>                   ("Molar Volume Name"),
-            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     latticeDefGrad       (p.get<std::string>    ("Lattice Deformation Gradient Name"),
-                          p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+                          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     weightedAverage(false),
     alpha(0.05)
   {
@@ -43,7 +43,7 @@ namespace LCM {
       alpha = p.get<double>("Average J Stabilization Parameter");
 
     Teuchos::RCP<PHX::DataLayout> tensor_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
 
     std::vector<PHX::DataLayout::size_type> dims;
     tensor_dl->dimensions(dims);

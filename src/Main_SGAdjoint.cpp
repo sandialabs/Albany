@@ -37,39 +37,29 @@ int main(int argc, char *argv[]) {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   // Command-line argument for input file
-  char * xmlfilename=0;
-  char * sg_xmlfilename=0;
-  char * adjsg_xmlfilename=0;
-  char defaultfile[10]={"input.xml"};
-  char sg_defaultfile[12]={"inputSG.xml"};
-  char adjsg_defaultfile[20]={"inputSG_adjoint.xml"};
+  Albany::CmdLineArgs cmd("input.xml", "inputSG.xml", "inputSG_adjoint.xml");
+  cmd.parse_cmdline(argc, argv, *out);
+  std::string xmlfilename;
+  std::string sg_xmlfilename;
+  std::string adjsg_xmlfilename;
   bool do_initial_guess;
-  if(argc>1){
-    if(!strcmp(argv[1],"--help")){
-      printf("albanySG [inputfile.xml inputfileSG.xml inputfileSGadjoint.xml]\n");
-      exit(1);
-    }
-    else {
-      if (argc == 2) {
-	sg_xmlfilename = argv[1];
-	do_initial_guess = false;
-      }
-      else {
-	xmlfilename=argv[1];
-	sg_xmlfilename = argv[2];
-	adjsg_xmlfilename = argv[3];
-	do_initial_guess = true;
-      }
-    }
-  }
-  else {
-    xmlfilename=defaultfile;
-    sg_xmlfilename=sg_defaultfile;
-    adjsg_xmlfilename=adjsg_defaultfile;
+  if (cmd.has_third_xml_file) {
+    xmlfilename = cmd.xml_filename;
+    sg_xmlfilename = cmd.xml_filename2;
+    adjsg_xmlfilename = cmd.xml_filename3;
     do_initial_guess = true;
   }
-       
-  
+  else if (cmd.has_second_xml_file) {
+    xmlfilename = "";
+    sg_xmlfilename = cmd.xml_filename;
+    adjsg_xmlfilename = cmd.xml_filename2;
+    do_initial_guess = false;
+  }
+  else {
+    *out << argv[0] << ":  must supply at least 2 input files!\n";
+    std::exit(1);
+  }
+
   try {
 
     Teuchos::RCP<Teuchos::Time> totalTime =
@@ -94,6 +84,10 @@ int main(int argc, char *argv[]) {
     // Parse parameters
     Teuchos::RCP<const Teuchos_Comm> comm =
       Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+    // Connect vtune for performance profiling
+    if (cmd.vtune) {
+      Albany::connect_vtune(comm->getRank());
+    }
     Albany::SolverFactory sg_slvrfctry(sg_xmlfilename, comm);
     Teuchos::ParameterList& albanyParams = sg_slvrfctry.getParameters();
     Teuchos::RCP< Teuchos::ParameterList> piroParams = 

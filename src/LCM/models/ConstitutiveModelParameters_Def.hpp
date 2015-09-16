@@ -3,12 +3,16 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#ifdef ALBANY_TIMER
+#include <chrono>
+#endif
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
 #include "Teuchos_Array.hpp"
+#include <PHAL_Utilities.hpp>
 
 namespace LCM
 {
@@ -29,7 +33,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
 
   // get the Parameter Library
   Teuchos::RCP<ParamLib> paramLib =
-      p.get<Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
+      p.get<Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
 
   // get the material parameter list
   Teuchos::ParameterList* mat_params =
@@ -145,7 +149,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
 
   // register evaluated fields
   typename
-  std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+  std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it;
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
@@ -153,17 +157,6 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
   }
   this->setName(
       "Constitutive Model Parameters" + PHX::typeAsString<EvalT>());
-
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    ddims_.push_back(24);
-   int num_cells=dims[0];
-    point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
-    point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
-    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(num_cells, num_pts_)));
-    second.setFieldData(ViewFactory::buildView(second.fieldTag(), ddims_));
-#endif
-
 
 }
 
@@ -173,7 +166,7 @@ void ConstitutiveModelParameters<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it;
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
@@ -184,6 +177,19 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   if (have_temperature_) this->utils.setFieldData(temperature_, fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    int deriv_dims=PHAL::getDerivativeDimensionsFromView(coord_vec_.get_kokkos_view());
+    ddims_.push_back(deriv_dims);
+    const int num_cells=coord_vec_.dimension(0);
+
+    point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
+    point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
+    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(num_cells, num_pts_)));
+    second.setFieldData(ViewFactory::buildView(second.fieldTag(), ddims_));
+#endif
+
+
 }
 //------------------------------------------------------------------------------
 //Kokkos kernels
@@ -287,7 +293,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
 
-  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+  typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it;
 
   for (it = field_map_.begin();
       it != field_map_.end();
@@ -335,7 +341,11 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-    typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it; 
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
+    typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint>>::iterator it; 
+
    for (it = field_map_.begin(); it != field_map_.end();    ++it) {
 
     constant_value = constant_value_map_[it->first];
@@ -371,6 +381,13 @@ evaluateFields(typename Traits::EvalData workset)
 
     }
    }
+#ifdef ALBANY_TIMER
+ PHX::Device::fence();
+ auto elapsed = std::chrono::high_resolution_clock::now() - start;
+ long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+ std::cout<< "ConstitutiveModelParameters time = "  << millisec << "  "  << microseconds << std::endl;
+#endif
 #endif
 }
 //------------------------------------------------------------------------------
@@ -386,7 +403,7 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string &n)
       return constant_value_map_[it->first];
     }
   }
-  typename std::map<std::string, Teuchos::Array<ScalarT> >::iterator it2;
+  typename std::map<std::string, Teuchos::Array<ScalarT>>::iterator it2;
   for (int i(0); i < rv_map_[it2->first].size(); ++i) {
     if (n == Albany::strint(n + " KL Random Variable", i))
       return rv_map_[it2->first][i];

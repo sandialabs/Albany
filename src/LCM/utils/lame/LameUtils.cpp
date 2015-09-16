@@ -10,20 +10,17 @@
 
 // LAME material models
 #ifdef ALBANY_LAME
-#include "models/Elastic.h"
-#include "models/ElasticNew.h"
-#include "models/NeoHookean.h"
-#include "models/ElasticFracture.h"
-#include "models/ElasticPlastic.h"
-#include "models/EPPowerLaw.h"
-#include "models/DuctileFracture.h"
-#include "models/JohnsonCook.h"
-#include "models/PowerLawCreep.h"
-#include "models/FoamPlasticity.h"
-#include "models/LowDensityFoam.h"
-#include "models/StiffElastic.h"
-#include "models/FeFp.h"
-#include "models/CrystalPlasticity.h"
+#include "models/production/Elastic.h"
+#include "models/production/NeoHookean.h"
+#include "models/production/ElasticFracture.h"
+#include "models/production/DuctileFracture.h"
+#include "models/production/JohnsonCook.h"
+#include "models/production/PowerLawCreep.h"
+#include "models/production/FoamPlasticity.h"
+#include "models/production/LowDensityFoam.h"
+#include "models/production/StiffElastic.h"
+#include "models/development/FeFp.h"
+#include "models/development/CrystalPlasticity.h"
 #endif
 
 namespace LameUtils {
@@ -45,16 +42,10 @@ Teuchos::RCP<LameMaterial> constructLameMaterialModel(const std::string lameMate
 #ifdef ALBANY_LAME
   if(materialModelName == "ELASTIC")
     materialModel = Teuchos::rcp(new lame::Elastic(props));
-  else if(materialModelName == "ELASTIC_NEW")
-    materialModel = Teuchos::rcp(new lame::ElasticNew(props));
   else if(materialModelName == "NEO_HOOKEAN")
     materialModel = Teuchos::rcp(new lame::NeoHookean(props));
   else if(materialModelName == "ELASTIC_FRACTURE")
     materialModel = Teuchos::rcp(new lame::ElasticFracture(props));
-  else if(materialModelName == "ELASTIC_PLASTIC")
-    materialModel = Teuchos::rcp(new lame::ElasticPlastic(props));
-  else if(materialModelName == "EP_POWER_HARD")
-    materialModel = Teuchos::rcp(new lame::EPPowerLaw(props));
   else if(materialModelName == "DUCTILE_FRACTURE")
     materialModel = Teuchos::rcp(new lame::DuctileFracture(props));
   else if(materialModelName == "JOHNSON_COOK")
@@ -149,12 +140,7 @@ std::vector<double> getStateVariableInitialValues(const std::string& lameMateria
   matp->stress_old = &stressOld[0];
   matp->stress_new = &stressNew[0];
 
-  LameMatProps props;
-  parameterListToMatProps(lameMaterialParameters, props);
-
-  // todo Check with Bill to see if props can be a null pointer (meaning no changes to the material properties).
-
-  materialModel->initialize(matp.get(), &props);
+  materialModel->initialize(matp.get());
 
   return stateOld;
 }

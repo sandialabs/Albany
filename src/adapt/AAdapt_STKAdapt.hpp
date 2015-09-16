@@ -14,6 +14,9 @@
 #include "AAdapt_AbstractAdapter.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
+#ifdef ALBANY_FELIX
+#include "Albany_STKDiscretizationStokesH.hpp"
+#endif
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"

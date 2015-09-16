@@ -18,9 +18,9 @@ template<typename EvalT, typename Traits>
 UpdateField<EvalT, Traits>::
 UpdateField(const Teuchos::ParameterList& p) :
   field_Nplus1 (p.get<std::string>("Updated Field Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") ),
+                p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout") ),
   field_Inc    (p.get<std::string>("Increment Name"),
-                p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") )
+                p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout") )
 {
   this->addDependentField(field_Inc);
   this->addEvaluatedField(field_Nplus1);

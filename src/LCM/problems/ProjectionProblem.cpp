@@ -132,7 +132,7 @@ Albany::ProjectionProblem::~ProjectionProblem()
 
 void
 Albany::ProjectionProblem::buildProblem(
-    ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,
+    ArrayRCP<RCP<Albany::MeshSpecsStruct>> mesh_specs,
     Albany::StateManager & state_manager)
 {
   // Construct all Phalanx evaluators
@@ -154,7 +154,7 @@ Albany::ProjectionProblem::buildProblem(
   constructDirichletEvaluators(*mesh_specs[0]);
 }
 
-Teuchos::Array<RCP<const PHX::FieldTag> >
+Teuchos::Array<RCP<const PHX::FieldTag>>
 Albany::ProjectionProblem::buildEvaluators(
     PHX::FieldManager<AlbanyTraits> & field_manager,
     Albany::MeshSpecsStruct const & mesh_specs,
@@ -263,8 +263,8 @@ Albany::ProjectionProblem::getValidProblemParameters() const
 
 void
 Albany::ProjectionProblem::getAllocatedStates(
-    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType> > > > old_state,
-    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType> > > > new_state) const
+    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> old_state,
+    ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> new_state) const
 {
   old_state = old_state_;
   new_state = new_state_;

@@ -7,12 +7,15 @@
 #if !defined(LCM_BifurcationCheck_hpp)
 #define LCM_BifurcationCheck_hpp
 
+#include <iostream>
+
 #include <Intrepid_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "Sacado.hpp"
 
 namespace LCM {
   /// \brief BifurcationCheck Evaluator
@@ -47,6 +50,14 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
+    typedef typename Sacado::mpl::apply<FadType,DFadType>::type D2FadType;
+
+    //! Input: Parametrization type
+    std::string parametrization_type_;
+    
+    //! Input: Parametrization sweep interval
+    double parametrization_interval_;
 
     //! Input: material tangent
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim,Dim,Dim> tangent_;
@@ -66,37 +77,98 @@ namespace LCM {
     //! number of spatial dimensions
     int num_dims_;
     
-        
     ///
     /// Spherical parametrization sweep
     ///
     ScalarT
-    spherical_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+    spherical_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent,
+      Intrepid::Vector<ScalarT, 2> & arg_minimum, 
+      Intrepid::Vector<ScalarT> & direction, double const & interval);
 
     ///
     /// Stereographic parametrization sweep
     ///
     ScalarT
-    stereographic_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+    stereographic_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent,
+      Intrepid::Vector<ScalarT, 2> & arg_minimum,  
+      Intrepid::Vector<ScalarT> & direction, double const & interval);
     
     ///
     /// Projective parametrization sweep
     ///
     ScalarT
-    projective_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+    projective_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent,
+      Intrepid::Vector<ScalarT, 3> & arg_minimum,  
+      Intrepid::Vector<ScalarT> & direction, double const & interval);
     
     ///
     /// Tangent parametrization sweep
     ///
     ScalarT
-    tangent_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);     
+    tangent_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent,
+      Intrepid::Vector<ScalarT, 2> & arg_minimum,  
+      Intrepid::Vector<ScalarT> & direction, double const & interval);     
     
     ///
     /// Cartesian parametrization sweep
     ///
     ScalarT
-    cartesian_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);        
-                
+    cartesian_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent,
+      Intrepid::Vector<ScalarT, 2> & arg_minimum, int surface_index,   
+      Intrepid::Vector<ScalarT> & direction, double const & interval);
+    
+    ///
+    /// Newton-Raphson method to find exact min DetA and direction
+    ///    
+    void
+    spherical_newton_raphson(Intrepid::Tensor4<ScalarT, 3> const & tangent, 
+      Intrepid::Vector<ScalarT, 2> & parameters,
+      Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA);
+      
+    void
+    stereographic_newton_raphson(Intrepid::Tensor4<ScalarT, 3> const & tangent, 
+      Intrepid::Vector<ScalarT, 2> & parameters,
+      Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA);
+      
+    void
+    projective_newton_raphson(Intrepid::Tensor4<ScalarT, 3> const & tangent, 
+      Intrepid::Vector<ScalarT, 3> & parameters,
+      Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA);
+      
+    void
+    tangent_newton_raphson(Intrepid::Tensor4<ScalarT, 3> const & tangent, 
+      Intrepid::Vector<ScalarT, 2> & parameters,
+      Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA);
+      
+    void
+    cartesian_newton_raphson(Intrepid::Tensor4<ScalarT, 3> const & tangent, 
+      Intrepid::Vector<ScalarT, 2> & parameters, int surface_index,
+      Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA);  
+    
+    ///
+    /// Get normal
+    ///  
+    Intrepid::Vector<D2FadType, 3>
+    spherical_get_normal(Intrepid::Vector<D2FadType, 2> & parameters);
+    
+    Intrepid::Vector<D2FadType, 3>
+    stereographic_get_normal(Intrepid::Vector<D2FadType, 2> & parameters);
+    
+    Intrepid::Vector<D2FadType, 3>
+    projective_get_normal(Intrepid::Vector<D2FadType, 3> & parameters);
+    
+    Intrepid::Vector<D2FadType, 3>
+    tangent_get_normal(Intrepid::Vector<D2FadType, 2> & parameters);
+    
+    Intrepid::Vector<D2FadType, 3>
+    cartesian_get_normal1(Intrepid::Vector<D2FadType, 2> & parameters);
+    
+    Intrepid::Vector<D2FadType, 3>
+    cartesian_get_normal2(Intrepid::Vector<D2FadType, 2> & parameters);
+    
+    Intrepid::Vector<D2FadType, 3>
+    cartesian_get_normal3(Intrepid::Vector<D2FadType, 2> & parameters);
+                           
   };
 
 }

@@ -30,7 +30,7 @@
 
 #include "Albany_Utils.hpp"
 
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
 
 Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Teuchos_Comm>& comm) :
     GenericSTKMeshStruct(params, Teuchos::null, 3), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false) {
@@ -83,6 +83,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
   params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
+#ifdef ALBANY_SEACAS
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
   if (params->isSublist("Side Sets Output"))
   {
@@ -93,6 +94,11 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
+#else
+    // Above block of code could allow for 2D mesh to come from other sources instead of Ioss
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+              std::endl << "Error in ExtrudedSTKMeshStruct: Currently Requires 2D mesh to come from exodus");
+#endif
 
   int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
   sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, sis, ws_size, Teuchos::null);
@@ -230,6 +236,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   else  //uniform layers
     for (int i = 0; i < numLayers+1; i++)
       levelsNormalizedThickness[i] = double(i) / numLayers;
+
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers);
+  for (int i = 0; i < numLayers; i++)
+    layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
 
   /*std::cout<< "Levels: ";
   for (int i = 0; i < numLayers+1; i++)
@@ -437,6 +447,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   int lEdgeColumnShift = (Ordering == 1) ? 1 : edges2D.size();
   int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
 
+  this->layered_mesh_numbering = (Ordering==0) ?
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+
   this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
   metaData->commit();
@@ -477,9 +491,14 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     else
       node = bulkData->declare_entity(stk::topology::NODE_RANK, il * vertexColumnShift + vertexLayerShift * node2dId + 1, nodePartVec);
 
+    std::vector<int> sharing_procs;
+    bulkData2D.comm_shared_procs( bulkData2D.entity_key(node2d), sharing_procs );
+    for(int iproc=0; iproc<sharing_procs.size(); ++iproc)
+      bulkData->add_node_sharing(node, sharing_procs[iproc]);
+
+
     double* coord = stk::mesh::field_data(*coordinates_field, node);
     double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
-
     coord[0] = coord2d[0];
     coord[1] = coord2d[1];
 
@@ -729,8 +748,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       bulkData->declare_relation(side, node, j);
     }
   }
-
-  Albany::fix_node_sharing(*bulkData);
+  //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
   if (params->get("Export 2D Data",false))
@@ -851,7 +869,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Tpetra_Mu
       ifile >> numNodes >> numComponents;
       TEUCHOS_TEST_FOR_EXCEPTION(numNodes != contentVec.getLocalLength(), Teuchos::Exceptions::InvalidParameterValue,
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << contentVec.getLocalLength() << ")" << std::endl);
-      TEUCHOS_TEST_FOR_EXCEPTION(numComponents != contentVec.getNumVectors(), Teuchos::Exceptions::InvalidParameterValue,
+      TEUCHOS_TEST_FOR_EXCEPTION(numComponents > contentVec.getNumVectors(), Teuchos::Exceptions::InvalidParameterValue,
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of components in file " << fname << " (" << numComponents << ") is different from the number expected (" << contentVec.getNumVectors() << ")" << std::endl);
       for (int il = 0; il < numComponents; ++il) {
         Teuchos::ArrayRCP<ST> contentVec_nonConstView = contentVec.getVectorNonConst(il)->get1dViewNonConst();
@@ -897,9 +915,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
       ifile >> zCoords[i];
   }
   //comm->Broadcast(&zCoords[0], numComponents, 0);
-  //IK, 10/1/14: double should be ST?
+  //IK, 10/1/14: double should be ST? 
   Teuchos::broadcast<int, double>(*comm, 0, numComponents, &zCoords[0]);
-
+  
   temperatureVec = Teuchos::rcp(new Tpetra_MultiVector(map, numComponents));
 
   Teuchos::ArrayRCP<ST> tempT_nonConstView = tempT.get1dViewNonConst();

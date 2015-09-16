@@ -4,40 +4,45 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #ifndef AADAPT_UNIFSIZEFIELD_HPP
 #define AADAPT_UNIFSIZEFIELD_HPP
 
-#include "AlbPUMI_FMDBDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
+#include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class UnifSizeField : public ma::IsotropicFunction {
+class UnifSizeField : public MeshSizeField {
 
   public:
-    UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
+
+    UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     ~UnifSizeField();
 
-    double getValue(ma::Entity* v);
+    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
-    void setParams(
-		   double element_size, double err_bound,
-		   const std::string state_var_name);
+    void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
     void computeError();
 
-    void copyInputFields() {};
-    void freeInputFields() {};
-    void freeSizeField() {};
+    void copyInputFields() {}
+    void freeInputFields() {}
+    void freeSizeField() {}
 
-  private:
+    class UnifIsoFunc : public ma::IsotropicFunction
+    {
+      public:
+        virtual ~UnifIsoFunc(){}
 
-    Teuchos::RCP<const Teuchos_Comm> commT;
+    /** \brief get the desired element size at this vertex */
 
-    double elem_size;
+        virtual double getValue(ma::Entity* vert){
+           return elem_size;
+        } 
+
+        double elem_size;
+
+    } unifIsoFunc;
 
 };
 

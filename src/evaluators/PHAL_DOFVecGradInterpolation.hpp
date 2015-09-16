@@ -57,6 +57,18 @@ private:
   std::size_t numDims;
   std::size_t vecDim;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFVecGradInterpolation_Residual_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolation_Residual_Tag> DOFVecGradInterpolation_Residual_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFVecGradInterpolation_Residual_Tag& tag, const int& cell) const;
+
+#endif
+
 };
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
@@ -96,8 +108,104 @@ private:
   std::size_t numDims;
   std::size_t vecDim;
   std::size_t offset;
+
+//KOKKOS:
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+ 
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFVecGradInterpolation_Jacobian_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolation_Jacobian_Tag> DOFVecGradInterpolation_Jacobian_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFVecGradInterpolation_Jacobian_Tag& tag, const int& cell) const;
+
+  int num_dof, neq;
+
+#endif
 };
 
+#ifdef ALBANY_SG
+//! Specialization for SGJacobian evaluation taking advantage of known sparsity
+template<typename Traits>
+class DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>\
+      : public PHX::EvaluatorWithBaseImpl<Traits>,
+ 	public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
+
+public:
+
+  DOFVecGradInterpolation(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
+  typedef PHAL::AlbanyTraits::SGJacobian::MeshScalarT MeshScalarT;
+
+
+  // Input:
+  //! Values at nodes
+  PHX::MDField<ScalarT,Cell,Node,VecDim> val_node;
+  //! Basis Functions
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+
+  // Output:
+  //! Values at quadrature points
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> grad_val_qp;
+
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  std::size_t vecDim;
+  std::size_t offset;
+};
+#endif
+
+#ifdef ALBANY_ENSEMBLE
+//! Specialization for MPJacobian evaluation taking advantage of known sparsity
+template<typename Traits>
+class DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>\
+      : public PHX::EvaluatorWithBaseImpl<Traits>,
+ 	public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+
+public:
+
+  DOFVecGradInterpolation(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+  typedef PHAL::AlbanyTraits::MPJacobian::MeshScalarT MeshScalarT;
+
+
+  // Input:
+  //! Values at nodes
+  PHX::MDField<ScalarT,Cell,Node,VecDim> val_node;
+  //! Basis Functions
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+
+  // Output:
+  //! Values at quadrature points
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> grad_val_qp;
+
+  std::size_t numNodes;
+  std::size_t numQPs;
+  std::size_t numDims;
+  std::size_t vecDim;
+  std::size_t offset;
+};
+#endif
 
 }
 

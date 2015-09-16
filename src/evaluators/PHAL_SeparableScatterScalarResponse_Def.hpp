@@ -10,7 +10,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Epetra_Export.h"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Petra_Converters.hpp"
 #endif
 #include "PHAL_Utilities.hpp"
@@ -173,7 +173,7 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Initialize derivatives
   Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
@@ -188,7 +188,7 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Here we scatter the *local* response derivative
   Teuchos::RCP<Epetra_MultiVector> dgdp = workset.overlapped_dgdp;
 
@@ -225,7 +225,7 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Here we scatter the *global* response and its derivatives
   Teuchos::RCP<Epetra_Vector> g = workset.g;
   Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
@@ -244,7 +244,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 // **********************************************************************
 // Specialization: Stochastic Galerkin Jacobian
 // **********************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 SeparableScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian, Traits>::
 SeparableScatterScalarResponse(const Teuchos::ParameterList& p,
@@ -299,7 +299,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      ScalarT& val = this->local_response(cell, res);
+      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -333,7 +333,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
   if (g_sg != Teuchos::null) {
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      ScalarT& val = this->global_response[res];
+      typename PHAL::Ref<ScalarT>::type val = this->global_response[res];
       for (int block=0; block<g_sg->size(); block++)
         (*g_sg)[block][res] = val.val().coeff(block);
     }
@@ -358,6 +358,8 @@ postEvaluate(typename Traits::PostEvalData workset)
       (*dgdxdot_sg)[block].Export((*overlapped_dgdxdot_sg)[block],
                                   *workset.x_importer, Add);
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **********************************************************************
 // Specialization: Multi-point Jacobian
@@ -417,7 +419,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      ScalarT& val = this->local_response(cell, res);
+      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -451,7 +453,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   if (g_mp != Teuchos::null) {
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      ScalarT& val = this->global_response[res];
+      typename PHAL::Ref<ScalarT>::type val = this->global_response[res];
       for (int block=0; block<g_mp->size(); block++)
         (*g_mp)[block][res] = val.val().coeff(block);
     }
@@ -476,7 +478,7 @@ postEvaluate(typename Traits::PostEvalData workset)
       (*dgdxdot_mp)[block].Export((*overlapped_dgdxdot_mp)[block],
                                   *workset.x_importer, Add);
 }
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

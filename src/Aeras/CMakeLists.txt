@@ -49,6 +49,7 @@
        evaluators/Aeras_DOFDInterpolationLevels.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_ShallowWaterSource.cpp
+       evaluators/Aeras_ShallowWaterHyperViscosity.cpp
        evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
        responses/Aeras_TotalVolume.cpp
        responses/Aeras_LayeredResponseUtilities.cpp
@@ -134,6 +135,8 @@
        evaluators/Aeras_Atmosphere_Moisture_Def.hpp
        evaluators/Aeras_ShallowWaterSource_Def.hpp
        evaluators/Aeras_ShallowWaterSource.hpp
+       evaluators/Aeras_ShallowWaterHyperViscosity_Def.hpp
+       evaluators/Aeras_ShallowWaterHyperViscosity.hpp
        responses/Aeras_TotalVolume.hpp
        responses/Aeras_TotalVolume_Def.hpp
        responses/Aeras_LayeredResponseUtilities.hpp
@@ -142,6 +145,13 @@
        evaluators/Aeras_XZHydrostatic_DensityWeightedVelx_Def.hpp       
        
   )
+
+SET(HEADERS ${HEADERS}
+    Aeras_HVDecorator.hpp
+)
+SET(SOURCES ${SOURCES}
+    Aeras_HVDecorator.cpp
+)
   
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                      ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 

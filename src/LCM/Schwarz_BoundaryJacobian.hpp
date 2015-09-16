@@ -4,66 +4,157 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LCM_SCHWARZ_BOUNDARY_JACOBIAN_H
-#define LCM_SCHWARZ_BOUNDARY_JACOBIAN_H
+#if !defined(LCM_SchwarzBoundaryJacobian_hpp)
+#define LCM_SchwarzBoundaryJacobian_hpp
 
 #include <iostream>
+
 #include "Teuchos_Comm.hpp"
-#include "Tpetra_Map.hpp"
-#include "Tpetra_Vector.hpp"
-#include "Tpetra_Operator.hpp"
+#include "Teuchos_RCP.hpp"
 #include "Tpetra_CrsMatrix.hpp"
 #include "Tpetra_Import.hpp"
+#include "Tpetra_Map.hpp"
+#include "Tpetra_Operator.hpp"
+#include "Tpetra_Vector.hpp"
 
+#include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
-
-#include "Teuchos_RCP.hpp"
+#include "Intrepid_MiniTensor.h"
 
 namespace LCM {
 
-/** 
- *  \brief A Tpetra operator that evaluates the Jacobian of a LCM coupled Schwarz Multiscale problem
- */
+///
+/// \brief A Tpetra operator that evaluates the Jacobian of a
+/// LCM coupled Schwarz Multiscale problem.
+/// Each Jacobian couples one single application to another.
+///
 
-  class Schwarz_BoundaryJacobian : public Tpetra_Operator {
-  public:
-    Schwarz_BoundaryJacobian(const Teuchos::RCP<const Teuchos_Comm>& comm);
+class Schwarz_BoundaryJacobian: public Tpetra_Operator {
+public:
+  Schwarz_BoundaryJacobian(
+      Teuchos::RCP<Teuchos_Comm const> const & comm,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca,
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
+      int const this_app_index = 0,
+      int const coupled_app_index = 0);
 
-    ~Schwarz_BoundaryJacobian();
+  ~Schwarz_BoundaryJacobian();
 
-    //! Initialize the operator with everything needed to apply it
-    //FIXME: add arguments
-    void initialize();
+  /// Initialize the operator with everything needed to apply it
+  //FIXME: add arguments
+  void
+  initialize();
 
+  /// Returns the result of a Tpetra_Operator applied to a
+  /// Tpetra_MultiVector X in Y.
+  virtual
+  void
+  apply(
+      Tpetra_MultiVector const & X,
+      Tpetra_MultiVector & Y,
+      Teuchos::ETransp mode = Teuchos::NO_TRANS,
+      ST alpha = Teuchos::ScalarTraits<ST>::one(),
+      ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
 
-    //! Returns the result of a Tpetra_Operator applied to a Tpetra_MultiVector X in Y.
-    virtual void apply(const Tpetra_MultiVector& X, Tpetra_MultiVector& Y,
-                      Teuchos::ETransp mode = Teuchos::NO_TRANS,
-                      ST alpha = Teuchos::ScalarTraits<ST>::one(),
-                      ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
+  /// Returns explicit matrix representation of operator if available.
+  Teuchos::RCP<Tpetra_CrsMatrix>
+  getExplicitOperator() const;
 
-    //! Returns the current UseTranspose setting.
-    virtual bool hasTransposeApply() const { return b_use_transpose_; }
+  /// Returns the current UseTranspose setting.
+  virtual
+  bool
+  hasTransposeApply() const
+  {
+    return b_use_transpose_;
+  }
 
-    //! Returns the Tpetra_Map object associated with the domain of this operator.
-    virtual Teuchos::RCP<const Tpetra_Map> getDomainMap() const { return domain_map_; }
+  /// Returns the Tpetra_Map object associated with the domain of this operator.
+  virtual
+  Teuchos::RCP<Tpetra_Map const>
+  getDomainMap() const
+  {
+    return domain_map_;
+  }
 
-    //! Returns the Tpetra_Map object associated with the range of this operator.
-    virtual Teuchos::RCP<const Tpetra_Map> getRangeMap() const { return range_map_; }
-    
-    
-  private:
+  /// Returns the Tpetra_Map object associated with the range of this operator.
+  virtual
+  Teuchos::RCP<Tpetra_Map const>
+  getRangeMap() const
+  {
+    return range_map_;
+  }
 
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_maps_;
-    Teuchos::RCP<const Tpetra_Map> domain_map_, range_map_;
-    Teuchos::RCP<const Teuchos_Comm> commT_;
-    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
-    bool b_use_transpose_;
-    bool b_initialized_;
-    int n_models_; 
+  void
+  setThisAppIndex(int const tai)
+  {
+    this_app_index_ = tai;
+  }
 
+  int
+  getThisAppIndex() const
+  {
+    return this_app_index_;
+  }
 
-  };
+  void
+  setCoupledAppIndex(int const cai)
+  {
+    coupled_app_index_ = cai;
+  }
+
+  int
+  getCoupledAppIndex() const
+  {
+    return coupled_app_index_;
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index)
+  {
+    return *(coupled_apps_[app_index]);
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index) const
+  {
+    return *(coupled_apps_[app_index]);
+  }
+
+private:
+
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+  coupled_apps_;
+
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
+  jacs_;
+
+  int
+  this_app_index_;
+
+  int
+  coupled_app_index_;
+
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
+  disc_maps_;
+
+  Teuchos::RCP<Tpetra_Map const>
+  domain_map_;
+
+  Teuchos::RCP<Tpetra_Map const>
+  range_map_;
+
+  Teuchos::RCP<Teuchos_Comm const>
+  commT_;
+
+  bool
+  b_use_transpose_;
+
+  bool
+  b_initialized_;
+
+  int
+  n_models_;
+};
 
 }
-#endif
+#endif // LCM_SchwarzBoundaryJacobian_hpp

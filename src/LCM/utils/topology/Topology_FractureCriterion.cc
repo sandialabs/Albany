@@ -135,7 +135,7 @@ FractureCriterionTraction::check(
 Intrepid::Vector<double> const &
 FractureCriterionTraction::getNormal(stk::mesh::EntityId const entity_id)
 {
-  std::map<stk::mesh::EntityId, Intrepid::Vector<double> >::const_iterator
+  std::map<stk::mesh::EntityId, Intrepid::Vector<double>>::const_iterator
   it = normals_.find(entity_id);
 
   assert(it != normals_.end());
@@ -160,7 +160,7 @@ FractureCriterionTraction::computeNormals()
   EntityVectorIndex const
   number_nodes = nodes.size();
 
-  std::vector<Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   coordinates(number_nodes);
 
   const Teuchos::ArrayRCP<double> &

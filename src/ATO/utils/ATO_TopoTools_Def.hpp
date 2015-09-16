@@ -42,7 +42,7 @@ T H1::Penalize(T phi) {
 
 template<typename T> 
 T H1::dPenalize(T phi) { 
-  if ((phi <= - regLength) || ( phi >= regLength))
+  if ((phi <= - regLength) || (phi >= regLength))
     return 0.0;
   else {
     T arg = T_PI*phi/(2.0*regLength);

@@ -162,7 +162,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
-  const int numVertices = cellType->getNodeCount();
+  const int numVertices = meshSpecs.ctd.node_count;
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices  = " << numVertices

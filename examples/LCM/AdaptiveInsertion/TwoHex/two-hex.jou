@@ -1,0 +1,26 @@
+## /usr/local/cubit-14.1/bin/clarox
+## Cubit Version 14.1
+## Cubit Build 393673
+## Revised 2014-08-11 09:13:47 -0600 (Mon, 11 Aug 2014)
+## Running 03/17/2015 04:05:22 PM
+## Command Options:
+## -warning = On
+## -information = On
+undo on
+brick x 1 y 1 z 1
+brick x 1 y 1 z 1
+move volume 2 x 0 y 0 z 1 include_merged
+unite volume 1 2
+volume all size 1
+volume all size 1
+mesh volume all
+block 1 volume 1
+block 1 name "bulk-block"
+nodeset 1 surface 2
+nodeset 2 surface 7
+nodeset 3 curve 7 15
+nodeset 4 curve 6 16
+undo group begin
+set large exodus file on
+export genesis "two-hex.exo" block all overwrite
+undo group end

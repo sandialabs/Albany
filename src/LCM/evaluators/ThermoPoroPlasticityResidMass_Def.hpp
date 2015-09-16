@@ -19,53 +19,53 @@ namespace LCM {
   ThermoPoroPlasticityResidMass<EvalT, Traits>::
   ThermoPoroPlasticityResidMass(const Teuchos::ParameterList& p) :
     wBF         (p.get<std::string>                   ("Weighted BF Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
     porePressure (p.get<std::string>                   ("QP Pore Pressure Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	densityPoreFluid       (p.get<std::string>      ("Pore-Fluid Density Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     Temp        (p.get<std::string>                   ("QP Temperature Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     RefTemp        (p.get<std::string>                   ("Reference Temperature Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	young_modulus_ (p.get<std::string>                   ("Elastic Modulus Name"),
-				 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+				 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	poissons_ratio_       (p.get<std::string>      ("Poissons Ratio Name"),
-			     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+			     p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	stabParameter        (p.get<std::string>           ("Material Property Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     ThermalCond (p.get<std::string>                   ("Thermal Conductivity Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     kcPermeability (p.get<std::string>            ("Kozeny-Carman Permeability Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     porosity (p.get<std::string>                   ("Porosity Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	alphaMixture (p.get<std::string>           ("Mixture Thermal Expansion Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     alphaPoreFluid       (p.get<std::string>      ("Pore-Fluid Thermal Expansion Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	alphaSkeleton       (p.get<std::string>      ("Skeleton Thermal Expansion Name"),
-	     p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	     p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     biotCoefficient (p.get<std::string>           ("Biot Coefficient Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     biotModulus (p.get<std::string>                   ("Biot Modulus Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
     TGrad       (p.get<std::string>                   ("Gradient QP Variable Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
 	TempGrad       (p.get<std::string>                   ("Temperature Gradient Name"),
-		 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
 	weights       (p.get<std::string>                   ("Weights Name"),
-		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	deltaTime (p.get<std::string>("Delta Time Name"),
-		p.get<Teuchos::RCP<PHX::DataLayout> >("Workset Scalar Data Layout")),
+		p.get<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout")),
 	J           (p.get<std::string>                   ("DetDefGrad Name"),
-		p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+		p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	defgrad     (p.get<std::string>                   ("DefGrad Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
+	    p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
     TResidual   (p.get<std::string>                   ("Residual Name"),
-		p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") ),
+		p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout") ),
     haveSource  (p.get<bool>("Have Source")),
     haveConvection(false),
     haveAbsorption  (p.get<bool>("Have Absorption")),
@@ -106,24 +106,24 @@ namespace LCM {
       if (haveAbsorption) {
         Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
   							p.get<std::string>("Absorption Name"),
-  							p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+  							p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
         this->addDependentField(Absorption);
       }
 /*
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
 */
     Teuchos::RCP<PHX::DataLayout> vector_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
     std::vector<PHX::DataLayout::size_type> dims;
     vector_dl->dimensions(dims);
     numQPs  = dims[1];
     numDims = dims[2];
 
     Teuchos::RCP<PHX::DataLayout> node_dl =
-      p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
+      p.get< Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout");
     std::vector<PHX::DataLayout::size_type> ndims;
     node_dl->dimensions(ndims);
     worksetSize = dims[0];
@@ -166,7 +166,7 @@ namespace LCM {
 	haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
 	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
-						 p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+						 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
 	rhoCp = tmp;
 	this->addDependentField(rhoCp);
       }

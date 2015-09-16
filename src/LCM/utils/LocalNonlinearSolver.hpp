@@ -117,7 +117,7 @@ public:
 // -----------------------------------------------------------------------------
 // Stochastic Galerkin Residual
 // -----------------------------------------------------------------------------
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class LocalNonlinearSolver< PHAL::AlbanyTraits::SGResidual, Traits> :
 public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::SGResidual, Traits>
@@ -168,6 +168,8 @@ public:
       std::vector<ScalarT> & X,
       std::vector<ScalarT> & B);
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // -----------------------------------------------------------------------------
 // Multi-Point Residual
@@ -222,7 +224,7 @@ public:
       std::vector<ScalarT> & X,
       std::vector<ScalarT> & B);
 };
-#endif //ALBANY_SG_MP
+#endif
 }
 
 #include "LocalNonlinearSolver_Def.hpp"

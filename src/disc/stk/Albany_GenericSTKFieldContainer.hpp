@@ -70,7 +70,7 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
                           const Teuchos::RCP<const Tpetra_Map>& node_mapT,
                           const stk::mesh::Bucket& bucket, int offset);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     // Use boost to provide explicit specialization
     template<class T>
     typename boost::disable_if< boost::is_same<T, ScalarFieldType>, void >::type
@@ -149,7 +149,7 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
   template class name<false>;
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
   template class name<true>;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVH(class_name, value, arg_type) \
   template void class_name<value>::saveVectorHelper( \
              const Epetra_Vector &soln, \
@@ -195,7 +195,7 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
           const arg_type *source_field, \
           arg_type *target_field);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \

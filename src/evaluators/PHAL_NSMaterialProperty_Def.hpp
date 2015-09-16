@@ -26,12 +26,13 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 
   double default_value = p.get("Default Value", 1.0);
 
-  Teuchos::RCP<ParamLib> paramLib = 
+  Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
 
-  Teuchos::ParameterList* mp_list = 
+  Teuchos::ParameterList* mp_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
   std::string type = mp_list->get("Type", "Constant");
+
   if (type == "Constant") {
     if (rank == 2) {
       matPropType = SCALAR_CONSTANT;
@@ -43,13 +44,13 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     else if (rank == 3) {
       matPropType = VECTOR_CONSTANT;
       PHX::index_size_type numDims = dims[2];
-      Teuchos::Array<double> tmp = 
-	mp_list->get< Teuchos::Array<double> >("Value");
+      Teuchos::Array<double> tmp =
+      mp_list->get< Teuchos::Array<double> >("Value");
       vector_constant_value.resize(numDims);
       TEUCHOS_TEST_FOR_EXCEPTION(vector_constant_value.size() != numDims,
 			 std::logic_error,
 			 "Vector constant value for material property " <<
-			 name_mp << " has size " << 
+			 name_mp << " has size " <<
 			 vector_constant_value.size() << " but expected size "
 			 << numDims);
 
@@ -64,16 +65,16 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       matPropType = TENSOR_CONSTANT;
       PHX::index_size_type numRows = dims[2];
       PHX::index_size_type numCols = dims[3];
-      Teuchos::TwoDArray<double> tmp = 
+      Teuchos::TwoDArray<double> tmp =
 	mp_list->get< Teuchos::TwoDArray<double> >("Value");
       TEUCHOS_TEST_FOR_EXCEPTION(tensor_constant_value.getNumRows() != numRows ||
 			 tensor_constant_value.getNumCols() != numCols,
 			 std::logic_error,
 			 "Tensor constant value for material property " <<
-			 name_mp << " has dimensions " << 
+			 name_mp << " has dimensions " <<
 			 tensor_constant_value.getNumRows() << "x" <<
-			 tensor_constant_value.getNumCols() << 
-			 " but expected dimensions " << 
+			 tensor_constant_value.getNumCols() <<
+			 " but expected dimensions " <<
 			 numRows << "x" << numCols);
       tensor_constant_value = Teuchos::TwoDArray<ScalarT>(numRows, numCols);
       for (PHX::index_size_type i=0; i<numRows; i++)
@@ -87,20 +88,20 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     }
     else
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-			 "Invalid material property rank " << rank << 
-			 ".  Acceptable values are 2 (scalar), " << 
+			 "Invalid material property rank " << rank <<
+			 ".  Acceptable values are 2 (scalar), " <<
 			 "3 (vector), or 4 (tensor)");
   }
-  else if (type == "Truncated KL Expansion" || 
+  else if (type == "Truncated KL Expansion" ||
 	   type == "Log Normal RF" ||
 	   type == "Exponential Truncated KL Expansion") {
     if (type == "Truncated KL Expansion")
       matPropType = KL_RAND_FIELD;
-    else if (type == "Log Normal RF" || 
+    else if (type == "Log Normal RF" ||
 	     type == "Exponential Truncated KL Expansion")
       matPropType = EXP_KL_RAND_FIELD;
- 
-    Teuchos::RCP<PHX::DataLayout> coord_dl = 
+
+    Teuchos::RCP<PHX::DataLayout> coord_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Vector Data Layout");
     coordVec = PHX::MDField<MeshScalarT>(
       p.get<std::string>("Coordinate Vector Name"),
@@ -110,7 +111,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     coord_dl->dimensions(coord_dims);
     point.resize(coord_dims[2]);
 
-    exp_rf_kl = 
+    exp_rf_kl =
       Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*mp_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
@@ -129,7 +130,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     T = PHX::MDField<ScalarT>(
       p.get<std::string>("Temperature Variable Name"),
       layout);
-    this->addDependentField(T); 
+    this->addDependentField(T);
 
     // Add property as a Sacado-ized parameter
     this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
@@ -141,7 +142,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     T = PHX::MDField<ScalarT>(
       p.get<std::string>("Temperature Variable Name"),
       layout);
-    this->addDependentField(T); 
+    this->addDependentField(T);
 
     // Add property as a Sacado-ized parameter
     this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
@@ -157,14 +158,26 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     mu = PHX::MDField<ScalarT>(
       p.get<std::string>("Average Scattering Angle Name"),
       layout);
-    this->addDependentField(sigma_a); 
-    this->addDependentField(sigma_s); 
+    this->addDependentField(sigma_a);
+    this->addDependentField(sigma_s);
     this->addDependentField(mu);
+  }
+  else if (type == "Time Dependent") {
+    matPropType = TIME_DEP_SCALAR;
+    timeValues = mp_list->get<Teuchos::Array<RealType>>("Time Values").toVector();
+    depValues = mp_list->get<Teuchos::Array<RealType>>("Dependent Values").toVector();
+
+    TEUCHOS_TEST_FOR_EXCEPTION( !(timeValues.size() == depValues.size()),
+                              Teuchos::Exceptions::InvalidParameter,
+                              "Dimension of \"Time Values\" and \"Dependent Values\" do not match" );
+
+      // Add property as a Sacado-ized parameter
+    this->registerSacadoParameter(name_mp, paramLib);
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid material property type " << type);
-  } 
+  }
 
   this->addEvaluatedField(matprop);
   this->setName(name_mp);
@@ -177,9 +190,9 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(matprop,fm);
-  if (matPropType == KL_RAND_FIELD || matPropType == EXP_KL_RAND_FIELD) 
+  if (matPropType == KL_RAND_FIELD || matPropType == EXP_KL_RAND_FIELD)
     this->utils.setFieldData(coordVec,fm);
-  if (matPropType == SQRT_TEMP || matPropType == INV_SQRT_TEMP) 
+  if (matPropType == SQRT_TEMP || matPropType == INV_SQRT_TEMP)
     this->utils.setFieldData(T,fm);
   if (matPropType == NEUTRON_DIFFUSION) {
     this->utils.setFieldData(sigma_a,fm);
@@ -196,7 +209,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (matPropType == SCALAR_CONSTANT) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < dims[1]; ++qp) {
-	matprop(cell,qp) = scalar_constant_value;
+        matprop(cell,qp) = scalar_constant_value;
       }
     }
   }
@@ -224,46 +237,74 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < dims[1]; ++qp) {
 	matprop(cell,qp) = scalar_constant_value / sqrt(ref_temp) * sqrt(T(cell,qp));
-      } 
+      }
     }
   }
   else if (matPropType == INV_SQRT_TEMP) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < dims[1]; ++qp) {
 	matprop(cell,qp) = scalar_constant_value * sqrt(ref_temp) / sqrt(T(cell,qp));
-      } 
+      }
     }
   }
   else if (matPropType == NEUTRON_DIFFUSION) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < dims[1]; ++qp) {
-	matprop(cell,qp) = 
+	matprop(cell,qp) =
 	  1.0 / (3.0*(1.0 - mu(cell,qp))*(sigma_a(cell,qp) + sigma_s(cell,qp)));
-      } 
+      }
+    }
+  }
+  else if (matPropType == TIME_DEP_SCALAR) {
+
+    RealType time = workset.current_time;
+    TEUCHOS_TEST_FOR_EXCEPTION(
+       time > timeValues.back(), Teuchos::Exceptions::InvalidParameter,
+      "Time is growing unbounded!" );
+
+    RealType slope;
+    unsigned int index(0);
+
+    while (timeValues[index] < time)
+      index++;
+
+    if (index == 0)
+      scalar_constant_value = depValues[index];
+    else {
+      slope = ((depValues[index] - depValues[index - 1]) /
+             (timeValues[index] - timeValues[index - 1]));
+      scalar_constant_value = depValues[index-1] + slope * (time - timeValues[index - 1]);
+    }
+
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < dims[1]; ++qp) {
+         matprop(cell,qp) = scalar_constant_value;
+      }
     }
   }
   else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < dims[1]; ++qp) {
 	for (std::size_t i=0; i<point.size(); i++)
-	  point[i] = 
+	  point[i] =
 	    Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
-	matprop(cell,qp) = exp_rf_kl->evaluate(point, rv);       
-        if (matPropType == EXP_KL_RAND_FIELD)
-          matprop(cell,qp) = std::exp(matprop(cell,qp));       
-      }
+    matprop(cell,qp) = exp_rf_kl->evaluate(point, rv);
+    if (matPropType == EXP_KL_RAND_FIELD)
+       matprop(cell,qp) = std::exp(matprop(cell,qp));
     }
   }
+ }
 }
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename NSMaterialProperty<EvalT,Traits>::ScalarT& 
+typename NSMaterialProperty<EvalT,Traits>::ScalarT&
 NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
 {
-  if (matPropType == SCALAR_CONSTANT || 
-      matPropType == SQRT_TEMP || 
-      matPropType == INV_SQRT_TEMP) {
+  if (matPropType == SCALAR_CONSTANT ||
+      matPropType == SQRT_TEMP ||
+      matPropType == INV_SQRT_TEMP ||
+      matPropType == TIME_DEP_SCALAR) {
     return scalar_constant_value;
   }
   else if (matPropType == VECTOR_CONSTANT) {

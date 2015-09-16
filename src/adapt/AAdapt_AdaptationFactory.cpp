@@ -8,8 +8,9 @@
 #include <Teuchos_TestForException.hpp>
 
 #include "AAdapt_AdaptationFactory.hpp"
+#if defined(HAVE_STK)
 #include "AAdapt_CopyRemesh.hpp"
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(ALBANY_BGL)
 #include "AAdapt_TopologyModification.hpp"
 #endif
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
@@ -17,6 +18,7 @@
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
 #include "AAdapt_STKAdapt.hpp"
+#endif
 #endif
 #ifdef ALBANY_SCOREC
 #include "AAdapt_MeshAdapt.hpp"
@@ -43,6 +45,7 @@ AAdapt::AdaptationFactory::createAdapter() {
   Teuchos::RCP<AAdapt::AbstractAdapter> strategy;
   std::string& method = adapt_params_->get("Method", "");
 
+#if defined(HAVE_STK)
   if(method == "Copy Remesh") {
     strategy = rcp(new AAdapt::CopyRemesh(adapt_params_,
                                           param_lib_,
@@ -50,7 +53,7 @@ AAdapt::AdaptationFactory::createAdapter() {
                                           commT_));
   }
 
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(ALBANY_BGL)
 
   else if(method == "Topmod") {
     strategy = rcp(new AAdapt::TopologyMod(adapt_params_,
@@ -71,6 +74,7 @@ AAdapt::AdaptationFactory::createAdapter() {
   }
 
 #endif
+#endif
 #if 0
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
 
@@ -84,7 +88,9 @@ AAdapt::AdaptationFactory::createAdapter() {
 #endif
 #endif
 
-  else {
+#if defined(HAVE_STK)
+  else 
+#endif
     TEUCHOS_TEST_FOR_EXCEPTION(true,
                                Teuchos::Exceptions::InvalidParameter,
                                std::endl <<
@@ -93,7 +99,6 @@ AAdapt::AdaptationFactory::createAdapter() {
                                " !" << std::endl
                                << "Supplied parameter list is " <<
                                std::endl << *adapt_params_);
-  }
 
   return strategy;
 }

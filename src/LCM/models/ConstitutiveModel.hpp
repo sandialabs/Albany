@@ -45,29 +45,30 @@ public:
   void
   computeState(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields) = 0;
 
   virtual
   void
   computeStateParallel(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields) = 0;
 
   ///
   /// Optional Method to volume average the pressure
   ///
+  virtual
   void
   computeVolumeAverage(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   ///
   /// Return a map to the dependent fields
   ///
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout> >
+  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
   getDependentFieldMap()
   {
     return dep_field_map_;
@@ -76,7 +77,7 @@ public:
   ///
   /// Return a map to the evaluated fields
   ///
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout> >
+  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
   getEvaluatedFieldMap()
   {
     return eval_field_map_;
@@ -281,17 +282,17 @@ protected:
   ///
   /// Map of field names
   ///
-  Teuchos::RCP<std::map<std::string, std::string> > field_name_map_;
+  Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
 
   std::vector<std::string> state_var_names_;
-  std::vector<Teuchos::RCP<PHX::DataLayout> > state_var_layouts_;
+  std::vector<Teuchos::RCP<PHX::DataLayout>> state_var_layouts_;
   std::vector<std::string> state_var_init_types_;
   std::vector<double> state_var_init_values_;
   std::vector<bool> state_var_old_state_flags_;
   std::vector<bool> state_var_output_flags_;
 
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout> > dep_field_map_;
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout> > eval_field_map_;
+  std::map<std::string, Teuchos::RCP<PHX::DataLayout>> dep_field_map_;
+  std::map<std::string, Teuchos::RCP<PHX::DataLayout>> eval_field_map_;
 
   ///
   /// Thermal Expansion Coefficient

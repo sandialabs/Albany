@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except SG and MP
-
 #if !defined(LCM_SchwarzBC_hpp)
 #define LCM_SchwarzBC_hpp
 
@@ -15,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Vector.h"
 #endif
 
@@ -26,7 +24,7 @@
 namespace LCM {
 
 //
-// \brief Schwarz for blocks BC Dirichlet evaluator
+// \brief Schwarz for models BC Dirichlet evaluator
 //
 
 //
@@ -38,7 +36,6 @@ template <typename EvalT, typename Traits>
 class SchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
-  typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
 
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
@@ -51,24 +48,84 @@ public:
       ScalarT & z_val);
 
   void
-  setDiscretization(Discretization & d) {disc_ = d;}
-
-  Discretization
-  getDiscretization() const {return disc_;}
-
-  void
-  setCoupledBlock(std::string const & cb) {coupled_block_ = cb;}
+  setCoupledAppName(std::string const & can)
+  {
+    coupled_app_name_ = can;
+  }
 
   std::string
-  getCoupledBlock() const {return coupled_block_;}
+  getCoupledAppName() const
+  {
+    return coupled_app_name_;
+  }
+
+  void
+  setCoupledBlockName(std::string const & cbn)
+  {
+    coupled_block_name_ = cbn;
+  }
+
+  std::string
+  getCoupledBlockName() const
+  {
+    return coupled_block_name_;
+  }
+
+  void
+  setThisAppIndex(int const tai)
+  {
+    this_app_index_ = tai;
+  }
+
+  int
+  getThisAppIndex() const
+  {
+    return this_app_index_;
+  }
+
+  void
+  setCoupledAppIndex(int const cai)
+  {
+    coupled_app_index_ = cai;
+  }
+
+  int
+  getCoupledAppIndex() const
+  {
+    return coupled_app_index_;
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index)
+  {
+    return *(coupled_apps_[app_index]);
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index) const
+  {
+    return *(coupled_apps_[app_index]);
+  }
 
 protected:
 
-  std::string
-  coupled_block_;
+  Teuchos::RCP<Albany::Application>
+  app_;
 
-  Discretization
-  disc_;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+  coupled_apps_;
+
+  std::string
+  coupled_app_name_;
+
+  std::string
+  coupled_block_name_;
+
+  int
+  this_app_index_;
+
+  int
+  coupled_app_index_;
 };
 
 //
@@ -122,7 +179,7 @@ public:
 //
 // Stochastic Galerkin Residual
 //
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class SchwarzBC<PHAL::AlbanyTraits::SGResidual,Traits>
    : public SchwarzBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -155,6 +212,8 @@ public:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 //
 // Multi-point Residual
@@ -192,7 +251,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#endif //ALBANY_SG_MP
+#endif
 
 }
 

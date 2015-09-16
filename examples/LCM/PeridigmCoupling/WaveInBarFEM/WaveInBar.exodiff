@@ -1,0 +1,116 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.81) Modified: 2015-06-03
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2015/08/22   18:09:00 MDT
+#  *****************************************************************
+
+#  FILE 1: /scratch/djlittl/Albany/examples/LCM/PeridigmCoupling/WaveInBarFEM/WaveInBar.gold.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 792, Elements = 525, Nodesets = 0, Sidesets = 0
+#          Vars: Global = 0, Nodal = 6, Element = 72, Nodeset = 0, Sideset = 0, Times = 23
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:           2e-05 @ t23
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	displacement_x  absolute 3.747402300000e-10    # min:               0 @ t1,n1	max:   0.00037474023 @ t20,n462
+	displacement_y  absolute 3.015203900000e-11    # min:               0 @ t1,n1	max:   3.0152039e-05 @ t4,n287
+	displacement_z  absolute 3.015203900000e-11    # min:               0 @ t1,n1	max:   3.0152039e-05 @ t4,n119
+	force_x         absolute 1.343247100000e-03    # min:               0 @ t1,n1	max:       1343.2471 @ t19,n690
+	force_y         absolute 6.864423700000e-04    # min:               0 @ t1,n1	max:       686.44237 @ t10,n489
+	force_z         absolute 6.864423700000e-04    # min:               0 @ t1,n1	max:       686.44237 @ t10,n492
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Stress_01  absolute 5.130104500000e+02    # min:               0 @ t1,b1,e1	max:   5.1301045e+08 @ t2,b1,e69
+	Stress_02  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e193
+	Stress_03  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e189
+	Stress_04  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e193
+	Stress_05  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_06  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e69
+	Stress_07  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e189
+	Stress_08  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e69
+	Stress_09  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_10  absolute 5.130104500000e+02    # min:               0 @ t1,b1,e1	max:   5.1301045e+08 @ t2,b1,e67
+	Stress_11  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e193
+	Stress_12  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e187
+	Stress_13  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e193
+	Stress_14  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_15  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e67
+	Stress_16  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e187
+	Stress_17  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e67
+	Stress_18  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_19  absolute 5.130104500000e+02    # min:               0 @ t1,b1,e1	max:   5.1301045e+08 @ t2,b1,e59
+	Stress_20  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e183
+	Stress_21  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e189
+	Stress_22  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e183
+	Stress_23  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_24  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e59
+	Stress_25  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e189
+	Stress_26  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e59
+	Stress_27  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_28  absolute 5.130104500000e+02    # min:               0 @ t1,b1,e1	max:   5.1301045e+08 @ t2,b1,e57
+	Stress_29  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e183
+	Stress_30  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e187
+	Stress_31  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e183
+	Stress_32  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_33  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e57
+	Stress_34  absolute 8.167349200000e+01    # min:               0 @ t1,b1,e1	max:        81673492 @ t21,b1,e187
+	Stress_35  absolute 4.944568300000e+01    # min:               0 @ t1,b1,e1	max:        49445683 @ t10,b1,e57
+	Stress_36  absolute 2.734856100000e+02    # min:               0 @ t1,b1,e1	max:   2.7348561e+08 @ t4,b1,e38
+	Stress_37  absolute 5.130105100000e+02    # min:               0 @ t1,b1,e1	max:   5.1301051e+08 @ t2,b1,e69
+	Stress_38  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e193
+	Stress_39  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e189
+	Stress_40  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e193
+	Stress_41  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e25
+	Stress_42  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e69
+	Stress_43  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e189
+	Stress_44  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e69
+	Stress_45  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e25
+	Stress_46  absolute 5.130105100000e+02    # min:               0 @ t1,b1,e1	max:   5.1301051e+08 @ t2,b1,e67
+	Stress_47  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e193
+	Stress_48  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e187
+	Stress_49  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e193
+	Stress_50  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e21
+	Stress_51  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e67
+	Stress_52  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e187
+	Stress_53  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e67
+	Stress_54  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e21
+	Stress_55  absolute 5.130105100000e+02    # min:               0 @ t1,b1,e1	max:   5.1301051e+08 @ t2,b1,e59
+	Stress_56  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e183
+	Stress_57  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e189
+	Stress_58  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e183
+	Stress_59  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e5
+	Stress_60  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e59
+	Stress_61  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e189
+	Stress_62  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e59
+	Stress_63  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e5
+	Stress_64  absolute 5.130105100000e+02    # min:               0 @ t1,b1,e1	max:   5.1301051e+08 @ t2,b1,e57
+	Stress_65  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e183
+	Stress_66  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e187
+	Stress_67  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e183
+	Stress_68  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e1
+	Stress_69  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e57
+	Stress_70  absolute 8.075466800000e+01    # min:               0 @ t1,b1,e1	max:        80754668 @ t21,b1,e187
+	Stress_71  absolute 4.905546700000e+01    # min:               0 @ t1,b1,e1	max:        49055467 @ t10,b1,e57
+	Stress_72  absolute 2.576442600000e+02    # min:               0 @ t1,b1,e1	max:   2.5764426e+08 @ t10,b1,e1
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
+

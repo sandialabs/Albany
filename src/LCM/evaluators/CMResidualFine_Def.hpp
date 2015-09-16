@@ -47,7 +47,7 @@ CMResidualFine(Teuchos::ParameterList & p,
   int num_dims_ = dims[3];
 
   Teuchos::RCP<ParamLib>
-  paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+  paramLib = p.get<Teuchos::RCP<ParamLib>>("Parameter Library");
 }
 
 //

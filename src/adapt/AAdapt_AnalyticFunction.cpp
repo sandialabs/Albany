@@ -34,6 +34,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
 
   else if(name == "Linear Y")
     F = Teuchos::rcp(new AAdapt::LinearY(neq, numDim, data));
+  
+  else if(name == "Circle")
+    F = Teuchos::rcp(new AAdapt::Circle(neq, numDim, data));
 
   else if(name == "Gaussian Pressure")
     F = Teuchos::rcp(new AAdapt::GaussianPress(neq, numDim, data));
@@ -79,6 +82,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   
   else if(name == "Aeras Scalar CosineBell")
       F = Teuchos::rcp(new AAdapt::AerasScalarCosineBell(neq, numDim, data));
+
+  else if(name == "Aeras SlottedCylinder")
+      F = Teuchos::rcp(new AAdapt::AerasSlottedCylinder(neq, numDim, data));
 
   else if(name == "Aeras ZonalFlow") //this used to be called TestCase2.  Irina has renamed it so it can be used for test case 5 too.
       F = Teuchos::rcp(new AAdapt::AerasZonalFlow(neq, numDim, data));
@@ -248,6 +254,29 @@ void AAdapt::LinearY::compute(double* x, const double* X) {
   x[1] = data[0] * X[0];
 
   if(numDim > 2) x[2] = 0.0;
+}
+//*****************************************************************************
+AAdapt::Circle::Circle(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  bool error = true; 
+  if (neq == 1 || neq == 3) error = false; 
+  TEUCHOS_TEST_FOR_EXCEPTION(error || (numDim != 2),
+                             std::logic_error,
+                             "Error! Invalid call of Circle with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::Circle::compute(double* x, const double* X) {
+  if( ((X[0]-.5)*(X[0]-.5) + (X[1]-.5)*(X[1]-.5))< 1.0/16.0  )
+    x[0] = 1.0;
+  else
+    x[0] = 0.0;
+
+  //This would be the initial condition for the auxiliary variables, but it should not 
+  //be needed. 
+  /*if (neq == 3) {
+    x[1] = 0.0; 
+    x[2] = 0.0; 
+  }*/
 }
 //*****************************************************************************
 AAdapt::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
@@ -708,7 +737,7 @@ void AAdapt::AerasHydrostatic::compute(double* solution, const double* X) {
   const double sinLambda = std::sin(lambda);
   const double cosLambda = std::cos(lambda);
 
-  const double u =  U1*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+  const double u =  U0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
   const double v = -U1*(sinLambda*sinAlpha);
 
 
@@ -751,7 +780,9 @@ void AAdapt::AerasHeaviside::compute(double* x, const double* X) {
 //*****************************************************************************
 AAdapt::AerasCosineBell::AerasCosineBell(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
+  bool error = true; 
+  if (neq == 3 || neq == 4 || neq == 6) error = false; 
+  TEUCHOS_TEST_FOR_EXCEPTION( (error || spatialDim!=3 || data.size()!=1) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras CosineBell with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -805,9 +836,80 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   solution[2] = v;
 }
 //*****************************************************************************
+AAdapt::AerasSlottedCylinder::AerasSlottedCylinder(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+  : spatialDim(spatialDim_), neq(neq_), data(data_) {
+  bool error = true; 
+  if (neq == 3 || neq == 4 || neq == 6) error = false; 
+  TEUCHOS_TEST_FOR_EXCEPTION( (error || spatialDim!=3 || data.size()!=1) ,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras Slotted Cylinder with " << neq
+                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
+}
+void AAdapt::AerasSlottedCylinder::compute(double* solution, const double* X) {
+
+  const double a = Aeras::ShallowWaterConstants::self().earthRadius;
+  const double cosAlpha = std::cos(data[0]);
+  const double sinAlpha = std::sin(data[0]);
+
+  const double myPi = Aeras::ShallowWaterConstants::self().pi;
+  const double u0 = 2*myPi*a/(12.*24.*3600.);
+  const double lambda_c = 1.5*myPi;
+  const double theta_c = 0;
+  const double sinTheta_c = std::sin(theta_c);
+  const double cosTheta_c = std::cos(theta_c);
+
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+
+  const double theta  = std::asin(z);
+
+  double lambda = std::atan2(y,x);
+
+  const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+  if (std::abs(std::abs(theta)-myPi/2.) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*myPi;
+
+  const double sinTheta = std::sin(theta);
+  const double cosTheta = std::cos(theta);
+
+  const double sinLambda = std::sin(lambda);
+  const double cosLambda = std::cos(lambda);
+
+
+  const double u = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+  const double v = -u0*(sinLambda*sinAlpha);
+
+  const double R = a/2.;
+  const double h0 = 1000.;
+
+  const double r = a*std::acos(sinTheta_c*sinTheta + cosTheta_c*cosTheta*std::cos(lambda - lambda_c));
+
+  double h = 0.0;
+
+  const double h2 = 0.5/6.0;
+
+  if ((r<R) && (std::abs(lambda-lambda_c) >= h2)){
+      h = 1.0;
+  }
+  if ((r<R) && (std::abs(lambda-lambda_c) < h2) && ((theta-theta_c)<-5.0/12.0*0.5)){
+      h = 1.0;
+  }
+
+  h *= h0;
+ 
+  solution[0] = h;
+  solution[1] = u;
+  solution[2] = v;
+}
+
+
+//*****************************************************************************
 AAdapt::AerasScalarCosineBell::AerasScalarCosineBell(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=1 || spatialDim!=3 || data.size()!=1) ,
+  bool error = true; 
+  if (neq == 1 || neq == 2) error = false; 
+  TEUCHOS_TEST_FOR_EXCEPTION( (error || spatialDim!=3 || data.size()!=1) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras ScalarCosineBell with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -859,7 +961,9 @@ void AAdapt::AerasScalarCosineBell::compute(double* solution, const double* X) {
 //IK, 2/5/14: added to data array h0*g, which corresponds to data[2] 
 AAdapt::AerasZonalFlow::AerasZonalFlow(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
+  bool error = true; 
+  if (neq == 3 || neq == 6 ) error = false; 
+  TEUCHOS_TEST_FOR_EXCEPTION( (error || spatialDim!=3 || data.size()!=1) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras ZonalFlow with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -919,7 +1023,9 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
 //TC5
 AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=0) ,
+  bool error = true; 
+  if (neq == 3 || neq == 6 || neq == 4 || neq == 7) error = false;
+  TEUCHOS_TEST_FOR_EXCEPTION( ( error || spatialDim!=3 || data.size()!=0) ,
                              std::logic_error,
                              "Error! Invalid call of Aeras ZonalFlow with " << neq
                              << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -1244,7 +1350,9 @@ double AAdapt::AerasTC4Init::phicon(const double lat){
 
 AAdapt::AerasTC3Init::AerasTC3Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
 : spatialDim(spatialDim_), neq(neq_), data(data_) {
-    TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
+    bool error = true; 
+    if (neq == 3 || neq == 6) error = false; 
+    TEUCHOS_TEST_FOR_EXCEPTION( (error || spatialDim!=3 || data.size()!=1), 
                                std::logic_error,
                                "Error! Invalid call of Aeras TC3Init with " << neq
                                << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -1383,6 +1491,8 @@ void AAdapt::AerasTC3Init::compute(double* solution, const double* X) {
     solution[0] = h;
     solution[1] = u;
     solution[2] = v;
+    for (int i=3; i<neq; ++i) //Hyperviscosity initial condition
+      solution[i] = 0.0; 
 }
 
 //*****************************************************************************
@@ -1495,4 +1605,95 @@ void AAdapt::AerasRossbyHaurwitzWave::compute(double* solution, const double* X)
 
   return;
 
+}
+
+//*****************************************************************************
+//ExpressionParser
+
+AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::string expressionX_, std::string expressionY_, std::string expressionZ_)
+  : spatialDim(spatialDim_), neq(neq_), expressionX(expressionX_), expressionY(expressionY_), expressionZ(expressionZ_)
+{
+
+  TEUCHOS_TEST_FOR_EXCEPTION( neq!=3 || spatialDim!=3,
+			      std::logic_error,
+			      "Error! Invalid call AAdapt::ExpressionParser::ExpressionParser(), neq = " << neq
+			      << ", spatialDim = " << spatialDim << ".");
+
+  bool success;
+
+  // set up RTCompiler
+  rtcFunctionX.addVar("double", "x");
+  rtcFunctionX.addVar("double", "y");
+  rtcFunctionX.addVar("double", "z");
+  rtcFunctionX.addVar("double", "value");
+  success = rtcFunctionX.addBody(expressionX);
+  if(!success){
+    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+    msg += "**** " + rtcFunctionX.getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+
+  rtcFunctionY.addVar("double", "x");
+  rtcFunctionY.addVar("double", "y");
+  rtcFunctionY.addVar("double", "z");
+  rtcFunctionY.addVar("double", "value");
+  success = rtcFunctionY.addBody(expressionY);
+  if(!success){
+    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+    msg += "**** " + rtcFunctionY.getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+
+  rtcFunctionZ.addVar("double", "x");
+  rtcFunctionZ.addVar("double", "y");
+  rtcFunctionZ.addVar("double", "z");
+  rtcFunctionZ.addVar("double", "value");
+  success = rtcFunctionZ.addBody(expressionZ);
+  if(!success){
+    std::string msg = "\n**** Error in AAdapt::ExpressionParser::ExpressionParser().\n";
+    msg += "**** " + rtcFunctionZ.getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+}
+
+void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
+
+  bool success;
+  double value;
+
+  for(int i=0 ; i<spatialDim ; i++){
+    success = rtcFunctionX.varValueFill(i, X[i]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
+  }
+  success = rtcFunctionX.varValueFill(spatialDim, 0.0);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
+  success = rtcFunctionX.execute();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.execute(), " + rtcFunctionX.getErrors());
+  solution[0] = rtcFunctionX.getValueOfVar("value");
+
+  for(int i=0 ; i<spatialDim ; i++){
+    success = rtcFunctionY.varValueFill(i, X[i]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+  }
+  success = rtcFunctionY.varValueFill(spatialDim, 0.0);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.varValueFill(), " + rtcFunctionY.getErrors());
+  success = rtcFunctionY.execute();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionY.execute(), " + rtcFunctionY.getErrors());
+  solution[1] = rtcFunctionY.getValueOfVar("value");
+
+  for(int i=0 ; i<spatialDim ; i++){
+    success = rtcFunctionZ.varValueFill(i, X[i]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+  }
+  success = rtcFunctionZ.varValueFill(spatialDim, 0.0);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.varValueFill(), " + rtcFunctionZ.getErrors());
+  success = rtcFunctionZ.execute();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
+  solution[2] = rtcFunctionZ.getValueOfVar("value");
+
+//   std::cout << "DEBUG CHECK ExpressionParser " << expressionX << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[0] << std::endl;
+//   std::cout << "DEBUG CHECK ExpressionParser " << expressionY << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[1] << std::endl;
+//   std::cout << "DEBUG CHECK ExpressionParser " << expressionZ << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[2] << std::endl;
+
+  return;
 }

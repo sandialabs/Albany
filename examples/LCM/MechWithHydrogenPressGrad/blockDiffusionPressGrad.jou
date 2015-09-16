@@ -1,0 +1,67 @@
+## /Applications/Cubit-15.1/Cubit.app/Contents/MacOS/cubitx
+## Cubit Version 15.1b
+## Cubit Build 395161
+## Revised 2014-10-22 16:12:00 -0600 (Wed, 22 Oct 2014)
+## Running 06/12/2015 12:59:02 PM
+## Command Options:
+undo on
+brick x 1 y 1 z 0.1
+curve 2 4 6 8 interval 40
+curve 2 4 6 8 scheme equal
+curve 1 3 5 7 interval 8
+curve 1 3 5 7 scheme equal
+curve 9 10 11 12 interval 1
+curve 9 10 11 12 scheme equal
+volume 1 scheme map
+mesh volume 1
+block 1 volume 1
+nodeset 1 surface 4
+nodeset 2 surface 6
+nodeset 3 surface 3
+nodeset 4 surface 5
+nodeset 5 surface 2
+nodeset 6 surface 1
+nodeset 7 node in volume 1 with x_coord < -0.495
+nodeset 8 node in volume 1 with x_coord > -0.495 and with x_coord < -0.47
+nodeset 9 node in volume 1 with x_coord > -0.47 and with x_coord < -0.445
+nodeset 10 node in volume 1 with x_coord > -0.445 and with x_coord < -0.42
+nodeset 11 node in volume 1 with x_coord > -0.42 and with x_coord < -0.395
+nodeset 12 node in volume 1 with x_coord > -0.395 and with x_coord < -0.37
+nodeset 13 node in volume 1 with x_coord > -0.37 and with x_coord < -0.345
+nodeset 14 node in volume 1 with x_coord > -0.345 and with x_coord < -0.32
+nodeset 15 node in volume 1 with x_coord > -0.32 and with x_coord < -0.295
+nodeset 16 node in volume 1 with x_coord > -0.295 and with x_coord < -0.27
+nodeset 17 node in volume 1 with x_coord > -0.27 and with x_coord < -0.245
+nodeset 18 node in volume 1 with x_coord > -0.245 and with x_coord < -0.22
+nodeset 19 node in volume 1 with x_coord > -0.22 and with x_coord < -0.195
+nodeset 20 node in volume 1 with x_coord > -0.195 and with x_coord < -0.17
+nodeset 21 node in volume 1 with x_coord > -0.17 and with x_coord < -0.145
+nodeset 22 node in volume 1 with x_coord > -0.145 and with x_coord < -0.12
+nodeset 23 node in volume 1 with x_coord > -0.12 and with x_coord < -0.0949999999999998
+nodeset 24 node in volume 1 with x_coord > -0.0949999999999998 and with x_coord < -0.0699999999999998
+nodeset 25 node in volume 1 with x_coord > -0.0699999999999998 and with x_coord < -0.0449999999999998
+nodeset 26 node in volume 1 with x_coord > -0.0449999999999998 and with x_coord < -0.0199999999999998
+nodeset 27 node in volume 1 with x_coord > -0.0199999999999998 and with x_coord < 0.00500000000000016
+nodeset 28 node in volume 1 with x_coord > 0.00500000000000016 and with x_coord < 0.0300000000000002
+nodeset 29 node in volume 1 with x_coord > 0.0300000000000002 and with x_coord < 0.0550000000000002
+nodeset 30 node in volume 1 with x_coord > 0.0550000000000002 and with x_coord < 0.0800000000000002
+nodeset 31 node in volume 1 with x_coord > 0.0800000000000002 and with x_coord < 0.105
+nodeset 32 node in volume 1 with x_coord > 0.105 and with x_coord < 0.13
+nodeset 33 node in volume 1 with x_coord > 0.13 and with x_coord < 0.155
+nodeset 34 node in volume 1 with x_coord > 0.155 and with x_coord < 0.18
+nodeset 35 node in volume 1 with x_coord > 0.18 and with x_coord < 0.205
+nodeset 36 node in volume 1 with x_coord > 0.205 and with x_coord < 0.23
+nodeset 37 node in volume 1 with x_coord > 0.23 and with x_coord < 0.255
+nodeset 38 node in volume 1 with x_coord > 0.255 and with x_coord < 0.28
+nodeset 39 node in volume 1 with x_coord > 0.28 and with x_coord < 0.305
+nodeset 40 node in volume 1 with x_coord > 0.305 and with x_coord < 0.33
+nodeset 41 node in volume 1 with x_coord > 0.33 and with x_coord < 0.355
+nodeset 42 node in volume 1 with x_coord > 0.355 and with x_coord < 0.38
+nodeset 43 node in volume 1 with x_coord > 0.38 and with x_coord < 0.405
+nodeset 44 node in volume 1 with x_coord > 0.405 and with x_coord < 0.43
+nodeset 45 node in volume 1 with x_coord > 0.43 and with x_coord < 0.455
+nodeset 46 node in volume 1 with x_coord > 0.455 and with x_coord < 0.48
+nodeset 47 node in volume 1 with x_coord > 0.48
+set large exodus file on
+export genesis "blockDiffusionPressGrad.g" block all overwrite
+undo group end

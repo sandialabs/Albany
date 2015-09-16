@@ -61,9 +61,9 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   Teuchos::RCP<PHX::FieldTag> mortar_projection_operation;
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > valVec;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim,Dim> > valTensor;
+  std::vector< PHX::MDField<ScalarT,Cell,Node>> val;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim>> valVec;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim,Dim>> valTensor;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
@@ -156,7 +156,7 @@ private:
 // **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 template<typename Traits>
 class MortarContactResidual<PHAL::AlbanyTraits::SGResidual,Traits>
   : public MortarContactResidualBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
@@ -201,6 +201,8 @@ private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
   const std::size_t numFields;
 };
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 // **************************************************************
 // Multi-point Residual
@@ -249,7 +251,7 @@ private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
   const std::size_t numFields;
 };
-#endif //ALBANY_SG_MP
+#endif
 
 // **************************************************************
 }

@@ -29,7 +29,9 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
+<!--
         <Parameter name="Output Filename" type="string" value="TensileBarPDPS_PeridigmResults"/>
+-->
         <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Model_Coordinates" type="bool" value="true"/>
@@ -59,8 +61,12 @@
       <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_6 for DOF Z" type="double" value="0.0"/>
       <!-- These are the contrived BC -->
-      <Parameter name="DBC on NS nodelist_7 for DOF X" type="double" value="-0.005"/>
-      <Parameter name="DBC on NS nodelist_8 for DOF X" type="double" value="0.005"/>
+      <ParameterList name="DBC on NS nodelist_7 for DOF lsfit">
+        <Parameter name="BC Function" type="string" value="Displacement"/>
+      </ParameterList>
+      <ParameterList name="DBC on NS nodelist_8 for DOF lsfit">
+        <Parameter name="BC Function" type="string" value="Displacement"/>
+      </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

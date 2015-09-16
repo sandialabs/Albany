@@ -30,13 +30,17 @@ ElasticDamageModel(Teuchos::ParameterList* p,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string energy_string = (*field_name_map_)["Matrix_Energy"];
   std::string damage_string = (*field_name_map_)["Matrix_Damage"];
+  std::string tangent_string = (*field_name_map_)["Material Tangent"];
 
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(energy_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(damage_string, dl->qp_scalar));
+  
+  if(compute_tangent_) {
   this->eval_field_map_.insert(
-      std::make_pair("Material Tangent", dl->qp_tensor4));
+      std::make_pair(tangent_string, dl->qp_tensor4));
+  }
 
   // define the state variables
   //
@@ -72,8 +76,8 @@ ElasticDamageModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void ElasticDamageModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   //bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
@@ -88,12 +92,17 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string energy_string = (*field_name_map_)["Matrix_Energy"];
   std::string damage_string = (*field_name_map_)["Matrix_Damage"];
+  std::string tangent_string = (*field_name_map_)["Material Tangent"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> energy = *eval_fields[energy_string];
   PHX::MDField<ScalarT> damage = *eval_fields[damage_string];
-  PHX::MDField<ScalarT> tangent = *eval_fields["Material Tangent"];
+  PHX::MDField<ScalarT> tangent;
+    
+  if(compute_tangent_) {
+    tangent = *eval_fields[tangent_string];
+  }
 
   // previous state
   Albany::MDArray energy_old =
@@ -148,8 +157,10 @@ computeState(typename Traits::EvalData workset,
           max_damage_ / saturation_ * std::exp(-alpha / saturation_);
 
       // tangent for matrix considering damage
-      Ce = (1.0 - damage(cell, pt)) * Ce
+      if(compute_tangent_) {
+        Ce = (1.0 - damage(cell, pt)) * Ce
           - damage_deriv * Intrepid::tensor(sigma, sigma);
+      }
 
       // total Cauchy stress
       for (int i(0); i < num_dims_; ++i) {
@@ -160,17 +171,20 @@ computeState(typename Traits::EvalData workset,
       }
 
       // total tangent
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
-          for (int k(0); k < num_dims_; ++k) {
-            for (int l(0); l < num_dims_; ++l) {
+      if(compute_tangent_) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
+            for (int k(0); k < num_dims_; ++k) {
+              for (int l(0); l < num_dims_; ++l) {
 
-              tangent(cell, pt, i, j, k, l) = Ce(i, j, k, l);
+                tangent(cell, pt, i, j, k, l) = Ce(i, j, k, l);
 
+              }
             }
           }
         }
-      }
+      }// compute_tangent_
+
     } // pt
   } // cell
 }

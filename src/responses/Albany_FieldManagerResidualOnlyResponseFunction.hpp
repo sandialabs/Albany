@@ -55,7 +55,7 @@ namespace Albany {
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void 
     evaluateGradient(const double current_time,
 		     const Epetra_Vector* xdot,
@@ -83,7 +83,7 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdotT,
 		     Tpetra_MultiVector* dg_dpT);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void
     evaluateDistParamDeriv(
           const double current_time,
@@ -95,7 +95,7 @@ namespace Albany {
           Epetra_MultiVector* dg_dp);
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
     virtual void init_sg(
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
@@ -147,9 +147,9 @@ namespace Albany {
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE 
     virtual void evaluateMPResponse(
       const double curr_time,
       const Stokhos::ProductEpetraVector* mp_xdot,
@@ -195,7 +195,7 @@ namespace Albany {
       Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
       Stokhos::ProductEpetraMultiVector* mp_dg_dp);
-#endif //ALBANY_SG_MP
+#endif
 
   private:
 

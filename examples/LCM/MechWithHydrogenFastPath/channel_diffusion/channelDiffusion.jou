@@ -1,0 +1,26 @@
+## /Applications/Cubit-15.1/Cubit.app/Contents/MacOS/cubitx
+## Cubit Version 15.1b
+## Cubit Build 395161
+## Revised 2014-10-22 16:12:00 -0600 (Wed, 22 Oct 2014)
+## Running 07/27/2015 04:42:14 PM
+## Command Options:
+#{channel_thick = 0.02}
+#{factor = 0.22}
+brick x 3 y {factor} z {channel_thick}
+webcut volume 1 with plane yplane offset {channel_thick/2.0} noimprint nomerge
+webcut volume 1 with plane yplane offset {-channel_thick/2.0} noimprint nomerge
+imprint all
+merge all
+block 1 volume 1 2
+block 2 volume 3
+volume all size {channel_thick}
+mesh volume all
+nodeset 1 surface 3
+nodeset 2 surface 19 13 26
+nodeset 3 surface 5
+nodeset 4 surface 16 21 23
+nodeset 5 surface 15 24 20
+nodeset 6 surface 14 18 25
+undo group begin
+set large exodus file on
+export genesis "channelDiffusion.g" block all overwrite

@@ -24,6 +24,8 @@ getVariableType(Teuchos::ParameterList& param_list,
     variable_type = MECH_VAR_TYPE_CONSTANT;
   else if (type == "DOF")
     variable_type = MECH_VAR_TYPE_DOF;
+  else if (type == "Time Dependent")
+    variable_type = MECH_VAR_TYPE_TIMEDEP;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Unknown variable type " << type << '\n');
@@ -39,6 +41,8 @@ variableTypeToString(Albany::MechanicsProblem::MECH_VAR_TYPE variable_type)
     return "None";
   else if (variable_type == MECH_VAR_TYPE_CONSTANT)
     return "Constant";
+  else if (variable_type == MECH_VAR_TYPE_TIMEDEP)
+    return "Time Dependent";
   return "DOF";
 }
 
@@ -48,7 +52,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<ParamLib>& param_lib,
     const int num_dims,
     const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-    Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
+    Teuchos::RCP<const Teuchos::Comm<int>>& commT) :
     Albany::AbstractProblem(params, param_lib),
     have_source_(false),
     thermal_source_(SOURCE_TYPE_NONE),
@@ -64,6 +68,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     have_stab_pressure_eq_(false),
     have_peridynamics_(false),
     have_topmod_adaptation_(false),
+    have_sizefield_adaptation_(false),
     rc_mgr_(rc_mgr)
 {
 
@@ -75,6 +80,21 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Is contact specified?
   have_contact_ = params->isSublist("Contact");
+
+  // Is adaptation specified?
+  bool adapt_sublist_exists = params->isSublist("Adaptation");
+
+  if(adapt_sublist_exists){
+
+    Teuchos::ParameterList const &
+    adapt_params = params->sublist("Adaptation");
+
+    std::string const &
+    adaptation_method_name = adapt_params.get<std::string>("Method");
+
+    have_sizefield_adaptation_ = (adaptation_method_name == "RPI Albany Size");
+
+  }
 
   getVariableType(params->sublist("Displacement"),
       "DOF",
@@ -236,7 +256,7 @@ Albany::MechanicsProblem::
 void
 Albany::MechanicsProblem::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs,
     Albany::StateManager& stateMgr)
 {
   // Construct All Phalanx Evaluators
@@ -260,7 +280,7 @@ buildProblem(
 
 }
 //------------------------------------------------------------------------------
-Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
+Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
 Albany::MechanicsProblem::
 buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Albany::MeshSpecsStruct& meshSpecs,
@@ -301,9 +321,18 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   if (have_damage_eq_) dirichletNames[index++] = "D";
   if (have_stab_pressure_eq_) dirichletNames[index++] = "SP";
 
+  // Pass on the Application as well that is needed for
+  // the coupled Schwarz BC. It is just ignored otherwise.
+  Teuchos::RCP<Albany::Application> const &
+  application = getApplication();
+
+  this->params->set<Teuchos::RCP<Albany::Application>>(
+      "Application", application);
+
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
       this->params, this->paramLib);
+
 }
 //------------------------------------------------------------------------------
 // Traction BCs
@@ -326,24 +355,27 @@ constructNeumannEvaluators(
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset,
   // so ordering is important
+  
   std::vector<std::string> neumannNames(neq + 1);
-  Teuchos::Array<Teuchos::Array<int> > offsets;
+  Teuchos::Array<Teuchos::Array<int>> offsets;
   offsets.resize(neq + 1);
 
   neumannNames[0] = "sig_x";
   offsets[0].resize(1);
   offsets[0][0] = 0;
-  offsets[neq].resize(neq);
+  // The Neumann BC code uses offsets[neq].size() as num dim, so use num_dims_
+  // here rather than neq.
+  offsets[neq].resize(num_dims_);
   offsets[neq][0] = 0;
 
-  if (neq > 1) {
+  if (num_dims_ > 1) {
     neumannNames[1] = "sig_y";
     offsets[1].resize(1);
     offsets[1][0] = 1;
     offsets[neq][1] = 1;
   }
 
-  if (neq > 2) {
+  if (num_dims_ > 2) {
     neumannNames[2] = "sig_z";
     offsets[2].resize(1);
     offsets[2][0] = 2;
@@ -384,8 +416,8 @@ constructNeumannEvaluators(
       dl_,
       this->params,
       this->paramLib);
-
 }
+
 //------------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
 Albany::MechanicsProblem::
@@ -412,10 +444,10 @@ void
 Albany::MechanicsProblem::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
     new_state
     ) const
     {

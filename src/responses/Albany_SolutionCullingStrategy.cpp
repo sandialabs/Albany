@@ -6,7 +6,7 @@
 
 #include "Albany_SolutionCullingStrategy.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_BlockMap.h"
 #include "Epetra_GatherAllV.hpp"
 #endif
@@ -26,7 +26,7 @@ namespace Albany {
 class UniformSolutionCullingStrategy : public SolutionCullingStrategyBase {
 public:
   explicit UniformSolutionCullingStrategy(int numValues);
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
   virtual Teuchos::Array<GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
@@ -65,7 +65,7 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
   return result;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::Array<int>
 Albany::UniformSolutionCullingStrategy::
 selectedGIDs(const Epetra_BlockMap &sourceMap) const
@@ -95,7 +95,7 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 #include "Albany_Application.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_BlockMap.h"
 #include "Epetra_Comm.h"
 #include "Epetra_GatherAllV.hpp"
@@ -119,7 +119,7 @@ public:
       const std::string &nodeSetLabel,
       const Teuchos::RCP<const Application> &app);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   virtual void setup();
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
@@ -157,7 +157,7 @@ setupT()
   app_.reset();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::NodeSetSolutionCullingStrategy::
 setup()
@@ -270,7 +270,7 @@ public:
       const Teuchos::Array<int>& nodeGIDs,
       const Teuchos::RCP<const Application> &app);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   virtual void setup();
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
@@ -308,7 +308,7 @@ setupT()
   app_.reset();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::NodeGIDsSolutionCullingStrategy::
 setup()

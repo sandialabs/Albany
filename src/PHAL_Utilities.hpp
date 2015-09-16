@@ -26,6 +26,15 @@ template<typename EvalT>
 int getDerivativeDimensions (const Albany::Application* app,
                              const int element_block_idx);
 
+template<class ViewType>
+int getDerivativeDimensionsFromView (const ViewType &a){return 1;}
+
+template< class D, class E, class M, class L>
+int getDerivativeDimensionsFromView(const Kokkos::View<D,E,M,L, Kokkos::Impl::ViewSpecializeSacadoFad> &a){
+  return a.storage_size();
+}
+
+
 /* \brief Replace use of runtime MDField operator[]. This class uses only stack
  *        allocation.
  *
@@ -66,17 +75,19 @@ private:
   bool done_;
 };
 
-//! Reduce on an MDField. Holdover until we get the official reduceAll
-//! implementation back.
+//! Reduce on an MDField.
 template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<T>& a);
-//! Reduce on a ScalarT. Holdover until we get the official reduceAll
-//! implementation back.
+//! Reduce on a ScalarT.
 template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type, T& a);
+//! Broadcast an MDField.
+template<typename T>
+void broadcast(
+  const Teuchos_Comm& comm, const int root_rank, PHX::MDField<T>& a);
 
 /*! \brief Loop over an array and apply a functor.
  *
@@ -97,11 +108,11 @@ void loop(Functor& f, PHX::MDField<ScalarT>& a);
 
 //! a(:) = val
 template<typename ArrayT, typename T>
-void set (ArrayT& a, const T& val);
+void set(ArrayT& a, const T& val);
 
 //! a(:) *= val
 template<typename ArrayT, typename T>
-void scale (ArrayT& a, const T& val);
+void scale(ArrayT& a, const T& val);
 
 } // namespace PHAL
 

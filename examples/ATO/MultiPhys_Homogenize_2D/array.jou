@@ -1,0 +1,56 @@
+## /projects/cubit/claro.Lin64.15.0/bin/cubitx
+## Cubit Version 15.0
+## Cubit Build 399075
+## Revised 2015-06-24 15:41:59 -0600 (Wed, 24 Jun 2015)
+## Running 07/23/2015 11:03:50 PM
+## Command Options:
+set geometry engine acis
+create brick x 1 y 1 z 0.2
+create cylinder height 0.3 radius 0.05
+volume 2 scale x 2.25 y 0.4 z 1
+#
+move volume 2 x 0.3 y 0.3
+volume 2 copy
+subtract volume 3 from volume 1
+
+move volume 2 x -0.3
+volume 2 copy
+subtract volume 4 from volume 1
+
+move volume 2 x -0.3
+volume 2 copy
+subtract volume 5 from volume 1
+
+move volume 2 y -0.3
+volume 2 copy
+subtract volume 6 from volume 1
+
+move volume 2 x 0.3
+volume 2 copy
+subtract volume 7 from volume 1
+
+move volume 2 x 0.3
+volume 2 copy
+subtract volume 8 from volume 1
+
+move volume 2 y -0.3
+volume 2 copy
+subtract volume 9 from volume 1
+
+move volume 2 x -0.3
+volume 2 copy
+subtract volume 10 from volume 1
+
+move volume 2 x -0.3
+subtract volume 2 from volume 1
+
+surface 59 scheme trimesh
+volume all size 0.04
+mesh surface 59
+nodeset 1 curve 3
+nodeset 2 curve 1
+nodeset 3 curve 4
+nodeset 4 curve 2
+block 1 surface 59
+block 1 element type TRI3
+export mesh "array.gen" dimension 2 overwrite

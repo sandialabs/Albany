@@ -1,0 +1,8 @@
+
+reset
+create brick x 0.042 y 0.01 z 0.01
+block all element type hex8
+volume all size 0.002
+mesh volume all
+block 1 volume 1
+export genesis 'WaveInBar.g' overwrite

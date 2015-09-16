@@ -40,9 +40,9 @@ EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterLis
   // Setting parameters
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("Physical Parameters");
 
-  rho_i        = physical_params.get<double>("Ice Density");
-  rho_w        = physical_params.get<double>("Water Density");
-  g            = physical_params.get<double>("Gravity Acceleration");
+  rho_i        = physical_params.get<double>("Ice Density", 910.0);
+  rho_w        = physical_params.get<double>("Water Density", 1028.0);
+  g            = physical_params.get<double>("Gravity Acceleration", 9.8);
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_scalar->dimensions(dims);

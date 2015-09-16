@@ -43,11 +43,11 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
       StateManager& stateMgr);
 
     // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
@@ -58,8 +58,8 @@ namespace Albany {
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
+			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
 			    ) const;
 
   private:
@@ -98,8 +98,8 @@ namespace Albany {
     std::string matModel; 
     Teuchos::RCP<Albany::Layouts> dl;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState;
 
     Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
   };
@@ -149,14 +149,14 @@ Albany::ElasticityProblem::constructEvaluators(
    std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
      intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
@@ -243,15 +243,15 @@ Albany::ElasticityProblem::constructEvaluators(
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
   // Temporary variable used numerous times below
-  Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+  Teuchos::RCP<PHX::Evaluator<AlbanyTraits>> ev;
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList);
 
     p->set<std::string>("Time Name", "Time");
     p->set<std::string>("Delta Time Name", "Delta Time");
-    p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set< RCP<DataLayout>>("Workset Scalar Data Layout", dl->workset_scalar);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
     p->set<bool>("Disable Transient", true);
 
     ev = rcp(new LCM::Time<EvalT,AlbanyTraits>(*p));
@@ -266,11 +266,11 @@ Albany::ElasticityProblem::constructEvaluators(
 
     p->set<std::string>("QP Variable Name", "Elastic Modulus");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Elastic Modulus");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -283,11 +283,11 @@ Albany::ElasticityProblem::constructEvaluators(
 
     p->set<std::string>("QP Variable Name", "Poissons Ratio");
     p->set<std::string>("QP Coordinate Vector Name", "Coord Vec");
-    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout>>("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Poissons Ratio");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -303,9 +303,9 @@ Albany::ElasticityProblem::constructEvaluators(
 
     p->set<std::string>("Source Name", "Source");
     p->set<std::string>("Variable Name", "Displacement");
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
-    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<RCP<ParamLib>>("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Source Functions");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -348,12 +348,12 @@ Albany::ElasticityProblem::constructEvaluators(
     p->set<bool>("weighted_Volume_Averaged_J Name", weighted_Volume_Averaged_J);
     p->set<std::string>("Weights Name","Weights");
     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
     //Outputs: F, J
     p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
     p->set<std::string>("DetDefGrad Name", "Determinant of Deformation Gradient"); 
-    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
     ev = rcp(new LCM::DefGrad<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -366,10 +366,10 @@ Albany::ElasticityProblem::constructEvaluators(
 
       //Input
       p->set<std::string>("Strain Name", "Strain");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
@@ -467,10 +467,10 @@ Albany::ElasticityProblem::constructEvaluators(
 
       //Input
       p->set<std::string>("Strain Name", "Strain");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
@@ -490,23 +490,23 @@ Albany::ElasticityProblem::constructEvaluators(
 
     //Input
     p->set<std::string>("Stress Name", "Stress");
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+    p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
     // \todo Is the required?
     p->set<std::string>("DefGrad Name", "Deformation Gradient"); //dl->qp_tensor also
 
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+    p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
 
     // extra input for time dependent term
     p->set<std::string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+    p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
 
     //Output
     p->set<std::string>("Residual Name", "Displacement Residual");
-    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+    p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);
 
     ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -532,10 +532,10 @@ Albany::ElasticityProblem::constructEvaluators(
 
       //Input
       p->set<std::string>("Strain Name", "Error Strain");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+      p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
 
       p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
 
@@ -554,17 +554,17 @@ Albany::ElasticityProblem::constructEvaluators(
 
       //Input
       p->set<std::string>("Error Stress Name", "Error Stress");
-      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+      p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
 
       p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+      p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
 
       p->set<std::string>("Displacement Residual Name", "Displacement Residual");
-      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+      p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);
 
       //Output
       p->set<std::string>("Residual Name", "Displacement Error Residual");
-      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+      p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);
 
       ev = rcp(new LCM::ElasticityDispErrResid<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);

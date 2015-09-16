@@ -8,7 +8,7 @@
 
 //IK, 9/13/14: Epetra ifdef'ed out except if SG and MP if ALBANY_EPETRA_EXE set to off.
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::DistributedResponseFunction::
 evaluateDerivative(
@@ -87,7 +87,7 @@ evaluateDerivativeT(
     dg_dxp, dg_dxdotp, dg_dxdotdotp, dg_dpp);
 }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::DistributedResponseFunction::
 evaluateSGDerivative(
@@ -110,6 +110,8 @@ evaluateSGDerivative(
     sg_g, sg_dg_dx.getLinearOp().get(), sg_dg_dxdot.getLinearOp().get(),
     sg_dg_dxdotdot.getLinearOp().get(), sg_dg_dp.getMultiVector().get());
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::DistributedResponseFunction::
@@ -133,4 +135,4 @@ evaluateMPDerivative(
     mp_g, mp_dg_dx.getLinearOp().get(), mp_dg_dxdot.getLinearOp().get(),
     mp_dg_dxdotdot.getLinearOp().get(), mp_dg_dp.getMultiVector().get());
 }
-#endif //ALBANY_SG_MP
+#endif

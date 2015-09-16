@@ -34,12 +34,31 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
   temperature = p.get<double>("Temperature"); //To be replaced by SharedParameter evaluator access
 
   // obtain material or eb name for a given nodeset 
-  std::string nodeSetName = PHAL::DirichletBase<EvalT,Traits>::nodeSetID;
+  // std::string nodeSetName = PHAL::DirichletBase<EvalT,Traits>::nodeSetID;
+  nodeSetName = p.get<std::string>("Node Set ID");
+
+  contactType = "None";  // default
+  sbHeight = 0.0; 
   material = materialDB->getNodeSetParam<std::string>(nodeSetName,"material","");
-  if (material.length() == 0) {
+  if (material.length() > 0) contactType = "Contact On Insulator";   // must be here
+
+  if (material.length() == 0) 
+  {
     ebName = materialDB->getNodeSetParam<std::string>(nodeSetName,"elementBlock","");
     if (ebName.length() > 0)
+    {
+      if (p.isParameter("Schottky Barrier Height"))
+      {
+        sbHeight = p.get<double>("Schottky Barrier Height");  // [eV]
+        contactType = "Schottky Contact";
+      }
+      else
+        contactType = "Ohmic Contact"; 
+
       material = materialDB->getElementBlockParam<std::string>(ebName,"material","");
+    }
+    
+    // if ebName.length() == 0, contactType = "None" and material.length() == 0
   }
 
   // private scaling parameter (note: kbT is used in calculating qPhiRef below)
@@ -61,9 +80,9 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
       double alpha = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Alpha Coefficient");
       double beta = materialDB->getMaterialParam<double>(refMtrlName,"Band Gap Beta Coefficient");
       
-      ScalarT Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
-      ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [eV]
-      qPhiRef = Chi - Eic;  // (Evac-Ei) in [eV] where Evac = vacuum level
+      ScalarT Eg = Eg0 - alpha * std::pow(temperature,2.0) / (beta+temperature); // in [eV]
+      ScalarT Eic = -Eg/2. + 3./4.*kbT*std::log(mdp/mdn);  // (Ei-Ec) in [eV]
+      qPhiRef = Chi - Eic;  // qPhiRef is basically the difference between vacuum energy level and intrinsic Fermi level
     }
     else if (category == "Insulator") {
       double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
@@ -87,58 +106,52 @@ template<typename EvalT,typename Traits>
 void PoissonDirichlet<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  ScalarT bcValue = 0.0; 
 
+  // Universal constants
+  const double kbBoltz = 8.617343e-05;  // [eV/K]
+  const double eleQ = 1.602176487e-19;  // [C]
+  const double m0 = 9.10938215e-31;     // [kg]
+  const double hbar = 1.054571628e-34;  // [J.s]
+  const double pi = 3.141592654;
+
+  ScalarT bcValue = 0.0; 
 
   if (material.length() > 0)  
   {
     std::string category = materialDB->getMaterialParam<std::string>(material,"Category");
 
-    //! Contacts on insulator or metal
-    if (category != "Semiconductor") {
+    //! Metal contact on insulator
+    if ((category == "Metal") && (contactType == "Contact On Insulator"))
+    {  
       double metalWorkFunc = materialDB->getMaterialParam<double>(material,"Work Function");
-
-      // TODO - get electron affinity instead for an insulator??
-      ScalarT offsetDueToWorkFunc = (metalWorkFunc-qPhiRef)/1.0;  // 1.0 converts from [eV] to [V]
-
-      bcValue = (user_value - offsetDueToWorkFunc) / energy_unit_in_eV;  //[myV]
+      ScalarT offsetDueToWorkFunc = (metalWorkFunc - qPhiRef) / 1.0;  // 1.0 converts from [eV] to [V]
+      bcValue = (user_value - offsetDueToWorkFunc) / energy_unit_in_eV;  //[meV]
     }
   
-    //! Ohmic contacts on semiconductor (charge neutrality and equilibrium ) 
-    else {
-
-      // Universal constants
-      const double kbBoltz = 8.617343e-05;  // [eV/K]
-      const double eleQ = 1.602176487e-19;  // [C]
-      const double m0 = 9.10938215e-31;     // [kg]
-      const double hbar = 1.054571628e-34;  // [J.s]
-      const double pi = 3.141592654;
-
-	// Temperature-independent material parameters
+    //! Ohmic contact on semiconductor (charge neutrality and equilibrium ) 
+    else if ((category == "Semiconductor") && (contactType == "Ohmic Contact"))
+    {
+      // Temperature-independent material parameters
       double mdn, mdp, Tref, Eg0, alpha, beta, Chi;
-      if (ebName.length() > 0)  {
-	mdn = materialDB->getElementBlockParam<double>(ebName,"Electron DOS Effective Mass");
-	mdp = materialDB->getElementBlockParam<double>(ebName,"Hole DOS Effective Mass");
-	Tref = materialDB->getElementBlockParam<double>(ebName,"Reference Temperature");
+      if (ebName.length() > 0)  
+      {
+        mdn = materialDB->getElementBlockParam<double>(ebName,"Electron DOS Effective Mass");
+        mdp = materialDB->getElementBlockParam<double>(ebName,"Hole DOS Effective Mass");
+        Tref = materialDB->getElementBlockParam<double>(ebName,"Reference Temperature");
 	
-	Eg0 = materialDB->getElementBlockParam<double>(ebName,"Zero Temperature Band Gap");
-	alpha = materialDB->getElementBlockParam<double>(ebName,"Band Gap Alpha Coefficient");
-	beta = materialDB->getElementBlockParam<double>(ebName,"Band Gap Beta Coefficient");
-	Chi = materialDB->getElementBlockParam<double>(ebName,"Electron Affinity");
+        Eg0 = materialDB->getElementBlockParam<double>(ebName,"Zero Temperature Band Gap");
+        alpha = materialDB->getElementBlockParam<double>(ebName,"Band Gap Alpha Coefficient");
+        beta = materialDB->getElementBlockParam<double>(ebName,"Band Gap Beta Coefficient");
+        Chi = materialDB->getElementBlockParam<double>(ebName,"Electron Affinity");
       }
-      else {
-	mdn = materialDB->getMaterialParam<double>(material,"Electron DOS Effective Mass");
-	mdp = materialDB->getMaterialParam<double>(material,"Hole DOS Effective Mass");
-	Tref = materialDB->getMaterialParam<double>(material,"Reference Temperature");
-	
-	Eg0 = materialDB->getMaterialParam<double>(material,"Zero Temperature Band Gap");
-	alpha = materialDB->getMaterialParam<double>(material,"Band Gap Alpha Coefficient");
-	beta = materialDB->getMaterialParam<double>(material,"Band Gap Beta Coefficient");
-	Chi = materialDB->getMaterialParam<double>(material,"Electron Affinity");
+      else 
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, std::endl 
+	          << "Error! elementBlock must exist for Ohmic Contact nodeset of " << nodeSetName << std::endl);
       }
 
       // Constant prefactor in calculating Nc and Nv in [cm-3]
-      double NcvFactor = 2.0*pow((kbBoltz*eleQ*m0*Tref)/(2*pi*pow(hbar,2)),3./2.)*1.e-6;
+      double NcvFactor = 2.0 * std::pow((kbBoltz*eleQ*m0*Tref) / (2*pi*std::pow(hbar,2)),3./2.)*1.e-6;
           // eleQ converts kbBoltz in [eV/K] to [J/K], 1e-6 converts [m-3] to [cm-3]
     
       // Strong temperature-dependent material parameters
@@ -146,58 +159,79 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       ScalarT Nv;  // valence band effective DOS in [cm-3]
       ScalarT Eg;  // band gap at T [K] in [eV]
     
-      Nc = NcvFactor*pow(mdn,1.5)*pow(temperature/Tref,1.5);  // in [cm-3]
-      Nv = NcvFactor*pow(mdp,1.5)*pow(temperature/Tref,1.5); 
-      Eg = Eg0-alpha*pow(temperature,2.0)/(beta+temperature); // in [eV]
+      Nc = NcvFactor * std::pow(mdn,1.5) * std::pow(temperature/Tref,1.5);  // in [cm-3]
+      Nv = NcvFactor * std::pow(mdp,1.5) * std::pow(temperature/Tref,1.5); 
+      Eg = Eg0 - alpha * std::pow(temperature,2.0)/(beta+temperature); // in [eV]
     
       ScalarT builtinPotential = 0.0; 
       std::string dopantType;
-      if (ebName.length() > 0)
-	dopantType = materialDB->getElementBlockParam<std::string>(ebName,"Dopant Type","None");
-      else
-	dopantType = materialDB->getMaterialParam<std::string>(material,"Dopant Type","None");
-
+      dopantType = materialDB->getElementBlockParam<std::string>(ebName,"Dopant Type");
+ 
       // Intrinsic semiconductor (no doping)
       if (dopantType == "None")  
       {
-	// apply charge neutrality (p=n) and MB statistics
-	builtinPotential = (qPhiRef-Chi-0.5*Eg)/1.0 + 0.5*kbT*log(Nv/Nc)/1.0;
-	bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
+        // apply charge neutrality (p=n) and MB statistics
+        builtinPotential = (qPhiRef-Chi-0.5*Eg)/1.0 + 0.5*kbT*std::log(Nv/Nc)/1.0;
+        bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
       }
     
       else // Extrinsic semiconductor (doped)
       {
-	double dopingConc, dopantActE;
-	if (ebName.length() > 0) {
-	  dopingConc = materialDB->getElementBlockParam<double>(ebName,"Doping Value");
-	  dopantActE = materialDB->getElementBlockParam<double>(ebName,"Dopant Activation Energy", 0.045);
-	}
-	else {
-	  dopingConc = materialDB->getMaterialParam<double>(material,"Doping Value");
-	  dopantActE = materialDB->getMaterialParam<double>(material,"Dopant Activation Energy", 0.045);
-	}
-
-	if ((carrierStatistics=="Boltzmann Statistics") && (incompIonization=="False"))
-	  builtinPotential = potentialForMBComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
+        double dopingConc, dopantActE;
+        dopingConc = materialDB->getElementBlockParam<double>(ebName,"Doping Value");
+        dopantActE = materialDB->getElementBlockParam<double>(ebName,"Dopant Activation Energy", 0.045);
+ 
+        if ((carrierStatistics=="Boltzmann Statistics") && (incompIonization=="False"))
+          builtinPotential = potentialForMBComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
     
-	else if ((carrierStatistics=="Boltzmann Statistics") && (incompIonization=="True"))
-	  builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
+        else if ((carrierStatistics=="Boltzmann Statistics") && (incompIonization=="True"))
+          builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
 
-	else if ((carrierStatistics=="Fermi-Dirac Statistics") && (incompIonization=="False"))
-	  builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
+        else if ((carrierStatistics=="Fermi-Dirac Statistics") && (incompIonization=="False"))
+          builtinPotential = potentialForFDComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
 	
-	else if ((carrierStatistics=="0-K Fermi-Dirac Statistics") && (incompIonization=="False"))
-	  builtinPotential = potentialForZeroKFDComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
+        else if ((carrierStatistics=="0-K Fermi-Dirac Statistics") && (incompIonization=="False"))
+          builtinPotential = potentialForZeroKFDComplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc);
     
-	// For cases of FD and 0-K FD with incompIonization==True, one needs to 
-	// numerically solve a non-trivial equation. Since when incompIonization==True
-	// is enabled, the MB almost always holds, so use potentialForMBIncomplIon.
-	else  
-	  builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
+        // For cases of FD and 0-K FD with incompIonization==True, one needs to 
+        // numerically solve a non-trivial equation. Since when incompIonization==True
+        // is enabled, the MB almost always holds, so use potentialForMBIncomplIon.
+        else  
+          builtinPotential = potentialForMBIncomplIon(Nc,Nv,Eg,Chi,dopantType,dopingConc,dopantActE);
         
-	bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
+        bcValue = (user_value + builtinPotential) / energy_unit_in_eV;  // [myV]
+        
       }
+    }  // end of else if (contactType == "Ohmic Contact")
+
+    //! Schottky contact on semiconductor  
+    else if ((category == "Semiconductor") && (contactType == "Schottky Contact"))
+    {
+      // Temperature-independent material parameters
+      double Tref, Eg0, alpha, beta, Chi;
+      if (ebName.length() > 0)  
+      {
+        Tref = materialDB->getElementBlockParam<double>(ebName,"Reference Temperature");
+        Eg0 = materialDB->getElementBlockParam<double>(ebName,"Zero Temperature Band Gap");
+        alpha = materialDB->getElementBlockParam<double>(ebName,"Band Gap Alpha Coefficient");
+        beta = materialDB->getElementBlockParam<double>(ebName,"Band Gap Beta Coefficient");
+        Chi = materialDB->getElementBlockParam<double>(ebName,"Electron Affinity");
+      }
+      else 
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, std::endl 
+	          << "Error! elementBlock must exist for Schottky Contact nodeset of " << nodeSetName << std::endl);
+
+      // Temperature-dependent material parameters
+      ScalarT Eg;  // band gap at T [K] in [eV]
+      Eg = Eg0 - alpha * std::pow(temperature,2.0) / (beta+temperature); // in [eV]
+    
+      ScalarT builtinPotential = 0.0; 
+      std::string dopantType = materialDB->getElementBlockParam<std::string>(ebName,"Dopant Type");
+      builtinPotential = potentialForSchottkyBarrier(Eg, Chi, dopantType);
+
+      bcValue = (user_value + builtinPotential) / energy_unit_in_eV; 
     }
+    
   } // end of if (material.length() > 0)
     
   //! Otherwise, just use the user_value converted into the units of the solution. 
@@ -418,6 +452,28 @@ QCAD::PoissonDirichlet<EvalT,Traits>::potentialForZeroKFDComplIon(const ScalarT 
       << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
   }
     
+  return builtinPotential;
+}
+
+
+// *****************************************************************************
+template<typename EvalT,typename Traits>
+typename QCAD::PoissonDirichlet<EvalT,Traits>::ScalarT
+QCAD::PoissonDirichlet<EvalT,Traits>::potentialForSchottkyBarrier(
+    const ScalarT &Eg, const double &Chi, const std::string &dopType)
+{
+  ScalarT builtinPotential;
+  
+  if ( (dopType == "Donor") || (dopType == "None"))  // SB on n-type SC
+    builtinPotential = -(sbHeight + Chi - qPhiRef)/1.0;  // 1.0 converts [eV] to [V]
+  
+  else if (dopType == "Acceptor")  // SB on p-type SC
+    builtinPotential = -(-sbHeight + Chi + Eg - qPhiRef)/1.0;  // in [V]
+
+  else 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error!  Unknown dopant type " << dopType << "!"<< std::endl);
+  
   return builtinPotential;
 }
 

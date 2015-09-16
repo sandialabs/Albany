@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LCM_SCHWARZ_JACOBIAN_H
-#define LCM_SCHWARZ_JACOBIAN_H
+#if !defined(LCM_SchwarzCoupledJacobian_hpp)
+#define LCM_SchwarzCoupledJacobian_hpp
 
 #include <iostream>
 #include "Teuchos_Comm.hpp"
@@ -20,32 +20,31 @@
 #include "Teuchos_RCP.hpp"
 
 #include "Thyra_BlockedLinearOpBase.hpp"
-#include <Thyra_PhysicallyBlockedLinearOpBase.hpp>
+#include "Thyra_PhysicallyBlockedLinearOpBase.hpp"
 #include "Schwarz_BoundaryJacobian.hpp"
 
 namespace LCM {
 
 /** 
- *  \brief A class that evaluates the Jacobian of a LCM coupled Schwarz Multiscale problem
+ *  \brief A class that evaluates the Jacobian of a
+ *  LCM coupled Schwarz Multiscale problem
  */
 
-  class Schwarz_CoupledJacobian { 
-  public:
-    Schwarz_CoupledJacobian(const Teuchos::RCP<const Teuchos_Comm>& comm);
+class Schwarz_CoupledJacobian {
+public:
+  Schwarz_CoupledJacobian(Teuchos::RCP<Teuchos_Comm const> const & commT);
 
-    ~Schwarz_CoupledJacobian();
-     
-    Teuchos::RCP<Thyra::LinearOpBase<ST> > getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs, 
-                                                                   Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> >jacs_boundary) const; 
+  ~Schwarz_CoupledJacobian();
 
-  private:
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca) const;
 
-    Teuchos::RCP<const Teuchos_Comm> commT_;
-  
-    Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST> > blockedOp_; 
+private:
 
-
-  };
+  Teuchos::RCP<Teuchos_Comm const>
+  commT_;
+};
 
 }
-#endif
+#endif // LCM_SchwarzCoupledJacobian_hpp

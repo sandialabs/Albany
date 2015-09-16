@@ -9,11 +9,20 @@
 #include <cstdlib>
 #include <stdexcept>
 
+// For vtune
+#include <sys/types.h>
+#include <unistd.h>
+
+// For stack trace
+#include <execinfo.h>
+#include <stdio.h>
+
+
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
-#ifdef ALBANY_EPETRA
-  const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
+#if defined(ALBANY_EPETRA)
+  Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
   }
@@ -60,7 +69,7 @@
 
 #else
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
@@ -87,11 +96,11 @@
 
   // End of Utils to do with Communicators
 
-  std::string Albany::strint(const std::string s, const int i) {
-    std::ostringstream ss;
-    ss << s << " " << i;
-    return ss.str();
-  }
+  std::string Albany::strint(const std::string s, const int i, const char delim) {
+      std::ostringstream ss;
+      ss << s << delim << i;
+      return ss.str();
+    }
 
   bool Albany::isValidInitString(const std::string& initString) {
 
@@ -194,3 +203,71 @@
     }
 
   }
+
+  Albany::CmdLineArgs::CmdLineArgs(const std::string& default_xml_filename,
+                                   const std::string& default_xml_filename2,
+                                   const std::string& default_xml_filename3) :
+    xml_filename(default_xml_filename),
+    xml_filename2(default_xml_filename2),
+    xml_filename3(default_xml_filename3),
+    has_first_xml_file(false),
+    has_second_xml_file(false),
+    has_third_xml_file(false),
+    vtune(false) {}
+
+  void Albany::CmdLineArgs::parse_cmdline(int argc , char ** argv,
+                                          std::ostream& os) {
+    bool found_first_xml_file = false;
+    bool found_second_xml_file = false;
+    for (int arg=1; arg<argc; ++arg) {
+      if(!std::strcmp(argv[arg],"--help")) {
+        os << argv[0] << " [--vtune] [inputfile1.xml] [inputfile2.xml] [inputfile3.xml]\n";
+        std::exit(1);
+      }
+      else if (!std::strcmp(argv[arg],"--vtune")) {
+        vtune = true;
+      }
+      else {
+        if (!found_first_xml_file) {
+          xml_filename=argv[arg];
+          found_first_xml_file = true;
+          has_first_xml_file = true;
+        }
+        else if (!found_second_xml_file) {
+          xml_filename2=argv[arg];
+          found_second_xml_file = true;
+          has_second_xml_file = true;
+        }
+        else {
+          xml_filename3=argv[arg];
+          has_third_xml_file = true;
+        }
+      }
+    }
+  }
+
+  void Albany::connect_vtune(const int p_rank) {
+    std::stringstream cmd;
+    pid_t my_os_pid=getpid();
+    const std::string vtune_loc = "amplxe-cl";
+    const std::string output_dir = "./vtune/vtune.";
+    cmd << vtune_loc
+        << " -collect hotspots -result-dir " << output_dir << p_rank
+        << " -target-pid " << my_os_pid << " &";
+    if (p_rank == 0)
+      std::cout << cmd.str() << std::endl;
+    system(cmd.str().c_str());
+    system("sleep 10");
+  }
+
+  void Albany::do_stack_trace() {
+
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+  }
+  

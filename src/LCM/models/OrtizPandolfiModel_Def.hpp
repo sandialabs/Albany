@@ -111,21 +111,21 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void OrtizPandolfiModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
 
   // extract dependent MDFields
-  PHX::MDField<ScalarT> jump = *dep_fields["Vector Jump"];
-  PHX::MDField<ScalarT> basis = *dep_fields["Current Basis"];
+  PHX::MDField<ScalarT> mdf_jump = *dep_fields["Vector Jump"];
+  PHX::MDField<ScalarT> mdf_basis = *dep_fields["Current Basis"];
 
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> traction = *eval_fields["Cohesive_Traction"];
-  PHX::MDField<ScalarT> traction_normal = *eval_fields["Normal_Traction"];
-  PHX::MDField<ScalarT> traction_shear = *eval_fields["Shear_Traction"];
-  PHX::MDField<ScalarT> jump_normal = *eval_fields["Normal_Jump"];
-  PHX::MDField<ScalarT> jump_shear = *eval_fields["Shear_Jump"];
-  PHX::MDField<ScalarT> jump_max = *eval_fields["Max_Jump"];
+  PHX::MDField<ScalarT> mdf_traction = *eval_fields["Cohesive_Traction"];
+  PHX::MDField<ScalarT> mdf_traction_normal = *eval_fields["Normal_Traction"];
+  PHX::MDField<ScalarT> mdf_traction_shear = *eval_fields["Shear_Traction"];
+  PHX::MDField<ScalarT> mdf_jump_normal = *eval_fields["Normal_Jump"];
+  PHX::MDField<ScalarT> mdf_jump_shear = *eval_fields["Shear_Jump"];
+  PHX::MDField<ScalarT> mdf_jump_max = *eval_fields["Max_Jump"];
 
   // get state variable
   Albany::MDArray jump_max_old = (*workset.stateArrayPtr)["Max_Jump_old"];
@@ -142,12 +142,12 @@ computeState(typename Traits::EvalData workset,
     for (int pt(0); pt < num_pts_; ++pt) {
 
       //current basis vector
-      Intrepid::Vector<ScalarT> g_0(3, basis, cell, pt, 0, 0);
-      Intrepid::Vector<ScalarT> g_1(3, basis, cell, pt, 1, 0);
-      Intrepid::Vector<ScalarT> n(3, basis, cell, pt, 2, 0);
+      Intrepid::Vector<ScalarT> g_0(3, mdf_basis, cell, pt, 0, 0);
+      Intrepid::Vector<ScalarT> g_1(3, mdf_basis, cell, pt, 1, 0);
+      Intrepid::Vector<ScalarT> n(3, mdf_basis, cell, pt, 2, 0);
 
       //current jump vector - move PHX::MDField into Intrepid::Vector
-      Intrepid::Vector<ScalarT> jump_pt(3, jump, cell, pt, 0);
+      Intrepid::Vector<ScalarT> jump_pt(3, mdf_jump, cell, pt, 0);
 
       //construct Identity tensor (2nd order) and tensor product of normal
       Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(3));
@@ -162,21 +162,28 @@ computeState(typename Traits::EvalData workset,
       ScalarT jump_n = Intrepid::dot(jump_pt, n);
       Intrepid::Vector<ScalarT> vec_jump_s = Intrepid::dot(I - Fn, jump_pt);
       // Be careful regarding Sacado and sqrt()
-      ScalarT jump_s2 = Intrepid::dot(vec_jump_s, vec_jump_s);
+      ScalarT const
+      jump_s2 = Intrepid::dot(vec_jump_s, vec_jump_s);
+
       ScalarT jump_s = 0.0;
       if (jump_s2 > 0.0) {
-	    jump_s = std::sqrt(jump_s2);
+        jump_s = std::sqrt(jump_s2);
       }
 
       // define the effective jump
-      // for intepenetration, only employ shear component
+      // for interpenetration, only employ shear component
 
-      ScalarT jump_eff = 0.0;
+      // Default no effective jump.
+      ScalarT
+      jump_eff = 0.0;
+
       if (jump_n >= 0.0) {
         // Be careful regarding Sacado and sqrt()
-    	ScalarT jump_eff2 = beta * beta * jump_s * jump_s + jump_n * jump_n;
+        ScalarT const
+        jump_eff2 = beta * beta * jump_s * jump_s + jump_n * jump_n;
+
         if (jump_eff2 > 0.0) {
-        jump_eff = std::sqrt(beta * beta * jump_s * jump_s + jump_n * jump_n);
+          jump_eff = std::sqrt(jump_eff2);
         }
       }
       else {
@@ -185,92 +192,105 @@ computeState(typename Traits::EvalData workset,
 
       // Debugging - print kinematics
       if (print_debug) {
-        std::cout << "jump for cell " << cell << " integration point " << pt
-            << '\n';
-        std::cout << jump_pt << '\n';
-        std::cout << "normal jump for cell " << cell << " integration point "
-            << pt << '\n';
-        std::cout << jump_n << '\n';
-        std::cout << "shear jump for cell " << cell << " integration point "
-            << pt << '\n';
-        std::cout << jump_s << '\n';
-        std::cout << "effective jump for cell " << cell << " integration point "
-            << pt << '\n';
-        std::cout << jump_eff << '\n';
+        std::cout << "--- KINEMATICS CELL: " << cell << ", IP: " << pt << '\n';
+        std::cout << "d    : " << jump_pt << '\n';
+        std::cout << "d_n  : " << jump_n << '\n';
+        std::cout << "d_s  : " << jump_s << '\n';
+        std::cout << "d_eff: " << jump_eff << '\n';
       }
 
       // define the constitutive response through an effective traction
 
-      ScalarT t_eff;
-      if (jump_eff < jump_m && jump_eff < delta_c) {
-        // linear unloading toward origin
-        t_eff = sigma_c / jump_m * (1.0 - jump_m / delta_c) * jump_eff;
-      }
-      else if (jump_eff >= jump_m && jump_eff <= delta_c) {
-        // linear unloading toward delta_c
-        t_eff = sigma_c * (1.0 - jump_eff / delta_c);
-      }
-      else {
-        // completely unloaded
-        t_eff = 0.0;
+      // Default completely unloaded
+      ScalarT
+      t_eff = 0.0;
+
+      if (jump_eff < delta_c) {
+
+        if (jump_eff >= jump_m) {
+          // linear unloading toward delta_c
+          t_eff = sigma_c * (1.0 - jump_eff / delta_c);
+        } else {
+          // linear unloading toward origin
+          t_eff = sigma_c * (jump_eff / jump_m - jump_eff / delta_c);
+
+        }
+
       }
 
       // calculate the global traction
-      // penalize interpentration through stiff_c
-      Intrepid::Vector<ScalarT> t_vec(3);
-      if (jump_n == 0.0 & jump_eff == 0.0) {
-        // no interpenetration, no effective jump
-        t_vec = 0.0 * n;
+      // penalize interpenetration through stiff_c
+
+      // Normal traction, default to zero.
+      Intrepid::Vector<ScalarT>
+      traction_normal(3, Intrepid::ZEROS);
+
+      if (jump_n >= 0.0) {
+
+        assert(jump_eff >= 0.0);
+
+        if (jump_n > 0.0) {
+          assert(jump_eff > 0.0);
+          traction_normal = t_eff / jump_eff * jump_n * n;
+        } else {
+          // FIXME: Assume that if there is no jump whatever (initial state)
+          // the initial traction will all be in the normal direction.
+          // Could pass on traction information from insertion criterion
+          // to determine a better direction and avoid a big residual at
+          // insertion but not sure it will have a big effect in the end
+          // on the solver.
+          traction_normal = t_eff * n;
+        }
+
+      } else {
+        // Interpenetration
+        traction_normal = stiff_c * jump_n * n;
       }
-      else if (jump_n < 0.0 && jump_eff == 0.0) {
-        // interpenetration, no effective jump
-        t_vec = stiff_c * jump_n * n;
+
+      // Shear traction, default to zero.
+      Intrepid::Vector<ScalarT>
+      traction_shear(3, Intrepid::ZEROS);
+
+      if (jump_eff > 0.0) {
+        traction_shear = t_eff / jump_eff * beta * beta * vec_jump_s;
       }
-      else if (jump_n < 0.0 && jump_eff > 0.0) {
-        //  interpenetration, effective jump
-        t_vec = t_eff / jump_eff * beta * beta * vec_jump_s
-            + stiff_c * jump_n * n;
-      }
-      else {
-        t_vec = t_eff / jump_eff * (beta * beta * vec_jump_s + jump_n * n);
-      }
+
+      Intrepid::Vector<ScalarT>
+      traction_vector = traction_normal + traction_shear;
 
       // Debugging - debug_print tractions
       if (print_debug) {
-        std::cout << "traction for cell " << cell << " integration point " << pt
-            << '\n';
-        std::cout << t_vec << '\n';
-        std::cout << "effective traction for cell " << cell
-            << " integration point " << pt << '\n';
-        std::cout << t_eff << '\n';
+        std::cout << "--- TRACTION CELL: " << cell << ", IP: " << pt << '\n';
+        std::cout << "t    : " << traction_vector << '\n';
+        std::cout << "t_eff: " << t_eff << '\n';
       }
 
       // update global traction
-      traction(cell, pt, 0) = t_vec(0);
-      traction(cell, pt, 1) = t_vec(1);
-      traction(cell, pt, 2) = t_vec(2);
+      mdf_traction(cell, pt, 0) = traction_vector(0);
+      mdf_traction(cell, pt, 1) = traction_vector(1);
+      mdf_traction(cell, pt, 2) = traction_vector(2);
 
       // update state variables 
 
       // Calculate normal and shear components of global traction
-      ScalarT traction_n = Intrepid::dot(t_vec, n);
+      ScalarT traction_n = Intrepid::dot(traction_vector, n);
       Intrepid::Vector<ScalarT> vec_traction_s = Intrepid::dot(I - Fn, jump_pt);
       // Be careful regarding Sacado and sqrt()
       ScalarT traction_s2 = Intrepid::dot(vec_traction_s, vec_traction_s);
       ScalarT traction_s = 0.0;
-        if (traction_s2 > 0.0) {
-    	  traction_s = std::sqrt(traction_s2);
-        }
-      traction_normal(cell, pt) = traction_n;
-      traction_shear(cell, pt) = traction_s;
+      if (traction_s2 > 0.0) {
+        traction_s = std::sqrt(traction_s2);
+      }
+      mdf_traction_normal(cell, pt) = traction_n;
+      mdf_traction_shear(cell, pt) = traction_s;
 
-      // Populate jump_normal and jump_shear
-      jump_normal(cell, pt) = jump_n;
-      jump_shear(cell, pt) = jump_s;
+      // Populate mdf_jump_normal and mdf_jump_shear
+      mdf_jump_normal(cell, pt) = jump_n;
+      mdf_jump_shear(cell, pt) = jump_s;
 
-      // only true state variable is jump_max
+      // only true state variable is mdf_jump_max
       if (jump_eff > jump_m) {
-        jump_max(cell, pt) = jump_eff;
+        mdf_jump_max(cell, pt) = jump_eff;
       }
 
     }

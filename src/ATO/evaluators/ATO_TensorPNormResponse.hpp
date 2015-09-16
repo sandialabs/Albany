@@ -67,7 +67,7 @@ namespace ATO
   /******************************************************************************/
   // Specialization: SGJacobian
   /******************************************************************************/
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
   template<typename Traits>
   class TensorPNormResponseSpec<PHAL::AlbanyTraits::SGJacobian,Traits> : 
     public PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::SGJacobian,Traits>
@@ -82,6 +82,10 @@ namespace ATO
   protected:
     double pVal;
   };
+
+#endif 
+#ifdef ALBANY_ENSEMBLE 
+
   /******************************************************************************/
   // Specialization: MPJacobian
   /******************************************************************************/

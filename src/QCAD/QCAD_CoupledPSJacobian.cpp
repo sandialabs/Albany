@@ -9,14 +9,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Epetra_LocalMap.h"
 
-//Forward Prototypes for utility functions
-double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double length_unit_in_m, double energy_unit_in_eV, double effmass);
-double n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
-double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
-double compute_FDIntOneHalf(const double x);
-double compute_dFDIntOneHalf(const double x);
-double compute_FDIntMinusOneHalf(const double x);
-double compute_dFDIntMinusOneHalf(const double x);
 
 QCAD::CoupledPSJacobian::CoupledPSJacobian(int nEigenvals, 
 					   const Teuchos::RCP<const Epetra_Map>& discretizationMap, 
@@ -275,7 +267,7 @@ const double cm2Perm2 = 1.0e4;
 const int MAX_EXPONENT = 100.0;
 
 
-double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double length_unit_in_m, double energy_unit_in_eV, double effmass)
+double QCAD::n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double length_unit_in_m, double energy_unit_in_eV, double effmass)
 {
   // Scaling factors
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um])
@@ -339,7 +331,7 @@ double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, double len
 
 
 //Note: assumes fermi level Ef == 0, so this is assumed to be true in the quantum region... perhaps pass in as a param later?
-double n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV)
+double QCAD::n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV)
 {
   double Ef = 0.0; //Fermi level of the quantum region
   double kbT = kbBoltz*T / energy_unit_in_eV;  // in [myV]
@@ -380,7 +372,7 @@ double n_weight_factor(double eigenvalue, int numDims, double T, double energy_u
   return 0.0;
 }
 
-double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV)
+double QCAD::dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV)
 {
   double Ef = 0.0; //Fermi level of the quantum region
   double kbT = kbBoltz*T / energy_unit_in_eV;  // in [myV]
@@ -422,7 +414,7 @@ double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_
 }
 
 
-double compute_FDIntOneHalf(const double x)
+double QCAD::compute_FDIntOneHalf(const double x)
 {
    // Use the approximate 1/2 FD integral by D. Bednarczyk and J. Bednarczyk, 
    // "The approximation of the Fermi-Dirac integral F_{1/2}(x),"
@@ -441,7 +433,7 @@ double compute_FDIntOneHalf(const double x)
    return fdInt;
 }
 
-double compute_dFDIntOneHalf(const double x)
+double QCAD::compute_dFDIntOneHalf(const double x)
 {
    // Use the approximate 1/2 FD integral by D. Bednarczyk and J. Bednarczyk, 
    // "The approximation of the Fermi-Dirac integral F_{1/2}(x),"
@@ -465,7 +457,7 @@ double compute_dFDIntOneHalf(const double x)
 
 
 
-double compute_FDIntMinusOneHalf(const double x)
+double QCAD::compute_FDIntMinusOneHalf(const double x)
 {
    // Use the approximate -1/2 FD integral by P. Van Halen and D. L. Pulfrey, 
    // "Accurate, short series approximations to Fermi-Dirac integrals of order 
@@ -530,7 +522,7 @@ double compute_FDIntMinusOneHalf(const double x)
 
 
 
-double compute_dFDIntMinusOneHalf(const double x)
+double QCAD::compute_dFDIntMinusOneHalf(const double x)
 {
    // Use the approximate -1/2 FD integral by P. Van Halen and D. L. Pulfrey, 
    // "Accurate, short series approximations to Fermi-Dirac integrals of order 

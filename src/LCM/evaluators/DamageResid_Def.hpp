@@ -16,22 +16,22 @@ template<typename EvalT, typename Traits>
 DamageResid<EvalT, Traits>::
 DamageResid(const Teuchos::ParameterList& p) :
   wBF         (p.get<std::string>                   ("Weighted BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout") ),
   damage      (p.get<std::string>                   ("QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   damage_dot  (p.get<std::string>                   ("QP Time Derivative Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   damageLS    (p.get<std::string>                   ("Damage Length Scale Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   wGradBF     (p.get<std::string>                   ("Weighted Gradient BF Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   damage_grad (p.get<std::string>                   ("Gradient QP Variable Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout") ),
   source      (p.get<std::string>                   ("Damage Source Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
   gc          (p.get<double>("gc Name")),
   dResidual   (p.get<std::string>                   ("Residual Name"),
-	       p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") )
+	       p.get<Teuchos::RCP<PHX::DataLayout>>("Node Scalar Data Layout") )
 {
   if (p.isType<bool>("Disable Transient"))
     enableTransient = !p.get<bool>("Disable Transient");
@@ -48,7 +48,7 @@ DamageResid(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(dResidual);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
+    p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];

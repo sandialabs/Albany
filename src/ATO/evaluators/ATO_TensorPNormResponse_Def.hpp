@@ -266,13 +266,13 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   this->global_response[0] = pow(this->global_response[0],1.0/pVal);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
   if(overlapped_dgdp != Teuchos::null) overlapped_dgdp->Scale(scale);
 #endif
 }
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 // **********************************************************************
 template<typename Traits>
 void ATO::TensorPNormResponseSpec<PHAL::AlbanyTraits::SGJacobian, Traits>::
@@ -283,7 +283,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdx_sg = workset.overlapped_sg_dgdx;
   if(overlapped_dgdx_sg != Teuchos::null){
     for(int block=0; block<overlapped_dgdx_sg->size(); block++){
-      ScalarT& gVal = this->global_response[0];
+      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdx_sg)[block].Scale(scale);
     }
@@ -292,13 +292,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdxdot_sg = workset.overlapped_sg_dgdxdot;
   if(overlapped_dgdxdot_sg != Teuchos::null){
     for(int block=0; block<overlapped_dgdxdot_sg->size(); block++){
-      ScalarT& gVal = this->global_response[0];
+      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdxdot_sg)[block].Scale(scale);
     }
   }
 }
 
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 // **********************************************************************
 template<typename Traits>
 void ATO::TensorPNormResponseSpec<PHAL::AlbanyTraits::MPJacobian, Traits>::
@@ -309,7 +311,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdx_mp = workset.overlapped_mp_dgdx;
   if(overlapped_dgdx_mp != Teuchos::null){
     for(int block=0; block<overlapped_dgdx_mp->size(); block++){
-      ScalarT& gVal = this->global_response[0];
+      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdx_mp)[block].Scale(scale);
     }
@@ -318,7 +320,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdxdot_mp = workset.overlapped_mp_dgdxdot;
   if(overlapped_dgdxdot_mp != Teuchos::null){
     for(int block=0; block<overlapped_dgdxdot_mp->size(); block++){
-      ScalarT& gVal = this->global_response[0];
+      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdxdot_mp)[block].Scale(scale);
     }

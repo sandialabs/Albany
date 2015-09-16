@@ -6,7 +6,7 @@
 
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Petra_Converters.hpp"
 #endif
 #include <algorithm>
@@ -98,6 +98,35 @@ setup(Teuchos::ParameterList& responseParams)
         application.get(), meshSpecs.get()));
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
       derivative_dimensions); }
+  // SG and MP implementations get deriv info from the regular evaluation types
+#ifdef ALBANY_SG
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGJacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGTangent>(
+      derivative_dimensions); }
+#endif
+#ifdef ALBANY_ENSEMBLE
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPJacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPTangent>(
+      derivative_dimensions); }
+#endif
   { std::vector<PHX::index_size_type> derivative_dimensions;
     derivative_dimensions.push_back(
       PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
@@ -203,7 +232,7 @@ evaluateTangentT(const double alpha,
   evaluate<PHAL::AlbanyTraits::Tangent>(workset);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateGradient(const double current_time,
@@ -383,7 +412,7 @@ evaluateGradientT(const double current_time,
   }  
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateDistParamDeriv(
@@ -433,7 +462,7 @@ evaluateDistParamDeriv(
 }
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateSGResponse(
@@ -574,6 +603,8 @@ evaluateSGGradient(
     evaluate<PHAL::AlbanyTraits::SGJacobian>(workset);
   }  
 }
+#endif 
+#ifdef ALBANY_ENSEMBLE 
 
 void
 Albany::FieldManagerScalarResponseFunction::
@@ -712,4 +743,4 @@ evaluateMPGradient(
     evaluate<PHAL::AlbanyTraits::MPJacobian>(workset);
   }  
 }
-#endif //ALBANY_SG_MP
+#endif

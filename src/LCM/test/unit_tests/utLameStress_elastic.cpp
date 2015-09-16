@@ -26,9 +26,9 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   const int worksetSize = 1;
   const int numQPts = 1;
   const int numDim = 3;
-  Teuchos::RCP<PHX::MDALayout<Cell, QuadPoint> > qp_scalar =
+  Teuchos::RCP<PHX::MDALayout<Cell, QuadPoint>> qp_scalar =
     Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(worksetSize, numQPts));
-  Teuchos::RCP<PHX::MDALayout<Cell, QuadPoint, Dim, Dim> > qp_tensor =
+  Teuchos::RCP<PHX::MDALayout<Cell, QuadPoint, Dim, Dim>> qp_tensor =
     Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim, Dim>(worksetSize, numQPts, numDim, numDim));
 
   // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
@@ -49,22 +49,22 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   // SetField evaluator, which will be used to manually assign a value to the DefGrad field
   Teuchos::ParameterList setFieldParameterList("SetField");
   setFieldParameterList.set<std::string>("Evaluated Field Name", "Deformation Gradient");
-  setFieldParameterList.set< Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", qp_tensor);
-  setFieldParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", tensorValue);
-  Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setField = 
+  setFieldParameterList.set< Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout", qp_tensor);
+  setFieldParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT>>("Field Values", tensorValue);
+  Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>> setField = 
     Teuchos::rcp(new LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(setFieldParameterList));
 
   // LameStress evaluator
   Teuchos::RCP<Teuchos::ParameterList> lameStressParameterList = Teuchos::rcp(new Teuchos::ParameterList("Stress"));
   lameStressParameterList->set<std::string>("DefGrad Name", "Deformation Gradient");
   lameStressParameterList->set<std::string>("Stress Name", "Stress");
-  lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);
-  lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
+  lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout", qp_scalar);
+  lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout", qp_tensor);
   lameStressParameterList->set<std::string>("Lame Material Model", "Elastic_New");
   Teuchos::ParameterList& materialModelParametersList = lameStressParameterList->sublist("Lame Material Parameters");
   materialModelParametersList.set<double>("Youngs Modulus", 1.0);
   materialModelParametersList.set<double>("Poissons Ratio", 0.25);
-  Teuchos::RCP<LCM::LameStress<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > lameStress = 
+  Teuchos::RCP<LCM::LameStress<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>> lameStress = 
     Teuchos::rcp(new LCM::LameStress<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>(*lameStressParameterList));
 
   // Instantiate a field manager.
@@ -75,7 +75,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   fieldManager.registerEvaluator<PHAL::AlbanyTraits::Residual>(lameStress);
 
   // Set the LameStress evaluated fields as required fields
-  for(std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = lameStress->evaluatedFields().begin() ; it != lameStress->evaluatedFields().end() ; it++)
+  for(std::vector<Teuchos::RCP<PHX::FieldTag>>::const_iterator it = lameStress->evaluatedFields().begin() ; it != lameStress->evaluatedFields().end() ; it++)
     fieldManager.requireField<PHAL::AlbanyTraits::Residual>(**it);
  
   // Call postRegistrationSetup on the evaluators
@@ -121,6 +121,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
                                      stkMeshStruct->getMeshSpecs()[0]->worksetSize);
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =
     Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, commT));
+  discretization->updateMesh();
 
   // Associate the discretization with the StateManager
   stateMgr.setStateArrays(discretization);

@@ -57,7 +57,7 @@ evaluateGradientT(const double current_time,
   if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::FieldManagerResidualOnlyResponseFunction:: 
 evaluateGradient(const double current_time,
                  const Epetra_Vector* xdot,
@@ -78,7 +78,7 @@ evaluateGradient(const double current_time,
 }
 #endif
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::FieldManagerResidualOnlyResponseFunction::
 evaluateDistParamDeriv(
   const double current_time,
@@ -90,7 +90,7 @@ evaluateDistParamDeriv(
   Epetra_MultiVector* dg_dp) {}
 #endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_SG
 void Albany::FieldManagerResidualOnlyResponseFunction::
 init_sg(
   const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
@@ -146,9 +146,9 @@ evaluateSGGradient(
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) {}
-#endif //ALBANY_SG_MP
+#endif
 
-#ifdef ALBANY_SG_MP
+#ifdef ALBANY_ENSEMBLE 
 void Albany::FieldManagerResidualOnlyResponseFunction::
 evaluateMPResponse(
   const double curr_time,
@@ -197,4 +197,4 @@ evaluateMPGradient(
   Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
   Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
   Stokhos::ProductEpetraMultiVector* mp_dg_dp) {}
-#endif //ALBANY_SG_MP
+#endif

@@ -48,9 +48,9 @@ namespace LCM {
 typedef stk::mesh::RelationIdentifier EdgeId;
 typedef stk::mesh::EntityVector::size_type EntityVectorIndex;
 typedef stk::mesh::RelationVector::size_type RelationVectorIndex;
-typedef std::vector<Intrepid::Vector<double> > Coordinates;
+typedef std::vector<Intrepid::Vector<double>> Coordinates;
 typedef Coordinates::size_type CoordinatesIndex;
-typedef std::vector<std::vector<stk::mesh::EntityId> > Connectivity;
+typedef std::vector<std::vector<stk::mesh::EntityId>> Connectivity;
 typedef Connectivity::size_type ConnectivityIndex;
 
 typedef boost::vertex_name_t VertexName;
@@ -136,6 +136,9 @@ struct EdgeLessThan
     return false;
   }
 };
+
+stk::mesh::Entity const
+INVALID_ENTITY(stk::mesh::Entity::Entity_t::InvalidEntity);
 
 // Forward declarations
 class Topology;
