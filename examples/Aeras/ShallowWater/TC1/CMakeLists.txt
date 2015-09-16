@@ -50,7 +50,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #add_test(Aeras_${testName} ${Albany.exe})
 #endif()
 if (NOT ALBANY_EPETRA)
-add_test(Aeras_${testName}_SlotCyl_HV_Tpetra ${AlbanyT.exe} input_slotcyl_hv_T.xml)
+#add_test(Aeras_${testName}_SlotCyl_HV_Tpetra ${AlbanyT.exe} input_slotcyl_hv_T.xml)
 
 add_test(Aeras_${testName}_SlotCyl_implicitHV_nu0_BackwardEuler ${AlbanyT.exe} input_slotcyl_implHV_nu0_BEuler_T.xml)
 add_test(Aeras_${testName}_SlotCyl_implicitHV_nu1e17_BackwardEuler ${AlbanyT.exe} input_slotcyl_implHV_nu1e17_BEuler_T.xml)
