@@ -8,46 +8,11 @@
 #include <MiniNonlinearSolver.h>
 #include "PHAL_AlbanyTraits.hpp"
 
-namespace
-{
-
-//
-// Simple test of the linear mini solver.
-//
-TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
-{
-  Intrepid::Index const
-  dimension{3};
-
-  // Lehmer matrix
-  Intrepid::Tensor<RealType, dimension> const
-  A(1.0, 0.5, 1.0/3.0, 0.5, 1.0, 2.0/3.0, 1.0/3.0, 2.0/3.0, 1.0);
-
-  // RHS
-  Intrepid::Vector<RealType, dimension> const
-  b(2.0, 1.0, 1.0);
-
-  // Known solution
-  Intrepid::Vector<RealType, dimension> const
-  v(2.0, -2.0/5.0, 3.0/5.0);
-
-  Intrepid::Vector<RealType, dimension>
-  x(0.0, 0.0, 0.0);
-
-  LCM::MiniLinearSolver<PHAL::AlbanyTraits::Residual, dimension>
-  solver;
-
-  solver.solve(A, b, x);
-
-  RealType const
-  error = norm(x - v) / norm(v);
-
-  TEST_COMPARE(error, <=, Intrepid::machine_epsilon<RealType>());
-}
-
 //
 // Define some nonlinear systems (NLS) to test nonlinear solution methods.
 //
+namespace LCM {
+
 template <typename S>
 class SquareRootNLS : public Intrepid::NonlinearSystem_Base<S>
 {
@@ -158,6 +123,78 @@ private:
   c_{0.0};
 };
 
+template <typename S>
+class BananaNLS  : public Intrepid::NonlinearSystem_Base<S>
+{
+public:
+
+  BananaNLS(S const a, S const b) : a_(a), b_(b) {}
+
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  Intrepid::Vector<T, N>
+  compute(Intrepid::Vector<T, N> const & x) const
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == 2);
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    r(0) = 2 * (x(0) - a_) + 4 * b_ * x(0) * (x(0) * x(0) - x(1));
+    r(1) = 2 * b_ * (x(1) - x(0) * x(0));
+
+    return r;
+  }
+
+private:
+  S const
+  a_{0.0};
+
+  S const
+  b_{0.0};
+};
+
+} // namespace LCM
+
+namespace
+{
+
+//
+// Simple test of the linear mini solver.
+//
+TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
+{
+  Intrepid::Index const
+  dimension{3};
+
+  // Lehmer matrix
+  Intrepid::Tensor<RealType, dimension> const
+  A(1.0, 0.5, 1.0/3.0, 0.5, 1.0, 2.0/3.0, 1.0/3.0, 2.0/3.0, 1.0);
+
+  // RHS
+  Intrepid::Vector<RealType, dimension> const
+  b(2.0, 1.0, 1.0);
+
+  // Known solution
+  Intrepid::Vector<RealType, dimension> const
+  v(2.0, -2.0/5.0, 3.0/5.0);
+
+  Intrepid::Vector<RealType, dimension>
+  x(0.0, 0.0, 0.0);
+
+  LCM::MiniLinearSolver<PHAL::AlbanyTraits::Residual, dimension>
+  solver;
+
+  solver.solve(A, b, x);
+
+  RealType const
+  error = norm(x - v) / norm(v);
+
+  TEST_COMPARE(error, <=, Intrepid::machine_epsilon<RealType>());
+}
+
 //
 // Test the solution methods by themselves.
 //
@@ -165,12 +202,12 @@ private:
 //
 // Square root NLS
 //
-TEUCHOS_UNIT_TEST(NewtonMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(IntrepidNewtonMethod, SquareRoot)
 {
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<RealType>;
+  using NLS = LCM::SquareRootNLS<RealType>;
 
   RealType const
   square = 2.0;
@@ -190,19 +227,17 @@ TEUCHOS_UNIT_TEST(NewtonMethod, SquareRoot)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = std::abs(norm_square(x) - square);
-
-  TEST_COMPARE(error, <=, method.getAbsoluteTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(TrustRegionMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(IntrepidTrustRegionMethod, SquareRoot)
 {
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<RealType>;
+  using NLS = LCM::SquareRootNLS<RealType>;
 
   RealType const
   square = 2.0;
@@ -222,19 +257,17 @@ TEUCHOS_UNIT_TEST(TrustRegionMethod, SquareRoot)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = std::abs(norm_square(x) - square);
-
-  TEST_COMPARE(error, <=, method.getAbsoluteTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(ConjugateGradientMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(IntrepidConjugateGradientMethod, SquareRoot)
 {
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<RealType>;
+  using NLS = LCM::SquareRootNLS<RealType>;
 
   RealType const
   square = 2.0;
@@ -254,19 +287,17 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, SquareRoot)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = std::abs(norm_square(x) - square);
-
-  TEST_COMPARE(error, <=, method.getAbsoluteTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(LineSearchRegularized, SquareRoot)
+TEUCHOS_UNIT_TEST(IntrepidLineSearchRegularized, SquareRoot)
 {
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<RealType>;
+  using NLS = LCM::SquareRootNLS<RealType>;
 
   RealType const
   square = 2.0;
@@ -286,22 +317,20 @@ TEUCHOS_UNIT_TEST(LineSearchRegularized, SquareRoot)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = std::abs(norm_square(x) - square);
-
-  TEST_COMPARE(error, <=, method.getAbsoluteTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 //
 // Quadratic NLS
 //
-TEUCHOS_UNIT_TEST(NewtonMethod, Quadratic)
+TEUCHOS_UNIT_TEST(IntrepidNewtonMethod, Quadratic)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = QuadraticNLS<RealType>;
+  using NLS = LCM::QuadraticNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -324,19 +353,17 @@ TEUCHOS_UNIT_TEST(NewtonMethod, Quadratic)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
-
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(TrustRegionMethod, Quadratic)
+TEUCHOS_UNIT_TEST(IntrepidTrustRegionMethod, Quadratic)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = QuadraticNLS<RealType>;
+  using NLS = LCM::QuadraticNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -359,19 +386,17 @@ TEUCHOS_UNIT_TEST(TrustRegionMethod, Quadratic)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
-
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Quadratic)
+TEUCHOS_UNIT_TEST(IntrepidConjugateGradientMethod, Quadratic)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = QuadraticNLS<RealType>;
+  using NLS = LCM::QuadraticNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -394,19 +419,17 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Quadratic)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
-
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Quadratic)
+TEUCHOS_UNIT_TEST(IntrepidLineSearchRegularizedMethod, Quadratic)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = QuadraticNLS<RealType>;
+  using NLS = LCM::QuadraticNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -429,22 +452,20 @@ TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Quadratic)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
-
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 //
 // Gaussian NLS
 //
-TEUCHOS_UNIT_TEST(NewtonMethod, Gaussian)
+TEUCHOS_UNIT_TEST(IntrepidNewtonMethod, Gaussian)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = GaussianNLS<RealType>;
+  using NLS = LCM::GaussianNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -467,19 +488,17 @@ TEUCHOS_UNIT_TEST(NewtonMethod, Gaussian)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
-
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(TrustRegionMethod, Gaussian)
+TEUCHOS_UNIT_TEST(IntrepidTrustRegionMethod, Gaussian)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = GaussianNLS<RealType>;
+  using NLS = LCM::GaussianNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -502,19 +521,17 @@ TEUCHOS_UNIT_TEST(TrustRegionMethod, Gaussian)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
-
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Gaussian)
+TEUCHOS_UNIT_TEST(IntrepidConjugateGradientMethod, Gaussian)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = GaussianNLS<RealType>;
+  using NLS = LCM::GaussianNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -537,19 +554,17 @@ TEUCHOS_UNIT_TEST(ConjugateGradientMethod, Gaussian)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
 
-  RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
-
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Gaussian)
+TEUCHOS_UNIT_TEST(IntrepidLineSearchRegularizedMethod, Gaussian)
 {
   Intrepid::Index const
   dimension{2};
 
-  using NLS = GaussianNLS<RealType>;
+  using NLS = LCM::GaussianNLS<RealType>;
 
   Intrepid::Vector<RealType, dimension> const
   minimum(4.0, 3.0);
@@ -572,11 +587,152 @@ TEUCHOS_UNIT_TEST(LineSearchRegularizedMethod, Gaussian)
   }
 
   method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
+
+  TEST_COMPARE(method.isConverged(), ==, true);
+}
+
+//
+// Banana function
+//
+TEUCHOS_UNIT_TEST(IntrepidNewtonMethod, Banana)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  using NLS = LCM::BananaNLS<RealType>;
 
   RealType const
-  error = Intrepid::norm(x - minimum) / Intrepid::norm(minimum);
+  a = 1.0;
 
-  TEST_COMPARE(error, <=, method.getRelativeTolerance());
+  RealType const
+  b = 100.0;
+
+  Intrepid::Vector<RealType, dimension> const
+  minimum(a, a * a);
+
+  NLS
+  nonlinear_system(a, b);
+
+  Intrepid::NewtonMethod<NLS, RealType, dimension>
+  method;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  // Initial guess
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
+
+  TEST_COMPARE(method.isConverged(), ==, true);
+}
+
+TEUCHOS_UNIT_TEST(IntrepidTrustRegionMethod, Banana)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  using NLS = LCM::BananaNLS<RealType>;
+
+  RealType const
+  a = 1.0;
+
+  RealType const
+  b = 100.0;
+
+  Intrepid::Vector<RealType, dimension> const
+  minimum(a, a * a);
+
+  NLS
+  nonlinear_system(a, b);
+
+  Intrepid::TrustRegionMethod<NLS, RealType, dimension>
+  method;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  // Initial guess
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
+
+  TEST_COMPARE(method.isConverged(), ==, true);
+}
+
+TEUCHOS_UNIT_TEST(IntrepidConjugateGradientMethod, Banana)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  using NLS = LCM::BananaNLS<RealType>;
+
+  RealType const
+  a = 1.0;
+
+  RealType const
+  b = 100.0;
+
+  Intrepid::Vector<RealType, dimension> const
+  minimum(a, a * a);
+
+  NLS
+  nonlinear_system(a, b);
+
+  Intrepid::ConjugateGradientMethod<NLS, RealType, dimension>
+  method;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  // Initial guess
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
+
+  TEST_COMPARE(method.isConverged(), ==, true);
+}
+
+TEUCHOS_UNIT_TEST(IntrepidLineSearchRegularizedMethod, Banana)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  using NLS = LCM::BananaNLS<RealType>;
+
+  RealType const
+  a = 1.0;
+
+  RealType const
+  b = 100.0;
+
+  Intrepid::Vector<RealType, dimension> const
+  minimum(a, a * a);
+
+  NLS
+  nonlinear_system(a, b);
+
+  Intrepid::LineSearchRegularizedMethod<NLS, RealType, dimension>
+  method;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  // Initial guess
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  method.solve(nonlinear_system, x);
+  method.printReport(std::cout);
+
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 //
@@ -592,7 +748,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<ValueT>;
+  using NLS = LCM::SquareRootNLS<ValueT>;
 
   ValueT const
   square = 2.0;
@@ -601,10 +757,10 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
   nonlinear_system(square);
 
   Intrepid::NewtonMethod<NLS, ValueT, dimension>
-  newton_method;
+  method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
-  solver(newton_method);
+  solver(method);
 
   Intrepid::Vector<ScalarT, dimension>
   x;
@@ -616,13 +772,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
 
   solver.solve(nonlinear_system, x);
 
-  ValueT const
-  error = std::abs(norm_square(x) - square);
-
-  ValueT const
-  absolute_tolerance = newton_method.getAbsoluteTolerance();
-
-  TEST_COMPARE(error, <=, absolute_tolerance);
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 TEUCHOS_UNIT_TEST(MiniNonLinearSolverTrustRegionMethod, SquareRoot)
@@ -634,7 +784,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverTrustRegionMethod, SquareRoot)
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<ValueT>;
+  using NLS = LCM::SquareRootNLS<ValueT>;
 
   ValueT const
   square = 2.0;
@@ -643,10 +793,10 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverTrustRegionMethod, SquareRoot)
   nonlinear_system(square);
 
   Intrepid::TrustRegionMethod<NLS, ValueT, dimension>
-  trust_region_method;
+  method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
-  solver(trust_region_method);
+  solver(method);
 
   Intrepid::Vector<ScalarT, dimension>
   x;
@@ -658,13 +808,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverTrustRegionMethod, SquareRoot)
 
   solver.solve(nonlinear_system, x);
 
-  ValueT const
-  error = std::abs(norm_square(x) - square);
-
-  ValueT const
-  absolute_tolerance = trust_region_method.getAbsoluteTolerance();
-
-  TEST_COMPARE(error, <=, absolute_tolerance);
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 TEUCHOS_UNIT_TEST(MiniNonLinearSolverConjugateGradientMethod, SquareRoot)
@@ -676,7 +820,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverConjugateGradientMethod, SquareRoot)
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<ValueT>;
+  using NLS = LCM::SquareRootNLS<ValueT>;
 
   ValueT const
   square = 2.0;
@@ -685,10 +829,10 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverConjugateGradientMethod, SquareRoot)
   nonlinear_system(square);
 
   Intrepid::ConjugateGradientMethod<NLS, ValueT, dimension>
-  conjugate_gradient_method;
+  method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
-  solver(conjugate_gradient_method);
+  solver(method);
 
   Intrepid::Vector<ScalarT, dimension>
   x;
@@ -700,13 +844,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverConjugateGradientMethod, SquareRoot)
 
   solver.solve(nonlinear_system, x);
 
-  ValueT const
-  error = std::abs(norm_square(x) - square);
-
-  ValueT const
-  absolute_tolerance = conjugate_gradient_method.getAbsoluteTolerance();
-
-  TEST_COMPARE(error, <=, absolute_tolerance);
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
@@ -718,7 +856,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
   Intrepid::Index const
   dimension{1};
 
-  using NLS = SquareRootNLS<ValueT>;
+  using NLS = LCM::SquareRootNLS<ValueT>;
 
   ValueT const
   square = 2.0;
@@ -727,10 +865,10 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
   nonlinear_system(square);
 
   Intrepid::LineSearchRegularizedMethod<NLS, ValueT, dimension>
-  conjugate_gradient_method;
+  method;
 
   LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
-  solver(conjugate_gradient_method);
+  solver(method);
 
   Intrepid::Vector<ScalarT, dimension>
   x;
@@ -742,13 +880,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
 
   solver.solve(nonlinear_system, x);
 
-  ValueT const
-  error = std::abs(norm_square(x) - square);
-
-  ValueT const
-  absolute_tolerance = conjugate_gradient_method.getAbsoluteTolerance();
-
-  TEST_COMPARE(error, <=, absolute_tolerance);
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 //
@@ -780,6 +912,5 @@ private:
   S const
   c_{0.0};
 };
-
 
 } // anonymous namespace

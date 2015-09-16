@@ -94,7 +94,7 @@ public:
   {return max_num_iter_;}
 
   Index
-  getNumberIterations()
+  getNumIterations()
   {return num_iter_;}
 
   void
@@ -125,6 +125,47 @@ public:
   isConverged() const
   {return converged_;}
 
+  T
+  getInitialResidualNorm() const
+  {return initial_norm_;}
+
+  Vector<T, N>
+  getInitialGuess() const
+  {return initial_guess_;}
+
+  Vector<T, N>
+  getFinalSolution() const
+  {return final_soln_;}
+
+  void printReport(std::ostream & os)
+  {
+    char const *
+    name = typeid(*this).name();
+
+    std::string const
+    cs = isConverged() == true ? "YES" : "NO";
+
+    //std::string const
+    //cs = isConverged() == true ? "\U0001F60A" : "\U0001F623";
+
+    os << "\n\n";
+    os << boost::core::demangle(name) << '\n';
+    os << "Converged                : " << cs << '\n';
+    os << "Maximum Number Iterations: " << getMaxNumIterations() << '\n';
+    os << "Number Iterations Taken  : " << getNumIterations() << '\n';
+
+    os << std::scientific << std::setw(24) << std::setprecision(16);
+
+    os << "Initial Residual Norm    : " << getInitialResidualNorm() << '\n';
+    os << "Absolute Tolerance       : " << getAbsoluteTolerance() << '\n';
+    os << "Absolute Error           : " << getAbsoluteError() << '\n';
+    os << "Relative Tolerance       : " << getRelativeTolerance() << '\n';
+    os << "Relative Error           : " << getRelativeError() << '\n';
+    os << "Initial Guess            : " << getInitialGuess() << '\n';
+    os << "Final Solution           : " << getFinalSolution() << '\n';
+    os << '\n';
+  }
+
 protected:
   void
   initConvergenceCriterion(T const in)
@@ -134,7 +175,7 @@ protected:
   updateConvergenceCriterion(T const abs_error)
   {
     abs_error_ = abs_error;
-    rel_error_ = abs_error_ / initial_norm_;
+    rel_error_ = initial_norm_ > 0.0 ? abs_error_ / initial_norm_ : 0.0;
 
     bool const
     converged_absolute = abs_error_ <= abs_tol_;
@@ -166,6 +207,18 @@ protected:
     ++num_iter_;
   }
 
+  void
+  setInitialGuess(Vector<T, N> const & x)
+  {
+    initial_guess_ = x;
+  }
+
+  void
+  setFinalSolution(Vector<T, N> const & x)
+  {
+    final_soln_ = x;
+  }
+
 protected:
   Index
   max_num_iter_{128};
@@ -190,6 +243,12 @@ protected:
 
   bool
   converged_{false};
+
+  Vector<T, N>
+  initial_guess_;
+
+  Vector<T, N>
+  final_soln_;
 };
 
 ///
@@ -267,13 +326,13 @@ private:
   max_num_restrict_iter_{4};
 
   T
-  max_step_length_{1.0};
+  max_step_length_{10.0};
 
   T
-  initial_step_length_{1.0};
+  initial_step_length_{10.0};
 
   T
-  min_reduction_{0.25};
+  min_reduction_{0.005};
 };
 
 ///

@@ -155,6 +155,8 @@ void
 NewtonMethod<NLS, T, N>::
 solve(NLS const & nls, Vector<T, N> & soln)
 {
+  this->setInitialGuess(soln);
+
   Index const
   dimension = soln.get_dimension();
 
@@ -190,6 +192,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
+  this->setFinalSolution(soln);
   return;
 }
 
@@ -201,6 +204,8 @@ void
 TrustRegionMethod<NLS, T, N>::
 solve(NLS const & nls, Vector<T, N> & soln)
 {
+  this->setInitialGuess(soln);
+
   Index const
   dimension = soln.get_dimension();
 
@@ -324,6 +329,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
+  this->setFinalSolution(soln);
   return;
 }
 
@@ -335,6 +341,8 @@ void
 ConjugateGradientMethod<NLS, T, N>::
 solve(NLS const & nls, Vector<T, N> & soln)
 {
+  this->setInitialGuess(soln);
+
   Index const
   dimension = soln.get_dimension();
 
@@ -448,6 +456,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
+  this->setFinalSolution(soln);
   return;
 }
 
@@ -459,6 +468,8 @@ void
 LineSearchRegularizedMethod<NLS, T, N>::
 solve(NLS const & nls, Vector<T, N> & soln)
 {
+  this->setInitialGuess(soln);
+
   Index const
   dimension = soln.get_dimension();
 
@@ -574,6 +585,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
+  this->setFinalSolution(soln);
   return;
 }
 
