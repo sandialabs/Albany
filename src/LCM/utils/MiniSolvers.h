@@ -152,7 +152,7 @@ class BananaNLS : public Intrepid::NonlinearSystem_Base<S>
 {
 public:
 
-  BananaNLS(S const a, S const b) : a_(a), b_(b) {}
+  BananaNLS() {}
 
   static constexpr
   Intrepid::Index
@@ -174,18 +174,12 @@ public:
     Intrepid::Vector<T, N>
     r(dimension);
 
-    r(0) = 2 * (x(0) - a_) + 4 * b_ * x(0) * (x(0) * x(0) - x(1));
-    r(1) = 2 * b_ * (x(1) - x(0) * x(0));
+    r(0) = 2.0 * (x(0) - 1.0) + 400.0 * x(0) * (x(0) * x(0) - x(1));
+    r(1) = 200.0 * (x(1) - x(0) * x(0));
 
     return r;
   }
 
-private:
-  S const
-  a_{0.0};
-
-  S const
-  b_{0.0};
 };
 
 template <typename S>

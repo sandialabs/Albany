@@ -129,7 +129,7 @@ bool testSystemsAndMethods()
   all_ok = all_ok && gaussian_ok;
 
   LCM::BananaNLS<RealType>
-  banana(1.0, 3.0);
+  banana;
 
   x.set_dimension(LCM::BananaNLS<RealType>::DIMENSION);
 
