@@ -65,7 +65,7 @@ public:
   char const * const
   NAME = "Quadratic";
 
- template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
   {
@@ -95,7 +95,7 @@ private:
 };
 
 template <typename S>
-class GaussianNLS  : public Intrepid::NonlinearSystem_Base<S>
+class GaussianNLS : public Intrepid::NonlinearSystem_Base<S>
 {
 public:
 
@@ -109,7 +109,7 @@ public:
   char const * const
   NAME = "Inverted Gaussian";
 
- template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
   {
@@ -148,7 +148,7 @@ private:
 };
 
 template <typename S>
-class BananaNLS  : public Intrepid::NonlinearSystem_Base<S>
+class BananaNLS : public Intrepid::NonlinearSystem_Base<S>
 {
 public:
 
@@ -162,7 +162,7 @@ public:
   char const * const
   NAME = "Rosenbrock's Banana";
 
- template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
   {
@@ -188,6 +188,111 @@ private:
   b_{0.0};
 };
 
+template <typename S>
+class MatyasNLS : public Intrepid::NonlinearSystem_Base<S>
+{
+public:
+
+  MatyasNLS() {}
+
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
+  static constexpr
+  char const * const
+  NAME = "Matyas";
+
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  Intrepid::Vector<T, N>
+  compute(Intrepid::Vector<T, N> const & x) const
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    r(0) = (13.0 * x(0) - 12.0 * x(1)) / 25.0;
+    r(1) = (13.0 * x(1) - 12.0 * x(0)) / 25.0;
+
+    return r;
+  }
+
+};
+
+template <typename S>
+class McCormickNLS : public Intrepid::NonlinearSystem_Base<S>
+{
+public:
+
+  McCormickNLS() {}
+
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
+  static constexpr
+  char const * const
+  NAME = "McCormick";
+
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  Intrepid::Vector<T, N>
+  compute(Intrepid::Vector<T, N> const & x) const
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    r(0) = std::cos(x(0) + x(1)) + 2.0 * x(0) - 2.0 * x(1) - 1.5;
+    r(1) = std::cos(x(0) + x(1)) - 2.0 * x(0) + 2.0 * x(1) + 2.5;
+
+    return r;
+  }
+
+};
+
+template <typename S>
+class StyblinskiTangNLS : public Intrepid::NonlinearSystem_Base<S>
+{
+public:
+
+  StyblinskiTangNLS() {}
+
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
+  static constexpr
+  char const * const
+  NAME = "Styblinski-Tang";
+
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  Intrepid::Vector<T, N>
+  compute(Intrepid::Vector<T, N> const & x) const
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    r(0) = 2.0 * x(0) * x(0) * x(0) - 16.0 * x(0) + 2.5;
+    r(1) = 2.0 * x(1) * x(1) * x(1) - 16.0 * x(1) + 2.5;
+
+    return r;
+  }
+
+};
+
 //
 // Define some nonlinear functions (NLF) to test nonlinear optimization methods.
 //
@@ -206,7 +311,7 @@ public:
   char const * const
   NAME = "Cubic";
 
- template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   compute(Intrepid::Vector<T, N> const & x) const
   {
