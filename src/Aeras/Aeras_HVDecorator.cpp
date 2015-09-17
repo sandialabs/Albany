@@ -29,9 +29,8 @@ Aeras::HVDecorator::HVDecorator(
 
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
-
   std::cout << "In HVDecorator app name: " << app->getProblemPL()->get("Name", "") << std::endl;
+#endif
 
 //Create and store mass and Laplacian operators (in CrsMatrix form). 
   mass_ = createOperator(1.0, 0.0, 0.0); 
@@ -154,7 +153,9 @@ Aeras::HVDecorator::evalModelImpl(
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG WHICH HVDecorator: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 	
   Teuchos::TimeMonitor Timer(*timer); //start timer
   //
@@ -308,7 +309,9 @@ Aeras::HVDecorator::evalModelImpl(
 #endif  
 
   if(Teuchos::nonnull(inArgsT.get_x_dot())){
+#ifdef OUTPUT_TO_SCREEN
 	  std::cout <<"in the if-statement for the update" <<std::endl;
+#endif
 	  fT_out->update(1.0, *xtildeT, 1.0);
   }
 
