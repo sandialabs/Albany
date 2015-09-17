@@ -6,157 +6,8 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <MiniLinearSolver.h>
 #include <MiniNonlinearSolver.h>
+#include "../../utils/MiniSolvers.h"
 #include "PHAL_AlbanyTraits.hpp"
-
-//
-// Define some nonlinear systems (NLS) to test nonlinear solution methods.
-//
-namespace LCM {
-
-template <typename S>
-class SquareRootNLS : public Intrepid::NonlinearSystem_Base<S>
-{
-public:
-
-  SquareRootNLS(S const c) : c_(c) {}
-
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == 1);
-
-    Intrepid::Vector<T, N>
-    r(dimension);
-
-    r(0) = x(0) * x(0) - c_;
-
-    return r;
-  }
-
-private:
-  S const
-  c_{0.0};
-};
-
-template <typename S>
-class QuadraticNLS : public Intrepid::NonlinearSystem_Base<S>
-{
-public:
-
-  QuadraticNLS(S const a, S const b, S const c) :  a_(a), b_(b), c_(c) {}
-
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == 2);
-
-    Intrepid::Vector<T, N>
-    r(dimension);
-
-    r(0) = 2.0 * c_ * (x(0) - a_);
-    r(1) = 2.0 * c_ * (x(1) - b_);
-
-    return r;
-  }
-
-private:
-  S const
-  a_{0.0};
-
-  S const
-  b_{0.0};
-
-  S const
-  c_{0.0};
-};
-
-template <typename S>
-class GaussianNLS  : public Intrepid::NonlinearSystem_Base<S>
-{
-public:
-
-  GaussianNLS(S const a, S const b, S const c) : a_(a), b_(b), c_(c) {}
-
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == 2);
-
-    Intrepid::Vector<T, N>
-    r(dimension);
-
-    T const
-    xa = (x(0) - a_) * c_;
-
-    T const
-    xb = (x(1) - b_) * c_;
-
-    T const
-    e = std::exp(- xa * xa - xb * xb);
-
-    r(0) = 2.0 * xa * e * c_;
-    r(1) = 2.0 * xb * e * c_;
-
-    return r;
-  }
-
-private:
-  S const
-  a_{0.0};
-
-  S const
-  b_{0.0};
-
-  S const
-  c_{0.0};
-};
-
-template <typename S>
-class BananaNLS  : public Intrepid::NonlinearSystem_Base<S>
-{
-public:
-
-  BananaNLS(S const a, S const b) : a_(a), b_(b) {}
-
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == 2);
-
-    Intrepid::Vector<T, N>
-    r(dimension);
-
-    r(0) = 2 * (x(0) - a_) + 4 * b_ * x(0) * (x(0) * x(0) - x(1));
-    r(1) = 2 * b_ * (x(1) - x(0) * x(0));
-
-    return r;
-  }
-
-private:
-  S const
-  a_{0.0};
-
-  S const
-  b_{0.0};
-};
-
-} // namespace LCM
 
 namespace
 {
@@ -199,6 +50,143 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 // Test the solution methods by themselves.
 //
 
+// Test one system with one method.
+template <typename NLS, typename NLM, typename T, Intrepid::Index N>
+bool
+solveNLSwithNLM(NLS & system, NLM & method, Intrepid::Vector<T, N> & x)
+{
+  method.solve(system, x);
+  method.printReport(std::cout);
+
+  return method.isConverged();
+}
+
+// Test one system with various methods.
+template <typename NLS, typename T, Intrepid::Index N>
+bool
+solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
+{
+  bool
+  all_ok = true;
+
+  Intrepid::Vector<T, N>
+  y;
+
+  Intrepid::NewtonMethod<NLS, T, N>
+  newton;
+
+  y = x;
+
+  bool const
+  newton_ok = solveNLSwithNLM(system, newton, y);
+
+  all_ok = all_ok && newton_ok;
+
+  Intrepid::TrustRegionMethod<NLS, T, N>
+  trust_region;
+
+  y = x;
+
+  bool const
+  trust_region_ok = solveNLSwithNLM(system, trust_region, y);
+
+  all_ok = all_ok && trust_region_ok;
+
+  Intrepid::ConjugateGradientMethod<NLS, T, N>
+  pcg;
+
+  y = x;
+
+  bool const
+  pcg_ok = solveNLSwithNLM(system, pcg, y);
+
+  all_ok = all_ok && pcg_ok;
+
+  Intrepid::LineSearchRegularizedMethod<NLS, T, N>
+  line_search;
+
+  y = x;
+
+  bool const
+  line_search_ok = solveNLSwithNLM(system, line_search, y);
+
+  all_ok = all_ok && line_search_ok;
+
+  return all_ok;
+}
+
+// Test various systems with various methods.
+bool testSystemsAndMethods()
+{
+  bool
+  all_ok = true;
+
+  Intrepid::Vector<RealType>
+  x;
+
+  LCM::SquareRootNLS<RealType>
+  square_root(2.0);
+
+  x.set_dimension(LCM::SquareRootNLS<RealType>::DIMENSION);
+
+  x(0) = 10.0;
+
+  bool const
+  square_root_ok = solveNLS(square_root, x);
+
+  all_ok = all_ok && square_root_ok;
+
+  LCM::QuadraticNLS<RealType>
+  quadratic(10.0, 15.0, 1.0);
+
+  x.set_dimension(LCM::QuadraticNLS<RealType>::DIMENSION);
+
+  x(0) = -15.0;
+  x(1) = -10.0;
+
+  bool const
+  quadratic_ok = solveNLS(quadratic, x);
+
+  all_ok = all_ok && quadratic_ok;
+
+  LCM::GaussianNLS<RealType>
+  gaussian(1.0, 2.0, 0.125);
+
+  x.set_dimension(LCM::GaussianNLS<RealType>::DIMENSION);
+
+  x(0) = 0.0;
+  x(1) = 0.0;
+
+  bool const
+  gaussian_ok = solveNLS(gaussian, x);
+
+  all_ok = all_ok && gaussian_ok;
+
+  LCM::BananaNLS<RealType>
+  banana(1.0, 3.0);
+
+  x.set_dimension(LCM::BananaNLS<RealType>::DIMENSION);
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  bool const
+  banana_ok = solveNLS(banana, x);
+
+  all_ok = all_ok && banana_ok;
+
+  return all_ok;
+}
+
+TEUCHOS_UNIT_TEST(NonlinearSystems, NonlinearMethods)
+{
+  bool const
+  passed = testSystemsAndMethods();
+
+  TEST_COMPARE(passed, ==, true);
+}
+
+#if 0
 //
 // Square root NLS
 //
@@ -883,34 +871,6 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
   TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-//
-// Define some nonlinear functions (NLF) to test nonlinear optimization methods.
-//
-template <typename S>
-class CubicFn
-{
-public:
-
-  CubicFn(S const c) : c_(c) {}
-
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-  T
-  compute(Intrepid::Vector<T, N> const & x) const
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == 1);
-
-    T
-    f = x(0) * x(0) * x(0) / 3.0 - c_ * x(0);
-
-    return f;
-  }
-
-private:
-  S const
-  c_{0.0};
-};
+#endif
 
 } // anonymous namespace
