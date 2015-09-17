@@ -50,6 +50,143 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 // Test the solution methods by themselves.
 //
 
+// Test one system with one method.
+template <typename NLS, typename NLM, typename T, Intrepid::Index N>
+bool
+solveNLSwithNLM(NLS & system, NLM & method, Intrepid::Vector<T, N> & x)
+{
+  method.solve(system, x);
+  method.printReport(std::cout);
+
+  return method.isConverged();
+}
+
+// Test one system with various methods.
+template <typename NLS, typename T, Intrepid::Index N>
+bool
+solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
+{
+  bool
+  all_ok = true;
+
+  Intrepid::Vector<T, N>
+  y;
+
+  Intrepid::NewtonMethod<NLS, T, N>
+  newton;
+
+  y = x;
+
+  bool const
+  newton_ok = solveNLSwithNLM(system, newton, y);
+
+  all_ok = all_ok && newton_ok;
+
+  Intrepid::TrustRegionMethod<NLS, T, N>
+  trust_region;
+
+  y = x;
+
+  bool const
+  trust_region_ok = solveNLSwithNLM(system, trust_region, y);
+
+  all_ok = all_ok && trust_region_ok;
+
+  Intrepid::ConjugateGradientMethod<NLS, T, N>
+  pcg;
+
+  y = x;
+
+  bool const
+  pcg_ok = solveNLSwithNLM(system, pcg, y);
+
+  all_ok = all_ok && pcg_ok;
+
+  Intrepid::LineSearchRegularizedMethod<NLS, T, N>
+  line_search;
+
+  y = x;
+
+  bool const
+  line_search_ok = solveNLSwithNLM(system, line_search, y);
+
+  all_ok = all_ok && line_search_ok;
+
+  return all_ok;
+}
+
+// Test various systems with various methods.
+bool testSystemsAndMethods()
+{
+  bool
+  all_ok = true;
+
+  Intrepid::Vector<RealType>
+  x;
+
+  LCM::SquareRootNLS<RealType>
+  square_root(2.0);
+
+  x.set_dimension(LCM::SquareRootNLS<RealType>::DIMENSION);
+
+  x(0) = 10.0;
+
+  bool const
+  square_root_ok = solveNLS(square_root, x);
+
+  all_ok = all_ok && square_root_ok;
+
+  LCM::QuadraticNLS<RealType>
+  quadratic(10.0, 15.0, 1.0);
+
+  x.set_dimension(LCM::QuadraticNLS<RealType>::DIMENSION);
+
+  x(0) = -15.0;
+  x(1) = -10.0;
+
+  bool const
+  quadratic_ok = solveNLS(quadratic, x);
+
+  all_ok = all_ok && quadratic_ok;
+
+  LCM::GaussianNLS<RealType>
+  gaussian(1.0, 2.0, 0.125);
+
+  x.set_dimension(LCM::GaussianNLS<RealType>::DIMENSION);
+
+  x(0) = 0.0;
+  x(1) = 0.0;
+
+  bool const
+  gaussian_ok = solveNLS(gaussian, x);
+
+  all_ok = all_ok && gaussian_ok;
+
+  LCM::BananaNLS<RealType>
+  banana(1.0, 3.0);
+
+  x.set_dimension(LCM::BananaNLS<RealType>::DIMENSION);
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  bool const
+  banana_ok = solveNLS(banana, x);
+
+  all_ok = all_ok && banana_ok;
+
+  return all_ok;
+}
+
+TEUCHOS_UNIT_TEST(NonlinearSystems, NonlinearMethods)
+{
+  bool const
+  passed = testSystemsAndMethods();
+
+  TEST_COMPARE(passed, ==, true);
+}
+
+#if 0
 //
 // Square root NLS
 //
@@ -733,5 +870,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverLineSearchRegularizedMethod, SquareRoot)
 
   TEST_COMPARE(method.isConverged(), ==, true);
 }
+
+#endif
 
 } // anonymous namespace

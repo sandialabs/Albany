@@ -20,6 +20,10 @@ public:
 
   SquareRootNLS(S const c) : c_(c) {}
 
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 1;
+
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
@@ -27,7 +31,7 @@ public:
     Intrepid::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == 1);
+    assert(dimension == DIMENSION);
 
     Intrepid::Vector<T, N>
     r(dimension);
@@ -49,6 +53,10 @@ public:
 
   QuadraticNLS(S const a, S const b, S const c) :  a_(a), b_(b), c_(c) {}
 
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
@@ -56,7 +64,7 @@ public:
     Intrepid::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == 2);
+    assert(dimension == DIMENSION);
 
     Intrepid::Vector<T, N>
     r(dimension);
@@ -85,6 +93,10 @@ public:
 
   GaussianNLS(S const a, S const b, S const c) : a_(a), b_(b), c_(c) {}
 
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
@@ -92,7 +104,7 @@ public:
     Intrepid::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == 2);
+    assert(dimension == DIMENSION);
 
     Intrepid::Vector<T, N>
     r(dimension);
@@ -106,8 +118,8 @@ public:
     T const
     e = std::exp(- xa * xa - xb * xb);
 
-    r(0) = 2.0 * xa * e * c_;
-    r(1) = 2.0 * xb * e * c_;
+    r(0) = 2.0 * xa * e * c_ * c_;
+    r(1) = 2.0 * xb * e * c_ * c_;
 
     return r;
   }
@@ -130,6 +142,10 @@ public:
 
   BananaNLS(S const a, S const b) : a_(a), b_(b) {}
 
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
@@ -137,7 +153,7 @@ public:
     Intrepid::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == 2);
+    assert(dimension == DIMENSION);
 
     Intrepid::Vector<T, N>
     r(dimension);
@@ -166,6 +182,10 @@ public:
 
   CubicFn(S const c) : c_(c) {}
 
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 1;
+
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   compute(Intrepid::Vector<T, N> const & x) const
@@ -173,7 +193,7 @@ public:
     Intrepid::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == 1);
+    assert(dimension == DIMENSION);
 
     T
     f = x(0) * x(0) * x(0) / 3.0 - c_ * x(0);
