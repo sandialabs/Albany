@@ -24,6 +24,10 @@ public:
   Intrepid::Index
   DIMENSION = 1;
 
+  static constexpr
+  char const * const
+  NAME = "Square Root";
+
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
@@ -57,7 +61,11 @@ public:
   Intrepid::Index
   DIMENSION = 2;
 
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  static constexpr
+  char const * const
+  NAME = "Quadratic";
+
+ template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
   {
@@ -97,7 +105,11 @@ public:
   Intrepid::Index
   DIMENSION = 2;
 
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  static constexpr
+  char const * const
+  NAME = "Inverted Gaussian";
+
+ template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
   {
@@ -146,7 +158,11 @@ public:
   Intrepid::Index
   DIMENSION = 2;
 
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  static constexpr
+  char const * const
+  NAME = "Rosenbrock's Banana";
+
+ template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   compute(Intrepid::Vector<T, N> const & x) const
   {
@@ -186,7 +202,11 @@ public:
   Intrepid::Index
   DIMENSION = 1;
 
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  static constexpr
+  char const * const
+  NAME = "Cubic";
+
+ template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   compute(Intrepid::Vector<T, N> const & x) const
   {

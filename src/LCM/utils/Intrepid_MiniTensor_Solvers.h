@@ -82,6 +82,10 @@ public:
   ~NonlinearMethod_Base() {}
 
   virtual
+  char const * const
+  name() const = 0;
+
+  virtual
   void
   solve(NLS const & nls, Vector<T, N> & x) = 0;
 
@@ -139,9 +143,6 @@ public:
 
   void printReport(std::ostream & os)
   {
-    char const *
-    name = typeid(*this).name();
-
     std::string const
     cs = isConverged() == true ? "YES" : "NO";
 
@@ -149,21 +150,21 @@ public:
     //cs = isConverged() == true ? "\U0001F60A" : "\U0001F623";
 
     os << "\n\n";
-    os << name << '\n';
-//    os << boost::core::demangle(name) << '\n';
-    os << "Converged                : " << cs << '\n';
-    os << "Maximum Number Iterations: " << getMaxNumIterations() << '\n';
-    os << "Number Iterations Taken  : " << getNumIterations() << '\n';
+    os << "Method     : " << name() << '\n';
+    os << "System     : " << NLS::NAME << '\n';
+    os << "Converged  : " << cs << '\n';
+    os << "Max Iters  : " << getMaxNumIterations() << '\n';
+    os << "Iters Taken: " << getNumIterations() << '\n';
 
-    os << std::scientific << std::setw(24) << std::setprecision(16);
+    os << std::scientific << std::setprecision(16);
 
-    os << "Initial Residual Norm    : " << getInitialResidualNorm() << '\n';
-    os << "Absolute Tolerance       : " << getAbsoluteTolerance() << '\n';
-    os << "Absolute Error           : " << getAbsoluteError() << '\n';
-    os << "Relative Tolerance       : " << getRelativeTolerance() << '\n';
-    os << "Relative Error           : " << getRelativeError() << '\n';
-    os << "Initial Guess            : " << getInitialGuess() << '\n';
-    os << "Final Solution           : " << getFinalSolution() << '\n';
+    os << "Initial |R|: " << getInitialResidualNorm() << '\n';
+    os << "Abs Tol    : " << getAbsoluteTolerance() << '\n';
+    os << "Abs Error  : " << getAbsoluteError() << '\n';
+    os << "Rel Tol    : " << getRelativeTolerance() << '\n';
+    os << "Rel Error  : " << getRelativeError() << '\n';
+    os << "Initial X  : " << getInitialGuess() << '\n';
+    os << "Final X    : " << getFinalSolution() << '\n';
     os << '\n';
   }
 
@@ -271,6 +272,11 @@ public:
   ~NewtonMethod() {}
 
   virtual
+  char const * const
+  name() const override
+  {return "Newton";}
+
+  virtual
   void
   solve(NLS const & nls, Vector<T, N> & x) override;
 };
@@ -285,6 +291,11 @@ public:
 
   virtual
   ~TrustRegionMethod() {}
+
+  virtual
+  char const * const
+  name() const override
+  {return "Trust Region";}
 
   virtual
   void
@@ -352,6 +363,11 @@ public:
   ~ConjugateGradientMethod() {}
 
   virtual
+  char const * const
+  name() const override
+  {return "Preconditioned Conjugate Gradient";}
+
+  virtual
   void
   solve(NLS const & nls, Vector<T, N> & x) override;
 
@@ -400,6 +416,11 @@ public:
 
   virtual
   ~LineSearchRegularizedMethod() {}
+
+  virtual
+  char const * const
+  name() const override
+  {return "Line Search Regularized Newton-like";}
 
   virtual
   void
