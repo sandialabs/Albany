@@ -30,7 +30,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -67,7 +67,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -111,7 +111,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -164,7 +164,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -199,7 +199,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -234,7 +234,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -269,7 +269,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();
@@ -291,11 +291,11 @@ public:
 // Define some nonlinear functions (NLF) to test nonlinear optimization methods.
 //
 template <typename S>
-class CubicFn
+class CubicNLF
 {
 public:
 
-  CubicFn(S const c) : c_(c) {}
+  CubicNLF(S const c) : c_(c) {}
 
   static constexpr
   Intrepid::Index
@@ -307,7 +307,7 @@ public:
 
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
-  compute(Intrepid::Vector<T, N> const & x) const
+  evaluate(Intrepid::Vector<T, N> const & x) const
   {
     Intrepid::Index const
     dimension = x.get_dimension();

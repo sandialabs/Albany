@@ -101,20 +101,20 @@ computeFADInfo(
 //
 template<typename NLS, typename T, Index N>
 Vector<T, N>
-computeResidual(NLS const & nls, Vector<T, N> const & x)
+getValue(NLS const & nls, Vector<T, N> const & x)
 {
   Vector<T, N>
-  r = nls.compute(x);
+  r = nls.evaluate(x);
 
   return r;
 }
 
 //
-// Hessian of nonlinear system
+// Gradient of nonlinear system
 //
 template<typename NLS, typename T, Index N>
 Tensor<T, N>
-computeHessian(NLS const & nls, Vector<T, N> const & x)
+getGradient(NLS const & nls, Vector<T, N> const & x)
 {
   using S = typename Sacado::ValueType<T>::type;
   using AD = typename Sacado::Fad::DFad<S>;
@@ -133,7 +133,7 @@ computeHessian(NLS const & nls, Vector<T, N> const & x)
   }
 
   Vector<AD, N>
-  r_ad = nls.compute(x_ad);
+  r_ad = nls.evaluate(x_ad);
 
   Tensor<T, N>
   Hessian(dimension);
@@ -167,7 +167,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   step(dimension);
 
   Vector<T, N>
-  resi = nls.compute(soln);
+  resi = nls.evaluate(soln);
 
   T const
   initial_norm = norm(resi);
@@ -177,13 +177,13 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
   while (this->continueSolve() == true) {
 
-    Hessian = computeHessian(nls, soln);
+    Hessian = getGradient(nls, soln);
 
     step = - Intrepid::solve(Hessian, resi);
 
     soln += step;
 
-    resi = nls.compute(soln);
+    resi = nls.evaluate(soln);
 
     T const
     norm_resi = norm(resi);
@@ -234,7 +234,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   I = identity<T, N>(dimension);
 
   Vector<T, N>
-  resi = nls.compute(soln);
+  resi = nls.evaluate(soln);
 
   T const
   initial_norm = norm(resi);
@@ -248,7 +248,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   // Outer solution loop
   while (this->continueSolve() == true) {
 
-    Hessian = computeHessian(nls, soln);
+    Hessian = getGradient(nls, soln);
 
     // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
     T
@@ -279,7 +279,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     soln_next = soln + step;
 
-    resi_next = nls.compute(soln_next);
+    resi_next = nls.evaluate(soln_next);
 
     // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
     T const
@@ -319,7 +319,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     if (reduction > getMinumumReduction()) {
       soln = soln_next;
-      resi = nls.compute(soln);
+      resi = nls.evaluate(soln);
     }
 
     T const
@@ -347,13 +347,13 @@ solve(NLS const & nls, Vector<T, N> & soln)
   dimension = soln.get_dimension();
 
   Vector<T, N>
-  gradient = nls.compute(soln);
+  gradient = nls.evaluate(soln);
 
   Vector<T, N>
   resi = - gradient;
 
   Tensor<T, N>
-  Hessian = computeHessian(nls, soln);
+  Hessian = getGradient(nls, soln);
 
   Vector<T, N>
   precon_resi = Intrepid::solve(Hessian, resi);
@@ -388,9 +388,9 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     for (Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
 
-      gradient = nls.compute(soln);
+      gradient = nls.evaluate(soln);
 
-      Hessian = computeHessian(nls, soln);
+      Hessian = getGradient(nls, soln);
 
       T const
       projection = dot(gradient, search_direction);
@@ -412,7 +412,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     }
 
-    gradient = nls.compute(soln);
+    gradient = nls.evaluate(soln);
 
     resi = - gradient;
 
@@ -422,7 +422,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
     T const
     projection_mid = dot(resi, precon_resi);
 
-    Hessian = computeHessian(nls, soln);
+    Hessian = getGradient(nls, soln);
 
     precon_resi = Intrepid::solve(Hessian, resi);
 
@@ -477,7 +477,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   Hessian(dimension);
 
   Vector<T, N>
-  resi = nls.compute(soln);
+  resi = nls.evaluate(soln);
 
   Tensor<T, N>
   K(dimension);
@@ -505,7 +505,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
   while (this->continueSolve() == true) {
 
-    Hessian = computeHessian(nls, soln);
+    Hessian = getGradient(nls, soln);
 
     bool const
     ill_conditioned = cond(Hessian) <= getHessianConditionTolerance();
@@ -553,9 +553,9 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     for (Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
 
-      resi = nls.compute(soln);
+      resi = nls.evaluate(soln);
 
-      Hessian = computeHessian(nls, soln);
+      Hessian = getGradient(nls, soln);
 
       T const
       projection = dot(resi, step);
@@ -576,7 +576,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     }
 
-    resi = nls.compute(soln);
+    resi = nls.evaluate(soln);
 
     T const
     norm_resi = norm(resi);

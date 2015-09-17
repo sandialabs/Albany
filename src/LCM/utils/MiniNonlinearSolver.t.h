@@ -47,11 +47,11 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
-  DrDx = Intrepid::computeHessian(nls, soln_val);
+  DrDx = Intrepid::getGradient(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = Intrepid::computeResidual(nls, soln);
+  resi = Intrepid::getValue(nls, soln);
 
   // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
@@ -83,11 +83,11 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
-  DrDx = Intrepid::computeHessian(nls, soln_val);
+  DrDx = Intrepid::getGradient(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = Intrepid::computeResidual(nls, soln);
+  resi = Intrepid::getValue(nls, soln);
 
   // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
@@ -119,11 +119,11 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
-  DrDx = Intrepid::computeHessian(nls, soln_val);
+  DrDx = Intrepid::getGradient(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = Intrepid::computeResidual(nls, soln);
+  resi = Intrepid::getValue(nls, soln);
 
   // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);

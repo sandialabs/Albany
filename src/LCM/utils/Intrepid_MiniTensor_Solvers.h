@@ -52,18 +52,18 @@ public:
 };
 
 ///
-/// Utility function to compute residual of a nonlinear system.
+/// Utility function to compute value of a nonlinear system.
 ///
 template<typename NLS, typename T, Index N = DYNAMIC>
 Vector<T, N>
-computeResidual(NLS const & nls, Vector<T, N> const & x);
+getValue(NLS const & nls, Vector<T, N> const & x);
 
 ///
-/// Utility function to compute Hessian of a nonlinear system.
+/// Utility function to compute gradient of a nonlinear system.
 ///
 template<typename NLS, typename T, Index N = DYNAMIC>
 Tensor<T, N>
-computeHessian(NLS const & nls, Vector<T, N> const & x);
+getGradient(NLS const & nls, Vector<T, N> const & x);
 
 ///
 /// Nonlinear Method Base Class
