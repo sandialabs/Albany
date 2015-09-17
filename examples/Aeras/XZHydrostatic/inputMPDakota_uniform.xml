@@ -28,7 +28,9 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="STK1D"/>
-    <Parameter name="1D Elements" type="int" value="300"/>
+    <!--Parameter name="1D Elements" type="int" value="300"/-->
+    <!-- JF  reducing size of mesh for nightly testing -->
+    <Parameter name="1D Elements" type="int" value="100"/>
     <Parameter name="1D Scale" type="double" value="300.0"/>
     <Parameter name="Workset Size" type="int" value="1000"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
