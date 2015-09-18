@@ -183,10 +183,6 @@ IF(ALBANY_FELIX AND ALBANY_SEACAS )
   add_subdirectory(FELIX)
 ENDIF()
 
-IF(ALBANY_FELIX)
-  add_subdirectory(FELIX)
-ENDIF()
-
 # Aeras ##################
 
 IF(ALBANY_AERAS)
