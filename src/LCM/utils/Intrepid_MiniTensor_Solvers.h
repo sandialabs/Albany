@@ -302,32 +302,32 @@ public:
   solve(NLS const & nls, Vector<T, N> & x) override;
 
   void
-  setMaxNumRestrictIterations(Index const mntri)
-  {max_num_restrict_iter_ = mntri;}
+  setMaxNumRestrictIterations(Index const n)
+  {max_num_restrict_iter_ = n;}
 
   Index
   getMaxNumRestrictIterations()
   {return max_num_restrict_iter_;}
 
   void
-  setMaxStepLength(T const msl)
-  {max_step_length_ = msl;}
+  setMaxRegionSize(T const l)
+  {max_region_size_ = l;}
 
   T
-  getMaxStepLength() const
-  {return max_step_length_;}
+  getMaxRegionSize() const
+  {return max_region_size_;}
 
   void
-  setInitialStepLength(T const isl)
-  {initial_step_length_ = isl;}
+  setInitialRegionSize(T const l)
+  {initial_region_size_ = l;}
 
   T
-  getInitialStepLength() const
-  {return initial_step_length_;}
+  getInitialRegionSize() const
+  {return initial_region_size_;}
 
   void
-  setMinimumReduction(T const mr)
-  {min_reduction_ = mr;}
+  setMinimumReduction(T const r)
+  {min_reduction_ = r;}
 
   T
   getMinumumReduction() const
@@ -338,13 +338,13 @@ private:
   max_num_restrict_iter_{4};
 
   T
-  max_step_length_{10.0};
+  max_region_size_{10.0};
 
   T
-  initial_step_length_{10.0};
+  initial_region_size_{10.0};
 
   T
-  min_reduction_{0.005};
+  min_reduction_{0.0};
 };
 
 ///

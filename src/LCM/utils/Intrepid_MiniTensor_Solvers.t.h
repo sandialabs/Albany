@@ -240,7 +240,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   initial_norm = norm(resi);
 
   T
-  step_length = getInitialStepLength();
+  region_size = getInitialRegionSize();
 
   this->initConvergenceCriterion(initial_norm);
   this->updateConvergenceCriterion(initial_norm);
@@ -265,13 +265,16 @@ solve(NLS const & nls, Vector<T, N> & soln)
       q = Intrepid::solve(L, step);
 
       T const
-      nps = norm_square(step);
+      np = norm(step);
+
+      T const
+      nps = np * np;
 
       T const
       nqs = norm_square(q);
 
       T const
-      lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+      lambda_incr = nps * (np - region_size) / nqs / region_size;
 
       lambda += std::max(lambda_incr, 0.0);
 
@@ -297,22 +300,22 @@ solve(NLS const & nls, Vector<T, N> & soln)
     // Determine whether the trust region should be increased, decreased
     // or left the same.
     T const
-    computed_length = norm(step);
+    computed_size = norm(step);
 
     if (reduction < 0.25) {
 
-      step_length = 0.25 * computed_length;
+      region_size = 0.25 * computed_size;
 
     } else {
 
       bool const
-      at_boundary_region = std::abs(computed_length - step_length) <= 1.0e-3;
+      at_boundary = std::abs(computed_size / region_size - 1.0) <= 1.0e-8;
 
       bool const
-      increase_step_length = reduction > 0.75 && at_boundary_region;
+      increase_region_size = reduction > 0.75 && at_boundary;
 
-      if (increase_step_length == true) {
-        step_length = std::min(2.0 * step_length, getMaxStepLength());
+      if (increase_region_size == true) {
+        region_size = std::min(2.0 * region_size, getMaxRegionSize());
       }
 
     }
