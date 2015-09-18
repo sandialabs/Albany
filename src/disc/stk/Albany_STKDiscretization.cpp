@@ -53,7 +53,7 @@ extern "C" {
 
 const double pi = 3.1415926535897932385;
 
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
@@ -338,13 +338,13 @@ Albany::STKDiscretization::transformMesh()
     const int numDim = stkMeshStruct->numDim;
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
-      double r = 0.0; 
-      for (int n=0; n<numDim; n++) 
-        r += x[n]*x[n]; 
+      double r = 0.0;
+      for (int n=0; n<numDim; n++)
+        r += x[n]*x[n];
       r = sqrt(r);
-      for (int n=0; n<numDim; n++) 
-      //FIXME: there could be division by 0 here! 
-        x[n] = x[n]/r;  
+      for (int n=0; n<numDim; n++)
+      //FIXME: there could be division by 0 here!
+        x[n] = x[n]/r;
     }
   }
   else if (transformType == "ISMIP-HOM Test A") {
@@ -494,9 +494,9 @@ Albany::STKDiscretization::transformMesh()
 #endif
     double L = stkMeshStruct->felixL;
     //hard-coding values of parameters...  make sure these are same as in the FOStokes body force evaluator!
-    double alpha0 = 4e-5; 
-    double s0 = 2.0; 
-    double H = 1.0; 
+    double alpha0 = 4e-5;
+    double s0 = 2.0;
+    double H = 1.0;
 #ifdef OUTPUT_TO_SCREEN
     *out << "L: " << L << endl;
 #endif
@@ -504,11 +504,11 @@ Albany::STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field = metaData.get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, "surface_height");
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
-      x[0] = L*(x[0]-1.0);  //test case assumes domain is from [-L, L], where unscaled domain is from [0, 2]; 
+      x[0] = L*(x[0]-1.0);  //test case assumes domain is from [-L, L], where unscaled domain is from [0, 2];
       double s = s0 - alpha0*x[0]*x[0];
       double b = s - H;
-      //this transformation of y = [0,1] should give b(x) < y < s(x) 
-      x[1] = b*(1-x[1]) + s*x[1]; 
+      //this transformation of y = [0,1] should give b(x) < y < s(x)
+      x[1] = b*(1-x[1]) + s*x[1];
       *stk::mesh::field_data(*surfaceHeight_field, overlapnodes[i]) = s;
      }
   }
@@ -584,13 +584,13 @@ void Albany::STKDiscretization::writeCoordsToMatrixMarket() const
       Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
     if (yy != NULL) {
       Teuchos::ArrayView<ST> yyAV = Teuchos::arrayView(yy, numOwnedNodes);
-      Teuchos::RCP<Tpetra_Vector> yCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, yyAV));  
+      Teuchos::RCP<Tpetra_Vector> yCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, yyAV));
       if (node_mapT->getComm()->getSize() > 1) {
         Teuchos::RCP<Tpetra_Vector> yCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
         Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoords_serialT);
       }
-      else 
+      else
         Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
     }
     if (zz != NULL){
@@ -601,7 +601,7 @@ void Albany::STKDiscretization::writeCoordsToMatrixMarket() const
         zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);
         Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoords_serialT);
       }
-      else 
+      else
         Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoordsT);
     }
   }
@@ -668,6 +668,7 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
     SideSetDiscretizations::iterator it;
     for (it=sideSetDiscretizations->begin(); it!=sideSetDiscretizations->end(); ++it)
     {
+      Teuchos::RCP<Albany::AbstractDiscretization>& sdisc = it->second;
       Epetra_Vector tmp(*it->second->getOverlapMap());
       it->second->writeSolution (tmp, time, overlapped);
     }
@@ -1232,7 +1233,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
   overlap_node_map = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").overlap_map;
 
   overlap_node_mapT = Petra::EpetraMap_To_TpetraMap(overlap_node_map, commT);
-  overlap_mapT = Petra::EpetraMap_To_TpetraMap(overlap_map, commT);  
+  overlap_mapT = Petra::EpetraMap_To_TpetraMap(overlap_map, commT);
 
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
     stkMeshStruct->nodal_data_base->resizeOverlapMap(
@@ -1390,7 +1391,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
     it->second.wsElNodeID_rawVec.resize(numBuckets);
   }
 #endif // ALBANY_EPETRA
-  
+
   for (int b=0; b < numBuckets; b++) {
 
     stk::mesh::Bucket& buck = *buckets[b];
@@ -1503,7 +1504,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       wsElNodeEqID[b][i].resize(nodes_per_element);
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
- 
+
 #if defined(ALBANY_EPETRA)
       for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
         IDArray& wsElNodeEqID_array = it->second.wsElNodeEqID[b];
@@ -2814,6 +2815,7 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     for (it=stkMeshStruct->sideSetMeshStructs.begin(); it!=stkMeshStruct->sideSetMeshStructs.end(); ++it)
     {
       Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(it->second,commT));
+      side_disc->updateMesh();
       sideSetDiscretizations->insert(std::make_pair(it->first,side_disc));
       sideSetDiscretizationsSTK->insert(std::make_pair(it->first,side_disc));
 
