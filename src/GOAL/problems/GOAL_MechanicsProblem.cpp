@@ -8,7 +8,6 @@
 #include "LCM_Utils.h"
 #include "PHAL_AlbanyTraits.hpp"
 #include "GOAL_MechanicsProblem.hpp"
-#include "GOAL_ProblemUtils.hpp"
 
 namespace Albany {
 
@@ -63,33 +62,6 @@ void GOALMechanicsProblem::buildProblem(
 }
 
 /*****************************************************************************/
-void GOALMechanicsProblem::buildAdjointProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
-    StateManager& stateMgr,
-    const Teuchos::RCP<Teuchos::ParameterList>& params)
-{
-  *out << "Building adjoint problem pde instantiations\n";
-
-  // get the number of physics sets
-  int physSets = meshSpecs.size();
-  adjFM.resize(physSets);
-
-  // build evaluators for each physics set
-  for (int ps=0; ps < physSets; ++ps)
-  {
-    adjFM[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(
-        *adjFM[ps], *meshSpecs[ps], stateMgr, BUILD_RESPONSE_FM, params);
-  }
-
-  // construct quantity of interest evaluators
-  adjQFM = Teuchos::null;
-
-  // construct dirichlet bc evaluators
-  adjDFM = Teuchos::null;
-}
-
-/*****************************************************************************/
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> > GOALMechanicsProblem::
 buildEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -135,7 +107,6 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> pl =
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
-  pl->set<bool>("Enriched Adjoint Solve", true, "");
   return pl;
 }
 

@@ -42,12 +42,6 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
         Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
         StateManager& stateMgr);
 
-    //! build the pde instantiations for the adjoint problem
-    void buildAdjointProblem(
-        Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
-        StateManager& stateMgr,
-        const Teuchos::RCP<Teuchos::ParameterList>& params);
-
     //! build evaluators
     Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> > buildEvaluators(
         PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -93,18 +87,6 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     void constructNeumannEvaluators(
         const Teuchos::RCP<MeshSpecsStruct>& meshSpecs);
 
-    //! get the adjoint field manager
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > getAdjointFieldManager() {return adjFM;}
-
-    //! get the adjoint quantity of interest field manager
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > getAdjointQoIFieldManager() {return adjQFM;}
-
-    //! get the adjoint Dirichlet condition field manager
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
-      getAdjointDirichletFieldManager() {return adjDFM;}
-
   protected:
 
     //! number of spatial dimensions
@@ -115,20 +97,6 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-
-    //! should the adjoint solve be enriched?
-    bool enrichedAdjoint;
-
-    //! field managers for adjoint volumetric fill
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > adjFM;
-
-    //! field manager for quantity of interest fill
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > adjQFM;
-
-    //! field manager for Dirichlet conditions fill
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > adjDFM;
 
     //! old state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
@@ -417,10 +385,6 @@ constructEvaluators(
   }
   else if (fmChoice == Albany::BUILD_RESPONSE_FM)
   {
-    // this may break other field manager scalar responses
-    PHX::Tag<typename EvalT::ScalarT> tag("Scatter", dl->dummy);
-    fm0.requireField<EvalT>(tag);
-
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);
