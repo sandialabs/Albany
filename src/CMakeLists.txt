@@ -250,46 +250,52 @@ SET(HEADERS ${HEADERS}
 
 #evaluators
 SET(SOURCES ${SOURCES}
-  evaluators/PHAL_GatherSolution.cpp
-  evaluators/PHAL_GatherCoordinateVector.cpp
-  evaluators/PHAL_ScatterResidual.cpp
+  evaluators/Adapt_ElementSizeField.cpp
+  evaluators/PHAL_Absorption.cpp
+  evaluators/PHAL_ComputeBasisFunctions.cpp
+  evaluators/PHAL_ComputeBasisFunctionsSide.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_DirichletCoordinateFunction.cpp
   evaluators/PHAL_DirichletField.cpp
-  evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
-  evaluators/PHAL_Neumann.cpp
-  evaluators/PHAL_ComputeBasisFunctions.cpp
+  evaluators/PHAL_DOFCellToSide.cpp
   evaluators/PHAL_DOFInterpolation.cpp
+  evaluators/PHAL_DOFInterpolationSide.cpp
   evaluators/PHAL_DOFGradInterpolation.cpp
-  evaluators/PHAL_DOFVecInterpolation.cpp
+  evaluators/PHAL_DOFGradInterpolationSide.cpp
+  evaluators/PHAL_DOFVecCellToSide.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
-  evaluators/PHAL_DOFTensorInterpolation.cpp
   evaluators/PHAL_DOFTensorGradInterpolation.cpp
-  evaluators/PHAL_MapToPhysicalFrame.cpp
-  evaluators/PHAL_SaveStateField.cpp
-  evaluators/PHAL_SaveCellStateField.cpp
+  evaluators/PHAL_DOFTensorInterpolation.cpp
+  evaluators/PHAL_DOFVecInterpolation.cpp
+  evaluators/PHAL_DOFVecInterpolationSide.cpp
+  evaluators/PHAL_GatherAuxData.cpp
+  evaluators/PHAL_GatherCoordinateVector.cpp
+  evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_GatherSolution.cpp
+  evaluators/PHAL_HeatEqResid.cpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/PHAL_LoadStateField.cpp
-  evaluators/PHAL_SharedParameter.cpp
+  evaluators/PHAL_MapToPhysicalFrame.cpp
+  evaluators/QCAD_MathVector.cpp
+  evaluators/QCAD_MeshRegion.cpp
+  evaluators/PHAL_Neumann.cpp
+  evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
+  evaluators/PHAL_SaveCellStateField.cpp
+  evaluators/PHAL_SaveNodalField.cpp
+  evaluators/PHAL_SaveStateField.cpp
+  evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_ScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponseT.cpp
-  evaluators/QCAD_ResponseFieldIntegral.cpp
-  evaluators/QCAD_ResponseFieldValue.cpp
-  evaluators/QCAD_ResponseFieldAverage.cpp
-  evaluators/QCAD_ResponseSaveField.cpp
-  evaluators/QCAD_ResponseCenterOfMass.cpp
-  evaluators/QCAD_MeshRegion.cpp
-  evaluators/QCAD_MathVector.cpp
-  evaluators/QCAD_EvaluatorTools.cpp
-  evaluators/PHAL_HeatEqResid.cpp
+  evaluators/PHAL_SharedParameter.cpp
   evaluators/PHAL_Source.cpp
   evaluators/PHAL_ThermalConductivity.cpp
-  evaluators/PHAL_NSMaterialProperty.cpp
-  evaluators/PHAL_Absorption.cpp
-  evaluators/Adapt_ElementSizeField.cpp
-  evaluators/PHAL_SaveNodalField.cpp
-  evaluators/PHAL_GatherScalarNodalParameter.cpp
-  evaluators/PHAL_GatherAuxData.cpp
+  evaluators/QCAD_EvaluatorTools.cpp
+  evaluators/QCAD_ResponseCenterOfMass.cpp
+  evaluators/QCAD_ResponseFieldAverage.cpp
+  evaluators/QCAD_ResponseFieldIntegral.cpp
+  evaluators/QCAD_ResponseFieldValue.cpp
+  evaluators/QCAD_ResponseSaveField.cpp
   )
 
 SET(SOURCES ${SOURCES}
@@ -336,85 +342,95 @@ SET(PDE_SRCS ${PDE_SRCS}
   )
 
 SET(HEADERS ${HEADERS}
-  evaluators/PHAL_GatherSolution.hpp
-  evaluators/PHAL_GatherSolution_Def.hpp
-  evaluators/PHAL_GatherCoordinateVector.hpp
-  evaluators/PHAL_GatherCoordinateVector_Def.hpp
-  evaluators/PHAL_ScatterResidual.hpp
-  evaluators/PHAL_ScatterResidual_Def.hpp
+  evaluators/Adapt_ElementSizeField.hpp
+  evaluators/Adapt_ElementSizeField_Def.hpp
+  evaluators/PHAL_Absorption.hpp
+  evaluators/PHAL_Absorption_Def.hpp
+  evaluators/PHAL_Constant.hpp
+  evaluators/PHAL_Constant_Def.hpp
   evaluators/PHAL_Dirichlet.hpp
   evaluators/PHAL_Dirichlet_Def.hpp
   evaluators/PHAL_DirichletCoordinateFunction.hpp
   evaluators/PHAL_DirichletCoordinateFunction_Def.hpp
   evaluators/PHAL_DirichletField.hpp
   evaluators/PHAL_DirichletField_Def.hpp
-  evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
-  evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
-  evaluators/PHAL_Neumann.hpp
-  evaluators/PHAL_Neumann_Def.hpp
-  evaluators/PHAL_Constant.hpp
-  evaluators/PHAL_Constant_Def.hpp
-  evaluators/PHAL_DOFInterpolation.hpp
-  evaluators/PHAL_DOFInterpolation_Def.hpp
+  evaluators/PHAL_DOFCellToSide.hpp
+  evaluators/PHAL_DOFCellToSide_Def.hpp
   evaluators/PHAL_DOFGradInterpolation.hpp
   evaluators/PHAL_DOFGradInterpolation_Def.hpp
-  evaluators/PHAL_DOFVecInterpolation.hpp
-  evaluators/PHAL_DOFVecInterpolation_Def.hpp
-  evaluators/PHAL_DOFVecGradInterpolation.hpp
-  evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
-  evaluators/PHAL_DOFTensorInterpolation.hpp
-  evaluators/PHAL_DOFTensorInterpolation_Def.hpp
+  evaluators/PHAL_DOFGradInterpolationSide.hpp
+  evaluators/PHAL_DOFGradInterpolationSide_Def.hpp
+  evaluators/PHAL_DOFInterpolation.hpp
+  evaluators/PHAL_DOFInterpolation_Def.hpp
+  evaluators/PHAL_DOFInterpolationSide.hpp
+  evaluators/PHAL_DOFInterpolationSide_Def.hpp
   evaluators/PHAL_DOFTensorGradInterpolation.hpp
   evaluators/PHAL_DOFTensorGradInterpolation_Def.hpp
-  evaluators/PHAL_MapToPhysicalFrame.hpp
-  evaluators/PHAL_MapToPhysicalFrame_Def.hpp
-  evaluators/PHAL_SaveStateField.hpp
-  evaluators/PHAL_SaveStateField_Def.hpp
-  evaluators/PHAL_SaveCellStateField.hpp
-  evaluators/PHAL_SaveCellStateField_Def.hpp
+  evaluators/PHAL_DOFTensorInterpolation.hpp
+  evaluators/PHAL_DOFTensorInterpolation_Def.hpp
+  evaluators/PHAL_DOFVecCellToSide.hpp
+  evaluators/PHAL_DOFVecCellToSide_Def.hpp
+  evaluators/PHAL_DOFVecGradInterpolation.hpp
+  evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
+  evaluators/PHAL_DOFVecInterpolation.hpp
+  evaluators/PHAL_DOFVecInterpolation_Def.hpp
+  evaluators/PHAL_DOFVecInterpolationSide.hpp
+  evaluators/PHAL_DOFVecInterpolationSide_Def.hpp
+  evaluators/PHAL_GatherAuxData.hpp
+  evaluators/PHAL_GatherAuxData_Def.hpp
+  evaluators/PHAL_GatherCoordinateVector.hpp
+  evaluators/PHAL_GatherCoordinateVector_Def.hpp
+  evaluators/PHAL_GatherScalarNodalParameter.hpp
+  evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  evaluators/PHAL_GatherSolution.hpp
+  evaluators/PHAL_GatherSolution_Def.hpp
+  evaluators/PHAL_HeatEqResid.hpp
+  evaluators/PHAL_HeatEqResid_Def.hpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/PHAL_LoadStateField.hpp
   evaluators/PHAL_LoadStateField_Def.hpp
-  evaluators/PHAL_SharedParameter.hpp
-  evaluators/PHAL_SharedParameter_Def.hpp
+  evaluators/PHAL_MapToPhysicalFrame.hpp
+  evaluators/PHAL_MapToPhysicalFrame_Def.hpp
+  evaluators/PHAL_Neumann.hpp
+  evaluators/PHAL_Neumann_Def.hpp
+  evaluators/PHAL_NSMaterialProperty.hpp
+  evaluators/PHAL_NSMaterialProperty_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
+  evaluators/PHAL_SaveCellStateField.hpp
+  evaluators/PHAL_SaveCellStateField_Def.hpp
+  evaluators/PHAL_SaveNodalField.hpp
+  evaluators/PHAL_SaveNodalField_Def.hpp
+  evaluators/PHAL_SaveStateField.hpp
+  evaluators/PHAL_SaveStateField_Def.hpp
   evaluators/PHAL_ScatterScalarResponse.hpp
   evaluators/PHAL_ScatterScalarResponse_Def.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
-  evaluators/QCAD_ResponseFieldIntegral.hpp
-  evaluators/QCAD_ResponseFieldIntegral_Def.hpp
-  evaluators/QCAD_ResponseFieldValue.hpp
-  evaluators/QCAD_ResponseFieldValue_Def.hpp
-  evaluators/QCAD_ResponseFieldAverage.hpp
-  evaluators/QCAD_ResponseFieldAverage_Def.hpp
-  evaluators/QCAD_ResponseSaveField.hpp
-  evaluators/QCAD_ResponseSaveField_Def.hpp
-  evaluators/QCAD_ResponseCenterOfMass.hpp
-  evaluators/QCAD_ResponseCenterOfMass_Def.hpp
-  evaluators/QCAD_MeshRegion.hpp
-  evaluators/QCAD_MeshRegion_Def.hpp
-  evaluators/QCAD_MathVector.hpp
-  evaluators/QCAD_EvaluatorTools.hpp
-  evaluators/QCAD_EvaluatorTools_Def.hpp
-  evaluators/PHAL_HeatEqResid.hpp
-  evaluators/PHAL_HeatEqResid_Def.hpp
+  evaluators/PHAL_SharedParameter.hpp
+  evaluators/PHAL_SharedParameter_Def.hpp
+  evaluators/PHAL_ScatterResidual.hpp
+  evaluators/PHAL_ScatterResidual_Def.hpp
   evaluators/PHAL_Source.hpp
   evaluators/PHAL_Source_Def.hpp
   evaluators/PHAL_ThermalConductivity.hpp
   evaluators/PHAL_ThermalConductivity_Def.hpp
-  evaluators/PHAL_NSMaterialProperty.hpp
-  evaluators/PHAL_NSMaterialProperty_Def.hpp
-  evaluators/PHAL_Absorption.hpp
-  evaluators/PHAL_Absorption_Def.hpp
-  evaluators/Adapt_ElementSizeField.hpp
-  evaluators/Adapt_ElementSizeField_Def.hpp
-  evaluators/PHAL_SaveNodalField.hpp
-  evaluators/PHAL_SaveNodalField_Def.hpp
-  evaluators/PHAL_GatherScalarNodalParameter.hpp
-  evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
-  evaluators/PHAL_GatherAuxData.hpp
-  evaluators/PHAL_GatherAuxData_Def.hpp
+  evaluators/QCAD_EvaluatorTools.hpp
+  evaluators/QCAD_EvaluatorTools_Def.hpp
+  evaluators/QCAD_MathVector.hpp
+  evaluators/QCAD_MeshRegion.hpp
+  evaluators/QCAD_MeshRegion_Def.hpp
+  evaluators/QCAD_ResponseCenterOfMass.hpp
+  evaluators/QCAD_ResponseCenterOfMass_Def.hpp
+  evaluators/QCAD_ResponseFieldAverage.hpp
+  evaluators/QCAD_ResponseFieldAverage_Def.hpp
+  evaluators/QCAD_ResponseFieldIntegral.hpp
+  evaluators/QCAD_ResponseFieldIntegral_Def.hpp
+  evaluators/QCAD_ResponseFieldValue.hpp
+  evaluators/QCAD_ResponseFieldValue_Def.hpp
+  evaluators/QCAD_ResponseSaveField.hpp
+  evaluators/QCAD_ResponseSaveField_Def.hpp
   )
 
 IF (ALBANY_EPETRA)
@@ -431,60 +447,62 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 SET(PDE_HDRS ${PDE_HDRS}
-  evaluators/PHAL_ODEResid.hpp
-  evaluators/PHAL_ODEResid_Def.hpp
-  evaluators/PHAL_GPAMResid.hpp
-  evaluators/PHAL_GPAMResid_Def.hpp
-  evaluators/PHAL_LinComprNSResid.hpp
-  evaluators/PHAL_LinComprNSResid_Def.hpp
   evaluators/PHAL_AdvDiffResid.hpp
   evaluators/PHAL_AdvDiffResid_Def.hpp
-  evaluators/PHAL_ComprNSResid.hpp
-  evaluators/PHAL_ComprNSResid_Def.hpp
-  evaluators/PHAL_LinComprNSBodyForce.hpp
-  evaluators/PHAL_LinComprNSBodyForce_Def.hpp
-  evaluators/PHAL_ComprNSBodyForce.hpp
-  evaluators/PHAL_ComprNSBodyForce_Def.hpp
-  evaluators/PHAL_ComprNSViscosity.hpp
-  evaluators/PHAL_ComprNSViscosity_Def.hpp
-  evaluators/PHAL_ComputeBasisFunctions.hpp
-  evaluators/PHAL_ComputeBasisFunctions_Def.hpp
-  evaluators/PHAL_HelmholtzResid.hpp
-  evaluators/PHAL_HelmholtzResid_Def.hpp
   evaluators/PHAL_CahnHillRhoResid.hpp
   evaluators/PHAL_CahnHillRhoResid_Def.hpp
   evaluators/PHAL_CahnHillWResid.hpp
   evaluators/PHAL_CahnHillWResid_Def.hpp
   evaluators/PHAL_CahnHillChemTerm.hpp
   evaluators/PHAL_CahnHillChemTerm_Def.hpp
+  evaluators/PHAL_ComprNSBodyForce.hpp
+  evaluators/PHAL_ComprNSBodyForce_Def.hpp
+  evaluators/PHAL_ComprNSResid.hpp
+  evaluators/PHAL_ComprNSResid_Def.hpp
+  evaluators/PHAL_ComprNSViscosity.hpp
+  evaluators/PHAL_ComprNSViscosity_Def.hpp
+  evaluators/PHAL_ComputeBasisFunctions.hpp
+  evaluators/PHAL_ComputeBasisFunctions_Def.hpp
+  evaluators/PHAL_ComputeBasisFunctionsSide.hpp
+  evaluators/PHAL_ComputeBasisFunctionsSide_Def.hpp
+  evaluators/PHAL_GPAMResid.hpp
+  evaluators/PHAL_GPAMResid_Def.hpp
+  evaluators/PHAL_HelmholtzResid.hpp
+  evaluators/PHAL_HelmholtzResid_Def.hpp
   evaluators/PHAL_LangevinNoiseTerm.hpp
   evaluators/PHAL_LangevinNoiseTerm_Def.hpp
+  evaluators/PHAL_LinComprNSBodyForce.hpp
+  evaluators/PHAL_LinComprNSBodyForce_Def.hpp
+  evaluators/PHAL_LinComprNSResid.hpp
+  evaluators/PHAL_LinComprNSResid_Def.hpp
   evaluators/PHAL_NSContinuityResid.hpp
   evaluators/PHAL_NSContinuityResid_Def.hpp
-  evaluators/PHAL_NSMomentumResid.hpp
-  evaluators/PHAL_NSMomentumResid_Def.hpp
-  evaluators/PHAL_NSThermalEqResid.hpp
-  evaluators/PHAL_NSThermalEqResid_Def.hpp
-  evaluators/PHAL_NSNeutronEqResid.hpp
-  evaluators/PHAL_NSNeutronEqResid_Def.hpp
-  evaluators/PHAL_NSRm.hpp
-  evaluators/PHAL_NSRm_Def.hpp
+  evaluators/PHAL_NSBodyForce.hpp
+  evaluators/PHAL_NSBodyForce_Def.hpp
   evaluators/PHAL_NSContravarientMetricTensor.hpp
   evaluators/PHAL_NSContravarientMetricTensor_Def.hpp
+  evaluators/PHAL_NSForchheimerTerm.hpp
+  evaluators/PHAL_NSForchheimerTerm_Def.hpp
+  evaluators/PHAL_NSMomentumResid.hpp
+  evaluators/PHAL_NSMomentumResid_Def.hpp
+  evaluators/PHAL_NSNeutronEqResid.hpp
+  evaluators/PHAL_NSNeutronEqResid_Def.hpp
+  evaluators/PHAL_NSPermeabilityTerm.hpp
+  evaluators/PHAL_NSPermeabilityTerm_Def.hpp
+  evaluators/PHAL_NSRm.hpp
+  evaluators/PHAL_NSRm_Def.hpp
   evaluators/PHAL_NSTauM.hpp
   evaluators/PHAL_NSTauM_Def.hpp
   evaluators/PHAL_NSTauT.hpp
   evaluators/PHAL_NSTauT_Def.hpp
-  evaluators/PHAL_NSBodyForce.hpp
-  evaluators/PHAL_NSBodyForce_Def.hpp
-  evaluators/PHAL_NSPermeabilityTerm.hpp
-  evaluators/PHAL_NSPermeabilityTerm_Def.hpp
-  evaluators/PHAL_NSForchheimerTerm.hpp
-  evaluators/PHAL_NSForchheimerTerm_Def.hpp
-  evaluators/PNP_PotentialResid.hpp
-  evaluators/PNP_PotentialResid_Def.hpp
+  evaluators/PHAL_NSThermalEqResid.hpp
+  evaluators/PHAL_NSThermalEqResid_Def.hpp
+  evaluators/PHAL_ODEResid.hpp
+  evaluators/PHAL_ODEResid_Def.hpp
   evaluators/PNP_ConcentrationResid.hpp
   evaluators/PNP_ConcentrationResid_Def.hpp
+  evaluators/PNP_PotentialResid.hpp
+  evaluators/PNP_PotentialResid_Def.hpp
   )
 
 # AERAS
@@ -722,7 +740,7 @@ endif()
 
 
 # Now build executables from this library, tailored main()s, and Trilinos
-IF (NOT ALBANY_LIBRARIES_ONLY) 
+IF (NOT ALBANY_LIBRARIES_ONLY)
 
 IF (ALBANY_EPETRA)
   add_executable(Albany Main_Solve.cpp)
@@ -779,7 +797,7 @@ IF (ALBANY_MESHDB_TOOLS)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
 ENDIF()
 
-ENDIF (NOT ALBANY_LIBRARIES_ONLY) 
+ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
 
 set(ALL_LIBRARIES
@@ -894,7 +912,7 @@ IF (Albany_BUILD_STATIC_EXE)
   FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
     SET_PROPERTY(TARGET ${ALB_EXEC} PROPERTY LINK_SEARCH_START_STATIC 1)
   ENDFOREACH()
-ENDIF() 
+ENDIF()
 
 FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
