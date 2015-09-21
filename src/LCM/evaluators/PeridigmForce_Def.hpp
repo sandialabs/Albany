@@ -113,7 +113,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   // WaveInBar that (hopefully) matches Peridigm
   double rho = 2200.0;
-  double volume = 8.0e-9;
+  // double volume = 8.0e-9;
+  double volume = 1.0e-9;
 
   for(int cell = 0; cell < workset.numCells; ++cell){
     this->residual(cell, 0, 0) = -1.0 * rho * volume * this->acceleration(cell, 0, 0);

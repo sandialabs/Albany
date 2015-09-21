@@ -21,7 +21,7 @@ ElasticityResid(Teuchos::ParameterList& p) :
 	        p.get<Teuchos::RCP<PHX::DataLayout>>("Node QP Vector Data Layout") ),
   ExResidual   (p.get<std::string>                   ("Residual Name"),
 		p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout") ),
-  density_     (p.get<RealType>("Density", 1.0)) /* DJL Need to read this in from the xml file */
+  density_     (p.get<RealType>("Density", 2200.0)) /* DJL Need to read this in from the xml file */
 {
   this->addDependentField(Stress);
   this->addDependentField(wGradBF);
