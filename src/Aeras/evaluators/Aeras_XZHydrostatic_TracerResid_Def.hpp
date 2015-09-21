@@ -25,7 +25,8 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
   TracerDot  (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level  ),        
   TracerSrc  (p.get<std::string> ("Tracer Source Name"),               dl->qp_scalar_level  ),        
   UTracerDiv (p.get<std::string> ("Divergence QP UTracer"),            dl->qp_scalar_level),        
-  etadotdTracer (p.get<std::string> ("Tracer EtaDotd Name"),           dl->qp_scalar_level  ),        
+  //etadotdTracer (p.get<std::string> ("Tracer EtaDotd Name"),           dl->qp_scalar_level  ),        
+  dedotpiTracerde (p.get<std::string> ("Tracer EtaDotd Name"),           dl->qp_scalar_level  ),        
   Residual   (p.get<std::string> ("Residual Name"),                    dl->node_scalar_level),        
   numNodes   (dl->node_scalar             ->dimension(1)),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -35,7 +36,8 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
   this->addDependentField(UTracerDiv);
   this->addDependentField(wBF);
   this->addDependentField(TracerSrc);
-  this->addDependentField(etadotdTracer);
+  //this->addDependentField(etadotdTracer);
+  this->addDependentField(dedotpiTracerde);
 
   this->addEvaluatedField(Residual);
 
@@ -52,7 +54,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(UTracerDiv,     fm);
   this->utils.setFieldData(wBF,            fm);
   this->utils.setFieldData(TracerSrc,      fm);
-  this->utils.setFieldData(etadotdTracer,  fm);
+  //this->utils.setFieldData(etadotdTracer,  fm);
+  this->utils.setFieldData(dedotpiTracerde,  fm);
   this->utils.setFieldData(Residual,       fm);
 }
 
@@ -70,7 +73,8 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,level) +=     TracerDot(cell,qp,level) * wBF(cell,node,qp);
           Residual(cell,node,level) +=     TracerSrc(cell,qp,level) * wBF(cell,node,qp);
           Residual(cell,node,level) +=    UTracerDiv(cell,qp,level) * wBF(cell,node,qp);
-          Residual(cell,node,level) += etadotdTracer(cell,qp,level) * wBF(cell,node,qp);
+          //Residual(cell,node,level) += etadotdTracer(cell,qp,level) * wBF(cell,node,qp);
+          Residual(cell,node,level) += dedotpiTracerde(cell,qp,level) * wBF(cell,node,qp);
         }
       }
     }

@@ -17,7 +17,7 @@ namespace LCM
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   this->nonlinear_method_.solve(nls, soln);
   return;
@@ -29,7 +29,7 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Jacobian, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -46,31 +46,14 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
   }
 
   // Get the Hessian evaluated at the solution.
-  using AD = typename Sacado::Fad::DFad<ValueT>;
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln_val(i));
-  }
-
-  Intrepid::Vector<AD, N>
-  resi_ad = nls.compute(soln_ad);
-
   Intrepid::Tensor<ValueT, N>
-  DrDx(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    for (Intrepid::Index j{0}; j < dimension; ++j) {
-      DrDx(i, j) = resi_ad(i).dx(j);
-    }
-  }
+  DrDx = Intrepid::getGradient(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = nls.compute(soln);
+  resi = Intrepid::getValue(nls, soln);
 
+  // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
 
   return;
@@ -82,7 +65,7 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -99,31 +82,14 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
   }
 
   // Get the Hessian evaluated at the solution.
-  using AD = typename Sacado::Fad::DFad<ValueT>;
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln_val(i));
-  }
-
-  Intrepid::Vector<AD, N>
-  resi_ad = nls.compute(soln_ad);
-
   Intrepid::Tensor<ValueT, N>
-  DrDx(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    for (Intrepid::Index j{0}; j < dimension; ++j) {
-      DrDx(i, j) = resi_ad(i).dx(j);
-    }
-  }
+  DrDx = Intrepid::getGradient(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = nls.compute(soln);
+  resi = Intrepid::getValue(nls, soln);
 
+  // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
 
   return;
@@ -135,7 +101,7 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N>::
-solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -152,31 +118,14 @@ solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
   }
 
   // Get the Hessian evaluated at the solution.
-  using AD = typename Sacado::Fad::DFad<ValueT>;
-
-  Intrepid::Vector<AD, N>
-  soln_ad(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    soln_ad(i) = AD(dimension, i, soln_val(i));
-  }
-
-  Intrepid::Vector<AD, N>
-  resi_ad = nls.compute(soln_ad);
-
   Intrepid::Tensor<ValueT, N>
-  DrDx(dimension);
-
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    for (Intrepid::Index j{0}; j < dimension; ++j) {
-      DrDx(i, j) = resi_ad(i).dx(j);
-    }
-  }
+  DrDx = Intrepid::getGradient(nls, soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = nls.compute(soln);
+  resi = Intrepid::getValue(nls, soln);
 
+  // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
 
   return;

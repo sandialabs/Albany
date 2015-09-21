@@ -36,7 +36,7 @@ XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
       p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
       p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
   Phi0 = xzhydrostatic_params->get<double>("Phi0", 0.0); //Default: Phi0=0.0
-  std::cout << "XZHydrostatic_GeoPotential: Phi0 = " << Phi0 << std::endl;
+  //std::cout << "XZHydrostatic_GeoPotential: Phi0 = " << Phi0 << std::endl;
 
   this->addDependentField(density);
   this->addDependentField(Pi);

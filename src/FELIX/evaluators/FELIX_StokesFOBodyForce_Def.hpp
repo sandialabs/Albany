@@ -13,7 +13,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 const double pi = 3.1415926535897932385;

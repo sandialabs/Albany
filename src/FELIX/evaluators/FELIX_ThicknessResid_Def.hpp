@@ -11,7 +11,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 
 

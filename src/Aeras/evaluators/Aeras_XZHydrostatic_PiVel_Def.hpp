@@ -54,7 +54,11 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int node=0; node < numNodes; ++node) 
       for (int level=0; level < numLevels; ++level) 
-        for (int dim=0; dim < numDims; ++dim) 
+        for (int dim=0; dim < numDims; ++dim) {
           pivelx(cell,node,level,dim) = pi(cell,node,level)*velx(cell,node,level,dim);
+             //std::cout << "pivelx: " << cell << " " << node << " " << level << " " << dim << " " << PiVelx(cell,node,level,dim) << std::endl;
+            //std::cout << "Tracer " << Tracer(cell,node,level) << std::endl;
+          }
+
 }
 }

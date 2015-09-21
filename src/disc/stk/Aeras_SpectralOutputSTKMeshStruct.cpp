@@ -39,7 +39,7 @@
 
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 
 //Constructor 
@@ -50,7 +50,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
                                              const int points_per_edge_, const std::string element_name_):
-  GenericSTKMeshStruct(params,Teuchos::null,3),
+  GenericSTKMeshStruct(params,Teuchos::null, numDim_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false), 
   numDim(numDim_),
@@ -87,7 +87,6 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   }
   else if (element_name_ == "Line") {
     params->validateParameters(*getValidDiscretizationParametersLines(),0);
-    //IKT, 8/28/15: FIXME: the following causes an exception to be thrown in STK.  Need to figure out why. 
     stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
     ElemType = LINE; 
   }

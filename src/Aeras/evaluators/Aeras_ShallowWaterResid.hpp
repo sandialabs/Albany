@@ -198,6 +198,7 @@ public:
 
  struct ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag{};
  struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag{};
+ struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag{};
  //The following are for hyperviscosity
  struct ShallowWaterResid_VecDim4_Tag{};
  struct ShallowWaterResid_VecDim6_Tag{};
@@ -207,6 +208,7 @@ public:
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim4_Tag> ShallowWaterResid_VecDim4_Policy;
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim6_Tag> ShallowWaterResid_VecDim6_Policy;
 
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Policy;
 
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const;
@@ -217,6 +219,9 @@ public:
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const; 
  
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag& tag, const int& cell) const;
+
  KOKKOS_INLINE_FUNCTION
  void compute_huAtNodes_vecDim3(const int& cell) const;
  

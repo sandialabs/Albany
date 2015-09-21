@@ -7,10 +7,8 @@
 #if !defined(Intrepid_NonlinearSolver_h)
 #define Intrepid_NonlinearSolver_h
 
-#include <memory>
-
 #include "PHAL_AlbanyTraits.hpp"
-#include "MiniUtils.h"
+#include "Intrepid_MiniTensor_Solvers.h"
 
 namespace LCM{
 
@@ -25,28 +23,29 @@ class MiniNonlinearSolver_Base
 public:
   using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using NLM = typename Intrepid::NonlinearMethod_Base<NLS, ValueT, N>;
 
-  MiniNonlinearSolver_Base(NonlinearMethod_Base<NLS, ValueT, N> & nlm) :
-    nonlinear_method_(nlm)
-  {
-  }
+  MiniNonlinearSolver_Base(NLM & nlm) : nonlinear_method_(nlm)
+  {}
 
   virtual
-  ~MiniNonlinearSolver_Base() {}
+  ~MiniNonlinearSolver_Base()
+  {}
 
   virtual
   void
-  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) {}
+  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x)
+  {}
 
   virtual
-  NonlinearMethod_Base<NLS, ValueT, N> &
+  NLM &
   getNonlinearMethod() final
   {
     return nonlinear_method_;
   }
 
 protected:
-  NonlinearMethod_Base<NLS, ValueT, N> &
+  NLM &
   nonlinear_method_;
 };
 
@@ -67,14 +66,14 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, N> :
 public:
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using NLM = typename Intrepid::NonlinearMethod_Base<NLS, ValueT, N>;
 
-  MiniNonlinearSolver(NonlinearMethod_Base<NLS, ValueT, N> & nlm) :
+  MiniNonlinearSolver(NLM & nlm) :
     MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Residual, NLS, N>(nlm)
-  {
-  }
+  {}
 
   void
-  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -87,14 +86,14 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::Jacobian, NLS, N> :
 public:
   using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using NLM = typename Intrepid::NonlinearMethod_Base<NLS, ValueT, N>;
 
-  MiniNonlinearSolver(NonlinearMethod_Base<NLS, ValueT, N> & nlm) :
+  MiniNonlinearSolver(NLM & nlm) :
     MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Jacobian, NLS, N>(nlm)
-  {
-  }
+  {}
 
   void
-  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -106,14 +105,14 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N> :
 {
   using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using NLM = typename Intrepid::NonlinearMethod_Base<NLS, ValueT, N>;
 
-  MiniNonlinearSolver(NonlinearMethod_Base<NLS, ValueT, N> & nlm) :
+  MiniNonlinearSolver(NLM & nlm) :
     MiniNonlinearSolver_Base<PHAL::AlbanyTraits::Tangent, NLS, N>(nlm)
-  {
-  }
+  {}
 
   void
-  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -126,14 +125,14 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N> :
 {
   using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using NLM = typename Intrepid::NonlinearMethod_Base<NLS, ValueT, N>;
 
-  MiniNonlinearSolver(NonlinearMethod_Base<NLS, ValueT, N> & nlm) :
+  MiniNonlinearSolver(NLM & nlm) :
     MiniNonlinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, NLS, N>(nlm)
-  {
-  }
+  {}
 
   void
-  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 #ifdef ALBANY_SG

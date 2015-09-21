@@ -7,11 +7,17 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_explicitHV_BE_nu8e15_vort_T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_explicitHV_BE_nu8e15_vort_T.xml COPYONLY)
                
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_explicitHV_BE_nu8e15_novort_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_explicitHV_BE_nu8e15_novort_T.xml COPYONLY)               
+               
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_explicitHV_RK4_nu8e15_novort_T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_explicitHV_RK4_nu8e15_novort_T.xml COPYONLY)
                
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_implicitHV_BE_nu8e15_vort_T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_implicitHV_BE_nu8e15_vort_T.xml COPYONLY)                                             
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_implicitHV_BE_nu8e15_novort_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_implicitHV_BE_nu8e15_novort_T.xml COPYONLY)  
                
 #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hv_T.xml
 #               ${CMAKE_CURRENT_BINARY_DIR}/input_hv_T.xml COPYONLY)               
@@ -31,8 +37,10 @@ if (NOT ALBANY_EPETRA)
 #add_test(Aeras_${testName}_HV_Tpetra ${AlbanyT.exe} input_hv_T.xml)
 
 add_test(Aeras_${testName}_explicitHV_BE_nu8e15_vort_Tpetra ${AlbanyT.exe} input_explicitHV_BE_nu8e15_vort_T.xml)
-add_test(Aeras_${testName}_explicitHV_RK4_nu8e15_vort_Tpetra ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
+add_test(Aeras_${testName}_explicitHV_BE_nu8e15_novort_Tpetra ${AlbanyT.exe} input_explicitHV_BE_nu8e15_novort_T.xml)
+add_test(Aeras_${testName}_explicitHV_RK4_nu8e15_novort_Tpetra ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
 add_test(Aeras_${testName}_implicitHV_BE_nu8e15_vort_Tpetra ${AlbanyT.exe} input_implicitHV_BE_nu8e15_vort_T.xml)
+add_test(Aeras_${testName}_implicitHV_BE_nu8e15_novort_Tpetra ${AlbanyT.exe} input_implicitHV_BE_nu8e15_novort_T.xml)
 
 endif()
 

@@ -32,11 +32,11 @@ SurfaceHeight(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (hsType == "None"){ 
-    *out << "Zero surface height!" << std::endl;
+//    *out << "Zero surface height!" << std::endl;
     hs_type = NONE;
   }
   else if (hsType == "Mountain") {
-   *out << "Mountain surface height!" << std::endl;
+ //  *out << "Mountain surface height!" << std::endl;
    hs_type = MOUNTAIN;
    sphere_coord = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Spherical Coord Name"),dl->qp_gradient);
