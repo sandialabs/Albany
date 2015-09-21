@@ -53,10 +53,10 @@ struct Cell : public shards::ArrayDimTag {
   static const Cell& tag();
 };
 
-struct Face : public shards::ArrayDimTag {
-  Face(){};
+struct Side : public shards::ArrayDimTag {
+  Side(){};
   const char * name() const;
-  static const Face& tag();
+  static const Side& tag();
 };
 
 struct Dummy : public shards::ArrayDimTag {
