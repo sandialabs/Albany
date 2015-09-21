@@ -38,7 +38,6 @@
       <Parameter name="Volume Enforcement Maximum Iterations" type="int" value="120" />
       <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-6" />
       <Parameter name="Objective Name" type="string" value="F" />
-      <Parameter name="Volume Multiplier Initial Guess" type="double" value="1e5" />
       <Parameter name="Volume Fraction Constraint" type="double" value="0.5" />
       <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
     </ParameterList>
