@@ -300,7 +300,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     virtual void releaseMesh();
 
     //! Some evaluators may want access to the underlying apf mesh elements.
-    std::vector<std::vector<apf::MeshEntity*> >& getBuckets {return buckets;}
+    std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
   private:
 
