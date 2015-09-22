@@ -18,24 +18,31 @@ template<typename EvalT, typename Traits>
 PeridigmForceBase<EvalT, Traits>::
 PeridigmForceBase(Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dataLayout) :
+  supportsTransient(false),
   referenceCoordinates (p.get<std::string> ("Reference Coordinates Name"), dataLayout->vertices_vector),
   currentCoordinates   (p.get<std::string> ("Current Coordinates Name"),   dataLayout->node_vector),
   velocity             (p.get<std::string> ("Velocity Name"),              dataLayout->node_vector),
   acceleration         (p.get<std::string> ("Acceleration Name"),          dataLayout->node_vector),
   force                (p.get<std::string> ("Force Name"),                 dataLayout->node_vector),
   residual             (p.get<std::string> ("Residual Name"),              dataLayout->node_vector),
-  density              (p.get<RealType>("Density", 1.0))
+  density              (p.get<std::string> ("Density Name"),               dataLayout->cell_scalar2),
+  sphereVolume         (p.get<std::string> ("Sphere Volume Name"),         dataLayout->node_scalar)
 {
   peridigmParams = p.sublist("Peridigm Parameters", true);
+  supportsTransient = p.get<bool>("Supports Transient", false);
 
   // Hard code numQPs and numDims for sphere elements.
   numQPs  = 1;
   numDims = 3;
 
+  if(supportsTransient){
+    this->addDependentField(density);
+    this->addDependentField(sphereVolume);
+    this->addDependentField(velocity);
+    this->addDependentField(acceleration);
+  }
   this->addDependentField(referenceCoordinates);
   this->addDependentField(currentCoordinates);
-  this->addDependentField(velocity);
-  this->addDependentField(acceleration);
   this->addEvaluatedField(force);
   this->addEvaluatedField(residual);
 
@@ -75,10 +82,14 @@ void PeridigmForceBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+  if(supportsTransient){
+    this->utils.setFieldData(density, fm);
+    this->utils.setFieldData(sphereVolume, fm);
+    this->utils.setFieldData(velocity, fm);
+    this->utils.setFieldData(acceleration, fm);
+  }
   this->utils.setFieldData(referenceCoordinates, fm);
   this->utils.setFieldData(currentCoordinates, fm);
-  this->utils.setFieldData(velocity, fm);
-  this->utils.setFieldData(acceleration, fm);
   this->utils.setFieldData(force, fm);
   this->utils.setFieldData(residual, fm);
   for(unsigned int i=0 ; i<outputFieldInfo.size() ; i++){
@@ -107,19 +118,12 @@ evaluateFields(typename Traits::EvalData workset)
 			       Teuchos::Exceptions::InvalidParameter, "Need specialization.");
   }
 
-  // Initial test
-  // double rho = 7800.0;
-  // double volume = 0.000001953125;
-
-  // WaveInBar that (hopefully) matches Peridigm
-  double rho = 2200.0;
-  // double volume = 8.0e-9;
-  double volume = 1.0e-9;
+  TEUCHOS_TEST_FOR_EXCEPTION(!supportsTransient, Teuchos::Exceptions::InvalidParameter, "PeridigmForceBase creation of mass matrix requires supportsTransient to be true.");
 
   for(int cell = 0; cell < workset.numCells; ++cell){
-    this->residual(cell, 0, 0) = -1.0 * rho * volume * this->acceleration(cell, 0, 0);
-    this->residual(cell, 0, 1) = -1.0 * rho * volume * this->acceleration(cell, 0, 1);
-    this->residual(cell, 0, 2) = -1.0 * rho * volume * this->acceleration(cell, 0, 2);
+    this->residual(cell, 0, 0) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 0);
+    this->residual(cell, 0, 1) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 1);
+    this->residual(cell, 0, 2) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 2);
   }
 }
 

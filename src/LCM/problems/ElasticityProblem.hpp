@@ -114,6 +114,7 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 
+#include "Density.hpp"
 #include "ElasticModulus.hpp"
 #include "PoissonsRatio.hpp"
 #include "PHAL_Source.hpp"
@@ -175,7 +176,15 @@ Albany::ElasticityProblem::constructEvaluators(
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
+
+   // Determine if transient analyses should be supported
+   bool supportsTransient = false;
+   if(params->isParameter("Solution Method")){
+     std::string solutionMethod = params->get<std::string>("Solution Method");
+     if(solutionMethod == "Transient"){
+       supportsTransient = true;
+     }
+   }
 
    // Displacement Fields
 
@@ -259,6 +268,23 @@ Albany::ElasticityProblem::constructEvaluators(
     p = stateMgr.registerStateVariable("Time",dl->workset_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Density (optional, needed only for dynamics)
+
+    if(supportsTransient){
+      RCP<ParameterList> p = rcp(new ParameterList);
+
+      p->set<std::string>("Cell Variable Name", "Density");
+      p->set< RCP<DataLayout>>("Cell Scalar Data Layout", dl->cell_scalar2);
+
+      p->set<RCP<ParamLib>>("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Density");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = rcp(new LCM::Density<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   { // Elastic Modulus
@@ -498,11 +524,18 @@ Albany::ElasticityProblem::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
 
-    // extra input for time dependent term
-    p->set<std::string>("Weighted BF Name", "wBF");
-    p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
-    p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
+    if(supportsTransient){
+      p->set<bool>("Disable Transient", false);
+      p->set<std::string>("Weighted BF Name", "wBF");
+      p->set< RCP<DataLayout>>("Node QP Scalar Data Layout", dl->node_qp_scalar);
+      p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
+      p->set< RCP<DataLayout>>("QP Vector Data Layout", dl->qp_vector);
+      p->set<std::string>("Density Name", "Density");
+      p->set< RCP<DataLayout>>("Cell Scalar Data Layout", dl->cell_scalar2);
+    }
+    else{
+      p->set<bool>("Disable Transient", true);
+    }
 
     //Output
     p->set<std::string>("Residual Name", "Displacement Residual");

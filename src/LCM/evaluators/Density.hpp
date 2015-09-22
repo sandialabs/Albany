@@ -14,7 +14,6 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
-#include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
@@ -30,7 +29,6 @@ class Density :
   
 public:
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   Density(Teuchos::ParameterList& p);
   
@@ -43,22 +41,10 @@ public:
 
 private:
 
-  int numQPs;
-  int numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> density;
-
-  //! Is density constant, or random field
-  bool is_constant;
+  PHX::MDField<ScalarT,Cell> density;
 
   //! Constant value
   ScalarT constant_value;
-
-  //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
-
-  //! Values of the random variables
-  Teuchos::Array<ScalarT> rv;
 };
 }
 
