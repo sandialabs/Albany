@@ -130,6 +130,8 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 
+#include "GOAL_ComputeHierarchicBasis.hpp"
+
 template<typename EvalT>
 Teuchos::RCP<const PHX::FieldTag> Albany::GOALMechanicsProblem::
 constructEvaluators(
@@ -216,10 +218,6 @@ constructEvaluators(
       evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
   fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructComputeBasisFunctionsEvaluator(
-        cellType, basis, cubature));
-
-  fm0.template registerEvaluator<EvalT>(
       evalUtils.constructScatterResidualEvaluator(true, residNames));
 
   // store velocity and acceleration
@@ -239,6 +237,27 @@ constructEvaluators(
   std::string mech_source = (*fnm)["Mechanical_Source"];
   std::string defgrad = (*fnm)["F"];
   std::string J = (*fnm)["J"];
+
+  { // hierarchic basis functions
+
+    // input
+    RCP<ParameterList> p = rcp(new ParameterList("Compute Hierarchic Basis"));
+    p->set<RCP<Albany::Application> >("Application", this->getApplication());
+    p->set<int>("Cubature Degree", meshSpecs.cubatureDegree);
+    p->set<int>("Polynomial Order", 1);
+
+    // output
+    p->set<std::string>("Jacobian Det Name", "Jacobian Det");
+    p->set<std::string>("Weights Name", "Weights");
+    p->set<std::string>("BF Name", "BF");
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Gradient BF Name", "Grad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+
+    // register evaluator
+    ev = rcp(new GOAL::ComputeHierarchicBasis<EvalT, PHAL::AlbanyTraits>(*p, dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // time
 

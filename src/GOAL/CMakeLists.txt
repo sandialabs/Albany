@@ -10,9 +10,12 @@ SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/GOAL)
 SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
 SET(SOURCES
+  evaluators/GOAL_ComputeHierarchicBasis.cpp
   problems/GOAL_MechanicsProblem.cpp)
 
 SET(HEADERS
+  evaluators/GOAL_ComputeHierarchicBasis.hpp
+  evaluators/GOAL_ComputeHierarchicBasis_Def.hpp
   problems/GOAL_MechanicsProblem.hpp)
 
 include_directories(
