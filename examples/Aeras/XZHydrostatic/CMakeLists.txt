@@ -19,6 +19,7 @@ add_test(Aeras_${testName} ${Albany.exe})
 endif()
 
 add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml) 
+add_test(Aeras_${testName}_Tpetra_Spectral_np2 ${AlbanyT.exe} input_spectralT.xml) 
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_STOKHOS)
