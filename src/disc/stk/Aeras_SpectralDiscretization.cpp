@@ -1917,7 +1917,7 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
       for (size_t inode = 0; inode < np; ++inode)
       {
         double x = refCoords(inode,0);
-        coords[iws][ielem][inode][0] = (c[0] * (x-1.0) -
+        coords[iws][ielem][inode][0] = (-c[0] * (x-1.0) +
                                         c[1] * (x+1.0)) * 0.5;
         coords[iws][ielem][inode][1] = 0.0;
         coords[iws][ielem][inode][2] = 0.0;
