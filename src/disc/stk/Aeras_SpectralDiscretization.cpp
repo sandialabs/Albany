@@ -657,8 +657,6 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  //IKT, 9/11/15, FIXME: apparently, writeSolutionT and the observer get called at all when there is no "Exodus Output Line" 
-  //in the input file.  I believe in this case there routines should not be called.  Needs to be debugged.
   writeSolutionToMeshDatabaseT(solnT, time, overlapped);
   writeSolutionToFileT(solnT, time, overlapped);
 }
@@ -2790,30 +2788,29 @@ void Aeras::SpectralDiscretization::createOutputMesh()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput)
-  {
-    //construct new mesh struct for output 
-    outputStkMeshStruct =
-      Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(
-          discParams,
-          commT,
-          stkMeshStruct->numDim,
-          stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
-          wsElNodeID,
-          coords,
-          points_per_edge, element_name));
-    Teuchos::RCP<Albany::StateInfoStruct> sis =
-      Teuchos::rcp(new Albany::StateInfoStruct);
-    Albany::AbstractFieldContainer::FieldContainerRequirements req;
-    //set field and bulk data for new struct (for output)
-    outputStkMeshStruct->setFieldAndBulkData(
-        commT,
+  //construct new mesh struct for output 
+  //IKT, 9/22/15: this needs to be called all the time even when no exodus output is requested b/c outputStkMeshStruct is 
+  //called in Aeras::SpectralDiscretization::setOvlpSolutionFieldT, which is always called.
+  outputStkMeshStruct =
+    Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(
         discParams,
-        neq,
-        req,
-        sis,
-        stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
-   }
+        commT,
+        stkMeshStruct->numDim,
+        stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
+        wsElNodeID,
+        coords,
+        points_per_edge, element_name));
+  Teuchos::RCP<Albany::StateInfoStruct> sis =
+    Teuchos::rcp(new Albany::StateInfoStruct);
+  Albany::AbstractFieldContainer::FieldContainerRequirements req;
+  //set field and bulk data for new struct (for output)
+  outputStkMeshStruct->setFieldAndBulkData(
+      commT,
+      discParams,
+      neq,
+      req,
+      sis,
+      stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
 #endif
 }
 
