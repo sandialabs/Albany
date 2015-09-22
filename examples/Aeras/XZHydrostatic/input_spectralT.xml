@@ -44,7 +44,7 @@
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic_spectral.exo"/>
     <Parameter name="Element Degree" type="int" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
