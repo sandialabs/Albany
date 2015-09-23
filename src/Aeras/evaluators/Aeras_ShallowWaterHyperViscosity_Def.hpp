@@ -54,7 +54,7 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2]; //# of dofs/node
 
- #define ALBANY_VERBOSE
+ //#define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
   std::cout << "In hyperviscosity constructor!" << std::endl;
   std::cout << "useHyperviscosity? " << useHyperviscosity <<std::endl;

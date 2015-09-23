@@ -41,7 +41,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
       p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
       p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
-  std::cout << "XZHydrostatic_TemperatureResid: Re= " << Re << std::endl;
+  //std::cout << "XZHydrostatic_TemperatureResid: Re= " << Re << std::endl;
 
   this->addDependentField(temperature);
   this->addDependentField(temperatureGrad);

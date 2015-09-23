@@ -394,13 +394,14 @@ ELSE()
 ENDIF()
 
 # set optional dependency on RBGen, for reduced basis computation
-LIST(FIND Trilinos_PACKAGE_LIST RBGen RBGen_List_ID)
+LIST(FIND Trilinos_LIBRARIES rbgen RBGen_List_ID)
 IF (RBGen_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_RBGEN)
-  MESSAGE("-- Looking for RBGen:              Found, compiling with -DALBANY_RBGEN")
+  MESSAGE("-- Looking for rbgen library:      Found, compiling with -DALBANY_RBGEN")
   SET(ALBANY_RBGEN TRUE)
 ELSE()
-  MESSAGE("-- Looking for RBGen:              NOT found.")
+  MESSAGE("-- Looking for rbgen library:      NOT found.")
+  MESSAGE("      -- To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
   SET(ALBANY_RBGEN FALSE)
 ENDIF()
 
@@ -508,7 +509,15 @@ ENDIF()
 # defaults to Disabled
 
 OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Interface to the CISM code" OFF)
+OPTION(ENABLE_CISM_REDUCED_COMM "Flag to turn on reduced communicator for CISM-Albany runs" ON)
+OPTION(ENABLE_CISM_EPETRA "Flag to turn on Epetra for CISM-Albany" OFF)
+
+
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
+  IF (ENABLE_CISM_REDUCED_COMM) 
+    ADD_DEFINITIONS(-DREDUCED_COMM)
+    MESSAGE("---> CISM_REDUCED_COMM     is Enabled, compiling with -DREDUCED_COMM.  CISM-Albany will use reduced communicator.")
+  ENDIF()
   IF (ENABLE_ALBANY_EPETRA_EXE) 
     IF (ENABLE_CISM_EPETRA) 
       ADD_DEFINITIONS(-DCISM_USE_EPETRA) 
@@ -699,12 +708,24 @@ ELSE()
   MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
+
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
-  ADD_DEFINITIONS(-DALBANY_MOR)
-  MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
-  SET(ALBANY_MOR TRUE)
+  #Check if RBGen library has been built as a part of Anasazi.  
+  #If it has not, turn MOR off despite what user requested and print message explaining that MOR requires RBGen library. 
+  LIST(FIND Trilinos_LIBRARIES rbgen rbgen_List_ID)
+  IF (rbgen_List_ID GREATER -1)
+    MESSAGE("-- Looking for rbgen library: -- found!  Continuing.")
+    ADD_DEFINITIONS(-DALBANY_MOR)
+    MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
+    SET(ALBANY_MOR TRUE)
+  ELSE()
+    MESSAGE("---- Looking for rbgen library: -- NOT found!") 
+    MESSAGE("-- MOR requires RBGen library.  To turn on, rebuild Trilinos with Anasazi_ENABLE_RBGen turned ON")
+    MESSAGE("-- MOR       is NOT Enabled.")
+    SET(ALBANY_MOR FALSE)
+  ENDIF()
 ELSE()
   MESSAGE("-- MOR       is NOT Enabled.")
   SET(ALBANY_MOR FALSE)

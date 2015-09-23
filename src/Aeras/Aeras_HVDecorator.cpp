@@ -19,7 +19,7 @@ static
 int mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-#define OUTPUT_TO_SCREEN 
+//#define OUTPUT_TO_SCREEN 
 
 Aeras::HVDecorator::HVDecorator(
     const Teuchos::RCP<Albany::Application>& app_,
@@ -29,9 +29,8 @@ Aeras::HVDecorator::HVDecorator(
 
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
-
   std::cout << "In HVDecorator app name: " << app->getProblemPL()->get("Name", "") << std::endl;
+#endif
 
 //Create and store mass and Laplacian operators (in CrsMatrix form). 
   mass_ = createOperator(1.0, 0.0, 0.0); 
@@ -87,6 +86,8 @@ const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
+
+  //OG store the inverse of diagonal?
   //initialize vector for inverse of mass diagonal
   Teuchos::RCP<Tpetra_Vector> inv_mass_diag = Teuchos::rcp(new Tpetra_Vector(mass_->getRowMap(), true)); 
   //get mass matrix's diagonal and put it in inv_mass_diag
@@ -152,7 +153,9 @@ Aeras::HVDecorator::evalModelImpl(
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG WHICH HVDecorator: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 	
   Teuchos::TimeMonitor Timer(*timer); //start timer
   //
@@ -305,10 +308,10 @@ Aeras::HVDecorator::evalModelImpl(
   mm_counter++; 
 #endif  
 
-  //std::cout <<"in HVDec evalModelImpl a, b= " << alpha << "  "<< beta <<std::endl;
-
   if(Teuchos::nonnull(inArgsT.get_x_dot())){
+#ifdef OUTPUT_TO_SCREEN
 	  std::cout <<"in the if-statement for the update" <<std::endl;
+#endif
 	  fT_out->update(1.0, *xtildeT, 1.0);
   }
 

@@ -55,3 +55,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_10_quad4.g.4.2
                ${CMAKE_CURRENT_BINARY_DIR}/uniform_10_quad4.g.4.2 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_10_quad4.g.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/uniform_10_quad4.g.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_20_quad4.g
+               ${CMAKE_CURRENT_BINARY_DIR}/uniform_20_quad4.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_30_quad4.g
+               ${CMAKE_CURRENT_BINARY_DIR}/uniform_30_quad4.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_40_quad4.g
+               ${CMAKE_CURRENT_BINARY_DIR}/uniform_40_quad4.g COPYONLY)

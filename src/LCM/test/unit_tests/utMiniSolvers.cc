@@ -6,12 +6,195 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <MiniLinearSolver.h>
 #include <MiniNonlinearSolver.h>
+#include "../../utils/MiniSolvers.h"
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace
 {
 
-TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
+//
+// Test the solution methods by themselves.
+//
+
+// Test one system with one method.
+template <typename NLS, typename NLM, typename T, Intrepid::Index N>
+bool
+solveNLSwithNLM(NLS & system, NLM & method, Intrepid::Vector<T, N> & x)
+{
+  method.solve(system, x);
+  method.printReport(std::cout);
+
+  return method.isConverged();
+}
+
+// Test one system with various methods.
+template <typename NLS, typename T, Intrepid::Index N>
+bool
+solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
+{
+  bool
+  all_ok = true;
+
+  Intrepid::Vector<T, N>
+  y;
+
+  Intrepid::NewtonMethod<NLS, T, N>
+  newton;
+
+  y = x;
+
+  bool const
+  newton_ok = solveNLSwithNLM(system, newton, y);
+
+  all_ok = all_ok && newton_ok;
+
+  Intrepid::TrustRegionMethod<NLS, T, N>
+  trust_region;
+
+  y = x;
+
+  bool const
+  trust_region_ok = solveNLSwithNLM(system, trust_region, y);
+
+  all_ok = all_ok && trust_region_ok;
+
+  Intrepid::ConjugateGradientMethod<NLS, T, N>
+  pcg;
+
+  y = x;
+
+  bool const
+  pcg_ok = solveNLSwithNLM(system, pcg, y);
+
+  all_ok = all_ok && pcg_ok;
+
+  Intrepid::LineSearchRegularizedMethod<NLS, T, N>
+  line_search;
+
+  y = x;
+
+  bool const
+  line_search_ok = solveNLSwithNLM(system, line_search, y);
+
+  all_ok = all_ok && line_search_ok;
+
+  return all_ok;
+}
+
+// Test various systems with various methods.
+bool testSystemsAndMethods()
+{
+  bool
+  all_ok = true;
+
+  Intrepid::Vector<RealType>
+  x;
+
+  LCM::SquareRootNLS<RealType>
+  square_root(2.0);
+
+  x.set_dimension(LCM::SquareRootNLS<RealType>::DIMENSION);
+
+  x(0) = 10.0;
+
+  bool const
+  square_root_ok = solveNLS(square_root, x);
+
+  all_ok = all_ok && square_root_ok;
+
+  LCM::QuadraticNLS<RealType>
+  quadratic(10.0, 15.0, 1.0);
+
+  x.set_dimension(LCM::QuadraticNLS<RealType>::DIMENSION);
+
+  x(0) = -15.0;
+  x(1) = -10.0;
+
+  bool const
+  quadratic_ok = solveNLS(quadratic, x);
+
+  all_ok = all_ok && quadratic_ok;
+
+  LCM::GaussianNLS<RealType>
+  gaussian(1.0, 2.0, 0.125);
+
+  x.set_dimension(LCM::GaussianNLS<RealType>::DIMENSION);
+
+  x(0) = 0.0;
+  x(1) = 0.0;
+
+  bool const
+  gaussian_ok = solveNLS(gaussian, x);
+
+  all_ok = all_ok && gaussian_ok;
+
+  LCM::BananaNLS<RealType>
+  banana;
+
+  x.set_dimension(LCM::BananaNLS<RealType>::DIMENSION);
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  bool const
+  banana_ok = solveNLS(banana, x);
+
+  all_ok = all_ok && banana_ok;
+
+  LCM::MatyasNLS<RealType>
+  matyas;
+
+  x.set_dimension(LCM::MatyasNLS<RealType>::DIMENSION);
+
+  x(0) = 10.0;
+  x(1) =  0.0;
+
+  bool const
+  matyas_ok = solveNLS(matyas, x);
+
+  all_ok = all_ok && matyas_ok;
+
+  LCM::McCormickNLS<RealType>
+  mccormick;
+
+  x.set_dimension(LCM::McCormickNLS<RealType>::DIMENSION);
+
+  x(0) = -0.5;
+  x(1) = -1.5;
+
+  bool const
+  mccormick_ok = solveNLS(mccormick, x);
+
+  all_ok = all_ok && mccormick_ok;
+
+  LCM::StyblinskiTangNLS<RealType>
+  styblinski_tang;
+
+  x.set_dimension(LCM::StyblinskiTangNLS<RealType>::DIMENSION);
+
+  x(0) = -4.0;
+  x(1) = -4.0;
+
+  bool const
+  styblinski_tang_ok = solveNLS(styblinski_tang, x);
+
+  all_ok = all_ok && styblinski_tang_ok;
+
+  return all_ok;
+}
+
+TEUCHOS_UNIT_TEST(NonlinearSystems, NonlinearMethods)
+{
+  bool const
+  passed = testSystemsAndMethods();
+
+  TEST_COMPARE(passed, ==, true);
+}
+
+//
+// Simple test of the linear mini solver.
+//
+TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 {
   Intrepid::Index const
   dimension{3};
@@ -42,86 +225,43 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, Instantiation)
   TEST_COMPARE(error, <=, Intrepid::machine_epsilon<RealType>());
 }
 
-template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class NewtonResidual : public LCM::Residual_Base<T, N>
-{
-public:
-
-  using ValueT = typename Sacado::ValueType<T>::type;
-
-  NewtonResidual(ValueT const a, ValueT const b) : a_(a), b_(b) {}
-
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) override
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    Intrepid::Vector<T, N>
-    r(dimension);
-
-    T const
-    xa = (x(0) - a_) / 10.0;
-
-    T const
-    xb = (x(1) - b_) / 10.0;
-
-    T const
-    e = std::exp(- xa * xa - xb * xb);
-
-    r(0) = -2.0 * xa * e;
-    r(1) = -2.0 * xb * e;
-
-    return r;
-  }
-
-
-private:
-  ValueT const
-  a_{0.0};
-
-  ValueT const
-  b_{0.0};
-
-};
-
-TEUCHOS_UNIT_TEST(MiniNewtonSolver, Instantiation)
+//
+// Test the LCM nonlinear mini solver.
+//
+TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
   using FadT = typename Sacado::Fad::DFad<ValueT>;
 
   Intrepid::Index const
-  dimension{2};
+  dimension{1};
 
-  Intrepid::Vector<ValueT, dimension>
-  solution(2.0, 1.0);
+  using NLS = LCM::SquareRootNLS<ValueT>;
 
-  using NR = NewtonResidual<FadT, dimension>;
+  ValueT const
+  square = 2.0;
 
-  NR
-  residual(solution(0), solution(1));
+  NLS
+  nonlinear_system(square);
 
-  LCM::NewtonSolver<PHAL::AlbanyTraits::Residual, NR, dimension>
-  solver;
+  Intrepid::NewtonMethod<NLS, ValueT, dimension>
+  method;
 
-  Intrepid::Vector<FadT, dimension>
+  LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
+  solver(method);
+
+  Intrepid::Vector<ScalarT, dimension>
   x;
 
   // Initial guess
   for (Intrepid::Index i{0}; i < dimension; ++i) {
-    x(i) = FadT(dimension, i, 0.0);
+    x(i) = 1.0;
   }
 
-  solver.solve(residual, x);
+  solver.solve(nonlinear_system, x);
 
-  Intrepid::Vector<ValueT, dimension>
-  x_val = Sacado::Value<Intrepid::Vector<FadT, dimension>>::eval(x);
-
-  ValueT const
-  error = norm(x_val - solution) / norm(solution);
-
-  TEST_COMPARE(error, <=, solver.relative_tolerance);
+  TEST_COMPARE(method.isConverged(), ==, true);
 }
 
 } // anonymous namespace

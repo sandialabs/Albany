@@ -83,9 +83,6 @@ public:
   //! Return x + a for nonoverlapping a.
   Teuchos::RCP<const Tpetra_Vector> add_x(
     const Teuchos::RCP<const Tpetra_Vector>& a) const;
-  //! Return x + a for overlapping a.
-  Teuchos::RCP<const Tpetra_Vector> add_x_ol(
-    const Teuchos::RCP<const Tpetra_Vector>& a_ol) const;
 
   /* Problems use these methods to set up RCU. */
 

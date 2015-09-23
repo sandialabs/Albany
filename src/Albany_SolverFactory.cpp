@@ -35,7 +35,7 @@
 
 #ifdef ALBANY_MUELU
 #include <Thyra_MueLuPreconditionerFactory.hpp>
-#include "Stratimikos_MueluTpetraHelpers.hpp"
+#include "Stratimikos_MueLuHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
@@ -652,8 +652,14 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
 #ifdef ALBANY_AERAS 
   if (solutionMethod == "Aeras Hyperviscosity") {
-    std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
- 
+    //std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
+    //Check if HV coefficient tau is zero of "Explicit HV" is false. Then there is no need for Aeras HVDecorator.
+
+    bool useExplHyperviscosity = problemParams->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
+    double tau = problemParams->sublist("Shallow Water Problem").get<double>("Hyperviscosity Tau", 0.0);
+
+    if( (useExplHyperviscosity) && (tau != 0.0) ){
+
 ///// make a solver, repeated code
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
     const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
@@ -676,10 +682,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+    Stratimikos::enableMueLu(linearSolverBuilder);
+    Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+    Stratimikos::enableMueLu(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
 
@@ -688,23 +694,25 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
 ///// create an app and a model evaluator
 
-  RCP<Albany::Application> app;
+    RCP<Albany::Application> app;
 
-  app = rcp(new Albany::Application(appComm, appParams, initial_guess));
-  RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelHV(new Aeras::HVDecorator(app, appParams));
+    app = rcp(new Albany::Application(appComm, appParams, initial_guess));
+    RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelHV(new Aeras::HVDecorator(app, appParams));
 
-  albanyApp = app;
+    albanyApp = app;
 
-  RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
+    RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
  
-  modelWithSolveT =
+    modelWithSolveT =
       rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
 
-  const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
 
-  return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
 
-}//if Aeras HyperViscosity 
+    }//if useExplHV=true and tau <>0.
+
+  }//if Aeras HyperViscosity
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
@@ -737,10 +745,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+    Stratimikos::enableMueLu(linearSolverBuilder);
+    Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+    Stratimikos::enableMueLu(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
 
@@ -804,10 +812,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+    Stratimikos::enableMueLu(linearSolverBuilder); 
+    Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+    Stratimikos::enableMueLu(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
    

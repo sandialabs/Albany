@@ -568,10 +568,12 @@ computeState(typename Traits::EvalData workset,
 if (have_temperature_) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
+        ScalarT three_kappa = elastic_modulus(cell,pt) /
+          (1.0 - 2.0*poissons_ratio(cell,pt));
         F.fill(def_grad,cell,pt,0,0);
         ScalarT J = Intrepid::det(F);
         sigma.fill(stress,cell,pt,0,0);
-        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
+        sigma -= three_kappa * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {

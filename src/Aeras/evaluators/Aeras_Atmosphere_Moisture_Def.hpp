@@ -51,7 +51,7 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
       p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
 
   compute_cloud_physics = xzhydrostatic_params->get<bool>("Compute Cloud Physics", false); 
-  std::cout << "Atmosphere_Moisture: Computing Cloud Physics = " << compute_cloud_physics << std::endl;
+  //std::cout << "Atmosphere_Moisture: Computing Cloud Physics = " << compute_cloud_physics << std::endl;
 
   Teuchos::ArrayRCP<std::string> RequiredTracers(3);
   RequiredTracers[0] = "Vapor";

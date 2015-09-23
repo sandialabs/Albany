@@ -4,14 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "ATO_Integrator.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 
-namespace ATO {
+#include "VariationalModel.h"
+#include "VariationalModel.t.h"
 
-//**********************************************************************
-Integrator::Integrator(Teuchos::RCP<shards::CellTopology> celltype)
-//**********************************************************************
-{
-}
-
-} // end ATO namespace
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::VariationalModel)

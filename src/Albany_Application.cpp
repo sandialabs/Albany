@@ -777,8 +777,8 @@ void dfm_set (
   Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
 {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
-  workset.transientTerms = ! Teuchos::nonnull(xd);
-  workset.accelerationTerms = ! Teuchos::nonnull(xdd);
+  workset.transientTerms = Teuchos::nonnull(xd);
+  workset.accelerationTerms = Teuchos::nonnull(xdd);
 }
 
 // For the perturbation xd,
@@ -798,7 +798,7 @@ void dfm_set (
 //   The purpose of this derivative checker is to help find programming errors
 // in the Jacobian. Automatic differentiation largely or entirely prevents math
 // errors, but other kinds of programming errors (uninitialized memory,
-// accidentaly omission of a FadType, etc.) can cause errors. The common symptom
+// accidental omission of a FadType, etc.) can cause errors. The common symptom
 // of such an error is that the residual is correct, and therefore so is the
 // solution, but convergence to the solution is not quadratic.
 //   A complementary method to check for errors in the Jacobian is to use

@@ -8,98 +8,128 @@ namespace LCM
 {
 
 //
-// Specializations
+// Specializations for MiniNonlinear solver
 //
 
 //
 // Residual
 //
-template<typename Residual, Intrepid::Index N>
+template<typename NLS, Intrepid::Index N>
 void
-NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
-solve(
-    Residual & residual,
-    Intrepid::Vector<FadT, N> & x)
+MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, N>::
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
-  Intrepid::Index const
-  dimension = x.get_dimension();
-
-  Intrepid::Vector<FadT, N>
-  r = residual.compute(x);
-
-  Intrepid::Vector<ValueT, N>
-  x_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(x);
-
-  Intrepid::Vector<ValueT, N>
-  r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
-
-  ValueT const
-  initial_norm = Intrepid::norm(r_val);
-
-  this->number_iterations = 0;
-
-  if (initial_norm <= this->absolute_tolerance) return;
-
-  bool
-  converged = false;
-
-  while (converged == false) {
-
-    r = residual.compute(x);
-
-    r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
-
-    this->absolute_error = Intrepid::norm(r_val);
-
-    this->relative_error = this->absolute_error / initial_norm;
-
-    bool const
-    converged_relative = this->relative_error <= this->relative_tolerance;
-
-    bool const
-    converged_absolute = this->absolute_error <= this->absolute_tolerance;
-
-    converged = converged_relative || converged_absolute;
-
-    bool const
-    is_max_iter = this->number_iterations >= this->maximum_number_iterations;
-
-    bool const
-    end_solve = converged || is_max_iter;
-
-    if (end_solve == true) break;
-
-    Intrepid::Tensor<ValueT, N>
-    DrDx(dimension);
-
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      for (Intrepid::Index j{0}; j < dimension; ++j) {
-        DrDx(i, j) = r(i).dx(j);
-      }
-    }
-
-    Intrepid::Vector<ValueT, N> const
-    x_incr = - Intrepid::solve(DrDx, r_val);
-
-    x += x_incr;
-
-    ++this->number_iterations;
-  }
-
+  this->nonlinear_method_.solve(nls, soln);
   return;
 }
 
 //
 // Jacobian
 //
+template<typename NLS, Intrepid::Index N>
+void
+MiniNonlinearSolver<PHAL::AlbanyTraits::Jacobian, NLS, N>::
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
+{
+  // Extract values and use them to solve the NLS.
+  Intrepid::Vector<ValueT, N>
+  soln_val = Sacado::Value<Intrepid::Vector<ScalarT, N>>::eval(soln);
+
+  this->nonlinear_method_.solve(nls, soln_val);
+
+  auto const
+  dimension = soln.get_dimension();
+
+  // Put values back in solution vector
+  for (auto i = 0; i < dimension; ++i) {
+    soln(i).val() = soln_val(i);
+  }
+
+  // Get the Hessian evaluated at the solution.
+  Intrepid::Tensor<ValueT, N>
+  DrDx = Intrepid::getGradient(nls, soln_val);
+
+  // Now evaluate nls with soln that has Albany sensitivities.
+  Intrepid::Vector<ScalarT, N>
+  resi = Intrepid::getValue(nls, soln);
+
+  // Solve for solution sensitivities.
+  computeFADInfo(resi, DrDx, soln);
+
+  return;
+}
 
 //
 // Tangent
 //
+template<typename NLS, Intrepid::Index N>
+void
+MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N>::
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
+{
+  // Extract values and use them to solve the NLS.
+  Intrepid::Vector<ValueT, N>
+  soln_val = Sacado::Value<Intrepid::Vector<ScalarT, N>>::eval(soln);
+
+  this->nonlinear_method_.solve(nls, soln_val);
+
+  auto const
+  dimension = soln.get_dimension();
+
+  // Put values back in solution vector
+  for (auto i = 0; i < dimension; ++i) {
+    soln(i).val() = soln_val(i);
+  }
+
+  // Get the Hessian evaluated at the solution.
+  Intrepid::Tensor<ValueT, N>
+  DrDx = Intrepid::getGradient(nls, soln_val);
+
+  // Now evaluate nls with soln that has Albany sensitivities.
+  Intrepid::Vector<ScalarT, N>
+  resi = Intrepid::getValue(nls, soln);
+
+  // Solve for solution sensitivities.
+  computeFADInfo(resi, DrDx, soln);
+
+  return;
+}
 
 //
 // DistParamDeriv
 //
+template<typename NLS, Intrepid::Index N>
+void
+MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N>::
+solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
+{
+  // Extract values and use them to solve the NLS.
+  Intrepid::Vector<ValueT, N>
+  soln_val = Sacado::Value<Intrepid::Vector<ScalarT, N>>::eval(soln);
+
+  this->nonlinear_method_.solve(nls, soln_val);
+
+  auto const
+  dimension = soln.get_dimension();
+
+  // Put values back in solution vector
+  for (auto i = 0; i < dimension; ++i) {
+    soln(i).val() = soln_val(i);
+  }
+
+  // Get the Hessian evaluated at the solution.
+  Intrepid::Tensor<ValueT, N>
+  DrDx = Intrepid::getGradient(nls, soln_val);
+
+  // Now evaluate nls with soln that has Albany sensitivities.
+  Intrepid::Vector<ScalarT, N>
+  resi = Intrepid::getValue(nls, soln);
+
+  // Solve for solution sensitivities.
+  computeFADInfo(resi, DrDx, soln);
+
+  return;
+}
 
 #ifdef ALBANY_SG
 //

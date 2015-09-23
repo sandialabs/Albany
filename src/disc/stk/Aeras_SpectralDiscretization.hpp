@@ -645,12 +645,13 @@ namespace Aeras
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Convert the stk mesh on this processor to a nodal graph using SEACAS
-    void meshToGraph();
-
     void writeCoordsToMatrixMarket() const;
 
     double previous_time_label;
+
+    //Create enum type for the different kinds of elements (currently lines and quads) 
+    enum elemType {LINE, QUAD};
+    elemType ElemType;
 
   protected:
 
@@ -784,51 +785,6 @@ namespace Aeras
     bool interleavedOrdering;
 
   private:
-
-    Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
-
-
-    // find the location of "value" within the first "count" locations of "vector"
-    ssize_t in_list(const std::size_t value,
-                    std::size_t count,
-                    std::size_t *vector)
-    {
-      for(std::size_t i=0; i < count; i++)
-      {
-        if(vector[i] == value)
-          return i;
-      }
-       return -1;
-    }
-
-    ssize_t in_list(const std::size_t value,
-                    const Teuchos::Array<GO>& vector)
-    {
-      for (std::size_t i=0; i < vector.size(); i++)
-        if (vector[i] == value)
-          return i;
-      return -1;
-    }
-
-    ssize_t in_list(const std::size_t value,
-                    const std::vector<std::size_t>& vector)
-    {
-      for (std::size_t i=0; i < vector.size(); i++)
-        if (vector[i] == value)
-          return i;
-      return -1;
-    }
-
-    ssize_t entity_in_list(const stk::mesh::Entity& value,
-                           const std::vector<stk::mesh::Entity>& vec)
-    {
-      for (std::size_t i = 0; i < vec.size(); i++)
-        if (bulkData.identifier(vec[i]) == bulkData.identifier(value))
-          return i;
-      return -1;
-    }
-
-    void printVertexConnectivity();
 
   };
 
