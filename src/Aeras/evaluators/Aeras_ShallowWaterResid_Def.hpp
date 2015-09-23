@@ -165,7 +165,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   if (nNodes != numQPs) { 
     TEUCHOS_TEST_FOR_EXCEPTION(true,
          Teuchos::Exceptions::InvalidParameter, "Aeras::ShallowWaterResid must be run such that nNodes == numQPs!  " 
-         <<  "This does now hold: numNodes = " <<  nNodes << ", numQPs = " << numQPs << "."); 
+         <<  "This does not hold: numNodes = " <<  nNodes << ", numQPs = " << numQPs << "."); 
   }
 
   refWeights        .resize               (numQPs);

@@ -177,7 +177,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   if (numNodes != numQPts) { 
     TEUCHOS_TEST_FOR_EXCEPTION(true,
          Teuchos::Exceptions::InvalidParameter, "Aeras::XZHydrostaticProblem must be run such that nNodes == numQPts!  " 
-         <<  "This does now hold: numNodes = " <<  numNodes << ", numQPts = " << numQPts << "."); 
+         <<  "This does not hold: numNodes = " <<  numNodes << ", numQPts = " << numQPts << "."); 
   }
 
   //Evaluators for DOFs that depend on levels
