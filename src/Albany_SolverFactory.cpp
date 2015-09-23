@@ -682,7 +682,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::enableMueLu(linearSolverBuilder); 
+    Stratimikos::enableMueLu(linearSolverBuilder);
     Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
     Stratimikos::enableMueLu(linearSolverBuilder);
@@ -745,7 +745,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::enableMueLu(linearSolverBuilder); 
+    Stratimikos::enableMueLu(linearSolverBuilder);
     Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
     Stratimikos::enableMueLu(linearSolverBuilder);
@@ -812,7 +812,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::enableMueLu(linearSolverBuilder); 
+    Stratimikos::enableMueLu(linearSolverBuilder); 
     Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
     Stratimikos::enableMueLu(linearSolverBuilder);
