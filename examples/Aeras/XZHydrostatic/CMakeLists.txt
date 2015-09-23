@@ -11,6 +11,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_topography.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_topography.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_xz_matlab.m
                ${CMAKE_CURRENT_BINARY_DIR}/plot_xz_matlab.m COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_ho_RK4_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_ho_RK4_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_ho_BE_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_ho_BE_T.xml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
