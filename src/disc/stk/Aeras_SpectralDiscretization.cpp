@@ -1210,9 +1210,9 @@ void Aeras::SpectralDiscretization::enrichMeshLines()
 
       // Create new interior nodes for the enriched element
       GO offset = maxGID + gid(element) * (np-2);
-      for (unsigned ii = 0; ii < np-2; ++ii)
-        wsElNodeID[ibuck][ielem][ii+1] =
-          offset + ii - 1;
+      for (unsigned ii = 0; ii < np-2; ++ii) {
+        wsElNodeID[ibuck][ielem][ii+1] = offset + ii; 
+       }
     }
   }
 }
