@@ -244,9 +244,23 @@ PoissonSource(Teuchos::ParameterList& p,
       clCharge.width                     = psList->sublist(subListName).get<double>("Width");
       clCharge.cutoff                    = psList->sublist(subListName).get<double>("Cutoff");
 
-      // TODO sacado-ize other parameters 
-      std::stringstream ss; ss << "Cloud Charge " << i << " Amplitude";
-      this->registerSacadoParameter(ss.str(), paramLib);
+      // Sacado-ization
+      std::stringstream s1; s1 << "Cloud Charge " << i << " Amplitude";
+      this->registerSacadoParameter(s1.str(), paramLib);
+      std::stringstream s2; s2 << "Cloud Charge " << i << " X";
+      this->registerSacadoParameter(s2.str(), paramLib);
+      if(numDims > 1) {
+	std::stringstream ss; ss << "Cloud Charge " << i << " Y";
+	this->registerSacadoParameter(ss.str(), paramLib);
+      }
+      if(numDims > 2) {
+	std::stringstream ss; ss << "Cloud Charge " << i << " Z";
+	this->registerSacadoParameter(ss.str(), paramLib);
+      }
+      std::stringstream s3; s3 << "Cloud Charge " << i << " Width";
+      this->registerSacadoParameter(s3.str(), paramLib);
+      std::stringstream s4; s4 << "Cloud Charge " << i << " Cutoff";
+      this->registerSacadoParameter(s4.str(), paramLib);
       
       cloudCharges.push_back(clCharge);
     }
@@ -354,9 +368,22 @@ QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
       if( n == Albany::strint("Mesh Region Factor",i) ) return meshRegionFactors[i];
 
     for( std::size_t i=0; i < cloudCharges.size(); ++i) {
-      std::stringstream ss; ss << "Cloud Charge " << i << " Amplitude";
-      // TODO: Add other cloud chare parameters here
-      if( n == ss.str()) return cloudCharges[i].amplitude;
+      std::stringstream s1; s1 << "Cloud Charge " << i << " Amplitude";
+      if( n == s1.str()) return cloudCharges[i].amplitude;
+      std::stringstream s2; s2 << "Cloud Charge " << i << " X";
+      if( n == s2.str()) return cloudCharges[i].position[0];
+      if(numDims > 1) { 
+	std::stringstream ss; ss << "Cloud Charge " << i << " Y";
+	if( n == ss.str()) return cloudCharges[i].position[1];
+      } 
+      if(numDims > 2) { 
+	std::stringstream ss; ss << "Cloud Charge " << i << " Z";
+	if( n == ss.str()) return cloudCharges[i].position[2];
+      }
+      std::stringstream s3; s3 << "Cloud Charge " << i << " Width";
+      if( n == s3.str()) return cloudCharges[i].width;
+      std::stringstream s4; s4 << "Cloud Charge " << i << " Cutoff";
+      if( n == s4.str()) return cloudCharges[i].cutoff;
     }
 
     TEUCHOS_TEST_FOR_EXCEPT(true); 

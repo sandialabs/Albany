@@ -1,8 +1,6 @@
 #To configure Trilinos on Edison:
-
-#prior to configuring you need to load the following modules: 
-#module load boost cmake netcdf-hdf5parallel
-
+#
+# AGS for ACME: removed Seacas, STKIO, netcdf, hdf5
 
 rm -rf CMakeCache.txt CMakeFiles
 
@@ -17,11 +15,6 @@ cmake \
       -D TPL_ENABLE_Boost:BOOL=ON \
       -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
       -D Boost_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
-      -D Netcdf_INCLUDE_DIRS:FILEPATH="${NETCDF_DIR}/include" \
-      -D Netcdf_LIBRARY_DIRS:FILEPATH="${NETCDF_DIR}/lib" \
-      -D TPL_ENABLE_HDF5:BOOL=ON \
-      -D HDF5_INCLUDE_DIRS:FILEPATH="${HDF5_DIR}/include" \
-      -D HDF5_LIBRARY_DIRS:FILEPATH="${HDF5_DIR}/lib" \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -52,9 +45,7 @@ cmake \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON\
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Trilinos_ENABLE_STKMesh:BOOL=ON \
-      -D Trilinos_ENABLE_STKIO:BOOL=ON \
-      -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
-      -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D TriKota_ENABLE_DakotaCMake:BOOL=OFF \
@@ -69,13 +60,6 @@ cmake \
     -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
     -D Kokkos_ENABLE_Pthread:BOOL=OFF \
     -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
-\
-      -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
-      -D Trilinos_ENABLE_ThreadPool:STRING="ON" \
-      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
-      -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH="${NETCDF_DIR}/include" \
-      -D Netcdf_LIBRARY_DIRS:PATH="${NETCDF_DIR}/lib" \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
@@ -110,8 +94,9 @@ cmake \
       -D CMAKE_Fortran_COMPILER:FILEPATH="ftn" \
       -DTPL_ENABLE_Pthread:BOOL=OFF \
       -DTPL_ENABLE_BinUtils:BOOL=OFF \
-      -D TPL_BLAS_LIBRARIES:STRING="sci_intel_mpi" \
-      -D TPL_LAPACK_LIBRARIES:STRING="sci_intel_mpi" \
+\
+      -D TPL_BLAS_LIBRARIES:STRING="sci" \
+      -D TPL_LAPACK_LIBRARIES:STRING="sci" \
 \
   -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
   -D Tpetra_INST_INT_LONG_LONG:BOOL=OFF \
@@ -128,10 +113,4 @@ cmake \
       -D MPI_EXEC_NUMPROCS_FLAG:STRING=-n \
 \
 ..
-
-#   -D Trilinos_ENABLE_Fortran:BOOL=OFF \
-#   -D TPL_BLAS_LIBRARIES:STRING="-L${ACML_DIR}/lib -lacml -lpgmp -pgcpplibs -lz" \
-#   -D TPL_LAPACK_LIBRARIES:STRING="-L${ACML_DIR}/lib -lacml -lpgmp -pgcpplibs -lz" \
-#   -D CMAKE_Fortran_FLAGS:STRING="-Mconcur -mp" \
-#   -D CMAKE_Fortran_FLAGS_DEBUG:STRING="-Mconcur -mp" \
 

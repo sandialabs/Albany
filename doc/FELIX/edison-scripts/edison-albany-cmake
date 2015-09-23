@@ -20,9 +20,6 @@ cmake  \
     -D ENABLE_MPAS_INTERFACE=ON \
     -D ENABLE_SLFAD:BOOL=ON \
     -D SLFAD_SIZE=8 \
-    -D ENABLE_GPTL:BOOL=OFF \
-    -D GPTL_INCLUDE_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
-    -D GPTL_LIBRARY_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
     -D Albany_BUILD_STATIC_EXE:BOOL=ON \
     -D ENABLE_INSTALL:BOOL=ON \
     -D CMAKE_INSTALL_PREFIX:BOOL=$PWD/install \
@@ -31,7 +28,7 @@ cmake  \
 
 #
 #  Add this to avoid linking Albany executables
-#    -D ALBANY_LIBRARIES_ONLY=ON \
+#    -D ALBANY_LIBRARIES_ONLY=ON
 #
 #  For Albany runs that will Only be under MPAS-LI (ie Tet elements)
 #    -D SLFAD_SIZE=8 \
