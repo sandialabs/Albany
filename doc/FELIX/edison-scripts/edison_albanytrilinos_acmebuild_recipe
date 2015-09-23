@@ -1,0 +1,35 @@
+#!/bin/bash
+echo "Make sure to first do:  source edison_modules.sh"
+
+# Get public Trilinos and back up to hash of 8/24/2105
+git clone https://software.sandia.gov/trilinos/repositories/publicTrilinos Trilinos
+cd Trilinos
+# For 092315 build: git reset --hard 53bfc01
+cd ..
+
+# Get public Albany and back up to hash of 8/24/2105
+git clone git@github.com:gahansen/Albany
+cd Albany
+# For 092315 build: git reset --hard b0e8e11
+cd ..
+
+source edison_modules.sh
+mkdir Trilinos/build
+cp edison-trilinos-cmake Trilinos/build
+cd Trilinos/build
+./edison-trilinos-cmake
+make -j 20 install
+cd ../..
+
+
+mkdir Albany/build
+cp edison-albany-cmake Albany/build
+cd Albany/build
+./edison-albany-cmake
+make -j 20 install
+cd ../..
+
+
+echo "REQUIRED: Edit Albany/build/install/export-albany.in to remove "
+echo "          all   -lsci -lsci_intel -lsci_intel_mpi  libs"
+
