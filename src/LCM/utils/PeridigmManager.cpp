@@ -418,6 +418,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   for(unsigned int i=0 ; i<initialX.size() ; ++i)
     previousSolutionPositions[i] = initialX[i];
 
+
+//   std::cout << "DJL DEBUGGING num peridigm pts " << peridigmNodeGlobalIds.size() << std::endl;
+//   for(unsigned int i=0 ; i<peridigmNodeGlobalIds.size() ; i++){
+//     std::cout << "DJL DEBUGGING global id " << peridigmNodeGlobalIds[i] << ", initialX (" << initialX[i*3] << ", " << initialX[i*3+1] << ", " << initialX[i*3+2] << ")" << std::endl;
+//   }
+
   // Create a Peridigm discretization
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
   TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");

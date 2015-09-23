@@ -29,7 +29,9 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 PDNeighborFitBC_Base<EvalT, Traits>::
 PDNeighborFitBC_Base(Teuchos::ParameterList& p) :
-  PHAL::DirichletBase<EvalT, Traits>(p) {
+  PHAL::DirichletBase<EvalT, Traits>(p), perturbDirichlet(1.0) {
+  this->perturbDirichlet = p.get<double>("Perturb Dirichlet");
+  this->timeStep = p.get<double>("Time Step");
 }
 
 // **********************************************************************
@@ -39,6 +41,7 @@ template<typename Traits>
 PDNeighborFitBC<PHAL::AlbanyTraits::Residual, Traits>::
 PDNeighborFitBC(Teuchos::ParameterList& p) :
   PDNeighborFitBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p) {
+
 }
 
 // **********************************************************************
@@ -46,10 +49,6 @@ template<typename Traits>
 void
 PDNeighborFitBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
-
-  static std::map<int, std::vector<double>> lastResult;
-  std::vector<double> initVec(3);
-  initVec[0] = 0.0 ; initVec[1] = 0.0 ; initVec[2] = 0.0;
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
@@ -89,45 +88,21 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       const double val_y = 0.0;
       const double val_z = 0.0;
 #endif
-      double density = 2200.0;
-      double volume = 8.0e-9;
-      double perturbDirichlet = 1.0e-6;
 
-      double delta_t = 0.00002/220.0;
+      // The scheme below is intended to be consistent with Velocity-Verlet time integration (explicit transient dynamics).
+      // Should work for statics and quasi-statics as well.
 
       double delta_x = xT_constView[xlunk] - val_x;
       double delta_y = xT_constView[ylunk] - val_y;
       double delta_z = xT_constView[zlunk] - val_z;
 
-      // double delta_x = val_x;
-      // double delta_y = val_y;
-      // double delta_z = val_z;
+      double a_x = (2.0/3.0)*delta_x/(this->timeStep*this->timeStep);
+      double a_y = (2.0/3.0)*delta_y/(this->timeStep*this->timeStep);
+      double a_z = (2.0/3.0)*delta_z/(this->timeStep*this->timeStep);
 
-      if(lastResult.find(localId) == lastResult.end()){
-	lastResult[localId] = initVec;
-      }
-
-      // double a_x = (2.0/3.0)*delta_x/(delta_t*delta_t) - delta_t*lastResult[localId][0];
-      // double a_y = (2.0/3.0)*delta_y/(delta_t*delta_t) - delta_t*lastResult[localId][1];
-      // double a_z = (2.0/3.0)*delta_z/(delta_t*delta_t) - delta_t*lastResult[localId][2];
-
-      double a_x = (2.0/3.0)*delta_x/(delta_t*delta_t);
-      double a_y = (2.0/3.0)*delta_y/(delta_t*delta_t);
-      double a_z = (2.0/3.0)*delta_z/(delta_t*delta_t);
-
-      fT_nonconstView[xlunk] = -1.5*perturbDirichlet*a_x;
-      fT_nonconstView[ylunk] = -1.5*perturbDirichlet*a_y;
-      fT_nonconstView[zlunk] = -1.5*perturbDirichlet*a_z;
-
-      lastResult[localId][0] = a_x;
-      lastResult[localId][1] = a_y;
-      lastResult[localId][2] = a_z;
-
-      std::cout << "DJL DEBUGGING localId " << localId << ", val_x = " << val_x << ", a_x = " << a_x << std::endl;
-
-      // fT_nonconstView[xlunk] = (xT_constView[xlunk] - val_x);
-      // fT_nonconstView[ylunk] = (xT_constView[ylunk] - val_y);
-      // fT_nonconstView[zlunk] = (xT_constView[zlunk] - val_z);
+      fT_nonconstView[xlunk] = -1.5 * this->perturbDirichlet * a_x;
+      fT_nonconstView[ylunk] = -1.5 * this->perturbDirichlet * a_y;
+      fT_nonconstView[zlunk] = -1.5 * this->perturbDirichlet * a_z;
   }
 }
 
@@ -150,7 +125,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
 #endif
 #endif
-
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;

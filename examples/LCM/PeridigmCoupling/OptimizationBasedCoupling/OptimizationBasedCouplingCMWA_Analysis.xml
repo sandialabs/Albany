@@ -43,8 +43,10 @@
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
+<!--
         <Parameter name="Output Filename" type="string" value="OptimizationBasedCoupling_PeridigmResults"/>
         <Parameter name="Output Frequency" type="int" value="1"/>
+-->
         <ParameterList name="Output Variables">
           <Parameter name="Displacement" type="bool" value="true"/>
           <Parameter name="Radius" type="bool" value="true"/>
@@ -84,7 +86,7 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="CMWA_1.g"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OptimizationBasedCoupling.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OptimizationBasedCouplingCMWA_Analysis.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
