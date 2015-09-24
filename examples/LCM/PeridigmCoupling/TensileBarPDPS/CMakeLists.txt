@@ -23,6 +23,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS_PostProcess.py
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS_PostProcess.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.gnuplot
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.gnuplot COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/linear_solution.txt
+               ${CMAKE_CURRENT_BINARY_DIR}/linear_solution.txt COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)
