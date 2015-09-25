@@ -99,6 +99,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     std::string outputFileName;
     int outputInterval;
     bool useNullspaceTranslationOnly;
+    bool useTemperatureHack;
 
     static const char* solution_name;
     static const char* residual_name;

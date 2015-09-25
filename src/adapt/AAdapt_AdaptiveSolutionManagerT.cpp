@@ -23,6 +23,9 @@
 #ifdef ALBANY_AMP
 #include "AAdapt_SimAdapt.hpp"
 #endif
+#if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
+#include "Albany_APFDiscretization.hpp"
+#endif
 #include "AAdapt_RC_Manager.hpp"
 
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
@@ -107,6 +110,12 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
       initial_xdotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
     }
   }
+#if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
+  Teuchos::RCP< Albany::APFDiscretization > apf_disc =
+    Teuchos::rcp_dynamic_cast< Albany::APFDiscretization >(disc_);
+  apf_disc->writeSolutionToMeshDatabaseT(*overlapped_xT, 0, true);
+  apf_disc->initTemperatureHack();
+#endif
 }
 
 void AAdapt::AdaptiveSolutionManagerT::

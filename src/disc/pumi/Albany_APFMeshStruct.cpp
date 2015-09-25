@@ -125,6 +125,7 @@ void Albany::APFMeshStruct::init(
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
+  useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
 
   compositeTet = false;
 
@@ -405,6 +406,9 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
                      "Temporary hack to get MueLu (possibly) working for us");
 
   validPL->set<std::string>("Model Associations File Name", "", "File with element block/sideset/nodeset associations");
+
+  validPL->set<bool>("QP Temperature from Nodes", false,
+                     "Hack to initialize QP Temperature from Solution");
 
   return validPL;
 }
