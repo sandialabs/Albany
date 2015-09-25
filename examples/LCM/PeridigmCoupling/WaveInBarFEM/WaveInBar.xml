@@ -17,6 +17,9 @@
       <Parameter name="Function Expression for DOF Y" type="string" value="value = 0.0"/>
       <Parameter name="Function Expression for DOF Z" type="string" value="value = 0.0"/>
     </ParameterList>
+    <ParameterList name="Density">
+      <Parameter name="Value" type="double" value="2200.0"/>
+    </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="22.35e9"/>

@@ -186,6 +186,7 @@ Albany::ElasticityProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidElasticityProblemParams");
 
+  validPL->sublist("Density", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");

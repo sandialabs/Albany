@@ -418,6 +418,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   for(unsigned int i=0 ; i<initialX.size() ; ++i)
     previousSolutionPositions[i] = initialX[i];
 
+
+//   std::cout << "DJL DEBUGGING num peridigm pts " << peridigmNodeGlobalIds.size() << std::endl;
+//   for(unsigned int i=0 ; i<peridigmNodeGlobalIds.size() ; i++){
+//     std::cout << "DJL DEBUGGING global id " << peridigmNodeGlobalIds[i] << ", initialX (" << initialX[i*3] << ", " << initialX[i*3+1] << ", " << initialX[i*3+2] << ")" << std::endl;
+//   }
+
   // Create a Peridigm discretization
   const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
   TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
@@ -1110,6 +1116,7 @@ double LCM::PeridigmManager::getDisplacementNeighborhoodFit(int globalAlbanyNode
     for(int iID=0 ; iID<numOwnedPoints ; ++iID){
       // Sum in the contributions for the neighbors
       int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+//       std::cout << "DJL DEBUGGING " << iID << " of " << numOwnedPoints << " has " << numNeighbors << " neighbors." << std::endl;
       if(iID==localAlbanyNodeId){
         neighborDispValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);
         neighborXValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);
@@ -1217,13 +1224,15 @@ double LCM::PeridigmManager::getDisplacementNeighborhoodFit(int globalAlbanyNode
 
     // Do a weighted average of the disp values to compare
 
-//    double totalX = 0.0;
-//    double compareDisp = 0.0;
-//    for(int i=0;i<neighborXValues.size();++i)
-//      totalX += std::abs(neighborXValues[i]-coord[dof]);
-//    TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborXValues.size()!=neighborDispValues.size(), "\n\n**** Error in PeridigmManager, neighbor arrays are not equal size.\n\n");
-//    for(int i=0;i<neighborDispValues.size();++i)
-//      compareDisp += neighborDispValues[i]*std::abs(neighborXValues[i]-coord[dof])/totalX;
+   // double totalX = 0.0;
+   // double compareDisp = 0.0;
+   // for(int i=0;i<neighborXValues.size();++i)
+   //   totalX += std::abs(neighborXValues[i]-coord[dof]);
+   // TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborXValues.size()!=neighborDispValues.size(), "\n\n**** Error in PeridigmManager, neighbor arrays are not equal size.\n\n");
+   // for(int i=0;i<neighborDispValues.size();++i)
+   //   compareDisp += neighborDispValues[i]*std::abs(neighborXValues[i]-coord[dof])/totalX;
+   // std::cout << "DJL DEBUGGING fitDisp " << fitDisp << ", " << compareDisp << std::endl;
+   // fitDisp = compareDisp;
   }
   return fitDisp;
 }

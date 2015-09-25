@@ -716,7 +716,6 @@ Albany::PoroElasticityProblem::constructEvaluators(
 
      p->set<bool>("Disable Transient", true);
 
-
      //Output
      p->set<std::string>("Residual Name", "Displacement Residual");
      p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);

@@ -95,7 +95,6 @@ Optimizer(optimizerParams)
 
   _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
   _volMaxIter    = optimizerParams.get<int>("Volume Enforcement Maximum Iterations");
-  _initLambda    = optimizerParams.get<double>("Volume Multiplier Initial Guess");
   _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _moveLimit     = optimizerParams.get<double>("Move Limiter");
   _stabExponent  = optimizerParams.get<double>("Stabilization Parameter");
@@ -455,12 +454,27 @@ Optimizer_OC::computeUpdatedTopology()
   const double minDensity = bounds[0];
   const double maxDensity = bounds[1];
   const double offset = minDensity - 0.01*(maxDensity-minDensity);
-  double vmid, v1=0.0;
-  double v2=_initLambda;
+  double vmid, v1=0.0, v2=0.0;
+  double residRatio = 0.0;
   int niters=0;
 
   for(int i=0; i<numOptDofs; i++)
     p_last[i] = p[i];
+
+  double dfdp_tot = 0.0, dvdp_tot = 0.0;
+  for(int i=0; i<numOptDofs; i++) {
+    dfdp_tot += dfdp[i];
+    dvdp_tot += dvdp[i];
+  }
+  double g_dfdp_tot = 0.0, g_dvdp_tot = 0.0;
+  comm->SumAll(&dfdp_tot, &g_dfdp_tot, 1);
+  comm->SumAll(&dvdp_tot, &g_dvdp_tot, 1);
+
+  v2 = -10.0* g_dfdp_tot / g_dvdp_tot;
+
+  if(comm->MyPID()==0){
+    std::cout << "Volume enforcement: Beginning search with recursive bisection." <<  std::endl;
+  }
 
   double vol = 0.0;
   do {
@@ -482,11 +496,115 @@ Optimizer_OC::computeUpdatedTopology()
     }
 
     // compute new volume
+    double prevResidual = vol - _volConstraint*_optVolume;
     solverInterface->ComputeVolume(p, vol);
-    if( (vol - _volConstraint*_optVolume) > 0.0 ) v1 = vmid;
-    else v2 = vmid;
+    double newResidual = vol - _volConstraint*_optVolume;
+    if( newResidual > 0.0 ){
+      residRatio = newResidual/prevResidual;
+      v1 = vmid;
+      niters++;
+      break;
+    } else v2 = vmid;
     niters++;
+
+    if(comm->MyPID()==0){
+      double resid = (vol - _volConstraint*_optVolume)/_optVolume;
+      std::cout << "Volume enforcement (iteration " << niters << "): Residual = " << resid << std::endl;
+    }
+
   } while ( niters < _volMaxIter && fabs(vol - _volConstraint*_optVolume) > _volConvTol*_optVolume );
+
+
+  if(comm->MyPID()==0){
+    std::cout << "Volume enforcement: Bounds found.  Switching to Newton search." << std::endl;
+  }
+
+  int newtonMaxIters = niters + 10;
+  double lambda = (residRatio*v2 - v1)/(residRatio-1.0);
+  double epsilon = lambda*1e-5;
+  do {
+    for(int i=0; i<numOptDofs; i++) {
+      double be = -dfdp[i]/dvdp[i]/lambda;
+      double p_old = p_last[i];
+      double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+      // limit change
+      double dval = p_new - p_old;
+      if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+      // enforce limits
+      if( p_new < minDensity ) p_new = minDensity;
+      if( p_new > maxDensity ) p_new = maxDensity;
+      p[i] = p_new;
+    }
+    // compute new volume
+    solverInterface->ComputeVolume(p, vol);
+    double f0 =  (vol - _volConstraint*_optVolume);
+
+    if(comm->MyPID()==0){
+      std::cout << "Volume Enforcement (iteration " << niters << "): Residual = " << f0/_optVolume << std::endl;
+    }
+
+    if( fabs(f0) < _volConvTol*_optVolume ) return;
+
+    double plambda = lambda+epsilon;
+    for(int i=0; i<numOptDofs; i++) {
+      double be = -dfdp[i]/dvdp[i]/plambda;
+      double p_old = p_last[i];
+      double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+      // limit change
+      double dval = p_new - p_old;
+      if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+      // enforce limits
+      if( p_new < minDensity ) p_new = minDensity;
+      if( p_new > maxDensity ) p_new = maxDensity;
+      p[i] = p_new;
+    }
+    // compute new volume
+    solverInterface->ComputeVolume(p, vol);
+    double f1 =  (vol - _volConstraint*_optVolume);
+
+    lambda -= epsilon*f0/(f1-f0);
+
+    niters++;
+  } while ( niters < newtonMaxIters );
+
+  if(comm->MyPID()==0){
+    std::cout << "Volume enforcement: Newton search failed.  Switching back to recursive bisection." << std::endl;
+  }
+
+  niters = 0;
+  do {
+    vol = 0.0;
+    vmid = (v2+v1)/2.0;
+
+    // update topology
+    for(int i=0; i<numOptDofs; i++) {
+      double be = -dfdp[i]/dvdp[i]/vmid;
+      double p_old = p_last[i];
+      double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+      // limit change
+      double dval = p_new - p_old;
+      if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+      // enforce limits
+      if( p_new < minDensity ) p_new = minDensity;
+      if( p_new > maxDensity ) p_new = maxDensity;
+      p[i] = p_new;
+    }
+
+    // compute new volume
+    solverInterface->ComputeVolume(p, vol);
+    double newResidual = vol - _volConstraint*_optVolume;
+    if( newResidual > 0.0 ){
+      v1 = vmid;
+    } else v2 = vmid;
+    niters++;
+
+    if(comm->MyPID()==0){
+      double resid = (vol - _volConstraint*_optVolume)/_optVolume;
+      std::cout << "Volume enforcement (iteration " << niters << "): Residual = " << resid << std::endl;
+    }
+
+  } while ( niters < _volMaxIter && fabs(vol - _volConstraint*_optVolume) > _volConvTol*_optVolume );
+
 
   TEUCHOS_TEST_FOR_EXCEPTION(
     ( fabs(vol - _volConstraint*_optVolume) > _volAccpTol*_optVolume ),
