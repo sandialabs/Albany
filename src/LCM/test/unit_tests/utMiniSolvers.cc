@@ -264,4 +264,23 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
   TEST_COMPARE(method.isConverged(), ==, true);
 }
 
+TEUCHOS_UNIT_TEST(Testing, Testing)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  LCM::Paraboloid<RealType>
+  p(1.0);
+
+  Intrepid::Vector<RealType, dimension>
+  x(0.0, 0.0);
+
+  std::cout << "Point   : " << x << '\n';
+  std::cout << "Value   : " << p.value(x) << '\n';
+  std::cout << "Gradient: " << p.gradient(x) << '\n';
+  std::cout << "Hessian : " << p.hessian(x) << '\n';
+
+  TEST_COMPARE(true, ==, true);
+}
+
 } // anonymous namespace

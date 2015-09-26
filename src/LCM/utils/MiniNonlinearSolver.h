@@ -34,7 +34,7 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x)
+  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x)
   {}
 
   virtual
@@ -73,7 +73,7 @@ public:
   {}
 
   void
-  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -93,7 +93,7 @@ public:
   {}
 
   void
-  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -112,7 +112,7 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N> :
   {}
 
   void
-  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 //
@@ -132,7 +132,7 @@ class MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N> :
   {}
 
   void
-  solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & x) override;
+  solve(NLS & nls, Intrepid::Vector<ScalarT, N> & x) override;
 };
 
 #ifdef ALBANY_SG

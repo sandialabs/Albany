@@ -17,7 +17,7 @@ namespace LCM
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, N>::
-solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   this->nonlinear_method_.solve(nls, soln);
   return;
@@ -29,7 +29,7 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Jacobian, NLS, N>::
-solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -47,11 +47,11 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
-  DrDx = Intrepid::getGradient(nls, soln_val);
+  DrDx = nls.hessian(soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = Intrepid::getValue(nls, soln);
+  resi = nls.gradient(soln);
 
   // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
@@ -65,7 +65,7 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::Tangent, NLS, N>::
-solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -83,11 +83,11 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
-  DrDx = Intrepid::getGradient(nls, soln_val);
+  DrDx = nls.hessian(soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = Intrepid::getValue(nls, soln);
+  resi = nls.gradient(soln);
 
   // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);
@@ -101,7 +101,7 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 template<typename NLS, Intrepid::Index N>
 void
 MiniNonlinearSolver<PHAL::AlbanyTraits::DistParamDeriv, NLS, N>::
-solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
+solve(NLS & nls, Intrepid::Vector<ScalarT, N> & soln)
 {
   // Extract values and use them to solve the NLS.
   Intrepid::Vector<ValueT, N>
@@ -119,11 +119,11 @@ solve(NLS const & nls, Intrepid::Vector<ScalarT, N> & soln)
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
-  DrDx = Intrepid::getGradient(nls, soln_val);
+  DrDx = nls.hessian(soln_val);
 
   // Now evaluate nls with soln that has Albany sensitivities.
   Intrepid::Vector<ScalarT, N>
-  resi = Intrepid::getValue(nls, soln);
+  resi = nls.gradient(soln);
 
   // Solve for solution sensitivities.
   computeFADInfo(resi, DrDx, soln);

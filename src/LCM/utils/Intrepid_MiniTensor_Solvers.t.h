@@ -97,63 +97,12 @@ computeFADInfo(
 }
 
 //
-// Residual of nonlinear system
-//
-template<typename NLS, typename T, Index N>
-Vector<T, N>
-getValue(NLS const & nls, Vector<T, N> const & x)
-{
-  Vector<T, N>
-  r = nls.evaluate(x);
-
-  return r;
-}
-
-//
-// Gradient of nonlinear system
-//
-template<typename NLS, typename T, Index N>
-Tensor<T, N>
-getGradient(NLS const & nls, Vector<T, N> const & x)
-{
-  using S = typename Sacado::ValueType<T>::type;
-  using AD = typename Sacado::Fad::DFad<S>;
-
-  Index const
-  dimension = x.get_dimension();
-
-  Vector<S, N>
-  x_val = Sacado::Value<Vector<T, N>>::eval(x);
-
-  Vector<AD, N>
-  x_ad(dimension);
-
-  for (Index i{0}; i < dimension; ++i) {
-    x_ad(i) = AD(dimension, i, x_val(i));
-  }
-
-  Vector<AD, N>
-  r_ad = nls.evaluate(x_ad);
-
-  Tensor<T, N>
-  Hessian(dimension);
-
-  for (Index i{0}; i < dimension; ++i) {
-    for (Index j{0}; j < dimension; ++j) {
-      Hessian(i, j) = r_ad(i).dx(j);
-    }
-  }
-
-  return Hessian;
-}
-
-//
 //
 //
 template<typename NLS, typename T, Index N>
 void
 NewtonMethod<NLS, T, N>::
-solve(NLS const & nls, Vector<T, N> & soln)
+solve(NLS & nls, Vector<T, N> & soln)
 {
   this->setInitialGuess(soln);
 
@@ -167,7 +116,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   step(dimension);
 
   Vector<T, N>
-  resi = nls.evaluate(soln);
+  resi = nls.gradient(soln);
 
   T const
   initial_norm = norm(resi);
@@ -177,13 +126,13 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
   while (this->continueSolve() == true) {
 
-    Hessian = getGradient(nls, soln);
+    Hessian = nls.hessian(soln);
 
     step = - Intrepid::solve(Hessian, resi);
 
     soln += step;
 
-    resi = nls.evaluate(soln);
+    resi = nls.gradient(soln);
 
     T const
     norm_resi = norm(resi);
@@ -202,7 +151,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 template<typename NLS, typename T, Index N>
 void
 TrustRegionMethod<NLS, T, N>::
-solve(NLS const & nls, Vector<T, N> & soln)
+solve(NLS & nls, Vector<T, N> & soln)
 {
   this->setInitialGuess(soln);
 
@@ -234,7 +183,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   I = identity<T, N>(dimension);
 
   Vector<T, N>
-  resi = nls.evaluate(soln);
+  resi = nls.gradient(soln);
 
   T const
   initial_norm = norm(resi);
@@ -248,7 +197,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   // Outer solution loop
   while (this->continueSolve() == true) {
 
-    Hessian = getGradient(nls, soln);
+    Hessian = nls.hessian(soln);
 
     // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
     T
@@ -282,7 +231,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     soln_next = soln + step;
 
-    resi_next = nls.evaluate(soln_next);
+    resi_next = nls.gradient(soln_next);
 
     // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
     T const
@@ -322,7 +271,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     if (reduction > getMinumumReduction()) {
       soln = soln_next;
-      resi = nls.evaluate(soln);
+      resi = nls.gradient(soln);
     }
 
     T const
@@ -342,7 +291,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 template<typename NLS, typename T, Index N>
 void
 ConjugateGradientMethod<NLS, T, N>::
-solve(NLS const & nls, Vector<T, N> & soln)
+solve(NLS & nls, Vector<T, N> & soln)
 {
   this->setInitialGuess(soln);
 
@@ -350,13 +299,13 @@ solve(NLS const & nls, Vector<T, N> & soln)
   dimension = soln.get_dimension();
 
   Vector<T, N>
-  gradient = nls.evaluate(soln);
+  gradient = nls.gradient(soln);
 
   Vector<T, N>
   resi = - gradient;
 
   Tensor<T, N>
-  Hessian = getGradient(nls, soln);
+  Hessian = nls.hessian(soln);
 
   Vector<T, N>
   precon_resi = Intrepid::solve(Hessian, resi);
@@ -391,9 +340,9 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     for (Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
 
-      gradient = nls.evaluate(soln);
+      gradient = nls.gradient(soln);
 
-      Hessian = getGradient(nls, soln);
+      Hessian = nls.hessian(soln);
 
       T const
       projection = dot(gradient, search_direction);
@@ -415,7 +364,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     }
 
-    gradient = nls.evaluate(soln);
+    gradient = nls.gradient(soln);
 
     resi = - gradient;
 
@@ -425,7 +374,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
     T const
     projection_mid = dot(resi, precon_resi);
 
-    Hessian = getGradient(nls, soln);
+    Hessian = nls.hessian(soln);
 
     precon_resi = Intrepid::solve(Hessian, resi);
 
@@ -469,7 +418,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 template<typename NLS, typename T, Index N>
 void
 LineSearchRegularizedMethod<NLS, T, N>::
-solve(NLS const & nls, Vector<T, N> & soln)
+solve(NLS & nls, Vector<T, N> & soln)
 {
   this->setInitialGuess(soln);
 
@@ -480,7 +429,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
   Hessian(dimension);
 
   Vector<T, N>
-  resi = nls.evaluate(soln);
+  resi = nls.gradient(soln);
 
   Tensor<T, N>
   K(dimension);
@@ -508,7 +457,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
   while (this->continueSolve() == true) {
 
-    Hessian = getGradient(nls, soln);
+    Hessian = nls.hessian(soln);
 
     bool const
     ill_conditioned = cond(Hessian) <= getHessianConditionTolerance();
@@ -556,9 +505,9 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     for (Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
 
-      resi = nls.evaluate(soln);
+      resi = nls.gradient(soln);
 
-      Hessian = getGradient(nls, soln);
+      Hessian = nls.hessian(soln);
 
       T const
       projection = dot(resi, step);
@@ -579,7 +528,7 @@ solve(NLS const & nls, Vector<T, N> & soln)
 
     }
 
-    resi = nls.evaluate(soln);
+    resi = nls.gradient(soln);
 
     T const
     norm_resi = norm(resi);
