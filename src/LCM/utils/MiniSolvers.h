@@ -13,6 +13,9 @@
 //
 namespace LCM {
 
+//
+//
+//
 template <typename S>
 class SquareRootNLS : public Intrepid::Function_Base<SquareRootNLS<S>>
 {
@@ -28,6 +31,15 @@ public:
   char const * const
   NAME = "Square Root";
 
+  // Default value.
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<SquareRootNLS<S>>::value(*this, x);
+  }
+
+  // Explicit gradient.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
@@ -58,6 +70,9 @@ private:
   c_{0.0};
 };
 
+//
+//
+//
 template <typename S>
 class QuadraticNLS : public Intrepid::Function_Base<QuadraticNLS<S>>
 {
@@ -73,6 +88,15 @@ public:
   char const * const
   NAME = "Quadratic";
 
+  // Default value.
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<QuadraticNLS<S>>::value(*this, x);
+  }
+
+  // Explicit gradient.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
@@ -110,6 +134,9 @@ private:
   c_{0.0};
 };
 
+//
+//
+//
 template <typename S>
 class GaussianNLS : public Intrepid::Function_Base<GaussianNLS<S>>
 {
@@ -125,6 +152,15 @@ public:
   char const * const
   NAME = "Inverted Gaussian";
 
+  // Default value.
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<GaussianNLS<S>>::value(*this, x);
+  }
+
+  // Explicit gradient.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
@@ -171,6 +207,9 @@ private:
   c_{0.0};
 };
 
+//
+//
+//
 template <typename S>
 class BananaNLS : public Intrepid::Function_Base<BananaNLS<S>>
 {
@@ -186,6 +225,15 @@ public:
   char const * const
   NAME = "Rosenbrock's Banana";
 
+  // Default value.
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<BananaNLS<S>>::value(*this, x);
+  }
+
+  // Explicit gradient.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
@@ -214,6 +262,9 @@ public:
 
 };
 
+//
+//
+//
 template <typename S>
 class MatyasNLS : public Intrepid::Function_Base<MatyasNLS<S>>
 {
@@ -229,6 +280,15 @@ public:
   char const * const
   NAME = "Matyas";
 
+  // Default value.
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<MatyasNLS<S>>::value(*this, x);
+  }
+
+  // Explicit gradient.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
@@ -257,6 +317,9 @@ public:
 
 };
 
+//
+//
+//
 template <typename S>
 class McCormickNLS : public Intrepid::Function_Base<McCormickNLS<S>>
 {
@@ -272,6 +335,15 @@ public:
   char const * const
   NAME = "McCormick";
 
+  // Default value.
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<McCormickNLS<S>>::value(*this, x);
+  }
+
+  // Explicit gradient.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
@@ -300,6 +372,9 @@ public:
 
 };
 
+//
+//
+//
 template <typename S>
 class StyblinskiTangNLS : public Intrepid::Function_Base<StyblinskiTangNLS<S>>
 {
@@ -315,6 +390,15 @@ public:
   char const * const
   NAME = "Styblinski-Tang";
 
+  // Default value.
+  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<StyblinskiTangNLS<S>>::value(*this, x);
+  }
+
+  // Explicit gradient.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
@@ -361,6 +445,7 @@ public:
   char const * const
   NAME = "Paraboloid";
 
+  // Explicit value.
   template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)

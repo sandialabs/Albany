@@ -141,7 +141,7 @@ solve(NLS & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
-  this->setFinalSolution(soln);
+  this->recordFinals(nls, soln);
   return;
 }
 
@@ -281,7 +281,7 @@ solve(NLS & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
-  this->setFinalSolution(soln);
+  this->recordFinals(nls, soln);
   return;
 }
 
@@ -408,7 +408,7 @@ solve(NLS & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
-  this->setFinalSolution(soln);
+  this->recordFinals(nls, soln);
   return;
 }
 
@@ -537,7 +537,7 @@ solve(NLS & nls, Vector<T, N> & soln)
     this->increaseIterationCounter();
   }
 
-  this->setFinalSolution(soln);
+  this->recordFinals(nls, soln);
   return;
 }
 

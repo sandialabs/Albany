@@ -212,6 +212,18 @@ public:
   getFinalSolution() const
   {return final_soln_;}
 
+  T
+  getFinalValue() const
+  {return final_value_;}
+
+  Vector<T, N>
+  getFinalGradient()
+  {return final_gradient_;}
+
+  Tensor<T, N>
+  getFinalHessian()
+  {return final_hessian_;}
+
   void printReport(std::ostream & os)
   {
     std::string const
@@ -229,13 +241,16 @@ public:
 
     os << std::scientific << std::setprecision(16);
 
-    os << "Initial |R|: " << getInitialResidualNorm() << '\n';
-    os << "Abs Tol    : " << getAbsoluteTolerance() << '\n';
-    os << "Abs Error  : " << getAbsoluteError() << '\n';
-    os << "Rel Tol    : " << getRelativeTolerance() << '\n';
-    os << "Rel Error  : " << getRelativeError() << '\n';
+    os << "Initial |R|: " << std::setw(24) << getInitialResidualNorm() << '\n';
+    os << "Abs Tol    : " << std::setw(24) << getAbsoluteTolerance() << '\n';
+    os << "Abs Error  : " << std::setw(24) << getAbsoluteError() << '\n';
+    os << "Rel Tol    : " << std::setw(24) << getRelativeTolerance() << '\n';
+    os << "Rel Error  : " << std::setw(24) << getRelativeError() << '\n';
     os << "Initial X  : " << getInitialGuess() << '\n';
     os << "Final X    : " << getFinalSolution() << '\n';
+    os << "f(X)       : " << std::setw(24) << getFinalValue() << '\n';
+    os << "Df(X)      : " << getFinalGradient() << '\n';
+    os << "DDf(X)     : " << getFinalHessian() << '\n';
     os << '\n';
   }
 
@@ -292,6 +307,33 @@ protected:
     final_soln_ = x;
   }
 
+  void
+  setFinalValue(NLS & nls, Vector<T, N> const & x)
+  {
+    final_value_ = nls.value(x);
+  }
+
+  void
+  setFinalGradient(NLS & nls, Vector<T, N> const & x)
+  {
+    final_gradient_ = nls.gradient(x);
+  }
+
+  void
+  setFinalHessian(NLS & nls, Vector<T, N> const & x)
+  {
+    final_hessian_ = nls.hessian(x);
+  }
+
+  void
+  recordFinals(NLS & nls, Vector<T, N> const & x)
+  {
+    setFinalSolution(x);
+    setFinalValue(nls, x);
+    setFinalGradient(nls, x);
+    setFinalHessian(nls, x);
+  }
+
 protected:
   Index
   max_num_iter_{128};
@@ -322,6 +364,15 @@ protected:
 
   Vector<T, N>
   final_soln_;
+
+  T
+  final_value_;
+
+  Vector<T, N>
+  final_gradient_;
+
+  Tensor<T, N>
+  final_hessian_;
 };
 
 ///
