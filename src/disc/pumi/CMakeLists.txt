@@ -38,6 +38,19 @@ IF(ALBANY_SCOREC)
      )
 ENDIF()
 
+IF(ALBANY_GOAL)
+  SET(SOURCES
+      ${SOURCES}
+      Albany_GOALMeshStruct.cpp
+      Albany_GOALDiscretization.cpp
+     )
+  SET(HEADERS
+      ${HEADERS}
+      Albany_GOALMeshStruct.hpp
+      Albany_GOALDiscretization.hpp
+     )
+ENDIF()
+
 IF(ALBANY_AMP)
   SET(SOURCES
       ${SOURCES}
