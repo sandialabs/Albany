@@ -11,6 +11,7 @@ Albany::GOALMeshStruct::GOALMeshStruct(
 		const Teuchos::RCP<const Teuchos_Comm>& commT) :
   PUMIMeshStruct(params, commT)
 {
+  polynomialOrder = params->get<int>("Polynomial Order", 1);
 }
 
 Albany::GOALMeshStruct::~GOALMeshStruct()
