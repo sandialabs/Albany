@@ -132,6 +132,10 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
 #include "GOAL_ComputeHierarchicBasis.hpp"
 
+#include <apf.h>
+#include <apfMesh.h>
+#include <apfShape.h>
+
 template<typename EvalT>
 Teuchos::RCP<const PHX::FieldTag> Albany::GOALMechanicsProblem::
 constructEvaluators(
@@ -169,17 +173,6 @@ constructEvaluators(
   if (matModelName == "Linear Elastic")
     smallStrain = true;
 
-  // define cell topologies
-  RCP<shards::CellTopology> cellType =
-    rcp(new shards::CellTopology(&meshSpecs.ctd));
-
-  // get the intrepid basis for the given cell topology
-  Basis basis = Albany::getIntrepidBasis(meshSpecs.ctd);
-
-  // get the cubature rules for given cell topology
-  CubatureFactory cubFctry;
-  Cubature cubature = cubFctry.create(*cellType, meshSpecs.cubatureDegree);
-
   // name variables
   ArrayRCP<std::string> dofNames(1);
   ArrayRCP<std::string> dofDotNames(1);
@@ -188,12 +181,19 @@ constructEvaluators(
   dofNames[0] = "Displacement";
   residNames[0] = dofNames[0] + " Residual";
 
+  // do some work to create a data layout
+  int pOrder = meshSpecs.polynomialOrder;
+  int qOrder = meshSpecs.cubatureDegree;
+  apf::Mesh::Type type = apf::Mesh::simplexTypes[numDims];
+  apf::FieldShape* shape = apf::getHierarchic(pOrder);
+  apf::EntityShape* eShape = shape->getEntityShape(type);
+
   // create a data layout
-  numDims = cubature->getDimension();
-  int numNodes = basis->getCardinality();
-  int numVertices = numNodes;
-  int numQPs = cubature->getNumPoints();
+  int numNodes = eShape->countNodes();
+  int numVertices = numDims + 1; // simplex assumption
+  int numQPs = apf::countGaussPoints(type, qOrder);
   const int worksetSize = meshSpecs.worksetSize;
+
   dl = rcp(new Albany::Layouts(
         worksetSize, numVertices, numNodes, numQPs, numDims));
 
@@ -213,9 +213,6 @@ constructEvaluators(
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructDOFVecGradInterpolationEvaluator(dofNames[0]));
-
-  fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructScatterResidualEvaluator(true, residNames));
@@ -244,7 +241,7 @@ constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Compute Hierarchic Basis"));
     p->set<RCP<Albany::Application> >("Application", this->getApplication());
     p->set<int>("Cubature Degree", meshSpecs.cubatureDegree);
-    p->set<int>("Polynomial Order", 1);
+    p->set<int>("Polynomial Order", meshSpecs.polynomialOrder);
 
     // output
     p->set<std::string>("Jacobian Det Name", "Jacobian Det");

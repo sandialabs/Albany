@@ -98,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // get the apf heirarchic shape
   // this is used to get shape function values / gradients
-  shape = apf::getLagrange(1);
+  shape = apf::getHierarchic(polynomialOrder);
 
   for (int cell=0; cell < workset.numCells; ++cell)
   {
