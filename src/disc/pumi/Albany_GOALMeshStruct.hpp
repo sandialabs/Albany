@@ -25,6 +25,8 @@ class GOALMeshStruct : public PUMIMeshStruct {
 
     apf::Field* createNodalField(char const* name, int valueType);
 
+    int getNumNodesPerElem(int ebi);
+
   private:
 
     int polynomialOrder;

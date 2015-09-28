@@ -6,6 +6,7 @@
 
 #include "Albany_GOALMeshStruct.hpp"
 #include <apfShape.h>
+#include <apfMesh.h>
 
 Albany::GOALMeshStruct::GOALMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -26,6 +27,14 @@ Albany::AbstractMeshStruct::msType
 Albany::GOALMeshStruct::meshSpecsType()
 {
   return GOAL_MS;
+}
+
+int Albany::GOALMeshStruct::getNumNodesPerElem(int ebi)
+{
+  int nDims = mesh->getDimension();
+  apf::Mesh::Type type = apf::Mesh::simplexTypes[nDims];
+  apf::EntityShape* eShape = shape->getEntityShape(type);
+  return eShape->countNodes(); 
 }
 
 apf::Field*

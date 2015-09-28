@@ -19,3 +19,8 @@ Albany::GOALDiscretization::GOALDiscretization(
 Albany::GOALDiscretization::~GOALDiscretization()
 {
 }
+
+int Albany::GOALDiscretization::getNumNodesPerElem(int ebi)
+{
+  return goalMeshStruct->getNumNodesPerElem(ebi);
+}
