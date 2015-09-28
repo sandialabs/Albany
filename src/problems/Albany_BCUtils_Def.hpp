@@ -370,26 +370,28 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (std::map<std
       // grab the sublist
       ParameterList& sub_list = BCparams.sublist(ss);
 
-      if(sub_list.get<string>("BC Function") == "Displacement") {
-        RCP<ParameterList> p = rcp(new ParameterList);
-        p->set<int>("Type", traits_type::typePd);
+      RCP<ParameterList> p = rcp(new ParameterList);
+      p->set<int>("Type", traits_type::typePd);
 
-        // Fill up ParameterList with things DirichletBase wants
-        p->set< RCP<DataLayout> >("Data Layout", dummy);
-        p->set< string > ("Dirichlet Name", ss);
-        p->set< RealType >("Dirichlet Value", 0.0);
-        p->set< string > ("Node Set ID", nodeSetIDs[i]);
-        //p->set< int >     ("Number of Equations", dirichletNames.size());
-        p->set< int > ("Equation Offset", 0);
-        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
+      // Fill up ParameterList with things DirichletBase wants
+      p->set< RCP<DataLayout> >("Data Layout", dummy);
+      p->set< std::string > ("Dirichlet Name", ss);
+      p->set< RealType >("Dirichlet Value", 0.0);
+      p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
+      //p->set< int >     ("Number of Equations", dirichletNames.size());
+      p->set< int > ("Equation Offset", 0);
+      p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
-        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        stringstream ess;
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+      // Parameters specific to the lsfit BC
+      p->set<double>("Perturb Dirichlet", sub_list.get<double>("Perturb Dirichlet", 1.0));
+      p->set<double>("Time Step", sub_list.get<double>("Time Step", 1.0));
 
-        bcs.push_back(ss);
-      }
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      std::stringstream ess;
+      ess << "Evaluator for " << ss;
+      evaluators_to_build[ess.str()] = p;
+
+      bcs.push_back(ss);
     }
   }
 

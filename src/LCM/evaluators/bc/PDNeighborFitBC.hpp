@@ -46,6 +46,9 @@ class PDNeighborFitBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
     PDNeighborFitBC_Base(Teuchos::ParameterList& p);
 
   protected:
+
+  double perturbDirichlet;
+  double timeStep;
 };
 
 // **************************************************************

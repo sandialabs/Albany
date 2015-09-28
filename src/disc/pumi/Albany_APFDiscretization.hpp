@@ -305,6 +305,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! thereby releasing the mesh.
     virtual void releaseMesh();
 
+    void initTemperatureHack();
+
   private:
 
     //! Private to prohibit copying
@@ -330,16 +332,16 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void computeSideSets();
 
     //! Transfer PUMIQPData to APF
-    void copyQPScalarToAPF(unsigned nqp, PUMIQPData<double, 2>& state, apf::Field* f);
-    void copyQPVectorToAPF(unsigned nqp, PUMIQPData<double, 3>& state, apf::Field* f);
-    void copyQPTensorToAPF(unsigned nqp, PUMIQPData<double, 4>& state, apf::Field* f);
+    void copyQPScalarToAPF(unsigned nqp, std::string const& state, apf::Field* f);
+    void copyQPVectorToAPF(unsigned nqp, std::string const& state, apf::Field* f);
+    void copyQPTensorToAPF(unsigned nqp, std::string const& state, apf::Field* f);
     void copyQPStatesToAPF(apf::Field* f, apf::FieldShape* fs, bool copyAll = true);
     void removeQPStatesFromAPF();
 
     //! Transfer QP Fields from APF to PUMIQPData
-    void copyQPScalarFromAPF(unsigned nqp, PUMIQPData<double, 2>& state, apf::Field* f);
-    void copyQPVectorFromAPF(unsigned nqp, PUMIQPData<double, 3>& state, apf::Field* f);
-    void copyQPTensorFromAPF(unsigned nqp, PUMIQPData<double, 4>& state, apf::Field* f);
+    void copyQPScalarFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
+    void copyQPVectorFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
+    void copyQPTensorFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
     void copyQPStatesFromAPF();
 
     // Transfer nodal data to/from APF.

@@ -446,6 +446,7 @@ void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
+  (void) time_value;
   if (solNames.size() == 0)
     this->setField(APFMeshStruct::solution_name,soln,overlapped);
   else
@@ -956,14 +957,14 @@ void Albany::APFDiscretization::computeWorksetInfo()
 
 void Albany::APFDiscretization::copyQPTensorToAPF(
     unsigned nqp,
-    PUMIQPData<double, 4>& state,
+    std::string const& stateName,
     apf::Field* f)
 {
   const int spdim = getNumDim();
   apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
     for (std::size_t e=0; e < buck.size(); ++e) {
       for (std::size_t p=0; p < nqp; ++p) {
         for (std::size_t i=0; i < spdim; ++i)
@@ -977,12 +978,12 @@ void Albany::APFDiscretization::copyQPTensorToAPF(
 
 void Albany::APFDiscretization::copyQPScalarToAPF(
     unsigned nqp,
-    PUMIQPData<double, 2>& state,
+    std::string const& stateName,
     apf::Field* f)
 {
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
     for (std::size_t e=0; e < buck.size(); ++e)
       for (std::size_t p=0; p < nqp; ++p)
         apf::setScalar(f,buck[e],p,ar(e,p));
@@ -991,14 +992,14 @@ void Albany::APFDiscretization::copyQPScalarToAPF(
 
 void Albany::APFDiscretization::copyQPVectorToAPF(
     unsigned nqp,
-    PUMIQPData<double, 3>& state,
+    std::string const& stateName,
     apf::Field* f)
 {
   const int spdim = getNumDim();
   apf::Vector3 v(0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
     for (std::size_t e=0; e < buck.size(); ++e) {
       for (std::size_t p=0; p < nqp; ++p) {
         for (std::size_t i=0; i < spdim; ++i)
@@ -1021,7 +1022,7 @@ void Albany::APFDiscretization::copyQPStatesToAPF(
       continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
-    copyQPScalarToAPF(nqp,state,f);
+    copyQPScalarToAPF(nqp, state.name, f);
   }
   for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
     PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
@@ -1029,7 +1030,7 @@ void Albany::APFDiscretization::copyQPStatesToAPF(
       continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
-    copyQPVectorToAPF(nqp,state,f);
+    copyQPVectorToAPF(nqp, state.name, f);
   }
   for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
     PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
@@ -1037,7 +1038,7 @@ void Albany::APFDiscretization::copyQPStatesToAPF(
       continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
-    copyQPTensorToAPF(nqp,state,f);
+    copyQPTensorToAPF(nqp, state.name, f);
   }
 }
 
@@ -1060,23 +1061,24 @@ void Albany::APFDiscretization::removeQPStatesFromAPF()
 
 void Albany::APFDiscretization::copyQPScalarFromAPF(
     unsigned nqp,
-    PUMIQPData<double, 2>& state,
+    std::string const& stateName,
     apf::Field* f)
 {
   apf::Mesh2* m = meshStruct->getMesh();
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
     for (std::size_t e=0; e < buck.size(); ++e) {
-      for (std::size_t p = 0; p < nqp; ++p)
+      for (std::size_t p = 0; p < nqp; ++p) {
         ar(e,p) = apf::getScalar(f,buck[e],p);
+      }
     }
   }
 }
 
 void Albany::APFDiscretization::copyQPVectorFromAPF(
     unsigned nqp,
-    PUMIQPData<double, 3>& state,
+    std::string const& stateName,
     apf::Field* f)
 {
   const int spdim = getNumDim();
@@ -1084,7 +1086,7 @@ void Albany::APFDiscretization::copyQPVectorFromAPF(
   apf::Vector3 v(0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
     for (std::size_t e=0; e < buck.size(); ++e) {
       for (std::size_t p=0; p < nqp; ++p) {
         apf::getVector(f,buck[e],p,v);
@@ -1097,7 +1099,7 @@ void Albany::APFDiscretization::copyQPVectorFromAPF(
 
 void Albany::APFDiscretization::copyQPTensorFromAPF(
     unsigned nqp,
-    PUMIQPData<double, 4>& state,
+    std::string const& stateName,
     apf::Field* f)
 {
   const int spdim = getNumDim();
@@ -1105,7 +1107,7 @@ void Albany::APFDiscretization::copyQPTensorFromAPF(
   apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
   for (std::size_t b = 0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
     for (std::size_t e=0; e < buck.size(); ++e) {
       for (std::size_t p=0; p < nqp; ++p) {
         apf::getMatrix(f,buck[e],p,v);
@@ -1126,19 +1128,19 @@ void Albany::APFDiscretization::copyQPStatesFromAPF()
     PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
-    copyQPScalarFromAPF(nqp,state,f);
+    copyQPScalarFromAPF(nqp, state.name, f);
   }
   for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
     PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
-    copyQPVectorFromAPF(nqp,state,f);
+    copyQPVectorFromAPF(nqp, state.name, f);
   }
   for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
     PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
-    copyQPTensorFromAPF(nqp,state,f);
+    copyQPTensorFromAPF(nqp, state.name, f);
   }
 }
 
@@ -1342,4 +1344,45 @@ void Albany::APFDiscretization::releaseMesh () {
     apf::destroyGlobalNumbering(elementNumbering);  
     elementNumbering = 0;
   }
+}
+
+/* LCM's ThermoMechanicalCoefficients evaluator
+   relies on Temperature and Temperature_old
+   to be initialized in the stateArrays as well
+   as the solution vector.
+   this hack will interpolate values from the
+   solution vector "temp" to populate the
+   stateArrays */
+
+void
+Albany::APFDiscretization::initTemperatureHack() {
+  if (!meshStruct->useTemperatureHack)
+    return;
+  apf::Mesh* m = meshStruct->getMesh();
+  apf::Field* Tnodal = m->findField("temp");
+  if (!Tnodal)
+    return;
+  int o = meshStruct->cubatureDegree;
+  unsigned nqp = 0;
+  int dim = m->getDimension();
+  apf::FieldShape* qpfs = apf::getIPShape(dim, o);
+  apf::Field* T = apf::createField(m, "temp_init_hack", apf::SCALAR, qpfs);
+  apf::MeshIterator* it = m->begin(dim);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it))) {
+    apf::Mesh::Type et = m->getType(e);
+    apf::Element* fe = apf::createElement(Tnodal, e);
+    nqp = apf::countGaussPoints(et, o);
+    for (unsigned i = 0; i < nqp; ++i) {
+      apf::Vector3 xi;
+      apf::getGaussPoint(et, o, i, xi);
+      double val = apf::getScalar(fe, xi);
+      apf::setScalar(T, e, 0, val);
+    }
+    apf::destroyElement(fe);
+  }
+  m->end(it);
+  copyQPScalarFromAPF(nqp, "Temperature", T);
+  copyQPScalarFromAPF(nqp, "Temperature_old", T);
+  apf::destroyField(T);
 }

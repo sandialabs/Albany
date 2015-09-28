@@ -38,32 +38,103 @@ computeFADInfo(
     Vector<T, N> & x);
 
 ///
-/// Nonlinear system (NLS) interface for mini nonlinear solver
+/// Function base class that defines the interface to Mini Solvers.
 ///
-template <typename S>
-class NonlinearSystem_Base
+template <typename Function_Derived>
+class Function_Base
 {
 public:
-  NonlinearSystem_Base()
+
+  ///
+  /// By default use merit function 0.5 dot(gradient, gradient)
+  /// as the target to optimize if only the gradient is provided.
+  ///
+  template <typename T, Index N = DYNAMIC>
+  T
+  value(Function_Derived & f, Vector<T, N> const & x)
   {
-    STATIC_ASSERT(Sacado::IsADType<S>::value == false, NO_FAD_ALLOWED);
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == Function_Derived::DIMENSION);
+
+    Vector<T, N> const
+    r = f.gradient(x);
+
+    return 0.5 * dot(r, r);
+  }
+
+  ///
+  /// By default compute gradient with AD from value().
+  ///
+  template <typename T, Index N = DYNAMIC>
+  Vector<T, N>
+  gradient(Function_Derived & f, Vector<T, N> const & x)
+  {
+    using AD = typename Sacado::Fad::DFad<T>;
+
+    Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == Function_Derived::DIMENSION);
+
+    Vector<AD, N>
+    x_ad(dimension);
+
+    for (Index i{0}; i < dimension; ++i) {
+      x_ad(i) = AD(dimension, i, x(i));
+    }
+
+    AD
+    f_ad = f.value(x_ad);
+
+    Vector<T, N>
+    gradient(dimension);
+
+    for (Index i{0}; i < dimension; ++i) {
+      gradient(i) = f_ad.dx(i);
+    }
+
+    return gradient;
+  }
+
+  ///
+  /// By default compute Hessian with AD from gradient().
+  ///
+  template <typename T, Index N = DYNAMIC>
+  Tensor<T, N>
+  hessian(Function_Derived & f, Vector<T, N> const & x)
+  {
+    using AD = typename Sacado::Fad::DFad<T>;
+
+    Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == Function_Derived::DIMENSION);
+
+    Vector<AD, N>
+    x_ad(dimension);
+
+    for (Index i{0}; i < dimension; ++i) {
+      x_ad(i) = AD(dimension, i, x(i));
+    }
+
+    Vector<AD, N>
+    r_ad = f.gradient(x_ad);
+
+    Tensor<T, N>
+    Hessian(dimension);
+
+    for (Index i{0}; i < dimension; ++i) {
+      for (Index j{0}; j < dimension; ++j) {
+        Hessian(i, j) = r_ad(i).dx(j);
+      }
+    }
+
+    return Hessian;
   }
 
 };
-
-///
-/// Utility function to compute value of a nonlinear system.
-///
-template<typename NLS, typename T, Index N = DYNAMIC>
-Vector<T, N>
-getValue(NLS const & nls, Vector<T, N> const & x);
-
-///
-/// Utility function to compute gradient of a nonlinear system.
-///
-template<typename NLS, typename T, Index N = DYNAMIC>
-Tensor<T, N>
-getGradient(NLS const & nls, Vector<T, N> const & x);
 
 ///
 /// Nonlinear Method Base Class
@@ -87,7 +158,7 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Vector<T, N> & x) = 0;
+  solve(NLS & nls, Vector<T, N> & x) = 0;
 
   void
   setMaxNumIterations(Index const mni)
@@ -141,6 +212,18 @@ public:
   getFinalSolution() const
   {return final_soln_;}
 
+  T
+  getFinalValue() const
+  {return final_value_;}
+
+  Vector<T, N>
+  getFinalGradient()
+  {return final_gradient_;}
+
+  Tensor<T, N>
+  getFinalHessian()
+  {return final_hessian_;}
+
   void printReport(std::ostream & os)
   {
     std::string const
@@ -158,13 +241,16 @@ public:
 
     os << std::scientific << std::setprecision(16);
 
-    os << "Initial |R|: " << getInitialResidualNorm() << '\n';
-    os << "Abs Tol    : " << getAbsoluteTolerance() << '\n';
-    os << "Abs Error  : " << getAbsoluteError() << '\n';
-    os << "Rel Tol    : " << getRelativeTolerance() << '\n';
-    os << "Rel Error  : " << getRelativeError() << '\n';
+    os << "Initial |R|: " << std::setw(24) << getInitialResidualNorm() << '\n';
+    os << "Abs Tol    : " << std::setw(24) << getAbsoluteTolerance() << '\n';
+    os << "Abs Error  : " << std::setw(24) << getAbsoluteError() << '\n';
+    os << "Rel Tol    : " << std::setw(24) << getRelativeTolerance() << '\n';
+    os << "Rel Error  : " << std::setw(24) << getRelativeError() << '\n';
     os << "Initial X  : " << getInitialGuess() << '\n';
     os << "Final X    : " << getFinalSolution() << '\n';
+    os << "f(X)       : " << std::setw(24) << getFinalValue() << '\n';
+    os << "Df(X)      : " << getFinalGradient() << '\n';
+    os << "DDf(X)     : " << getFinalHessian() << '\n';
     os << '\n';
   }
 
@@ -221,6 +307,33 @@ protected:
     final_soln_ = x;
   }
 
+  void
+  setFinalValue(NLS & nls, Vector<T, N> const & x)
+  {
+    final_value_ = nls.value(x);
+  }
+
+  void
+  setFinalGradient(NLS & nls, Vector<T, N> const & x)
+  {
+    final_gradient_ = nls.gradient(x);
+  }
+
+  void
+  setFinalHessian(NLS & nls, Vector<T, N> const & x)
+  {
+    final_hessian_ = nls.hessian(x);
+  }
+
+  void
+  recordFinals(NLS & nls, Vector<T, N> const & x)
+  {
+    setFinalSolution(x);
+    setFinalValue(nls, x);
+    setFinalGradient(nls, x);
+    setFinalHessian(nls, x);
+  }
+
 protected:
   Index
   max_num_iter_{128};
@@ -251,6 +364,15 @@ protected:
 
   Vector<T, N>
   final_soln_;
+
+  T
+  final_value_;
+
+  Vector<T, N>
+  final_gradient_;
+
+  Tensor<T, N>
+  final_hessian_;
 };
 
 ///
@@ -278,7 +400,7 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Vector<T, N> & x) override;
+  solve(NLS & nls, Vector<T, N> & x) override;
 };
 
 ///
@@ -299,7 +421,7 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Vector<T, N> & x) override;
+  solve(NLS & nls, Vector<T, N> & x) override;
 
   void
   setMaxNumRestrictIterations(Index const n)
@@ -369,7 +491,7 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Vector<T, N> & x) override;
+  solve(NLS & nls, Vector<T, N> & x) override;
 
   void
   setMaxNumLineSearchIterations(T const n)
@@ -424,7 +546,7 @@ public:
 
   virtual
   void
-  solve(NLS const & nls, Vector<T, N> & x) override;
+  solve(NLS & nls, Vector<T, N> & x) override;
 
   void
   setMaxNumRestrictIterations(Index const mntri)
