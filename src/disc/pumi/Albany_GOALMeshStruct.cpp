@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_GOALMeshStruct.hpp"
+#include <apfShape.h>
 
 Albany::GOALMeshStruct::GOALMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -12,6 +13,7 @@ Albany::GOALMeshStruct::GOALMeshStruct(
   PUMIMeshStruct(params, commT)
 {
   polynomialOrder = params->get<int>("Polynomial Order", 1);
+  shape = apf::getHierarchic(polynomialOrder);
 }
 
 Albany::GOALMeshStruct::~GOALMeshStruct()
@@ -27,5 +29,5 @@ Albany::GOALMeshStruct::meshSpecsType()
 apf::Field*
 Albany::GOALMeshStruct::createNodalField(char const* name, int valueType)
 {
-  return apf::createFieldOn(this->mesh, name, valueType);
+  return apf::createField(this->mesh, name, valueType, shape);
 }

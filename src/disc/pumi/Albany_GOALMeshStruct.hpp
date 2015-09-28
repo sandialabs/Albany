@@ -28,6 +28,7 @@ class GOALMeshStruct : public PUMIMeshStruct {
   private:
 
     int polynomialOrder;
+    apf::FieldShape* shape;
 
 };
 
