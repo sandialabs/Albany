@@ -14,6 +14,8 @@ Albany::GOALMeshStruct::GOALMeshStruct(
 {
   polynomialOrder = params->get<int>("Polynomial Order", 1);
   shape = apf::getHierarchic(polynomialOrder);
+  for (int ps=0; ps < meshSpecs.size(); ++ps)
+    meshSpecs[ps]->polynomialOrder = polynomialOrder;
 }
 
 Albany::GOALMeshStruct::~GOALMeshStruct()
