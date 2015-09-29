@@ -27,6 +27,8 @@ class GOALMeshStruct : public PUMIMeshStruct {
 
     int getNumNodesPerElem(int ebi);
 
+    apf::FieldShape* getShape() {return shape;}
+
   private:
 
     int polynomialOrder;

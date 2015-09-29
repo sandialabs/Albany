@@ -12,7 +12,8 @@
 
 namespace Albany {
 
-class GOALDiscretization : public PUMIDiscretization {
+class GOALDiscretization : public PUMIDiscretization
+{
   public:
 
     //! Constructor
@@ -31,6 +32,19 @@ class GOALDiscretization : public PUMIDiscretization {
     int getNumNodesPerElem(int ebi);
 
   private:
+
+    //! Process APF mesh for Owned nodal quantitites
+    void computeOwnedNodesAndUnknowns();
+    //! Process APF mesh for Overlap nodal quantitites
+    void computeOverlapNodesAndUnknowns();
+    //! Process APF mesh for CRS Graphs
+    void computeGraphs();
+    //! Process APF mesh for Workset/Bucket Info
+    void computeWorksetInfo();
+    //! Process APF mesh for NodeSets
+    void computeNodeSets();
+    //! Process APF mesh for SideSets
+    void computeSideSets();
 
     Teuchos::RCP<Albany::GOALMeshStruct> goalMeshStruct;
 };
