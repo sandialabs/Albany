@@ -32,7 +32,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   this->addEvaluatedField(BF);
   this->addEvaluatedField(GradBF);
 
-  sideSetNames = *p.get<const std::set<std::string>*>("Side Sets Names");
+  sideSetName = p.get<std::string>("Side Set Name");
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -134,86 +134,83 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctionsSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::set<std::string>::const_iterator it_names=sideSetNames.begin(); it_names!=sideSetNames.end(); ++it_names)
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
+
+  if (it_ss==ssList.end())
+    return;
+
+  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
+  std::vector<Albany::SideStruct>::const_iterator iter_s;
+  for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
   {
-    const Albany::SideSetList& ssList = *(workset.sideSets);
-    Albany::SideSetList::const_iterator it_ss = ssList.find(*it_names);
+    // Get the local data of side and cell
+    const int cell = iter_s->elem_LID;
+    const int side = iter_s->side_local_id;
 
-    if (it_ss==ssList.end())
-      continue;
-
-    const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-    std::vector<Albany::SideStruct>::const_iterator iter_s;
-    for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
+    // Computing tangents (the basis for the manifold)
+    for (int itan=0; itan<sideDims; ++itan)
     {
-      // Get the local data of side and cell
-      const int cell = iter_s->elem_LID;
-      const int side = iter_s->side_local_id;
-
-      // Computing tangents (the basis for the manifold)
-      for (int itan=0; itan<sideDims; ++itan)
+      for (int icoor=0; icoor<cellDims; ++icoor)
       {
-        for (int icoor=0; icoor<cellDims; ++icoor)
+        for (int qp=0; qp<numSideQPs; ++qp)
         {
-          for (int qp=0; qp<numSideQPs; ++qp)
+          tangents(itan,icoor,qp) = 0.;
+          for (int node=0; node<numSideNodes; ++node)
           {
-            tangents(itan,icoor,qp) = 0.;
-            for (int node=0; node<numSideNodes; ++node)
-            {
-              tangents(itan,icoor,qp) += coordVec(cell,sideNodes[side][node],icoor) * grad_at_cub_points(node,qp,itan);
-            }
+            tangents(itan,icoor,qp) += coordVec(cell,sideNodes[side][node],icoor) * grad_at_cub_points(node,qp,itan);
           }
         }
       }
-      // Computing the metric
-      for (int qp=0; qp<numSideQPs; ++qp)
+    }
+    // Computing the metric
+    for (int qp=0; qp<numSideQPs; ++qp)
+    {
+      for (int idim=0; idim<sideDims; ++idim)
       {
-        for (int idim=0; idim<sideDims; ++idim)
+        // Diagonal
+        metric(qp,idim,idim) = 0.;
+        for (int coor=0; coor<cellDims; ++coor)
         {
-          // Diagonal
-          metric(qp,idim,idim) = 0.;
+          metric(qp,idim,idim) += tangents(idim,coor,qp)*tangents(idim,coor,qp); // g = J'*J
+        }
+
+        // Extra-diagonal
+        for (int jdim=idim+1; jdim<sideDims; ++jdim)
+        {
+          metric(qp,idim,jdim) = 0.;
           for (int coor=0; coor<cellDims; ++coor)
           {
-            metric(qp,idim,idim) += tangents(idim,coor,qp)*tangents(idim,coor,qp); // g = J'*J
+            metric(qp,idim,jdim) += tangents(idim,coor,qp)*tangents(jdim,coor,qp); // g = J'*J
           }
-
-          // Extra-diagonal
-          for (int jdim=idim+1; jdim<sideDims; ++jdim)
-          {
-            metric(qp,idim,jdim) = 0.;
-            for (int coor=0; coor<cellDims; ++coor)
-            {
-              metric(qp,idim,jdim) += tangents(idim,coor,qp)*tangents(jdim,coor,qp); // g = J'*J
-            }
-            metric(qp,jdim,idim) = metric(qp,idim,jdim);
-          }
+          metric(qp,jdim,idim) = metric(qp,idim,jdim);
         }
       }
+    }
 
-      // Computing the metric determinant, the weighted measure and the inverse of the metric
-      switch (sideDims)
-      {
-        case 1:
-          for (int qp=0; qp<numSideQPs; ++qp)
-          {
-            metric_det(cell,side,qp) = metric(qp,0,0);
-            w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric(qp,0,0));
-            inv_metric(cell,side,qp,0,0) = 1./metric(qp,0,0);
-          }
-          break;
-        case 2:
-          for (int qp=0; qp<numSideQPs; ++qp)
-          {
-            metric_det(cell,side,qp) = metric(qp,0,0)*metric(qp,1,1) - metric(qp,0,1)*metric(qp,1,0);
-            w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric_det(cell,side,qp));
-            inv_metric(cell,side,qp,0,0) = metric(qp,1,1)/metric_det(cell,side,qp);
-            inv_metric(cell,side,qp,1,1) = metric(qp,0,0)/metric_det(cell,side,qp);
-            inv_metric(cell,side,qp,0,1) = inv_metric(cell,side,qp,1,0) = -metric(qp,0,1)/metric_det(cell,side,qp);
-          }
-          break;
-        default:
-          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! The dimension of the side should be 1 or 2.\n");
-      }
+    // Computing the metric determinant, the weighted measure and the inverse of the metric
+    switch (sideDims)
+    {
+      case 1:
+        for (int qp=0; qp<numSideQPs; ++qp)
+        {
+          metric_det(cell,side,qp) = metric(qp,0,0);
+          w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric(qp,0,0));
+          inv_metric(cell,side,qp,0,0) = 1./metric(qp,0,0);
+        }
+        break;
+      case 2:
+        for (int qp=0; qp<numSideQPs; ++qp)
+        {
+          metric_det(cell,side,qp) = metric(qp,0,0)*metric(qp,1,1) - metric(qp,0,1)*metric(qp,1,0);
+          w_measure(cell,side,qp) = cub_weights(qp)*std::sqrt(metric_det(cell,side,qp));
+          inv_metric(cell,side,qp,0,0) = metric(qp,1,1)/metric_det(cell,side,qp);
+          inv_metric(cell,side,qp,1,1) = metric(qp,0,0)/metric_det(cell,side,qp);
+          inv_metric(cell,side,qp,0,1) = inv_metric(cell,side,qp,1,0) = -metric(qp,0,1)/metric_det(cell,side,qp);
+        }
+        break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! The dimension of the side should be 1 or 2.\n");
     }
   }
 }

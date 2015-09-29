@@ -14,8 +14,9 @@ template<typename EvalT, typename Traits>
 DOFCellToSide<EvalT, Traits>::
 DOFCellToSide(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_cell    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
-  val_side    (p.get<std::string>   ("Variable Name"), dl->side_node_scalar )
+  sideSetName (p.get<std::string> ("Side Set Name")),
+  val_cell    (p.get<std::string> ("Cell Variable Name"), dl->node_scalar),
+  val_side    (p.get<std::string> ("Side Variable Name"), dl->side_node_scalar )
 {
   this->addDependentField(val_cell);
   this->addEvaluatedField(val_side);
@@ -38,8 +39,6 @@ DOFCellToSide(const Teuchos::ParameterList& p,
     for (int node=0; node<numSideNodes; ++node)
       sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
   }
-
-  sideSetNames = *p.get<const std::set<std::string>*>("Side Set Names");
 }
 
 //**********************************************************************
@@ -57,26 +56,23 @@ template<typename EvalT, typename Traits>
 void DOFCellToSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::set<std::string>::const_iterator it_names=sideSetNames.begin(); it_names!=sideSetNames.end(); ++it_names)
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
+
+  if (it_ss==ssList.end())
+    return;
+
+  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
+  std::vector<Albany::SideStruct>::const_iterator iter_s;
+  for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
   {
-    const Albany::SideSetList& ssList = *(workset.sideSets);
-    Albany::SideSetList::const_iterator it_ss = ssList.find(*it_names);
+    // Get the local data of side and cell
+    const int cell = iter_s->elem_LID;
+    const int side = iter_s->side_local_id;
 
-    if (it_ss==ssList.end())
-      continue;
-
-    const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-    std::vector<Albany::SideStruct>::const_iterator iter_s;
-    for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
+    for (int node=0; node<numSideNodes; ++node)
     {
-      // Get the local data of side and cell
-      const int cell = iter_s->elem_LID;
-      const int side = iter_s->side_local_id;
-
-      for (int node=0; node<numSideNodes; ++node)
-      {
-        val_side(cell,side,node) = val_cell(cell,sideNodes[side][node]);
-      }
+      val_side(cell,side,node) = val_cell(cell,sideNodes[side][node]);
     }
   }
 }

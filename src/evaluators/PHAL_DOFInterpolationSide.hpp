@@ -39,6 +39,8 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
 
+  std::string sideSetName;
+
   // Input:
   //! Values at nodes
   PHX::MDField<ScalarT,Cell,Side,Node> val_node;
@@ -48,8 +50,6 @@ private:
   // Output:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Side,Cell,QuadPoint> val_qp;
-
-  std::set<std::string> sideSetNames;
 
   int numSideNodes;
   int numSideQPs;

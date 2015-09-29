@@ -43,8 +43,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int numSides, numSideNodes, numSideQPs, cellDims, sideDims;
 
-  //! The side sets where to compute the Basis Functions
-  std::set<std::string> sideSetNames;
+  //! The side set where to compute the Basis Functions
+  std::string sideSetName;
 
   // Input:
   //! Coordinate vector at vertices

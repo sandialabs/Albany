@@ -130,30 +130,48 @@ namespace Albany {
     //! Same as above, for Interpolating the Gradient
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationEvaluator(
-       std::string& dof_names, int offsetToFirstDOF=0);
+       const std::string& dof_names, int offsetToFirstDOF=0);
 
     //! Interpolating the Gradient of quantity with no derivs
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationEvaluator_noDeriv(
-       std::string& dof_names);
+       const std::string& dof_names);
 
     //! Interpolation functions for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecInterpolationEvaluator(
-       std::string& dof_names, int offsetToFirstDOF=0);
+       const std::string& dof_names, int offsetToFirstDOF=0);
     //! Same as above, for Interpolating the Gradient for Vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecGradInterpolationEvaluator(
-       std::string& dof_names, int offsetToFirstDOF=0);
+       const std::string& dof_names, int offsetToFirstDOF=0);
 
     //! Interpolation functions for Tensor quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFTensorInterpolationEvaluator(
-       std::string& dof_names, int offsetToFirstDOF=0);
+       const std::string& dof_names, int offsetToFirstDOF=0);
     //! Same as above, for Interpolating the Gradient for Tensor quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFTensorGradInterpolationEvaluator(
-       std::string& dof_names, int offsetToFirstDOF=0);
+       const std::string& dof_names, int offsetToFirstDOF=0);
+
+    //! Interpolation functions for scalar quantities defined on a side set
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFInterpolationSideEvaluator(
+       const std::string& dof_names,
+       const std::string& sideSetName);
+
+    //! Interpolation functions for vector quantities defined on a side set
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFVecInterpolationSideEvaluator(
+       const std::string& dof_names,
+       const std::string& sideSetName);
+
+    //! Interpolation functions for gradient of quantities defined on a side set
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFGradInterpolationSideEvaluator(
+      const std::string& dof_names,
+      const std::string& sideSetName);
 
     //! Function to create parameter list for construction of GatherCoordinateVector
     //! evaluator with standard Field names
@@ -174,6 +192,15 @@ namespace Albany {
       const Teuchos::RCP<shards::CellTopology>& cellType,
       const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis,
       const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
+
+    //! Function to create parameter list for construction of ComputeBasisFunctionsSide
+    //! evaluator with standard Field names
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructComputeBasisFunctionsSideEvaluator(
+      const Teuchos::RCP<shards::CellTopology>& cellType,
+      const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasisSide,
+      const Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureSide,
+      const std::string& sideSetName);
 
   private:
 

@@ -16,9 +16,10 @@ template<typename EvalT, typename Traits>
 DOFInterpolationSide<EvalT, Traits>::
 DOFInterpolationSide(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), dl->side_node_scalar),
-  BF          (p.get<std::string>   ("BF Name"), dl->side_node_qp_scalar),
-  val_qp      (p.get<std::string>   ("Variable Name"), dl->side_qp_scalar )
+  sideSetName (p.get<std::string> ("Side Set Name")),
+  val_node    (p.get<std::string> ("Variable Name"), dl->side_node_scalar),
+  BF          (p.get<std::string> ("BF Name"), dl->side_node_qp_scalar),
+  val_qp      (p.get<std::string> ("Variable Name"), dl->side_qp_scalar )
 {
   this->addDependentField(val_node);
   this->addDependentField(BF);
@@ -30,8 +31,6 @@ DOFInterpolationSide(const Teuchos::ParameterList& p,
   BF.fieldTag().dataLayout().dimensions(dims);
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
-
-  sideSetNames = *p.get<const std::set<std::string>*>("Side Set Names");
 }
 
 //**********************************************************************
@@ -50,29 +49,26 @@ template<typename EvalT, typename Traits>
 void DOFInterpolationSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::set<std::string>::const_iterator it_names=sideSetNames.begin(); it_names!=sideSetNames.end(); ++it_names)
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
+
+  if (it_ss==ssList.end())
+    return;
+
+  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
+  std::vector<Albany::SideStruct>::const_iterator iter_s;
+  for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
   {
-    const Albany::SideSetList& ssList = *(workset.sideSets);
-    Albany::SideSetList::const_iterator it_ss = ssList.find(*it_names);
+    // Get the local data of side and cell
+    const int cell = iter_s->elem_LID;
+    const int side = iter_s->side_local_id;
 
-    if (it_ss==ssList.end())
-      continue;
-
-    const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-    std::vector<Albany::SideStruct>::const_iterator iter_s;
-    for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
+    for (int qp=0; qp<numSideQPs; ++qp)
     {
-      // Get the local data of side and cell
-      const int cell = iter_s->elem_LID;
-      const int side = iter_s->side_local_id;
-
-      for (int qp=0; qp<numSideQPs; ++qp)
+      val_qp(cell,side,qp) = 0;
+      for (int node=0; node<numSideNodes; ++node)
       {
-        val_qp(cell,side,qp) = 0;
-        for (int node=0; node<numSideNodes; ++node)
-        {
-          val_qp(cell,side,qp) += val_node(cell,side,node) * BF(cell,side,node,qp);
-        }
+        val_qp(cell,side,qp) += val_node(cell,side,node) * BF(cell,side,node,qp);
       }
     }
   }
