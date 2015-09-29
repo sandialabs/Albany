@@ -158,10 +158,10 @@ ELSE(Trilinos_BUILD_SHARED_LIBS)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
 OPTION(Albany_BUILD_STATIC_EXE "Flag to turn on building of static executables in Albany" OFF)
-IF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE)) 
+IF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
   MESSAGE("-- Building Albany with static executables")
 ENDIF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
-  
+
 
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
@@ -185,7 +185,7 @@ ENDIF()
 # Make Albany inherit Trilinos compiler flags. The most important are the
 # presence or absence of -NDEBUG (which can affect linking for complicated
 # reasons) and -std=c++11.
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Trilinos_CXX_COMPILER_FLAGS}")
+SET(CMAKE_CXX_FLAGS "${Trilinos_CXX_COMPILER_FLAGS} ${CMAKE_CXX_FLAGS}")
 
 if (SET_COMPILERS_AUTOMATICALLY)
   SET(CMAKE_AR ${Trilinos_AR})
@@ -233,7 +233,7 @@ ENDIF()
 
 # MPI check -- defaults to TRUE
 # MESSAGE("-- Checking if MPI is enabled in Trilinos:")
-  
+
 
 ADD_DEFINITIONS(-DPIRO_HAS_TPETRA)
 
@@ -363,9 +363,9 @@ ELSE()
   SET(ALBANY_MUELU_EXAMPLES FALSE)
 ENDIF()
 
-# Set optional build of only Albany (Epetra) executable. 
-# Be default, it will be on, so both the Albany and AlbanyT executables will 
-# be built in the Tpetra Albany branch.  The idea is ultimately you'll 
+# Set optional build of only Albany (Epetra) executable.
+# Be default, it will be on, so both the Albany and AlbanyT executables will
+# be built in the Tpetra Albany branch.  The idea is ultimately you'll
 # be able to build only the AlbanyT executable in which case Epetra will not
 # be needed at all in the Trilinos.  This will be accomplished by ifdef'ing
 # out all the Epetra stuff
@@ -551,9 +551,9 @@ ENDIF()
 # defaults to Disabled
 OPTION(ENABLE_MPAS_INTERFACE "Flag to turn on FELIX Source code" OFF)
 IF (ENABLE_MPAS_INTERFACE AND ENABLE_FELIX)
-  IF (ENABLE_ALBANY_EPETRA_EXE) 
-    IF (ENABLE_MPAS_EPETRA) 
-      ADD_DEFINITIONS(-DMPAS_USE_EPETRA) 
+  IF (ENABLE_ALBANY_EPETRA_EXE)
+    IF (ENABLE_MPAS_EPETRA)
+      ADD_DEFINITIONS(-DMPAS_USE_EPETRA)
       MESSAGE("---> MPAS_EPETRA     is Enabled, compiling with -DMPAS_USE_EPETRA.  MPAS-Albany will run with Epetra software stack.")
      ELSE()
       MESSAGE("---> MPAS_EPETRA     is Disabled, NOT compiling with -DMPAS_USE_EPETRA.  MPAS-Albany will run with Tpetra software stack.")
@@ -836,8 +836,8 @@ SET(SLFAD_SIZE 32 CACHE INT "set Sacado SLFad size")
 IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_SLFAD_SIZE=${SLFAD_SIZE})
-  MESSAGE("-- FADType   is SLFAD, compiling with -DALBANY_FAST_FELIX -DALBANY_SLFAD_SIZE=${SLFAD_SIZE}")  
-  MESSAGE("---> WARNING: problems with elemental DOFs > ${SLFAD_SIZE} will fail.")  
+  MESSAGE("-- FADType   is SLFAD, compiling with -DALBANY_FAST_FELIX -DALBANY_SLFAD_SIZE=${SLFAD_SIZE}")
+  MESSAGE("---> WARNING: problems with elemental DOFs > ${SLFAD_SIZE} will fail.")
 ELSE()
   MESSAGE("-- FADType   is DFAD (default).")
 ENDIF()
@@ -1049,19 +1049,19 @@ IF (ENABLE_MESHDB_TOOLS)
   SET(ALBANY_MESHDB_TOOLS TRUE)
 ENDIF()
 
-IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
+IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
   MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 
-IF (ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
+IF (ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
   MESSAGE("-- WARNING: MOR               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 
 # Repeat this warning.
-IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
+IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
   MESSAGE("-- WARNING: ATO                is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
-   
+
 IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
   MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with
 ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
