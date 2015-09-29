@@ -4,14 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_VISCOSITYFO_HPP
-#define FELIX_VISCOSITYFO_HPP
+#ifndef FELIX_VISCOSITY_FO_HPP
+#define FELIX_VISCOSITY_FO_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp" 
+#include "Sacado_ParameterAccessor.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace FELIX {
@@ -23,8 +23,8 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits>
 class ViscosityFO : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
+                    public PHX::EvaluatorDerived<EvalT, Traits>,
+                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
 
@@ -38,22 +38,22 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n); 
+  ScalarT& getValue(const std::string &n);
 
 
 private:
- 
+
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT homotopyParam;
   ScalarT dummyParam;
+  ScalarT printedH;
 
   bool useStereographicMap;
   Teuchos::ParameterList* stereographicMapList;
 
   //coefficients for Glen's law
-  double A; 
-  double n; 
+  double A;
+  double n;
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
@@ -66,7 +66,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
 
   unsigned int numQPs, numDims, numNodes, numCells;
-  
+
   enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW, GLENSLAW_XZ};
   enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED, FROMFILE, FROMCISM};
   VISCTYPE visc_type;
@@ -76,7 +76,7 @@ private:
 public:
   typedef typename PHX::Device execution_space;
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  
+
   struct ViscosityFO_EXPTRIG_Tag{};
   struct ViscosityFO_CONSTANT_Tag{};
   struct ViscosityFO_GLENSLAW_UNIFORM_Tag{};
@@ -99,13 +99,13 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ViscosityFO_EXPTRIG_Tag& tag, const int& i) const;
-  
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const ViscosityFO_CONSTANT_Tag& tag, const int& i) const;
- 
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const ViscosityFO_GLENSLAW_UNIFORM_Tag& tag, const int& i) const;
-  
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag& tag, const int& i) const;
 
@@ -126,16 +126,16 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void glenslaw (const ScalarT &flowFactorVec, const int& cell) const;
-  
+
   KOKKOS_INLINE_FUNCTION
   void glenslaw_xz (const ScalarT &flowFactorVec, const int& cell) const;
 
   double R, x_0, y_0, R2;
 
 #endif
- 
+
 };
 
-}
+} // Namespace FELIX
 
-#endif
+#endif // FELIX_VISCOSITY_FO_HPP
