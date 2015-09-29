@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "Albany_IossSTKMeshStruct.hpp"
+#include "Albany_SideSetSTKMeshStruct.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 #include <Shards_BasicTopologies.hpp>
@@ -42,7 +43,7 @@ void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
   }
 }
 
-}
+} // Anonymous namespace
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -233,6 +234,22 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     const Ioss::Region& inputRegion = *(mesh_data->get_input_io_region());
     m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
   }
+
+  if (params->isSublist ("Side Set Discretizations"))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (numEB!=1, std::logic_error, "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+    const Teuchos::ParameterList& list = params->sublist("Side Set Discretizations");
+    Teuchos::Array<std::string> sideSets = list.get<Teuchos::Array<std::string> >("Side Sets");
+
+    Teuchos::RCP<Teuchos::ParameterList> params_ss;
+    for (int i(0); i<sideSets.size(); ++i)
+    {
+      const std::string& ss_name = sideSets[i];
+      params_ss = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist(ss_name)));
+      this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, commT));
+      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
+    }
+  }
 }
 
 Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
@@ -262,7 +279,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
           const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,
-          const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_/*sis*/)
+          const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis)
 {
   this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
@@ -455,323 +472,327 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   Tpetra_Import importOperatorNode (serial_nodes_map, nodes_map);
   Tpetra_Import importOperatorElem (serial_elems_map, elems_map);
 
+  Teuchos::ParameterList dummyList;
   Teuchos::ParameterList* req_fields_info;
   if (params->isSublist("Required Fields Info"))
   {
     req_fields_info = &params->sublist("Required Fields Info");
+  }
+  else
+  {
+    req_fields_info = &dummyList;
+  }
 
-    for (AbstractFieldContainer::FieldContainerRequirements::const_iterator it=req.begin(); it!=req.end(); ++it)
+  for (AbstractFieldContainer::FieldContainerRequirements::const_iterator it=req.begin(); it!=req.end(); ++it)
+  {
+    // Get the file name
+    std::string temp_str = *it + " File Name";
+    std::string fname = req_fields_info->get<std::string>(temp_str,"");
+
+    // Ge the file type (if not specified, assume Scalar)
+    temp_str = *it + " Field Type";
+    std::string ftype = req_fields_info->get<std::string>(temp_str,"");
+    if (ftype=="")
     {
-      // Get the file name
-      std::string temp_str = *it + " File Name";
-      std::string fname = req_fields_info->get<std::string>(temp_str,"");
+      *out << "Warning! No field type specified for field " << *it << ". We skip it and hope is already present in the mesh...\n";
+      continue;
+    }
 
-      // Ge the file type (if not specified, assume Scalar)
-      temp_str = *it + " Field Type";
-      std::string ftype = req_fields_info->get<std::string>(temp_str,"");
-      if (ftype=="")
+    stk::mesh::Entity node, elem;
+    stk::mesh::EntityId nodeId, elemId;
+    int lid;
+    double* values;
+
+    typedef AbstractSTKFieldContainer::QPScalarFieldType  QPScalarFieldType;
+    typedef AbstractSTKFieldContainer::QPVectorFieldType  QPVectorFieldType;
+    typedef AbstractSTKFieldContainer::ScalarFieldType    ScalarFieldType;
+    typedef AbstractSTKFieldContainer::VectorFieldType    VectorFieldType;
+
+    // Depending on the field type, we need to use different pointers
+    if (ftype == "Node Scalar")
+    {
+      // Creating the serial and (possibly) parallel Tpetra service vectors
+      Tpetra_Vector serial_req_vec(serial_nodes_map);
+      Tpetra_Vector req_vec(nodes_map);
+
+      temp_str = *it + " Value";
+      if (req_fields_info->isParameter(temp_str))
       {
-        *out << "Warning! No field type specified for field " << *it << ". We skip it and hope is already present in the mesh...\n";
-        continue;
+        *out << "Discarding other info about Node Scalar field " << *it << " and filling it with constant value " << req_fields_info->get<double>(temp_str) << "\n";
+        // For debug, we allow to fill the field with a given uniform value
+        fillTpetraVec (serial_req_vec,req_fields_info->get<double>(temp_str));
       }
-
-
-      stk::mesh::Entity node, elem;
-      stk::mesh::EntityId nodeId, elemId;
-      int lid;
-      double* values;
-
-      typedef AbstractSTKFieldContainer::QPScalarFieldType  QPScalarFieldType;
-      typedef AbstractSTKFieldContainer::QPVectorFieldType  QPVectorFieldType;
-      typedef AbstractSTKFieldContainer::ScalarFieldType    ScalarFieldType;
-      typedef AbstractSTKFieldContainer::VectorFieldType    VectorFieldType;
-
-      // Depending on the field type, we need to use different pointers
-      if (ftype == "Node Scalar")
+      else if (fname!="")
       {
-        // Creating the serial and (possibly) parallel Tpetra service vectors
-        Tpetra_Vector serial_req_vec(serial_nodes_map);
-        Tpetra_Vector req_vec(nodes_map);
+        *out << "Reading Node Scalar field " << *it << " from file " << fname << "\n";
+        // Read the input file and stuff it in the Tpetra vector
+        readScalarFileSerial (fname,serial_req_vec,commT);
 
-        temp_str = *it + " Value";
+        temp_str = *it + " Scale Factor";
         if (req_fields_info->isParameter(temp_str))
         {
-          *out << "Discarding other info about Node Scalar field " << *it << " and filling it with constant value " << req_fields_info->get<double>(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraVec (serial_req_vec,req_fields_info->get<double>(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Node Scalar field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra vector
-          readScalarFileSerial (fname,serial_req_vec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_vec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Node Scalar field " << *it << "; initializing it to 0.\n";
-              fillTpetraVec (serial_req_vec,0.);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Node Scalar field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_vec.doImport(serial_req_vec,importOperatorNode,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector view
-        ScalarFieldType* field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, *it);
-
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Scalar'?).\n");
-
-        Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<nodes.size(); ++i)
-        {
-          nodeId = bulkData->identifier(nodes[i]) - 1;
-          lid    = nodes_map->getLocalElement((GO)(nodeId));
-
-          values = stk::mesh::field_data(*field, nodes[i]);
-          values[0] = req_vec_view[lid];
-        }
-      }
-      else if (ftype == "Elem Scalar")
-      {
-        // Creating the serial and (possibly) parallel Tpetra service vectors
-        Tpetra_Vector serial_req_vec(serial_elems_map);
-        Tpetra_Vector req_vec(elems_map);
-
-        temp_str = *it + " Value";
-        if (req_fields_info->isParameter(temp_str))
-        {
-          *out << "Discarding other info about Elem Scalar field " << *it << " and filling it with constant value " << req_fields_info->get<double>(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraVec (serial_req_vec,req_fields_info->get<double>(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Elem Scalar field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra vector
-          readScalarFileSerial (fname,serial_req_vec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_vec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Elem Scalar field " << *it << "; initializing it to 0.\n";
-              fillTpetraVec (serial_req_vec,0.);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Elem Scalar field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_vec.doImport(serial_req_vec,importOperatorElem,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector view
-        QPScalarFieldType* field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Scalar'?).\n");
-
-        Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<elems.size(); ++i)
-        {
-          elemId = bulkData->identifier(elems[i]) - 1;
-          lid    = elems_map->getLocalElement((GO)(elemId));
-
-          values = stk::mesh::field_data(*field, elems[i]);
-          values[0] = req_vec_view[lid];
-        }
-      }
-      else if (ftype == "Node Vector")
-      {
-        // Loading the dimension of the Vector Field (by default equal to the mesh dimension)
-        temp_str = *it + " Field Dimension";
-        int fieldDim = req_fields_info->get<int>(temp_str,this->meshSpecs[0]->numDim);
-
-        // Creating the serial and (possibly) parallel Tpetra service multivectors
-        Tpetra_MultiVector serial_req_mvec(serial_nodes_map,fieldDim);
-        Tpetra_MultiVector req_mvec(nodes_map,fieldDim);
-
-        temp_str = *it + " Value";
-        if (req_fields_info->isParameter(temp_str))
-        {
-          *out << "Discarding other info about Node Vector field " << *it << " and filling it with constant value "
-               << req_fields_info->get<Teuchos::Array<double> >(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraMVec (serial_req_mvec,req_fields_info->get<Teuchos::Array<double> >(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Node Vector field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra multivector
-          readVectorFileSerial (fname,serial_req_mvec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_mvec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Node Vector field " << *it << "; initializing it to 0.\n";
-              Teuchos::Array<double> vals(fieldDim,0.);
-              fillTpetraMVec (serial_req_mvec,vals);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Node Vector field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_mvec.doImport(serial_req_mvec,importOperatorNode,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector views
-        VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, *it);
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Vector'?).\n");
-
-        std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
-        for (int i(0); i<fieldDim; ++i)
-          req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<nodes.size(); ++i)
-        {
-          nodeId = bulkData->identifier(nodes[i]) - 1;
-          lid    = nodes_map->getLocalElement((GO)(nodeId));
-
-          values = stk::mesh::field_data(*field, nodes[i]);
-
-          for (int iDim(0); iDim<fieldDim; ++iDim)
-            values[iDim] = req_mvec_view[iDim][lid];
-        }
-      }
-      else if (ftype == "Elem Vector")
-      {
-        // Loading the dimension of the Vector Field (by default equal to the mesh dimension)
-        temp_str = *it + " Field Dimension";
-        int fieldDim = req_fields_info->get<int>(temp_str,this->meshSpecs[0]->numDim);
-
-        // Creating the serial and (possibly) parallel Tpetra service multivectors
-        Tpetra_MultiVector serial_req_mvec(serial_elems_map,fieldDim);
-        Tpetra_MultiVector req_mvec(elems_map,fieldDim);
-
-        temp_str = *it + " Value";
-        if (req_fields_info->isParameter(temp_str))
-        {
-          *out << "Discarding other info about Elem Vector field " << *it << " and filling it with constant value "
-               << req_fields_info->get<Teuchos::Array<double> >(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraMVec (serial_req_mvec,req_fields_info->get<Teuchos::Array<double> >(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Elem Vector field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra multivector
-          readVectorFileSerial (fname,serial_req_mvec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_mvec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Elem Vector field " << *it << "; initializing it to 0.\n";
-              Teuchos::Array<double> vals(fieldDim,0.);
-              fillTpetraMVec (serial_req_mvec,vals);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Elem Vector field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_mvec.doImport(serial_req_mvec,importOperatorElem,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector views
-        VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::ELEM_RANK, *it);
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Vector'?).\n");
-        std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
-        for (int i(0); i<fieldDim; ++i)
-          req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<elems.size(); ++i)
-        {
-          elemId = bulkData->identifier(elems[i]) - 1;
-          lid    = elems_map->getLocalElement((GO)(elemId));
-
-          values = stk::mesh::field_data(*field, nodes[i]);
-
-          for (int iDim(0); iDim<fieldDim; ++iDim)
-            values[iDim] = req_mvec_view[iDim][lid];
+          double scale_factor = req_fields_info->get<double>(temp_str);
+          serial_req_vec.scale (scale_factor);
         }
       }
       else
       {
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
-                                    "Sorry, I haven't yet implemented the case of field that are not Scalar nor Vector or that is not at nodal nor elemental.\n");
+        bool found = false;
+        for (int i(0); i<missing.size(); ++i)
+        {
+          if (missing[i].field()->name()==*it)
+          {
+            *out << "No file name nor constant value specified for Node Scalar field " << *it << "; initializing it to 0.\n";
+            fillTpetraVec (serial_req_vec,0.);
+            found = true;
+            break;
+          }
+        }
+        if (!found)
+        {
+          *out << "Using mesh-stored values for Node Scalar field " << *it << " since no constant value nor filename has been specified\n";
+          continue;
+        }
       }
+
+      // Fill the (possibly) parallel vector
+      req_vec.doImport(serial_req_vec,importOperatorNode,Tpetra::INSERT);
+
+      // Extracting the mesh field and the tpetra vector view
+      ScalarFieldType* field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, *it);
+
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Scalar'?).\n");
+
+      Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
+
+      //Now we have to stuff the vector in the mesh data
+      for (int i(0); i<nodes.size(); ++i)
+      {
+        nodeId = bulkData->identifier(nodes[i]) - 1;
+        lid    = nodes_map->getLocalElement((GO)(nodeId));
+
+        values = stk::mesh::field_data(*field, nodes[i]);
+        values[0] = req_vec_view[lid];
+      }
+    }
+    else if (ftype == "Elem Scalar")
+    {
+      // Creating the serial and (possibly) parallel Tpetra service vectors
+      Tpetra_Vector serial_req_vec(serial_elems_map);
+      Tpetra_Vector req_vec(elems_map);
+
+      temp_str = *it + " Value";
+      if (req_fields_info->isParameter(temp_str))
+      {
+        *out << "Discarding other info about Elem Scalar field " << *it << " and filling it with constant value " << req_fields_info->get<double>(temp_str) << "\n";
+        // For debug, we allow to fill the field with a given uniform value
+        fillTpetraVec (serial_req_vec,req_fields_info->get<double>(temp_str));
+      }
+      else if (fname!="")
+      {
+        *out << "Reading Elem Scalar field " << *it << " from file " << fname << "\n";
+        // Read the input file and stuff it in the Tpetra vector
+        readScalarFileSerial (fname,serial_req_vec,commT);
+
+        temp_str = *it + " Scale Factor";
+        if (req_fields_info->isParameter(temp_str))
+        {
+          double scale_factor = req_fields_info->get<double>(temp_str);
+          serial_req_vec.scale (scale_factor);
+        }
+      }
+      else
+      {
+        bool found = false;
+        for (int i(0); i<missing.size(); ++i)
+        {
+          if (missing[i].field()->name()==*it)
+          {
+            *out << "No file name nor constant value specified for Elem Scalar field " << *it << "; initializing it to 0.\n";
+            fillTpetraVec (serial_req_vec,0.);
+            found = true;
+            break;
+          }
+        }
+        if (!found)
+        {
+          *out << "Using mesh-stored values for Elem Scalar field " << *it << " since no constant value nor filename has been specified\n";
+          continue;
+        }
+      }
+
+      // Fill the (possibly) parallel vector
+      req_vec.doImport(serial_req_vec,importOperatorElem,Tpetra::INSERT);
+
+      // Extracting the mesh field and the tpetra vector view
+      QPScalarFieldType* field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Scalar'?).\n");
+
+      Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
+
+      //Now we have to stuff the vector in the mesh data
+      for (int i(0); i<elems.size(); ++i)
+      {
+        elemId = bulkData->identifier(elems[i]) - 1;
+        lid    = elems_map->getLocalElement((GO)(elemId));
+
+        values = stk::mesh::field_data(*field, elems[i]);
+        values[0] = req_vec_view[lid];
+      }
+    }
+    else if (ftype == "Node Vector")
+    {
+      // Loading the dimension of the Vector Field (by default equal to the mesh dimension)
+      temp_str = *it + " Field Dimension";
+      int fieldDim = req_fields_info->get<int>(temp_str,this->meshSpecs[0]->numDim);
+
+      // Creating the serial and (possibly) parallel Tpetra service multivectors
+      Tpetra_MultiVector serial_req_mvec(serial_nodes_map,fieldDim);
+      Tpetra_MultiVector req_mvec(nodes_map,fieldDim);
+
+      temp_str = *it + " Value";
+      if (req_fields_info->isParameter(temp_str))
+      {
+        *out << "Discarding other info about Node Vector field " << *it << " and filling it with constant value "
+             << req_fields_info->get<Teuchos::Array<double> >(temp_str) << "\n";
+        // For debug, we allow to fill the field with a given uniform value
+        fillTpetraMVec (serial_req_mvec,req_fields_info->get<Teuchos::Array<double> >(temp_str));
+      }
+      else if (fname!="")
+      {
+        *out << "Reading Node Vector field " << *it << " from file " << fname << "\n";
+        // Read the input file and stuff it in the Tpetra multivector
+        readVectorFileSerial (fname,serial_req_mvec,commT);
+
+        temp_str = *it + " Scale Factor";
+        if (req_fields_info->isParameter(temp_str))
+        {
+          double scale_factor = req_fields_info->get<double>(temp_str);
+          serial_req_mvec.scale (scale_factor);
+        }
+      }
+      else
+      {
+        bool found = false;
+        for (int i(0); i<missing.size(); ++i)
+        {
+          if (missing[i].field()->name()==*it)
+          {
+            *out << "No file name nor constant value specified for Node Vector field " << *it << "; initializing it to 0.\n";
+            Teuchos::Array<double> vals(fieldDim,0.);
+            fillTpetraMVec (serial_req_mvec,vals);
+            found = true;
+            break;
+          }
+        }
+        if (!found)
+        {
+          *out << "Using mesh-stored values for Node Vector field " << *it << " since no constant value nor filename has been specified\n";
+          continue;
+        }
+      }
+
+      // Fill the (possibly) parallel vector
+      req_mvec.doImport(serial_req_mvec,importOperatorNode,Tpetra::INSERT);
+
+      // Extracting the mesh field and the tpetra vector views
+      VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, *it);
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Vector'?).\n");
+
+      std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
+      for (int i(0); i<fieldDim; ++i)
+        req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
+
+      //Now we have to stuff the vector in the mesh data
+      for (int i(0); i<nodes.size(); ++i)
+      {
+        nodeId = bulkData->identifier(nodes[i]) - 1;
+        lid    = nodes_map->getLocalElement((GO)(nodeId));
+
+        values = stk::mesh::field_data(*field, nodes[i]);
+
+        for (int iDim(0); iDim<fieldDim; ++iDim)
+          values[iDim] = req_mvec_view[iDim][lid];
+      }
+    }
+    else if (ftype == "Elem Vector")
+    {
+      // Loading the dimension of the Vector Field (by default equal to the mesh dimension)
+      temp_str = *it + " Field Dimension";
+      int fieldDim = req_fields_info->get<int>(temp_str,this->meshSpecs[0]->numDim);
+
+      // Creating the serial and (possibly) parallel Tpetra service multivectors
+      Tpetra_MultiVector serial_req_mvec(serial_elems_map,fieldDim);
+      Tpetra_MultiVector req_mvec(elems_map,fieldDim);
+
+      temp_str = *it + " Value";
+      if (req_fields_info->isParameter(temp_str))
+      {
+        *out << "Discarding other info about Elem Vector field " << *it << " and filling it with constant value "
+             << req_fields_info->get<Teuchos::Array<double> >(temp_str) << "\n";
+        // For debug, we allow to fill the field with a given uniform value
+        fillTpetraMVec (serial_req_mvec,req_fields_info->get<Teuchos::Array<double> >(temp_str));
+      }
+      else if (fname!="")
+      {
+        *out << "Reading Elem Vector field " << *it << " from file " << fname << "\n";
+        // Read the input file and stuff it in the Tpetra multivector
+        readVectorFileSerial (fname,serial_req_mvec,commT);
+
+        temp_str = *it + " Scale Factors";
+        if (req_fields_info->isParameter(temp_str))
+        {
+          Teuchos::Array<double> scale_factors = req_fields_info->get<Teuchos::Array<double> >(temp_str);
+          serial_req_mvec.scale (scale_factors);
+        }
+      }
+      else
+      {
+        bool found = false;
+        for (int i(0); i<missing.size(); ++i)
+        {
+          if (missing[i].field()->name()==*it)
+          {
+            *out << "No file name nor constant value specified for Elem Vector field " << *it << "; initializing it to 0.\n";
+            Teuchos::Array<double> vals(fieldDim,0.);
+            fillTpetraMVec (serial_req_mvec,vals);
+            found = true;
+            break;
+          }
+        }
+        if (!found)
+        {
+          *out << "Using mesh-stored values for Elem Vector field " << *it << " since no constant value nor filename has been specified\n";
+          continue;
+        }
+      }
+
+      // Fill the (possibly) parallel vector
+      req_mvec.doImport(serial_req_mvec,importOperatorElem,Tpetra::INSERT);
+
+      // Extracting the mesh field and the tpetra vector views
+      VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::ELEM_RANK, *it);
+      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Vector'?).\n");
+      std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
+      for (int i(0); i<fieldDim; ++i)
+        req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
+
+      //Now we have to stuff the vector in the mesh data
+      for (int i(0); i<elems.size(); ++i)
+      {
+        elemId = bulkData->identifier(elems[i]) - 1;
+        lid    = elems_map->getLocalElement((GO)(elemId));
+
+        values = stk::mesh::field_data(*field, nodes[i]);
+
+        for (int iDim(0); iDim<fieldDim; ++iDim)
+          values[iDim] = req_mvec_view[iDim][lid];
+      }
+    }
+    else
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
+                                  "Sorry, I haven't yet implemented the case of field that are not Scalar nor Vector or that is not at nodal nor elemental.\n");
     }
   }
 
@@ -809,6 +830,31 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
+
+  if (this->sideSetMeshStructs.size()>0)
+  {
+    for (auto it=this->sideSetMeshStructs.begin(); it!=this->sideSetMeshStructs.end(); ++it)
+    {
+      Teuchos::RCP<Albany::StateInfoStruct> this_ss_sis;
+      if (ss_sis!=Teuchos::null)
+      {
+        if (ss_sis->find(it->first)!=ss_sis->end())
+          this_ss_sis = ss_sis->find(it->first)->second;
+      }
+      if (this_ss_sis==Teuchos::null)
+      {
+        this_ss_sis = Teuchos::rcp(new Albany::StateInfoStruct());
+        this_ss_sis->createNodalDataBase();
+      }
+      it->second->setFieldAndBulkData(commT,params,neq,req,this_ss_sis,worksetSize);
+      Teuchos::RCP<Albany::SideSetSTKMeshStruct> sideMesh;
+      sideMesh = Teuchos::rcp_dynamic_cast<Albany::SideSetSTKMeshStruct>(it->second,false);
+      if (sideMesh!=Teuchos::null)
+      {
+        sideMesh->extractEntitiesFromSTKMesh(*this,it->first);
+      }
+    }
+  }
 }
 
 double
@@ -842,6 +888,7 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
   validPL->set<Teuchos::ParameterList>("Required Fields Info",Teuchos::ParameterList());
   validPL->set<bool>("Write points coordinates to ascii file", "", "Write the mesh points coordinates to file?");
+  validPL->sublist("Side Set Discretizations", false, "Sublist of discretization parameters for the side set meshes");
 
   Teuchos::Array<std::string> emptyStringArray;
   validPL->set<Teuchos::Array<std::string> >("Additional Node Sets", emptyStringArray, "Declare additional node sets not present in the input file");

@@ -57,7 +57,10 @@ inline Ioss::Field::RoleType role_type(const bool output) {
 
 template<bool Interleaved>
 void
-Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis){
+Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
+{
+  if (sis==Teuchos::null)
+    return;
 
   using namespace Albany;
 
@@ -501,7 +504,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Ve
     if(node_mapT->getLocalElement(node_gid) != Teuchos::OrdinalTraits<LO>::invalid()){
       int node_lid = node_mapT->getLocalElement(node_gid);
       for(std::size_t j = 0; j < num_vec_components; j++)
-	solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
+  solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
     }
   }
 }

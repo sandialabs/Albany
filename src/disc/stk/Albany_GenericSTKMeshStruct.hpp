@@ -31,6 +31,7 @@ namespace Albany {
 
     public:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
+    const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
 
 #ifdef ALBANY_STK_PERCEPT
     Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
