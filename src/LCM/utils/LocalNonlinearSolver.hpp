@@ -192,7 +192,7 @@ public:
 // -----------------------------------------------------------------------------
 // Multi-Point Jacobian
 // -----------------------------------------------------------------------------
-template <typename Traits>
+template<typename Traits>
 class LocalNonlinearSolver< PHAL::AlbanyTraits::MPJacobian, Traits> :
 public LocalNonlinearSolver_Base< PHAL::AlbanyTraits::MPJacobian, Traits>
 {
