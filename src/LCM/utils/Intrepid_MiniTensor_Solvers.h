@@ -149,6 +149,15 @@ public:
 };
 
 ///
+/// Plain Newton Step
+///
+template<typename FN, typename T, Index N = DYNAMIC>
+class NewtonStep: public Step_Base<NewtonStep<FN, T, N>>
+{
+
+};
+
+///
 /// Nonlinear Method Base Class
 ///
 template<typename NLS, typename T, Index N = DYNAMIC>
