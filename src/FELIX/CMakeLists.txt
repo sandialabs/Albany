@@ -9,6 +9,7 @@
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
        evaluators/FELIX_EffectivePressure.cpp
+       evaluators/FELIX_Elliptic2DResidual.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_HydrologyDischarge.cpp
@@ -17,39 +18,42 @@
        evaluators/FELIX_HydrologyResidual.cpp
        evaluators/FELIX_HydrologyRhs.cpp
        evaluators/FELIX_QuadPointsToCellInterpolation.cpp
+       evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_SaveSideSetStateField.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
+       evaluators/FELIX_StokesFOBasalResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
-       evaluators/FELIX_ThicknessResid.cpp
-       evaluators/FELIX_StokesL1L2Resid.cpp
-       evaluators/FELIX_Viscosity.cpp
-       evaluators/FELIX_ViscosityFO.cpp
-       evaluators/FELIX_ViscosityL1L2.cpp
        evaluators/FELIX_StokesContinuityResid.cpp
-       evaluators/FELIX_StokesTauM.cpp
        evaluators/FELIX_StokesContravarientMetricTensor.cpp
-       evaluators/FELIX_StokesRm.cpp
        evaluators/FELIX_StokesBodyForce.cpp
        evaluators/FELIX_StokesFOBodyForce.cpp
        evaluators/FELIX_StokesL1L2BodyForce.cpp
+       evaluators/FELIX_StokesL1L2Resid.cpp
+       evaluators/FELIX_StokesRm.cpp
+       evaluators/FELIX_StokesTauM.cpp
+       evaluators/FELIX_ThicknessResid.cpp
+       evaluators/FELIX_Viscosity.cpp
+       evaluators/FELIX_ViscosityFO.cpp
+       evaluators/FELIX_ViscosityL1L2.cpp
+       problems/FELIX_CoupledStokesFOHydrology.cpp
+       problems/FELIX_Elliptic2D.cpp
        problems/FELIX_Hydrology.cpp
-       evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
    )
 
-IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES}
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
        evaluators/FELIX_GatherThickness.cpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
        evaluators/FELIX_ScatterResidualH.cpp
-       
+
        problems/FELIX_StokesFOThickness.cpp
    )
 ENDIF()
-   
+
 IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS
        interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
@@ -70,6 +74,8 @@ ENDIF()
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
        evaluators/FELIX_EffectivePressure.hpp
        evaluators/FELIX_EffectivePressure_Def.hpp
+       evaluators/FELIX_Elliptic2DResidual.hpp
+       evaluators/FELIX_Elliptic2DResidual_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
        evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_FieldNorm.hpp
@@ -86,51 +92,54 @@ ENDIF()
        evaluators/FELIX_HydrologyRhs_Def.hpp
        evaluators/FELIX_QuadPointsToCellInterpolation.hpp
        evaluators/FELIX_QuadPointsToCellInterpolation_Def.hpp
+       evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
+       evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
        evaluators/FELIX_SaveSideSetStateField.hpp
        evaluators/FELIX_SaveSideSetStateField_Def.hpp
-       evaluators/FELIX_StokesMomentumResid.hpp
-       evaluators/FELIX_StokesFOResid_Def.hpp
+       evaluators/FELIX_StokesBodyForce.hpp
+       evaluators/FELIX_StokesBodyForce_Def.hpp
+       evaluators/FELIX_StokesContinuityResid.hpp
+       evaluators/FELIX_StokesContinuityResid_Def.hpp
+       evaluators/FELIX_StokesContravarientMetricTensor.hpp
+       evaluators/FELIX_StokesContravarientMetricTensor_Def.hpp
+       evaluators/FELIX_StokesFOBodyForce.hpp
+       evaluators/FELIX_StokesFOBodyForce_Def.hpp
+       evaluators/FELIX_StokesFOBasalResid.hpp
+       evaluators/FELIX_StokesFOBasalResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
-       evaluators/FELIX_ThicknessResid_Def.hpp
-       evaluators/FELIX_ThicknessResid.hpp
+       evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesL1L2Resid_Def.hpp
        evaluators/FELIX_StokesL1L2Resid.hpp
+       evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesMomentumResid_Def.hpp
+       evaluators/FELIX_StokesRm.hpp
+       evaluators/FELIX_StokesRm_Def.hpp
+       evaluators/FELIX_StokesTauM.hpp
+       evaluators/FELIX_StokesTauM_Def.hpp
+       evaluators/FELIX_ThicknessResid_Def.hpp
+       evaluators/FELIX_ThicknessResid.hpp
        evaluators/FELIX_ViscosityFO.hpp
        evaluators/FELIX_ViscosityFO_Def.hpp
        evaluators/FELIX_ViscosityL1L2.hpp
        evaluators/FELIX_ViscosityL1L2_Def.hpp
-       evaluators/FELIX_StokesContinuityResid.hpp
-       evaluators/FELIX_StokesContinuityResid_Def.hpp
-       evaluators/FELIX_StokesTauM.hpp
-       evaluators/FELIX_StokesTauM_Def.hpp
-       evaluators/FELIX_StokesContravarientMetricTensor.hpp
-       evaluators/FELIX_StokesContravarientMetricTensor_Def.hpp
-       evaluators/FELIX_StokesRm.hpp
-       evaluators/FELIX_StokesRm_Def.hpp
-       evaluators/FELIX_StokesBodyForce.hpp
-       evaluators/FELIX_StokesBodyForce_Def.hpp
-       evaluators/FELIX_StokesFOBodyForce.hpp
-       evaluators/FELIX_StokesFOBodyForce_Def.hpp
+       problems/FELIX_CoupledStokesFOHydrology.hpp
+       problems/FELIX_Elliptic2D.hpp
        problems/FELIX_Hydrology.hpp
-       evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
-       evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
   )
-  
-IF (ALBANY_EPETRA) 
-  SET(HEADERS ${HEADERS} 
-       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
-       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
+
+IF (ALBANY_EPETRA)
+  SET(HEADERS ${HEADERS}
        evaluators/FELIX_GatherThickness.hpp
        evaluators/FELIX_GatherThickness_Def.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
        evaluators/FELIX_ScatterResidualH.hpp
        evaluators/FELIX_ScatterResidualH_Def.hpp
-       
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
+       evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
        problems/FELIX_StokesFOThickness.hpp
   )
 ENDIF()

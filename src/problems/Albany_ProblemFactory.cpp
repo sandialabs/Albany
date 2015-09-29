@@ -79,6 +79,7 @@
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
 #ifdef ALBANY_EPETRA
 #include "FELIX/problems/FELIX_Hydrology.hpp"
+#include "FELIX/problems/FELIX_Elliptic2D.hpp"
 #include "FELIX/problems/FELIX_StokesFOThickness.hpp"
 #endif
 #endif
@@ -411,8 +412,8 @@ Albany::ProblemFactory::create()
   else if (method == "FELIX Hydrology 2D") {
     strategy = rcp(new FELIX::Hydrology(problemParams, paramLib, 2));
   }
-  else if (method == "FELIX Hydrology 1D") {
-    strategy = rcp(new FELIX::Hydrology(problemParams, paramLib, 1));
+  else if (method == "FELIX Elliptic 2D") {
+    strategy = rcp(new FELIX::Elliptic2D(problemParams, paramLib, 1));
   }
 #endif
 #ifdef ALBANY_AERAS
