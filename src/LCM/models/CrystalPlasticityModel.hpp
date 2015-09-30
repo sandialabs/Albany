@@ -91,19 +91,19 @@ private:
   template<typename ArgT>
   void
   updateSlipViaExplicitIntegration(ScalarT dt,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ScalarT> const & hardness,
+      Intrepid::Vector<ScalarT> const & slip_n,
+      Intrepid::Vector<ScalarT> const & hardness,
       Intrepid::Tensor<ArgT> const & S,
-      std::vector<ArgT> const & shear,
-      std::vector<ArgT> & slip_np1) const;
+      Intrepid::Vector<ArgT> const & shear,
+      Intrepid::Vector<ArgT> & slip_np1) const;
 
   ///
   /// Compute Lp_np1 and Fp_np1 based on computed slip increment
   ///
   template<typename ArgT>
   void
-  applySlipIncrement(std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1,
+  applySlipIncrement(Intrepid::Vector<ScalarT> const & slip_n,
+      Intrepid::Vector<ArgT> const & slip_np1,
       Intrepid::Tensor<ScalarT> const & Fp_n,
       Intrepid::Tensor<ArgT> & Lp_np1,
       Intrepid::Tensor<ArgT> & Fp_np1) const;
@@ -113,9 +113,9 @@ private:
   ///
   template<typename ArgT>
   void
-  updateHardness(std::vector<ArgT> const & slip_np1,
-      std::vector<ScalarT> const & hardness_n,
-      std::vector<ArgT> & hardness_np1) const;
+  updateHardness(Intrepid::Vector<ArgT> const & slip_np1,
+      Intrepid::Vector<ScalarT> const & hardness_n,
+      Intrepid::Vector<ArgT> & hardness_np1) const;
 
   ///
   /// residual
@@ -123,11 +123,11 @@ private:
   template<typename ArgT>
   void
   computeResidual(ScalarT dt,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1,
-      std::vector<ArgT> const & hardness_np1,
-      std::vector<ArgT> const & shear_np1,
-      std::vector<ArgT> & slip_residual,
+      Intrepid::Vector<ScalarT> const & slip_n,
+      Intrepid::Vector<ArgT> const & slip_np1,
+      Intrepid::Vector<ArgT> const & hardness_np1,
+      Intrepid::Vector<ArgT> const & shear_np1,
+      Intrepid::Vector<ArgT> & slip_residual,
       ArgT & norm_slip_residual) const;
 
   ///
@@ -139,27 +139,27 @@ private:
       Intrepid::Tensor<ArgT> const & Fp,
       Intrepid::Tensor<ArgT> & T,
       Intrepid::Tensor<ArgT> & S,
-      std::vector<ArgT> & shear) const;
+      Intrepid::Vector<ArgT> & shear) const;
 
   template<typename ArgT>
   void
   constructMatrixFiniteDifference(ScalarT dt,
       Intrepid::Tensor<ScalarT> const & Fp_n,
       Intrepid::Tensor<ScalarT> const & F_np1,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1,
-      std::vector<ScalarT> const & hardness_n,
-      std::vector<ArgT> & matrix) const;
+      Intrepid::Vector<ScalarT> const & slip_n,
+      Intrepid::Vector<ArgT> const & slip_np1,
+      Intrepid::Vector<ScalarT> const & hardness_n,
+      Intrepid::Vector<ArgT> & matrix) const;
 
   template<typename ArgT>
   void
   lineSearch(ScalarT dt,
       Intrepid::Tensor<ScalarT> const & Fp_n,
       Intrepid::Tensor<ScalarT> const & F_np1,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1_km1,
-      std::vector<ArgT> const & delta_delta_slip,
-      std::vector<ScalarT> const & hardness_n,
+      Intrepid::Vector<ScalarT> const & slip_n,
+      Intrepid::Vector<ArgT> const & slip_np1_km1,
+      Intrepid::Vector<ArgT> const & delta_delta_slip,
+      Intrepid::Vector<ScalarT> const & hardness_n,
       ScalarT const & norm_slip_residual,
       RealType & alpha) const;
 
