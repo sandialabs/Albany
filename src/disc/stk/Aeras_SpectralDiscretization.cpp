@@ -1911,9 +1911,36 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
 
       // Get the coordinates value along this axis of the end nodes
       // from the STK mesh
-      for (size_t ii = 0; ii < 2; ++ii)
+      for (size_t ii = 0; ii < 2; ++ii) {
         c[ii] = stk::mesh::field_data(*coordinates_field,
                                       stkNodes[ii])[0];
+      }
+      //The following is for periodic BCs.  This will only be relevant for the x-z hydrostatic equations.
+      if (stkMeshStruct->PBCStruct.periodic[0])
+      {
+        bool anyXeqZero=false;
+        for (int j=0; j < 2; j++) {
+          if (c[j] == 0.0)
+            anyXeqZero=true;
+        }
+        if (anyXeqZero)
+        {
+          bool flipZeroToScale=false;
+          for (int j=0; j < 2; j++)
+            if (c[j] > stkMeshStruct->PBCStruct.scale[0]/1.9)
+              flipZeroToScale=true;
+          if (flipZeroToScale)
+          {
+            for (int j=0; j < 2; j++)
+            {
+              if (c[j] == 0.0)
+              {
+                c[j] = stkMeshStruct->PBCStruct.scale[0]; 
+              }
+            }
+          }
+        }
+      }
       for (size_t inode = 0; inode < np; ++inode)
       {
         double x = refCoords(inode,0);
