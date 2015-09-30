@@ -67,8 +67,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
   typedef typename AbstractSTKFieldContainer::QPVectorFieldType QPVFT;
   typedef typename AbstractSTKFieldContainer::QPTensorFieldType QPTFT;
   typedef typename AbstractSTKFieldContainer::QPTensor3FieldType QPT3FT;
-  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
-  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
   // Code to parse the vector of StateStructs and create STK fields
   for(std::size_t i = 0; i < sis->size(); i++) {
@@ -79,7 +77,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
       qpscalar_states.push_back(& metaData->declare_field< QPSFT >(stk::topology::ELEMENT_RANK, st.name));
       stk::mesh::put_field(*qpscalar_states.back() ,
                            metaData->universal_part(), 1);
-
+      
       //Debug
       //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
       //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
@@ -144,24 +142,11 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
     else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
       scalarValue_states.push_back(&st.name); // Just save a pointer to the name allocated in st
     } // End scalar at center of element
-    else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter))
-    { // Data at the node points
-
-        if (dim.size()==2)
-        {
-          SFT& scalar_state = metaData->declare_field< SFT >(stk::topology::NODE_RANK, st.name);
-          stk::mesh::put_field(scalar_state, metaData->universal_part(), dim[1]);
-
-        }
-        else if (dim.size()==2)
-        {
-          VFT& vector_state = metaData->declare_field< VFT >(stk::topology::NODE_RANK, st.name);
-          stk::mesh::put_field(vector_state, metaData->universal_part(), dim[2], dim[1]);
-        }
+    else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter)) { // Data at the node points
 
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
-      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer
+      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer 
       //         = sis->getNodalDataBlock()->getNodeContainer();
 
         if(st.entity == StateStruct::NodalDataToElemNode) {

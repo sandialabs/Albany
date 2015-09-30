@@ -121,7 +121,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   mesh_data->add_mesh_database(file_name, mesh_type, stk::io::READ_MESH);
   mesh_data->create_input_mesh();
 
-  metaData = mesh_data->meta_data_rcp();//Teuchos::rcpFromRef(mesh_data->meta_data());
+  metaData = mesh_data->meta_data_rcp();
 
   // End of creating input mesh
 
@@ -316,10 +316,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
         m_hasRestartSolution = true;
       }
       else {
-        mesh_data->read_defined_input_fields(-1.0, &missing);
-        *out << "Neither restart index or time are set. We still read defined fields in case they are needed (e.g., parameters)."<< std::endl;
 
-//        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
+        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
 
       }
     }
