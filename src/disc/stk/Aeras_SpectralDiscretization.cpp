@@ -90,6 +90,17 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
 
+   //IKT, 9/30/15: error check that the user is not trying to prescribe periodic BCs for a problem other than a 1D one.  
+   //Periodic BCs are only supported for 1D (xz-hydrostatic) problems.
+  int numPeriodicBCs = 0; 
+  for (int dim=0; dim<stkMeshStruct->numDim; dim++)
+     if (stkMeshStruct->PBCStruct.periodic[dim])
+       numPeriodicBCs++; 
+  if ((stkMeshStruct->numDim>1) && (numPeriodicBCs>0))
+    TEUCHOS_TEST_FOR_EXCEPTION(
+       true, std::logic_error, "Aeras::SpectralDiscretization constructor: periodic BCs are only supported for 1D spectral elements!  " 
+            << "You are attempting to specify periodic BCs for a " << stkMeshStruct->numDim << "D problem." << std::endl);
+
   // Get from parameter list how many points per edge we have (default
   // = 2: no enrichment)
   points_per_edge = stkMeshStruct->points_per_edge;
