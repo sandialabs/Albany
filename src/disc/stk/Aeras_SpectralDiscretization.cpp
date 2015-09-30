@@ -2823,7 +2823,9 @@ void Aeras::SpectralDiscretization::createOutputMesh()
         discParams,
         commT,
         stkMeshStruct->numDim,
-        stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
+        stkMeshStruct->getMeshSpecs()[0]->worksetSize,
+        stkMeshStruct->PBCStruct.periodic[0], 
+        stkMeshStruct->PBCStruct.scale[0], 
         wsElNodeID,
         coords,
         points_per_edge, element_name));

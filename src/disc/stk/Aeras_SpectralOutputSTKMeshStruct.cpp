@@ -39,7 +39,7 @@
 
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 
 //Constructor 
@@ -47,12 +47,14 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT, 
                                              const int numDim_, const int worksetSize_,
+                                             const bool periodic_, const double scale_,  
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
                                              const int points_per_edge_, const std::string element_name_):
   GenericSTKMeshStruct(params,Teuchos::null, numDim_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  periodic(false), 
+  periodic(periodic_), 
+  scale(scale_), 
   numDim(numDim_),
   wsElNodeID(wsElNodeID_),
   coords(coords_), 
@@ -65,7 +67,8 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   contigIDs = params->get("Contiguous IDs", true);
   
 #ifdef OUTPUT_TO_SCREEN
-  *out << "element_name: " << element_name_ << "\n"; 
+  *out << "element_name: " << element_name_ << "\n";
+  *out << "periodic BCs? " << periodic << "\n";  
 #endif
 
   //just creating 1 element block.  May want to change later...
@@ -280,16 +283,18 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
           double* coord;
           //set node 0 in STK linear mesh 
           coord = stk::mesh::field_data(*coordinates_field, node0);
-#ifdef OUTPUT_TO_SCREEN
-          std::cout << "Output mesh node0 x-coord: " << coords[ws][e][i][0] << std::endl;  
-#endif 
           coord[0] = coords[ws][e][i][0];
+#ifdef OUTPUT_TO_SCREEN
+          std::cout << "Output mesh node0 x-coord: " << coord[0] << std::endl;  
+#endif 
           //set node 1 in STK linear mesh 
           coord = stk::mesh::field_data(*coordinates_field, node1);
-#ifdef OUTPUT_TO_SCREEN
-          std::cout << "Output mesh node1 x-coord: " << coords[ws][e][i+1][0] << std::endl;  
-#endif 
           coord[0] = coords[ws][e][i+1][0];
+          if ((periodic == true) && (coords[ws][e][i+1][0] == scale))
+            coord[0] = 0.0; 
+#ifdef OUTPUT_TO_SCREEN
+          std::cout << "Output mesh node1 x-coord: " << coord[0] << std::endl;  
+#endif 
         }
       }
     }    
