@@ -5,9 +5,8 @@
   </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Solution Method" type="string" value="Steady"/>
-    <Parameter name="Name" type="string" value="FELIX Coupled FO H 3D"/>
-    <Parameter name="Time Step" type="double" value="0.2"/>
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
+    <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
 
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -35,11 +34,6 @@
     <ParameterList name="Distributed Parameters">
       <Parameter name="Number of Parameter Vectors" type="int" value="0"/>
     </ParameterList>
-
-    <ParameterList name="Parameter Fields">
-      <Parameter name="Register Surface Mass Balance" type="int" value="1"/>
-    </ParameterList>
-
     <ParameterList name="FELIX Viscosity">
       <Parameter name="Type" type="string" value="Glen's Law"/>
       <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0.1"/>
@@ -50,29 +44,35 @@
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="FO INTERP SURF GRAD"/>
     </ParameterList>
+    <ParameterList name="Stereographic Map">
+      <Parameter name="Use Stereographic Map" type="bool" value="true"/>
+      <Parameter name="Earth Radius" type="double" value="6371"/>
+      <Parameter name="X_0" type="double" value="0"/>
+      <Parameter name="Y_0" type="double" value="0"/>
+    </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Columnwise Ordering" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct.exo"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../ExoMeshes/gis_unstruct_2d.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
-    <Parameter name="Basal Friction File Name" type="string" value="../../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
-    <Parameter name="Temperature File Name" type="string" value="../../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
-    <Parameter name="Thickness File Name" type="string" value="../../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
-    <Parameter name="Surface Height File Name" type="string" value="../../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
-    <Parameter name="Surface Velocity File Name" type="string" value="../../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
-    <Parameter name="Surface Velocity RMS File Name" type="string" value="../../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii"/>
+    <Parameter name="Basal Friction File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
+    <Parameter name="Temperature File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
+    <Parameter name="Thickness File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
+    <Parameter name="Surface Height File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
+    <Parameter name="Surface Velocity File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
+    <Parameter name="Surface Velocity RMS File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{106350624.657}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{105284963.108}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17486258.5734}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{18530461.0489}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

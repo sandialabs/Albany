@@ -1,15 +1,13 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <ParameterList name="Dirichlet BCs">     
-      <Parameter name="DBC on NS middle for DOF U0" type="double" value="0.0"/>
-      <Parameter name="DBC on NS middle for DOF U1" type="double" value="0.0"/>
-    </ParameterList>
-    <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS lateralss for DOF all set basal" type="Array(double)" value="{-8918.0, 10074.4, 0.0, 0.0, 0.0}"/>
-        <Parameter name="BetaXY" type="string" value="Circular Shelf"/>
+      <Parameter name="DBC on NS lateral for DOF U0" type="double" value="0.0"/>
+      <Parameter name="DBC on NS lateral for DOF U1" type="double" value="0.0"/>
+      <Parameter name="DBC on NS basal for DOF U0" type="double" value="0.0"/>
+      <Parameter name="DBC on NS basal for DOF U1" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -18,11 +16,11 @@
     <ParameterList name="FELIX Viscosity">
       <Parameter name="Type" type="string" value="Glen's Law"/>
       <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0.3"/>
-      <Parameter name="Glen's Law A" type="double" value="5.7e-6"/>
+      <Parameter name="Glen's Law A" type="double" value="0.0001"/>
       <Parameter name="Glen's Law n" type="double" value="3"/>
     </ParameterList>
     <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="None"/>
+      <Parameter name="Type" type="string" value="FO Dome"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="3"/>
@@ -40,18 +38,20 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
+    <Parameter name="Transform Type" type="string" value="Dome"/>
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../ExoMeshes/shelf_cyl.exo"/>
-    <Parameter name="Transform Type" type="string" value="Circular Shelf"/>
-    <Parameter name="FELIX L" type="double" value="22.5"/>
-    <Parameter name="Exodus Output File Name" type="string" value="circularShelf_out_tpetra.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/dome_cyl.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="dome_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{1989.13398565, 1989.13398565, -8.97444061301e-13}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{85.70866677, 85.70866677, 0.0}"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="3"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ -0.0012612}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{ -0.0012612}"/>
+    <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ 0.0}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
@@ -85,17 +85,17 @@
 	    <Parameter name="Test Type" type="string" value="NormF"/>
 	    <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	    <Parameter name="Scale Type" type="string" value="Scaled"/>
-	    <Parameter name="Tolerance" type="double" value="1e-4"/>
+	    <Parameter name="Tolerance" type="double" value="1e-6"/>
 	  </ParameterList>
 	  <ParameterList name="Test 1">
 	    <Parameter name="Test Type" type="string" value="NormWRMS"/>
 	    <Parameter name="Absolute Tolerance" type="double" value="1e-3"/>
-	    <Parameter name="Relative Tolerance" type="double" value="1e-5"/>
+	    <Parameter name="Relative Tolerance" type="double" value="1e-6"/>
 	  </ParameterList>
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="20"/>
+	  <Parameter name="Maximum Iterations" type="int" value="10"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
@@ -119,7 +119,7 @@
 		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
 		      <Parameter name="Output Frequency" type="int" value="20"/>
 		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="1000"/>
+		    <Parameter name="Max Iterations" type="int" value="200"/>
 		    <Parameter name="Tolerance" type="double" value="1e-6"/>
 		  </ParameterList>
 		</ParameterList>
@@ -131,7 +131,7 @@
 		      <Parameter name="Output Frequency" type="int" value="20"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="1000"/>
+		      <Parameter name="Maximum Iterations" type="int" value="200"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
 		      <Parameter name="Num Blocks" type="int" value="200"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
@@ -139,13 +139,13 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack2">
-		  <Parameter name="Overlap" type="int" value="1"/>
-		  <Parameter name="Prec Type" type="string" value="ILUT"/>
-		  <ParameterList name="Ifpack2 Settings">
-		    <Parameter name="fact: ilut level-of-fill" type="double" value="2"/>
+		<ParameterList name="Ifpack">
+		  <Parameter name="Overlap" type="int" value="0"/>
+		  <Parameter name="Prec Type" type="string" value="ILU"/>
+		  <ParameterList name="Ifpack Settings">
+		    <Parameter name="fact: level-of-fill" type="int" value="0"/>
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="ML">

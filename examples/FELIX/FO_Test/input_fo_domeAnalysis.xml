@@ -8,7 +8,7 @@
       <Parameter name="DBC on NS lateral for DOF U1" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS basalss for DOF all set basal" type="Array(double)" value="{0.0, 3.0 0.005, 0.005, 0.005}"/>
+        <Parameter name="NBC on SS basalss for DOF all set basal" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
         <Parameter name="BetaXY" type="string" value="Dome UQ"/>
     </ParameterList>
     <ParameterList name="Parameters">
@@ -38,7 +38,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Restart Index" type="int" value="6"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../ExoMeshes/domeAnalysis_in.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/domeAnalysis_in.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="domeAnalysis_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
@@ -104,7 +104,7 @@
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
 		  <ParameterList name="Forward Solve"> 
