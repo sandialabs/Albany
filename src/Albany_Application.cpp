@@ -529,8 +529,9 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())){
     LCM::PeridigmManager::self()->initialize(params, disc, commT);
+  }
 #endif
 #endif
 }

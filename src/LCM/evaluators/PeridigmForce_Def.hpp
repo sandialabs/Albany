@@ -118,12 +118,12 @@ evaluateFields(typename Traits::EvalData workset)
 			       Teuchos::Exceptions::InvalidParameter, "Need specialization.");
   }
 
-  TEUCHOS_TEST_FOR_EXCEPTION(!supportsTransient, Teuchos::Exceptions::InvalidParameter, "PeridigmForceBase creation of mass matrix requires supportsTransient to be true.");
-
-  for(int cell = 0; cell < workset.numCells; ++cell){
-    this->residual(cell, 0, 0) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 0);
-    this->residual(cell, 0, 1) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 1);
-    this->residual(cell, 0, 2) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 2);
+  if(supportsTransient && albanyIsCreatingMassMatrix){
+    for(int cell = 0; cell < workset.numCells; ++cell){
+      this->residual(cell, 0, 0) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 0);
+      this->residual(cell, 0, 1) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 1);
+      this->residual(cell, 0, 2) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 2);
+    }
   }
 }
 
