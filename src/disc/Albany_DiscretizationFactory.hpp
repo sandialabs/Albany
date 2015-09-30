@@ -60,6 +60,12 @@ class DiscretizationFactory {
                          const AbstractFieldContainer::FieldContainerRequirements& req,
                          const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
+    Teuchos::RCP<Albany::AbstractDiscretization>
+    createDiscretization(unsigned int num_equations,
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                         const AbstractFieldContainer::FieldContainerRequirements& req,
+                         const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
+
     void
     setupInternalMeshStruct(
       unsigned int neq,

@@ -375,7 +375,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
       ess << "Evaluator for " << ss;
       evaluators_to_build[ess.str()] = p;
 
-      bcs.push_back(ss);
+      bcs->push_back(ss);
     }
   }
 

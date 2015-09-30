@@ -225,7 +225,6 @@ namespace Albany {
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;}
-    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return stkMeshStruct;}
     
     Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const
     {

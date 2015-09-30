@@ -183,9 +183,6 @@ class AbstractDiscretization {
     //! Get the map side_id->side_set_elem_id
     virtual Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const = 0;
 
-    //! Get MeshStruct
-    virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
-
     //! Get stateArrays
     virtual Albany::StateArrays& getStateArrays() = 0;
 

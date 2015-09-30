@@ -131,7 +131,13 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported in FMDB discretization.\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Albany::APFDiscretization::getSideSetDiscretizations() not implemented yet");
+      return Teuchos::null;
+    }
+
+    //! Get the map side_id->side_set_elem_id
+    Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Albany::APFDiscretization::getSideIdToSideSetElemIdMap() not implemented yet");
       return Teuchos::null;
     }
 

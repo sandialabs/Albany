@@ -375,6 +375,14 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
   return result;
 }
 
+Teuchos::RCP<Albany::AbstractDiscretization>
+Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
+  return createDiscretization(neq, sis, Teuchos::null, req, rigidBodyModes);
+}
+
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
 Albany::DiscretizationFactory::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh) {
   meshStruct = mesh;
