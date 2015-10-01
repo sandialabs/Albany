@@ -2804,43 +2804,6 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   printCoords();
 #endif
 
-  // If the mesh struct stores sideSet mesh structs, we update them
-  if (stkMeshStruct->sideSetMeshStructs.size()>0)
-  {
-    sideSetDiscretizationsSTK = Teuchos::rcp( new std::map<std::string,Teuchos::RCP<STKDiscretization> >() );
-    sideSetDiscretizations = Teuchos::rcp( new std::map<std::string,Teuchos::RCP<AbstractDiscretization> >() );
-    sideIdToSideSetElemIdMap = Teuchos::rcp( new std::map<std::string,std::map<GO,GO> >() );
-
-    std::map<std::string,Teuchos::RCP<Albany::AbstractSTKMeshStruct> >::iterator it;
-    for (it=stkMeshStruct->sideSetMeshStructs.begin(); it!=stkMeshStruct->sideSetMeshStructs.end(); ++it)
-    {
-      Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(it->second,commT));
-      side_disc->updateMesh();
-      sideSetDiscretizations->insert(std::make_pair(it->first,side_disc));
-      sideSetDiscretizationsSTK->insert(std::make_pair(it->first,side_disc));
-
-      buildSideIdToSideSetElemIdMap(it->first);
-/*
-      std::map<GO,GO> map = sideIdToSideSetElemIdMap->find(it->first)->second;
-      std::cout << "===========================================\n";
-      for (std::map<GO,GO>::const_iterator itm=map.begin(); itm!=map.end(); ++itm)
-      {
-        std::cout << "side " << itm->first << " becomes cell " << itm->second << "\n";
-      }
-      std::cout << "===========================================\n";
-
-Albany::WsLIDList& elemGIDws2D = side_disc->getElemGIDws();
-std::cout << "---------------------------\n";
-for (std::map<GO, Albany::wsLid >::iterator it=elemGIDws2D.begin(); it!=elemGIDws2D.end(); ++it)
-{
-  std::cout << "Elem " << it->first << ":\n";
-  std::cout << "  ws : " << it->second.ws << "\n";
-  std::cout << "  lid: " << it->second.LID << "\n";
-}
-std::cout << "---------------------------\n";
-*/
-    }
-  }
 /*
 for (int ws(0); ws<sideSets.size(); ++ws)
 {

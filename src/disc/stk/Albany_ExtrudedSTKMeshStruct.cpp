@@ -90,7 +90,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     params2D->set<std::string>("Exodus Output File Name",params->sublist("Side Sets Output").sublist("basalside").get<std::string>("Exodus Output File Name"));
   }
 
-  sideSetMeshStructs["basalside"] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
+  basalMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
 
   Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -100,11 +100,11 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
               std::endl << "Error in ExtrudedSTKMeshStruct: Currently Requires 2D mesh to come from exodus");
 #endif
 
-  int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
-  sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, sis, ws_size);
+  int ws_size = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
+  basalMeshStruct->setFieldAndBulkData(comm, params, 1, req, sis, ws_size);
 
-  stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->universal_part()) & stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->locally_owned_part());
-  int numCells = stk::mesh::count_selected_entities(select_owned_in_part, sideSetMeshStructs["basalside"]->bulkData->buckets(stk::topology::ELEMENT_RANK));
+  stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(basalMeshStruct->metaData->universal_part()) & stk::mesh::Selector(basalMeshStruct->metaData->locally_owned_part());
+  int numCells = stk::mesh::count_selected_entities(select_owned_in_part, basalMeshStruct->bulkData->buckets(stk::topology::ELEMENT_RANK));
 
   std::string shape = params->get("Element Shape", "Hexahedron");
   std::string basalside_name;
@@ -124,7 +124,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
               std::endl << "Error in ExtrudedSTKMeshStruct: Element Shape " << shape << " not recognized. Possible values: Tetrahedron, Wedge, Hexahedron");
 
-  std::string elem2d_name(sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->ctd.base->name);
+  std::string elem2d_name(basalMeshStruct->getMeshSpecs()[0]->ctd.base->name);
   TEUCHOS_TEST_FOR_EXCEPTION(basalside_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
                 std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_name << " but it is " << elem2d_name);
 
@@ -165,7 +165,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
 
   // Add side set mesh specs
-  this->meshSpecs[0]->sideSetMeshSpecs["basalside"] = sideSetMeshStructs["basalside"]->getMeshSpecs();
+  this->meshSpecs[0]->sideSetMeshSpecs["basalside"] = basalMeshStruct->getMeshSpecs();
 }
 
 Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
@@ -190,8 +190,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
-  stk::mesh::BulkData& bulkData2D = *sideSetMeshStructs["basalside"]->bulkData;
-  stk::mesh::MetaData& metaData2D = *sideSetMeshStructs["basalside"]->metaData; //bulkData2D.mesh_meta_data();
+  stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
+  stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
   std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
 

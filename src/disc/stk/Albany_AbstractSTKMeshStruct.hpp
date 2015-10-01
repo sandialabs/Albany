@@ -39,6 +39,14 @@ namespace Albany {
 
   public:
 
+    virtual void setFieldAndBulkData(
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_, 
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const unsigned int worksetSize) {};
+
     msType meshSpecsType(){ return STK_MS; }
 
     Teuchos::RCP<stk::mesh::MetaData> metaData;
@@ -99,8 +107,6 @@ namespace Albany {
 
     // Info for periodic BCs -- only for hand-coded STK meshes
     struct PeriodicBCStruct PBCStruct;
-
-    std::map<std::string,Teuchos::RCP<Albany::AbstractSTKMeshStruct> >  sideSetMeshStructs;
 
   protected:
 
