@@ -995,7 +995,7 @@ computeResidual(ScalarT dt,
     const double active_filter = std::numeric_limits<RealType>::epsilon()
         * 10.0;
     if (temp < active_filter) {
-      dgamma_value2 = 0.0;
+      dgamma_value2 = dt * g0 * 0.0 * sign;
     }
     else {
       dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
