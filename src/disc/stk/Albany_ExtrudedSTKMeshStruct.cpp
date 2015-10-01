@@ -30,7 +30,7 @@
 
 #include "Albany_Utils.hpp"
 
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Teuchos_Comm>& comm) :
     GenericSTKMeshStruct(params, Teuchos::null, 3), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false) {
@@ -179,43 +179,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-    const unsigned int worksetSize,
-    const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis)
+    const unsigned int worksetSize)
 {
-  // Rewriting the field data, now that we do have the sideSet field container
-  if (Teuchos::nonnull(ss_sis))
-  {
-    Teuchos::RCP<Albany::StateInfoStruct> basal_sis = ss_sis->find("basalside")->second;
-
-    // Unfortunately, due to how stk handles stuff, we cannot add more states to the mesh, so
-    // we have to re-create it again (namely, stk commits mesh
-    Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
-    params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
-    params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-
-    // If we intend to store some field on the side set mesh, we need to register them in the mesh
-    Teuchos::ParameterList& basalSideOutputInfo = params->sublist("Side Sets Output").sublist("basalside");
-    params2D->set("Required Fields Info", basalSideOutputInfo);
-    params2D->set<std::string>("Exodus Output File Name",basalSideOutputInfo.get<std::string>("Exodus Output File Name"));
-
-    sideSetMeshStructs["basalside"] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
-
-    Albany::AbstractFieldContainer::FieldContainerRequirements req;
-    if (params->isSublist("Side Sets Output") )
-    {
-      Teuchos::ParameterList& basalSideOutputInfo = params->sublist("Side Sets Output").sublist("basalside");
-      Teuchos::Array<std::string> req_names = basalSideOutputInfo.get<Teuchos::Array<std::string> >("Output Fields Names");
-      for (int i(0); i<req_names.size(); ++i)
-        req.push_back(req_names[i]);  // Filling the req with the names of the side set fields to export
-    }
-
-    int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
-    sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params2D, 1, req, basal_sis, ws_size);
-
-
-    this->meshSpecs[0]->sideSetMeshSpecs["basalside"] = sideSetMeshStructs["basalside"]->getMeshSpecs();
-  }
-
   int numLayers = params->get("NumLayers", 10);
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
   GO maxGlobalElements2D = 0;
@@ -915,9 +880,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
       ifile >> zCoords[i];
   }
   //comm->Broadcast(&zCoords[0], numComponents, 0);
-  //IK, 10/1/14: double should be ST? 
+  //IK, 10/1/14: double should be ST?
   Teuchos::broadcast<int, double>(*comm, 0, numComponents, &zCoords[0]);
-  
+
   temperatureVec = Teuchos::rcp(new Tpetra_MultiVector(map, numComponents));
 
   Teuchos::ArrayRCP<ST> tempT_nonConstView = tempT.get1dViewNonConst();

@@ -17,7 +17,6 @@
        evaluators/FELIX_HydrologyResidual.cpp
        evaluators/FELIX_HydrologyRhs.cpp
        evaluators/FELIX_QuadPointsToCellInterpolation.cpp
-       evaluators/FELIX_SaveSideSetStateField.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
        evaluators/FELIX_ThicknessResid.cpp
@@ -39,17 +38,17 @@
        problems/FELIX_StokesL1L2.cpp
    )
 
-IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES}
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
        evaluators/FELIX_GatherThickness.cpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
        evaluators/FELIX_ScatterResidualH.cpp
-       
+
        problems/FELIX_StokesFOThickness.cpp
    )
 ENDIF()
-   
+
 IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS
        interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
@@ -86,8 +85,6 @@ ENDIF()
        evaluators/FELIX_HydrologyRhs_Def.hpp
        evaluators/FELIX_QuadPointsToCellInterpolation.hpp
        evaluators/FELIX_QuadPointsToCellInterpolation_Def.hpp
-       evaluators/FELIX_SaveSideSetStateField.hpp
-       evaluators/FELIX_SaveSideSetStateField_Def.hpp
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
@@ -119,9 +116,9 @@ ENDIF()
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
   )
-  
-IF (ALBANY_EPETRA) 
-  SET(HEADERS ${HEADERS} 
+
+IF (ALBANY_EPETRA)
+  SET(HEADERS ${HEADERS}
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
        evaluators/FELIX_GatherThickness.hpp
@@ -130,7 +127,7 @@ IF (ALBANY_EPETRA)
        evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
        evaluators/FELIX_ScatterResidualH.hpp
        evaluators/FELIX_ScatterResidualH_Def.hpp
-       
+
        problems/FELIX_StokesFOThickness.hpp
   )
 ENDIF()

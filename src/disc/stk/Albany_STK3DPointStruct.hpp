@@ -21,7 +21,7 @@ namespace Albany {
   public:
 
     //! Default constructor
-    STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, 
+    STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                      const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~STK3DPointStruct();
@@ -33,8 +33,7 @@ namespace Albany {
                              const unsigned int neq_,
                              const AbstractFieldContainer::FieldContainerRequirements& req,
                              const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                             const unsigned int worksetSize,
-                             const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis = Teuchos::null);
+                             const unsigned int worksetSize);
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -46,7 +45,7 @@ namespace Albany {
 
     //! Build the mesh
     void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
- 
+
     //! Build a parameter list that contains valid input parameters
     Teuchos::RCP<const Teuchos::ParameterList>
     getValidDiscretizationParameters() const;

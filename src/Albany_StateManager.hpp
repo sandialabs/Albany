@@ -122,29 +122,6 @@ public:
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
       const std::string &init_type);
 
-  Teuchos::RCP<Teuchos::ParameterList>
-  registerSideSetStateVariable(const std::string& sideSetName,
-                               const std::string& cellFieldName,
-                               const std::string& sideSetStateName,
-                               const Teuchos::RCP<PHX::DataLayout>& dl,
-                               const std::string& ebName,
-                               const bool outputToExodus,
-                               StateStruct::MeshFieldEntity const* fieldEntity = NULL);
-
-  Teuchos::RCP<Teuchos::ParameterList>
-  registerSideSetStateVariable(const std::string& sideSetName,
-                               const std::string& cellFieldName,
-                               const std::string& sideSetStateName,
-                               const Teuchos::RCP<PHX::DataLayout> &dl,
-                               const std::string& ebName,
-                               const std::string &init_type,
-                               const double init_val,
-                               const bool registerOldState,
-                               const bool outputToExodus,
-                               const std::string &responseIDtoRequire,
-                               StateStruct::MeshFieldEntity const* fieldEntity,
-                               const std::string& meshPartName = "");
-
   //! Method to re-initialize state variables, which can be called multiple times after allocating
   void importStateData(Albany::StateArrays& statesToCopyFrom);
 
@@ -161,9 +138,6 @@ public:
   //! Method to get a StateInfoStruct of info needed by STK to output States as Fields
   Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct() const;
 
-  //! Equivalent of previous method for the sideSets states
-  Teuchos::RCP<std::map<std::string,Teuchos::RCP<StateInfoStruct> > > getSideSetStateInfoStruct() const;
-
   //! Method to set discretization object
   void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
 
@@ -175,15 +149,9 @@ public:
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Albany::StateArrays& getSideSetStateArrays (const std::string& sideSet);
-
   Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase ()
   {
     return stateInfo->createNodalDataBase();
-  }
-  Teuchos::RCP<Adapt::NodalDataBase> getSideSetNodalDataBase(const std::string& sideSet)
-  {
-    return sideSetStateInfo->find(sideSet)->second->createNodalDataBase();
   }
 
 #if defined(ALBANY_EPETRA)
@@ -208,23 +176,17 @@ private:
   //! Private to prohibit copying
   StateManager& operator=(const StateManager&);
 
-  //! Sets states arrays from a given StateInfoStruct into a given discretization
-  void doSetStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
-                        const Teuchos::RCP<StateInfoStruct>& stateInfoPtr);
-
   //! boolean to enforce that allocate gets called once, and after registration and befor gets
   bool stateVarsAreAllocated;
 
   //! Container to hold the states that have been registered, by element block, to be allocated later
   std::map<std::string, RegisteredStates> statesToStore;
-  std::map<std::string,std::map<std::string, RegisteredStates> > sideSetStatesToStore;
 
   //! Discretization object which allows StateManager to perform input/output with exodus and Epetra vectors
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
-  Teuchos::RCP<std::map<std::string,Teuchos::RCP<StateInfoStruct> > > sideSetStateInfo; // A map sideSetName->stateInfoBd
 
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<EigendataStruct> eigenData;

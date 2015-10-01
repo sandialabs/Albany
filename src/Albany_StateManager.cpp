@@ -327,147 +327,10 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
 
 }
 
-Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetName,
-                                                   const std::string& cellFieldName,
-                                                   const std::string& sideSetStateName,
-                                                   const Teuchos::RCP<PHX::DataLayout> &dl,
-                                                   const std::string& ebName,
-                                                   const bool outputToExodus,
-                                                   StateStruct::MeshFieldEntity const* fieldEntity)
-{
-  return registerSideSetStateVariable (sideSetName,cellFieldName,sideSetStateName,dl,ebName,
-                                       "",0.0,false,outputToExodus,"",fieldEntity,"");
-}
-
-Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetName,
-                                                   const std::string& cellFieldName,
-                                                   const std::string& sideSetStateName,
-                                                   const Teuchos::RCP<PHX::DataLayout> &dl,
-                                                   const std::string& ebName,
-                                                   const std::string &init_type,
-                                                   const double init_val,
-                                                   const bool registerOldState,
-                                                   const bool outputToExodus,
-                                                   const std::string &responseIDtoRequire,
-                                                   StateStruct::MeshFieldEntity const* fieldEntity,
-                                                   const std::string& meshPartName)
-{
-  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
-  using Albany::StateStruct;
-
-  // Create param list for SaveSideSetStateField evaluator
-  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save Side Set State "
-                + sideSetStateName + " to/from Cell Field " + cellFieldName));
-  p->set<const std::string>("Side Set State Name", sideSetStateName);
-  p->set<const std::string>("Cell Field Name", cellFieldName);
-  p->set<const std::string>("Side Set Name", sideSetName);
-  p->set<const Teuchos::RCP<PHX::DataLayout> >("Cell Field Layout", dl);
-
-  if( sideSetStatesToStore[sideSetName][ebName].find(sideSetStateName) != sideSetStatesToStore[sideSetName][ebName].end() ) {
-    //Duplicate registration.  This will occur when a problem's
-    // constructEvaluators function (templated) registers state variables.
-
-    //Perform a check here that dl and statesToStore[sideSetStateName] are the same:
-    //TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[sideSetStateName]);  //I don't know how to do this correctly (erik)
-//    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[sideSetStateName]));
-    return p;  // Don't re-register the same state name
-  }
-
-  sideSetStatesToStore[sideSetName][ebName][sideSetStateName] = dl;
-
-  if (sideSetStateInfo == Teuchos::null)
-  {
-    // It's the first time we register side set states, so we initiate the pointer
-    sideSetStateInfo = Teuchos::rcp(new std::map<std::string,Teuchos::RCP<StateInfoStruct> >());
-  }
-
-  if ( sideSetStateInfo->find(sideSetName)==sideSetStateInfo->end() )
-  {
-    // It's the first time we register states on this side set, so we initiate the pointer
-
-    std::pair<std::string,Teuchos::RCP<StateInfoStruct> > new_pair;
-    new_pair = std::make_pair(sideSetName,Teuchos::rcp(new StateInfoStruct()));
-    sideSetStateInfo->insert(new_pair);
-  }
-  Teuchos::RCP<StateInfoStruct> sis_ptr = (*sideSetStateInfo)[sideSetName];
-
-  // Load into StateInfo
-  StateStruct::MeshFieldEntity mfe_type;
-  if(fieldEntity) mfe_type=*fieldEntity;
-  else if(dl->rank() == 1 && dl->size() == 1)
-     mfe_type = StateStruct::WorksetValue; // One value for the whole workset (i.e., time)
-  else if (dl->rank() == 1 && dl->name(0) == "Cell")
-     mfe_type = StateStruct::ElemData;
-  else if(dl->rank() >= 1 && dl->name(0) == "Node") // Nodal data
-     mfe_type = StateStruct::NodalData;
-  else if(dl->rank() >= 1 && dl->name(0) == "Cell"){ // Element QP or node data
-     if(dl->rank() > 1 && dl->name(1) == "Node") // Element node data
-        mfe_type = StateStruct::ElemNode; // One value for the whole workset (i.e., time)
-     else if(dl->rank() > 1 && dl->name(1) == "QuadPoint") // Element node data
-        mfe_type = StateStruct::QuadPoint; // One value for the whole workset (i.e., time)
-     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-       "StateManager: Element Entity type - " << dl->name(1) << " - not supported" << std::endl);
-  }
-  else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-     "StateManager: Unknown Entity type - " << dl->name(0) << " - not supported" << std::endl);
-
-  sis_ptr->push_back(Teuchos::rcp(new StateStruct(sideSetStateName, mfe_type)));
-  StateStruct& stateRef = *sis_ptr->back();
-  stateRef.setInitType(init_type);
-  stateRef.setInitValue(init_val);
-  stateRef.setMeshPart(meshPartName);
-
-  dl->dimensions(stateRef.dim);
-
-  if (stateRef.entity == StateStruct::NodalData ||
-      stateRef.entity == StateStruct::NodalDataToElemNode ||
-      stateRef.entity == Albany::StateStruct::NodalDistParameter)
-  {
-    // Register the state with the nodalDataVector also.
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getSideSetNodalDataBase(sideSetName);
-
-    if (dl->rank() == 2) // node vector
-      nodalDataBase->registerVectorState (sideSetStateName, stateRef.dim[1]);
-    else if (dl->rank() == 3) // node tensor
-      nodalDataBase->registerVectorState (sideSetStateName, stateRef.dim[1]*stateRef.dim[2]);
-    else // node scalar
-      nodalDataBase->registerVectorState (sideSetStateName, 1);
-  }
-
-  stateRef.output = outputToExodus;
-  stateRef.responseIDtoRequire = responseIDtoRequire;
-
-  // If space is needed for old state
-  if (registerOldState) {
-    stateRef.saveOldState = true;
-
-    std::string sideSetStateName_old = sideSetStateName + "_old";
-    sis_ptr->push_back(Teuchos::rcp(new Albany::StateStruct(sideSetStateName_old, mfe_type)));
-    Albany::StateStruct& pstateRef = *sis_ptr->back();
-    pstateRef.initType  = init_type;
-    pstateRef.initValue = init_val;
-    pstateRef.pParentStateStruct = &stateRef;
-
-    pstateRef.output = false;
-    dl->dimensions(pstateRef.dim);
-  }
-
-  // insert
-  stateRef.nameMap[sideSetStateName] = ebName;
-}
-
 Teuchos::RCP<Albany::StateInfoStruct>
 Albany::StateManager::getStateInfoStruct() const
 {
   return stateInfo;
-}
-
-Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >
-Albany::StateManager::getSideSetStateInfoStruct() const
-{
-  return sideSetStateInfo;
 }
 
 void
@@ -478,18 +341,218 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
   disc = disc_;
 
-  doSetStateArrays(disc,stateInfo);
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  if (Teuchos::nonnull(sideSetStateInfo))
-  {
-    std::map<std::string,Teuchos::RCP<StateInfoStruct> >::iterator it;
-    TEUCHOS_TEST_FOR_EXCEPTION (disc->getSideSetDiscretizations()==Teuchos::null, std::logic_error,
-                                "Error! There are sideSet states registered but no sideSet discretizations.\n");
-    for (it=sideSetStateInfo->begin(); it!=sideSetStateInfo->end(); ++it)
+  // Get states from STK mesh
+  Albany::StateArrays& sa = disc->getStateArrays();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
+  Albany::StateArrayVec& nsa = sa.nodeStateArrays;
+
+  int numElemWorksets = esa.size();
+  int numNodeWorksets = nsa.size();
+
+  // For each workset, loop over registered states
+
+  for (unsigned int i=0; i<stateInfo->size(); i++) {
+    const std::string& stateName = (*stateInfo)[i]->name;
+    const std::string& init_type = (*stateInfo)[i]->initType;
+    const double init_val        = (*stateInfo)[i]->initValue;
+    bool have_restart            = (*stateInfo)[i]->restartDataAvailable;
+    Albany::StateStruct *pParentStruct = (*stateInfo)[i]->pParentStateStruct;
+
+    // JTO: specifying zero recovers previous behavior
+    // if (stateName == "zero")
+    // {
+    //   init_val = 0.0;
+    //   init_type = "scalar";
+    // }
+
+    *out << "StateManager: initializing state:  " << stateName << "\n";
+    switch((*stateInfo)[i]->entity)
     {
-      doSetStateArrays (disc->getSideSetDiscretizations()->find(it->first)->second,it->second);
+
+     case Albany::StateStruct::WorksetValue :
+     case Albany::StateStruct::ElemData :
+     case Albany::StateStruct::QuadPoint :
+     case Albany::StateStruct::ElemNode :
+
+      if(have_restart){
+          *out << " from restart file." << std::endl;
+          // If we are restarting, arrays should already be initialized from exodus file
+          continue;
+      }
+      else if(pParentStruct && pParentStruct->restartDataAvailable){
+          *out << " from restarted parent state." << std::endl;
+          // If we are restarting, my parent is initialized from exodus file
+          // Copy over parent's state
+
+          for (int ws = 0; ws < numElemWorksets; ws++)
+
+            esa[ws][stateName] = esa[ws][pParentStruct->name];
+
+          continue;
+      }
+      else if (init_type == "scalar")
+        *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
+      else if (init_type == "identity")
+        *out << " with initialization type 'identity'" << std::endl;
+
+      for (int ws = 0; ws < numElemWorksets; ws++){
+
+        Albany::StateStruct::FieldDims dims;
+        esa[ws][stateName].dimensions(dims);
+        int size = dims.size();
+
+        if (init_type == "scalar"){
+
+          switch (size) {
+
+            case 1:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                esa[ws][stateName](cell) = init_val;
+              break;
+
+            case 2:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  esa[ws][stateName](cell, qp) = init_val;
+              break;
+
+            case 3:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  for (int i = 0; i < dims[2]; ++i)
+                    esa[ws][stateName](cell, qp, i) = init_val;
+              break;
+
+            case 4:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  for (int i = 0; i < dims[2]; ++i)
+                   for (int j = 0; j < dims[3]; ++j)
+                     esa[ws][stateName](cell, qp, i, j) = init_val;
+              break;
+
+            case 5:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  for (int i = 0; i < dims[2]; ++i)
+                   for (int j = 0; j < dims[3]; ++j)
+                     for (int k = 0; k < dims[4]; ++k)
+                       esa[ws][stateName](cell, qp, i, j, k) = init_val;
+              break;
+
+            default:
+              TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>5, std::logic_error,
+                       "Something is wrong during scalar state variable initialization: " << size);
+          }
+
+        }
+        else if (init_type == "identity"){
+
+          // we assume operating on the last two indices is correct
+          TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
+             "Something is wrong during tensor state variable initialization: " << size);
+          TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
+
+          for (int cell = 0; cell < dims[0]; ++cell)
+            for (int qp = 0; qp < dims[1]; ++qp)
+              for (int i = 0; i < dims[2]; ++i)
+                for (int j = 0; j < dims[3]; ++j)
+                  if (i==j) esa[ws][stateName](cell, qp, i, i) = 1.0;
+                  else      esa[ws][stateName](cell, qp, i, j) = 0.0;
+        }
+      }
+     break;
+
+     case Albany::StateStruct::NodalData :
+
+      if(have_restart){
+          *out << " from restart file." << std::endl;
+          // If we are restarting, arrays should already be initialized from exodus file
+          continue;
+      }
+      else if(pParentStruct && pParentStruct->restartDataAvailable){
+          *out << " from restarted parent state." << std::endl;
+          // If we are restarting, my parent is initialized from exodus file
+          // Copy over parent's state
+
+          for (int ws = 0; ws < numNodeWorksets; ws++)
+
+            nsa[ws][stateName] = nsa[ws][pParentStruct->name];
+
+          continue;
+      }
+      else if (init_type == "scalar")
+        *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
+      else if (init_type == "identity")
+        *out << " with initialization type 'identity'" << std::endl;
+
+      for (int ws = 0; ws < numNodeWorksets; ws++){
+
+        Albany::StateStruct::FieldDims dims;
+        nsa[ws][stateName].dimensions(dims);
+        int size = dims.size();
+
+        if (init_type == "scalar")
+
+          switch (size) {
+
+            case 1: // node scalar
+              for (int node = 0; node < dims[0]; ++node)
+                nsa[ws][stateName](node) = init_val;
+              break;
+
+            case 2: // node vector
+              for (int node = 0; node < dims[0]; ++node)
+                for (int dim = 0; dim < dims[1]; ++dim)
+                  nsa[ws][stateName](node, dim) = init_val;
+              break;
+
+            case 3: // node tensor
+              for (int node = 0; node < dims[0]; ++node)
+                for (int dim = 0; dim < dims[1]; ++dim)
+                  for (int i = 0; i < dims[2]; ++i)
+                    nsa[ws][stateName](node, dim, i) = init_val;
+              break;
+
+            default:
+              TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                       "Something is wrong during node scalar state variable initialization: " << size);
+        }
+        else if (init_type == "identity"){
+
+          // we assume operating on the last two indices is correct
+          TEUCHOS_TEST_FOR_EXCEPTION(size != 3, std::logic_error,
+             "Something is wrong during node tensor state variable initialization: " << size);
+          TEUCHOS_TEST_FOR_EXCEPT( ! (dims[1] == dims[2]) );
+
+          for (int node = 0; node < dims[0]; ++node)
+            for (int i = 0; i < dims[1]; ++i)
+              for (int j = 0; j < dims[2]; ++j)
+                if (i==j) nsa[ws][stateName](node, i, i) = 1.0;
+                else      nsa[ws][stateName](node, i, j) = 0.0;
+        }
+      }
+     break;
+
+     case Albany::StateStruct::NodalDataToElemNode :
+     case Albany::StateStruct::NodalDistParameter :
+
+      if(have_restart){
+          *out << " from restart file." << std::endl;
+          // If we are restarting, arrays should already be initialized from exodus file
+          continue;
+      }
+      else if(pParentStruct && pParentStruct->restartDataAvailable) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to restart a NodalDataToElemNode field or a NodalDistParameter field from parent structure" << std::endl);
+      }
+      else if ((init_type == "scalar")||(init_type == "identity")) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to initialize a NodalDataToElemNode field or a NodalDistParameter field. It should be initialized when building the mesh" << std::endl);
+      }
     }
   }
+  *out << std::endl;
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -773,223 +836,4 @@ Albany::StateManager::getResidResponseIDsToRequire(std::string & elementBlockNam
     i++;
   }
   return idsToRequire;
-}
-
-// ============================================= PRIVATE METHODS =============================================== //
-
-void
-Albany::StateManager::doSetStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
-                                       const Teuchos::RCP<StateInfoStruct>& stateInfoPtr)
-{
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  // Get states from STK mesh
-  Albany::StateArrays& sa = disc->getStateArrays();
-  Albany::StateArrayVec& esa = sa.elemStateArrays;
-  Albany::StateArrayVec& nsa = sa.nodeStateArrays;
-
-  int numElemWorksets = esa.size();
-  int numNodeWorksets = nsa.size();
-
-  // For each workset, loop over registered states
-
-  for (unsigned int i=0; i<stateInfoPtr->size(); i++) {
-    const std::string& stateName = (*stateInfoPtr)[i]->name;
-    const std::string& init_type = (*stateInfoPtr)[i]->initType;
-    const double init_val        = (*stateInfoPtr)[i]->initValue;
-    bool have_restart            = (*stateInfoPtr)[i]->restartDataAvailable;
-    Albany::StateStruct *pParentStruct = (*stateInfoPtr)[i]->pParentStateStruct;
-
-    // JTO: specifying zero recovers previous behavior
-    // if (stateName == "zero")
-    // {
-    //   init_val = 0.0;
-    //   init_type = "scalar";
-    // }
-
-    *out << "StateManager: initializing state:  " << stateName << "\n";
-    switch((*stateInfoPtr)[i]->entity){
-
-     case Albany::StateStruct::WorksetValue :
-     case Albany::StateStruct::ElemData :
-     case Albany::StateStruct::QuadPoint :
-     case Albany::StateStruct::ElemNode :
-
-      if(have_restart){
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from exodus file
-          continue;
-      }
-      else if(pParentStruct && pParentStruct->restartDataAvailable){
-          *out << " from restarted parent state." << std::endl;
-          // If we are restarting, my parent is initialized from exodus file
-          // Copy over parent's state
-
-          for (int ws = 0; ws < numElemWorksets; ws++)
-
-            esa[ws][stateName] = esa[ws][pParentStruct->name];
-
-          continue;
-      }
-      else if (init_type == "scalar")
-        *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
-      else if (init_type == "identity")
-        *out << " with initialization type 'identity'" << std::endl;
-
-      for (int ws = 0; ws < numElemWorksets; ws++){
-
-        Albany::StateStruct::FieldDims dims;
-        esa[ws][stateName].dimensions(dims);
-        int size = dims.size();
-
-        if (init_type == "scalar"){
-
-          switch (size) {
-
-            case 1:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                esa[ws][stateName](cell) = init_val;
-              break;
-
-            case 2:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  esa[ws][stateName](cell, qp) = init_val;
-              break;
-
-            case 3:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  for (int i = 0; i < dims[2]; ++i)
-                    esa[ws][stateName](cell, qp, i) = init_val;
-              break;
-
-            case 4:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  for (int i = 0; i < dims[2]; ++i)
-                   for (int j = 0; j < dims[3]; ++j)
-                     esa[ws][stateName](cell, qp, i, j) = init_val;
-              break;
-
-            case 5:
-              for (int cell = 0; cell < dims[0]; ++cell)
-                for (int qp = 0; qp < dims[1]; ++qp)
-                  for (int i = 0; i < dims[2]; ++i)
-                   for (int j = 0; j < dims[3]; ++j)
-                     for (int k = 0; k < dims[4]; ++k)
-                       esa[ws][stateName](cell, qp, i, j, k) = init_val;
-              break;
-
-            default:
-              TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>5, std::logic_error,
-                       "Something is wrong during scalar state variable initialization: " << size);
-          }
-
-        }
-        else if (init_type == "identity"){
-
-          // we assume operating on the last two indices is correct
-          TEUCHOS_TEST_FOR_EXCEPTION(size != 4, std::logic_error,
-             "Something is wrong during tensor state variable initialization: " << size);
-          TEUCHOS_TEST_FOR_EXCEPT( ! (dims[2] == dims[3]) );
-
-          for (int cell = 0; cell < dims[0]; ++cell)
-            for (int qp = 0; qp < dims[1]; ++qp)
-              for (int i = 0; i < dims[2]; ++i)
-                for (int j = 0; j < dims[3]; ++j)
-                  if (i==j) esa[ws][stateName](cell, qp, i, i) = 1.0;
-                  else      esa[ws][stateName](cell, qp, i, j) = 0.0;
-        }
-      }
-     break;
-
-     case Albany::StateStruct::NodalData :
-
-      if(have_restart){
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from exodus file
-          continue;
-      }
-      else if(pParentStruct && pParentStruct->restartDataAvailable){
-          *out << " from restarted parent state." << std::endl;
-          // If we are restarting, my parent is initialized from exodus file
-          // Copy over parent's state
-
-          for (int ws = 0; ws < numNodeWorksets; ws++)
-
-            nsa[ws][stateName] = nsa[ws][pParentStruct->name];
-
-          continue;
-      }
-      else if (init_type == "scalar")
-        *out << " with initialization type 'scalar' and value: " << init_val << std::endl;
-      else if (init_type == "identity")
-        *out << " with initialization type 'identity'" << std::endl;
-
-      for (int ws = 0; ws < numNodeWorksets; ws++){
-
-        Albany::StateStruct::FieldDims dims;
-        nsa[ws][stateName].dimensions(dims);
-        int size = dims.size();
-
-        if (init_type == "scalar")
-
-          switch (size) {
-
-            case 1: // node scalar
-              for (int node = 0; node < dims[0]; ++node)
-                nsa[ws][stateName](node) = init_val;
-              break;
-
-            case 2: // node vector
-              for (int node = 0; node < dims[0]; ++node)
-                for (int dim = 0; dim < dims[1]; ++dim)
-                  nsa[ws][stateName](node, dim) = init_val;
-              break;
-
-            case 3: // node tensor
-              for (int node = 0; node < dims[0]; ++node)
-                for (int dim = 0; dim < dims[1]; ++dim)
-                  for (int i = 0; i < dims[2]; ++i)
-                    nsa[ws][stateName](node, dim, i) = init_val;
-              break;
-
-            default:
-              TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                       "Something is wrong during node scalar state variable initialization: " << size);
-        }
-        else if (init_type == "identity"){
-
-          // we assume operating on the last two indices is correct
-          TEUCHOS_TEST_FOR_EXCEPTION(size != 3, std::logic_error,
-             "Something is wrong during node tensor state variable initialization: " << size);
-          TEUCHOS_TEST_FOR_EXCEPT( ! (dims[1] == dims[2]) );
-
-          for (int node = 0; node < dims[0]; ++node)
-            for (int i = 0; i < dims[1]; ++i)
-              for (int j = 0; j < dims[2]; ++j)
-                if (i==j) nsa[ws][stateName](node, i, i) = 1.0;
-                else      nsa[ws][stateName](node, i, j) = 0.0;
-        }
-      }
-     break;
-
-     case Albany::StateStruct::NodalDataToElemNode :
-     case Albany::StateStruct::NodalDistParameter :
-
-      if(have_restart){
-          *out << " from restart file." << std::endl;
-          // If we are restarting, arrays should already be initialized from exodus file
-          continue;
-      }
-      else if(pParentStruct && pParentStruct->restartDataAvailable) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to restart a NodalDataToElemNode field or a NodalDistParameter field from parent structure" << std::endl);
-      }
-      else if ((init_type == "scalar")||(init_type == "identity")) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to initialize a NodalDataToElemNode field or a NodalDistParameter field. It should be initialized when building the mesh" << std::endl);
-      }
-    }
-  }
-  *out << std::endl;
 }

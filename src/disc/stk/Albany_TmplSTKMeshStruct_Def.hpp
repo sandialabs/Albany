@@ -333,8 +333,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
+                  const unsigned int worksetSize)
 {
 
   // Create global mesh: Dim-D structured, rectangular
@@ -904,8 +903,7 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
+                  const unsigned int worksetSize)
 {
 
   SetupFieldData(commT, neq_, req, sis, worksetSize);

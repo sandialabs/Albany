@@ -22,8 +22,8 @@ namespace Albany {
     public:
 
     IossSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
                   const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~IossSTKMeshStruct();
@@ -34,8 +34,7 @@ namespace Albany {
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis = Teuchos::null);
+                  const unsigned int worksetSize);
 
     int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
     double getSolutionFieldHistoryStamp(int step) const;
@@ -48,7 +47,7 @@ namespace Albany {
     double restartDataTime() const {return m_restartDataTime;}
 
     private:
-    
+
     Ioss::Init::Initializer ioInit;
 
     Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;

@@ -19,12 +19,12 @@ namespace Aeras {
 
     public:
 
-//Constructor 
+//Constructor
     SpectralOutputSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Teuchos_Comm>& commT, 
-                  const int numDim_, const int worksetSize_, 
-                  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const int numDim_, const int worksetSize_,
+                  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
                   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
                   const int points_per_edge_, const std::string element_name_);
 
@@ -38,16 +38,15 @@ namespace Aeras {
                   const unsigned int neq_,
                   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis = Teuchos::null);
+                  const unsigned int worksetSize);
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
 
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return -1.0; }
-    
-    //Is this necessary here? 
+
+    //Is this necessary here?
 //    bool getInterleavedOrdering() const {return this->interleavedOrdering;}
 
     private:
@@ -55,19 +54,19 @@ namespace Aeras {
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParametersQuads() const;
-    
+
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParametersLines() const;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
-    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run 
-    const int numDim;  
+    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run
+    const int numDim;
     const int points_per_edge;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-     
-    //Create enum type for the different kinds of elements (currently lines and quads) 
+
+    //Create enum type for the different kinds of elements (currently lines and quads)
     enum elemType {LINE, QUAD};
     elemType ElemType;
 
