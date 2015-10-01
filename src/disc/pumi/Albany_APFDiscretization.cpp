@@ -83,7 +83,7 @@ void Albany::APFDiscretization::init()
 
   // Initialize the mesh and all data structures
   bool shouldTransferIPData = false;
-  Albany::APFDiscretization::updateMesh(shouldTransferIPData);
+  this->updateMesh(shouldTransferIPData);
 
   Teuchos::Array<std::string> layout = meshStruct->solVectorLayout;
   int index;
@@ -1353,6 +1353,12 @@ void Albany::APFDiscretization::removeNodalDataFromAPF () {
 
 void
 Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
+{
+  updateMeshBase(shouldTransferIPData);
+}
+
+void
+Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
 {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())

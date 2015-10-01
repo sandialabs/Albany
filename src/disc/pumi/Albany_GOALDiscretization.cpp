@@ -59,3 +59,13 @@ void Albany::GOALDiscretization::computeSideSets()
 {
   computeSideSetsBase();
 }
+
+void Albany::GOALDiscretization::updateMesh(bool shouldTransferIPData)
+{
+  apf::Mesh* m = goalMeshStruct->getMesh();
+  apf::FieldShape* s = goalMeshStruct->getShape();
+  apf::FieldShape* ms = m->getShape();
+  apf::changeMeshShape(m, s);
+  updateMeshBase(shouldTransferIPData);
+  apf::changeMeshShape(m, ms);
+}

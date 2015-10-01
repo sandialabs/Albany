@@ -25,11 +25,14 @@ class GOALDiscretization : public PUMIDiscretization
     //! Destructor
     ~GOALDiscretization();
 
-    // Retrieve mesh struct
+    //! Retrieve mesh struct
     Teuchos::RCP<Albany::GOALMeshStruct> getGOALMeshStruct() {return goalMeshStruct;}
 
-    // Get the number of DOFs per element for this element block
+    //! Get the number of DOFs per element for this element block
     int getNumNodesPerElem(int ebi);
+
+    //! Update the mesh
+    void updateMesh(bool shouldTransferIPData);
 
   private:
 

@@ -150,7 +150,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void detachQPData();
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(bool shouldTransferIPData);
+    virtual void updateMesh(bool shouldTransferIPData);
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
@@ -361,6 +361,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void computeNodeSetsBase();
     //! Process APF mesh for SideSets
     void computeSideSetsBase();
+    //! Base for updating the mesh
+    void updateMeshBase(bool shouldTransferIPData);
+
 
     //! Process APF mesh for Owned nodal quantitites
     virtual void computeOwnedNodesAndUnknowns();
