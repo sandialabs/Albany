@@ -27,7 +27,8 @@ CrystalPlasticityModel<EvalT, Traits>::
 CrystalPlasticityModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-    num_slip_(p->get<int>("Number of Slip Systems", 0))
+    num_slip_(p->get<int>("Number of Slip Systems", 0)),
+    crystalPlasticityNLS(num_dims_, p->get<int>("Number of Slip Systems", 0))
 {
   integration_scheme_ = EXPLICIT;
   if (p->isParameter("Integration Scheme")) {
@@ -43,7 +44,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "\n**** Error in CrystalPlasticityModel, invalid value for\"Integration Scheme\", must be \"Implicit\" or \"Explicit\".\n");
+          "\n**** Error in CrystalPlasticityModel, invalid value for \"Integration Scheme\", must be \"Implicit\" or \"Explicit\".\n");
     }
   }
   implicit_nonlinear_solver_relative_tolerance_ = p->get<double>(
@@ -148,6 +149,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
         "Hardening Exponent",
         0.0);
   }
+  
+  crystalPlasticityNLS.loadSlipSystems(slip_systems_);
+
 #ifdef PRINT_DEBUG
   std::cout << "<<< done with parameter list\n";
 #endif
@@ -512,7 +516,7 @@ computeState(typename Traits::EvalData workset,
             slip_np1);
 
         // compute Lp_np1, and Fp_np1
-        applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+	crystalPlasticityNLS.applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
 
         // compute sigma_np1, S_np1, and shear_np1 using Fp_np1
         computeStress(F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
@@ -536,7 +540,7 @@ computeState(typename Traits::EvalData workset,
       else if (integration_scheme_ == IMPLICIT) {
 
         // Evaluate quantities under the initial guess for the slip increment
-        applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+	crystalPlasticityNLS.applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
         updateHardness(slip_np1, hardness_n, hardness_np1);
         computeStress(F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
         computeResidual(
@@ -598,7 +602,7 @@ computeState(typename Traits::EvalData workset,
           }
 
           // Compute Lp_np1, and Fp_np1
-          applySlipIncrement(slip_n, slip_np1_ad, Fp_n, Lp_np1_ad, Fp_np1_ad);
+	  crystalPlasticityNLS.applySlipIncrement(slip_n, slip_np1_ad, Fp_n, Lp_np1_ad, Fp_np1_ad);
 
           // Compute hardness_np1
           updateHardness(slip_np1_ad, hardness_n, hardness_np1_ad);
@@ -714,7 +718,7 @@ computeState(typename Traits::EvalData workset,
         }
 
         // Re-evaluate everything (and propagate derivative information) with the final values of slip_np1
-        applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+	crystalPlasticityNLS.applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
         updateHardness(slip_np1, hardness_n, hardness_np1);
         computeStress(F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
         computeResidual(
@@ -880,9 +884,16 @@ updateSlipViaExplicitIntegration(ScalarT dt,
 
 //------------------------------------------------------------------------------
 
-template<typename EvalT, typename Traits>
-template<typename ArgT>
-void CrystalPlasticityModel<EvalT, Traits>::
+// template<typename EvalT, typename Traits>
+// template<typename ArgT>
+// void CrystalPlasticityModel<EvalT, Traits>::
+// applySlipIncrement(Intrepid::Vector<ScalarT> const & slip_n,
+//     Intrepid::Vector<ArgT> const & slip_np1,
+//     Intrepid::Tensor<ScalarT> const & Fp_n,
+//     Intrepid::Tensor<ArgT> & Lp_np1,
+//     Intrepid::Tensor<ArgT> & Fp_np1) const
+template<typename ArgT, typename ScalarT>
+void CrystalPlasticityNLS::
 applySlipIncrement(Intrepid::Vector<ScalarT> const & slip_n,
     Intrepid::Vector<ArgT> const & slip_np1,
     Intrepid::Tensor<ScalarT> const & Fp_n,
@@ -1058,7 +1069,7 @@ constructMatrixFiniteDifference(ScalarT dt,
       slip_np1_temp[s] = slip_np1[s];
     }
     slip_np1_temp[column] += epsilon;
-    applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
+    crystalPlasticityNLS.applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
     updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
     computeStress(
         F_np1,
@@ -1080,7 +1091,7 @@ constructMatrixFiniteDifference(ScalarT dt,
       slip_np1_temp[s] = slip_np1[s];
     }
     slip_np1_temp[column] -= epsilon;
-    applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
+    crystalPlasticityNLS.applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
     updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
     computeStress(
         F_np1,
@@ -1162,7 +1173,7 @@ lineSearch(ScalarT dt,
     try {
 
       // find residual for alpha_k
-      applySlipIncrement(slip_n, slip_np1_k, Fp_n, Lp_np1_k, Fp_np1_k);
+      crystalPlasticityNLS.applySlipIncrement(slip_n, slip_np1_k, Fp_n, Lp_np1_k, Fp_np1_k);
       updateHardness(slip_np1_k, hardness_n, hardness_np1_k);
       computeStress(F_np1, Fp_np1_k, sigma_np1_k, S_np1_k, shear_np1_k);
       computeResidual(
@@ -1227,7 +1238,7 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
   E = 0.5 * (Intrepid::transpose(Fe) * Fe - I);
   S = Intrepid::dotdot(C_, E);
   sigma = (1.0 / Intrepid::det(F)) * F * S * Intrepid::transpose(F);
-  confirmTensorSanity(
+  crystalPlasticityNLS.confirmTensorSanity(
       sigma,
       "Cauchy stress in CrystalPlasticityModel::computeStress()");
 
@@ -1239,19 +1250,23 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
 
 //------------------------------------------------------------------------------
 
-template<typename EvalT, typename Traits>
+// template<typename EvalT, typename Traits>
+// template<typename ArgT>
+// void CrystalPlasticityModel<EvalT, Traits>::
+// confirmTensorSanity(Intrepid::Tensor<ArgT> const & input,
+//     std::string const & message) const
 template<typename ArgT>
-void CrystalPlasticityModel<EvalT, Traits>::
+void CrystalPlasticityNLS::
 confirmTensorSanity(Intrepid::Tensor<ArgT> const & input,
     std::string const & message) const
-    {
+{
   int dim = input.get_dimension();
   for (int i = 0; i < dim; i++) {
     for (int j = 0; j < dim; j++) {
       if (!boost::math::isfinite(
           Sacado::ScalarValue<ArgT>::eval(input(i, j)))) {
         std::string msg =
-            "**** Invalid data detected in CrystalPlasticityModel::confirmTensorSanity(): "
+            "**** Invalid data detected in CrystalPlasticityNLS::confirmTensorSanity(): "
                 + message;
         TEUCHOS_TEST_FOR_EXCEPTION(
             !boost::math::isfinite(
