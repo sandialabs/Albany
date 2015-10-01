@@ -885,8 +885,9 @@ updateSlipViaExplicitIntegration(ScalarT dt,
 
 //------------------------------------------------------------------------------
 
-template<typename ArgT, typename ScalarT>
-void CrystalPlasticityNLS::
+template<typename ScalarT>
+template<typename ArgT>
+void CrystalPlasticityNLS<ScalarT>::
 applySlipIncrement(Intrepid::Vector<ScalarT> const & slip_n,
     Intrepid::Vector<ArgT> const & slip_np1,
     Intrepid::Tensor<ScalarT> const & Fp_n,
@@ -921,8 +922,9 @@ applySlipIncrement(Intrepid::Vector<ScalarT> const & slip_n,
 
 //------------------------------------------------------------------------------
 
-template<typename ArgT, typename ScalarT>
-void CrystalPlasticityNLS::
+template<typename ScalarT>
+template<typename ArgT>
+void CrystalPlasticityNLS<ScalarT>::
 updateHardness(Intrepid::Vector<ArgT> const & slip_np1,
     Intrepid::Vector<ScalarT> const & hardness_n,
     Intrepid::Vector<ArgT> & hardness_np1) const
@@ -960,8 +962,9 @@ updateHardness(Intrepid::Vector<ArgT> const & slip_np1,
 
 //------------------------------------------------------------------------------
 
-template<typename ArgT, typename ScalarT>
-void CrystalPlasticityNLS::
+template<typename ScalarT>
+template<typename ArgT>
+void CrystalPlasticityNLS<ScalarT>::
 computeResidual(ScalarT dt,
     Intrepid::Vector<ScalarT> const & slip_n,
     Intrepid::Vector<ArgT> const & slip_np1,
@@ -1206,8 +1209,9 @@ lineSearch(ScalarT dt,
 
 //------------------------------------------------------------------------------
 
-template<typename ArgT, typename ScalarT>
-void CrystalPlasticityNLS::
+template<typename ScalarT>
+template<typename ArgT>
+void CrystalPlasticityNLS<ScalarT>::
 computeStress(Intrepid::Tensor<ScalarT> const & F,
     Intrepid::Tensor<ArgT> const & Fp,
     Intrepid::Tensor<ArgT> & sigma,
@@ -1240,8 +1244,9 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
 
 //------------------------------------------------------------------------------
 
+template<typename ScalarT>
 template<typename ArgT>
-void CrystalPlasticityNLS::
+void CrystalPlasticityNLS<ScalarT>::
 confirmTensorSanity(Intrepid::Tensor<ArgT> const & input,
     std::string const & message) const
 {
