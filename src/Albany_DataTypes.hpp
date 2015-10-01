@@ -87,7 +87,6 @@ typedef Sacado::Fad::DFad<double> TanFadType;
 
 
 //Kokkos includes
-#include "Kokkos_SerialNode.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
 //Tpetra typedefs
@@ -99,12 +98,6 @@ typedef int                                         GO;
 #endif
 typedef int                                         LO;
 typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device> KokkosNode;
-
-//typedef Kokkos::DefaultNode::DefaultNodeType KokkosNode; // Whatever is Trilinos compiled to use?
-//typedef Kokkos::SerialNode KokkosNode; // No threading
-//typedef Kokkos::TPINode KokkosNode; // custom Pthreads
-//typedef Kokkos::TBBNode KokkosNode; // Intel TBB
-//typedef Kokkos::ThrustNode KokkosNode; // C++ Cuda wtapper
 
 typedef Teuchos::Comm<int>                          Teuchos_Comm;
 typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
