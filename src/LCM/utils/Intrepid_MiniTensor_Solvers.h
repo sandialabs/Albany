@@ -40,7 +40,7 @@ computeFADInfo(
 ///
 /// Function base class that defines the interface to Mini Solvers.
 ///
-template <typename Function_Derived>
+template<typename Function_Derived>
 class Function_Base
 {
 public:
@@ -49,7 +49,7 @@ public:
   /// By default use merit function 0.5 dot(gradient, gradient)
   /// as the target to optimize if only the gradient is provided.
   ///
-  template <typename T, Index N = DYNAMIC>
+  template<typename T, Index N = DYNAMIC>
   T
   value(Function_Derived & f, Vector<T, N> const & x)
   {
@@ -67,7 +67,7 @@ public:
   ///
   /// By default compute gradient with AD from value().
   ///
-  template <typename T, Index N = DYNAMIC>
+  template<typename T, Index N = DYNAMIC>
   Vector<T, N>
   gradient(Function_Derived & f, Vector<T, N> const & x)
   {
@@ -101,7 +101,7 @@ public:
   ///
   /// By default compute Hessian with AD from gradient().
   ///
-  template <typename T, Index N = DYNAMIC>
+  template<typename T, Index N = DYNAMIC>
   Tensor<T, N>
   hessian(Function_Derived & f, Vector<T, N> const & x)
   {
@@ -137,6 +137,27 @@ public:
 };
 
 ///
+/// Base class for stepping method
+///
+template<typename Step_Derived>
+class Step_Base
+{
+public:
+  template<typename FN, typename T, Index N = DYNAMIC>
+  Vector<T, N>
+  step(Step_Derived & step, FN & fn, Vector<T, N> const & x);
+};
+
+///
+/// Plain Newton Step
+///
+template<typename FN, typename T, Index N = DYNAMIC>
+class NewtonStep: public Step_Base<NewtonStep<FN, T, N>>
+{
+
+};
+
+///
 /// Nonlinear Method Base Class
 ///
 template<typename NLS, typename T, Index N = DYNAMIC>
@@ -162,69 +183,102 @@ public:
 
   void
   setMaxNumIterations(Index const mni)
-  {max_num_iter_ = mni;}
+  {
+    max_num_iter_ = mni;
+  }
 
   Index
   getMaxNumIterations()
-  {return max_num_iter_;}
+  {
+    return max_num_iter_;
+  }
 
   Index
   getNumIterations()
-  {return num_iter_;}
+  {
+    return num_iter_;
+  }
 
   void
   setRelativeTolerance(T const rt)
-  {rel_tol_ = rt;}
+  {
+    rel_tol_ = rt;
+  }
 
   T
   getRelativeTolerance() const
-  {return rel_tol_;}
+  {
+    return rel_tol_;
+  }
 
   T
   getRelativeError() const
-  {return rel_error_;}
+  {
+    return rel_error_;
+  }
 
   void
   setAbsoluteTolerance(T const at)
-  {abs_tol_ = at;}
+  {
+    abs_tol_ = at;
+  }
 
   T
   getAbsoluteTolerance() const
-  {return abs_tol_;}
+  {
+    return abs_tol_;
+  }
 
   T
   getAbsoluteError() const
-  {return abs_error_;}
+  {
+    return abs_error_;
+  }
 
   bool
   isConverged() const
-  {return converged_;}
+  {
+    return converged_;
+  }
 
   T
   getInitialResidualNorm() const
-  {return initial_norm_;}
+  {
+    return initial_norm_;
+  }
 
   Vector<T, N>
   getInitialGuess() const
-  {return initial_guess_;}
+  {
+    return initial_guess_;
+  }
 
   Vector<T, N>
   getFinalSolution() const
-  {return final_soln_;}
+  {
+    return final_soln_;
+  }
 
   T
   getFinalValue() const
-  {return final_value_;}
+  {
+    return final_value_;
+  }
 
   Vector<T, N>
   getFinalGradient()
-  {return final_gradient_;}
+  {
+    return final_gradient_;
+  }
 
   Tensor<T, N>
   getFinalHessian()
-  {return final_hessian_;}
+  {
+    return final_hessian_;
+  }
 
-  void printReport(std::ostream & os)
+  void
+  printReport(std::ostream & os)
   {
     std::string const
     cs = isConverged() == true ? "YES" : "NO";
@@ -257,7 +311,9 @@ public:
 protected:
   void
   initConvergenceCriterion(T const in)
-  {initial_norm_ = in;}
+  {
+    initial_norm_ = in;
+  }
 
   void
   updateConvergenceCriterion(T const abs_error)
@@ -335,6 +391,220 @@ protected:
   }
 
 protected:
+  Index
+  max_num_iter_{128};
+
+  Index
+  num_iter_{0};
+
+  T
+  rel_tol_{1.0e-10};
+
+  T
+  rel_error_{1.0};
+
+  T
+  abs_tol_{1.0e-10};
+
+  T
+  abs_error_{1.0};
+
+  T
+  initial_norm_{1.0};
+
+  bool
+  converged_{false};
+
+  Vector<T, N>
+  initial_guess_;
+
+  Vector<T, N>
+  final_soln_;
+
+  T
+  final_value_;
+
+  Vector<T, N>
+  final_gradient_;
+
+  Tensor<T, N>
+  final_hessian_;
+};
+
+///
+/// Optimization Method Class
+///
+template<typename FN, typename STEP, typename T, Index N = DYNAMIC>
+class OptimizationMethod
+{
+public:
+
+  OptimizationMethod()
+  {
+    STATIC_ASSERT(Sacado::IsADType<T>::value == false, NO_FAD_ALLOWED);
+  }
+
+  void
+  setMaxNumIterations(Index const mni)
+  {
+    max_num_iter_ = mni;
+  }
+
+  Index
+  getMaxNumIterations()
+  {
+    return max_num_iter_;
+  }
+
+  Index
+  getNumIterations()
+  {
+    return num_iter_;
+  }
+
+  void
+  setRelativeTolerance(T const rt)
+  {
+    rel_tol_ = rt;
+  }
+
+  T
+  getRelativeTolerance() const
+  {
+    return rel_tol_;
+  }
+
+  T
+  getRelativeError() const
+  {
+    return rel_error_;
+  }
+
+  void
+  setAbsoluteTolerance(T const at)
+  {
+    abs_tol_ = at;
+  }
+
+  T
+  getAbsoluteTolerance() const
+  {
+    return abs_tol_;
+  }
+
+  T
+  getAbsoluteError() const
+  {
+    return abs_error_;
+  }
+
+  bool
+  isConverged() const
+  {
+    return converged_;
+  }
+
+  T
+  getInitialResidualNorm() const
+  {
+    return initial_norm_;
+  }
+
+  Vector<T, N>
+  getInitialGuess() const
+  {
+    return initial_guess_;
+  }
+
+  Vector<T, N>
+  getFinalSolution() const
+  {
+    return final_soln_;
+  }
+
+  T
+  getFinalValue() const
+  {
+    return final_value_;
+  }
+
+  Vector<T, N>
+  getFinalGradient()
+  {
+    return final_gradient_;
+  }
+
+  Tensor<T, N>
+  getFinalHessian()
+  {
+    return final_hessian_;
+  }
+
+  void
+  solve(FN & fn, Vector<T, N> & x);
+
+  void
+  printReport(std::ostream & os);
+
+private:
+  void
+  initConvergenceCriterion(T const in)
+  {
+    initial_norm_ = in;
+  }
+
+  void
+  updateConvergenceCriterion(T const abs_error);
+
+  bool
+  continueSolve() const;
+
+  void
+  increaseIterationCounter()
+  {
+    ++num_iter_;
+  }
+
+  void
+  setInitialGuess(Vector<T, N> const & x)
+  {
+    initial_guess_ = x;
+  }
+
+  void
+  setFinalSolution(Vector<T, N> const & x)
+  {
+    final_soln_ = x;
+  }
+
+  void
+  setFinalValue(FN & fn, Vector<T, N> const & x)
+  {
+    final_value_ = fn.value(x);
+  }
+
+  void
+  setFinalGradient(FN & fn, Vector<T, N> const & x)
+  {
+    final_gradient_ = fn.gradient(x);
+  }
+
+  void
+  setFinalHessian(FN & fn, Vector<T, N> const & x)
+  {
+    final_hessian_ = fn.hessian(x);
+  }
+
+  void
+  recordFinals(FN & fn, Vector<T, N> const & x)
+  {
+    setFinalSolution(x);
+    setFinalValue(fn, x);
+    setFinalGradient(fn, x);
+    setFinalHessian(fn, x);
+  }
+
+private:
   Index
   max_num_iter_{128};
 

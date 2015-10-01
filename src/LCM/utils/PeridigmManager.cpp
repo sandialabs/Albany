@@ -1076,6 +1076,13 @@ void LCM::PeridigmManager::evaluateInternalForce()
     peridigm->computeInternalForce();
 }
 
+void LCM::PeridigmManager::evaluateTangentStiffnessMatrix()
+{
+  if(hasPeridynamics)
+    peridigm->evaluateTangentStiffnessMatrix();
+}
+
+
 double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
 {
   double force(0.0);

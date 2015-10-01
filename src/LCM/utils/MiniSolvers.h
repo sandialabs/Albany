@@ -16,7 +16,7 @@ namespace LCM {
 //
 //
 //
-template <typename S>
+template<typename S>
 class SquareRootNLS : public Intrepid::Function_Base<SquareRootNLS<S>>
 {
 public:
@@ -32,7 +32,7 @@ public:
   NAME = "Square Root";
 
   // Default value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -40,7 +40,7 @@ public:
   }
 
   // Explicit gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
   {
@@ -58,7 +58,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
@@ -73,7 +73,7 @@ private:
 //
 //
 //
-template <typename S>
+template<typename S>
 class QuadraticNLS : public Intrepid::Function_Base<QuadraticNLS<S>>
 {
 public:
@@ -89,7 +89,7 @@ public:
   NAME = "Quadratic";
 
   // Default value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -97,7 +97,7 @@ public:
   }
 
   // Explicit gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
   {
@@ -116,7 +116,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
@@ -137,7 +137,7 @@ private:
 //
 //
 //
-template <typename S>
+template<typename S>
 class GaussianNLS : public Intrepid::Function_Base<GaussianNLS<S>>
 {
 public:
@@ -153,7 +153,7 @@ public:
   NAME = "Inverted Gaussian";
 
   // Default value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -161,7 +161,7 @@ public:
   }
 
   // Explicit gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
   {
@@ -189,7 +189,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
@@ -210,7 +210,7 @@ private:
 //
 //
 //
-template <typename S>
+template<typename S>
 class BananaNLS : public Intrepid::Function_Base<BananaNLS<S>>
 {
 public:
@@ -226,7 +226,7 @@ public:
   NAME = "Rosenbrock's Banana";
 
   // Default value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -234,7 +234,7 @@ public:
   }
 
   // Explicit gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
   {
@@ -253,7 +253,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
@@ -265,7 +265,7 @@ public:
 //
 //
 //
-template <typename S>
+template<typename S>
 class MatyasNLS : public Intrepid::Function_Base<MatyasNLS<S>>
 {
 public:
@@ -281,7 +281,7 @@ public:
   NAME = "Matyas";
 
   // Default value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -289,7 +289,7 @@ public:
   }
 
   // Explicit gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
   {
@@ -308,7 +308,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
@@ -320,7 +320,7 @@ public:
 //
 //
 //
-template <typename S>
+template<typename S>
 class McCormickNLS : public Intrepid::Function_Base<McCormickNLS<S>>
 {
 public:
@@ -336,7 +336,7 @@ public:
   NAME = "McCormick";
 
   // Default value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -344,7 +344,7 @@ public:
   }
 
   // Explicit gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
   {
@@ -363,7 +363,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
@@ -375,7 +375,7 @@ public:
 //
 //
 //
-template <typename S>
+template<typename S>
 class StyblinskiTangNLS : public Intrepid::Function_Base<StyblinskiTangNLS<S>>
 {
 public:
@@ -391,7 +391,7 @@ public:
   NAME = "Styblinski-Tang";
 
   // Default value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -399,7 +399,7 @@ public:
   }
 
   // Explicit gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x) const
   {
@@ -418,7 +418,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
@@ -430,7 +430,7 @@ public:
 //
 // Define some nonlinear functions (NLF) to test nonlinear optimization methods.
 //
-template <typename S>
+template<typename S>
 class Paraboloid : public Intrepid::Function_Base<Paraboloid<S>>
 {
 public:
@@ -446,7 +446,7 @@ public:
   NAME = "Paraboloid";
 
   // Explicit value.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
@@ -462,7 +462,7 @@ public:
   }
 
   // Default AD gradient.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x)
   {
@@ -470,7 +470,7 @@ public:
   }
 
   // Default AD hessian.
-  template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {

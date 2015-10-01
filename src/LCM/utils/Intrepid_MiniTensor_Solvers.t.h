@@ -99,6 +99,97 @@ computeFADInfo(
 //
 //
 //
+template<typename FN, typename STEP, typename T, Index N>
+void
+OptimizationMethod<FN, STEP, T, N>::
+printReport(std::ostream & os)
+{
+  std::string const
+  cs = isConverged() == true ? "YES" : "NO";
+
+  //std::string const
+  //cs = isConverged() == true ? "\U0001F60A" : "\U0001F623";
+
+  os << "\n\n";
+  os << "Method     : " << STEP::NAME << '\n';
+  os << "System     : " << FN::NAME << '\n';
+  os << "Converged  : " << cs << '\n';
+  os << "Max Iters  : " << getMaxNumIterations() << '\n';
+  os << "Iters Taken: " << getNumIterations() << '\n';
+
+  os << std::scientific << std::setprecision(16);
+
+  os << "Initial |R|: " << std::setw(24) << getInitialResidualNorm() << '\n';
+  os << "Abs Tol    : " << std::setw(24) << getAbsoluteTolerance() << '\n';
+  os << "Abs Error  : " << std::setw(24) << getAbsoluteError() << '\n';
+  os << "Rel Tol    : " << std::setw(24) << getRelativeTolerance() << '\n';
+  os << "Rel Error  : " << std::setw(24) << getRelativeError() << '\n';
+  os << "Initial X  : " << getInitialGuess() << '\n';
+  os << "Final X    : " << getFinalSolution() << '\n';
+  os << "f(X)       : " << std::setw(24) << getFinalValue() << '\n';
+  os << "Df(X)      : " << getFinalGradient() << '\n';
+  os << "DDf(X)     : " << getFinalHessian() << '\n';
+  os << '\n';
+
+  return;
+}
+
+//
+//
+//
+template<typename FN, typename STEP, typename T, Index N>
+void
+OptimizationMethod<FN, STEP, T, N>::
+updateConvergenceCriterion(T const abs_error)
+{
+  abs_error_ = abs_error;
+  rel_error_ = initial_norm_ > 0.0 ? abs_error_ / initial_norm_ : 0.0;
+
+  bool const
+  converged_absolute = abs_error_ <= abs_tol_;
+
+  bool const
+  converged_relative = rel_error_ <= rel_tol_;
+
+  converged_ = converged_absolute || converged_relative;
+
+  return;
+}
+
+//
+//
+//
+template<typename FN, typename STEP, typename T, Index N>
+bool
+OptimizationMethod<FN, STEP, T, N>::
+continueSolve() const
+{
+  bool const
+  is_max_iter = num_iter_ >= max_num_iter_;
+
+  bool const
+  end_solve = is_max_iter == true || converged_ == true;
+
+  bool const
+  continue_solve = end_solve == false;
+
+  return continue_solve;
+}
+
+//
+//
+//
+template<typename FN, typename STEP, typename T, Index N>
+void
+OptimizationMethod<FN, STEP, T, N>::
+solve(FN & fn, Vector<T, N> & x)
+{
+  return;
+}
+
+//
+//
+//
 template<typename NLS, typename T, Index N>
 void
 NewtonMethod<NLS, T, N>::

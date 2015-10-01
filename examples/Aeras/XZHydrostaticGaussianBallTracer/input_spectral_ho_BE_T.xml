@@ -41,7 +41,7 @@
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic_spectral_ho_be.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic_gb_spectral_ho_be_np3.exo"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Cubature Degree" type="int" value="4"/>
     <Parameter name="Element Degree" type="int" value="2"/>
