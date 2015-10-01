@@ -16,7 +16,6 @@
        evaluators/FELIX_HydrologyMelting.cpp
        evaluators/FELIX_HydrologyResidual.cpp
        evaluators/FELIX_HydrologyRhs.cpp
-       evaluators/FELIX_QuadPointsToCellInterpolation.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
        evaluators/FELIX_ThicknessResid.cpp
@@ -83,8 +82,6 @@ ENDIF()
        evaluators/FELIX_HydrologyResidual_Def.hpp
        evaluators/FELIX_HydrologyRhs.hpp
        evaluators/FELIX_HydrologyRhs_Def.hpp
-       evaluators/FELIX_QuadPointsToCellInterpolation.hpp
-       evaluators/FELIX_QuadPointsToCellInterpolation_Def.hpp
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp

@@ -101,7 +101,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #endif
 
   int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
-  sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, sis, ws_size, Teuchos::null);
+  sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, sis, ws_size);
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->universal_part()) & stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->locally_owned_part());
   int numCells = stk::mesh::count_selected_entities(select_owned_in_part, sideSetMeshStructs["basalside"]->bulkData->buckets(stk::topology::ELEMENT_RANK));
