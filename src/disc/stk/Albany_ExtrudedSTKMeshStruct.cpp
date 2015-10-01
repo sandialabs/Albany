@@ -85,10 +85,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
 #ifdef ALBANY_SEACAS
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-  if (params->isSublist("Side Sets Output"))
-  {
-    params2D->set<std::string>("Exodus Output File Name",params->sublist("Side Sets Output").sublist("basalside").get<std::string>("Exodus Output File Name"));
-  }
 
   basalMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
 
@@ -164,8 +160,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
 
-  // Add side set mesh specs
-  this->meshSpecs[0]->sideSetMeshSpecs["basalside"] = basalMeshStruct->getMeshSpecs();
 }
 
 Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()

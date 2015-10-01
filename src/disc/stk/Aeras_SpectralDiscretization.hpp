@@ -319,18 +319,6 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
     getSphereVolume() const;
 
-    Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported in spectral discretization.\n");
-      return Teuchos::null;
-    }
-
-    Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported in spectral discretization.\n");
-      return Teuchos::null;
-    }
-
     //! Print the coordinates for debugging
     void printCoords() const;
     void printConnectivity(bool printEdges=false) const;
@@ -338,11 +326,6 @@ namespace Aeras
 
     //! Get stateArrays
     Albany::StateArrays& getStateArrays() {return stateArrays;}
-    Albany::StateArrays& getSideSetStateArrays (const std::string& /*sideSet*/)
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true,std::logic_error,"Error! Functionality not supported by spectral discretization.\n");
-      return stateArrays; // to avoid compilation warning
-    }
 
     //! Get nodal parameters state info struct
     const Albany::StateInfoStruct& getNodalParameterSIS() const

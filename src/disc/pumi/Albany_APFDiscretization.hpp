@@ -129,18 +129,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     // Retrieve mesh struct
     Teuchos::RCP<Albany::APFMeshStruct> getAPFMeshStruct() {return meshStruct;}
 
-    Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Albany::APFDiscretization::getSideSetDiscretizations() not implemented yet");
-      return Teuchos::null;
-    }
-
-    //! Get the map side_id->side_set_elem_id
-    Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Albany::APFDiscretization::getSideIdToSideSetElemIdMap() not implemented yet");
-      return Teuchos::null;
-    }
-
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return meshStruct->hasRestartSolution;}
 

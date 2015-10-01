@@ -71,8 +71,6 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
     }
 #endif
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
   ScalarT ff = 0;
   if (homotopyParam!=0 && *homotopyParam!=0)
     ff = pow(10.0, -10.0*(*homotopyParam));
@@ -88,16 +86,11 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
       field_norm(cell,node) = std::sqrt (norm + ff);
     }
   }
-#else
-  Kokkos::parallel_for (workset.numCells, *this);
-#endif
 }
 
 template<typename EvalT, typename Traits>
 void FieldNorm<EvalT, Traits>::operator() (const int i) const
 {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
   ScalarT ff = 0;
   if (homotopyParam!=0 && *homotopyParam!=0)
     ff = pow(10.0, -10.0*(*homotopyParam));
@@ -110,9 +103,6 @@ void FieldNorm<EvalT, Traits>::operator() (const int i) const
       norm += std::pow(field(i,node,dim),2);
     field_norm(i,node) = std::sqrt (norm + ff);
   }
-#else
-  Kokkos::parallel_for (workset.numCells, *this);
-#endif
 }
 
 } // Namespace FELIX

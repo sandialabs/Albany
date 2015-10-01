@@ -39,7 +39,6 @@ class SideStruct {
 
   public:
 
-    GO side_GID; // the global id of the side in the mesh
     GO elem_GID; // the global id of the element containing the side
     int elem_LID; // the local id of the element containing the side
     int elem_ebIndex; // The index of the element block that contains the element
@@ -67,8 +66,6 @@ struct WorksetArray {
 
 class AbstractDiscretization {
   public:
-
-    typedef std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > SideSetDiscretizations;
 
     //! Constructor
     AbstractDiscretization() {};
@@ -176,12 +173,6 @@ class AbstractDiscretization {
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
-
-    //! Get sideSet discretizations map
-    virtual Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const = 0;
-
-    //! Get the map side_id->side_set_elem_id
-    virtual Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const = 0;
 
     //! Get stateArrays
     virtual Albany::StateArrays& getStateArrays() = 0;

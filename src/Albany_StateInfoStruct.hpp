@@ -71,8 +71,6 @@ typedef std::vector<StateArray> StateArrayVec;
     // but the user must enforce this intention.
     bool sepEvalsByEB;
     const Intrepid::EIntrepidPLPoly cubatureRule;
-
-    std::map<std::string,Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > > sideSetMeshSpecs;
   };
 
 //! Container to get state info from StateManager to STK. Made into a struct so
