@@ -42,12 +42,6 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
         Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
         StateManager& stateMgr);
 
-    //! build the pde instantiations for the adjoint problem
-    void buildAdjointProblem(
-        Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
-        StateManager& stateMgr,
-        const Teuchos::RCP<Teuchos::ParameterList>& params);
-
     //! build evaluators
     Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> > buildEvaluators(
         PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -93,18 +87,6 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     void constructNeumannEvaluators(
         const Teuchos::RCP<MeshSpecsStruct>& meshSpecs);
 
-    //! get the adjoint field manager
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > getAdjointFieldManager() {return adjFM;}
-
-    //! get the adjoint quantity of interest field manager
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > getAdjointQoIFieldManager() {return adjQFM;}
-
-    //! get the adjoint Dirichlet condition field manager
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
-      getAdjointDirichletFieldManager() {return adjDFM;}
-
   protected:
 
     //! number of spatial dimensions
@@ -115,20 +97,6 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-
-    //! should the adjoint solve be enriched?
-    bool enrichedAdjoint;
-
-    //! field managers for adjoint volumetric fill
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > adjFM;
-
-    //! field manager for quantity of interest fill
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<
-      PHAL::AlbanyTraits> > > adjQFM;
-
-    //! field manager for Dirichlet conditions fill
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > adjDFM;
 
     //! old state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
@@ -161,6 +129,12 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 #include "MechanicsResidual.hpp"
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
+
+#include "GOAL_ComputeHierarchicBasis.hpp"
+
+#include <apf.h>
+#include <apfMesh.h>
+#include <apfShape.h>
 
 template<typename EvalT>
 Teuchos::RCP<const PHX::FieldTag> Albany::GOALMechanicsProblem::
@@ -199,17 +173,6 @@ constructEvaluators(
   if (matModelName == "Linear Elastic")
     smallStrain = true;
 
-  // define cell topologies
-  RCP<shards::CellTopology> cellType =
-    rcp(new shards::CellTopology(&meshSpecs.ctd));
-
-  // get the intrepid basis for the given cell topology
-  Basis basis = Albany::getIntrepidBasis(meshSpecs.ctd);
-
-  // get the cubature rules for given cell topology
-  CubatureFactory cubFctry;
-  Cubature cubature = cubFctry.create(*cellType, meshSpecs.cubatureDegree);
-
   // name variables
   ArrayRCP<std::string> dofNames(1);
   ArrayRCP<std::string> dofDotNames(1);
@@ -218,12 +181,19 @@ constructEvaluators(
   dofNames[0] = "Displacement";
   residNames[0] = dofNames[0] + " Residual";
 
+  // do some work to create a data layout
+  int pOrder = meshSpecs.polynomialOrder;
+  int qOrder = meshSpecs.cubatureDegree;
+  apf::Mesh::Type type = apf::Mesh::simplexTypes[numDims];
+  apf::FieldShape* shape = apf::getHierarchic(pOrder);
+  apf::EntityShape* eShape = shape->getEntityShape(type);
+
   // create a data layout
-  numDims = cubature->getDimension();
-  int numNodes = basis->getCardinality();
-  int numVertices = numNodes;
-  int numQPs = cubature->getNumPoints();
+  int numNodes = eShape->countNodes();
+  int numVertices = numDims + 1; // simplex assumption
+  int numQPs = apf::countGaussPoints(type, qOrder);
   const int worksetSize = meshSpecs.worksetSize;
+
   dl = rcp(new Albany::Layouts(
         worksetSize, numVertices, numNodes, numQPs, numDims));
 
@@ -245,13 +215,6 @@ constructEvaluators(
       evalUtils.constructDOFVecGradInterpolationEvaluator(dofNames[0]));
 
   fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
-
-  fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructComputeBasisFunctionsEvaluator(
-        cellType, basis, cubature));
-
-  fm0.template registerEvaluator<EvalT>(
       evalUtils.constructScatterResidualEvaluator(true, residNames));
 
   // store velocity and acceleration
@@ -271,6 +234,27 @@ constructEvaluators(
   std::string mech_source = (*fnm)["Mechanical_Source"];
   std::string defgrad = (*fnm)["F"];
   std::string J = (*fnm)["J"];
+
+  { // hierarchic basis functions
+
+    // input
+    RCP<ParameterList> p = rcp(new ParameterList("Compute Hierarchic Basis"));
+    p->set<RCP<Albany::Application> >("Application", this->getApplication());
+    p->set<int>("Cubature Degree", meshSpecs.cubatureDegree);
+    p->set<int>("Polynomial Order", meshSpecs.polynomialOrder);
+
+    // output
+    p->set<std::string>("Jacobian Det Name", "Jacobian Det");
+    p->set<std::string>("Weights Name", "Weights");
+    p->set<std::string>("BF Name", "BF");
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Gradient BF Name", "Grad BF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+
+    // register evaluator
+    ev = rcp(new GOAL::ComputeHierarchicBasis<EvalT, PHAL::AlbanyTraits>(*p, dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // time
 
@@ -417,10 +401,6 @@ constructEvaluators(
   }
   else if (fmChoice == Albany::BUILD_RESPONSE_FM)
   {
-    // this may break other field manager scalar responses
-    PHX::Tag<typename EvalT::ScalarT> tag("Scatter", dl->dummy);
-    fm0.requireField<EvalT>(tag);
-
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);

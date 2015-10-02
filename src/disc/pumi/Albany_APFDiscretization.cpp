@@ -63,16 +63,27 @@ Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct>
   interleavedOrdering(meshStruct_->interleavedOrdering),
   outputInterval(0)
 {
-  meshOutput = PUMIOutput::create(meshStruct, commT_);
+}
+
+Albany::APFDiscretization::~APFDiscretization()
+{
+  delete meshOutput;
+  apf::destroyGlobalNumbering(globalNumbering);
+  apf::destroyGlobalNumbering(elementNumbering);
+}
+
+void Albany::APFDiscretization::init()
+{
+  meshOutput = PUMIOutput::create(meshStruct, commT);
 #if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(commT_);
+  comm = Albany::createEpetraCommFromTeuchosComm(commT);
 #endif
   globalNumbering = 0;
   elementNumbering = 0;
 
   // Initialize the mesh and all data structures
   bool shouldTransferIPData = false;
-  Albany::APFDiscretization::updateMesh(shouldTransferIPData);
+  this->updateMesh(shouldTransferIPData);
 
   Teuchos::Array<std::string> layout = meshStruct->solVectorLayout;
   int index;
@@ -101,13 +112,7 @@ Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct>
   else
     apf::zeroField(
       meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
-}
 
-Albany::APFDiscretization::~APFDiscretization()
-{
-  delete meshOutput;
-  apf::destroyGlobalNumbering(globalNumbering);
-  apf::destroyGlobalNumbering(elementNumbering);
 }
 
 Teuchos::RCP<const Tpetra_Map>
@@ -610,8 +615,43 @@ int Albany::APFDiscretization::nonzeroesPerRow(const int neq) const
 void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
+  computeOwnedNodesAndUnknownsBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
+{
+  apf::Mesh* m = meshStruct->getMesh();
+  computeOverlapNodesAndUnknownsBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeGraphs()
+{
+  apf::Mesh* m = meshStruct->getMesh();
+  computeGraphsBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeWorksetInfo()
+{
+  apf::Mesh* m = meshStruct->getMesh();
+  computeWorksetInfoBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeNodeSets()
+{
+  computeNodeSetsBase();
+}
+
+void Albany::APFDiscretization::computeSideSets()
+{
+  computeSideSetsBase();
+}
+
+void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
+    apf::FieldShape* shape)
+{
+  apf::Mesh* m = meshStruct->getMesh();
   if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
-  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
+  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned",shape));
   apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
   numOwnedNodes = ownedNodes.getSize();
@@ -635,14 +675,19 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
     new Epetra_Map(-1, indices.size(), convert(indices)->getRawPtr(), 0,
                    *comm));
 #endif
+
+  std::cout << "computeOwnedNodesAndUnknownsBase\n";
+  std::cout << "Field: " << shape->getName() << std::endl;
+  std::cout << "numOwnedNodes: " << numOwnedNodes << std::endl;
 }
 
-void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
+void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
+    apf::FieldShape* shape)
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Numbering* overlap = m->findNumbering("overlap");
   if (overlap) apf::destroyNumbering(overlap);
-  overlap = apf::numberOverlapNodes(m,"overlap");
+  overlap = apf::numberOverlapNodes(m,"overlap",shape);
   apf::getNodes(overlap,nodes);
   numOverlapNodes = nodes.getSize();
   Teuchos::Array<GO> nodeIndices(numOverlapNodes);
@@ -662,11 +707,15 @@ void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
 #endif
   if(Teuchos::nonnull(meshStruct->nodal_data_base))
     meshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
+
+  std::cout << "computeOverlapNodesAndUnknownsBase\n";
+  std::cout << "Field: " << shape->getName() << std::endl;
+  std::cout << "numOwnedNodes: " << numOwnedNodes << std::endl;
 }
 
-void Albany::APFDiscretization::computeGraphs()
+void Albany::APFDiscretization::computeGraphsBase(
+    apf::FieldShape* shape)
 {
-
   apf::Mesh* m = meshStruct->getMesh();
   int numDim = m->getDimension();
   std::vector<apf::MeshEntity*> cells;
@@ -677,7 +726,7 @@ void Albany::APFDiscretization::computeGraphs()
   GO node_sum = 0;
   while ((e = m->iterate(it))){
     cells.push_back(e);
-    int nnodes = apf::countElementNodes(m->getShape(),m->getType(e));
+    int nnodes = apf::countElementNodes(shape,m->getType(e));
     n_nodes_in_elem.push_back(nnodes);
     node_sum += nnodes;
   }
@@ -734,9 +783,14 @@ void Albany::APFDiscretization::computeGraphs()
   graph->Export(*overlap_graph, exporter, Insert);
   graph->FillComplete();
 #endif
+
+  std::cout << "computeGraphsBase:\n";
+  std::cout << "Field: " << shape->getName() << std::endl;
+  std::cout << "nodes per element: " << nodes_per_element << std::endl;
 }
 
-void Albany::APFDiscretization::computeWorksetInfo()
+void Albany::APFDiscretization::computeWorksetInfoBase(
+    apf::FieldShape* shape)
 {
   apf::Mesh* m = meshStruct->getMesh();
   int numDim = m->getDimension();
@@ -843,7 +897,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
       apf::getElementNumbers(globalNumbering,element,nodeIDs);
 
       int nodes_per_element = apf::countElementNodes(
-          m->getShape(),m->getType(element));
+          shape,m->getType(element));
       wsElNodeEqID[b][i].resize(nodes_per_element);
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
@@ -953,6 +1007,114 @@ void Albany::APFDiscretization::computeWorksetInfo()
       }
     }
   }
+
+  std::cout << "computeWorksetInfoBase:\n";
+  std::cout << "Field: " << shape->getName() << std::endl;
+}
+
+void Albany::APFDiscretization::computeNodeSetsBase()
+{
+  // Make sure all the maps are allocated
+  for (int i = 0; i < meshStruct->nsNames.size(); i++)
+  { // Iterate over Node Sets
+    std::string name = meshStruct->nsNames[i];
+    nodeSets[name].resize(0);
+    nodeSetCoords[name].resize(0);
+    nodeset_node_coords[name].resize(0);
+  }
+  //grab the analysis model and mesh
+  apf::StkModels& sets = meshStruct->getSets();
+  apf::Mesh* m = meshStruct->getMesh();
+  int mesh_dim = m->getDimension();
+  //loop over mesh nodes
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    apf::MeshEntity* e = node.entity;
+    if (!m->isOwned(e))
+      continue;
+    std::set<apf::StkModel*> mset;
+    apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
+    if (mset.empty())
+      continue;
+    GO node_gid = apf::getNumber(globalNumbering,node);
+    int node_lid = node_mapT->getLocalElement(node_gid);
+    assert(node_lid >= 0);
+    assert(node_lid < numOwnedNodes);
+    APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
+      apf::StkModel* ns = *mit;
+      std::string const& NS_name = ns->stkName;
+      nodeSets[NS_name].push_back(std::vector<int>());
+      std::vector<int>& dofLids = nodeSets[NS_name].back();
+      std::vector<double>& ns_coords = nodeset_node_coords[NS_name];
+      ns_coords.resize(ns_coords.size() + mesh_dim);
+      double* node_coords = &ns_coords[ns_coords.size() - mesh_dim];
+      nodeSetCoords[NS_name].push_back(node_coords);
+      dofLids.resize(neq);
+      for (std::size_t eq=0; eq < neq; eq++)
+        dofLids[eq] = getDOF(node_lid, eq);
+      double buf[3];
+      apf::getComponents(m->getCoordinateField(), e, node.node, buf);
+      for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
+    }
+  }
+}
+
+void Albany::APFDiscretization::computeSideSetsBase()
+{
+  apf::Mesh* m = meshStruct->getMesh();
+  apf::StkModels& sets = meshStruct->getSets();
+
+  // need a sideset list per workset
+  int num_buckets = wsEBNames.size();
+  sideSets.resize(num_buckets);
+
+  int d = m->getDimension();
+
+  // loop over mesh sides
+  apf::MeshIterator* it = m->begin(d - 1);
+  apf::MeshEntity* side;
+  while ((side = m->iterate(it))) {
+    apf::ModelEntity* me = m->toModel(side);
+    if (!sets.invMaps[d - 1].count(me))
+      continue;
+    //side is part of a side set
+    apf::StkModel* sideSet = sets.invMaps[d - 1][me];
+    std::string const& ss_name = sideSet->stkName;
+
+    // get the elements adjacent to this side
+    apf::Up side_elems;
+    m->getUp(side, side_elems);
+
+    // we are not yet considering non-manifold side sets !
+    TEUCHOS_TEST_FOR_EXCEPTION(side_elems.n != 1, std::logic_error,
+		 "PUMIDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
+
+    apf::MeshEntity* elem = side_elems.e[0];
+
+    // fill in the data holder for a side struct
+
+    Albany::SideStruct sstruct;
+
+    sstruct.elem_GID = apf::getNumber(elementNumbering, apf::Node(elem, 0));
+    int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
+    sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
+    sstruct.elem_ebIndex = meshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
+    sstruct.side_local_id = apf::getLocalSideId(m, elem, side);
+
+    Albany::SideSetList& ssList = sideSets[workset]; // Get a ref to the side set map for this ws
+
+    // Get an iterator to the correct sideset (if it exists)
+    Albany::SideSetList::iterator sit = ssList.find(ss_name);
+
+    if (sit != ssList.end()) // The sideset has already been created
+      sit->second.push_back(sstruct); // Save this side to the vector that belongs to the name ss->first
+    else { // Add the key ss_name to the map, and the side vector to that map
+      std::vector<Albany::SideStruct> tmpSSVec;
+      tmpSSVec.push_back(sstruct);
+      ssList.insert(Albany::SideSetList::value_type(ss_name, tmpSSVec));
+    }
+  }
+  m->end(it);
 }
 
 void Albany::APFDiscretization::copyQPTensorToAPF(
@@ -1144,64 +1306,6 @@ void Albany::APFDiscretization::copyQPStatesFromAPF()
   }
 }
 
-void Albany::APFDiscretization::computeSideSets()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  apf::StkModels& sets = meshStruct->getSets();
-
-  // need a sideset list per workset
-  int num_buckets = wsEBNames.size();
-  sideSets.resize(num_buckets);
-
-  int d = m->getDimension();
-
-  // loop over mesh sides
-  apf::MeshIterator* it = m->begin(d - 1);
-  apf::MeshEntity* side;
-  while ((side = m->iterate(it))) {
-    apf::ModelEntity* me = m->toModel(side);
-    if (!sets.invMaps[d - 1].count(me))
-      continue;
-    //side is part of a side set
-    apf::StkModel* sideSet = sets.invMaps[d - 1][me];
-    std::string const& ss_name = sideSet->stkName;
-
-    // get the elements adjacent to this side
-    apf::Up side_elems;
-    m->getUp(side, side_elems);
-
-    // we are not yet considering non-manifold side sets !
-    TEUCHOS_TEST_FOR_EXCEPTION(side_elems.n != 1, std::logic_error,
-		 "PUMIDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
-
-    apf::MeshEntity* elem = side_elems.e[0];
-
-    // fill in the data holder for a side struct
-
-    Albany::SideStruct sstruct;
-
-    sstruct.elem_GID = apf::getNumber(elementNumbering, apf::Node(elem, 0));
-    int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
-    sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
-    sstruct.elem_ebIndex = meshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
-    sstruct.side_local_id = apf::getLocalSideId(m, elem, side);
-
-    Albany::SideSetList& ssList = sideSets[workset]; // Get a ref to the side set map for this ws
-
-    // Get an iterator to the correct sideset (if it exists)
-    Albany::SideSetList::iterator sit = ssList.find(ss_name);
-
-    if (sit != ssList.end()) // The sideset has already been created
-      sit->second.push_back(sstruct); // Save this side to the vector that belongs to the name ss->first
-    else { // Add the key ss_name to the map, and the side vector to that map
-      std::vector<Albany::SideStruct> tmpSSVec;
-      tmpSSVec.push_back(sstruct);
-      ssList.insert(Albany::SideSetList::value_type(ss_name, tmpSSVec));
-    }
-  }
-  m->end(it);
-}
-
 void Albany::APFDiscretization::
 copyNodalDataToAPF (const bool copy_all) {
   if (meshStruct->nodal_data_base.is_null()) return;
@@ -1249,55 +1353,14 @@ void Albany::APFDiscretization::removeNodalDataFromAPF () {
   }
 }
 
-void Albany::APFDiscretization::computeNodeSets()
+void
+Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
 {
-  // Make sure all the maps are allocated
-  for (int i = 0; i < meshStruct->nsNames.size(); i++)
-  { // Iterate over Node Sets
-    std::string name = meshStruct->nsNames[i];
-    nodeSets[name].resize(0);
-    nodeSetCoords[name].resize(0);
-    nodeset_node_coords[name].resize(0);
-  }
-  //grab the analysis model and mesh
-  apf::StkModels& sets = meshStruct->getSets();
-  apf::Mesh* m = meshStruct->getMesh();
-  int mesh_dim = m->getDimension();
-  //loop over mesh nodes
-  for (size_t i = 0; i < nodes.getSize(); ++i) {
-    apf::Node node = nodes[i];
-    apf::MeshEntity* e = node.entity;
-    if (!m->isOwned(e))
-      continue;
-    std::set<apf::StkModel*> mset;
-    apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
-    if (mset.empty())
-      continue;
-    GO node_gid = apf::getNumber(globalNumbering,node);
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    assert(node_lid >= 0);
-    assert(node_lid < numOwnedNodes);
-    APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
-      apf::StkModel* ns = *mit;
-      std::string const& NS_name = ns->stkName;
-      nodeSets[NS_name].push_back(std::vector<int>());
-      std::vector<int>& dofLids = nodeSets[NS_name].back();
-      std::vector<double>& ns_coords = nodeset_node_coords[NS_name];
-      ns_coords.resize(ns_coords.size() + mesh_dim);
-      double* node_coords = &ns_coords[ns_coords.size() - mesh_dim];
-      nodeSetCoords[NS_name].push_back(node_coords);
-      dofLids.resize(neq);
-      for (std::size_t eq=0; eq < neq; eq++)
-        dofLids[eq] = getDOF(node_lid, eq);
-      double buf[3];
-      apf::getComponents(m->getCoordinateField(), e, node.node, buf);
-      for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
-    }
-  }
+  updateMeshBase(shouldTransferIPData);
 }
 
 void
-Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
+Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
 {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())

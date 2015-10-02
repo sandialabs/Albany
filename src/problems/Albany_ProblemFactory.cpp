@@ -356,6 +356,9 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_GOAL
+  else if (method == "GOAL Mechanics 2D") {
+    strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 2, commT));
+  }
   else if (method == "GOAL Mechanics 3D") {
     strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 3, commT));
   }
