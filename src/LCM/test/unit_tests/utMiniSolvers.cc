@@ -314,4 +314,31 @@ TEUCHOS_UNIT_TEST(Testing, MixedStorage)
   TEST_COMPARE(true, ==, true);
 }
 
+TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
+{
+  constexpr Intrepid::Index
+  dimension{2};
+
+  LCM::BananaNLS<RealType>
+  banana;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  Intrepid::NewtonStep
+  newton_step;
+
+  Intrepid::Minimizer<Intrepid::NewtonStep, RealType, dimension>
+  minimizer(newton_step);
+
+  minimizer.solve(banana, x);
+
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(true, ==, true);
+}
+
 } // anonymous namespace

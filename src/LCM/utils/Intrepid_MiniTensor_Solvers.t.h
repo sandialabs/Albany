@@ -84,7 +84,7 @@ computeFADInfo(
 
   // Solve for all DxDp
   Matrix<S>
-  DxDp = solve(DrDx, DrDp);
+  DxDp = Intrepid::solve(DrDx, DrDp);
 
   // Pack into x.
   for (auto i = 0; i < dimension; ++i) {
@@ -99,9 +99,9 @@ computeFADInfo(
 //
 //
 //
-template<typename FN, typename STEP, typename T, Index N>
+template<typename STEP, typename T, Index N>
 void
-OptimizationMethod<FN, STEP, T, N>::
+Minimizer<STEP, T, N>::
 printReport(std::ostream & os)
 {
   std::string const
@@ -112,7 +112,7 @@ printReport(std::ostream & os)
 
   os << "\n\n";
   os << "Method     : " << STEP::NAME << '\n';
-  os << "System     : " << FN::NAME << '\n';
+  os << "System     : " << getFunctionName() << '\n';
   os << "Converged  : " << cs << '\n';
   os << "Max Iters  : " << getMaxNumIterations() << '\n';
   os << "Iters Taken: " << getNumIterations() << '\n';
@@ -137,9 +137,9 @@ printReport(std::ostream & os)
 //
 //
 //
-template<typename FN, typename STEP, typename T, Index N>
+template<typename STEP, typename T, Index N>
 void
-OptimizationMethod<FN, STEP, T, N>::
+Minimizer<STEP, T, N>::
 updateConvergenceCriterion(T const abs_error)
 {
   abs_error_ = abs_error;
@@ -159,9 +159,9 @@ updateConvergenceCriterion(T const abs_error)
 //
 //
 //
-template<typename FN, typename STEP, typename T, Index N>
+template<typename STEP, typename T, Index N>
 bool
-OptimizationMethod<FN, STEP, T, N>::
+Minimizer<STEP, T, N>::
 continueSolve() const
 {
   bool const
@@ -179,12 +179,59 @@ continueSolve() const
 //
 //
 //
-template<typename FN, typename STEP, typename T, Index N>
+template<typename STEP, typename T, Index N>
+template<typename FN>
 void
-OptimizationMethod<FN, STEP, T, N>::
-solve(FN & fn, Vector<T, N> & x)
+Minimizer<STEP, T, N>::
+solve(FN & fn, Vector<T, N> & soln)
 {
+  setFunctionName(FN::NAME);
+  setInitialGuess(soln);
+
+  Vector<T, N>
+  resi = fn.gradient(soln);
+
+  T const
+  initial_norm = norm(resi);
+
+  initConvergenceCriterion(initial_norm);
+  updateConvergenceCriterion(initial_norm);
+
+  while (continueSolve() == true) {
+
+    Vector<T, N> const
+    step = getStepMethod().step(fn, soln, resi);
+
+    soln += step;
+
+    resi = fn.gradient(soln);
+
+    T const
+    norm_resi = norm(resi);
+
+    updateConvergenceCriterion(norm_resi);
+    increaseIterationCounter();
+  }
+
+  recordFinals(fn, soln);
   return;
+}
+
+//
+//
+//
+template<typename FN, typename T, Index N>
+Vector<T, N>
+NewtonStep::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
+{
+  Tensor<T, N> const
+  Hessian = fn.hessian(soln);
+
+  Vector<T, N> const
+  step = - Intrepid::solve(Hessian, resi);
+
+  return step;
 }
 
 //
