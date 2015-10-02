@@ -1421,10 +1421,12 @@ void
 Albany::APFDiscretization::initTemperatureHack() {
   if (!meshStruct->useTemperatureHack)
     return;
+  std::cout << "interpolating temperature from nodes\n";
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* Tnodal = m->findField("temp");
   if (!Tnodal)
-    return;
+    Tnodal = m->findField(APFMeshStruct::solution_name);
+  assert(Tnodal);
   int o = meshStruct->cubatureDegree;
   unsigned nqp = 0;
   int dim = m->getDimension();
@@ -1432,6 +1434,8 @@ Albany::APFDiscretization::initTemperatureHack() {
   apf::Field* T = apf::createField(m, "temp_init_hack", apf::SCALAR, qpfs);
   apf::MeshIterator* it = m->begin(dim);
   apf::MeshEntity* e;
+  bool first = false;
+  double min,max;
   while ((e = m->iterate(it))) {
     apf::Mesh::Type et = m->getType(e);
     apf::Element* fe = apf::createElement(Tnodal, e);
@@ -1441,11 +1445,37 @@ Albany::APFDiscretization::initTemperatureHack() {
       apf::getGaussPoint(et, o, i, xi);
       double val = apf::getScalar(fe, xi);
       apf::setScalar(T, e, 0, val);
+      if (!first) {
+        min = max = val;
+        first = false;
+      } else {
+        if (val > max)
+          max = val;
+        if (val < min)
+          min = val;
+      }
     }
     apf::destroyElement(fe);
   }
+  std::cout << "min/max values: " << min << '/' << max << '\n';
   m->end(it);
   copyQPScalarFromAPF(nqp, "Temperature", T);
   copyQPScalarFromAPF(nqp, "Temperature_old", T);
   apf::destroyField(T);
+
+  std::cout << "QP scalar states are:\n";
+  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
+    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
+    std::cout << state.name << '\n';
+  }
+  std::cout << "QP vector states are:\n";
+  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
+    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
+    std::cout << state.name << '\n';
+  }
+  std::cout << "QP tensor states are:\n";
+  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
+    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
+    std::cout << state.name << '\n';
+  }
 }

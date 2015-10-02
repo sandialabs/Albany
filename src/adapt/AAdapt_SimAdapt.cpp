@@ -39,6 +39,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   pParMesh sim_pm = apf_msim->getMesh();
   /* ensure that users don't expect Simmetrix to transfer IP state */
   bool should_transfer_ip_data = adapt_params_->get<bool>("Transfer IP Data", false);
+  /* remove this assert when Simmetrix support IP transfer */
   assert(!should_transfer_ip_data);
   /* compute the size field via SPR error estimation
      on the solution gradient */
@@ -102,6 +103,8 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   apf::writeVtkFiles("adapted", apf_m);
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data);
+  /* see the comment in Albany_APFDiscretization.cpp */
+  sim_disc->initTemperatureHack();
   ++callcount;
   return true;
 }
