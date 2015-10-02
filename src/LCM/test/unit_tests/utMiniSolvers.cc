@@ -264,7 +264,7 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
   TEST_COMPARE(method.isConverged(), ==, true);
 }
 
-TEUCHOS_UNIT_TEST(Testing, Testing)
+TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
 {
   Intrepid::Index const
   dimension{2};
@@ -279,6 +279,37 @@ TEUCHOS_UNIT_TEST(Testing, Testing)
   std::cout << "Value   : " << p.value(x) << '\n';
   std::cout << "Gradient: " << p.gradient(x) << '\n';
   std::cout << "Hessian : " << p.hessian(x) << '\n';
+
+  TEST_COMPARE(true, ==, true);
+}
+
+TEUCHOS_UNIT_TEST(Testing, MixedStorage)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  std::cout << '\n';
+
+  Intrepid::Vector<RealType, 3>
+  v(1.0, 2.0, 3.0);
+
+  v.set_dimension(dimension);
+
+  std::cout << "Vector   : " << v << '\n';
+
+  Intrepid::Tensor<RealType, 3>
+  A(1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 7.0, 8.0, 9.0);
+
+  A.set_dimension(dimension);
+
+  std::cout << "Tensor   : " << A << '\n';
+
+  Intrepid::Matrix<RealType, 3, 4>
+  B(Intrepid::ONES);
+
+  B.set_dimensions(4, 2);
+
+  std::cout << "Matrix   : " << B << '\n';
 
   TEST_COMPARE(true, ==, true);
 }

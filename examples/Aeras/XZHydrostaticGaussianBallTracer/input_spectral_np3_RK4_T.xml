@@ -36,7 +36,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="STK1D Aeras"/>
-    <Parameter name="1D Elements" type="int" value="300"/>
+    <Parameter name="1D Elements" type="int" value="100"/>
     <Parameter name="1D Scale" type="double" value="300.0"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
@@ -101,7 +101,7 @@
                  value="Simple Integration Control Strategy"/>
            <ParameterList name="Simple Integration Control Strategy">
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
-             <Parameter name="Fixed dt" type="double" value="0.025"/>
+             <Parameter name="Fixed dt" type="double" value="0.05"/>
              <!--Parameter name="Number of Time Steps" type="int" value="10"/-->
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>
