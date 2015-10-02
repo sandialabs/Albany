@@ -154,16 +154,56 @@ public:
 ///
 /// Plain Newton Step
 ///
-class NewtonStep
+struct NewtonStep
 {
-public:
   static constexpr
   char const * const
   NAME = "Newton";
 
+  void
+  initialize()
+  {
+  }
+
   template<typename FN, typename T, Index N = DYNAMIC>
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+};
+
+///
+/// Trust Region Step
+///
+template<typename S>
+struct TrustRegionStep
+{
+  static constexpr
+  char const * const
+  NAME = "Trust Region";
+
+  void
+  initialize()
+  {
+    region_size = initial_region_size;
+  }
+
+  template<typename FN, typename T, Index N = DYNAMIC>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  Index
+  max_num_restrict_iter{4};
+
+  S
+  region_size{0.0};
+
+  S
+  max_region_size{10.0};
+
+  S
+  initial_region_size{10.0};
+
+  S
+  min_reduction{0.0};
 };
 
 ///

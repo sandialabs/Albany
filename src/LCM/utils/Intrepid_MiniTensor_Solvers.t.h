@@ -197,6 +197,8 @@ solve(FN & fn, Vector<T, N> & soln)
   initConvergenceCriterion(initial_norm);
   updateConvergenceCriterion(initial_norm);
 
+  getStepMethod().initialize();
+
   while (continueSolve() == true) {
 
     Vector<T, N> const
@@ -232,6 +234,18 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
   step = - Intrepid::solve(Hessian, resi);
 
   return step;
+}
+
+//
+// Trust Region method.  See Nocedal's algorithm 11.5.
+//
+template<typename S>
+template<typename FN, typename T, Index N>
+Vector<T, N>
+TrustRegionStep<S>::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
+{
+  return resi;
 }
 
 //
