@@ -105,30 +105,30 @@ Minimizer<STEP, T, N>::
 printReport(std::ostream & os)
 {
   std::string const
-  cs = isConverged() == true ? "YES" : "NO";
+  cs = converged == true ? "YES" : "NO";
 
   //std::string const
-  //cs = isConverged() == true ? "\U0001F60A" : "\U0001F623";
+  //cs = converged == true ? "\U0001F60A" : "\U0001F623";
 
   os << "\n\n";
   os << "Method     : " << STEP::NAME << '\n';
-  os << "System     : " << getFunctionName() << '\n';
+  os << "System     : " << function_name << '\n';
   os << "Converged  : " << cs << '\n';
-  os << "Max Iters  : " << getMaxNumIterations() << '\n';
-  os << "Iters Taken: " << getNumIterations() << '\n';
+  os << "Max Iters  : " << max_num_iter << '\n';
+  os << "Iters Taken: " << num_iter << '\n';
 
   os << std::scientific << std::setprecision(16);
 
-  os << "Initial |R|: " << std::setw(24) << getInitialResidualNorm() << '\n';
-  os << "Abs Tol    : " << std::setw(24) << getAbsoluteTolerance() << '\n';
-  os << "Abs Error  : " << std::setw(24) << getAbsoluteError() << '\n';
-  os << "Rel Tol    : " << std::setw(24) << getRelativeTolerance() << '\n';
-  os << "Rel Error  : " << std::setw(24) << getRelativeError() << '\n';
-  os << "Initial X  : " << getInitialGuess() << '\n';
-  os << "Final X    : " << getFinalSolution() << '\n';
-  os << "f(X)       : " << std::setw(24) << getFinalValue() << '\n';
-  os << "Df(X)      : " << getFinalGradient() << '\n';
-  os << "DDf(X)     : " << getFinalHessian() << '\n';
+  os << "Initial |R|: " << std::setw(24) << initial_norm << '\n';
+  os << "Abs Tol    : " << std::setw(24) << abs_tol << '\n';
+  os << "Abs Error  : " << std::setw(24) << abs_error << '\n';
+  os << "Rel Tol    : " << std::setw(24) << rel_tol << '\n';
+  os << "Rel Error  : " << std::setw(24) << rel_error << '\n';
+  os << "Initial X  : " << initial_guess << '\n';
+  os << "Final X    : " << final_soln << '\n';
+  os << "f(X)       : " << std::setw(24) << final_value << '\n';
+  os << "Df(X)      : " << final_gradient << '\n';
+  os << "DDf(X)     : " << final_hessian << '\n';
   os << '\n';
 
   return;
@@ -140,18 +140,18 @@ printReport(std::ostream & os)
 template<typename STEP, typename T, Index N>
 void
 Minimizer<STEP, T, N>::
-updateConvergenceCriterion(T const abs_error)
+updateConvergenceCriterion(T const ae)
 {
-  abs_error_ = abs_error;
-  rel_error_ = initial_norm_ > 0.0 ? abs_error_ / initial_norm_ : 0.0;
+  abs_error = ae;
+  rel_error = initial_norm > 0.0 ? abs_error / initial_norm : 0.0;
 
   bool const
-  converged_absolute = abs_error_ <= abs_tol_;
+  converged_absolute = abs_error <= abs_tol;
 
   bool const
-  converged_relative = rel_error_ <= rel_tol_;
+  converged_relative = rel_error <= rel_tol;
 
-  converged_ = converged_absolute || converged_relative;
+  converged = converged_absolute || converged_relative;
 
   return;
 }
@@ -165,10 +165,10 @@ Minimizer<STEP, T, N>::
 continueSolve() const
 {
   bool const
-  is_max_iter = num_iter_ >= max_num_iter_;
+  is_max_iter = num_iter >= max_num_iter;
 
   bool const
-  end_solve = is_max_iter == true || converged_ == true;
+  end_solve = is_max_iter == true || converged == true;
 
   bool const
   continue_solve = end_solve == false;
@@ -185,24 +185,22 @@ void
 Minimizer<STEP, T, N>::
 solve(FN & fn, Vector<T, N> & soln)
 {
-  setFunctionName(FN::NAME);
-  setInitialGuess(soln);
+  function_name = FN::NAME;
+  initial_guess = soln;
 
   Vector<T, N>
   resi = fn.gradient(soln);
 
-  T const
   initial_norm = norm(resi);
 
-  initConvergenceCriterion(initial_norm);
   updateConvergenceCriterion(initial_norm);
 
-  getStepMethod().initialize();
+  step_method.initialize();
 
   while (continueSolve() == true) {
 
     Vector<T, N> const
-    step = getStepMethod().step(fn, soln, resi);
+    step = step_method.step(fn, soln, resi);
 
     soln += step;
 
@@ -212,7 +210,7 @@ solve(FN & fn, Vector<T, N> & soln)
     norm_resi = norm(resi);
 
     updateConvergenceCriterion(norm_resi);
-    increaseIterationCounter();
+    ++num_iter;
   }
 
   recordFinals(fn, soln);
@@ -220,11 +218,12 @@ solve(FN & fn, Vector<T, N> & soln)
 }
 
 //
+// Plain Newton step.
 //
-//
+template<typename S>
 template<typename FN, typename T, Index N>
 Vector<T, N>
-NewtonStep::
+NewtonStep<S>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
   Tensor<T, N> const
@@ -245,7 +244,110 @@ Vector<T, N>
 TrustRegionStep<S>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
-  return resi;
+  Index const
+  dimension = soln.get_dimension();
+
+  Tensor<T, N> const
+  I = identity<T, N>(dimension);
+
+  Tensor<T, N> const
+  Hessian = fn.hessian(soln);
+
+  Vector<T, N>
+  step(dimension);
+
+  // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+  T
+  lambda = 0.0;
+
+  for (Index i{0}; i < max_num_restrict_iter; ++i) {
+
+    Tensor<T, N> const
+    K = Hessian + lambda * I;
+
+    Tensor<T, N> const
+    L = cholesky(K).first;
+
+    step = - Intrepid::solve(K, resi);
+
+    Vector<T, N>
+    q = Intrepid::solve(L, step);
+
+    T const
+    np = norm(step);
+
+    T const
+    nps = np * np;
+
+    T const
+    nqs = norm_square(q);
+
+    T const
+    lambda_incr = nps * (np - region_size) / nqs / region_size;
+
+    lambda += std::max(lambda_incr, 0.0);
+
+  }
+
+  Vector<T, N>
+  soln_next = soln + step;
+
+  Vector<T, N>
+  resi_next = fn.gradient(soln_next);
+
+  // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
+  T const
+  nr = norm_square(resi);
+
+  T const
+  nrp = norm_square(resi_next);
+
+  T const
+  nrKp = norm_square(resi + dot(Hessian, step));
+
+  T const
+  reduction = (nr - nrp) / (nr - nrKp);
+
+  // Determine whether the trust region should be increased, decreased
+  // or left the same.
+  T const
+  computed_size = norm(step);
+
+  if (reduction < 0.25) {
+
+    region_size = 0.25 * computed_size;
+
+  } else {
+
+    bool const
+    at_boundary = std::abs(computed_size / region_size - 1.0) <= 1.0e-8;
+
+    bool const
+    increase_region_size = reduction > 0.75 && at_boundary;
+
+    if (increase_region_size == true) {
+      region_size = std::min(2.0 * region_size, max_region_size);
+    }
+
+  }
+
+  if (reduction <= min_reduction) {
+    step.fill(ZEROS);
+  }
+
+  return step;
+}
+
+//
+// Trust Region method.  See Nocedal's algorithm 11.5.
+//
+template<typename S>
+template<typename FN, typename T, Index N>
+Vector<T, N>
+ConjugateGradientStep<S>::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
+{
+  return gradient;
 }
 
 //

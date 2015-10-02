@@ -38,15 +38,24 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
   Intrepid::Vector<T, N>
   y;
 
-  Intrepid::NewtonMethod<NLS, T, N>
-  newton;
+  Intrepid::NewtonStep<T>
+  newton_step;
+
+  Intrepid::Minimizer<Intrepid::NewtonStep<T>, T, N>
+  newton_minimizer(newton_step);
 
   y = x;
 
   bool const
-  newton_ok = solveNLSwithNLM(system, newton, y);
+  newton_ok = solveNLSwithNLM(system, newton_minimizer, y);
 
   all_ok = all_ok && newton_ok;
+
+  Intrepid::TrustRegionStep<T>
+  trust_region_step;
+
+  Intrepid::Minimizer<Intrepid::TrustRegionStep<T>, T, N>
+  trust_region_minimizer(trust_region_step);
 
   Intrepid::TrustRegionMethod<NLS, T, N>
   trust_region;
@@ -54,7 +63,7 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
   y = x;
 
   bool const
-  trust_region_ok = solveNLSwithNLM(system, trust_region, y);
+  trust_region_ok = solveNLSwithNLM(system, trust_region_minimizer, y);
 
   all_ok = all_ok && trust_region_ok;
 
@@ -328,11 +337,13 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  Intrepid::NewtonStep
-  newton_step;
+  using STEP = Intrepid::TrustRegionStep<RealType>;
 
-  Intrepid::Minimizer<Intrepid::NewtonStep, RealType, dimension>
-  minimizer(newton_step);
+  STEP
+  step;
+
+  Intrepid::Minimizer<STEP, RealType, dimension>
+  minimizer(step);
 
   minimizer.solve(banana, x);
 

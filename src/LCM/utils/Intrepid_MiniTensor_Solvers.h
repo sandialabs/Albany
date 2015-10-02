@@ -154,6 +154,7 @@ public:
 ///
 /// Plain Newton Step
 ///
+template<typename S>
 struct NewtonStep
 {
   static constexpr
@@ -207,118 +208,45 @@ struct TrustRegionStep
 };
 
 ///
-/// Minimizer Class
+/// Conjugate Gradient Step
+///
+template<typename S>
+struct ConjugateGradientStep
+{
+  static constexpr
+  char const * const
+  NAME = "Preconditioned Conjugate Gradient";
+
+  void
+  initialize()
+  {
+  }
+
+  template<typename FN, typename T, Index N = DYNAMIC>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  Index
+  max_num_line_search_iter_{16};
+
+  Index
+  restart_directions_interval_{32};
+
+  S
+  line_search_tol_{1.0e-6};
+};
+
+///
+/// Minimizer Struct
 ///
 template<typename STEP, typename T, Index N = DYNAMIC>
-class Minimizer
+struct Minimizer
 {
 public:
 
-  Minimizer(STEP & s) : step_method_(s)
+  Minimizer(STEP & s) : step_method(s)
   {
     STATIC_ASSERT(Sacado::IsADType<T>::value == false, NO_FAD_ALLOWED);
-  }
-
-  void
-  setMaxNumIterations(Index const mni)
-  {
-    max_num_iter_ = mni;
-  }
-
-  Index
-  getMaxNumIterations()
-  {
-    return max_num_iter_;
-  }
-
-  Index
-  getNumIterations()
-  {
-    return num_iter_;
-  }
-
-  void
-  setRelativeTolerance(T const rt)
-  {
-    rel_tol_ = rt;
-  }
-
-  T
-  getRelativeTolerance() const
-  {
-    return rel_tol_;
-  }
-
-  T
-  getRelativeError() const
-  {
-    return rel_error_;
-  }
-
-  void
-  setAbsoluteTolerance(T const at)
-  {
-    abs_tol_ = at;
-  }
-
-  T
-  getAbsoluteTolerance() const
-  {
-    return abs_tol_;
-  }
-
-  T
-  getAbsoluteError() const
-  {
-    return abs_error_;
-  }
-
-  bool
-  isConverged() const
-  {
-    return converged_;
-  }
-
-  T
-  getInitialResidualNorm() const
-  {
-    return initial_norm_;
-  }
-
-  Vector<T, N>
-  getInitialGuess() const
-  {
-    return initial_guess_;
-  }
-
-  Vector<T, N>
-  getFinalSolution() const
-  {
-    return final_soln_;
-  }
-
-  T
-  getFinalValue() const
-  {
-    return final_value_;
-  }
-
-  Vector<T, N>
-  getFinalGradient()
-  {
-    return final_gradient_;
-  }
-
-  Tensor<T, N>
-  getFinalHessian()
-  {
-    return final_hessian_;
-  }
-
-  STEP &
-  getStepMethod()
-  {
-    return step_method_;
   }
 
   template<typename FN>
@@ -328,125 +256,72 @@ public:
   void
   printReport(std::ostream & os);
 
-private:
-  void
-  initConvergenceCriterion(T const in)
-  {
-    initial_norm_ = in;
-  }
-
   void
   updateConvergenceCriterion(T const abs_error);
 
   bool
   continueSolve() const;
 
-  void
-  increaseIterationCounter()
+  bool
+  isConverged() const
   {
-    ++num_iter_;
-  }
-
-  void
-  setInitialGuess(Vector<T, N> const & x)
-  {
-    initial_guess_ = x;
-  }
-
-  void
-  setFinalSolution(Vector<T, N> const & x)
-  {
-    final_soln_ = x;
-  }
-
-  template<typename FN>
-  void
-  setFinalValue(FN & fn, Vector<T, N> const & x)
-  {
-    final_value_ = fn.value(x);
-  }
-
-  template<typename FN>
-  void
-  setFinalGradient(FN & fn, Vector<T, N> const & x)
-  {
-    final_gradient_ = fn.gradient(x);
-  }
-
-  template<typename FN>
-  void
-  setFinalHessian(FN & fn, Vector<T, N> const & x)
-  {
-    final_hessian_ = fn.hessian(x);
+    return converged;
   }
 
   template<typename FN>
   void
   recordFinals(FN & fn, Vector<T, N> const & x)
   {
-    setFinalSolution(x);
-    setFinalValue(fn, x);
-    setFinalGradient(fn, x);
-    setFinalHessian(fn, x);
+    final_soln = x;
+    final_value = fn.value(x);
+    final_gradient = fn.gradient(x);
+    final_hessian = fn.hessian(x);
   }
-
-  void
-  setFunctionName(char const * const fn)
-  {
-    function_name_ = fn;
-  }
-
-  char const * const
-  getFunctionName() const
-  {
-    return function_name_;
-  }
-
-private:
-  Index
-  max_num_iter_{128};
 
   Index
-  num_iter_{0};
+  max_num_iter{128};
+
+  Index
+  num_iter{0};
 
   T
-  rel_tol_{1.0e-10};
+  rel_tol{1.0e-10};
 
   T
-  rel_error_{1.0};
+  rel_error{1.0};
 
   T
-  abs_tol_{1.0e-10};
+  abs_tol{1.0e-10};
 
   T
-  abs_error_{1.0};
+  abs_error{1.0};
 
   T
-  initial_norm_{1.0};
+  initial_norm{1.0};
 
   bool
-  converged_{false};
+  converged{false};
 
   Vector<T, N>
-  initial_guess_;
+  initial_guess;
 
   Vector<T, N>
-  final_soln_;
+  final_soln;
 
   T
-  final_value_;
+  final_value;
 
   Vector<T, N>
-  final_gradient_;
+  final_gradient;
 
   Tensor<T, N>
-  final_hessian_;
+  final_hessian;
 
   STEP &
-  step_method_;
+  step_method;
 
   char const *
-  function_name_{nullptr};
+  function_name{nullptr};
 };
 
 ///
