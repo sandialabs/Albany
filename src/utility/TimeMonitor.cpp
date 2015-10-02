@@ -12,7 +12,7 @@ TimeMonitor::TimeMonitor () {
 }
 
 string TimeMonitor::getStringValue (const monitored_type& val) {
-  return to_string(static_cast<double>(val.totalElapsedTime()));
+  return to_string(static_cast<long double>(val.totalElapsedTime()));
 }
 
 }
