@@ -36,15 +36,15 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="STK1D Aeras"/>
-    <Parameter name="1D Elements" type="int" value="300"/>
+    <Parameter name="1D Elements" type="int" value="100"/>
     <Parameter name="1D Scale" type="double" value="300.0"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic_gb_spectral_ho_be_np3.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic_gb_spectral_ho_be_np5.exo"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <Parameter name="Cubature Degree" type="int" value="4"/>
-    <Parameter name="Element Degree" type="int" value="2"/>
+    <Parameter name="Cubature Degree" type="int" value="8"/>
+    <Parameter name="Element Degree" type="int" value="4"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -73,7 +73,7 @@
       <Parameter name="Stepper Type" type="string" value="Backward Euler"/>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="5"/>
+        <Parameter name="Number of Time Steps" type="int" value="40"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">
