@@ -57,9 +57,6 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
   Intrepid::Minimizer<Intrepid::TrustRegionStep<T>, T, N>
   trust_region_minimizer(trust_region_step);
 
-  Intrepid::TrustRegionMethod<NLS, T, N>
-  trust_region;
-
   y = x;
 
   bool const
@@ -337,7 +334,7 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  using STEP = Intrepid::TrustRegionStep<RealType>;
+  using STEP = Intrepid::TrustRegionStep<RealType, dimension>;
 
   STEP
   step;

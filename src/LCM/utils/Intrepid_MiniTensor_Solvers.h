@@ -154,19 +154,20 @@ public:
 ///
 /// Plain Newton Step
 ///
-template<typename S>
+template<typename T, Index N = DYNAMIC>
 struct NewtonStep
 {
   static constexpr
   char const * const
   NAME = "Newton";
 
+  template<typename FN>
   void
-  initialize()
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r)
   {
   }
 
-  template<typename FN, typename T, Index N = DYNAMIC>
+  template<typename FN>
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 };
@@ -174,55 +175,55 @@ struct NewtonStep
 ///
 /// Trust Region Step
 ///
-template<typename S>
+template<typename T, Index N = DYNAMIC>
 struct TrustRegionStep
 {
   static constexpr
   char const * const
   NAME = "Trust Region";
 
+  template<typename FN>
   void
-  initialize()
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r)
   {
     region_size = initial_region_size;
   }
 
-  template<typename FN, typename T, Index N = DYNAMIC>
+  template<typename FN>
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
   Index
   max_num_restrict_iter{4};
 
-  S
+  T
   region_size{0.0};
 
-  S
+  T
   max_region_size{10.0};
 
-  S
+  T
   initial_region_size{10.0};
 
-  S
+  T
   min_reduction{0.0};
 };
 
 ///
 /// Conjugate Gradient Step
 ///
-template<typename S>
+template<typename T, Index N = DYNAMIC>
 struct ConjugateGradientStep
 {
   static constexpr
   char const * const
   NAME = "Preconditioned Conjugate Gradient";
 
+  template<typename FN>
   void
-  initialize()
-  {
-  }
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
-  template<typename FN, typename T, Index N = DYNAMIC>
+  template<typename FN>
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
@@ -232,7 +233,7 @@ struct ConjugateGradientStep
   Index
   restart_directions_interval_{32};
 
-  S
+  T
   line_search_tol_{1.0e-6};
 };
 

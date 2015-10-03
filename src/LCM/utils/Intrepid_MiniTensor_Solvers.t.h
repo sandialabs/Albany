@@ -195,7 +195,7 @@ solve(FN & fn, Vector<T, N> & soln)
 
   updateConvergenceCriterion(initial_norm);
 
-  step_method.initialize();
+  step_method.initialize(fn, soln, resi);
 
   while (continueSolve() == true) {
 
@@ -220,10 +220,10 @@ solve(FN & fn, Vector<T, N> & soln)
 //
 // Plain Newton step.
 //
-template<typename S>
-template<typename FN, typename T, Index N>
+template<typename T, Index N>
+template<typename FN>
 Vector<T, N>
-NewtonStep<S>::
+NewtonStep<T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
   Tensor<T, N> const
@@ -238,10 +238,10 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 //
 // Trust Region method.  See Nocedal's algorithm 11.5.
 //
-template<typename S>
-template<typename FN, typename T, Index N>
+template<typename T, Index N>
+template<typename FN>
 Vector<T, N>
-TrustRegionStep<S>::
+TrustRegionStep<T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
   Index const
@@ -339,12 +339,36 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 }
 
 //
-// Trust Region method.  See Nocedal's algorithm 11.5.
 //
-template<typename S>
-template<typename FN, typename T, Index N>
+//
+template<typename T, Index N>
+template<typename FN>
+void
+ConjugateGradientStep<T, N>::
+initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
+{
+  Tensor<T, N> const
+  Hessian = fn.hessian(soln);
+
+  Vector<T, N>
+  precon_resi = Intrepid::solve(Hessian, -gradient);
+
+  Vector<T, N>
+  search_direction = precon_resi;
+
+}
+
+//
+// Conjugate Gradient Method class.
+// For now the Gram-Schmidt method is fixed to Polak-Ribiere
+// and preconditioning with the Hessian.
+// This is taken from J.R. Shewchuck "painless" conjugate gradient
+// manuscript that is all over the place on the net.
+//
+template<typename T, Index N>
+template<typename FN>
 Vector<T, N>
-ConjugateGradientStep<S>::
+ConjugateGradientStep<T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 {
   return gradient;
