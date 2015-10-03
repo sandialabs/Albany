@@ -306,7 +306,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 #endif
   }
   else if(method == "PUMI Hierarchic") {
-#ifdef ALBANY_SCOREC
+#ifdef ALBANY_GOAL
     meshStruct = Teuchos::rcp(new Albany::GOALMeshStruct(discParams, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
