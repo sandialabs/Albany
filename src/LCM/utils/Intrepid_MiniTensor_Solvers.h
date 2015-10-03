@@ -246,6 +246,43 @@ private:
 };
 
 ///
+/// Line Search Regularized Step
+///
+template<typename T, Index N>
+struct LineSearchRegularizedStep
+{
+  static constexpr
+  char const * const
+  NAME = "Line Search Regularized";
+
+  template<typename FN>
+  void
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  template<typename FN>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  Index
+  max_num_restrict_iter{4};
+
+  T
+  step_length{1.0};
+
+  T
+  hessian_cond_tol{1.0e+08};
+
+  T
+  hessian_singular_tol{1.0e-12};
+
+  Index
+  max_num_line_search_iter{16};
+
+  T
+  line_search_tol{1.0e-6};
+};
+
+///
 /// Minimizer Struct
 ///
 template<typename STEP, typename T, Index N>
@@ -270,12 +307,6 @@ public:
 
   bool
   continueSolve() const;
-
-  bool
-  isConverged() const
-  {
-    return converged;
-  }
 
   template<typename FN>
   void

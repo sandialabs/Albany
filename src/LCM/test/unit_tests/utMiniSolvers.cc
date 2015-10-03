@@ -24,7 +24,7 @@ solveNLSwithNLM(NLS & system, NLM & method, Intrepid::Vector<T, N> & x)
   method.solve(system, x);
   method.printReport(std::cout);
 
-  return method.isConverged();
+  return method.converged;
 }
 
 // Test one system with various methods.
@@ -77,13 +77,16 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
 
   all_ok = all_ok && pcg_ok;
 
-  Intrepid::LineSearchRegularizedMethod<NLS, T, N>
-  line_search;
+  Intrepid::LineSearchRegularizedStep<T, N>
+  line_search_step;
+
+  Intrepid::Minimizer<Intrepid::LineSearchRegularizedStep<T, N>, T, N>
+  line_search_minimizer(line_search_step);
 
   y = x;
 
   bool const
-  line_search_ok = solveNLSwithNLM(system, line_search, y);
+  line_search_ok = solveNLSwithNLM(system, line_search_minimizer, y);
 
   all_ok = all_ok && line_search_ok;
 
@@ -340,7 +343,7 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  using STEP = Intrepid::ConjugateGradientStep<RealType, dimension>;
+  using STEP = Intrepid::LineSearchRegularizedStep<RealType, dimension>;
 
   STEP
   step;

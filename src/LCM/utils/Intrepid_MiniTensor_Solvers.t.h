@@ -489,6 +489,121 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 //
 //
 //
+template<typename T, Index N>
+template<typename FN>
+void
+LineSearchRegularizedStep<T, N>::
+initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
+{
+  return;
+}
+
+//
+// Trust Region method.  See Nocedal's algorithm 11.5.
+//
+template<typename T, Index N>
+template<typename FN>
+Vector<T, N>
+LineSearchRegularizedStep<T, N>::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
+{
+  Index const
+  dimension = soln.get_dimension();
+
+  Tensor<T, N> const
+  I = identity<T, N>(dimension);
+
+  Tensor<T, N>
+  Hessian = fn.hessian(soln);
+
+  Vector<T, N>
+  step(dimension);
+
+  bool const
+  ill_conditioned =
+      det(Hessian) < hessian_singular_tol || cond(Hessian) > hessian_cond_tol;
+
+  if (ill_conditioned == true) {
+
+    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+    T
+    lambda = 0.0;
+
+    for (Index i{0}; i < max_num_restrict_iter; ++i) {
+
+      Tensor<T, N>
+      K = Hessian + lambda * I;
+
+      Tensor<T, N>
+      L = cholesky(K).first;
+
+      step = - Intrepid::solve(K, gradient);
+
+      Vector<T, N>
+      q = Intrepid::solve(L, step);
+
+      T const
+      nps = norm_square(step);
+
+      T const
+      nqs = norm_square(q);
+
+      T const
+      lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
+
+      lambda += std::max(lambda_incr, 0.0);
+
+    }
+
+  } else {
+
+    // Standard Newton step
+    step = - Intrepid::solve(Hessian, gradient);
+
+  }
+
+  // Newton line search.
+
+  T const
+  projection_step = dot(step, step);
+
+  Vector<T, N>
+  ls_step(dimension, ZEROS);
+
+  for (Index i{0}; i < max_num_line_search_iter; ++i) {
+
+    Vector<T, N>
+    soln_next = soln + ls_step;
+
+    Vector<T, N> const
+    gradient_next = fn.gradient(soln_next);
+
+    Hessian = fn.hessian(soln_next);
+
+    T const
+    projection = dot(gradient_next, step);
+
+    T const
+    contraction = dot(step, dot(Hessian, step));
+
+    T const
+    ls_length = - projection / contraction;
+
+    ls_step += ls_length * step;
+
+    bool const
+    line_search_converged = ls_length * ls_length * projection_step <=
+    line_search_tol * line_search_tol;
+
+    if (line_search_converged == true) break;
+
+  }
+
+  return ls_step;
+}
+//
+//
+//
 template<typename NLS, typename T, Index N>
 void
 NewtonMethod<NLS, T, N>::
