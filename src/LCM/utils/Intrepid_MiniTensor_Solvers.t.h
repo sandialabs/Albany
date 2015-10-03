@@ -218,6 +218,18 @@ solve(FN & fn, Vector<T, N> & soln)
 }
 
 //
+//
+//
+template<typename T, Index N>
+template<typename FN>
+void
+NewtonStep<T, N>::
+initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
+{
+  return;
+}
+
+//
 // Plain Newton step.
 //
 template<typename T, Index N>
@@ -233,6 +245,20 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
   step = - Intrepid::solve(Hessian, resi);
 
   return step;
+}
+
+//
+//
+//
+template<typename T, Index N>
+template<typename FN>
+void
+TrustRegionStep<T, N>::
+initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
+{
+  region_size = initial_region_size;
+
+  return;
 }
 
 //
@@ -350,12 +376,15 @@ initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   Tensor<T, N> const
   Hessian = fn.hessian(soln);
 
-  Vector<T, N>
   precon_resi = Intrepid::solve(Hessian, -gradient);
 
-  Vector<T, N>
   search_direction = precon_resi;
 
+  projection_new = - dot(gradient, search_direction);
+
+  restart_directions_counter = 0;
+
+  return;
 }
 
 //
@@ -369,9 +398,92 @@ template<typename T, Index N>
 template<typename FN>
 Vector<T, N>
 ConjugateGradientStep<T, N>::
-step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 {
-  return gradient;
+  Index const
+  dimension = soln.get_dimension();
+
+  Vector<T, N>
+  step(dimension, ZEROS);
+
+  Vector<T, N>
+  soln_next(dimension, ZEROS);
+
+  Vector<T, N>
+  gradient_next(dimension, ZEROS);
+
+  Tensor<T, N>
+  Hessian(dimension, ZEROS);
+
+  T const
+  projection_search = dot(search_direction, search_direction);
+
+  // Newton line search.
+  for (Index i{0}; i < max_num_line_search_iter; ++i) {
+
+    soln_next = soln + step;
+
+    gradient_next = fn.gradient(soln_next);
+
+    Hessian = fn.hessian(soln_next);
+
+    T const
+    projection = dot(gradient_next, search_direction);
+
+    T const
+    contraction = dot(search_direction, dot(Hessian, search_direction));
+
+    T const
+    step_length = - projection / contraction;
+
+    step += step_length * search_direction;
+
+    bool const
+    line_search_converged = step_length * step_length * projection_search <=
+    line_search_tol * line_search_tol;
+
+    if (line_search_converged == true) break;
+
+  }
+
+  soln_next = soln + step;
+
+  gradient_next = fn.gradient(soln_next);
+
+  T const
+  projection_old = projection_new;
+
+  T const
+  projection_mid = - dot(gradient_next, precon_resi);
+
+  Hessian = fn.hessian(soln_next);
+
+  precon_resi = Intrepid::solve(Hessian, -gradient_next);
+
+  projection_new = - dot(gradient_next, precon_resi);
+
+  T const
+  gram_schmidt_factor = (projection_new - projection_mid) / projection_old;
+
+  ++restart_directions_counter;
+
+  bool const
+  restart_directions =
+      restart_directions_counter == restart_directions_interval ||
+      gram_schmidt_factor <= 0.0;
+
+  if (restart_directions == true) {
+
+    search_direction = precon_resi;
+    restart_directions_counter = 0;
+
+  } else {
+
+    search_direction = precon_resi + gram_schmidt_factor * search_direction;
+
+  }
+
+  return step;
 }
 
 //

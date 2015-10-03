@@ -38,10 +38,10 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
   Intrepid::Vector<T, N>
   y;
 
-  Intrepid::NewtonStep<T>
+  Intrepid::NewtonStep<T, N>
   newton_step;
 
-  Intrepid::Minimizer<Intrepid::NewtonStep<T>, T, N>
+  Intrepid::Minimizer<Intrepid::NewtonStep<T, N>, T, N>
   newton_minimizer(newton_step);
 
   y = x;
@@ -51,10 +51,10 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
 
   all_ok = all_ok && newton_ok;
 
-  Intrepid::TrustRegionStep<T>
+  Intrepid::TrustRegionStep<T, N>
   trust_region_step;
 
-  Intrepid::Minimizer<Intrepid::TrustRegionStep<T>, T, N>
+  Intrepid::Minimizer<Intrepid::TrustRegionStep<T, N>, T, N>
   trust_region_minimizer(trust_region_step);
 
   y = x;
@@ -64,13 +64,16 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
 
   all_ok = all_ok && trust_region_ok;
 
-  Intrepid::ConjugateGradientMethod<NLS, T, N>
-  pcg;
+  Intrepid::ConjugateGradientStep<T, N>
+  pcg_step;
+
+  Intrepid::Minimizer<Intrepid::ConjugateGradientStep<T, N>, T, N>
+  pcg_minimizer(pcg_step);
 
   y = x;
 
   bool const
-  pcg_ok = solveNLSwithNLM(system, pcg, y);
+  pcg_ok = solveNLSwithNLM(system, pcg_minimizer, y);
 
   all_ok = all_ok && pcg_ok;
 
@@ -90,10 +93,13 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
 // Test various systems with various methods.
 bool testSystemsAndMethods()
 {
+  constexpr Intrepid::Index
+  max_dimension{2};
+
   bool
   all_ok = true;
 
-  Intrepid::Vector<RealType>
+  Intrepid::Vector<RealType, max_dimension>
   x;
 
   LCM::SquareRootNLS<RealType>
@@ -334,7 +340,7 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  using STEP = Intrepid::TrustRegionStep<RealType, dimension>;
+  using STEP = Intrepid::ConjugateGradientStep<RealType, dimension>;
 
   STEP
   step;

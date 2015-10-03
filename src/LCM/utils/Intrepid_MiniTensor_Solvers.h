@@ -49,7 +49,7 @@ public:
   /// By default use merit function 0.5 dot(gradient, gradient)
   /// as the target to optimize if only the gradient is provided.
   ///
-  template<typename T, Index N = DYNAMIC>
+  template<typename T, Index N>
   T
   value(Function_Derived & f, Vector<T, N> const & x)
   {
@@ -67,7 +67,7 @@ public:
   ///
   /// By default compute gradient with AD from value().
   ///
-  template<typename T, Index N = DYNAMIC>
+  template<typename T, Index N>
   Vector<T, N>
   gradient(Function_Derived & f, Vector<T, N> const & x)
   {
@@ -101,7 +101,7 @@ public:
   ///
   /// By default compute Hessian with AD from gradient().
   ///
-  template<typename T, Index N = DYNAMIC>
+  template<typename T, Index N>
   Tensor<T, N>
   hessian(Function_Derived & f, Vector<T, N> const & x)
   {
@@ -143,7 +143,7 @@ template<typename Step_Derived>
 class Step_Base
 {
 public:
-  template<typename FN, typename T, Index N = DYNAMIC>
+  template<typename FN, typename T, Index N>
   Vector<T, N>
   step(Step_Derived & step_method, FN & fn, Vector<T, N> const & x)
   {
@@ -154,7 +154,7 @@ public:
 ///
 /// Plain Newton Step
 ///
-template<typename T, Index N = DYNAMIC>
+template<typename T, Index N>
 struct NewtonStep
 {
   static constexpr
@@ -163,9 +163,7 @@ struct NewtonStep
 
   template<typename FN>
   void
-  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r)
-  {
-  }
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
   template<typename FN>
   Vector<T, N>
@@ -175,7 +173,7 @@ struct NewtonStep
 ///
 /// Trust Region Step
 ///
-template<typename T, Index N = DYNAMIC>
+template<typename T, Index N>
 struct TrustRegionStep
 {
   static constexpr
@@ -184,10 +182,7 @@ struct TrustRegionStep
 
   template<typename FN>
   void
-  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r)
-  {
-    region_size = initial_region_size;
-  }
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
   template<typename FN>
   Vector<T, N>
@@ -212,7 +207,7 @@ struct TrustRegionStep
 ///
 /// Conjugate Gradient Step
 ///
-template<typename T, Index N = DYNAMIC>
+template<typename T, Index N>
 struct ConjugateGradientStep
 {
   static constexpr
@@ -228,19 +223,32 @@ struct ConjugateGradientStep
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
   Index
-  max_num_line_search_iter_{16};
+  max_num_line_search_iter{16};
 
   Index
-  restart_directions_interval_{32};
+  restart_directions_interval{32};
 
   T
-  line_search_tol_{1.0e-6};
+  line_search_tol{1.0e-6};
+
+private:
+  Vector<T, N>
+  search_direction;
+
+  Vector<T, N>
+  precon_resi;
+
+  T
+  projection_new{0.0};
+
+  Index
+  restart_directions_counter{0};
 };
 
 ///
 /// Minimizer Struct
 ///
-template<typename STEP, typename T, Index N = DYNAMIC>
+template<typename STEP, typename T, Index N>
 struct Minimizer
 {
 public:
