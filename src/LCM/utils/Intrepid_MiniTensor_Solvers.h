@@ -270,19 +270,19 @@ struct LineSearchRegularizedStep
 ///
 /// Minimizer Struct
 ///
-template<typename STEP, typename T, Index N>
+template<typename T, Index N>
 struct Minimizer
 {
 public:
 
-  Minimizer(STEP & s) : step_method(s)
+  Minimizer()
   {
     STATIC_ASSERT(Sacado::IsADType<T>::value == false, NO_FAD_ALLOWED);
   }
 
-  template<typename FN>
+  template<typename STEP, typename FN>
   void
-  solve(FN & fn, Vector<T, N> & x);
+  solve(STEP & step_method, FN & fn, Vector<T, N> & x);
 
   void
   printReport(std::ostream & os);
@@ -342,8 +342,8 @@ public:
   Tensor<T, N>
   final_hessian;
 
-  STEP &
-  step_method;
+  char const *
+  step_method_name{nullptr};
 
   char const *
   function_name{nullptr};

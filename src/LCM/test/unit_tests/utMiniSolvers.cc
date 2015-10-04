@@ -16,21 +16,25 @@ namespace
 // Test the solution methods by themselves.
 //
 
-// Test one system with one method.
-template <typename NLS, typename NLM, typename T, Intrepid::Index N>
+// Test one function with one method.
+template <typename STEP, typename FN, typename T, Intrepid::Index N>
 bool
-solveNLSwithNLM(NLS & system, NLM & method, Intrepid::Vector<T, N> & x)
+solveFNwithSTEP(STEP & step_method, FN & function, Intrepid::Vector<T, N> & x)
 {
-  method.solve(system, x);
-  method.printReport(std::cout);
+  Intrepid::Minimizer<T, N>
+  minimizer;
 
-  return method.converged;
+  minimizer.solve(step_method, function, x);
+
+  minimizer.printReport(std::cout);
+
+  return minimizer.converged;
 }
 
 // Test one system with various methods.
-template <typename NLS, typename T, Intrepid::Index N>
+template <typename FN, typename T, Intrepid::Index N>
 bool
-solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
+solveFN(FN & function, Intrepid::Vector<T, N> const & x)
 {
   bool
   all_ok = true;
@@ -41,52 +45,40 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
   Intrepid::NewtonStep<T, N>
   newton_step;
 
-  Intrepid::Minimizer<Intrepid::NewtonStep<T, N>, T, N>
-  newton_minimizer(newton_step);
-
   y = x;
 
   bool const
-  newton_ok = solveNLSwithNLM(system, newton_minimizer, y);
+  newton_ok = solveFNwithSTEP(newton_step, function, y);
 
   all_ok = all_ok && newton_ok;
 
   Intrepid::TrustRegionStep<T, N>
   trust_region_step;
 
-  Intrepid::Minimizer<Intrepid::TrustRegionStep<T, N>, T, N>
-  trust_region_minimizer(trust_region_step);
-
   y = x;
 
   bool const
-  trust_region_ok = solveNLSwithNLM(system, trust_region_minimizer, y);
+  trust_region_ok = solveFNwithSTEP(trust_region_step, function, y);
 
   all_ok = all_ok && trust_region_ok;
 
   Intrepid::ConjugateGradientStep<T, N>
   pcg_step;
 
-  Intrepid::Minimizer<Intrepid::ConjugateGradientStep<T, N>, T, N>
-  pcg_minimizer(pcg_step);
-
   y = x;
 
   bool const
-  pcg_ok = solveNLSwithNLM(system, pcg_minimizer, y);
+  pcg_ok = solveFNwithSTEP(pcg_step, function, y);
 
   all_ok = all_ok && pcg_ok;
 
   Intrepid::LineSearchRegularizedStep<T, N>
   line_search_step;
 
-  Intrepid::Minimizer<Intrepid::LineSearchRegularizedStep<T, N>, T, N>
-  line_search_minimizer(line_search_step);
-
   y = x;
 
   bool const
-  line_search_ok = solveNLSwithNLM(system, line_search_minimizer, y);
+  line_search_ok = solveFNwithSTEP(line_search_step, function, y);
 
   all_ok = all_ok && line_search_ok;
 
@@ -113,7 +105,7 @@ bool testSystemsAndMethods()
   x(0) = 10.0;
 
   bool const
-  square_root_ok = solveNLS(square_root, x);
+  square_root_ok = solveFN(square_root, x);
 
   all_ok = all_ok && square_root_ok;
 
@@ -126,7 +118,7 @@ bool testSystemsAndMethods()
   x(1) = -10.0;
 
   bool const
-  quadratic_ok = solveNLS(quadratic, x);
+  quadratic_ok = solveFN(quadratic, x);
 
   all_ok = all_ok && quadratic_ok;
 
@@ -139,7 +131,7 @@ bool testSystemsAndMethods()
   x(1) = 0.0;
 
   bool const
-  gaussian_ok = solveNLS(gaussian, x);
+  gaussian_ok = solveFN(gaussian, x);
 
   all_ok = all_ok && gaussian_ok;
 
@@ -152,7 +144,7 @@ bool testSystemsAndMethods()
   x(1) = 3.0;
 
   bool const
-  banana_ok = solveNLS(banana, x);
+  banana_ok = solveFN(banana, x);
 
   all_ok = all_ok && banana_ok;
 
@@ -165,7 +157,7 @@ bool testSystemsAndMethods()
   x(1) =  0.0;
 
   bool const
-  matyas_ok = solveNLS(matyas, x);
+  matyas_ok = solveFN(matyas, x);
 
   all_ok = all_ok && matyas_ok;
 
@@ -178,7 +170,7 @@ bool testSystemsAndMethods()
   x(1) = -1.5;
 
   bool const
-  mccormick_ok = solveNLS(mccormick, x);
+  mccormick_ok = solveFN(mccormick, x);
 
   all_ok = all_ok && mccormick_ok;
 
@@ -191,7 +183,7 @@ bool testSystemsAndMethods()
   x(1) = -4.0;
 
   bool const
-  styblinski_tang_ok = solveNLS(styblinski_tang, x);
+  styblinski_tang_ok = solveFN(styblinski_tang, x);
 
   all_ok = all_ok && styblinski_tang_ok;
 
@@ -266,10 +258,10 @@ TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, SquareRoot)
   STEP
   step;
 
-  Intrepid::Minimizer<STEP, ValueT, dimension>
-  minimizer(step);
+  Intrepid::Minimizer<ValueT, dimension>
+  minimizer;
 
-  LCM::miniMinimize(minimizer, banana, x);
+  LCM::miniMinimize(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
@@ -345,10 +337,10 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
   STEP
   step;
 
-  Intrepid::Minimizer<STEP, RealType, dimension>
-  minimizer(step);
+  Intrepid::Minimizer<RealType, dimension>
+  minimizer;
 
-  minimizer.solve(banana, x);
+  minimizer.solve(step, banana, x);
 
   minimizer.printReport(std::cout);
 

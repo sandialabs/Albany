@@ -58,9 +58,9 @@ computeFADInfo(
 //
 //
 //
-template<typename STEP, typename T, Index N>
+template<typename T, Index N>
 void
-Minimizer<STEP, T, N>::
+Minimizer<T, N>::
 printReport(std::ostream & os)
 {
   std::string const
@@ -70,7 +70,7 @@ printReport(std::ostream & os)
   //cs = converged == true ? "\U0001F60A" : "\U0001F623";
 
   os << "\n\n";
-  os << "Method     : " << STEP::NAME << '\n';
+  os << "Method     : " << step_method_name << '\n';
   os << "System     : " << function_name << '\n';
   os << "Converged  : " << cs << '\n';
   os << "Max Iters  : " << max_num_iter << '\n';
@@ -96,9 +96,9 @@ printReport(std::ostream & os)
 //
 //
 //
-template<typename STEP, typename T, Index N>
+template<typename T, Index N>
 void
-Minimizer<STEP, T, N>::
+Minimizer<T, N>::
 updateConvergenceCriterion(T const ae)
 {
   abs_error = ae;
@@ -118,9 +118,9 @@ updateConvergenceCriterion(T const ae)
 //
 //
 //
-template<typename STEP, typename T, Index N>
+template<typename T, Index N>
 bool
-Minimizer<STEP, T, N>::
+Minimizer<T, N>::
 continueSolve() const
 {
   bool const
@@ -138,12 +138,13 @@ continueSolve() const
 //
 //
 //
-template<typename STEP, typename T, Index N>
-template<typename FN>
+template<typename T, Index N>
+template<typename STEP, typename FN>
 void
-Minimizer<STEP, T, N>::
-solve(FN & fn, Vector<T, N> & soln)
+Minimizer<T, N>::
+solve(STEP & step_method, FN & fn, Vector<T, N> & soln)
 {
+  step_method_name = STEP::NAME;
   function_name = FN::NAME;
   initial_guess = soln;
 

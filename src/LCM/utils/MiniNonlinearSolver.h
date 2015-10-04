@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(Intrepid_NonlinearSolver_h)
-#define Intrepid_NonlinearSolver_h
+#if !defined(LCM_MiniNonlinearSolver_h)
+#define LCM_MiniNonlinearSolver_h
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "Intrepid_MiniTensor_Solvers.h"
@@ -16,16 +16,24 @@ namespace LCM{
 /// miniMinimize function that wraps the MiniTensor Nonlinear Solvers
 /// and deals with Albany traits and AD sensitivities.
 ///
-template<typename OPT, typename FN, Intrepid::Index N>
+template<typename MIN, typename STEP, typename FN, Intrepid::Index N>
 void
-miniMinimize(OPT & optimizer, FN & function, Intrepid::Vector<RealType, N> & x);
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<RealType, N> & soln);
 
-template<typename OPT, typename FN, typename T, Intrepid::Index N>
+template<typename MIN, typename STEP, typename FN, typename T, Intrepid::Index N>
 void
-miniMinimize(OPT & optimizer, FN & function, Intrepid::Vector<T, N> & x);
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<T, N> & soln);
 
 } //namesapce LCM
 
 #include "MiniNonlinearSolver.t.h"
 
-#endif // Intrepid_NonlinearSolver_h
+#endif // LCM_MiniNonlinearSolver_h

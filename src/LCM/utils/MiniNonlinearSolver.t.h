@@ -10,18 +10,26 @@ namespace LCM
 //
 // miniMinimizer
 //
-template<typename OPT, typename FN, Intrepid::Index N>
+template<typename MIN, typename STEP, typename FN, Intrepid::Index N>
 void
-miniMinimize(OPT & optimizer, FN & function, Intrepid::Vector<RealType, N> & x)
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<RealType, N> & soln)
 {
-  optimizer.solve(function, x);
+  minimizer.solve(step_method, function, soln);
 
   return;
 }
 
-template<typename OPT, typename FN, typename T, Intrepid::Index N>
+template<typename MIN, typename STEP, typename FN, typename T, Intrepid::Index N>
 void
-miniMinimize(OPT & optimizer, FN & function, Intrepid::Vector<T, N> & soln)
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<T, N> & soln)
 {
   // Extract values and use them to minimize the function.
   using ValueT = typename Sacado::ValueType<T>::type;
@@ -29,7 +37,7 @@ miniMinimize(OPT & optimizer, FN & function, Intrepid::Vector<T, N> & soln)
   Intrepid::Vector<ValueT, N>
   soln_val = Sacado::Value<Intrepid::Vector<T, N>>::eval(soln);
 
-  optimizer.solve(function, soln_val);
+  minimizer.solve(step_method, function, soln_val);
 
   auto const
   dimension = soln.get_dimension();
