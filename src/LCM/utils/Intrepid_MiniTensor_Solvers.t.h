@@ -10,54 +10,6 @@ namespace Intrepid
 //
 //
 //
-template<typename T, typename S, Index N>
-void
-computeFADInfo(
-    Vector<T, N> const & r,
-    Tensor<S, N> const & DrDx,
-    Vector<T, N> & x)
-{
-  // Check whether dealing with AD type.
-  if (Sacado::IsADType<T>::value == false) return;
-
-  //Deal with derivative information
-  auto const
-  dimension = r.get_dimension();
-
-  assert(dimension > 0);
-
-  auto const
-  order = r[0].size();
-
-  assert(order > 0);
-
-  // Extract sensitivities of r wrt p
-  Matrix<S>
-  DrDp(dimension, order);
-
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DrDp(i, j) = r(i).dx(j);
-    }
-  }
-
-  // Solve for all DxDp
-  Matrix<S>
-  DxDp = Intrepid::solve(DrDx, DrDp);
-
-  // Pack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
-  }
-
-}
-
-//
-//
-//
 template<typename T, Index N>
 void
 Minimizer<T, N>::
