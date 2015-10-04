@@ -16,7 +16,7 @@ T
 Function_Base<Function_Derived>::
 value(Function_Derived & f, Vector<T, N> const & x)
 {
-  Intrepid::Index const
+  Index const
   dimension = x.get_dimension();
 
   assert(dimension == Function_Derived::DIMENSION);
@@ -50,7 +50,7 @@ gradient(Function_Derived & f, Vector<T, N> const & x)
     x_ad(i) = AD(dimension, i, x(i));
   }
 
-  AD
+  AD const
   f_ad = f.value(x_ad);
 
   Vector<T, N>
@@ -86,7 +86,7 @@ hessian(Function_Derived & f, Vector<T, N> const & x)
     x_ad(i) = AD(dimension, i, x(i));
   }
 
-  Vector<AD, N>
+  Vector<AD, N> const
   r_ad = f.gradient(x_ad);
 
   Tensor<T, N>
@@ -177,10 +177,7 @@ continueSolve() const
   is_max_iter = num_iter >= max_num_iter;
 
   bool const
-  end_solve = is_max_iter == true || converged == true;
-
-  bool const
-  continue_solve = end_solve == false;
+  continue_solve = is_max_iter == false && converged == false;
 
   return continue_solve;
 }
@@ -193,16 +190,17 @@ void
 Minimizer<T, N>::
 printReport(std::ostream & os)
 {
-  std::string const
-  cs = converged == true ? "YES" : "NO";
+  char const * const
+  converged_string = converged == true ? "YES" : "NO";
 
-  //std::string const
-  //cs = converged == true ? "\U0001F60A" : "\U0001F623";
+  // Happy / frowny face
+  //char const * const
+  //converged_string = converged == true ? "\U0001F60A" : "\U0001F623";
 
   os << "\n\n";
   os << "Method     : " << step_method_name << '\n';
   os << "Function   : " << function_name << '\n';
-  os << "Converged  : " << cs << '\n';
+  os << "Converged  : " << converged_string << '\n';
   os << "Max Iters  : " << max_num_iter << '\n';
   os << "Iters Taken: " << num_iter << '\n';
 

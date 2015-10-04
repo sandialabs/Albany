@@ -203,7 +203,7 @@ TEUCHOS_UNIT_TEST(NonlinearSystems, NonlinearMethods)
 //
 TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 {
-  Intrepid::Index const
+  constexpr Intrepid::Index
   dimension{3};
 
   // Lehmer matrix
@@ -232,6 +232,33 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
   TEST_COMPARE(error, <=, Intrepid::machine_epsilon<RealType>());
 }
 
+TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
+{
+  constexpr Intrepid::Index
+  dimension{2};
+
+  LCM::BananaNLS<RealType>
+  banana;
+
+  Intrepid::NewtonStep<RealType, dimension>
+  step;
+
+  Intrepid::Minimizer<RealType, dimension>
+  minimizer;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  minimizer.solve(step, banana, x);
+
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(true, ==, true);
+}
+
 //
 // Test the LCM mini minimizer.
 //
@@ -247,19 +274,17 @@ TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, Banana)
   LCM::BananaNLS<ValueT>
   banana;
 
+  Intrepid::NewtonStep<ValueT, dimension>
+  step;
+
+  Intrepid::Minimizer<ValueT, dimension>
+  minimizer;
+
   Intrepid::Vector<ScalarT, dimension>
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
-
-  using STEP = Intrepid::NewtonStep<ValueT, dimension>;
-
-  STEP
-  step;
-
-  Intrepid::Minimizer<ValueT, dimension>
-  minimizer;
 
   LCM::miniMinimize(minimizer, step, banana, x);
 
@@ -270,7 +295,7 @@ TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, Banana)
 
 TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
 {
-  Intrepid::Index const
+  constexpr Intrepid::Index
   dimension{2};
 
   LCM::Paraboloid<RealType>
@@ -314,35 +339,6 @@ TEUCHOS_UNIT_TEST(Testing, MixedStorage)
   B.set_dimensions(4, 2);
 
   std::cout << "Matrix   : " << B << '\n';
-
-  TEST_COMPARE(true, ==, true);
-}
-
-TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
-{
-  constexpr Intrepid::Index
-  dimension{2};
-
-  LCM::BananaNLS<RealType>
-  banana;
-
-  Intrepid::Vector<RealType, dimension>
-  x;
-
-  x(0) = 0.0;
-  x(1) = 3.0;
-
-  using STEP = Intrepid::LineSearchRegularizedStep<RealType, dimension>;
-
-  STEP
-  step;
-
-  Intrepid::Minimizer<RealType, dimension>
-  minimizer;
-
-  minimizer.solve(step, banana, x);
-
-  minimizer.printReport(std::cout);
 
   TEST_COMPARE(true, ==, true);
 }
