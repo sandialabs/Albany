@@ -279,6 +279,42 @@ TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
   TEST_COMPARE(method.isConverged(), ==, true);
 }
 
+//
+// Test the LCM mini minimizer.
+//
+TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, SquareRoot)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  constexpr
+  Intrepid::Index
+  dimension{2};
+
+  LCM::BananaNLS<ValueT>
+  banana;
+
+  Intrepid::Vector<ScalarT, dimension>
+  x;
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  using STEP = Intrepid::NewtonStep<ValueT, dimension>;
+
+  STEP
+  step;
+
+  Intrepid::Minimizer<STEP, ValueT, dimension>
+  minimizer(step);
+
+  LCM::miniMinimize(minimizer, banana, x);
+
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(minimizer.converged, ==, true);
+}
+
 TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
 {
   Intrepid::Index const

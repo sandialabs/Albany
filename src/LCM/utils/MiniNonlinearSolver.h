@@ -13,6 +13,18 @@
 namespace LCM{
 
 ///
+/// miniMinimize function that wraps the MiniTensor Nonlinear Solvers
+/// and deals with Albany traits and AD sensitivities.
+///
+template<typename OPT, typename FN, Intrepid::Index N>
+void
+miniMinimize(OPT & optimizer, FN & function, Intrepid::Vector<RealType, N> & x);
+
+template<typename OPT, typename FN, typename T, Intrepid::Index N>
+void
+miniMinimize(OPT & optimizer, FN & function, Intrepid::Vector<T, N> & x);
+
+///
 /// MiniNonlinear Solver Base class
 /// NLS: Nonlinear System
 ///
