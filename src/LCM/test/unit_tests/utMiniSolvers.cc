@@ -235,7 +235,7 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 //
 // Test the LCM mini minimizer.
 //
-TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, Banana)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;

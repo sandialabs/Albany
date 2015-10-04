@@ -28,237 +28,22 @@ public:
   ///
   template<typename T, Index N>
   T
-  value(Function_Derived & f, Vector<T, N> const & x)
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == Function_Derived::DIMENSION);
-
-    Vector<T, N> const
-    r = f.gradient(x);
-
-    return 0.5 * dot(r, r);
-  }
+  value(Function_Derived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute gradient with AD from value().
   ///
   template<typename T, Index N>
   Vector<T, N>
-  gradient(Function_Derived & f, Vector<T, N> const & x)
-  {
-    using AD = typename Sacado::Fad::DFad<T>;
-
-    Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == Function_Derived::DIMENSION);
-
-    Vector<AD, N>
-    x_ad(dimension);
-
-    for (Index i{0}; i < dimension; ++i) {
-      x_ad(i) = AD(dimension, i, x(i));
-    }
-
-    AD
-    f_ad = f.value(x_ad);
-
-    Vector<T, N>
-    gradient(dimension);
-
-    for (Index i{0}; i < dimension; ++i) {
-      gradient(i) = f_ad.dx(i);
-    }
-
-    return gradient;
-  }
+  gradient(Function_Derived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute Hessian with AD from gradient().
   ///
   template<typename T, Index N>
   Tensor<T, N>
-  hessian(Function_Derived & f, Vector<T, N> const & x)
-  {
-    using AD = typename Sacado::Fad::DFad<T>;
+  hessian(Function_Derived & f, Vector<T, N> const & x);
 
-    Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == Function_Derived::DIMENSION);
-
-    Vector<AD, N>
-    x_ad(dimension);
-
-    for (Index i{0}; i < dimension; ++i) {
-      x_ad(i) = AD(dimension, i, x(i));
-    }
-
-    Vector<AD, N>
-    r_ad = f.gradient(x_ad);
-
-    Tensor<T, N>
-    Hessian(dimension);
-
-    for (Index i{0}; i < dimension; ++i) {
-      for (Index j{0}; j < dimension; ++j) {
-        Hessian(i, j) = r_ad(i).dx(j);
-      }
-    }
-
-    return Hessian;
-  }
-
-};
-
-///
-/// Newton line search
-///
-template<typename T, Index N>
-struct NewtonLineSearch
-{
-  template<typename FN>
-  T
-  length(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln);
-
-  Index
-  max_num_line_search_iter{16};
-
-  T
-  line_search_tol{1.0e-6};
-};
-
-///
-/// Plain Newton Step
-///
-template<typename T, Index N>
-struct NewtonStep
-{
-  static constexpr
-  char const * const
-  NAME = "Newton";
-
-  template<typename FN>
-  void
-  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  template<typename FN>
-  Vector<T, N>
-  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-};
-
-///
-/// Trust Region Step
-///
-template<typename T, Index N>
-struct TrustRegionStep
-{
-  static constexpr
-  char const * const
-  NAME = "Trust Region";
-
-  template<typename FN>
-  void
-  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  template<typename FN>
-  Vector<T, N>
-  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  Index
-  max_num_restrict_iter{4};
-
-  T
-  region_size{0.0};
-
-  T
-  max_region_size{10.0};
-
-  T
-  initial_region_size{10.0};
-
-  T
-  min_reduction{0.0};
-};
-
-///
-/// Conjugate Gradient Step
-///
-template<typename T, Index N>
-struct ConjugateGradientStep
-{
-  static constexpr
-  char const * const
-  NAME = "Preconditioned Conjugate Gradient";
-
-  template<typename FN>
-  void
-  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  template<typename FN>
-  Vector<T, N>
-  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  Index
-  max_num_line_search_iter{16};
-
-  Index
-  restart_directions_interval{32};
-
-  T
-  line_search_tol{1.0e-6};
-
-private:
-  Vector<T, N>
-  search_direction;
-
-  Vector<T, N>
-  precon_resi;
-
-  T
-  projection_new{0.0};
-
-  Index
-  restart_directions_counter{0};
-};
-
-///
-/// Line Search Regularized Step
-///
-template<typename T, Index N>
-struct LineSearchRegularizedStep
-{
-  static constexpr
-  char const * const
-  NAME = "Line Search Regularized";
-
-  template<typename FN>
-  void
-  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  template<typename FN>
-  Vector<T, N>
-  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  Index
-  max_num_restrict_iter{4};
-
-  T
-  step_length{1.0};
-
-  T
-  hessian_cond_tol{1.0e+08};
-
-  T
-  hessian_singular_tol{1.0e-12};
-
-  Index
-  max_num_line_search_iter{16};
-
-  T
-  line_search_tol{1.0e-6};
 };
 
 ///
@@ -341,6 +126,142 @@ public:
 
   char const *
   function_name{nullptr};
+};
+
+///
+/// Newton line search
+///
+template<typename T, Index N>
+struct NewtonLineSearch
+{
+  template<typename FN>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln);
+
+  Index
+  max_num_iter{16};
+
+  T
+  tolerance{1.0e-6};
+};
+
+///
+/// Plain Newton Step
+///
+template<typename T, Index N>
+struct NewtonStep
+{
+  static constexpr
+  char const * const
+  NAME = "Newton";
+
+  template<typename FN>
+  void
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  template<typename FN>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+};
+
+///
+/// Trust Region Step
+///
+template<typename T, Index N>
+struct TrustRegionStep
+{
+  static constexpr
+  char const * const
+  NAME = "Trust Region";
+
+  template<typename FN>
+  void
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  template<typename FN>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  Index
+  max_num_restrict_iter{4};
+
+  T
+  region_size{0.0};
+
+  T
+  max_region_size{10.0};
+
+  T
+  initial_region_size{10.0};
+
+  T
+  min_reduction{0.0};
+};
+
+///
+/// Conjugate Gradient Step
+///
+template<typename T, Index N>
+struct ConjugateGradientStep
+{
+  static constexpr
+  char const * const
+  NAME = "Preconditioned Conjugate Gradient";
+
+  template<typename FN>
+  void
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  template<typename FN>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  Index
+  restart_directions_interval{32};
+
+private:
+  Vector<T, N>
+  search_direction;
+
+  Vector<T, N>
+  precon_resi;
+
+  T
+  projection_new{0.0};
+
+  Index
+  restart_directions_counter{0};
+};
+
+///
+/// Line Search Regularized Step
+///
+template<typename T, Index N>
+struct LineSearchRegularizedStep
+{
+  static constexpr
+  char const * const
+  NAME = "Line Search Regularized";
+
+  template<typename FN>
+  void
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  template<typename FN>
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  Index
+  max_num_restrict_iter{4};
+
+  T
+  step_length{1.0};
+
+  T
+  hessian_cond_tol{1.0e+08};
+
+  T
+  hessian_singular_tol{1.0e-12};
 };
 
 } // namespace Intrepid

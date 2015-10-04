@@ -10,38 +10,136 @@ namespace Intrepid
 //
 //
 //
+template<typename Function_Derived>
 template<typename T, Index N>
+T
+Function_Base<Function_Derived>::
+value(Function_Derived & f, Vector<T, N> const & x)
+{
+  Intrepid::Index const
+  dimension = x.get_dimension();
+
+  assert(dimension == Function_Derived::DIMENSION);
+
+  Vector<T, N> const
+  r = f.gradient(x);
+
+  return 0.5 * dot(r, r);
+}
+
+//
+//
+//
+template<typename Function_Derived>
+template<typename T, Index N>
+Vector<T, N>
+Function_Base<Function_Derived>::
+gradient(Function_Derived & f, Vector<T, N> const & x)
+{
+  using AD = typename Sacado::Fad::DFad<T>;
+
+  Index const
+  dimension = x.get_dimension();
+
+  assert(dimension == Function_Derived::DIMENSION);
+
+  Vector<AD, N>
+  x_ad(dimension);
+
+  for (Index i{0}; i < dimension; ++i) {
+    x_ad(i) = AD(dimension, i, x(i));
+  }
+
+  AD
+  f_ad = f.value(x_ad);
+
+  Vector<T, N>
+  gradient(dimension);
+
+  for (Index i{0}; i < dimension; ++i) {
+    gradient(i) = f_ad.dx(i);
+  }
+
+  return gradient;
+}
+
+//
+//
+//
+template<typename Function_Derived>
+template<typename T, Index N>
+Tensor<T, N>
+Function_Base<Function_Derived>::
+hessian(Function_Derived & f, Vector<T, N> const & x)
+{
+  using AD = typename Sacado::Fad::DFad<T>;
+
+  Index const
+  dimension = x.get_dimension();
+
+  assert(dimension == Function_Derived::DIMENSION);
+
+  Vector<AD, N>
+  x_ad(dimension);
+
+  for (Index i{0}; i < dimension; ++i) {
+    x_ad(i) = AD(dimension, i, x(i));
+  }
+
+  Vector<AD, N>
+  r_ad = f.gradient(x_ad);
+
+  Tensor<T, N>
+  Hessian(dimension);
+
+  for (Index i{0}; i < dimension; ++i) {
+    for (Index j{0}; j < dimension; ++j) {
+      Hessian(i, j) = r_ad(i).dx(j);
+    }
+  }
+
+  return Hessian;
+}
+
+//
+//
+//
+template<typename T, Index N>
+template<typename STEP, typename FN>
 void
 Minimizer<T, N>::
-printReport(std::ostream & os)
+solve(STEP & step_method, FN & fn, Vector<T, N> & soln)
 {
-  std::string const
-  cs = converged == true ? "YES" : "NO";
+  step_method_name = STEP::NAME;
+  function_name = FN::NAME;
+  initial_guess = soln;
 
-  //std::string const
-  //cs = converged == true ? "\U0001F60A" : "\U0001F623";
+  Vector<T, N>
+  resi = fn.gradient(soln);
 
-  os << "\n\n";
-  os << "Method     : " << step_method_name << '\n';
-  os << "System     : " << function_name << '\n';
-  os << "Converged  : " << cs << '\n';
-  os << "Max Iters  : " << max_num_iter << '\n';
-  os << "Iters Taken: " << num_iter << '\n';
+  initial_norm = norm(resi);
 
-  os << std::scientific << std::setprecision(16);
+  updateConvergenceCriterion(initial_norm);
 
-  os << "Initial |R|: " << std::setw(24) << initial_norm << '\n';
-  os << "Abs Tol    : " << std::setw(24) << abs_tol << '\n';
-  os << "Abs Error  : " << std::setw(24) << abs_error << '\n';
-  os << "Rel Tol    : " << std::setw(24) << rel_tol << '\n';
-  os << "Rel Error  : " << std::setw(24) << rel_error << '\n';
-  os << "Initial X  : " << initial_guess << '\n';
-  os << "Final X    : " << final_soln << '\n';
-  os << "f(X)       : " << std::setw(24) << final_value << '\n';
-  os << "Df(X)      : " << final_gradient << '\n';
-  os << "DDf(X)     : " << final_hessian << '\n';
-  os << '\n';
+  step_method.initialize(fn, soln, resi);
 
+  while (continueSolve() == true) {
+
+    Vector<T, N> const
+    step = step_method.step(fn, soln, resi);
+
+    soln += step;
+
+    resi = fn.gradient(soln);
+
+    T const
+    norm_resi = norm(resi);
+
+    updateConvergenceCriterion(norm_resi);
+    ++num_iter;
+  }
+
+  recordFinals(fn, soln);
   return;
 }
 
@@ -91,42 +189,97 @@ continueSolve() const
 //
 //
 template<typename T, Index N>
-template<typename STEP, typename FN>
 void
 Minimizer<T, N>::
-solve(STEP & step_method, FN & fn, Vector<T, N> & soln)
+printReport(std::ostream & os)
 {
-  step_method_name = STEP::NAME;
-  function_name = FN::NAME;
-  initial_guess = soln;
+  std::string const
+  cs = converged == true ? "YES" : "NO";
+
+  //std::string const
+  //cs = converged == true ? "\U0001F60A" : "\U0001F623";
+
+  os << "\n\n";
+  os << "Method     : " << step_method_name << '\n';
+  os << "Function   : " << function_name << '\n';
+  os << "Converged  : " << cs << '\n';
+  os << "Max Iters  : " << max_num_iter << '\n';
+  os << "Iters Taken: " << num_iter << '\n';
+
+  os << std::scientific << std::setprecision(16);
+
+  os << "Initial |R|: " << std::setw(24) << initial_norm << '\n';
+  os << "Abs Tol    : " << std::setw(24) << abs_tol << '\n';
+  os << "Abs Error  : " << std::setw(24) << abs_error << '\n';
+  os << "Rel Tol    : " << std::setw(24) << rel_tol << '\n';
+  os << "Rel Error  : " << std::setw(24) << rel_error << '\n';
+  os << "Initial X  : " << initial_guess << '\n';
+  os << "Final X    : " << final_soln << '\n';
+  os << "f(X)       : " << std::setw(24) << final_value << '\n';
+  os << "Df(X)      : " << final_gradient << '\n';
+  os << "DDf(X)     : " << final_hessian << '\n';
+  os << '\n';
+
+  return;
+}
+
+///
+/// Newton line search
+///
+template<typename T, Index N>
+template<typename FN>
+Vector<T, N>
+NewtonLineSearch<T, N>::
+step(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln)
+{
+  Index const
+  dimension = soln.get_dimension();
 
   Vector<T, N>
-  resi = fn.gradient(soln);
+  step(dimension, ZEROS);
 
-  initial_norm = norm(resi);
+  Vector<T, N>
+  soln_next(dimension, ZEROS);
 
-  updateConvergenceCriterion(initial_norm);
+  Vector<T, N>
+  gradient_next(dimension, ZEROS);
 
-  step_method.initialize(fn, soln, resi);
+  Tensor<T, N>
+  Hessian_next(dimension, ZEROS);
 
-  while (continueSolve() == true) {
+  T const
+  projection_direction = dot(direction, direction);
 
-    Vector<T, N> const
-    step = step_method.step(fn, soln, resi);
+  for (Index i{0}; i < max_num_iter; ++i) {
 
-    soln += step;
+    soln_next = soln + step;
 
-    resi = fn.gradient(soln);
+    gradient_next = fn.gradient(soln_next);
+
+    Hessian_next = fn.hessian(soln_next);
 
     T const
-    norm_resi = norm(resi);
+    projection = dot(gradient_next, direction);
 
-    updateConvergenceCriterion(norm_resi);
-    ++num_iter;
+    T const
+    contraction = dot(direction, dot(Hessian_next, direction));
+
+    T const
+    step_length = - projection / contraction;
+
+    step += step_length * direction;
+
+    T const
+    ls_length2 = step_length * step_length * projection_direction;
+
+    bool const
+    line_search_converged = ls_length2 <= tolerance * tolerance;
+
+    if (line_search_converged == true) break;
+
   }
 
-  recordFinals(fn, soln);
-  return;
+  return step;
 }
 
 //
@@ -315,53 +468,17 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
   Index const
   dimension = soln.get_dimension();
 
-  Vector<T, N>
-  step(dimension, ZEROS);
-
-  Vector<T, N>
-  soln_next(dimension, ZEROS);
-
-  Vector<T, N>
-  gradient_next(dimension, ZEROS);
-
-  Tensor<T, N>
-  Hessian(dimension, ZEROS);
-
-  T const
-  projection_search = dot(search_direction, search_direction);
-
   // Newton line search.
-  for (Index i{0}; i < max_num_line_search_iter; ++i) {
+  NewtonLineSearch<T, N>
+  newton_ls;
 
-    soln_next = soln + step;
+  Vector<T, N> const
+  step = newton_ls.step(fn, search_direction, soln);
 
-    gradient_next = fn.gradient(soln_next);
-
-    Hessian = fn.hessian(soln_next);
-
-    T const
-    projection = dot(gradient_next, search_direction);
-
-    T const
-    contraction = dot(search_direction, dot(Hessian, search_direction));
-
-    T const
-    step_length = - projection / contraction;
-
-    step += step_length * search_direction;
-
-    T const
-    ls_length2 = step_length * step_length * projection_search;
-
-    bool const
-    line_search_converged = ls_length2 <= line_search_tol * line_search_tol;
-
-    if (line_search_converged == true) break;
-
-  }
-
+  Vector<T, N> const
   soln_next = soln + step;
 
+  Vector<T, N> const
   gradient_next = fn.gradient(soln_next);
 
   T const
@@ -370,6 +487,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
   T const
   projection_mid = - dot(gradient_next, precon_resi);
 
+  Tensor<T, N> const
   Hessian = fn.hessian(soln_next);
 
   precon_resi = - Intrepid::solve(Hessian, gradient_next);
@@ -486,41 +604,11 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   }
 
   // Newton line search.
+  NewtonLineSearch<T, N>
+  newton_ls;
 
-  T const
-  projection_step = dot(step, step);
-
-  Vector<T, N>
-  ls_step(dimension, ZEROS);
-
-  for (Index i{0}; i < max_num_line_search_iter; ++i) {
-
-    Vector<T, N>
-    soln_next = soln + ls_step;
-
-    Vector<T, N> const
-    gradient_next = fn.gradient(soln_next);
-
-    Hessian = fn.hessian(soln_next);
-
-    T const
-    projection = dot(gradient_next, step);
-
-    T const
-    contraction = dot(step, dot(Hessian, step));
-
-    T const
-    ls_length = - projection / contraction;
-
-    ls_step += ls_length * step;
-
-    bool const
-    line_search_converged = ls_length * ls_length * projection_step <=
-    line_search_tol * line_search_tol;
-
-    if (line_search_converged == true) break;
-
-  }
+  Vector<T, N> const
+  ls_step = newton_ls.step(fn, step, soln);
 
   return ls_step;
 }
