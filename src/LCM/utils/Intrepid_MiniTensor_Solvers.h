@@ -146,6 +146,25 @@ struct NewtonLineSearch
 };
 
 ///
+/// Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+///
+template<typename T, Index N>
+struct TrustRegionExact
+{
+  Vector<T, N>
+  step(Tensor<T, N> const & Hessian, Vector<T, N> const & gradient);
+
+  Index
+  max_num_iter{4};
+
+  T
+  region_size{1.0};
+
+  T
+  initial_lambda{0.0};
+};
+
+///
 /// Plain Newton Step
 ///
 template<typename T, Index N>
@@ -181,9 +200,6 @@ struct TrustRegionStep
   template<typename FN>
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  Index
-  max_num_restrict_iter{4};
 
   T
   region_size{0.0};
@@ -250,9 +266,6 @@ struct LineSearchRegularizedStep
   template<typename FN>
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
-
-  Index
-  max_num_restrict_iter{4};
 
   T
   step_length{1.0};
