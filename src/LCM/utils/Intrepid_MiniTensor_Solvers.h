@@ -15,29 +15,6 @@ namespace Intrepid
 {
 
 ///
-/// Types of nonlinear method for Intrepid nonlinear mini solvers.
-///
-enum class NonlinearMethod
-{
-  NEWTON,
-  TRUST_REGION,
-  CONJUGATE_GRADIENT,
-  LINE_SEARCH_REGULARIZED};
-
-///
-/// Deal with derivative information for all the mini solvers.
-/// Call this when a converged solution is obtained on a system that is
-/// typed on a FAD type.
-/// Assuming that T is a FAD type and S is a simple type.
-///
-template<typename T, typename S, Index N>
-void
-computeFADInfo(
-    Vector<T, N> const & r,
-    Tensor<S, N> const & DrDx,
-    Vector<T, N> & x);
-
-///
 /// Function base class that defines the interface to Mini Solvers.
 ///
 template<typename Function_Derived>
@@ -134,6 +111,23 @@ public:
     return Hessian;
   }
 
+};
+
+///
+/// Newton line search
+///
+template<typename T, Index N>
+struct NewtonLineSearch
+{
+  template<typename FN>
+  T
+  length(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln);
+
+  Index
+  max_num_line_search_iter{16};
+
+  T
+  line_search_tol{1.0e-6};
 };
 
 ///

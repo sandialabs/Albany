@@ -32,6 +32,19 @@ miniMinimize(
     FN & function,
     Intrepid::Vector<T, N> & soln);
 
+///
+/// Deal with derivative information for all the mini solvers.
+/// Call this when a converged solution is obtained on a system that is
+/// typed on a FAD type.
+/// Assuming that T is a FAD type and S is a simple type.
+///
+template<typename T, typename S, Intrepid::Index N>
+void
+computeFADInfo(
+    Intrepid::Vector<T, N> const & r,
+    Intrepid::Tensor<S, N> const & DrDx,
+    Intrepid::Vector<T, N> & x);
+
 } //namesapce LCM
 
 #include "MiniNonlinearSolver.t.h"
