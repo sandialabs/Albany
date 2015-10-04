@@ -137,21 +137,6 @@ public:
 };
 
 ///
-/// Base class for stepping method
-///
-template<typename Step_Derived>
-class Step_Base
-{
-public:
-  template<typename FN, typename T, Index N>
-  Vector<T, N>
-  step(Step_Derived & step_method, FN & fn, Vector<T, N> const & x)
-  {
-    return step_method(fn, x);
-  }
-};
-
-///
 /// Plain Newton Step
 ///
 template<typename T, Index N>

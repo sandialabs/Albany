@@ -274,10 +274,10 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 
   }
 
-  Vector<T, N>
+  Vector<T, N> const
   soln_next = soln + step;
 
-  Vector<T, N>
+  Vector<T, N> const
   resi_next = fn.gradient(soln_next);
 
   // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
@@ -335,7 +335,7 @@ initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   Tensor<T, N> const
   Hessian = fn.hessian(soln);
 
-  precon_resi = Intrepid::solve(Hessian, -gradient);
+  precon_resi = - Intrepid::solve(Hessian, gradient);
 
   search_direction = precon_resi;
 
@@ -397,9 +397,11 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 
     step += step_length * search_direction;
 
+    T const
+    ls_length2 = step_length * step_length * projection_search;
+
     bool const
-    line_search_converged = step_length * step_length * projection_search <=
-    line_search_tol * line_search_tol;
+    line_search_converged = ls_length2 <= line_search_tol * line_search_tol;
 
     if (line_search_converged == true) break;
 
@@ -417,7 +419,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 
   Hessian = fn.hessian(soln_next);
 
-  precon_resi = Intrepid::solve(Hessian, -gradient_next);
+  precon_resi = - Intrepid::solve(Hessian, gradient_next);
 
   projection_new = - dot(gradient_next, precon_resi);
 
@@ -427,9 +429,13 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
   ++restart_directions_counter;
 
   bool const
-  restart_directions =
-      restart_directions_counter == restart_directions_interval ||
-      gram_schmidt_factor <= 0.0;
+  rewind = restart_directions_counter == restart_directions_interval;
+
+  bool const
+  bad_directions = gram_schmidt_factor <= 0.0;
+
+  bool const
+  restart_directions = rewind || bad_directions;
 
   if (restart_directions == true) {
 
@@ -479,10 +485,15 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   step(dimension);
 
   bool const
-  ill_conditioned =
-      det(Hessian) < hessian_singular_tol || cond(Hessian) > hessian_cond_tol;
+  singular_hessian = std::abs(det(Hessian)) < hessian_singular_tol;
 
-  if (ill_conditioned == true) {
+  bool const
+  ill_conditioned_hessian = inv_cond(Hessian) * hessian_cond_tol < 1.0;
+
+  bool const
+  bad_hessian = singular_hessian || ill_conditioned_hessian;
+
+  if (bad_hessian == true) {
 
     // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
     T
@@ -490,15 +501,15 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 
     for (Index i{0}; i < max_num_restrict_iter; ++i) {
 
-      Tensor<T, N>
+      Tensor<T, N> const
       K = Hessian + lambda * I;
 
-      Tensor<T, N>
+      Tensor<T, N> const
       L = cholesky(K).first;
 
       step = - Intrepid::solve(K, gradient);
 
-      Vector<T, N>
+      Vector<T, N> const
       q = Intrepid::solve(L, step);
 
       T const
