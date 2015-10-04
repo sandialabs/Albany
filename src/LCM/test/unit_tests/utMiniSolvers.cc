@@ -241,45 +241,6 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 }
 
 //
-// Test the LCM nonlinear mini solver.
-//
-TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
-{
-  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-
-  Intrepid::Index const
-  dimension{1};
-
-  using NLS = LCM::SquareRootNLS<ValueT>;
-
-  ValueT const
-  square = 2.0;
-
-  NLS
-  nonlinear_system(square);
-
-  Intrepid::NewtonMethod<NLS, ValueT, dimension>
-  method;
-
-  LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
-  solver(method);
-
-  Intrepid::Vector<ScalarT, dimension>
-  x;
-
-  // Initial guess
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    x(i) = 1.0;
-  }
-
-  solver.solve(nonlinear_system, x);
-
-  TEST_COMPARE(method.isConverged(), ==, true);
-}
-
-//
 // Test the LCM mini minimizer.
 //
 TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, SquareRoot)
