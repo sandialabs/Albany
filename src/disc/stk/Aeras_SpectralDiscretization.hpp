@@ -73,6 +73,7 @@ namespace Aeras
         << "Line elements." << std::endl); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
+      std::cout << "DEBUG: original ctd key = " << orig_ctd.key << std::endl; 
 #endif 
       int orig_numDim = orig_mesh_specs_struct->numDim;
       int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
@@ -117,9 +118,14 @@ namespace Aeras
       char* new_name_char = new char[new_name.size() + 1]; 
       std::copy(new_name.begin(), new_name.end(), new_name_char);
       new_name_char[new_name.size()] = '\0';
-      new_ctd.name = new_name_char;   
+      new_ctd.name = new_name_char;  
+      //For 1D elements, create a new key for the ctd -- this is needed for Intrepid
+      //setJacobian function. 
+      if (orig_numDim == 1) 
+        new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, np, np); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
+      std::cout << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl; 
 #endif
       // Create and return Albany::MeshSpecsStruct object based on the
       // new (enriched) ctd.
