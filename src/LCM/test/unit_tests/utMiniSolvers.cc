@@ -187,6 +187,58 @@ bool testSystemsAndMethods()
 
   all_ok = all_ok && styblinski_tang_ok;
 
+  LCM::Paraboloid<RealType>
+  paraboloid;
+
+  x.set_dimension(LCM::Paraboloid<RealType>::DIMENSION);
+
+  x(0) = 128.0;
+  x(1) = 256.0;;
+
+  bool const
+  paraboloid_ok = solveFN(paraboloid, x);
+
+  all_ok = all_ok && paraboloid_ok;
+
+  LCM::Beale<RealType>
+  beale;
+
+  x.set_dimension(LCM::Beale<RealType>::DIMENSION);
+
+  x(0) = -4.5;
+  x(1) = -4.5;
+
+  bool const
+  beale_ok = solveFN(beale, x);
+
+  all_ok = all_ok && beale_ok;
+
+  LCM::Booth<RealType>
+  booth;
+
+  x.set_dimension(LCM::Booth<RealType>::DIMENSION);
+
+  x(0) = -10.0;
+  x(1) = -10.0;
+
+  bool const
+  booth_ok = solveFN(booth, x);
+
+  all_ok = all_ok && booth_ok;
+
+  LCM::GoldsteinPrice<RealType>
+  goldstein_price;
+
+  x.set_dimension(LCM::GoldsteinPrice<RealType>::DIMENSION);
+
+  x(0) = 2.0;
+  x(1) = 2.0;
+
+  bool const
+  goldstein_price_ok = solveFN(goldstein_price, x);
+
+  all_ok = all_ok && goldstein_price_ok;
+
   return all_ok;
 }
 
@@ -299,7 +351,7 @@ TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
   dimension{2};
 
   LCM::Paraboloid<RealType>
-  p(1.0);
+  p;
 
   Intrepid::Vector<RealType, dimension>
   x(0.0, 0.0);

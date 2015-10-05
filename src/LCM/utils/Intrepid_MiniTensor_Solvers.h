@@ -83,19 +83,19 @@ public:
   }
 
   Index
-  max_num_iter{128};
+  max_num_iter{256};
 
   Index
   num_iter{0};
 
   T
-  rel_tol{1.0e-10};
+  rel_tol{1.0e-12};
 
   T
   rel_error{1.0};
 
   T
-  abs_tol{1.0e-10};
+  abs_tol{1.0e-12};
 
   T
   abs_error{1.0};
@@ -113,7 +113,7 @@ public:
   final_soln;
 
   T
-  final_value;
+  final_value{0.0};
 
   Vector<T, N>
   final_gradient;

@@ -430,12 +430,16 @@ public:
 //
 // Define some nonlinear functions (NLF) to test nonlinear optimization methods.
 //
+
+//
+// Paraboloid of revolution
+//
 template<typename S>
 class Paraboloid : public Intrepid::Function_Base<Paraboloid<S>>
 {
 public:
 
-  Paraboloid(S const c) : c_(c) {}
+  Paraboloid() {}
 
   static constexpr
   Intrepid::Index
@@ -455,8 +459,8 @@ public:
 
     assert(dimension == DIMENSION);
 
-    T
-    f = c_ * (x(0) * x(0) + x(1) * x(1));
+    T const
+    f = (x(0) * x(0) + x(1) * x(1));
 
     return f;
   }
@@ -477,9 +481,213 @@ public:
     return Intrepid::Function_Base<Paraboloid<S>>::hessian(*this, x);
   }
 
-private:
-  S const
-  c_{0.0};
+};
+
+//
+// Beale's function
+//
+template<typename S>
+class Beale : public Intrepid::Function_Base<Beale<S>>
+{
+public:
+
+  Beale() {}
+
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
+  static constexpr
+  char const * const
+  NAME = "Beale";
+
+  // Explicit value.
+  template<typename T, Intrepid::Index N>
+  T
+  value(Intrepid::Vector<T, N> const & X)
+  {
+    Intrepid::Index const
+    dimension = X.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    T const &
+    x = X(0);
+
+    T const &
+    y = X(1);
+
+    T const
+    a = 1.5 - x + x * y;
+
+    T const
+    b = 2.25 - x + x * y * y;
+
+    T const
+    c = 2.625 - x + x * y * y * y;
+
+    T const
+    f = a * a + b * b + c * c;
+
+    return f;
+  }
+
+  // Default AD gradient.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Vector<T, N>
+  gradient(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<Beale<S>>::gradient(*this, x);
+  }
+
+  // Default AD hessian.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Tensor<T, N>
+  hessian(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<Beale<S>>::hessian(*this, x);
+  }
+
+};
+
+//
+// Booth's function
+//
+template<typename S>
+class Booth : public Intrepid::Function_Base<Booth<S>>
+{
+public:
+
+  Booth() {}
+
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
+  static constexpr
+  char const * const
+  NAME = "Booth";
+
+  // Explicit value.
+  template<typename T, Intrepid::Index N>
+  T
+  value(Intrepid::Vector<T, N> const & X)
+  {
+    Intrepid::Index const
+    dimension = X.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    T const &
+    x = X(0);
+
+    T const &
+    y = X(1);
+
+    T const
+    a = x + 2 * y - 7;
+
+    T const
+    b = 2 * x + y - 5;
+
+    T const
+    f = a * a + b * b;
+
+    return f;
+  }
+
+  // Default AD gradient.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Vector<T, N>
+  gradient(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<Booth<S>>::gradient(*this, x);
+  }
+
+  // Default AD hessian.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Tensor<T, N>
+  hessian(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<Booth<S>>::hessian(*this, x);
+  }
+
+};
+
+//
+// Goldstein-Price function
+//
+template<typename S>
+class GoldsteinPrice : public Intrepid::Function_Base<GoldsteinPrice<S>>
+{
+public:
+
+  GoldsteinPrice() {}
+
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 2;
+
+  static constexpr
+  char const * const
+  NAME = "Goldstein-Price";
+
+  // Explicit value.
+  template<typename T, Intrepid::Index N>
+  T
+  value(Intrepid::Vector<T, N> const & X)
+  {
+    Intrepid::Index const
+    dimension = X.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    T const &
+    x = X(0);
+
+    T const &
+    y = X(1);
+
+    T const
+    a = x + y + 1;
+
+    T const
+    b = 19 - 14 * x + 3 * x * x - 14 * y + 6 * x * y + 3 * y * y;
+
+    T const
+    c = 2 * x - 3 * y;
+
+    T const
+    d = 18 - 32 * x + 12 * x * x + 48 * y - 36 * x * y + 27 * y * y;
+
+    T const
+    e = 1 + a * a * b;
+
+    T const
+    f = 30 + c * c * d;
+
+    T const
+    fn = e * f;
+
+    return fn;
+  }
+
+  // Default AD gradient.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Vector<T, N>
+  gradient(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<GoldsteinPrice<S>>::gradient(*this, x);
+  }
+
+  // Default AD hessian.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Tensor<T, N>
+  hessian(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<GoldsteinPrice<S>>::hessian(*this, x);
+  }
+
 };
 
 } // namespace LCM
