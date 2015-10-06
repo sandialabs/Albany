@@ -238,7 +238,7 @@ struct TrustRegionStep : public Step_Base<T>
   initial_region_size{10.0};
 
   T
-  min_reduction{0.0};
+  min_reduction{1.0e-4};
 };
 
 ///

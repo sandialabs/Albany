@@ -288,24 +288,18 @@ step(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln)
   Vector<T, N>
   step(dimension, ZEROS);
 
-  Vector<T, N>
-  soln_next(dimension, ZEROS);
-
-  Vector<T, N>
-  gradient_next(dimension, ZEROS);
-
-  Tensor<T, N>
-  Hessian_next(dimension, ZEROS);
-
   T const
   projection_direction = dot(direction, direction);
 
   for (Index i{0}; i < max_num_iter; ++i) {
 
+    Vector<T, N> const
     soln_next = soln + step;
 
+    Vector<T, N> const
     gradient_next = fn.gradient(soln_next);
 
+    Tensor<T, N> const
     Hessian_next = fn.hessian(soln_next);
 
     T const
@@ -440,7 +434,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 
   }
 
-  if (reduction <= min_reduction) {
+  if (reduction < min_reduction) {
     step.fill(ZEROS);
   }
 
@@ -586,7 +580,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
     TrustRegionExact<T, N>
     tr_exact;
 
-    tr_exact.initial_lambda = 0.0;
+    tr_exact.initial_lambda = 1.0;
     tr_exact.region_size = step_length;
 
     step = tr_exact.step(Hessian, gradient);
