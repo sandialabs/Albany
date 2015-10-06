@@ -23,7 +23,10 @@ class Function_Base
 public:
   Function_Base()
   {
-    //static_assert(Sacado::IsADType<S>::value == false, "FAD not allowed");
+    //constexpr bool
+    //is_fad = Sacado::IsADType<S>::value == true;
+
+    //static_assert(is_fad == false, "AD types not allowed for type S");
   }
 
   ///
@@ -59,7 +62,10 @@ struct Minimizer
 public:
   Minimizer()
   {
-    static_assert(Sacado::IsADType<T>::value == false, "FAD not allowed");
+    constexpr bool
+    is_fad = Sacado::IsADType<T>::value == true;
+
+    static_assert(is_fad == false, "AD types not allowed for type T");
   }
 
   template<typename STEP, typename FN>
@@ -178,7 +184,10 @@ struct Step_Base
 {
   Step_Base()
   {
-    static_assert(Sacado::IsADType<T>::value == false, "FAD not allowed");
+    constexpr bool
+    is_fad = Sacado::IsADType<T>::value == true;
+
+    static_assert(is_fad == false, "AD types not allowed for type T");
   }
 };
 
@@ -229,7 +238,7 @@ struct TrustRegionStep : public Step_Base<T>
   initial_region_size{10.0};
 
   T
-  min_reduction{0.0};
+  min_reduction{1.0e-4};
 };
 
 ///
