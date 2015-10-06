@@ -16,21 +16,25 @@ namespace
 // Test the solution methods by themselves.
 //
 
-// Test one system with one method.
-template <typename NLS, typename NLM, typename T, Intrepid::Index N>
+// Test one function with one method.
+template <typename STEP, typename FN, typename T, Intrepid::Index N>
 bool
-solveNLSwithNLM(NLS & system, NLM & method, Intrepid::Vector<T, N> & x)
+solveFNwithSTEP(STEP & step_method, FN & function, Intrepid::Vector<T, N> & x)
 {
-  method.solve(system, x);
-  method.printReport(std::cout);
+  Intrepid::Minimizer<T, N>
+  minimizer;
 
-  return method.isConverged();
+  minimizer.solve(step_method, function, x);
+
+  minimizer.printReport(std::cout);
+
+  return minimizer.converged;
 }
 
 // Test one system with various methods.
-template <typename NLS, typename T, Intrepid::Index N>
+template <typename FN, typename T, Intrepid::Index N>
 bool
-solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
+solveFN(FN & function, Intrepid::Vector<T, N> const & x)
 {
   bool
   all_ok = true;
@@ -38,43 +42,43 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
   Intrepid::Vector<T, N>
   y;
 
-  Intrepid::NewtonMethod<NLS, T, N>
-  newton;
+  Intrepid::NewtonStep<T, N>
+  newton_step;
 
   y = x;
 
   bool const
-  newton_ok = solveNLSwithNLM(system, newton, y);
+  newton_ok = solveFNwithSTEP(newton_step, function, y);
 
   all_ok = all_ok && newton_ok;
 
-  Intrepid::TrustRegionMethod<NLS, T, N>
-  trust_region;
+  Intrepid::TrustRegionStep<T, N>
+  trust_region_step;
 
   y = x;
 
   bool const
-  trust_region_ok = solveNLSwithNLM(system, trust_region, y);
+  trust_region_ok = solveFNwithSTEP(trust_region_step, function, y);
 
   all_ok = all_ok && trust_region_ok;
 
-  Intrepid::ConjugateGradientMethod<NLS, T, N>
-  pcg;
+  Intrepid::ConjugateGradientStep<T, N>
+  pcg_step;
 
   y = x;
 
   bool const
-  pcg_ok = solveNLSwithNLM(system, pcg, y);
+  pcg_ok = solveFNwithSTEP(pcg_step, function, y);
 
   all_ok = all_ok && pcg_ok;
 
-  Intrepid::LineSearchRegularizedMethod<NLS, T, N>
-  line_search;
+  Intrepid::LineSearchRegularizedStep<T, N>
+  line_search_step;
 
   y = x;
 
   bool const
-  line_search_ok = solveNLSwithNLM(system, line_search, y);
+  line_search_ok = solveFNwithSTEP(line_search_step, function, y);
 
   all_ok = all_ok && line_search_ok;
 
@@ -84,10 +88,13 @@ solveNLS(NLS & system, Intrepid::Vector<T, N> const & x)
 // Test various systems with various methods.
 bool testSystemsAndMethods()
 {
+  constexpr Intrepid::Index
+  max_dimension{2};
+
   bool
   all_ok = true;
 
-  Intrepid::Vector<RealType>
+  Intrepid::Vector<RealType, max_dimension>
   x;
 
   LCM::SquareRootNLS<RealType>
@@ -98,7 +105,7 @@ bool testSystemsAndMethods()
   x(0) = 10.0;
 
   bool const
-  square_root_ok = solveNLS(square_root, x);
+  square_root_ok = solveFN(square_root, x);
 
   all_ok = all_ok && square_root_ok;
 
@@ -111,7 +118,7 @@ bool testSystemsAndMethods()
   x(1) = -10.0;
 
   bool const
-  quadratic_ok = solveNLS(quadratic, x);
+  quadratic_ok = solveFN(quadratic, x);
 
   all_ok = all_ok && quadratic_ok;
 
@@ -124,7 +131,7 @@ bool testSystemsAndMethods()
   x(1) = 0.0;
 
   bool const
-  gaussian_ok = solveNLS(gaussian, x);
+  gaussian_ok = solveFN(gaussian, x);
 
   all_ok = all_ok && gaussian_ok;
 
@@ -137,7 +144,7 @@ bool testSystemsAndMethods()
   x(1) = 3.0;
 
   bool const
-  banana_ok = solveNLS(banana, x);
+  banana_ok = solveFN(banana, x);
 
   all_ok = all_ok && banana_ok;
 
@@ -150,7 +157,7 @@ bool testSystemsAndMethods()
   x(1) =  0.0;
 
   bool const
-  matyas_ok = solveNLS(matyas, x);
+  matyas_ok = solveFN(matyas, x);
 
   all_ok = all_ok && matyas_ok;
 
@@ -163,7 +170,7 @@ bool testSystemsAndMethods()
   x(1) = -1.5;
 
   bool const
-  mccormick_ok = solveNLS(mccormick, x);
+  mccormick_ok = solveFN(mccormick, x);
 
   all_ok = all_ok && mccormick_ok;
 
@@ -176,9 +183,61 @@ bool testSystemsAndMethods()
   x(1) = -4.0;
 
   bool const
-  styblinski_tang_ok = solveNLS(styblinski_tang, x);
+  styblinski_tang_ok = solveFN(styblinski_tang, x);
 
   all_ok = all_ok && styblinski_tang_ok;
+
+  LCM::Paraboloid<RealType>
+  paraboloid;
+
+  x.set_dimension(LCM::Paraboloid<RealType>::DIMENSION);
+
+  x(0) = 128.0;
+  x(1) = 256.0;;
+
+  bool const
+  paraboloid_ok = solveFN(paraboloid, x);
+
+  all_ok = all_ok && paraboloid_ok;
+
+  LCM::Beale<RealType>
+  beale;
+
+  x.set_dimension(LCM::Beale<RealType>::DIMENSION);
+
+  x(0) = -4.5;
+  x(1) = -4.5;
+
+  bool const
+  beale_ok = solveFN(beale, x);
+
+  all_ok = all_ok && beale_ok;
+
+  LCM::Booth<RealType>
+  booth;
+
+  x.set_dimension(LCM::Booth<RealType>::DIMENSION);
+
+  x(0) = -10.0;
+  x(1) = -10.0;
+
+  bool const
+  booth_ok = solveFN(booth, x);
+
+  all_ok = all_ok && booth_ok;
+
+  LCM::GoldsteinPrice<RealType>
+  goldstein_price;
+
+  x.set_dimension(LCM::GoldsteinPrice<RealType>::DIMENSION);
+
+  x(0) = 2.0;
+  x(1) = 2.0;
+
+  bool const
+  goldstein_price_ok = solveFN(goldstein_price, x);
+
+  all_ok = all_ok && goldstein_price_ok;
 
   return all_ok;
 }
@@ -196,7 +255,7 @@ TEUCHOS_UNIT_TEST(NonlinearSystems, NonlinearMethods)
 //
 TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 {
-  Intrepid::Index const
+  constexpr Intrepid::Index
   dimension{3};
 
   // Lehmer matrix
@@ -225,52 +284,108 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
   TEST_COMPARE(error, <=, Intrepid::machine_epsilon<RealType>());
 }
 
+TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
+{
+  constexpr Intrepid::Index
+  dimension{2};
+
+  LCM::BananaNLS<RealType>
+  banana;
+
+  Intrepid::NewtonStep<RealType, dimension>
+  step;
+
+  Intrepid::Minimizer<RealType, dimension>
+  minimizer;
+
+  Intrepid::Vector<RealType, dimension>
+  x;
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  minimizer.solve(step, banana, x);
+
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(true, ==, true);
+}
+
 //
-// Test the LCM nonlinear mini solver.
+// Test the LCM mini minimizer.
 //
-TEUCHOS_UNIT_TEST(MiniNonLinearSolverNewtonMethod, SquareRoot)
+TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
 
-  Intrepid::Index const
-  dimension{1};
+  constexpr
+  Intrepid::Index
+  dimension{2};
 
-  using NLS = LCM::SquareRootNLS<ValueT>;
+  LCM::BananaNLS<ValueT>
+  banana;
 
-  ValueT const
-  square = 2.0;
+  Intrepid::NewtonStep<ValueT, dimension>
+  step;
 
-  NLS
-  nonlinear_system(square);
-
-  Intrepid::NewtonMethod<NLS, ValueT, dimension>
-  method;
-
-  LCM::MiniNonlinearSolver<PHAL::AlbanyTraits::Residual, NLS, dimension>
-  solver(method);
+  Intrepid::Minimizer<ValueT, dimension>
+  minimizer;
 
   Intrepid::Vector<ScalarT, dimension>
   x;
 
-  // Initial guess
-  for (Intrepid::Index i{0}; i < dimension; ++i) {
-    x(i) = 1.0;
-  }
+  x(0) = 0.0;
+  x(1) = 3.0;
 
-  solver.solve(nonlinear_system, x);
+  LCM::miniMinimize(minimizer, step, banana, x);
 
-  TEST_COMPARE(method.isConverged(), ==, true);
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(minimizer.converged, ==, true);
 }
 
-TEUCHOS_UNIT_TEST(Testing, Testing)
+//
+// Test the LCM mini minimizer.
+//
+TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
 {
-  Intrepid::Index const
+  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  constexpr
+  Intrepid::Index
+  dimension{2};
+
+  LCM::BananaNLS<ValueT>
+  banana;
+
+  Intrepid::NewtonStep<ValueT, dimension>
+  step;
+
+  Intrepid::Minimizer<ValueT, dimension>
+  minimizer;
+
+  Intrepid::Vector<ScalarT, dimension>
+  x;
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  LCM::miniMinimize(minimizer, step, banana, x);
+
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(minimizer.converged, ==, true);
+}
+
+TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
+{
+  constexpr Intrepid::Index
   dimension{2};
 
   LCM::Paraboloid<RealType>
-  p(1.0);
+  p;
 
   Intrepid::Vector<RealType, dimension>
   x(0.0, 0.0);
@@ -279,6 +394,37 @@ TEUCHOS_UNIT_TEST(Testing, Testing)
   std::cout << "Value   : " << p.value(x) << '\n';
   std::cout << "Gradient: " << p.gradient(x) << '\n';
   std::cout << "Hessian : " << p.hessian(x) << '\n';
+
+  TEST_COMPARE(true, ==, true);
+}
+
+TEUCHOS_UNIT_TEST(Testing, MixedStorage)
+{
+  Intrepid::Index const
+  dimension{2};
+
+  std::cout << '\n';
+
+  Intrepid::Vector<RealType, 3>
+  v(1.0, 2.0, 3.0);
+
+  v.set_dimension(dimension);
+
+  std::cout << "Vector   : " << v << '\n';
+
+  Intrepid::Tensor<RealType, 3>
+  A(1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 7.0, 8.0, 9.0);
+
+  A.set_dimension(dimension);
+
+  std::cout << "Tensor   : " << A << '\n';
+
+  Intrepid::Matrix<RealType, 3, 4>
+  B(Intrepid::ONES);
+
+  B.set_dimensions(4, 2);
+
+  std::cout << "Matrix   : " << B << '\n';
 
   TEST_COMPARE(true, ==, true);
 }

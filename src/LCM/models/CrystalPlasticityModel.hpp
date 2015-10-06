@@ -35,7 +35,7 @@ struct SlipSystemStruct {
 };
 
 template <typename ScalarT>
-class CrystalPlasticityNLS : public Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>>
+class CrystalPlasticityNLS : public Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>, ScalarT>
 {
 public:
 
@@ -56,7 +56,7 @@ public:
   T
   value(Intrepid::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>>::value(*this, x);
+    return Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>, ScalarT>::value(*this, x);
   }
 
   // Explicit gradient.
@@ -91,7 +91,7 @@ public:
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>>::hessian(*this, x);
+    return Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>, ScalarT>::hessian(*this, x);
   }
 
   void loadElasticityTensor(Intrepid::Tensor4<RealType>& C)

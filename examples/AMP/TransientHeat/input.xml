@@ -46,6 +46,7 @@
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{85,81,xmin,xmax}" />
     <Parameter name="Cubature Degree" type="int" value="1" />
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="false" />
+    <Parameter name="QP Temperature from Nodes" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1" />
@@ -57,6 +58,9 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
+      <ParameterList name="VerboseObject">
+        <Parameter name="Verbosity Level" type="string" value="low"/>
+      </ParameterList>
       <ParameterList name="Bifurcation" />
       <ParameterList name="Constraints" />
       <ParameterList name="Predictor">
@@ -92,13 +96,16 @@
               <Parameter name="Linear Solver Type" type="string" value="Belos" />
               <ParameterList name="Linear Solver Types">
                 <ParameterList name="Belos">
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
                   <Parameter name="Solver Type" type="string" value="Block GMRES" />
                   <ParameterList name="Solver Types">
                     <ParameterList name="Block GMRES">
                       <Parameter name="Convergence Tolerance" type="double" value="1e-8" />
-                      <Parameter name="Output Frequency" type="int" value="0" />
-                      <Parameter name="Output Style" type="int" value="0" />
-                      <Parameter name="Verbosity" type="int" value="1" />
+                      <Parameter name="Output Frequency" type="int" value="1" />
+                      <Parameter name="Output Style" type="int" value="1" />
+                      <Parameter name="Verbosity" type="int" value="33" />
                       <Parameter name="Maximum Iterations" type="int" value="1200" />
                       <Parameter name="Block Size" type="int" value="1" />
                       <Parameter name="Num Blocks" type="int" value="1200" />
@@ -139,8 +146,8 @@
           <Parameter name="Details" type="bool" value="0" />
           <Parameter name="Linear Solver Details" type="bool" value="0" />
           <Parameter name="Stepper Iteration" type="bool" value="1" />
-          <Parameter name="Stepper Details" type="bool" value="1" />
-          <Parameter name="Stepper Parameters" type="bool" value="1" />
+          <Parameter name="Stepper Details" type="bool" value="0" />
+          <Parameter name="Stepper Parameters" type="bool" value="0" />
         </ParameterList>
         <Parameter name="Output Precision" type="int" value="3" />
         <Parameter name="Output Processor" type="int" value="0" />

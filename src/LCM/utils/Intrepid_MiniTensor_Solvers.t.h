@@ -10,126 +10,157 @@ namespace Intrepid
 //
 //
 //
-template<typename NLS, typename T, Index N>
-std::unique_ptr<NonlinearMethod_Base<NLS, T, N>>
-nonlinearMethodFactory(NonlinearMethod const method_type)
+template<typename Function_Derived, typename S>
+template<typename T, Index N>
+T
+Function_Base<Function_Derived, S>::
+value(Function_Derived & f, Vector<T, N> const & x)
 {
-  std::unique_ptr<NonlinearMethod_Base<NLS, T, N>>
-  method = nullptr;
+  Index const
+  dimension = x.get_dimension();
 
-  switch (method_type) {
+  assert(dimension == Function_Derived::DIMENSION);
 
-  default:
-    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-    std::cerr << std::endl;
-    std::cerr << "Unknown nonlinear method.";
-    std::cerr << std::endl;
-    exit(1);
-    break;
+  Vector<T, N> const
+  r = f.gradient(x);
 
-  case NonlinearMethod::NEWTON:
-    method = new NewtonMethod<NLS, T, N>();
-    break;
-
-  case NonlinearMethod::TRUST_REGION:
-    method = new TrustRegionMethod<NLS, T, N>();
-    break;
-
-  case NonlinearMethod::CONJUGATE_GRADIENT:
-    method = new ConjugateGradientMethod<NLS, T, N>();
-    break;
-
-  case NonlinearMethod::LINE_SEARCH_REGULARIZED:
-    method = new LineSearchRegularizedMethod<NLS, T, N>();
-    break;
-
-  }
-
-  return method;
+  return 0.5 * dot(r, r);
 }
 
 //
 //
 //
-template<typename T, typename S, Index N>
-void
-computeFADInfo(
-    Vector<T, N> const & r,
-    Tensor<S, N> const & DrDx,
-    Vector<T, N> & x)
+template<typename Function_Derived, typename S>
+template<typename T, Index N>
+Vector<T, N>
+Function_Base<Function_Derived, S>::
+gradient(Function_Derived & f, Vector<T, N> const & x)
 {
-  // Check whether dealing with AD type.
-  if (Sacado::IsADType<T>::value == false) return;
+  using AD = typename Sacado::Fad::DFad<T>;
 
-  //Deal with derivative information
-  auto const
-  dimension = r.get_dimension();
+  Index const
+  dimension = x.get_dimension();
 
-  assert(dimension > 0);
+  assert(dimension == Function_Derived::DIMENSION);
 
-  auto const
-  order = r[0].size();
+  Vector<AD, N>
+  x_ad(dimension);
 
-  assert(order > 0);
-
-  // Extract sensitivities of r wrt p
-  Matrix<S>
-  DrDp(dimension, order);
-
-  for (auto i = 0; i < dimension; ++i) {
-    for (auto j = 0; j < order; ++j) {
-      DrDp(i, j) = r(i).dx(j);
-    }
+  for (Index i{0}; i < dimension; ++i) {
+    x_ad(i) = AD(dimension, i, x(i));
   }
 
-  // Solve for all DxDp
-  Matrix<S>
-  DxDp = solve(DrDx, DrDp);
+  AD const
+  f_ad = f.value(x_ad);
 
-  // Pack into x.
-  for (auto i = 0; i < dimension; ++i) {
-    x(i).resize(order);
-    for (auto j = 0; j < order; ++j) {
-      x(i).fastAccessDx(j) = -DxDp(i, j);
-    }
+  Vector<T, N>
+  gradient(dimension);
+
+  for (Index i{0}; i < dimension; ++i) {
+    gradient(i) = f_ad.dx(i);
   }
 
+  return gradient;
 }
 
 //
 //
 //
-template<typename FN, typename STEP, typename T, Index N>
-void
-OptimizationMethod<FN, STEP, T, N>::
-printReport(std::ostream & os)
+template<typename Function_Derived, typename S>
+template<typename T, Index N>
+Tensor<T, N>
+Function_Base<Function_Derived, S>::
+hessian(Function_Derived & f, Vector<T, N> const & x)
 {
-  std::string const
-  cs = isConverged() == true ? "YES" : "NO";
+  using AD = typename Sacado::Fad::DFad<T>;
 
-  //std::string const
-  //cs = isConverged() == true ? "\U0001F60A" : "\U0001F623";
+  Index const
+  dimension = x.get_dimension();
 
-  os << "\n\n";
-  os << "Method     : " << STEP::NAME << '\n';
-  os << "System     : " << FN::NAME << '\n';
-  os << "Converged  : " << cs << '\n';
-  os << "Max Iters  : " << getMaxNumIterations() << '\n';
-  os << "Iters Taken: " << getNumIterations() << '\n';
+  assert(dimension == Function_Derived::DIMENSION);
 
-  os << std::scientific << std::setprecision(16);
+  Vector<AD, N>
+  x_ad(dimension);
 
-  os << "Initial |R|: " << std::setw(24) << getInitialResidualNorm() << '\n';
-  os << "Abs Tol    : " << std::setw(24) << getAbsoluteTolerance() << '\n';
-  os << "Abs Error  : " << std::setw(24) << getAbsoluteError() << '\n';
-  os << "Rel Tol    : " << std::setw(24) << getRelativeTolerance() << '\n';
-  os << "Rel Error  : " << std::setw(24) << getRelativeError() << '\n';
-  os << "Initial X  : " << getInitialGuess() << '\n';
-  os << "Final X    : " << getFinalSolution() << '\n';
-  os << "f(X)       : " << std::setw(24) << getFinalValue() << '\n';
-  os << "Df(X)      : " << getFinalGradient() << '\n';
-  os << "DDf(X)     : " << getFinalHessian() << '\n';
-  os << '\n';
+  for (Index i{0}; i < dimension; ++i) {
+    x_ad(i) = AD(dimension, i, x(i));
+  }
+
+  Vector<AD, N> const
+  r_ad = f.gradient(x_ad);
+
+  Tensor<T, N>
+  Hessian(dimension);
+
+  for (Index i{0}; i < dimension; ++i) {
+    for (Index j{0}; j < dimension; ++j) {
+      Hessian(i, j) = r_ad(i).dx(j);
+    }
+  }
+
+  return Hessian;
+}
+
+//
+//
+//
+template<typename T, Index N>
+template<typename STEP, typename FN>
+void
+Minimizer<T, N>::
+solve(STEP & step_method, FN & fn, Vector<T, N> & soln)
+{
+  step_method_name = STEP::NAME;
+  function_name = FN::NAME;
+  initial_guess = soln;
+
+  Vector<T, N>
+  resi = fn.gradient(soln);
+
+  initial_norm = norm(resi);
+
+  updateConvergenceCriterion(initial_norm);
+
+  step_method.initialize(fn, soln, resi);
+
+  while (continueSolve() == true) {
+
+    Vector<T, N> const
+    step = step_method.step(fn, soln, resi);
+
+    soln += step;
+
+    resi = fn.gradient(soln);
+
+    T const
+    norm_resi = norm(resi);
+
+    updateConvergenceCriterion(norm_resi);
+    ++num_iter;
+  }
+
+  recordFinals(fn, soln);
+  return;
+}
+
+//
+//
+//
+template<typename T, Index N>
+void
+Minimizer<T, N>::
+updateConvergenceCriterion(T const ae)
+{
+  abs_error = ae;
+  rel_error = initial_norm > 0.0 ? abs_error / initial_norm : 0.0;
+
+  bool const
+  converged_absolute = abs_error <= abs_tol;
+
+  bool const
+  converged_relative = rel_error <= rel_tol;
+
+  converged = converged_absolute || converged_relative;
 
   return;
 }
@@ -137,41 +168,16 @@ printReport(std::ostream & os)
 //
 //
 //
-template<typename FN, typename STEP, typename T, Index N>
-void
-OptimizationMethod<FN, STEP, T, N>::
-updateConvergenceCriterion(T const abs_error)
-{
-  abs_error_ = abs_error;
-  rel_error_ = initial_norm_ > 0.0 ? abs_error_ / initial_norm_ : 0.0;
-
-  bool const
-  converged_absolute = abs_error_ <= abs_tol_;
-
-  bool const
-  converged_relative = rel_error_ <= rel_tol_;
-
-  converged_ = converged_absolute || converged_relative;
-
-  return;
-}
-
-//
-//
-//
-template<typename FN, typename STEP, typename T, Index N>
+template<typename T, Index N>
 bool
-OptimizationMethod<FN, STEP, T, N>::
+Minimizer<T, N>::
 continueSolve() const
 {
   bool const
-  is_max_iter = num_iter_ >= max_num_iter_;
+  is_max_iter = num_iter >= max_num_iter;
 
   bool const
-  end_solve = is_max_iter == true || converged_ == true;
-
-  bool const
-  continue_solve = end_solve == false;
+  continue_solve = is_max_iter == false && converged == false;
 
   return continue_solve;
 }
@@ -179,457 +185,427 @@ continueSolve() const
 //
 //
 //
-template<typename FN, typename STEP, typename T, Index N>
+template<typename T, Index N>
 void
-OptimizationMethod<FN, STEP, T, N>::
-solve(FN & fn, Vector<T, N> & x)
+Minimizer<T, N>::
+printReport(std::ostream & os)
 {
+  char const * const
+  converged_string = converged == true ? "YES" : "NO";
+
+  // Happy / frowny face
+  //char const * const
+  //converged_string = converged == true ? "\U0001F60A" : "\U0001F623";
+
+  os << "\n\n";
+  os << "Method     : " << step_method_name << '\n';
+  os << "Function   : " << function_name << '\n';
+  os << "Converged  : " << converged_string << '\n';
+  os << "Max Iters  : " << max_num_iter << '\n';
+  os << "Iters Taken: " << num_iter << '\n';
+
+  os << std::scientific << std::setprecision(16);
+
+  os << "Initial |R|: " << std::setw(24) << initial_norm << '\n';
+  os << "Abs Tol    : " << std::setw(24) << abs_tol << '\n';
+  os << "Abs Error  : " << std::setw(24) << abs_error << '\n';
+  os << "Rel Tol    : " << std::setw(24) << rel_tol << '\n';
+  os << "Rel Error  : " << std::setw(24) << rel_error << '\n';
+  os << "Initial X  : " << initial_guess << '\n';
+  os << "Final X    : " << final_soln << '\n';
+  os << "f(X)       : " << std::setw(24) << final_value << '\n';
+  os << "Df(X)      : " << final_gradient << '\n';
+  os << "DDf(X)     : " << final_hessian << '\n';
+  os << '\n';
+
   return;
+}
+
+//
+// Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+//
+template<typename T, Index N>
+Vector<T, N>
+TrustRegionExact<T, N>::
+step(Tensor<T, N> const & Hessian, Vector<T, N> const & gradient)
+{
+  Index const
+  dimension = gradient.get_dimension();
+
+  Tensor<T, N> const
+  I = identity<T, N>(dimension);
+
+  Vector<T, N>
+  step(dimension);
+
+  T
+  lambda = initial_lambda;
+
+  for (Index i{0}; i < max_num_iter; ++i) {
+
+    Tensor<T, N> const
+    K = Hessian + lambda * I;
+
+    Tensor<T, N> const
+    L = cholesky(K).first;
+
+    step = - Intrepid::solve(K, gradient);
+
+    Vector<T, N> const
+    q = Intrepid::solve(L, step);
+
+    T const
+    np = norm(step);
+
+    T const
+    nps = np * np;
+
+    T const
+    nqs = norm_square(q);
+
+    T const
+    lambda_incr = nps * (np - region_size) / nqs / region_size;
+
+    lambda += std::max(lambda_incr, 0.0);
+
+  }
+
+  return step;
+}
+
+//
+// Newton line search
+//
+template<typename T, Index N>
+template<typename FN>
+Vector<T, N>
+NewtonLineSearch<T, N>::
+step(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln)
+{
+  Index const
+  dimension = soln.get_dimension();
+
+  Vector<T, N>
+  step(dimension, ZEROS);
+
+  Vector<T, N>
+  soln_next(dimension, ZEROS);
+
+  Vector<T, N>
+  gradient_next(dimension, ZEROS);
+
+  Tensor<T, N>
+  Hessian_next(dimension, ZEROS);
+
+  T const
+  projection_direction = dot(direction, direction);
+
+  for (Index i{0}; i < max_num_iter; ++i) {
+
+    soln_next = soln + step;
+
+    gradient_next = fn.gradient(soln_next);
+
+    Hessian_next = fn.hessian(soln_next);
+
+    T const
+    projection = dot(gradient_next, direction);
+
+    T const
+    contraction = dot(direction, dot(Hessian_next, direction));
+
+    T const
+    step_length = - projection / contraction;
+
+    step += step_length * direction;
+
+    T const
+    ls_length2 = step_length * step_length * projection_direction;
+
+    bool const
+    line_search_converged = ls_length2 <= tolerance * tolerance;
+
+    if (line_search_converged == true) break;
+
+  }
+
+  return step;
 }
 
 //
 //
 //
-template<typename NLS, typename T, Index N>
+template<typename T, Index N>
+template<typename FN>
 void
-NewtonMethod<NLS, T, N>::
-solve(NLS & nls, Vector<T, N> & soln)
+NewtonStep<T, N>::
+initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
-  this->setInitialGuess(soln);
+  return;
+}
 
-  Index const
-  dimension = soln.get_dimension();
+//
+// Plain Newton step.
+//
+template<typename T, Index N>
+template<typename FN>
+Vector<T, N>
+NewtonStep<T, N>::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
+{
+  Tensor<T, N> const
+  Hessian = fn.hessian(soln);
 
-  Tensor<T, N>
-  Hessian(dimension);
+  Vector<T, N> const
+  step = - Intrepid::solve(Hessian, resi);
 
-  Vector<T, N>
-  step(dimension);
+  return step;
+}
 
-  Vector<T, N>
-  resi = nls.gradient(soln);
+//
+//
+//
+template<typename T, Index N>
+template<typename FN>
+void
+TrustRegionStep<T, N>::
+initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
+{
+  region_size = initial_region_size;
 
-  T const
-  initial_norm = norm(resi);
-
-  this->initConvergenceCriterion(initial_norm);
-  this->updateConvergenceCriterion(initial_norm);
-
-  while (this->continueSolve() == true) {
-
-    Hessian = nls.hessian(soln);
-
-    step = - Intrepid::solve(Hessian, resi);
-
-    soln += step;
-
-    resi = nls.gradient(soln);
-
-    T const
-    norm_resi = norm(resi);
-
-    this->updateConvergenceCriterion(norm_resi);
-    this->increaseIterationCounter();
-  }
-
-  this->recordFinals(nls, soln);
   return;
 }
 
 //
 // Trust Region method.  See Nocedal's algorithm 11.5.
 //
-template<typename NLS, typename T, Index N>
-void
-TrustRegionMethod<NLS, T, N>::
-solve(NLS & nls, Vector<T, N> & soln)
+template<typename T, Index N>
+template<typename FN>
+Vector<T, N>
+TrustRegionStep<T, N>::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
-  this->setInitialGuess(soln);
-
-  Index const
-  dimension = soln.get_dimension();
-
-  Tensor<T, N>
-  Hessian(dimension);
-
-  Tensor<T, N>
-  K(dimension);
-
-  Tensor<T, N>
-  L(dimension);
-
-  Vector<T, N>
-  step(dimension);
-
-  Vector<T, N>
-  q(dimension);
-
-  Vector<T, N>
-  soln_next(dimension);
-
-  Vector<T, N>
-  resi_next(dimension);
-
   Tensor<T, N> const
-  I = identity<T, N>(dimension);
+  Hessian = fn.hessian(soln);
+
+  // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+  TrustRegionExact<T, N>
+  tr_exact;
+
+  tr_exact.initial_lambda = 0.0;
+  tr_exact.region_size = region_size;
 
   Vector<T, N>
-  resi = nls.gradient(soln);
+  step = tr_exact.step(Hessian, resi);
+
+  Vector<T, N> const
+  soln_next = soln + step;
+
+  Vector<T, N> const
+  resi_next = fn.gradient(soln_next);
+
+  // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
+  T const
+  nr = norm_square(resi);
 
   T const
-  initial_norm = norm(resi);
+  nrp = norm_square(resi_next);
 
-  T
-  region_size = getInitialRegionSize();
+  T const
+  nrKp = norm_square(resi + dot(Hessian, step));
 
-  this->initConvergenceCriterion(initial_norm);
-  this->updateConvergenceCriterion(initial_norm);
+  T const
+  reduction = (nr - nrp) / (nr - nrKp);
 
-  // Outer solution loop
-  while (this->continueSolve() == true) {
+  // Determine whether the trust region should be increased, decreased
+  // or left the same.
+  T const
+  computed_size = norm(step);
 
-    Hessian = nls.hessian(soln);
+  if (reduction < 0.25) {
 
-    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
-    T
-    lambda = 0.0;
+    region_size = 0.25 * computed_size;
 
-    for (Index i{0}; i < getMaxNumRestrictIterations(); ++i) {
+  } else {
 
-      K = Hessian + lambda * I;
+    bool const
+    at_boundary = std::abs(computed_size / region_size - 1.0) <= 1.0e-8;
 
-      L = cholesky(K).first;
+    bool const
+    increase_region_size = reduction > 0.75 && at_boundary;
 
-      step = - Intrepid::solve(K, resi);
-
-      q = Intrepid::solve(L, step);
-
-      T const
-      np = norm(step);
-
-      T const
-      nps = np * np;
-
-      T const
-      nqs = norm_square(q);
-
-      T const
-      lambda_incr = nps * (np - region_size) / nqs / region_size;
-
-      lambda += std::max(lambda_incr, 0.0);
-
+    if (increase_region_size == true) {
+      region_size = std::min(2.0 * region_size, max_region_size);
     }
 
-    soln_next = soln + step;
-
-    resi_next = nls.gradient(soln_next);
-
-    // Compute reduction factor \rho_k in Nocedal's algorithm 11.5
-    T const
-    nr = norm_square(resi);
-
-    T const
-    nrp = norm_square(resi_next);
-
-    T const
-    nrKp = norm_square(resi + dot(Hessian, step));
-
-    T const
-    reduction = (nr - nrp) / (nr - nrKp);
-
-    // Determine whether the trust region should be increased, decreased
-    // or left the same.
-    T const
-    computed_size = norm(step);
-
-    if (reduction < 0.25) {
-
-      region_size = 0.25 * computed_size;
-
-    } else {
-
-      bool const
-      at_boundary = std::abs(computed_size / region_size - 1.0) <= 1.0e-8;
-
-      bool const
-      increase_region_size = reduction > 0.75 && at_boundary;
-
-      if (increase_region_size == true) {
-        region_size = std::min(2.0 * region_size, getMaxRegionSize());
-      }
-
-    }
-
-    if (reduction > getMinumumReduction()) {
-      soln = soln_next;
-      resi = nls.gradient(soln);
-    }
-
-    T const
-    norm_resi = norm(resi);
-
-    this->updateConvergenceCriterion(norm_resi);
-    this->increaseIterationCounter();
   }
 
-  this->recordFinals(nls, soln);
-  return;
+  if (reduction <= min_reduction) {
+    step.fill(ZEROS);
+  }
+
+  return step;
 }
 
 //
 //
 //
-template<typename NLS, typename T, Index N>
+template<typename T, Index N>
+template<typename FN>
 void
-ConjugateGradientMethod<NLS, T, N>::
-solve(NLS & nls, Vector<T, N> & soln)
+ConjugateGradientStep<T, N>::
+initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 {
-  this->setInitialGuess(soln);
+  Tensor<T, N> const
+  Hessian = fn.hessian(soln);
 
-  Index const
-  dimension = soln.get_dimension();
+  precon_resi = - Intrepid::solve(Hessian, gradient);
 
-  Vector<T, N>
-  gradient = nls.gradient(soln);
-
-  Vector<T, N>
-  resi = - gradient;
-
-  Tensor<T, N>
-  Hessian = nls.hessian(soln);
-
-  Vector<T, N>
-  precon_resi = Intrepid::solve(Hessian, resi);
-
-  Vector<T, N>
   search_direction = precon_resi;
 
-  Vector<T, N>
-  trial_soln(dimension);
+  projection_new = - dot(gradient, search_direction);
 
-  Vector<T, N>
-  trial_gradient(dimension);
-
-  T
-  projection_new = dot(resi, search_direction);
-
-  T const
-  initial_norm = norm(resi);
-
-  Index
   restart_directions_counter = 0;
 
-  this->initConvergenceCriterion(initial_norm);
-  this->updateConvergenceCriterion(initial_norm);
+  return;
+}
 
-  while (this->continueSolve() == true) {
+//
+// Conjugate Gradient Method step.
+// For now the Gram-Schmidt method is fixed to Polak-Ribiere
+// and preconditioning with the Hessian.
+// This is taken from J.R. Shewchuck "painless" conjugate gradient
+// manuscript that is all over the place on the net.
+//
+template<typename T, Index N>
+template<typename FN>
+Vector<T, N>
+ConjugateGradientStep<T, N>::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
+{
+  Index const
+  dimension = soln.get_dimension();
 
-    // Newton line search.
+  // Newton line search.
+  NewtonLineSearch<T, N>
+  newton_ls;
 
-    T const
-    projection_search = dot(search_direction, search_direction);
+  Vector<T, N> const
+  step = newton_ls.step(fn, search_direction, soln);
 
-    for (Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
+  Vector<T, N> const
+  soln_next = soln + step;
 
-      gradient = nls.gradient(soln);
+  Vector<T, N> const
+  gradient_next = fn.gradient(soln_next);
 
-      Hessian = nls.hessian(soln);
+  T const
+  projection_old = projection_new;
 
-      T const
-      projection = dot(gradient, search_direction);
+  T const
+  projection_mid = - dot(gradient_next, precon_resi);
 
-      T const
-      contraction =
-          dot(search_direction, dot(Hessian, search_direction));
+  Tensor<T, N> const
+  Hessian = fn.hessian(soln_next);
 
-      T const
-      step_length = - projection / contraction;
+  precon_resi = - Intrepid::solve(Hessian, gradient_next);
 
-      soln += step_length * search_direction;
+  projection_new = - dot(gradient_next, precon_resi);
 
-      bool const
-      line_search_converged = step_length * step_length * projection_search <=
-      getLineSearchTolerance() * getLineSearchTolerance();
+  T const
+  gram_schmidt_factor = (projection_new - projection_mid) / projection_old;
 
-      if (line_search_converged == true) break;
+  ++restart_directions_counter;
 
-    }
+  bool const
+  rewind = restart_directions_counter == restart_directions_interval;
 
-    gradient = nls.gradient(soln);
+  bool const
+  bad_directions = gram_schmidt_factor <= 0.0;
 
-    resi = - gradient;
+  bool const
+  restart_directions = rewind || bad_directions;
 
-    T const
-    projection_old = projection_new;
+  if (restart_directions == true) {
 
-    T const
-    projection_mid = dot(resi, precon_resi);
+    search_direction = precon_resi;
+    restart_directions_counter = 0;
 
-    Hessian = nls.hessian(soln);
+  } else {
 
-    precon_resi = Intrepid::solve(Hessian, resi);
+    search_direction = precon_resi + gram_schmidt_factor * search_direction;
 
-    projection_new = dot(resi, precon_resi);
-
-    T const
-    gram_schmidt_factor = (projection_new - projection_mid) / projection_old;
-
-    ++restart_directions_counter;
-
-    bool const
-    restart_directions =
-        restart_directions_counter == getRestartDirectionsInterval() ||
-        gram_schmidt_factor <= 0.0;
-
-    if (restart_directions == true) {
-
-      search_direction = precon_resi;
-      restart_directions_counter = 0;
-
-    } else {
-
-      search_direction = precon_resi + gram_schmidt_factor * search_direction;
-
-    }
-
-    T const
-    norm_resi = norm(resi);
-
-    this->updateConvergenceCriterion(norm_resi);
-    this->increaseIterationCounter();
   }
 
-  this->recordFinals(nls, soln);
-  return;
+  return step;
 }
 
 //
 //
 //
-template<typename NLS, typename T, Index N>
+template<typename T, Index N>
+template<typename FN>
 void
-LineSearchRegularizedMethod<NLS, T, N>::
-solve(NLS & nls, Vector<T, N> & soln)
+LineSearchRegularizedStep<T, N>::
+initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
-  this->setInitialGuess(soln);
+  return;
+}
 
+//
+// Trust Region method.  See Nocedal's algorithm 11.5.
+//
+template<typename T, Index N>
+template<typename FN>
+Vector<T, N>
+LineSearchRegularizedStep<T, N>::
+step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
+{
   Index const
   dimension = soln.get_dimension();
 
-  Tensor<T, N>
-  Hessian(dimension);
-
-  Vector<T, N>
-  resi = nls.gradient(soln);
-
-  Tensor<T, N>
-  K(dimension);
-
-  Tensor<T, N>
-  L(dimension);
+  Tensor<T, N> const
+  Hessian = fn.hessian(soln);
 
   Vector<T, N>
   step(dimension);
 
-  Vector<T, N>
-  q(dimension);
+  bool const
+  singular_hessian = std::abs(det(Hessian)) < hessian_singular_tol;
 
-  Tensor<T, N> const
-  I = identity<T, N>(dimension);
+  bool const
+  ill_conditioned_hessian = inv_cond(Hessian) * hessian_cond_tol < 1.0;
 
-  T const
-  initial_norm = norm(resi);
+  bool const
+  bad_hessian = singular_hessian || ill_conditioned_hessian;
 
-  T const
-  step_length = getInitialStepLength();
+  // Regularize Hessian if it is bad.
+  if (bad_hessian == true) {
 
-  this->initConvergenceCriterion(initial_norm);
-  this->updateConvergenceCriterion(initial_norm);
+    // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
+    TrustRegionExact<T, N>
+    tr_exact;
 
-  while (this->continueSolve() == true) {
+    tr_exact.initial_lambda = 0.0;
+    tr_exact.region_size = step_length;
 
-    Hessian = nls.hessian(soln);
+    step = tr_exact.step(Hessian, gradient);
 
-    bool const
-    ill_conditioned = cond(Hessian) <= getHessianConditionTolerance();
+  } else {
 
-    if (ill_conditioned == true) {
+    // Standard Newton step
+    step = - Intrepid::solve(Hessian, gradient);
 
-      // Trust region subproblem. Exact algorithm, Nocedal 2nd Ed 4.3
-      T
-      lambda = 0.0;
-
-      for (Index i{0}; i < getMaxNumRestrictIterations(); ++i) {
-
-        K = Hessian + lambda * I;
-
-        L = cholesky(K).first;
-
-        step = - Intrepid::solve(K, resi);
-
-        q = Intrepid::solve(L, step);
-
-        T const
-        nps = norm_square(step);
-
-        T const
-        nqs = norm_square(q);
-
-        T const
-        lambda_incr = nps * (std::sqrt(nps) - step_length) / nqs / step_length;
-
-        lambda += std::max(lambda_incr, 0.0);
-
-      }
-
-    } else {
-
-      // Standard Newton step
-      step = - Intrepid::solve(Hessian, resi);
-
-    }
-
-    // Newton line search.
-
-    T const
-    projection_step = dot(step, step);
-
-    for (Index i{0}; i < getMaxNumLineSearchIterations(); ++i) {
-
-      resi = nls.gradient(soln);
-
-      Hessian = nls.hessian(soln);
-
-      T const
-      projection = dot(resi, step);
-
-      T const
-      contraction = dot(step, dot(Hessian, step));
-
-      T const
-      ls_length = - projection / contraction;
-
-      soln += ls_length * step;
-
-      bool const
-      line_search_converged = ls_length * ls_length * projection_step <=
-      getLineSearchTolerance() * getLineSearchTolerance();
-
-      if (line_search_converged == true) break;
-
-    }
-
-    resi = nls.gradient(soln);
-
-    T const
-    norm_resi = norm(resi);
-
-    this->updateConvergenceCriterion(norm_resi);
-    this->increaseIterationCounter();
   }
 
-  this->recordFinals(nls, soln);
-  return;
+  // Newton line search.
+  NewtonLineSearch<T, N>
+  newton_ls;
+
+  Vector<T, N> const
+  ls_step = newton_ls.step(fn, step, soln);
+
+  return ls_step;
 }
 
 } // namespace Intrepid

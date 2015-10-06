@@ -7,10 +7,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_ho_RK4_T.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_ho_RK4_T.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_ho_BE_T.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_ho_BE_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_np3_RK4_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_np3_RK4_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_np3_BE_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_np3_BE_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_np4_BE_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_np4_BE_T.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_np5_BE_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectral_np5_BE_T.xml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
@@ -60,10 +64,10 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
   endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 
-  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt
-                   ${CMAKE_CURRENT_BINARY_DIR}/Moocho.opt COPYONLY)
-  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocho.opt)
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocnp3.opt)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Moocnp3.opt
+                   ${CMAKE_CURRENT_BINARY_DIR}/Moocnp3.opt COPYONLY)
+  endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Moocnp3.opt)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})

@@ -40,6 +40,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Destructor
     virtual ~APFDiscretization();
 
+    //! Initialize this class
+    void init();
+
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
@@ -147,7 +150,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void detachQPData();
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(bool shouldTransferIPData);
+    virtual void updateMesh(bool shouldTransferIPData);
 
     //! Accessor function to get coordinates for ML. Memory controlled here.
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
@@ -300,6 +303,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     virtual void releaseMesh();
 
     void initTemperatureHack();
+    
+    //! Some evaluators may want access to the underlying apf mesh elements.
+    std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
   private:
 
@@ -311,19 +317,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
-
-    //! Process APF mesh for Owned nodal quantitites
-    void computeOwnedNodesAndUnknowns();
-    //! Process APF mesh for Overlap nodal quantitites
-    void computeOverlapNodesAndUnknowns();
-    //! Process APF mesh for CRS Graphs
-    void computeGraphs();
-    //! Process APF mesh for Workset/Bucket Info
-    void computeWorksetInfo();
-    //! Process APF mesh for NodeSets
-    void computeNodeSets();
-    //! Process APF mesh for SideSets
-    void computeSideSets();
 
     //! Transfer PUMIQPData to APF
     void copyQPScalarToAPF(unsigned nqp, std::string const& state, apf::Field* f);
@@ -357,6 +350,35 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     TRANSFORMTYPE transform_type;
 
   protected:
+
+    //! Process APF mesh for Owned nodal quantitites
+    void computeOwnedNodesAndUnknownsBase(apf::FieldShape* s);
+    //! Process APF mesh for Overlap nodal quantitites
+    void computeOverlapNodesAndUnknownsBase(apf::FieldShape* s);
+    //! Process APF mesh for CRS Graphs
+    void computeGraphsBase(apf::FieldShape* s);
+    //! Process APF mesh for Workset/Bucket Info
+    void computeWorksetInfoBase(apf::FieldShape* s);
+    //! Process APF mesh for NodeSets
+    void computeNodeSetsBase();
+    //! Process APF mesh for SideSets
+    void computeSideSetsBase();
+    //! Base for updating the mesh
+    void updateMeshBase(bool shouldTransferIPData);
+
+
+    //! Process APF mesh for Owned nodal quantitites
+    virtual void computeOwnedNodesAndUnknowns();
+    //! Process APF mesh for Overlap nodal quantitites
+    virtual void computeOverlapNodesAndUnknowns();
+    //! Process APF mesh for CRS Graphs
+    virtual void computeGraphs();
+    //! Process APF mesh for Workset/Bucket Info
+    virtual void computeWorksetInfo();
+    //! Process APF mesh for NodeSets
+    virtual void computeNodeSets();
+    //! Process APF mesh for SideSets
+    virtual void computeSideSets();
 
     //! Output object
     PUMIOutput* meshOutput;

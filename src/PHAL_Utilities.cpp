@@ -1,6 +1,10 @@
 #include "Albany_Application.hpp"
 #include "PHAL_Utilities.hpp"
 
+#ifdef ALBANY_GOAL
+#include "Albany_GOALDiscretization.hpp"
+#endif
+
 namespace PHAL {
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
@@ -25,12 +29,24 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
-  if(app->getProblemPL()->get("Name", "") == "FELIX Coupled FO H 3D")
+  std::string problemName = app->getProblemPL()->get("Name", "");
+  if(problemName == "FELIX Coupled FO H 3D")
   { //all column is coupled
     int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
     int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
     return app->getNumEquations()*side_node_count*numLevels;
   }
+#ifdef ALBANY_GOAL
+  if ((problemName == "GOAL Mechanics 2D") ||
+      (problemName == "GOAL Mechanics 3D"))
+  {
+    Teuchos::RCP<Albany::AbstractDiscretization> ad =
+      app->getDiscretization();
+    Teuchos::RCP<Albany::GOALDiscretization> d =
+      Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
+    return d->getNumNodesPerElem(ebi) * app->getNumEquations();
+  }
+#endif
 #ifdef ALBANY_AERAS
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
   app->getEnrichedMeshSpecs(); 
