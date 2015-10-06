@@ -314,9 +314,43 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
 //
 // Test the LCM mini minimizer.
 //
-TEUCHOS_UNIT_TEST(MinimizerNewtonMethod, Banana)
+TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 {
   using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  constexpr
+  Intrepid::Index
+  dimension{2};
+
+  LCM::BananaNLS<ValueT>
+  banana;
+
+  Intrepid::NewtonStep<ValueT, dimension>
+  step;
+
+  Intrepid::Minimizer<ValueT, dimension>
+  minimizer;
+
+  Intrepid::Vector<ScalarT, dimension>
+  x;
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  LCM::miniMinimize(minimizer, step, banana, x);
+
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(minimizer.converged, ==, true);
+}
+
+//
+// Test the LCM mini minimizer.
+//
+TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr

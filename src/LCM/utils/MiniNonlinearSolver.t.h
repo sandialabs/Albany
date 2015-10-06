@@ -47,6 +47,12 @@ miniMinimize(
     soln(i).val() = soln_val(i);
   }
 
+  // Check if there is FAD info.
+  auto const
+  order = soln[0].size();
+
+  if (order == 0) return;
+
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
   DrDx = function.hessian(soln_val);
@@ -86,7 +92,7 @@ computeFADInfo(
   assert(order > 0);
 
   // Extract sensitivities of r wrt p
-  Intrepid::Matrix<S>
+  Intrepid::Matrix<S, N>
   DrDp(dimension, order);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -96,7 +102,7 @@ computeFADInfo(
   }
 
   // Solve for all DxDp
-  Intrepid::Matrix<S>
+  Intrepid::Matrix<S, N>
   DxDp = Intrepid::solve(DrDx, DrDp);
 
   // Pack into x.

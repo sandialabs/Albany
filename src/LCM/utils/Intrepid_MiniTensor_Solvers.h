@@ -17,10 +17,14 @@ namespace Intrepid
 ///
 /// Function base class that defines the interface to Mini Solvers.
 ///
-template<typename Function_Derived>
+template<typename Function_Derived, typename S>
 class Function_Base
 {
 public:
+  Function_Base()
+  {
+    //static_assert(Sacado::IsADType<S>::value == false, "FAD not allowed");
+  }
 
   ///
   /// By default use merit function 0.5 dot(gradient, gradient)
@@ -53,10 +57,9 @@ template<typename T, Index N>
 struct Minimizer
 {
 public:
-
   Minimizer()
   {
-    STATIC_ASSERT(Sacado::IsADType<T>::value == false, NO_FAD_ALLOWED);
+    static_assert(Sacado::IsADType<T>::value == false, "FAD not allowed");
   }
 
   template<typename STEP, typename FN>
@@ -66,6 +69,7 @@ public:
   void
   printReport(std::ostream & os);
 
+private:
   void
   updateConvergenceCriterion(T const abs_error);
 
@@ -82,11 +86,9 @@ public:
     final_hessian = fn.hessian(x);
   }
 
+public:
   Index
   max_num_iter{256};
-
-  Index
-  num_iter{0};
 
   T
   rel_tol{1.0e-12};
@@ -100,11 +102,15 @@ public:
   T
   abs_error{1.0};
 
+  bool
+  converged{false};
+
+private:
   T
   initial_norm{1.0};
 
-  bool
-  converged{false};
+  Index
+  num_iter{0};
 
   Vector<T, N>
   initial_guess;
@@ -165,10 +171,22 @@ struct TrustRegionExact
 };
 
 ///
+/// Step Base
+///
+template<typename T>
+struct Step_Base
+{
+  Step_Base()
+  {
+    static_assert(Sacado::IsADType<T>::value == false, "FAD not allowed");
+  }
+};
+
+///
 /// Plain Newton Step
 ///
 template<typename T, Index N>
-struct NewtonStep
+struct NewtonStep : public Step_Base<T>
 {
   static constexpr
   char const * const
@@ -187,7 +205,7 @@ struct NewtonStep
 /// Trust Region Step
 ///
 template<typename T, Index N>
-struct TrustRegionStep
+struct TrustRegionStep : public Step_Base<T>
 {
   static constexpr
   char const * const
@@ -218,7 +236,7 @@ struct TrustRegionStep
 /// Conjugate Gradient Step
 ///
 template<typename T, Index N>
-struct ConjugateGradientStep
+struct ConjugateGradientStep : public Step_Base<T>
 {
   static constexpr
   char const * const
@@ -253,7 +271,7 @@ private:
 /// Line Search Regularized Step
 ///
 template<typename T, Index N>
-struct LineSearchRegularizedStep
+struct LineSearchRegularizedStep : public Step_Base<T>
 {
   static constexpr
   char const * const
