@@ -675,10 +675,6 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
     new Epetra_Map(-1, indices.size(), convert(indices)->getRawPtr(), 0,
                    *comm));
 #endif
-
-  std::cout << "computeOwnedNodesAndUnknownsBase\n";
-  std::cout << "Field: " << shape->getName() << std::endl;
-  std::cout << "numOwnedNodes: " << numOwnedNodes << std::endl;
 }
 
 void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
@@ -707,10 +703,6 @@ void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
 #endif
   if(Teuchos::nonnull(meshStruct->nodal_data_base))
     meshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
-
-  std::cout << "computeOverlapNodesAndUnknownsBase\n";
-  std::cout << "Field: " << shape->getName() << std::endl;
-  std::cout << "numOwnedNodes: " << numOwnedNodes << std::endl;
 }
 
 void Albany::APFDiscretization::computeGraphsBase(
@@ -783,10 +775,6 @@ void Albany::APFDiscretization::computeGraphsBase(
   graph->Export(*overlap_graph, exporter, Insert);
   graph->FillComplete();
 #endif
-
-  std::cout << "computeGraphsBase:\n";
-  std::cout << "Field: " << shape->getName() << std::endl;
-  std::cout << "nodes per element: " << nodes_per_element << std::endl;
 }
 
 void Albany::APFDiscretization::computeWorksetInfoBase(
@@ -1007,9 +995,6 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
       }
     }
   }
-
-  std::cout << "computeWorksetInfoBase:\n";
-  std::cout << "Field: " << shape->getName() << std::endl;
 }
 
 void Albany::APFDiscretization::computeNodeSetsBase()
