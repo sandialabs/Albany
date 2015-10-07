@@ -11,6 +11,8 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "FELIX_GatherThickness.hpp"
+#include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -509,6 +511,35 @@ FELIX::StokesFO::constructEvaluators(
       RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
       ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    if(this->params->isSublist("Parameter Fields"))
+    {
+      Teuchos::ParameterList& params_list =  this->params->sublist("Parameter Fields");
+      if(params_list.get<int>("Register Surface Mass Balance",0)){
+        std::string stateName("surface_mass_balance");
+        RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+        ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+    }
+
+    {
+      RCP<ParameterList> p = rcp(new ParameterList("Gather Thickness"));
+      p->set<string>("Thickness Name", "Thickness");
+      p->set<int>("Offset of First DOF", offset);
+      p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
+      ev = rcp(new GatherThickness<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+
+    {
+       RCP<ParameterList> p = rcp(new ParameterList("Gather Averaged Velocity"));
+       p->set<string>("Averaged Velocity Name", "Averaged Velocity");
+       p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
+       ev = rcp(new GatherVerticallyAveragedVelocity<EvalT,AlbanyTraits>(*p,dl));
+       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);

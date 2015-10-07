@@ -27,6 +27,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct_restart.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_adjoint_sensitivity.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_adjoint_sensitivity.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_analysis_beta.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_analysis_beta.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_wedge_adjoint_sensitivity.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_wedge_adjoint_sensitivity.xml COPYONLY)
 

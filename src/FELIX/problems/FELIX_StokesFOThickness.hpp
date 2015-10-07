@@ -584,6 +584,7 @@ FELIX::StokesFOThickness::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
      }
 
+
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
