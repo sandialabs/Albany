@@ -77,8 +77,16 @@ private:
   BETA_TYPE beta_type;
 };
 
+#ifdef ALBANY_ENSEMBLE
 template<>
-double BasalFrictionCoefficient<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s);
+double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPResidual,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s);
+
+template<>
+double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPJacobian,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s);
+
+template<>
+double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPTangent,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s);
+#endif
 
 } // Namespace FELIX
 

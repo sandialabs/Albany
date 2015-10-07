@@ -321,16 +321,31 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
 #endif
 }
 
-template<>
-double BasalFrictionCoefficient<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s)
-{
-    return s;
-}
 
 template<typename EvalT, typename Traits>
 double BasalFrictionCoefficient<EvalT, Traits>::getScalarTValue(const ScalarT& s)
 {
-    return s.val();
+    return Albany::ADValue(s);
 }
+
+#ifdef ALBANY_ENSEMBLE
+template<>
+double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPResidual,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "FELIX::BasalFrictionCoefficient::getScalarTValue does not work with Ensemble MP types!!");
+  return 0.;
+}
+
+template<>
+double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPJacobian,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "FELIX::BasalFrictionCoefficient::getScalarTValue does not work with Ensemble MP types!!");
+  return 0.;
+}
+
+template<>
+double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPTangent,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s) {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "FELIX::BasalFrictionCoefficient::getScalarTValue does not work with Ensemble MP types!!");
+  return 0.;
+}
+#endif
 
 } // Namespace FELIX
