@@ -748,29 +748,49 @@ computeState(typename Traits::EvalData workset,
         std::cout << "CP model final residual " << residual_val << std::endl;
 #endif
 
+	#ifdef MINISOLVER
+	{ // MiniSolver testing
 
-#ifdef MINISOLVER
+	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> Fp_n_minisolver;
+	  Fp_n_minisolver.set_dimension(num_dims_);
+	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> hardness_n_minisolver;
+	  hardness_n_minisolver.set_dimension(num_slip_);
+	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> slip_n_minisolver;
+	  slip_n_minisolver.set_dimension(num_slip_);
+	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> F_np1_minisolver;
+	  F_np1_minisolver.set_dimension(num_dims_);
+	  RealType dt_minisolver;
+	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> x; // unknowns, which are slip_np1
+	  x.set_dimension(num_slip_);
 
-	CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, ScalarT> crystalPlasticityNLS(C_,
-											      slip_systems_,
-											      Fp_n,
-											      hardness_n,
-											      slip_n,
-											      F_np1,
-											      dt);
+	  for(int i=0 ; i<num_dims_ ; ++i){
+	    for(int j=0 ; j<num_dims_ ; ++j){
+	      Fp_n_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp_n(i,j));
+	      F_np1_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(F_np1(i,j));
+	    }
+	  }
 
-	Intrepid::NewtonStep<RealType, CP::MAX_NUM_SLIP> step;
-	Intrepid::Minimizer<RealType, CP::MAX_NUM_SLIP> minimizer;
-	Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> x;
-	x.fill(Intrepid::ZEROS);
-	x.set_dimension(num_slip_);
-	for(int i=0 ; i<num_slip_; ++i){
-	  x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
+	  for(int i=0; i<num_slip_; ++i){
+	    hardness_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(hardness_n(i));
+	    slip_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
+	    // initial guess for x is slip_n
+	    x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
+	  }
+	  CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, RealType> crystalPlasticityNLS(C_,
+												 slip_systems_,
+												 Fp_n_minisolver,
+												 hardness_n_minisolver,
+												 slip_n_minisolver,
+												 F_np1_minisolver,
+												 dt);
+
+	  Intrepid::NewtonStep<RealType, CP::MAX_NUM_SLIP> step;
+	  Intrepid::Minimizer<RealType, CP::MAX_NUM_SLIP> minimizer;
+	  minimizer.solve(step, crystalPlasticityNLS, x);
+	  minimizer.printReport(std::cout);
+
 	}
-	minimizer.solve(step, crystalPlasticityNLS, x);
-	minimizer.printReport(std::cout);
-
-#endif
+	#endif
 
       } // integration_scheme == IMPLICIT
 
