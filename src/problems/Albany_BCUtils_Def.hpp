@@ -676,9 +676,14 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
             p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
+            double rho = params->get("Ice Density", 910.0);
+            double rho_w = params->get("Water Density", 1028.0);
+            p->set<double> ("Ice Density", rho);
+            p->set<double> ("Water Density", rho_w);
             p->set<string> ("BetaXY", betaName);
             p->set<string>("Beta Field Name", "basal_friction");
             p->set<string>("thickness Field Name", "thickness");
+            p->set<string>("BedTopo Field Name", "bed_topography");
             p->set<double> ("L", L);
             p->set<string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
@@ -882,16 +887,39 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
     evaluators_to_build[NeuGBF] = p;
   }
 
+
+  // Build evaluator for basal_friction
+  string NeuGBT="Evaluator for Gather bed_topography";
+  {
+    const string paramName = "bed_topography";
+    RCP<ParameterList> p = rcp(new ParameterList());
+    std::stringstream key; key<< paramName <<  "Is Distributed Parameter";
+    if(params->get<int>(key.str(),0) == 1) {
+      p->set<int>("Type", traits_type::typeSF);
+      p->set< RCP<Albany::Layouts> >("Layouts Struct", dl);
+      p->set< string >("Parameter Name", paramName);
+    }
+    else {
+      p->set<int>("Type", traits_type::typeSF);
+      p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
+      p->set< string >("State Name", paramName);
+      p->set< string >("Field Name", paramName);
+    }
+
+    evaluators_to_build[NeuGBT] = p;
+  }
+
   // Build evaluator for thickness
   string NeuGT="Evaluator for Gather thickness";
   {
-    RCP<ParameterList> p = rcp(new ParameterList());
-    p->set<int>("Type", traits_type::typeSF);
+    const string paramName = "thickness";
+	  RCP<ParameterList> p = rcp(new ParameterList());
+	  p->set<int>("Type", traits_type::typeSF);
 
     // for new way
     p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
-    p->set< string >("State Name", "thickness");
-    p->set< string >("Field Name", "thickness");
+    p->set< string >("State Name", paramName);
+    p->set< string >("Field Name", paramName);
 
     evaluators_to_build[NeuGT] = p;
   }

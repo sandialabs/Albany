@@ -296,6 +296,15 @@ FELIX::StokesFO::constructEvaluators(
      }
    }
 
+   {
+      std::string stateName("bed_topography");
+      entity= Albany::StateStruct::NodalDataToElemNode;
+      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+
 #if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
    {
     // Here is how to register the field for dirichlet condition.
