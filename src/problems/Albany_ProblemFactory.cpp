@@ -77,8 +77,8 @@
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
-#ifdef ALBANY_EPETRA
 #include "FELIX/problems/FELIX_Hydrology.hpp"
+#ifdef ALBANY_EPETRA
 #include "FELIX/problems/FELIX_StokesFOThickness.hpp"
 #endif
 #endif
