@@ -1197,6 +1197,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
 
   workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
 #if defined(ALBANY_EPETRA)
+  workset.disc = disc;  // Needed by FELIX for sideset DOF save
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 #endif

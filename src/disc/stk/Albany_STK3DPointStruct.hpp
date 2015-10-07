@@ -21,7 +21,7 @@ namespace Albany {
   public:
 
     //! Default constructor
-    STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, 
+    STK3DPointStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                      const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~STK3DPointStruct();
@@ -45,7 +45,7 @@ namespace Albany {
 
     //! Build the mesh
     void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
- 
+
     //! Build a parameter list that contains valid input parameters
     Teuchos::RCP<const Teuchos::ParameterList>
     getValidDiscretizationParameters() const;

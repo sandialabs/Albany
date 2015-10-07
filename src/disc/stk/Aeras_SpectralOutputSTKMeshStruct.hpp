@@ -19,7 +19,7 @@ namespace Aeras {
 
     public:
 
-//Constructor 
+//Constructor
     SpectralOutputSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const Teuchos::RCP<const Teuchos_Comm>& commT, 
@@ -46,8 +46,8 @@ namespace Aeras {
 
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return -1.0; }
-    
-    //Is this necessary here? 
+
+    //Is this necessary here?
 //    bool getInterleavedOrdering() const {return this->interleavedOrdering;}
 
     private:
@@ -55,7 +55,7 @@ namespace Aeras {
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParametersQuads() const;
-    
+
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParametersLines() const;
 
@@ -67,8 +67,8 @@ namespace Aeras {
     const int points_per_edge;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-     
-    //Create enum type for the different kinds of elements (currently lines and quads) 
+
+    //Create enum type for the different kinds of elements (currently lines and quads)
     enum elemType {LINE, QUAD};
     elemType ElemType;
 

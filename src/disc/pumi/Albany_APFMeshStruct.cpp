@@ -120,7 +120,7 @@ static void getEBSizes(
 
 void Albany::APFMeshStruct::init(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<const Teuchos_Comm>& commT)
+    const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 

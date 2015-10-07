@@ -50,22 +50,33 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
 
   // Need to allocate a fields in mesh database
-  this->requirements.push_back("surface_height");
+  if (params->isParameter("RequiredFields"))
+  {
+    // Need to allocate a fields in mesh database
+    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
+    for (int i(0); i<req.size(); ++i)
+      this->requirements.push_back(req[i]);
+  }
+  else
+  {
+    this->requirements.push_back("surface_height");
 #ifdef CISM_HAS_FELIX
-  this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM 
-  this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM 
+    this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM
+    this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM
 #endif
-  this->requirements.push_back("temperature");
-  this->requirements.push_back("basal_friction");
-  this->requirements.push_back("thickness");
-  this->requirements.push_back("flow_factor");
-  this->requirements.push_back("surface_velocity");
-  this->requirements.push_back("surface_velocity_rms");
+    this->requirements.push_back("temperature");
+    this->requirements.push_back("basal_friction");
+    this->requirements.push_back("thickness");
+    this->requirements.push_back("flow_factor");
+    this->requirements.push_back("surface_velocity");
+    this->requirements.push_back("surface_velocity_rms");
+  }
 }
 
 FELIX::StokesFO::
 ~StokesFO()
 {
+  // Nothing to be done here
 }
 
 void
@@ -121,8 +132,7 @@ FELIX::StokesFO::constructDirichletEvaluators(
 }
 
 // Neumann BCs
-void
-FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void FELIX::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file
@@ -151,17 +161,17 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    offsets[neq][0] = 0;
 
    if (neq>1){
-      neumannNames[1] = "U1";
-      offsets[1].resize(1);
-      offsets[1][0] = 1;
-      offsets[neq][1] = 1;
+     neumannNames[1] = "U1";
+     offsets[1].resize(1);
+     offsets[1][0] = 1;
+     offsets[neq][1] = 1;
    }
 
    if (neq>2){
      neumannNames[2] = "U2";
-      offsets[2].resize(1);
-      offsets[2][0] = 2;
-      offsets[neq][2] = 2;
+     offsets[2].resize(1);
+     offsets[2][0] = 2;
+     offsets[neq][2] = 2;
    }
 
    neumannNames[neq] = "all";
@@ -187,28 +197,35 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    condNames[4] = "lateral";
    condNames[5] = "basal_scalar_field";
 
+   std::vector< Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > > extra_evaluators;
+   ConstructBasalEvaluatorOp constructor(*this,extra_evaluators);
+   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(constructor);
+
    nfm.resize(1); // FELIX problem only has one element block
 
    nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
-
-
+                                           condNames, offsets, dl,
+                                           this->params, this->paramLib, extra_evaluators);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-FELIX::StokesFO::getValidProblemParameters() const
+FELIX::StokesFO::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesFOProblemParams");
-
+    
+  validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
+  validPL->set<bool>("Ice-Hydrology Coupling", false, "If true, saves basalside quantities needed by the Hydrology model");
   validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
-  validPL->sublist("Physical Parameters", false, "");
+  validPL->sublist("FELIX Physical Parameters", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   return validPL;
 }
 
+// Instantiating the homotopy parameter holder class
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HomotopyParamValue)

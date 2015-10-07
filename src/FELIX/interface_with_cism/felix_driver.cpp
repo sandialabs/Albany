@@ -486,9 +486,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
  
    //IK, 11/20/14: pass gravity, ice density, and water density values to Albany.  These are needed 
    //in the PHAL_Neumann and FELIX_StokesFOBodyForce evaluators.  
-    parameterList->sublist("Problem").sublist("Physical Parameters").set("Gravity", gravity);
-    parameterList->sublist("Problem").sublist("Physical Parameters").set("Ice Density", rho_ice);
-    parameterList->sublist("Problem").sublist("Physical Parameters").set("Water Density", rho_seawater);
+    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Gravity", gravity);
+    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Ice Density", rho_ice);
+    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Water Density", rho_seawater);
  
     //IK, 11/17/14: if ds/dx, ds/dy are passed from CISM, use these in body force; 
     //otherwise calculate ds/dx from s by interpolation within Albany 

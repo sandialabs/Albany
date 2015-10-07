@@ -104,7 +104,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterRank0_Tag& tag, const int& i) const;
- 
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterRank1_Tag& tag, const int& i) const;
 
@@ -141,7 +141,7 @@ public:
   //LO *colT;
   int neq, nunk, numDim;
 
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
   LocalMatrixType jacobian;
 
   struct ScatterRank0_is_adjoint_Tag{};

@@ -42,10 +42,10 @@
 //#define OUTPUT_TO_SCREEN
 
 
-//Constructor 
+//Constructor
 Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                             const Teuchos::RCP<const Teuchos_Comm>& commT, 
+                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
                                              const int numDim_, const int worksetSize_,
                                              const bool periodic_, const double scale_,  
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
@@ -54,10 +54,10 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   GenericSTKMeshStruct(params,Teuchos::null, numDim_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(periodic_), 
-  scale(scale_), 
+  scale(scale_),
   numDim(numDim_),
   wsElNodeID(wsElNodeID_),
-  coords(coords_), 
+  coords(coords_),
   points_per_edge(points_per_edge_)
 {
 #ifdef OUTPUT_TO_SCREEN
@@ -65,7 +65,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 #endif
 
   contigIDs = params->get("Contiguous IDs", true);
-  
+
 #ifdef OUTPUT_TO_SCREEN
   *out << "element_name: " << element_name_ << "\n";
   *out << "periodic BCs? " << periodic << "\n";  
@@ -81,30 +81,30 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
-  
 
-  if (element_name_ == "ShellQuadrilateral") { 
+
+  if (element_name_ == "ShellQuadrilateral") {
     params->validateParameters(*getValidDiscretizationParametersQuads(),0);
     stk::mesh::set_cell_topology<shards::ShellQuadrilateral<4> >(*partVec[0]);
-    ElemType = QUAD; 
+    ElemType = QUAD;
   }
   else if (element_name_ == "Line") {
     params->validateParameters(*getValidDiscretizationParametersLines(),0);
     stk::mesh::set_cell_topology<shards::Line<2> >(*partVec[0]);
-    ElemType = LINE; 
+    ElemType = LINE;
   }
 
 
   int cub = params->get("Cubature Degree",3);
   //FIXME: hard-coded for now that all the elements are in 1 workset
-  int worksetSize = -1; 
+  int worksetSize = -1;
   //int worksetSizeMax = params->get("Workset Size",50);
   //int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
 #ifdef OUTPUT_TO_SCREEN
-  *out << "numDim, cub, worksetSize, points_per_edge, ctd name: " << numDim << ", " 
+  *out << "numDim, cub, worksetSize, points_per_edge, ctd name: " << numDim << ", "
        << cub << ", " << worksetSize << ", " << points_per_edge << ", " << ctd.name << "\n";
 #endif
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
@@ -139,20 +139,20 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
-  
+
   //FIXME?: assuming for now 1 element block
-  unsigned int ebNo = 0; 
+  unsigned int ebNo = 0;
 
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef Albany::AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
-  if (ElemType == QUAD) { //Quads 
+  if (ElemType == QUAD) { //Quads
 #ifdef OUTPUT_TO_SCREEN
-    std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl; 
-    for (int ws = 0; ws < wsElNodeID.size(); ws++){           
-      for (int e = 0; e < wsElNodeID[ws].size(); e++){        
+    std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl;
+    for (int ws = 0; ws < wsElNodeID.size(); ws++){
+      for (int e = 0; e < wsElNodeID[ws].size(); e++){
         std::cout << "Spectral Mesh Element " << e << ": Nodes = ";
         for (size_t inode = 0; inode < points_per_edge*points_per_edge; ++inode)
           std::cout << wsElNodeID[ws][e][inode] << " ";
@@ -161,36 +161,36 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
     }
 #endif
 
-    int count = 0;  
+    int count = 0;
     int numOutputEles = wsElNodeID[0].size()*(points_per_edge-1)*(points_per_edge-1);
     for (int ws = 0; ws < wsElNodeID.size(); ws++){             // workset
       for (int e = 0; e < wsElNodeID[ws].size(); e++){          // cell
         for (int i=0; i<points_per_edge-1; i++) {           //Each spectral element broken into (points_per_edge-1)^2 bilinear elements
           for (int j=0; j<points_per_edge-1; j++) {
-            //Set connectivity for new mesh  
+            //Set connectivity for new mesh
             const unsigned int elem_GID = count + numOutputEles*commT->getRank();
-            count++; 
+            count++;
             stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
             singlePartVec[0] = partVec[ebNo];
-            //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based 
+            //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based
             stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-            stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK, 
+            stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK,
                                       1+wsElNodeID[ws][e][i+j*points_per_edge], nodePartVec);
-            stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK, 
+            stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK,
                                       1+wsElNodeID[ws][e][i+1+j*points_per_edge], nodePartVec);
-            stk::mesh::Entity node2 = bulkData->declare_entity(stk::topology::NODE_RANK, 
+            stk::mesh::Entity node2 = bulkData->declare_entity(stk::topology::NODE_RANK,
                                       1+wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge], nodePartVec);
             stk::mesh::Entity node3 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                      1+wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge], nodePartVec); 
+                                      1+wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge], nodePartVec);
 #ifdef OUTPUT_TO_SCREEN
-            std::cout << "ws, e, i , j " << ws << ", " << e << ", " << i << ", " << j << std::endl; 
-            std::cout << "Output Mesh elem_GID, node0, node1, node2, node3: " << elem_GID << ", " 
-                      << wsElNodeID[ws][e][i+j*points_per_edge] << ", " 
-                      << wsElNodeID[ws][e][i+1+j*points_per_edge] << ", " 
-                      << wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge] << ", " 
-                      << wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge] 
-                      << std::endl; 
-#endif 
+            std::cout << "ws, e, i , j " << ws << ", " << e << ", " << i << ", " << j << std::endl;
+            std::cout << "Output Mesh elem_GID, node0, node1, node2, node3: " << elem_GID << ", "
+                      << wsElNodeID[ws][e][i+j*points_per_edge] << ", "
+                      << wsElNodeID[ws][e][i+1+j*points_per_edge] << ", "
+                      << wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge] << ", "
+                      << wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge]
+                      << std::endl;
+#endif
             bulkData->declare_relation(elem, node0, 0);
             bulkData->declare_relation(elem, node1, 1);
             bulkData->declare_relation(elem, node2, 2);
@@ -198,55 +198,55 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
             //Set coordinates of new mesh
             double* coord;
-            //set node 0 in STK bilinear mesh 
+            //set node 0 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node0);
 #ifdef OUTPUT_TO_SCREEN
-           std::cout << "Output mesh node0 coords: " << coords[ws][e][i+j*points_per_edge][0] 
+           std::cout << "Output mesh node0 coords: " << coords[ws][e][i+j*points_per_edge][0]
                      << ", " << coords[ws][e][i+j*points_per_edge][1] << ", " << coords[ws][e][i+j*points_per_edge][2] << std::endl;
-#endif 
+#endif
             coord[0] = coords[ws][e][i+j*points_per_edge][0];
             coord[1] = coords[ws][e][i+j*points_per_edge][1];
             coord[2] = coords[ws][e][i+j*points_per_edge][2];
-            //set node 1 in STK bilinear mesh 
+            //set node 1 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node1);
 #ifdef OUTPUT_TO_SCREEN
-            std::cout << "Output mesh node1 coords: " << coords[ws][e][i+1+j*points_per_edge][0] 
+            std::cout << "Output mesh node1 coords: " << coords[ws][e][i+1+j*points_per_edge][0]
                       << ", " << coords[ws][e][i+1+j*points_per_edge][1] << ", " << coords[ws][e][i+1+j*points_per_edge][2] << std::endl;
-#endif 
+#endif
             coord[0] = coords[ws][e][i+1+j*points_per_edge][0];
             coord[1] = coords[ws][e][i+1+j*points_per_edge][1];
             coord[2] = coords[ws][e][i+1+j*points_per_edge][2];
-            //set node 2 in STK bilinear mesh 
+            //set node 2 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node2);
 #ifdef OUTPUT_TO_SCREEN
-            std::cout << "Output mesh node2 coords: " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][0] 
-                      << ", " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][1] 
+            std::cout << "Output mesh node2 coords: " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][0]
+                      << ", " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][1]
                       << ", " << coords[ws][e][i+points_per_edge+1+j*points_per_edge][2] << std::endl;
-#endif 
-            coord[0] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][0];   
-            coord[1] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][1];  
-            coord[2] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][2];  
-            //set node 3 in STK bilinear mesh 
+#endif
+            coord[0] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][0];
+            coord[1] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][1];
+            coord[2] = coords[ws][e][i+points_per_edge+1+j*points_per_edge][2];
+            //set node 3 in STK bilinear mesh
             coord = stk::mesh::field_data(*coordinates_field, node3);
 #ifdef OUTPUT_TO_SCREEN
-            std::cout << "Output mesh node3 coords: " << coords[ws][e][i+points_per_edge+j*points_per_edge][0] 
-                      << ", " << coords[ws][e][i+points_per_edge+j*points_per_edge][1] 
+            std::cout << "Output mesh node3 coords: " << coords[ws][e][i+points_per_edge+j*points_per_edge][0]
+                      << ", " << coords[ws][e][i+points_per_edge+j*points_per_edge][1]
                       << ", " << coords[ws][e][i+points_per_edge+j*points_per_edge][2] << std::endl;
-#endif 
-            coord[0] = coords[ws][e][i+points_per_edge+j*points_per_edge][0];   
-            coord[1] = coords[ws][e][i+points_per_edge+j*points_per_edge][1];  
-            coord[2] = coords[ws][e][i+points_per_edge+j*points_per_edge][2];  
+#endif
+            coord[0] = coords[ws][e][i+points_per_edge+j*points_per_edge][0];
+            coord[1] = coords[ws][e][i+points_per_edge+j*points_per_edge][1];
+            coord[2] = coords[ws][e][i+points_per_edge+j*points_per_edge][2];
           }
         }
       }
-    }    
+    }
   }
-  else if (ElemType == LINE) { //Lines (for xz hydrostatic) 
-    //IKT, 8/28/15: the following code needs testing 
+  else if (ElemType == LINE) { //Lines (for xz hydrostatic)
+    //IKT, 8/28/15: the following code needs testing
 #ifdef OUTPUT_TO_SCREEN
-    std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl; 
-    for (int ws = 0; ws < wsElNodeID.size(); ws++){           
-      for (int e = 0; e < wsElNodeID[ws].size(); e++){        
+    std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl;
+    for (int ws = 0; ws < wsElNodeID.size(); ws++){
+      for (int e = 0; e < wsElNodeID[ws].size(); e++){
         std::cout << "Spectral Mesh Element " << e << ": Nodes = ";
         for (size_t inode = 0; inode < points_per_edge; ++inode)
           std::cout << wsElNodeID[ws][e][inode] << " ";
@@ -254,34 +254,34 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
       }
     }
 #endif
-    int count = 0;  
+    int count = 0;
     int numOutputEles = wsElNodeID[0].size()*(points_per_edge-1);
     for (int ws = 0; ws < wsElNodeID.size(); ws++){             // workset
       for (int e = 0; e < wsElNodeID[ws].size(); e++){          // cell
         for (int i=0; i<points_per_edge-1; i++) {           //Each spectral element broken into (points_per_edge-1) linear elements
-          //Set connectivity for new mesh  
+          //Set connectivity for new mesh
           const unsigned int elem_GID = count + numOutputEles*commT->getRank()*commT->getSize();
-          count++; 
+          count++;
           stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
           singlePartVec[0] = partVec[ebNo];
-          //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based 
+          //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based
           stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-          stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK, 
+          stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK,
                                     1+wsElNodeID[ws][e][i], nodePartVec);
-          stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK, 
+          stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK,
                                     1+wsElNodeID[ws][e][i+1], nodePartVec);
 #ifdef OUTPUT_TO_SCREEN
-          std::cout << "ws, e, i " << ws << ", " << e << ", " << i  << std::endl; 
-          std::cout << "Output Mesh elem_GID, node0, node1: " << elem_GID << ", " 
-                    << wsElNodeID[ws][e][i] << ", " 
-                    << wsElNodeID[ws][e][i+1] << std::endl; 
-#endif 
+          std::cout << "ws, e, i " << ws << ", " << e << ", " << i  << std::endl;
+          std::cout << "Output Mesh elem_GID, node0, node1: " << elem_GID << ", "
+                    << wsElNodeID[ws][e][i] << ", "
+                    << wsElNodeID[ws][e][i+1] << std::endl;
+#endif
           bulkData->declare_relation(elem, node0, 0);
           bulkData->declare_relation(elem, node1, 1);
 
           //Set coordinates of new mesh
           double* coord;
-          //set node 0 in STK linear mesh 
+          //set node 0 in STK linear mesh
           coord = stk::mesh::field_data(*coordinates_field, node0);
           coord[0] = coords[ws][e][i][0];
 #ifdef OUTPUT_TO_SCREEN
@@ -297,7 +297,7 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 #endif 
         }
       }
-    }    
+    }
   }
 
   Albany::fix_node_sharing(*bulkData);
@@ -334,14 +334,14 @@ Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersLines() cons
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getValidGenericSTKParameters("Valid Aeras_DiscParams_STK1D");
   validPL->set<bool>("Periodic_x BC", false, "Flag to indicate periodic mesh in x-dimension");
-  //IKT, 8/31/15: why are Periodic_y BC and Periodic_z BC needed in valid parameterlist when we will 
-  //always have 1D mesh? 
+  //IKT, 8/31/15: why are Periodic_y BC and Periodic_z BC needed in valid parameterlist when we will
+  //always have 1D mesh?
   validPL->set<bool>("Periodic_y BC", false, "Flag to indicate periodic mesh in y-dimension");
   validPL->set<bool>("Periodic_z BC", false, "Flag to indicate periodic mesh in z-dimension");
   validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks");
- 
-  return validPL; 
+
+  return validPL;
 }

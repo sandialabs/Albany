@@ -282,13 +282,13 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
 
   //Physical Parameters
-  if(!paramList->sublist("Problem").isSublist("Physical Parameters")) {
-    paramList->sublist("Problem").sublist("Physical Parameters").set("Gravity", MPAS_gravity);
-    paramList->sublist("Problem").sublist("Physical Parameters").set("Ice Density", MPAS_rho_ice);
-    paramList->sublist("Problem").sublist("Physical Parameters").set("Water Density", MPAS_rho_seawater);
+  if(!paramList->sublist("Problem").isSublist("FELIX Physical Parameters")) {
+    paramList->sublist("Problem").sublist("FELIX Physical Parameters").set("Gravity", MPAS_gravity);
+    paramList->sublist("Problem").sublist("FELIX Physical Parameters").set("Ice Density", MPAS_rho_ice);
+    paramList->sublist("Problem").sublist("FELIX Physical Parameters").set("Water Density", MPAS_rho_seawater);
   }
   else {
-    std::cout<<"\nWARNING: Using Physical Parameters (gravity, ice/ocean densities) provided in Albany input file. In order to use those provided by MPAS, remove \"Physical Parameters\" sublist from Albany input file.\n"<<std::endl;
+    std::cout<<"\nWARNING: Using Physical Parameters (gravity, ice/ocean densities) provided in Albany input file. In order to use those provided by MPAS, remove \"FELIX Physical Parameters\" sublist from Albany input file.\n"<<std::endl;
   }
 
   MPAS_dt = Teuchos::rcp(new double(0.0));

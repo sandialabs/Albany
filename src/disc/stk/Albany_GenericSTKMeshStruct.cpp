@@ -102,7 +102,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
-		  const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -672,7 +672,6 @@ void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
 #endif
 
 }
-
 
 void Albany::GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData){
 

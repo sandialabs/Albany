@@ -9,7 +9,7 @@ INCLUDE(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
 set(CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
 set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
- 
+
 
 SET(SOURCES
   Albany_SolverFactory.cpp
@@ -29,7 +29,7 @@ SET(SOURCES
   )
 
 IF (ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp) 
+  SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
   IF(ALBANY_64BIT_INT)
     SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
   ELSE()
@@ -38,8 +38,8 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 
-IF(ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
+IF(ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES}
     Albany_PiroObserver.cpp
     Albany_ModelEvaluator.cpp
     Albany_RythmosObserver.cpp
@@ -77,8 +77,8 @@ SET(HEADERS
   Albany_EigendataInfoStructT.hpp
   )
 
-IF(ALBANY_EPETRA) 
-  SET(HEADERS ${HEADERS} 
+IF(ALBANY_EPETRA)
+  SET(HEADERS ${HEADERS}
     Albany_PiroObserver.hpp
     Albany_ModelEvaluator.hpp
     Albany_DistributedParameterDerivativeOp.hpp
@@ -168,10 +168,10 @@ SET(PDE_HDRS
 
 #responses
 IF (ALBANY_EPETRA)
-SET(SOURCES ${SOURCES} 
+SET(SOURCES ${SOURCES}
   responses/Epetra_GatherAllV.cpp
 )
-SET(HEADERS ${HEADERS} 
+SET(HEADERS ${HEADERS}
   responses/Epetra_GatherAllV.hpp
 )
 ENDIF()
@@ -208,7 +208,7 @@ SET(HEADERS ${HEADERS}
   responses/Albany_ResponseFactory.hpp
   )
 
-IF(ALBANY_EPETRA) 
+IF(ALBANY_EPETRA)
 
 SET(SOURCES ${SOURCES}
   responses/Albany_SolutionResponseFunction.cpp
@@ -221,10 +221,10 @@ SET(HEADERS ${HEADERS}
 ENDIF()
 
 IF(ALBANY_EPETRA)
-SET(SOURCES ${SOURCES} 
+SET(SOURCES ${SOURCES}
   responses/Epetra_ImportWithAlternateMap.cpp
 )
-SET(HEADERS ${HEADERS} 
+SET(HEADERS ${HEADERS}
   responses/Epetra_ImportWithAlternateMap.hpp
 )
 ENDIF()
@@ -291,18 +291,18 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherScalarNodalParameter.cpp
   evaluators/PHAL_GatherAuxData.cpp
   )
- 
+
 SET(SOURCES ${SOURCES}
  evaluators/PHAL_ResponseFieldIntegral.cpp
  evaluators/PHAL_SeparableScatterScalarResponse.cpp
  )
 
-IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES} 
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES}
     evaluators/PHAL_GatherEigenvectors.cpp
     evaluators/PHAL_GatherEigenData.cpp
   )
-ENDIF() 
+ENDIF()
 
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -416,8 +416,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherAuxData.hpp
   evaluators/PHAL_GatherAuxData_Def.hpp
   )
-  
-IF (ALBANY_EPETRA) 
+
+IF (ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
     evaluators/PHAL_GatherEigenvectors.hpp
     evaluators/PHAL_GatherEigenvectors_Def.hpp
@@ -733,13 +733,13 @@ endif()
 # Now build executables from this library, tailored main()s, and Trilinos
 IF (NOT ALBANY_LIBRARIES_ONLY) 
 
-IF (ALBANY_EPETRA) 
+IF (ALBANY_EPETRA)
   add_executable(Albany Main_Solve.cpp)
-ENDIF() 
+ENDIF()
 
 add_executable(AlbanyT Main_SolveT.cpp)
 SET(ALBANY_EXECUTABLES AlbanyT)
-IF (ALBANY_EPETRA) 
+IF (ALBANY_EPETRA)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
 ENDIF()
 if (ALBANY_STOKHOS AND ALBANY_EPETRA)
@@ -776,7 +776,7 @@ IF (ALBANY_MOR AND ALBANY_EPETRA)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
 ENDIF ()
 
-IF (ALBANY_EPETRA) 
+IF (ALBANY_EPETRA)
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
 ENDIF()
@@ -834,11 +834,11 @@ ENDIF()
 IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
-  
+
   IF (ENABLE_MPAS_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
   ENDIF()
-  
+
   IF (ENABLE_CISM_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
   ENDIF()
