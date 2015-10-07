@@ -447,10 +447,29 @@ void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const d
 }
 #endif
 
+static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
+{
+  if (!(meshStruct->useTemperatureHack && meshStruct->solutionInitialized))
+    return;
+  apf::Mesh* m = meshStruct->getMesh();
+  apf::Field* t = m->findField("temp");
+  if (!t)
+    t = m->findField(Albany::APFMeshStruct::solution_name);
+  assert(t);
+  apf::Field* told = m->findField("temp_old");
+  if (!told)
+    told = meshStruct->createNodalField("temp_old", apf::SCALAR);
+  assert(told);
+  std::cout << "copying nodal " << apf::getName(t)
+    << " to nodal " << apf::getName(told) << '\n';
+  apf::copyData(told, t);
+}
+
 void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
+  saveOldTemperature(meshStruct);
   (void) time_value;
   if (solNames.size() == 0)
     this->setField(APFMeshStruct::solution_name,soln,overlapped);
