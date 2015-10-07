@@ -99,6 +99,7 @@ namespace ATO {
 
     void ComputeObjective(double* p, double& g, double* dgdp=NULL);
     void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
+    void writeCurrentDesign();
     void InitializeTopology(double* p);
 
     void ComputeVolume(double* p, const double* dgdp, 
@@ -110,8 +111,9 @@ namespace ATO {
   private:
 
     // data
-    int  numDims;
     int _iteration;
+    int _writeDesignFrequency;
+    int  numDims;
     int _num_parameters; // for sensitiviy analysis(?)
     int _num_responses;  //  ditto
     Teuchos::RCP<Epetra_LocalMap> _epetra_param_map;
@@ -130,6 +132,7 @@ namespace ATO {
     Teuchos::RCP<Topology> _topology;
 
     std::vector<Teuchos::RCP<SpatialFilter> > filters;
+    bool _filterIsRecursive;
     Teuchos::RCP<SpatialFilter> _derivativeFilter;
     Teuchos::RCP<SpatialFilter> _topologyFilter;
     Teuchos::RCP<SpatialFilter> _postTopologyFilter;
@@ -178,6 +181,7 @@ namespace ATO {
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
     void smoothTopology(double* p);
+    void smoothTopology();
     void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
     void copyObjectiveFromStateMgr( double& g, double* dgdp );

@@ -121,6 +121,8 @@ namespace Albany {
 
     bool uniformRefinementInitialized;
 
+    bool requiresAutomaticAura;
+
     bool compositeTet;
 
   };

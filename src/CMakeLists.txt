@@ -650,6 +650,15 @@ include_directories (${Trilinos_INCLUDE_DIRS}
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
+IF ( ENABLE_ISOLIB )
+  include_directories (${ISOLIB_INCLUDE_DIR_MAIN})
+  include_directories (${ISOLIB_INCLUDE_DIR_UTIL})
+  link_directories (${ISOLIB_LIBRARY_DIR})
+  set(ISOLIB_LIB iso)
+ELSE()
+  set(ISOLIB_LIB )
+ENDIF()
+
 IF ( ENABLE_NLopt )
   include_directories (${NLopt_INCLUDE_DIR})
   link_directories (${NLopt_LIBRARY_DIR})
@@ -863,6 +872,8 @@ IF (ALBANY_ATO AND ALBANY_EPETRA)
     SET(ALBANY_LCM ON)
     add_subdirectory(ATO)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
+    # iso library uses stk
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ISOLIB_LIB})
 ENDIF()
 
 IF (ALBANY_HYDRIDE)

@@ -24,6 +24,11 @@ Please remove when issue is resolved
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
 
+#ifdef ATO_USES_ISOLIB
+#include "Albany_STKDiscretization.hpp"
+#include "STKExtract.hpp"
+#endif
+
 MPI_Datatype MPI_GlobalPoint;
 
 bool ATO::operator< (ATO::GlobalPoint const & a, ATO::GlobalPoint const & b){return a.gid < b.gid;}
@@ -71,6 +76,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   _optimizer->SetInterface(this);
   _optimizer->SetCommunicator(comm);
 
+  _writeDesignFrequency = problemParams.get<int>("Design Output Frequency", 0);
+
   // Parse and create aggregator
   Teuchos::ParameterList& aggregatorParams = problemParams.get<Teuchos::ParameterList>("Objective Aggregator");
   std::string topoEntityType = topoParams.get<std::string>("Entity Type");
@@ -90,6 +97,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     }
   }
   
+  _filterIsRecursive = topoParams.get<bool>("Apply Filter Recursively", true);
+
   int topologyFilterIndex = _topology->SpatialFilterIndex();
   if( topologyFilterIndex >= 0 ){
     TEUCHOS_TEST_FOR_EXCEPTION( topologyFilterIndex >= filters.size(),
@@ -312,11 +321,12 @@ ATO::Solver::zeroSet()
   // set parameters and responses
   _num_parameters = 0; //TEV: assume no parameters or responses for now...
   _num_responses  = 0; //TEV: assume no parameters or responses for now...
-  _iteration      = 0;
+  _iteration      = 1;
 
   _is_verbose = false;
   _is_restart = false;
 
+  _filterIsRecursive  = true;
   _derivativeFilter   = Teuchos::null;
   _topologyFilter     = Teuchos::null;
   _postTopologyFilter = Teuchos::null;
@@ -498,7 +508,7 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
 
-  if(_iteration!=0) smoothTopology(p);
+  if(_iteration!=1 && _filterIsRecursive) smoothTopology(p);
 
   for(int i=0; i<_numPhysics; i++){
     
@@ -520,9 +530,56 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
   _aggregator->Evaluate();
   copyObjectiveFromStateMgr( g, dgdp );
 
-  _iteration++;
+  // See if the user specified a new design frequency.
+  int new_frequency = -1;
+  if( _solverComm->MyPID() == 0){
+    FILE *fp = fopen("update_frequency.txt", "r");
+    if(fp)
+    {
+      fscanf(fp, "%d", &new_frequency);
+      fclose(fp);
+    }
+  }
+  _solverComm->Broadcast(&new_frequency, /*nvals=*/ 1, /*root_process=*/ 0);
 
-  
+  if(new_frequency != -1)
+  {
+    // the user has specified a new frequency to use
+    _writeDesignFrequency = new_frequency;
+   }
+
+   // Output a new result file if requested
+   if(_writeDesignFrequency && (_iteration % _writeDesignFrequency == 0) )
+     writeCurrentDesign();
+  _iteration++;
+}
+
+/******************************************************************************/
+void
+ATO::Solver::writeCurrentDesign()
+/******************************************************************************/
+{
+#ifdef ATO_USES_ISOLIB
+  Teuchos::RCP<Albany::AbstractDiscretization>
+    disc = _subProblems[0].app->getDiscretization();
+
+  Albany::STKDiscretization *stkmesh = dynamic_cast<Albany::STKDiscretization*>(disc.get());
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    stkmesh == NULL, Teuchos::Exceptions::InvalidParameter, std::endl
+    << "Error!  Attempted to cast non STK mesh." << std::endl);
+
+  MPI_Comm mpi_comm = Albany::getMpiCommFromEpetraComm(*_solverComm);
+  iso::STKExtract ex;
+  ex.create_mesh_apis_Albany(&mpi_comm,
+             &(stkmesh->getSTKBulkData()),
+             &(stkmesh->getSTKMetaData()),
+             "", "iso.exo", "Rho_node", 1e-5, 0.5,
+              0, 0, 1, 0);
+  ex.run_Albany(_iteration);
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+         << "Error! Albany must be compiled with IsoLib support for runtime output." << std::endl);
+#endif
 }
 
 /******************************************************************************/
@@ -625,6 +682,17 @@ ATO::Solver::smoothTopology(double* p)
   for(int lid=0; lid<numLocalNodes; lid++)
     ltopo[lid] = p[lid];
 
+  smoothTopology();
+
+  // copy the topology back from the epetra vector
+  for(int lid=0; lid<numLocalNodes; lid++)
+    p[lid] = ltopo[lid];
+}
+/******************************************************************************/
+void
+ATO::Solver::smoothTopology()
+/******************************************************************************/
+{
   // apply filter if requested
   if(_topologyFilter != Teuchos::null){
     Epetra_Vector filtered_topoVec(*topoVec);
@@ -635,11 +703,8 @@ ATO::Solver::smoothTopology(double* p)
     _postTopologyFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, *filteredTopoVec);
     filteredOTopoVec->Import(*filteredTopoVec, *importer, Insert);
   }
-
-  // copy the topology back from the epetra vector
-  for(int lid=0; lid<numLocalNodes; lid++)
-    p[lid] = ltopo[lid];
 }
+
 /******************************************************************************/
 void
 ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& stateMgr )
@@ -662,6 +727,8 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
   int numLocalNodes = topoVec->MyLength();
   for(int lid=0; lid<numLocalNodes; lid++)
     ltopo[lid] = p[lid];
+
+  if(!_filterIsRecursive) smoothTopology();
 
   overlapTopoVec->Import(*topoVec, *importer, Insert);
 
@@ -1026,6 +1093,9 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
   if( _topology->getFixedBlocks().size() > 0 )
     physics_discList.set("Separate Evaluators by Element Block", true);
 
+  if( _writeDesignFrequency != 0 )
+    physics_discList.set("Use Automatic Aura", true);
+
   // Piro sublist processing
   physics_appParams->set("Piro",appParams->sublist("Piro"));
 
@@ -1215,6 +1285,7 @@ ATO::Solver::getValidProblemParameters() const
   validPL->set<int>("Number of Subproblems", 1, "Number of PDE constraint problems");
   validPL->set<int>("Number of Homogenization Problems", 0, "Number of homogenization problems");
   validPL->set<bool>("Verbose Output", false, "Enable detailed output mode");
+  validPL->set<int>("Design Output Frequency", 0, "Write isosurface every N iterations");
   validPL->set<std::string>("Name", "", "String to designate Problem");
 
   // Specify physics problem(s)
