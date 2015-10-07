@@ -10,6 +10,10 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 #include "LocalNonlinearSolver.hpp"
 
+#include <MiniLinearSolver.h>
+#include <MiniNonlinearSolver.h>
+#include "../../utils/MiniSolvers.h"
+
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
@@ -446,7 +450,6 @@ computeState(typename Traits::EvalData workset,
   slip_dot_n.set_dimension(num_slip_);
   Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_n;
   hardness_n.set_dimension(num_slip_);
-  ScalarT equivalent_plastic_strain;
 
   // Unknown quantities
   Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1;
@@ -470,6 +473,7 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_np1;
   hardness_np1.set_dimension(num_slip_);
   ScalarT norm_slip_residual;
+  ScalarT equivalent_plastic_strain;
 
   // LocalNonlinearSolver
   LocalNonlinearSolver<EvalT, Traits> solver;
@@ -743,7 +747,33 @@ computeState(typename Traits::EvalData workset,
 #ifdef PRINT_DEBUG
         std::cout << "CP model final residual " << residual_val << std::endl;
 #endif
+
+
+#ifdef MINISOLVER
+
+	CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, ScalarT> crystalPlasticityNLS(C_,
+											      slip_systems_,
+											      Fp_n,
+											      hardness_n,
+											      slip_n,
+											      F_np1,
+											      dt);
+
+	Intrepid::NewtonStep<RealType, CP::MAX_NUM_SLIP> step;
+	Intrepid::Minimizer<RealType, CP::MAX_NUM_SLIP> minimizer;
+	Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> x;
+	x.fill(Intrepid::ZEROS);
+	x.set_dimension(num_slip_);
+	for(int i=0 ; i<num_slip_; ++i){
+	  x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
+	}
+	minimizer.solve(step, crystalPlasticityNLS, x);
+	minimizer.printReport(std::cout);
+
+#endif
+
       } // integration_scheme == IMPLICIT
+
 
 // The EQPS can be computed (or can it?) from the Cauchy Green strain operator applied to Fp.
 //      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
