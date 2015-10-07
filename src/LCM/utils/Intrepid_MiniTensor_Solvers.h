@@ -229,16 +229,17 @@ struct TrustRegionStep : public Step_Base<T>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
   T
-  region_size{0.0};
-
-  T
   max_region_size{10.0};
 
   T
   initial_region_size{10.0};
 
   T
-  min_reduction{1.0e-4};
+  min_reduction{0.0};
+
+private:
+  T
+  region_size{0.0};
 };
 
 ///

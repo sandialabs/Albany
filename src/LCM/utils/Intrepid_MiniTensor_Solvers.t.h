@@ -434,7 +434,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 
   }
 
-  if (reduction < min_reduction) {
+  if (reduction <= min_reduction) {
     step.fill(ZEROS);
   }
 
