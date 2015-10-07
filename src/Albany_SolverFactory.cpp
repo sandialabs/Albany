@@ -35,7 +35,7 @@
 
 #ifdef ALBANY_MUELU
 #include <Thyra_MueLuPreconditionerFactory.hpp>
-#include "Stratimikos_MueluTpetraHelpers.hpp"
+#include "Stratimikos_MueLuHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
@@ -682,10 +682,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+    Stratimikos::enableMueLu(linearSolverBuilder);
+    Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+    Stratimikos::enableMueLu(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
 
@@ -745,10 +745,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+    Stratimikos::enableMueLu(linearSolverBuilder);
+    Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+    Stratimikos::enableMueLu(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
 
@@ -812,10 +812,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
     renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+    Stratimikos::enableMueLu(linearSolverBuilder); 
+    Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+    Stratimikos::enableMueLu(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
    
