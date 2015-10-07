@@ -447,6 +447,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   ScalarFieldType* bed_topography_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "bed_topography");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
   ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+  ElemScalarFieldType* flowRate_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
 
   std::vector<GO> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
 
@@ -558,6 +559,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         if(hasTemperature && temperature_field) {
           double* temperature = stk::mesh::field_data(*temperature_field, elem);
           temperature[0] = tempOnPrism;
+          if(flowRate_field) {
+            double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
+            flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
+          }
         }
       }
     }
@@ -575,6 +580,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       if(hasTemperature && temperature_field) {
         double* temperature = stk::mesh::field_data(*temperature_field, elem);
         temperature[0] = tempOnPrism;
+        if(flowRate_field) {
+          double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
+          flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
+        }
       }
     }
     }
