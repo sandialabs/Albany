@@ -95,29 +95,34 @@ namespace CP
 
 }
 
-template <typename ScalarT>
-class CrystalPlasticityNLS : public Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>, ScalarT>
+template <Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT>
+class CrystalPlasticityNLS : public Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>
 {
 public:
 
-  CrystalPlasticityNLS(RealType num_dims,
-		       RealType num_slip)
-    : num_dims_(num_dims), num_slip_(num_slip) {}
+  CrystalPlasticityNLS(Intrepid::Tensor4<RealType, NumDimT> const & C,
+		       std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+		       Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
+		       Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
+		       Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
+		       Intrepid::Tensor<ScalarT, NumDimT> const & F_np1,
+		       ScalarT dt)
+    : C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
+      slip_n_(slip_n), F_np1_(F_np1), dt_(dt), norm_slip_residual_(0.0)
+  {
+    num_dim_ = Fp_n_.get_dimension();
+    num_slip_ = hardness_n_.get_dimension();
+  }
 
-  static constexpr
-  Intrepid::Index
-  DIMENSION = CP::MAX_NUM_SLIP;
-
-  static constexpr
-  char const * const
-  NAME = "Crystal Plasticity Nonlinear System";
+  static constexpr Intrepid::Index DIMENSION = CP::MAX_NUM_SLIP;
+  static constexpr char const * const NAME = "Crystal Plasticity Nonlinear System";
 
   // Default value.
   template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   T
   value(Intrepid::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>, ScalarT>::value(*this, x);
+    return Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>::value(*this, x);
   }
 
   // Explicit gradient.
@@ -125,24 +130,37 @@ public:
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & slip_np1) const
   {
-    Intrepid::Index const dimension = slip_np1.get_dimension();
-    assert(dimension == DIMENSION);
+    // This is a design flaw, temporaries are a bad idea here.
+    // The difficulty is that the first template argument must match T and will vary
+    // as the solver calls this function with different types (e.g., scalars, AD types).
+    Intrepid::Tensor<T, NumDimT> Fp_np1;
+    Intrepid::Tensor<T, NumDimT> Lp_np1;
+    Intrepid::Vector<T, N> hardness_np1;
+    Intrepid::Tensor<T, NumDimT> sigma_np1;
+    Intrepid::Tensor<T, N> S_np1;
+    Intrepid::Vector<T, N> shear_np1;
+    Intrepid::Vector<T, N> slip_residual;
 
-    // DJL can these be class member data?
-    Intrepid::Vector<T, N> slip_residual(dimension);
-//     ScalarT norm_slip_residual;
+    slip_np1.set_dimension(num_slip_);
+    Fp_np1.set_dimension(num_dim_);
+    Lp_np1.set_dimension(num_dim_);
+    hardness_np1.set_dimension(num_slip_);
+    sigma_np1.set_dimension(num_slip_);
+    S_np1.set_dimension(num_dim_);
+    shear_np1.set_dimension(num_slip_);
+    slip_residual.set_dimension(num_slip_);
 
-//     // Compute Lp_np1, and Fp_np1
-//     applySlipIncrement(slip_n_, slip_np1, Fp_n_, Lp_np1_, Fp_np1_);
+    // Compute Lp_np1, and Fp_np1
+    CP::applySlipIncrement<NumDimT, NumSlipT>(slip_n_, slip_np1, Fp_n_, Lp_np1, Fp_np1);
 
-//     // Compute hardness_np1
-//     updateHardness(slip_np1, hardness_n_, hardness_np1_);
+    // Compute hardness_np1
+    CP::updateHardness<NumDimT, NumSlipT>(slip_np1, hardness_n_, hardness_np1);
 
-//     // Compute sigma_np1, S_np1, and shear_np1
-//     computeStress(F_np1_, Fp_np1_, sigma_np1_, S_np1_, shear_np1_);
+    // Compute sigma_np1, S_np1, and shear_np1
+    CP::computeStress<NumDimT, NumSlipT>(F_np1_, Fp_np1, sigma_np1, S_np1, shear_np1);
 
-//     // Compute slip_residual and norm_slip_residual
-//     computeResidual(dt_, slip_n_, slip_np1, hardness_np1_, shear_np1_, slip_residual, norm_slip_residual);
+    // Compute slip_residual and norm_slip_residual
+    CP::computeResidual<NumDimT, NumSlipT>(dt_, slip_n_, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual_);
 
     return slip_residual;
   }
@@ -152,29 +170,21 @@ public:
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<CrystalPlasticityNLS<ScalarT>, ScalarT>::hessian(*this, x);
+    return Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>::hessian(*this, x);
   }
 
 private:
 
-  RealType num_dims_;
+  RealType num_dim_;
   RealType num_slip_;
-//   Intrepid::Tensor4<RealType> C_;
-//   std::vector<CP::SlipSystemStruct> slip_systems_;
-
-//   ScalarT dt_;
-//   Intrepid::Vector<ScalarT> slip_n_;
-//   Intrepid::Vector<ScalarT> slip_np1_;
-//   Intrepid::Tensor<ScalarT> F_np1_;
-//   Intrepid::Tensor<ScalarT> Fp_n_;
-//   Intrepid::Tensor<ScalarT> Fp_np1_;
-//   Intrepid::Tensor<ScalarT> Lp_np1_;
-//   Intrepid::Vector<ScalarT> hardness_n_;
-//   Intrepid::Vector<ScalarT> hardness_np1_;
-//   Intrepid::Tensor<ScalarT> sigma_np1_;
-//   Intrepid::Tensor<ScalarT> S_np1_;
-//   Intrepid::Vector<ScalarT> shear_n_;
-//   Intrepid::Vector<ScalarT> shear_np1_;
+  Intrepid::Tensor4<RealType, NumDimT> const & C_;
+  std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
+  Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n_;
+  Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n_;
+  Intrepid::Vector<ScalarT, NumSlipT> const & slip_n_;
+  Intrepid::Tensor<ScalarT, NumDimT> const & F_np1_;
+  ScalarT dt_;
+  ScalarT norm_slip_residual_;
 };
 
 //! \brief CrystalPlasticity Plasticity Constitutive Model
