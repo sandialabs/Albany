@@ -92,8 +92,8 @@ evaluateFields(typename Traits::EvalData workset)
     * final workset. Ideally, these are size numCells.
   //int containerSize = workset.numCells;
     */
-  
-  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+ 
+  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
