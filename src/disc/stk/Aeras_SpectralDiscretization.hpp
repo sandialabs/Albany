@@ -122,7 +122,7 @@ namespace Aeras
       //For 1D elements, create a new key for the ctd -- this is needed for Intrepid
       //setJacobian function. 
       if (orig_numDim == 1) 
-        new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, np, np); 
+        new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, 2, np); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
       std::cout << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl; 
