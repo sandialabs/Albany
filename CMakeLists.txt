@@ -1068,6 +1068,13 @@ ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 # Introduce a compiler flag that lets us deal with desynced internal and public
 # Trilinos repos when necessary.
 option (USE_PUBLICTRILINOS "Flag to deal with desynced internal and public Trilinos repos" OFF)
+# If the user explicitly provides it, use it. But if not, detect whether it's
+# needed.
+if (NOT USE_PUBLICTRILINOS)
+  if (${Trilinos_VERSION} LESS 12.4)
+    set (USE_PUBLICTRILINOS ON)
+  endif ()
+endif ()
 if (USE_PUBLICTRILINOS)
   message ("-- INFO: Building with the assumption that we're linking against publicTrilinos rather than the internal Trilinos repo")
   add_definitions (-DALBANY_USE_PUBLICTRILINOS)
