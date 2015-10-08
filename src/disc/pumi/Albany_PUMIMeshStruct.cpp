@@ -152,6 +152,8 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   if (params->isParameter("PUMI Restart Time")) {
     hasRestartSolution = true;
     restartDataTime = params->get<double>("PUMI Restart Time", 0.0);
+    solutionInitialized = true;
+    std::cerr << "Restarting from time: " << restartDataTime << std::endl;
   }
 
   APFMeshStruct::init(params, commT);
