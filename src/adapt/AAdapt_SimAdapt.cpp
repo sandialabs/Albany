@@ -1,6 +1,8 @@
 #include "AAdapt_SimAdapt.hpp"
 #include "Albany_SimDiscretization.hpp"
 #include <MeshSimAdapt.h>
+#include <SimPartitionedMesh.h>
+#include <SimField.h>
 #include <apfSIM.h>
 #include <spr.h>
 
@@ -25,6 +27,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
 {
   /* dig through all the abstrations to obtain pointers
      to the various structures needed */
+  static int callcount = 0;
   Teuchos::RCP<Albany::AbstractDiscretization> disc =
     state_mgr_.getDiscretization();
   Teuchos::RCP<Albany::SimDiscretization> sim_disc =
@@ -36,18 +39,19 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   pParMesh sim_pm = apf_msim->getMesh();
   /* ensure that users don't expect Simmetrix to transfer IP state */
   bool should_transfer_ip_data = adapt_params_->get<bool>("Transfer IP Data", false);
+  /* remove this assert when Simmetrix support IP transfer */
   assert(!should_transfer_ip_data);
   /* compute the size field via SPR error estimation
      on the solution gradient */
   apf::Field* sol_fld = apf_m->findField(Albany::APFMeshStruct::solution_name);
+  assert(apf::countComponents(sol_fld) == 1);
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
   /* write the mesh with size field to file */
   std::stringstream ss;
-  static int i = 0;
-  ss << "size_" << i++ << '_';
+  ss << "size_" << callcount << '_';
   std::string s = ss.str();
   apf::writeVtkFiles(s.c_str(), apf_m);
   /* create the Simmetrix adapter */
@@ -68,19 +72,47 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   pPList sim_fld_lst = PList_new();
   PList_append(sim_fld_lst, sim_sol_fld);
   PList_append(sim_fld_lst, sim_res_fld);
+  if (apf_ms->useTemperatureHack) {
+    /* transfer Temperature_old at the nodes */
+    apf::Field* told_fld = apf_m->findField("temp_old");
+    pField sim_told_fld = apf::getSIMField(told_fld);
+    PList_append(sim_fld_lst, sim_told_fld);
+  }
   MSA_setMapFields(adapter, sim_fld_lst);
   PList_delete(sim_fld_lst);
+
+#ifdef SIMDEBUG
+  char simname[80];
+  sprintf(simname, "preadapt_%d.sms", callcount);
+  PM_write(sim_pm, simname, sthreadDefault, 0);
+  sprintf(simname, "preadapt_sol_%d.fld", callcount);
+  Field_write(sim_sol_fld, simname, 0, 0, 0);
+  sprintf(simname, "preadapt_res_%d.fld", callcount);
+  Field_write(sim_res_fld, simname, 0, 0, 0);
+#endif
   /* run the adapter */
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
+#ifdef SIMDEBUG
+  sprintf(simname, "adapted_%d.sms", callcount);
+  PM_write(sim_pm, simname, sthreadDefault, 0);
+  sprintf(simname, "adapted_sol_%d.fld", callcount);
+  Field_write(sim_sol_fld, simname, 0, 0, 0);
+  sprintf(simname, "adapted_res_%d.fld", callcount);
+  Field_write(sim_res_fld, simname, 0, 0, 0);
+#endif
+
   /* run APF verification on the resulting mesh */
   apf_m->verify();
   /* write the adapted mesh to file */
   apf::writeVtkFiles("adapted", apf_m);
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data);
+  /* see the comment in Albany_APFDiscretization.cpp */
+  sim_disc->initTemperatureHack();
+  ++callcount;
   return true;
 }
 

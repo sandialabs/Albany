@@ -73,6 +73,7 @@ namespace Aeras
         << "Line elements." << std::endl); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
+      std::cout << "DEBUG: original ctd key = " << orig_ctd.key << std::endl; 
 #endif 
       int orig_numDim = orig_mesh_specs_struct->numDim;
       int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
@@ -117,9 +118,14 @@ namespace Aeras
       char* new_name_char = new char[new_name.size() + 1]; 
       std::copy(new_name.begin(), new_name.end(), new_name_char);
       new_name_char[new_name.size()] = '\0';
-      new_ctd.name = new_name_char;   
+      new_ctd.name = new_name_char;  
+      //For 1D elements, create a new key for the ctd -- this is needed for Intrepid
+      //setJacobian function. 
+      if (orig_numDim == 1) 
+        new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, 2, np); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
+      std::cout << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl; 
 #endif
       // Create and return Albany::MeshSpecsStruct object based on the
       // new (enriched) ctd.
@@ -571,9 +577,6 @@ namespace Aeras
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Convert the stk mesh on this processor to a nodal graph using SEACAS
-    void meshToGraph();
-
     void writeCoordsToMatrixMarket() const;
 
     double previous_time_label;
@@ -714,51 +717,6 @@ namespace Aeras
     bool interleavedOrdering;
 
   private:
-
-    Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
-
-
-    // find the location of "value" within the first "count" locations of "vector"
-    ssize_t in_list(const std::size_t value,
-                    std::size_t count,
-                    std::size_t *vector)
-    {
-      for(std::size_t i=0; i < count; i++)
-      {
-        if(vector[i] == value)
-          return i;
-      }
-       return -1;
-    }
-
-    ssize_t in_list(const std::size_t value,
-                    const Teuchos::Array<GO>& vector)
-    {
-      for (std::size_t i=0; i < vector.size(); i++)
-        if (vector[i] == value)
-          return i;
-      return -1;
-    }
-
-    ssize_t in_list(const std::size_t value,
-                    const std::vector<std::size_t>& vector)
-    {
-      for (std::size_t i=0; i < vector.size(); i++)
-        if (vector[i] == value)
-          return i;
-      return -1;
-    }
-
-    ssize_t entity_in_list(const stk::mesh::Entity& value,
-                           const std::vector<stk::mesh::Entity>& vec)
-    {
-      for (std::size_t i = 0; i < vec.size(); i++)
-        if (bulkData.identifier(vec[i]) == bulkData.identifier(value))
-          return i;
-      return -1;
-    }
-
-    void printVertexConnectivity();
 
   };
 

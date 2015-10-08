@@ -30,7 +30,7 @@
 
 #include "Albany_Utils.hpp"
 
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Teuchos_Comm>& comm) :
     GenericSTKMeshStruct(params, Teuchos::null, 3), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false) {
@@ -85,18 +85,22 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
 #ifdef ALBANY_SEACAS
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-  meshStruct2D = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
+
+  basalMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
+
   Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  meshStruct2D->setFieldAndBulkData(comm, params, 1, req, sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
 #else
     // Above block of code could allow for 2D mesh to come from other sources instead of Ioss
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
               std::endl << "Error in ExtrudedSTKMeshStruct: Currently Requires 2D mesh to come from exodus");
 #endif
 
-  stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(meshStruct2D->metaData->universal_part()) & stk::mesh::Selector(meshStruct2D->metaData->locally_owned_part());
-  int numCells = stk::mesh::count_selected_entities(select_owned_in_part, meshStruct2D->bulkData->buckets(stk::topology::ELEMENT_RANK));
+  int ws_size = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
+  basalMeshStruct->setFieldAndBulkData(comm, params, 1, req, sis, ws_size);
+
+  stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(basalMeshStruct->metaData->universal_part()) & stk::mesh::Selector(basalMeshStruct->metaData->locally_owned_part());
+  int numCells = stk::mesh::count_selected_entities(select_owned_in_part, basalMeshStruct->bulkData->buckets(stk::topology::ELEMENT_RANK));
 
   std::string shape = params->get("Element Shape", "Hexahedron");
   std::string basalside_name;
@@ -116,7 +120,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
               std::endl << "Error in ExtrudedSTKMeshStruct: Element Shape " << shape << " not recognized. Possible values: Tetrahedron, Wedge, Hexahedron");
 
-  std::string elem2d_name(meshStruct2D->getMeshSpecs()[0]->ctd.base->name);
+  std::string elem2d_name(basalMeshStruct->getMeshSpecs()[0]->ctd.base->name);
   TEUCHOS_TEST_FOR_EXCEPTION(basalside_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
                 std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_name << " but it is " << elem2d_name);
 
@@ -158,12 +162,19 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
 }
 
-Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct() {
+Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
+{
+  // Nothing to be done here
 }
 
-void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm, const Teuchos::RCP<Teuchos::ParameterList>& params, const unsigned int neq_, const AbstractFieldContainer::FieldContainerRequirements& req, const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-    const unsigned int worksetSize) {
-
+void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
+    const Teuchos::RCP<const Teuchos_Comm>& comm,
+    const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const unsigned int neq_,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const unsigned int worksetSize)
+{
   int numLayers = params->get("NumLayers", 10);
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
   GO maxGlobalElements2D = 0;
@@ -173,8 +184,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
-  const stk::mesh::BulkData& bulkData2D = *meshStruct2D->bulkData;
-  const stk::mesh::MetaData& metaData2D = *meshStruct2D->metaData; //bulkData2D.mesh_meta_data();
+  stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
+  stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
   std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
 
@@ -236,16 +247,15 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalEdges2D << std::endl;
 
   Teuchos::Array<GO> indices(nodes2D.size());
-  std::vector<GO> serialIndices;
   for (int i = 0; i < nodes2D.size(); ++i)
     indices[i] = bulkData2D.identifier(nodes2D[i]) - 1;
-  
+
   Teuchos::RCP<const Tpetra_Map>
     nodes_map = Tpetra::createNonContigMapWithNode<LO, GO> (
       indices(), comm, KokkosClassic::Details::getNode<KokkosNode>());
   int numMyElements = (comm->getRank() == 0) ? numGlobalVertices2D : 0;
-  //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::createUniformContigMap<LO, GO>(numMyElements, comm); 
-  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm)); 
+  //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::createUniformContigMap<LO, GO>(numMyElements, comm);
+  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
   Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_nodes_map, nodes_map));
 
   Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(serial_nodes_map));
@@ -281,13 +291,47 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
 
   bool hasBasal_friction = std::find(req.begin(), req.end(), "basal_friction") != req.end();
-  if(hasBasal_friction) {
-    std::string fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
-    read2DFileSerial(fname, temp, comm);
+  if(hasBasal_friction)
+  {
     bFrictionVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
-    bFrictionVec->doImport(*temp, *importOperator, Tpetra::INSERT);
+
+    if (params->isParameter("Basal Friction File Name"))
+    {
+      std::string fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
+      read2DFileSerial(fname, temp, comm);
+      bFrictionVec->doImport(*temp, *importOperator, Tpetra::INSERT);
+    }
+    else
+    {
+      // Try to load it from the 2D mesh
+      Albany::AbstractSTKFieldContainer::ScalarFieldType* field = 0;
+      field = metaData2D.get_field<Albany::AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
+      if (field!=0)
+      {
+        Teuchos::ArrayRCP<ST> bFrictionVec_view = bFrictionVec->get1dViewNonConst();
+
+        stk::mesh::Entity node;
+        stk::mesh::EntityId nodeId;
+        int lid;
+        double* values;
+
+        //Now we have to stuff the vector in the mesh data
+        for (int i(0); i<nodes2D.size(); ++i)
+        {
+          nodeId = bulkData2D.identifier(nodes2D[i]) - 1;
+          lid    = nodes_map->getLocalElement((GO)(nodeId));
+
+          values = stk::mesh::field_data(*field, nodes2D[i]);
+          bFrictionVec_view[lid] = values[0];
+        }
+      }
+      else
+      {
+        // We use a zero vector, but we issue a warning. Just in case the user forgot to setup something
+        std::cout << "No file name specified for 'basal_friction', and no field retrieved from the mesh. Using a zero vector.\n";
+      }
+    }
   }
-  Teuchos::ArrayRCP<const ST> bFrictionVec_constView = bFrictionVec->get1dView();
 
   bool hasTemperature = std::find(req.begin(), req.end(), "temperature") != req.end();
   if(hasTemperature) {
@@ -385,7 +429,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-  stk::mesh::FieldBase const* coordinates_field2d = bulkData2D.mesh_meta_data().coordinate_field();
+  stk::mesh::FieldBase const* coordinates_field2d = metaData2D.coordinate_field();
   VectorFieldType* surface_velocity_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "surface_velocity");
   VectorFieldType* surface_velocity_RMS_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "surface_velocity_rms");
   ScalarFieldType* surface_height_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
@@ -449,7 +493,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
     if(hasBasal_friction && basal_friction_field) {
       double* bFriction = stk::mesh::field_data(*basal_friction_field, node);
-      bFriction[0] = bFrictionVec_constView[lid];
+      bFriction[0] = bFrictionVec->get1dView()[lid];
     }
   }
 
@@ -663,14 +707,80 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       bulkData->declare_relation(side, node, j);
     }
   }
-  
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
+  if (params->get("Export 2D Data",false))
+  {
+    // We export the basal mesh in GMSH format
+    std::ofstream ofile;
+    ofile.open (params->get("GMSH 2D Output File Name","basal_mesh.msh"));
+    TEUCHOS_TEST_FOR_EXCEPTION (!ofile.is_open(), std::logic_error, "Error! Cannot open file 'basal_mesh.msh'.\n");
+
+    // Preamble
+    ofile << "$MeshFormat\n"
+          << "2.2 0 8\n"
+          << "$EndMeshFormat\n";
+
+    // Nodes
+    ofile << "$Nodes\n" << nodes2D.size() << "\n";
+    stk::mesh::Entity node2d;
+    stk::mesh::EntityId nodeId;
+    for (int i(0); i<nodes2D.size(); ++i)
+    {
+      node2d = bulkData2D.get_entity(stk::topology::NODE_RANK, i + 1);
+      nodeId = bulkData2D.identifier(nodes2D[i]);
+
+      double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
+
+      ofile << nodeId << " " << coord2d[0] << " " << coord2d[1] << " " << 0. << "\n";
+    }
+    ofile << "$EndNodes\n";
+
+    // Mesh Elements (including edges)
+    ofile << "$Elements\n";
+    ofile << edges2D.size()+cells2D.size() << "\n";
+
+    int counter = 1;
+
+    // edges
+    for (int i(0); i<edges2D.size(); ++i)
+    {
+      stk::mesh::Entity const* rel = bulkData2D.begin_nodes(edges2D[i]);
+
+      ofile << counter << " " << 1 << " " << 2 << " " << 30 << " " << 1;
+      for (int j(0); j<2; ++j)
+      {
+        stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]);
+        ofile << " " << node2dId;
+      }
+      ofile << "\n";
+      ++counter;
+    }
+
+    // elements
+    for (int i(0); i<cells2D.size(); ++i)
+    {
+      stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[i]);
+      ofile << counter << " " << 2 << " " << 2 << " " << 100 << " " << 11;
+      for (int j(0); j<3; ++j)
+      {
+        stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]);
+        ofile << " " << node2dId;
+      }
+      ofile << "\n";
+      ++counter;
+    }
+    ofile << "$EndElements\n";
+
+    ofile.close();
+  }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getValidDiscretizationParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getValidGenericSTKParameters("Valid Extruded_DiscParams");
+  validPL->set<bool>("Export 2D Data", "", "If true, exports the 2D mesh in GMSH format");
+  validPL->set<std::string>("GMSH 2D Output File Name", "", "File Name for GMSH 2D Basal Mesh Export");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<std::string>("Surface Height File Name", "surface_height.ascii", "Name of the file containing the surface height data");
   validPL->set<std::string>("Thickness File Name", "thickness.ascii", "Name of the file containing the thickness data");
@@ -682,6 +792,11 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
   validPL->set<bool>("Columnwise Ordering", false, "True for Columnwise ordering, false for Layerwise ordering");
+
+#ifdef ALBANY_FELIX
+  validPL->sublist("Side Sets Output", false, "A sublist containing info for storing side set meshes");
+#endif
+
   return validPL;
 }
 
@@ -723,8 +838,8 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Tpetra_Mu
       ifile.close();
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
-      //	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-      //			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
+      //  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      //      std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
     }
   }
 }
@@ -745,8 +860,8 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map_serial->getNodeNumElements() << ")" << std::endl);
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
-      //	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-      //			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
+      //  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      //      std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
     }
   }
   // The first int is for Comm<int>; the second is the type of numComponents.
@@ -759,9 +874,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
       ifile >> zCoords[i];
   }
   //comm->Broadcast(&zCoords[0], numComponents, 0);
-  //IK, 10/1/14: double should be ST? 
+  //IK, 10/1/14: double should be ST?
   Teuchos::broadcast<int, double>(*comm, 0, numComponents, &zCoords[0]);
-  
+
   temperatureVec = Teuchos::rcp(new Tpetra_MultiVector(map, numComponents));
 
   Teuchos::ArrayRCP<ST> tempT_nonConstView = tempT.get1dViewNonConst();

@@ -41,18 +41,18 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Stress;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot;
+  PHX::MDField<ScalarT,Cell> density;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;
-
-  RealType density_;
 
   int numNodes;
   int numQPs;
   int numDims;
   bool enableTransient;
+  bool hasDensity;
 
 };
 }

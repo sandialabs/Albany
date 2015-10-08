@@ -65,13 +65,13 @@ namespace Albany {
     const DOFsStruct& getDOFsStruct(const std::string& field_name) const {return fieldToMap.find(field_name)->second->second;}; //TODO handole errors
 
     void addEmptyDOFsStruct(const std::string& field_name, const std::string& meshPart, int numComps){
-    
+
       if(numComps != 1)
         mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,1),DOFsStruct()));
 
       fieldToMap[field_name] = mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,numComps),DOFsStruct())).first;
     }
-    
+
   };
 #endif // ALBANY_EPETRA
 
@@ -135,12 +135,12 @@ namespace Albany {
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
     //! Get overlapped Node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 #endif
     //! Get Tpetra Node map
-    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
     //! Get overlapped Node map
     Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
 
@@ -201,7 +201,7 @@ namespace Albany {
 #if defined(ALBANY_EPETRA)
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
 #endif
-   
+
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false);
    void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
@@ -374,12 +374,12 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::Comm<int> > commT;
 
     //! Unknown map and node map
-    Teuchos::RCP<const Tpetra_Map> node_mapT; 
-    Teuchos::RCP<const Tpetra_Map> mapT; 
+    Teuchos::RCP<const Tpetra_Map> node_mapT;
+    Teuchos::RCP<const Tpetra_Map> mapT;
 
     //! Overlapped unknown map and node map
-    Teuchos::RCP<const Tpetra_Map> overlap_mapT; 
-    Teuchos::RCP<const Tpetra_Map> overlap_node_mapT; 
+    Teuchos::RCP<const Tpetra_Map> overlap_mapT;
+    Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
 
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Map> node_map;
@@ -392,10 +392,10 @@ namespace Albany {
 
 
     //! Jacobian matrix graph
-    Teuchos::RCP<Tpetra_CrsGraph> graphT; 
+    Teuchos::RCP<Tpetra_CrsGraph> graphT;
 
     //! Overlapped Jacobian matrix graph
-    Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT; 
+    Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
 
     //! Processor ID
     unsigned int myPID;

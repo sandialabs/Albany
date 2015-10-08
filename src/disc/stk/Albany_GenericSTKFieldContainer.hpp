@@ -35,15 +35,15 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
 
     virtual ~GenericSTKFieldContainer();
 
+    // Add StateStructs to the list of stored ones
+    void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis);
+
   protected:
 
     // non-interleaved version
     inline int getDOF(const int inode, const int eq) const {
       return inode + numNodes * eq;
     }
-
-    // Build StateStructs
-    void buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis);
 
     // Use boost to provide explicit specialization - Tpetra
     template<class T>

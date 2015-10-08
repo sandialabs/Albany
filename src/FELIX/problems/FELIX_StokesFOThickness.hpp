@@ -428,7 +428,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set<std::string>("Weighted BF Name", "wBF");
 
-    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters");
+    Teuchos::ParameterList& physParamList = params->sublist("FELIX Physical Parameters");
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
 
     //Output
@@ -539,7 +539,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
       
-    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters"); 
+    Teuchos::ParameterList& physParamList = params->sublist("FELIX Physical Parameters");
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
     
     //Output

@@ -5,19 +5,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OptimizationBasedCoupling_PoissonMate
                ${CMAKE_CURRENT_BINARY_DIR}/OptimizationBasedCoupling_PoissonMaterials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OptimizationBasedCouplingCMWA_Analysis.xml
                ${CMAKE_CURRENT_BINARY_DIR}/OptimizationBasedCouplingCMWA_Analysis.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../CMWA/CMWA_1.g
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMWA_1.g
                ${CMAKE_CURRENT_BINARY_DIR}/CMWA_1.g COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../CMWA/CMWA_1.g.4.0
-               ${CMAKE_CURRENT_BINARY_DIR}/CMWA_1.g.4.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../CMWA/CMWA_1.g.4.1
-               ${CMAKE_CURRENT_BINARY_DIR}/CMWA_1.g.4.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../CMWA/CMWA_1.g.4.2
-               ${CMAKE_CURRENT_BINARY_DIR}/CMWA_1.g.4.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../CMWA/CMWA_1.g.4.3
-               ${CMAKE_CURRENT_BINARY_DIR}/CMWA_1.g.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OptimizationBasedCouplingCMWA_Analysis.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/OptimizationBasedCouplingCMWA_Analysis.gold.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OptimizationBasedCouplingCMWA_Analysis.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/OptimizationBasedCouplingCMWA_Analysis.exodiff COPYONLY)
+
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_EPETRA) 
-# add_test(${testName}_CMWA ${SerialAlbany.exe} OptimizationBasedCouplingCMWA_Analysis.xml)
-add_test(${testName}_CMWA ${Albany.exe} OptimizationBasedCouplingCMWA_Analysis.xml)
+add_test(PeridigmCoupling_OptimizationBasedCoupling_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" OptimizationBasedCouplingCMWA_Analysis.xml)
+add_test(PeridigmCoupling_OptimizationBasedCoupling_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" OptimizationBasedCouplingCMWA_Analysis.xml)
 endif()

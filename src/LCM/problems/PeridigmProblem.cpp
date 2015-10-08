@@ -13,7 +13,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const int numDim_,
                 Teuchos::RCP<const Teuchos::Comm<int>>& commT):
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  haveSource(false), haveMatDB(false), numDim(numDim_)
+  haveSource(false), numDim(numDim_), haveMatDB(false), supportsTransient(false)
 {
  
   std::string& method = params->get("Name", "Peridigm Code Coupling ");
@@ -29,6 +29,15 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<std::string>("MaterialDB Filename")){
     std::string filename = params->get<std::string>("MaterialDB Filename");
     materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
+  }
+
+  // Determine if transient analyses should be supported
+  supportsTransient = false;
+  if(params->isParameter("Solution Method")){
+    std::string solutionMethod = params->get<std::string>("Solution Method");
+    if(solutionMethod == "Transient"){
+      supportsTransient = true;
+    }
   }
 
   // "Sphere Volume" is a required field for peridynamic simulations that read an Exodus sphere mesh
@@ -105,6 +114,7 @@ Albany::PeridigmProblem::getValidProblemParameters() const
 
   validPL->sublist("Peridigm Parameters", false, "The full parameter list that will be passed to Peridigm.");
   validPL->set<std::string>("MaterialDB Filename", "materials.xml", "Filename of material database xml file");
+  validPL->set<bool>("Supports Transient", "false", "Flag for enabling transient analyses");
 
   return validPL;
 }

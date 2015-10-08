@@ -17,6 +17,9 @@
       <Parameter name="Function" type="string" value="Linear Y"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.02}"/>
     </ParameterList>
+    <ParameterList name="Density">
+      <Parameter name="Value" type="double" value="1.0"/>
+    </ParameterList>
     <ParameterList name="Elastic Modulus">
       <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
       <Parameter name="Value" type="double" value="1.0"/>

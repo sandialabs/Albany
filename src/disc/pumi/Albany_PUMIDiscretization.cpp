@@ -14,6 +14,8 @@ Albany::PUMIDiscretization::PUMIDiscretization(
   APFDiscretization(meshStruct_, commT_, rigidBodyModes_)
 {
   pumiMeshStruct = meshStruct_;
+  if (pumiMeshStruct->meshSpecsType() == Albany::AbstractMeshStruct::PUMI_MS)
+    init();
 }
 
 Albany::PUMIDiscretization::~PUMIDiscretization()

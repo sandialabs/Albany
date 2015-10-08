@@ -19,7 +19,7 @@ namespace Albany {
     public:
 
     ExtrudedSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     ~ExtrudedSTKMeshStruct();
@@ -41,8 +41,6 @@ namespace Albany {
     private:
     //Ioss::Init::Initializer ioInit;
 
-    Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
-
     inline void computeMap();
     inline int prismType(GO const* prismVertexMpasIds, int& minIndex);
     inline void tetrasFromPrismStructured (GO const* prismVertexMpasIds, GO const* prismVertexGIds, GO tetrasIdsOnPrism[][4]);
@@ -53,6 +51,8 @@ namespace Albany {
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
+
+    Teuchos::RCP<Albany::AbstractSTKMeshStruct> basalMeshStruct;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;

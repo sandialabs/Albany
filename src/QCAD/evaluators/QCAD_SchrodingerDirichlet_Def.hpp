@@ -522,7 +522,7 @@ SchrodingerDirichletAggregator(Teuchos::ParameterList& p)
 {
   Teuchos::RCP<PHX::DataLayout> dl =  p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
-  std::vector<std::string>& dbcs = *(p.get<std::vector<std::string>* >("DBC Names"));
+  std::vector<std::string>& dbcs = *p.get<Teuchos::RCP<std::vector<std::string> > >("DBC Names");
 
   for (unsigned int i=0; i<dbcs.size(); i++) {
     PHX::Tag<ScalarT> fieldTag(dbcs[i], dl);

@@ -54,7 +54,7 @@ typedef std::vector<StateArray> StateArrayVec;
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worksetSize_),
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
           interleavedOrdering(interleavedOrdering_), sepEvalsByEB(sepEvalsByEB_),
-          cubatureRule(cubatureRule_) {}
+          cubatureRule(cubatureRule_), polynomialOrder(0) {}
     CellTopologyData ctd;  // nonconst to allow replacement when the mesh adapts
     int numDim;
     int cubatureDegree;
@@ -71,6 +71,8 @@ typedef std::vector<StateArray> StateArrayVec;
     // but the user must enforce this intention.
     bool sepEvalsByEB;
     const Intrepid::EIntrepidPLPoly cubatureRule;
+    // polynomial order for higher order fields in GOAL
+    int polynomialOrder;
   };
 
 //! Container to get state info from StateManager to STK. Made into a struct so
@@ -81,9 +83,9 @@ struct StateStruct {
   enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, ElemData, NodalDataToElemNode, NodalDistParameter, QuadPoint};
   typedef std::vector<PHX::DataLayout::size_type> FieldDims;
 
-  StateStruct (const std::string& name_, MeshFieldEntity ent): 
-        name(name_), responseIDtoRequire(""), output(true), 
-	restartDataAvailable(false), saveOldState(false), meshPart(""),
+  StateStruct (const std::string& name_, MeshFieldEntity ent):
+        name(name_), responseIDtoRequire(""), output(true),
+  restartDataAvailable(false), saveOldState(false), meshPart(""),
         pParentStateStruct(NULL), entity(ent)
   {}
 

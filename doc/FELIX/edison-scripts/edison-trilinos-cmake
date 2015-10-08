@@ -80,6 +80,7 @@ cmake \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
+      -D Trilinos_ENABLE_Galeri:BOOL=OFF\
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=OFF \

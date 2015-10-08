@@ -104,18 +104,22 @@ struct AbstractMeshStruct {
 #ifdef ALBANY_SCOREC
       PUMI_MS,
 #endif
+#ifdef ALBANY_GOAL
+      GOAL_MS,
+#endif
 #ifdef ALBANY_AMP
       SIM_MS,
 #endif
     };
 
     virtual void setFieldAndBulkData(
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
-      const Teuchos::RCP<Teuchos::ParameterList>& params,
-      const unsigned int neq_,
-      const AbstractFieldContainer::FieldContainerRequirements& req,
-      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-      const unsigned int worksetSize) = 0;
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const unsigned int neq_,
+                  const AbstractFieldContainer::FieldContainerRequirements& req,
+                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                  const unsigned int worksetSize) = 0;
+;
 
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
 

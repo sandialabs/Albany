@@ -202,7 +202,7 @@ FELIX::StokesFOThickness::getValidProblemParameters() const
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
-  validPL->sublist("Physical Parameters", false, "");
+  validPL->sublist("FELIX Physical Parameters", false, "");
   validPL->set<double>("Time Step", 1.0, "Time step for divergence flux ");
   validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");

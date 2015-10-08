@@ -189,7 +189,8 @@ void AAdapt::MeshAdapt::initAdapt()
 
 void AAdapt::MeshAdapt::beforeAdapt()
 {
-  if (should_transfer_ip_data) pumi_discretization->attachQPData();
+  if (should_transfer_ip_data)
+    pumi_discretization->attachQPData();
   szField->copyInputFields();
 }
 

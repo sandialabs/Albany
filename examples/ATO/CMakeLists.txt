@@ -6,6 +6,7 @@
 
 add_subdirectory(DistParam_2D)
 add_subdirectory(RegHeaviside_2D)
+add_subdirectory(RegHeaviside_3D)
 add_subdirectory(Mitchell_2D)
 add_subdirectory(Mitchell_3D)
 add_subdirectory(MultiLoadSet)

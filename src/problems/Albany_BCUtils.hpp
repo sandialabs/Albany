@@ -91,7 +91,6 @@ struct NeumannTraits {
 };
 
 template<typename BCTraits>
-
 class BCUtils {
 
   public:
@@ -138,12 +137,52 @@ class BCUtils {
       Teuchos::RCP<ParamLib> paramLib,
       const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
 
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+    constructBCEvaluators(
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
+      const std::vector<std::string>& bcNames,
+      const Teuchos::ArrayRCP<std::string>& dof_names,
+      bool isVectorField,
+      int offsetToFirstDOF,
+      const std::vector<std::string>& conditions,
+      const Teuchos::Array<Teuchos::Array<int> >& offsets,
+      const Teuchos::RCP<Albany::Layouts>& dl,
+      Teuchos::RCP<Teuchos::ParameterList> params,
+      Teuchos::RCP<ParamLib> paramLib,
+      const std::vector<Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > >& extra_evaluators,
+      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
+
   private:
+
+    //! Builds the list
+    void buildEvaluatorsList(
+      std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluatorss_to_build,
+      const std::vector<std::string>& nodeSetIDs,
+      const std::vector<std::string>& bcNames,
+      Teuchos::RCP<Teuchos::ParameterList> params,
+      Teuchos::RCP<ParamLib> paramLib,
+      const int numEqn);
+
+    //! Creates the list of evaluators (together with their parameter lists) to build
+    void buildEvaluatorsList (
+      std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build,
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
+      const std::vector<std::string>& bcNames,
+      const Teuchos::ArrayRCP<std::string>& dof_names,
+      bool isVectorField,
+      int offsetToFirstDOF,
+      const std::vector<std::string>& conditions,
+      const Teuchos::Array<Teuchos::Array<int> >& offsets,
+      const Teuchos::RCP<Albany::Layouts>& dl,
+      Teuchos::RCP<Teuchos::ParameterList> params,
+      Teuchos::RCP<ParamLib> paramLib,
+      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
 
     //! Generic implementation of Field Manager construction function
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
-    buildFieldManager(const std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evals_to_build,
-                      std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy);
+    buildFieldManager(
+        const Teuchos::RCP< std::vector< Teuchos::RCP<PHX::Evaluator_TemplateManager<PHAL::AlbanyTraits> > > > evaluators,
+        std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy);
 
 };
 
@@ -163,6 +202,46 @@ BCUtils<DirichletTraits>::constructBCEvaluators(
 template<>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
 BCUtils<NeumannTraits>::constructBCEvaluators(
+  const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
+  const std::vector<std::string>& bcNames,
+  const Teuchos::ArrayRCP<std::string>& dof_names,
+  bool isVectorField,
+  int offsetToFirstDOF,
+  const std::vector<std::string>& conditions,
+  const Teuchos::Array<Teuchos::Array<int> >& offsets,
+  const Teuchos::RCP<Albany::Layouts>& dl,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  Teuchos::RCP<ParamLib> paramLib,
+  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
+
+template<>
+Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
+BCUtils<NeumannTraits>::constructBCEvaluators(
+  const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
+  const std::vector<std::string>& bcNames,
+  const Teuchos::ArrayRCP<std::string>& dof_names,
+  bool isVectorField,
+  int offsetToFirstDOF,
+  const std::vector<std::string>& conditions,
+  const Teuchos::Array<Teuchos::Array<int> >& offsets,
+  const Teuchos::RCP<Albany::Layouts>& dl,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  Teuchos::RCP<ParamLib> paramLib,
+  const std::vector<Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > >& extra_evaluators,
+  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
+
+template<>
+void  BCUtils<DirichletTraits>::buildEvaluatorsList (
+  std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build,
+  const std::vector<std::string>& nodeSetIDs,
+  const std::vector<std::string>& bcNames,
+  Teuchos::RCP<Teuchos::ParameterList> params,
+  Teuchos::RCP<ParamLib> paramLib,
+  int numEqn);
+
+template<>
+void  BCUtils<NeumannTraits>::buildEvaluatorsList (
+  std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evaluators_to_build,
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs,
   const std::vector<std::string>& bcNames,
   const Teuchos::ArrayRCP<std::string>& dof_names,

@@ -90,6 +90,17 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
 
+   //IKT, 9/30/15: error check that the user is not trying to prescribe periodic BCs for a problem other than a 1D one.  
+   //Periodic BCs are only supported for 1D (xz-hydrostatic) problems.
+  int numPeriodicBCs = 0; 
+  for (int dim=0; dim<stkMeshStruct->numDim; dim++)
+     if (stkMeshStruct->PBCStruct.periodic[dim])
+       numPeriodicBCs++; 
+  if ((stkMeshStruct->numDim>1) && (numPeriodicBCs>0))
+    TEUCHOS_TEST_FOR_EXCEPTION(
+       true, std::logic_error, "Aeras::SpectralDiscretization constructor: periodic BCs are only supported for 1D spectral elements!  " 
+            << "You are attempting to specify periodic BCs for a " << stkMeshStruct->numDim << "D problem." << std::endl);
+
   // Get from parameter list how many points per edge we have (default
   // = 2: no enrichment)
   points_per_edge = stkMeshStruct->points_per_edge;
@@ -657,8 +668,6 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
-  //IKT, 9/11/15, FIXME: apparently, writeSolutionT and the observer get called at all when there is no "Exodus Output Line" 
-  //in the input file.  I believe in this case there routines should not be called.  Needs to be debugged.
   writeSolutionToMeshDatabaseT(solnT, time, overlapped);
   writeSolutionToFileT(solnT, time, overlapped);
 }
@@ -1212,9 +1221,9 @@ void Aeras::SpectralDiscretization::enrichMeshLines()
 
       // Create new interior nodes for the enriched element
       GO offset = maxGID + gid(element) * (np-2);
-      for (unsigned ii = 0; ii < np-2; ++ii)
-        wsElNodeID[ibuck][ielem][ii+1] =
-          offset + ii - 1;
+      for (unsigned ii = 0; ii < np-2; ++ii) {
+        wsElNodeID[ibuck][ielem][ii+1] = offset + ii; 
+       }
     }
   }
 }
@@ -1913,13 +1922,40 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
 
       // Get the coordinates value along this axis of the end nodes
       // from the STK mesh
-      for (size_t ii = 0; ii < 2; ++ii)
+      for (size_t ii = 0; ii < 2; ++ii) {
         c[ii] = stk::mesh::field_data(*coordinates_field,
                                       stkNodes[ii])[0];
+      }
+      //The following is for periodic BCs.  This will only be relevant for the x-z hydrostatic equations.
+      if (stkMeshStruct->PBCStruct.periodic[0])
+      {
+        bool anyXeqZero=false;
+        for (int j=0; j < 2; j++) {
+          if (c[j] == 0.0)
+            anyXeqZero=true;
+        }
+        if (anyXeqZero)
+        {
+          bool flipZeroToScale=false;
+          for (int j=0; j < 2; j++)
+            if (c[j] > stkMeshStruct->PBCStruct.scale[0]/1.9)
+              flipZeroToScale=true;
+          if (flipZeroToScale)
+          {
+            for (int j=0; j < 2; j++)
+            {
+              if (c[j] == 0.0)
+              {
+                c[j] = stkMeshStruct->PBCStruct.scale[0]; 
+              }
+            }
+          }
+        }
+      }
       for (size_t inode = 0; inode < np; ++inode)
       {
         double x = refCoords(inode,0);
-        coords[iws][ielem][inode][0] = (c[0] * (x-1.0) -
+        coords[iws][ielem][inode][0] = (-c[0] * (x-1.0) +
                                         c[1] * (x+1.0)) * 0.5;
         coords[iws][ielem][inode][1] = 0.0;
         coords[iws][ielem][inode][2] = 0.0;
@@ -2790,30 +2826,31 @@ void Aeras::SpectralDiscretization::createOutputMesh()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput)
-  {
-    //construct new mesh struct for output 
-    outputStkMeshStruct =
-      Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(
-          discParams,
-          commT,
-          stkMeshStruct->numDim,
-          stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
-          wsElNodeID,
-          coords,
-          points_per_edge, element_name));
-    Teuchos::RCP<Albany::StateInfoStruct> sis =
-      Teuchos::rcp(new Albany::StateInfoStruct);
-    Albany::AbstractFieldContainer::FieldContainerRequirements req;
-    //set field and bulk data for new struct (for output)
-    outputStkMeshStruct->setFieldAndBulkData(
-        commT,
+  //construct new mesh struct for output 
+  //IKT, 9/22/15: this needs to be called all the time even when no exodus output is requested b/c outputStkMeshStruct is 
+  //called in Aeras::SpectralDiscretization::setOvlpSolutionFieldT, which is always called.
+  outputStkMeshStruct =
+    Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(
         discParams,
-        neq,
-        req,
-        sis,
-        stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
-   }
+        commT,
+        stkMeshStruct->numDim,
+        stkMeshStruct->getMeshSpecs()[0]->worksetSize,
+        stkMeshStruct->PBCStruct.periodic[0], 
+        stkMeshStruct->PBCStruct.scale[0], 
+        wsElNodeID,
+        coords,
+        points_per_edge, element_name));
+  Teuchos::RCP<Albany::StateInfoStruct> sis =
+    Teuchos::rcp(new Albany::StateInfoStruct);
+  Albany::AbstractFieldContainer::FieldContainerRequirements req;
+  //set field and bulk data for new struct (for output)
+  outputStkMeshStruct->setFieldAndBulkData(
+      commT,
+      discParams,
+      neq,
+      req,
+      sis,
+      stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
 #endif
 }
 
@@ -3401,135 +3438,7 @@ void Aeras::SpectralDiscretization::reNameExodusOutput(std::string& filename)
 #endif
 }
 
-// Convert the stk mesh on this processor to a nodal graph.
-// todo Dev/tested on linear elements only.
-void Aeras::SpectralDiscretization::meshToGraph()
-{
-  if (Teuchos::is_null(stkMeshStruct->nodal_data_base)) return;
-  if (!stkMeshStruct->nodal_data_base->isNodeDataPresent()) return;
 
-  // Set up the CRS graph used for solution transfer and projection mass
-  // matrices. Assume the Crs row size is 27, which is the maximum number
-  // required for first-order hexahedral elements.
-  nodalGraph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_node_mapT, 27));
-
-  // Elements that surround a given node, in the form of Entity's.
-  std::vector<std::vector<stk::mesh::Entity> > sur_elem;
-  // numOverlapNodes are the total # of nodes seen by this pe
-  // numOwnedNodes are the total # of nodes owned by this pe
-  sur_elem.resize(numOverlapNodes);
-
-  // Get the elements owned by the current processor
-  const stk::mesh::Selector select_owned =
-    stk::mesh::Selector(metaData.locally_owned_part());
-
-  const stk::mesh::BucketVector & buckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
-
-  for (int b = 0; b < buckets.size(); ++b)
-  {
-    const stk::mesh::Bucket& cells = *buckets[b];
-    // Find the surrounding elements for each node owned by this processor.
-    for (std::size_t ecnt = 0; ecnt < cells.size(); ecnt++)
-    {
-      const stk::mesh::Entity e = cells[ecnt];
-      const stk::mesh::Entity* node_rels = bulkData.begin_nodes(e);
-      const size_t num_node_rels = bulkData.num_nodes(e);
-
-      // Loop over nodes within the element.
-      for (std::size_t ncnt = 0; ncnt < num_node_rels; ++ncnt)
-      {
-        const stk::mesh::Entity rowNode = node_rels[ncnt];
-        GO nodeGID = gid(rowNode);
-        int nodeLID = overlap_node_mapT->getLocalElement(nodeGID);
-        // In the case of degenerate elements, where a node can be entered into
-        // the connect table twice, need to check to make sure that this element
-        // is not already listed as surrounding this node.
-        if (sur_elem[nodeLID].empty() || entity_in_list(e, sur_elem[nodeLID]) < 0)
-          sur_elem[nodeLID].push_back(e);
-      }
-    }
-  }
-
-  std::size_t max_nsur = 0;
-  for (std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++)
-  {
-    if (sur_elem[ncnt].empty())
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
-        "Node = " << ncnt+1 << " has no elements" << std::endl);
-    }
-    else
-    {
-      std::size_t nsur = sur_elem[ncnt].size();
-      if (nsur > max_nsur) max_nsur = nsur;
-    }
-  }
-
-  // end find_surrnd_elems
-
-  // find_adjacency
-
-  // Note that the center node of a subgraph must be owned by this pe, but we
-  // want all nodes in the overlap graph to be covered in the nodal graph.
-
-  // loop over all the nodes owned by this PE
-  for(std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++)
-  {
-    Teuchos::Array<GO> adjacency;
-    GO globalrow = overlap_node_mapT->getGlobalElement(ncnt);
-    // loop over the elements surrounding node ncnt
-    for(std::size_t ecnt = 0; ecnt < sur_elem[ncnt].size(); ecnt++)
-    {
-      const stk::mesh::Entity elem  = sur_elem[ncnt][ecnt];
-      const stk::mesh::Entity* node_rels = bulkData.begin_nodes(elem);
-      const size_t num_node_rels = bulkData.num_nodes(elem);
-      std::size_t ws = elemGIDws[gid(elem)].ws;
-      // loop over the nodes in the surrounding element elem
-      for (std::size_t lnode = 0; lnode < num_node_rels; ++lnode)
-      {
-        const stk::mesh::Entity node_a = node_rels[lnode];
-        // entry is the GID of each node
-        GO entry = gid(node_a);
-        // Every node in an element adjacent to node 'globalrow' is in this
-        // graph.
-        if (in_list(entry, adjacency) < 0) adjacency.push_back(entry);
-      }
-    }
-    nodalGraph->insertGlobalIndices(globalrow, adjacency());
-  }
-
-  // end find_adjacency
-
-  nodalGraph->fillComplete();
-  // Pass the graph RCP to the nodal data block
-  stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
-}
-
-void
-Aeras::SpectralDiscretization::printVertexConnectivity()
-{
-
-  if(Teuchos::is_null(nodalGraph)) return;
-
-  for(std::size_t i = 0; i < numOverlapNodes; i++)
-  {
-
-    GO globalvert = overlap_node_mapT->getGlobalElement(i);
-
-    std::cout << "Center vert is : " << globalvert + 1 << std::endl;
-
-    Teuchos::ArrayView<const GO> adj;
-
-    nodalGraph->getGlobalRowView(globalvert, adj);
-
-    for(std::size_t j = 0; j < adj.size(); j++)
-
-      std::cout << "                  " << adj[j] + 1 << std::endl;
-
-   }
-}
 
 void
 Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
@@ -3614,14 +3523,6 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
    createOutputMesh(); 
    setupExodusOutput();
 
-  // Build the node graph needed for the mass matrix for solution
-  // transfer and projection operations
-
-  // FIXME this only needs to be called if we are using the L2
-  // Projection response
-
-  // IK, 1/23/15: I don't think we'll need meshToGraph for Aeras.
-  // meshToGraph();
-  // printVertexConnectivity(); IK, 1/26/15 -- commenting out for
-  // now setupNetCDFOutput();
+  //IKT, 9/22/15: the following routine needs to be implemented, if we care about netCDFoutput.
+  //setupNetCDFOutput();
 }

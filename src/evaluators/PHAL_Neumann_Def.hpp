@@ -604,7 +604,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
           // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
           //Intrepid::FunctionSpaceTools::
         //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
-        }
+    }
 #endif
   // Transform the given BC data to the physical space QPs in each side (elem_side)
 
@@ -648,7 +648,6 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 #endif
          break;
 
-
       case LATERAL:
 
 #ifdef ALBANY_FELIX
@@ -678,7 +677,6 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
   }
-
 }
 
 template<typename EvalT, typename Traits>
@@ -1182,7 +1180,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
  }
  //Robin/Neumann bc for FELIX FO XZ MMS test case
  else if (beta_type == FELIX_XZ_MMS) {
-    //parameter values are hard-coded here... 
+    //parameter values are hard-coded here...
     MeshScalarT H = 1.0; 
     double alpha0 = 4.0e-5; 
     double beta0 = 1;
@@ -2000,7 +1998,7 @@ NeumannAggregator(const Teuchos::ParameterList& p)
 {
   Teuchos::RCP<PHX::DataLayout> dl =  p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
-  std::vector<std::string>& nbcs = *(p.get<std::vector<std::string>* >("NBC Names"));
+  const std::vector<std::string>& nbcs = *p.get<Teuchos::RCP<std::vector<std::string> > >("NBC Names");
 
   for (unsigned int i=0; i<nbcs.size(); i++) {
     PHX::Tag<ScalarT> fieldTag(nbcs[i], dl);

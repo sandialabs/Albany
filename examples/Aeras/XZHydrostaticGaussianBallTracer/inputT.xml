@@ -33,7 +33,7 @@
     <Parameter name="Workset Size" type="int" value="1000"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic_gb.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

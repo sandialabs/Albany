@@ -36,7 +36,7 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
-       Teuchos::ArrayRCP<std::string> dof_names_dot, 
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
        int offsetToFirstDOF)
 {
     using Teuchos::RCP;
@@ -56,7 +56,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
 
     p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
-} 
+}
 
 
 template<typename EvalT, typename Traits>
@@ -89,8 +89,8 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_withAcceleration(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
-       Teuchos::ArrayRCP<std::string> dof_names_dot, 
-       Teuchos::ArrayRCP<std::string> dof_names_dotdot, 
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
        int offsetToFirstDOF)
 {
     using Teuchos::RCP;
@@ -108,7 +108,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_withAccel
 
     p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
-    if (dof_names_dot != Teuchos::null) 
+    if (dof_names_dot != Teuchos::null)
       p->set< Teuchos::ArrayRCP<string> >("Time Dependent Solution Names", dof_names_dot);
     else
       p->set<bool>("Disable Transient", true);
@@ -283,13 +283,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator(s
 
     // Input: Periodic BC flag
     p->set<bool>("Periodic BC", false);
- 
+
     // Output:: Coordindate Vector at vertices
     p->set<string>("Coordinate Vector Name", "Coord Vec");
 
     if( strCurrentDisp != "" )
       p->set<string>("Current Displacement Vector Name", strCurrentDisp);
- 
+
     return rcp(new PHAL::GatherCoordinateVector<EvalT,Traits>(*p,dl));
 }
 
@@ -305,14 +305,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame"));
- 
+
     // Input: X, Y at vertices
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
- 
+
     // Output: X, Y at Quad Points (same name as input)
- 
+
     return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p,dl));
 }
 
@@ -333,10 +333,10 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
     p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
- 
+
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
         ("Intrepid Basis", intrepidBasis);
- 
+
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Weights Name",          "Weights");
@@ -345,7 +345,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
- 
+
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
 
@@ -355,7 +355,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
-       std::string& dof_name,
+       const std::string& dof_name,
        int offsetToFirstDOF)
 {
     using Teuchos::RCP;

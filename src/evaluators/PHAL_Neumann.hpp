@@ -89,15 +89,15 @@ protected:
                           ScalarT scale = 1.0);
 
   // robin (also uses flux scaling)
-  void calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-                          const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id,
-		          ScalarT scale,
-		          const ScalarT* robin_param_values);
+  void calc_dudn_robin (Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                        const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                        const Intrepid::FieldContainer<ScalarT>& dof_side,
+                        const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                        const shards::CellTopology & celltopo,
+                        const int cellDims,
+                        int local_side_id,
+                        ScalarT scale,
+                        const ScalarT* robin_param_values);
 
    // (dudx, dudy, dudz)
   void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -122,7 +122,7 @@ protected:
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
-   
+
   //Basal bc
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
    		       const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
@@ -134,17 +134,18 @@ protected:
                        int local_side_id);
 
   void calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-   		                    const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-   		                    const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          	    const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-	                            const shards::CellTopology & celltopo,
-          	                    const int cellDims,
-                   	            int local_side_id);
-  //Lateral bc 
+                            const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+                            const Intrepid::FieldContainer<ScalarT>& dof_side,
+                                const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                                const shards::CellTopology & celltopo,
+                                const int cellDims,
+                                int local_side_id);
+
+  //Lateral bc
   void calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-     		         const Intrepid::FieldContainer<ScalarT>& thickness_side,
-     		         const Intrepid::FieldContainer<ScalarT>& elevation_side,
-     		         const Intrepid::FieldContainer<ScalarT>& dof_side,
+                     const Intrepid::FieldContainer<ScalarT>& thickness_side,
+                     const Intrepid::FieldContainer<ScalarT>& elevation_side,
+                     const Intrepid::FieldContainer<ScalarT>& dof_side,
                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                          const shards::CellTopology & celltopo,
                          const int cellDims,
@@ -159,6 +160,7 @@ protected:
   PHX::MDField<ScalarT,Cell,Node> dof;
   PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
   PHX::MDField<ScalarT,Cell,Node> beta_field;
+  PHX::MDField<ScalarT,Cell,Node> roughness_field;
   PHX::MDField<ScalarT,Cell,Node> thickness_field;
   PHX::MDField<ScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;

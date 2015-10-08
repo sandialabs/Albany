@@ -78,7 +78,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
     }
   */
 
-  this->buildStateStructs(sis);
+  this->addStateStructs(sis);
 
   initializeSTKAdaptation();
 }
