@@ -19,6 +19,7 @@
 //#define  DECOUPLE
 #define LINE_SEARCH
 #define SLIP_PREDICTOR
+#define MINISOLVER
 
 #include <typeinfo>
 #include <iostream>
@@ -748,9 +749,10 @@ computeState(typename Traits::EvalData workset,
         std::cout << "CP model final residual " << residual_val << std::endl;
 #endif
 
-	#ifdef MINISOLVER
+#ifdef MINISOLVER
 	{ // MiniSolver testing
 
+	  // MiniSolver currently does not accept AD types
 	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> Fp_n_minisolver;
 	  Fp_n_minisolver.set_dimension(num_dims_);
 	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> hardness_n_minisolver;
@@ -776,21 +778,36 @@ computeState(typename Traits::EvalData workset,
 	    // initial guess for x is slip_n
 	    x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
 	  }
+
+	  dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
+
 	  CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, RealType> crystalPlasticityNLS(C_,
 												 slip_systems_,
 												 Fp_n_minisolver,
 												 hardness_n_minisolver,
 												 slip_n_minisolver,
 												 F_np1_minisolver,
-												 dt);
+												 dt_minisolver);
 
 	  Intrepid::NewtonStep<RealType, CP::MAX_NUM_SLIP> step;
 	  Intrepid::Minimizer<RealType, CP::MAX_NUM_SLIP> minimizer;
 	  minimizer.solve(step, crystalPlasticityNLS, x);
-	  minimizer.printReport(std::cout);
 
+	  std::cout << "------------------------------------\n" << std::endl;
+	  std::cout << "Home-rolled solver slip_np1" ;
+	  for(int i=0 ; i<num_slip_ ; ++i){
+	    std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
+	  }
+	  std::cout << std::endl;
+	  std::cout << "MiniSolver slip_np1" ;
+	  for(int i=0 ; i<num_slip_ ; ++i){
+	    std::cout << "  " << x(i);
+	  }
+	  std::cout << std::endl;
+	  std::cout << "\nHome-rolled solver num iterations = " << iteration << ", residual = " << residual_val;
+	  minimizer.printReport(std::cout);
 	}
-	#endif
+#endif
 
       } // integration_scheme == IMPLICIT
 
