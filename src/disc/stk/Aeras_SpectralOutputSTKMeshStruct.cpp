@@ -319,6 +319,7 @@ Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersQuads() cons
   validPL->set<Teuchos::Array<std::string> >("Additional Node Sets", emptyStringArray, "Declare additional node sets not present in the input file");
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
+  validPL->set<bool>("Write points coordinates to ascii file", false, "If true, writes the mesh points coordinates on file");
 
 
 
@@ -342,6 +343,7 @@ Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParametersLines() cons
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks");
+  validPL->set<bool>("Write points coordinates to ascii file", false, "If true, writes the mesh points coordinates on file");
 
   return validPL;
 }
