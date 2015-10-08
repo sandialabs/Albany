@@ -144,6 +144,9 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     ma::adapt(input);
   }
 
+  // get the continuation step to write a restart file
+  restartWriteStep = params->get<int>("Write Restart File at Step",0);
+
   APFMeshStruct::init(params, commT);
 }
 
@@ -193,6 +196,7 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("PUMI Input File Name", "", "File Name For PUMI Mesh Input");
   validPL->set<std::string>("PUMI Output File Name", "", "File Name For PUMI Mesh Output");
   validPL->set<std::string>("Mesh Model Input File Name", "", "meshmodel geometry file");
+  validPL->set<int>("Write Restart File at Step", 0, "Continuation step to write restart files");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
 

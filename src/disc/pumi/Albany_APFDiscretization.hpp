@@ -123,6 +123,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
+    void writeRestartFile(const double time);
+
     virtual void writeMeshDebug (const std::string& filename);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
@@ -475,6 +477,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // counter for limiting data writes to output file
     int outputInterval;
+
+    // counter for the continuation step number
+    int continuationStep;
 
     // Mesh adaptation stuff.
     Teuchos::RCP<AAdapt::rc::Manager> rcm;

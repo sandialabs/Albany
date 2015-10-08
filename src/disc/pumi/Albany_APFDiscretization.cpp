@@ -61,7 +61,8 @@ Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct>
   neq(meshStruct_->neq),
   meshStruct(meshStruct_),
   interleavedOrdering(meshStruct_->interleavedOrdering),
-  outputInterval(0)
+  outputInterval(0),
+  continuationStep(0)
 {
 }
 
@@ -506,6 +507,30 @@ void Albany::APFDiscretization::writeAnySolutionToFile(
   copyQPStatesToAPF(f,fs,false);
   copyNodalDataToAPF(false);
   meshOutput->writeFile(time_label);
+  removeNodalDataFromAPF();
+  removeQPStatesFromAPF();
+
+  if ((continuationStep == meshStruct->restartWriteStep) &&
+      (continuationStep != 0))
+    writeRestartFile(time_label);
+
+  continuationStep++;
+}
+
+void
+Albany::APFDiscretization::writeRestartFile(const double time)
+{
+  *out << "Albany::APFDiscretization::writeRestartFile: writing time "
+    << time << std::endl;
+  apf::Field* f;
+  int dim = getNumDim();
+  apf::FieldShape* fs = apf::getIPShape(dim, meshStruct->cubatureDegree);
+  copyQPStatesToAPF(f,fs,true);
+  copyNodalDataToAPF(true);
+  apf::Mesh2* m = meshStruct->getMesh();
+  std::ostringstream oss;
+  oss << "restart_" << time << "_.smb";
+  m->writeNative(oss.str().c_str());
   removeNodalDataFromAPF();
   removeQPStatesFromAPF();
 }
