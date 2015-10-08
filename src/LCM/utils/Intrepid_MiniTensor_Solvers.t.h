@@ -568,7 +568,11 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   singular_hessian = std::abs(det(Hessian)) < hessian_singular_tol;
 
   bool const
+#ifdef ALBANY_USE_PUBLICTRILINOS
+  ill_conditioned_hessian = cond(Hessian) > hessian_cond_tol;
+#else
   ill_conditioned_hessian = inv_cond(Hessian) * hessian_cond_tol < 1.0;
+#endif
 
   bool const
   bad_hessian = singular_hessian || ill_conditioned_hessian;
