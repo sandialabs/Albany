@@ -583,21 +583,20 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag&
         //uAtNodes(node, 0) = ulambda;
         //uAtNodes(node, 1) = utheta;
 
-        ScalarT utlambda;
-        ScalarT uttheta;
+           const typename PHAL::Ref<const ScalarT>::type
+             utlambda = UDotDotNodal(cell, node,1),
+             uttheta  = UDotDotNodal(cell, node,2);
 
+           const typename PHAL::Ref<const MeshScalarT>::type
+             lam = lambda_nodal(cell, node),
+             th = theta_nodal(cell, node);
 
-          utlambda = UDotDotNodal(cell, node,1);
-          uttheta  = UDotDotNodal(cell, node,2);
-
-           ScalarT lam = lambda_nodal(cell, node);
-           ScalarT th = theta_nodal(cell, node);
-
-           ScalarT k11 = -sin(lam);
-           ScalarT k12 = -sin(th)*cos(lam);
-           ScalarT k21 =  cos(lam);
-           ScalarT k22 = -sin(th)*sin(lam);
-           ScalarT k32 =  cos(th);
+           const MeshScalarT
+             k11 = -sin(lam),
+             k12 = -sin(th)*cos(lam),
+             k21 =  cos(lam),
+             k22 = -sin(th)*sin(lam),
+             k32 =  cos(th);
 
            //uX(node) = k11*ulambda + k12*utheta;
            //uY(node) = k21*ulambda + k22*utheta;
@@ -623,18 +622,20 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag&
           for (std::size_t qp=0; qp < numQPs; ++qp) {
             for (std::size_t node=0; node < numNodes; ++node) {
 
-              ScalarT lam = sphere_coord(cell, qp, 0);
-              ScalarT th = sphere_coord(cell, qp, 1);
+              const typename PHAL::Ref<const MeshScalarT>::type
+                lam = sphere_coord(cell, qp, 0),
+                th = sphere_coord(cell, qp, 1);
 
   //K = -sin L    -sin T cos L
   //     cos L    -sin T sin L
   //     0         cos T
   //K^{-1} = K^T
-              ScalarT k11 = -sin(lam);
-              ScalarT k12 = -sin(th)*cos(lam);
-              ScalarT k21 =  cos(lam);
-              ScalarT k22 = -sin(th)*sin(lam);
-              ScalarT k32 =  cos(th);
+              const MeshScalarT
+                k11 = -sin(lam),
+                k12 = -sin(th)*cos(lam),
+                k21 =  cos(lam),
+                k22 = -sin(th)*sin(lam),
+                k32 =  cos(th);
 
 
               Residual(cell,node,1) +=
@@ -709,14 +710,16 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
     ScalarT utlambda = UNodal(cell, node,4);
     ScalarT uttheta = UNodal(cell, node,5);
 
-    ScalarT lam = lambda_nodal(cell, node);
-    ScalarT th = theta_nodal(cell, node);
+    const typename PHAL::Ref<const MeshScalarT>::type
+      lam = lambda_nodal(cell, node),
+      th = theta_nodal(cell, node);
 
-    ScalarT k11 = -sin(lam);
-    ScalarT k12 = -sin(th)*cos(lam);
-    ScalarT k21 =  cos(lam);
-    ScalarT k22 = -sin(th)*sin(lam);
-    ScalarT k32 =  cos(th);
+    const MeshScalarT
+      k11 = -sin(lam),
+      k12 = -sin(th)*cos(lam),
+      k21 =  cos(lam),
+      k22 = -sin(th)*sin(lam),
+      k32 =  cos(th);
 
     uX(node) = k11*ulambda + k12*utheta;
     uY(node) = k21*ulambda + k22*utheta;
@@ -763,19 +766,21 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
   for (int qp=0; qp < numQPs; ++qp) {
     for (int node=0; node < numNodes; ++node) {
 
-      ScalarT lam = sphere_coord(cell, qp, 0);
-      ScalarT th = sphere_coord(cell, qp, 1);
+      const typename PHAL::Ref<const MeshScalarT>::type
+        lam = sphere_coord(cell, qp, 0),
+        th = sphere_coord(cell, qp, 1);
             
 //K = -sin L    -sin T cos L
 //     cos L    -sin T sin L
 //     0         cos T
 //K^{-1} = K^T
 
-      ScalarT k11 = -sin(lam);
-      ScalarT k12 = -sin(th)*cos(lam);
-      ScalarT k21 =  cos(lam);
-      ScalarT k22 = -sin(th)*sin(lam);
-      ScalarT k32 =  cos(th);
+      const MeshScalarT
+        k11 = -sin(lam),
+        k12 = -sin(th)*cos(lam),
+        k21 =  cos(lam),
+        k22 = -sin(th)*sin(lam),
+        k32 =  cos(th);
 
 //Do not delete:
 //Consider 
@@ -1084,14 +1089,16 @@ evaluateFields(typename Traits::EvalData workset)
         } 
 
         if((useExplHyperviscosity)&&(n_coeff == 1)) {
-           ScalarT lam = lambda_nodal(cell, node);
-           ScalarT th = theta_nodal(cell, node);
+           const typename PHAL::Ref<const MeshScalarT>::type
+             lam = lambda_nodal(cell, node),
+             th = theta_nodal(cell, node);
 
-           ScalarT k11 = -sin(lam);
-           ScalarT k12 = -sin(th)*cos(lam);
-           ScalarT k21 =  cos(lam);
-           ScalarT k22 = -sin(th)*sin(lam);
-           ScalarT k32 =  cos(th);
+           const MeshScalarT
+             k11 = -sin(lam),
+             k12 = -sin(th)*cos(lam),
+             k21 =  cos(lam),
+             k22 = -sin(th)*sin(lam),
+             k32 =  cos(th);
 
            //uX(node) = k11*ulambda + k12*utheta;
            //uY(node) = k21*ulambda + k22*utheta;
@@ -1104,14 +1111,16 @@ evaluateFields(typename Traits::EvalData workset)
         }
 
         if(useImplHyperviscosity) {
-           ScalarT lam = lambda_nodal(cell, node);
-           ScalarT th = theta_nodal(cell, node);
+           const typename PHAL::Ref<const MeshScalarT>::type
+             lam = lambda_nodal(cell, node),
+             th = theta_nodal(cell, node);
 
-           ScalarT k11 = -sin(lam);
-           ScalarT k12 = -sin(th)*cos(lam);
-           ScalarT k21 =  cos(lam);
-           ScalarT k22 = -sin(th)*sin(lam);
-           ScalarT k32 =  cos(th);
+           const MeshScalarT
+             k11 = -sin(lam),
+             k12 = -sin(th)*cos(lam),
+             k21 =  cos(lam),
+             k22 = -sin(th)*sin(lam),
+             k32 =  cos(th);
 
            uX(node) = k11*ulambda + k12*utheta;
            uY(node) = k21*ulambda + k22*utheta;
@@ -1176,19 +1185,20 @@ evaluateFields(typename Traits::EvalData workset)
       if (useImplHyperviscosity) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t node=0; node < numNodes; ++node) {
-
-            ScalarT lam = sphere_coord(cell, qp, 0);
-            ScalarT th = sphere_coord(cell, qp, 1);
+            const typename PHAL::Ref<const MeshScalarT>::type
+              lam = sphere_coord(cell, qp, 0),
+              th = sphere_coord(cell, qp, 1);
             
 //K = -sin L    -sin T cos L
 //     cos L    -sin T sin L
 //     0         cos T
 //K^{-1} = K^T
-            ScalarT k11 = -sin(lam);
-            ScalarT k12 = -sin(th)*cos(lam);
-            ScalarT k21 =  cos(lam);
-            ScalarT k22 = -sin(th)*sin(lam);
-            ScalarT k32 =  cos(th);
+            const MeshScalarT
+              k11 = -sin(lam),
+              k12 = -sin(th)*cos(lam),
+              k21 =  cos(lam),
+              k22 = -sin(th)*sin(lam),
+              k32 =  cos(th);
              
 //Do not delete:
 //Consider 
@@ -1253,18 +1263,20 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t qp=0; qp < numQPs; ++qp) {
             for (std::size_t node=0; node < numNodes; ++node) {
 
-              ScalarT lam = sphere_coord(cell, qp, 0);
-              ScalarT th = sphere_coord(cell, qp, 1);
+              const typename PHAL::Ref<const MeshScalarT>::type
+                lam = sphere_coord(cell, qp, 0),
+                th = sphere_coord(cell, qp, 1);
 
   //K = -sin L    -sin T cos L
   //     cos L    -sin T sin L
   //     0         cos T
   //K^{-1} = K^T
-              ScalarT k11 = -sin(lam);
-              ScalarT k12 = -sin(th)*cos(lam);
-              ScalarT k21 =  cos(lam);
-              ScalarT k22 = -sin(th)*sin(lam);
-              ScalarT k32 =  cos(th);
+              const MeshScalarT
+                k11 = -sin(lam),
+                k12 = -sin(th)*cos(lam),
+                k21 =  cos(lam),
+                k22 = -sin(th)*sin(lam),
+                k32 =  cos(th);
 
   //Do not delete:
   //Consider

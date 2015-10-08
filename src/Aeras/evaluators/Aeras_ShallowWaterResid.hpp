@@ -87,8 +87,8 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
 #endif
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
-  PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
-  PHX::MDField<ScalarT,Cell,Node> theta_nodal;
+  PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
+  PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> source;
 
   ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
