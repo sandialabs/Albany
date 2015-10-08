@@ -88,6 +88,9 @@
       <ParameterList name="Direction">
         <Parameter name="Method" type="string" value="Newton" />
         <ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-10"/>
+          </ParameterList>
           <Parameter name="Forcing Term Method" type="string" value="Constant" />
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1" />
           <ParameterList name="Stratimikos Linear Solver">
