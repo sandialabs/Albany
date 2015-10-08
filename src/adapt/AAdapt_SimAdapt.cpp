@@ -44,6 +44,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   /* compute the size field via SPR error estimation
      on the solution gradient */
   apf::Field* sol_fld = apf_m->findField(Albany::APFMeshStruct::solution_name);
+  assert(apf::countComponents(sol_fld) == 1);
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
@@ -71,6 +72,12 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   pPList sim_fld_lst = PList_new();
   PList_append(sim_fld_lst, sim_sol_fld);
   PList_append(sim_fld_lst, sim_res_fld);
+  if (apf_ms->useTemperatureHack) {
+    /* transfer Temperature_old at the nodes */
+    apf::Field* told_fld = apf_m->findField("temp_old");
+    pField sim_told_fld = apf::getSIMField(told_fld);
+    PList_append(sim_fld_lst, sim_told_fld);
+  }
   MSA_setMapFields(adapter, sim_fld_lst);
   PList_delete(sim_fld_lst);
 

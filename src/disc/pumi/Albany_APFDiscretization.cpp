@@ -447,10 +447,29 @@ void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const d
 }
 #endif
 
+static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
+{
+  if (!(meshStruct->useTemperatureHack && meshStruct->solutionInitialized))
+    return;
+  apf::Mesh* m = meshStruct->getMesh();
+  apf::Field* t = m->findField("temp");
+  if (!t)
+    t = m->findField(Albany::APFMeshStruct::solution_name);
+  assert(t);
+  apf::Field* told = m->findField("temp_old");
+  if (!told)
+    told = meshStruct->createNodalField("temp_old", apf::SCALAR);
+  assert(told);
+  std::cout << "copying nodal " << apf::getName(t)
+    << " to nodal " << apf::getName(told) << '\n';
+  apf::copyData(told, t);
+}
+
 void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
+  saveOldTemperature(meshStruct);
   (void) time_value;
   if (solNames.size() == 0)
     this->setField(APFMeshStruct::solution_name,soln,overlapped);
@@ -1275,19 +1294,22 @@ void Albany::APFDiscretization::copyQPStatesFromAPF()
     PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
-    copyQPScalarFromAPF(nqp, state.name, f);
+    if (f)
+      copyQPScalarFromAPF(nqp, state.name, f);
   }
   for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
     PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
-    copyQPVectorFromAPF(nqp, state.name, f);
+    if (f)
+      copyQPVectorFromAPF(nqp, state.name, f);
   }
   for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
     PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
-    copyQPTensorFromAPF(nqp, state.name, f);
+    if (f)
+      copyQPTensorFromAPF(nqp, state.name, f);
   }
 }
 
@@ -1394,6 +1416,62 @@ void Albany::APFDiscretization::releaseMesh () {
   }
 }
 
+static apf::Field* interpolate(
+    apf::Field* nf,
+    int cubatureDegree,
+    char const* name)
+{
+  assert(apf::getValueType(nf) == apf::SCALAR);
+  apf::Mesh* m = apf::getMesh(nf);
+  int dim = m->getDimension();
+  apf::FieldShape* qpfs = apf::getIPShape(dim, cubatureDegree);
+  apf::Field* ipf = apf::createField(m, name, apf::SCALAR, qpfs);
+  apf::MeshIterator* it = m->begin(dim);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it))) {
+    apf::Mesh::Type et = m->getType(e);
+    apf::Element* fe = apf::createElement(nf, e);
+    unsigned nqp = apf::countGaussPoints(et, cubatureDegree);
+    for (unsigned i = 0; i < nqp; ++i) {
+      apf::Vector3 xi;
+      apf::getGaussPoint(et, cubatureDegree, i, xi);
+      double val = apf::getScalar(fe, xi);
+      apf::setScalar(ipf, e, 0, val);
+    }
+    apf::destroyElement(fe);
+  }
+  m->end(it);
+  return ipf;
+}
+
+static apf::Field* try_interpolate(
+    apf::Mesh* m,
+    char const* fromName,
+    int cubatureDegree,
+    char const* toName)
+{
+  apf::Field* nf = m->findField(fromName);
+  if (!nf) {
+    std::cout << "could not find " << fromName << " on nodes\n";
+    return 0;
+  } else {
+    std::cout << "interpolating nodal " << fromName << " to QP " << toName << '\n';
+    return interpolate(nf, cubatureDegree, toName);
+  }
+}
+
+static void temperaturesToQP(
+    apf::Mesh* m,
+    int cubatureDegree)
+{
+  int o = cubatureDegree;
+  if (!try_interpolate(m, "temp", o, "Temperature"))
+    try_interpolate(m, Albany::APFMeshStruct::solution_name, o, "Temperature");
+  if (!try_interpolate(m, "temp_old", o, "Temperature_old"))
+    if (!try_interpolate(m, "temp", o, "Temperature_old"))
+      try_interpolate(m, Albany::APFMeshStruct::solution_name, o, "Temperature_old");
+}
+
 /* LCM's ThermoMechanicalCoefficients evaluator
    relies on Temperature and Temperature_old
    to be initialized in the stateArrays as well
@@ -1406,61 +1484,9 @@ void
 Albany::APFDiscretization::initTemperatureHack() {
   if (!meshStruct->useTemperatureHack)
     return;
-  std::cout << "interpolating temperature from nodes\n";
   apf::Mesh* m = meshStruct->getMesh();
-  apf::Field* Tnodal = m->findField("temp");
-  if (!Tnodal)
-    Tnodal = m->findField(APFMeshStruct::solution_name);
-  assert(Tnodal);
-  int o = meshStruct->cubatureDegree;
-  unsigned nqp = 0;
-  int dim = m->getDimension();
-  apf::FieldShape* qpfs = apf::getIPShape(dim, o);
-  apf::Field* T = apf::createField(m, "temp_init_hack", apf::SCALAR, qpfs);
-  apf::MeshIterator* it = m->begin(dim);
-  apf::MeshEntity* e;
-  bool first = false;
-  double min,max;
-  while ((e = m->iterate(it))) {
-    apf::Mesh::Type et = m->getType(e);
-    apf::Element* fe = apf::createElement(Tnodal, e);
-    nqp = apf::countGaussPoints(et, o);
-    for (unsigned i = 0; i < nqp; ++i) {
-      apf::Vector3 xi;
-      apf::getGaussPoint(et, o, i, xi);
-      double val = apf::getScalar(fe, xi);
-      apf::setScalar(T, e, 0, val);
-      if (!first) {
-        min = max = val;
-        first = false;
-      } else {
-        if (val > max)
-          max = val;
-        if (val < min)
-          min = val;
-      }
-    }
-    apf::destroyElement(fe);
-  }
-  std::cout << "min/max values: " << min << '/' << max << '\n';
-  m->end(it);
-  copyQPScalarFromAPF(nqp, "Temperature", T);
-  copyQPScalarFromAPF(nqp, "Temperature_old", T);
-  apf::destroyField(T);
-
-  std::cout << "QP scalar states are:\n";
-  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
-    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
-    std::cout << state.name << '\n';
-  }
-  std::cout << "QP vector states are:\n";
-  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
-    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
-    std::cout << state.name << '\n';
-  }
-  std::cout << "QP tensor states are:\n";
-  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
-    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
-    std::cout << state.name << '\n';
-  }
+  temperaturesToQP(m, meshStruct->cubatureDegree);
+  copyQPStatesFromAPF();
+  apf::destroyField(m->findField("Temperature"));
+  apf::destroyField(m->findField("Temperature_old"));
 }
