@@ -32,7 +32,7 @@
     <ParameterList name="Adaptation">
       <Parameter name="Method" type="string" value="Sim" />
       <Parameter name="Remesh Strategy" type="string" value="Continuous" />
-      <Parameter name="Error Bound" type="double" value="0.06" />
+      <Parameter name="Error Bound" type="double" value="0.13" />
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
