@@ -108,7 +108,7 @@ public:
 		       Intrepid::Tensor<ScalarT, NumDimT> const & F_np1,
 		       ScalarT dt)
     : C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
-      slip_n_(slip_n), F_np1_(F_np1), dt_(dt), norm_slip_residual_(0.0)
+      slip_n_(slip_n), F_np1_(F_np1), dt_(dt)
   {
     num_dim_ = Fp_n_.get_dimension();
     num_slip_ = hardness_n_.get_dimension();
@@ -137,11 +137,11 @@ public:
     Intrepid::Tensor<T, NumDimT> Lp_np1;
     Intrepid::Vector<T, N> hardness_np1;
     Intrepid::Tensor<T, NumDimT> sigma_np1;
-    Intrepid::Tensor<T, N> S_np1;
+    Intrepid::Tensor<T, NumDimT> S_np1;
     Intrepid::Vector<T, N> shear_np1;
     Intrepid::Vector<T, N> slip_residual;
+    T norm_slip_residual_;
 
-    slip_np1.set_dimension(num_slip_);
     Fp_np1.set_dimension(num_dim_);
     Lp_np1.set_dimension(num_dim_);
     hardness_np1.set_dimension(num_slip_);
@@ -151,16 +151,16 @@ public:
     slip_residual.set_dimension(num_slip_);
 
     // Compute Lp_np1, and Fp_np1
-    CP::applySlipIncrement<NumDimT, NumSlipT>(slip_n_, slip_np1, Fp_n_, Lp_np1, Fp_np1);
+    CP::applySlipIncrement<NumDimT, NumSlipT>(slip_systems_, slip_n_, slip_np1, Fp_n_, Lp_np1, Fp_np1);
 
     // Compute hardness_np1
-    CP::updateHardness<NumDimT, NumSlipT>(slip_np1, hardness_n_, hardness_np1);
+    CP::updateHardness<NumDimT, NumSlipT>(slip_systems_, slip_np1, hardness_n_, hardness_np1);
 
     // Compute sigma_np1, S_np1, and shear_np1
-    CP::computeStress<NumDimT, NumSlipT>(F_np1_, Fp_np1, sigma_np1, S_np1, shear_np1);
+    CP::computeStress<NumDimT, NumSlipT>(slip_systems_, C_, F_np1_, Fp_np1, sigma_np1, S_np1, shear_np1);
 
     // Compute slip_residual and norm_slip_residual
-    CP::computeResidual<NumDimT, NumSlipT>(dt_, slip_n_, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual_);
+    CP::computeResidual<NumDimT, NumSlipT>(slip_systems_, dt_, slip_n_, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual_);
 
     return slip_residual;
   }
@@ -184,7 +184,6 @@ private:
   Intrepid::Vector<ScalarT, NumSlipT> const & slip_n_;
   Intrepid::Tensor<ScalarT, NumDimT> const & F_np1_;
   ScalarT dt_;
-  ScalarT norm_slip_residual_;
 };
 
 //! \brief CrystalPlasticity Plasticity Constitutive Model
