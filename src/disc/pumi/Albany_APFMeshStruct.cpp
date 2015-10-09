@@ -308,6 +308,11 @@ Albany::APFMeshStruct::setFieldAndBulkData(
          "st.entity != Albany::StateStruct::QuadPoint || " <<
          "st.entity != Albany::StateStruct::ElemNode || " <<
          "st.entity != Albany::StateStruct::NodalData" << std::endl);
+
+    // quick hack to get restarts working
+    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
+      if (hasRestartSolution)
+        st.restartDataAvailable = true;
   }
 }
 

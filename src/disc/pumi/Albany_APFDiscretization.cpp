@@ -119,11 +119,6 @@ void Albany::APFDiscretization::init()
     setRestartData();
 }
 
-void
-Albany::APFDiscretization::setRestartData()
-{
-}
-
 Teuchos::RCP<const Tpetra_Map>
 Albany::APFDiscretization::getMapT() const
 {
