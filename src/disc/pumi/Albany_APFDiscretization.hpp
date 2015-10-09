@@ -43,6 +43,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Initialize this class
     void init();
 
+    //! Set any restart data
+    void setRestartData();
+
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 

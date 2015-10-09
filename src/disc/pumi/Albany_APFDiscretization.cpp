@@ -114,6 +114,14 @@ void Albany::APFDiscretization::init()
     apf::zeroField(
       meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
 
+  // set all of the restart fields here
+  if (meshStruct->hasRestartSolution)
+    setRestartData();
+}
+
+void
+Albany::APFDiscretization::setRestartData()
+{
 }
 
 Teuchos::RCP<const Tpetra_Map>

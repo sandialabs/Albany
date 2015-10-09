@@ -262,9 +262,13 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     /* field may have been created by restart mechanism */
     if (mesh->findField(solution_name))
       solutionInitialized = true;
-    else
+    else {
       this->createNodalField(solution_name,valueType);
-  } else
+      if (hasRestartSolution)
+        solutionInitialized = true;
+    }
+  }
+  else
     splitFields(solVectorLayout);
 
   // Code to parse the vector of StateStructs and save the information
@@ -330,6 +334,8 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
     this->createNodalField(fieldLayout[i].append("Res").c_str(),valueType);
   }
 
+  if (hasRestartSolution)
+    solutionInitialized = true;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&

@@ -147,16 +147,17 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   // get the continuation step to write a restart file
   restartWriteStep = params->get<int>("Write Restart File at Step",0);
 
-  // if we have a restart time, we will fill the solution
-  // from the .smb mesh file
+  APFMeshStruct::init(params, commT);
+
+  // if we have a restart time, we will want to override some of
+  // the default paramaters set by APFMeshStruct::init
   if (params->isParameter("PUMI Restart Time")) {
     hasRestartSolution = true;
     restartDataTime = params->get<double>("PUMI Restart Time", 0.0);
-    solutionInitialized = true;
-    std::cerr << "Restarting from time: " << restartDataTime << std::endl;
+    if (!PCU_Comm_Self())
+      std::cout << "Restarting from time: " << restartDataTime << std::endl;
   }
 
-  APFMeshStruct::init(params, commT);
 }
 
 Albany::PUMIMeshStruct::~PUMIMeshStruct()
