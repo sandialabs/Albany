@@ -17,6 +17,8 @@
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
 
+namespace Albany { class StateManager; }
+
 namespace Aeras {
 
 /** \brief Finite Element Interpolation Evaluator
@@ -78,7 +80,6 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> GradGradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
          
-         
   const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
   void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
@@ -86,6 +87,12 @@ private:
                             const int e,
                             const double rrearth=1) const;
   void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
+
+  Teuchos::RCP<Albany::StateManager> state_mgr_;
+  void setupMemoization(const Teuchos::RCP<Aeras::Layouts>& dl);
+  void memoize(typename Traits::EvalData workset);
+  bool haveStoredData(typename Traits::EvalData workset) const;
+  void readStoredData(typename Traits::EvalData workset);
 
   // Kokkos
 /*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

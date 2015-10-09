@@ -81,6 +81,7 @@ namespace Aeras {
     int spatialDim; // 3 for shells
     int modelDim;   // 2 for shells
     Teuchos::RCP<Aeras::Layouts> dl;
+    bool memoize_basis_functions_;
 
   };
 
@@ -252,6 +253,9 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
     p->set<std::size_t>("spatialDim", spatialDim);
+
+    if (memoize_basis_functions_)
+      p->set<Teuchos::RCP<Albany::StateManager> >("State Manager", Teuchos::rcpFromRef(stateMgr));
 
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
