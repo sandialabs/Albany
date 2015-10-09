@@ -68,7 +68,7 @@
       </ParameterList>
       <ParameterList name="Stepper">
         <Parameter name="Continuation Method" type="string" value="Natural"/>
-        <Parameter name="Initial Value" type="double" value="0.25"/>
+        <Parameter name="Initial Value" type="double" value="0.5"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
         <Parameter name="Max Steps" type="int" value="3"/>
         <Parameter name="Max Value" type="double" value="1.0"/>
