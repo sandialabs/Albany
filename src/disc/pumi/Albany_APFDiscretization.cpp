@@ -107,9 +107,9 @@ void Albany::APFDiscretization::init()
   }
 
   // zero the residual field for Rhythmos
-  if (solNames.size())
-    for (size_t i = 0; i < solNames.size(); ++i)
-      apf::zeroField(meshStruct->getMesh()->findField(solNames[i].c_str()));
+  if (resNames.size())
+    for (size_t i = 0; i < resNames.size(); ++i)
+      apf::zeroField(meshStruct->getMesh()->findField(resNames[i].c_str()));
   else
     apf::zeroField(
       meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
