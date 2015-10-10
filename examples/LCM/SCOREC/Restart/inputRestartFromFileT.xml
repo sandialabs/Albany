@@ -33,8 +33,8 @@
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="false"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="0"/>
-    <Parameter name="Test Values" type="Array(double)" value="{0.0109475866838}"/>
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.0017042635636}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-7"/>
   </ParameterList>
   <ParameterList name="Piro">
@@ -70,7 +70,7 @@
         <Parameter name="Continuation Method" type="string" value="Natural"/>
         <Parameter name="Initial Value" type="double" value="0.5"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="3"/>
+        <Parameter name="Max Steps" type="int" value="5"/>
         <Parameter name="Max Value" type="double" value="1.0"/>
         <Parameter name="Min Value" type="double" value="0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
@@ -81,7 +81,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Initial Step Size" type="double" value="0.25"/>
+        <Parameter name="Initial Step Size" type="double" value="0.1"/>
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>

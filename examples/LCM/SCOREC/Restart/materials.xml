@@ -27,7 +27,7 @@
       </ParameterList>
       <ParameterList name="Yield Strength">
         <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="10.0"/>
+        <Parameter name="Value" type="double" value="1.0e-4"/>
       </ParameterList>
       <Parameter name="Output Cauchy Stress" type="bool" value="1"/>
       <Parameter name="Output eqps" type="bool" value="1"/>
