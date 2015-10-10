@@ -11,7 +11,6 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
 
-
 namespace Aeras {
 
 namespace {
@@ -1074,6 +1073,8 @@ inline void write (Albany::MDArray& mda, const MDFieldT& mdf) {
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 setupMemoization (const Teuchos::RCP<Aeras::Layouts>& dl) {
+  prev_workset_index_ = -1;
+
 #define OP(name, dl) \
   state_mgr_->registerStateVariable(ACBF_NAME(name), dl, "", "scalar", 100, false, false)
 
@@ -1123,6 +1124,15 @@ haveStoredData (typename Traits::EvalData workset) const {
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 readStoredData (typename Traits::EvalData workset) {
+  if (workset.wsIndex == prev_workset_index_) {
+    // Special case: #worksets is 1.
+    Albany::MDArray& mda = getMDArray(state_mgr_, ACBF_NAME(weighted_measure), workset.wsIndex);
+    // Does the MDField already contain correct data?
+    if (mda[0] == weighted_measure(0,0))
+      return;
+  }
+  prev_workset_index_ = workset.wsIndex;
+
 #define OP(name) read(getMDArray(state_mgr_, ACBF_NAME(name), workset.wsIndex), name);
   OP(weighted_measure);
   OP(sphere_coord);
