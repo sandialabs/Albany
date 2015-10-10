@@ -32,37 +32,24 @@ public:
   ///
   /// By default use merit function 0.5 dot(gradient, gradient)
   /// as the target to optimize if only the gradient is provided.
-  /// \param in to pass in values needed to compute f(x), df(x), ddf(x)
   ///
-  template<typename T, Index N, Index IN = 0, Index OUT = 0>
+  template<typename T, Index N>
   T
-  value(
-      Function_Derived & f,
-      Vector<T, N> const & x,
-      Vector<T, IN> const & in = Vector<T, IN>(),
-      Vector<T, OUT> && out = Vector<T, OUT>());
+  value(Function_Derived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute gradient with AD from value().
   ///
-  template<typename T, Index N, Index IN = 0, Index OUT = 0>
+  template<typename T, Index N>
   Vector<T, N>
-  gradient(
-      Function_Derived & f,
-      Vector<T, N> const & x,
-      Vector<T, IN> const & in = Vector<T, IN>(),
-      Vector<T, OUT> && out = Vector<T, OUT>());
+  gradient(Function_Derived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute Hessian with AD from gradient().
   ///
-  template<typename T, Index N, Index IN = 0, Index OUT = 0>
+  template<typename T, Index N>
   Tensor<T, N>
-  hessian(
-      Function_Derived & f,
-      Vector<T, N> const & x,
-      Vector<T, IN> const & in = Vector<T, IN>(),
-      Vector<T, OUT> && out = Vector<T, OUT>());
+  hessian(Function_Derived & f, Vector<T, N> const & x);
 
 };
 
