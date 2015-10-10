@@ -154,8 +154,10 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   if (params->isParameter("PUMI Restart Time")) {
     hasRestartSolution = true;
     restartDataTime = params->get<double>("PUMI Restart Time", 0.0);
+    std::string name = params->get<std::string>("PUMI Input File Name");
     if (!PCU_Comm_Self())
-      std::cout << "Restarting from time: " << restartDataTime << std::endl;
+      std::cout << "Restarting from time: " << restartDataTime
+        << " from restart file: " << name << std::endl;
   }
 
 }
