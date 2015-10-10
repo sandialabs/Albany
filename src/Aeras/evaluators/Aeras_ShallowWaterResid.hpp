@@ -50,12 +50,12 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;  //vecDim works but its really Dim+1
+  PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1
   PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
   PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDotDot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> UDot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDot;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;

@@ -25,12 +25,11 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  U        (p.get<std::string> ("QP Variable Name"), dl->qp_vector),
+  U        (p.get<std::string> ("QP Variable Name"), dl->node_vector),
   UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
   UDotDotNodal   (p.get<std::string> ("Time Dependent Nodal Variable Name"), dl->node_vector),
-  Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
-  UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
-  UDotDot     (p.get<std::string> ("Time Dependent Variable Name"), dl->qp_vector),
+  UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector),
+  UDotDot     (p.get<std::string> ("Time Dependent Variable Name"), dl->node_vector),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   mountainHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
@@ -135,7 +134,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   
   this->addDependentField(U);
   this->addDependentField(UNodal);
-  this->addDependentField(Ugrad);
   this->addDependentField(UDot);
   this->addDependentField(UDotDot);
   this->addDependentField(UDotDotNodal);
@@ -188,10 +186,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
   std::vector<PHX::DataLayout::size_type> gradDims;
   wGradBF.fieldTag().dataLayout().dimensions(gradDims);
-
-
-  gradDims.clear();
-  Ugrad.fieldTag().dataLayout().dimensions(gradDims);
 
 
 //  std::cout << " vecDim = " << vecDim << std::endl;
@@ -312,7 +306,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(U,fm);
   this->utils.setFieldData(UNodal,fm);
-  this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(UDot,fm);
   this->utils.setFieldData(UDotDot,fm);
   this->utils.setFieldData(UDotDotNodal,fm);
