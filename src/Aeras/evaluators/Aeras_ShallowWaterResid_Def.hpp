@@ -173,6 +173,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   nodal_jacobian.resize(numNodes, 2, 2);
   nodal_inv_jacobian.resize(numNodes, 2, 2);
   nodal_det_j.resize(numNodes);
+  wrk_.resize(numNodes, 2);
 #endif
   cubature->getCubature(refPoints, refWeights);
   
@@ -1366,7 +1367,8 @@ void
 ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
     std::size_t cell, Intrepid::FieldContainer<ScalarT>  & div) {
 
-  Intrepid::FieldContainer<ScalarT>  vcontra(numNodes, 2);
+  Intrepid::FieldContainer<ScalarT>& vcontra = wrk_;
+  vcontra.initialize();
 
   fill_nodal_metrics(cell);
 
@@ -1537,7 +1539,8 @@ void
 ShallowWaterResid<EvalT,Traits>::curl(const Intrepid::FieldContainer<ScalarT>  & nodalVector,
     std::size_t cell, Intrepid::FieldContainer<ScalarT>  & curl) {
 
-  Intrepid::FieldContainer<ScalarT>  covariantVector(numNodes, 2);
+  Intrepid::FieldContainer<ScalarT>& covariantVector = wrk_;
+  covariantVector.initialize();
 
   fill_nodal_metrics(cell);
 

@@ -85,6 +85,7 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
+  Intrepid::FieldContainer<ScalarT> wrk_;
 #endif
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
   PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
