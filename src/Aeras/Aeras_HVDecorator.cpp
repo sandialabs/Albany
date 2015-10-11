@@ -33,13 +33,17 @@ Aeras::HVDecorator::HVDecorator(
 #endif
 
 //Create and store mass and Laplacian operators (in CrsMatrix form). 
-  mass_ = createOperator(1.0, 0.0, 0.0); 
+  Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
   laplace_ = createOperator(0.0, 0.0, 1.0); 
 #ifdef WRITE_TO_MATRIX_MARKET
-  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass_);
+  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass);
   Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
 #endif
 
+  inv_mass_diag_ = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap(), true)); 
+  mass->getLocalDiagCopy(*inv_mass_diag_);
+  inv_mass_diag_->reciprocal(*inv_mass_diag_);
+  wrk_ = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap()));
 }
  
 //IKT: the following function creates either the mass or Laplacian operator, to be 
@@ -87,25 +91,12 @@ const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-  //OG store the inverse of diagonal?
-  //initialize vector for inverse of mass diagonal
-  Teuchos::RCP<Tpetra_Vector> inv_mass_diag = Teuchos::rcp(new Tpetra_Vector(mass_->getRowMap(), true)); 
-  //get mass matrix's diagonal and put it in inv_mass_diag
-  mass_->getLocalDiagCopy(*inv_mass_diag); 
-  //inv_mass_diag->putScalar(1.0);  
-  //take reciprocal
-  inv_mass_diag->reciprocal(*inv_mass_diag);
-  Teuchos::RCP<Tpetra_Vector> x_temp1 = Teuchos::rcp(new Tpetra_Vector(x_in->getMap())); 
-  //x_temp1 = laplace_*x_in
-  laplace_->apply(*x_in, *x_temp1, Teuchos::NO_TRANS, 1.0, 0.0); 
-
-  Teuchos::RCP<Tpetra_Vector> x_temp2 = Teuchos::rcp(new Tpetra_Vector(x_in->getMap())); 
-  //x_temp2 = inv(M)*x_temp1
-  x_temp2->elementWiseMultiply(1.0, *inv_mass_diag, *x_temp1, 0.0);
-
-  //x_out = laplace*x_temp2 = laplace* inv(M) * laplace * x_in
-  laplace_->apply(*x_temp2, *x_out, Teuchos::NO_TRANS, 1.0, 0.0);
-  
+  // x_out = laplace_ * x_in
+  laplace_->apply(*x_in, *x_out, Teuchos::NO_TRANS, 1.0, 0.0); 
+  // wrk_ = inv(M) * x_out
+  wrk_->elementWiseMultiply(1.0, *inv_mass_diag_, *x_out, 0.0);
+  // x_out = laplace*wrk_ = laplace * inv(M) * laplace * x_in
+  laplace_->apply(*wrk_, *x_out, Teuchos::NO_TRANS, 1.0, 0.0);
 
   //Teuchos::ArrayRCP<const ST> inv_mass_diag_constView = inv_mass_diag->get1dView(); 
   /*//create CrsMatrix for Mass^(-1)
@@ -152,12 +143,12 @@ Aeras::HVDecorator::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
-
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG WHICH HVDecorator: " << __PRETTY_FUNCTION__ << "\n";
 #endif
 	
   Teuchos::TimeMonitor Timer(*timer); //start timer
+
   //
   // Get the input arguments
   //
