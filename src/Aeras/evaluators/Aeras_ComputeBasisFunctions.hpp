@@ -88,12 +88,11 @@ private:
                             const double rrearth=1) const;
   void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
 
-  Teuchos::RCP<Albany::StateManager> state_mgr_;
+  // 1-workset hack.
+  bool memoize_;
   int prev_workset_index_;
-  void setupMemoization(const Teuchos::RCP<Aeras::Layouts>& dl);
-  void memoize(typename Traits::EvalData workset);
-  bool haveStoredData(typename Traits::EvalData workset) const;
-  void readStoredData(typename Traits::EvalData workset);
+  void setupMemoization();
+  bool haveStoredData(typename Traits::EvalData workset);
 
   // Kokkos
 /*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

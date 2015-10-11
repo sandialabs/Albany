@@ -13,11 +13,6 @@
 
 namespace Aeras {
 
-namespace {
-template<typename ScalarT> bool canMemoize() { return false; }
-template<> bool canMemoize<double>() { return true; }
-}
-
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
@@ -84,10 +79,10 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
   intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid::OPERATOR_D2);
 
-  if (p.isType<Teuchos::RCP<Albany::StateManager> >("State Manager")) {
-    state_mgr_ = p.get<Teuchos::RCP<Albany::StateManager> >("State Manager");
-    setupMemoization(dl);
-  }
+  memoize_ = false;
+  if (p.isType<bool>("Memoize Basis Functions"))
+    memoize_ = p.get<bool>("Memoize Basis Functions");
+  if (memoize_) setupMemoization();
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 /*
@@ -413,10 +408,7 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (Teuchos::nonnull(state_mgr_) && canMemoize<MeshScalarT>() && haveStoredData(workset)) {
-    readStoredData(workset);
-    return;
-  }
+  if (memoize_ && haveStoredData(workset)) return;
 
   /** The allocated size of the Field Containers must currently 
     * match the full workset size of the allocated PHX Fields, 
@@ -821,9 +813,6 @@ evaluateFields(typename Traits::EvalData workset)
 #endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 */
   //div_check(spatialDim, numelements);
-
-  if (Teuchos::nonnull(state_mgr_) && canMemoize<MeshScalarT>())
-    memoize(workset);
 }
 
 
@@ -1033,123 +1022,17 @@ div_check(const int spatialDim, const int numelements) const
 
 //**********************************************************************
 
-#define ACBF_NAME(name) "ACBF::" #name
-
-namespace {
-Albany::MDArray& getMDArray (const Teuchos::RCP<Albany::StateManager>& state_mgr,
-                             const std::string& name, const unsigned int wi) {
-  Albany::StateArray& esa = state_mgr->getStateArrays().elemStateArrays[wi];
-  const Albany::StateArray::iterator it = esa.find(name);
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    it == esa.end(), std::logic_error, "elemStateArrays is missing " + name);
-  return it->second;
-}
-
-struct CopyMDArrayToMDFieldFunctor {
-  const Albany::MDArray& mda;
-  CopyMDArrayToMDFieldFunctor (const Albany::MDArray& mda) : mda(mda) {}
-  void operator() (typename PHAL::Ref<double>::type e, int i) { e = mda[i]; }
-};
-
-template<typename MDFieldT>
-inline void read (const Albany::MDArray& mda, MDFieldT& mdf) {
-  CopyMDArrayToMDFieldFunctor f(mda);
-  PHAL::loop(f, mdf);
-}
-
-struct CopyMDFieldToMDArrayFunctor {
-  Albany::MDArray& mda;
-  CopyMDFieldToMDArrayFunctor (Albany::MDArray& mda) : mda(mda) {}
-  void operator() (typename PHAL::Ref<double>::type e, int i) { mda[i] = e; }
-};
-
-template<typename MDFieldT>
-inline void write (Albany::MDArray& mda, const MDFieldT& mdf) {
-  CopyMDFieldToMDArrayFunctor f(mda);
-  PHAL::loop(f, mdf);
-}
-} // namespace
-
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
-setupMemoization (const Teuchos::RCP<Aeras::Layouts>& dl) {
+setupMemoization () {
   prev_workset_index_ = -1;
-
-#define OP(name, dl) \
-  state_mgr_->registerStateVariable(ACBF_NAME(name), dl, "", "scalar", 100, false, false)
-
-  OP(weighted_measure, dl->qp_scalar);
-  OP(sphere_coord, dl->qp_gradient);
-  OP(lambda_nodal, dl->node_scalar);
-  OP(theta_nodal, dl->node_scalar); 
-  OP(jacobian_inv, dl->qp_tensor);
-  OP(jacobian_det, dl->qp_scalar);
-  OP(BF, dl->node_qp_scalar);
-  OP(wBF, dl->node_qp_scalar);
-  OP(GradBF, dl->node_qp_gradient);
-  OP(wGradBF, dl->node_qp_gradient);
-  OP(GradGradBF, dl->node_qp_tensor);
-  OP(wGradGradBF, dl->node_qp_tensor);
-  OP(jacobian, dl->qp_tensor);
-#undef OP
-}
-
-template<typename EvalT, typename Traits>
-void ComputeBasisFunctions<EvalT, Traits>::
-memoize (typename Traits::EvalData workset) {
-#define OP(name) write(getMDArray(state_mgr_, ACBF_NAME(name), workset.wsIndex), name);
-  OP(weighted_measure);
-  OP(sphere_coord);
-  OP(lambda_nodal);
-  OP(theta_nodal);
-  OP(jacobian_inv);
-  OP(jacobian_det);
-  OP(BF);
-  OP(wBF);
-  OP(GradBF);
-  OP(wGradBF);
-  OP(GradGradBF);
-  OP(wGradGradBF);
-  OP(jacobian);
-#undef OP
 }
 
 template<typename EvalT, typename Traits>
 bool ComputeBasisFunctions<EvalT, Traits>::
-haveStoredData (typename Traits::EvalData workset) const {
-  const Albany::MDArray& w = getMDArray(state_mgr_, ACBF_NAME(theta_nodal), workset.wsIndex);
-  return theta_nodal.dimension(0) >= 1 && theta_nodal.dimension(1) >= 1 && w[0] != 100;
-}
-
-template<typename EvalT, typename Traits>
-void ComputeBasisFunctions<EvalT, Traits>::
-readStoredData (typename Traits::EvalData workset) {
-  if (workset.wsIndex == prev_workset_index_) {
-    // Special case: #worksets is 1.
-    Albany::MDArray& mda = getMDArray(state_mgr_, ACBF_NAME(weighted_measure), workset.wsIndex);
-    // Does the MDField already contain correct data?
-    if (mda[0] == weighted_measure(0,0))
-      return;
-  }
+haveStoredData (typename Traits::EvalData workset) {
+  const bool stored = workset.wsIndex == prev_workset_index_;
   prev_workset_index_ = workset.wsIndex;
-
-#define OP(name) read(getMDArray(state_mgr_, ACBF_NAME(name), workset.wsIndex), name);
-  OP(weighted_measure);
-  OP(sphere_coord);
-  OP(lambda_nodal);
-  OP(theta_nodal);
-  OP(jacobian_inv);
-  OP(jacobian_det);
-  OP(BF);
-  OP(wBF);
-  OP(GradBF);
-  OP(wGradBF);
-  OP(GradGradBF);
-  OP(wGradGradBF);
-  OP(jacobian);
-#undef OP
+  return stored;
 }
-
-#undef ACBF_NAME
-
 }

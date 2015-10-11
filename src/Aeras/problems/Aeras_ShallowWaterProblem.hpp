@@ -254,8 +254,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
     p->set<std::size_t>("spatialDim", spatialDim);
 
-    if (memoize_basis_functions_)
-      p->set<Teuchos::RCP<Albany::StateManager> >("State Manager", Teuchos::rcpFromRef(stateMgr));
+    p->set<bool>("Memoize Basis Functions", memoize_basis_functions_);
 
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
