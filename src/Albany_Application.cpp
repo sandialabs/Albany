@@ -1010,11 +1010,12 @@ computeGlobalResidualImplT(
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
+#ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
-
   // Write the residual to the discretization, which will later (optionally) be written to the output file
   disc->setResidualFieldT(*overlapped_fT);
+#endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
