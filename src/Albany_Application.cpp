@@ -937,13 +937,14 @@ computeGlobalResidualImplT(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+  const Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
+  const Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
+  const Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
 
-  //Scatter distributed parameters
+  // Scatter distributed parameters
   distParamLib->scatter();
 
   // Set parameters
@@ -1010,8 +1011,7 @@ computeGlobalResidualImplT(
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
   // Push the assembled residual values back into the overlap vector
-  Tpetra_Import tpetraImport(fT->getMap(), overlapped_fT->getMap());
-  overlapped_fT->doImport(*fT, tpetraImport, Tpetra::INSERT);
+  overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
 
   // Write the residual to the discretization, which will later (optionally) be written to the output file
   disc->setResidualFieldT(*overlapped_fT);
