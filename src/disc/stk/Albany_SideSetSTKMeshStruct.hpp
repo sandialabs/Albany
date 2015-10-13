@@ -28,7 +28,8 @@ public:
                             const AbstractFieldContainer::FieldContainerRequirements& req,
                             const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                             const unsigned int worksetSize,
-                            const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis = Teuchos::null);
+                            const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                            const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
 
   void extractEntitiesFromSTKMesh(const AbstractSTKMeshStruct& inputMeshStruct,
                                   const std::string& sideSetName);

@@ -10,7 +10,6 @@
 #include <iostream>
 
 #include "Albany_IossSTKMeshStruct.hpp"
-#include "Albany_SideSetSTKMeshStruct.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 #include <Shards_BasicTopologies.hpp>
@@ -235,21 +234,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
   }
 
-  if (params->isSublist ("Side Set Discretizations"))
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (numEB!=1, std::logic_error, "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
-    const Teuchos::ParameterList& list = params->sublist("Side Set Discretizations");
-    Teuchos::Array<std::string> sideSets = list.get<Teuchos::Array<std::string> >("Side Sets");
-
-    Teuchos::RCP<Teuchos::ParameterList> params_ss;
-    for (int i(0); i<sideSets.size(); ++i)
-    {
-      const std::string& ss_name = sideSets[i];
-      params_ss = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist(ss_name)));
-      this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, commT));
-      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
-    }
-  }
+  this->initializeSideSetMeshStructsExtraction(commT);
 }
 
 Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
@@ -279,7 +264,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
           const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,
-          const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis)
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
@@ -333,11 +319,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
         m_hasRestartSolution = true;
       }
       else {
-        mesh_data->read_defined_input_fields(-1.0, &missing);
-        *out << "Neither restart index or time are set. We still read defined fields in case they are needed (e.g., parameters)."<< std::endl;
-
-//        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
-
+        *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
       }
     }
     else {
@@ -831,30 +813,9 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
 
-  if (this->sideSetMeshStructs.size()>0)
-  {
-    for (auto it=this->sideSetMeshStructs.begin(); it!=this->sideSetMeshStructs.end(); ++it)
-    {
-      Teuchos::RCP<Albany::StateInfoStruct> this_ss_sis;
-      if (ss_sis!=Teuchos::null)
-      {
-        if (ss_sis->find(it->first)!=ss_sis->end())
-          this_ss_sis = ss_sis->find(it->first)->second;
-      }
-      if (this_ss_sis==Teuchos::null)
-      {
-        this_ss_sis = Teuchos::rcp(new Albany::StateInfoStruct());
-        this_ss_sis->createNodalDataBase();
-      }
-      it->second->setFieldAndBulkData(commT,params,neq,req,this_ss_sis,worksetSize);
-      Teuchos::RCP<Albany::SideSetSTKMeshStruct> sideMesh;
-      sideMesh = Teuchos::rcp_dynamic_cast<Albany::SideSetSTKMeshStruct>(it->second,false);
-      if (sideMesh!=Teuchos::null)
-      {
-        sideMesh->extractEntitiesFromSTKMesh(*this,it->first);
-      }
-    }
-  }
+  // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
+  this->setSideSetMeshStructsFieldAndBulkData (commT, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructsExtraction();
 }
 
 double

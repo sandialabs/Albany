@@ -86,6 +86,19 @@ namespace Albany {
     //! Perform initial uniform refinement of the mesh
     void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
+    //! Creates empty mesh structs if required (and not already present)
+    void initializeSideSetMeshStructsExtraction (const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+    //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
+    void finalizeSideSetMeshStructsExtraction ();
+
+    //! Sets fields and bulk data in the side meshes
+    void setSideSetMeshStructsFieldAndBulkData(
+          const Teuchos::RCP<const Teuchos_Comm>& commT,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+          int worksetSize);
+
     //! Perform initial adaptation input checking
     void checkInput(std::string option, std::string value, std::string allowed_values);
 

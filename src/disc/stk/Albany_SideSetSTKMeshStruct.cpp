@@ -79,13 +79,15 @@ SideSetSTKMeshStruct::~SideSetSTKMeshStruct()
 }
 
 
-void SideSetSTKMeshStruct::setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                                const unsigned int neq_,
-                                                const AbstractFieldContainer::FieldContainerRequirements& req,
-                                                const Teuchos::RCP<StateInfoStruct>& sis,
-                                                const unsigned int worksetSize,
-                                                const Teuchos::RCP<std::map<std::string,Teuchos::RCP<StateInfoStruct> > >& ss_/*sis*/)
+void SideSetSTKMeshStruct::setFieldAndBulkData (
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<Teuchos::ParameterList>& /*params*/,
+      const unsigned int neq_,
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const Teuchos::RCP<StateInfoStruct>& sis,
+      const unsigned int worksetSize,
+      const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& /*side_set_sis*/,
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
   this->SetupFieldData(commT, neq_, req, sis, worksetSize);
   metaData->commit();

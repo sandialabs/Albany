@@ -93,7 +93,8 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis = Teuchos::null);
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -200,7 +201,8 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis);
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req);
 
   template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const;
   template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const;

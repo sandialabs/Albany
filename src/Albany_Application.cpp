@@ -370,6 +370,7 @@ void Albany::Application::createDiscretization() {
                                            stateMgr.getStateInfoStruct(),
                                            stateMgr.getSideSetStateInfoStruct(),
                                            problem->getFieldRequirements(),
+                                           problem->getSideSetFieldRequirements(),
                                            problem->getNullSpace());
 }
 
@@ -1261,7 +1262,6 @@ computeGlobalJacobianImplT(const double alpha,
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
-
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
       if (Teuchos::nonnull(nfm))
@@ -1315,8 +1315,7 @@ computeGlobalJacobianImplT(const double alpha,
 
   jacT->fillComplete();
 
-
- #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (overlapped_jacT->isFillActive()) {
     // Makes getLocalMatrix() valid.
   overlapped_jacT->fillComplete();

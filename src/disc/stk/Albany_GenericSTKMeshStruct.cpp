@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "Albany_GenericSTKMeshStruct.hpp"
+#include "Albany_SideSetSTKMeshStruct.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
@@ -675,6 +676,71 @@ void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
    }
 #endif
 
+}
+
+void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructsExtraction (const Teuchos::RCP<const Teuchos_Comm>& commT)
+{
+  if (params->isSublist ("Side Set Discretizations"))
+  {
+    const Teuchos::ParameterList& list = params->sublist("Side Set Discretizations");
+    Teuchos::Array<std::string> sideSets = list.get<Teuchos::Array<std::string> >("Side Sets");
+
+    Teuchos::RCP<Teuchos::ParameterList> params_ss;
+    for (int i(0); i<sideSets.size(); ++i)
+    {
+      const std::string& ss_name = sideSets[i];
+      if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
+      {
+        // The mesh on this side set was not already created (such as for the base for an Extrusion), so we build it
+
+        TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
+                                    "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
+
+        params_ss = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist(ss_name)));
+        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, commT));
+      }
+
+      // Update the side set mesh specs pointer in the mesh specs of this mesh
+      this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
+    }
+  }
+}
+
+void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructsExtraction ()
+{
+  if (this->sideSetMeshStructs.size()>0)
+  {
+    for (auto it=this->sideSetMeshStructs.begin(); it!=this->sideSetMeshStructs.end(); ++it)
+    {
+      Teuchos::RCP<Albany::SideSetSTKMeshStruct> sideMesh;
+      sideMesh = Teuchos::rcp_dynamic_cast<Albany::SideSetSTKMeshStruct>(it->second,false);
+      if (sideMesh!=Teuchos::null)
+      {
+        // This side set mesh was created as a SideSet mesh, so mesh entities need to be built
+        sideMesh->extractEntitiesFromSTKMesh(*this,it->first);
+      }
+    }
+  }
+}
+
+void Albany::GenericSTKMeshStruct::setSideSetMeshStructsFieldAndBulkData(
+          const Teuchos::RCP<const Teuchos_Comm>& commT,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+          int worksetSize)
+{
+  for (auto it : this->sideSetMeshStructs)
+  {
+    if (side_set_req.find(it.first)!=side_set_req.end())
+    {
+      it.second->setFieldAndBulkData(commT,params,neq,side_set_req.at(it.first),side_set_sis.at(it.first),worksetSize);
+    }
+    else
+    {
+      AbstractFieldContainer::FieldContainerRequirements empty_req;
+      it.second->setFieldAndBulkData(commT,params,neq,empty_req,side_set_sis.at(it.first),worksetSize);
+    }
+  }
 }
 
 void Albany::GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData){

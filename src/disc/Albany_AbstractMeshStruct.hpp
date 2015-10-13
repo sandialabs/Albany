@@ -116,7 +116,8 @@ struct AbstractMeshStruct {
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis = Teuchos::null) = 0;
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
 ;
 
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
@@ -131,6 +132,7 @@ struct AbstractMeshStruct {
     Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 
 };
-}
+
+} // Namespace Albany
 
 #endif // ALBANY_ABSTRACTMESHSTRUCT_HPP

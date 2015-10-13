@@ -116,6 +116,8 @@ namespace Albany {
     //! Get a list of the Special fields needed to implement the problem
     const AbstractFieldContainer::FieldContainerRequirements getFieldRequirements(){ return requirements; }
 
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>&
+      getSideSetFieldRequirements () const {return ss_requirements;}
   protected:
 
     //! List of valid problem params common to all problems, as
@@ -152,6 +154,8 @@ namespace Albany {
 
     //! Special fields needed to implement the problem
     AbstractFieldContainer::FieldContainerRequirements requirements;
+    //! Special fields defined on the side sets needed to implement the problem
+    std::map<std::string,AbstractFieldContainer::FieldContainerRequirements> ss_requirements;
 
     //! Null space object used to communicate with MP
     Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;

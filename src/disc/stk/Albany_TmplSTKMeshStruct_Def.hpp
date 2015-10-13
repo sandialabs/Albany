@@ -322,7 +322,9 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                                 nsNames, ssNames, worksetSize, partVec[eb]->name(),
                                 ebNameToIndex, this->interleavedOrdering, true));
     }
- }
+  }
+
+  this->initializeSideSetMeshStructsExtraction(commT);
 }
 
 template<unsigned Dim, class traits>
@@ -334,7 +336,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
 
   // Create global mesh: Dim-D structured, rectangular
@@ -705,7 +708,9 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
 
-
+  // Finally, setup the side set meshes (if any)
+  this->finalizeSideSetMeshStructsExtraction();
+  this->setSideSetMeshStructsFieldAndBulkData(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 template <unsigned Dim, class traits>
@@ -905,7 +910,8 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
-                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
 
   SetupFieldData(commT, neq_, req, sis, worksetSize);
@@ -920,7 +926,6 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
   // STK
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
-
 }
 
 template<>
