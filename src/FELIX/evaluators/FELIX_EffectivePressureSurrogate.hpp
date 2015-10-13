@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_EFFECTIVE_PRESSURE_HPP
-#define FELIX_EFFECTIVE_PRESSURE_HPP 1
+#ifndef FELIX_EFFECTIVE_PRESSURE_SURROGATE_HPP
+#define FELIX_EFFECTIVE_PRESSURE_SURROGATE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,15 +22,15 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits>
-class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
+class EffectivePressureSurrogate : public PHX::EvaluatorWithBaseImpl<Traits>,
                           public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  EffectivePressure (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+  EffectivePressureSurrogate (const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -40,16 +40,16 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node> phi;
-  PHX::MDField<ScalarT,Cell,Node> H;
-  PHX::MDField<ScalarT,Cell,Node> z_s;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint> H;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint> z_s;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> N;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint> N;
 
-  unsigned int numNodes;
+  std::string basalSideName;
 
-  bool   has_phi;
+  int numSideQPs;
+
   double alpha;
   double rho_i;
   double rho_w;
@@ -58,4 +58,4 @@ private:
 
 } // Namespace FELIX
 
-#endif // FELIX_EFFECTIVE_PRESSURE_HPP
+#endif // FELIX_EFFECTIVE_PRESSURE_SURROGATE_HPP

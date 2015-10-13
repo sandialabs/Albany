@@ -6,7 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_EffectivePressure.hpp"
-#include "FELIX_EffectivePressure_Def.hpp"
+#include "FELIX_BasalFrictionCoefficientGradient.hpp"
+#include "FELIX_BasalFrictionCoefficientGradient_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::EffectivePressure)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::BasalFrictionCoefficientGradient)
+

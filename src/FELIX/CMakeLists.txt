@@ -8,7 +8,8 @@
 
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
-       evaluators/FELIX_EffectivePressure.cpp
+       evaluators/FELIX_BasalFrictionCoefficientGradient.cpp
+       evaluators/FELIX_EffectivePressureSurrogate.cpp
        evaluators/FELIX_Elliptic2DResidual.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
@@ -17,9 +18,7 @@
        evaluators/FELIX_HydrologyMelting.cpp
        evaluators/FELIX_HydrologyResidual.cpp
        evaluators/FELIX_HydrologyRhs.cpp
-       evaluators/FELIX_QuadPointsToCellInterpolation.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
-       evaluators/FELIX_SaveSideSetStateField.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
@@ -72,8 +71,10 @@ ENDIF()
   SET(HEADERS
        evaluators/FELIX_BasalFrictionCoefficient.hpp
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
-       evaluators/FELIX_EffectivePressure.hpp
-       evaluators/FELIX_EffectivePressure_Def.hpp
+       evaluators/FELIX_BasalFrictionCoefficientGradient.hpp
+       evaluators/FELIX_BasalFrictionCoefficientGradient_Def.hpp
+       evaluators/FELIX_EffectivePressureSurrogate.hpp
+       evaluators/FELIX_EffectivePressureSurrogate_Def.hpp
        evaluators/FELIX_Elliptic2DResidual.hpp
        evaluators/FELIX_Elliptic2DResidual_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
@@ -90,12 +91,8 @@ ENDIF()
        evaluators/FELIX_HydrologyResidual_Def.hpp
        evaluators/FELIX_HydrologyRhs.hpp
        evaluators/FELIX_HydrologyRhs_Def.hpp
-       evaluators/FELIX_QuadPointsToCellInterpolation.hpp
-       evaluators/FELIX_QuadPointsToCellInterpolation_Def.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
-       evaluators/FELIX_SaveSideSetStateField.hpp
-       evaluators/FELIX_SaveSideSetStateField_Def.hpp
        evaluators/FELIX_StokesBodyForce.hpp
        evaluators/FELIX_StokesBodyForce_Def.hpp
        evaluators/FELIX_StokesContinuityResid.hpp
