@@ -79,11 +79,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
   intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid::OPERATOR_D2);
 
-  memoize_ = false;
-  if (p.isType<bool>("Memoize Basis Functions"))
-    memoize_ = p.get<bool>("Memoize Basis Functions");
-  if (memoize_) setupMemoization();
-
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 /*
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -408,7 +403,7 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  if (memoize_ && haveStoredData(workset)) return;
+  if (memoizer_.haveStoredData(workset)) return;
 
   /** The allocated size of the Field Containers must currently 
     * match the full workset size of the allocated PHX Fields, 
@@ -1020,19 +1015,4 @@ div_check(const int spatialDim, const int numelements) const
   }
 }
 
-//**********************************************************************
-
-template<typename EvalT, typename Traits>
-void ComputeBasisFunctions<EvalT, Traits>::
-setupMemoization () {
-  prev_workset_index_ = -1;
-}
-
-template<typename EvalT, typename Traits>
-bool ComputeBasisFunctions<EvalT, Traits>::
-haveStoredData (typename Traits::EvalData workset) {
-  const bool stored = workset.wsIndex == prev_workset_index_;
-  prev_workset_index_ = workset.wsIndex;
-  return stored;
-}
 }
