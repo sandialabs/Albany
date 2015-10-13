@@ -22,12 +22,12 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   numDim(numDim_)
 {
-  //Set # of PDEs per node based on the Equation Set.  
+  //Set # of PDEs per node based on the Equation Set.
   //Equation Set is FELIX by default (2 dofs / node -- usual FELIX Stokes FO).
-  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX"); 
-  if (eqnSet == "FELIX") 
+  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX");
+  if (eqnSet == "FELIX")
     neq = 2; //FELIX FO Stokes system is a system of 2 PDEs
-  else if (eqnSet == "Poisson" || eqnSet == "FELIX X-Z") 
+  else if (eqnSet == "Poisson" || eqnSet == "FELIX X-Z")
     neq = 1; //1 PDE/node for Poisson or FELIX X-Z physics
 
 
@@ -37,20 +37,20 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
   //written by IK, Feb. 2012
   //Check if we want to give ML RBMs (from parameterlist)
-  int numRBMs = params_->get<int>("Number RBMs for ML", 0); 
-  bool setRBMs = false;   
+  int numRBMs = params_->get<int>("Number RBMs for ML", 0);
+  bool setRBMs = false;
   if (numRBMs > 0) {
-    setRBMs = true; 
+    setRBMs = true;
     int numScalar = 0;
-    if (numRBMs == 2 || numRBMs == 3) 
+    if (numRBMs == 2 || numRBMs == 3)
       rigidBodyModes->setParameters(neq, numDim, numScalar, numRBMs, setRBMs);
     else
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs " 
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"The specified number of RBMs "
                                      << numRBMs << " is not valid!  Valid values are 0, 2 and 3.");
   }
 
   // Need to allocate a fields in mesh database
-  if (params->isParameter("RequiredFields"))
+  if (params->isParameter("Required Fields"))
   {
     // Need to allocate a fields in mesh database
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
@@ -70,6 +70,25 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     this->requirements.push_back("flow_factor");
     this->requirements.push_back("surface_velocity");
     this->requirements.push_back("surface_velocity_rms");
+  }
+
+  if (params->isSublist("FELIX Basal Friction Coefficient"))
+  {
+    sliding = true;
+    basalSideName = params->sublist("FELIX Basal Friction Coefficient").get<std::string>("Basal Side Name");
+
+    if (params->isParameter("Required Basal Fields"))
+    {
+      // Need to allocate a fields in basal mesh database
+      Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
+      for (int i(0); i<req.size(); ++i)
+        this->ss_requirements[basalSideName].push_back(req[i]);
+    }
+  }
+  else
+  {
+    sliding = false;
+    basalSideName = "";
   }
 }
 
@@ -91,10 +110,10 @@ buildProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
-		  Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
+      Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
-  
+
   if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
      constructNeumannEvaluators(meshSpecs[0]);
 }
@@ -197,15 +216,11 @@ void FELIX::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::Mes
    condNames[4] = "lateral";
    condNames[5] = "basal_scalar_field";
 
-   std::vector< Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > > extra_evaluators;
-   ConstructBasalEvaluatorOp constructor(*this,extra_evaluators);
-   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(constructor);
-
    nfm.resize(1); // FELIX problem only has one element block
 
    nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
                                            condNames, offsets, dl,
-                                           this->params, this->paramLib, extra_evaluators);
+                                           this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -213,9 +228,9 @@ FELIX::StokesFO::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesFOProblemParams");
-    
+
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
-  validPL->set<bool>("Ice-Hydrology Coupling", false, "If true, saves basalside quantities needed by the Hydrology model");
+  validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
   validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
@@ -224,8 +239,6 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("Body Force", false, "");
   validPL->sublist("FELIX Physical Parameters", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
+
   return validPL;
 }
-
-// Instantiating the homotopy parameter holder class
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HomotopyParamValue)

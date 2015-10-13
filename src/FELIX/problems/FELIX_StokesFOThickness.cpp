@@ -23,7 +23,7 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_)
 {
   //Set # of PDEs per node.
-  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX"); 
+  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX");
   neq = 3; //FELIX FO Stokes system is a system of 2 PDEs
 
 
@@ -34,8 +34,8 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Need to allocate a fields in mesh database
   this->requirements.push_back("surface_height");
 #ifdef CISM_HAS_FELIX
-  this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM 
-  this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM 
+  this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM
+  this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM
 #endif
   this->requirements.push_back("temperature");
   this->requirements.push_back("basal_friction");
@@ -62,10 +62,10 @@ buildProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
-		  Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
+      Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
-  
+
   if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
      constructNeumannEvaluators(meshSpecs[0]);
 }
@@ -205,6 +205,7 @@ FELIX::StokesFOThickness::getValidProblemParameters() const
   validPL->sublist("FELIX Physical Parameters", false, "");
   validPL->set<double>("Time Step", 1.0, "Time step for divergence flux ");
   validPL->set<Teuchos::RCP<double> >("Time Step Ptr", Teuchos::null, "Time step ptr for divergence flux ");
+  validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   return validPL;
 }

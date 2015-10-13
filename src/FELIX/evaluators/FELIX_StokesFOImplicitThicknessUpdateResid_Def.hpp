@@ -32,7 +32,7 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   Teuchos::ParameterList* p_list =
       p.get<Teuchos::ParameterList*>("Physical Parameter List");
 
-  g = p_list->get("Gravity", 9.8);
+  g = p_list->get("Gravity Acceleration", 9.8);
   rho = p_list->get("Ice Density", 910.0);
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -54,8 +54,8 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
 
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX StokesFOImplicitThicknessUpdate residual! " << std::endl;
-*out << " numQPs = " << numQPs << std::endl; 
-*out << " numNodes = " << numNodes << std::endl; 
+*out << " numQPs = " << numQPs << std::endl;
+*out << " numNodes = " << numNodes << std::endl;
 #endif
 }
 
@@ -80,7 +80,7 @@ template<typename EvalT, typename Traits>
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST; 
+  typedef Intrepid::FunctionSpaceTools FST;
 
   // Initialize residual to 0.0
   Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));

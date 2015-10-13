@@ -33,11 +33,11 @@ namespace FELIX {
    */
   class StokesFOThickness : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     StokesFOThickness(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		 const Teuchos::RCP<ParamLib>& paramLib,
-		 const int numDim_);
+     const Teuchos::RCP<ParamLib>& paramLib,
+     const int numDim_);
 
     //! Destructor
     ~StokesFOThickness();
@@ -66,7 +66,7 @@ namespace FELIX {
 
     //! Private to prohibit copying
     StokesFOThickness(const StokesFOThickness&);
-    
+
     //! Private to prohibit copying
     StokesFOThickness& operator=(const StokesFOThickness&);
 
@@ -135,31 +135,31 @@ FELIX::StokesFOThickness::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-  
+
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
-  
+
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-  
+
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
   int vecDimFO = std::min((int)neq,(int)2);
   std::string elementBlockName = meshSpecs.ebName;
 
 #ifdef OUTPUT_TO_SCREEN
-  *out << "Field Dimensions: Workset=" << worksetSize 
+  *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim 
+       << ", Dim= " << numDim
        << ", vecDimFO= " << vecDimFO << std::endl;
 #endif
-  
+
    Albany::StateStruct::MeshFieldEntity entity;
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDimFO));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -399,16 +399,15 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
     p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
-   
+
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("QP Variable Name", "Velocity");
-    p->set<std::string>("QP Time Derivative Variable Name", "Velocity_dot");
-    p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<std::string>("Body Force Name", "Body Force");
-    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-    
+    p->set<std::string>("Weighted BF Variable Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Variable Name", "wGrad BF");
+    p->set<std::string>("Velocity QP Variable Name", "Velocity");
+    p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+    p->set<std::string>("Body Force Variable Name", "Body Force");
+    p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+
     Teuchos::ParameterList& paramList = params->sublist("Equation Set");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -479,24 +478,24 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
 
     //Input
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<std::string>("QP Variable Name", "Velocity");
-    p->set<std::string>("temperature Name", "temperature");
-    p->set<std::string>("flow_factor Name", "flow_factor");
-    
+    p->set<std::string>("iVelocity QP Variable Name", "Velocity");
+    p->set<std::string>("Temperature Variable Name", "temperature");
+    p->set<std::string>("Flow Factor Variable Name", "flow_factor");
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
+
     //Output
-    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
 
     ev = rcp(new FELIX::ViscosityFO<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
+
   }
-  
+
   //std::cout << __FILE__<<":"<<__LINE__<<std::endl;
 
 
@@ -505,20 +504,20 @@ FELIX::StokesFOThickness::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Surface Gradient"));
 
     //Input
-    p->set<std::string>("xgrad_surface_height Name", "xgrad_surface_height");
-    p->set<std::string>("ygrad_surface_height Name", "ygrad_surface_height");
-    p->set<std::string>("BF Name", "BF");
-    
+    p->set<std::string>("CISM Surface Height Gradient X Variable Name", "xgrad_surface_height");
+    p->set<std::string>("CISM Surface Height Gradient X Variable Name", "ygrad_surface_height");
+    p->set<std::string>("BF Variable Name", "BF");
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Surface Gradient");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
+
     //Output
-    p->set<std::string>("FELIX Surface Gradient QP Name", "FELIX Surface Gradient");
+    p->set<std::string>("Surface Gradient QP Varible Name", "FELIX Surface Gradient");
 
     ev = rcp(new FELIX::CismSurfaceGradFO<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
+
   }
 #endif
 
@@ -529,21 +528,21 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
 
     //Input
-    p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
 #ifdef CISM_HAS_FELIX
-    p->set<std::string>("FELIX Surface Gradient QP Variable Name", "FELIX Surface Gradient");
+    p->set<std::string>("Surface Gradient QP Variable Name", "FELIX Surface Gradient");
 #endif
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<std::string>("surface_height Gradient Name", "surface_height Gradient");
-    
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+    p->set<std::string>("Surface Height Gradient Name", "surface_height Gradient");
+
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-      
+
     Teuchos::ParameterList& physParamList = params->sublist("FELIX Physical Parameters");
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
-    
+
     //Output
-    p->set<std::string>("Body Force Name", "Body Force");
+    p->set<std::string>("Body Force Variable Name", "Body Force");
 
     ev = rcp(new FELIX::StokesFOBodyForce<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -567,9 +566,9 @@ FELIX::StokesFOThickness::constructEvaluators(
 
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    
+
     entity= Albany::StateStruct::NodalDataToElemNode;
- 
+
     {
       std::string stateName("surface_velocity");
       RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
