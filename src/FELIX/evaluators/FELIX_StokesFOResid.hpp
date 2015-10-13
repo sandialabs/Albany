@@ -22,7 +22,7 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits>
 class StokesFOResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		        public PHX::EvaluatorDerived<EvalT, Traits>  {
+            public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
@@ -30,7 +30,7 @@ public:
                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+           PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -40,20 +40,20 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>       force;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>       U;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint>              muFELIX;
 
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>            basalRes;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim>     coordVec;
 
   enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
   EQNTYPE eqn_type;
-  
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
@@ -64,20 +64,20 @@ private:
   bool enableTransient;
   Teuchos::ParameterList* stereographicMapList;
   bool useStereographicMap;
-
+  bool needsBasalResidual;
 
 //KOKKOS:
  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  
+
   struct FELIX_3D_Tag{};
   struct POISSON_3D_Tag{};
   struct FELIX_2D_Tag{};
   struct FELIX_XZ_2D_Tag{};
   struct POISSON_2D_Tag{};
-  
+
   typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_3D_Tag> FELIX_3D_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,POISSON_3D_Tag> POISSON_3D_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,FELIX_2D_Tag> FELIX_2D_Policy;
@@ -93,7 +93,7 @@ private:
   KOKKOS_INLINE_FUNCTION
   void operator() (const FELIX_XZ_2D_Tag& tag, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const POISSON_2D_Tag& tag, const int& cell) const; 
+  void operator() (const POISSON_2D_Tag& tag, const int& cell) const;
 
 #endif
 };
