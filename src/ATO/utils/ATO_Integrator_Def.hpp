@@ -1053,10 +1053,12 @@ uint _maxRefs, RealType _maxErr):
     int nFaces = topo.side_count;
     for(int iside=0; iside<nFaces; iside++){
 
-      std::vector<Vector3D<RealType>::Type> V(nFaceVerts,Vector3D<RealType>::Type(nDims));
-      for(int inode=0; inode<nFaceVerts; inode++)
+      std::vector<Vector3D<RealType>::Type> V(nFaceVerts);
+      for(int inode=0; inode<nFaceVerts; inode++){
+        V[inode].clear();
         for(uint idim=0; idim<nDims; idim++)
           V[inode](idim) = parentCoords(topo.side[iside].node[inode],idim);
+      }
       
       Vector3D<RealType>::Type sideCenter(V[0]);
       for(int inode=1; inode<nFaceVerts; inode++) sideCenter += V[inode];
@@ -1088,7 +1090,7 @@ uint _maxRefs, RealType _maxErr):
     }
 
     const int nVerts = topo.vertex_count;
-    std::vector<Vector3D<RealType>::Type> V(nVerts,Vector3D<RealType>::Type(nDims));
+    std::vector<Vector3D<RealType>::Type> V(nVerts);
     for(int inode=0; inode<nVerts; inode++){
       V[inode].clear();
       for(uint idim=0; idim<nDims; idim++)

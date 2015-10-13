@@ -50,12 +50,12 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;  //vecDim works but its really Dim+1
+  PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1
   PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
   PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDotDot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> UDot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDot;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
@@ -85,10 +85,11 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
+  Intrepid::FieldContainer<ScalarT> wrk_;
 #endif
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
-  PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
-  PHX::MDField<ScalarT,Cell,Node> theta_nodal;
+  PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
+  PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> source;
 
   ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities

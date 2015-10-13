@@ -562,6 +562,7 @@ Optimizer_OC::computeUpdatedTopology()
     solverInterface->ComputeVolume(p, vol);
     double f1 =  (vol - _volConstraint*_optVolume);
 
+    if( f1-f0 == 0.0 ) break;
     lambda -= epsilon*f0/(f1-f0);
 
     niters++;

@@ -33,6 +33,7 @@
        evaluators/Aeras_XZHydrostatic_SurfaceGeopotential.cpp
        evaluators/Aeras_XZHydrostatic_UTracer.cpp
        evaluators/Aeras_XZHydrostatic_VirtualT.cpp
+       evaluators/Aeras_EvaluatorUtilities.hpp
        problems/Aeras_XZHydrostaticProblem.cpp
        problems/Aeras_HydrostaticProblem.cpp
        problems/Aeras_Layouts.cpp

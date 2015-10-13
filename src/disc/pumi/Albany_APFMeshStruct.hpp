@@ -78,6 +78,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
 
     bool hasRestartSolution;
     double restartDataTime;
+    int restartWriteStep;
+
     int neq;
     int numDim;
     int cubatureDegree;

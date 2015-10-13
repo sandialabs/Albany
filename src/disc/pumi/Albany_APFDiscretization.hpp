@@ -43,6 +43,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Initialize this class
     void init();
 
+    //! Set any restart data
+    virtual void setRestartData() {}
+
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
@@ -122,6 +125,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+
+    void writeRestartFile(const double time);
 
     virtual void writeMeshDebug (const std::string& filename);
 
@@ -318,6 +323,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
+  protected:
+
     //! Transfer PUMIQPData to APF
     void copyQPScalarToAPF(unsigned nqp, std::string const& state, apf::Field* f);
     void copyQPVectorToAPF(unsigned nqp, std::string const& state, apf::Field* f);
@@ -334,6 +341,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     // Transfer nodal data to/from APF.
     void copyNodalDataToAPF(const bool copy_all);
     void removeNodalDataFromAPF();
+
+  private:
 
     // ! Split Solution fields
     std::vector<std::string> solNames;
@@ -475,6 +484,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // counter for limiting data writes to output file
     int outputInterval;
+
+    // counter for the continuation step number
+    int continuationStep;
 
     // Mesh adaptation stuff.
     Teuchos::RCP<AAdapt::rc::Manager> rcm;
