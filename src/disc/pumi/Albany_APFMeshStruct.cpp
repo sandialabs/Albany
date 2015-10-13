@@ -120,11 +120,12 @@ static void getEBSizes(
 
 void Albany::APFMeshStruct::init(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<const Teuchos_Comm>& commT)
+    const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
+  useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
 
   compositeTet = false;
 
@@ -261,9 +262,13 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     /* field may have been created by restart mechanism */
     if (mesh->findField(solution_name))
       solutionInitialized = true;
-    else
+    else {
       this->createNodalField(solution_name,valueType);
-  } else
+      if (hasRestartSolution)
+        solutionInitialized = true;
+    }
+  }
+  else
     splitFields(solVectorLayout);
 
   // Code to parse the vector of StateStructs and save the information
@@ -303,6 +308,11 @@ Albany::APFMeshStruct::setFieldAndBulkData(
          "st.entity != Albany::StateStruct::QuadPoint || " <<
          "st.entity != Albany::StateStruct::ElemNode || " <<
          "st.entity != Albany::StateStruct::NodalData" << std::endl);
+
+    // quick hack to get restarts working
+    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
+      if (hasRestartSolution)
+        st.restartDataAvailable = true;
   }
 }
 
@@ -329,6 +339,8 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
     this->createNodalField(fieldLayout[i].append("Res").c_str(),valueType);
   }
 
+  if (hasRestartSolution)
+    solutionInitialized = true;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
@@ -405,6 +417,9 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
                      "Temporary hack to get MueLu (possibly) working for us");
 
   validPL->set<std::string>("Model Associations File Name", "", "File with element block/sideset/nodeset associations");
+
+  validPL->set<bool>("QP Temperature from Nodes", false,
+                     "Hack to initialize QP Temperature from Solution");
 
   return validPL;
 }

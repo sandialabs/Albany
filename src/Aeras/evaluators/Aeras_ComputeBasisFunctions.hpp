@@ -13,9 +13,12 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Aeras_Layouts.hpp"
+#include "Aeras_EvaluatorUtilities.hpp"
 
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
+
+namespace Albany { class StateManager; }
 
 namespace Aeras {
 
@@ -66,8 +69,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord; 
-  PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
-  PHX::MDField<ScalarT,Cell,Node> theta_nodal;
+  PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
+  PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
   PHX::MDField<MeshScalarT,Cell,QuadPoint>     jacobian_det; 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> jacobian_inv_node;
@@ -78,7 +81,6 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> GradGradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
          
-         
   const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
   void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
@@ -86,6 +88,8 @@ private:
                             const int e,
                             const double rrearth=1) const;
   void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
+
+  MDFieldMemoizer<Traits> memoizer_;
 
   // Kokkos
 /*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

@@ -26,8 +26,8 @@
 namespace Albany {
   //! Small container to hold periodicBC info for use in setting coordinates
   struct PeriodicBCStruct {
-    PeriodicBCStruct() 
-       {periodic[0]=false; periodic[1]=false; periodic[2]=false; 
+    PeriodicBCStruct()
+       {periodic[0]=false; periodic[1]=false; periodic[2]=false;
         scale[0]=1.0; scale[1]=1.0; scale[2]=1.0; };
     bool periodic[3];
     double scale[3];
@@ -87,19 +87,19 @@ namespace Albany {
 
     virtual bool useCompositeTet() = 0;
 
-    //Flag for transforming STK mesh; currently only needed for FELIX/Aeras problems 
+    //Flag for transforming STK mesh; currently only needed for FELIX/Aeras problems
     std::string transformType;
-    //alpha and L are parameters read in from ParameterList for FELIX problems 
-    double felixAlpha; 
-    double felixL; 
-    
-    //Points per edge in creating enriched spectral mesh in Aeras::SpectralDiscretization (for Aeras only). 
+    //alpha and L are parameters read in from ParameterList for FELIX problems
+    double felixAlpha;
+    double felixL;
+
+    //Points per edge in creating enriched spectral mesh in Aeras::SpectralDiscretization (for Aeras only).
     int points_per_edge;
 
     bool contigIDs; //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
 
     //boolean flag for writing coordinates to matrix market file (e.g., for ML analysis)
-    bool writeCoordsToMMFile; 
+    bool writeCoordsToMMFile;
 
     // Info to map element block to physics set
     bool allElementBlocksHaveSamePhysics;

@@ -27,8 +27,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PostProcess.py
                ${CMAKE_CURRENT_BINARY_DIR}/PostProcess.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_hard_implicit.py
-               ${CMAKE_CURRENT_BINARY_DIR}/plot_hard_implicit.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlotHardImplicit.py
+               ${CMAKE_CURRENT_BINARY_DIR}/PlotHardImplicit.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.gnuplot
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.gnuplot COPYONLY)
 

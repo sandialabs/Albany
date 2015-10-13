@@ -50,10 +50,6 @@ if __name__ == "__main__":
     pd_target_z = 0.03125
     fem_target_y = 0.0
     fem_target_z = 0.0
-#    pd_target_y = -0.21875
-#    pd_target_z = 0.09375
-#    fem_target_y = -0.25
-#    fem_target_z = 0.125
     tol = 1.0e-3
 
     pd_initial_data = []

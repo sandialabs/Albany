@@ -90,6 +90,17 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
 
+   //IKT, 9/30/15: error check that the user is not trying to prescribe periodic BCs for a problem other than a 1D one.  
+   //Periodic BCs are only supported for 1D (xz-hydrostatic) problems.
+  int numPeriodicBCs = 0; 
+  for (int dim=0; dim<stkMeshStruct->numDim; dim++)
+     if (stkMeshStruct->PBCStruct.periodic[dim])
+       numPeriodicBCs++; 
+  if ((stkMeshStruct->numDim>1) && (numPeriodicBCs>0))
+    TEUCHOS_TEST_FOR_EXCEPTION(
+       true, std::logic_error, "Aeras::SpectralDiscretization constructor: periodic BCs are only supported for 1D spectral elements!  " 
+            << "You are attempting to specify periodic BCs for a " << stkMeshStruct->numDim << "D problem." << std::endl);
+
   // Get from parameter list how many points per edge we have (default
   // = 2: no enrichment)
   points_per_edge = stkMeshStruct->points_per_edge;
@@ -1210,9 +1221,9 @@ void Aeras::SpectralDiscretization::enrichMeshLines()
 
       // Create new interior nodes for the enriched element
       GO offset = maxGID + gid(element) * (np-2);
-      for (unsigned ii = 0; ii < np-2; ++ii)
-        wsElNodeID[ibuck][ielem][ii+1] =
-          offset + ii - 1;
+      for (unsigned ii = 0; ii < np-2; ++ii) {
+        wsElNodeID[ibuck][ielem][ii+1] = offset + ii; 
+       }
     }
   }
 }
@@ -1911,9 +1922,36 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
 
       // Get the coordinates value along this axis of the end nodes
       // from the STK mesh
-      for (size_t ii = 0; ii < 2; ++ii)
+      for (size_t ii = 0; ii < 2; ++ii) {
         c[ii] = stk::mesh::field_data(*coordinates_field,
                                       stkNodes[ii])[0];
+      }
+      //The following is for periodic BCs.  This will only be relevant for the x-z hydrostatic equations.
+      if (stkMeshStruct->PBCStruct.periodic[0])
+      {
+        bool anyXeqZero=false;
+        for (int j=0; j < 2; j++) {
+          if (c[j] == 0.0)
+            anyXeqZero=true;
+        }
+        if (anyXeqZero)
+        {
+          bool flipZeroToScale=false;
+          for (int j=0; j < 2; j++)
+            if (c[j] > stkMeshStruct->PBCStruct.scale[0]/1.9)
+              flipZeroToScale=true;
+          if (flipZeroToScale)
+          {
+            for (int j=0; j < 2; j++)
+            {
+              if (c[j] == 0.0)
+              {
+                c[j] = stkMeshStruct->PBCStruct.scale[0]; 
+              }
+            }
+          }
+        }
+      }
       for (size_t inode = 0; inode < np; ++inode)
       {
         double x = refCoords(inode,0);
@@ -2796,7 +2834,9 @@ void Aeras::SpectralDiscretization::createOutputMesh()
         discParams,
         commT,
         stkMeshStruct->numDim,
-        stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
+        stkMeshStruct->getMeshSpecs()[0]->worksetSize,
+        stkMeshStruct->PBCStruct.periodic[0], 
+        stkMeshStruct->PBCStruct.scale[0], 
         wsElNodeID,
         coords,
         points_per_edge, element_name));

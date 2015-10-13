@@ -77,7 +77,7 @@ solve(
     }
   }
 
-  Intrepid::computeFADInfo(b, DbDx, x);
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -133,7 +133,7 @@ solve(
     }
   }
 
-  Intrepid::computeFADInfo(b, DbDx, x);
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -189,7 +189,7 @@ solve(
     }
   }
 
-  Intrepid::computeFADInfo(b, DbDx, x);
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -261,7 +261,7 @@ solve(
     }
   }
 
-  Intrepid::computeFADInfo(b, DbDx, x);
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -317,7 +317,7 @@ solve(
     }
   }
 
-  Intrepid::computeFADInfo(b, DbDx, x);
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -391,7 +391,7 @@ solve(
     }
   }
 
-  Intrepid::computeFADInfo(b, DbDx, x);
+  computeFADInfo(b, DbDx, x);
 
   return;
 }
@@ -447,7 +447,7 @@ solve(
     }
   }
 
-  Intrepid::computeFADInfo(b, DbDx, x);
+  computeFADInfo(b, DbDx, x);
 
   return;
 }

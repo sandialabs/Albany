@@ -4,8 +4,11 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="XZHydrostatic Problem">
       <!--Parameter name="Reynolds Number" type="double" value="0.02"/-->
+    <!--Parameter name="Topography Type" type="string" value="Mountain1"/-->
+                                                              <!-- center width height --> 
+    <!--Parameter name="Topography Data" type="Array(double)" value="{150.0, 50.0, 1.0}"/-->
       <Parameter name="Number of Vertical Levels" type="int" value="30"/>
-      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Cloud}"/>
+      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Cloud,Rain}"/>
       <Parameter name="P0" type="double" value="101325.0"/>
       <Parameter name="Ptop" type="double" value="101.325"/>
       <Parameter name="Compute Cloud Physics" type="bool" value="false"/>
@@ -33,7 +36,8 @@
     <Parameter name="Workset Size" type="int" value="1000"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/>
+    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic_gb_epetra.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

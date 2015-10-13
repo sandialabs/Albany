@@ -9,7 +9,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 #if defined(HAVE_STK)
 #include "Albany_STKDiscretization.hpp"
-#ifdef ALBANY_AERAS 
+#ifdef ALBANY_AERAS
 #include "Aeras_SpectralDiscretization.hpp"
 #endif
 #include "Albany_TmplSTKMeshStruct.hpp"
@@ -36,6 +36,10 @@
 #ifdef ALBANY_SCOREC
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
+#endif
+#ifdef ALBANY_GOAL
+#include "Albany_GOALDiscretization.hpp"
+#include "Albany_GOALMeshStruct.hpp"
 #endif
 #ifdef ALBANY_AMP
 #include "Albany_SimDiscretization.hpp"
@@ -267,13 +271,14 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     Ioss::Init::Initializer io;
     Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data =Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
     mesh_data->set_bulk_data(*meshStruct2D->bulkData);
-    size_t idx = mesh_data->create_output_mesh("IceSheet.exo", stk::io::WRITE_RESULTS);
+    size_t idx = mesh_data->create_output_mesh("mesh.exo", stk::io::WRITE_RESULTS);
     mesh_data->process_output_request(idx, 0.0);
+    meshStruct = meshStruct2D;
 #endif
   }
 #ifdef ALBANY_FELIX
   else if(method == "Extruded") {
-  	  meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, commT));
+      meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, commT));
   }
 #endif
 #endif
@@ -289,13 +294,23 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 #endif
   }
 
-  else 
+  else
 #endif
   if(method == "PUMI") {
 #ifdef ALBANY_SCOREC
     meshStruct = Teuchos::rcp(new Albany::PUMIMeshStruct(discParams, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif
+  }
+  else if(method == "PUMI Hierarchic") {
+#ifdef ALBANY_GOAL
+    meshStruct = Teuchos::rcp(new Albany::GOALMeshStruct(discParams, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
                                Teuchos::Exceptions::InvalidParameter,
                                "Error: Discretization method " << method
                                << " requested, but not compiled in" << std::endl);
@@ -314,9 +329,10 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
-                               "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams
-                               << "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss,  Ioss Aeras," <<
-                                  " Exodus, Exodus Aeras, Cubit, PUMI, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
+                               "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams <<
+                               "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
+                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Mpas, Ascii," <<
+                               " Ascii2D, Extruded" << std::endl);
   }
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
@@ -325,26 +341,26 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   createInterfaceParts(adaptParams, meshStruct);
 #endif // ALBANY_LCM
 
-  //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization, 
-  //overwrite the meshSpecs of the meshStruct with an enriched one. 
+  //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization,
+  //overwrite the meshSpecs of the meshStruct with an enriched one.
 #if defined(ALBANY_AERAS) && defined(HAVE_STK)
-  if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") { 
-    //get "Element Degree" from parameter list.  Default value is 1. 
-    int points_per_edge = discParams->get("Element Degree", 1) + 1; 
+  if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
+    //get "Element Degree" from parameter list.  Default value is 1.
+    int points_per_edge = discParams->get("Element Degree", 1) + 1;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > &mesh_specs_struct = meshStruct->getMeshSpecs();
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type number_blocks = mesh_specs_struct.size();
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > enriched_mesh_specs_struct; 
-    enriched_mesh_specs_struct.resize(number_blocks); 
-    for (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type i=0; i< number_blocks; i++) { 
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > enriched_mesh_specs_struct;
+    enriched_mesh_specs_struct.resize(number_blocks);
+    for (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type i=0; i< number_blocks; i++) {
       Teuchos::RCP<Albany::MeshSpecsStruct> orig_mesh_specs_struct = mesh_specs_struct[i];
       Aeras::AerasMeshSpectStruct aeras_mesh_specs_struct;
-      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, points_per_edge); 
+      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, points_per_edge);
     }
     return enriched_mesh_specs_struct;
   }
-  else 
+  else
 #endif
-    return meshStruct->getMeshSpecs(); 
+    return meshStruct->getMeshSpecs();
 
 }
 
@@ -383,9 +399,9 @@ void
 Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-  const AbstractFieldContainer::FieldContainerRequirements& req) {
-  meshStruct->setFieldAndBulkData(commT, discParams, neq, req,
-                                  sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+  const AbstractFieldContainer::FieldContainerRequirements& req)
+{
+  meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -399,15 +415,15 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
   std::string& method = discParams->get("Method", "STK1D");
 
   //IK, 1/8/15: added a method called "Ioss Aeras" and "Exodus Aeras" (which are equivalent)
-  //which would tell the code to read in an Ioss (Exodus) linear mesh and then 
+  //which would tell the code to read in an Ioss (Exodus) linear mesh and then
   //refine it.  Changed the logic here so that the switch statement on meshSpecsType() is only hit if the method is not Ioss Aeras
   //or Exodus Aeras.
-  //If it is Ioss Aeras or Exodus Aeras we use the Aeras::SpectralDiscretization class (right now just a dummy class that's a copy of 
+  //If it is Ioss Aeras or Exodus Aeras we use the Aeras::SpectralDiscretization class (right now just a dummy class that's a copy of
   //Albany::STKDiscretization).  The class will impelement the enrichment of a linear mesh to get higher order meshes.
   //
   //NOTE: one may want to create STK Aeras methods too if for example the Aeras::SpectralDiscretization class can refine
   //meshes created internally to Albany, if this is of interest.
-  
+
   if(method != "Ioss Aeras" && method != "Exodus Aeras" && method != "STK1D Aeras") {
     switch(meshStruct->meshSpecsType()) {
 #if defined(HAVE_STK)
@@ -432,6 +448,14 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       }
       break;
 #endif
+#ifdef ALBANY_GOAL
+      case Albany::AbstractMeshStruct::GOAL_MS: {
+        Teuchos::RCP<Albany::GOALMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::GOALMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::GOALDiscretization(ms, commT, rigidBodyModes));
+      }
+      break;
+#endif
+
 #ifdef ALBANY_AMP
       case Albany::AbstractMeshStruct::SIM_MS: {
         Teuchos::RCP<Albany::SimMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::SimMeshStruct>(meshStruct);
@@ -441,12 +465,13 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 #endif
     }
   }
+
 #if defined(ALBANY_AERAS) && defined(HAVE_STK)
   else if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
     //IK, 1/8/15: Added construction of Aeras::SpectralDiscretization object.
     //WARNING: meshSpecsType() right now is set to STK_MS even for an Aeras::SpectralDiscretization, b/c that's how
     //the code is structured.  That should be OK since meshSpecsType() is not used anywhere except this function.
-    //But one may want to change it to, e.g., AERAS_MS, to prevent confusion. 
+    //But one may want to change it to, e.g., AERAS_MS, to prevent confusion.
       Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
       return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, commT, rigidBodyModes));
     }

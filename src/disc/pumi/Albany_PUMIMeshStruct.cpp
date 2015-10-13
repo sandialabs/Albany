@@ -144,7 +144,22 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     ma::adapt(input);
   }
 
+  // get the continuation step to write a restart file
+  restartWriteStep = params->get<int>("Write Restart File at Step",0);
+
   APFMeshStruct::init(params, commT);
+
+  // if we have a restart time, we will want to override some of
+  // the default paramaters set by APFMeshStruct::init
+  if (params->isParameter("PUMI Restart Time")) {
+    hasRestartSolution = true;
+    restartDataTime = params->get<double>("PUMI Restart Time", 0.0);
+    std::string name = params->get<std::string>("PUMI Input File Name");
+    if (!PCU_Comm_Self())
+      std::cout << "Restarting from time: " << restartDataTime
+        << " from restart file: " << name << std::endl;
+  }
+
 }
 
 Albany::PUMIMeshStruct::~PUMIMeshStruct()
@@ -194,6 +209,9 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("PUMI Output File Name", "", "File Name For PUMI Mesh Output");
   validPL->set<std::string>("Mesh Model Input File Name", "", "meshmodel geometry file");
 
+  validPL->set<int>("Write Restart File at Step", 0, "Continuation step to write restart files");
+  validPL->set<double>("PUMI Restart Time", 0, "Simulation time to restart from");
+
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
 
   // Parameters to refine the mesh after input
@@ -207,6 +225,9 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
   validPL->set<bool>("Hexahedral", true, "Build hexahedral elements");
+
+  // this will do nothing unless this is a GOAL mesh struct
+  validPL->set<int>("Polynomial Order", 1, "Polynomial order of solution basis functions");
 
   return validPL;
 }

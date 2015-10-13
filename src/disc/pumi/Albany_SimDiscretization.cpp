@@ -13,6 +13,7 @@ Albany::SimDiscretization::SimDiscretization(
     const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_):
   APFDiscretization(meshStruct_, commT_, rigidBodyModes_)
 {
+  init();
 }
 
 Albany::SimDiscretization::~SimDiscretization()

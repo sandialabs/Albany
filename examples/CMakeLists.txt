@@ -179,8 +179,8 @@ ENDIF()
 
 # FELIX ##################
 
-IF(ALBANY_FELIX)
-  add_subdirectory(FELIX_Stokes)
+IF(ALBANY_FELIX AND ALBANY_SEACAS )
+  add_subdirectory(FELIX)
 ENDIF()
 
 # Aeras ##################

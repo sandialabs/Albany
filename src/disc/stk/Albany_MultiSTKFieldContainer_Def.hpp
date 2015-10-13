@@ -220,7 +220,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   }
 #endif
 
-  this->buildStateStructs(sis);
+  this->addStateStructs(sis);
 
   initializeSTKAdaptation();
 

@@ -14,9 +14,177 @@
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
 #include <Intrepid_MiniTensor.h>
+#include "Intrepid_MiniTensor_Solvers.h"
 
 namespace LCM
 {
+
+namespace CP
+{
+
+  static constexpr Intrepid::Index MAX_NUM_DIM = 3;
+  static constexpr Intrepid::Index MAX_NUM_SLIP = 12;
+
+  //! \brief Struct to slip system information
+  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT>
+  struct SlipSystemStruct {
+
+    SlipSystemStruct() {}
+
+    // slip system vectors
+    Intrepid::Vector<RealType, NumDimT> s_, n_;
+
+    // Schmid Tensor
+    Intrepid::Tensor<RealType, NumDimT> projector_;
+
+    // flow rule parameters
+    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_, Rd_;
+  };
+
+  // Check tensor for NaN and inf values.
+  template<Intrepid::Index NumDimT, typename ArgT>
+  void
+  confirmTensorSanity(
+      Intrepid::Tensor<ArgT, NumDimT> const & input,
+      std::string const & message);
+
+  // Compute Lp_np1 and Fp_np1 based on computed slip increment
+  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+  void
+  applySlipIncrement(
+      std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+      Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
+      Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
+      Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
+      Intrepid::Tensor<ArgT, NumDimT> & Lp_np1,
+      Intrepid::Tensor<ArgT, NumDimT> & Fp_np1);
+
+  // Update the hardness
+  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+  void
+  updateHardness(
+      std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+      Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
+      Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
+      Intrepid::Vector<ArgT, NumSlipT> & hardness_np1);
+
+  /// Evaluate the slip residual
+  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+  void
+  computeResidual(
+      std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+      ScalarT dt,
+      Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
+      Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
+      Intrepid::Vector<ArgT, NumSlipT> const & hardness_np1,
+      Intrepid::Vector<ArgT, NumSlipT> const & shear_np1,
+      Intrepid::Vector<ArgT, NumSlipT> & slip_residual,
+      ArgT & norm_slip_residual);
+
+  /// Compute stress
+  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+  void
+  computeStress(
+      std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+      Intrepid::Tensor4<RealType, NumDimT> const & C,
+      Intrepid::Tensor<ScalarT, NumDimT> const & F,
+      Intrepid::Tensor<ArgT, NumDimT> const & Fp,
+      Intrepid::Tensor<ArgT, NumDimT> & T,
+      Intrepid::Tensor<ArgT, NumDimT> & S,
+      Intrepid::Vector<ArgT, NumSlipT> & shear);
+
+}
+
+template <Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT>
+class CrystalPlasticityNLS : public Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>
+{
+public:
+
+  CrystalPlasticityNLS(Intrepid::Tensor4<RealType, NumDimT> const & C,
+		       std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+		       Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
+		       Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
+		       Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
+		       Intrepid::Tensor<ScalarT, NumDimT> const & F_np1,
+		       ScalarT dt)
+    : C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
+      slip_n_(slip_n), F_np1_(F_np1), dt_(dt)
+  {
+    num_dim_ = Fp_n_.get_dimension();
+    num_slip_ = hardness_n_.get_dimension();
+  }
+
+  static constexpr Intrepid::Index DIMENSION = CP::MAX_NUM_SLIP;
+  static constexpr char const * const NAME = "Crystal Plasticity Nonlinear System";
+
+  // Default value.
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>::value(*this, x);
+  }
+
+  // Explicit gradient.
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  Intrepid::Vector<T, N>
+  gradient(Intrepid::Vector<T, N> const & slip_np1) const
+  {
+    // This is a design flaw, temporaries are a bad idea here.
+    // The difficulty is that the first template argument must match T and will vary
+    // as the solver calls this function with different types (e.g., scalars, AD types).
+    Intrepid::Tensor<T, NumDimT> Fp_np1;
+    Intrepid::Tensor<T, NumDimT> Lp_np1;
+    Intrepid::Vector<T, N> hardness_np1;
+    Intrepid::Tensor<T, NumDimT> sigma_np1;
+    Intrepid::Tensor<T, NumDimT> S_np1;
+    Intrepid::Vector<T, N> shear_np1;
+    Intrepid::Vector<T, N> slip_residual;
+    T norm_slip_residual_;
+
+    Fp_np1.set_dimension(num_dim_);
+    Lp_np1.set_dimension(num_dim_);
+    hardness_np1.set_dimension(num_slip_);
+    sigma_np1.set_dimension(num_slip_);
+    S_np1.set_dimension(num_dim_);
+    shear_np1.set_dimension(num_slip_);
+    slip_residual.set_dimension(num_slip_);
+
+    // Compute Lp_np1, and Fp_np1
+    CP::applySlipIncrement<NumDimT, NumSlipT>(slip_systems_, slip_n_, slip_np1, Fp_n_, Lp_np1, Fp_np1);
+
+    // Compute hardness_np1
+    CP::updateHardness<NumDimT, NumSlipT>(slip_systems_, slip_np1, hardness_n_, hardness_np1);
+
+    // Compute sigma_np1, S_np1, and shear_np1
+    CP::computeStress<NumDimT, NumSlipT>(slip_systems_, C_, F_np1_, Fp_np1, sigma_np1, S_np1, shear_np1);
+
+    // Compute slip_residual and norm_slip_residual
+    CP::computeResidual<NumDimT, NumSlipT>(slip_systems_, dt_, slip_n_, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual_);
+
+    return slip_residual;
+  }
+
+  // Default AD hessian.
+  template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
+  Intrepid::Tensor<T, N>
+  hessian(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>::hessian(*this, x);
+  }
+
+private:
+
+  RealType num_dim_;
+  RealType num_slip_;
+  Intrepid::Tensor4<RealType, NumDimT> const & C_;
+  std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
+  Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n_;
+  Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n_;
+  Intrepid::Vector<ScalarT, NumSlipT> const & slip_n_;
+  Intrepid::Tensor<ScalarT, NumDimT> const & F_np1_;
+  ScalarT dt_;
+};
 
 //! \brief CrystalPlasticity Plasticity Constitutive Model
 template<typename EvalT, typename Traits>
@@ -50,10 +218,7 @@ public:
   /// Virtual Denstructor
   ///
   virtual
-  ~CrystalPlasticityModel()
-  {
-  }
-  ;
+  ~CrystalPlasticityModel() {}
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
@@ -85,125 +250,48 @@ private:
   ///
   CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
-  ///
-  /// explicit update of the slip
-  ///
-  template<typename ArgT>
+  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ArgT>
   void
-  updateSlipViaExplicitIntegration(ScalarT dt,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ScalarT> const & hardness,
-      Intrepid::Tensor<ArgT> const & S,
-      std::vector<ArgT> const & shear,
-      std::vector<ArgT> & slip_np1) const;
-
-  ///
-  /// Compute Lp_np1 and Fp_np1 based on computed slip increment
-  ///
-  template<typename ArgT>
-  void
-  applySlipIncrement(std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1,
-      Intrepid::Tensor<ScalarT> const & Fp_n,
-      Intrepid::Tensor<ArgT> & Lp_np1,
-      Intrepid::Tensor<ArgT> & Fp_np1) const;
-
-  ///
-  /// update the hardness
-  ///
-  template<typename ArgT>
-  void
-  updateHardness(std::vector<ArgT> const & slip_np1,
-      std::vector<ScalarT> const & hardness_n,
-      std::vector<ArgT> & hardness_np1) const;
-
-  ///
-  /// residual
-  ///
-  template<typename ArgT>
-  void
-  computeResidual(ScalarT dt,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1,
-      std::vector<ArgT> const & hardness_np1,
-      std::vector<ArgT> const & shear_np1,
-      std::vector<ArgT> & slip_residual,
-      ArgT & norm_slip_residual) const;
-
-  ///
-  /// compute stresses
-  ///
-  template<typename ArgT>
-  void
-  computeStress(Intrepid::Tensor<ScalarT> const & F,
-      Intrepid::Tensor<ArgT> const & Fp,
-      Intrepid::Tensor<ArgT> & T,
-      Intrepid::Tensor<ArgT> & S,
-      std::vector<ArgT> & shear) const;
-
-  template<typename ArgT>
-  void
-  constructMatrixFiniteDifference(ScalarT dt,
-      Intrepid::Tensor<ScalarT> const & Fp_n,
-      Intrepid::Tensor<ScalarT> const & F_np1,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1,
-      std::vector<ScalarT> const & hardness_n,
-      std::vector<ArgT> & matrix) const;
-
-  template<typename ArgT>
-  void
-  lineSearch(ScalarT dt,
-      Intrepid::Tensor<ScalarT> const & Fp_n,
-      Intrepid::Tensor<ScalarT> const & F_np1,
-      std::vector<ScalarT> const & slip_n,
-      std::vector<ArgT> const & slip_np1_km1,
-      std::vector<ArgT> const & delta_delta_slip,
-      std::vector<ScalarT> const & hardness_n,
+  lineSearch(
+      ScalarT dt,
+      Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
+      Intrepid::Tensor<ScalarT, NumDimT> const & F_np1,
+      Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
+      Intrepid::Vector<ArgT, NumSlipT> const & slip_np1_km1,
+      Intrepid::Vector<ArgT, NumSlipT> const & delta_delta_slip,
+      Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
       ScalarT const & norm_slip_residual,
       RealType & alpha) const;
 
   ///
-  /// Check tensor for nans and infs.
+  /// explicit update of the slip
   ///
-  template<typename ArgT>
+  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ArgT>
   void
-  confirmTensorSanity(Intrepid::Tensor<ArgT> const & input,
-      std::string const & message) const;
+  updateSlipViaExplicitIntegration(
+      ScalarT dt,
+      Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
+      Intrepid::Vector<ScalarT, NumSlipT> const & hardness,
+      Intrepid::Tensor<ArgT, NumDimT> const & S,
+      Intrepid::Vector<ArgT, NumSlipT> const & shear,
+      Intrepid::Vector<ArgT, NumSlipT> & slip_np1) const;
 
   ///
   /// Crystal elasticity parameters
   ///
   RealType c11_, c12_, c44_;
-  Intrepid::Tensor4<RealType> C_;
-  Intrepid::Tensor<RealType> orientation_;
+  Intrepid::Tensor4<RealType, CP::MAX_NUM_DIM> C_;
+  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> orientation_;
 
   ///
   /// Number of slip systems
   ///
   int num_slip_;
 
-  //! \brief Struct to slip system information
-  struct SlipSystemStruct {
-
-    SlipSystemStruct()
-    {
-    }
-
-    // slip system vectors
-    Intrepid::Vector<RealType> s_, n_;
-
-    // Schmid Tensor
-    Intrepid::Tensor<RealType> projector_;
-
-    // flow rule parameters
-    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_, Rd_;
-  };
-
   ///
   /// Crystal Plasticity parameters
   ///
-  std::vector<SlipSystemStruct> slip_systems_;
+  std::vector< CP::SlipSystemStruct<CP::MAX_NUM_DIM,CP::MAX_NUM_SLIP> > slip_systems_;
 
   IntegrationScheme integration_scheme_;
   RealType implicit_nonlinear_solver_relative_tolerance_;

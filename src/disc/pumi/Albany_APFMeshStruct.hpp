@@ -78,6 +78,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
 
     bool hasRestartSolution;
     double restartDataTime;
+    int restartWriteStep;
+
     int neq;
     int numDim;
     int cubatureDegree;
@@ -99,6 +101,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     std::string outputFileName;
     int outputInterval;
     bool useNullspaceTranslationOnly;
+    bool useTemperatureHack;
 
     static const char* solution_name;
     static const char* residual_name;

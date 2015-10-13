@@ -1,0 +1,431 @@
+<html>
+  
+  <head>
+    <script type="text/javascript" src="../../../common/js/cm.js"></script>
+    <link rel="stylesheet" href="../../../common/css/style.css" type="text/css">
+  </head>
+
+  <body>
+    <center>
+      <h2>Discretization - PUMI</h2>
+      <a href="#description">Description</a>&emsp;
+      <a href="#dependencies">Dependencies</a>&emsp;
+      <a href="#parameters">Parameters</a>&emsp;
+      <a href="#example">Example</a>&emsp;
+      <a href="#albanyexs">Albany Examples</a>&emsp;
+      <a href="#exlinks">External Links</a>&emsp;
+    </center>
+
+    <hr>
+
+    <h3><a name="description">Description</h3>
+    
+    <p>
+      An efficient distributed mesh data structure is needed to support parallel adaptive analysis since
+      it strongly influences the overall performance of adaptive mesh-based simulations. In addition
+      to the general mesh-based operations, such as mesh entity creation/deletion, adjacency and
+      geometric classication, iterators, arbitrary attachable data to mesh entities, etc., the distributed
+      mesh data structure must support (i) efficient communication between entities duplicated over
+      multiple processors, (ii) migration of mesh entities between processors, and (iii) dynamic load
+      balancing.
+    </p>
+
+    <img src="pumi_torus.jpg" height="100px" align="right">
+
+    <p>
+      Issues associated with supporting parallel adaptive analysis on a given unstructured mesh include
+      dynamic mesh load balancing techniques, and data structure and algorithms for parallel
+      mesh adaptation.
+    </p>
+    
+    <p>
+      The Parallel Unstructured Mesh Infrastructure (PUMI) is a distributed mesh data management system
+      that is capable of a parallel mesh infrastructure capable of handling general non-manifold
+      models and effectively supporting automated adaptive analysis.
+    </p>
+
+    <h3><a name="dependencies">Dependencies</h3>
+    
+    SCOREC
+    
+    <h3><a name="parameters">Parameters</h3>
+
+<ul>
+<li>1D Elements
+<ul>
+<li>Data Type</li>
+&emsp; &lt;int&gt;
+<li>Default Value</li>
+&emsp; 0
+<li>Description</li>
+&emsp; "Number of Elements in X discretization"
+</ul>
+</li>
+<li>1D Scale
+<ul>
+<li>Data Type</li>
+&emsp; &lt;double&gt;
+<li>Default Value</li>
+&emsp; 1.0
+<li>Description</li>
+&emsp; "Width of X discretization"
+</ul>
+</li>
+<li>2D Elements
+<ul>
+<li>Data Type</li>
+&emsp; &lt;int&gt;
+<li>Default Value</li>
+&emsp; 0
+<li>Description</li>
+&emsp; "Number of Elements in Y discretization"
+</ul>
+</li>
+<li>2D Scale
+<ul>
+<li>Data Type</li>
+&emsp; &lt;double&gt;
+<li>Default Value</li>
+&emsp; 1.0
+<li>Description</li>
+&emsp; "Depth of Y discretization"
+</ul>
+</li>
+<li>2nd Order Mesh
+<ul>
+<li>Data Type</li>
+&emsp; &lt;bool&gt;
+<li>Default Value</li>
+&emsp; false
+<li>Description</li>
+&emsp; "Flag to indicate 2nd order Lagrange shape functions"
+</ul>
+</li>
+<li>3D Elements
+<ul>
+<li>Data Type</li>
+&emsp; &lt;int&gt;
+<li>Default Value</li>
+&emsp; 0
+<li>Description</li>
+&emsp; "Number of Elements in Z discretization"
+</ul>
+</li>
+<li>3D Scale
+<ul>
+<li>Data Type</li>
+&emsp; &lt;double&gt;
+<li>Default Value</li>
+&emsp; 1.0
+<li>Description</li>
+&emsp; "Height of Z discretization"
+</ul>
+</li>
+<li>Hexahedral
+<ul>
+<li>Data Type</li>
+&emsp; &lt;bool&gt;
+<li>Default Value</li>
+&emsp; true
+<li>Description</li>
+&emsp; "Build hexahedral elements"
+</ul>
+</li>
+<li>Max Number of Mesh Adapt Iterations
+<ul>
+<li>Data Type</li>
+&emsp; &lt;int&gt;
+<li>Default Value</li>
+&emsp; 1
+<li>Description</li>
+&emsp; "Upper bound on iterations taken by Mesh Adapt"
+</ul>
+</li>
+<li>Mesh Model Input File Name
+<ul>
+<li>Data Type</li>
+&emsp; &lt;std::string&gt;
+<li>Default Value</li>
+&emsp; ""
+<li>Description</li>
+&emsp; "meshmodel geometry file"
+</ul>
+</li>
+<li>PUMI Input File Name
+<ul>
+<li>Data Type</li>
+&emsp; &lt;std::string&gt;
+<li>Default Value</li>
+&emsp; ""
+<li>Description</li>
+&emsp; "File Name For PUMI Mesh Input"
+</ul>
+</li>
+<li>PUMI Output File Name
+<ul>
+<li>Data Type</li>
+&emsp; &lt;std::string&gt;
+<li>Default Value</li>
+&emsp; ""
+<li>Description</li>
+&emsp; "File Name For PUMI Mesh Output"
+</ul>
+</li>
+<li>PUMI Write Interval
+<ul>
+<li>Data Type</li>
+&emsp; &lt;int&gt;
+<li>Default Value</li>
+&emsp; 3
+<li>Description</li>
+&emsp; "Step interval to write solution data to output file"
+</ul>
+</li>
+<li>Resize Input Mesh Element Size
+<ul>
+<li>Data Type</li>
+&emsp; &lt;double&gt;
+<li>Default Value</li>
+&emsp; 1.0
+<li>Description</li>
+&emsp; "Resize mesh element to this size at input"
+</ul>
+</li>
+<li>Use Serial Mesh
+<ul>
+<li>Data Type</li>
+&emsp; &lt;bool&gt;
+<li>Default Value</li>
+&emsp; false
+<li>Description</li>
+&emsp; "Read in a single mesh on PE 0 and rebalance"
+</ul>
+</li>
+<li>Acis Model Input File Name
+<ul>
+<li>Data Type</li>
+&emsp; &lt;std::string&gt;
+<li>Default Value</li>
+&emsp; ""
+<li>Description</li>
+&emsp; "File Name For ACIS Model Input"
+</ul>
+</li>
+<li>Cubature Degree
+<ul>
+<li>Data Type</li>
+&emsp; &lt;int&gt;
+<li>Default Value</li>
+&emsp; 3
+<li>Description</li>
+&emsp; "Integration order sent to Intrepid"
+</ul>
+</li>
+<li>Edge Node Set Associations
+<ul>
+<li>Data Type</li>
+&emsp; &lt;Teuchos::TwoDArray&lt;std::string&gt; &gt;
+<li>Default Value</li>
+&emsp; defaultData
+<li>Description</li>
+&emsp; "Association between geometric edge ID and node set string"
+</ul>
+</li>
+<li>Element Block Associations
+<ul>
+<li>Data Type</li>
+&emsp; &lt;Teuchos::TwoDArray&lt;std::string&gt; &gt;
+<li>Default Value</li>
+&emsp; defaultData
+<li>Description</li>
+&emsp; "Association between region ID and element block string"
+</ul>
+</li>
+<li>Interleaved Ordering
+<ul>
+<li>Data Type</li>
+&emsp; &lt;bool&gt;
+<li>Default Value</li>
+&emsp; true
+<li>Description</li>
+&emsp; "Flag for interleaved or blocked unknown ordering"
+</ul>
+</li>
+<li>Method
+<ul>
+<li>Data Type</li>
+&emsp; &lt;std::string&gt;
+<li>Default Value</li>
+&emsp; ""
+<li>Description</li>
+&emsp; "The discretization method, parsed in the Discretization Factory"
+</ul>
+</li>
+<li>Model Associations File Name
+<ul>
+<li>Data Type</li>
+&emsp; &lt;std::string&gt;
+<li>Default Value</li>
+&emsp; ""
+<li>Description</li>
+&emsp; "File with element block/sideset/nodeset associations"
+</ul>
+</li>
+<li>Node Set Associations
+<ul>
+<li>Data Type</li>
+&emsp; &lt;Teuchos::TwoDArray&lt;std::string&gt; &gt;
+<li>Default Value</li>
+&emsp; defaultData
+<li>Description</li>
+&emsp; "Association between geometric face ID and node set string"
+</ul>
+</li>
+<li>Parasolid Model Input File Name
+<ul>
+<li>Data Type</li>
+&emsp; &lt;std::string&gt;
+<li>Default Value</li>
+&emsp; ""
+<li>Description</li>
+&emsp; "File Name For PARASOLID Model Input"
+</ul>
+</li>
+<li>QP Temperature from Nodes
+<ul>
+<li>Data Type</li>
+&emsp; &lt;bool&gt;
+<li>Default Value</li>
+&emsp; false
+<li>Description</li>
+&emsp; "Hack to initialize QP Temperature from Solution"
+</ul>
+</li>
+<li>Separate Evaluators by Element Block
+<ul>
+<li>Data Type</li>
+&emsp; &lt;bool&gt;
+<li>Default Value</li>
+&emsp; false
+<li>Description</li>
+&emsp; "Flag for different evaluation trees for each Element Block"
+</ul>
+</li>
+<li>Side Set Associations
+<ul>
+<li>Data Type</li>
+&emsp; &lt;Teuchos::TwoDArray&lt;std::string&gt; &gt;
+<li>Default Value</li>
+&emsp; defaultData
+<li>Description</li>
+&emsp; "Association between face ID and side set string"
+</ul>
+</li>
+<li>Solution Vector Components
+<ul>
+<li>Data Type</li>
+&emsp; &lt;Teuchos::Array&lt;std::string&gt; &gt;
+<li>Default Value</li>
+&emsp; defaultFields
+<li>Description</li>
+&emsp; "Names and layouts of solution vector components"
+</ul>
+</li>
+<li>Use Nullspace Translation Only
+<ul>
+<li>Data Type</li>
+&emsp; &lt;bool&gt;
+<li>Default Value</li>
+&emsp; false
+<li>Description</li>
+&emsp; "Temporary hack to get MueLu (possibly) working for us"
+</ul>
+</li>
+<li>Vertex Node Set Associations
+<ul>
+<li>Data Type</li>
+&emsp; &lt;Teuchos::TwoDArray&lt;std::string&gt; &gt;
+<li>Default Value</li>
+&emsp; defaultData
+<li>Description</li>
+&emsp; "Association between geometric edge ID and node set string"
+</ul>
+</li>
+<li>Workset Size
+<ul>
+<li>Data Type</li>
+&emsp; &lt;int&gt;
+<li>Default Value</li>
+&emsp; 50
+<li>Description</li>
+&emsp; "Upper bound on workset (bucket) size"
+</ul>
+</li>
+</ul>
+
+    <h3><a name="example">Example</h3>
+    <pre>
+  &lt;ParameterList name="Discretization"&gt;
+    &lt;Parameter name="Method" type="string" value="PUMI"/&gt;
+    &lt;Parameter name="Workset Size" type="int" value="50"/&gt;
+    &lt;Parameter name="Mesh Model Input File Name" type="string" value="../meshes/bar/bar.dmg"/&gt;
+    &lt;Parameter name="PUMI Input File Name" type="string" value="../meshes/bar/bar.smb"/&gt;
+    &lt;Parameter name="PUMI Output File Name" type="string" value="out_elastic.vtk"/&gt;
+    &lt;Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115,bar}"/&gt;
+    &lt;Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{97,101,51,95,ns1,ns2,ns3,ns4}"/&gt;
+    &lt;Parameter name="2nd Order Mesh" type="bool" value="false"/&gt;
+    &lt;Parameter name="Cubature Degree" type="int" value="1"/&gt;
+    &lt;Parameter name="Separate Evaluators by Element Block" type="bool" value="false"/&gt;
+  &lt;/ParameterList&gt;
+    </pre>
+     
+    <h3><a name="albanyexs">Albany Examples</h3>
+
+<ul>
+<li>Albany/examples/Heat3DPUMI/input.xml</li>
+<li>Albany/examples/Heat3DPUMI/inputSerial.xml</li>
+<li>Albany/examples/LCM/SCOREC/BimetallicStrip/inputElasticT.xml</li>
+<li>Albany/examples/LCM/SCOREC/BimetallicStrip/inputT.xml</li>
+<li>Albany/examples/LCM/SCOREC/ElastAdapt/inputNeckingSerialT.xml</li>
+<li>Albany/examples/LCM/SCOREC/ElastAdapt/inputNeckingT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputEdgeDBCT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputNeckingSingleMeshT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputNeckingT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputRenameT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputSingleMeshT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputSquoze.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputSquoze2.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputSquozeSerial.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputSquozeSerial2.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity/inputVtxDBCT.xml</li>
+<li>Albany/examples/LCM/SCOREC/Elasticity2D/inputT.xml</li>
+<li>Albany/examples/LCM/SCOREC/GOAL/inputElasticT.xml</li>
+<li>Albany/examples/LCM/SCOREC/GOAL/inputJ2T.xml</li>
+<li>Albany/examples/LCM/SCOREC/MechWithTemp/inputT.xml</li>
+<li>Albany/examples/LCM/SCOREC/MechWithTemp/inputUnifT.xml</li>
+<li>Albany/examples/LCM/SCOREC/RCU/inputSquareStabilized.xml</li>
+<li>Albany/examples/LCM/SCOREC/ThermoMechanicalCan/MechanicsT.xml</li>
+<li>Albany/examples/LCM/SCOREC/ThermoMechanicalCan/MechanicsTimeDepTemperatureT.xml</li>
+<li>Albany/examples/LCM/SCOREC/ThermoMechanicalCan/MechanicsWithTemperatureT.xml</li>
+<li>Albany/examples/LCM/SCOREC/TransientHeat/input.xml</li>
+<li>Albany/examples/LCM/ThermoElasticity3D/inputT_pumi.xml</li>
+<li>Albany/examples/PerformanceTests/AdaptiveCan/MechanicsWithTemperatureT.xml</li>
+<li>Albany/examples/PerformanceTests/Necking3D/inputElastSPRAdaptMmodel.xml</li>
+<li>Albany/examples/PerformanceTests/Necking3D/inputElastSPRAdaptMmodelMueLuT64.xml</li>
+<li>Albany/examples/PerformanceTests/Necking3D/inputElastSPRStressAdaptMmodel1M.xml</li>
+<li>Albany/examples/PerformanceTests/Necking3D/inputElastSPRStressAdaptParasolid.xml</li>
+<li>Albany/examples/PerformanceTests/Necking3D/inputLD.xml</li>
+<li>Albany/examples/PerformanceTests/Necking3D/inputPlasLD.xml</li>
+<li>Albany/examples/PerformanceTests/Necking3D/inputPlasLDMueLuT64.xml</li>
+<li>Albany/examples/PerformanceTests/NotchedTensionTet10/NotchedTensileTet10FMDB.xml</li>
+<li>Albany/examples/SteadyHeat3D/inputT_pumi.xml</li>
+</ul>
+   
+    <h3><a name="exlinks">External Links</h3>
+    <a href="https://github.com/SCOREC/core" target="_blank">PUMI GitHub page</a>
+    <br>
+    <a href="http://www.scorec.rpi.edu/pumi/pumi_documents.php">PUMI Documents</a>
+
+  </body>
+</html>

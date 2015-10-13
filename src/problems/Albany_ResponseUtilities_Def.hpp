@@ -347,13 +347,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 #endif
 
-#ifdef ALBANY_GOAL
-  /* bng: required fields are added to the field manager fm in the GOAL
-     mechanics problem. Still, this block needs to because constructResponses()
-     is called and won't recognize responseName otherwise */
-  else if (responseName == "Adjoint") {}
-#endif
-
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,

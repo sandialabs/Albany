@@ -30,14 +30,6 @@ namespace Albany {
   class GenericSTKMeshStruct : public AbstractSTKMeshStruct {
 
     public:
-    virtual void setFieldAndBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize) = 0;
-
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
 #ifdef ALBANY_STK_PERCEPT
@@ -58,7 +50,7 @@ namespace Albany {
     const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
         { return meshDynamicData; }
 
-    protected: 
+    protected:
     GenericSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
@@ -120,6 +112,8 @@ namespace Albany {
 #endif
 
     bool uniformRefinementInitialized;
+
+    bool requiresAutomaticAura;
 
     bool compositeTet;
 

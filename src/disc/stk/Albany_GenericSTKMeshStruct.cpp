@@ -93,6 +93,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
 
+  requiresAutomaticAura = params->get<bool>("Use Automatic Aura", false);
+
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
 }
@@ -100,7 +102,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
-		  const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -116,10 +118,12 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   if (bulkData.is_null()) {
      const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
+     stk::mesh::BulkData::AutomaticAuraOption auto_aura_option = stk::mesh::BulkData::NO_AUTO_AURA;
+     if(requiresAutomaticAura) auto_aura_option = stk::mesh::BulkData::AUTO_AURA;
      bulkData = Teuchos::rcp(
        new stk::mesh::BulkData(*metaData,
                                *mpiComm->getRawMpiComm(),
-                               stk::mesh::BulkData::NO_AUTO_AURA,
+                               auto_aura_option,
                                //worksetSize, // capability currently removed from STK_Mesh
                                false, // add_fmwk_data
                                NULL, // ConnectivityMap
@@ -669,7 +673,6 @@ void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
 
 }
 
-
 void Albany::GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData){
 
     std::cout << "Printing all part names of the parts found in the metaData:" << std::endl;
@@ -727,6 +730,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
   validPL->set<int>("Cubature Rule", 0, "Integration rule sent to Intrepid: 0=GAUSS, 1=GAUSS_RADAU_LEFT, 2=GAUSS_RADAU_RIGHT, 3=GAUSS_LOBATTO");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
+  validPL->set<bool>("Use Automatic Aura", false, "Use automatic aura with BulkData");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");

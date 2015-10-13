@@ -77,6 +77,7 @@
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
+#include "FELIX/problems/FELIX_Hydrology.hpp"
 #ifdef ALBANY_EPETRA
 #include "FELIX/problems/FELIX_StokesFOThickness.hpp"
 #endif
@@ -93,7 +94,7 @@
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
        const Teuchos::RCP<ParamLib>& paramLib_,
-       const Teuchos::RCP<const Teuchos::Comm<int> >& commT_) : 
+       const Teuchos::RCP<const Teuchos::Comm<int> >& commT_) :
   problemParams(problemParams_),
   paramLib(paramLib_),
   commT(commT_)
@@ -118,7 +119,7 @@ Albany::ProblemFactory::create()
 {
   Teuchos::RCP<Albany::AbstractProblem> strategy;
   using Teuchos::rcp;
-    
+
 
   std::string& method = problemParams->get("Name", "Heat 1D");
 
@@ -356,6 +357,9 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_GOAL
+  else if (method == "GOAL Mechanics 2D") {
+    strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 2, commT));
+  }
   else if (method == "GOAL Mechanics 3D") {
     strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 3, commT));
   }
@@ -406,6 +410,12 @@ Albany::ProblemFactory::create()
     }
   else if (method == "FELIX Stokes L1L2 2D") {
     strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
+  }
+  else if (method == "FELIX Hydrology 2D") {
+    strategy = rcp(new FELIX::Hydrology(problemParams, paramLib, 2));
+  }
+  else if (method == "FELIX Hydrology 1D") {
+    strategy = rcp(new FELIX::Hydrology(problemParams, paramLib, 1));
   }
 #endif
 #ifdef ALBANY_AERAS
