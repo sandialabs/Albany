@@ -791,6 +791,9 @@ computeState(typename Traits::EvalData workset,
 
 	  Intrepid::NewtonStep<RealType, CP::MAX_NUM_SLIP> step;
 	  Intrepid::Minimizer<RealType, CP::MAX_NUM_SLIP> minimizer;
+
+	  // LCM::miniMinimize(minimizer, step, CrystalPlsticityNLS, x);
+
 	  minimizer.solve(step, crystalPlasticityNLS, x);
 
 	  std::cout << "------------------------------------\n" << std::endl;
