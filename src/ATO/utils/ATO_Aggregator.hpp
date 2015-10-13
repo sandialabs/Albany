@@ -20,10 +20,10 @@ namespace ATO {
 class SolverSubSolver;
 
 class Aggregator 
-/** \brief Combines objectives.
+/** \brief Combines values.
 
-    This class reads objectives from response functions and combines them into
-  a single objective for optimization.
+    This class reads values from response functions and combines them into
+  a single value for optimization.
 
 */
 {
@@ -36,35 +36,37 @@ public:
 
   virtual void Evaluate()=0;
 
-  virtual std::string getOutputObjectiveName(){return outputObjectiveName;}
+  virtual std::string getOutputValueName(){return outputValueName;}
   virtual std::string getOutputDerivativeName(){return outputDerivativeName;}
 
   virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems){};
   virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
-                                 const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap,
-                                 const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap){};
+                                 const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
+                                 const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap){};
   void SetCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm){comm = _comm;}
-  void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::RCP<Epetra_Vector> dgdp)
-         {gAggregated = g; dgdpAggregated = dgdp;}
+  void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::RCP<Epetra_Vector> deriv)
+         {valueAggregated = g; derivAggregated = deriv;}
 
 protected:
 
   void parse(const Teuchos::ParameterList& aggregatorParams);
 
-  Teuchos::Array<std::string> aggregatedObjectivesNames;
+  Teuchos::Array<std::string> aggregatedValuesNames;
   Teuchos::Array<std::string> aggregatedDerivativesNames;
-  std::string outputObjectiveName;
+  std::string outputValueName;
   std::string outputDerivativeName;
 
-  Teuchos::RCP<double> gAggregated;
-  Teuchos::RCP<Epetra_Vector> dgdpAggregated;
+  Teuchos::RCP<double> valueAggregated;
+  Teuchos::RCP<Epetra_Vector> derivAggregated;
 
   Teuchos::RCP<Albany::Application> outApp;
   Teuchos::RCP<const Epetra_Comm> comm;
 
   Teuchos::Array<double> normalize;
+  double shiftValueAggregated;
 };
 
+/******************************************************************************/
 class Aggregator_StateVarBased : public virtual Aggregator {
  public:
   Aggregator_StateVarBased(){}
@@ -75,27 +77,30 @@ class Aggregator_StateVarBased : public virtual Aggregator {
     Teuchos::RCP<Albany::Application> app;
   } SubVariable;
 
-  std::vector<SubVariable> objectives;
+  std::vector<SubVariable> values;
   std::vector<SubVariable> derivatives;
-
-
 };
+/******************************************************************************/
 
+
+/******************************************************************************/
 class Aggregator_DistParamBased : public virtual Aggregator {
  public:
   Aggregator_DistParamBased(){}
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
-                         const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap,
-                         const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap);
+                         const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
+                         const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap);
  protected:
-  typedef struct { std::string name; Teuchos::RCP<const Epetra_Vector> value; } SubObjective;
+  typedef struct { std::string name; Teuchos::RCP<const Epetra_Vector> value; } SubValue;
   typedef struct { std::string name; Teuchos::RCP<Epetra_MultiVector> value; } SubDerivative;
 
-  std::vector<SubObjective> objectives;
+  std::vector<SubValue> values;
   std::vector<SubDerivative> derivatives;
-
 };
+/******************************************************************************/
 
+
+/******************************************************************************/
 class Aggregator_Scaled : public virtual Aggregator,
                           public virtual Aggregator_StateVarBased {
  public:
@@ -105,13 +110,29 @@ class Aggregator_Scaled : public virtual Aggregator,
  protected:
   Teuchos::Array<double> weights;
 };
+/******************************************************************************/
 
+/******************************************************************************/
+template <typename C>
+class Aggregator_Extremum : public virtual Aggregator,
+                            public virtual Aggregator_StateVarBased {
+ public:
+  Aggregator_Extremum(){}
+  Aggregator_Extremum(const Teuchos::ParameterList& aggregatorParams);
+  virtual void Evaluate();
+ protected:
+  C compare;
+};
+/******************************************************************************/
 
+/******************************************************************************/
 class Aggregator_Uniform : public Aggregator_Scaled {
  public:
   Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams);
 };
+/******************************************************************************/
 
+/******************************************************************************/
 class Aggregator_DistScaled : public virtual Aggregator,
                               public virtual Aggregator_DistParamBased {
  public:
@@ -121,17 +142,36 @@ class Aggregator_DistScaled : public virtual Aggregator,
  protected:
   Teuchos::Array<double> weights;
 };
+/******************************************************************************/
+
+/******************************************************************************/
+template <typename C>
+class Aggregator_DistExtremum : public virtual Aggregator,
+                                public virtual Aggregator_DistParamBased {
+ public:
+  Aggregator_DistExtremum(){}
+  Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams);
+  void Evaluate();
+ protected:
+  C compare;
+};
+/******************************************************************************/
+
+/******************************************************************************/
 class Aggregator_DistUniform : public Aggregator_DistScaled {
  public:
   Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams);
 };
+/******************************************************************************/
 
 
+/******************************************************************************/
 class AggregatorFactory {
 public:
   Teuchos::RCP<Aggregator> create(const Teuchos::ParameterList& aggregatorParams,
                                   std::string entityType);
 };
+/******************************************************************************/
 
 
 }
