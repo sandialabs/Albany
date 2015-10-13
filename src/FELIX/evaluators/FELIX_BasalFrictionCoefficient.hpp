@@ -32,7 +32,7 @@ public:
   BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl);
 
-  ~BasalFrictionCoefficient ();
+  virtual ~BasalFrictionCoefficient () {}
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
@@ -43,42 +43,38 @@ public:
 
   typedef typename PHX::Device execution_space;
 
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
-
 private:
 
+  typedef typename EvalT::MeshScalarT MeshScalarT;
   ScalarT* homotopyParam;
 
-  double getScalarTValue (const ScalarT& s);
-
   // Coefficients for computing beta (if not given)
-  double mu;      // Coulomb friction coefficient
-  double L;       // Roughness of the bed (for REGULARIZED_COULOMB only)
-  double power;   // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
-
-  // Data to compute beta in case beta(|u|) is a piecewise linear function of |u|
-  int      nb_pts;
-  double*  u_grid;
-  double*  u_grid_h;
-  double*  beta_coeffs;
+  double mu;              // Coulomb friction coefficient
+  double lambda;          // Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
+  double power;           // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
+  double beta_given_val;  // Constant value (for CONSTANT only)
+  double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node>     u_norm;
-  PHX::MDField<ScalarT,Cell,Node>     beta_given;
-  PHX::MDField<ScalarT,Cell,Node>     N;
+//  PHX::MDField<ScalarT,Cell>                          flowFactorA;       //this is the coefficient A of the flow factor
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           u_norm;
+  PHX::MDField<ScalarT,Cell,Node>                     beta_given_field;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           N;
+
+  PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint>  BF;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> beta;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>     beta;
 
-  unsigned int numDims, numNodes, numCells;
+  std::string                     basalSideName;
+  std::vector<std::vector<int> >  sideNodes;     // Needed only in case of given beta
 
-  enum BETA_TYPE {FROM_FILE, POWER_LAW, REGULARIZED_COULOMB, PIECEWISE_LINEAR};
+  int numSideNodes;
+  int numSideQPs;
+
+  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
 };
-
-template<>
-double BasalFrictionCoefficient<PHAL::AlbanyTraits::Residual,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s);
 
 } // Namespace FELIX
 
