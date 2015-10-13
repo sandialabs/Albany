@@ -10,10 +10,10 @@
     and owns the derivative of the objective wrt the topology.  
     -->
     <ParameterList name="Objective Aggregator">
-      <Parameter name="Objective Name" type="string" value="F" />
-      <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
-      <Parameter name="Objectives" type="Array(string)" value="{R0}"/>
-      <Parameter name="Objective Derivatives" type="Array(string)" value="{dR0dRho}"/>
+      <Parameter name="Output Value Name" type="string" value="F" />
+      <Parameter name="Output Derivative Name" type="string" value="dFdRho" />
+      <Parameter name="Values" type="Array(string)" value="{R0}"/>
+      <Parameter name="Derivatives" type="Array(string)" value="{dR0dRho}"/>
       <Parameter name="Weighting" type="string" value="Uniform"/>
     </ParameterList>
 
