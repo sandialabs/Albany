@@ -15,15 +15,20 @@
 #include "PHAL_MapToPhysicalFrame.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
 #include "PHAL_ComputeBasisFunctionsSide.hpp"
+#include "PHAL_DOFCellToSide.hpp"
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_DOFGradInterpolationSide.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFInterpolationSide.hpp"
+#include "PHAL_DOFTensorInterpolation.hpp"
+#include "PHAL_DOFTensorGradInterpolation.hpp"
+#include "PHAL_DOFVecCellToSide.hpp"
 #include "PHAL_DOFVecGradInterpolation.hpp"
 #include "PHAL_DOFVecInterpolation.hpp"
 #include "PHAL_DOFVecInterpolationSide.hpp"
-#include "PHAL_DOFTensorInterpolation.hpp"
-#include "PHAL_DOFTensorGradInterpolation.hpp"
+#include "PHAL_QuadPointsToCellInterpolation.hpp"
+#include "PHAL_SideQuadPointsToSideInterpolation.hpp"
+
 
 /********************  Problem Utils Class  ******************************/
 
@@ -390,24 +395,30 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsSideEvaluato
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
-       const std::string& dof_name,
-       int offsetToFirstDOF)
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFCellToSideEvaluator(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& side_dof_name)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
-    using std::string;
 
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Cell To Side"));
+
     // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("BF Name", "BF");
-    p->set<int>("Offset of First DOF", offsetToFirstDOF);
+    p->set<std::string>("Cell Variable Name", cell_dof_name);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<std::string>("Side Set Name", sideSetName);
 
-    // Output (assumes same Name as input)
+    // Output
+    if (side_dof_name!="")
+      p->set<std::string>("Side Variable Name", side_dof_name);
+    else
+      p->set<std::string>("Side Variable Name", cell_dof_name);
 
-    return rcp(new PHAL::DOFInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFCellToSide<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -434,6 +445,28 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationSideEvaluator(
+       const std::string& dof_name,
+       const std::string& sideSetName)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation Side "+dof_name));
+    // Input
+    p->set<std::string>("Variable Name", dof_name);
+    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
+    p->set<std::string> ("Side Set Name",sideSetName);
+
+    // Output (assumes same Name as input)
+    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
+
+    return rcp(new PHAL::DOFGradInterpolationSide<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator_noDeriv(
     const std::string& dof_name)
 {
@@ -454,15 +487,16 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator_noD
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
        const std::string& dof_name,
        int offsetToFirstDOF)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
-    RCP<ParameterList> p = rcp(new ParameterList("DOFVec Interpolation "+dof_name));
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
     // Input
     p->set<std::string>("Variable Name", dof_name);
     p->set<std::string>("BF Name", "BF");
@@ -470,29 +504,29 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFInterpolation<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationSideEvaluator(
        const std::string& dof_name,
-       int offsetToFirstDOF)
+       const std::string& sideSetName)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
+    using std::string;
 
-    RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_name));
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Side "+dof_name));
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF");
-    p->set<int>("Offset of First DOF", offsetToFirstDOF);
+    p->set<std::string>("BF Name", "BF "+sideSetName);
+    p->set<std::string>("Side Set Name",sideSetName);
 
     // Output (assumes same Name as input)
-    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFInterpolationSide<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -540,24 +574,73 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFTensorGradInterpolationEvaluat
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationSideEvaluator(
-       const std::string& dof_name,
-       const std::string& sideSetName)
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecCellToSideEvaluator(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& side_dof_name)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
     using Teuchos::ParameterList;
-    using std::string;
 
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Side "+dof_name));
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Cell To Side"));
+
+    // Input
+    p->set<std::string>("Cell Variable Name", cell_dof_name);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<std::string>("Side Set Name", sideSetName);
+
+    // Output
+    if (side_dof_name!="")
+      p->set<std::string>("Side Variable Name", side_dof_name);
+    else
+      p->set<std::string>("Side Variable Name", cell_dof_name);
+
+    return rcp(new PHAL::DOFVecCellToSide<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
+       const std::string& dof_name,
+       int offsetToFirstDOF)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_name));
     // Input
     p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("BF Name", "BF "+sideSetName);
-    p->set<std::string>("Side Set Name",sideSetName);
+    p->set<std::string>("Gradient BF Name", "Grad BF");
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
+
+    // Output (assumes same Name as input)
+    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
+
+    return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
+       const std::string& dof_name,
+       int offsetToFirstDOF)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOFVec Interpolation "+dof_name));
+    // Input
+    p->set<std::string>("Variable Name", dof_name);
+    p->set<std::string>("BF Name", "BF");
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFInterpolationSide<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -583,23 +666,42 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideEvaluator(
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationSideEvaluator(
-       const std::string& dof_name,
-       const std::string& sideSetName)
+Albany::EvaluatorUtils<EvalT,Traits>::constructQuadPointToCellInterpolationEvaluator(
+  const std::string& dof_name,
+  bool isVectorField)
 {
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
+  Teuchos::RCP<Teuchos::ParameterList> p;
+  p = Teuchos::rcp(new Teuchos::ParameterList("DOF QuadPoint to Cell Interpolation "+dof_name));
 
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation Side "+dof_name));
-    // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
-    p->set<std::string> ("Side Set Name",sideSetName);
+  // Input
+  p->set<std::string>("Field QP Name", dof_name);
+  p->set<std::string>("Weighted Measure Name", "Weights");
+  p->set<bool>("Is Vector Field", isVectorField);
 
-    // Output (assumes same Name as input)
-    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
+  // Output
+  p->set<std::string>("Field Cell Name", dof_name);
 
-    return rcp(new PHAL::DOFGradInterpolationSide<EvalT,Traits>(*p,dl));
+  return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolation<EvalT,Traits>(*p,dl));
 }
 
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructSideQuadPointToSideInterpolationEvaluator(
+  const std::string& dof_name,
+  const std::string& sideSetName,
+  bool isVectorField)
+{
+  Teuchos::RCP<Teuchos::ParameterList> p;
+  p = Teuchos::rcp(new Teuchos::ParameterList("DOF Side QuadPoint to Side Interpolation "+dof_name));
+
+  // Input
+  p->set<std::string>("Field QP Name", dof_name);
+  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+sideSetName);
+  p->set<std::string>("Side Set Name", sideSetName);
+  p->set<bool>("Is Vector Field", isVectorField);
+
+  // Output
+  p->set<std::string>("Field Side Name", dof_name);
+
+  return Teuchos::rcp(new PHAL::SideQuadPointsToSideInterpolation<EvalT,Traits>(*p,dl));
+}

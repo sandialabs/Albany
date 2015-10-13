@@ -4,17 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_QUAD_POINT_TO_CELL_INTERPOLATION_HPP
-#define FELIX_QUAD_POINT_TO_CELL_INTERPOLATION_HPP
+#ifndef PHAL_QUAD_POINT_TO_CELL_INTERPOLATION_HPP
+#define PHAL_QUAD_POINT_TO_CELL_INTERPOLATION_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp"
 #include "Albany_Layouts.hpp"
 
-namespace FELIX
+namespace PHAL
 {
 /** \brief Average from Qp to Cell
 
@@ -25,7 +24,7 @@ namespace FELIX
 
 template<typename EvalT, typename Traits>
 class QuadPointsToCellInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                      public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Residual, Traits>
+                                      public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -41,15 +40,19 @@ public:
 
 private:
 
-  int numQPt;
+  int numQPs;
+  int vecDim;
+
+  bool isVectorField;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint>  field_qp;
+  PHX::MDField<ScalarT>     field_qp;
+  PHX::MDField<ScalarT>     w_measure;
 
   // Output:
-  PHX::MDField<ScalarT,Cell>            field_cell;
+  PHX::MDField<ScalarT>     field_cell;
 };
 
-} // Namespace FELIX
+} // Namespace PHAL
 
-#endif // FELIX_QUAD_POINT_TO_CELL_INTERPOLATION_HPP
+#endif // PHAL_QUAD_POINT_TO_CELL_INTERPOLATION_HPP

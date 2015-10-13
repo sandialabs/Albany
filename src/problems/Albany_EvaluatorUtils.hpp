@@ -185,6 +185,34 @@ namespace Albany {
       const Teuchos::RCP<shards::CellTopology>& cellType,
       const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
 
+    //! Function to create evaluator for restriction to side set
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFCellToSideEvaluator(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& side_dof_name = "");
+    //! Same as above, for vector quantities
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFVecCellToSideEvaluator(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& side_dof_name = "");
+
+    //! Function to create evaluator QuadPointToCellInterpolation
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructQuadPointToCellInterpolationEvaluator(
+      const std::string& dof_name,
+      bool isVectorField = false);
+
+    //! Function to create evaluator QuadPointToCellInterpolation
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructSideQuadPointToSideInterpolationEvaluator(
+      const std::string& dof_name,
+      const std::string& sideSetName,
+      bool isVectorField = false);
+
     //! Function to create parameter list for construction of ComputeBasisFunctions
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >

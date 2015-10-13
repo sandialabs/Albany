@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_QuadPointsToCellInterpolation.hpp"
-#include "FELIX_QuadPointsToCellInterpolation_Def.hpp"
+#include "PHAL_QuadPointsToCellInterpolation.hpp"
+#include "PHAL_QuadPointsToCellInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::QuadPointsToCellInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::QuadPointsToCellInterpolation)

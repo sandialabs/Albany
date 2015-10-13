@@ -276,20 +276,24 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_HeatEqResid.cpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
+  evaluators/PHAL_LoadSideSetStateField.cpp
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_MapToPhysicalFrame.cpp
   evaluators/QCAD_MathVector.cpp
   evaluators/QCAD_MeshRegion.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_NSMaterialProperty.cpp
+  evaluators/PHAL_QuadPointsToCellInterpolation.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
   evaluators/PHAL_SaveCellStateField.cpp
   evaluators/PHAL_SaveNodalField.cpp
+  evaluators/PHAL_SaveSideSetStateField.cpp
   evaluators/PHAL_SaveStateField.cpp
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_ScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/PHAL_SharedParameter.cpp
+  evaluators/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/PHAL_Source.cpp
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/QCAD_EvaluatorTools.cpp
@@ -394,6 +398,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_HeatEqResid_Def.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
+  evaluators/PHAL_LoadSideSetStateField.hpp
+  evaluators/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/PHAL_LoadStateField.hpp
   evaluators/PHAL_LoadStateField_Def.hpp
   evaluators/PHAL_MapToPhysicalFrame.hpp
@@ -402,22 +408,28 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_Neumann_Def.hpp
   evaluators/PHAL_NSMaterialProperty.hpp
   evaluators/PHAL_NSMaterialProperty_Def.hpp
+  evaluators/PHAL_QuadPointsToCellInterpolation.hpp
+  evaluators/PHAL_QuadPointsToCellInterpolation_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
   evaluators/PHAL_SaveCellStateField.hpp
   evaluators/PHAL_SaveCellStateField_Def.hpp
   evaluators/PHAL_SaveNodalField.hpp
   evaluators/PHAL_SaveNodalField_Def.hpp
+  evaluators/PHAL_SaveSideSetStateField.hpp
+  evaluators/PHAL_SaveSideSetStateField_Def.hpp
   evaluators/PHAL_SaveStateField.hpp
   evaluators/PHAL_SaveStateField_Def.hpp
+  evaluators/PHAL_ScatterResidual.hpp
+  evaluators/PHAL_ScatterResidual_Def.hpp
   evaluators/PHAL_ScatterScalarResponse.hpp
   evaluators/PHAL_ScatterScalarResponse_Def.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/PHAL_SharedParameter.hpp
   evaluators/PHAL_SharedParameter_Def.hpp
-  evaluators/PHAL_ScatterResidual.hpp
-  evaluators/PHAL_ScatterResidual_Def.hpp
+  evaluators/PHAL_SideQuadPointsToSideInterpolation.hpp
+  evaluators/PHAL_SideQuadPointsToSideInterpolation_Def.hpp
   evaluators/PHAL_Source.hpp
   evaluators/PHAL_Source_Def.hpp
   evaluators/PHAL_ThermalConductivity.hpp

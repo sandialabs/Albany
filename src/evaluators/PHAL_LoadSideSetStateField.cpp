@@ -7,8 +7,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_LoadSideSetStateField.hpp"
-#include "FELIX_LoadSideSetStateField_Def.hpp"
+#include "PHAL_LoadSideSetStateField.hpp"
+#include "PHAL_LoadSideSetStateField_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::LoadSideSetStateField)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::LoadSideSetStateField)
 
