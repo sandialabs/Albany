@@ -32,7 +32,7 @@ namespace Albany {
     //! Data Layout for scalar quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_scalar2;
     //! Data Layout for scalar quantity that lives on a side
-    Teuchos::RCP<PHX::DataLayout> side_scalar2;
+    Teuchos::RCP<PHX::DataLayout> side_scalar;
     //! Data Layout for vector quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_vector;
     //! Data Layout for vector quantity that lives at quad points
