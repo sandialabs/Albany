@@ -61,10 +61,6 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::cout << "eqnSet, modelDim, neq: " << eqnSet << ", " << modelDim << ", " << neq << std::endl; 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
-
-  // Keep this as an option for performance and correctness testing.
-  memoize_basis_functions_ = (params_->sublist("Shallow Water Problem").
-                              get<bool>("Memoize Basis Functions", true));
 }
 
 Aeras::ShallowWaterProblem::

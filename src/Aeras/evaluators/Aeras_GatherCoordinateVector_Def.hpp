@@ -43,6 +43,8 @@ void GatherCoordinateVector<EvalT, Traits>::postRegistrationSetup(typename Trait
 template<typename EvalT, typename Traits>
 void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
+  if (memoizer_.haveStoredData(workset)) return;
+
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 

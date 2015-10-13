@@ -117,6 +117,8 @@ template<typename EvalT, typename Traits>
 void SurfaceHeight<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer_.haveStoredData(workset)) return;
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   switch (hs_type) {
     case NONE: //no surface height: hs = 0

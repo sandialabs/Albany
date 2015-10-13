@@ -63,6 +63,8 @@ namespace ATO {
 
   class OptInterface {
   public:
+    virtual void Compute(double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
+
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
 
     virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
@@ -94,6 +96,8 @@ namespace ATO {
     virtual EpetraExt::ModelEvaluator::OutArgs createOutArgs() const;
     //pure virtual from EpetraExt::ModelEvaluator
     void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
+
+    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 
@@ -127,7 +131,8 @@ namespace ATO {
     bool _is_verbose;    // verbose or not for topological optimization solver
     bool _is_restart;
 
-    Teuchos::RCP<Aggregator> _aggregator;
+    Teuchos::RCP<Aggregator> _objAggregator;
+    Teuchos::RCP<Aggregator> _conAggregator;
     Teuchos::RCP<Optimizer> _optimizer;
     Teuchos::RCP<Topology> _topology;
 
@@ -166,16 +171,20 @@ namespace ATO {
     Teuchos::RCP<Epetra_Vector> overlapTopoVec;
     Teuchos::RCP<Epetra_Vector> topoVec;
 
-    Teuchos::RCP<Epetra_Vector> overlapdgdpVec;
-    Teuchos::RCP<Epetra_Vector> dgdpVec;
+    Teuchos::RCP<Epetra_Vector> overlapObjectiveGradientVec;
+    Teuchos::RCP<Epetra_Vector> ObjectiveGradientVec;
 
-    Teuchos::RCP<double> gValue;
+    Teuchos::RCP<Epetra_Vector> overlapConstraintGradientVec;
+    Teuchos::RCP<Epetra_Vector> ConstraintGradientVec;
+
+    Teuchos::RCP<double> objectiveValue;
+    Teuchos::RCP<double> constraintValue;
 
     Teuchos::RCP<Epetra_Import> importer;
     Teuchos::RCP<Epetra_Export> exporter;
 
-    std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap;
-    std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap;
+    std::map<std::string, Teuchos::RCP<const Epetra_Vector> > responseMap;
+    std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > responseDerivMap;
 
 
     // methods
@@ -185,6 +194,7 @@ namespace ATO {
     void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
     void copyObjectiveFromStateMgr( double& g, double* dgdp );
+    void copyConstraintFromStateMgr( double& c, double* dcdp );
     void zeroSet();
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 

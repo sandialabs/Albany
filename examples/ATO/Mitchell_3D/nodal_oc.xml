@@ -10,10 +10,10 @@
     and owns the derivative of the objective wrt the topology.  
     -->
     <ParameterList name="Objective Aggregator">
-      <Parameter name="Objective Name" type="string" value="F" />
-      <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
-      <Parameter name="Objectives" type="Array(string)" value="{R0}"/>
-      <Parameter name="Objective Derivatives" type="Array(string)" value="{dR0dRho}"/>
+      <Parameter name="Output Value Name" type="string" value="F" />
+      <Parameter name="Output Derivative Name" type="string" value="dFdRho" />
+      <Parameter name="Values" type="Array(string)" value="{R0}"/>
+      <Parameter name="Derivatives" type="Array(string)" value="{dR0dRho}"/>
       <Parameter name="Weighting" type="string" value="Uniform"/>
     </ParameterList>
 
@@ -34,11 +34,13 @@
         <Parameter name="Relative Topology Change" type="double" value="5e-3" />
         <Parameter name="Relative Objective Change" type="double" value="1e-4" />
       </ParameterList>
-      <Parameter name="Volume Enforcement Maximum Iterations" type="int" value="120" />
-      <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-6" />
+      <ParameterList name="Volume Enforcement">
+        <Parameter name="Maximum Iterations" type="int" value="120" />
+        <Parameter name="Convergence Tolerance" type="double" value="1e-6" />
+        <Parameter name="Target Volume Fraction" type="double" value="0.5" />
+      </ParameterList>
       <Parameter name="Minimum Density" type="double" value="0.05" />
       <Parameter name="Objective Name" type="string" value="F" />
-      <Parameter name="Volume Fraction Constraint" type="double" value="0.5" />
       <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
     </ParameterList>
     
