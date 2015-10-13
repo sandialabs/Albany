@@ -7,8 +7,8 @@
 //IK, 9/12/14: Epetra ifdef'ed out!
 //No Epetra if ALBANY_EPETRA_EXE turned off.
 
-#ifndef ALBANY_STATEMANAGER
-#define ALBANY_STATEMANAGER
+#ifndef ALBANY_STATEMANAGER_HPP
+#define ALBANY_STATEMANAGER_HPP
 
 #include <string>
 #include <map>
@@ -124,8 +124,8 @@ public:
 
   Teuchos::RCP<Teuchos::ParameterList>
   registerSideSetStateVariable(const std::string& sideSetName,
-                               const std::string& cellFieldName,
-                               const std::string& sideSetStateName,
+                               const std::string& stateName,
+                               const std::string& fieldName,
                                const Teuchos::RCP<PHX::DataLayout>& dl,
                                const std::string& ebName,
                                const bool outputToExodus,
@@ -133,8 +133,8 @@ public:
 
   Teuchos::RCP<Teuchos::ParameterList>
   registerSideSetStateVariable(const std::string& sideSetName,
-                               const std::string& cellFieldName,
-                               const std::string& sideSetStateName,
+                               const std::string& stateName,
+                               const std::string& fieldName,
                                const Teuchos::RCP<PHX::DataLayout> &dl,
                                const std::string& ebName,
                                const std::string &init_type,
@@ -162,7 +162,7 @@ public:
   Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct() const;
 
   //! Equivalent of previous method for the sideSets states
-  Teuchos::RCP<std::map<std::string,Teuchos::RCP<StateInfoStruct> > > getSideSetStateInfoStruct() const;
+  const std::map<std::string,Teuchos::RCP<StateInfoStruct> >& getSideSetStateInfoStruct() const;
 
   //! Method to set discretization object
   void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
@@ -183,7 +183,7 @@ public:
   }
   Teuchos::RCP<Adapt::NodalDataBase> getSideSetNodalDataBase(const std::string& sideSet)
   {
-    return sideSetStateInfo->find(sideSet)->second->createNodalDataBase();
+    return sideSetStateInfo.at(sideSet)->createNodalDataBase();
   }
 
 #if defined(ALBANY_EPETRA)
@@ -224,7 +224,7 @@ private:
 
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
-  Teuchos::RCP<std::map<std::string,Teuchos::RCP<StateInfoStruct> > > sideSetStateInfo; // A map sideSetName->stateInfoBd
+  std::map<std::string,Teuchos::RCP<StateInfoStruct> > sideSetStateInfo; // A map sideSetName->stateInfoBd
 
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<EigendataStruct> eigenData;
@@ -235,5 +235,6 @@ private:
 
 };
 
-}
-#endif
+} // Namespace Albany
+
+#endif // ALBANY_STATEMANAGER_HPP

@@ -13,9 +13,10 @@
 #include "Teuchos_TestForException.hpp"
 
 Albany::StateManager::StateManager() :
-  stateVarsAreAllocated(false),
-  stateInfo(Teuchos::rcp(new StateInfoStruct))
+  stateVarsAreAllocated (false),
+  stateInfo             (Teuchos::rcp(new StateInfoStruct))
 {
+  // Nothing to be done here
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
@@ -329,21 +330,21 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetName,
-                                                   const std::string& cellFieldName,
-                                                   const std::string& sideSetStateName,
+                                                   const std::string& stateName,
+                                                   const std::string& fieldName,
                                                    const Teuchos::RCP<PHX::DataLayout> &dl,
                                                    const std::string& ebName,
                                                    const bool outputToExodus,
                                                    StateStruct::MeshFieldEntity const* fieldEntity)
 {
-  return registerSideSetStateVariable (sideSetName,cellFieldName,sideSetStateName,dl,ebName,
+  return registerSideSetStateVariable (sideSetName,stateName,fieldName,dl,ebName,
                                        "",0.0,false,outputToExodus,"",fieldEntity,"");
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetName,
-                                                   const std::string& cellFieldName,
-                                                   const std::string& sideSetStateName,
+                                                   const std::string& stateName,
+                                                   const std::string& fieldName,
                                                    const Teuchos::RCP<PHX::DataLayout> &dl,
                                                    const std::string& ebName,
                                                    const std::string &init_type,
@@ -359,61 +360,46 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
 
   // Create param list for SaveSideSetStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save Side Set State "
-                + sideSetStateName + " to/from Cell Field " + cellFieldName));
-  p->set<const std::string>("Side Set State Name", sideSetStateName);
-  p->set<const std::string>("Cell Field Name", cellFieldName);
+                + stateName + " to/from Side Set Field " + fieldName));
+  p->set<const std::string>("State Name", stateName);
+  p->set<const std::string>("Field Name", fieldName);
   p->set<const std::string>("Side Set Name", sideSetName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("Field Layout", dl);
 
-  if( sideSetStatesToStore[sideSetName][ebName].find(sideSetStateName) != sideSetStatesToStore[sideSetName][ebName].end() ) {
+  if( sideSetStatesToStore[sideSetName][ebName].find(stateName) != sideSetStatesToStore[sideSetName][ebName].end() ) {
     //Duplicate registration.  This will occur when a problem's
     // constructEvaluators function (templated) registers state variables.
 
-    //Perform a check here that dl and statesToStore[sideSetStateName] are the same:
-    //TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[sideSetStateName]);  //I don't know how to do this correctly (erik)
-//    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[sideSetStateName]));
+    //Perform a check here that dl and statesToStore[stateName] are the same:
+    //TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know how to do this correctly (erik)
+//    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[stateName]));
     return p;  // Don't re-register the same state name
   }
 
-  sideSetStatesToStore[sideSetName][ebName][sideSetStateName] = dl;
+  sideSetStatesToStore[sideSetName][ebName][stateName] = dl;
 
-  if (sideSetStateInfo == Teuchos::null)
-  {
-    // It's the first time we register side set states, so we initiate the pointer
-    sideSetStateInfo = Teuchos::rcp(new std::map<std::string,Teuchos::RCP<StateInfoStruct> >());
-  }
-
-  if ( sideSetStateInfo->find(sideSetName)==sideSetStateInfo->end() )
+  if ( sideSetStateInfo.find(sideSetName)==sideSetStateInfo.end() )
   {
     // It's the first time we register states on this side set, so we initiate the pointer
-
-    std::pair<std::string,Teuchos::RCP<StateInfoStruct> > new_pair;
-    new_pair = std::make_pair(sideSetName,Teuchos::rcp(new StateInfoStruct()));
-    sideSetStateInfo->insert(new_pair);
+    sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
   }
-  Teuchos::RCP<StateInfoStruct> sis_ptr = (*sideSetStateInfo)[sideSetName];
+
+  const Teuchos::RCP<StateInfoStruct>& sis_ptr = sideSetStateInfo.at(sideSetName);
 
   // Load into StateInfo
   StateStruct::MeshFieldEntity mfe_type;
-  if(fieldEntity) mfe_type=*fieldEntity;
-  else if(dl->rank() == 1 && dl->size() == 1)
-     mfe_type = StateStruct::WorksetValue; // One value for the whole workset (i.e., time)
-  else if (dl->rank() == 1 && dl->name(0) == "Cell")
-     mfe_type = StateStruct::ElemData;
-  else if(dl->rank() >= 1 && dl->name(0) == "Node") // Nodal data
-     mfe_type = StateStruct::NodalData;
-  else if(dl->rank() >= 1 && dl->name(0) == "Cell"){ // Element QP or node data
-     if(dl->rank() > 1 && dl->name(1) == "Node") // Element node data
-        mfe_type = StateStruct::ElemNode; // One value for the whole workset (i.e., time)
-     else if(dl->rank() > 1 && dl->name(1) == "QuadPoint") // Element node data
-        mfe_type = StateStruct::QuadPoint; // One value for the whole workset (i.e., time)
-     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-       "StateManager: Element Entity type - " << dl->name(1) << " - not supported" << std::endl);
-  }
-  else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-     "StateManager: Unknown Entity type - " << dl->name(0) << " - not supported" << std::endl);
+  if(fieldEntity)
+    mfe_type=*fieldEntity;
+  else if (dl->rank() == 2 && dl->name(1) == "Side")
+    mfe_type = StateStruct::ElemData;
+  else if(dl->rank() > 2 && dl->name(2) == "Node") // Element node data
+      mfe_type = StateStruct::ElemNode; // One value for the whole workset (i.e., time)
+  else if(dl->rank() > 2 && dl->name(2) == "QuadPoint") // Element node data
+    mfe_type = StateStruct::QuadPoint; // One value for the whole workset (i.e., time)
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "StateManager: Unknown Entity type.\n");
 
-  sis_ptr->push_back(Teuchos::rcp(new StateStruct(sideSetStateName, mfe_type)));
+  sis_ptr->push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
   StateStruct& stateRef = *sis_ptr->back();
   stateRef.setInitType(init_type);
   stateRef.setInitValue(init_val);
@@ -429,11 +415,11 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getSideSetNodalDataBase(sideSetName);
 
     if (dl->rank() == 2) // node vector
-      nodalDataBase->registerVectorState (sideSetStateName, stateRef.dim[1]);
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
     else if (dl->rank() == 3) // node tensor
-      nodalDataBase->registerVectorState (sideSetStateName, stateRef.dim[1]*stateRef.dim[2]);
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
     else // node scalar
-      nodalDataBase->registerVectorState (sideSetStateName, 1);
+      nodalDataBase->registerVectorState (stateName, 1);
   }
 
   stateRef.output = outputToExodus;
@@ -443,8 +429,8 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   if (registerOldState) {
     stateRef.saveOldState = true;
 
-    std::string sideSetStateName_old = sideSetStateName + "_old";
-    sis_ptr->push_back(Teuchos::rcp(new Albany::StateStruct(sideSetStateName_old, mfe_type)));
+    std::string stateName_old = stateName + "_old";
+    sis_ptr->push_back(Teuchos::rcp(new Albany::StateStruct(stateName_old, mfe_type)));
     Albany::StateStruct& pstateRef = *sis_ptr->back();
     pstateRef.initType  = init_type;
     pstateRef.initValue = init_val;
@@ -455,7 +441,7 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   }
 
   // insert
-  stateRef.nameMap[sideSetStateName] = ebName;
+  stateRef.nameMap[stateName] = ebName;
 }
 
 Teuchos::RCP<Albany::StateInfoStruct>
@@ -464,7 +450,7 @@ Albany::StateManager::getStateInfoStruct() const
   return stateInfo;
 }
 
-Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >
+const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >&
 Albany::StateManager::getSideSetStateInfoStruct() const
 {
   return sideSetStateInfo;
@@ -480,15 +466,25 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
   doSetStateArrays(disc,stateInfo);
 
-  if (Teuchos::nonnull(sideSetStateInfo))
+  // First, we check the explicitly required side discretizations exist...
+  const auto& ss_discs = disc->getSideSetDiscretizations();
+  for (auto it : sideSetStateInfo)
   {
-    std::map<std::string,Teuchos::RCP<StateInfoStruct> >::iterator it;
-    TEUCHOS_TEST_FOR_EXCEPTION (disc->getSideSetDiscretizations()==Teuchos::null, std::logic_error,
-                                "Error! There are sideSet states registered but no sideSet discretizations.\n");
-    for (it=sideSetStateInfo->begin(); it!=sideSetStateInfo->end(); ++it)
+    TEUCHOS_TEST_FOR_EXCEPTION (ss_discs.find(it.first)==ss_discs.end(), std::logic_error,
+                                "Error! Side Set " << it.first << "has sideSet states registered but no discretizations.\n");
+  }
+
+  // Then we make sure that for every side discretization there is a StateInfoStruct (possibly empty)
+  for (auto it : disc->getSideSetDiscretizations())
+  {
+    Teuchos::RCP<StateInfoStruct>& sis = sideSetStateInfo[it.first];
+    if (sis==Teuchos::null)
     {
-      doSetStateArrays (disc->getSideSetDiscretizations()->find(it->first)->second,it->second);
+      // Initialize to an empty StateInfoStruct
+      sis = Teuchos::rcp(new StateInfoStruct());
+      sis->createNodalDataBase();
     }
+    doSetStateArrays (it.second,sis);
   }
 }
 
@@ -498,7 +494,6 @@ getDiscretization() const
 {
   return disc;
 }
-
 
 void
 Albany::StateManager::
