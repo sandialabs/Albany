@@ -227,12 +227,12 @@ namespace Albany {
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;}
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return stkMeshStruct;}
 
-    Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const
+    const SideSetDiscretizationsType& getSideSetDiscretizations () const
     {
       return sideSetDiscretizations;
     }
 
-    Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const
+    const std::map<std::string,std::map<GO,GO> >& getSideIdToSideSetElemIdMap () const
     {
       return sideIdToSideSetElemIdMap;
     }
@@ -361,6 +361,9 @@ namespace Albany {
     void writeCoordsToMatrixMarket() const;
 
     void buildSideIdToSideSetElemIdMap (const std::string& sideSetName);
+
+    void buildSideSetProjectors ();
+
     double previous_time_label;
 
   protected:
@@ -476,9 +479,15 @@ namespace Albany {
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
 
     // Sideset discretizations
-    Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > >  sideSetDiscretizations;
-    Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::STKDiscretization> > >       sideSetDiscretizationsSTK;
-    Teuchos::RCP<std::map<std::string,std::map<GO,GO> > >                               sideIdToSideSetElemIdMap;
+    std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;
+    std::map<std::string,Teuchos::RCP<Albany::STKDiscretization> >      sideSetDiscretizationsSTK;
+    std::map<std::string,std::map<GO,GO> >                              sideIdToSideSetElemIdMap;
+    std::map<std::string,Teuchos::RCP<Tpetra_CrsMatrix> >               projectorsT;
+    std::map<std::string,Teuchos::RCP<Tpetra_CrsMatrix> >               ov_projectorsT;
+#ifdef ALBANY_EPETRA
+    std::map<std::string,Teuchos::RCP<Epetra_CrsMatrix> >               projectors;
+    std::map<std::string,Teuchos::RCP<Epetra_CrsMatrix> >               ov_projectors;
+#endif
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS

@@ -665,15 +665,23 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
   }
   outputInterval++;
 
-  if (Teuchos::nonnull(sideSetDiscretizations))
+  for (auto it : sideSetDiscretizations)
   {
-    SideSetDiscretizations::iterator it;
-    for (it=sideSetDiscretizations->begin(); it!=sideSetDiscretizations->end(); ++it)
+    Teuchos::RCP<Albany::AbstractDiscretization>& sdisc = it.second;
+    Teuchos::RCP<Epetra_Vector> ss_soln;
+    if (overlapped)
     {
-      Teuchos::RCP<Albany::AbstractDiscretization>& sdisc = it->second;
-      Epetra_Vector tmp(*it->second->getOverlapMap());
-      it->second->writeSolution (tmp, time, overlapped);
+      ss_soln = Teuchos::rcp(new Epetra_Vector(*it.second->getOverlapMap()));
+      const Epetra_CrsMatrix& P = *ov_projectors.at(it.first);
+      P.Apply(soln, *ss_soln);
     }
+    else
+    {
+      ss_soln = Teuchos::rcp(new Epetra_Vector(*it.second->getMap()));
+      const Epetra_CrsMatrix& P = *projectors.at(it.first);
+      P.Apply(soln, *ss_soln);
+    }
+    it.second->writeSolution (*ss_soln, time, overlapped);
   }
 #endif
 }
@@ -742,13 +750,21 @@ writeSolutionToFileT(const Tpetra_Vector& solnT, const double time,
   }
   outputInterval++;
 
-  if (Teuchos::nonnull(sideSetDiscretizations))
+  for (auto it : sideSetDiscretizations)
   {
-    SideSetDiscretizations::iterator it;
-    for (it=sideSetDiscretizations->begin(); it!=sideSetDiscretizations->end(); ++it)
+    if (overlapped)
     {
-      Tpetra_Vector tmpT(it->second->getOverlapMapT());
-      it->second->writeSolutionToFileT (tmpT, time, overlapped);
+      Tpetra_Vector ss_solnT (it.second->getOverlapMapT());
+      const Tpetra_CrsMatrix& P = *ov_projectorsT.at(it.first);
+      P.apply(solnT, ss_solnT);
+      it.second->writeSolutionToFileT (ss_solnT, time, overlapped);
+    }
+    else
+    {
+      Tpetra_Vector ss_solnT (it.second->getMapT());
+      const Tpetra_CrsMatrix& P = *projectorsT.at(it.first);
+      P.apply(solnT, ss_solnT);
+      it.second->writeSolutionToFileT (ss_solnT, time, overlapped);
     }
   }
 #endif
@@ -801,6 +817,15 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 
 //    container->saveResVector(residual, select_owned_or_shared, overlap_node_map);
   }
+
+  // Setting the residual on the side set meshes
+  for (auto it : sideSetDiscretizations)
+  {
+    const Epetra_CrsMatrix& P = *ov_projectors.at(it.first);
+    Epetra_Vector ss_residual (*it.second->getOverlapMap());
+    P.Apply(residual,ss_residual);
+    it.second->setResidualField(ss_residual);
+  }
 #endif
 }
 #endif
@@ -816,6 +841,15 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
     // Write the overlapped data
     stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
     container->saveResVectorT(residualT, select_owned_or_shared, overlap_node_mapT);
+  }
+
+  // Setting the residual on the side set meshes
+  for (auto it : sideSetDiscretizations)
+  {
+    const Tpetra_CrsMatrix& P = *ov_projectors.at(it.first);
+    Tpetra_Vector ss_residualT (it.second->getOverlapMapT());
+    P.apply(residualT,ss_residualT);
+    it.second->setResidualFieldT(ss_residualT);
   }
 #endif
 }
@@ -1008,6 +1042,14 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
   Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->saveSolnVector(soln, locally_owned, node_map);
 
+  // Setting the solution on the side set meshes
+  for (auto it : sideSetDiscretizations)
+  {
+    const Epetra_CrsMatrix& P = *projectors.at(it.first);
+    Epetra_Vector ss_soln (*it.second->getMap());
+    P.Apply(soln,ss_soln);
+    it.second->setSolutionField(ss_soln);
+  }
 }
 #endif // ALBANY_EPETRA
 
@@ -1026,6 +1068,15 @@ Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 
   container->saveSolnVectorT(solnT, locally_owned, node_mapT);
 
+  // Setting the solution on the side set meshes
+  for (auto it : sideSetDiscretizationsSTK)
+  {
+    const Tpetra_CrsMatrix& P = *projectorsT.at(it.first);
+    Tpetra_Vector ss_solnT (it.second->getMapT());
+    P.apply(solnT,ss_solnT);
+    it.second->setSolutionFieldT(ss_solnT);
+  }
+
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1043,6 +1094,14 @@ Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
   Teuchos::RCP<Epetra_Map> overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
   container->saveSolnVector(soln, select_owned_or_shared, overlap_node_map);
 
+  // Setting the solution on the side set meshes
+  for (auto it : sideSetDiscretizationsSTK)
+  {
+    const Epetra_CrsMatrix& P = *ov_projectors.at(it.first);
+    Epetra_Vector ss_soln (*it.second->getOverlapMap());
+    P.Apply(soln,ss_soln);
+    it.second->setOvlpSolutionField(ss_soln);
+  }
 }
 #endif // ALBANY_EPETRA
 
@@ -1058,6 +1117,15 @@ Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
   stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
 
   container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
+
+  // Setting the solution on the side set meshes
+  for (auto it : sideSetDiscretizationsSTK)
+  {
+    const Tpetra_CrsMatrix& P = *ov_projectorsT.at(it.first);
+    Tpetra_Vector ss_solnT (it.second->getOverlapMapT());
+    P.apply(solnT,ss_solnT);
+    it.second->setOvlpSolutionFieldT(ss_solnT);
+  }
 
 }
 
@@ -1202,7 +1270,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
     stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
 
-  numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
+  numGlobalNodes = node_mapT->getGlobalNumElements();
 
   indicesT.resize(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
@@ -2079,6 +2147,7 @@ void Albany::STKDiscretization::setupExodusOutput()
       catch (std::runtime_error const&) { }
     }
   }
+
 #else
   if (stkMeshStruct->exoOutput)
     *out << "\nWARNING: exodus output requested but SEACAS not compiled in:"
@@ -2475,6 +2544,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& s
   }
 #endif
 #endif
+
   return netCDFOutputRequest++;
 }
 #endif
@@ -2754,10 +2824,10 @@ Albany::STKDiscretization::printVertexConnectivity(){
 void
 Albany::STKDiscretization::buildSideIdToSideSetElemIdMap (const std::string& sideSetName)
 {
-  Teuchos::RCP<STKDiscretization>& side_disc = sideSetDiscretizationsSTK->find(sideSetName)->second;
+  Teuchos::RCP<STKDiscretization>& side_disc = sideSetDiscretizationsSTK.find(sideSetName)->second;
   Teuchos::RCP<Albany::AbstractSTKMeshStruct> side_mesh_struct = side_disc->getSTKMeshStruct();
 
-  std::map<GO,GO>& map = (*sideIdToSideSetElemIdMap)[sideSetName];
+  std::map<GO,GO>& map = sideIdToSideSetElemIdMap[sideSetName];
 
   // We assume the side-id is equal to the cell-id in the side mesh, so we build an identity map
 
@@ -2879,6 +2949,73 @@ Albany::STKDiscretization::buildSideIdToSideSetElemIdMap (const std::string& sid
 */
 }
 
+void Albany::STKDiscretization::buildSideSetProjectors()
+{
+  // Note: the Global index of a node should be the same in both this and the side discretizations
+  //       since the underlying STK entities should have the same ID
+  Teuchos::RCP<const Tpetra_Map> ss_ov_mapT, ss_mapT;
+  Teuchos::RCP<Tpetra_CrsMatrix> P, ov_P;
+#ifdef ALBANY_EPETRA
+  Teuchos::RCP<Epetra_CrsGraph> graphP_E;
+  Teuchos::RCP<Epetra_CrsMatrix> P_E;
+#endif
+
+  Teuchos::Array<GO> cols(1);
+  Teuchos::Array<ST> vals(1);
+  vals[0] = 1.0;
+
+  LO num_entries;
+  Teuchos::ArrayView<const GO> ss_indices;
+  for (auto it : sideSetDiscretizations)
+  {
+    // Extract the discretization
+    const std::string& sideSetName = it.first;
+    const Albany::AbstractDiscretization& disc = *it.second;
+
+    // Get the maps
+    ss_ov_mapT = disc.getOverlapMapT();
+    ss_mapT    = disc.getMapT();
+
+    // The projector: first the overlapped...
+    ov_P = Teuchos::rcp(new Tpetra_CrsMatrix(ss_ov_mapT,1,Tpetra::StaticProfile));
+    num_entries = ss_ov_mapT->getNodeNumElements();
+    ss_indices = ss_ov_mapT->getNodeElementList();
+    for (LO j(0); j<num_entries; ++j)
+    {
+      // Fill projector as an identity
+      cols[0] = ss_indices[j];
+      ov_P->insertGlobalValues(ss_indices[j],cols(),vals());
+    }
+    ov_P->fillComplete (overlap_mapT,ss_mapT);
+    ov_projectorsT[sideSetName] = ov_P;
+
+    // ...then the non-overlapped.
+    P = Teuchos::rcp(new Tpetra_CrsMatrix(ss_mapT,1,Tpetra::StaticProfile));
+    num_entries = ss_mapT->getNodeNumElements();
+    ss_indices = ss_mapT->getNodeElementList();
+    for (LO j(0); j<num_entries; ++j)
+    {
+      // Fill projector as an identity
+      cols[0] = ss_indices[j];
+      P->insertGlobalValues(ss_indices[j],cols(),vals());
+    }
+    P->fillComplete (overlap_mapT,ss_mapT);
+    projectorsT[sideSetName] = P;
+
+#ifdef ALBANY_EPETRA
+    graphP_E = Petra::TpetraCrsGraph_To_EpetraCrsGraph(P->getCrsGraph(),comm);
+    P_E = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*graphP_E));
+    Petra::TpetraCrsMatrix_To_EpetraCrsMatrix (P,*P_E,comm);
+    projectors[sideSetName] = P_E;
+
+    graphP_E = Petra::TpetraCrsGraph_To_EpetraCrsGraph(ov_P->getCrsGraph(),comm);
+    P_E = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*graphP_E));
+    Petra::TpetraCrsMatrix_To_EpetraCrsMatrix (ov_P,*P_E,comm);
+    ov_projectors[sideSetName] = P_E;
+#endif
+  }
+}
+
 void
 Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 {
@@ -2949,20 +3086,17 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   // If the mesh struct stores sideSet mesh structs, we update them
   if (stkMeshStruct->sideSetMeshStructs.size()>0)
   {
-    sideSetDiscretizationsSTK = Teuchos::rcp( new std::map<std::string,Teuchos::RCP<STKDiscretization> >() );
-    sideSetDiscretizations = Teuchos::rcp( new std::map<std::string,Teuchos::RCP<AbstractDiscretization> >() );
-    sideIdToSideSetElemIdMap = Teuchos::rcp( new std::map<std::string,std::map<GO,GO> >() );
-
-    std::map<std::string,Teuchos::RCP<Albany::AbstractSTKMeshStruct> >::iterator it;
-    for (it=stkMeshStruct->sideSetMeshStructs.begin(); it!=stkMeshStruct->sideSetMeshStructs.end(); ++it)
+    for (auto it : stkMeshStruct->sideSetMeshStructs)
     {
-      Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(it->second,commT));
+      Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(it.second,commT));
       side_disc->updateMesh();
-      sideSetDiscretizations->insert(std::make_pair(it->first,side_disc));
-      sideSetDiscretizationsSTK->insert(std::make_pair(it->first,side_disc));
+      sideSetDiscretizations.insert(std::make_pair(it.first,side_disc));
+      sideSetDiscretizationsSTK.insert(std::make_pair(it.first,side_disc));
 
-      buildSideIdToSideSetElemIdMap(it->first);
+      buildSideIdToSideSetElemIdMap(it.first);
     }
+
+    buildSideSetProjectors();
   }
 /*
 for (int ws(0); ws<sideSets.size(); ++ws)
