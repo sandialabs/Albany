@@ -363,7 +363,7 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   p->set<const std::string>("Side Set State Name", sideSetStateName);
   p->set<const std::string>("Cell Field Name", cellFieldName);
   p->set<const std::string>("Side Set Name", sideSetName);
-  p->set<const Teuchos::RCP<PHX::DataLayout> >("Cell Field Layout", dl);
+  p->set<const Teuchos::RCP<PHX::DataLayout> >("Field Layout", dl);
 
   if( sideSetStatesToStore[sideSetName][ebName].find(sideSetStateName) != sideSetStatesToStore[sideSetName][ebName].end() ) {
     //Duplicate registration.  This will occur when a problem's

@@ -29,6 +29,12 @@ Albany::AbstractProblem::numEquations() const
   return neq;
 }
 
+const std::map<int,std::vector<std::string> >&
+Albany::AbstractProblem::getSideSetEquations() const
+{
+  return sideSetEquations;
+}
+
 void
 Albany::AbstractProblem::setNumEquations(const int neq_)
 {
@@ -100,9 +106,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<bool>("Compute Sensitivities", true, "Deprecated; Use parameter located under \"Piro\"/\"Analysis\"/\"Solve\" instead.");
   validPL->set<bool>("Stochastic", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
   validPL->sublist("Stochastic Galerkin", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
-  
-  // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015) 
+
+  // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015)
   validPL->sublist("Schottky Barrier", false, "");
-   
+
   return validPL;
 }

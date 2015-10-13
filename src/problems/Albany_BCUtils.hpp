@@ -39,6 +39,7 @@ struct DirichletTraits {
   enum { typeDa = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_aggregator };
   enum { typeFb = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_coordinate_function };
   enum { typeF  = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_field };
+  enum { typeON = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_off_nodeset };
 
   static const std::string bcParamsPl;
 
@@ -58,6 +59,8 @@ struct DirichletTraits {
   static std::string
   constructTimeDepBCName(const std::string& ns, const std::string& dof);
 
+  static std::string
+  constructBCNameOffNodeSet(const std::string& ns, const std::string& dof);
 };
 
 struct NeumannTraits {

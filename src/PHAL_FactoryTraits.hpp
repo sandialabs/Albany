@@ -38,6 +38,7 @@
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
+#include "PHAL_DirichletOffNodeSet.hpp"
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -64,41 +65,43 @@ namespace PHAL {
     static const int id_dirichlet_aggregator           =  1;
     static const int id_dirichlet_coordinate_function  =  2;
     static const int id_dirichlet_field                =  3;
-    static const int id_qcad_poisson_dirichlet         =  4;
-    static const int id_kfield_bc                      =  5; // Only for LCM probs
-    static const int id_timedep_bc                     =  6; // Only for LCM probs
-    static const int id_time                           =  7; // Only for LCM probs
-    static const int id_torsion_bc                     =  8; // Only for LCM probs
-    static const int id_schwarz_bc                     =  9; // Only for LCM probs
-    static const int id_pd_neigh_fit_bc                = 10; // Only for LCM-Peridigm coupling
+    static const int id_dirichlet_off_nodeset          =  4; // To handle equations on side set (see PHAL_DirichletOffNodeSet)
+    static const int id_qcad_poisson_dirichlet         =  5;
+    static const int id_kfield_bc                      =  6; // Only for LCM probs
+    static const int id_timedep_bc                     =  7; // Only for LCM probs
+    static const int id_time                           =  8; // Only for LCM probs
+    static const int id_torsion_bc                     =  9; // Only for LCM probs
+    static const int id_schwarz_bc                     = 10; // Only for LCM probs
+    static const int id_pd_neigh_fit_bc                = 11; // Only for LCM-Peridigm coupling
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-    typedef boost::mpl::vector11<
+    typedef boost::mpl::vector12<
 #elif defined(ALBANY_LCM)
-    typedef boost::mpl::vector9<
+    typedef boost::mpl::vector10<
 #else
-    typedef boost::mpl::vector5<
+    typedef boost::mpl::vector6<
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
         PHAL::DirichletCoordFunction<_,Traits>,   //  2
         PHAL::DirichletField<_,Traits>,           //  3
+        PHAL::DirichletOffNodeSet<_,Traits>,      //  4
 #ifdef ALBANY_QCAD
-        QCAD::PoissonDirichlet<_,Traits>          //  4
+        QCAD::PoissonDirichlet<_,Traits>          //  5
 #else
-        PHAL::Dirichlet<_,Traits>                 //  4 dummy
+        PHAL::Dirichlet<_,Traits>                 //  5 dummy
 #endif
 #if defined(ALBANY_LCM)
         ,
-        LCM::KfieldBC<_,Traits>,                  //  5
-        LCM::TimeDepBC<_, Traits>,                //  6
-        LCM::Time<_, Traits>,                     //  7
-        LCM::TorsionBC<_, Traits>                 //  8
+        LCM::KfieldBC<_,Traits>,                  //  6
+        LCM::TimeDepBC<_, Traits>,                //  7
+        LCM::Time<_, Traits>,                     //  8
+        LCM::TorsionBC<_, Traits>                 //  9
 #endif
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
         ,
-        LCM::SchwarzBC<_, Traits>,                 //  9
-        LCM::PDNeighborFitBC<_, Traits>           //  10
+        LCM::SchwarzBC<_, Traits>,                 // 10
+        LCM::PDNeighborFitBC<_, Traits>           //  11
 #endif
         > EvaluatorTypes;
 };
@@ -139,7 +142,7 @@ namespace PHAL {
 #if defined(ALBANY_LCM)
        , LCM::TimeTracBC<_, Traits>               //  8
 #endif
-	  > EvaluatorTypes;
+    > EvaluatorTypes;
 };
 
 }

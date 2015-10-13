@@ -74,6 +74,7 @@ namespace Albany {
 
     //! Get the number of equations
     unsigned int numEquations() const;
+    const std::map<int,std::vector<std::string> >& getSideSetEquations() const;
     void setNumEquations(const int neq_);
     unsigned int numStates() const;
 
@@ -127,6 +128,9 @@ namespace Albany {
 
     //! Number of equations per node being solved
     unsigned int neq;
+
+    //! Equations that are defined ONLY on some part of the mesh
+    std::map<int,std::vector<std::string> > sideSetEquations;
 
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;

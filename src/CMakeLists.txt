@@ -256,12 +256,14 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ComputeBasisFunctionsSide.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_DirichletCoordinateFunction.cpp
+  evaluators/PHAL_DirichletOffNodeSet.cpp
   evaluators/PHAL_DirichletField.cpp
   evaluators/PHAL_DOFCellToSide.cpp
   evaluators/PHAL_DOFInterpolation.cpp
   evaluators/PHAL_DOFInterpolationSide.cpp
   evaluators/PHAL_DOFGradInterpolation.cpp
   evaluators/PHAL_DOFGradInterpolationSide.cpp
+  evaluators/PHAL_DOFSideToCell.cpp
   evaluators/PHAL_DOFVecCellToSide.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
   evaluators/PHAL_DOFTensorGradInterpolation.cpp
@@ -354,6 +356,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DirichletCoordinateFunction_Def.hpp
   evaluators/PHAL_DirichletField.hpp
   evaluators/PHAL_DirichletField_Def.hpp
+  evaluators/PHAL_DirichletOffNodeSet.hpp
+  evaluators/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/PHAL_DOFCellToSide.hpp
   evaluators/PHAL_DOFCellToSide_Def.hpp
   evaluators/PHAL_DOFGradInterpolation.hpp
@@ -368,6 +372,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFTensorGradInterpolation_Def.hpp
   evaluators/PHAL_DOFTensorInterpolation.hpp
   evaluators/PHAL_DOFTensorInterpolation_Def.hpp
+  evaluators/PHAL_DOFSideToCell.hpp
+  evaluators/PHAL_DOFSideToCell_Def.hpp
   evaluators/PHAL_DOFVecCellToSide.hpp
   evaluators/PHAL_DOFVecCellToSide_Def.hpp
   evaluators/PHAL_DOFVecGradInterpolation.hpp

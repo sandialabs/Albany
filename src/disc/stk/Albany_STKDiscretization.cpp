@@ -61,7 +61,8 @@ const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size
 Albany::STKDiscretization::
 STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
-                  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
+                  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_,
+                  const std::map<int,std::vector<std::string> >& sideSetEquations_) :
 
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
@@ -71,6 +72,7 @@ STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
   rigidBodyModes(rigidBodyModes_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
+  sideSetEquations(sideSetEquations_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
 #if defined(ALBANY_EPETRA)
@@ -1286,6 +1288,16 @@ void Albany::STKDiscretization::computeGraphs()
   GO row, col;
   Teuchos::ArrayView<GO> colAV;
 
+  // determining the equations that are defined on the whole domain
+  std::vector<int> globalEqns;
+  for (int k(0); k<neq; ++k)
+  {
+    if (sideSetEquations.find(k)==sideSetEquations.end())
+    {
+      globalEqns.push_back(k);
+    }
+  }
+
   for (std::size_t i=0; i < cells.size(); i++) {
     stk::mesh::Entity e = cells[i];
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
@@ -1296,11 +1308,14 @@ void Albany::STKDiscretization::computeGraphs()
       stk::mesh::Entity rowNode = node_rels[j];
 
       // loop over eqs
-      for (std::size_t k=0; k < neq; k++) {
-        row = getGlobalDOF(gid(rowNode), k);
-        for (std::size_t l=0; l < num_nodes; l++) {
+      for (std::size_t k=0; k < globalEqns.size(); ++k)
+      {
+        row = getGlobalDOF(gid(rowNode), globalEqns[k]);
+        for (std::size_t l=0; l < num_nodes; l++)
+        {
           stk::mesh::Entity colNode = node_rels[l];
-          for (std::size_t m=0; m < neq; m++) {
+          for (std::size_t m=0; m < neq; m++) // Note: here we cycle through ALL the eqns (not just the global ones),
+          {                                   //       since they could all be coupled with this eq
             col = getGlobalDOF(gid(colNode), m);
             colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
@@ -1309,6 +1324,73 @@ void Albany::STKDiscretization::computeGraphs()
       }
     }
   }
+
+  if (sideSetEquations.size()>0)
+  {
+    // iterator over all sideSet-defined equations
+    std::map<int,std::vector<std::string> >::iterator it;
+    for (it=sideSetEquations.begin(); it!=sideSetEquations.end(); ++it)
+    {
+      // Get the eq number
+      int eq = it->first;
+
+      // In case we only have equations on side sets (no "volume" eqns),
+      // there would be problem with linear solvers. To avoid this, we
+      // put one diagonal entry for every side set equation.
+      // NOTE: some nodes will be processed twice, but this is safe
+      //       in Tpetra_CrsGraph: the redundant indices will be discarded
+      for (std::size_t inode=0; inode < overlapnodes.size(); ++inode)
+      {
+        stk::mesh::Entity node = overlapnodes[inode];
+        row = getGlobalDOF(gid(node), it->first);
+        colAV = Teuchos::arrayView(&row, 1);
+        overlap_graphT->insertGlobalIndices(row, colAV);
+      }
+
+      // Number of side sets this eq is defined on
+      int numSideSets = it->second.size();
+      for (int ss(0); ss<numSideSets; ++ss)
+      {
+        stk::mesh::Part& part = *stkMeshStruct->ssPartVec.find(it->second[ss])->second;
+
+        // Get all owned sides in this side set
+        stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector( part ) & stk::mesh::Selector( metaData.locally_owned_part() );
+
+        std::vector< stk::mesh::Entity > sides;
+        stk::mesh::get_selected_entities( select_owned_in_sspart, bulkData.buckets( metaData.side_rank() ), sides ); // store the result in "sides"
+
+        // Loop on all the sides of this sideset
+        for (std::size_t localSideID=0; localSideID < sides.size(); localSideID++)
+        {
+          stk::mesh::Entity sidee = sides[localSideID];
+          stk::mesh::Entity const* node_rels = bulkData.begin_nodes(sidee);
+          const size_t num_nodes = bulkData.num_nodes(sidee);
+
+          // loop over local nodes of the side (row)
+          for (std::size_t i=0; i < num_nodes; i++)
+          {
+            stk::mesh::Entity rowNode = node_rels[i];
+            row = getGlobalDOF(gid(rowNode), eq);
+
+            // loop over local nodes of the side (col)
+            for (std::size_t j=0; j < num_nodes; j++)
+            {
+              stk::mesh::Entity colNode = node_rels[j];
+
+             // loop on all the equations (the eq may be coupled with other eqns)
+              for (std::size_t m=0; m < neq; m++)
+              {
+                col = getGlobalDOF(gid(colNode), m);
+                colAV = Teuchos::arrayView(&col, 1);
+                overlap_graphT->insertGlobalIndices(row, colAV);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   overlap_graphT->fillComplete();
 
   // Create Owned graph by exporting overlap with known row map
@@ -1795,6 +1877,42 @@ void Albany::STKDiscretization::computeSideSets(){
     }
 
     ss++;
+  }
+}
+
+void Albany::STKDiscretization::computeNodeSetsFromSideSets()
+{
+  // Looping over all side_rank parts found in the mesh
+  for (auto ss : stkMeshStruct->ssPartVec)
+  {
+    if (nodeSets.find(ss.first) != nodeSets.end())
+    {
+      // WARNING! We are assuming that if an existing node set has already the name of
+      //          this side set, then it must contain all this side set's nodes.
+      continue;
+    }
+
+    // Get all owned sides in this side set
+    stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector( *ss.second )
+                                               & stk::mesh::Selector( metaData.locally_owned_part() );
+
+    std::vector<stk::mesh::Entity> nodes;
+    stk::mesh::get_selected_entities (select_owned_in_sspart , // sides local to this processor
+                                      bulkData.buckets (stk::topology::NODE_RANK) ,
+                                      nodes); // store the result in "nodes"
+
+    // Adding the nodes to the nodeSets
+    nodeSets[ss.first].resize(nodes.size());
+    for (int inode=0; inode<nodes.size(); ++inode)
+    {
+      GO node_gid = gid(nodes[inode]);
+      nodeSets[ss.first][inode].resize(neq);
+      int node_lid = node_mapT->getLocalElement(node_gid);
+      for (int eq=0; eq<neq; ++eq)
+      {
+        nodeSets[ss.first][inode][eq] = getOwnedDOF(node_lid,eq);
+      }
+    }
   }
 }
 
@@ -2641,6 +2759,27 @@ Albany::STKDiscretization::buildSideIdToSideSetElemIdMap (const std::string& sid
 
   std::map<GO,GO>& map = (*sideIdToSideSetElemIdMap)[sideSetName];
 
+  // We assume the side-id is equal to the cell-id in the side mesh, so we build an identity map
+
+  const stk::mesh::MetaData& meta_data = *stkMeshStruct->metaData;
+  stk::mesh::BulkData& bulk_data = *stkMeshStruct->bulkData;
+
+  // Extracting sides in this sideSet
+  stk::mesh::Part& ss_part = *stkMeshStruct->ssPartVec.find(sideSetName)->second;
+  stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector(ss_part) & stk::mesh::Selector(meta_data.locally_owned_part() );
+  std::vector< stk::mesh::Entity > sides ;
+  stk::mesh::get_selected_entities( select_owned_in_sspart, bulk_data.buckets( meta_data.side_rank() ), sides); // store the result in "sides"
+
+  // Loop over the sides
+  for (int is(0); is<sides.size(); ++is)
+  {
+    stk::mesh::Entity side = sides[is];
+    stk::mesh::EntityId side_id = bulk_data.identifier(side)-1;
+
+    map[side_id] = side_id;
+  }
+
+/*
   const stk::mesh::MetaData& side_meta_data = *side_mesh_struct->metaData;
   const stk::mesh::MetaData& meta_data = *stkMeshStruct->metaData;
 
@@ -2737,6 +2876,7 @@ Albany::STKDiscretization::buildSideIdToSideSetElemIdMap (const std::string& sid
     }
 
   }
+*/
 }
 
 void
@@ -2790,6 +2930,8 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   computeSideSets();
 
+  computeNodeSetsFromSideSets();
+
   setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution transfer and projection operations
@@ -2820,25 +2962,6 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
       sideSetDiscretizationsSTK->insert(std::make_pair(it->first,side_disc));
 
       buildSideIdToSideSetElemIdMap(it->first);
-/*
-      std::map<GO,GO> map = sideIdToSideSetElemIdMap->find(it->first)->second;
-      std::cout << "===========================================\n";
-      for (std::map<GO,GO>::const_iterator itm=map.begin(); itm!=map.end(); ++itm)
-      {
-        std::cout << "side " << itm->first << " becomes cell " << itm->second << "\n";
-      }
-      std::cout << "===========================================\n";
-
-Albany::WsLIDList& elemGIDws2D = side_disc->getElemGIDws();
-std::cout << "---------------------------\n";
-for (std::map<GO, Albany::wsLid >::iterator it=elemGIDws2D.begin(); it!=elemGIDws2D.end(); ++it)
-{
-  std::cout << "Elem " << it->first << ":\n";
-  std::cout << "  ws : " << it->second.ws << "\n";
-  std::cout << "  lid: " << it->second.LID << "\n";
-}
-std::cout << "---------------------------\n";
-*/
     }
   }
 /*

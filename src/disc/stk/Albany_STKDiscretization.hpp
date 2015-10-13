@@ -82,8 +82,8 @@ namespace Albany {
     STKDiscretization(
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
-       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
-
+       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null,
+       const std::map<int,std::vector<std::string> >& sideSetEquations = std::map<int,std::vector<std::string> >());
 
     //! Destructor
     ~STKDiscretization();
@@ -206,7 +206,7 @@ namespace Albany {
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false);
    void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
 
-#if defined(ALBANY_EPETRA) 
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Vector> getSolutionField(const bool overlapped=false) const;
 #endif
     //Tpetra analog
@@ -226,7 +226,7 @@ namespace Albany {
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;}
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return stkMeshStruct;}
-    
+
     Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const
     {
       return sideSetDiscretizations;
@@ -341,6 +341,8 @@ namespace Albany {
     void computeNodeSets();
     //! Process STK mesh for SideSets
     void computeSideSets();
+    //! Process STK mesh for NodeSets corresponding to SideSets
+    void computeNodeSetsFromSideSets();
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
     //! Call stk_io for creating NetCDF output file
@@ -414,6 +416,9 @@ namespace Albany {
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
+
+    //! Equations that are defined only on some side sets of the mesh
+    std::map<int,std::vector<std::string> >   sideSetEquations;
 
     //! Number of elements on this processor
     unsigned int numMyElements;

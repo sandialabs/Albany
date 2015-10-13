@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra has been ifdef'ed out if ALBANY_EPETRA_EXE is off. 
+//IK, 9/12/14: Epetra has been ifdef'ed out if ALBANY_EPETRA_EXE is off.
 
 #ifndef PHAL_WORKSET_HPP
 #define PHAL_WORKSET_HPP
@@ -70,7 +70,7 @@ struct Workset {
   Teuchos::RCP<const Tpetra_Vector> xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  
+
   Teuchos::RCP<ParamVec> params;
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<const Epetra_MultiVector> Vx;
@@ -99,7 +99,7 @@ struct Workset {
 #endif
   //Tpetra analog of f
   Teuchos::RCP<Tpetra_Vector> fT;
- 
+
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
 #endif
@@ -171,7 +171,8 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
-  // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters. 
+  // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters.
+  // Note: also needed by OffNodeSet dirichlet BC
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 #if defined(ALBANY_LCM)
   // Needed for Schwarz coupling
@@ -221,7 +222,7 @@ struct Workset {
   Teuchos::RCP<Epetra_MultiVector> dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> dgdxdotdot;
 #endif
-  //Tpetra analogs of dgdx and dgdxdot 
+  //Tpetra analogs of dgdx and dgdxdot
   Teuchos::RCP<Tpetra_MultiVector> dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotdotT;
@@ -250,8 +251,8 @@ struct Workset {
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdotdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdp;
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
   Teuchos::RCP< Stokhos::ProductEpetraVector > mp_g;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdx;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdot;
@@ -412,8 +413,8 @@ struct Workset {
         setValue<PHAL::AlbanyTraits::SGTangent>(serializer);
     }
   };
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
   template <> struct BuildSerializer<PHAL::AlbanyTraits::MPResidual> {
     BuildSerializer(Workset& workset) {
       int nblock = workset.mp_x->size();
