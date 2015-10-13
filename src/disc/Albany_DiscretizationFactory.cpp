@@ -353,14 +353,15 @@ Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(
     unsigned int neq, const std::map<int,std::vector<std::string> >& sideSetEquations,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-    const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis,
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const AbstractFieldContainer::FieldContainerRequirements& req,
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
     const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
   TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
                              std::logic_error,
                              "meshStruct accessed, but it has not been constructed" << std::endl);
 
-  setupInternalMeshStruct(neq, sis, side_set_sis, req);
+  setupInternalMeshStruct(neq, sis, side_set_sis, req, side_set_req);
   Teuchos::RCP<Albany::AbstractDiscretization> result =
       createDiscretizationFromInternalMeshStruct(sideSetEquations,rigidBodyModes);
 
@@ -386,10 +387,11 @@ void
 Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis,
-  const AbstractFieldContainer::FieldContainerRequirements& req) {
+  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+  const AbstractFieldContainer::FieldContainerRequirements& req,
+  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req) {
   meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis,
-                                  meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis);
+                                  meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, side_set_req);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
