@@ -763,9 +763,15 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
     
-   const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
+    const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
                                                                          initial_guess, lowsFactory));
 
+
+     //IKT, 10/14/15: create dummy local app object that effectively just tells Albany application that 
+     //Schwarz problems will not have a problem list, so an attempt to get "Name" from it is not made. 
+     //This is needed to avoid seg fault that started on 7/5/15 due to changes in the 
+     //getDerivativeDimensions function in PHAL_Utilities.cpp 
+     RCP<Albany::Application> app = rcp(new Albany::Application());
 
     const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.

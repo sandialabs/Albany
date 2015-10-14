@@ -70,7 +70,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0)
+  stateGraphVisDetail(0) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -80,6 +80,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params,initial_guess);
+  if (noProblemParams != 1) 
+    noProblemParams = 0; 
 }
 
 
@@ -96,7 +98,17 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
+  if (noProblemParams != 1) 
+    noProblemParams = 0; 
 };
+
+
+Albany::Application::
+Application() 
+{
+  noProblemParams = 1; 
+};
+
 
 namespace {
 int calcTangentDerivDimension (
