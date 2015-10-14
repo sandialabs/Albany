@@ -87,7 +87,7 @@ namespace Albany {
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
     
-    //! Constructor
+    //! Dummy constructor (only used for Coupled Schwarz problems)
     Application();
 
     //! Destructor
