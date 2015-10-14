@@ -8,8 +8,8 @@
       <Parameter name="DBC on NS ns_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS ns_3 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS ns_4 for DOF X">
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.5, 1.0 }"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.05, 0.1 }"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0 }"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.1 }"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Parameters">
