@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Aeras_EvaluatorUtilities.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -53,6 +54,8 @@ private:
   std::size_t worksetSize;
   std::size_t numNodes;
   std::size_t numCoords;
+
+  MDFieldMemoizer<Traits> memoizer_;
 };
 }
 

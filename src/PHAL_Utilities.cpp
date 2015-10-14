@@ -29,32 +29,36 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
-  std::string problemName = app->getProblemPL()->get("Name", "");
-  if(problemName == "FELIX Coupled FO H 3D")
-  { //all column is coupled
-    int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
-    int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
-    return app->getNumEquations()*side_node_count*numLevels;
-  }
+  if (app->getProblemPL() != Teuchos::null) { //Check if app has problem param list.  
+                                              //It will not for coupled Schwarz problems 
+                                              //so w/o this check the code will set fault.
+    std::string problemName = app->getProblemPL()->get("Name", "");
+    if(problemName == "FELIX Coupled FO H 3D")
+    { //all column is coupled
+      int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+      int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+      return app->getNumEquations()*side_node_count*numLevels;
+    }
 #ifdef ALBANY_GOAL
-  if ((problemName == "GOAL Mechanics 2D") ||
-      (problemName == "GOAL Mechanics 3D"))
-  {
-    Teuchos::RCP<Albany::AbstractDiscretization> ad =
-      app->getDiscretization();
-    Teuchos::RCP<Albany::GOALDiscretization> d =
-      Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
-    return d->getNumNodesPerElem(ebi) * app->getNumEquations();
-  }
+    if ((problemName == "GOAL Mechanics 2D") ||
+        (problemName == "GOAL Mechanics 3D"))
+    {
+      Teuchos::RCP<Albany::AbstractDiscretization> ad =
+        app->getDiscretization();
+      Teuchos::RCP<Albany::GOALDiscretization> d =
+        Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
+      return d->getNumNodesPerElem(ebi) * app->getNumEquations();
+    }
 #endif
 #ifdef ALBANY_AERAS
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
-  app->getEnrichedMeshSpecs(); 
-  return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-      app, mesh_specs[ebi].get());
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+    app->getEnrichedMeshSpecs(); 
+    return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+       app, mesh_specs[ebi].get());
 #endif
-  return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    app, app->getEnrichedMeshSpecs()[ebi].get());
+   }
+   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+   app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (

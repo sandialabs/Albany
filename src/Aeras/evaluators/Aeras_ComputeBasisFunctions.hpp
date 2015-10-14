@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Aeras_Layouts.hpp"
+#include "Aeras_EvaluatorUtilities.hpp"
 
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
@@ -88,11 +89,7 @@ private:
                             const double rrearth=1) const;
   void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
 
-  // 1-workset hack.
-  bool memoize_;
-  int prev_workset_index_;
-  void setupMemoization();
-  bool haveStoredData(typename Traits::EvalData workset);
+  MDFieldMemoizer<Traits> memoizer_;
 
   // Kokkos
 /*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

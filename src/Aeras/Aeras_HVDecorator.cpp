@@ -21,6 +21,63 @@ int mm_counter = 0;
 
 //#define OUTPUT_TO_SCREEN 
 
+namespace {
+// Got hints from Tpetra::CrsMatrix::clone.
+Teuchos::RCP<Tpetra_CrsMatrix> alloc (const Teuchos::RCP<Tpetra_CrsMatrix>& A) {
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+  using Teuchos::ArrayRCP;
+
+  ArrayRCP<const std::size_t> per_local_row;
+  std::size_t all_local_rows = 0;
+  bool bound_same = false;
+  A->getCrsGraph()->getNumEntriesPerLocalRowUpperBound(per_local_row, all_local_rows, bound_same);
+
+  RCP<Tpetra_CrsMatrix> B;
+  if (bound_same)
+    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), all_local_rows,
+                                 Tpetra::StaticProfile));
+  else
+    B = rcp(new Tpetra_CrsMatrix(A->getRowMap(), A->getColMap(), per_local_row,
+                                 Tpetra::StaticProfile));
+
+  return B;
+}
+
+Teuchos::RCP<Tpetra_CrsMatrix> getOnlyNonzeros (const Teuchos::RCP<Tpetra_CrsMatrix>& A) {
+  using Teuchos::RCP;
+  using Teuchos::Array;
+  using Teuchos::ArrayView;
+
+  TEUCHOS_ASSERT(A->hasColMap());
+  TEUCHOS_ASSERT(A->isLocallyIndexed());
+
+  RCP<Tpetra_CrsMatrix> B = alloc(A);
+  const RCP<const Tpetra_Map> row_map = B->getRowMap();
+
+  ArrayView<const LO> Ainds;
+  ArrayView<const ST> Avals;
+  Array<LO> Binds;
+  Array<ST> Bvals;
+  for (LO lrow = row_map->getMinLocalIndex(), lmax = row_map->getMaxLocalIndex(); lrow <= lmax; ++lrow) {
+    A->getLocalRowView(lrow, Ainds, Avals);
+    if (Ainds.size()) {
+      Binds.clear();
+      Bvals.clear();
+      for (std::size_t i = 0, ilim = Ainds.size(); i < ilim; ++i)
+        if (Avals[i] != 0) {
+          Binds.push_back(Ainds[i]);
+          Bvals.push_back(Avals[i]);
+        }
+      B->insertLocalValues(lrow, Binds, Bvals);
+    }
+  }
+  B->fillComplete();
+  
+  return B;
+}
+} // namespace
+
 Aeras::HVDecorator::HVDecorator(
     const Teuchos::RCP<Albany::Application>& app_,
     const Teuchos::RCP<Teuchos::ParameterList>& appParams)
@@ -32,18 +89,24 @@ Aeras::HVDecorator::HVDecorator(
   std::cout << "In HVDecorator app name: " << app->getProblemPL()->get("Name", "") << std::endl;
 #endif
 
-//Create and store mass and Laplacian operators (in CrsMatrix form). 
-  Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
-  laplace_ = createOperator(0.0, 0.0, 1.0); 
+  // Create and store mass and Laplacian operators (in CrsMatrix form). 
+  const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
+  const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 0.0, 1.0); 
 #ifdef WRITE_TO_MATRIX_MARKET
   Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass);
   Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
 #endif
 
+  // Do some preprocessing to speed up subsequent residual calculations.
+  // 1. Store the lumped mass diag reciprocal.
   inv_mass_diag_ = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap(), true)); 
   mass->getLocalDiagCopy(*inv_mass_diag_);
   inv_mass_diag_->reciprocal(*inv_mass_diag_);
+  // 2. Create a work vector in advance.
   wrk_ = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap()));
+  // 3. Remove the structural nonzeros, numerical zeros, from the Laplace
+  // operator.
+  laplace_ = getOnlyNonzeros(laplace);
 }
  
 //IKT: the following function creates either the mass or Laplacian operator, to be 

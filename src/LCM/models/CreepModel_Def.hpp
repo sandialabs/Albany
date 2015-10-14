@@ -331,6 +331,7 @@ computeState(typename Traits::EvalData workset,
 
           // exponential map to get Fpnew
           A = dgam * N;
+          eqps(cell, pt) = eqpsold(cell, pt);
           expA = Intrepid::exp(A);
           Fpnew = expA * Fpn;
           for (int i(0); i < num_dims_; ++i) {

@@ -70,7 +70,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0)
+  stateGraphVisDetail(0) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -80,6 +80,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params,initial_guess);
+  if (noProblemParams != 1) 
+    noProblemParams = 0; 
 }
 
 
@@ -96,7 +98,17 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
+  if (noProblemParams != 1) 
+    noProblemParams = 0; 
 };
+
+
+Albany::Application::
+Application() 
+{
+  noProblemParams = 1; 
+};
+
 
 namespace {
 int calcTangentDerivDimension (
@@ -1010,11 +1022,12 @@ computeGlobalResidualImplT(
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
+#ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
-
   // Write the residual to the discretization, which will later (optionally) be written to the output file
   disc->setResidualFieldT(*overlapped_fT);
+#endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
