@@ -19,7 +19,7 @@
 #include <Intrepid_Cubature.hpp>
 
 
-//#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 
 namespace Aeras {
@@ -158,16 +158,6 @@ public:
  PHX::MDField<ScalarT,QuadPoint, Dim> hgradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> htildegradNodes;
 
-// PHX::MDField<ScalarT,Node> ucomp;
-// PHX::MDField<ScalarT,Node> vcomp;
-// PHX::MDField<ScalarT,Node> utildecomp;
-// PHX::MDField<ScalarT,Node> vtildecomp;
-
-// PHX::MDField<ScalarT,QuadPoint, Dim> ugradNodes;
-// PHX::MDField<ScalarT,QuadPoint, Dim> vgradNodes;
-// PHX::MDField<ScalarT,QuadPoint, Dim> utildegradNodes;
-// PHX::MDField<ScalarT,QuadPoint, Dim> vtildegradNodes;
-
  PHX::MDField<ScalarT,Node> uX, uY, uZ, utX, utY,utZ;
  PHX::MDField<ScalarT,QuadPoint, Dim> uXgradNodes, uYgradNodes, uZgradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> utXgradNodes, utYgradNodes, utZgradNodes;
@@ -207,8 +197,10 @@ public:
  //The following are for hyperviscosity
  struct ShallowWaterResid_VecDim4_Tag{};
  struct ShallowWaterResid_VecDim6_Tag{};
+
  struct ShallowWaterResid_BuildLaplace_for_h_Tag{};
- struct ShallowWaterResid_BuildLaplace_for_uv_Tag{};
+// struct ShallowWaterResid_BuildLaplace_for_uv_Tag{};
+ struct ShallowWaterResid_BuildLaplace_for_huv_Tag{};
 
  struct ShallowWaterResid_Zeroing_h_Residual_Tag{};
  struct ShallowWaterResid_Zeroing_huv_Residual_Tag{};
@@ -223,7 +215,8 @@ public:
 
  //building Laplace op
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_h_Tag>  ShallowWaterResid_BuildLaplace_for_h_Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_uv_Tag>  ShallowWaterResid_BuildLaplace_for_uv_Policy;
+// typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_uv_Tag>  ShallowWaterResid_BuildLaplace_for_uv_Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_huv_Tag>  ShallowWaterResid_BuildLaplace_for_huv_Policy;
 
  //zeroing residual
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_Zeroing_h_Residual_Tag>  ShallowWaterResid_Zeroing_h_Residual_Policy;
@@ -245,7 +238,7 @@ public:
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_BuildLaplace_for_h_Tag& tag, const int& cell) const;
  KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_BuildLaplace_for_uv_Tag& tag, const int& cell) const;
+ void operator() (const ShallowWaterResid_BuildLaplace_for_huv_Tag& tag, const int& cell) const;
 
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_Zeroing_h_Residual_Tag& tag, const int& cell) const;
@@ -263,6 +256,12 @@ public:
  void compute_Residual0_useHyperViscosity(const int& cell) const;
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual3(const int& cell) const;
+
+ KOKKOS_INLINE_FUNCTION
+ void BuildLaplace_for_h (const int& cell) const;
+ KOKKOS_INLINE_FUNCTION
+ void BuildLaplace_for_uv (const int& cell) const;
+
 
 #endif
 };
