@@ -604,10 +604,6 @@ BuildLaplace_for_uv (const int& cell) const
              k22 = -sin(th)*sin(lam),
              k32 =  cos(th);
 
-           //uX(node) = k11*ulambda + k12*utheta;
-           //uY(node) = k21*ulambda + k22*utheta;
-           //uZ(node) = k32*utheta;
-
            utX(node) = k11*utlambda + k12*uttheta;
            utY(node) = k21*utlambda + k22*uttheta;
            utZ(node) = k32*uttheta;
@@ -693,7 +689,7 @@ BuildLaplace_for_h (const int& cell) const
 
     	for (std::size_t node=0; node < numNodes; ++node)
           surftilde(node) = UDotDotNodal(cell,node,0);
-        //gradient(surftilde, cell, htildegradNodes);
+
         gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 
 	    for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -719,16 +715,20 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
   get_coriolis(cell);
 
   for (int node=0; node < numNodes; ++node) {
-    ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]);
-    ScalarT ulambda = UNodal(cell, node,1);
-    ScalarT utheta  = UNodal(cell, node,2);
+
+      const typename PHAL::Ref<const ScalarT>::type
+	      ulambda = UNodal(cell, node,1),
+          utheta  = UNodal(cell, node,2),
+          utlambda = UNodal(cell, node,4),
+          uttheta = UNodal(cell, node,5);
+
+	  ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]);
+
+
     kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
     potentialEnergyAtNodes(node) = gravity*depth;
     uAtNodes(node, 0) = ulambda;
     uAtNodes(node, 1) = utheta;
-
-    ScalarT utlambda = UNodal(cell, node,4);
-    ScalarT uttheta = UNodal(cell, node,5);
 
     const typename PHAL::Ref<const MeshScalarT>::type
       lam = lambda_nodal(cell, node),
@@ -778,9 +778,7 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
                           + gradPotentialEnergy(qp,1)
                           + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
                           )*wBF(cell,node,qp);
-  
-//    Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp);
-//    Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp);
+
   }
 
   for (int qp=0; qp < numQPs; ++qp) {
