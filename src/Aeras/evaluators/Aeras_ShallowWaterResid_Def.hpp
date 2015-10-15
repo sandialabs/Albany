@@ -370,7 +370,7 @@ void gradient(const ArrayT1  & fieldAtNodes,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
-compute_huAtNodes_vecDim3(const int& cell) const{
+compute_hu(const int& cell) const{
  for (int node=0; node < numNodes; ++node) {
 
       const typename PHAL::Ref<const ScalarT>::type
@@ -386,6 +386,9 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0(const int& cell) const
 {
+
+  compute_product_h_vel(cell);
+
   for (int node=0; node < numNodes; ++node) 
     surf(node) = UNodal(cell,node,0);
 
@@ -402,6 +405,8 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0_useHyperViscosity(const int& cell) const
 {
+  compute_product_h_vel(cell);
+
   for (std::size_t node=0; node < numNodes; ++node) 
       surftilde(node) = UNodal(cell,node,3);
 
@@ -449,7 +454,7 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const
 {
-  compute_huAtNodes_vecDim3(cell); 
+
   compute_Residual0(cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
@@ -465,12 +470,9 @@ void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const
 {
    
-  compute_huAtNodes_vecDim3(cell); 
   compute_Residual0_useHyperViscosity(cell);
   compute_Residual3(cell);
 
-  //OG: I do not think there is anything to fix here.
-  //FIXME!
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
     Residual(cell,node,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wBF(cell, node, qp);
@@ -485,7 +487,6 @@ void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, const int& cell) const
 {
 
-  compute_huAtNodes_vecDim3(cell);
   compute_Residual0(cell);
 
   get_coriolis(cell);
@@ -515,36 +516,6 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, c
                            )*wBF(cell,node,qp); 
    }
 }
-
-
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ShallowWaterResid<EvalT, Traits>::
-operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag& tag, const int& cell) const
-{
-
-}
-
-
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ShallowWaterResid<EvalT, Traits>::
-operator() (const ShallowWaterResid_Zeroing_huv_Residual_Tag& tag, const int& cell) const
-{
-}
-
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ShallowWaterResid<EvalT, Traits>::
-operator() (const ShallowWaterResid_Zeroing_h_Residual_Tag& tag, const int& cell) const
-{
-
-}
-
-
 
 
 template<typename EvalT, typename Traits>
@@ -708,7 +679,6 @@ void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
 {
 
-  compute_huAtNodes_vecDim3(cell);
   compute_Residual0_useHyperViscosity(cell);
   compute_Residual3(cell);
 

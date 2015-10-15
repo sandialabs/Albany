@@ -199,11 +199,7 @@ public:
  struct ShallowWaterResid_VecDim6_Tag{};
 
  struct ShallowWaterResid_BuildLaplace_for_h_Tag{};
-// struct ShallowWaterResid_BuildLaplace_for_uv_Tag{};
  struct ShallowWaterResid_BuildLaplace_for_huv_Tag{};
-
- struct ShallowWaterResid_Zeroing_h_Residual_Tag{};
- struct ShallowWaterResid_Zeroing_huv_Residual_Tag{};
 
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy;
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy;
@@ -212,15 +208,9 @@ public:
 //name should be be changed to smth like create laplace for u,v
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Policy;
 
-
  //building Laplace op
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_h_Tag>  ShallowWaterResid_BuildLaplace_for_h_Policy;
-// typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_uv_Tag>  ShallowWaterResid_BuildLaplace_for_uv_Policy;
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_huv_Tag>  ShallowWaterResid_BuildLaplace_for_huv_Policy;
-
- //zeroing residual
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_Zeroing_h_Residual_Tag>  ShallowWaterResid_Zeroing_h_Residual_Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_Zeroing_huv_Residual_Tag>  ShallowWaterResid_Zeroing_huv_Residual_Policy;
 
 
  KOKKOS_INLINE_FUNCTION
@@ -248,7 +238,7 @@ public:
 
 
  KOKKOS_INLINE_FUNCTION
- void compute_huAtNodes_vecDim3(const int& cell) const;
+ void compute_product_h_vel(const int& cell) const;
  
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual0(const int& cell) const;
