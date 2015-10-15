@@ -347,6 +347,9 @@ KOKKOS_INLINE_FUNCTION
 void gradient(const ArrayT1  & fieldAtNodes,
               const int &cell, ArrayT2  & gradField, ArrayJac &jacobian_inv, ArrayGrad &grad_at_cub_points_Kokkos) {
 
+//refs to fieldAtNodes(node)
+//	jacobian_inv(cell, qp, 0, 0), jacobian_inv(cell, qp, 0, 1)
+
 
     for (int qp=0; qp < grad_at_cub_points_Kokkos.dimension(1); ++qp) {
 
@@ -369,8 +372,12 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_huAtNodes_vecDim3(const int& cell) const{
  for (int node=0; node < numNodes; ++node) {
-      huAtNodes(node,0)= UNodal(cell,node,0)*UNodal(cell,node,1);
-      huAtNodes(node,1)= UNodal(cell,node,0)*UNodal(cell,node,2);
+
+      const typename PHAL::Ref<const ScalarT>::type
+	     unodal0 = UNodal(cell,node,0);
+
+      huAtNodes(node,0)= unodal0*UNodal(cell,node,1);
+      huAtNodes(node,1)= unodal0*UNodal(cell,node,2);
  }
 }
 
@@ -386,8 +393,7 @@ compute_Residual0(const int& cell) const
 
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
-    Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
-                          +  div_hU(qp)*wBF(cell, node, qp); 
+    Residual(cell,node,0) += (UDot(cell,qp,0) + div_hU(qp))*wBF(cell, node, qp);
   }
 }
 
@@ -396,10 +402,6 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0_useHyperViscosity(const int& cell) const
 {
-//surf is not used here
-//  for (int node=0; node < numNodes; ++node)
-//      surf(node) = UNodal(cell,node,0);
-
   for (std::size_t node=0; node < numNodes; ++node) 
       surftilde(node) = UNodal(cell,node,3);
 
@@ -409,8 +411,7 @@ compute_Residual0_useHyperViscosity(const int& cell) const
 
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
-    Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
-                          +  div_hU(qp)*wBF(cell, node, qp); 
+    Residual(cell,node,0) += (UDot(cell,qp,0) + div_hU(qp))*wBF(cell, node, qp);
   }
   for (int qp=0; qp < numQPs; ++qp) {
     for (int node=0; node < numNodes; ++node) {
@@ -448,14 +449,13 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const
 {
-   
   compute_huAtNodes_vecDim3(cell); 
   compute_Residual0(cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
-    Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
-    Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp);
+    Residual(cell,node,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wBF(cell, node, qp);
+    Residual(cell,node,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wBF(cell, node, qp);
   }
 }
 
@@ -473,8 +473,8 @@ operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const
   //FIXME!
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
-    Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
-    Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp);
+    Residual(cell,node,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wBF(cell, node, qp);
+    Residual(cell,node,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wBF(cell, node, qp);
   }
 }
 
