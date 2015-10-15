@@ -11,8 +11,8 @@ result = 0
 ######################
 # Test 1 
 ######################
-print "test 1 - Cubes"
-name = "Cubes"
+print "test 1 - NotchedCylinder"
+name = "NotchedCylinder"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
@@ -20,10 +20,10 @@ logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-9; 
-meanvalue = 0.00133030399669;
+meanvalue = 0.0; 
 
 # run AlbanyT 
-command = ["./AlbanyT", "cubes.xml"]
+command = ["./AlbanyT", "notched-cylinder-S-ctest.xml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

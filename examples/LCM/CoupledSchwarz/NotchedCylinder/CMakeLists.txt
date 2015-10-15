@@ -21,7 +21,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials-0.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials-1.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-add_test(CoupledSchwarz_${testName} ${SerialAlbanyT.exe} notched-cylinder-S-ctest.xml)
+add_test(NAME CoupledSchwarz_${testName} COMMAND "python" "runtestT.py")
