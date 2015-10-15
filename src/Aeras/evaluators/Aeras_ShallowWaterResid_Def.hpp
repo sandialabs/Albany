@@ -370,7 +370,7 @@ void gradient(const ArrayT1  & fieldAtNodes,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
-compute_hu(const int& cell) const{
+compute_product_h_vel(const int& cell) const{
  for (int node=0; node < numNodes; ++node) {
 
       const typename PHAL::Ref<const ScalarT>::type

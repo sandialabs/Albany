@@ -230,12 +230,6 @@ public:
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_BuildLaplace_for_huv_Tag& tag, const int& cell) const;
 
- KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_Zeroing_h_Residual_Tag& tag, const int& cell) const;
- KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_Zeroing_huv_Residual_Tag& tag, const int& cell) const;
-
-
 
  KOKKOS_INLINE_FUNCTION
  void compute_product_h_vel(const int& cell) const;
