@@ -62,7 +62,7 @@ void SideQuadPointsToSideInterpolation<EvalT, Traits>::evaluateFields (typename 
     return;
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto it_side : sideSet)
+  for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell
     const int cell = it_side.elem_LID;

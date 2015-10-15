@@ -59,11 +59,11 @@ private:
 
   // Output:
   //! Basis Functions and other quantities at quadrature points
-  PHX::MDField<RealType,Cell,Side,QuadPoint>              metric_det;
+  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>           metric_det;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>           w_measure;
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>         BF;
-  PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   inv_metric;
+  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>         BF;
+  PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>     GradBF;
 
   std::vector<std::vector<int> > sideNodes;
 };

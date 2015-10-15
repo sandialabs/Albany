@@ -134,19 +134,15 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctionsSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
-
-  if (it_ss==ssList.end())
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
-  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-  std::vector<Albany::SideStruct>::const_iterator iter_s;
-  for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
+  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell
-    const int cell = iter_s->elem_LID;
-    const int side = iter_s->side_local_id;
+    const int cell = it_side.elem_LID;
+    const int side = it_side.side_local_id;
 
     // Computing tangents (the basis for the manifold)
     for (int itan=0; itan<sideDims; ++itan)

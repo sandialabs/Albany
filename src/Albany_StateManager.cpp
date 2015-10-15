@@ -468,14 +468,14 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
   // First, we check the explicitly required side discretizations exist...
   const auto& ss_discs = disc->getSideSetDiscretizations();
-  for (auto it : sideSetStateInfo)
+  for (auto const& it : sideSetStateInfo)
   {
     TEUCHOS_TEST_FOR_EXCEPTION (ss_discs.find(it.first)==ss_discs.end(), std::logic_error,
                                 "Error! Side Set " << it.first << "has sideSet states registered but no discretizations.\n");
   }
 
   // Then we make sure that for every side discretization there is a StateInfoStruct (possibly empty)
-  for (auto it : disc->getSideSetDiscretizations())
+  for (auto const& it : disc->getSideSetDiscretizations())
   {
     Teuchos::RCP<StateInfoStruct>& sis = sideSetStateInfo[it.first];
     if (sis==Teuchos::null)

@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Loop on the sides of this sideSet that are in this workset
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto it_side : sideSet)
+  for (auto const& it_side : sideSet)
   {
     // Get the data that corresponds to the side
     const int side_GID = it_side.side_GID;
