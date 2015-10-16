@@ -465,9 +465,14 @@ void ShallowWaterResid<EvalT, Traits>::
 compute_Residuals12_prescribed(const int& cell) const
 {
   for (int qp=0; qp < numQPs; ++qp) {
-    int node = qp; 
-    Residual(cell,node,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wBF(cell, node, qp);
-    Residual(cell,node,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wBF(cell, node, qp);
+    // before this loop used int node = qp;
+	//  ... wBF(cell, node, qp), ...Residual(cell,node,1)
+    const typename PHAL::Ref<const ScalarT>::type
+	    wbf = wBF(cell, qp, qp);
+
+    //OG Something should be done about this source, it is there for TC4 and is hardly in use (not to mention TC4 is broken).
+    Residual(cell,qp,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wbf;
+    Residual(cell,qp,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wbf;
   }
 }
 
@@ -475,17 +480,19 @@ compute_Residuals12_prescribed(const int& cell) const
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
-operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, const int& cell) const
+compute_Residuals12_notprescribed (const int& cell) const
 {
-
-  compute_Residual0(cell);
-
   get_coriolis(cell);
 
   for (int node=0; node < numNodes; ++node) {
-    ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]);
-    ScalarT ulambda = UNodal(cell, node,1);
-    ScalarT utheta  = UNodal(cell, node,2);
+	    const typename PHAL::Ref<const ScalarT>::type
+	    depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]),
+	    ulambda = UNodal(cell, node,1),
+	    utheta  = UNodal(cell, node,2);
+
+    //ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]);
+    //ScalarT ulambda = UNodal(cell, node,1);
+    //ScalarT utheta  = UNodal(cell, node,2);
     kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
     potentialEnergyAtNodes(node) = gravity*depth;
     uAtNodes(node, 0) = ulambda;
@@ -496,17 +503,34 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, c
    curl(cell);
 
    for (int qp=0; qp < numQPs; ++qp) {
-     int node = qp; 
-     Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
+     //int node = qp;
+	 const typename PHAL::Ref<const ScalarT>::type
+		    coriolis_ = coriolis(qp),
+			curl_ = curlU(qp),
+		    wbf_ = wBF(cell, qp, qp);
+
+     Residual(cell,qp,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
                            + gradPotentialEnergy(qp,0)
-                           - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
-                           )*wBF(cell,node,qp); 
-     Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
+                           - ( coriolis_ + curl_ )*U(cell, qp, 2)
+                           )*wbf_;
+     Residual(cell,qp,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
                            + gradPotentialEnergy(qp,1)
-                           + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
-                           )*wBF(cell,node,qp); 
+                           + ( coriolis_ + curl_ )*U(cell, qp, 1)
+                           )*wbf_;
    }
 }
+
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, const int& cell) const
+{
+  compute_Residual0(cell);
+  compute_Residuals12_notprescribed(cell);
+}
+
+
 
 
 template<typename EvalT, typename Traits>

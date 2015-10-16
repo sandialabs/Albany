@@ -247,6 +247,8 @@ public:
  void BuildLaplace_for_uv (const int& cell) const;
  KOKKOS_INLINE_FUNCTION
  void compute_Residuals12_prescribed (const int& cell) const;
+ KOKKOS_INLINE_FUNCTION
+ void compute_Residuals12_notprescribed (const int& cell) const;
 
 
 #endif
