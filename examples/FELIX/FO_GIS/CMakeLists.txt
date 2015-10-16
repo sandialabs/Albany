@@ -21,6 +21,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_unstruct.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_coupled_shape_opt.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_coupled_shape_opt.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_manifold.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_manifold.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_unstruct_restart.xml
@@ -43,7 +45,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.xml
 if (ALBANY_EPETRA) 
 add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.xml)
 add_test(${testName}_GisUnstructured ${Albany.exe} input_fo_gis_unstruct.xml)
-add_test(${testName}_GisCoupledThickness ${Albany.exe} input_fo_gis_coupled.xml)
+if (ALBANY_MESH_DEPENDS_ON_SOLUTION) 
+  add_test(${testName}_GisCoupledThicknessShapeOpt ${Albany.exe} input_fo_gis_coupled_shape_opt.xml)
+else()
+  add_test(${testName}_GisCoupledThickness ${Albany.exe} input_fo_gis_coupled.xml)
+endif()
 add_test(${testName}_GisManifold ${Albany.exe} input_fo_gis_manifold.xml)
 add_test(${testName}_GisRestartUnstructured ${Albany.exe} input_fo_gis_unstruct_restart.xml)
 add_test(${testName}_GisAdjointSensitivity ${Albany.exe} input_fo_gis_adjoint_sensitivity.xml)

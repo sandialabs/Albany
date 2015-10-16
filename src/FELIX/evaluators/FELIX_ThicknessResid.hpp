@@ -44,7 +44,7 @@ private:
 
   // Input:
 
-  PHX::MDField<ScalarT,Cell,Node> H;
+  PHX::MDField<ScalarT,Cell,Node> dH;
   PHX::MDField<ScalarT,Cell,Node> H0;
   PHX::MDField<ScalarT,Cell,Node,Dim> V;
   Teuchos::RCP<PHX::MDField<ScalarT,Cell,Node> > SMB_ptr;

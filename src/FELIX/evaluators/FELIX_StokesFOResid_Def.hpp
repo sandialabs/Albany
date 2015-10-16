@@ -86,7 +86,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   numDims  = dims[3];
 
   U.fieldTag().dataLayout().dimensions(dims);
-  vecDimFO = std::min(PHX::DataLayout::size_type(2), dims[2]);
+  vecDimFO = std::min(PHX::DataLayout::size_type(2), numDims);
 
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX Stokes FO residual! " << std::endl;
@@ -381,8 +381,8 @@ evaluateFields(typename Traits::EvalData workset)
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   // Initialize residual to 0.0
-//  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
-  Residual.deep_copy(ScalarT(0.0));
+  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+ // Residual.deep_copy(ScalarT(0.0));
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {

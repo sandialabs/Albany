@@ -55,7 +55,7 @@
     <Parameter name="Columnwise Ordering" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_coupled.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_coupled_shape_opt.exo"/>
     <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
     <Parameter name="Basal Friction File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
@@ -70,9 +70,9 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{106350624.657}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{106263895.113}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17486258.5734}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17488693.5837}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

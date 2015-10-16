@@ -11,7 +11,6 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
-#include "FELIX_GatherThickness.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 
 #include "Phalanx.hpp"
@@ -523,16 +522,6 @@ FELIX::StokesFO::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
       }
     }
-
-    {
-      RCP<ParameterList> p = rcp(new ParameterList("Gather Thickness"));
-      p->set<string>("Thickness Name", "Thickness");
-      p->set<int>("Offset of First DOF", offset);
-      p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
-      ev = rcp(new GatherThickness<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-
 
     {
        RCP<ParameterList> p = rcp(new ParameterList("Gather Averaged Velocity"));
