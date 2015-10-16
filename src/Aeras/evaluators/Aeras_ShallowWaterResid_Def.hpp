@@ -349,18 +349,17 @@ KOKKOS_INLINE_FUNCTION
 void gradient(const ArrayT1  & fieldAtNodes,
               const int &cell, ArrayT2  & gradField, ArrayJac &jacobian_inv, ArrayGrad &grad_at_cub_points_Kokkos) {
 
-//refs to fieldAtNodes(node)
-//	jacobian_inv(cell, qp, 0, 0), jacobian_inv(cell, qp, 0, 1)
-
-
     for (int qp=0; qp < grad_at_cub_points_Kokkos.dimension(1); ++qp) {
 
       ScalarT gx = 0;
       ScalarT gy = 0;
       for (int node=0; node < grad_at_cub_points_Kokkos.dimension(0); ++node) {
 
-       gx +=   fieldAtNodes(node)*grad_at_cub_points_Kokkos(node, qp,0);
-       gy +=   fieldAtNodes(node)*grad_at_cub_points_Kokkos(node, qp,1);
+       const typename PHAL::Ref<const ScalarT>::type
+	      field = fieldAtNodes(node);
+
+       gx +=   field*grad_at_cub_points_Kokkos(node, qp,0);
+       gy +=   field*grad_at_cub_points_Kokkos(node, qp,1);
       }
 
       gradField(qp, 0) = jacobian_inv(cell, qp, 0, 0)*gx + jacobian_inv(cell, qp, 1, 0)*gy;
@@ -401,35 +400,6 @@ compute_Residual0(const int& cell) const
     Residual(cell,node,0) += (UDot(cell,qp,0) + div_hU(qp))*wBF(cell, node, qp);
   }
 }
-
-/*template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ShallowWaterResid<EvalT, Traits>::
-compute_Residual0_useHyperViscosity(const int& cell) const
-{
-  compute_product_h_vel(cell);
-
-  ///impl hv
-  for (std::size_t node=0; node < numNodes; ++node) 
-      surftilde(node) = UNodal(cell,node,3);
-
-  gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-  ///
-
-  
-  divergence(huAtNodes, cell);
-
-  for (int qp=0; qp < numQPs; ++qp) {
-    int node = qp; 
-    Residual(cell,node,0) += (UDot(cell,qp,0) + div_hU(qp))*wBF(cell, node, qp);
-  }
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int node=0; node < numNodes; ++node) {
-      Residual(cell,node,0) -= hyperviscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                            + hyperviscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
-    }
-  }
-}*/
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -474,14 +444,8 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const
 {
-
   compute_Residual0(cell);
-
-  for (int qp=0; qp < numQPs; ++qp) {
-    int node = qp; 
-    Residual(cell,node,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wBF(cell, node, qp);
-    Residual(cell,node,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wBF(cell, node, qp);
-  }
+  compute_Residuals12_prescribed(cell);
 }
 
 template<typename EvalT, typename Traits>
@@ -492,7 +456,14 @@ operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const
    
   compute_Residual0(cell);
   compute_h_ImplHV(cell);
+  compute_Residuals12_prescribed(cell);
+}
 
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+compute_Residuals12_prescribed(const int& cell) const
+{
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
     Residual(cell,node,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wBF(cell, node, qp);
@@ -572,13 +543,6 @@ BuildLaplace_for_uv (const int& cell) const
 		}*/
 
       for (std::size_t node=0; node < numNodes; ++node) {
-
-//        ScalarT ulambda = UNodal(cell, node,1);
-//        ScalarT utheta  = UNodal(cell, node,2);
-
-
-        //uAtNodes(node, 0) = ulambda;
-        //uAtNodes(node, 1) = utheta;
 
            const typename PHAL::Ref<const ScalarT>::type
              utlambda = UDotDotNodal(cell, node,1),
