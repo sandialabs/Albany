@@ -90,7 +90,7 @@ evaluateFields(typename Traits::EvalData workset)
   double rho_g=rho*g;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (int i = 0; i < res.size(); i++) res(i) = 0.0;
+    res.initialize();
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       ScalarT dHdiffdx = 0;//Ugrad(cell,qp,2,0);
       ScalarT dHdiffdy = 0;//Ugrad(cell,qp,2,1);
