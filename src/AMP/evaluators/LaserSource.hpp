@@ -62,6 +62,8 @@ private:
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
   PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
+  PHX::MDField<ScalarT,Dummy> time;
+  PHX::MDField<ScalarT,Dummy> deltaTime;
 
   unsigned int num_qps_;
   unsigned int num_dims_;

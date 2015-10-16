@@ -52,6 +52,8 @@ private:
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
+  PHX::MDField<ScalarT,Dummy> time;
+  PHX::MDField<ScalarT,Dummy> deltaTime;
 
   PHX::MDField<ScalarT,Cell,Node> source_;
 
@@ -59,6 +61,8 @@ private:
   unsigned int num_dims_;
   unsigned int num_nodes_;
   unsigned int workset_size_;
+
+
 
   Teuchos::RCP<const Teuchos::ParameterList>
      getValidPhaseSourceParameters() const;

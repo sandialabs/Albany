@@ -52,7 +52,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
   PHX::MDField<ScalarT,Cell,QuadPoint> source_;
   PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
-  
+  PHX::MDField<ScalarT,Dummy> time;
+  PHX::MDField<ScalarT,Dummy> deltaTime;
+
   PHX::MDField<ScalarT,Cell,Node> residual_;
 
   unsigned int num_qps_;
@@ -61,7 +63,7 @@ private:
   unsigned int workset_size_;
 
   bool enable_transient_;
-
+  std::string Temperature_Name_;
   Intrepid::FieldContainer<ScalarT> term1_;
   Intrepid::FieldContainer<ScalarT> term2_;
 
