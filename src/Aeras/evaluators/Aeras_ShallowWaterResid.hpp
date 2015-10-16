@@ -237,7 +237,7 @@ public:
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual0(const int& cell) const;
  KOKKOS_INLINE_FUNCTION 
- void compute_Residual0_useHyperViscosity(const int& cell) const;
+ void compute_h_ImplHV(const int& cell) const;
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual3(const int& cell) const;
 

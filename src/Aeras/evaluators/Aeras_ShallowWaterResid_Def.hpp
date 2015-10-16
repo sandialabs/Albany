@@ -54,6 +54,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   doNotDampRotation(true)
 {
 
+	//OG I noticed that source(...,0) is never used, it means TC4 is broken.
+
   Teuchos::ParameterList* shallowWaterList = p.get<Teuchos::ParameterList*>("Shallow Water Problem");
 
   usePrescribedVelocity = shallowWaterList->get<bool>("Use Prescribed Velocity", false); //Default: false
@@ -400,17 +402,20 @@ compute_Residual0(const int& cell) const
   }
 }
 
-template<typename EvalT, typename Traits>
+/*template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0_useHyperViscosity(const int& cell) const
 {
   compute_product_h_vel(cell);
 
+  ///impl hv
   for (std::size_t node=0; node < numNodes; ++node) 
       surftilde(node) = UNodal(cell,node,3);
 
   gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+  ///
+
   
   divergence(huAtNodes, cell);
 
@@ -424,13 +429,28 @@ compute_Residual0_useHyperViscosity(const int& cell) const
                             + hyperviscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
     }
   }
-}
+}*/
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
-compute_Residual3(const int& cell) const 
+compute_h_ImplHV(const int& cell) const
 {
+
+   ///impl hv
+   for (std::size_t node=0; node < numNodes; ++node)
+	  surftilde(node) = UNodal(cell,node,3);
+
+   gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+	  ///
+
+   for (int qp=0; qp < numQPs; ++qp) {
+   for (int node=0; node < numNodes; ++node) {
+	   Residual(cell,node,0) -= hyperviscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
+	                         + hyperviscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
+   }
+ }
+
   for (std::size_t node=0; node < numNodes; ++node) 
     surf(node) = UNodal(cell,node,0);
   
@@ -470,8 +490,8 @@ void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const
 {
    
-  compute_Residual0_useHyperViscosity(cell);
-  compute_Residual3(cell);
+  compute_Residual0(cell);
+  compute_h_ImplHV(cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
@@ -678,9 +698,10 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
 {
-
-  compute_Residual0_useHyperViscosity(cell);
-  compute_Residual3(cell);
+	  compute_Residual0(cell);
+	  compute_h_ImplHV(cell);
+  //compute_Residual0_useHyperViscosity(cell);
+  //compute_Residual3(cell);
 
   get_coriolis(cell);
 
