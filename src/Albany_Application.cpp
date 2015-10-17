@@ -80,8 +80,6 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params,initial_guess);
-  if (noProblemParams != 1) 
-    noProblemParams = 0; 
 }
 
 
@@ -98,15 +96,6 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
-  if (noProblemParams != 1) 
-    noProblemParams = 0; 
-};
-
-
-Albany::Application::
-Application() 
-{
-  noProblemParams = 1; 
 };
 
 

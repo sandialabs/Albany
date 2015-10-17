@@ -87,9 +87,6 @@ namespace Albany {
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
     
-    //! Dummy constructor (only used for Coupled Schwarz problems)
-    Application();
-
     //! Destructor
     ~Application();
 
@@ -699,19 +696,13 @@ namespace Albany {
     }
 
     //! Const access to problem parameter list
-    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() const {
-        if (noProblemParams == 1) 
-          return problemParams;
-        else 
-          return Teuchos::null; 
+    Teuchos::RCP<const Teuchos::ParameterList> getProblemPL() const {
+      return problemParams;
     }
 
     //! Access to problem parameter list
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
-        if (noProblemParams == 1)
-          return problemParams;
-        else
-          return Teuchos::null; 
+      return problemParams;
     }
 
 #if defined(ALBANY_EPETRA)
@@ -1017,9 +1008,6 @@ namespace Albany {
 
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos_Comm> commT;
-
-    //Boolean flag used for Schwarz multiscale problems
-    int noProblemParams; 
 
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;

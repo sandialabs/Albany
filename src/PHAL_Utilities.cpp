@@ -29,10 +29,9 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
-  if (app->getProblemPL() != Teuchos::null) { //Check if app has problem param list.  
-                                              //It will not for coupled Schwarz problems 
-                                              //so w/o this check the code will set fault.
-    std::string problemName = app->getProblemPL()->get("Name", "");
+  const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
+  if (Teuchos::nonnull(pl)) {
+    const std::string problemName = pl->isType<std::string>("Name") ? pl->get<std::string>("Name") : "";
     if(problemName == "FELIX Coupled FO H 3D")
     { //all column is coupled
       int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
@@ -50,26 +49,14 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       return d->getNumNodesPerElem(ebi) * app->getNumEquations();
     }
 #endif
-#ifdef ALBANY_AERAS
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
-    app->getEnrichedMeshSpecs(); 
-    return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-       app, mesh_specs[ebi].get());
-#endif
    }
    return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-   app, app->getEnrichedMeshSpecs()[ebi].get());
+     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
  const Albany::Application* app, const int ebi)
 {
-#ifdef ALBANY_AERAS
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
-  app->getEnrichedMeshSpecs(); 
-  return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-      app, mesh_specs[ebi].get());
-#endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
@@ -77,12 +64,6 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
  const Albany::Application* app, const int ebi)
 {
-#ifdef ALBANY_AERAS
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
-  app->getEnrichedMeshSpecs(); 
-  return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-      app, mesh_specs[ebi].get());
-#endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
