@@ -220,11 +220,8 @@ evaluateFields(typename Traits::EvalData workset)
       Intrepid::FieldContainer<ScalarT> gradH_Side(numQPsSide, numVecFODims);
       Intrepid::FieldContainer<ScalarT> divV_Side(numQPsSide);
 
-      for (int i = 0; i < gradH_Side.size(); i++)
-        gradH_Side(i) = 0.0;
-
-      for (int i = 0; i < divV_Side.size(); i++)
-        divV_Side(i) = 0.0;
+      gradH_Side.initialize();
+      divV_Side.initialize();
 
       std::map<LO, std::size_t>::const_iterator it;
 

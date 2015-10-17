@@ -21,11 +21,17 @@ PhaseSource(Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
   coord_      (p.get<std::string>("Coordinate Name"),
                dl->qp_vector),
+  time        (p.get<std::string>("Time Name"),
+               dl->workset_scalar),
+  deltaTime   (p.get<std::string>("Delta Time Name"),
+               dl->workset_scalar),
   source_     (p.get<std::string>("Source Name"),
                dl->qp_scalar)
 {
 
   this->addDependentField(coord_);
+  this->addDependentField(time);
+  this->addDependentField(deltaTime);
   this->addEvaluatedField(source_);
  
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -65,6 +71,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coord_,fm);
+  this->utils.setFieldData(time,fm);
+  this->utils.setFieldData(deltaTime,fm);
   this->utils.setFieldData(source_,fm);
 }
 
@@ -74,7 +82,7 @@ void PhaseSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // current time
-  const RealType time = workset.current_time;
+ // const RealType time = workset.current_time;
 
   //source function
   ScalarT laser_beam_radius = 60.0e-6;
@@ -122,8 +130,14 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT LaserVelocity_z = 0.0;
         ScalarT Laser_Init_position_x = 0.0;
         ScalarT Laser_Init_position_z = 0.0;
-        ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*time;
-        ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*time;
+
+   //     ScalarT Laser_center_x = 0.0;
+   //     ScalarT Laser_center_z = 0.0;
+        
+        ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*(time(0)-deltaTime(0));
+        ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*(time(0)-deltaTime(0));
+
+
   //  Note:(0.0003 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.                                  
         ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Z - Laser_center_z)*(Z - Laser_center_z));
         if (radius < laser_beam_radius && (0.0003 - Y) >= Substrate_Top && (0.0003 - Y) <= Substrate_Bot)

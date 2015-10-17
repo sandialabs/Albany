@@ -86,7 +86,7 @@ namespace Albany {
 
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
-
+    
     //! Destructor
     ~Application();
 
@@ -696,13 +696,13 @@ namespace Albany {
     }
 
     //! Const access to problem parameter list
-    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() const {
-        return problemParams;
+    Teuchos::RCP<const Teuchos::ParameterList> getProblemPL() const {
+      return problemParams;
     }
 
     //! Access to problem parameter list
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
-        return problemParams;
+      return problemParams;
     }
 
 #if defined(ALBANY_EPETRA)

@@ -33,15 +33,14 @@
      <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD9/uniform_10_quad9.g"/>
-    <Parameter name="Cubature Degree" type="int" value="3"/>
+    <Parameter name="Method" type="string" value="Exodus Aeras"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD4/uniform_10_quad4.g"/>
+    <Parameter name="Cubature Degree" type="int" value="4"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <Parameter name="Element Degree" type="int" value="2"/>
+    <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_stk_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_np4_out.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
-    <Parameter name="Cubature Degree" type="int" value="3"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->

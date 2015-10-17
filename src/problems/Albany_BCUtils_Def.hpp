@@ -5,6 +5,70 @@
 //*****************************************************************//
 #include "Albany_BCUtils.hpp"
 
+namespace {
+const char decorator[] = "Evaluator for ";
+
+// Name decorator.
+inline std::string evaluatorsToBuildName (const std::string& bc_name)
+{
+  std::stringstream ess;
+  ess << decorator << bc_name;
+  return ess.str();
+}
+
+// Inverse of above.
+inline std::string plName (const std::string& name)
+{
+  const std::size_t pos = name.find(decorator);
+  if (pos == std::string::npos) return name;
+  return name.substr(pos + sizeof(decorator) - 1);
+}
+
+// DBCs do not depend on each other. However, BCs are not always compatible at
+// corners, and so order of evaluation can matter. Establish an order here. The
+// order is the order the BC is listed in the XML input file.
+void imposeOrder (const Teuchos::ParameterList& bc_pl,
+                  const std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >& evname2pl)
+{
+  using Teuchos::RCP;
+  using Teuchos::ParameterList;
+  typedef std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> > S2PL;
+  typedef std::map<std::string, int> S2int;
+
+  const std::string parm_name("BCOrder");
+  const char* parm_val = "BCOrder_";
+
+  // Get the order of the BCs as they are written in the XML file.
+  // ParameterList::ConstIterator preserves the text ordering.
+  S2int order;
+  int ne = 0;
+  for (ParameterList::ConstIterator it = bc_pl.begin(); it != bc_pl.end(); ++it)
+    order[it->first] = ne++;
+
+  for (S2PL::const_iterator it = evname2pl.begin(); it != evname2pl.end(); ++it) {
+    const std::string name = plName(it->first);
+    const S2int::const_iterator order_it = order.find(name);
+    if (order_it == order.end()) {
+      // If for some reason it->first is not in order (because I didn't think of
+      // a naming case), we'll at worst break the intended order, which was
+      // never promised anyway.
+      continue;
+    }
+    const int index = order_it->second;
+    if (index > 0) {
+      std::stringstream dependency;
+      dependency << parm_val << index-1;
+      it->second->set<std::string>(parm_name + " Dependency", dependency.str());
+    }
+    if (index+1 < ne) {
+      std::stringstream evaluates;
+      evaluates << parm_val << index;
+      it->second->set<std::string>(parm_name + " Evaluates", evaluates.str());
+    }
+  }
+}
+} // namespace
+
 // Dirichlet specialization
 
 template<>
@@ -35,6 +99,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   // Build the list of evaluators (with their parameters) that have to be built
   std::map<string, RCP<Teuchos::ParameterList> > evaluators_to_build;
   buildEvaluatorsList (evaluators_to_build, nodeSetIDs, bcNames, params, paramLib, numEqn);
+
+  imposeOrder(params->sublist(traits_type::bcParamsPl), evaluators_to_build);
 
   // Build Field Evaluators for each evaluation type
   PHX::EvaluatorFactory<AlbanyTraits, Albany::DirichletTraits::factory_type > factory;
@@ -193,9 +259,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
 
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-        std::stringstream ess;
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
       }
@@ -227,9 +291,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< int > ("Equation Offset", 0);
 
         p->set<RCP<ParamLib> > ("Parameter Library", paramLib);
-        std::stringstream ess;
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
       }
@@ -251,9 +313,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         p->set< int > ("Equation Offset", j);
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        std::stringstream ess;
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
         bcs->push_back(ss);
       }
     }
@@ -297,9 +357,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
-        std::stringstream ess;
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
       }
@@ -335,9 +393,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
 
 
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        std::stringstream ess;
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
       }
@@ -371,9 +427,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
       p->set<double>("Time Step", sub_list.get<double>("Time Step", 1.0));
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-      std::stringstream ess;
-      ess << "Evaluator for " << ss;
-      evaluators_to_build[ess.str()] = p;
+      evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
       bcs->push_back(ss);
     }
@@ -427,10 +481,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
-        std::stringstream ess;
-
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
       }
@@ -497,9 +548,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< int > ("Equation Offset", 0);
 
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-        std::stringstream ess;
-        ess << "Evaluator for " << ss;
-        evaluators_to_build[ess.str()] = p;
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
         bcs->push_back(ss);
       }
@@ -665,9 +714,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
           // Inputs: X, Y at nodes, Cubature, and Basis
           //p->set<string>("Node Variable Name", "Neumann");
 
-          std::stringstream ess;
-          ess << "Evaluator for " << ss;
-          evaluators_to_build[ess.str()] = p;
+          evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
           bcs->push_back(ss);
         }
@@ -763,9 +810,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
             p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
           }
 
-          std::stringstream ess;
-          ess << "Evaluator for " << ss;
-          evaluators_to_build[ess.str()] = p;
+          evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
           bcs->push_back(ss);
         }

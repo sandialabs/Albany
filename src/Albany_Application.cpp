@@ -74,7 +74,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0)
+  stateGraphVisDetail(0) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -101,6 +101,7 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
 };
+
 
 namespace {
 int calcTangentDerivDimension (

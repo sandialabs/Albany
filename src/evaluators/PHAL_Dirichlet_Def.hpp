@@ -37,6 +37,22 @@ DirichletBase(Teuchos::ParameterList& p) :
                ("Parameter Library", Teuchos::null);
 
   this->registerSacadoParameter(name, paramLib);
+
+  {
+    // Impose an ordering on DBC evaluators. This code works with the function
+    // imposeOrder defined elsewhere.
+    Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+    if (p.isType<std::string>("BCOrder Dependency")) {
+      order_depends_on_ = Teuchos::rcp(
+        new PHX::Tag<typename EvalT::ScalarT>(p.get<std::string>("BCOrder Dependency"), dummy));
+      this->addDependentField(*order_depends_on_);
+    }
+    if (p.isType<std::string>("BCOrder Evaluates")) {
+      order_evaluates_ = Teuchos::rcp(
+        new PHX::Tag<typename EvalT::ScalarT>(p.get<std::string>("BCOrder Evaluates"), dummy));
+      this->addEvaluatedField(*order_evaluates_);
+    }
+  }
 }
 
 template<typename EvalT, typename Traits>
