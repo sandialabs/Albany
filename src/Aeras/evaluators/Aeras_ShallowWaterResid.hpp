@@ -92,14 +92,6 @@ private:
   Intrepid::FieldContainer<ScalarT> wrk_;
 #endif
 
-  //Intrepid::FieldContainer<ScalarT> wrk2_;
-  PHX::MDField<ScalarT,QuadPoint> wrk1_scalar_scope1_;
-  PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope1_;
-
-  PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope2_;
-
-
-
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
   PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
   PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
@@ -120,6 +112,17 @@ private:
 
   //OG: this is temporary
   double sHvTau;
+
+
+  PHX::MDField<ScalarT,QuadPoint> wrk1_scalar_scope1_;
+  PHX::MDField<ScalarT,QuadPoint> wrk2_scalar_scope1_;
+  PHX::MDField<ScalarT,QuadPoint> wrk3_scalar_scope1_;
+  PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope1_;
+  PHX::MDField<ScalarT,Node, Dim> wrk2_vector_scope1_;
+
+  PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope2_;
+
+
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
@@ -154,15 +157,15 @@ public:
  
  typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
 
- PHX::MDField<ScalarT,Node, Dim> huAtNodes;
- PHX::MDField<ScalarT,QuadPoint> div_hU;
+// PHX::MDField<ScalarT,Node, Dim> huAtNodes;
+// PHX::MDField<ScalarT,QuadPoint> div_hU;
  PHX::MDField<ScalarT,Node> kineticEnergyAtNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> gradKineticEnergy;
  PHX::MDField<ScalarT,Node> potentialEnergyAtNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> gradPotentialEnergy;
  PHX::MDField<ScalarT,Node, Dim> uAtNodes;
  PHX::MDField<ScalarT,QuadPoint> curlU;
- PHX::MDField<ScalarT,QuadPoint> coriolis;
+// PHX::MDField<ScalarT,QuadPoint> coriolis;
 
  PHX::MDField<ScalarT,Node> surf;
  PHX::MDField<ScalarT,Node> surftilde;
@@ -185,15 +188,21 @@ public:
  MeshScalarT k11, k12, k21, k22, k32;
 
 
- KOKKOS_INLINE_FUNCTION
- void divergence(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
-      const int cell) const;
+// KOKKOS_INLINE_FUNCTION
+// void divergence(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
+//      const int cell) const;
 
  KOKKOS_INLINE_FUNCTION
- void divergence3(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
-		          const PHX::MDField<ScalarT,QuadPoint>  & div_,
+ void divergence3(const PHX::MDField<ScalarT, Node, Dim>  & field,
+		          const PHX::MDField<ScalarT, QuadPoint>  & div_,
 	              const int & cell) const;
 
+ KOKKOS_INLINE_FUNCTION
+ void gradient3(const PHX::MDField<ScalarT, QuadPoint>  & field,
+		        const PHX::MDField<ScalarT, Node, Dim>  & gradient_,
+	            const int & cell) const;
+
+//This function puts (Residual(0)*Residual(1), Residual(0)*residual(2)) into huv_ .
  KOKKOS_INLINE_FUNCTION
  void product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_,
 	               const int & cell) const;
@@ -210,8 +219,13 @@ public:
  KOKKOS_INLINE_FUNCTION 
  void fill_nodal_metrics (const int &cell) const;
   
+// KOKKOS_INLINE_FUNCTION
+// void get_coriolis(const int &cell)const;
+
  KOKKOS_INLINE_FUNCTION
- void get_coriolis(const int &cell)const;
+ void get_coriolis3(const PHX::MDField<ScalarT,QuadPoint>  & cor_,
+		            const int &cell)const;
+
 
  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
