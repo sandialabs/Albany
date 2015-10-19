@@ -93,7 +93,9 @@ private:
 #endif
 
   //Intrepid::FieldContainer<ScalarT> wrk2_;
-  PHX::MDField<ScalarT,QuadPoint> wrk3_;
+  PHX::MDField<ScalarT,QuadPoint> wrk1_scalar_scope1_;
+
+  PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope2_;
 
 
 
@@ -187,14 +189,9 @@ public:
       const int cell) const;
 
  KOKKOS_INLINE_FUNCTION
- void divergence2(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
-		 Intrepid::FieldContainer<ScalarT>  & div_,
-      const int cell) const;
-
- KOKKOS_INLINE_FUNCTION
  void divergence3(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
 		          const PHX::MDField<ScalarT,QuadPoint>  & div_,
-	      const int & cell) const;
+	              const int & cell) const;
 
 
 // KOKKOS_INLINE_FUNCTION
@@ -216,7 +213,7 @@ public:
 
  struct ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag{};
  struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag{};
- struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag{};
+// struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag{};
  //The following are for hyperviscosity
  struct ShallowWaterResid_VecDim4_Tag{};
  struct ShallowWaterResid_VecDim6_Tag{};
@@ -229,7 +226,7 @@ public:
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim4_Tag> ShallowWaterResid_VecDim4_Policy;
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim6_Tag> ShallowWaterResid_VecDim6_Policy;
 //name should be be changed to smth like create laplace for u,v
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Policy;
+// typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Policy;
 
  //building Laplace op
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_h_Tag>  ShallowWaterResid_BuildLaplace_for_h_Policy;
@@ -245,8 +242,8 @@ public:
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const; 
  
- KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag& tag, const int& cell) const;
+// KOKKOS_INLINE_FUNCTION
+// void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_explHV_Tag& tag, const int& cell) const;
 
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_BuildLaplace_for_h_Tag& tag, const int& cell) const;
@@ -263,6 +260,8 @@ public:
  void compute_h_ImplHV(const int& cell) const;
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual3(const int& cell) const;
+ KOKKOS_INLINE_FUNCTION
+ void compute_uv_ImplHV(const int& cell) const;
 
  KOKKOS_INLINE_FUNCTION
  void BuildLaplace_for_h (const int& cell) const;

@@ -190,7 +190,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 #endif
 
   //can I resize all the time?
-  wrk2_.resize(numQPs);
+  //wrk2_.resize(numQPs);
 
 
   cubature->getCubature(refPoints, refWeights);
@@ -316,9 +316,11 @@ for (int i=0; i<nNodes; i++)
  nodeToQPMap_Kokkos(i)=nodeToQPMap[i];
 #endif
 
-wrk3_=PHX::MDField<ScalarT,QuadPoint>("wrk3_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-wrk3_.setFieldData(ViewFactory::buildView(wrk3_.fieldTag(),ddims_));
+wrk1_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+wrk1_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1_scalar_scope1_.fieldTag(),ddims_));
 
+wrk1_vector_scope2_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope2_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+wrk1_vector_scope2_.setFieldData(ViewFactory::buildView(wrk1_vector_scope2_.fieldTag(),ddims_));
 }
 
 //**********************************************************************
@@ -388,6 +390,10 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
 
   fill_nodal_metrics(cell);
 
+  const PHX::MDField<ScalarT,Node, Dim>  &  vcontra_ = wrk1_vector_scope2_;
+  //og is it necessary?
+  //vcontra.deep_copy(0);
+
   for (std::size_t node=0; node < numNodes; ++node) {
 
     const MeshScalarT jinv00 = nodal_inv_jacobian(node, 0, 0);
@@ -395,9 +401,9 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
     const MeshScalarT jinv10 = nodal_inv_jacobian(node, 1, 0);
     const MeshScalarT jinv11 = nodal_inv_jacobian(node, 1, 1);
 
-    vcontra(node, 0 ) = nodal_det_j(node)*(
+    vcontra_(node, 0 ) = nodal_det_j(node)*(
         jinv00*fieldAtNodes(node, 0) + jinv01*fieldAtNodes(node, 1) );
-    vcontra(node, 1 ) = nodal_det_j(node)*(
+    vcontra_(node, 1 ) = nodal_det_j(node)*(
         jinv10*fieldAtNodes(node, 0)+ jinv11*fieldAtNodes(node, 1) );
   }
 
@@ -407,8 +413,8 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
 //      ScalarT tempAdd =vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
 //                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
  //     Kokkos::atomic_fetch_add(&div_hU(qp), tempAdd);
-      div_(qp) +=   vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
-                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
+      div_(qp) +=   vcontra_(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
+                  + vcontra_(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
     }
 
   }
@@ -446,16 +452,8 @@ compute_Residual0(const int& cell) const
 
   //divergence(huAtNodes, cell);
 
-//ref here get me an error, wrk2 becomes const member for kokkos?
-//  Intrepid::FieldContainer<ScalarT> & div_ = wrk2_;
-
-  //Intrepid::FieldContainer<ScalarT> div_ = wrk2_;
-  //div_.initialize();
-  //divergence2(huAtNodes, div_,cell);
-
-  const PHX::MDField<ScalarT,QuadPoint>  &  div_ = wrk3_;
+  const PHX::MDField<ScalarT,QuadPoint>  &  div_ = wrk1_scalar_scope1_;
   divergence3(huAtNodes, div_, cell);
-
 
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
@@ -533,7 +531,8 @@ compute_Residuals12_prescribed(const int& cell) const
     const typename PHAL::Ref<const ScalarT>::type
 	    wbf = wBF(cell, qp, qp);
 
-    //OG Something should be done about this source, it is there for TC4 and is hardly in use (not to mention TC4 is broken).
+    //OG Something should be done about this source,
+    //it is there for TC4 and is hardly in use (not to mention TC4 is broken).
     Residual(cell,qp,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wbf;
     Residual(cell,qp,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wbf;
   }
@@ -772,10 +771,17 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
 {
 	  compute_Residual0(cell);
 	  compute_h_ImplHV(cell);
-  //compute_Residual0_useHyperViscosity(cell);
-  //compute_Residual3(cell);
+	  compute_Residuals12_notprescribed (cell);
+	  compute_uv_ImplHV(cell);
+}
 
-  get_coriolis(cell);
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+compute_uv_ImplHV (const int& cell) const
+{
+
 
   for (int node=0; node < numNodes; ++node) {
 
@@ -784,14 +790,6 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
           utheta  = UNodal(cell, node,2),
           utlambda = UNodal(cell, node,4),
           uttheta = UNodal(cell, node,5);
-
-	  ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]);
-
-
-    kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
-    potentialEnergyAtNodes(node) = gravity*depth;
-    uAtNodes(node, 0) = ulambda;
-    uAtNodes(node, 1) = utheta;
 
     const typename PHAL::Ref<const MeshScalarT>::type
       lam = lambda_nodal(cell, node),
@@ -814,11 +812,6 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
     utY(node) = k21*utlambda + k22*uttheta;
     utZ(node) = k32*uttheta;
   }
-  
-  //obtain grads of U, V, Vcomp, U, V comp
-  gradient<ScalarT>(potentialEnergyAtNodes, cell, gradPotentialEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
-  gradient<ScalarT>(kineticEnergyAtNodes, cell, gradKineticEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
-  curl(cell);
 
   gradient<ScalarT>(uX, cell, uXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
   gradient<ScalarT>(uY, cell, uYgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
@@ -827,24 +820,6 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
   gradient<ScalarT>(utX, cell, utXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
   gradient<ScalarT>(utY, cell, utYgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
   gradient<ScalarT>(utZ, cell, utZgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-
-//note that option to plot vorticity is only in the traditional code,
-//to avoid even more branching because of dimensions
-
-  for (int qp=0; qp < numQPs; ++qp) {
-    int node = qp;  
-
-    Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
-                          + gradPotentialEnergy(qp,0)
-                          - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
-                          )*wBF(cell,node,qp); 
-
-    Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
-                          + gradPotentialEnergy(qp,1)
-                          + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
-                          )*wBF(cell,node,qp);
-
-  }
 
   for (int qp=0; qp < numQPs; ++qp) {
     for (int node=0; node < numNodes; ++node) {
@@ -923,6 +898,7 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
     }
   }
 }
+
 
 #endif
 //**********************************************************************
@@ -1525,51 +1501,6 @@ ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid::FieldContainer<Scala
 #endif
 // *********************************************************************
 //Kokkos functors
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-template<typename EvalT,typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ShallowWaterResid<EvalT,Traits>::divergence2(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
-		Intrepid::FieldContainer<ScalarT>  & div_,
-      const int cell) const  {
-
-
-  fill_nodal_metrics(cell);
-
-  for (std::size_t node=0; node < numNodes; ++node) {
-
-    const MeshScalarT jinv00 = nodal_inv_jacobian(node, 0, 0);
-    const MeshScalarT jinv01 = nodal_inv_jacobian(node, 0, 1);
-    const MeshScalarT jinv10 = nodal_inv_jacobian(node, 1, 0);
-    const MeshScalarT jinv11 = nodal_inv_jacobian(node, 1, 1);
-
-    vcontra(node, 0 ) = nodal_det_j(node)*(
-        jinv00*fieldAtNodes(node, 0) + jinv01*fieldAtNodes(node, 1) );
-    vcontra(node, 1 ) = nodal_det_j(node)*(
-        jinv10*fieldAtNodes(node, 0)+ jinv11*fieldAtNodes(node, 1) );
-  }
-
-
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int node=0; node < numNodes; ++node) {
-//      ScalarT tempAdd =vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
-//                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
- //     Kokkos::atomic_fetch_add(&div_hU(qp), tempAdd);
-      div_(qp) +=   vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
-                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
-    }
-
-  }
-
-  for (int qp=0; qp < numQPs; ++qp) {
-    div_(qp) = div_(qp)/jacobian_det(cell,qp);
-  }
-
-}
-
-
-
-#endif
-
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
