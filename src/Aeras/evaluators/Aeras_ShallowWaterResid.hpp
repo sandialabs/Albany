@@ -91,6 +91,12 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
   Intrepid::FieldContainer<ScalarT> wrk_;
 #endif
+
+  //Intrepid::FieldContainer<ScalarT> wrk2_;
+  PHX::MDField<ScalarT,QuadPoint> wrk3_;
+
+
+
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
   PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
   PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
@@ -134,6 +140,8 @@ private:
 #else
 public:
 
+  //OG why is everything here public?
+
   Kokkos::View<MeshScalarT***, PHX::Device> nodal_jacobian;
   Kokkos::View<MeshScalarT***, PHX::Device> nodal_inv_jacobian;
   Kokkos::View<MeshScalarT*, PHX::Device> nodal_det_j;
@@ -170,9 +178,24 @@ public:
 
  double a, myPi;
 
+
+ MeshScalarT k11, k12, k21, k22, k32;
+
+
  KOKKOS_INLINE_FUNCTION
  void divergence(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
       const int cell) const;
+
+ KOKKOS_INLINE_FUNCTION
+ void divergence2(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
+		 Intrepid::FieldContainer<ScalarT>  & div_,
+      const int cell) const;
+
+ KOKKOS_INLINE_FUNCTION
+ void divergence3(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
+		          const PHX::MDField<ScalarT,QuadPoint>  & div_,
+	      const int & cell) const;
+
 
 // KOKKOS_INLINE_FUNCTION
 // void gradient(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
@@ -249,6 +272,15 @@ public:
  void compute_Residuals12_prescribed (const int& cell) const;
  KOKKOS_INLINE_FUNCTION
  void compute_Residuals12_notprescribed (const int& cell) const;
+
+
+ //KOKKOS_INLINE_FUNCTION
+ //void compute_coefficients_K(const typename PHAL::Ref<const MeshScalarT>::type lam,
+//		                     const typename PHAL::Ref<const MeshScalarT>::type th   );
+// KOKKOS_INLINE_FUNCTION
+ void compute_coefficients_K(const MeshScalarT lam, const MeshScalarT th   );
+
+
 
 
 #endif
