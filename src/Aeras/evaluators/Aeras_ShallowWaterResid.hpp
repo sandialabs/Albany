@@ -94,6 +94,7 @@ private:
 
   //Intrepid::FieldContainer<ScalarT> wrk2_;
   PHX::MDField<ScalarT,QuadPoint> wrk1_scalar_scope1_;
+  PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope1_;
 
   PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope2_;
 
@@ -193,6 +194,9 @@ public:
 		          const PHX::MDField<ScalarT,QuadPoint>  & div_,
 	              const int & cell) const;
 
+ KOKKOS_INLINE_FUNCTION
+ void product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_,
+	               const int & cell) const;
 
 // KOKKOS_INLINE_FUNCTION
 // void gradient(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,

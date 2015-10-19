@@ -318,6 +318,9 @@ for (int i=0; i<nNodes; i++)
 
 wrk1_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
 wrk1_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1_scalar_scope1_.fieldTag(),ddims_));
+wrk1_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+wrk1_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1_vector_scope1_.fieldTag(),ddims_));
+
 
 wrk1_vector_scope2_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope2_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
 wrk1_vector_scope2_.setFieldData(ViewFactory::buildView(wrk1_vector_scope2_.fieldTag(),ddims_));
@@ -442,22 +445,35 @@ compute_product_h_vel(const int& cell) const{
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
+product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_, const int& cell) const{
+
+ for (int node=0; node < numNodes; ++node) {
+      const typename PHAL::Ref<const ScalarT>::type
+	     unodal0 = UNodal(cell,node,0);
+      huv_(node,0)= unodal0*UNodal(cell,node,1);
+      huv_(node,1)= unodal0*UNodal(cell,node,2);
+ }
+}
+
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0(const int& cell) const
 {
 
-  compute_product_h_vel(cell);
+//  compute_product_h_vel(cell);
+  const PHX::MDField<ScalarT,Node, Dim>  &  huv_ = wrk1_vector_scope1_;
 
-  for (int node=0; node < numNodes; ++node) 
-    surf(node) = UNodal(cell,node,0);
-
-  //divergence(huAtNodes, cell);
+  product_h_uv(huv_, cell);
 
   const PHX::MDField<ScalarT,QuadPoint>  &  div_ = wrk1_scalar_scope1_;
-  divergence3(huAtNodes, div_, cell);
+
+  //divergence3(huAtNodes, div_, cell);
+  divergence3(huv_, div_, cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
     int node = qp; 
-    //Residual(cell,node,0) += (UDot(cell,qp,0) + div_hU(qp))*wBF(cell, node, qp);
     Residual(cell,node,0) += (UDot(cell,qp,0) + div_(qp))*wBF(cell, node, qp);
   }
 }
