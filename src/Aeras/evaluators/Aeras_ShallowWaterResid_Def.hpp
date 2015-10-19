@@ -18,7 +18,7 @@
 namespace Aeras {
 
 
-#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 
 //**********************************************************************
@@ -300,24 +300,31 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
  vcontra=PHX::MDField<ScalarT,Node,Dim>("vcontra",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
  vcontra.setFieldData(ViewFactory::buildView(vcontra.fieldTag(),ddims_));
 
+
+wrk1_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+wrk1_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1_scalar_scope1_.fieldTag(),ddims_));
+wrk2_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk2_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+wrk2_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk2_scalar_scope1_.fieldTag(),ddims_));
+wrk3_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk3_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+wrk3_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk3_scalar_scope1_.fieldTag(),ddims_));
+wrk4_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk4_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+wrk4_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk4_scalar_scope1_.fieldTag(),ddims_));
+
+wrk1_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+wrk1_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1_vector_scope1_.fieldTag(),ddims_));
+wrk2_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk2_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+wrk2_vector_scope1_.setFieldData(ViewFactory::buildView(wrk2_vector_scope1_.fieldTag(),ddims_));
+
+wrk1_vector_scope2_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope2_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+wrk1_vector_scope2_.setFieldData(ViewFactory::buildView(wrk1_vector_scope2_.fieldTag(),ddims_));
+
+
 nodeToQPMap_Kokkos=Kokkos::View<int*, PHX::Device> ("nodeToQPMap_Kokkos",nNodes);
 for (int i=0; i<nNodes; i++)
  nodeToQPMap_Kokkos(i)=nodeToQPMap[i];
 #endif
 
-wrk1_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-wrk1_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1_scalar_scope1_.fieldTag(),ddims_));
-wrk2_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-wrk2_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1_scalar_scope1_.fieldTag(),ddims_));
-wrk3_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-wrk3_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1_scalar_scope1_.fieldTag(),ddims_));
-wrk1_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
-wrk1_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1_vector_scope1_.fieldTag(),ddims_));
-wrk2_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
-wrk2_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1_vector_scope1_.fieldTag(),ddims_));
 
-wrk1_vector_scope2_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope2_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
-wrk1_vector_scope2_.setFieldData(ViewFactory::buildView(wrk1_vector_scope2_.fieldTag(),ddims_));
 }
 
 //**********************************************************************
@@ -392,10 +399,10 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
 
   for (std::size_t node=0; node < numNodes; ++node) {
 
-    const MeshScalarT jinv00 = nodal_inv_jacobian(node, 0, 0);
-    const MeshScalarT jinv01 = nodal_inv_jacobian(node, 0, 1);
-    const MeshScalarT jinv10 = nodal_inv_jacobian(node, 1, 0);
-    const MeshScalarT jinv11 = nodal_inv_jacobian(node, 1, 1);
+    const MeshScalarT & jinv00 = nodal_inv_jacobian(node, 0, 0);
+    const MeshScalarT & jinv01 = nodal_inv_jacobian(node, 0, 1);
+    const MeshScalarT & jinv10 = nodal_inv_jacobian(node, 1, 0);
+    const MeshScalarT & jinv11 = nodal_inv_jacobian(node, 1, 1);
 
     vcontra_(node, 0 ) = nodal_det_j(node)*(
         jinv00*fieldAtNodes(node, 0) + jinv01*fieldAtNodes(node, 1) );
@@ -448,6 +455,39 @@ gradient3(const PHX::MDField<ScalarT, QuadPoint>  & field,
 
 }
 
+template<typename EvalT,typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT,Traits>::curl3(
+		const PHX::MDField<ScalarT, Node, Dim>  & field,
+		const PHX::MDField<ScalarT, QuadPoint>  & curl_,
+		const int &cell) const {
+
+  fill_nodal_metrics(cell);
+
+  const PHX::MDField<ScalarT,Node, Dim>  &  vcontra_ = wrk1_vector_scope2_;
+
+  for (int node=0; node < numNodes; ++node) {
+
+    const MeshScalarT & j00 = nodal_jacobian(node, 0, 0);
+    const MeshScalarT & j01 = nodal_jacobian(node, 0, 1);
+    const MeshScalarT & j10 = nodal_jacobian(node, 1, 0);
+    const MeshScalarT & j11 = nodal_jacobian(node, 1, 1);
+
+    vcontra_(node, 0 ) = j00*field(node, 0) + j10*field(node, 1);
+    vcontra_(node, 1 ) = j01*field(node, 0) + j11*field(node, 1);
+  }
+
+
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int node=0; node < numNodes; ++node) {
+
+      curl_(qp) +=  vcontra_(node, 1)*grad_at_cub_points_Kokkos(node, qp,0)
+                  - vcontra_(node, 0)*grad_at_cub_points_Kokkos(node, qp,1);
+    }
+    curl_(qp) = curl_(qp)/jacobian_det(cell,qp);
+  }
+
+}
 
 /*template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -578,9 +618,11 @@ compute_Residuals12_notprescribed (const int& cell) const
 {
 
   const PHX::MDField<ScalarT, QuadPoint>  &  cor_ = wrk1_scalar_scope1_;
+//probably this call can be removed
   get_coriolis3(cor_, cell);
   const PHX::MDField<ScalarT, QuadPoint> & kineticenergy_ = wrk2_scalar_scope1_;
   const PHX::MDField<ScalarT, QuadPoint> & potentialenergy_ = wrk3_scalar_scope1_;
+//  const PHX::MDField<ScalarT,Node, Dim> & vectoru_ = wrk1_vector_scope1_;
 
   for (int node=0; node < numNodes; ++node) {
     const typename PHAL::Ref<const ScalarT>::type
@@ -596,6 +638,8 @@ compute_Residuals12_notprescribed (const int& cell) const
 
     uAtNodes(node, 0) = ulambda;
     uAtNodes(node, 1) = utheta;
+//    vectoru_(node, 0) = ulambda;
+//    vectoru_(node, 1) = utheta;
    }
 
 //   gradient<ScalarT>(potentialEnergyAtNodes, cell, gradPotentialEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
@@ -608,6 +652,9 @@ compute_Residuals12_notprescribed (const int& cell) const
    gradient3(potentialenergy_, gradPotentialEnergy_, cell);
 
    curl(cell);
+
+//   const PHX::MDField<ScalarT, QuadPoint> & curlU_ = wrk4_scalar_scope1_;
+//   curl3(vectoru_, curlU_, cell);
 
    for (int qp=0; qp < numQPs; ++qp) {
      //int node = qp;
@@ -1710,6 +1757,8 @@ ShallowWaterResid<EvalT,Traits>::curl(const Intrepid::FieldContainer<ScalarT>  &
 // *********************************************************************
 //Kokkos functors
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::curl(const int &cell) const {
@@ -1741,6 +1790,8 @@ void ShallowWaterResid<EvalT,Traits>::curl(const int &cell) const {
 
 
 }
+
+
 #endif
 // *********************************************************************
 

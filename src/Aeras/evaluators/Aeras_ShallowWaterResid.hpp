@@ -19,7 +19,7 @@
 #include <Intrepid_Cubature.hpp>
 
 
-#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 
 namespace Aeras {
@@ -117,6 +117,7 @@ private:
   PHX::MDField<ScalarT,QuadPoint> wrk1_scalar_scope1_;
   PHX::MDField<ScalarT,QuadPoint> wrk2_scalar_scope1_;
   PHX::MDField<ScalarT,QuadPoint> wrk3_scalar_scope1_;
+  PHX::MDField<ScalarT,QuadPoint> wrk4_scalar_scope1_;
   PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope1_;
   PHX::MDField<ScalarT,Node, Dim> wrk2_vector_scope1_;
 
@@ -159,10 +160,10 @@ public:
 
 // PHX::MDField<ScalarT,Node, Dim> huAtNodes;
 // PHX::MDField<ScalarT,QuadPoint> div_hU;
- PHX::MDField<ScalarT,Node> kineticEnergyAtNodes;
- PHX::MDField<ScalarT,QuadPoint, Dim> gradKineticEnergy;
- PHX::MDField<ScalarT,Node> potentialEnergyAtNodes;
- PHX::MDField<ScalarT,QuadPoint, Dim> gradPotentialEnergy;
+// PHX::MDField<ScalarT,Node> kineticEnergyAtNodes;
+// PHX::MDField<ScalarT,QuadPoint, Dim> gradKineticEnergy;
+// PHX::MDField<ScalarT,Node> potentialEnergyAtNodes;
+// PHX::MDField<ScalarT,QuadPoint, Dim> gradPotentialEnergy;
  PHX::MDField<ScalarT,Node, Dim> uAtNodes;
  PHX::MDField<ScalarT,QuadPoint> curlU;
 // PHX::MDField<ScalarT,QuadPoint> coriolis;
@@ -201,6 +202,11 @@ public:
  void gradient3(const PHX::MDField<ScalarT, QuadPoint>  & field,
 		        const PHX::MDField<ScalarT, Node, Dim>  & gradient_,
 	            const int & cell) const;
+
+ KOKKOS_INLINE_FUNCTION
+ void curl3(const PHX::MDField<ScalarT, Node, Dim>  & field,
+			const PHX::MDField<ScalarT, QuadPoint>  & curl_,
+			const int &cell) const;
 
 //This function puts (Residual(0)*Residual(1), Residual(0)*residual(2)) into huv_ .
  KOKKOS_INLINE_FUNCTION
