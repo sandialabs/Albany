@@ -11,10 +11,14 @@ namespace Intrepid
 //
 //
 template<typename Function_Derived, typename S>
-template<typename T, Index N>
+template<typename T, Index N, Index IN, Index OUT>
 T
 Function_Base<Function_Derived, S>::
-value(Function_Derived & f, Vector<T, N> const & x)
+value(
+    Function_Derived & f,
+    Vector<T, N> const & x,
+    Vector<T, IN> const &,
+    Vector<T, OUT> &&)
 {
   Index const
   dimension = x.get_dimension();
@@ -31,10 +35,14 @@ value(Function_Derived & f, Vector<T, N> const & x)
 //
 //
 template<typename Function_Derived, typename S>
-template<typename T, Index N>
+template<typename T, Index N, Index IN, Index OUT>
 Vector<T, N>
 Function_Base<Function_Derived, S>::
-gradient(Function_Derived & f, Vector<T, N> const & x)
+gradient(
+    Function_Derived & f,
+    Vector<T, N> const & x,
+    Vector<T, IN> const &,
+    Vector<T, OUT> &&)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
@@ -67,10 +75,14 @@ gradient(Function_Derived & f, Vector<T, N> const & x)
 //
 //
 template<typename Function_Derived, typename S>
-template<typename T, Index N>
+template<typename T, Index N, Index IN, Index OUT>
 Tensor<T, N>
 Function_Base<Function_Derived, S>::
-hessian(Function_Derived & f, Vector<T, N> const & x)
+hessian(
+    Function_Derived & f,
+    Vector<T, N> const & x,
+    Vector<T, IN> const &,
+    Vector<T, OUT> &&)
 {
   using AD = typename Sacado::Fad::DFad<T>;
 
