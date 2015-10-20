@@ -33,7 +33,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_16_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <Parameter name="Exodus Write Interval" type="int" value="5"/>
   </ParameterList>
   <ParameterList name="Regression Results">
