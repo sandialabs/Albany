@@ -70,6 +70,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     this->requirements.push_back("flow_factor");
     this->requirements.push_back("surface_velocity");
     this->requirements.push_back("surface_velocity_rms");
+    this->requirements.push_back("bed_topography");
   }
 }
 

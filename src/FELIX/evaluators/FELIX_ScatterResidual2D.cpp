@@ -6,9 +6,9 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_ScatterResidualH.hpp"
-#include "FELIX_ScatterResidualH_Def.hpp"
+#include "FELIX_ScatterResidual2D.hpp"
+#include "FELIX_ScatterResidual2D_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterResidualH)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterResidualH3D)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterResidual2D)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterResidualWithExtrudedField)
 

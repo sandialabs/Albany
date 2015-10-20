@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "FELIX_GatherThickness.hpp"
-#include "FELIX_GatherThickness_Def.hpp"
+#include "FELIX_Gather2DField.hpp"
+#include "FELIX_Gather2DField_Def.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::GatherThickness)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::GatherThickness3D)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::Gather2DField)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::GatherExtruded2DField)

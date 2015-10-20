@@ -32,6 +32,7 @@
        evaluators/FELIX_StokesL1L2BodyForce.cpp
        problems/FELIX_Hydrology.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
+       evaluators/FELIX_ResponseSMBMismatch.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
@@ -40,9 +41,10 @@
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
-       evaluators/FELIX_GatherThickness.cpp
+       evaluators/FELIX_Gather2DField.cpp
+       evaluators/FELIX_UpdateZCoordinate.cpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
-       evaluators/FELIX_ScatterResidualH.cpp
+       evaluators/FELIX_ScatterResidual2D.cpp
 
        problems/FELIX_StokesFOThickness.cpp
    )
@@ -109,6 +111,8 @@ ENDIF()
        problems/FELIX_Hydrology.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
+       evaluators/FELIX_ResponseSMBMismatch.hpp
+       evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
@@ -118,12 +122,14 @@ IF (ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
-       evaluators/FELIX_GatherThickness.hpp
-       evaluators/FELIX_GatherThickness_Def.hpp
+       evaluators/FELIX_Gather2DField.hpp
+       evaluators/FELIX_Gather2DField_Def.hpp
+       evaluators/FELIX_UpdateZCoordinate.hpp
+       evaluators/FELIX_UpdateZCoordinate_Def.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
-       evaluators/FELIX_ScatterResidualH.hpp
-       evaluators/FELIX_ScatterResidualH_Def.hpp
+       evaluators/FELIX_ScatterResidual2D.hpp
+       evaluators/FELIX_ScatterResidual2D_Def.hpp
 
        problems/FELIX_StokesFOThickness.hpp
   )

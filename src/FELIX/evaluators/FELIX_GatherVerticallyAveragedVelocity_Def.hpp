@@ -243,7 +243,7 @@ void GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
+    "FELIX::GatherVerticallyAveragedVelocity not implemented for Ensemble MP types!!");
 }
 
 template<typename Traits>

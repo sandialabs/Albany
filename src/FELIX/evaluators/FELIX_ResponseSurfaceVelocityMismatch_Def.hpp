@@ -14,7 +14,8 @@
 
 template<typename EvalT, typename Traits>
 FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-    coordVec("Coord Vec", dl->vertices_vector), surfaceVelocity_field("surface_velocity", dl->node_vector), basal_friction_field("basal_friction", dl->node_scalar), velocityRMS_field("surface_velocity_rms", dl->node_vector), velocity_field("Velocity", dl->node_vector), numVecDim(2) {
+    coordVec("Coord Vec", dl->vertices_vector), surfaceVelocity_field("surface_velocity", dl->node_vector), basal_friction_field("basal_friction", dl->node_scalar), velocityRMS_field("surface_velocity_rms", dl->node_vector),
+    velocity_field(p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem")->get("Velocity Name", "Velocity"), dl->node_vector), numVecDim(2) {
   // get and validate Response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
