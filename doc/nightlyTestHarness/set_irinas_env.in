@@ -16,18 +16,14 @@
 
 
 
-SCRIPTDIR=/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/
+SCRIPTDIR=/home/ikalash/nightlyAlbanyTests/
 NIGHTLYDIR=$SCRIPTDIR/Results
 
 #set this correctly
-NETCDF=/home/ikalash/Install/netcdf-4.2-hack
-HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
-BOOSTDIR=/home/ikalash/Install/boost_1_53_0
-SUPERLUDIR=/home/ikalash/Install/SuperLU_4.3
 LAMEINCLUDEDIR=/home/ikalash/Install//lame-4.24.1/lame/include
 LAMELIBDIR=/home/ikalash/Install/lame-4.24.1/lame/build_mockba
 PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
-CISMDIR=/home/ikalash/Desktop/glimmer/felix_interface_branch
+CISMDIR=/home/ikalash/cism-piscees
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
 
@@ -48,8 +44,3 @@ TRILINOS_BRANCH=master
 ALBANY_BRANCH=master
 
 
-export PATH=/home/ikalash/ap/local/bin:/home/ikalash/ap/local/lib:/home/ikalash/ap/local/lib64:/home/ikalash/ap/local/include:$PATH
-export LD_LIBRARY_PATH=/home/ikalash/ap/local/lib:/home/ikalash/ap/local/lib64:$LD_LIBRARY_PATH
-export OMPI_CXX=g++
-export OMPI_CC=gcc
-export OMPI_FC=gfortran
