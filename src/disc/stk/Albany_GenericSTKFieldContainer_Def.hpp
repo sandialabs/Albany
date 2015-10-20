@@ -149,19 +149,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
     } // End scalar at center of element
     else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter))
     { // Data at the node points
-
-        if (dim.size()==2)
-        {
-          SFT& scalar_state = metaData->declare_field< SFT >(stk::topology::NODE_RANK, st.name);
-          stk::mesh::put_field(scalar_state, metaData->universal_part(), dim[1]);
-
-        }
-        else if (dim.size()==2)
-        {
-          VFT& vector_state = metaData->declare_field< VFT >(stk::topology::NODE_RANK, st.name);
-          stk::mesh::put_field(vector_state, metaData->universal_part(), dim[2], dim[1]);
-        }
-
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
       // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer
