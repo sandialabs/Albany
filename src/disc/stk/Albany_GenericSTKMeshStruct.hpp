@@ -99,6 +99,17 @@ namespace Albany {
           const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
           int worksetSize);
 
+    //! Loads from file input required fields not found in the mesh
+    void loadRequiredInputFields(
+          const Teuchos::RCP<const Teuchos_Comm>& commT,
+          const AbstractFieldContainer::FieldContainerRequirements& req,
+          const std::vector<std::string>& missing = {});
+
+    void readScalarFileSerial (std::string& fname, Tpetra_MultiVector& content,
+                               const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+    void readVectorFileSerial (std::string& fname,Tpetra_MultiVector& contentVec,
+                               const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+
     //! Perform initial adaptation input checking
     void checkInput(std::string option, std::string value, std::string allowed_values);
 
