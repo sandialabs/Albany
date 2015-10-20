@@ -32,7 +32,6 @@
        evaluators/FELIX_StokesL1L2BodyForce.cpp
        problems/FELIX_Hydrology.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
-       evaluators/FELIX_ResponseSMBMismatch.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
@@ -111,8 +110,6 @@ ENDIF()
        problems/FELIX_Hydrology.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
-       evaluators/FELIX_ResponseSMBMismatch.hpp
-       evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
