@@ -132,7 +132,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   using Teuchos::rcp;
   using Teuchos::ParameterList;
 
-
   const CellTopologyData * const cell_top = &meshSpecs.ctd;
   const CellTopologyData * const side_top = cell_top->side[0].topology;
 
@@ -145,6 +144,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (cell_top));
   RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology (side_top));
 
+  // Building the right quadrature formula
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   RCP <Intrepid::Cubature<RealType> > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
@@ -166,7 +166,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   const int numSideQPs = (!sliding ? 0 : basalCubature->getNumPoints());
   const int worksetSize = meshSpecs.worksetSize;
 
-  std::string elementBlockName = meshSpecs.ebName;
+  const std::string& elementBlockName = meshSpecs.ebName;
+  const std::string& basalEBName = (sliding ? "" : meshSpecs.sideSetMeshSpecs.at(basalSideName)[0]->ebName);
 
 #ifdef OUTPUT_TO_SCREEN
   *out << "Field Dimensions: Workset=" << worksetSize
@@ -214,6 +215,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string>("Field Name", fieldName);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
+  if (sliding)
+    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_node_scalar, basalEBName, true, &entity);
 
 #ifdef CISM_HAS_FELIX
   // Surface Gradient-x
@@ -243,6 +246,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string>("Field Name", fieldName);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
+  if (sliding)
+    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_node_scalar, basalEBName, true, &entity);
 
   // Basal friction
   stateName = "basal_friction";
@@ -280,23 +285,25 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     }
   }
 
-  // We interpolate beta from quad point to cell
-  ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
-  fm0.template registerEvaluator<EvalT>(ev);
-
-  // We save it on the basal mesh
-  const std::string& basalEBName = meshSpecs.sideSetMeshSpecs.at(basalSideName)[0]->ebName;
-  p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
-  p->set<bool>("Is Vector Field", false);
-  ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
-  if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+  if (sliding)
   {
-    // Only PHAL::AlbanyTraits::Residual evaluates something
-    if (ev->evaluatedFields().size()>0)
+    // We interpolate beta from quad point to cell
+    ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // We save it on the basal mesh
+    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
+    p->set<bool>("Is Vector Field", false);
+    ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
     {
-      // Require save beta
-      fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      // Only PHAL::AlbanyTraits::Residual evaluates something
+      if (ev->evaluatedFields().size()>0)
+      {
+        // Require save beta
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
     }
   }
 
@@ -321,6 +328,36 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (sliding)
+  {
+    std::string beta_type = params->sublist("FELIX Basal Friction Coefficient").get<std::string>("Type");
+
+    if (beta_type=="Regularized Coulomb" || beta_type=="Power Law")
+    {
+      // We save the effective pressure too
+      stateName = "effective_pressure";
+      fieldName = "Effective Pressure";
+
+      // We interpolate the effective pressure from quad point to cell
+      ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // We register the state and build the loader
+      p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
+      p->set<bool>("Is Vector Field", false);
+      ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+      if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+      {
+        // Only PHAL::AlbanyTraits::Residual evaluates something
+        if (ev->evaluatedFields().size()>0)
+        {
+          // Require save beta
+          fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+        }
+      }
+    }
+  }
 
 #if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
   // Dirichelt field
@@ -496,7 +533,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("Sliding Velocity Side QP Variable Name", "Sliding Velocity");
     p->set<std::string>("BF Side Variable Name", "BF "+basalSideName);
     p->set<std::string>("Effective Pressure Side QP Variable Name", "Effective Pressure");
-    p->set<std::string>("Flow Factor Variable Name", "flow_factor");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
