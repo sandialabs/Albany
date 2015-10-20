@@ -107,6 +107,7 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> pl =
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
+  pl->sublist("Hierarchic Boundary Conditions", false, "");
   return pl;
 }
 
