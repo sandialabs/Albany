@@ -30,7 +30,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
 
   HydrologyMelting (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+                    const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -40,20 +40,19 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  gradPhi;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  q;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      u_b;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      beta;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      G;
+  PHX::MDField<ScalarT>      u_b;
+  PHX::MDField<ScalarT>      beta;
+  PHX::MDField<ScalarT>      G;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint>      m;
+  PHX::MDField<ScalarT>      m;
+
+  bool              stokes_coupling;
+  std::string       sideSetName;
 
   int numQPs;
   int numDim;
 
-  double nonlin_coeff;
-  double mu_w;
   double L;
 };
 

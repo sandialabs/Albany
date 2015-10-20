@@ -27,7 +27,6 @@ class BasalFrictionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
                                  public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
-  typedef typename EvalT::ScalarT ScalarT;
 
   BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl);
@@ -37,16 +36,12 @@ public:
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
 
-  void setHomotopyParamPtr(ScalarT* h);
-
   void evaluateFields (typename Traits::EvalData d);
-
-  typedef typename PHX::Device execution_space;
 
 private:
 
+  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  ScalarT* homotopyParam;
 
   // Coefficients for computing beta (if not given)
   double mu;              // Coulomb friction coefficient
@@ -56,21 +51,21 @@ private:
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only
 
   // Input:
-//  PHX::MDField<ScalarT,Cell>                          flowFactorA;       //this is the coefficient A of the flow factor
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           u_norm;
-  PHX::MDField<ScalarT,Cell,Node>                     beta_given_field;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           N;
-
-  PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint>  BF;
+  PHX::MDField<ScalarT,Cell,Node>     beta_given_field;
+  PHX::MDField<ScalarT>               u_norm;
+  PHX::MDField<ScalarT>               N;
+  PHX::MDField<RealType>              BF;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>     beta;
+  PHX::MDField<ScalarT>               beta;
 
   std::string                     basalSideName;
-  std::vector<std::vector<int> >  sideNodes;     // Needed only in case of given beta
+  std::vector<std::vector<int> >  sideNodes;     // Needed only in case of given beta and stokesFO
 
-  int numSideNodes;
-  int numSideQPs;
+  bool is_hydrology;
+
+  int numNodes;
+  int numQPs;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;

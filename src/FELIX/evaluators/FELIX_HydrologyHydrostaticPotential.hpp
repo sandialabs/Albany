@@ -40,13 +40,17 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint>      z_s;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      H;
+  PHX::MDField<ScalarT>     z_s;
+  PHX::MDField<ScalarT>     H;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint>      phi_H;
+  PHX::MDField<ScalarT>     phi_H;
 
-  int numQPs;
+  std::set<std::string>     sideSetNames;
+
+  int numNodes;
+
+  bool stokes_coupling;
 
   double rho_i;
   double rho_w;

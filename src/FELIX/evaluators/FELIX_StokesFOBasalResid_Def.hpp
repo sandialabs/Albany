@@ -70,13 +70,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(w_measure,fm);
 
   this->utils.setFieldData(basalResid,fm);
-
-  // Zero-ing out the basal residual (I'm not sure how the allocation in Phalanx is done)
-  int numCells = basalResid.fieldTag().dataLayout().dimension(0);
-  for (int cell=0; cell<numCells; ++cell)
-    for (int node=0; node<numCellNodes; ++node)
-      for (int dim=0; dim<vecDim; ++dim)
-        basalResid(cell,node,dim) = 0;
 }
 
 //**********************************************************************

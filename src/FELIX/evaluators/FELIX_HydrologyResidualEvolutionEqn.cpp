@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_HydrologyDischarge.hpp"
-#include "FELIX_HydrologyDischarge_Def.hpp"
+#include "FELIX_HydrologyResidualEvolutionEqn.hpp"
+#include "FELIX_HydrologyResidualEvolutionEqn_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyDischarge)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyResidualEvolutionEqn)

@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_HydrologyResidual.hpp"
-#include "FELIX_HydrologyResidual_Def.hpp"
+#include "FELIX_HydrologyResidualEllipticEqn.hpp"
+#include "FELIX_HydrologyResidualEllipticEqn_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyResidualEllipticEqn)

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_RESIDUAL_HPP
-#define FELIX_HYDROLOGY_RESIDUAL_HPP 1
+#ifndef FELIX_HYDROLOGY_RESIDUAL_EVOLUTION_EQN_H_HPP
+#define FELIX_HYDROLOGY_RESIDUAL_EVOLUTION_EQN_H_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -16,20 +16,18 @@
 namespace FELIX
 {
 
-/** \brief Hydrology Residual Evaluator
+/** \brief Hydrology Mass Equation Residual Evaluator
 
     This evaluator evaluates the residual of the Hydrology model
 */
 
 template<typename EvalT, typename Traits>
-class HydrologyResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyResidualEvolutionEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                      public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-
-  HydrologyResidual (const Teuchos::ParameterList& p,
+  HydrologyResidualEvolutionEqn (const Teuchos::ParameterList& p,
                      const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -40,30 +38,36 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ScalarT     ScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint>              phi;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>          q;
-  PHX::MDField<ScalarT,Cell>                        mu_i;
-  PHX::MDField<ScalarT,Cell,QuadPoint>              h;
-  PHX::MDField<ScalarT,Cell,QuadPoint>              m;
-  PHX::MDField<ScalarT,Cell,QuadPoint>              constantRhs;
+  PHX::MDField<RealType>      BF;
+  PHX::MDField<MeshScalarT>   w_measure;
+  PHX::MDField<ScalarT>       h;
+  PHX::MDField<ScalarT>       h_dot;
+  PHX::MDField<ScalarT>       N;
+  PHX::MDField<ScalarT>       m;
+  PHX::MDField<ScalarT>       u_b;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> residual;
 
-  unsigned int numNodes;
-  unsigned int numQPs;
-  unsigned int numDims;
+  int numNodes;
+  int numQPs;
+  int numDims;
 
-  double mu_w;
   double rho_i;
-  double rho_w;
-  double has_melt_opening;
+  double h_r;
+  double l_r;
+  double A;
+  double n;
+
+  // Variables necessary for stokes coupling
+  bool                            stokes_coupling;
+  std::string                     sideSetName;
+  std::vector<std::vector<int> >  sideNodes;
 };
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_RESIDUAL_HPP
+#endif // FELIX_HYDROLOGY_RESIDUAL_EVOLUTION_EQN_H_HPP
