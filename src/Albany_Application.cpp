@@ -1047,7 +1047,7 @@ computeGlobalResidualImplT(
   }
 
 #ifdef ALBANY_GOAL
-  GOAL::computeHierarchicBCs((*this), fT, Teuchos::null);
+  GOAL::computeHierarchicBCs((*this), xT, fT, Teuchos::null);
 #endif
 }
 
@@ -1323,7 +1323,7 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
 #ifdef ALBANY_GOAL
-  GOAL::computeHierarchicBCs((*this), fT, jacT);
+  GOAL::computeHierarchicBCs((*this), xT, fT, jacT);
 #endif
 
   jacT->fillComplete();
