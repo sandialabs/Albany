@@ -31,11 +31,25 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   // print a summary of the problem
   *out << "GOAL Mechanics Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
+
+  // fill in the dof names
+  offsets["X"] = 1;
+  if (numDims > 1)
+    offsets["Y"] = 2;
+  if (numDims > 2)
+    offsets["Z"] = 3;
 }
 
 /*****************************************************************************/
 GOALMechanicsProblem::~GOALMechanicsProblem()
 {
+}
+
+/*****************************************************************************/
+int GOALMechanicsProblem::getOffset(std::string const& var)
+{
+  assert(offsets.count(var) == 1);
+  return offsets[var];
 }
 
 /*****************************************************************************/

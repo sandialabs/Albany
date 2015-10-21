@@ -31,11 +31,14 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
         const int numDim,
         Teuchos::RCP<const Teuchos::Comm<int> >& commT);
 
-    //! destrcutor
+    //! destructor
     virtual ~GOALMechanicsProblem();
 
     //! return number of spatial dimensions
     int spatialDimension() const {return numDims;}
+
+    //! get the offset corresponding to a variable name
+    int getOffset(std::string const& var);
 
     //! build the pde instantiations for the primal problem
     void buildProblem(
@@ -91,6 +94,9 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! number of spatial dimensions
     int numDims;
+
+    //! a map of the dof offsets
+    std::map<std::string, int> offsets;
 
     //! data layouts
     Teuchos::RCP<Layouts> dl;
