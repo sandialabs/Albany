@@ -33,11 +33,11 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   *out << "Number of spatial dimensions: " << numDims << std::endl;
 
   // fill in the dof names
-  offsets["X"] = 1;
+  offsets["X"] = 0;
   if (numDims > 1)
-    offsets["Y"] = 2;
+    offsets["Y"] = 1;
   if (numDims > 2)
-    offsets["Z"] = 3;
+    offsets["Z"] = 2;
 }
 
 /*****************************************************************************/
