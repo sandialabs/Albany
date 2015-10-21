@@ -11,7 +11,6 @@
 
 namespace
 {
-
 //
 // Test the solution methods by themselves.
 //
@@ -427,6 +426,39 @@ TEUCHOS_UNIT_TEST(Testing, MixedStorage)
   std::cout << "Matrix   : " << B << '\n';
 
   TEST_COMPARE(true, ==, true);
+}
+
+//
+// Test the LCM mini minimizer.
+//
+TEUCHOS_UNIT_TEST(Testing, Testing)
+{
+  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  constexpr
+  Intrepid::Index
+  dimension{1};
+
+  LCM::TestNLS<ValueT>
+  nls(2.0);
+
+  Intrepid::NewtonStep<ValueT, dimension>
+  step;
+
+  Intrepid::Minimizer<ValueT, dimension>
+  minimizer;
+
+  Intrepid::Vector<ScalarT, dimension>
+  x;
+
+  x(0) = 2.0;
+
+  LCM::miniMinimize(minimizer, step, nls, x);
+
+  minimizer.printReport(std::cout);
+
+  TEST_COMPARE(minimizer.converged, ==, true);
 }
 
 } // anonymous namespace

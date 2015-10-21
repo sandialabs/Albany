@@ -20,14 +20,14 @@ namespace FELIX {
 //**********************************************************************
 
 template<typename EvalT, typename Traits>
-GatherThicknessBase<EvalT, Traits>::
-GatherThicknessBase(const Teuchos::ParameterList& p,
+Gather2DFieldBase<EvalT, Traits>::
+Gather2DFieldBase(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  thickness(p.get<std::string>("Thickness Name"), dl->node_scalar)
+  field2D(p.get<std::string>("2D Field Name"), dl->node_scalar)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addEvaluatedField(thickness);
+  this->addEvaluatedField(field2D);
   cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -35,27 +35,26 @@ GatherThicknessBase(const Teuchos::ParameterList& p,
   dl->node_gradient->dimensions(dims);
   numNodes = dims[1];
   vecDim = dims[2];
-  vecDimFO = std::min(PHX::DataLayout::size_type(2), dims[2]); //this->vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
 
-  this->setName("GatherThickness"+PHX::typeAsString<EvalT>());
+  this->setName("Gather2DField"+PHX::typeAsString<EvalT>());
 
   if (p.isType<int>("Offset of First DOF"))
     offset = p.get<int>("Offset of First DOF");
   else offset = 2;
 
-  if (p.isType<int>("H level"))
-    HLevel = p.get<int>("H level");
-  else HLevel = -1;
+  if (p.isType<int>("Field Level"))
+    fieldLevel = p.get<int>("Field Level");
+  else fieldLevel = -1;
 }
 
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void GatherThicknessBase<EvalT, Traits>::
+void Gather2DFieldBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-    this->utils.setFieldData(thickness,fm);
+    this->utils.setFieldData(field2D,fm);
 }
 
 //**********************************************************************
@@ -63,10 +62,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 
 template<typename Traits>
-GatherThickness<PHAL::AlbanyTraits::Residual, Traits>::
-GatherThickness(const Teuchos::ParameterList& p,
+Gather2DField<PHAL::AlbanyTraits::Residual, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
 {
   if (p.isType<const std::string>("Mesh Part"))
     this->meshPart = p.get<const std::string>("Mesh Part");
@@ -75,14 +74,14 @@ GatherThickness(const Teuchos::ParameterList& p,
 }
 
 template<typename Traits>
-void GatherThickness<PHAL::AlbanyTraits::Residual, Traits>::
+void Gather2DField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
 
-  Kokkos::deep_copy(this->thickness.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
@@ -104,7 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        this->thickness(elem_LID,node) = xT_constView[eqID[this->offset]];
+        this->field2D(elem_LID,node) = xT_constView[eqID[this->offset]];
       }
     }
   }
@@ -112,10 +111,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 template<typename Traits>
-GatherThickness<PHAL::AlbanyTraits::Jacobian, Traits>::
-GatherThickness(const Teuchos::ParameterList& p,
+Gather2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl)
 {
   if (p.isType<const std::string>("Mesh Part"))
     this->meshPart = p.get<const std::string>("Mesh Part");
@@ -124,7 +123,7 @@ GatherThickness(const Teuchos::ParameterList& p,
 }
 
 template<typename Traits>
-void GatherThickness<PHAL::AlbanyTraits::Jacobian, Traits>::
+void Gather2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
@@ -136,9 +135,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   int numLayers = workset.disc->getLayeredMeshNumbering()->numLayers;
-  this->HLevel = (this->HLevel < 0) ? numLayers : this->HLevel;
+  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
 
-  Kokkos::deep_copy(this->thickness.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
@@ -166,74 +165,74 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        this->thickness(elem_LID,node) = FadType(numSideNodes*this->vecDim*(numLayers+1), xT_constView[eqID[this->offset]]);
-        this->thickness(elem_LID,node).fastAccessDx(numSideNodes*this->vecDim*this->HLevel+this->vecDim*i+this->offset) = workset.j_coeff;
+        this->field2D(elem_LID,node) = FadType(numSideNodes*this->vecDim*(numLayers+1), xT_constView[eqID[this->offset]]);
+        this->field2D(elem_LID,node).fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset) = workset.j_coeff;
       }
     }
   }
 }
 
 template<typename Traits>
-GatherThickness<PHAL::AlbanyTraits::Tangent, Traits>::
-GatherThickness(const Teuchos::ParameterList& p,
+Gather2DField<PHAL::AlbanyTraits::Tangent, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl)
             {}
 
 template<typename Traits>
-void GatherThickness<PHAL::AlbanyTraits::Tangent, Traits>::
+void Gather2DField<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
 template<typename Traits>
-GatherThickness<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-GatherThickness(const Teuchos::ParameterList& p,
+Gather2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
             {}
 
 template<typename Traits>
-void GatherThickness<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void Gather2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-GatherThickness<PHAL::AlbanyTraits::MPResidual, Traits>::
-GatherThickness(const Teuchos::ParameterList& p,
+Gather2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
 {}
 
 template<typename Traits>
-void GatherThickness<PHAL::AlbanyTraits::MPResidual, Traits>::
+void Gather2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
-    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
+    "FELIX::Gather2DField not implemented for Ensemble MP types!!");
 }
 
 template<typename Traits>
-GatherThickness<PHAL::AlbanyTraits::MPJacobian, Traits>::
-GatherThickness(const Teuchos::ParameterList& p,
+Gather2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl)
             {}
 
 template<typename Traits>
-void GatherThickness<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void Gather2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
 template<typename Traits>
-GatherThickness<PHAL::AlbanyTraits::MPTangent, Traits>::
-GatherThickness(const Teuchos::ParameterList& p,
+Gather2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
+Gather2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl)
             {}
 
 template<typename Traits>
-void GatherThickness<PHAL::AlbanyTraits::MPTangent, Traits>::
+void Gather2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 #endif
@@ -243,26 +242,27 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 template<typename Traits>
-GatherThickness3D<PHAL::AlbanyTraits::Residual, Traits>::
-GatherThickness3D(const Teuchos::ParameterList& p,
+GatherExtruded2DField<PHAL::AlbanyTraits::Residual, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
-            {}
+          : Gather2DFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl) {
+  this->setName("GatherExtruded2DField Residual");
+}
 
 template<typename Traits>
-void GatherThickness3D<PHAL::AlbanyTraits::Residual, Traits>::
+void GatherExtruded2DField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  Kokkos::deep_copy(this->thickness.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
   int numLayers = layeredMeshNumbering.numLayers;
-  this->HLevel = (this->HLevel < 0) ? numLayers : this->HLevel;
+  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -272,35 +272,36 @@ evaluateFields(typename Traits::EvalData workset)
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-      LO inode = layeredMeshNumbering.getId(base_id, this->HLevel);
+      LO inode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
 
-      (this->thickness)(cell,node) = xT_constView[solDOFManager.getLocalDOF(inode, this->offset)];
+      (this->field2D)(cell,node) = xT_constView[solDOFManager.getLocalDOF(inode, this->offset)];
     }
   }
 }
 
 
 template<typename Traits>
-GatherThickness3D<PHAL::AlbanyTraits::Jacobian, Traits>::
-GatherThickness3D(const Teuchos::ParameterList& p,
+GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl)
-            {}
+          : Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian, Traits>(p,dl) {
+  this->setName("GatherExtruded2DField Jacobian");
+}
 
 template<typename Traits>
-void GatherThickness3D<PHAL::AlbanyTraits::Jacobian, Traits>::
+void GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  Kokkos::deep_copy(this->thickness.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
   int numLayers = layeredMeshNumbering.numLayers;
-  this->HLevel = (this->HLevel < 0) ? numLayers : this->HLevel;
+  this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
 
@@ -311,14 +312,14 @@ evaluateFields(typename Traits::EvalData workset)
     const std::size_t num_dof = neq * this->numNodes;
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      int firstunk = node;
+      int firstunk = neq * node + this->offset;
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
       LO base_id, ilayer;
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
-      LO inode = layeredMeshNumbering.getId(base_id, this->HLevel);
-      typename PHAL::Ref<ScalarT>::type val = (this->thickness)(cell,node);
+      LO inode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
+      typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
 
-      val = FadType(this->numNodes, xT_constView[solDOFManager.getLocalDOF(inode, this->offset)]);
+      val = FadType(neq * this->numNodes, xT_constView[solDOFManager.getLocalDOF(inode, this->offset)]);
       val.setUpdateValue(!workset.ignore_residual);
       val.fastAccessDx(firstunk) = workset.j_coeff;
     }
@@ -327,66 +328,68 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 template<typename Traits>
-GatherThickness3D<PHAL::AlbanyTraits::Tangent, Traits>::
-GatherThickness3D(const Teuchos::ParameterList& p,
+GatherExtruded2DField<PHAL::AlbanyTraits::Tangent, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl)
-            {}
+          : Gather2DFieldBase<PHAL::AlbanyTraits::Tangent, Traits>(p,dl) {
+  this->setName("GatherExtruded2DField Tangent");
+}
 
 template<typename Traits>
-void GatherThickness3D<PHAL::AlbanyTraits::Tangent, Traits>::
+void GatherExtruded2DField<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
 template<typename Traits>
-GatherThickness3D<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-GatherThickness3D(const Teuchos::ParameterList& p,
+GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl)
-            {}
+          : Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl){
+  this->setName("GatherExtruded2DField DistParamDeriv");
+}
 
 template<typename Traits>
-void GatherThickness3D<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-GatherThickness3D<PHAL::AlbanyTraits::MPResidual, Traits>::
-GatherThickness3D(const Teuchos::ParameterList& p,
+GatherExtruded2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::MPResidual, Traits>(p,dl)
             {}
 
 template<typename Traits>
-void GatherThickness3D<PHAL::AlbanyTraits::MPResidual, Traits>::
+void GatherExtruded2DField<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
-    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
+    "FELIX::GatherExtruded2DField not implemented for Ensemble MP types!!");
 }
 
 template<typename Traits>
-GatherThickness3D<PHAL::AlbanyTraits::MPJacobian, Traits>::
-GatherThickness3D(const Teuchos::ParameterList& p,
+GatherExtruded2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::MPJacobian, Traits>(p,dl)
             {}
 
 template<typename Traits>
-void GatherThickness3D<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void GatherExtruded2DField<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 
 template<typename Traits>
-GatherThickness3D<PHAL::AlbanyTraits::MPTangent, Traits>::
-GatherThickness3D(const Teuchos::ParameterList& p,
+GatherExtruded2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
+GatherExtruded2DField(const Teuchos::ParameterList& p,
           const Teuchos::RCP<Albany::Layouts>& dl)
-          : GatherThicknessBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl)
+          : Gather2DFieldBase<PHAL::AlbanyTraits::MPTangent, Traits>(p,dl)
             {}
 
 template<typename Traits>
-void GatherThickness3D<PHAL::AlbanyTraits::MPTangent, Traits>::
+void GatherExtruded2DField<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {}
 #endif

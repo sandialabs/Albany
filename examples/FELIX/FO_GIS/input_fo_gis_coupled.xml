@@ -55,7 +55,7 @@
     <Parameter name="Columnwise Ordering" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_coupled.exo"/>
     <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
     <Parameter name="Basal Friction File Name" type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>

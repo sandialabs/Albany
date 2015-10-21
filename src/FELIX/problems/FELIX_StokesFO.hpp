@@ -11,6 +11,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -296,6 +297,15 @@ FELIX::StokesFO::constructEvaluators(
      }
    }
 
+   {
+      std::string stateName("bed_topography");
+      entity= Albany::StateStruct::NodalDataToElemNode;
+      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+
 #if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
    {
     // Here is how to register the field for dirichlet condition.
@@ -500,6 +510,25 @@ FELIX::StokesFO::constructEvaluators(
       RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
       ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    if(this->params->isSublist("Parameter Fields"))
+    {
+      Teuchos::ParameterList& params_list =  this->params->sublist("Parameter Fields");
+      if(params_list.get<int>("Register Surface Mass Balance",0)){
+        std::string stateName("surface_mass_balance");
+        RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+        ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+    }
+
+    {
+       RCP<ParameterList> p = rcp(new ParameterList("Gather Averaged Velocity"));
+       p->set<string>("Averaged Velocity Name", "Averaged Velocity");
+       p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
+       ev = rcp(new GatherVerticallyAveragedVelocity<EvalT,AlbanyTraits>(*p,dl));
+       fm0.template registerEvaluator<EvalT>(ev);
     }
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);

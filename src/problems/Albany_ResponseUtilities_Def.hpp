@@ -19,6 +19,7 @@
 #include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
+  #include "FELIX_ResponseSMBMismatch.hpp"
 #endif
 #ifdef ALBANY_QCAD
 #if defined(ALBANY_EPETRA)
@@ -101,6 +102,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   {
     RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
       rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
+  else if (responseName == "Surface Mass Balance Mismatch")
+  {
+    RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
+      rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

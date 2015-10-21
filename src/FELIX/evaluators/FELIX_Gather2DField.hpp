@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_GATHERTHICKNESS_HPP
-#define FELIX_GATHERTHICKNESS_HPP
+#ifndef FELIX_GATHER2DFIELD_HPP
+#define FELIX_GATHER2DFIELD_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -25,15 +25,15 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class GatherThicknessBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+class Gather2DFieldBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
-  GatherThicknessBase(const Teuchos::ParameterList& p,
+  Gather2DFieldBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
-  virtual ~GatherThicknessBase(){};
+  virtual ~Gather2DFieldBase(){};
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -46,31 +46,30 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node>  thickness;
+  PHX::MDField<ScalarT,Cell,Node>  field2D;
 
-  std::size_t vecDimFO;
   std::size_t vecDim;
   std::size_t numNodes;
   std::size_t offset; // Offset of first DOF being gathered
 
-  int HLevel;
+  int fieldLevel;
   std::string meshPart;
 
   Teuchos::RCP<const CellTopologyData> cell_topo;
 };
 
 
-template<typename EvalT, typename Traits> class GatherThickness;
+template<typename EvalT, typename Traits> class Gather2DField;
 
 
 
 template<typename Traits>
-class GatherThickness<PHAL::AlbanyTraits::Residual,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::Residual,Traits> {
+class Gather2DField<PHAL::AlbanyTraits::Residual,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::Residual,Traits> {
 
 public:
 
-  GatherThickness(const Teuchos::ParameterList& p,
+  Gather2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -83,12 +82,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness<PHAL::AlbanyTraits::Jacobian,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::Jacobian,Traits> {
+class Gather2DField<PHAL::AlbanyTraits::Jacobian,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian,Traits> {
 
 public:
 
-  GatherThickness(const Teuchos::ParameterList& p,
+  Gather2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -101,12 +100,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness<PHAL::AlbanyTraits::Tangent,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::Tangent,Traits> {
+class Gather2DField<PHAL::AlbanyTraits::Tangent,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::Tangent,Traits> {
 
 public:
 
-  GatherThickness(const Teuchos::ParameterList& p,
+  Gather2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -119,12 +118,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
+class Gather2DField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
 
 public:
 
-  GatherThickness(const Teuchos::ParameterList& p,
+  Gather2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -139,12 +138,12 @@ private:
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-class GatherThickness<PHAL::AlbanyTraits::MPResidual,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::MPResidual,Traits> {
+class Gather2DField<PHAL::AlbanyTraits::MPResidual,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::MPResidual,Traits> {
 
 public:
 
-  GatherThickness(const Teuchos::ParameterList& p,
+  Gather2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -157,12 +156,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness<PHAL::AlbanyTraits::MPJacobian,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::MPJacobian,Traits> {
+class Gather2DField<PHAL::AlbanyTraits::MPJacobian,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::MPJacobian,Traits> {
 
 public:
 
-  GatherThickness(const Teuchos::ParameterList& p,
+  Gather2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -175,12 +174,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness<PHAL::AlbanyTraits::MPTangent,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::MPTangent,Traits> {
+class Gather2DField<PHAL::AlbanyTraits::MPTangent,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::MPTangent,Traits> {
 
 public:
 
-  GatherThickness(const Teuchos::ParameterList& p,
+  Gather2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -194,17 +193,17 @@ private:
 #endif
 
 
-template<typename EvalT, typename Traits> class GatherThickness3D;
+template<typename EvalT, typename Traits> class GatherExtruded2DField;
 
 
 
 template<typename Traits>
-class GatherThickness3D<PHAL::AlbanyTraits::Residual,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::Residual,Traits> {
+class GatherExtruded2DField<PHAL::AlbanyTraits::Residual,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::Residual,Traits> {
 
 public:
 
-  GatherThickness3D(const Teuchos::ParameterList& p,
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -217,12 +216,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness3D<PHAL::AlbanyTraits::Jacobian,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::Jacobian,Traits> {
+class GatherExtruded2DField<PHAL::AlbanyTraits::Jacobian,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::Jacobian,Traits> {
 
 public:
 
-  GatherThickness3D(const Teuchos::ParameterList& p,
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -235,12 +234,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness3D<PHAL::AlbanyTraits::Tangent,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::Tangent,Traits> {
+class GatherExtruded2DField<PHAL::AlbanyTraits::Tangent,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::Tangent,Traits> {
 
 public:
 
-  GatherThickness3D(const Teuchos::ParameterList& p,
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -253,12 +252,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness3D<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
+class GatherExtruded2DField<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::DistParamDeriv,Traits> {
 
 public:
 
-  GatherThickness3D(const Teuchos::ParameterList& p,
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -272,12 +271,12 @@ private:
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-class GatherThickness3D<PHAL::AlbanyTraits::MPResidual,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::MPResidual,Traits> {
+class GatherExtruded2DField<PHAL::AlbanyTraits::MPResidual,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::MPResidual,Traits> {
 
 public:
 
-  GatherThickness3D(const Teuchos::ParameterList& p,
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -290,12 +289,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness3D<PHAL::AlbanyTraits::MPJacobian,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::MPJacobian,Traits> {
+class GatherExtruded2DField<PHAL::AlbanyTraits::MPJacobian,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::MPJacobian,Traits> {
 
 public:
 
-  GatherThickness3D(const Teuchos::ParameterList& p,
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);
@@ -308,12 +307,12 @@ private:
 };
 
 template<typename Traits>
-class GatherThickness3D<PHAL::AlbanyTraits::MPTangent,Traits>
-    : public GatherThicknessBase<PHAL::AlbanyTraits::MPTangent,Traits> {
+class GatherExtruded2DField<PHAL::AlbanyTraits::MPTangent,Traits>
+    : public Gather2DFieldBase<PHAL::AlbanyTraits::MPTangent,Traits> {
 
 public:
 
-  GatherThickness3D(const Teuchos::ParameterList& p,
+  GatherExtruded2DField(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void evaluateFields(typename Traits::EvalData d);

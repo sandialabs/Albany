@@ -63,9 +63,6 @@ protected:
   const int offset;
   ScalarT value;
   std::string nodeSetID;
-
-private:
-  Teuchos::RCP<PHX::Tag<typename EvalT::ScalarT> > order_depends_on_, order_evaluates_;
 };
 
 // **************************************************************

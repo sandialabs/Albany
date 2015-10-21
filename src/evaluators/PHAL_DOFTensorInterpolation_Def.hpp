@@ -115,12 +115,20 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
           typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
-	  vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+          vqp = val_node(cell, 0, i, j) * BF(cell, 0, qp);
+#else
+	        vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * BF(cell, 0, qp);
+#endif
           for (std::size_t node=1; node < numNodes; ++node) {
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+            vqp += val_node(cell, node, i, j) * BF(cell, node, qp);
+#else
             vqp.val() += val_node(cell, node, i, j).val() * BF(cell, node, qp);
             vqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
               += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * BF(cell, node, qp);
+#endif
           } 
         }
       } 

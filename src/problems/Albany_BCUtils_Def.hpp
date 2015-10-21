@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Albany_BCUtils.hpp"
 
 namespace {
@@ -16,7 +17,8 @@ inline std::string evaluatorsToBuildName (const std::string& bc_name)
   return ess.str();
 }
 
-// Inverse of above.
+// Either (1) the inverse of above or (2) identity, in case the decorator is not
+// used.
 inline std::string plName (const std::string& name)
 {
   const std::size_t pos = name.find(decorator);
@@ -45,16 +47,17 @@ void imposeOrder (const Teuchos::ParameterList& bc_pl,
   for (ParameterList::ConstIterator it = bc_pl.begin(); it != bc_pl.end(); ++it)
     order[it->first] = ne++;
 
+  std::vector<bool> found(ne, false);
   for (S2PL::const_iterator it = evname2pl.begin(); it != evname2pl.end(); ++it) {
     const std::string name = plName(it->first);
     const S2int::const_iterator order_it = order.find(name);
     if (order_it == order.end()) {
-      // If for some reason it->first is not in order (because I didn't think of
-      // a naming case), we'll at worst break the intended order, which was
-      // never promised anyway.
+      // It is not an error to add an evaluator not directly mapped to an XML
+      // entry.
       continue;
     }
     const int index = order_it->second;
+    found[index] = true;
     if (index > 0) {
       std::stringstream dependency;
       dependency << parm_val << index-1;
@@ -66,6 +69,26 @@ void imposeOrder (const Teuchos::ParameterList& bc_pl,
       it->second->set<std::string>(parm_name + " Evaluates", evaluates.str());
     }
   }
+
+  // Protect against not having all dependencies satisfied. Phalanx would detect
+  // this, of course, but here I can provide more information.
+  bool all_found = true;
+  for (std::vector<bool>::const_iterator it = found.begin(); it != found.end(); ++it)
+    if ( ! *it) {
+      all_found = false;
+      break;
+    }
+  if ( ! all_found) {
+    std::stringstream msg;
+    msg << ne << " BCs were specified in " << bc_pl.name() << ", but not all "
+        << " were detected and ordered. The parameter list gives:\n";
+    for (S2int::const_iterator it = order.begin(); it != order.end(); ++it)
+      msg << "  " << it->first << "\n";
+    msg << "But BCUtils provided:\n";
+    for (S2PL::const_iterator it = evname2pl.begin(); it != evname2pl.end(); ++it)
+      msg << "  " << plName(it->first) << "\n";
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, msg.str());
+  }    
 }
 } // namespace
 
@@ -653,9 +676,14 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
             p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
             string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
+            double rho = params->get("Ice Density", 910.0);
+            double rho_w = params->get("Water Density", 1028.0);
+            p->set<double> ("Ice Density", rho);
+            p->set<double> ("Water Density", rho_w);
             p->set<string> ("BetaXY", betaName);
             p->set<string>("Beta Field Name", "basal_friction");
             p->set<string>("thickness Field Name", "thickness");
+            p->set<string>("BedTopo Field Name", "bed_topography");
             p->set<double> ("L", L);
             p->set<string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
@@ -859,16 +887,39 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
     evaluators_to_build[NeuGBF] = p;
   }
 
+
+  // Build evaluator for basal_friction
+  string NeuGBT="Evaluator for Gather bed_topography";
+  {
+    const string paramName = "bed_topography";
+    RCP<ParameterList> p = rcp(new ParameterList());
+    std::stringstream key; key<< paramName <<  "Is Distributed Parameter";
+    if(params->get<int>(key.str(),0) == 1) {
+      p->set<int>("Type", traits_type::typeSF);
+      p->set< RCP<Albany::Layouts> >("Layouts Struct", dl);
+      p->set< string >("Parameter Name", paramName);
+    }
+    else {
+      p->set<int>("Type", traits_type::typeSF);
+      p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
+      p->set< string >("State Name", paramName);
+      p->set< string >("Field Name", paramName);
+    }
+
+    evaluators_to_build[NeuGBT] = p;
+  }
+
   // Build evaluator for thickness
   string NeuGT="Evaluator for Gather thickness";
   {
-    RCP<ParameterList> p = rcp(new ParameterList());
-    p->set<int>("Type", traits_type::typeSF);
+    const string paramName = "thickness";
+	  RCP<ParameterList> p = rcp(new ParameterList());
+	  p->set<int>("Type", traits_type::typeSF);
 
     // for new way
     p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
-    p->set< string >("State Name", "thickness");
-    p->set< string >("Field Name", "thickness");
+    p->set< string >("State Name", paramName);
+    p->set< string >("Field Name", paramName);
 
     evaluators_to_build[NeuGT] = p;
   }

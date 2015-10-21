@@ -22,10 +22,10 @@ template<typename EvalT, typename Traits>
 ThicknessResid<EvalT, Traits>::
 ThicknessResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
-  H        (p.get<std::string> ("Thickness Variable Name"), dl->node_scalar),
-  H0       (p.get<std::string> ("Old Thickness Name"), dl->node_scalar),
+  dH        (p.get<std::string> ("Thickness Increment Variable Name"), dl->node_scalar),
+  H0       (p.get<std::string> ("Past Thickness Name"), dl->node_scalar),
   V        (p.get<std::string> ("Averaged Velocity Variable Name"), dl->node_vector),
-  coordVec ("Coord Vec", dl->vertices_vector),
+  coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar)
 {
 
@@ -44,7 +44,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
 
-  this->addDependentField(H);
+  this->addDependentField(dH);
   this->addDependentField(H0);
   this->addDependentField(V);
   this->addDependentField(coordVec);
@@ -91,7 +91,7 @@ void ThicknessResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(H,fm);
+  this->utils.setFieldData(dH,fm);
   this->utils.setFieldData(H0,fm);
   this->utils.setFieldData(V,fm);
   this->utils.setFieldData(coordVec, fm);
@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    Intrepid::FieldContainer<ScalarT> H_Side;
+    Intrepid::FieldContainer<ScalarT> dH_Side;
     Intrepid::FieldContainer<ScalarT> SMB_Side;
     Intrepid::FieldContainer<ScalarT> H0_Side;
     Intrepid::FieldContainer<ScalarT> V_Side;
@@ -162,7 +162,7 @@ evaluateFields(typename Traits::EvalData workset)
       // Pre-Calculate reference element quantitites
       cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
-      H_Side.resize(numQPsSide);
+      dH_Side.resize(numQPsSide);
       SMB_Side.resize(numQPsSide);
       H0_Side.resize(numQPsSide);
       V_Side.resize(numQPsSide, numVecFODims);
@@ -213,7 +213,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid::FieldContainer<ScalarT> H_Cell(numNodes);
+      Intrepid::FieldContainer<ScalarT> dH_Cell(numNodes);
       Intrepid::FieldContainer<ScalarT> SMB_Cell(numNodes);
       Intrepid::FieldContainer<ScalarT> H0_Cell(numNodes);
       Intrepid::FieldContainer<ScalarT> V_Cell(numNodes, numVecFODims);
@@ -228,7 +228,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i]; //it->second;
-        H_Cell(node) = H(elem_LID, node);
+        dH_Cell(node) = dH(elem_LID, node);
         H0_Cell(node) = H0(elem_LID, node);
         SMB_Cell(node) = have_SMB ? (*SMB_ptr)(elem_LID, node) : ScalarT(0.0);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim)
@@ -237,7 +237,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       // This is needed, since evaluate currently sums into
       for (int qp = 0; qp < numQPsSide; qp++) {
-        H_Side(qp) = 0.0;
+        dH_Side(qp) = 0.0;
         H0_Side(qp) = 0.0;
         SMB_Side(qp) = 0.0;
         for (std::size_t dim = 0; dim < numVecFODims; ++dim)
@@ -249,7 +249,7 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i]; //it->second;
         for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
           const MeshScalarT& tmp = trans_basis_refPointsSide(0, node, qp);
-          H_Side(qp) += H_Cell(node) * tmp;
+          dH_Side(qp) += dH_Cell(node) * tmp;
           SMB_Side(qp) += SMB_Cell(node) * tmp;
           H0_Side(qp) += H0_Cell(node) * tmp;
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
@@ -276,8 +276,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t dim = 0; dim < numVecFODims; ++dim)
             divHV += gradH_Side(qp, dim)*V_Side(qp,dim);
 
-          //std::cout << "(" << 1.0/1000.0 * divHV << ", " << SMB_Side(qp)<< ")";
-          ScalarT tmp = H_Side(qp)-H0_Side(qp) + (*dt/1000.0) * divHV - *dt*SMB_Side(qp);
+         ScalarT tmp = dH_Side(qp) + (*dt/1000.0) * divHV - *dt*SMB_Side(qp);
           res +=tmp * weighted_trans_basis_refPointsSide(0, node, qp);
         }
         Residual(elem_LID,node) = res;

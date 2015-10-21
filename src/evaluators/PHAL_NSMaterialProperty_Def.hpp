@@ -112,7 +112,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     point.resize(coord_dims[2]);
 
     exp_rf_kl =
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*mp_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*mp_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters
