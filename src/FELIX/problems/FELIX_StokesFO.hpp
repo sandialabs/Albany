@@ -11,7 +11,10 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
-#include "FELIX_GatherVerticallyAveragedVelocity.hpp"
+
+#ifdef ALBANY_EPETRA
+  #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
+#endif
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -523,6 +526,7 @@ FELIX::StokesFO::constructEvaluators(
       }
     }
 
+#ifdef ALBANY_EPETRA
     {
        RCP<ParameterList> p = rcp(new ParameterList("Gather Averaged Velocity"));
        p->set<string>("Averaged Velocity Name", "Averaged Velocity");
@@ -530,6 +534,7 @@ FELIX::StokesFO::constructEvaluators(
        ev = rcp(new GatherVerticallyAveragedVelocity<EvalT,AlbanyTraits>(*p,dl));
        fm0.template registerEvaluator<EvalT>(ev);
     }
+#endif
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);

@@ -47,6 +47,10 @@
 #endif
 #endif
 
+#ifdef ALBANY_GOAL
+#include "GOAL_BCUtils.hpp"
+#endif
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -1041,6 +1045,10 @@ computeGlobalResidualImplT(
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+
+#ifdef ALBANY_GOAL
+  GOAL::computeHierarchicBCs((*this), xT, fT, Teuchos::null);
+#endif
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1313,6 +1321,10 @@ computeGlobalJacobianImplT(const double alpha,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
+
+#ifdef ALBANY_GOAL
+  GOAL::computeHierarchicBCs((*this), xT, fT, jacT);
+#endif
 
   jacT->fillComplete();
 

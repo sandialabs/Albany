@@ -31,11 +31,25 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   // print a summary of the problem
   *out << "GOAL Mechanics Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
+
+  // fill in the dof names
+  offsets["X"] = 0;
+  if (numDims > 1)
+    offsets["Y"] = 1;
+  if (numDims > 2)
+    offsets["Z"] = 2;
 }
 
 /*****************************************************************************/
 GOALMechanicsProblem::~GOALMechanicsProblem()
 {
+}
+
+/*****************************************************************************/
+int GOALMechanicsProblem::getOffset(std::string const& var)
+{
+  assert(offsets.count(var) == 1);
+  return offsets[var];
 }
 
 /*****************************************************************************/
@@ -82,22 +96,14 @@ void GOALMechanicsProblem::constructDirichletEvaluators(
     const Albany::MeshSpecsStruct& meshSpecs,
     Teuchos::RCP<Teuchos::ParameterList>& bcs)
 {
-  int idx = 0;
-  std::vector<std::string> dirichletNames(neq);
-  dirichletNames[idx++] = "X";
-  if (numDims > 1) dirichletNames[idx++] = "Y";
-  if (numDims > 2) dirichletNames[idx++] = "Z";
-
-  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-  dfm = dirUtils.constructBCEvaluators(
-      meshSpecs.nsNames, dirichletNames, bcs, this->paramLib);
+  dfm = Teuchos::null;
 }
 
 /*****************************************************************************/
 void GOALMechanicsProblem::constructNeumannEvaluators(
     const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-  *out << "don't do that!" << std::endl;
+  nfm = Teuchos::null;
 }
 
 /*****************************************************************************/
@@ -107,6 +113,7 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> pl =
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
+  pl->sublist("Hierarchic Boundary Conditions", false, "");
   return pl;
 }
 

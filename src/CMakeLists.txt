@@ -633,6 +633,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/evaluators
                      ./ATO/utils
                      ./GOAL
+                     ./GOAL/utils
                      ./GOAL/responses
                      ./GOAL/evaluators
                     )
