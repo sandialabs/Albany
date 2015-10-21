@@ -39,7 +39,7 @@
     <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_np4_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_be_np4_out.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
