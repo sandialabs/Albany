@@ -17,6 +17,7 @@ namespace GOAL {
 
 void computeHierarchicBCs(
     Albany::Application const& app,
+    const double time,
     Teuchos::RCP<const Tpetra_Vector> const& sol,
     Teuchos::RCP<Tpetra_Vector> const& res,
     Teuchos::RCP<Tpetra_CrsMatrix> const& jac);

@@ -1047,7 +1047,10 @@ computeGlobalResidualImplT(
   }
 
 #ifdef ALBANY_GOAL
-  GOAL::computeHierarchicBCs((*this), xT, fT, Teuchos::null);
+  double t = current_time;
+  if (paramLib->isParameter("Time"))
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  GOAL::computeHierarchicBCs((*this), t, xT, fT, Teuchos::null);
 #endif
 }
 
@@ -1323,7 +1326,10 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
 #ifdef ALBANY_GOAL
-  GOAL::computeHierarchicBCs((*this), xT, fT, jacT);
+  double t = current_time;
+  if (paramLib->isParameter("Time"))
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  GOAL::computeHierarchicBCs((*this), t, xT, fT, jacT);
 #endif
 
   jacT->fillComplete();

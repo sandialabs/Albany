@@ -9,6 +9,8 @@
 #include "Albany_GOALDiscretization.hpp"
 #include "GOAL_MechanicsProblem.hpp"
 
+#include "RTC_FunctionRTC.hh"
+
 using Teuchos::RCP;
 using Teuchos::ArrayRCP;
 using Teuchos::ParameterList;
@@ -20,6 +22,7 @@ class BCManager
   public:
     BCManager(
         Albany::Application const& application,
+        const double time,
         RCP<const Tpetra_Vector> const& solution,
         RCP<Tpetra_Vector> const& residual,
         RCP<Tpetra_CrsMatrix> const& jacobian);
@@ -28,6 +31,7 @@ class BCManager
     void applyBC(Teuchos::ParameterList const& p);
     void modifyLinearSystem(double v, int offset, std::string set);
     Albany::Application const& app;
+    const double t;
     RCP<const Tpetra_Vector> const& sol;
     RCP<Tpetra_Vector> const& res;
     RCP<Tpetra_CrsMatrix> const& jac;
@@ -40,10 +44,12 @@ class BCManager
 
 BCManager::BCManager(
     Albany::Application const& application,
+    const double time,
     RCP<const Tpetra_Vector> const& solution,
     RCP<Tpetra_Vector> const& residual,
     RCP<Tpetra_CrsMatrix> const& jacobian) :
   app(application),
+  t(time),
   sol(solution),
   res(residual),
   jac(jacobian)
@@ -74,9 +80,22 @@ static RCP<ParameterList> getValidBCParameters()
 {
   RCP<ParameterList> p = rcp(new ParameterList("Valid Hierarchic BC Params"));
   p->set<std::string>("DOF", "", "Degree of freedom to which BC is applied");
-  p->set<double>("Value", 0.0, "Value of the BC as function of t");
+  p->set<std::string>("Value", "", "Value of the BC as function of t");
   p->set<std::string>("Node Set", "", "Node Set to apply the BC to");
   return p;
+}
+
+static double parseExpression(std::string const& val, const double t)
+{
+  bool success;
+  PG_RuntimeCompiler::Function f;
+  f.addVar("double", "t");
+  f.addVar("double", "value");
+  success = f.addBody(val); assert(success);
+  success = f.varValueFill(0, t); assert(success);
+  success = f.varValueFill(1, 0); assert(success);
+  success = f.execute(); assert(success);
+  return f.getValueOfVar("value");
 }
 
 void BCManager::applyBC(ParameterList const& p)
@@ -86,9 +105,14 @@ void BCManager::applyBC(ParameterList const& p)
   p.validateParameters(*vp,0);
 
   // get the input parameters
-  double v = p.get<double>("Value");
+  std::string val = p.get<std::string>("Value");
   std::string set = p.get<std::string>("Node Set");
   std::string dof = p.get<std::string>("DOF");
+
+  // parse the value and get a double
+  double v = parseExpression(val, t);
+
+  std::cout << v << std::endl;
 
   // does this node set actually exist?
   assert(ns.count(set) == 1);
@@ -157,6 +181,7 @@ void BCManager::modifyLinearSystem(double v, int offset, std::string set)
 
 void computeHierarchicBCs(
     Albany::Application const& app,
+    const double time,
     RCP<const Tpetra_Vector> const& sol,
     RCP<Tpetra_Vector> const& res,
     RCP<Tpetra_CrsMatrix> const& jac)
@@ -165,7 +190,7 @@ void computeHierarchicBCs(
   std::string name = pl->get<std::string>("Name");
   if (name.find("GOAL") != 0)
     return;
-  BCManager bcm(app, sol, res, jac);
+  BCManager bcm(app, time, sol, res, jac);
   bcm.run();
 }
 
