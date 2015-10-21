@@ -7,6 +7,7 @@
 #include "GOAL_BCUtils.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_GOALDiscretization.hpp"
+#include "GOAL_MechanicsProblem.hpp"
 
 using Teuchos::RCP;
 using Teuchos::ParameterList;
@@ -28,6 +29,7 @@ class BCManager
     RCP<Tpetra_CrsMatrix> const& jac;
     RCP<Albany::GOALDiscretization> disc;
     RCP<Albany::GOALMeshStruct> meshStruct;
+    RCP<Albany::GOALMechanicsProblem> problem;
     Albany::GOALNodeSets ns;
     ParameterList bcParams;
 };
@@ -45,6 +47,8 @@ BCManager::BCManager(
   RCP<Albany::AbstractDiscretization> ad = app.getDiscretization();
   disc = Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
   meshStruct = disc->getGOALMeshStruct();
+  RCP<Albany::AbstractProblem> ap = app.getProblem();
+  problem = Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(ap);
   ns = disc->getGOALNodeSets();
 }
 
@@ -64,15 +68,30 @@ static RCP<ParameterList> getValidBCParameters()
 {
   RCP<ParameterList> p = rcp(new ParameterList("Valid Hierarchic BC Params"));
   p->set<std::string>("DOF", "", "Degree of freedom to which BC is applied");
-  p->set<std::string>("Value", "", "Value of the BC as function of t");
+  p->set<double>("Value", 0.0, "Value of the BC as function of t");
   p->set<std::string>("Node Set", "", "Node Set to apply the BC to");
   return p;
 }
 
-void BCManager::applyBC(Teuchos::ParameterList const& p)
+void BCManager::applyBC(ParameterList const& p)
 {
+  // validate parameters
   RCP<ParameterList> vp = getValidBCParameters();
   p.validateParameters(*vp,0);
+
+  // get the input parameters
+  double v = p.get<double>("Value");
+  std::string set = p.get<std::string>("Node Set");
+  std::string dof = p.get<std::string>("DOF");
+
+  // does this node set actually exist?
+  assert(ns.count(set) == 1);
+
+  // does this dof actually exist?
+  int offset = problem->getOffset(dof);
+
+  std::cout << "OFFSET " << offset << std::endl;
+
 }
 
 void computeHierarchicBCs(
