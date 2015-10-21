@@ -6,12 +6,72 @@
 #if !defined(LCM_MiniSolvers_h)
 #define LCM_MiniSolvers_h
 
+#include <boost/any.hpp>
+
 #include "Intrepid_MiniTensor_Solvers.h"
 
 //
 // Define some nonlinear systems (NLS) to test nonlinear solution methods.
 //
 namespace LCM {
+
+//
+//
+//
+template<typename S>
+class TestNLS : public Intrepid::Function_Base<TestNLS<S>, S>
+{
+public:
+  TestNLS(S const c) : any_(c)
+  {
+  }
+
+  static constexpr
+  Intrepid::Index
+  DIMENSION = 1;
+
+  static constexpr
+  char const * const
+  NAME = "Test";
+
+  // Default value.
+  template<typename T, Intrepid::Index N>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<TestNLS<S>, S>::value(*this, x);
+  }
+
+  // Explicit gradient.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Vector<T, N>
+  gradient(Intrepid::Vector<T, N> const & x) const
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    r(0) = x(0) * x(0) - 2.0;
+
+    return r;
+  }
+
+  // Default AD hessian.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Tensor<T, N>
+  hessian(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<TestNLS<S>, S>::hessian(*this, x);
+  }
+
+private:
+  boost::any
+  any_{0.0};
+};
 
 //
 //
