@@ -487,17 +487,6 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PNP_ConcentrationResid_Def.hpp
   )
 
-# AERAS
-IF (ALBANY_AERAS)
-  SET(SOURCES ${SOURCES}
-    evaluators/Aeras_ShallowWaterResponseL2Error.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    evaluators/Aeras_ShallowWaterResponseL2Error.hpp
-    evaluators/Aeras_ShallowWaterResponseL2Error_Def.hpp
-  )
-ENDIF()
-
 # ASCR
 IF(ALBANY_ASCR AND ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}

@@ -183,6 +183,14 @@ Aeras::HydrostaticProblem::constructEvaluators(
        << ", numLevels = " << numLevels 
        << ", numTracers= " << numTracers << std::endl;
   
+  if (numNodes != numQPts) { 
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+         Teuchos::Exceptions::InvalidParameter, "Aeras::HydrostaticProblem must be run such that nNodes == numQPts!  " 
+         <<  "This does not hold: numNodes = " <<  numNodes << ", numQPts = " << numQPts << "."); 
+  }
+
+  //Evaluators for DOFs that depend on levels
+  
   //Evaluators for DOFs that depend on levels
   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim, numLevels));
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
