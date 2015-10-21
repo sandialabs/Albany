@@ -112,8 +112,6 @@ void BCManager::applyBC(ParameterList const& p)
   // parse the value and get a double
   double v = parseExpression(val, t);
 
-  std::cout << v << std::endl;
-
   // does this node set actually exist?
   assert(ns.count(set) == 1);
 
