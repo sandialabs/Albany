@@ -20,8 +20,8 @@
  
 <!--  Dirichlet boundary conditions prescribed temperatures in this case --> 
      <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS Bottom_Surface for DOF T" type="double" value="300.0"/> 
-  <!--    <Parameter name="DBC on NS Top_Surface for DOF T" type="double" value="300.0"/> -->
+      <Parameter name="DBC on NS Bottom_Surface for DOF Temperature" type="double" value="300.0"/> 
+  <!--    <Parameter name="DBC on NS Top_Surface for DOF Temperature" type="double" value="300.0"/> -->
      </ParameterList> 
 
     <!--  Neumann boundary conditions prescribed fluxes in this case -->

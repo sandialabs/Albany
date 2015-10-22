@@ -164,9 +164,9 @@ Albany::PhaseProblem::constructEvaluators(
   Teuchos::ArrayRCP<string> dof_names_dot(1);
   Teuchos::ArrayRCP<string> resid_names(1);
 
-  dof_names[0] = "T";
-  dof_names_dot[0] = "T_dot";
-  resid_names[0] = "T Residual";
+  dof_names[0] = "Temperature";
+  dof_names_dot[0] = "Temperature_dot";
+  resid_names[0] = "Temperature Residual";
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator(
@@ -229,7 +229,7 @@ Albany::PhaseProblem::constructEvaluators(
      }
      Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
          new Teuchos::ParameterList("Save Temperature"));
-     p = stateMgr.registerStateVariable("T",
+     p = stateMgr.registerStateVariable("Temperature",
          dl_->qp_scalar,
          dl_->dummy,
          eb_name,
@@ -320,9 +320,9 @@ Albany::PhaseProblem::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name","wBF");
     p->set<string>("Weighted Gradient BF Name","wGrad BF");
-    p->set<string>("Temperature Name","T");
-    p->set<string>("Temperature Gradient Name","T Gradient");
-    p->set<string>("Temperature Time Derivative Name","T_dot");
+    p->set<string>("Temperature Name","Temperature");
+    p->set<string>("Temperature Gradient Name","Temperature Gradient");
+    p->set<string>("Temperature Time Derivative Name","Temperature_dot");
     p->set<string>("Thermal Conductivity Name","k");
     p->set<string>("Rho Cp Name","Rho Cp");
     p->set<string>("Source Name","Source");
@@ -331,7 +331,7 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Delta Time Name","Delta Time");
 
     //Output
-    p->set<string>("Residual Name", "T Residual");
+    p->set<string>("Residual Name", "Temperature Residual");
 
     ev = rcp(new AMP::PhaseResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
