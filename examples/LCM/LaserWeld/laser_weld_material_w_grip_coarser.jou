@@ -1,0 +1,207 @@
+#{specimen_length_nom = 0.1524}
+#{specimen_length_tol=0.000}                        #0.0001?
+#{specimen_length = (specimen_length_tol+specimen_length_nom)/2}
+
+#{specimen_width_nom=0.375*0.0254}
+#{specimen_width_tol=0}                                #0.000?
+#{specimen_width=(specimen_width_nom+specimen_width_tol)/2}
+
+#{specimen_thickness_nom=0.0606*0.0254}
+#{specimen_thickness_tol= 0.0}                      #0.0000?
+#{specimen_thickness=(specimen_thickness_nom+specimen_thickness_tol)}
+#{grip_start_away_from_center = (3-1.25)*0.0254}
+
+reset
+
+create brick x {specimen_width} y {specimen_length} z {specimen_thickness}
+move volume 1 x {specimen_width/2} y {specimen_length/2} z {specimen_thickness/2}
+
+#{notch_rad_nom=0.25*0.0254}
+#{notch_rad_tol=0}                                         #0.000?
+#{notch_rad=notch_rad_nom+notch_rad_tol}
+
+#{notch_y_loc_nom = 0.01746250}
+#{notch_y_loc_tol=0.0000/2}                #0.0000?
+#{notch_y_loc=notch_y_loc_nom+notch_y_loc_tol}
+
+#{notch_x_loc_nom = 0.24674/2*0.0254}
+#{notch_x_loc_tol=0.0000}                #0.0000?
+#{notch_x_loc=notch_x_loc_nom+notch_x_loc_tol+notch_rad}
+
+create cylinder height 0.01 radius {notch_rad}
+move volume 2 x {notch_x_loc} y {notch_y_loc} z 0
+
+subtract volume 2 from volume 1
+
+#{guage_width = notch_x_loc-notch_rad}
+
+webcut volume 1 with plane yplane offset {notch_y_loc}
+webcut volume 1 with plane xplane offset {notch_x_loc-notch_rad}
+
+delete volume 1
+
+#{hourglass_rad=14.2875}
+#{hourglass_rad_offset=0.000025/2+.0000005}
+
+create cylinder height 10 radius {hourglass_rad}
+move volume 5 x {notch_x_loc+hourglass_rad-notch_rad-hourglass_rad_offset}
+
+subtract volume 5 from volume 4
+ 
+#webcut volume 4 with plane yplane offset {notch_y_loc*0.02}
+#webcut volume 6 with plane yplane offset {notch_y_loc*0.05}
+#webcut volume 7 with plane yplane offset {notch_y_loc*0.10}
+#webcut volume 8 with plane yplane offset 0.0127
+
+#{min_half_width=notch_x_loc-notch_rad-hourglass_rad_offset}
+
+webcut volume all with plane yplane offset {grip_start_away_from_center}
+
+#Add notch and volumes to mesh.
+
+#{thickness = specimen_thickness}
+#{width = guage_width } # this is the half width of the specimen
+#{crack_length = 0.0312*0.0254}
+#{ligament_length = thickness - crack_length}
+#{strain_guage_length = 1.0*0.0254}
+#{weld_surf_width = .0325/2.0*0.0254}  ## the nominal size of the weld at the outer surface in the y direction - divide by two due to y plane symmetry
+
+## define notch radius based on a scale value and calculate inner  
+## mesh refinement cylinder around crack(outer_notch)
+
+#{notch_radius_scale=2.5}
+#{notch_radius = 0.008/2*0.0254}
+#{outer_notch =0.017/2*0.0254}
+
+## define outer cylinder radius for outer mesh 
+## refinement around crack 
+#{cylrad = (outer_notch*2) + .030*0.0254}
+
+
+create cylinder radius {cylrad} height {width}
+
+volume 7  rotate 90 about y
+volume  7 move  x {width/2}
+webcut volume all tool volume 7
+delete volume 7
+
+create cylinder radius {notch_radius} height {width}
+volume 9 rotate 90 about y
+
+volume 9 move z {thickness - crack_length + notch_radius}
+volume 9 move x {width/2.}
+webcut volume all tool volume 9
+delete volume 9
+
+create brick x {width} y {notch_radius*2.} z {crack_length - notch_radius}
+volume 11 move x {width/2.}
+volume 11 move z { thickness - (crack_length - notch_radius)/2.}
+webcut volume all tool volume 11
+
+delete volume 10 11 12 13 14
+
+create cylinder radius {outer_notch} height {width}
+
+volume 15 rotate 90 about y
+volume 15 move z {thickness - crack_length + notch_radius}
+volume 15 move x {width/2.}
+webcut volume all tool volume 15
+delete volume 15
+
+webcut volume 16 with plane zplane offset {thickness - crack_length + notch_radius} rotate -40 about x center 0 0 {thickness - crack_length + notch_radius}
+webcut volume 16 with plane zplane offset {thickness - crack_length + notch_radius} 
+
+#{half_weld_width_surface=0.0325/2*0.0254}
+
+create cylinder radius {half_weld_width_surface} height {width}
+volume 19 rotate 90 about y
+volume 19 move x {width/2.}
+webcut volume all tool volume 19
+delete volume 19
+
+webcut volume 8  with general plane location {width} {outer_notch*sin(3.141592653*50/180)} {thickness - crack_length + notch_radius-outer_notch*cos(3.141592653*50/180)}  location  {0} {outer_notch*sin(3.141592653*50/180)} {thickness - crack_length + notch_radius-outer_notch*cos(3.141592653*50/180)}  location 0 {half_weld_width_surface*cos(3.141592653*50/180)} {half_weld_width_surface*sin(3.141592653*50/180)}
+
+webcut volume all with plane yplane offset {cylrad*1.3}
+#webcut volume 20 with cylinder radius 0.0002 axis x center 0 0 0
+webcut volume 21 with cylinder radius 0.00068994643 axis x center 0 0 0
+unite volume 16 18 21
+
+volume all copy reflect y
+
+merge tolerance 5.0e-6
+imprint tolerant volume all
+merge volume all
+merge tolerance 5.000000e-04
+
+#{grip_mesh_size = specimen_thickness/3}
+#{guage_mesh_size = grip_mesh_size/3}
+#{mesh_size_medium = guage_mesh_size/3}
+#{mesh_size_small = mesh_size_medium/3}
+volume 3 6 24 26 size {grip_mesh_size}
+curve 2 8 319 322 size 0.0008
+mesh volume 3 6 24 26
+
+refine surface 20 189 numsplit 1 depth 1
+
+volume 22 31 size {guage_mesh_size}
+mesh volume 22 31
+
+##refine surface 166 193 numsplit 1 depth 1
+
+volume 4 25 size {mesh_size_medium}
+mesh volume 4 25
+
+volume 16 28 size {mesh_size_medium}
+mesh volume 16 28 
+
+volume 23 32 size {mesh_size_medium}
+mesh volume 23 32 
+
+volume 17 29 size {mesh_size_medium}
+curve 203 202 201 200 365 329 362 327 interval  6
+curve 203 202 201 200 365 329 362 327 scheme  equal
+
+volume 8 27 size {mesh_size_medium}
+mesh volume 8 27 
+
+mesh volume 17 29
+
+volume 20 30 size {mesh_size_medium}
+mesh volume 20 30
+
+delete volume 6 26
+
+##refine volume all numsplit 1 bias 1.0 depth 1 smooth
+
+block 1 volume 8 17 20 29 27 30
+#block 1 name "weld_material"
+
+block 2 volume 23 16 4 22 3 32 28 25 31 24
+#block 2 name "base_material"
+
+nodeset 1 surface  131 158 154 136 169 173 45 222 208 230 243 218 198 234 192 185
+#nodeset 1 name "x_symmetry_surf"
+
+nodeset 2 curve  62 283
+#nodeset 2 name "fixed_z"
+
+nodeset 3 surface 41
+#nodeset 3 name "top_load_surf"
+
+nodeset 4 surface 20
+#nodeset 4 name "top_extensometer_surf"
+
+nodeset 5 surface 186
+#nodeset 5 name "bottom_load_surf"
+
+nodeset 6 surface 189
+#nodeset 6 name "bottom_extensometer_surf"
+
+sideset 1 surface 124 wrt volume 17
+sideset 1 surface 149 wrt volume 8
+sideset 1 surface 153 wrt volume 20
+
+export mesh "laser_weld_tensile_specimen_nominal_coarser.g" overwrite
+
+
+
