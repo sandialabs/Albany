@@ -11,12 +11,10 @@
     <!-- solution method - Steady / Continuation (quasi-static / load-stepping) / Transient (time-dependent)-->
 <!--   <Parameter name="Solution Method" type="string" value="Transient"/>-->
    <Parameter name="Solution Method" type="string" value="Continuation"/>
-<!-- Only used if Solution methodTransient is Used; For Continuation Use as defined in materials.xml
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Constant"/>
        <Parameter name="Function Data" type="Array(double)" value="{300.0}"/>
     </ParameterList>
--->
  
 <!--  Dirichlet boundary conditions prescribed temperatures in this case --> 
      <ParameterList name="Dirichlet BCs">

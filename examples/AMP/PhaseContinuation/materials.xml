@@ -46,7 +46,6 @@
         <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
         <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.70"/>
       </ParameterList>
-	<!--<Parameter name="Initial Temperature" type="double" value="400.0"/>-->
     </ParameterList>
 
     <ParameterList name="Solid">
@@ -81,10 +80,6 @@
         <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
         <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.70"/>
       </ParameterList>
-<!-- Define initial temperature for continuation analysis(using LOCA Package)-->
-<Parameter name="Initial Temperature" type="double" value="300.0"/>
+    </ParameterList>
   </ParameterList>
-
-</ParameterList>
-
 </ParameterList>
