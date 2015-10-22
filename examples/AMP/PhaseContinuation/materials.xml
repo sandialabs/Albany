@@ -1,39 +1,90 @@
 <ParameterList>
+
   <ParameterList name="ElementBlocks">
-    <ParameterList name="cube">
-      <Parameter name="material" type="string" value="Solid"/>
-    </ParameterList>
+
     <ParameterList name="Upper_Region">
       <Parameter name="material" type="string" value="Powder" />
     </ParameterList>
+
+    <ParameterList name="Lower_Region">
+      <Parameter name="material" type="string" value="Solid" />
+    </ParameterList>
+
   </ParameterList>
+
   <ParameterList name="Materials">
+
+    <ParameterList name="Powder">
+      <Parameter name="Category" type="string" value="Powder" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="3.0"/>
+	<!-- Unit of thermal conductivity is W/m-K)-->
+      </ParameterList> 
+
+      <ParameterList name="Rho Cp">
+        <Parameter name="Rho Cp Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="4.25e6"/>
+	<!-- Unit of RhoCp is J/m^3-K)-->
+      </ParameterList>
+<!-- Should always put the value = 0 (which is heat in substrate) in the powder zone-->
+      <ParameterList name="Source">
+        <Parameter name="Phase Source Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0"/>
+      </ParameterList>
+<!-- Should always put the value of Laser power in the powder-->
+      <ParameterList name="Laser Source">
+	<!-- all values are in SI units-->
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Porosity Value" type="double" value="0.60"/>
+        <Parameter name="Particle Dia Type" type="string" value="Constant"/>
+        <Parameter name="Particle Dia Value" type="double" value="20.0e-6"/>
+        <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
+        <Parameter name="Laser Beam Radius Value" type="double" value="60.0e-6"/>
+        <Parameter name="Laser Power Type" type="string" value="Constant"/>
+        <Parameter name="Laser Power Value" type="double" value="30.0"/>
+        <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
+        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.70"/>
+      </ParameterList>
+	<!--<Parameter name="Initial Temperature" type="double" value="400.0"/>-->
+    </ParameterList>
+
     <ParameterList name="Solid">
       <Parameter name="Category" type="string" value="Solid" />
       <ParameterList name="Thermal Conductivity">
         <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.05"/>
+        <Parameter name="Value" type="double" value="20.0"/>
+	<!-- Unit of thermal conductivity is W/m-K)-->
       </ParameterList>
+
       <ParameterList name="Rho Cp">
         <Parameter name="Rho Cp Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.01"/>
+        <Parameter name="Value" type="double" value="4.25e6"/>
+	<!-- Unit of RhoCp is J/m^3-K)-->
       </ParameterList>
+<!-- Heat in Substrate -->
       <ParameterList name="Source">
         <Parameter name="Phase Source Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.0"/>
+        <Parameter name="Value" type="double" value="30.0"/>
       </ParameterList>
+<!-- Should always put the value of Laser power = 0 in the substrate-->
       <ParameterList name="Laser Source">
+	<!-- all values are in SI units-->
         <Parameter name="Porosity Type" type="string" value="Constant"/>
-        <Parameter name="Porosity Value" type="double" value="0.5"/>
+        <Parameter name="Porosity Value" type="double" value="0.60"/>
         <Parameter name="Particle Dia Type" type="string" value="Constant"/>
-        <Parameter name="Particle Dia Value" type="double" value="0.5"/>
+        <Parameter name="Particle Dia Value" type="double" value="20.0e-6"/>
         <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
-        <Parameter name="Laser Beam Radius Value" type="double" value="0.5"/>
+        <Parameter name="Laser Beam Radius Value" type="double" value="60.0e-6"/>
         <Parameter name="Laser Power Type" type="string" value="Constant"/>
-        <Parameter name="Laser Power Value" type="double" value="5.0"/>
+        <Parameter name="Laser Power Value" type="double" value="0.0"/>
         <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
-        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.5"/>
+        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.70"/>
       </ParameterList>
-    </ParameterList>
+<!-- Define initial temperature for continuation analysis(using LOCA Package)-->
+<Parameter name="Initial Temperature" type="double" value="300.0"/>
   </ParameterList>
+
+</ParameterList>
+
 </ParameterList>
