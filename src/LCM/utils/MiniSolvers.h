@@ -19,64 +19,6 @@ namespace LCM {
 //
 //
 template<typename S>
-class TestNLS : public Intrepid::Function_Base<TestNLS<S>, S>
-{
-public:
-  TestNLS(S const c) : any_(c)
-  {
-  }
-
-  static constexpr
-  Intrepid::Index
-  DIMENSION = 1;
-
-  static constexpr
-  char const * const
-  NAME = "Test";
-
-  // Default value.
-  template<typename T, Intrepid::Index N>
-  T
-  value(Intrepid::Vector<T, N> const & x)
-  {
-    return Intrepid::Function_Base<TestNLS<S>, S>::value(*this, x);
-  }
-
-  // Explicit gradient.
-  template<typename T, Intrepid::Index N>
-  Intrepid::Vector<T, N>
-  gradient(Intrepid::Vector<T, N> const & x) const
-  {
-    Intrepid::Index const
-    dimension = x.get_dimension();
-
-    assert(dimension == DIMENSION);
-
-    Intrepid::Vector<T, N>
-    r(dimension);
-
-    r(0) = x(0) * x(0) - 2.0;
-
-    return r;
-  }
-
-  // Default AD hessian.
-  template<typename T, Intrepid::Index N>
-  Intrepid::Tensor<T, N>
-  hessian(Intrepid::Vector<T, N> const & x)
-  {
-    return Intrepid::Function_Base<TestNLS<S>, S>::hessian(*this, x);
-  }
-
-private:
-  boost::any
-  any_{0.0};
-};
-
-//
-//
-//
-template<typename S>
 class SquareRootNLS : public Intrepid::Function_Base<SquareRootNLS<S>, S>
 {
 public:
@@ -86,11 +28,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 1;
+  DIMENSION{1};
 
   static constexpr
   char const * const
-  NAME = "Square Root";
+  NAME{"Square Root"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -144,11 +86,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Quadratic";
+  NAME{"Quadratic"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -209,11 +151,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Inverted Gaussian";
+  NAME{"Inverted Gaussian"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -284,11 +226,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Rosenbrock's Banana";
+  NAME{"Rosenbrock's Banana"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -339,11 +281,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Matyas";
+  NAME{"Matyas"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -394,11 +336,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "McCormick";
+  NAME{"McCormick"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -449,11 +391,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Styblinski-Tang";
+  NAME{"Styblinski-Tang"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -508,11 +450,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Paraboloid";
+  NAME{"Paraboloid"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>
@@ -560,11 +502,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Beale";
+  NAME{"Beale"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>
@@ -627,11 +569,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Booth";
+  NAME{"Booth"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>
@@ -691,11 +633,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Goldstein-Price";
+  NAME{"Goldstein-Price"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>
