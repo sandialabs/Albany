@@ -39,13 +39,12 @@
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
-<!--
     <ParameterList name="Adaptation">
+     <Parameter name="Remesh Strategy" type="string" value="None" />
      <Parameter name="Method" type="string" value="Sim" />
      <Parameter name="Remesh Step Number" type="Array(int)" value="{5,10,15,20,25,30}"/>
      <Parameter name="Error Bound" type="double" value="0.05" />
     </ParameterList>
--->
 
   </ParameterList>
 
