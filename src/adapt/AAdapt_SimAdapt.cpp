@@ -19,27 +19,24 @@ SimAdapt::SimAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 bool SimAdapt::queryAdaptationCriteria(int iteration)
 {
-    if(adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0){
-
-          if(iteration > 1)
-
-                  return true;
-
-              else
-
-                      return false;
-
-                }
-
-      Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
-
-        for(int i = 0; i < remesh_iter.size(); i++)
-
-              if(iteration == remesh_iter[i])
-
-                      return true;
-
-          return false;
+  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "Step Number");
+  if (strategy == "None")
+    return false;
+  if (strategy == "Continuous")
+    return iteration > 1;
+  if (strategy == "Step Number") {
+    TEUCHOS_TEST_FOR_EXCEPTION(!adapt_params_->isParameter("Remesh Step Number"),
+        std::logic_error,
+        "Remesh Strategy " << strategy << " but no Remesh Step Number" << '\n');
+    Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+    for(int i = 0; i < remesh_iter.size(); i++)
+      if(iteration == remesh_iter[i])
+        return true;
+    return false;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "Unknown Remesh Strategy " << strategy << '\n');
+  return false;
 }
 
 bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,

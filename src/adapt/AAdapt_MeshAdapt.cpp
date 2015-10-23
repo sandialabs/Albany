@@ -126,29 +126,33 @@ void AAdapt::MeshAdapt::initRcMgr () {
 
 AAdapt::MeshAdapt::~MeshAdapt() {}
 
-bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iter)
+bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iteration)
 {
-  adapt_params_->set<int>("LastIter", iter);
-
-  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "None");
-
-  if (strategy.compare("Continuous") == 0)
-    return iter > 1;
-
-  if (strategy.compare("PLDriven") == 0){
+  adapt_params_->set<int>("LastIter", iteration);
+  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "Step Number");
+  if (strategy == "None")
+    return false;
+  if (strategy == "Continuous")
+    return iteration > 1;
+  if (strategy == "Step Number") {
+    TEUCHOS_TEST_FOR_EXCEPTION(!adapt_params_->isParameter("Remesh Step Number"),
+        std::logic_error,
+        "Remesh Strategy " << strategy << " but no Remesh Step Number" << '\n');
+    Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+    for(int i = 0; i < remesh_iter.size(); i++)
+      if(iteration == remesh_iter[i])
+        return true;
+    return false;
+  }
+  if (strategy == "PLDriven") {
     if(adapt_params_->get<bool>("AdaptNow", false)){
-
       adapt_params_->set<bool>("AdaptNow", false);
-      return iter > 1;
-
+      return iteration > 1;
     }
     return false;
   }
-
-  Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
-  for (int i = 0; i < remesh_iter.size(); i++)
-    if (iter == remesh_iter[i])
-      return true;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "Unknown Remesh Strategy " << strategy << '\n');
   return false;
 }
 
