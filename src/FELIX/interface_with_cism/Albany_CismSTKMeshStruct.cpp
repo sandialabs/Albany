@@ -109,8 +109,6 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   beta = new double[NumNodes];
   uvel = new double[NumNodes];
   vvel = new double[NumNodes];
-  //TO DO? pass in temper?  for now, flwa is passed instead of temper
-  //temper = new double[NumEles];
 
   //check if optional input fields exist
   if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
@@ -135,7 +133,6 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   else have_sf = false;
   if (global_north_face_active_owned_map_Ptr != NULL && NumNorthFaces > 0) have_nf = true;
   else have_nf = false;
-  have_temp = false; //for now temperature field is not passed; flwa is passed instead
   if (dirichlet_node_mask_Ptr != NULL) have_dirichlet = true; 
   else have_dirichlet = false; 
 
@@ -400,8 +397,6 @@ Albany::CismSTKMeshStruct::constructMesh(
      have_shGrad = false;
   if(!flowFactor_field)
      have_flwa = false;
-  if(!temperature_field)
-     have_temp = false;
   if(!basal_friction_field)
      have_beta = false;
 
@@ -476,17 +471,19 @@ Albany::CismSTKMeshStruct::constructMesh(
        //i is elem_LID (element local ID);
        //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;
        flowFactor[0] = flwa[i];
-     }
-     if (have_temp) {
-       double *temperature = stk::mesh::field_data(*temperature_field, elem); 
-       //i is elem_LID (element local ID);
-       //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;
-       temperature[0] = temper[i];
+       //Fill temperature field from flowRate
+       //For CISM-Albany runs, flowRate will always be passed, not temperature.  
+       double *temperature = stk::mesh::field_data(*temperature_field, elem);
+       //This is the inverse of the temperature-flowRate relationship; see FELIX_ViscosityFO_Def.hpp .
+       if (flwa[i] < 1.57349384110036e-05)
+         temperature[0] = 6.0e4/log(1.3e7/flwa[i])/8.314;
+       else 
+         temperature[0] = 1.39e5/log(6.26e22/flwa[i])/8.314;
      }
      
-     //set basal face connectivity
   }
 
+  //set basal face connectivity
   if (have_bf == true) {
     if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from data provided..." << std::endl;
     singlePartVec[0] = ssPartVec["Basal"];
