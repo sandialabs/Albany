@@ -4,14 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-# SCOREC/meshes ##################
+# GOAL ##################
 
-add_subdirectory(cube)
-add_subdirectory(cube2)
-add_subdirectory(bar)
-add_subdirectory(necking)
-add_subdirectory(cylinder)
-add_subdirectory(tm_bar)
-add_subdirectory(square)
-add_subdirectory(notch)
-add_subdirectory(two_bars)
+add_subdirectory(Elasticity2D)
+add_subdirectory(J2_2D)

@@ -36,6 +36,7 @@
 #include "AnisotropicViscoplasticModel.hpp"
 #include "OrtizPandolfiModel.hpp"
 #include "ElastoViscoplasticModel.hpp"
+#include "J2MiniSolver.hpp"
 
 #include "../parallel_models/ParallelNeohookeanModel.hpp"
 
@@ -346,6 +347,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elasto Viscoplastic") {
     model = rcp(new ElastoViscoplasticModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "J2 MiniSolver") {
+    model = rcp(new J2MiniSolver<EvalT, Traits>(p, dl));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, error_msg);
   }
