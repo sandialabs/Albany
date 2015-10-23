@@ -32,8 +32,8 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="PUMI Hierarchic"/>
     <Parameter name="Workset Size" type="int" value="50"/>
-    <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/notch.dmg"/>
-    <Parameter name="PUMI Input File Name" type="string" value="../meshes/notch.smb"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="../../LCM/SCOREC/meshes/notch/notch.dmg"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../../LCM/SCOREC/meshes/notch/notch.smb"/>
     <Parameter name="PUMI Output File Name" type="string" value="out_p1.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{1, eb_1}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x3:{5,3,4, ns_1, ns_3, ns_2}"/>
@@ -43,7 +43,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>
-    <Parameter name="Test Values" type="Array(double)" value="{0.00203016834797}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.00102368721083}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-7"/>
   </ParameterList>
   <ParameterList name="Piro">
@@ -79,7 +79,7 @@
         <Parameter name="Continuation Method" type="string" value="Natural"/>
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="4"/>
+        <Parameter name="Max Steps" type="int" value="2"/>
         <Parameter name="Max Value" type="double" value="1.0"/>
         <Parameter name="Min Value" type="double" value="0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
