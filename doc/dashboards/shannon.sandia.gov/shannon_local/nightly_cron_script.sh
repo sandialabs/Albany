@@ -2,9 +2,8 @@
 
 # Crontab entry
 #
-# Run at midnight every day (0700 UTC)
-#
-# 00 07 * * * /home/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/shannon_local/nightly_cron_script.sh
+# Run test at 21:00 (9:00PM MDT --> 3:00 UTC, 8:00PM MST --> 3:00 UTC)
+# 00 21 * * * /home/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/shannon_local/nightly_cron_script.sh
 
 SUBMIT_RESULTS=ON
 #SUBMIT_RESULTS=OFF
