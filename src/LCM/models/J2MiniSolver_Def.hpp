@@ -11,6 +11,7 @@
 #include "LocalNonlinearSolver.hpp"
 
 #include "Intrepid_MiniTensor_Solvers.h"
+#include <MiniNonlinearSolver.h>
 
 namespace LCM
 {
@@ -101,6 +102,160 @@ J2MiniSolver(Teuchos::ParameterList* p,
     this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
   }
 }
+
+//
+// J2 nonlinear system
+//
+template<typename S>
+class J2NLS: public Intrepid::Function_Base<J2NLS<S>, S>
+{
+public:
+  J2NLS(
+      RealType sat_mod_,
+      RealType sat_exp_,
+      RealType eqps_old_,
+      S const & K_,
+      S const & smag_,
+      S const & mubar_,
+      S const & Y_) :
+        sat_mod(sat_mod_),
+        sat_exp(sat_exp_),
+        eqps_old(eqps_old_),
+        K(Sacado::Value<S>::eval(K_)),
+        smag(Sacado::Value<S>::eval(smag_)),
+        mubar(Sacado::Value<S>::eval(mubar_)),
+        Y(Sacado::Value<S>::eval(Y_))
+  {
+  }
+
+  static constexpr Intrepid::Index
+  DIMENSION{1};
+
+  static constexpr
+  char const * const
+  NAME{"J2 NLS"};
+
+  // Default value.
+  template<typename T, Intrepid::Index N>
+  T
+  value(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<J2NLS<S>, S>::value(*this, x);
+  }
+
+  // Explicit gradient.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Vector<T, N>
+  gradient(Intrepid::Vector<T, N> const & x)
+  {
+    Intrepid::Index const
+    dimension = x.get_dimension();
+
+    assert(dimension == DIMENSION);
+
+    Intrepid::Vector<T, N>
+    r(dimension);
+
+    T const &
+    X = x(0);
+
+    T &
+    R = r(0);
+
+    T
+    alpha = eqps_old + sq23 * X;
+
+    T
+    H = K * alpha + sat_mod * (1.0 - std::exp(-sat_exp * alpha));
+
+    R = smag - (2.0 * mubar * X + sq23 * (Y + H));
+
+    save(alpha, H);
+
+    return r;
+  }
+
+  // Default AD hessian.
+  template<typename T, Intrepid::Index N>
+  Intrepid::Tensor<T, N>
+  hessian(Intrepid::Vector<T, N> const & x)
+  {
+    return Intrepid::Function_Base<J2NLS<S>, S>::hessian(*this, x);
+  }
+
+  // Save values for later use
+  template<typename T>
+  void
+  save(T const & alpha_, T const & H_);
+
+  // Constants.
+  RealType const
+  sq23{std::sqrt(2.0 / 3.0)};
+
+  // RealType data (fixed non-AD type)
+  RealType const
+  sat_mod{0.0};
+
+  RealType const
+  sat_exp{0.0};
+
+  RealType const
+  eqps_old{0.0};
+
+  // RealType inputs (fixed non-AD type)
+  RealType const &
+  K;
+
+  RealType const &
+  smag;
+
+  RealType const &
+  mubar;
+
+  RealType const &
+  Y;
+
+  // RealType outputs (fixed non-AD type)
+  RealType
+  alpha{0.0};
+
+  RealType
+  H{0.0};
+};
+
+// Save nothing for general case
+template<typename S>
+template<typename T>
+void
+J2NLS<S>::save(T const & alpha_, T const & H_)
+{
+  return;
+}
+
+// Save for RealType, i.e, when computing Albany Residual
+template<>
+template<>
+void
+J2NLS<PHAL::AlbanyTraits::Residual::ScalarT>::
+save(RealType const & alpha_, RealType const & H_)
+{
+  alpha = alpha_;
+  H = H_;
+  return;
+}
+
+// Save when computing Albany Jacobian
+template<>
+template<>
+void
+J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
+save(RealType const & alpha_, RealType const & H_)
+{
+  alpha = alpha_;
+  H = H_;
+  return;
+}
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
@@ -154,53 +309,6 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
   Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
 
-  constexpr
-  Intrepid::Index
-  NLSDIM = 1;
-
-#if 0
-  class J2NLS : public Intrepid::Function_Base<J2NLS,RealType>
-  {
-    Intrepid::Index const
-    DIMENSION = NLSDIM;
-
-    char const * const
-    NAME = "J2 NLS";
-
-    // Default value.
-    ScalarT
-    value(Intrepid::Vector<ScalarT, NLSDIM> const & x)
-    {
-      return Intrepid::Function_Base<J2NLS, RealType>::value(*this, x);
-    }
-
-    // Explicit gradient.
-    Intrepid::Vector<ScalarT, NLSDIM>
-    gradient(Intrepid::Vector<ScalarT, NLSDIM> const & x) const
-    {
-      Intrepid::Index const
-      dimension = x.get_dimension();
-
-      assert(dimension == NLSDIM);
-
-      Intrepid::Vector<ScalarT, NLSDIM>
-      r(dimension);
-
-      r(0) = smag - (2. * mubar * x(0) + sq23 * (Y + H));
-
-      return r;
-    }
-
-    // Default AD hessian.
-    Intrepid::Tensor<ScalarT, NLSDIM>
-    hessian(Intrepid::Vector<ScalarT, NLSDIM> const & x)
-    {
-      return Intrepid::Function_Base<J2NLS, RealType>::hessian(*this, x);
-    }
-
-  };
-#endif
-
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
       kappa = elastic_modulus(cell, pt)
@@ -234,6 +342,30 @@ computeState(typename Traits::EvalData workset,
 
       if (f > 1E-12) {
         // return mapping algorithm
+
+        // Use minimization equivalent to return mapping
+        using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+        J2NLS<ScalarT>
+        j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
+
+        constexpr
+        Intrepid::Index
+        dimension{1};
+
+        Intrepid::NewtonStep<ValueT, dimension>
+        step;
+
+        Intrepid::Minimizer<ValueT, dimension>
+        minimizer;
+
+        Intrepid::Vector<ScalarT, dimension>
+        x;
+
+        x(0) = 0.0;
+
+        miniMinimize(minimizer, step, j2nls, x);
+#if 0
         bool converged = false;
         ScalarT g = f;
         ScalarT H = 0.0;
@@ -281,7 +413,14 @@ computeState(typename Traits::EvalData workset,
               "\nalpha = " << alpha << std::endl);
         }
         solver.computeFadInfo(dFdX, X, F);
-        dgam = X[0];
+#endif
+        ScalarT
+        H = j2nls.H;
+
+        ScalarT
+        alpha = j2nls.alpha;
+
+        dgam = x(0);
 
         // plastic direction
         N = (1 / smag) * s;

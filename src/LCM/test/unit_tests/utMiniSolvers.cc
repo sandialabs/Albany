@@ -11,7 +11,6 @@
 
 namespace
 {
-
 //
 // Test the solution methods by themselves.
 //

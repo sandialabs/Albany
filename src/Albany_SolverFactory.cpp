@@ -602,7 +602,6 @@ void enableMueLu(Teuchos::RCP<Albany::Application>& albanyApp,
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createAndGetAlbanyAppT(
   Teuchos::RCP<Albany::Application>& albanyApp,
-//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Teuchos_Comm>& solverComm,
   const Teuchos::RCP<const Tpetra_Vector>& initial_guess, 
@@ -763,14 +762,14 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
     
-   const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
+    const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
                                                                          initial_guess, lowsFactory));
 
-
     const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
+
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
-    }
+  }
 #endif /* LCM and Schwarz */
 
   RCP<Albany::Application> app = albanyApp;
@@ -881,7 +880,6 @@ Albany::SolverFactory::createModel(
 Teuchos::RCP<Thyra::ModelEvaluator<ST> >
 Albany::SolverFactory::createAlbanyAppAndModelT(
   Teuchos::RCP<Albany::Application>& albanyApp,
-//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
   const bool createAlbanyApp)

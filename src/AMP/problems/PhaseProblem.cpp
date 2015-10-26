@@ -76,7 +76,7 @@ void Albany::PhaseProblem::constructDirichletEvaluators(
     const std::vector<std::string>& nodeSetIDs)
 {
   std::vector<std::string> bcNames(neq);
-  bcNames[0] = "T";
+  bcNames[0] = "Temperature";
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
       this->params, this->paramLib);

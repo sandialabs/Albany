@@ -23,10 +23,6 @@ class Function_Base
 public:
   Function_Base()
   {
-    //constexpr bool
-    //is_fad = Sacado::IsADType<S>::value == true;
-
-    //static_assert(is_fad == false, "AD types not allowed for type S");
   }
 
   ///

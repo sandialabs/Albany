@@ -1,0 +1,51 @@
+reset
+logging off
+${set_warning_count(0)}
+
+${radius = 0.032}
+${height = 0.064}
+${neck_radius = 0.016}
+${notch_radius = 0.008}
+${overlap = 0.008}
+${coarse_height = 0.048}
+${fine_height = height - coarse_height + overlap}
+${offset = height - coarse_height / 2.0}
+${h_fine = 0.001}
+${h_coarse = 0.0025}
+${intervals = 16}
+${rel_tol = 0.0001}
+${lo = 1.0 - rel_tol}
+${hi = 1.0 + rel_tol}
+
+# volume 1
+create cylinder radius {radius} z {2.0 * fine_height}
+create brick x {2.0 * radius} y {2.0 * radius} z {2.0 * notch_radius}
+webcut volume 2 cylinder radius {neck_radius + notch_radius} axis z
+delete volume 3
+create torus major {neck_radius + notch_radius} minor {notch_radius}
+unite volume 2 4
+subtract volume 2 from volume 1
+webcut volume 1 with plane zplane
+delete volume 5
+create cylinder radius {radius} z {coarse_height}
+move volume 6 z {offset} include_merged
+webcut volume 1 with plane xplane
+delete volume 7
+webcut volume 1 with plane yplane
+delete volume 1
+webcut volume 6 with plane xplane
+delete volume 9
+webcut volume 6 with plane yplane
+delete volume 6
+webcut volume 8 with cylinder radius {0.5 * neck_radius} axis z center 0 0 0
+unite volume 8 11
+unite volume 8 10
+volume 8 scheme tetmesh
+set tetmesher interior points on 
+set tetmesher optimize level 3 optimize overconstrained  off sliver  off 
+set tetmesher boundary recovery  off 
+volume 8 tetmesh growth_factor 1.0
+curve all in volume 8 scheme bias fine size {h_coarse} coarse size {h_coarse}
+mesh volume all
+export mesh "notched-cylinder.g" overwrite
+

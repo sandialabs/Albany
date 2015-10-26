@@ -65,15 +65,24 @@ namespace PHAL {
     };
 
     struct Residual : EvaluationType<RealType, RealType> {};
-    struct Jacobian : EvaluationType<FadType,  RealType> {};
-    struct Tangent  : EvaluationType<TanFadType,
-#ifdef ALBANY_MESH_TANFAD
-                                     TanFadType // Use this for shape opt
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+    struct Jacobian : EvaluationType<FadType,  FadType> {};
 #else
-                                     RealType // Uncomment for no shape opt
+    struct Jacobian : EvaluationType<FadType,  RealType> {};
 #endif
-                                     > {};
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION) || defined(ALBANY_MESH_TANFAD)
+    struct Tangent  : EvaluationType<TanFadType,TanFadType> {};
+#else
+    struct Tangent  : EvaluationType<TanFadType, RealType> {};
+#endif
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    struct DistParamDeriv : EvaluationType<TanFadType,TanFadType> {};
+#else
     struct DistParamDeriv : EvaluationType<TanFadType, RealType> {};
+#endif
+
 
 #ifdef ALBANY_SG
     struct SGResidual : EvaluationType<SGType,    RealType> {};

@@ -1464,7 +1464,7 @@ static apf::Field* interpolate(
       apf::Vector3 xi;
       apf::getGaussPoint(et, cubatureDegree, i, xi);
       double val = apf::getScalar(fe, xi);
-      apf::setScalar(ipf, e, 0, val);
+      apf::setScalar(ipf, e, i, val);
     }
     apf::destroyElement(fe);
   }

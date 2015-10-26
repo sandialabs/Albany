@@ -19,7 +19,7 @@
 //#define  DECOUPLE
 #define LINE_SEARCH
 #define SLIP_PREDICTOR
-#define MINISOLVER
+//#define MINISOLVER
 
 #include <typeinfo>
 #include <iostream>

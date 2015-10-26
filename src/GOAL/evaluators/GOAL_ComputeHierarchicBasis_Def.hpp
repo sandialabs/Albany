@@ -83,9 +83,9 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
     pumiDiscretization->getPUMIMeshStruct();
 
-  // get the element block index
+  // get the workset index
   // this will allow us to index into buckets
-  ebIndex = pumiMeshStruct->ebNameToIndex[workset.EBName];
+  wsIndex = workset.wsIndex;
 
   // get the buckets
   // this is the elements of the apf mesh indexed by
@@ -104,7 +104,7 @@ evaluateFields(typename Traits::EvalData workset)
   {
 
     // get the apf objects associated with this cell
-    apf::MeshEntity* element = buckets[ebIndex][cell];
+    apf::MeshEntity* element = buckets[wsIndex][cell];
     apf::MeshElement* meshElement = apf::createMeshElement(mesh, element);
 
     for (int qp=0; qp < numQPs; ++qp)

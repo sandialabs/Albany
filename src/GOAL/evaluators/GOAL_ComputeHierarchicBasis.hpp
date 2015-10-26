@@ -51,7 +51,7 @@ class ComputeHierarchicBasis :
     int polynomialOrder;
 
     // Used for basis function computation
-    int ebIndex;
+    int wsIndex;
     apf::Mesh* mesh;
     apf::FieldShape* shape;
     apf::Vector3 point;

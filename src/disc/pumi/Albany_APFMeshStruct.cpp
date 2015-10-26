@@ -310,9 +310,11 @@ Albany::APFMeshStruct::setFieldAndBulkData(
          "st.entity != Albany::StateStruct::NodalData" << std::endl);
 
     // quick hack to get restarts working
+#ifdef ALBANY_SCOREC
     if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
       if (hasRestartSolution)
         st.restartDataAvailable = true;
+#endif
   }
 }
 

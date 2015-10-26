@@ -187,9 +187,7 @@ SchwarzMultiscale(
 
   apps_.resize(num_models_);
   models_.resize(num_models_);
-
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
-  model_app_params(num_models_);
+  model_app_params_.resize(num_models_);
 
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
   model_problem_params(num_models_);
@@ -210,14 +208,17 @@ SchwarzMultiscale(
     //get parameterlist from mth model *.xml file
     Albany::SolverFactory
     solver_factory(model_filenames[m], commT_);
+    
+    // solver_factory will go out of scope, so get a copy of the PL. We take
+    // ownership and give weak pointers to everyone else.
+    model_app_params_[m] = Teuchos::rcp(
+        new Teuchos::ParameterList(solver_factory.getParameters()));
 
     Teuchos::ParameterList &
-    app_params_m = solver_factory.getParameters();
-
-    model_app_params[m] = Teuchos::rcp(&(app_params_m), false);
+    app_params_m = *model_app_params_[m];
 
     Teuchos::RCP<Teuchos::ParameterList>
-    problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
+    problem_params_m = Teuchos::sublist(model_app_params_[m], "Problem");
 
     // Set Parameter sublists for individual models 
     // to the parameters specified in the "master" coupled input file.
@@ -299,11 +300,11 @@ SchwarzMultiscale(
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(
-        new Albany::Application(commT, model_app_params[m], initial_guessT));
+        new Albany::Application(commT, model_app_params_[m].create_weak(), initial_guessT));
 
     //Create model evaluator
     Albany::ModelFactory
-    model_factory(model_app_params[m], apps_[m]);
+    model_factory(model_app_params_[m].create_weak(), apps_[m]);
 
     models_[m] = model_factory.createT();
 

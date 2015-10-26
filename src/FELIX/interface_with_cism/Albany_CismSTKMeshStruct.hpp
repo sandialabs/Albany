@@ -119,7 +119,6 @@ namespace Albany {
     GO* dirichletNodeMask;  
     int (*eles)[8]; //hard-coded for 3D hexes for now 
     double *flwa; //double array that gives value of flow factor  
-    double *temper; //double array that gives value of flow factor  
     bool have_sh; // Does surface height data exist?
     bool have_thck; // Does thickness data field exist? 
     bool have_shGrad; // Does surface height gradient data exist?
@@ -127,7 +126,6 @@ namespace Albany {
     bool have_tf; // Does top face connectivity file exist?
     bool have_wf, have_ef, have_sf, have_nf; 
     bool have_flwa; // Does flwa (flow factor) file exist?
-    bool have_temp; // Does temperature file exist?
     bool have_beta; // Does beta (basal fraction) file exist?
     bool have_dirichlet;
     double *uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM

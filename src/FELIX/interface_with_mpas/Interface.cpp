@@ -58,6 +58,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     const std::vector<double>& elevationData,
     const std::vector<double>& thicknessData,
     const std::vector<double>& betaData,
+    const std::vector<double>& bedTopographyData,
     const std::vector<double>& smbData,
     const std::vector<double>& temperatureOnTetra,
     std::vector<double>& velocityOnVertices,
@@ -101,6 +102,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   ScalarFieldType* surfaceHeightField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_height");
   ScalarFieldType* thicknessField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "thickness");
+  ScalarFieldType* bedTopographyField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "bed_topography");
   ScalarFieldType* smbField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "surface_mass_balance");
   VectorFieldType* dirichletField = meshStruct->metaData->get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
   ScalarFieldType* basalFrictionField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::NODE_RANK, "basal_friction");
@@ -113,12 +115,14 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int gId = il * vertexColumnShift + vertexLayerShift * indexToVertexID[ib];
     stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, gId + 1);
     double* coord = stk::mesh::field_data(*meshStruct->getCoordinatesField(), node);
-    coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers - il] * regulThk[ib];
+    coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers - il] * thicknessData[ib];
 
     double* sHeight = stk::mesh::field_data(*surfaceHeightField, node);
     sHeight[0] = elevationData[ib];
     double* thickness = stk::mesh::field_data(*thicknessField, node);
     thickness[0] = thicknessData[ib];
+    double* bedTopography = stk::mesh::field_data(*bedTopographyField, node);
+    bedTopography[0] = bedTopographyData[ib];
     if(smbField != NULL) {
       double* smb = stk::mesh::field_data(*smbField, node);
       smb[0] = smbData[ib];

@@ -19,7 +19,24 @@ SimAdapt::SimAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 bool SimAdapt::queryAdaptationCriteria(int iteration)
 {
-  return true;
+  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "Step Number");
+  if (strategy == "None")
+    return false;
+  if (strategy == "Continuous")
+    return iteration > 1;
+  if (strategy == "Step Number") {
+    TEUCHOS_TEST_FOR_EXCEPTION(!adapt_params_->isParameter("Remesh Step Number"),
+        std::logic_error,
+        "Remesh Strategy " << strategy << " but no Remesh Step Number" << '\n');
+    Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+    for(int i = 0; i < remesh_iter.size(); i++)
+      if(iteration == remesh_iter[i])
+        return true;
+    return false;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "Unknown Remesh Strategy " << strategy << '\n');
+  return false;
 }
 
 bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
@@ -48,6 +65,8 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
+//  Estimation meshFinal;
+
   apf::destroyField(grad_ip_fld);
   /* write the mesh with size field to file */
   std::stringstream ss;
@@ -60,7 +79,9 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   apf::MeshEntity* v;
   apf::MeshIterator* it = apf_m->begin(0);
   while ((v = apf_m->iterate(it))) {
-    double size = apf::getScalar(size_fld, v, 0);
+    double size1 = apf::getScalar(size_fld, v, 0);
+    double meshsize_constant = 25e-6;
+    double size = std::min(meshsize_constant,size1);
     MSA_setVertexSize(adapter, (pVertex) v, size);
   }
   apf_m->end(it);
