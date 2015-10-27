@@ -13,11 +13,11 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 QuadPointsToCellInterpolation<EvalT, Traits>::
 QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl)
+                               const Teuchos::RCP<Albany::Layouts>& dl) :
+  w_measure (p.get<std::string>("Weighted Measure Name"), dl->qp_scalar)
 {
   isVectorField = p.get<bool>("Is Vector Field");
 
-  w_measure    = PHX::MDField<ScalarT> (p.get<std::string>("Weighted Measure Name"), dl->qp_scalar);
   if (isVectorField)
   {
     field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->qp_vector);

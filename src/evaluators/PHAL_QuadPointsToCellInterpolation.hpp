@@ -28,8 +28,6 @@ class QuadPointsToCellInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-
   QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -40,14 +38,17 @@ public:
 
 private:
 
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ScalarT     ScalarT;
+
   int numQPs;
   int vecDim;
 
   bool isVectorField;
 
   // Input:
-  PHX::MDField<ScalarT>     field_qp;
-  PHX::MDField<ScalarT>     w_measure;
+  PHX::MDField<ScalarT>                    field_qp;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> w_measure;
 
   // Output:
   PHX::MDField<ScalarT>     field_cell;

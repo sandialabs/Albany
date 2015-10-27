@@ -13,12 +13,12 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 SideQuadPointsToSideInterpolation<EvalT, Traits>::
 SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl)
+                               const Teuchos::RCP<Albany::Layouts>& dl) :
+  w_measure (p.get<std::string>("Weighted Measure Name"), dl->side_qp_scalar)
 {
   isVectorField = p.get<bool>("Is Vector Field");
 
   sideSetName = p.get<std::string>("Side Set Name");
-  w_measure    = PHX::MDField<ScalarT> (p.get<std::string>("Weighted Measure Name"), dl->side_qp_scalar);
   if (isVectorField)
   {
     field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_vector);
@@ -58,6 +58,13 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void SideQuadPointsToSideInterpolation<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
+  // Note: since only required sides are processed by the evaluator,
+  //       if we don't zero out the values from the previous workset
+  //       we may save this field using old values and make a mess!
+
+  ScalarT zero = 0.;
+  field_side.deep_copy (zero);
+
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 

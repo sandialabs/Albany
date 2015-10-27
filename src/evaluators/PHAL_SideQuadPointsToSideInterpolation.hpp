@@ -28,8 +28,6 @@ class SideQuadPointsToSideInterpolation : public PHX::EvaluatorWithBaseImpl<Trai
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-
   SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
                                      const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -40,6 +38,9 @@ public:
 
 private:
 
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ScalarT     ScalarT;
+
   int numQPs;
   int vecDim;
   int numSides;
@@ -49,8 +50,8 @@ private:
   std::string sideSetName;
 
   // Input:
-  PHX::MDField<ScalarT>     field_qp;
-  PHX::MDField<ScalarT>     w_measure;
+  PHX::MDField<ScalarT>                         field_qp;
+  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> w_measure;
 
   // Output:
   PHX::MDField<ScalarT>     field_side;
