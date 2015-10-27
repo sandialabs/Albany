@@ -182,19 +182,31 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
   dl->dimensions(stateRef.dim);
 
-  if (stateRef.entity == StateStruct::NodalData ||
-      stateRef.entity == StateStruct::NodalDataToElemNode ||
-      stateRef.entity == Albany::StateStruct::NodalDistParameter) {
+  if (stateRef.entity == StateStruct::NodalData)
+  {
     // Register the state with the nodalDataVector also.
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
-    if (dl->rank() == 2) // node vector
-      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
+    if (dl->rank() == 1) // node scalar
+      nodalDataBase->registerVectorState (stateName, 1);
+    else if (dl->rank() == 2) // node vector
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
     else if (dl->rank() == 3) // node tensor
-      nodalDataBase->registerVectorState(
-        stateName, stateRef.dim[1]*stateRef.dim[2]);
-    else // node scalar
-      nodalDataBase->registerVectorState(stateName, 1);
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
+  }
+  else if (stateRef.entity == StateStruct::NodalDataToElemNode ||
+           stateRef.entity == Albany::StateStruct::NodalDistParameter)
+  {
+    // Register the state with the nodalDataVector also.
+    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
+
+    // These entities store data as <Cell,Node,...>, so the dl has one more rank
+    if (dl->rank() == 2) // node scalar
+      nodalDataBase->registerVectorState (stateName, 1);
+    else if (dl->rank() == 3) // node vector
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+    else if (dl->rank() == 4) // node tensor
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
   }
 
   stateRef.output = outputToExodus;
@@ -213,7 +225,6 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
     pstateRef.output = false;
     dl->dimensions(pstateRef.dim);
-
   }
 
   // insert
@@ -223,14 +234,14 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
 
 void
-Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateName,
-              const Teuchos::RCP<PHX::DataLayout> &dl,
-                                            const std::string& ebName,
-                                            const std::string &init_type,
-                                            const double init_val,
-                                            const bool registerOldState,
-              const bool outputToExodus,
-              const std::string &responseIDtoRequire)
+Albany::StateManager::registerNodalVectorStateVariable (const std::string &stateName,
+                                                        const Teuchos::RCP<PHX::DataLayout> &dl,
+                                                        const std::string& ebName,
+                                                        const std::string &init_type,
+                                                        const double init_val,
+                                                        const bool registerOldState,
+                                                        const bool outputToExodus,
+                                                        const std::string &responseIDtoRequire)
 
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
@@ -272,20 +283,27 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
 
   dl->dimensions(stateRef.dim);
 
-
   Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
-  if ( dl->rank() == 2 ){ // node vector
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
+  if (stateRef.entity == StateStruct::NodalData)
+  {
+    if (dl->rank() == 1) // node scalar
+      nodalDataBase->registerVectorState (stateName, 1);
+    else if (dl->rank() == 2) // node vector
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+    else if (dl->rank() == 3) // node tensor
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
   }
-  else if ( dl->rank() == 3 ){ // node tensor
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]*stateRef.dim[2]);
-  }
-  else { // node scalar
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName, 1);
+  else if (stateRef.entity == StateStruct::NodalDataToElemNode ||
+           stateRef.entity == Albany::StateStruct::NodalDistParameter)
+  {
+    // These entities store data as <Cell,Node,...>, so the dl has one more rank
+    if (dl->rank() == 2) // node scalar
+      nodalDataBase->registerVectorState (stateName, 1);
+    else if (dl->rank() == 3) // node vector
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+    else if (dl->rank() == 4) // node tensor
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
   }
 
   stateRef.output = outputToExodus;
@@ -308,24 +326,31 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
 
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
-    if ( dl->rank() == 2 ){ // node vector
-      // register the state with the nodalDataVector also
-      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]);
+    if (stateRef.entity == StateStruct::NodalData)
+    {
+      // These entities store data as <Node,...>, so the dl rank and fieldDim are the same
+      if (dl->rank() == 1) // node scalar
+        nodalDataBase->registerVectorState (stateName, 1);
+      else if (dl->rank() == 2) // node vector
+        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+      else if (dl->rank() == 3) // node tensor
+        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
     }
-    else if ( dl->rank() == 3 ){ // node tensor
-      // register the state with the nodalDataVector also
-      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
+    else if (stateRef.entity == StateStruct::NodalDataToElemNode ||
+             stateRef.entity == Albany::StateStruct::NodalDistParameter)
+    {
+      // These entities store data as <Cell,Node,...>, so the dl has rank = fieldDim + 1
+      if (dl->rank() == 2) // node scalar
+        nodalDataBase->registerVectorState (stateName, 1);
+      else if (dl->rank() == 3) // node vector
+        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+      else if (dl->rank() == 4) // node tensor
+        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
     }
-    else { // node scalar
-      // register the state with the nodalDataVector also
-      nodalDataBase->registerVectorState(stateName_old, 1);
-    }
-
   }
 
   // insert
   stateRef.nameMap[stateName] = ebName;
-
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
@@ -389,15 +414,32 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   // Load into StateInfo
   StateStruct::MeshFieldEntity mfe_type;
   if(fieldEntity)
-    mfe_type=*fieldEntity;
-  else if (dl->rank() == 2 && dl->name(1) == "Side")
-    mfe_type = StateStruct::ElemData;
-  else if(dl->rank() > 2 && dl->name(2) == "Node") // Element node data
-      mfe_type = StateStruct::ElemNode; // One value for the whole workset (i.e., time)
-  else if(dl->rank() > 2 && dl->name(2) == "QuadPoint") // Element node data
-    mfe_type = StateStruct::QuadPoint; // One value for the whole workset (i.e., time)
+  {
+    mfe_type = *fieldEntity;
+  }
+  else if(dl->rank() >= 1 && dl->name(0) == "Node") // Nodal data
+  {
+    mfe_type = StateStruct::NodalData; // One value per node
+  }
+  else if (dl->rank() == 2 && dl->name(1) == "Side") // Element data
+  {
+      mfe_type = StateStruct::ElemData; // One value per element
+  }
+  else if(dl->rank() > 2)
+  {
+    if (dl->name(2) == "Dim")
+      mfe_type = StateStruct::ElemData; // One vector/tensor per element
+    else if (dl->name(2) == "Node") // Element node data
+      mfe_type = StateStruct::ElemNode; // One value per side node
+    else if(dl->name(2) == "QuadPoint") // Quad point data
+      mfe_type = StateStruct::QuadPoint; // One value per side quad point
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "StateManager: Unknown Entity type.\n");
+  }
   else
+  {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "StateManager: Unknown Entity type.\n");
+  }
 
   sis_ptr->push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
   StateStruct& stateRef = *sis_ptr->back();
@@ -405,23 +447,54 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   stateRef.setInitValue(init_val);
   stateRef.setMeshPart(meshPartName);
 
-  dl->dimensions(stateRef.dim);
-
-  if (stateRef.entity == StateStruct::NodalData ||
-      stateRef.entity == StateStruct::NodalDataToElemNode ||
-      stateRef.entity == Albany::StateStruct::NodalDistParameter)
+  if (stateRef.entity == StateStruct::NodalData)
   {
+    TEUCHOS_TEST_FOR_EXCEPTION(dl->name(0) == "Node", std::logic_error, "Error! NodalData states should have dl <Node,...>.\n");
+
+    dl->dimensions(stateRef.dim);
+
     // Register the state with the nodalDataVector also.
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getSideSetNodalDataBase(sideSetName);
 
-    if (dl->rank() == 2) // node vector
+    if (dl->rank() == 1) // node scalar
+      nodalDataBase->registerVectorState (stateName, 1);
+    else if (dl->rank() == 2) // node vector
       nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
     else if (dl->rank() == 3) // node tensor
       nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
-    else // node scalar
-      nodalDataBase->registerVectorState (stateName, 1);
   }
+  else if (stateRef.entity == StateStruct::NodalDataToElemNode ||
+           stateRef.entity == Albany::StateStruct::NodalDistParameter)
+  {
+    // Strip one dimension out cause it's Side
+    TEUCHOS_TEST_FOR_EXCEPTION (dl->rank()<2,  std::logic_error, "Error! The given layout does not appear to be that of a side set field.\n");
 
+    stateRef.dim.resize(dl->rank()-1);
+    stateRef.dim[0] = dl->dimension(0);
+    for (int i(1); i<stateRef.dim.size(); ++i)
+      stateRef.dim[i] = dl->dimension(i+1);
+
+    // Register the state with the nodalDataVector also.
+    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getSideSetNodalDataBase(sideSetName);
+
+    // These entities store data as <Cell,Node,...>, so the dl has one more rank
+    if (dl->rank() == 2) // node scalar
+      nodalDataBase->registerVectorState (stateName, 1);
+    else if (dl->rank() == 3) // node vector
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+    else if (dl->rank() == 4) // node tensor
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
+  }
+  else
+  {
+    // Strip one dimension out cause it's Side
+    TEUCHOS_TEST_FOR_EXCEPTION (dl->rank()<2,  std::logic_error, "Error! The given layout does not appear to be that of a side set field.\n");
+
+    stateRef.dim.resize(dl->rank()-1);
+    stateRef.dim[0] = dl->dimension(0);
+    for (int i(1); i<stateRef.dim.size(); ++i)
+      stateRef.dim[i] = dl->dimension(i+1);
+  }
   stateRef.output = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
 
