@@ -120,6 +120,7 @@ createResponseFunction(
 	   name == "Surface Velocity Mismatch" ||
 	   name == "Surface Mass Balance Mismatch" ||
            name == "Aeras Shallow Water L2 Error" ||
+           name == "Aeras Shallow Water L2 Norm" ||
            name == "Aeras Total Volume" ||
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||
