@@ -20,7 +20,7 @@ if (ALBANY_MUELU)
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
-if (ALBANY_STOKHOS AND ALBANY_EPETRA)
+if (ALBANY_STOKHOS AND ALBANY_EPETRA AND ALBANY_ENSEMBLE)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputSG.xml COPYONLY)
