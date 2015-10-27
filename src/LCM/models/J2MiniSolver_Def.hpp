@@ -502,6 +502,32 @@ computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elas
 #endif
 #endif*/
 }
+#ifdef ALBANY_ENSEMBLE
+template<>
+void J2MiniSolver<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>::
+computeState(typename PHAL::AlbanyTraits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> eval_fields)
+{
+  assert(0);
+}
+template<>
+void J2MiniSolver<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>::
+computeState(typename PHAL::AlbanyTraits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> eval_fields)
+{
+  assert(0);
+}
+template<>
+void J2MiniSolver<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>::
+computeState(typename PHAL::AlbanyTraits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> eval_fields)
+{
+  assert(0);
+}
+#endif
 //------------------------------------------------------------------------------
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 #ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
