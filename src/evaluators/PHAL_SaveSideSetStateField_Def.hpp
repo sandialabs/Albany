@@ -145,17 +145,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Trick to use a single switch statement below:
     // (cell,side)          -> size = 2
-    // (cell,side,dim)      -> size = -3
+    // (cell,side,dim)      -> size = 3 + 10 = 13
     // (cell,side,node)     -> size = 3
-    // (cell,side,node,dim) -> size = -4
+    // (cell,side,node,dim) -> size = 4 + 10 = 14
     if (isVectorField)
-      size = -size;
-
-    // In StateManager, ElemData (1 scalar per cell) is stored as QuadPoint (1 qp),
-    // so size would figure as 2 even if it is actually 1. Therefore we had to
-    // call size on dims computed on field. Then, we call dimensions on state to get
-    // the correct state dimensions
-    state.dimensions(dims);
+      size += 10;
 
     switch (size)
     {
@@ -166,24 +160,25 @@ evaluateFields(typename Traits::EvalData workset)
 
       case 3:
         // side set node scalar
-        for (int node = 0; node < dims[1]; ++node)
+        for (int node = 0; node < dims[2]; ++node)
         {
           state(ss_cell, node) = field(cell,side,node);
         }
         break;
 
-      case -3:
+      case 13:
         // side set cell vector
-        for (int dim=0; dim<dims[1]; ++dim)
+        for (int dim=0; dim<dims[2]; ++dim)
         {
           state(ss_cell, dim) = field(cell,side,dim);
         }
+        break;
 
-      case -4:
+      case 14:
         // side set node vector
-        for (int node = 0; node < dims[1]; ++node)
+        for (int node = 0; node < dims[2]; ++node)
         {
-          for (int dim = 0; dim < dims[2]; ++dim)
+          for (int dim = 0; dim < dims[3]; ++dim)
             state(ss_cell, node, dim) = field(cell,side,node,dim);
         }
         break;
