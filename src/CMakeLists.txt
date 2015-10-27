@@ -14,17 +14,17 @@ set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
 SET(SOURCES
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
-  PHAL_Dimension.cpp
   PHAL_AlbanyTraits.cpp
+  PHAL_Dimension.cpp
   Albany_Application.cpp
-  Albany_PiroObserverT.cpp
-  Albany_StateManager.cpp
+  Albany_Memory.cpp
   Albany_ModelFactory.cpp
   Albany_ModelEvaluatorT.cpp
-  Albany_ObserverImpl.cpp
-  Albany_StatelessObserverImpl.cpp
   Albany_NullSpaceUtils.cpp
-  Albany_Memory.cpp
+  Albany_ObserverImpl.cpp
+  Albany_PiroObserverT.cpp
+  Albany_StatelessObserverImpl.cpp
+  Albany_StateManager.cpp
   PHAL_Utilities.cpp
   )
 
@@ -40,55 +40,55 @@ ENDIF()
 
 IF(ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
-    Albany_PiroObserver.cpp
     Albany_ModelEvaluator.cpp
-    Albany_RythmosObserver.cpp
-    Albany_SaveEigenData.cpp
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
+    Albany_PiroObserver.cpp
+    Albany_RythmosObserver.cpp
+    Albany_SaveEigenData.cpp
   )
 ENDIF()
 
 SET(HEADERS
-  Albany_SolverFactory.hpp
-  Albany_Utils.hpp
-  Albany_DataTypes.hpp
-  PHAL_Dimension.hpp
-  PHAL_FactoryTraits.hpp
-  PHAL_AlbanyTraits.hpp
-  PHAL_Workset.hpp
-  PHAL_TypeKeyMap.hpp
-  PHAL_Utilities.hpp
-  PHAL_Utilities_Def.hpp
   Albany_Application.hpp
-  Albany_PiroObserverT.hpp
-  Albany_StateManager.hpp
-  Albany_StateInfoStruct.hpp
-  Albany_ModelFactory.hpp
-  Albany_ModelEvaluatorT.hpp
-  Albany_ObserverImpl.hpp
-  Albany_StatelessObserverImpl.hpp
-  Albany_NullSpaceUtils.hpp
-  Albany_Memory.hpp
-  Albany_DummyParameterAccessor.hpp
+  Albany_DataTypes.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
+  Albany_DummyParameterAccessor.hpp
   Albany_EigendataInfoStructT.hpp
+  Albany_Memory.hpp
+  Albany_ModelFactory.hpp
+  Albany_ModelEvaluatorT.hpp
+  Albany_NullSpaceUtils.hpp
+  Albany_ObserverImpl.hpp
+  Albany_PiroObserverT.hpp
+  Albany_SolverFactory.hpp
+  Albany_StateManager.hpp
+  Albany_StateInfoStruct.hpp
+  Albany_StatelessObserverImpl.hpp
+  Albany_Utils.hpp
+  PHAL_AlbanyTraits.hpp
+  PHAL_Dimension.hpp
+  PHAL_FactoryTraits.hpp
+  PHAL_TypeKeyMap.hpp
+  PHAL_Utilities.hpp
+  PHAL_Utilities_Def.hpp
+  PHAL_Workset.hpp
   )
 
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
-    Albany_PiroObserver.hpp
-    Albany_ModelEvaluator.hpp
     Albany_DistributedParameterDerivativeOp.hpp
-    Albany_SaveEigenData.hpp
     Albany_EigendataInfoStruct.hpp
-    Albany_RythmosObserver.hpp
+    Albany_SaveEigenData.hpp
+    Albany_ModelEvaluator.hpp
     Albany_NOXObserver.hpp
     Albany_NOXStatelessObserver.hpp
-    Petra_Converters.hpp
     Albany_ObserverFactory.hpp
+    Albany_PiroObserver.hpp
+    Albany_RythmosObserver.hpp
+    Petra_Converters.hpp
   )
 ENDIF()
 
@@ -120,49 +120,49 @@ SET(HEADERS ${HEADERS}
 #problems
 SET(SOURCES ${SOURCES}
   problems/Albany_AbstractProblem.cpp
-  problems/Albany_ProblemUtils.cpp
-  problems/Albany_Layouts.cpp
-  problems/Albany_EvaluatorUtils.cpp
-  problems/Albany_ResponseUtilities.cpp
   problems/Albany_BCUtils.cpp
-  problems/Albany_ProblemFactory.cpp
-  problems/QCAD_MaterialDatabase.cpp
+  problems/Albany_EvaluatorUtils.cpp
   problems/Albany_HeatProblem.cpp
+  problems/Albany_Layouts.cpp
+  problems/Albany_ProblemFactory.cpp
+  problems/Albany_ProblemUtils.cpp
+  problems/Albany_ResponseUtilities.cpp
+  problems/QCAD_MaterialDatabase.cpp
   )
 SET(PDE_SRCS
-  problems/Albany_NavierStokes.cpp
-  problems/Albany_GPAMProblem.cpp
-  problems/Albany_LinComprNSProblem.cpp
   problems/Albany_AdvDiffProblem.cpp
-  problems/Albany_ComprNSProblem.cpp
-  problems/Albany_ODEProblem.cpp
-  problems/Albany_Helmholtz2DProblem.cpp
   problems/Albany_CahnHillProblem.cpp
+  problems/Albany_ComprNSProblem.cpp
+  problems/Albany_GPAMProblem.cpp
+  problems/Albany_Helmholtz2DProblem.cpp
+  problems/Albany_LinComprNSProblem.cpp
+  problems/Albany_ODEProblem.cpp
+  problems/Albany_NavierStokes.cpp
   problems/Albany_PNPProblem.cpp
   )
 SET(HEADERS ${HEADERS}
-  problems/Albany_ProblemFactory.hpp
   problems/Albany_AbstractProblem.hpp
-  problems/Albany_ProblemUtils.hpp
-  problems/Albany_Layouts.hpp
-  problems/Albany_EvaluatorUtils.hpp
-  problems/Albany_EvaluatorUtils_Def.hpp
-  problems/Albany_ResponseUtilities.hpp
-  problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_BCUtils.hpp
   problems/Albany_BCUtils_Def.hpp
-  problems/QCAD_MaterialDatabase.hpp
+  problems/Albany_EvaluatorUtils.hpp
+  problems/Albany_EvaluatorUtils_Def.hpp
   problems/Albany_HeatProblem.hpp
+  problems/Albany_Layouts.hpp
+  problems/Albany_ProblemFactory.hpp
+  problems/Albany_ProblemUtils.hpp
+  problems/Albany_ResponseUtilities.hpp
+  problems/Albany_ResponseUtilities_Def.hpp
+  problems/QCAD_MaterialDatabase.hpp
   )
 SET(PDE_HDRS
-  problems/Albany_NavierStokes.hpp
-  problems/Albany_GPAMProblem.hpp
-  problems/Albany_LinComprNSProblem.hpp
   problems/Albany_AdvDiffProblem.hpp
-  problems/Albany_ComprNSProblem.hpp
-  problems/Albany_ODEProblem.hpp
-  problems/Albany_Helmholtz2DProblem.hpp
   problems/Albany_CahnHillProblem.hpp
+  problems/Albany_ComprNSProblem.hpp
+  problems/Albany_GPAMProblem.hpp
+  problems/Albany_Helmholtz2DProblem.hpp
+  problems/Albany_LinComprNSProblem.hpp
+  problems/Albany_NavierStokes.hpp
+  problems/Albany_ODEProblem.hpp
   problems/Albany_PNPProblem.hpp
   )
 
@@ -176,36 +176,36 @@ SET(HEADERS ${HEADERS}
 )
 ENDIF()
 SET(SOURCES ${SOURCES}
-  responses/Albany_SolutionCullingStrategy.cpp
-  responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_AggregateScalarResponseFunction.cpp
-  responses/Albany_SamplingBasedScalarResponseFunction.cpp
-  responses/Albany_SolutionAverageResponseFunction.cpp
-  responses/Albany_SolutionMaxValueResponseFunction.cpp
-  responses/Albany_SolutionTwoNormResponseFunction.cpp
-  responses/Albany_SolutionFileResponseFunction.cpp
+  responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
   responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
-  responses/Albany_DistributedResponseFunction.cpp
+  responses/Albany_SamplingBasedScalarResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
-  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
+  responses/Albany_ScalarResponseFunction.cpp
+  responses/Albany_SolutionCullingStrategy.cpp
+  responses/Albany_SolutionAverageResponseFunction.cpp
+  responses/Albany_SolutionFileResponseFunction.cpp
+  responses/Albany_SolutionMaxValueResponseFunction.cpp
+  responses/Albany_SolutionTwoNormResponseFunction.cpp
+  responses/Albany_SolutionValuesResponseFunction.cpp
   )
 SET(HEADERS ${HEADERS}
-  responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_AbstractResponseFunction.hpp
-  responses/Albany_ScalarResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
+  responses/Albany_DistributedResponseFunction.hpp
+  responses/Albany_FieldManagerScalarResponseFunction.hpp
+  responses/Albany_KLResponseFunction.hpp
   responses/Albany_SamplingBasedScalarResponseFunction.hpp
+  responses/Albany_ResponseFactory.hpp
+  responses/Albany_ScalarResponseFunction.hpp
   responses/Albany_SolutionAverageResponseFunction.hpp
+  responses/Albany_SolutionCullingStrategy.hpp
+  responses/Albany_SolutionFileResponseFunction.hpp
   responses/Albany_SolutionMaxValueResponseFunction.hpp
   responses/Albany_SolutionTwoNormResponseFunction.hpp
-  responses/Albany_SolutionFileResponseFunction.hpp
-  responses/Albany_FieldManagerScalarResponseFunction.hpp
-  responses/Albany_DistributedResponseFunction.hpp
-  responses/Albany_KLResponseFunction.hpp
   responses/Albany_SolutionValuesResponseFunction.hpp
-  responses/Albany_ResponseFactory.hpp
   )
 
 IF(ALBANY_EPETRA)
@@ -231,21 +231,21 @@ ENDIF()
 
 #discretization
 SET(SOURCES ${SOURCES}
-  disc/Albany_DiscretizationFactory.cpp
-  disc/Albany_AbstractMeshStruct.cpp
   disc/Adapt_NodalDataBase.cpp
   disc/Adapt_NodalDataVector.cpp
+  disc/Albany_AbstractMeshStruct.cpp
+  disc/Albany_DiscretizationFactory.cpp
   )
 SET(HEADERS ${HEADERS}
-  disc/Albany_AbstractDiscretization.hpp
-  disc/Albany_AbstractMeshStruct.hpp
-  disc/Albany_AbstractFieldContainer.hpp
-  disc/Albany_AbstractNodeFieldContainer.hpp
-  disc/Albany_DiscretizationFactory.hpp
-  disc/Albany_NodalDOFManager.hpp
   disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataVector.hpp
   disc/Adapt_NodalFieldUtils.hpp
+  disc/Albany_AbstractDiscretization.hpp
+  disc/Albany_AbstractFieldContainer.hpp
+  disc/Albany_AbstractMeshStruct.hpp
+  disc/Albany_AbstractNodeFieldContainer.hpp
+  disc/Albany_DiscretizationFactory.hpp
+  disc/Albany_NodalDOFManager.hpp
   )
 
 #evaluators
@@ -279,8 +279,6 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_LoadSideSetStateField.cpp
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_MapToPhysicalFrame.cpp
-  evaluators/QCAD_MathVector.cpp
-  evaluators/QCAD_MeshRegion.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_QuadPointsToCellInterpolation.cpp
@@ -297,6 +295,8 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_Source.cpp
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/QCAD_EvaluatorTools.cpp
+  evaluators/QCAD_MathVector.cpp
+  evaluators/QCAD_MeshRegion.cpp
   evaluators/QCAD_ResponseCenterOfMass.cpp
   evaluators/QCAD_ResponseFieldAverage.cpp
   evaluators/QCAD_ResponseFieldIntegral.cpp
@@ -311,40 +311,40 @@ SET(SOURCES ${SOURCES}
 
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
-    evaluators/PHAL_GatherEigenvectors.cpp
     evaluators/PHAL_GatherEigenData.cpp
+    evaluators/PHAL_GatherEigenvectors.cpp
   )
 ENDIF()
 
 SET(PDE_SRCS ${PDE_SRCS}
-  evaluators/PHAL_Constant.cpp
-  evaluators/PHAL_ODEResid.cpp
-  evaluators/PHAL_GPAMResid.cpp
-  evaluators/PHAL_LinComprNSResid.cpp
   evaluators/PHAL_AdvDiffResid.cpp
-  evaluators/PHAL_LinComprNSBodyForce.cpp
-  evaluators/PHAL_ComprNSResid.cpp
-  evaluators/PHAL_ComprNSBodyForce.cpp
-  evaluators/PHAL_ComprNSViscosity.cpp
-  evaluators/PHAL_HelmholtzResid.cpp
+  evaluators/PHAL_CahnHillChemTerm.cpp
   evaluators/PHAL_CahnHillRhoResid.cpp
   evaluators/PHAL_CahnHillWResid.cpp
-  evaluators/PHAL_CahnHillChemTerm.cpp
+  evaluators/PHAL_ComprNSBodyForce.cpp
+  evaluators/PHAL_ComprNSResid.cpp
+  evaluators/PHAL_ComprNSViscosity.cpp
+  evaluators/PHAL_Constant.cpp
+  evaluators/PHAL_GPAMResid.cpp
+  evaluators/PHAL_HelmholtzResid.cpp
   evaluators/PHAL_LangevinNoiseTerm.cpp
+  evaluators/PHAL_LinComprNSBodyForce.cpp
+  evaluators/PHAL_LinComprNSResid.cpp
+  evaluators/PHAL_NSBodyForce.cpp
   evaluators/PHAL_NSContinuityResid.cpp
-  evaluators/PHAL_NSMomentumResid.cpp
-  evaluators/PHAL_NSThermalEqResid.cpp
-  evaluators/PHAL_NSNeutronEqResid.cpp
-  evaluators/PHAL_NSRm.cpp
   evaluators/PHAL_NSContravarientMetricTensor.cpp
+  evaluators/PHAL_NSForchheimerTerm.cpp
+  evaluators/PHAL_NSMomentumResid.cpp
+  evaluators/PHAL_NSNeutronEqResid.cpp
+  evaluators/PHAL_NSPermeabilityTerm.cpp
+  evaluators/PHAL_NSRm.cpp
   evaluators/PHAL_NSTauM.cpp
   evaluators/PHAL_NSTauT.cpp
-  evaluators/PHAL_NSBodyForce.cpp
-  evaluators/PHAL_NSPermeabilityTerm.cpp
-  evaluators/PHAL_NSForchheimerTerm.cpp
+  evaluators/PHAL_NSThermalEqResid.cpp
+  evaluators/PHAL_ODEResid.cpp
   evaluators/PHAL_Permittivity.cpp
-  evaluators/PNP_PotentialResid.cpp
   evaluators/PNP_ConcentrationResid.cpp
+  evaluators/PNP_PotentialResid.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -548,9 +548,9 @@ SET(MESHMOVER_DIR ${Albany_SOURCE_DIR}/src/MeshMover/src)
 SET(CUTR_SRCS
   ${MESHMOVER_DIR}/CUTR_CubitMeshMover.cpp
   ${MESHMOVER_DIR}/MeshMorpher.cpp
-  ${MESHMOVER_DIR}/MeshMorpher_XWR.cpp
   ${MESHMOVER_DIR}/MeshMorpher_BMS.cpp
   ${MESHMOVER_DIR}/MeshMorpher_smooth.cpp
+  ${MESHMOVER_DIR}/MeshMorpher_XWR.cpp
   ${MESHMOVER_DIR}/MoverProblem.cpp
   ${MESHMOVER_DIR}/STKMeshData.cpp
   ${MESHMOVER_DIR}/ToyProblem.cpp
@@ -560,11 +560,11 @@ SET(CUTR_SRCS
   ${MESHMOVER_DIR}/util/CubitVector.cpp
   ${MESHMOVER_DIR}/util/GeoNode.cpp
   ${MESHMOVER_DIR}/util/GeoTet.cpp
-  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
-  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
-  ${MESHMOVER_DIR}/util/MemoryManager.cpp
   ${MESHMOVER_DIR}/util/KDDTree.cpp
   ${MESHMOVER_DIR}/util/KDDTreeNode.cpp
+  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
+  ${MESHMOVER_DIR}/util/MemoryManager.cpp
+  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
   ${MESHMOVER_DIR}/util/PriorityQueue.cpp
   ${MESHMOVER_DIR}/util/SimpleNode.cpp
   ${MESHMOVER_DIR}/util/TDDelaunay.cpp
@@ -576,9 +576,9 @@ SET(CUTR_SRCS
 SET(CUTR_HDRS
   ${MESHMOVER_DIR}/CUTR_CubitMeshMover.hpp
   ${MESHMOVER_DIR}/MeshMorpher.hpp
-  ${MESHMOVER_DIR}/MeshMorpher_XWR.hpp
   ${MESHMOVER_DIR}/MeshMorpher_BMS.hpp
   ${MESHMOVER_DIR}/MeshMorpher_smooth.hpp
+  ${MESHMOVER_DIR}/MeshMorpher_XWR.hpp
   ${MESHMOVER_DIR}/MoverProblem.hpp
   ${MESHMOVER_DIR}/STKMeshData.hpp
   ${MESHMOVER_DIR}/ToyProblem.hpp
@@ -588,11 +588,11 @@ SET(CUTR_HDRS
   ${MESHMOVER_DIR}/util/CubitVector.cpp
   ${MESHMOVER_DIR}/util/GeoNode.cpp
   ${MESHMOVER_DIR}/util/GeoTet.cpp
-  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
-  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
-  ${MESHMOVER_DIR}/util/MemoryManager.cpp
   ${MESHMOVER_DIR}/util/KDDTree.cpp
   ${MESHMOVER_DIR}/util/KDDTreeNode.cpp
+  ${MESHMOVER_DIR}/util/MemoryBlock.cpp
+  ${MESHMOVER_DIR}/util/MemoryManager.cpp
+  ${MESHMOVER_DIR}/util/MMGfxDebug.cpp
   ${MESHMOVER_DIR}/util/PriorityQueue.cpp
   ${MESHMOVER_DIR}/util/SimpleNode.cpp
   ${MESHMOVER_DIR}/util/TDDelaunay.cpp
@@ -616,20 +616,20 @@ if (ALBANY_MOR AND ALBANY_EPETRA)
   include_directories (./MOR)
 
   set (MOR_ALBANY_HEADERS
+    MOR/Albany_DiscretizationDofListProvider.hpp
+    MOR/Albany_MORDiscretizationUtils.hpp
     MOR/Albany_MORFacade.hpp
     MOR/Albany_MORFacadeImpl.hpp
     MOR/Albany_StkEpetraMVSource.hpp
-    MOR/Albany_DiscretizationDofListProvider.hpp
     MOR/Albany_StkNodalBasisSource.hpp
-    MOR/Albany_MORDiscretizationUtils.hpp
     )
 
   set (MOR_ALBANY_SOURCES
+    MOR/Albany_DiscretizationDofListProvider.cpp
+    MOR/Albany_MORDiscretizationUtils.cpp
     MOR/Albany_MORFacadeImpl.cpp
     MOR/Albany_StkEpetraMVSource.cpp
-    MOR/Albany_DiscretizationDofListProvider.cpp
     MOR/Albany_StkNodalBasisSource.cpp
-    MOR/Albany_MORDiscretizationUtils.cpp
     )
 
   set(SOURCES ${SOURCES} ${MOR_ALBANY_SOURCES})
@@ -780,8 +780,8 @@ if (ALBANY_ASCR AND ALBANY_EPETRA)
   add_executable(AlbanySGCoupled Main_SGCoupled.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanyAdjoint
-    AlbanySGAdjoint
     AlbanyCoupled
+    AlbanySGAdjoint
     AlbanySGCoupled
     )
 endif()
