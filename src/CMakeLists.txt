@@ -923,14 +923,13 @@ IF (INSTALL_ALBANY)
   ENDIF()
   INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
 
-  SET(TMP1 ${ALBANY_LIBRARIES} ${ALL_LIBRARIES} ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES})
+  SET(TMP1 ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
 
-  MESSAGE("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.[sh,in]")
+  MESSAGE("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
   STRING(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
   STRING(REPLACE ";" " -l" ALBANY_LINK_LIBS
         "-L ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
         " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
-  CONFIGURE_FILE(export_albany.sh ${CMAKE_INSTALL_PREFIX}/export_albany.sh)
   CONFIGURE_FILE(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
 
 ENDIF()
