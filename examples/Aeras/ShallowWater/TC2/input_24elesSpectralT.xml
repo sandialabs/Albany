@@ -51,8 +51,8 @@
     <!--Parameter name="Workset Size" type="int" value="500"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="4"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{798.410060587, 2998.20634878, 47532.4592921, 3.90103552589}"/>   
+    <Parameter  name="Number of Comparisons" type="int" value="6"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{798.410060587, 2998.20634878, 47532.4592921,  3263254.79407, 54922149082.1, 5.94160069955e-05}"/>   
   <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>

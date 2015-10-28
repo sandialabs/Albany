@@ -1,123 +1,75 @@
 <ParameterList>
-
   <ParameterList name="Problem">
-    
-    <!-- physics model -->
-    <Parameter name="Name" type="string" value="Phase 3D"/>
-
-    <!-- Material database that holds the material parameters in each element block -->
+    <Parameter name="Name" type="string" value="GOAL Mechanics 3D"/>
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
-
-    <!-- solution method - Steady / Continuation (quasi-static / load-stepping) / Transient (time-dependent)-->
-<!--   <Parameter name="Solution Method" type="string" value="Transient"/>-->
-   <Parameter name="Solution Method" type="string" value="Continuation"/>
-    <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Constant"/>
-       <Parameter name="Function Data" type="Array(double)" value="{300.0}"/>
+    <ParameterList name="Hierarchic Boundary Conditions">
+      <ParameterList>
+        <Parameter name="DOF" type="string" value="X"/>
+        <Parameter name="Value" type="string" value="value=0.0"/>
+        <Parameter name="Node Set" type="string" value="ns_1"/>
+      </ParameterList>
+      <ParameterList>
+        <Parameter name="DOF" type="string" value="Y"/>
+        <Parameter name="Value" type="string" value="value=0.0"/>
+        <Parameter name="Node Set" type="string" value="ns_2"/>
+      </ParameterList>
+      <ParameterList>
+        <Parameter name="DOF" type="string" value="Z"/>
+        <Parameter name="Value" type="string" value="value=0.0"/>
+        <Parameter name="Node Set" type="string" value="ns_3"/>
+      </ParameterList>
+      <ParameterList>
+        <Parameter name="DOF" type="string" value="Y"/>
+        <Parameter name="Value" type="string" value="value=t"/>
+        <Parameter name="Node Set" type="string" value="ns_4"/>
+      </ParameterList>
     </ParameterList>
- 
-<!--  Dirichlet boundary conditions prescribed temperatures in this case --> 
-     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS Bottom_Surface for DOF Temperature" type="double" value="300.0"/> 
-  <!--    <Parameter name="DBC on NS Top_Surface for DOF Temperature" type="double" value="300.0"/> -->
-     </ParameterList> 
-
-    <!--  Neumann boundary conditions prescribed fluxes in this case -->
-    <ParameterList name="Neumann BCs">
-      <Parameter name="NBC on SS Top_Surface for DOF U set (dudx, dudy, dudz)" type="Array(double)" value="{0.0, 0.0, 0.0}"/>
-    </ParameterList>
- 
-
-    <!-- not too sure about this one - won't be necessary for simple heat transfer problems, though -->
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
-
-    <!--  response functions values used for post-processing e.g. can compare solution average of temperature over the entire mesh to a pre-defined value in the input file not necessary for now -->
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
-    <ParameterList name="Adaptation">
-     <Parameter name="Remesh Strategy" type="string" value="Step Number" />
-     <Parameter name="Method" type="string" value="Sim" />
-     <Parameter name="Remesh Step Number" type="Array(int)" value="{5,10,15,20,25,30}"/>
-     <Parameter name="Error Bound" type="double" value="0.05" />
-    </ParameterList>
-
   </ParameterList>
-
-
-
-  <!-- Discretization block where mesh stuff happens -->
-   <ParameterList name="Discretization">
-
-    <!-- pumi discretization -->
-    <Parameter name="Method" type="string" value="Sim"/>
-
-    <!-- partition mesh in memory from serial to parallel mesh
-    <Parameter name="Call serial global partition" type="bool" value="false"/>
--->
-<!-- for single mesh without parallal processing-->
-    <Parameter name="Sim Input File Name" type="string" value="./movinglaser.sms"/>
-<!-- for partitioned mesh with parallal processing-->
-   <!-- <Parameter name="Sim Input File Name" type="string" value="./parts.sms"/>-->
-    <Parameter name="Sim Model Input File Name" type="string" value="./movinglaser.smd"/>
-    <Parameter name="Parasolid Model Input File Name" type="string" value="./movinglaser_nat.xmt_txt" />
-
-   <!-- output name - either *.vtk or *.exo -->
-    <Parameter name="Sim Output File Name" type="string" value="TransientN.vtk"/>
-
-    <!-- associate parasolid / mesh model region ID with an element block name -->
-    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{95,3616, Upper_Region,Lower_Region}"/>
-
-    <!-- associate parasolid / mesh model face ID with a node set name (for Dirichlet BCs) -->
-    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x1:{3610, Bottom_Surface}"/>
-
-    <!-- associate parasolid / mesh model face ID with a side set name (for Neumann BCs)-->
-    <Parameter name="Side Set Associations" type="TwoDArray(string)" value="2x9:{1, 79,81,83,85, 3588,3593,3598,3603, Top_Surface, Upper_1,Upper_2,Upper_3,Upper_4, Lower_1,Lower_2,Lower_3,Lower_4}"/>
-  
-    <!-- separate physics by material region -->
-    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-
-    <!-- Quadrature point =1 -->
-<!--    <Parameter name="Cubature Degree" type="int" value="1" />-->
-
-    <!-- Storing Solution variable in the mid of element using values from QPs -->
-    <Parameter name="QP Temperature from Nodes" type="bool" value="true"/>
-
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="PUMI Hierarchic"/>
+    <Parameter name="Workset Size" type="int" value="50"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="../../LCM/SCOREC/meshes/bar/bar.dmg"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../../LCM/SCOREC/meshes/bar/bar-serial.smb"/>
+    <Parameter name="PUMI Output File Name" type="string" value="out_p2.vtk"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115, eb_1}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{97,101,51,95,ns_1,ns_2,ns_3,ns_4}"/>
+    <Parameter name="Cubature Degree" type="int" value="2"/>
+    <Parameter name="Polynomial Order" type="int" value="2"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="false"/>
   </ParameterList>
-
-  <!--Where info for regression tests based on solution are set e.g. values for solution average and a tolerance for comparison would be set here not necessary for now 
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.00275317972231}"/>
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-7"/>
   </ParameterList>
--->
-  <!-- Solver information follows: This will remain the same from problem to problem if you are solving simple heat equation problems -->
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="0.0003"/>
-      <Parameter name="Max State Error" type="double" value="0.05"/>
-      <Parameter name="Alpha"           type="double" value="0.0"/>
+      <Parameter name="Num Time Steps" type="int" value="100"/>
+      <Parameter name="Final Time" type="double" value="1"/>
+      <Parameter name="Max State Error" type="double" value="0.0001"/>
+      <Parameter name="Alpha" type="double" value="0"/>
       <ParameterList name="Rythmos Stepper">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="low"/>
-	</ParameterList>
+        <ParameterList name="VerboseObject">
+          <Parameter name="Verbosity Level" type="string" value="low"/>
+        </ParameterList>
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
-        <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="30"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="none"/>
-	</ParameterList>
+        <ParameterList name="VerboseObject">
+          <Parameter name="Verbosity Level" type="string" value="none"/>
+        </ParameterList>
       </ParameterList>
       <ParameterList name="Stratimikos">
-        <Parameter name="Linear Solver Type" type="string" value="Belos"/>
-        <Parameter name="Preconditioner Type" type="string" value="None"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="LOCA">
@@ -132,9 +84,9 @@
         <Parameter name="Continuation Method" type="string" value="Natural"/>
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="1000"/>
-        <Parameter name="Max Value" type="double" value="0.0003"/>
-        <Parameter name="Min Value" type="double" value="0.0"/>
+        <Parameter name="Max Steps" type="int" value="2"/>
+        <Parameter name="Max Value" type="double" value="1.0"/>
+        <Parameter name="Min Value" type="double" value="0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
         <ParameterList name="Eigensolver">
           <Parameter name="Method" type="string" value="Anasazi"/>
@@ -143,7 +95,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Initial Step Size" type="double" value="0.00001"/>
+        <Parameter name="Initial Step Size" type="double" value="0.05"/>
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
@@ -176,7 +128,7 @@
                 </ParameterList>
                 <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="none"/>
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
                   </ParameterList>
                   <Parameter name="Left Preconditioner If Unspecified" type="bool" value="1"/>
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
@@ -185,12 +137,12 @@
                       <Parameter name="Convergence Tolerance" type="double" value="0.01"/>
                       <Parameter name="Implicit Residual Scaling" type="string" value="Norm of Preconditioned Initial Residual"/>
                       <Parameter name="Explicit Residual Scaling" type="string" value="Norm of RHS"/>
-                      <Parameter name="Output Frequency" type="int" value="1"/>
+                      <Parameter name="Output Frequency" type="int" value="25"/>
                       <Parameter name="Output Style" type="int" value="1"/>
                       <Parameter name="Verbosity" type="int" value="33"/>
-                      <Parameter name="Maximum Iterations" type="int" value="100"/>
+                      <Parameter name="Maximum Iterations" type="int" value="250"/>
                       <Parameter name="Block Size" type="int" value="1"/>
-                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Num Blocks" type="int" value="250"/>
                       <Parameter name="Orthogonalization" type="string" value="DGKS"/>
                     </ParameterList>
                   </ParameterList>
@@ -296,7 +248,7 @@
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="MaxIters"/>
-          <Parameter name="Maximum Iterations" type="int" value="100"/>
+          <Parameter name="Maximum Iterations" type="int" value="10"/>
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="FiniteValue"/>
@@ -310,4 +262,3 @@
     </ParameterList>
   </ParameterList>
 </ParameterList>
-

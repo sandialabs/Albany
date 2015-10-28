@@ -20,6 +20,7 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
       <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+      <Parameter name="Response 3" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>

@@ -211,6 +211,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = EXP_SCALAR_FIELD;
       else if (betaName == "Power Law Scalar Field")
         beta_type = POWERLAW_SCALAR_FIELD;
+      else if (betaName == "GLP Scalar Field")
+        beta_type = GLP_SCALAR_FIELD;
       else if (betaName == "Exponent Of Scalar Field Times Thickness")
         beta_type = EXP_SCALAR_FIELD_THK;
       else if (betaName == "FELIX XZ MMS") 
@@ -1065,7 +1067,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
               MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
               MeshScalarT h2 = h*h;
               ScalarT vel=0;
-              const ScalarT beta = basalFriction_side(cell, pt)*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
+              const ScalarT beta = basalFriction_side(cell, pt);//*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
               for(int dim = 0; dim < numDOFsSet; dim++)
                 vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
               for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -1078,7 +1080,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           for(int cell = 0; cell < numCells; cell++) {
             for(int pt = 0; pt < numPoints; pt++) {
               ScalarT vel=0;
-              const ScalarT beta = basalFriction_side(cell, pt)*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
+              const ScalarT beta = basalFriction_side(cell, pt);//*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
               for(int dim = 0; dim < numDOFsSet; dim++)
                 vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
               for(int dim = 0; dim < numDOFsSet; dim++) {
