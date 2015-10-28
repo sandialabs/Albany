@@ -651,8 +651,8 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
 
    // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval)) {
-
+  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
+  {
      double time_label = monotonicTimeLabel(time);
 
      int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
@@ -1716,7 +1716,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
          "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
         coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
-
         wsElNodeID[b][i][j] = node_gid;
 
         wsElNodeEqID[b][i][j].resize(neq);
@@ -1782,41 +1781,63 @@ void Albany::STKDiscretization::computeWorksetInfo()
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
 
-  ScalarValueState scalarValue_states = stkMeshStruct->getFieldContainer()->getScalarValueStates();
-  QPScalarState qpscalar_states = stkMeshStruct->getFieldContainer()->getQPScalarStates();
-  QPVectorState qpvector_states = stkMeshStruct->getFieldContainer()->getQPVectorStates();
-  QPTensorState qptensor_states = stkMeshStruct->getFieldContainer()->getQPTensorStates();
-  QPTensor3State qptensor3_states = stkMeshStruct->getFieldContainer()->getQPTensor3States();
-  std::map<std::string, double>& time = stkMeshStruct->getFieldContainer()->getTime();
+  Albany::AbstractSTKFieldContainer& container = *stkMeshStruct->getFieldContainer();
+
+  ScalarValueState& scalarValue_states = container.getScalarValueStates();
+  ScalarState& cell_scalar_states      = container.getCellScalarStates();
+  VectorState& cell_vector_states      = container.getCellVectorStates();
+  TensorState& cell_tensor_states      = container.getCellTensorStates();
+  QPScalarState& qpscalar_states       = container.getQPScalarStates();
+  QPVectorState& qpvector_states       = container.getQPVectorStates();
+  QPTensorState& qptensor_states       = container.getQPTensorStates();
+  QPTensor3State& qptensor3_states     = container.getQPTensor3States();
+  std::map<std::string, double>& time  = container.getTime();
 
   for (std::size_t b=0; b < buckets.size(); b++) {
     stk::mesh::Bucket& buck = *buckets[b];
-    for (QPScalarState::iterator qpss = qpscalar_states.begin();
-              qpss != qpscalar_states.end(); ++qpss){
+    for (auto css = cell_scalar_states.begin(); css != cell_scalar_states.end(); ++css){
+      BucketArray<Albany::AbstractSTKFieldContainer::ScalarFieldType> array(**css, buck);
+//Debug
+//std::cout << "Buck.size(): " << buck.size() << " SFT dim[1]: " << array.dimension(1) << std::endl;
+      MDArray ar = array;
+      stateArrays.elemStateArrays[b][(*css)->name()] = ar;
+    }
+    for (auto cvs = cell_vector_states.begin(); cvs != cell_vector_states.end(); ++cvs){
+      BucketArray<Albany::AbstractSTKFieldContainer::VectorFieldType> array(**cvs, buck);
+//Debug
+//std::cout << "Buck.size(): " << buck.size() << " VFT dim[2]: " << array.dimension(2) << std::endl;
+      MDArray ar = array;
+      stateArrays.elemStateArrays[b][(*cvs)->name()] = ar;
+    }
+    for (auto cts = cell_tensor_states.begin(); cts != cell_tensor_states.end(); ++cts){
+      BucketArray<Albany::AbstractSTKFieldContainer::TensorFieldType> array(**cts, buck);
+//Debug
+//std::cout << "Buck.size(): " << buck.size() << " TFT dim[3]: " << array.dimension(3) << std::endl;
+      MDArray ar = array;
+      stateArrays.elemStateArrays[b][(*cts)->name()] = ar;
+    }
+    for (auto qpss = qpscalar_states.begin(); qpss != qpscalar_states.end(); ++qpss){
       BucketArray<Albany::AbstractSTKFieldContainer::QPScalarFieldType> array(**qpss, buck);
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " << array.dimension(1) << std::endl;
       MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
     }
-    for (QPVectorState::iterator qpvs = qpvector_states.begin();
-              qpvs != qpvector_states.end(); ++qpvs){
+    for (auto qpvs = qpvector_states.begin(); qpvs != qpvector_states.end(); ++qpvs){
       BucketArray<Albany::AbstractSTKFieldContainer::QPVectorFieldType> array(**qpvs, buck);
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " << array.dimension(2) << std::endl;
       MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
-    for (QPTensorState::iterator qptsa = qptensor_states.begin();
-              qptsa != qptensor_states.end(); ++qptsa){
-      BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qptsa, buck);
+    for (auto qpts = qptensor_states.begin(); qpts != qptensor_states.end(); ++qpts){
+      BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qpts, buck);
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
       MDArray ar = array;
-      stateArrays.elemStateArrays[b][(*qptsa)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
-    for (QPTensor3State::iterator qpts = qptensor3_states.begin();
-              qpts != qptensor3_states.end(); ++qpts){
+    for (auto qpts = qptensor3_states.begin(); qpts != qptensor3_states.end(); ++qpts){
       BucketArray<Albany::AbstractSTKFieldContainer::QPTensor3FieldType> array(**qpts, buck);
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPT3FT dim[4]: " << array.dimension(4) << std::endl;
@@ -2832,22 +2853,51 @@ Albany::STKDiscretization::buildSideIdToSideSetElemIdMap (const std::string& sid
   // We assume the side-id is equal to the cell-id in the side mesh, so we build an identity map
 
   const stk::mesh::MetaData& meta_data = *stkMeshStruct->metaData;
-  stk::mesh::BulkData& bulk_data = *stkMeshStruct->bulkData;
+  const stk::mesh::BulkData& bulk_data = *stkMeshStruct->bulkData;
+  const stk::mesh::MetaData& side_meta_data = *side_mesh_struct->metaData;
+  const stk::mesh::BulkData& side_bulk_data = *side_mesh_struct->bulkData;
 
   // Extracting sides in this sideSet
   stk::mesh::Part& ss_part = *stkMeshStruct->ssPartVec.find(sideSetName)->second;
   stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector(ss_part) & stk::mesh::Selector(meta_data.locally_owned_part() );
   std::vector< stk::mesh::Entity > sides ;
-  stk::mesh::get_selected_entities( select_owned_in_sspart, bulk_data.buckets( meta_data.side_rank() ), sides); // store the result in "sides"
+  stk::mesh::get_selected_entities( select_owned_in_sspart, bulk_data.buckets( meta_data.side_rank() ), sides);
+
+  // Extracting cells in this sideSet mesh
+  stk::mesh::Selector ss_select_owned_in_part (meta_data.locally_owned_part());
+  std::vector< stk::mesh::Entity > ss_cells;
+  stk::mesh::get_selected_entities (ss_select_owned_in_part, side_bulk_data.buckets(stk::topology::ELEM_RANK), ss_cells);
+
+  // Sanity check
+  TEUCHOS_TEST_FOR_EXCEPTION (ss_cells.size()!=sides.size(), std::logic_error, "Error! Something is wrong with the sides or ss cells count.\n");
 
   // Loop over the sides
+  bool all_good = true;
   for (int is(0); is<sides.size(); ++is)
   {
     stk::mesh::Entity side = sides[is];
+    stk::mesh::Entity ss_cell = ss_cells[is];
     stk::mesh::EntityId side_id = bulk_data.identifier(side)-1;
+    stk::mesh::EntityId side_cell_id = side_bulk_data.identifier(ss_cell)-1;
 
-    map[side_id] = side_id;
+    // NOTE: given how things are now, the map is basically an identity. Why have it then? Glad you asked.
+    //       Unfortunately it is not an identity for Extruded meshes with column-wise ordering. However,
+    //       so far I could not figure how to build the map in that case. Hopefully will figure it out.
+    //       Meanwhile, we still create a map (an identity), to prepare for more general scenarios,
+    //       and, for now, we issue warnings if the map does not yield an identity.
+    if (side_id!=side_cell_id)
+      all_good = false;
+
+    map[side_id] = side_cell_id;
   }
+
+  if (!all_good)
+    std::cout << "WARNING! Something went wrong when building a the map side_id->ss_cell_id."
+              << "         A possible reason is that you are using an Extruded mesh with"
+              << "         column-wise ordering. If this is the case and you do need the map,"
+              << "         please, do not use column-wise ordering. If this is not the case,"
+              << "         there may be a bug in the creation of the side set mesh."
+              << "         However, if you don't need this map, you're not affected by the bug.\n";
 
 /*
   const stk::mesh::MetaData& side_meta_data = *side_mesh_struct->metaData;

@@ -849,10 +849,8 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
     int lid;
     double* values;
 
-    typedef AbstractSTKFieldContainer::QPScalarFieldType  QPScalarFieldType;
-    typedef AbstractSTKFieldContainer::QPVectorFieldType  QPVectorFieldType;
-    typedef AbstractSTKFieldContainer::ScalarFieldType    ScalarFieldType;
-    typedef AbstractSTKFieldContainer::VectorFieldType    VectorFieldType;
+    typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
+    typedef AbstractSTKFieldContainer::VectorFieldType  VFT;
 
     // Depending on the input field type, we need to use different pointers
     if (ftype == "Node Scalar")
@@ -905,7 +903,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
       req_vec.doImport(serial_req_vec,importOperatorNode,Tpetra::INSERT);
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
 
-      ScalarFieldType* field = metaData->get_field<ScalarFieldType> (stk::topology::NODE_RANK, *it);
+      SFT* field = metaData->get_field<SFT> (stk::topology::NODE_RANK, *it);
       TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Node Scalar'?).\n");
 
       //Now we have to stuff the vector in the mesh data
@@ -969,7 +967,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
       req_vec.doImport(serial_req_vec,importOperatorElem,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector view
-      QPScalarFieldType* field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
+      SFT* field = metaData->get_field<SFT>(stk::topology::ELEM_RANK, *it);
       TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Elem Scalar'?).\n");
 
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
@@ -1048,7 +1046,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
 
       // Extracting the mesh field (we still don't know if the field is node or cell oriented)
-      VectorFieldType* field = metaData->get_field<VectorFieldType> (stk::topology::NODE_RANK, *it);
+      VFT* field = metaData->get_field<VFT> (stk::topology::NODE_RANK, *it);
 
       TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Node Vector'?).\n");
 
@@ -1129,7 +1127,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
       req_mvec.doImport(serial_req_mvec,importOperatorElem,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector views
-      VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::ELEM_RANK, *it);
+      VFT* field = metaData->get_field<VFT>(stk::topology::ELEM_RANK, *it);
       TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Elem Vector'?).\n");
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
       for (int i(0); i<fieldDim; ++i)
