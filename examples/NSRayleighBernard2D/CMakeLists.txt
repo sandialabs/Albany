@@ -23,7 +23,7 @@ add_test(${testName} ${Albany.exe})
 endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
-if (ALBANY_STOKHOS)
+if (ALBANY_STOKHOS AND ALBANY_EPETRA)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG_steady.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSG_steady.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputSG_steady.xml COPYONLY)

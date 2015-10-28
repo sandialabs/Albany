@@ -232,11 +232,24 @@ J2NLS<S>::save(T const & alpha_, T const & H_)
   return;
 }
 
-// Save only for RealType, i.e, when computing Albany Residual
+// Save for RealType, i.e, when computing Albany Residual
 template<>
 template<>
 void
-J2NLS<RealType>::save(RealType const & alpha_, RealType const & H_)
+J2NLS<PHAL::AlbanyTraits::Residual::ScalarT>::
+save(RealType const & alpha_, RealType const & H_)
+{
+  alpha = alpha_;
+  H = H_;
+  return;
+}
+
+// Save when computing Albany Jacobian
+template<>
+template<>
+void
+J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
+save(RealType const & alpha_, RealType const & H_)
 {
   alpha = alpha_;
   H = H_;
@@ -352,7 +365,7 @@ computeState(typename Traits::EvalData workset,
         x(0) = 0.0;
 
         miniMinimize(minimizer, step, j2nls, x);
-
+#if 0
         bool converged = false;
         ScalarT g = f;
         ScalarT H = 0.0;
@@ -400,7 +413,14 @@ computeState(typename Traits::EvalData workset,
               "\nalpha = " << alpha << std::endl);
         }
         solver.computeFadInfo(dFdX, X, F);
-        dgam = X[0];
+#endif
+        ScalarT
+        H = j2nls.H;
+
+        ScalarT
+        alpha = j2nls.alpha;
+
+        dgam = x(0);
 
         // plastic direction
         N = (1 / smag) * s;
@@ -482,6 +502,32 @@ computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elas
 #endif
 #endif*/
 }
+#ifdef ALBANY_ENSEMBLE
+template<>
+void J2MiniSolver<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>::
+computeState(typename PHAL::AlbanyTraits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> eval_fields)
+{
+  assert(0);
+}
+template<>
+void J2MiniSolver<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>::
+computeState(typename PHAL::AlbanyTraits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> eval_fields)
+{
+  assert(0);
+}
+template<>
+void J2MiniSolver<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>::
+computeState(typename PHAL::AlbanyTraits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> eval_fields)
+{
+  assert(0);
+}
+#endif
 //------------------------------------------------------------------------------
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 #ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA

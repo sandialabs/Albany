@@ -305,24 +305,25 @@ evaluateFields(typename Traits::EvalData workset)
 
   //Calculate absolute L2 error squared and norm of reference solution squared
    ScalarT err_sq = 0.0;
-    ScalarT norm_ref_sq = 0.0;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      this->local_response(cell,2) = 0.0;  
-      this->global_response(2) = 0.0; 
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t dim=0; dim < vecDim; ++dim) {
-           //L^2 error squared w.r.t. flow_state_field_ref -- first component of global_response
-            err_sq = err_qp(cell,qp,dim)*err_qp(cell,qp,dim);
-           this->local_response(cell,0) += err_sq;
-           this->global_response(0) += err_sq;
-           //L^2 norm squared of flow_state_field_ref, the exact solution  -- second component of global_response
-            norm_ref_sq = flow_state_field_ref_qp(cell,qp,dim)*flow_state_field_ref_qp(cell,qp,dim);
-           this->local_response(cell,1) += norm_ref_sq;
-           this->global_response(1) += norm_ref_sq;
-        }
-      }
-    }
-//  }
+   ScalarT norm_ref_sq = 0.0;
+   ScalarT wm; //weighted measure
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     this->local_response(cell,2) = 0.0;  
+     this->global_response(2) = 0.0; 
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
+       wm = weighted_measure(cell,qp); 
+       for (std::size_t dim=0; dim < vecDim; ++dim) {
+         //L^2 error squared w.r.t. flow_state_field_ref -- first component of global_response
+         err_sq = err_qp(cell,qp,dim)*err_qp(cell,qp,dim);
+         this->local_response(cell,0) += err_sq*wm;
+         this->global_response(0) += err_sq*wm;
+         //L^2 norm squared of flow_state_field_ref, the exact solution  -- second component of global_response
+         norm_ref_sq = flow_state_field_ref_qp(cell,qp,dim)*flow_state_field_ref_qp(cell,qp,dim);
+         this->local_response(cell,1) += norm_ref_sq*wm;
+         this->global_response(1) += norm_ref_sq*wm;
+       }
+     }
+   }
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);

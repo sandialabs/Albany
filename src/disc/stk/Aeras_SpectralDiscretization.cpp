@@ -1152,20 +1152,12 @@ Aeras::SpectralDiscretization::getMaximumID(const stk::mesh::EntityRank rank) co
     (--bulkData.end_entities(rank))->first.id();
 
   // Use a parallel MAX reduction to obtain the global maximum ID
-  //
-  // FIXME: WFS: I added what appear to be unnecessary casts to (int*)
-  // in order to avoid compilation errors complaining that we do not
-  // have Teuchos::Serializations for unsigned long long.  This
-  // appears to be because HAVE_TEUCHOS_LONG_LONG_INT=OFF when
-  // building Trilinos.  That might be easily changed, but it might
-  // indicate some larger issue that needs to be dealt with.  I will
-  // leave it like this until I have figured it out.
   stk::mesh::EntityId result;
   Teuchos::reduceAll(*commT,
                      Teuchos::REDUCE_MAX,
                      1,
-                     (int*)(&last_entity),
-                     (int*)(&result));
+                     (GO*)(&last_entity),
+                     (GO*)(&result));
   return result;
 }
 
