@@ -18,7 +18,7 @@
 namespace Aeras {
 
 
-//#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 
 //**********************************************************************
@@ -253,10 +253,10 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 // potentialEnergyAtNodes.setFieldData(ViewFactory::buildView(potentialEnergyAtNodes.fieldTag(),ddims_));
 // gradPotentialEnergy=PHX::MDField<ScalarT,QuadPoint,Dim>("gradPotentialEnergy",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
 // gradPotentialEnergy.setFieldData(ViewFactory::buildView(gradPotentialEnergy.fieldTag(),ddims_));
- uAtNodes=PHX::MDField<ScalarT,Node,Dim>("uAtNodes",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
- uAtNodes.setFieldData(ViewFactory::buildView(uAtNodes.fieldTag(),ddims_));
- curlU=PHX::MDField<ScalarT,QuadPoint>("curlU",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
- curlU.setFieldData(ViewFactory::buildView(curlU.fieldTag(),ddims_));
+// uAtNodes=PHX::MDField<ScalarT,Node,Dim>("uAtNodes",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+// uAtNodes.setFieldData(ViewFactory::buildView(uAtNodes.fieldTag(),ddims_));
+// curlU=PHX::MDField<ScalarT,QuadPoint>("curlU",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+// curlU.setFieldData(ViewFactory::buildView(curlU.fieldTag(),ddims_));
 // coriolis=PHX::MDField<ScalarT,QuadPoint>("coriolis",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
 // coriolis.setFieldData(ViewFactory::buildView(coriolis.fieldTag(),ddims_));
  
@@ -297,8 +297,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
  utZgradNodes.setFieldData(ViewFactory::buildView(utZgradNodes.fieldTag(),ddims_));
 
 
- vcontra=PHX::MDField<ScalarT,Node,Dim>("vcontra",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
- vcontra.setFieldData(ViewFactory::buildView(vcontra.fieldTag(),ddims_));
+// vcontra=PHX::MDField<ScalarT,Node,Dim>("vcontra",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+// vcontra.setFieldData(ViewFactory::buildView(vcontra.fieldTag(),ddims_));
 
 
 wrk1_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
@@ -464,7 +464,7 @@ void ShallowWaterResid<EvalT,Traits>::curl3(
 
   fill_nodal_metrics(cell);
 
-  const PHX::MDField<ScalarT,Node, Dim>  &  vcontra_ = wrk1_vector_scope2_;
+  const PHX::MDField<ScalarT,Node, Dim>  &  vcovar_ = wrk1_vector_scope2_;
 
   for (int node=0; node < numNodes; ++node) {
 
@@ -473,19 +473,53 @@ void ShallowWaterResid<EvalT,Traits>::curl3(
     const MeshScalarT & j10 = nodal_jacobian(node, 1, 0);
     const MeshScalarT & j11 = nodal_jacobian(node, 1, 1);
 
-    vcontra_(node, 0 ) = j00*field(node, 0) + j10*field(node, 1);
-    vcontra_(node, 1 ) = j01*field(node, 0) + j11*field(node, 1);
+    vcovar_(node, 0 ) = j00*field(node, 0) + j10*field(node, 1);
+    vcovar_(node, 1 ) = j01*field(node, 0) + j11*field(node, 1);
+
+    //std::cout<< "node="<< node <<"j coefs in NEW curl: (0,0)" << j00 <<" "<< j01 << " "<< j10 << "j11" << j11 <<std::endl;
+//    if(node == 0)
+//    std::cout<<"field in NEW curl: (node,0)" << field(node,0) <<", (node,1)" << field(node,1)<<std::endl;
+
+  }
+
+//  std::cout<<"vcontra in NEW curl: (0,0)" << vcontra_(0,0) <<", (0,1)" <<vcontra_(0,1)<<std::endl;
+
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int node=0; node < numNodes; ++node) {
+
+      curl_(qp) +=  vcovar_(node, 1)*grad_at_cub_points_Kokkos(node, qp,0)
+                  - vcovar_(node, 0)*grad_at_cub_points_Kokkos(node, qp,1);
+    }
+    curl_(qp) = curl_(qp)/jacobian_det(cell,qp);
+  }
+
+/*
+  fill_nodal_metrics(cell);
+
+
+  for (int node=0; node < numNodes; ++node) {
+
+    const MeshScalarT j00 = nodal_jacobian(node, 0, 0);
+    const MeshScalarT j01 = nodal_jacobian(node, 0, 1);
+    const MeshScalarT j10 = nodal_jacobian(node, 1, 0);
+    const MeshScalarT j11 = nodal_jacobian(node, 1, 1);
+
+    vcontra(node, 0 ) = j00*uAtNodes(node, 0) + j10*uAtNodes(node, 1);
+    vcontra(node, 1 ) = j01*uAtNodes(node, 0) + j11*uAtNodes(node, 1);
   }
 
 
   for (int qp=0; qp < numQPs; ++qp) {
     for (int node=0; node < numNodes; ++node) {
 
-      curl_(qp) +=  vcontra_(node, 1)*grad_at_cub_points_Kokkos(node, qp,0)
-                  - vcontra_(node, 0)*grad_at_cub_points_Kokkos(node, qp,1);
+      curlU(qp) +=   vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,0)
+                  - vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,1);
     }
-    curl_(qp) = curl_(qp)/jacobian_det(cell,qp);
+    curlU(qp) = curlU(qp)/jacobian_det(cell,qp);
   }
+*/
+
+
 
 }
 
@@ -622,7 +656,7 @@ compute_Residuals12_notprescribed (const int& cell) const
   get_coriolis3(cor_, cell);
   const PHX::MDField<ScalarT, QuadPoint> & kineticenergy_ = wrk2_scalar_scope1_;
   const PHX::MDField<ScalarT, QuadPoint> & potentialenergy_ = wrk3_scalar_scope1_;
-//  const PHX::MDField<ScalarT,Node, Dim> & vectoru_ = wrk1_vector_scope1_;
+  const PHX::MDField<ScalarT,Node, Dim> & vectoru_ = wrk1_vector_scope1_;
 
   for (int node=0; node < numNodes; ++node) {
     const typename PHAL::Ref<const ScalarT>::type
@@ -636,31 +670,36 @@ compute_Residuals12_notprescribed (const int& cell) const
     kineticenergy_(node) = 0.5*(ulambda*ulambda + utheta*utheta);
     potentialenergy_(node) = gravity*depth;
 
-    uAtNodes(node, 0) = ulambda;
-    uAtNodes(node, 1) = utheta;
-//    vectoru_(node, 0) = ulambda;
-//    vectoru_(node, 1) = utheta;
+//    uAtNodes(node, 0) = ulambda;
+//    uAtNodes(node, 1) = utheta;
+    vectoru_(node, 0) = ulambda;
+    vectoru_(node, 1) = utheta;
+
    }
+
+//  std::cout << "Compare uAtNodes and vectoru_" << uAtNodes(0,0)<<",  "<< vectoru_(0,0) <<std::endl;
 
 //   gradient<ScalarT>(potentialEnergyAtNodes, cell, gradPotentialEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
 //   gradient<ScalarT>(kineticEnergyAtNodes, cell, gradKineticEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
 
-  const PHX::MDField<ScalarT, Node, Dim> & gradKineticEnergy_ = wrk1_vector_scope1_;
-  const PHX::MDField<ScalarT, Node, Dim> & gradPotentialEnergy_ = wrk2_vector_scope1_;
+   const PHX::MDField<ScalarT, QuadPoint> & curlU_ = wrk4_scalar_scope1_;
+   curl3(vectoru_, curlU_, cell);
+
+   const PHX::MDField<ScalarT, Node, Dim> & gradKineticEnergy_ = wrk1_vector_scope1_;
+   const PHX::MDField<ScalarT, Node, Dim> & gradPotentialEnergy_ = wrk2_vector_scope1_;
 
    gradient3(kineticenergy_, gradKineticEnergy_, cell);
    gradient3(potentialenergy_, gradPotentialEnergy_, cell);
 
-   curl(cell);
+//   curl(cell);
 
-//   const PHX::MDField<ScalarT, QuadPoint> & curlU_ = wrk4_scalar_scope1_;
-//   curl3(vectoru_, curlU_, cell);
+//   std::cout << "Compare old curl and new curl: old/new" << curlU(0)<<",  "<<curlU_(0) <<std::endl;
 
    for (int qp=0; qp < numQPs; ++qp) {
      //int node = qp;
 	 const typename PHAL::Ref<const ScalarT>::type
 		    coriolis_ = cor_(qp),
-			curl_ = curlU(qp),
+			curl_ = curlU_(qp),//  old code curl_ = curlU(qp)
 		    wbf_ = wBF(cell, qp, qp);
 
      Residual(cell,qp,1) += (   UDot(cell,qp,1) + gradKineticEnergy_(qp,0)
@@ -1758,7 +1797,7 @@ ShallowWaterResid<EvalT,Traits>::curl(const Intrepid::FieldContainer<ScalarT>  &
 //Kokkos functors
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
-
+/*
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::curl(const int &cell) const {
@@ -1776,7 +1815,14 @@ void ShallowWaterResid<EvalT,Traits>::curl(const int &cell) const {
 
     vcontra(node, 0 ) = j00*uAtNodes(node, 0) + j10*uAtNodes(node, 1);
     vcontra(node, 1 ) = j01*uAtNodes(node, 0) + j11*uAtNodes(node, 1);
+
+
+//    std::cout<< "node="<< node <<"j coefs in OLD curl: (0,0)" << j00 <<" "<< j01 << " "<< j10 << "j11" << j11 <<std::endl;
+//    std::cout<<"field in OLD curl: (node,0)" << uAtNodes(node,0) <<", (node,1)" << uAtNodes(node,1)<<std::endl;
+
   }
+
+//std::cout<<"vcontra in old curl: (0,0)" << vcontra(0,0) <<", (0,1)" <<vcontra(0,1)<<std::endl;
 
 
   for (int qp=0; qp < numQPs; ++qp) {
@@ -1790,7 +1836,7 @@ void ShallowWaterResid<EvalT,Traits>::curl(const int &cell) const {
 
 
 }
-
+*/
 
 #endif
 // *********************************************************************

@@ -19,7 +19,7 @@
 #include <Intrepid_Cubature.hpp>
 
 
-//#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 
 namespace Aeras {
@@ -164,8 +164,8 @@ public:
 // PHX::MDField<ScalarT,QuadPoint, Dim> gradKineticEnergy;
 // PHX::MDField<ScalarT,Node> potentialEnergyAtNodes;
 // PHX::MDField<ScalarT,QuadPoint, Dim> gradPotentialEnergy;
- PHX::MDField<ScalarT,Node, Dim> uAtNodes;
- PHX::MDField<ScalarT,QuadPoint> curlU;
+ //PHX::MDField<ScalarT,Node, Dim> uAtNodes;
+ //PHX::MDField<ScalarT,QuadPoint> curlU;
 // PHX::MDField<ScalarT,QuadPoint> coriolis;
 
  PHX::MDField<ScalarT,Node> surf;
@@ -177,7 +177,7 @@ public:
  PHX::MDField<ScalarT,QuadPoint, Dim> uXgradNodes, uYgradNodes, uZgradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> utXgradNodes, utYgradNodes, utZgradNodes;
 
- PHX::MDField<ScalarT,Node, Dim> vcontra;
+ //PHX::MDField<ScalarT,Node, Dim> vcontra;
 
  std::vector<LO> qpToNodeMap;
  std::vector<LO> nodeToQPMap;
@@ -217,10 +217,8 @@ public:
 // void gradient(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
 //      int cell, Intrepid::FieldContainer<ScalarT>  & gradField)const;
 
-
-
- KOKKOS_INLINE_FUNCTION
- void curl(const int &cell)const;
+// KOKKOS_INLINE_FUNCTION
+// void curl(const int &cell)const;
 
  KOKKOS_INLINE_FUNCTION 
  void fill_nodal_metrics (const int &cell) const;
