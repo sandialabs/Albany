@@ -116,11 +116,11 @@
 		  <Parameter name="Test Block Operator"
 			     type="bool" value="false"/>
                   <Parameter name="Inverse Type"
-			     type = "string" value="GS-Outer"/>
+			     type = "string" value="Block Jacobi"/>
                    <ParameterList name="Inverse Factory Library">
-		     <ParameterList name="GS-Outer">
+		     <ParameterList name="Block Jacobi">
 		       <Parameter name="Type"
-				  type="string" value="Block Gauss-Seidel"/>
+				  type="string" value="Block Jacobi"/>
 		       <Parameter name="Use Upper Triangle"
 				  type="bool" value="false"/>
 		       <Parameter name="Inverse Type 1"
