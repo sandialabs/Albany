@@ -73,7 +73,7 @@ ViscosityL1L2(const Teuchos::ParameterList& p,
   if (surfType == "Box") 
     surf_type = BOX; 
   else if (surfType == "Test A")
-    surf_type == TESTA; 
+    surf_type = TESTA; 
   
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
