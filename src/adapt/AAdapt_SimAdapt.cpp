@@ -78,10 +78,10 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
   apf::MeshIterator* it = apf_m->begin(0);
+  double max_size = adapt_params_->get<double>("Max Size", 1e10);
   while ((v = apf_m->iterate(it))) {
     double size1 = apf::getScalar(size_fld, v, 0);
-    double meshsize_constant = 25e-6;
-    double size = std::min(meshsize_constant,size1);
+    double size = std::min(max_size, size1);
     MSA_setVertexSize(adapter, (pVertex) v, size);
   }
   apf_m->end(it);
@@ -143,6 +143,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimAdapt::getValidAdapterParameters()
     this->getGenericAdapterParams("ValidSimAdaptParams");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
+  validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
   return validPL;
 }
 
