@@ -40,10 +40,12 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
     <ParameterList name="Adaptation">
-     <Parameter name="Remesh Strategy" type="string" value="Step Number" />
-     <Parameter name="Method" type="string" value="Sim" />
-     <Parameter name="Remesh Step Number" type="Array(int)" value="{5,10,15,20,25,30}"/>
-     <Parameter name="Error Bound" type="double" value="0.05" />
+      <Parameter name="Equilibration" type="bool" value="0"/>
+      <Parameter name="Remesh Strategy" type="string" value="None" />
+      <Parameter name="Method" type="string" value="Sim" />
+      <Parameter name="Remesh Step Number" type="Array(int)" value="{5,10,15,20,25,30}"/>
+      <Parameter name="Error Bound" type="double" value="0.09" />
+      <Parameter name="Max Size" type="double" value="6e-5" />
     </ParameterList>
 
   </ParameterList>
@@ -176,22 +178,22 @@
                 </ParameterList>
                 <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="none"/>
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
                   </ParameterList>
-                  <Parameter name="Left Preconditioner If Unspecified" type="bool" value="1"/>
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
                     <ParameterList name="Block GMRES">
-                      <Parameter name="Convergence Tolerance" type="double" value="0.01"/>
-                      <Parameter name="Implicit Residual Scaling" type="string" value="Norm of Preconditioned Initial Residual"/>
-                      <Parameter name="Explicit Residual Scaling" type="string" value="Norm of RHS"/>
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-4"/>
                       <Parameter name="Output Frequency" type="int" value="1"/>
                       <Parameter name="Output Style" type="int" value="1"/>
                       <Parameter name="Verbosity" type="int" value="33"/>
-                      <Parameter name="Maximum Iterations" type="int" value="100"/>
+                      <Parameter name="Maximum Iterations" type="int" value="1200"/>
                       <Parameter name="Block Size" type="int" value="1"/>
-                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Num Blocks" type="int" value="1200"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="0" />
                       <Parameter name="Orthogonalization" type="string" value="DGKS"/>
+                      <Parameter name="Implicit Residual Scaling" type="string" value="Norm of Preconditioned Initial Residual"/>
+                      <Parameter name="Explicit Residual Scaling" type="string" value="Norm of RHS"/>
                     </ParameterList>
                   </ParameterList>
                 </ParameterList>
