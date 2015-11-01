@@ -40,12 +40,12 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
     <ParameterList name="Adaptation">
-      <Parameter name="Equilibration" type="bool" value="0"/>
-      <Parameter name="Remesh Strategy" type="string" value="None" />
+      <Parameter name="Equilibration" type="bool" value="1"/>
+      <Parameter name="Remesh Strategy" type="string" value="Step Number" />
       <Parameter name="Method" type="string" value="Sim" />
       <Parameter name="Remesh Step Number" type="Array(int)" value="{5,10,15,20,25,30}"/>
       <Parameter name="Error Bound" type="double" value="0.09" />
-      <Parameter name="Max Size" type="double" value="6e-5" />
+      <Parameter name="Max Size" type="double" value="4e-5" />
     </ParameterList>
 
   </ParameterList>
@@ -154,7 +154,7 @@
         <Parameter name="Method" type="string" value="Newton"/>
         <ParameterList name="Newton">
           <ParameterList name="Linear Solver">
-            <Parameter name="Tolerance" type="double" value="1.0e-6"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-4"/>
           </ParameterList>
           <Parameter name="Forcing Term Method" type="string" value="Constant"/>
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
@@ -164,18 +164,6 @@
             <ParameterList name="Stratimikos">
               <Parameter name="Linear Solver Type" type="string" value="Belos"/>
               <ParameterList name="Linear Solver Types">
-                <ParameterList name="AztecOO">
-                  <ParameterList name="Forward Solve">
-                    <ParameterList name="AztecOO Settings">
-                      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
-                      <Parameter name="Convergence Test" type="string" value="r0"/>
-                      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
-                      <Parameter name="Output Frequency" type="int" value="10"/>
-                    </ParameterList>
-                    <Parameter name="Max Iterations" type="int" value="200"/>
-                    <Parameter name="Tolerance" type="double" value="1e-09"/>
-                  </ParameterList>
-                </ParameterList>
                 <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
                     <Parameter name="Verbosity Level" type="string" value="medium"/>
@@ -183,7 +171,7 @@
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
                     <ParameterList name="Block GMRES">
-                      <Parameter name="Convergence Tolerance" type="double" value="1e-4"/>
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
                       <Parameter name="Output Frequency" type="int" value="1"/>
                       <Parameter name="Output Style" type="int" value="1"/>
                       <Parameter name="Verbosity" type="int" value="33"/>
@@ -219,41 +207,6 @@
                     <Parameter name="schwarz: filter singletons" type="bool" value="1"/>
                     <Parameter name="schwarz: use reordering" type="bool" value="1"/>
                     <Parameter name="schwarz: overlap level" type="int" value="0"/>
-                  </ParameterList>
-                </ParameterList>
-                <ParameterList name="ML">
-                  <Parameter name="Base Method Defaults" type="string" value="none"/>
-                  <ParameterList name="ML Settings">
-                    <Parameter name="ML output" type="int" value="0"/>
-                    <Parameter name="default values" type="string" value="SA"/>
-                    <Parameter name="prec type" type="string" value="MGV"/>
-                    <Parameter name="max levels" type="int" value="10"/>
-                    <Parameter name="repartition: enable" type="int" value="1"/>
-                    <Parameter name="repartition: Zoltan dimensions" type="int" value="3"/>
-                    <Parameter name="repartition: min per proc" type="int" value="1000"/>
-                    <Parameter name="smoother: type" type="string" value="ML symmetric Gauss-Seidel"/>
-                    <Parameter name="smoother: damping factor" type="double" value="0.5"/>
-                    <Parameter name="smoother: sweeps" type="int" value="3"/>
-                    <Parameter name="smoother: pre or post" type="string" value="both"/>
-                    <Parameter name="coarse: max size" type="int" value="500"/>
-                    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
-                    <Parameter name="analyze memory" type="bool" value="1"/>
-                    <Parameter name="aggregation: type" type="string" value="MIS"/>
-                  </ParameterList>
-                </ParameterList>
-                <ParameterList name="MueLu">
-                  <Parameter name="verbosity" type="string" value="high"/>
-                  <Parameter name="max levels" type="int" value="10"/>
-                  <Parameter name="repartition: enable" type="bool" value="1"/>
-                  <Parameter name="repartition: min rows per proc" type="int" value="1000"/>
-                  <Parameter name="sa: damping factor" type="double" value="0.5"/>
-                  <Parameter name="smoother: pre or post" type="string" value="both"/>
-                  <Parameter name="coarse: max size" type="int" value="500"/>
-                  <Parameter name="coarse: type" type="string" value="KLU"/>
-                  <Parameter name="aggregation: type" type="string" value="uncoupled"/>
-                  <Parameter name="smoother: type" type="string" value="RELAXATION"/>
-                  <ParameterList name="smoother: params">
-                    <Parameter name="relaxation: type" type="string" value="Symmetric Gauss-Seidel"/>
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
@@ -294,7 +247,7 @@
           <Parameter name="Test Type" type="string" value="NormF"/>
           <Parameter name="Norm Type" type="string" value="Two Norm"/>
           <Parameter name="Scale Type" type="string" value="Unscaled"/>
-          <Parameter name="Tolerance" type="double" value="1.0e-6"/>
+          <Parameter name="Tolerance" type="double" value="1.0e-4"/>
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="MaxIters"/>
