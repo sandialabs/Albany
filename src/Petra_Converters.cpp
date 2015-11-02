@@ -63,28 +63,107 @@ Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Teuchos::RCP<
 
 //TpetraCrsGraph_To_TpetraCrsGraph: takes in Tpetra::CrsGraph object, converts it to its equivalent Epetra_CrsGraph object,
 //and returns an RCP pointer to this Epetra_CrsGraph
-Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& tpetraCrsGraph_,
-                                                                     const Teuchos::RCP<const Epetra_Comm>& comm_)
+Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& tpetraCrsGraph,
+                                                                      const Teuchos::RCP<const Epetra_Comm>& comm,
+                                                                      Tpetra::ProfileType pft)
 {
-  Teuchos::RCP<const Tpetra_Map> tpetraMap_ = tpetraCrsGraph_->getRowMap();
-  Teuchos::RCP<const Epetra_Map> epetraMap_ = TpetraMap_To_EpetraMap(tpetraMap_, comm_);
-  GO maxEntries = tpetraCrsGraph_->getGlobalMaxNumRowEntries();
-  Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph_= Teuchos::rcp(new Epetra_CrsGraph(Copy, *epetraMap_, maxEntries));
-  std::size_t NumEntries = 0;
-  GO col;
-  Teuchos::Array<LO> Indices;
-  for (std::size_t i = 0; i<tpetraCrsGraph_->getNodeNumRows(); i++) {
-     NumEntries = tpetraCrsGraph_->getNumEntriesInLocalRow(i);
-     Indices.resize(NumEntries);
-     tpetraCrsGraph_->getLocalRowCopy(i, Indices(), NumEntries);
-     GO globalRow = tpetraMap_->getGlobalElement(i);
-     for (std::size_t j = 0; j<NumEntries; j++){
-         col = tpetraCrsGraph_->getColMap()->getGlobalElement(Indices[j]);
-         epetraCrsGraph_->InsertGlobalIndices(globalRow, 1, &col);
-     }
+  Teuchos::RCP<const Tpetra_Map> tpetraDomainMap = tpetraCrsGraph->getDomainMap();
+  Teuchos::RCP<const Tpetra_Map> tpetraRangeMap  = tpetraCrsGraph->getRangeMap();
+  Teuchos::RCP<const Epetra_Map> epetraDomainMap = TpetraMap_To_EpetraMap(tpetraDomainMap, comm);
+  Teuchos::RCP<const Epetra_Map> epetraRangeMap  = TpetraMap_To_EpetraMap(tpetraRangeMap, comm);
+
+  Teuchos::Array<LO> numRowEntries(tpetraCrsGraph->getNodeNumRows());
+  for (std::size_t i = 0; i<tpetraCrsGraph->getNodeNumRows(); i++)
+  {
+    numRowEntries[i] = tpetraCrsGraph->getNumEntriesInLocalRow(i);
   }
-  epetraCrsGraph_->FillComplete();
-  return epetraCrsGraph_;
+
+  // If the user asks for static profile, but the graph is not filled, we automatically switch to dynamic profile
+  bool staticProfile = tpetraCrsGraph->isFillActive() ? false : (pft==Tpetra::StaticProfile);
+  if (pft==Tpetra::StaticProfile && tpetraCrsGraph->isFillActive())
+    std::cout << "Warning [TpetraCrsGraph_To_EpetraCrsGraph]: input graph is not filled, but a static profile is requested. Switching to dynamic profile.\n";
+
+  Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph= Teuchos::rcp(new Epetra_CrsGraph(Copy, *epetraRangeMap, numRowEntries.getRawPtr(), staticProfile));
+
+  Teuchos::ArrayView<const GO> tIndices;
+  GO col;
+  if (tpetraCrsGraph->isLocallyIndexed())
+  {
+    Teuchos::RCP<const Tpetra_Map> tpetraColMap    = tpetraCrsGraph->getColMap();
+    for (std::size_t i = 0; i<tpetraCrsGraph->getNodeNumRows(); ++i)
+    {
+       tpetraCrsGraph->getLocalRowView(i, tIndices);
+       for (std::size_t j=0; j<tIndices.size(); ++j)
+       {
+          col = tpetraColMap->getGlobalElement(tIndices[j]);
+          epetraCrsGraph->InsertGlobalIndices (epetraRangeMap->GID(i), 1, &col);
+       }
+    }
+
+    // The input graph was locally indexed (i.e., filled), so we fill/optimize also the epetra graph.
+    epetraCrsGraph->FillComplete(*epetraDomainMap, *epetraRangeMap);
+    epetraCrsGraph->OptimizeStorage();
+  }
+  else
+  {
+    for (std::size_t i = 0; i<tpetraCrsGraph->getNodeNumRows(); ++i)
+    {
+       tpetraCrsGraph->getGlobalRowView(tpetraRangeMap->getGlobalElement(i), tIndices);
+       for (std::size_t j=0; j<tIndices.size(); ++j)
+       {
+          col = tIndices[j];
+          epetraCrsGraph->InsertGlobalIndices (epetraRangeMap->GID(i), 1, &col);
+       }
+    }
+  }
+
+  return epetraCrsGraph;
+}
+
+//TpetraCrsMatrix_To_EpetraCrsMatrix: copies Tpetra::CrsMatrix object into its analogous
+//Epetra_CrsMatrix object
+Teuchos::RCP<Epetra_CrsMatrix>
+Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix,
+                                          const Teuchos::RCP<const Epetra_Comm>& comm)
+{
+  Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph = Petra::TpetraCrsGraph_To_EpetraCrsGraph(tpetraCrsMatrix->getCrsGraph(),comm,Tpetra::StaticProfile);
+  Teuchos::RCP<Epetra_CrsMatrix> epetraCrsMatrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*epetraCrsGraph));
+
+  GO col; ST val;
+  Teuchos::ArrayView<const ST> tValues;
+  int numEntries;
+  double* eValues;
+  if (tpetraCrsMatrix->isLocallyIndexed())
+  {
+    Teuchos::ArrayView<const LO> tIndices;
+    Teuchos::RCP<const Tpetra_Map> tpetraColMap = tpetraCrsMatrix->getColMap();
+    for (std::size_t i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++)
+    {
+       tpetraCrsMatrix->getLocalRowView(i, tIndices, tValues);
+       epetraCrsMatrix->ExtractMyRowView(i, numEntries, eValues);
+       for (std::size_t j=0; j<numEntries; ++j)
+       {
+          eValues[j] = tValues[j];
+       }
+    }
+  }
+  else
+  {
+    Teuchos::RCP<const Tpetra_Map> tpetraRangeMap  = tpetraCrsMatrix->getRangeMap();
+    Teuchos::ArrayView<const GO> tIndices;
+    for (std::size_t i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++)
+    {
+       GO row = tpetraRangeMap->getGlobalElement(i);
+       tpetraCrsMatrix->getGlobalRowView(row, tIndices, tValues);
+       epetraCrsMatrix->ExtractGlobalRowView(row, numEntries, eValues);
+       for (std::size_t j=0; j<numEntries; ++j)
+       {
+          eValues[j] = tValues[j];
+       }
+    }
+  }
+
+  return epetraCrsMatrix;
 }
 
 //TpetraCrsMatrix_To_EpetraCrsMatrix: copies Tpetra::CrsMatrix object into its analogous
