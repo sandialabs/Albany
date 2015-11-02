@@ -49,6 +49,7 @@ namespace Albany {
     std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> getFieldContainer(){return fieldContainer; }
+    const AbstractSTKFieldContainer::VectorFieldType* const getCoordinatesField() const { return fieldContainer->getCoordinatesField(); }
     AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField(){ return fieldContainer->getCoordinatesField(); }
 
     int numDim;

@@ -397,8 +397,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   computeAddlConnectivity();
 
   // Finally, setup the side set meshes (if any)
-  this->finalizeSideSetMeshStructsExtraction();
-  this->setSideSetMeshStructsFieldAndBulkData(commT, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 template <unsigned Dim, class traits>

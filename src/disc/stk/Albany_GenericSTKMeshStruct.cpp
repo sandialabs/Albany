@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include "Teuchos_VerboseObject.hpp"
+#include "Tpetra_ComputeGatherMap.hpp"
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
@@ -102,11 +103,11 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
-      const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const int neq_,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const int worksetSize)
+    const Teuchos::RCP<const Teuchos_Comm>& commT,
+    const int neq_,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const int worksetSize)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(!metaData->is_initialized(),
        std::logic_error,
@@ -683,21 +684,20 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructsExtraction (const
 {
   if (params->isSublist ("Side Set Discretizations"))
   {
-    const Teuchos::ParameterList& list = params->sublist("Side Set Discretizations");
-    Teuchos::Array<std::string> sideSets = list.get<Teuchos::Array<std::string> >("Side Sets");
+    const Teuchos::ParameterList& ssd_list = params->sublist("Side Set Discretizations");
+    const Teuchos::Array<std::string>& sideSets = ssd_list.get<Teuchos::Array<std::string> >("Side Sets");
 
     Teuchos::RCP<Teuchos::ParameterList> params_ss;
     for (int i(0); i<sideSets.size(); ++i)
     {
       const std::string& ss_name = sideSets[i];
-      if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
+      params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
+      if (params_ss->get<std::string>("Method")=="SideSetSTK")
       {
-        // The mesh on this side set was not already created (such as for the base for an Extrusion), so we build it
-
+        // The user said this mesh is extracted from a higher dimensional one
         TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
                                     "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
 
-        params_ss = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist(ss_name)));
         this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, commT));
       }
 
@@ -707,39 +707,36 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructsExtraction (const
   }
 }
 
-void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructsExtraction ()
-{
-  if (this->sideSetMeshStructs.size()>0)
-  {
-    for (auto it=this->sideSetMeshStructs.begin(); it!=this->sideSetMeshStructs.end(); ++it)
-    {
-      Teuchos::RCP<Albany::SideSetSTKMeshStruct> sideMesh;
-      sideMesh = Teuchos::rcp_dynamic_cast<Albany::SideSetSTKMeshStruct>(it->second,false);
-      if (sideMesh!=Teuchos::null)
-      {
-        // This side set mesh was created as a SideSet mesh, so mesh entities need to be built
-        sideMesh->extractEntitiesFromSTKMesh(*this,it->first);
-      }
-    }
-  }
-}
-
-void Albany::GenericSTKMeshStruct::setSideSetMeshStructsFieldAndBulkData(
+void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructsExtraction (
           const Teuchos::RCP<const Teuchos_Comm>& commT,
           const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
           const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
           int worksetSize)
 {
-  for (auto it : this->sideSetMeshStructs)
+  if (this->sideSetMeshStructs.size()>0)
   {
-    if (side_set_req.find(it.first)!=side_set_req.end())
+    // Dummy sis/req if not present in the maps for a given side set.
+    // This could happen if the side discretization has no requirements/states
+    Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
+    dummy_sis->createNodalDataBase();
+    AbstractFieldContainer::FieldContainerRequirements dummy_req;
+
+    for (auto it : sideSetMeshStructs)
     {
-      it.second->setFieldAndBulkData(commT,params,neq,side_set_req.at(it.first),side_set_sis.at(it.first),worksetSize);
-    }
-    else
-    {
-      AbstractFieldContainer::FieldContainerRequirements empty_req;
-      it.second->setFieldAndBulkData(commT,params,neq,empty_req,side_set_sis.at(it.first),worksetSize);
+      Teuchos::RCP<Albany::SideSetSTKMeshStruct> sideMesh;
+      sideMesh = Teuchos::rcp_dynamic_cast<Albany::SideSetSTKMeshStruct>(it.second,false);
+      if (sideMesh!=Teuchos::null)
+      {
+        sideMesh->setParentMeshInfo(*this, it.first);
+
+        auto it_req = side_set_req.find(it.first);
+        auto it_sis = side_set_sis.find(it.first);
+
+        auto& req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
+        auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
+
+        sideMesh->setFieldAndBulkData(commT,params,neq,req,sis,worksetSize);
+      }
     }
   }
 }
@@ -804,10 +801,11 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
   Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, GO> (nodeIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
   Teuchos::RCP<const Tpetra_Map> elems_map = Tpetra::createNonContigMapWithNode<LO, GO> (elemIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
 
-  int numMyNodes = (commT->getRank() == 0) ? numGlobalVertices : 0;
-  int numMyElements = (commT->getRank() == 0) ? numGlobalElements : 0;
-  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyNodes, 0, commT));
-  Teuchos::RCP<const Tpetra_Map> serial_elems_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
+  // NOTE: the serial map cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
+  //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
+  //       Therefore, we must create a root map, using the Tpetra utility
+  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::Details::computeGatherMap(nodes_map,out);
+  Teuchos::RCP<const Tpetra_Map> serial_elems_map = Tpetra::Details::computeGatherMap(elems_map,out);
 
   // Creating the Tpetra_Import object (to transfer from serial to parallel vectors)
   Tpetra_Import importOperatorNode (serial_nodes_map, nodes_map);
@@ -894,7 +892,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
         }
         if (!found)
         {
-          *out << "Using mesh-stored values for Node Scalar field " << *it << " since no constant value nor filename has been specified\n";
+          *out << "No file name nor constant value specified for Node Scalar field " << *it << "; crossing our fingers and hoping it's already in the mesh...\n";
           continue;
         }
       }
@@ -958,7 +956,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
         }
         if (!found)
         {
-          *out << "Using mesh-stored values for Elem Scalar field " << *it << " since no constant value nor filename has been specified\n";
+          *out << "No file name nor constant value specified for Elem Scalar field " << *it << "; crossing our fingers and hoping it's already in the mesh...\n";
           continue;
         }
       }
@@ -1036,7 +1034,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
         }
         if (!found)
         {
-          *out << "Using mesh-stored values for Node Vector field " << *it << " since no constant value nor filename has been specified\n";
+          *out << "No file name nor constant value specified for Node Vector field " << *it << "; crossing our fingers and hoping it's already in the mesh...\n";
           continue;
         }
       }
@@ -1118,7 +1116,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
         }
         if (!found)
         {
-          *out << "Using mesh-stored values for Elem Vector field " << *it << " since no constant value nor filename has been specified\n";
+          *out << "No file name nor constant value specified for Elem Vector field " << *it << "; crossing our fingers and hoping it's already in the mesh...\n";
           continue;
         }
       }
@@ -1277,6 +1275,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
+
+  validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 
   // Uniform percept adaptation of input mesh prior to simulation
 

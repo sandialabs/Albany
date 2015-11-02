@@ -68,8 +68,7 @@ Albany::STK3DPointStruct::setFieldAndBulkData(
 
   bulkData->modification_end();
 
-  this->finalizeSideSetMeshStructsExtraction ();
-  this->setSideSetMeshStructsFieldAndBulkData (commT, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 void

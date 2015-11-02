@@ -200,7 +200,15 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 {
   this->SetupFieldData(comm, neq_, req, sis, worksetSize);
 
-  this->setSideSetMeshStructsFieldAndBulkData (comm, side_set_req, side_set_sis, worksetSize);
+  // The basal mesh field and bulk data need to be set now
+  Teuchos::RCP<Albany::StateInfoStruct> dummy_sis = Teuchos::rcp(new Albany::StateInfoStruct());
+  dummy_sis->createNodalDataBase();
+  AbstractFieldContainer::FieldContainerRequirements dummy_req;
+  auto it_req = side_set_req.find("basalside");
+  auto it_sis = side_set_sis.find("basalside");
+  auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
+  auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
+  this->sideSetMeshStructs.at("basalside")->setFieldAndBulkData (comm, params, neq, basal_req, basal_sis, worksetSize);
 
   int numLayers = params->get("NumLayers", 10);
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
@@ -818,7 +826,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
-  this->finalizeSideSetMeshStructsExtraction();
+  // We can finally extract the side set meshes and set the fields and bulk data in all of them
+  this->finalizeSideSetMeshStructsExtraction(comm, side_set_req, side_set_sis, worksetSize);
 
   if (params->get("Export 2D Data",false))
   {

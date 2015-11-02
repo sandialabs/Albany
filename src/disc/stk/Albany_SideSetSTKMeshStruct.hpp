@@ -31,11 +31,18 @@ public:
                             const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
                             const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {});
 
-  void extractEntitiesFromSTKMesh(const AbstractSTKMeshStruct& inputMeshStruct,
-                                  const std::string& sideSetName);
+  void setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
+                          const std::string& sideSetName);
 
   bool hasRestartSolution () const {return false;}
   double restartDataTime () const {return 0.;}
+
+  Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
+
+private:
+
+  Teuchos::RCP<const AbstractSTKMeshStruct>  parentMeshStruct; // Weak ptr
+  std::string                                parentMeshSideSetName;
 };
 
 } // Namespace Albany

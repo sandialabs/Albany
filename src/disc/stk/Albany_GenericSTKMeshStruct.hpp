@@ -90,10 +90,7 @@ namespace Albany {
     void initializeSideSetMeshStructsExtraction (const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
-    void finalizeSideSetMeshStructsExtraction ();
-
-    //! Sets fields and bulk data in the side meshes
-    void setSideSetMeshStructsFieldAndBulkData(
+    void finalizeSideSetMeshStructsExtraction(
           const Teuchos::RCP<const Teuchos_Comm>& commT,
           const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
           const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,

@@ -707,8 +707,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
-  this->finalizeSideSetMeshStructsExtraction();
-  this->setSideSetMeshStructsFieldAndBulkData(commT, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
