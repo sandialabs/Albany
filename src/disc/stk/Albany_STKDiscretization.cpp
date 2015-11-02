@@ -667,21 +667,20 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
   for (auto it : sideSetDiscretizations)
   {
-    Teuchos::RCP<Albany::AbstractDiscretization>& sdisc = it.second;
-    Teuchos::RCP<Epetra_Vector> ss_soln;
     if (overlapped)
     {
-      ss_soln = Teuchos::rcp(new Epetra_Vector(*it.second->getOverlapMap()));
+      Epetra_Vector ss_soln (*it.second->getOverlapMap());
       const Epetra_CrsMatrix& P = *ov_projectors.at(it.first);
-      P.Apply(soln, *ss_soln);
+      P.Apply(soln, ss_soln);
+      it.second->writeSolution (ss_soln, time, overlapped);
     }
     else
     {
-      ss_soln = Teuchos::rcp(new Epetra_Vector(*it.second->getMap()));
+      Epetra_Vector ss_soln (*it.second->getMap());
       const Epetra_CrsMatrix& P = *projectors.at(it.first);
-      P.Apply(soln, *ss_soln);
+      P.Apply(soln, ss_soln);
+      it.second->writeSolution (ss_soln, time, overlapped);
     }
-    it.second->writeSolution (*ss_soln, time, overlapped);
   }
 #endif
 }
@@ -1041,15 +1040,6 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
 
   Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->saveSolnVector(soln, locally_owned, node_map);
-
-  // Setting the solution on the side set meshes
-  for (auto it : sideSetDiscretizations)
-  {
-    const Epetra_CrsMatrix& P = *projectors.at(it.first);
-    Epetra_Vector ss_soln (*it.second->getMap());
-    P.Apply(soln,ss_soln);
-    it.second->setSolutionField(ss_soln);
-  }
 }
 #endif // ALBANY_EPETRA
 
@@ -1067,16 +1057,6 @@ Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
   container->saveSolnVectorT(solnT, locally_owned, node_mapT);
-
-  // Setting the solution on the side set meshes
-  for (auto it : sideSetDiscretizationsSTK)
-  {
-    const Tpetra_CrsMatrix& P = *projectorsT.at(it.first);
-    Tpetra_Vector ss_solnT (it.second->getMapT());
-    P.apply(solnT,ss_solnT);
-    it.second->setSolutionFieldT(ss_solnT);
-  }
-
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1093,15 +1073,6 @@ Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 
   Teuchos::RCP<Epetra_Map> overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
   container->saveSolnVector(soln, select_owned_or_shared, overlap_node_map);
-
-  // Setting the solution on the side set meshes
-  for (auto it : sideSetDiscretizationsSTK)
-  {
-    const Epetra_CrsMatrix& P = *ov_projectors.at(it.first);
-    Epetra_Vector ss_soln (*it.second->getOverlapMap());
-    P.Apply(soln,ss_soln);
-    it.second->setOvlpSolutionField(ss_soln);
-  }
 }
 #endif // ALBANY_EPETRA
 
@@ -1117,16 +1088,6 @@ Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
   stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
 
   container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
-
-  // Setting the solution on the side set meshes
-  for (auto it : sideSetDiscretizationsSTK)
-  {
-    const Tpetra_CrsMatrix& P = *ov_projectorsT.at(it.first);
-    Tpetra_Vector ss_solnT (it.second->getOverlapMapT());
-    P.apply(solnT,ss_solnT);
-    it.second->setOvlpSolutionFieldT(ss_solnT);
-  }
-
 }
 
 GO Albany::STKDiscretization::gid(const stk::mesh::Entity node) const
@@ -3004,9 +2965,9 @@ void Albany::STKDiscretization::buildSideSetProjectors()
   // Note: the Global index of a node should be the same in both this and the side discretizations
   //       since the underlying STK entities should have the same ID
   Teuchos::RCP<const Tpetra_Map> ss_ov_mapT, ss_mapT;
+  Teuchos::RCP<Tpetra_CrsGraph> graphP, ov_graphP;
   Teuchos::RCP<Tpetra_CrsMatrix> P, ov_P;
 #ifdef ALBANY_EPETRA
-  Teuchos::RCP<Epetra_CrsGraph> graphP_E;
   Teuchos::RCP<Epetra_CrsMatrix> P_E;
 #endif
 
@@ -3027,41 +2988,43 @@ void Albany::STKDiscretization::buildSideSetProjectors()
     ss_mapT    = disc.getMapT();
 
     // The projector: first the overlapped...
-    ov_P = Teuchos::rcp(new Tpetra_CrsMatrix(ss_ov_mapT,1,Tpetra::StaticProfile));
+    ov_graphP = Teuchos::rcp(new Tpetra_CrsGraph(ss_ov_mapT,1,Tpetra::StaticProfile));
     num_entries = ss_ov_mapT->getNodeNumElements();
     ss_indices = ss_ov_mapT->getNodeElementList();
     for (LO j(0); j<num_entries; ++j)
     {
       // Fill projector as an identity
       cols[0] = ss_indices[j];
-      ov_P->insertGlobalValues(ss_indices[j],cols(),vals());
+      ov_graphP->insertGlobalIndices (ss_indices[j],cols());
     }
-    ov_P->fillComplete (overlap_mapT,ss_mapT);
+    ov_graphP->fillComplete (overlap_mapT,ss_ov_mapT);
+    ov_P = Teuchos::rcp(new Tpetra_CrsMatrix(ov_graphP)); // This constructor creates matrix with static profile
+    ov_P->setAllToScalar (1.0);
+    ov_P->fillComplete ();
     ov_projectorsT[sideSetName] = ov_P;
 
     // ...then the non-overlapped.
-    P = Teuchos::rcp(new Tpetra_CrsMatrix(ss_mapT,1,Tpetra::StaticProfile));
+    graphP = Teuchos::rcp(new Tpetra_CrsGraph(ss_mapT,1,Tpetra::StaticProfile));
     num_entries = ss_mapT->getNodeNumElements();
     ss_indices = ss_mapT->getNodeElementList();
     for (LO j(0); j<num_entries; ++j)
     {
       // Fill projector as an identity
       cols[0] = ss_indices[j];
-      P->insertGlobalValues(ss_indices[j],cols(),vals());
+      graphP->insertGlobalIndices (ss_indices[j],cols());
     }
-    P->fillComplete (overlap_mapT,ss_mapT);
+    graphP->fillComplete (mapT,ss_mapT);
+    P = Teuchos::rcp(new Tpetra_CrsMatrix(graphP)); // This constructor creates matrix with static profile
+    P->setAllToScalar (1.0);
+    P->fillComplete ();
     projectorsT[sideSetName] = P;
 
 #ifdef ALBANY_EPETRA
-    graphP_E = Petra::TpetraCrsGraph_To_EpetraCrsGraph(P->getCrsGraph(),comm);
-    P_E = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*graphP_E));
-    Petra::TpetraCrsMatrix_To_EpetraCrsMatrix (P,*P_E,comm);
-    projectors[sideSetName] = P_E;
-
-    graphP_E = Petra::TpetraCrsGraph_To_EpetraCrsGraph(ov_P->getCrsGraph(),comm);
-    P_E = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*graphP_E));
-    Petra::TpetraCrsMatrix_To_EpetraCrsMatrix (ov_P,*P_E,comm);
+    P_E = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix (ov_P,comm);
     ov_projectors[sideSetName] = P_E;
+
+    P_E = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix (P,comm);
+    projectors[sideSetName] = P_E;
 #endif
   }
 }
