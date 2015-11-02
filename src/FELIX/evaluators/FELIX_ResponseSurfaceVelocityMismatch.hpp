@@ -48,9 +48,10 @@ namespace FELIX {
     PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim> observedVelocity;
     PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim> observedVelocityRMS;
     PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim> grad_beta;
-    PHX::MDField<RealType,Cell,Side,Node,QuadPoint> BF;
-    PHX::MDField<RealType,Cell,Side,QuadPoint> w_measure;
-    PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim> inv_metric;
+    PHX::MDField<RealType,Cell,Side,Node,QuadPoint> BF_basal;
+    PHX::MDField<RealType,Cell,Side,QuadPoint> w_measure_basal;
+    PHX::MDField<RealType,Cell,Side,QuadPoint> w_measure_surface;
+    PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim> inv_metric_surface;
 
     ScalarT p_resp, p_reg, resp, reg;
     double scaling, alpha, asinh_scaling;
