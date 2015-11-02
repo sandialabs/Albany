@@ -137,19 +137,11 @@ evaluateFields(typename Traits::EvalData workset)
     Albany::MDArray state = esa[wsIndex2D].at(stateName);
 
     // Now we have the two arrays: 3D and 2D. We need to take the part we need from the 3D
-    // and put it at the right place in the 2D one
+    // and put it in the 2D one
 
     std::vector<PHX::DataLayout::size_type> dims;
     field.dimensions(dims);
     int size = dims.size();
-
-    // Trick to use a single switch statement below:
-    // (cell,side)          -> size = 2
-    // (cell,side,dim)      -> size = 3 + 10 = 13
-    // (cell,side,node)     -> size = 3
-    // (cell,side,node,dim) -> size = 4 + 10 = 14
-    if (isVectorField)
-      size += 10;
 
     switch (size)
     {
@@ -159,27 +151,19 @@ evaluateFields(typename Traits::EvalData workset)
         break;
 
       case 3:
-        // side set node scalar
-        for (int node = 0; node < dims[2]; ++node)
+        // side set node scalar or side set cell scalar
+        for (int i=0; i<dims[2]; ++i)
         {
-          state(ss_cell, node) = field(cell,side,node);
+          state(ss_cell,i) = field(cell,side,i);
         }
         break;
 
-      case 13:
-        // side set cell vector
-        for (int dim=0; dim<dims[2]; ++dim)
+      case 4:
+        // side set node/qp vector
+        for (int pt=0; pt<dims[2]; ++pt)
         {
-          state(ss_cell, dim) = field(cell,side,dim);
-        }
-        break;
-
-      case 14:
-        // side set node vector
-        for (int node = 0; node < dims[2]; ++node)
-        {
-          for (int dim = 0; dim < dims[3]; ++dim)
-            state(ss_cell, node, dim) = field(cell,side,node,dim);
+          for (int dim=0; dim<dims[3]; ++dim)
+            state(ss_cell,pt,dim) = field(cell,side,pt,dim);
         }
         break;
 
