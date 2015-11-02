@@ -31,19 +31,19 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "From File");
 
   basalSideName = p.get<std::string>("Side Set Name");
-  if (betaType == "Constant")
+  if (betaType == "Given Constant")
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant and uniform beta, loaded from xml input file.\n";
 #endif
-    beta_type = CONSTANT;
+    beta_type = GIVEN_CONSTANT;
   }
-  else if (betaType == "From File")
+  else if (betaType == "Given Field")
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant beta, loaded from file.\n";
 #endif
-    beta_type = FROM_FILE;
+    beta_type = GIVEN_FIELD;
 
     beta_given = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Given Beta Variable Name"), dl->node_scalar);
     GradBF     = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->side_node_qp_gradient);
@@ -59,7 +59,6 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
     int numSides = dims[1];
-    sideDim  = dims[4];
     sideNodes.resize(numSides);
     for (int side=0; side<numSides; ++side)
     {
@@ -74,9 +73,8 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
         std::endl << "Error in FELIX::BasalFrictionCoefficientGradient:  \"" << betaType << "\" does not allow for gradient calculation\n");
   }
 
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl->side_qp_scalar->dimensions(dims);
-  numSideQPs = dims[2];
+  numSideQPs = dl->side_qp_gradient->dimension(2);
+  sideDim    = dl->side_qp_gradient->dimension(3);
 
   this->addEvaluatedField(grad_beta);
 
@@ -91,7 +89,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 {
   this->utils.setFieldData(grad_beta,fm);
 
-  if (beta_type==FROM_FILE)
+  if (beta_type==GIVEN_FIELD)
   {
     this->utils.setFieldData(GradBF,fm);
     this->utils.setFieldData(beta_given,fm);
@@ -118,7 +116,7 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
 
     switch (beta_type)
     {
-      case CONSTANT:
+      case GIVEN_CONSTANT:
         for (int qp=0; qp<numSideQPs; ++qp)
         {
           for (int dim=0; dim<sideDim; ++dim)
@@ -126,7 +124,7 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
         }
         break;
 
-      case FROM_FILE:
+      case GIVEN_FIELD:
         for (int qp=0; qp<numSideQPs; ++qp)
         {
           for (int dim=0; dim<sideDim; ++dim)
