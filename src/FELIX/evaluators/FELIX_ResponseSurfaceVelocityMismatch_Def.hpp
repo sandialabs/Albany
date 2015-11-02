@@ -58,7 +58,6 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   surfaceSideName = paramList->get<std::string> ("Surface Side Name");
 
   // add dependent fields
-  this->addDependentField(grad_beta);
   this->addDependentField(velocity);
   this->addDependentField(observedVelocity);
   this->addDependentField(observedVelocityRMS);
@@ -66,6 +65,10 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   this->addDependentField(w_measure_basal);
   this->addDependentField(w_measure_surface);
   this->addDependentField(inv_metric_surface);
+  if (alpha!=0)
+  {
+    this->addDependentField(grad_beta);
+  }
 
   this->setName(fieldName + " Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
 
@@ -94,11 +97,14 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(velocity, fm);
   this->utils.setFieldData(observedVelocity, fm);
   this->utils.setFieldData(observedVelocityRMS, fm);
-  this->utils.setFieldData(grad_beta, fm);
   this->utils.setFieldData(BF_basal, fm);
   this->utils.setFieldData(w_measure_basal, fm);
   this->utils.setFieldData(w_measure_surface, fm);
   this->utils.setFieldData(inv_metric_surface, fm);
+  if (alpha!=0)
+  {
+    this->utils.setFieldData(grad_beta, fm);
+  }
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }

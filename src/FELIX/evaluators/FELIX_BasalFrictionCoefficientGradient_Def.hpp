@@ -30,6 +30,9 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "From File");
 
+  numSideQPs = dl->side_qp_gradient->dimension(2);
+  sideDim    = dl->side_qp_gradient->dimension(3);
+
   basalSideName = p.get<std::string>("Side Set Name");
   if (betaType == "Given Constant")
   {
@@ -67,14 +70,6 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
         sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
   }
-  else
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in FELIX::BasalFrictionCoefficientGradient:  \"" << betaType << "\" does not allow for gradient calculation\n");
-  }
-
-  numSideQPs = dl->side_qp_gradient->dimension(2);
-  sideDim    = dl->side_qp_gradient->dimension(3);
 
   this->addEvaluatedField(grad_beta);
 
@@ -100,6 +95,10 @@ postRegistrationSetup (typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (beta_type==POWER_LAW || beta_type==REGULARIZED_COULOMB, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error in FELIX::BasalFrictionCoefficientGradient:  \"" << (beta_type==POWER_LAW ? "Power Law" : "Regularized Coulomb")
+                << "\" does not allow for gradient calculation\n");
+
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it_ss = ssList.find(basalSideName);
 
