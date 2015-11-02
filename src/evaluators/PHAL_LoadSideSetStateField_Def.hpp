@@ -18,34 +18,7 @@ namespace PHAL
 
 template<typename EvalT, typename Traits>
 LoadSideSetStateField<EvalT, Traits>::
-LoadSideSetStateField (const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl)
-{
-  // States Not Loaded for Generic Type, only Specializations
-  this->setName("Load Side Set State Field"+PHX::typeAsString<EvalT>());
-}
-
-// **********************************************************************
-template<typename EvalT, typename Traits>
-void LoadSideSetStateField<EvalT, Traits>::
-postRegistrationSetup (typename Traits::SetupData d,
-                       PHX::FieldManager<Traits>& fm)
-{
-  // States Not Loaded for Generic Type, only Specializations
-}
-
-// **********************************************************************
-template<typename EvalT, typename Traits>
-void LoadSideSetStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
-{
-  // States Not Loaded for Generic Type, only Specializations
-}
-
-// **********************************************************************
-template<typename Traits>
-LoadSideSetStateField<PHAL::AlbanyTraits::Residual,Traits>::
-LoadSideSetStateField (const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl)
+LoadSideSetStateField (const Teuchos::ParameterList& p)
 {
   sideSetName = p.get<std::string>("Side Set Name");
 
@@ -61,16 +34,16 @@ LoadSideSetStateField (const Teuchos::ParameterList& p,
 }
 
 // **********************************************************************
-template<typename Traits>
-void LoadSideSetStateField<PHAL::AlbanyTraits::Residual,Traits>::
+template<typename EvalT, typename Traits>
+void LoadSideSetStateField<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
 }
 
-template<typename Traits>
-void LoadSideSetStateField<PHAL::AlbanyTraits::Residual,Traits>::
+template<typename EvalT, typename Traits>
+void LoadSideSetStateField<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
@@ -134,38 +107,33 @@ evaluateFields(typename Traits::EvalData workset)
                                 "Error! Cannot locate " << stateName << " in PHAL_SaveSideSetStateField_Def.\n");
     Albany::MDArray state = esa[wsIndex2D].at(stateName);
 
-    // Now we have the two arrays: 3D and 2D. We need to take the part we need from the 3D
-    // and put it at the right place in the 2D one
+    // Now we have the two arrays: 3D and 2D. We need to take the 2D one
+    // and put it at the right place in the 3D one
 
     std::vector<PHX::DataLayout::size_type> dims;
     field.dimensions(dims);
     int size = dims.size();
 
-    // In StateManager, ElemData (1 scalar per cell) is stored as QuadPoint (1 qp),
-    // so size would figure as 2 even if it is actually 1. Therefore we had to
-    // call size on dims computed on field. Then, we call it on state to get
-    // the correct state dimensions
-    state.dimensions(dims);
-
     switch (size)
     {
       case 2:
-      {
+        // side set cell scalar
         field(cell,side) = state(ss_cell);
         break;
-      }
       case 3:
-        for (int node = 0; node < dims[1]; ++node)
+        // side set node scalar or side set cell scalar
+        for (int i=0; i<dims[2]; ++i)
         {
-          field(cell,side,node) = state(ss_cell, node);
+          field(cell,side,i) = state(ss_cell,i);
         }
         break;
 
       case 4:
-        for (int node = 0; node < dims[1]; ++node)
+        // side set node/qp vector
+        for (int pt=0; pt<dims[2]; ++pt)
         {
-          for (int dim = 0; dim < dims[2]; ++dim)
-            field(cell,side,node,dim) = state(ss_cell, node, dim);
+          for (int dim=0; dim<dims[3]; ++dim)
+            field(cell,side,pt,dim) = state(ss_cell,pt,dim);
         }
         break;
 

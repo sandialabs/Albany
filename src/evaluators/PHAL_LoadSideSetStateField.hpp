@@ -26,26 +26,7 @@ class LoadSideSetStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  LoadSideSetStateField (const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
-
-  void evaluateFields (typename Traits::EvalData d);
-};
-
-// =========================== SPECIALIZATION ======================== //
-
-template<typename Traits>
-class LoadSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>
-                    : public PHX::EvaluatorWithBaseImpl<Traits>,
-                      public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Residual, Traits>
-{
-public:
-
-  LoadSideSetStateField (const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
+  LoadSideSetStateField (const Teuchos::ParameterList& p);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -54,7 +35,7 @@ public:
 
 private:
 
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT ScalarT;
 
   PHX::MDField<ScalarT>              field;
 
