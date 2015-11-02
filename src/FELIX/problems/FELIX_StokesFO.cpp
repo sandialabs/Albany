@@ -90,6 +90,14 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     sliding = false;
     basalSideName = "";
   }
+  if (params->isParameter("Required Surface Fields"))
+  {
+    surfaceSideName = params->get<std::string>("Surface Side Name");
+
+    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
+    for (int i(0); i<req.size(); ++i)
+      this->ss_requirements[surfaceSideName].push_back(req[i]);
+  }
 }
 
 FELIX::StokesFO::
@@ -231,6 +239,8 @@ FELIX::StokesFO::getValidProblemParameters () const
 
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
+  validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");
+  validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
   validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");

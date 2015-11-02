@@ -29,6 +29,7 @@
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_DOFCellToSide.hpp"
 #include "PHAL_DOFVecCellToSide.hpp"
+#include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
 
 #include "FELIX_EffectivePressureSurrogate.hpp"
@@ -114,6 +115,7 @@ protected:
 
   bool  sliding;
   std::string basalSideName;
+  std::string surfaceSideName;
 };
 
 } // Namespace FELIX
@@ -287,22 +289,31 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   if (sliding)
   {
-    // We interpolate beta from quad point to cell
-    ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    // We save it on the basal mesh
-    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
-    p->set<bool>("Is Vector Field", false);
-    ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+    if (ss_requirements.find(basalSideName)!=ss_requirements.end())
     {
-      // Only PHAL::AlbanyTraits::Residual evaluates something
-      if (ev->evaluatedFields().size()>0)
+      const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
+
+      auto it = std::find(req.begin(), req.end(), stateName);
+      if (it!=req.end())
       {
-        // Require save beta
-        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+        // We interpolate beta from quad point to cell
+        ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
+        fm0.template registerEvaluator<EvalT>(ev);
+
+        // We save it on the basal mesh
+        p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
+        p->set<bool>("Is Vector Field", false);
+        ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+        if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+        {
+          // Only PHAL::AlbanyTraits::Residual evaluates something
+          if (ev->evaluatedFields().size()>0)
+          {
+            // Require save beta
+            fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+          }
+        }
       }
     }
   }
@@ -330,30 +341,39 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   if (sliding)
   {
-    std::string beta_type = params->sublist("FELIX Basal Friction Coefficient").get<std::string>("Type");
-
-    if (beta_type=="Regularized Coulomb" || beta_type=="Power Law")
+    if (ss_requirements.find(basalSideName)!=ss_requirements.end())
     {
-      // We save the effective pressure too
-      stateName = "effective_pressure";
-      fieldName = "Effective Pressure";
+      const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
 
-      // We interpolate the effective pressure from quad point to cell
-      ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      // We register the state and build the loader
-      p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
-      p->set<bool>("Is Vector Field", false);
-      ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-      if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+      auto it = std::find(req.begin(), req.end(), stateName);
+      if (it!=req.end())
       {
-        // Only PHAL::AlbanyTraits::Residual evaluates something
-        if (ev->evaluatedFields().size()>0)
+        std::string beta_type = params->sublist("FELIX Basal Friction Coefficient").get<std::string>("Type");
+
+        if (beta_type=="Regularized Coulomb" || beta_type=="Power Law")
         {
-          // Require save beta
-          fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+          // We save the effective pressure too
+          stateName = "effective_pressure";
+          fieldName = "Effective Pressure";
+
+          // We interpolate the effective pressure from quad point to cell
+          ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
+          fm0.template registerEvaluator<EvalT>(ev);
+
+          // We register the state and build the loader
+          p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
+          p->set<bool>("Is Vector Field", false);
+          ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
+          fm0.template registerEvaluator<EvalT>(ev);
+          if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+          {
+            // Only PHAL::AlbanyTraits::Residual evaluates something
+            if (ev->evaluatedFields().size()>0)
+            {
+              // Require save beta
+              fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+            }
+          }
         }
       }
     }
@@ -601,6 +621,68 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = rcp(new FELIX::StokesFOBodyForce<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  if (sliding && surfaceSideName!="")
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.sideSetMeshSpecs.find(surfaceSideName)==meshSpecs.sideSetMeshSpecs.end(), std::logic_error,
+                                "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+
+    RCP<Albany::MeshSpecsStruct> surfaceMeshSpecs = meshSpecs.sideSetMeshSpecs.find(surfaceSideName)->second[0];
+    RCP <Intrepid::Cubature<RealType> > surfaceCubature = cubFactory.create(*sideType, surfaceMeshSpecs->cubatureDegree);
+    const std::string& surfaceEBName = meshSpecs.sideSetMeshSpecs.at(surfaceSideName)[0]->ebName;
+
+    //---- Compute side basis functions
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, surfaceCubature, surfaceSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    // Load surface velocity
+    entity= Albany::StateStruct::NodalDataToElemNode;
+    stateName = "surface_velocity";
+    fieldName = "Observed Surface Velocity";
+    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl->side_node_vector, surfaceEBName, true, &entity);
+    ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate surface velocity on QP on side
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Load surface velocity rms
+    entity= Albany::StateStruct::NodalDataToElemNode;
+    stateName = "surface_velocity_rms";
+    fieldName = "Observed Surface Velocity RMS";
+    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl->side_node_vector, surfaceEBName, true, &entity);
+    ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate surface velocity rms on QP on side
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
+    ev = evalUtils.constructDOFVecCellToSideEvaluator("Velocity",surfaceSideName,cellType,"Surface Velocity");
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    //---- Interpolate velocity (the solution) on QP on side
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Build beta gradient on QP on basal side
+    p = rcp(new ParameterList("Basal Friction Coefficient Gradient"));
+
+    // Input
+    p->set<std::string>("Given Beta Variable Name", "Beta");
+    p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Side Set Name", basalSideName);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+
+    // Output
+    p->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
+
+    ev = rcp(new FELIX::BasalFrictionCoefficientGradient<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
   {
     // Require scattering of residual
@@ -609,97 +691,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {
-    std::string surfaceSideName = "";
-
-    // If we have a response function of type velocity mismatch, we need to build evaluators also for the surface side
-    int numResp = params->sublist("Response Functions").get<int>("Number");
-    for (int i(0); i<numResp; ++i)
-    {
-      std::stringstream ss;
-      ss << "Response " << i;
-      if (params->sublist("Response Functions").get<std::string>(ss.str())=="Surface Velocity Mismatch")
-      {
-        ss.str("");
-        ss.clear();
-        ss << "ResponseParams " << i;
-        Teuchos::ParameterList& plist = params->sublist("Response Functions").sublist(ss.str());
-        surfaceSideName = plist.get<std::string>("Surface Side Name");
-
-        break;
-      }
-    }
-
-    if (surfaceSideName!="")
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (sliding==false, std::logic_error, "Error! The surface mismatch response requires sliding.\n");
-
-      TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.sideSetMeshSpecs.find(surfaceSideName)==meshSpecs.sideSetMeshSpecs.end(), std::logic_error,
-                                  "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-
-      RCP<Albany::MeshSpecsStruct> surfaceMeshSpecs = meshSpecs.sideSetMeshSpecs.find(surfaceSideName)->second[0];
-      RCP <Intrepid::Cubature<RealType> > surfaceCubature = cubFactory.create(*sideType, surfaceMeshSpecs->cubatureDegree);
-
-      //---- Compute side basis functions
-      ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, surfaceCubature, surfaceSideName);
-      fm0.template registerEvaluator<EvalT> (ev);
-
-      // Load surface velocity
-      entity= Albany::StateStruct::NodalDataToElemNode;
-      stateName = "surface_velocity";
-      p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
-      p->set<std::string>("Field Name", "Observed Surface Velocity");
-      ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      //---- Restrict surface velocity from cell-based to cell-side-based
-      ev = evalUtils.constructDOFVecCellToSideEvaluator("Observed Surface Velocity",surfaceSideName,cellType);
-      fm0.template registerEvaluator<EvalT> (ev);
-
-      //---- Interpolate surface velocity on QP on side
-      ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      // Load surface velocity rms
-      entity= Albany::StateStruct::NodalDataToElemNode;
-      stateName = "surface_velocity_rms";
-      p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
-      p->set<std::string>("Field Name", "Observed Surface Velocity RMS");
-      ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      //---- Restrict surface velocity rms from cell-based to cell-side-based
-      ev = evalUtils.constructDOFVecCellToSideEvaluator("Observed Surface Velocity RMS",surfaceSideName,cellType);
-      fm0.template registerEvaluator<EvalT> (ev);
-
-      //---- Interpolate surface velocity rms on QP on side
-      ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
-      ev = evalUtils.constructDOFVecCellToSideEvaluator("Velocity",surfaceSideName,cellType,"Surface Velocity");
-      fm0.template registerEvaluator<EvalT> (ev);
-
-      //---- Interpolate velocity (the solution) on QP on side
-      ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      //---- Build beta gradient on QP on basal side
-      p = rcp(new ParameterList("Basal Friction Coefficient Gradient"));
-
-      // Input
-      p->set<std::string>("Given Beta Variable Name", "Beta");
-      p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
-      p->set<std::string>("Side Set Name", basalSideName);
-      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-      p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
-
-      // Output
-      p->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
-
-      ev = rcp(new FELIX::BasalFrictionCoefficientGradient<EvalT,PHAL::AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-
     // ----------------------- Responses --------------------- //
     RCP<ParameterList> paramList = rcp(new ParameterList("Param List"));
     RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
@@ -709,9 +700,10 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","Observed Surface Velocity");
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","Observed Surface Velocity RMS");
-    paramList->set<std::string>("BF Name","BF " + basalSideName);
-    paramList->set<std::string>("Weighted Measure Name","Weighted Measure " + basalSideName);
-    paramList->set<std::string>("Inverse Metric Name","Inv Metric " + basalSideName);
+    paramList->set<std::string>("BF Basal Name","BF " + surfaceSideName);
+    paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
+    paramList->set<std::string>("Weighted Measure Surface Name","Weighted Measure " + surfaceSideName);
+    paramList->set<std::string>("Inverse Metric Surface Name","Inv Metric " + surfaceSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
 
