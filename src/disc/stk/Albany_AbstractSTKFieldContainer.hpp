@@ -75,6 +75,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
     virtual void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) = 0;
 
+    const VectorFieldType* const getCoordinatesField() const { return coordinates_field; }
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     IntScalarFieldType* getRefineField(){ return refine_field; }

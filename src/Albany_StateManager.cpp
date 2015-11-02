@@ -557,7 +557,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
       sis = Teuchos::rcp(new StateInfoStruct());
       sis->createNodalDataBase();
     }
-    doSetStateArrays (it.second,sis);
+    doSetStateArrays (it.second,sis); // If sis was null, this should basically do nothing
   }
 }
 
