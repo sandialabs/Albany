@@ -14,6 +14,7 @@
 
 // traits Base Class
 #ifdef ALBANY_USE_PUBLICTRILINOS
+#include "Albany_PublicTrilinosTrickery.hpp"
 #include "Phalanx_Traits_Base.hpp"
 #else
 #include "Phalanx_Traits.hpp"

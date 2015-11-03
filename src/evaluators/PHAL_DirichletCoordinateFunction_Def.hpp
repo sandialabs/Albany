@@ -582,9 +582,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // Specialization: Multi-point Tangent
 // **********************************************************************
 template<typename Traits/*, typename cfunc_traits*/>
-DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits,  cfunc_traits>::
+DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPTangent, Traits,  cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
 template<typename Traits/*, typename cfunc_traits*/>

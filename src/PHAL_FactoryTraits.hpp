@@ -39,12 +39,17 @@
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
 
-#include "boost/mpl/vector/vector50.hpp"
+#ifndef ALBANY_USE_PUBLICTRILINOS
 #include "Sacado_mpl_placeholders.hpp"
-
 // \cond  Have doxygern ignore this namespace
 using namespace Sacado::mpl::placeholders;
 // \endcond
+#else
+#include "Albany_PublicTrilinosTrickery.hpp"
+// \cond  Have doxygern ignore this namespace
+using namespace boost::mpl::placeholders;
+// \endcond
+#endif
 
 namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
@@ -74,11 +79,11 @@ namespace PHAL {
 
 #ifdef ALBANY_USE_PUBLICTRILINOS
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-    typedef Sacado::mpl::vector11<
+    typedef boost::mpl::vector11<
 #elif defined(ALBANY_LCM)
-    typedef Sacado::mpl::vector9<
+    typedef boost::mpl::vector9<
 #else
-    typedef Sacado::mpl::vector5<
+    typedef boost::mpl::vector5<
 #endif
 #else
     typedef Sacado::mpl::vector<
@@ -124,9 +129,9 @@ namespace PHAL {
 
 #ifdef ALBANY_USE_PUBLICTRILINOS
 #if defined(ALBANY_LCM)
-    typedef Sacado::mpl::vector9<
+    typedef boost::mpl::vector9<
 #else
-    typedef Sacado::mpl::vector8<
+    typedef boost::mpl::vector8<
 #endif
 #else
     typedef Sacado::mpl::vector<
