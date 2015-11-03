@@ -7,7 +7,8 @@
 ##   INCLUDE(CTest)
 
 set(CTEST_PROJECT_NAME "Albany")
-set(CTEST_NIGHTLY_START_TIME "00:00:00 MDT")
+# Run test at/after 21:00 (9:00PM MDT --> 3:00 UTC, 8:00PM MST --> 3:00 UTC)
+set(CTEST_NIGHTLY_START_TIME "03:00:00 UTC")
 
 set(CTEST_DROP_SITE "compton.sandia.gov")
 set(CTEST_DROP_LOCATION "nightly/Albany")
