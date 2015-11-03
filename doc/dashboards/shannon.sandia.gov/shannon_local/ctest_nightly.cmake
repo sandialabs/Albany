@@ -370,7 +370,7 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
-  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=OFF"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
   "-DTrilinos_ENABLE_Teko:BOOL=OFF"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
 # Comment these out to disable stk
