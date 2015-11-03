@@ -40,17 +40,17 @@
 #include "PHAL_DirichletField.hpp"
 
 #include "boost/mpl/vector/vector50.hpp"
-#include "boost/mpl/placeholders.hpp"
+#include "Sacado_mpl_placeholders.hpp"
 
 // \cond  Have doxygern ignore this namespace
-using namespace boost::mpl::placeholders;
+using namespace Sacado::mpl::placeholders;
 // \endcond
 
 namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
 
     Preconditions:
-    - You must provide a boost::mpl::vector named EvaluatorTypes that contain
+    - You must provide a Sacado::mpl::vector named EvaluatorTypes that contain
     all Evaluator objects that you wish the factory to build.  Do not confuse
     evaluator types (concrete instances of evaluator objects) with evaluation
     types (types of evaluations to perform, i.e., Residual, Jacobian).
@@ -73,11 +73,11 @@ namespace PHAL {
     static const int id_pd_neigh_fit_bc                = 10; // Only for LCM-Peridigm coupling
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-    typedef boost::mpl::vector11<
+    typedef Sacado::mpl::vector11<
 #elif defined(ALBANY_LCM)
-    typedef boost::mpl::vector9<
+    typedef Sacado::mpl::vector9<
 #else
-    typedef boost::mpl::vector5<
+    typedef Sacado::mpl::vector5<
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
@@ -119,9 +119,9 @@ namespace PHAL {
 
 
 #if defined(ALBANY_LCM)
-    typedef boost::mpl::vector9<
+    typedef Sacado::mpl::vector9<
 #else
-    typedef boost::mpl::vector8<
+    typedef Sacado::mpl::vector8<
 #endif
        PHAL::Neumann<_,Traits>,                   //  0
        PHAL::NeumannAggregator<_,Traits>,         //  1

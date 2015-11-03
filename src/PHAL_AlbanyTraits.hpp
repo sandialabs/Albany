@@ -100,24 +100,24 @@ namespace PHAL {
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 SGResidual, SGJacobian, SGTangent,
                                 MPResidual, MPJacobian, MPTangent> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                SGResidual, SGJacobian, SGTangent,
                                MPResidual, MPJacobian, MPTangent> BEvalTypes;
 #else
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 SGResidual, SGJacobian, SGTangent> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                SGResidual, SGJacobian, SGTangent> BEvalTypes;
 #endif
 #else
 #ifdef ALBANY_ENSEMBLE 
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 MPResidual, MPJacobian, MPTangent> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                MPResidual, MPJacobian, MPTangent> BEvalTypes;
 #else
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
 #endif
 #endif
 
@@ -167,46 +167,46 @@ namespace PHAL {
     // Maps the key EvalType a vector of DataTypes
 #ifdef ALBANY_SG
 #ifdef ALBANY_ENSEMBLE 
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
-      boost::mpl::pair<SGResidual, SGResidualDataTypes>,
-      boost::mpl::pair<SGJacobian, SGJacobianDataTypes>,
-      boost::mpl::pair<SGTangent,  SGTangentDataTypes>,
-      boost::mpl::pair<MPResidual, MPResidualDataTypes>,
-      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>,
-      boost::mpl::pair<MPTangent,  MPTangentDataTypes >
+    typedef Sacado::mpl::map<
+      Sacado::mpl::pair<Residual, ResidualDataTypes>,
+      Sacado::mpl::pair<Jacobian, JacobianDataTypes>,
+      Sacado::mpl::pair<Tangent,  TangentDataTypes>,
+      Sacado::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
+      Sacado::mpl::pair<SGResidual, SGResidualDataTypes>,
+      Sacado::mpl::pair<SGJacobian, SGJacobianDataTypes>,
+      Sacado::mpl::pair<SGTangent,  SGTangentDataTypes>,
+      Sacado::mpl::pair<MPResidual, MPResidualDataTypes>,
+      Sacado::mpl::pair<MPJacobian, MPJacobianDataTypes>,
+      Sacado::mpl::pair<MPTangent,  MPTangentDataTypes >
     >::type EvalToDataMap;
 #else
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
-      boost::mpl::pair<SGResidual, SGResidualDataTypes>,
-      boost::mpl::pair<SGJacobian, SGJacobianDataTypes>,
-      boost::mpl::pair<SGTangent,  MPTangentDataTypes >
+    typedef Sacado::mpl::map<
+      Sacado::mpl::pair<Residual, ResidualDataTypes>,
+      Sacado::mpl::pair<Jacobian, JacobianDataTypes>,
+      Sacado::mpl::pair<Tangent,  TangentDataTypes>,
+      Sacado::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
+      Sacado::mpl::pair<SGResidual, SGResidualDataTypes>,
+      Sacado::mpl::pair<SGJacobian, SGJacobianDataTypes>,
+      Sacado::mpl::pair<SGTangent,  MPTangentDataTypes >
     >::type EvalToDataMap;
 #endif
 #else
 #ifdef ALBANY_ENSEMBLE 
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
-      boost::mpl::pair<MPResidual, MPResidualDataTypes>,
-      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>,
-      boost::mpl::pair<MPTangent,  MPTangentDataTypes >
+    typedef Sacado::mpl::map<
+      Sacado::mpl::pair<Residual, ResidualDataTypes>,
+      Sacado::mpl::pair<Jacobian, JacobianDataTypes>,
+      Sacado::mpl::pair<Tangent,  TangentDataTypes>,
+      Sacado::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
+      Sacado::mpl::pair<MPResidual, MPResidualDataTypes>,
+      Sacado::mpl::pair<MPJacobian, MPJacobianDataTypes>,
+      Sacado::mpl::pair<MPTangent,  MPTangentDataTypes >
     >::type EvalToDataMap;
 #else
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>
+    typedef Sacado::mpl::map<
+      Sacado::mpl::pair<Residual, ResidualDataTypes>,
+      Sacado::mpl::pair<Jacobian, JacobianDataTypes>,
+      Sacado::mpl::pair<Tangent,  TangentDataTypes>,
+      Sacado::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>
     >::type EvalToDataMap;
 #endif
 #endif

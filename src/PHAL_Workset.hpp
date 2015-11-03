@@ -267,7 +267,7 @@ struct Workset {
   template <typename T>
   struct ApplyEvalT {
     template <typename EvalT> struct apply {
-      typedef typename boost::mpl::apply<T, typename EvalT::ScalarT>::type type;
+      typedef typename Sacado::mpl::apply<T, typename EvalT::ScalarT>::type type;
     };
   };
 
