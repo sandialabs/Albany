@@ -87,7 +87,7 @@ buildEvaluators(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   std::cout << __FILE__<<":"<<__LINE__<<std::endl;
 
-  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   std::cout << __FILE__<<":"<<__LINE__<<std::endl;
 
   return *op.tags;

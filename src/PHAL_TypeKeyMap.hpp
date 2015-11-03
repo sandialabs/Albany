@@ -26,7 +26,7 @@ namespace PHAL {
   //! Container for storing objects indexed by types
   /*!
    * This class provides a generic container class for storing objects
-   * indexed by a type.  It's single template parameter should be an mpl::map
+   * indexed by a type.  Its single template parameter should be an mpl::map
    * mapping the type index to the type of the object, which can then be 
    * retrieved from the container.
    *

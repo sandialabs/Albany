@@ -113,7 +113,7 @@ buildEvaluators(
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<StokesFO> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
@@ -200,7 +200,7 @@ void FELIX::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::Mes
 
    std::vector< Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > > extra_evaluators;
    ConstructBasalEvaluatorOp constructor(*this,extra_evaluators);
-   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(constructor);
+   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(constructor);
 
    nfm.resize(1); // FELIX problem only has one element block
 

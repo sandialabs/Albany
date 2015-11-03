@@ -79,7 +79,7 @@ buildEvaluators(
 
   ConstructEvaluatorsOp<LaplaceBeltramiProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 

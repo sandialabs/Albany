@@ -72,12 +72,16 @@ namespace PHAL {
     static const int id_schwarz_bc                     =  9; // Only for LCM probs
     static const int id_pd_neigh_fit_bc                = 10; // Only for LCM-Peridigm coupling
 
+#ifdef ALBANY_USE_PUBLICTRILINOS
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
     typedef Sacado::mpl::vector11<
 #elif defined(ALBANY_LCM)
     typedef Sacado::mpl::vector9<
 #else
     typedef Sacado::mpl::vector5<
+#endif
+#else
+    typedef Sacado::mpl::vector<
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
@@ -118,10 +122,14 @@ namespace PHAL {
     static const int id_timedep_bc                =  8; // Only for LCM probs
 
 
+#ifdef ALBANY_USE_PUBLICTRILINOS
 #if defined(ALBANY_LCM)
     typedef Sacado::mpl::vector9<
 #else
     typedef Sacado::mpl::vector8<
+#endif
+#else
+    typedef Sacado::mpl::vector<
 #endif
        PHAL::Neumann<_,Traits>,                   //  0
        PHAL::NeumannAggregator<_,Traits>,         //  1

@@ -76,7 +76,7 @@ FELIX::Hydrology::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<Hydrology> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
 
   return *op.tags;
 }

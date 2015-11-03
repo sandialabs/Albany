@@ -110,7 +110,7 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       stateMgr,
       fmchoice,
       responseList);
-  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 //------------------------------------------------------------------------------
