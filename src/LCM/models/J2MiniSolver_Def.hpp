@@ -121,10 +121,10 @@ public:
         sat_mod(sat_mod_),
         sat_exp(sat_exp_),
         eqps_old(eqps_old_),
-        K(Sacado::Value<S>::eval(K_)),
-        smag(Sacado::Value<S>::eval(smag_)),
-        mubar(Sacado::Value<S>::eval(mubar_)),
-        Y(Sacado::Value<S>::eval(Y_))
+        K(K_),
+        smag(smag_),
+        mubar(mubar_),
+        Y(Y_)
   {
   }
 
@@ -148,6 +148,8 @@ public:
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x)
   {
+    using PT = typename Sacado::Promote<S, T>::type;
+
     Intrepid::Index const
     dimension = x.get_dimension();
 
@@ -159,18 +161,16 @@ public:
     T const &
     X = x(0);
 
-    T &
-    R = r(0);
-
     T
     alpha = eqps_old + sq23 * X;
 
-    T
+    PT
     H = K * alpha + sat_mod * (1.0 - std::exp(-sat_exp * alpha));
 
+    PT
     R = smag - (2.0 * mubar * X + sq23 * (Y + H));
 
-    save(alpha, H);
+    //save(alpha, H);
 
     return r;
   }
@@ -202,24 +202,24 @@ public:
   RealType const
   eqps_old{0.0};
 
-  // RealType inputs (fixed non-AD type)
-  RealType const &
+  // Inputs
+  S const &
   K;
 
-  RealType const &
+  S const &
   smag;
 
-  RealType const &
+  S const &
   mubar;
 
-  RealType const &
+  S const &
   Y;
 
-  // RealType outputs (fixed non-AD type)
-  RealType
+  // Outputs
+  S
   alpha{0.0};
 
-  RealType
+  S
   H{0.0};
 };
 
