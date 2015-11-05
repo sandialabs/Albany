@@ -19,6 +19,8 @@
 //! Code Base for Quantum Device Simulation Tools LDRD
 namespace Albany {
 
+class StateManager;
+
   /*!
    * \brief Abstract interface for representing a 1-D finite element
    * problem.
@@ -30,13 +32,13 @@ namespace Albany {
     public:
 
     ResponseUtilities(Teuchos::RCP<Albany::Layouts> dl);
-  
+
     //! Utility for parsing response requests and creating response field manager
     Teuchos::RCP<const PHX::FieldTag>
     constructResponses(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      Teuchos::ParameterList& responseList, 
-      Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem, 
+      Teuchos::ParameterList& responseList,
+      Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem,
       Albany::StateManager& stateMgr,
       // Optionally provide the MeshSpecsStruct. This is relevant only if the
       // response function needs to know whether there are separate field
@@ -49,12 +51,12 @@ namespace Albany {
     Teuchos::RCP<const PHX::FieldTag>
     constructResponses(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      Teuchos::ParameterList& responseList, 
+      Teuchos::ParameterList& responseList,
       Albany::StateManager& stateMgr) {
       return constructResponses(fm0, responseList, Teuchos::null, stateMgr);
     }
- 
-    //! Accessor 
+
+    //! Accessor
     Teuchos::RCP<Albany::Layouts> get_dl() { return dl;};
 
    private:

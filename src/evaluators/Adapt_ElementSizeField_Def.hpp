@@ -4,11 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra 
+//IK, 9/12/14: no Epetra
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Adapt_NodalDataVector.hpp"
+#include "Albany_StateManager.hpp"
 
 template<typename T>
 T Sqr(T num)
@@ -19,7 +20,7 @@ T Sqr(T num)
 template<typename EvalT, typename Traits>
 Adapt::ElementSizeFieldBase<EvalT, Traits>::
 ElementSizeFieldBase(Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl) :
+      const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector),
   coordVec_vertices(p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
   qp_weights("Weights", dl->qp_scalar)
@@ -360,7 +361,7 @@ Teuchos::RCP<const Teuchos::ParameterList>
 Adapt::ElementSizeFieldBase<EvalT,Traits>::getValidSizeFieldParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid ElementSizeField Params"));;
+      rcp(new Teuchos::ParameterList("Valid ElementSizeField Params"));;
 
   validPL->set<std::string>("Name", "", "Name of size field Evaluator");
   validPL->set<std::string>("Size Field Name", "", "Size field prefix");

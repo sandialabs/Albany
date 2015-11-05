@@ -19,7 +19,6 @@
 #include "Epetra_Import.h"
 #endif
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_StateManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include <Intrepid_FieldContainer.hpp>
@@ -38,12 +37,20 @@
 typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParamLib;
 typedef Albany::DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParam;
 
+#if defined(ALBANY_EPETRA)
+namespace Albany
+{
+class EigendataStruct;
+}
+#endif
+
 #if defined(ALBANY_LCM)
 // Forward declaration needed for Schwarz coupling
 namespace Albany {
 class Application;
 } // namespace Albany
 #endif
+
 
 namespace PHAL {
 

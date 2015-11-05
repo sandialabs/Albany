@@ -7,11 +7,12 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Adapt_NodalDataVector.hpp"
+#include "Albany_StateManager.hpp"
 
 template<typename EvalT, typename Traits>
 PHAL::SaveNodalFieldBase<EvalT, Traits>::
 SaveNodalFieldBase(Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl)
+      const Teuchos::RCP<Albany::Layouts>& dl)
 {
 
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =

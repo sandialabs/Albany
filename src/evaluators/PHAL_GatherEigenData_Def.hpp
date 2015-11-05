@@ -11,6 +11,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Albany_EigendataInfoStruct.hpp"
 
 namespace PHAL {
 
@@ -19,10 +20,10 @@ template<typename EvalT, typename Traits>
 GatherEigenDataBase<EvalT,Traits>::
 GatherEigenDataBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl)
-{ 
+{
   char buf[200];
-  
-  std::string eigenvector_name_root = p.get<std::string>("Eigenvector name root"); 
+
+  std::string eigenvector_name_root = p.get<std::string>("Eigenvector name root");
   std::string eigenvalue_name_root = p.get<std::string>("Eigenvalue name root");
 
   nEigenvectors = p.get<int>("Number of eigenvectors");
@@ -58,7 +59,7 @@ GatherEigenDataBase(const Teuchos::ParameterList& p,
     this->addEvaluatedField(eigenvalue_Im[k]);
 
   }
-  
+
   this->setName("Gather EigenData");
 
 }
@@ -82,7 +83,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void GatherEigenDataBase<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
   if(nEigenvectors == 0) return;
 
   if(workset.eigenDataPtr != Teuchos::null) {
@@ -106,17 +107,17 @@ evaluateFields(typename Traits::EvalData workset)
 
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-	     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-    
-	     for(std::size_t node =0; node < this->numNodes; ++node) {
+       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
+
+       for(std::size_t node =0; node < this->numNodes; ++node) {
                for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-	         int offset_eq = nodeID[node][dof];
-	         for (std::size_t k = 0; k < numVecsToGather; ++k) {
-	           (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
-	           (this->eigenvector_Im[k])(cell,node,dof) = (*(e_i(k)))[offset_eq];
-	         }
+           int offset_eq = nodeID[node][dof];
+           for (std::size_t k = 0; k < numVecsToGather; ++k) {
+             (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
+             (this->eigenvector_Im[k])(cell,node,dof) = (*(e_i(k)))[offset_eq];
+           }
                }
-     	     }
+           }
            }
         } else { // Only real parts of eigenvectors is given -- "gather" zeros into imaginary fields
 
@@ -132,18 +133,18 @@ evaluateFields(typename Traits::EvalData workset)
 
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-     	     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-    
-	     for(std::size_t node =0; node < this->numNodes; ++node) {
-               for(std::size_t dof = 0; dof < dims[2]; ++dof) {
-	         int offset_eq = nodeID[node][dof];
+           const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
 
-  	         for (std::size_t k = 0; k < numVecsToGather; ++k) {
-	           (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
-	           (this->eigenvector_Im[k])(cell,node,dof) = 0.0;
-	         }
+       for(std::size_t node =0; node < this->numNodes; ++node) {
+               for(std::size_t dof = 0; dof < dims[2]; ++dof) {
+           int offset_eq = nodeID[node][dof];
+
+             for (std::size_t k = 0; k < numVecsToGather; ++k) {
+             (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
+             (this->eigenvector_Im[k])(cell,node,dof) = 0.0;
+           }
                }
-  	     }
+         }
            }
         }
      }
@@ -193,7 +194,7 @@ GatherEigenData(const Teuchos::ParameterList& p,
 template< typename Traits>
 void GatherEigenData<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
 
 /*
   if(nEigenvectors == 0) return;
@@ -218,14 +219,14 @@ evaluateFields(typename Traits::EvalData workset)
              (this->eigenvalue_Re[k])(0) = v_r[k];
              (this->eigenvalue_Im[k])(0) = v_i[k];
            }
-     
+
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-   	    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
- 	    for(std::size_t node =0; node < this->numNodes; ++node) {
+        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
+      for(std::size_t node =0; node < this->numNodes; ++node) {
                for(std::size_t dof = 0; dof < dims[2]; ++dof) {
- 	        int offset_eq = nodeID[node][dof];
- 	        for (std::size_t k = 0; k < numVecsToGather; ++k) {
+          int offset_eq = nodeID[node][dof];
+          for (std::size_t k = 0; k < numVecsToGather; ++k) {
                    valptr = &(this->eigenvector_Re[k](cell,node,dof));
                    *valptr = FadType(2, (*(e_r(k)))[offset_eq]);
                    valptr = &(this->eigenvector_Im[k](cell,node,dof));
@@ -244,14 +245,14 @@ evaluateFields(typename Traits::EvalData workset)
              (this->eigenvalue_Re[k])(0) = v_r[k];
              (this->eigenvalue_Im[k])(0) = 0.;
            }
-     
+
            //Gather real and imaginary eigenvectors from workset Eigendata info structure
            for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-   	    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
- 	    for(std::size_t node =0; node < this->numNodes; ++node) {
+        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
+      for(std::size_t node =0; node < this->numNodes; ++node) {
                for(std::size_t dof = 0; dof < dims[2]; ++dof) {
- 	        int offset_eq = nodeID[node][dof];
- 	        for (std::size_t k = 0; k < numVecsToGather; ++k) {
+          int offset_eq = nodeID[node][dof];
+          for (std::size_t k = 0; k < numVecsToGather; ++k) {
                    valptr = &(this->eigenvector_Re[k](cell,node,dof));
                    *valptr = FadType(2, (*(e_r(k)))[offset_eq]);
                    valptr = &(this->eigenvector_Im[k](cell,node,dof));
