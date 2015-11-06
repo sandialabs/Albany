@@ -91,4 +91,10 @@ double computeAMPEnergyIntegral(apf::Mesh* m)
   return integrator.energy;
 }
 
+void debugAMPMesh(apf::Mesh* m, char const* prefix)
+{
+  std::cout << "Energy integral: " << computeAMPEnergyIntegral(m) << '\n';
+  apf::writeVtkFiles(prefix, m);
+}
+
 }

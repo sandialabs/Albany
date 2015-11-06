@@ -5,6 +5,7 @@
 #include <SimField.h>
 #include <apfSIM.h>
 #include <spr.h>
+#include <EnergyIntegral.hpp>
 
 namespace AAdapt {
 
@@ -111,6 +112,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   sprintf(simname, "preadapt_res_%d.fld", callcount);
   Field_write(sim_res_fld, simname, 0, 0, 0);
 #endif
+  Albany::debugAMPMesh(apf_m, "before");
   /* run the adapter */
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
@@ -127,8 +129,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
 
   /* run APF verification on the resulting mesh */
   apf_m->verify();
-  /* write the adapted mesh to file */
-  apf::writeVtkFiles("adapted", apf_m);
+  Albany::debugAMPMesh(apf_m, "after");
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data);
   /* see the comment in Albany_APFDiscretization.cpp */

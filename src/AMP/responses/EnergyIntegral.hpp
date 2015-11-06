@@ -14,6 +14,7 @@ namespace apf {
 namespace Albany {
 
 double computeAMPEnergyIntegral(apf::Mesh* m);
+void debugAMPMesh(apf::Mesh* m, char const* prefix);
 
 }
 
