@@ -119,7 +119,7 @@ buildEvaluators(
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<PoissonProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
@@ -153,7 +153,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
 
    map<string, RCP<ParameterList> > evaluators_to_build;
    RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
-   vector<string> dbcs;
+   RCP<vector<string> > dbcs = rcp(new vector<string>);
 
    // Check for all possible standard BCs (every dof on every nodeset) to see which is set
    for (std::size_t i=0; i<nodeSetIDs.size(); i++) {
@@ -198,7 +198,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
          std::stringstream ess; ess << "Evaluator for " << ss;
          evaluators_to_build[ess.str()] = p;
 
-         dbcs.push_back(ss);
+         dbcs->push_back(ss);
        }
      }
    }
@@ -210,7 +210,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
       int type = DirichletFactoryTraits<AlbanyTraits>::id_dirichlet_aggregator;
       p->set<int>("Type", type);
 
-      p->set<vector<string>* >("DBC Names", &dbcs);
+      p->set<RCP<vector<string> > >("DBC Names", dbcs);
       p->set< RCP<DataLayout> >("Data Layout", dummy);
       p->set<string>("DBC Aggregator Name", allDBC);
       evaluators_to_build[allDBC] = p;

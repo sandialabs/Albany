@@ -66,11 +66,20 @@ class Optimizer_OC : public Optimizer {
 
   double* p;
   double* p_last;
+  double* dvdp;
+
   double f;
   double f_last;
   double* dfdp;
-  double* dvdp;
+
+  double g;
+  double g_last;
+  double* dgdp;
+
+
   int numOptDofs;
+
+  std::string constraintGradient;
 
   double _volConvTol;
   double _volAccpTol;
@@ -79,7 +88,10 @@ class Optimizer_OC : public Optimizer {
   double _moveLimit;
   double _stabExponent;
   double _volConstraint;
+  double _minVolume;
+  double _maxVolume;
   double _optVolume;
+  bool   _useNewtonSearch;
 
 };
 

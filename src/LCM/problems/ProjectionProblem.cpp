@@ -174,7 +174,7 @@ Albany::ProjectionProblem::buildEvaluators(
       field_manager_choice,
       response_list);
 
-  boost::mpl::for_each<AlbanyTraits::BEvalTypes>(construct_evaluator);
+  Sacado::mpl::for_each<AlbanyTraits::BEvalTypes> fe(construct_evaluator);
 
   return *construct_evaluator.tags;
 }

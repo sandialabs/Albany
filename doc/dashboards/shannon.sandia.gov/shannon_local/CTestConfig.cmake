@@ -7,8 +7,8 @@
 ##   INCLUDE(CTest)
 
 set(CTEST_PROJECT_NAME "Albany")
-# Roughly midnite - 0700 UTC
-set(CTEST_NIGHTLY_START_TIME "04:00:00 UTC")
+# Run test at/after 20:00 (8:00PM MDT --> 2:00 UTC, 7:00PM MST --> 2:00 UTC)
+set(CTEST_NIGHTLY_START_TIME "02:00:00 UTC")
 
 #set(CTEST_DROP_METHOD "http")
 #set(CTEST_DROP_SITE "cdash.sandia.gov")

@@ -16,6 +16,8 @@
 
 namespace LCM
 {
+class IPtoNodalFieldManager;
+
 /// 
 /// \brief Evaltuator to compute a nodal stress field
 ///
@@ -85,6 +87,7 @@ protected:
   Teuchos::RCP<PHX::Tag<ScalarT>> field_tag_;
   Albany::StateManager* p_state_mgr_;
 
+  Teuchos::RCP<IPtoNodalFieldManager> mgr_;
 };
 
 template<typename EvalT, typename Traits>
@@ -112,7 +115,6 @@ public:
 // **************************************************************
 // Residual 
 // **************************************************************
-class IPtoNodalFieldManager;
 
 template<typename Traits>
 class IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>
@@ -124,8 +126,6 @@ public:
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
-private:
-  Teuchos::RCP<IPtoNodalFieldManager> mgr_;
 };
 }
 

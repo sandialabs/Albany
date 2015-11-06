@@ -30,9 +30,9 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="uniform_16_quad9.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_16_quad9.g"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -51,10 +51,6 @@
       <Parameter name="Parameter Vector Index" type="int" value="0"/>
       <Parameter name="Response Vector Index" type="int" value="0"/>
       <Parameter name="Use Multi-Point" type="bool" value="false"/>
-      <ParameterList name="Multi-Point">
-        <Parameter name="Block Size" type="int" value="32"/>
-        <Parameter name="Number of Spatial Processors" type="int" value="-1"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Rythmos Solver">
@@ -70,7 +66,10 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="27000"/>
+           <Parameter name="Final Time" type="double" value="270"/>
+           <!-- Originally final time was 2700; reduced it for nightly tests (IK, 10/8/14) -->
+           <!--Parameter name="Final Time" type="double" value="2700"/-->
+           <!-- change to 12*3600*24 to get full 12 days -->
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
 	     <ParameterList name="Default Integrator">
@@ -101,7 +100,7 @@
                  value="Simple Integration Control Strategy"/>
            <ParameterList name="Simple Integration Control Strategy">
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
-             <Parameter name="Fixed dt" type="double" value="9"/>
+             <Parameter name="Fixed dt" type="double" value="90"/>
              <!--Parameter name="Number of Time Steps" type="int" value="10"/-->
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>

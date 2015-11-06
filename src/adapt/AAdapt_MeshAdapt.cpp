@@ -126,29 +126,33 @@ void AAdapt::MeshAdapt::initRcMgr () {
 
 AAdapt::MeshAdapt::~MeshAdapt() {}
 
-bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iter)
+bool AAdapt::MeshAdapt::queryAdaptationCriteria(int iteration)
 {
-  adapt_params_->set<int>("LastIter", iter);
-
-  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "None");
-
-  if (strategy.compare("Continuous") == 0)
-    return iter > 1;
-
-  if (strategy.compare("PLDriven") == 0){
+  adapt_params_->set<int>("LastIter", iteration);
+  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "Step Number");
+  if (strategy == "None")
+    return false;
+  if (strategy == "Continuous")
+    return iteration > 1;
+  if (strategy == "Step Number") {
+    TEUCHOS_TEST_FOR_EXCEPTION(!adapt_params_->isParameter("Remesh Step Number"),
+        std::logic_error,
+        "Remesh Strategy " << strategy << " but no Remesh Step Number" << '\n');
+    Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+    for(int i = 0; i < remesh_iter.size(); i++)
+      if(iteration == remesh_iter[i])
+        return true;
+    return false;
+  }
+  if (strategy == "PLDriven") {
     if(adapt_params_->get<bool>("AdaptNow", false)){
-
       adapt_params_->set<bool>("AdaptNow", false);
-      return iter > 1;
-
+      return iteration > 1;
     }
     return false;
   }
-
-  Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
-  for (int i = 0; i < remesh_iter.size(); i++)
-    if (iter == remesh_iter[i])
-      return true;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "Unknown Remesh Strategy " << strategy << '\n');
   return false;
 }
 
@@ -189,7 +193,8 @@ void AAdapt::MeshAdapt::initAdapt()
 
 void AAdapt::MeshAdapt::beforeAdapt()
 {
-  if (should_transfer_ip_data) pumi_discretization->attachQPData();
+  if (should_transfer_ip_data)
+    pumi_discretization->attachQPData();
   szField->copyInputFields();
 }
 
@@ -360,7 +365,7 @@ bool AAdapt::MeshAdapt::adaptMesh(
 
 #ifdef AMBDEBUG
   al::anlzCoords(pumi_discretization);
-  //al::writeMesh(pumi_discretization);
+  al::writeMesh(pumi_discretization);
 #endif
   return success;
 }
@@ -384,7 +389,7 @@ adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
         Teuchos::Array<double> data(n * ncol);
         // non-interleaved -> interleaved ordering.
         //rcu-todo Figure out these ordering details. What sets the ordering
-        // requirements? Can we changed by field at runtime?
+        // requirements? Can we change by field at runtime?
         for (int c = 0; c < ncol; ++c) {
           Teuchos::ArrayRCP<RealType>
             v = mv->getVectorNonConst(c)->getDataNonConst();
@@ -616,8 +621,10 @@ void anlzCoords (
     soln = pumi_disc->getSolutionFieldT(true);
   const Teuchos::ArrayRCP<const ST> soln_data = soln->get1dView();
   const Teuchos::ArrayRCP<double> x(coords.size());
-  for (std::size_t i = 0; i < coords.size(); ++i)
-    x[i] = coords[i] + soln_data[i];
+  const int spdim = pumi_disc->getNumDim(), neq = pumi_disc->getNumEq();
+  for (std::size_t i = 0, j = 0; i < coords.size(); i += spdim, j += neq)
+    for (int k = 0; k < spdim; ++k)
+      x[i+k] = coords[i+k] + soln_data[j+k];
   // Display min and max extent in each axis-aligned dimension.
   dispExtremum<mymin>(x, dim, "min", Teuchos::REDUCE_MIN);
   dispExtremum<mymax>(x, dim, "max", Teuchos::REDUCE_MAX);
@@ -626,6 +633,7 @@ void anlzCoords (
 void writeMesh (
   const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
 {
+  return;
   static int ncalls = 0;
   std::stringstream ss;
   ss << "mesh_" << ncalls << ".vtk";
@@ -672,8 +680,10 @@ void updateCoordinates (
 {
   // Albany::PUMIDiscretization uses interleaved DOF and coordinates, so we
   // can sum coords and soln_data straightforwardly.
-  for (std::size_t i = 0; i < cs.coords.size(); ++i)
-    x[i] = cs.coords[i] + cs.soln_ol_data[i];
+  const int spdim = pumi_disc->getNumDim(), neq = pumi_disc->getNumEq();
+  for (std::size_t i = 0, j = 0; i < cs.coords.size(); i += spdim, j += neq)
+    for (int k = 0; k < spdim; ++k)
+      x[i+k] = cs.coords[i+k] + cs.soln_ol_data[j+k];
   pumi_disc->setCoordinates(x);
 }
 
@@ -730,6 +740,9 @@ double findAlpha (
   for (int it = 0 ;; ) {
     cs.set_alpha(alpha);
     updateCoordinates(pumi_disc, cs, x);
+#ifdef AMBDEBUG
+    if (it == 0) al::writeMesh(pumi_disc);
+#endif
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(

@@ -15,6 +15,6 @@
 # This file should be copied to the top "boost" directory and executed.
 #
  
-./bootstrap.sh --with-libraries=signals,regex,system,filesystem,serialization  --prefix=.
+./bootstrap.sh --with-libraries=signals,regex,system,filesystem,serialization,program_options  --prefix=.
 
 ./bjam install

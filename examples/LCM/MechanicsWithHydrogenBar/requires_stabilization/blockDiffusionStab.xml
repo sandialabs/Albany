@@ -46,7 +46,6 @@
       <!-- <Parameter name="DBC on NS nodelist_1 for DOF C" type="double" value="5.6e-2"/> -->
       <!-- <Parameter name="DBC on NS nodelist_2 for DOF C" type="double" value="1.6e-2"/> -->
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF C" type="double" value="3.87e-5"/>
       <!-- <Parameter name="DBC on NS nodelist_5 for DOF Z" type="double" value="0.0"/> -->

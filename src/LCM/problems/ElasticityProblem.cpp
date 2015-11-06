@@ -90,7 +90,7 @@ buildEvaluators(
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<ElasticityProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
@@ -186,6 +186,7 @@ Albany::ElasticityProblem::getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidElasticityProblemParams");
 
+  validPL->sublist("Density", false, "");
   validPL->sublist("Elastic Modulus", false, "");
   validPL->sublist("Poissons Ratio", false, "");
   validPL->sublist("Material Model", false, "");

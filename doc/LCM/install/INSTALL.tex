@@ -12,7 +12,7 @@
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
 \author{The Albany/LCM team\thanks{Original version by Juli\'an R\'imoli}}
-\title{Instructions for Installing Albany/LCM and Trilinos on Fedora 21}
+\title{Instructions for Installing Albany/LCM and Trilinos on Fedora 21/22}
 \begin{document}
 
 \maketitle
@@ -63,6 +63,7 @@ cmake
 gcc-c++
 git
 hwloc-libs
+hwloc-devel
 \end{verbatim}
 
 For example, to install the first package you should type in Fedora 22
@@ -157,8 +158,7 @@ just change the email addresses for tests reports at the end of
 read only:
 \begin{verbatim}
 cd ~/LCM
-chmod +x *.sh
-chmod -r *.sh
+chmod 0555 *.sh
 \end{verbatim}
 
 The \verb+build.sh+ and \verb+build-all.sh+ scripts perform different
@@ -196,7 +196,7 @@ export LD_LIBRARY_PATH=/usr/lib64/openmpi/lib:$LD_LIBRARY_PATH
 First, configure and compile Trilinos. Within the top-level \verb+LCM+
 directory type:
 \begin{verbatim}
-./config-build.sh trilinos [architecture] [toolchain] [build_type] [# processors]
+./config-build.sh trilinos [thread model] [toolchain] [build type] [# processors]
 \end{verbatim}
 
 For example, if you want to use the \verb+GCC+ toolchain to build a
@@ -207,7 +207,7 @@ serial release version of the code using 16 processors, type:
 
 Finally, repeat the procedure for Albany:
 \begin{verbatim}
-./config-build.sh albany [architecture] [toolchain] [build_type] [# processors]
+./config-build.sh albany [thread model] [toolchain] [build type] [# processors]
 \end{verbatim}
 
 For example, if you want to use the GCC toolchain to build a
@@ -216,11 +216,11 @@ serial release version of the code using 16 processors, type:
 ./config-build.sh albany serial gcc release 16
 \end{verbatim}
 
-Note that to compile a version of Albany with a specific architecture,
+Note that to compile a version of Albany with a specific thread model,
 toolchain and build type, the corresponding version of Trilinos must
 exist.
 
-Note also that the architecture option refers to the thread
+Note also that the \verb+thread model+ option refers to the thread
 parallelism model that the code will use by means of the Kokkos
 package in Trilinos. Currently the sopported models are: \verb+serial+
 that works for all supported compilers, \verb+openmp+ that works with
@@ -259,33 +259,39 @@ number of processors.
 
 \section{Running and debugging LCM} 
 
-After building Albany, you might want to run and/or debug the code. 
-Tools were built in Trilinos (decomp, epu, etc.) that are necessary for parallel execution. 
-Please modify your path
+After building Albany, you might want to run and/or debug the code.
+Tools were built in Trilinos (decomp, epu, etc.) that are necessary
+for parallel execution. Modify your path
 \begin{verbatim}
-export PATH=$HOME/LCM/trilinos-install-gcc-release/bin:$PATH
+export PATH=$HOME/LCM/trilinos-install-serial-gcc-release/bin:$PATH
 \end{verbatim}
 and include the necessary libraries
 \begin{verbatim}
-export LD_LIBRARY_PATH=$HOME/LCM/trilinos-install-gcc-release/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/LCM/trilinos-install-serial-gcc-release/lib:$LD_LIBRARY_PATH
 \end{verbatim}
-prior to execution. Please note that in this specific case, we are pointing to 
-\verb+gcc-release+.
-If we attempt to execute the debug version, the \verb+LD_LIBRARY_PATH+ will be invalid.
-One is required to change the  \verb+LD_LIBRARY_PATH+ for each toolchain and build type.
-To select toolchains and build types for execution, one can create configuration scripts in his/her LCM
-directory. Each configuration script might be named something akin to \verb+LCM_gcc_release.conf+ 
-and contain the necessary changes to \verb+PATH+ and \verb+LD_LIBRARY_PATH+. For example,
-prior to debugging the code one would construct the configuration file  
+prior to execution. Note that in this specific case, we are pointing
+to a \verb+serial-gcc-release+ compiled version of the code.  If you
+attempt to execute a different version, the \verb+LD_LIBRARY_PATH+
+will be invalid and you may get execution errors. As the building
+scripts are today, one is required to change the
+\verb+LD_LIBRARY_PATH+ for each thread model, toolchain and build
+type.  To select different thread models, toolchains and build types
+for execution, you can create configuration scripts in the top-level LCM
+directory. Each configuration script might be named something akin to
+\verb+LCM_gcc_release.conf+ and contain the necessary changes to
+\verb+PATH+ and \verb+LD_LIBRARY_PATH+. For example, prior to
+debugging the code one would construct the configuration file
 \verb+$HOME/LCM/LCM_gcc_debug.conf+
 \begin{verbatim}
-export PATH=$HOME/LCM/trilinos-install-gcc-debug/bin:$PATH
-export LD_LIBRARY_PATH=/$HOME/LCM/trilinos-install-gcc-debug/lib:$LD_LIBRARY_PATH
+export PATH=$HOME/LCM/trilinos-install-serial-gcc-debug/bin:$PATH
+export LD_LIBRARY_PATH=/$HOME/LCM/trilinos-install-serial-gcc-debug/lib:$LD_LIBRARY_PATH
 \end{verbatim}
-and then \verb+source $HOME/LCM/LCM_gcc_debug.conf+ prior to execution. We note that these 
-environmental variables are temporarily set by the build scripts. However, one may have a total of six
-toolchains and build types. Currently, the user must specify the environmental variables 
-necessary for execution. 
+and then \verb+source $HOME/LCM/LCM_gcc_debug.conf+ prior to
+execution. We note that these environment variables are temporarily
+set by the build scripts when configuring and building Trilinos and
+Albany. One may have a variety of thread models, toolchains and build
+types. Currently, however, the user must specify the environment
+variables necessary for execution.
 
 \section{Policies}
 Albany is a simulation code for researchers by researchers. As such,

@@ -122,12 +122,20 @@ namespace PHAL {
             for (std::size_t dim=0; dim<numDims; dim++) {
               // For node==0, overwrite. Then += for 1 to numNodes.
               typename PHAL::Ref<ScalarT>::type gvqp = grad_val_qp(cell,qp,i,j,dim);
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+              gvqp = val_node(cell, 0, i, j) * GradBF(cell, 0, qp, dim);
+#else
               gvqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * GradBF(cell, 0, qp, dim));
               gvqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * GradBF(cell, 0, qp, dim);
+#endif
               for (std::size_t node= 1 ; node < numNodes; ++node) {
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+                gvqp += val_node(cell, node, i, j) * GradBF(cell, node, qp, dim);
+#else
                 gvqp.val() += val_node(cell, node, i, j).val() * GradBF(cell, node, qp, dim);
                 gvqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
                   += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * GradBF(cell, node, qp, dim);
+#endif
               }
             } 
           } 

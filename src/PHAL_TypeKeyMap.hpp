@@ -18,7 +18,7 @@
 #include "boost/mpl/size.hpp"
 #include "boost/mpl/transform.hpp"
 #include "boost/mpl/back_inserter.hpp"
-#include "boost/mpl/placeholders.hpp"
+#include "Sacado_mpl_placeholders.hpp"
 #include "boost/type_traits.hpp"
 
 namespace PHAL {
@@ -26,7 +26,7 @@ namespace PHAL {
   //! Container for storing objects indexed by types
   /*!
    * This class provides a generic container class for storing objects
-   * indexed by a type.  It's single template parameter should be an mpl::map
+   * indexed by a type.  Its single template parameter should be an mpl::map
    * mapping the type index to the type of the object, which can then be 
    * retrieved from the container.
    *
@@ -41,12 +41,12 @@ namespace PHAL {
     //! Meta-function for getting the object type indexed by T
     template <typename T>
     struct GetObjectTypeAndPos {
-      typedef typename boost::mpl::find_if<
+      typedef typename Sacado::mpl::find_if<
 	TypeMap, 
-	boost::is_same<boost::mpl::first<boost::mpl::placeholders::_1>, T >
+	boost::is_same<Sacado::mpl::first<Sacado::mpl::placeholders::_1>, T >
 	>::type Iter;
-      typedef typename boost::mpl::deref<Iter>::type Pair;
-      typedef typename boost::mpl::second<Pair>::type type;
+      typedef typename Sacado::mpl::deref<Iter>::type Pair;
+      typedef typename Sacado::mpl::second<Pair>::type type;
       typedef typename Iter::pos pos;
       static const int value = pos::value;
     };
@@ -76,7 +76,7 @@ namespace PHAL {
     typedef typename container::const_iterator const_iterator;
 
     //! Default constructor
-    TypeKeyMap() : objects(boost::mpl::size<TypeMap>::value) {}
+    TypeKeyMap() : objects(Sacado::mpl::size<TypeMap>::value) {}
 
     //! Destructor
     ~TypeKeyMap() {}
@@ -130,16 +130,16 @@ namespace PHAL {
     // Create pair<T1,T2>
     struct CreatePair {
       template <typename T1, typename T2> struct apply {
-	typedef boost::mpl::pair<T1,T2> type;
+	typedef Sacado::mpl::pair<T1,T2> type;
       };
     };
 
     typedef typename 
-    boost::mpl::transform< 
+    Sacado::mpl::transform< 
       KeySeq, 
       ElemSeq, 
       CreatePair,
-      boost::mpl::back_inserter< boost::mpl::vector<> > >::type type;
+      Sacado::mpl::back_inserter< Sacado::mpl::vector<> > >::type type;
   };
 
   /*! 
@@ -148,7 +148,7 @@ namespace PHAL {
    */
   template <typename KeySeq, typename F> 
   struct CreateLambdaKeyMap {
-    typedef typename boost::mpl::transform<KeySeq, F>::type ElemSeq;
+    typedef typename Sacado::mpl::transform<KeySeq, F>::type ElemSeq;
     typedef typename ZipMap<KeySeq,ElemSeq>::type type;
   };
 

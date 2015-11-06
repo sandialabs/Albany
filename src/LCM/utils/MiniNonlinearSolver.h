@@ -4,217 +4,49 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(Intrepid_NonlinearSolver_h)
-#define Intrepid_NonlinearSolver_h
+#if !defined(LCM_MiniNonlinearSolver_h)
+#define LCM_MiniNonlinearSolver_h
 
 #include "PHAL_AlbanyTraits.hpp"
-#include <Intrepid_MiniTensor.h>
+#include "Intrepid_MiniTensor_Solvers.h"
 
 namespace LCM{
 
 ///
-/// Residual interafce for mini nonlinear solver
-/// To use the solver framework, derive from this class and perform
-/// residual computations in the compute method.
+/// miniMinimize function that wraps the MiniTensor Nonlinear Solvers
+/// and deals with Albany traits and AD sensitivities.
 ///
-template <typename T, Intrepid::Index N = Intrepid::DYNAMIC>
-class Residual_Base
-{
-public:
-  virtual
-  Intrepid::Vector<T, N>
-  compute(Intrepid::Vector<T, N> const & x) = 0;
+template<typename MIN, typename STEP, typename FN, Intrepid::Index N>
+void
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<RealType, N> & soln);
 
-  virtual
-  ~Residual_Base() {}
-};
+template<typename MIN, typename STEP, typename FN, typename T, Intrepid::Index N>
+void
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<T, N> & soln);
 
 ///
-/// Newton Solver Base class
+/// Deal with derivative information for all the mini solvers.
+/// Call this when a converged solution is obtained on a system that is
+/// typed on a FAD type.
+/// Assuming that T is a FAD type and S is a simple type.
 ///
-template<typename EvalT, typename Residual,
-Intrepid::Index N = Intrepid::DYNAMIC>
-class NewtonSolver_Base
-{
-public:
-  using ScalarT = typename EvalT::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-
-  virtual
-  ~NewtonSolver_Base() {}
-
-  virtual
-  void
-  solve(Residual & residual, Intrepid::Vector<FadT, N> & x) {}
-
-public:
-  Intrepid::Index
-  maximum_number_iterations{128};
-
-  Intrepid::Index
-  number_iterations{0};
-
-  ValueT
-  relative_tolerance{1.0e-10};
-
-  ValueT
-  relative_error{1.0};
-
-  ValueT
-  absolute_tolerance{1.0e-10};
-
-  ValueT
-  absolute_error{1.0};
-};
-
-//
-// Specializations
-//
-template<typename EvalT, typename Residual,
-Intrepid::Index N = Intrepid::DYNAMIC>
-class NewtonSolver;
-
-//
-// Residual
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::Residual, Residual, N>
-{
-public:
-  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-
-  void
-  solve(
-      Residual & residual,
-      Intrepid::Vector<FadT, N> & x) override;
-};
-
-//
-// Jacobian
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::Jacobian, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::Jacobian, Residual, N>
-{
-public:
-  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-
-//
-// Tangent
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::Tangent, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::Tangent, Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-
-//
-// Distribured Parameter Derivative
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::DistParamDeriv, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::DistParamDeriv,
-    Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-
-#ifdef ALBANY_SG
-//
-// SGResidual
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::SGResidual, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::SGResidual,
-    Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::SGResidual::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-
-//
-// SGJacobian
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::SGJacobian, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::SGJacobian,
-    Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::SGJacobian::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-
-//
-// SGTangent
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::SGTangent, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::SGTangent,
-    Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::SGTangent::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-#endif
-
-#ifdef ALBANY_ENSEMBLE
-//
-// MPResidual
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::MPResidual, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::MPResidual,
-    Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::MPResidual::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-
-//
-// MPJacobian
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::MPJacobian, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::MPJacobian,
-    Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::MPJacobian::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-
-//
-// MPTangent
-//
-template<typename Residual, Intrepid::Index N>
-class NewtonSolver<PHAL::AlbanyTraits::MPTangent, Residual, N> :
-    public NewtonSolver_Base<PHAL::AlbanyTraits::MPTangent,
-    Residual, N>
-{
-  using ScalarT = typename PHAL::AlbanyTraits::MPTangent::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-  using FadT = typename Sacado::Fad::DFad<ValueT>;
-};
-#endif
+template<typename T, typename S, Intrepid::Index N>
+void
+computeFADInfo(
+    Intrepid::Vector<T, N> const & r,
+    Intrepid::Tensor<S, N> const & DrDx,
+    Intrepid::Vector<T, N> & x);
 
 } //namesapce LCM
 
 #include "MiniNonlinearSolver.t.h"
 
-#endif // Intrepid_NonlinearSolver_h
+#endif // LCM_MiniNonlinearSolver_h

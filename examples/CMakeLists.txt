@@ -47,6 +47,7 @@ IF (ALBANY_MPI)
   set(AlbanyAnalysis.exe               ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyAnalysisPath})
   set(AlbanyAnalysisT.exe              ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyAnalysisTPath})
   set(Albany8.exe                      ${MPIEX} ${MPIPRE} ${MPINPF} 8 ${AlbanyPath})
+  set(AlbanyT8.exe                      ${MPIEX} ${MPIPRE} ${MPINPF} 8 ${AlbanyTPath})
 ELSE()
   set(SerialAlbany.exe                 ${AlbanyPath})
   set(SerialAlbanyT.exe                ${AlbanyTPath})
@@ -159,6 +160,12 @@ ENDIF(ALBANY_HAVE_STK)
 IF(ALBANY_LCM)
   add_subdirectory(LCM)
 ENDIF(ALBANY_LCM)
+
+# GOAL ##############
+
+IF(ALBANY_GOAL)
+  add_subdirectory(GOAL)
+ENDIF()
 
 IF(ALBANY_HAVE_STK)
 

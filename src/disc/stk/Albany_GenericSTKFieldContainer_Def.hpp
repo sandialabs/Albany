@@ -514,7 +514,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Ve
     if(node_mapT->getLocalElement(node_gid) != Teuchos::OrdinalTraits<LO>::invalid()){
       int node_lid = node_mapT->getLocalElement(node_gid);
       for(std::size_t j = 0; j < num_vec_components; j++)
-  solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
+        solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
     }
   }
 }

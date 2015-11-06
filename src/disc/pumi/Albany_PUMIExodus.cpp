@@ -8,17 +8,12 @@
 #include "Albany_PUMIExodus.hpp"
 
 #ifdef ALBANY_SEACAS
+#include <apfSTK.h>
 #include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 #include <stk_io/IossBridge.hpp>
 #include <Ionit_Initializer.h>
 #include <stk_io/StkMeshIoBroker.hpp>
-#endif
-
-#if defined(HAVE_STK) && defined(ALBANY_SEACAS)
-# include <apfSTK.h>
-#else
-# include <apfAlbany.h>
 #endif
 
 #include <Albany_Utils.hpp>
@@ -55,61 +50,12 @@ void Albany::PUMIExodus::setFileName(const std::string& fname)
 #endif 
 }
 
-namespace {
-#ifdef ALBANY_SEACAS
-void define_output_fields(stk::io::StkMeshIoBroker& mesh_data,
-                          std::size_t output_file_idx)
-{
-  // Follow the approach in Albany::STKDiscretization::setupExodusOutput().
-  const stk::mesh::MetaData& meta = mesh_data.meta_data();
-  const stk::mesh::FieldVector& fields = meta.get_fields();
-  for (std::size_t i = 0; i < fields.size(); i++) {
-    try {
-      mesh_data.add_field(output_file_idx, *fields[i]);
-    }
-    catch (std::runtime_error const&) {}
-  }
-}
-#endif
-}
-
 void
 Albany::PUMIExodus::write(const char* filename, const double time_val)
 {
 #ifdef ALBANY_SEACAS
-  apf::Mesh2* mesh = mesh_struct->getMesh();
-
-  apf::GlobalNumbering* n[4];
-  apf::makeStkNumberings(mesh, n);
-  apf::StkModels& models = sets_p;
-
-  if (mesh_data.is_null()) {
-    meta = Teuchos::rcp(new stk::mesh::MetaData(mesh->getDimension()));
-    apf::copyMeshToMeta(mesh, models, meta.get());
-    apf::copyFieldsToMeta(mesh, meta.get());
-    meta->commit();
-  }
-
-  if (bulk.is_null()) {
-    bulk = Teuchos::rcp(
-      new stk::mesh::BulkData(*meta, Albany::getMpiCommFromTeuchosComm(comm)));
-    apf::copyMeshToBulk(n, models, meta.get(), bulk.get());
-  }
-  apf::copyFieldsToBulk(n, meta.get(), bulk.get());
-
-  if (mesh_data.is_null()) {
-    Ioss::Init::Initializer();
-    mesh_data = Teuchos::rcp(
-      new stk::io::StkMeshIoBroker(Albany::getMpiCommFromTeuchosComm(comm)));
-    output_file_idx = mesh_data->create_output_mesh(filename,
-                                                    stk::io::WRITE_RESULTS);
-    mesh_data->set_bulk_data(*bulk);
-    define_output_fields(*mesh_data, output_file_idx);
-  }
-
-  mesh_data->process_output_request(output_file_idx, time_val);
-
-  apf::freeStkNumberings(mesh, n);
+  apf::writeExodus(mesh_struct->getMesh(), sets_p, filename,
+      output_file_idx, time_val, meta, bulk, mesh_data);
 #else
   *Teuchos::VerboseObjectBase::getDefaultOStream()
     << "WARNING: exodus output requested but SEACAS not compiled in:"

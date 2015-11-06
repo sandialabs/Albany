@@ -140,7 +140,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
               std::endl << "Error in ExtrudedSTKMeshStruct: Element Shape " << shape << " not recognized. Possible values: Tetrahedron, Wedge, Hexahedron");
 
-  std::string elem2d_name(sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->ctd.base->name);
+  std::string elem2d_name(basalMeshStruct->getMeshSpecs()[0]->ctd.base->name);
   TEUCHOS_TEST_FOR_EXCEPTION(basalside_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
                 std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_name << " but it is " << elem2d_name);
 
@@ -171,7 +171,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   numDim = 3;
   int cub = params->get("Cubature Degree", 3);
-  int basalWorksetSize = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
+  int basalWorksetSize = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
   int worksetSizeMax = params->get("Workset Size", 50);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize);
 
@@ -232,8 +232,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
-  stk::mesh::BulkData& bulkData2D = *sideSetMeshStructs["basalside"]->bulkData;
-  stk::mesh::MetaData& metaData2D = *sideSetMeshStructs["basalside"]->metaData; //bulkData2D.mesh_meta_data();
+  stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
+  stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
   std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
 
@@ -309,6 +309,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(serial_nodes_map));
   Teuchos::RCP<Tpetra_Vector> sHeightVec;
   Teuchos::RCP<Tpetra_Vector> thickVec;
+  Teuchos::RCP<Tpetra_Vector> bTopographyVec;
   Teuchos::RCP<Tpetra_Vector> bFrictionVec;
   Teuchos::RCP<Tpetra_MultiVector> temperatureVecInterp;
   Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
@@ -405,6 +406,15 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   Teuchos::ArrayRCP<const ST> thickVec_constView = thickVec->get1dView();
 
+  bool hasBedTopography =  std::find(req.begin(), req.end(), "bed_topography") != req.end();
+  {
+    std::string fname = params->get<std::string>("Bed Topography File Name", "bed_topography.ascii");
+    read2DFileSerial(fname, temp, comm);
+    bTopographyVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
+    bTopographyVec->doImport(*temp, *importOperator, Tpetra::INSERT);
+  }
+  
+  Teuchos::ArrayRCP<const ST> bTopographyVec_constView = bTopographyVec->get1dView();
   bool hasBasal_friction = std::find(req.begin(), req.end(), "basal_friction") != req.end();
   if(hasBasal_friction)
   {
@@ -430,6 +440,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         int lid;
         double* values;
 
+        //Now we have to stuff the vector in the mesh data
         for (int i(0); i<nodes2D.size(); ++i)
         {
           nodeId = bulkData2D.identifier(nodes2D[i]) - 1;
@@ -553,13 +564,17 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   VectorFieldType* surface_velocity_RMS_field = 0;
   if (hasSurfaceVelocityRMS)
     surface_velocity_RMS_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "surface_velocity_rms");
+  ScalarFieldType* bed_topography_field = 0;
+  if(hasBedTopography)
+    bed_topography_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "bed_topography");
+  
   ScalarFieldType* basal_friction_field = 0;
   if (hasBasal_friction)
     basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
   ElemScalarFieldType* temperature_field = 0;
   if (hasTemperature)
     temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
-
+  ElemScalarFieldType* flowRate_field =  metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
   std::vector<GO> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
 
   for (int i = 0; i < (numLayers + 1) * nodes2D.size(); i++) {
@@ -595,6 +610,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     if(hasThickness && thickness_field) {
       double* thick = stk::mesh::field_data(*thickness_field, node);
       thick[0] = thickVec_constView[lid];
+    }
+
+    if(hasBedTopography && bed_topography_field) {
+      double* bedTopo = stk::mesh::field_data(*bed_topography_field, node);
+      bedTopo[0] = bTopographyVec_constView[lid];
     }
 
     if(surface_velocity_field) {
@@ -671,6 +691,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         if(hasTemperature && temperature_field) {
           double* temperature = stk::mesh::field_data(*temperature_field, elem);
           temperature[0] = tempOnPrism;
+          if(flowRate_field) {
+            double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
+            flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
+          }
         }
       }
     }
@@ -688,6 +712,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       if(hasTemperature && temperature_field) {
         double* temperature = stk::mesh::field_data(*temperature_field, elem);
         temperature[0] = tempOnPrism;
+        if(flowRate_field) {
+          double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
+          flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
+        }
       }
     }
     }
@@ -914,6 +942,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<std::string>("Surface Height File Name", "surface_height.ascii", "Name of the file containing the surface height data");
   validPL->set<std::string>("Thickness File Name", "thickness.ascii", "Name of the file containing the thickness data");
+  validPL->set<std::string>("BedTopography File Name", "bed_topography.ascii", "Name of the file containing the bed topography data");
   validPL->set<std::string>("Surface Velocity File Name", "surface_velocity.ascii", "Name of the file containing the surface velocity data");
   validPL->set<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii", "Name of the file containing the surface velocity RMS data");
   validPL->set<std::string>("Basal Friction File Name", "basal_friction.ascii", "Name of the file containing the basal friction data");

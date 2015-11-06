@@ -25,8 +25,11 @@ class PUMIDiscretization : public APFDiscretization {
     //! Destructor
     ~PUMIDiscretization();
 
-    // Retrieve mesh struct
+    //! Retrieve mesh struct
     Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() {return pumiMeshStruct;}
+
+    //! Set restart data
+    void setRestartData();
 
   private:
 

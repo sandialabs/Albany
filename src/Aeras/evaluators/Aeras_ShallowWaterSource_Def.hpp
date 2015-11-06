@@ -203,6 +203,8 @@ template<typename EvalT, typename Traits>
 void ShallowWaterSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  if (memoizer_.haveStoredData(workset)) return;
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (sourceType == NONE) {
     for(std::size_t cell = 0; cell < workset.numCells; ++cell) {

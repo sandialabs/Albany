@@ -70,6 +70,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     this->requirements.push_back("flow_factor");
     this->requirements.push_back("surface_velocity");
     this->requirements.push_back("surface_velocity_rms");
+    this->requirements.push_back("bed_topography");
   }
 
   if (params->isSublist("FELIX Basal Friction Coefficient"))
@@ -139,7 +140,7 @@ buildEvaluators(
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   Albany::ConstructEvaluatorsOp<StokesFO> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 

@@ -129,8 +129,7 @@ evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
   const int nqp = ref_points_.dimension(0), nd = ref_points_.dimension(1),
     nc = coord_vert.dimension(0), nn = coord_vert.dimension(1);
   FieldContainer<RealType> jacobian(nc, nqp, nd, nd), jacobian_det(nc, nqp),
-    weighted_measure(nc, nqp), coord_qp(nc, nqp, nd), val_ref_points(nn, nqp);
-  CellTools::mapToPhysicalFrame(coord_qp, ref_points_, coord_vert, *cell_topo_);
+    weighted_measure(nc, nqp), val_ref_points(nn, nqp);
   CellTools::setJacobian(jacobian, ref_points_, coord_vert, *cell_topo_);
   CellTools::setJacobianDet(jacobian_det, jacobian);
   intrepid_basis_->getValues(val_ref_points, ref_points_,
@@ -347,11 +346,8 @@ create (EMassMatrixType::Enum type) {
 
 template<typename Traits>
 bool ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-initManager (Teuchos::ParameterList* const pl) {
-  // If later we have a reason for multiple ProjectIPtoNodalField response
-  // functions, generalize the key to something that incorporates the data
-  // associated with this instance.
-  static const char* key = "ProjectIPtoNodalField";
+initManager (Teuchos::ParameterList* const pl, const std::string& key_suffix) {
+  const std::string key = "ProjectIPtoNodalField_" + key_suffix;
   Teuchos::RCP<Adapt::NodalDataBase> ndb = p_state_mgr_->getNodalDataBase();
   const bool isr = ndb->isManagerRegistered(key);
   if (isr)
@@ -425,23 +421,27 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
   num_dims_ = vector_dl->dimension(2);
   num_nodes_ = node_dl->dimension(1);
 
-  p_state_mgr_ = p.get<Albany::StateManager*>("State Manager Ptr");
-  const bool
-    first = initManager(p.get<Teuchos::ParameterList*>("Parameter List"));
-
   // Number of Fields is read from the input file; this is the number of named
   // fields (scalar, vector, or tensor) to transfer.
   num_fields_ = plist->get<int>("Number of Fields", 0);
+
+  // Surface element prefix, if any.
+  const std::string
+    field_name_prefix = mesh_specs->ebName == "Surface Element" ? "surf_" : "";
+
+  p_state_mgr_ = p.get<Albany::StateManager*>("State Manager Ptr");
+
+  const std::string key_suffix = field_name_prefix +
+    (num_fields_ > 0 ?
+     plist->get<std::string>(Albany::strint("IP Field Name", 0)) :
+     "");
+  const bool first = initManager(plist, key_suffix);
 
   // Resize field vectors.
   ip_field_names_.resize(num_fields_);
   ip_field_layouts_.resize(num_fields_);
   nodal_field_names_.resize(num_fields_);
   ip_fields_.resize(num_fields_);
-
-  // Surface element prefix, if any.
-  const std::string
-    field_name_prefix = mesh_specs->ebName == "Surface Element" ? "surf_" : "";
 
   for (int field = 0; field < num_fields_; ++field) {
     ip_field_names_[field] = field_name_prefix + plist->get<std::string>(

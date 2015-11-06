@@ -186,8 +186,22 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 #endif
 
   const int cub      = params->get("Cubature Degree",3);
-  const int default_cub_rule = static_cast<int>(Intrepid::PL_GAUSS);
-  const Intrepid::EIntrepidPLPoly cub_rule = static_cast<Intrepid::EIntrepidPLPoly>(params->get("Cubature Rule",default_cub_rule));
+  
+  //Get Cubature Rule
+  const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");
+  Intrepid::EIntrepidPLPoly cub_rule;  
+  if (cub_rule_string == "GAUSS")
+    cub_rule = static_cast<Intrepid::EIntrepidPLPoly>(Intrepid::PL_GAUSS); 
+  else if (cub_rule_string == "GAUSS_RADAU_LEFT") 
+    cub_rule = static_cast<Intrepid::EIntrepidPLPoly>(Intrepid::PL_GAUSS_RADAU_LEFT); 
+  else if (cub_rule_string == "GAUSS_RADAU_RIGHT") 
+    cub_rule = static_cast<Intrepid::EIntrepidPLPoly>(Intrepid::PL_GAUSS_RADAU_RIGHT); 
+  else if (cub_rule_string == "GAUSS_LOBATTO")
+    cub_rule = static_cast<Intrepid::EIntrepidPLPoly>(Intrepid::PL_GAUSS_LOBATTO); 
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
+                                "Invalid Cubature Rule: " << cub_rule_string << "; valid options are GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, and GAUSS_LOBATTO");
+
   int worksetSizeMax = params->get("Workset Size",50);
 
   // Get number of elements per element block using Ioss for use

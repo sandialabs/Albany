@@ -3,7 +3,26 @@
 //#define WRITE_TO_MATRIX_MARKET 
 
 //uncomment the following if you want to exclude procs with 0 elements from solve.
-#define REDUCED_COMM
+//#define REDUCED_COMM
+
+//uncomment the following if you want to use Epetra
+//#define CISM_USE_EPETRA
+
+//if we have an epetra build but no reduced comm, compute sensitivities 
+//and responses
+#ifdef CISM_USE_EPETRA
+#ifndef REDUCED_COMM
+#define COMPUTE_SENS_AND_RESP 
+#endif
+#endif
+
+//if we have tpetra build, compute sensitivities and responses.
+#ifndef CISM_USE_EPETRA
+#define COMPUTE_SENS_AND_RESP
+#endif
+
+//computation of sensitivities and responses will be off in the case 
+//we have an epetra build + reduced comm, as this was causing a hang.
 
 #include <iostream>
 #include <fstream>
@@ -669,7 +688,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 #endif
 
     Teuchos::ParameterList solveParams;
-    solveParams.set("Compute Sensitivities", true);
+    solveParams.set("Compute Sensitivities", false);
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
@@ -713,7 +732,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // Compute sensitivies / responses and perform regression tests
     // IK, 12/9/13: how come this is turned off in mpas branch? 
     // ---------------------------------------------------------------------------------------------------
- 
+
+#ifdef COMPUTE_SENS_AND_RESP 
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
       std::cout << "Computing responses and sensitivities..." << std::endl;
     int status=0; // 0 = pass, failures are incremented
@@ -808,6 +828,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //if (status > 0)     
     //  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "All regression comparisons did not pass!" << std::endl);
 
+#endif
     // ---------------------------------------------------------------------------------------------------
     // Copy solution back to glimmer uvel and vvel arrays to be passed back
     // ---------------------------------------------------------------------------------------------------

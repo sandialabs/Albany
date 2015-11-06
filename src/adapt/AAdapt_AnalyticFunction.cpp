@@ -71,6 +71,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras XZ Hydrostatic Cloud")
     F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticCloud(neq, numDim, data));
 
+ else if(name == "Aeras XZ Hydrostatic Mountain")
+    F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticMountain(neq, numDim, data));
+
   else if(name == "Aeras Hydrostatic")
     F = Teuchos::rcp(new AAdapt::AerasHydrostatic(neq, numDim, data));
 
@@ -367,6 +370,11 @@ void AAdapt::AerasXScalarAdvection::compute(double* x, const double* X) {
     x[i] = data[0];
   }
 }
+
+#include "Aeras_Eta.hpp"
+
+struct DoubleType   { typedef double  ScalarT; typedef double MeshScalarT; };
+
 //*****************************************************************************
 AAdapt::AerasXZHydrostatic::AerasXZHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
@@ -386,6 +394,23 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
     q0[nt] = data[5+nt];
   }
 
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+
+  const double Ptop = 101.325;
+  const double P0   = SP0;
+  const double Ps   = P0;
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
+  }
+
   int offset = 0;
   //Surface Pressure
   x[offset++] = SP0;
@@ -396,10 +421,10 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
      x[offset++] = T0;
   }
 
-  //Tracers
+  //Tracers (Pi*q)
   for (int i=0; i<numLevels; ++i) {
     for (int nt=0; nt<numTracers; ++nt) {
-      x[offset++] = q0[nt];
+      x[offset++] = Pi[i]*q0[nt];
     }
   }
 
@@ -424,25 +449,53 @@ void AAdapt::AerasXZHydrostaticGaussianBall::compute(double* x, const double* X)
   const double z0      =       data[7];
   const double sig_x   =       data[8];
   const double sig_z   =       data[9];
+
+  const double PI = 3.14159265;
+
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
     q0[nt] = data[10+nt];
+  }
+
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+
+  const double Ptop = 101.325;
+  const double P0   = SP0;
+  const double Ps   = P0;
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
   }
 
   int offset = 0;
   //Surface Pressure
   x[offset++] = SP0;
   
-  //Velx
   for (int i=0; i<numLevels; ++i) {
+  //Velx
      x[offset++] = U0;
+     //Temperature
      x[offset++] = T0;
+     //cosine bubble
+     //double r = sqrt( (X[0] -x0)*(X[0] -x0) + (i-z0)*(i-z0) );
+     //if (r <= sig_x) x[offset++] = T0 + 0.5*amp * ( 1.0 + cos(PI*r/sig_x) );
+     //else  x[offset++] = T0;
   }
 
   //Tracers
   for (int i=0; i<numLevels; ++i) {
     for (int nt=0; nt<numTracers; ++nt) {
-      x[offset++] = q0[nt] + amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) )  ;
+      x[offset++] = Pi[i]*q0[nt] 
+                  + Pi[i]*amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) );
+      //cosine bubble
+      //x[offset++] = q0[nt];
     }
   }
 
@@ -453,7 +506,7 @@ AAdapt::AerasXZHydrostaticGaussianBallInShear::AerasXZHydrostaticGaussianBallInS
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
                              std::logic_error,
-                             "Error! Invalid call of Aeras XZ Hydrostatic Gaussian Ball Model " << neq
+                             "Error! Invalid call of Aeras XZ Hydrostatic Gaussian Ball Model In Shear" << neq
                              << " " << numDim << std::endl);
 }
 void AAdapt::AerasXZHydrostaticGaussianBallInShear::compute(double* x, const double* X) {
@@ -473,6 +526,23 @@ void AAdapt::AerasXZHydrostaticGaussianBallInShear::compute(double* x, const dou
     q0[nt] = data[11+nt];
   }
 
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+
+  const double Ptop = 101.325;
+  const double P0   = SP0;
+  const double Ps   = P0;
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
+  }
+
   int offset = 0;
   //Surface Pressure
   x[offset++] = SP0;
@@ -486,21 +556,20 @@ void AAdapt::AerasXZHydrostaticGaussianBallInShear::compute(double* x, const dou
   //Tracers
   for (int i=0; i<numLevels; ++i) {
     for (int nt=0; nt<numTracers; ++nt) {
-      x[offset++] = q0[nt] + amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) )  ;
+      x[offset++] = Pi[i]*q0[nt] 
+                  + Pi[i]*amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) );
     }
   }
 
 }
 
-#include "Aeras_Eta.hpp"
-struct DoubleType   { typedef double  ScalarT; typedef double MeshScalarT; };
 
 //*****************************************************************************
 AAdapt::AerasXZHydrostaticGaussianVelocityBubble::AerasXZHydrostaticGaussianVelocityBubble(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
                              std::logic_error,
-                             "Error! Invalid call of Aeras XZ Hydrostatic Gaussian Ball Model " << neq
+                             "Error! Invalid call of Aeras XZ Hydrostatic Gaussian Velocity Bubble Model" << neq
                              << " " << numDim << std::endl);
 }
 void AAdapt::AerasXZHydrostaticGaussianVelocityBubble::compute(double* x, const double* X) {
@@ -570,7 +639,7 @@ void AAdapt::AerasXZHydrostaticGaussianVelocityBubble::compute(double* x, const 
   //Tracers
   for (int i=0; i<numLevels; ++i) {
     for (int nt=0; nt<numTracers; ++nt) {
-      x[offset++] = q0[nt];
+      x[offset++] = Pi[i]*q0[nt];
     }
   }
 
@@ -693,6 +762,77 @@ void AAdapt::AerasXZHydrostaticCloud::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
+AAdapt::AerasXZHydrostaticMountain::AerasXZHydrostaticMountain(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Mountain Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasXZHydrostaticMountain::compute(double* x, const double* X) {
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  const double SP0     =       data[2];
+  const double U0      =       data[3];
+  const double T0      =       data[4];
+  const double amp     =       data[5];
+  const double x0      =       data[6];
+  const double z0      =       data[7];
+  const double sig_x   =       data[8];
+  const double sig_z   =       data[9];
+
+  const double PI = 3.14159265;
+
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[10+nt];
+  }
+
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+
+  const double Ptop = 101.325;
+  const double P0   = SP0;
+  const double Ps   = P0;
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
+  }
+
+  int offset = 0;
+  //Surface Pressure
+  x[offset++] = SP0;
+  
+  for (int i=0; i<numLevels; ++i) {
+  //Velx
+     x[offset++] = U0;
+     //Temperature
+     x[offset++] = T0;
+     //cosine bubble
+     //double r = sqrt( (X[0] -x0)*(X[0] -x0) + (i-z0)*(i-z0) );
+     //if (r <= sig_x) x[offset++] = T0 + 0.5*amp * ( 1.0 + cos(PI*r/sig_x) );
+     //else  x[offset++] = T0;
+  }
+
+  //Tracers
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
+      x[offset++] = Pi[i]*q0[nt] 
+                  + Pi[i]*amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) );
+      //cosine bubble
+      //x[offset++] = q0[nt];
+    }
+  }
+
+}
+
+//*****************************************************************************
 AAdapt::AerasHydrostatic::AerasHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
@@ -712,6 +852,23 @@ void AAdapt::AerasHydrostatic::compute(double* solution, const double* X) {
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
     q0[nt] = data[6 + nt];
+  }
+
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+
+  const double Ptop = 101.325;
+  const double P0   = SP0;
+  const double Ps   = P0;
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
   }
 
   const double x = X[0];
@@ -758,7 +915,7 @@ void AAdapt::AerasHydrostatic::compute(double* solution, const double* X) {
   for (int i=0; i<numLevels; ++i) {
     for (int nt=0; nt<numTracers; ++nt) {
       const double w = nt%3 ? ((nt%3 == 1) ? y : z) : x;
-      solution[offset++] = w*q0[nt];
+      solution[offset++] = w*Pi[i]*q0[nt];
     }
   }
 }

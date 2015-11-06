@@ -54,10 +54,6 @@ public:
   //! Print the coordinates for debugging
   void printCoords() const;
 
-  Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const;
-
-  Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const;
-
   Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const;
 
   Albany::StateArrays& getStateArrays();

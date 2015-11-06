@@ -231,20 +231,8 @@ template<typename EvalT, typename Traits>
 void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  // Add contributions across processors
-#if 0 
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
-    workset.serializerManager.template getValue<EvalT>();
-  Teuchos::reduceAll(
-    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-    this->global_response.size(), &this->global_response[0], 
-    &this->global_response[0]);
-#else
-  //amb Use a workaround for now.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response);
-#endif
-  // Do global scattering
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
 }
 

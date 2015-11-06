@@ -8,126 +8,111 @@ namespace LCM
 {
 
 //
-// Specializations
+// miniMinimizer
 //
-
-//
-// Residual
-//
-template<typename Residual, Intrepid::Index N>
+template<typename MIN, typename STEP, typename FN, Intrepid::Index N>
 void
-NewtonSolver<PHAL::AlbanyTraits::Residual, Residual, N>::
-solve(
-    Residual & residual,
-    Intrepid::Vector<FadT, N> & x)
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<RealType, N> & soln)
 {
-  Intrepid::Index const
-  dimension = x.get_dimension();
+  minimizer.solve(step_method, function, soln);
 
-  Intrepid::Vector<FadT, N>
-  r = residual.compute(x);
+  return;
+}
+
+template<typename MIN, typename STEP, typename FN, typename T, Intrepid::Index N>
+void
+miniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid::Vector<T, N> & soln)
+{
+  // Extract values and use them to minimize the function.
+  using ValueT = typename Sacado::ValueType<T>::type;
 
   Intrepid::Vector<ValueT, N>
-  x_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(x);
+  soln_val = Sacado::Value<Intrepid::Vector<T, N>>::eval(soln);
 
-  Intrepid::Vector<ValueT, N>
-  r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
+  minimizer.solve(step_method, function, soln_val);
 
-  ValueT const
-  initial_norm = Intrepid::norm(r_val);
+  auto const
+  dimension = soln.get_dimension();
 
-  this->number_iterations = 0;
-
-  if (initial_norm <= this->absolute_tolerance) return;
-
-  bool
-  converged = false;
-
-  while (converged == false) {
-
-    r = residual.compute(x);
-
-    r_val = Sacado::Value<Intrepid::Vector<FadT, N>>::eval(r);
-
-    this->absolute_error = Intrepid::norm(r_val);
-
-    this->relative_error = this->absolute_error / initial_norm;
-
-    bool const
-    converged_relative = this->relative_error <= this->relative_tolerance;
-
-    bool const
-    converged_absolute = this->absolute_error <= this->absolute_tolerance;
-
-    converged = converged_relative || converged_absolute;
-
-    bool const
-    is_max_iter = this->number_iterations >= this->maximum_number_iterations;
-
-    bool const
-    end_solve = converged || is_max_iter;
-
-    if (end_solve == true) break;
-
-    Intrepid::Tensor<ValueT, N>
-    DrDx(dimension);
-
-    for (Intrepid::Index i{0}; i < dimension; ++i) {
-      for (Intrepid::Index j{0}; j < dimension; ++j) {
-        DrDx(i, j) = r(i).dx(j);
-      }
-    }
-
-    Intrepid::Vector<ValueT, N> const
-    x_incr = - Intrepid::solve(DrDx, r_val);
-
-    x += x_incr;
-
-    ++this->number_iterations;
+  // Put values back in solution vector
+  for (auto i = 0; i < dimension; ++i) {
+    soln(i).val() = soln_val(i);
   }
+
+  // Check if there is FAD info.
+  auto const
+  order = soln[0].size();
+
+  if (order == 0) return;
+
+  // Get the Hessian evaluated at the solution.
+  Intrepid::Tensor<ValueT, N>
+  DrDx = function.hessian(soln_val);
+
+  // Now compute gradient with solution that has Albany sensitivities.
+  Intrepid::Vector<T, N>
+  resi = function.gradient(soln);
+
+  // Solve for solution sensitivities.
+  computeFADInfo(resi, DrDx, soln);
 
   return;
 }
 
 //
-// Jacobian
 //
+//
+template<typename T, typename S, Intrepid::Index N>
+void
+computeFADInfo(
+    Intrepid::Vector<T, N> const & r,
+    Intrepid::Tensor<S, N> const & DrDx,
+    Intrepid::Vector<T, N> & x)
+{
+  // Check whether dealing with AD type.
+  if (Sacado::IsADType<T>::value == false) return;
 
-//
-// Tangent
-//
+  //Deal with derivative information
+  auto const
+  dimension = r.get_dimension();
 
-//
-// DistParamDeriv
-//
+  assert(dimension > 0);
 
-#ifdef ALBANY_SG
-//
-// SGResidual
-//
+  auto const
+  order = r[0].size();
 
-//
-// SGJacobian
-//
+  assert(order > 0);
 
-//
-// SGTangent
-//
-#endif // ALBANY_SG
+  // Extract sensitivities of r wrt p
+  Intrepid::Matrix<S, N>
+  DrDp(dimension, order);
 
-#ifdef ALBANY_ENSEMBLE
-//
-// MPResidual
-//
+  for (auto i = 0; i < dimension; ++i) {
+    for (auto j = 0; j < order; ++j) {
+      DrDp(i, j) = r(i).dx(j);
+    }
+  }
 
-//
-// MPJacobian
-//
+  // Solve for all DxDp
+  Intrepid::Matrix<S, N>
+  DxDp = Intrepid::solve(DrDx, DrDp);
 
-//
-// MPTangent
-//
+  // Pack into x.
+  for (auto i = 0; i < dimension; ++i) {
+    x(i).resize(order);
+    for (auto j = 0; j < order; ++j) {
+      x(i).fastAccessDx(j) = -DxDp(i, j);
+    }
+  }
 
-#endif // ALBANY_ENSEMBLE
+}
 
 } // namespace LCM

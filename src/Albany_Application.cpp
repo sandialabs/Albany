@@ -47,6 +47,10 @@
 #endif
 #endif
 
+#ifdef ALBANY_GOAL
+#include "GOAL_BCUtils.hpp"
+#endif
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -70,7 +74,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0)
+  stateGraphVisDetail(0) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -97,6 +101,7 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
 };
+
 
 namespace {
 int calcTangentDerivDimension (
@@ -532,8 +537,9 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())){
     LCM::PeridigmManager::self()->initialize(params, disc, commT);
+  }
 #endif
 #endif
 }
@@ -779,8 +785,8 @@ void dfm_set (
   Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
 {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
-  workset.transientTerms = ! Teuchos::nonnull(xd);
-  workset.accelerationTerms = ! Teuchos::nonnull(xdd);
+  workset.transientTerms = Teuchos::nonnull(xd);
+  workset.accelerationTerms = Teuchos::nonnull(xdd);
 }
 
 // For the perturbation xd,
@@ -800,7 +806,7 @@ void dfm_set (
 //   The purpose of this derivative checker is to help find programming errors
 // in the Jacobian. Automatic differentiation largely or entirely prevents math
 // errors, but other kinds of programming errors (uninitialized memory,
-// accidentaly omission of a FadType, etc.) can cause errors. The common symptom
+// accidental omission of a FadType, etc.) can cause errors. The common symptom
 // of such an error is that the residual is correct, and therefore so is the
 // solution, but convergence to the solution is not quadratic.
 //   A complementary method to check for errors in the Jacobian is to use
@@ -939,13 +945,14 @@ computeGlobalResidualImplT(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+  const Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
+  const Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
+  const Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
 
-  //Scatter distributed parameters
+  // Scatter distributed parameters
   distParamLib->scatter();
 
   // Set parameters
@@ -1011,12 +1018,12 @@ computeGlobalResidualImplT(
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
+#ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
-  Tpetra_Import tpetraImport(fT->getMap(), overlapped_fT->getMap());
-  overlapped_fT->doImport(*fT, tpetraImport, Tpetra::INSERT);
-
+  overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
   // Write the residual to the discretization, which will later (optionally) be written to the output file
   disc->setResidualFieldT(*overlapped_fT);
+#endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (dfm!=Teuchos::null) {
@@ -1041,6 +1048,13 @@ computeGlobalResidualImplT(
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+
+#ifdef ALBANY_GOAL
+  double t = current_time;
+  if (paramLib->isParameter("Time"))
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  GOAL::computeHierarchicBCs((*this), t, xT, fT, Teuchos::null);
+#endif
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1312,6 +1326,13 @@ computeGlobalJacobianImplT(const double alpha,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
+
+#ifdef ALBANY_GOAL
+  double t = current_time;
+  if (paramLib->isParameter("Time"))
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  GOAL::computeHierarchicBCs((*this), t, xT, fT, jacT);
+#endif
 
   jacT->fillComplete();
 

@@ -61,18 +61,30 @@ Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct>
   neq(meshStruct_->neq),
   meshStruct(meshStruct_),
   interleavedOrdering(meshStruct_->interleavedOrdering),
-  outputInterval(0)
+  outputInterval(0),
+  continuationStep(0)
 {
-  meshOutput = PUMIOutput::create(meshStruct, commT_);
+}
+
+Albany::APFDiscretization::~APFDiscretization()
+{
+  delete meshOutput;
+  apf::destroyGlobalNumbering(globalNumbering);
+  apf::destroyGlobalNumbering(elementNumbering);
+}
+
+void Albany::APFDiscretization::init()
+{
+  meshOutput = PUMIOutput::create(meshStruct, commT);
 #if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(commT_);
+  comm = Albany::createEpetraCommFromTeuchosComm(commT);
 #endif
   globalNumbering = 0;
   elementNumbering = 0;
 
   // Initialize the mesh and all data structures
   bool shouldTransferIPData = false;
-  Albany::APFDiscretization::updateMesh(shouldTransferIPData);
+  this->updateMesh(shouldTransferIPData);
 
   Teuchos::Array<std::string> layout = meshStruct->solVectorLayout;
   int index;
@@ -95,19 +107,16 @@ Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct>
   }
 
   // zero the residual field for Rhythmos
-  if (solNames.size())
-    for (size_t i = 0; i < solNames.size(); ++i)
-      apf::zeroField(meshStruct->getMesh()->findField(solNames[i].c_str()));
+  if (resNames.size())
+    for (size_t i = 0; i < resNames.size(); ++i)
+      apf::zeroField(meshStruct->getMesh()->findField(resNames[i].c_str()));
   else
     apf::zeroField(
       meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
-}
 
-Albany::APFDiscretization::~APFDiscretization()
-{
-  delete meshOutput;
-  apf::destroyGlobalNumbering(globalNumbering);
-  apf::destroyGlobalNumbering(elementNumbering);
+  // set all of the restart fields here
+  if (meshStruct->hasRestartSolution)
+    setRestartData();
 }
 
 Teuchos::RCP<const Tpetra_Map>
@@ -442,10 +451,30 @@ void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const d
 }
 #endif
 
+static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
+{
+  if (!(meshStruct->useTemperatureHack && meshStruct->solutionInitialized))
+    return;
+  apf::Mesh* m = meshStruct->getMesh();
+  apf::Field* t = m->findField("temp");
+  if (!t)
+    t = m->findField(Albany::APFMeshStruct::solution_name);
+  assert(t);
+  apf::Field* told = m->findField("temp_old");
+  if (!told)
+    told = meshStruct->createNodalField("temp_old", apf::SCALAR);
+  assert(told);
+  std::cout << "copying nodal " << apf::getName(t)
+    << " to nodal " << apf::getName(told) << '\n';
+  apf::copyData(told, t);
+}
+
 void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
+  saveOldTemperature(meshStruct);
+  (void) time_value;
   if (solNames.size() == 0)
     this->setField(APFMeshStruct::solution_name,soln,overlapped);
   else
@@ -481,6 +510,30 @@ void Albany::APFDiscretization::writeAnySolutionToFile(
   copyQPStatesToAPF(f,fs,false);
   copyNodalDataToAPF(false);
   meshOutput->writeFile(time_label);
+  removeNodalDataFromAPF();
+  removeQPStatesFromAPF();
+
+  if ((continuationStep == meshStruct->restartWriteStep) &&
+      (continuationStep != 0))
+    writeRestartFile(time_label);
+
+  continuationStep++;
+}
+
+void
+Albany::APFDiscretization::writeRestartFile(const double time)
+{
+  *out << "Albany::APFDiscretization::writeRestartFile: writing time "
+    << time << std::endl;
+  apf::Field* f;
+  int dim = getNumDim();
+  apf::FieldShape* fs = apf::getIPShape(dim, meshStruct->cubatureDegree);
+  copyQPStatesToAPF(f,fs,true);
+  copyNodalDataToAPF(true);
+  apf::Mesh2* m = meshStruct->getMesh();
+  std::ostringstream oss;
+  oss << "restart_" << time << "_.smb";
+  m->writeNative(oss.str().c_str());
   removeNodalDataFromAPF();
   removeQPStatesFromAPF();
 }
@@ -609,8 +662,43 @@ int Albany::APFDiscretization::nonzeroesPerRow(const int neq) const
 void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
+  computeOwnedNodesAndUnknownsBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
+{
+  apf::Mesh* m = meshStruct->getMesh();
+  computeOverlapNodesAndUnknownsBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeGraphs()
+{
+  apf::Mesh* m = meshStruct->getMesh();
+  computeGraphsBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeWorksetInfo()
+{
+  apf::Mesh* m = meshStruct->getMesh();
+  computeWorksetInfoBase(m->getShape());
+}
+
+void Albany::APFDiscretization::computeNodeSets()
+{
+  computeNodeSetsBase();
+}
+
+void Albany::APFDiscretization::computeSideSets()
+{
+  computeSideSetsBase();
+}
+
+void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
+    apf::FieldShape* shape)
+{
+  apf::Mesh* m = meshStruct->getMesh();
   if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
-  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
+  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned",shape));
   apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
   numOwnedNodes = ownedNodes.getSize();
@@ -636,12 +724,13 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
 #endif
 }
 
-void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
+void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
+    apf::FieldShape* shape)
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Numbering* overlap = m->findNumbering("overlap");
   if (overlap) apf::destroyNumbering(overlap);
-  overlap = apf::numberOverlapNodes(m,"overlap");
+  overlap = apf::numberOverlapNodes(m,"overlap",shape);
   apf::getNodes(overlap,nodes);
   numOverlapNodes = nodes.getSize();
   Teuchos::Array<GO> nodeIndices(numOverlapNodes);
@@ -663,9 +752,9 @@ void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
     meshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
 }
 
-void Albany::APFDiscretization::computeGraphs()
+void Albany::APFDiscretization::computeGraphsBase(
+    apf::FieldShape* shape)
 {
-
   apf::Mesh* m = meshStruct->getMesh();
   int numDim = m->getDimension();
   std::vector<apf::MeshEntity*> cells;
@@ -676,7 +765,7 @@ void Albany::APFDiscretization::computeGraphs()
   GO node_sum = 0;
   while ((e = m->iterate(it))){
     cells.push_back(e);
-    int nnodes = apf::countElementNodes(m->getShape(),m->getType(e));
+    int nnodes = apf::countElementNodes(shape,m->getType(e));
     n_nodes_in_elem.push_back(nnodes);
     node_sum += nnodes;
   }
@@ -735,7 +824,8 @@ void Albany::APFDiscretization::computeGraphs()
 #endif
 }
 
-void Albany::APFDiscretization::computeWorksetInfo()
+void Albany::APFDiscretization::computeWorksetInfoBase(
+    apf::FieldShape* shape)
 {
   apf::Mesh* m = meshStruct->getMesh();
   int numDim = m->getDimension();
@@ -842,7 +932,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
       apf::getElementNumbers(globalNumbering,element,nodeIDs);
 
       int nodes_per_element = apf::countElementNodes(
-          m->getShape(),m->getType(element));
+          shape,m->getType(element));
       wsElNodeEqID[b][i].resize(nodes_per_element);
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
@@ -954,195 +1044,54 @@ void Albany::APFDiscretization::computeWorksetInfo()
   }
 }
 
-void Albany::APFDiscretization::copyQPTensorToAPF(
-    unsigned nqp,
-    PUMIQPData<double, 4>& state,
-    apf::Field* f)
+void Albany::APFDiscretization::computeNodeSetsBase()
 {
-  const int spdim = getNumDim();
-  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
-  for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
-    for (std::size_t e=0; e < buck.size(); ++e) {
-      for (std::size_t p=0; p < nqp; ++p) {
-        for (std::size_t i=0; i < spdim; ++i)
-          for (std::size_t j=0; j < spdim; ++j)
-            v[i][j] = ar(e,p,i,j);
-        apf::setMatrix(f,buck[e],p,v);
-      }
-    }
+  // Make sure all the maps are allocated
+  for (int i = 0; i < meshStruct->nsNames.size(); i++)
+  { // Iterate over Node Sets
+    std::string name = meshStruct->nsNames[i];
+    nodeSets[name].resize(0);
+    nodeSetCoords[name].resize(0);
+    nodeset_node_coords[name].resize(0);
   }
-}
-
-void Albany::APFDiscretization::copyQPScalarToAPF(
-    unsigned nqp,
-    PUMIQPData<double, 2>& state,
-    apf::Field* f)
-{
-  for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
-    for (std::size_t e=0; e < buck.size(); ++e)
-      for (std::size_t p=0; p < nqp; ++p)
-        apf::setScalar(f,buck[e],p,ar(e,p));
-  }
-}
-
-void Albany::APFDiscretization::copyQPVectorToAPF(
-    unsigned nqp,
-    PUMIQPData<double, 3>& state,
-    apf::Field* f)
-{
-  const int spdim = getNumDim();
-  apf::Vector3 v(0,0,0);
-  for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
-    for (std::size_t e=0; e < buck.size(); ++e) {
-      for (std::size_t p=0; p < nqp; ++p) {
-        for (std::size_t i=0; i < spdim; ++i)
-          v[i] = ar(e,p,i);
-        apf::setVector(f,buck[e],p,v);
-      }
-    }
-  }
-}
-
-void Albany::APFDiscretization::copyQPStatesToAPF(
-    apf::Field* f,
-    apf::FieldShape* fs,
-    bool copyAll)
-{
-  apf::Mesh2* m = meshStruct->getMesh();
-  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
-    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
-    if (!copyAll && !state.output)
+  //grab the analysis model and mesh
+  apf::StkModels& sets = meshStruct->getSets();
+  apf::Mesh* m = meshStruct->getMesh();
+  int mesh_dim = m->getDimension();
+  //loop over mesh nodes
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    apf::MeshEntity* e = node.entity;
+    if (!m->isOwned(e))
       continue;
-    int nqp = state.dims[1];
-    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
-    copyQPScalarToAPF(nqp,state,f);
-  }
-  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
-    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
-    if (!copyAll && !state.output)
+    std::set<apf::StkModel*> mset;
+    apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
+    if (mset.empty())
       continue;
-    int nqp = state.dims[1];
-    f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
-    copyQPVectorToAPF(nqp,state,f);
-  }
-  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
-    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
-    if (!copyAll && !state.output)
-      continue;
-    int nqp = state.dims[1];
-    f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
-    copyQPTensorToAPF(nqp,state,f);
-  }
-}
-
-void Albany::APFDiscretization::removeQPStatesFromAPF()
-{
-  apf::Mesh2* m = meshStruct->getMesh();
-  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
-    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
-    apf::destroyField(m->findField(state.name.c_str()));
-  }
-  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
-    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
-    apf::destroyField(m->findField(state.name.c_str()));
-  }
-  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
-    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
-    apf::destroyField(m->findField(state.name.c_str()));
-  }
-}
-
-void Albany::APFDiscretization::copyQPScalarFromAPF(
-    unsigned nqp,
-    PUMIQPData<double, 2>& state,
-    apf::Field* f)
-{
-  apf::Mesh2* m = meshStruct->getMesh();
-  for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
-    for (std::size_t e=0; e < buck.size(); ++e) {
-      for (std::size_t p = 0; p < nqp; ++p)
-        ar(e,p) = apf::getScalar(f,buck[e],p);
+    GO node_gid = apf::getNumber(globalNumbering,node);
+    int node_lid = node_mapT->getLocalElement(node_gid);
+    assert(node_lid >= 0);
+    assert(node_lid < numOwnedNodes);
+    APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
+      apf::StkModel* ns = *mit;
+      std::string const& NS_name = ns->stkName;
+      nodeSets[NS_name].push_back(std::vector<int>());
+      std::vector<int>& dofLids = nodeSets[NS_name].back();
+      std::vector<double>& ns_coords = nodeset_node_coords[NS_name];
+      ns_coords.resize(ns_coords.size() + mesh_dim);
+      double* node_coords = &ns_coords[ns_coords.size() - mesh_dim];
+      nodeSetCoords[NS_name].push_back(node_coords);
+      dofLids.resize(neq);
+      for (std::size_t eq=0; eq < neq; eq++)
+        dofLids[eq] = getDOF(node_lid, eq);
+      double buf[3];
+      apf::getComponents(m->getCoordinateField(), e, node.node, buf);
+      for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
     }
   }
 }
 
-void Albany::APFDiscretization::copyQPVectorFromAPF(
-    unsigned nqp,
-    PUMIQPData<double, 3>& state,
-    apf::Field* f)
-{
-  const int spdim = getNumDim();
-  apf::Mesh2* m = meshStruct->getMesh();
-  apf::Vector3 v(0,0,0);
-  for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
-    for (std::size_t e=0; e < buck.size(); ++e) {
-      for (std::size_t p=0; p < nqp; ++p) {
-        apf::getVector(f,buck[e],p,v);
-        for (std::size_t i=0; i < spdim; ++i)
-          ar(e,p,i) = v[i];
-      }
-    }
-  }
-}
-
-void Albany::APFDiscretization::copyQPTensorFromAPF(
-    unsigned nqp,
-    PUMIQPData<double, 4>& state,
-    apf::Field* f)
-{
-  const int spdim = getNumDim();
-  apf::Mesh2* m = meshStruct->getMesh();
-  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
-  for (std::size_t b = 0; b < buckets.size(); ++b) {
-    std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
-    for (std::size_t e=0; e < buck.size(); ++e) {
-      for (std::size_t p=0; p < nqp; ++p) {
-        apf::getMatrix(f,buck[e],p,v);
-        for (std::size_t i=0; i < spdim; ++i) {
-          for (std::size_t j=0; j < spdim; ++j)
-            ar(e,p,i,j) = v[i][j];
-        }
-      }
-    }
-  }
-}
-
-void Albany::APFDiscretization::copyQPStatesFromAPF()
-{
-  apf::Mesh2* m = meshStruct->getMesh();
-  apf::Field* f;
-  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
-    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
-    int nqp = state.dims[1];
-    f = m->findField(state.name.c_str());
-    copyQPScalarFromAPF(nqp,state,f);
-  }
-  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
-    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
-    int nqp = state.dims[1];
-    f = m->findField(state.name.c_str());
-    copyQPVectorFromAPF(nqp,state,f);
-  }
-  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
-    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
-    int nqp = state.dims[1];
-    f = m->findField(state.name.c_str());
-    copyQPTensorFromAPF(nqp,state,f);
-  }
-}
-
-void Albany::APFDiscretization::computeSideSets()
+void Albany::APFDiscretization::computeSideSetsBase()
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::StkModels& sets = meshStruct->getSets();
@@ -1200,6 +1149,198 @@ void Albany::APFDiscretization::computeSideSets()
   m->end(it);
 }
 
+void Albany::APFDiscretization::copyQPTensorToAPF(
+    unsigned nqp,
+    std::string const& stateName,
+    apf::Field* f)
+{
+  const int spdim = getNumDim();
+  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      for (std::size_t p=0; p < nqp; ++p) {
+        for (std::size_t i=0; i < spdim; ++i)
+          for (std::size_t j=0; j < spdim; ++j)
+            v[i][j] = ar(e,p,i,j);
+        apf::setMatrix(f,buck[e],p,v);
+      }
+    }
+  }
+}
+
+void Albany::APFDiscretization::copyQPScalarToAPF(
+    unsigned nqp,
+    std::string const& stateName,
+    apf::Field* f)
+{
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
+    for (std::size_t e=0; e < buck.size(); ++e)
+      for (std::size_t p=0; p < nqp; ++p)
+        apf::setScalar(f,buck[e],p,ar(e,p));
+  }
+}
+
+void Albany::APFDiscretization::copyQPVectorToAPF(
+    unsigned nqp,
+    std::string const& stateName,
+    apf::Field* f)
+{
+  const int spdim = getNumDim();
+  apf::Vector3 v(0,0,0);
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      for (std::size_t p=0; p < nqp; ++p) {
+        for (std::size_t i=0; i < spdim; ++i)
+          v[i] = ar(e,p,i);
+        apf::setVector(f,buck[e],p,v);
+      }
+    }
+  }
+}
+
+void Albany::APFDiscretization::copyQPStatesToAPF(
+    apf::Field* f,
+    apf::FieldShape* fs,
+    bool copyAll)
+{
+  apf::Mesh2* m = meshStruct->getMesh();
+  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
+    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
+    if (!copyAll && !state.output)
+      continue;
+    int nqp = state.dims[1];
+    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
+    copyQPScalarToAPF(nqp, state.name, f);
+  }
+  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
+    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
+    if (!copyAll && !state.output)
+      continue;
+    int nqp = state.dims[1];
+    f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
+    copyQPVectorToAPF(nqp, state.name, f);
+  }
+  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
+    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
+    if (!copyAll && !state.output)
+      continue;
+    int nqp = state.dims[1];
+    f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
+    copyQPTensorToAPF(nqp, state.name, f);
+  }
+}
+
+void Albany::APFDiscretization::removeQPStatesFromAPF()
+{
+  apf::Mesh2* m = meshStruct->getMesh();
+  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
+    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
+    apf::destroyField(m->findField(state.name.c_str()));
+  }
+  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
+    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
+    apf::destroyField(m->findField(state.name.c_str()));
+  }
+  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
+    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
+    apf::destroyField(m->findField(state.name.c_str()));
+  }
+}
+
+void Albany::APFDiscretization::copyQPScalarFromAPF(
+    unsigned nqp,
+    std::string const& stateName,
+    apf::Field* f)
+{
+  apf::Mesh2* m = meshStruct->getMesh();
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      for (std::size_t p = 0; p < nqp; ++p) {
+        ar(e,p) = apf::getScalar(f,buck[e],p);
+      }
+    }
+  }
+}
+
+void Albany::APFDiscretization::copyQPVectorFromAPF(
+    unsigned nqp,
+    std::string const& stateName,
+    apf::Field* f)
+{
+  const int spdim = getNumDim();
+  apf::Mesh2* m = meshStruct->getMesh();
+  apf::Vector3 v(0,0,0);
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      for (std::size_t p=0; p < nqp; ++p) {
+        apf::getVector(f,buck[e],p,v);
+        for (std::size_t i=0; i < spdim; ++i)
+          ar(e,p,i) = v[i];
+      }
+    }
+  }
+}
+
+void Albany::APFDiscretization::copyQPTensorFromAPF(
+    unsigned nqp,
+    std::string const& stateName,
+    apf::Field* f)
+{
+  const int spdim = getNumDim();
+  apf::Mesh2* m = meshStruct->getMesh();
+  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
+  for (std::size_t b = 0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      for (std::size_t p=0; p < nqp; ++p) {
+        apf::getMatrix(f,buck[e],p,v);
+        for (std::size_t i=0; i < spdim; ++i) {
+          for (std::size_t j=0; j < spdim; ++j)
+            ar(e,p,i,j) = v[i][j];
+        }
+      }
+    }
+  }
+}
+
+void Albany::APFDiscretization::copyQPStatesFromAPF()
+{
+  apf::Mesh2* m = meshStruct->getMesh();
+  apf::Field* f;
+  for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
+    PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
+    int nqp = state.dims[1];
+    f = m->findField(state.name.c_str());
+    if (f)
+      copyQPScalarFromAPF(nqp, state.name, f);
+  }
+  for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
+    PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
+    int nqp = state.dims[1];
+    f = m->findField(state.name.c_str());
+    if (f)
+      copyQPVectorFromAPF(nqp, state.name, f);
+  }
+  for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
+    PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
+    int nqp = state.dims[1];
+    f = m->findField(state.name.c_str());
+    if (f)
+      copyQPTensorFromAPF(nqp, state.name, f);
+  }
+}
+
 void Albany::APFDiscretization::
 copyNodalDataToAPF (const bool copy_all) {
   if (meshStruct->nodal_data_base.is_null()) return;
@@ -1247,55 +1388,14 @@ void Albany::APFDiscretization::removeNodalDataFromAPF () {
   }
 }
 
-void Albany::APFDiscretization::computeNodeSets()
+void
+Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
 {
-  // Make sure all the maps are allocated
-  for (int i = 0; i < meshStruct->nsNames.size(); i++)
-  { // Iterate over Node Sets
-    std::string name = meshStruct->nsNames[i];
-    nodeSets[name].resize(0);
-    nodeSetCoords[name].resize(0);
-    nodeset_node_coords[name].resize(0);
-  }
-  //grab the analysis model and mesh
-  apf::StkModels& sets = meshStruct->getSets();
-  apf::Mesh* m = meshStruct->getMesh();
-  int mesh_dim = m->getDimension();
-  //loop over mesh nodes
-  for (size_t i = 0; i < nodes.getSize(); ++i) {
-    apf::Node node = nodes[i];
-    apf::MeshEntity* e = node.entity;
-    if (!m->isOwned(e))
-      continue;
-    std::set<apf::StkModel*> mset;
-    apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
-    if (mset.empty())
-      continue;
-    GO node_gid = apf::getNumber(globalNumbering,node);
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    assert(node_lid >= 0);
-    assert(node_lid < numOwnedNodes);
-    APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
-      apf::StkModel* ns = *mit;
-      std::string const& NS_name = ns->stkName;
-      nodeSets[NS_name].push_back(std::vector<int>());
-      std::vector<int>& dofLids = nodeSets[NS_name].back();
-      std::vector<double>& ns_coords = nodeset_node_coords[NS_name];
-      ns_coords.resize(ns_coords.size() + mesh_dim);
-      double* node_coords = &ns_coords[ns_coords.size() - mesh_dim];
-      nodeSetCoords[NS_name].push_back(node_coords);
-      dofLids.resize(neq);
-      for (std::size_t eq=0; eq < neq; eq++)
-        dofLids[eq] = getDOF(node_lid, eq);
-      double buf[3];
-      apf::getComponents(m->getCoordinateField(), e, node.node, buf);
-      for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
-    }
-  }
+  updateMeshBase(shouldTransferIPData);
 }
 
 void
-Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
+Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
 {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
@@ -1342,4 +1442,79 @@ void Albany::APFDiscretization::releaseMesh () {
     apf::destroyGlobalNumbering(elementNumbering);  
     elementNumbering = 0;
   }
+}
+
+static apf::Field* interpolate(
+    apf::Field* nf,
+    int cubatureDegree,
+    char const* name)
+{
+  assert(apf::getValueType(nf) == apf::SCALAR);
+  apf::Mesh* m = apf::getMesh(nf);
+  int dim = m->getDimension();
+  apf::FieldShape* qpfs = apf::getIPShape(dim, cubatureDegree);
+  apf::Field* ipf = apf::createField(m, name, apf::SCALAR, qpfs);
+  apf::MeshIterator* it = m->begin(dim);
+  apf::MeshEntity* e;
+  while ((e = m->iterate(it))) {
+    apf::Mesh::Type et = m->getType(e);
+    apf::Element* fe = apf::createElement(nf, e);
+    unsigned nqp = apf::countGaussPoints(et, cubatureDegree);
+    for (unsigned i = 0; i < nqp; ++i) {
+      apf::Vector3 xi;
+      apf::getGaussPoint(et, cubatureDegree, i, xi);
+      double val = apf::getScalar(fe, xi);
+      apf::setScalar(ipf, e, i, val);
+    }
+    apf::destroyElement(fe);
+  }
+  m->end(it);
+  return ipf;
+}
+
+static apf::Field* try_interpolate(
+    apf::Mesh* m,
+    char const* fromName,
+    int cubatureDegree,
+    char const* toName)
+{
+  apf::Field* nf = m->findField(fromName);
+  if (!nf) {
+    std::cout << "could not find " << fromName << " on nodes\n";
+    return 0;
+  } else {
+    std::cout << "interpolating nodal " << fromName << " to QP " << toName << '\n';
+    return interpolate(nf, cubatureDegree, toName);
+  }
+}
+
+static void temperaturesToQP(
+    apf::Mesh* m,
+    int cubatureDegree)
+{
+  int o = cubatureDegree;
+  if (!try_interpolate(m, "temp", o, "Temperature"))
+    try_interpolate(m, Albany::APFMeshStruct::solution_name, o, "Temperature");
+  if (!try_interpolate(m, "temp_old", o, "Temperature_old"))
+    if (!try_interpolate(m, "temp", o, "Temperature_old"))
+      try_interpolate(m, Albany::APFMeshStruct::solution_name, o, "Temperature_old");
+}
+
+/* LCM's ThermoMechanicalCoefficients evaluator
+   relies on Temperature and Temperature_old
+   to be initialized in the stateArrays as well
+   as the solution vector.
+   this hack will interpolate values from the
+   solution vector "temp" to populate the
+   stateArrays */
+
+void
+Albany::APFDiscretization::initTemperatureHack() {
+  if (!meshStruct->useTemperatureHack)
+    return;
+  apf::Mesh* m = meshStruct->getMesh();
+  temperaturesToQP(m, meshStruct->cubatureDegree);
+  copyQPStatesFromAPF();
+  apf::destroyField(m->findField("Temperature"));
+  apf::destroyField(m->findField("Temperature_old"));
 }

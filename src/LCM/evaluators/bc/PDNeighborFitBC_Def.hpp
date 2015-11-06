@@ -29,7 +29,9 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 PDNeighborFitBC_Base<EvalT, Traits>::
 PDNeighborFitBC_Base(Teuchos::ParameterList& p) :
-  PHAL::DirichletBase<EvalT, Traits>(p) {
+  PHAL::DirichletBase<EvalT, Traits>(p), perturbDirichlet(1.0) {
+  this->perturbDirichlet = p.get<double>("Perturb Dirichlet");
+  this->timeStep = p.get<double>("Time Step");
 }
 
 // **********************************************************************
@@ -39,6 +41,7 @@ template<typename Traits>
 PDNeighborFitBC<PHAL::AlbanyTraits::Residual, Traits>::
 PDNeighborFitBC(Teuchos::ParameterList& p) :
   PDNeighborFitBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p) {
+
 }
 
 // **********************************************************************
@@ -85,9 +88,21 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       const double val_y = 0.0;
       const double val_z = 0.0;
 #endif
-      fT_nonconstView[xlunk] = xT_constView[xlunk] - val_x;
-      fT_nonconstView[ylunk] = xT_constView[ylunk] - val_y;
-      fT_nonconstView[zlunk] = xT_constView[zlunk] - val_z;
+
+      // The scheme below is intended to be consistent with Velocity-Verlet time integration (explicit transient dynamics).
+      // Should work for statics and quasi-statics as well.
+
+      double delta_x = xT_constView[xlunk] - val_x;
+      double delta_y = xT_constView[ylunk] - val_y;
+      double delta_z = xT_constView[zlunk] - val_z;
+
+      double a_x = (2.0/3.0)*delta_x/(this->timeStep*this->timeStep);
+      double a_y = (2.0/3.0)*delta_y/(this->timeStep*this->timeStep);
+      double a_z = (2.0/3.0)*delta_z/(this->timeStep*this->timeStep);
+
+      fT_nonconstView[xlunk] = -1.5 * this->perturbDirichlet * a_x;
+      fT_nonconstView[ylunk] = -1.5 * this->perturbDirichlet * a_y;
+      fT_nonconstView[zlunk] = -1.5 * this->perturbDirichlet * a_z;
   }
 }
 
@@ -110,7 +125,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
 #endif
 #endif
-
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;

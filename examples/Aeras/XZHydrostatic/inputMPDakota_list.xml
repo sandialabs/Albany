@@ -28,12 +28,14 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="STK1D"/>
-    <Parameter name="1D Elements" type="int" value="300"/>
+    <!--Parameter name="1D Elements" type="int" value="300"/-->
+    <!-- JF  reducing size of mesh for nightly testing -->
+    <Parameter name="1D Elements" type="int" value="100"/>
     <Parameter name="1D Scale" type="double" value="300.0"/>
     <Parameter name="Workset Size" type="int" value="1000"/>
     <Parameter name="Periodic_x BC" type="bool" value="true"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
     <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/>
   </ParameterList>
@@ -54,10 +56,6 @@
       <Parameter name="Parameter Vector Index" type="int" value="0"/>
       <Parameter name="Response Vector Index" type="int" value="0"/>
       <Parameter name="Use Multi-Point" type="bool" value="true"/>
-      <ParameterList name="Multi-Point">
-        <Parameter name="Block Size" type="int" value="3"/>
-        <Parameter name="Number of Spatial Processors" type="int" value="-1"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Rythmos Solver">
@@ -73,7 +71,7 @@
       <ParameterList name="Rythmos">
      
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="1.00"/>
+           <Parameter name="Final Time" type="double" value="0.002"/>
            <!-- change to 1.037e6 to get full revolution -->
            <ParameterList name="Integrator Selection">
              <Parameter name="Integrator Type" type="string" value="Default Integrator"/>

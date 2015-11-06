@@ -164,9 +164,9 @@ Albany::PhaseProblem::constructEvaluators(
   Teuchos::ArrayRCP<string> dof_names_dot(1);
   Teuchos::ArrayRCP<string> resid_names(1);
 
-  dof_names[0] = "T";
-  dof_names_dot[0] = "T_dot";
-  resid_names[0] = "T Residual";
+  dof_names[0] = "Temperature";
+  dof_names_dot[0] = "Temperature_dot";
+  resid_names[0] = "Temperature Residual";
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator(
@@ -197,7 +197,7 @@ Albany::PhaseProblem::constructEvaluators(
       elem_type,intrepid_basis,elem_cubature));
 
   { // Time
-    RCP<ParameterList> p = rcp(new ParameterList("Time"));
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Time"));
    
     // Input
     p->set<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout",
@@ -218,6 +218,28 @@ Albany::PhaseProblem::constructEvaluators(
         dl_->dummy, eb_name, "scalar", 0.0, true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
+  { // Temperature
+     
+     double temp(0.0);
+     if (material_db_->isElementBlockParam(eb_name, "Initial Temperature")) {
+       temp = material_db_->
+           getElementBlockParam<double>(eb_name, "Initial Temperature");
+     }
+     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+         new Teuchos::ParameterList("Save Temperature"));
+     p = stateMgr.registerStateVariable("Temperature",
+         dl_->qp_scalar,
+         dl_->dummy,
+         eb_name,
+         "scalar",
+         temp,
+         true,
+         false);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+     
   }
 
   { // Thermal Conductivity
@@ -262,6 +284,8 @@ Albany::PhaseProblem::constructEvaluators(
 
     //Input
     p->set<string>("Coordinate Name","Coord Vec");
+    p->set<string>("Time Name","Time");
+    p->set<string>("Delta Time Name","Delta Time");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
 
     //Output
@@ -279,6 +303,8 @@ Albany::PhaseProblem::constructEvaluators(
 
     //Input
     p->set<string>("Coordinate Name","Coord Vec");
+    p->set<string>("Time Name","Time");
+    p->set<string>("Delta Time Name","Delta Time");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
 
     //Output
@@ -294,16 +320,18 @@ Albany::PhaseProblem::constructEvaluators(
     //Input
     p->set<string>("Weighted BF Name","wBF");
     p->set<string>("Weighted Gradient BF Name","wGrad BF");
-    p->set<string>("Temperature Name","T");
-    p->set<string>("Temperature Gradient Name","T Gradient");
-    p->set<string>("Temperature Time Derivative Name","T_dot");
+    p->set<string>("Temperature Name","Temperature");
+    p->set<string>("Temperature Gradient Name","Temperature Gradient");
+    p->set<string>("Temperature Time Derivative Name","Temperature_dot");
     p->set<string>("Thermal Conductivity Name","k");
     p->set<string>("Rho Cp Name","Rho Cp");
     p->set<string>("Source Name","Source");
-    p->set<string>("Laser Source Name","Laser Source");	
+    p->set<string>("Laser Source Name","Laser Source");
+    p->set<string>("Time Name","Time");
+    p->set<string>("Delta Time Name","Delta Time");
 
     //Output
-    p->set<string>("Residual Name", "T Residual");
+    p->set<string>("Residual Name", "Temperature Residual");
 
     ev = rcp(new AMP::PhaseResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);

@@ -46,21 +46,6 @@ class AdjointResponse :
     AdjointResponse(const AdjointResponse&);
     AdjointResponse& operator=(const AdjointResponse&);
 
-    //! counter
-    int evalCtr;
-
-    //! Albany application
-    Teuchos::RCP<Albany::Application> application;
-
-    //! Dirichlet field manager
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
-
-    //! Jacobian field managers
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
-
-    //! quantity of interest field managers
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > qfm;
-
   public:
 
     virtual void evaluateTangentT(const double alpha, const double beta, const double omega, const double current_time, bool sum_derivs, const Tpetra_Vector* xdot, const Tpetra_Vector* xdotdot, const Tpetra_Vector& x, const Teuchos::Array<ParamVec>& p, ParamVec* deriv_p, const Tpetra_MultiVector* Vxdot, const Tpetra_MultiVector* Vxdotdot, const Tpetra_MultiVector* Vx, const Tpetra_MultiVector* Vp, Tpetra_Vector* g, Tpetra_MultiVector* gx, Tpetra_MultiVector* gp) {}
