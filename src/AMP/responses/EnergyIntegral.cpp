@@ -1,11 +1,9 @@
-#include <iostream>
-#include <apf.h>
-#include <apfMesh2.h>
-#include <apfShape.h>
-#include <gmi_mesh.h>
-#include <apfMDS.h>
+#include "EnergyIntegral.hpp"
+
+#include <Albany_APFMeshStruct.hpp>
 #include <PCU.h>
-#include <assert.h>
+
+namespace Albany {
 
 class EnergyIntegrator : public apf::Integrator
 {
@@ -71,8 +69,9 @@ class EnergyIntegrator : public apf::Integrator
     apf::Element* e_;
 };
 
-double computeEnergy(apf::Mesh* m, apf::Field* T)
+double computeAMPEnergyIntegral(apf::Mesh* m)
 {
+  apf::Field* T = m->findField(Albany::APFMeshStruct::solution_name);
   // create the energy integrator
   EnergyIntegrator integrator;
 
@@ -92,25 +91,4 @@ double computeEnergy(apf::Mesh* m, apf::Field* T)
   return integrator.energy;
 }
 
-int main(int argc, char** argv)
-{
-  assert(argc==4);
-  const char* modelFile = argv[1];
-  const char* meshFile = argv[2];
-  const char* outFile = argv[3];
-  MPI_Init(&argc,&argv);
-  PCU_Comm_Init();
-  gmi_register_mesh();
-  apf::Mesh2* mesh = apf::loadMdsMesh(modelFile, meshFile);
-  apf::Field* T = 
-    apf::createLagrangeField(mesh, "Solution", apf::SCALAR, 1);
-  double e = computeEnergy(mesh,T);
-  std::cout << "Energy: " << e << std::endl;
-  writeVtkFiles(outFile,mesh);
-  apf::destroyField(T);
-  mesh->destroyNative();
-  apf::destroyMesh(mesh);
-  PCU_Comm_Free();
-  MPI_Finalize();
 }
-
