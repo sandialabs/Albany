@@ -824,6 +824,18 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
 
   for (AbstractFieldContainer::FieldContainerRequirements::const_iterator it=req.begin(); it!=req.end(); ++it)
   {
+    typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
+    typedef AbstractSTKFieldContainer::VectorFieldType  VFT;
+
+    // Extracting all possible types of field (at most one will be non-null)
+    SFT* scalar_node = metaData->get_field<SFT> (stk::topology::NODE_RANK, *it);
+    VFT* vector_node = metaData->get_field<VFT> (stk::topology::NODE_RANK, *it);
+    SFT* scalar_elem = metaData->get_field<SFT> (stk::topology::ELEM_RANK, *it);
+    VFT* vector_elem = metaData->get_field<VFT> (stk::topology::ELEM_RANK, *it);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (scalar_node==0 && vector_node==0 && scalar_elem==0 && vector_elem==0,
+                                std::logic_error, "Error! The field is not present in the mesh.\n");
+
     // Get the file name
     std::string temp_str = *it + " File Name";
     std::string fname = req_fields_info->get<std::string>(temp_str,"");
@@ -833,7 +845,12 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
     std::string ftype = req_fields_info->get<std::string>(temp_str,"");
     if (ftype=="")
     {
-      *out << "Warning! No field type specified for field " << *it << ". We skip it and hope this does not cause problems. Note: you can list it as 'Output' if it's not meant to be an input field.\n";
+      *out << "Warning! No field type specified for field " << *it << ". We skip it and hope this does not cause problems. Note: you can list it as 'Output' if it's not meant to be an input field or 'From Mesh' if it is already stored in the mesh.\n";
+      continue;
+    }
+    else if (ftype=="From Mesh")
+    {
+      *out << "Skipping field " << *it << " since it's listed as already present in the mesh. Make sure this is true!\n";
       continue;
     }
     else if (ftype=="Output")
@@ -846,9 +863,6 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
     stk::mesh::EntityId nodeId, elemId;
     int lid;
     double* values;
-
-    typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
-    typedef AbstractSTKFieldContainer::VectorFieldType  VFT;
 
     // Depending on the input field type, we need to use different pointers
     if (ftype == "Node Scalar")
@@ -901,13 +915,12 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
       req_vec.doImport(serial_req_vec,importOperatorNode,Tpetra::INSERT);
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
 
-      SFT* field = metaData->get_field<SFT> (stk::topology::NODE_RANK, *it);
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Node Scalar'?).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (scalar_node==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Node Scalar'?).\n");
 
       //Now we have to stuff the vector in the mesh data
       for (int i(0); i<nodes.size(); ++i)
       {
-        values = stk::mesh::field_data(*field, nodes[i]);
+        values = stk::mesh::field_data(*scalar_node, nodes[i]);
 
         nodeId    = bulkData->identifier(nodes[i]) - 1;
         lid       = nodes_map->getLocalElement((GO)(nodeId));
@@ -963,12 +976,9 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
 
       // Fill the (possibly) parallel vector
       req_vec.doImport(serial_req_vec,importOperatorElem,Tpetra::INSERT);
-
-      // Extracting the mesh field and the tpetra vector view
-      SFT* field = metaData->get_field<SFT>(stk::topology::ELEM_RANK, *it);
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Elem Scalar'?).\n");
-
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
+
+      TEUCHOS_TEST_FOR_EXCEPTION (scalar_elem==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Elem Scalar'?).\n");
 
       //Now we have to stuff the vector in the mesh data
       for (int i(0); i<elems.size(); ++i)
@@ -976,7 +986,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
         elemId = bulkData->identifier(elems[i]) - 1;
         lid    = elems_map->getLocalElement((GO)(elemId));
 
-        values = stk::mesh::field_data(*field, elems[i]);
+        values = stk::mesh::field_data(*scalar_elem, elems[i]);
         values[0] = req_vec_view[lid];
       }
     }
@@ -1043,10 +1053,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
       req_mvec.doImport(serial_req_mvec,importOperatorNode,Tpetra::INSERT);
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
 
-      // Extracting the mesh field (we still don't know if the field is node or cell oriented)
-      VFT* field = metaData->get_field<VFT> (stk::topology::NODE_RANK, *it);
-
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Node Vector'?).\n");
+      TEUCHOS_TEST_FOR_EXCEPTION (vector_node==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Node Vector'?).\n");
 
       for (int i(0); i<fieldDim; ++i)
         req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
@@ -1054,7 +1061,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
       //Now we have to stuff the vector in the mesh data
       for (int i(0); i<nodes.size(); ++i)
       {
-        values = stk::mesh::field_data(*field, nodes[i]);
+        values = stk::mesh::field_data(*vector_node, nodes[i]);
 
         nodeId = bulkData->identifier(nodes[i]) - 1;
         lid    = nodes_map->getLocalElement((GO)(nodeId));
@@ -1123,11 +1130,10 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
 
       // Fill the (possibly) parallel vector
       req_mvec.doImport(serial_req_mvec,importOperatorElem,Tpetra::INSERT);
-
-      // Extracting the mesh field and the tpetra vector views
-      VFT* field = metaData->get_field<VFT>(stk::topology::ELEM_RANK, *it);
-      TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Elem Vector'?).\n");
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
+
+      TEUCHOS_TEST_FOR_EXCEPTION (vector_elem==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is not 'Elem Vector'?).\n");
+
       for (int i(0); i<fieldDim; ++i)
         req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
 
@@ -1137,7 +1143,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields(
         elemId = bulkData->identifier(elems[i]) - 1;
         lid    = elems_map->getLocalElement((GO)(elemId));
 
-        values = stk::mesh::field_data(*field, nodes[i]);
+        values = stk::mesh::field_data(*vector_elem, nodes[i]);
 
         for (int iDim(0); iDim<fieldDim; ++iDim)
           values[iDim] = req_mvec_view[iDim][lid];

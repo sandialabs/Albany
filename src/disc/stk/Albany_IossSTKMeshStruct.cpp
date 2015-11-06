@@ -361,8 +361,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       }
       else
       {
-        *out << "Neither restart index or time are set. We still read defined fields in case they are needed (e.g., parameters)."<< std::endl;
-//        *out << "Restart Index not set. Not reading solution from exodus (" << index << ")"<< std::endl;
+        *out << "Restart Index not set. Not reading solution from exodus (" << index << ")"<< std::endl;
       }
     }
 
