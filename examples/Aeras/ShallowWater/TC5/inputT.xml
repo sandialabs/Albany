@@ -20,6 +20,7 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
       <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+      <Parameter name="Response 3" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
@@ -30,7 +31,7 @@
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_16_quad4.g"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_16_out.exo"/>

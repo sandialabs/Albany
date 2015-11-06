@@ -13,6 +13,7 @@
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
+
 FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
@@ -159,6 +160,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
   // --------------- Regularization term on the basal side ----------------- //
 
+
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end() && alpha!=0)
   {
     const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
@@ -167,6 +169,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       // Get the local data of side and cell
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
+
 
       ScalarT t = 0;
       for (int qp=0; qp<numSideQPs; ++qp)

@@ -21,12 +21,13 @@ namespace Aeras {
 
 //Constructor
     SpectralOutputSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                  const Teuchos::RCP<const Teuchos_Comm>& commT, 
                   const int numDim_, const int worksetSize_,
-                  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
+                  const bool periodic_, const double scale_,  
+                  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_, 
                   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
-                  const int points_per_edge_);
+                  const int points_per_edge_, const std::string element_name_);
 
 
 
@@ -55,17 +56,23 @@ namespace Aeras {
     //Ioss::Init::Initializer ioInit;
 
     Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
+      getValidDiscretizationParametersQuads() const;
+
+    Teuchos::RCP<const Teuchos::ParameterList>
+      getValidDiscretizationParametersLines() const;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
-    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run
-    const int numDim;
+    double scale; 
+    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run 
+    const int numDim;  
     const int points_per_edge;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-    std::string element_name;
 
+    //Create enum type for the different kinds of elements (currently lines and quads)
+    enum elemType {LINE, QUAD};
+    elemType ElemType;
 
     protected:
   };

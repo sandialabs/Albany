@@ -174,6 +174,12 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
        << ", numLevels = " << numLevels 
        << ", numTracers= " << numTracers << std::endl;
   
+  if (numNodes != numQPts) { 
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+         Teuchos::Exceptions::InvalidParameter, "Aeras::XZHydrostaticProblem must be run such that nNodes == numQPts!  " 
+         <<  "This does not hold: numNodes = " <<  numNodes << ", numQPts = " << numQPts << "."); 
+  }
+
   //Evaluators for DOFs that depend on levels
   dl = rcp(new Aeras::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, 1, numLevels));
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -713,9 +719,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     {//Level u*Tracer
       RCP<ParameterList> p = rcp(new ParameterList("UTracer"));
-      p->set<string>("PiVelx",        "PiVelx");
-      p->set<string>("Tracer",       dof_names_tracers[t]);
-      p->set<string>("UTracer",  "U"+dof_names_tracers[t]);
+      p->set<string>("Velx Name", "Velx");
+      p->set<string>("PiVelx",    "PiVelx");
+      p->set<string>("Tracer",    dof_names_tracers[t]);
+      p->set<string>("UTracer",   "U"+dof_names_tracers[t]);
     
       ev = rcp(new Aeras::XZHydrostatic_UTracer<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);

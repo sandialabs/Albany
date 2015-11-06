@@ -13,7 +13,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 
@@ -243,7 +243,7 @@ void GatherVerticallyAveragedVelocity<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-    "FELIX::GatherThickness not implemented for Ensemble MP types!!");
+    "FELIX::GatherVerticallyAveragedVelocity not implemented for Ensemble MP types!!");
 }
 
 template<typename Traits>

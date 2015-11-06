@@ -58,9 +58,9 @@ void ObserverImpl::observeSolution (
       peridigmManager->updateState();
 
       int myPID = nonOverlappedSolution.Map().Comm().MyPID();
-      if(myPID == 0)
-        std::cout << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = "
-                  << obcFunctional << "\n" << std::endl;
+//       if(myPID == 0)
+//         std::cout << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = "
+//                   << obcFunctional << "\n" << std::endl;
     }
 #endif
 #endif

@@ -18,8 +18,8 @@
 
 namespace PHAL {
 
-template <typename EvalT, typename Traits, typename cfunc_traits>
-DirichletCoordFunction_Base<EvalT, Traits, cfunc_traits>::
+template <typename EvalT, typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction_Base<EvalT, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction_Base(Teuchos::ParameterList& p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
   func(p) {
@@ -28,16 +28,16 @@ DirichletCoordFunction_Base(Teuchos::ParameterList& p) :
 // **********************************************************************
 // Specialization: Residual
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits,  cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::Residual, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::Residual, Traits/*, cfunc_traits*/>(p) {
 }
 
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
+template<typename Traits/*, typename cfunc_traits*/>
 void
-DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits, cfunc_traits>::
+DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
@@ -74,14 +74,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::Jacobian, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::Jacobian, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
@@ -141,14 +141,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Tangent
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::Tangent, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
@@ -209,14 +209,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: DistParamDeriv
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
   Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
@@ -285,14 +285,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 #ifdef ALBANY_SG
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGResidual, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGResidual, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
@@ -330,14 +330,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Stochastic Galerkin Jacobian
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGJacobian, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGJacobian, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
@@ -402,14 +402,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Stochastic Galerkin Tangent
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::SGTangent, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::SGTangent, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGTangent, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGTangent, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::SGTangent, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::SGTangent, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
@@ -466,14 +466,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Multi-point Residual
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPResidual, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPResidual, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<Stokhos::ProductEpetraVector> f =
     dirichletWorkset.mp_f;
@@ -511,14 +511,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Multi-point Jacobian
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPJacobian, Traits, cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPJacobian, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<Stokhos::ProductEpetraVector> f =
     dirichletWorkset.mp_f;
@@ -581,14 +581,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 // **********************************************************************
 // Specialization: Multi-point Tangent
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits,  cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/>::
 DirichletCoordFunction(Teuchos::ParameterList& p) :
-  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPTangent, Traits,  cfunc_traits>(p) {
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/>(p) {
 }
 // **********************************************************************
-template<typename Traits, typename cfunc_traits>
-void DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits, cfunc_traits>::
+template<typename Traits/*, typename cfunc_traits*/>
+void DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::RCP<Stokhos::ProductEpetraVector> f =
     dirichletWorkset.mp_f;

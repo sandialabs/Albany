@@ -125,6 +125,7 @@ void Albany::APFMeshStruct::init(
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
+  useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
 
   compositeTet = false;
 
@@ -263,9 +264,13 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     /* field may have been created by restart mechanism */
     if (mesh->findField(solution_name))
       solutionInitialized = true;
-    else
+    else {
       this->createNodalField(solution_name,valueType);
-  } else
+      if (hasRestartSolution)
+        solutionInitialized = true;
+    }
+  }
+  else
     splitFields(solVectorLayout);
 
   // Code to parse the vector of StateStructs and save the information
@@ -279,6 +284,12 @@ Albany::APFMeshStruct::setFieldAndBulkData(
 
   for (std::size_t i=0; i<sis->size(); i++) {
     StateStruct& st = *((*sis)[i]);
+
+#ifdef ALBANY_SCOREC
+    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
+        st.restartDataAvailable = hasRestartSolution;
+#endif
+
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
     std::vector<PHX::DataLayout::size_type>& dim = st.dim;
@@ -331,6 +342,8 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
     this->createNodalField(fieldLayout[i].append("Res").c_str(),valueType);
   }
 
+  if (hasRestartSolution)
+    solutionInitialized = true;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
@@ -407,6 +420,9 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
                      "Temporary hack to get MueLu (possibly) working for us");
 
   validPL->set<std::string>("Model Associations File Name", "", "File with element block/sideset/nodeset associations");
+
+  validPL->set<bool>("QP Temperature from Nodes", false,
+                     "Hack to initialize QP Temperature from Solution");
 
   return validPL;
 }

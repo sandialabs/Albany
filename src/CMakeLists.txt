@@ -77,6 +77,10 @@ SET(HEADERS
   PHAL_Workset.hpp
   )
 
+if (USE_PUBLICTRILINOS)
+  set(HEADERS ${HEADERS} Albany_PublicTrilinosTrickery.hpp)
+endif ()
+
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
     Albany_DistributedParameterDerivativeOp.hpp
@@ -523,17 +527,6 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PNP_PotentialResid_Def.hpp
   )
 
-# AERAS
-IF (ALBANY_AERAS)
-  SET(SOURCES ${SOURCES}
-    evaluators/Aeras_ShallowWaterResponseL2Error.cpp
-  )
-  SET(HEADERS ${HEADERS}
-    evaluators/Aeras_ShallowWaterResponseL2Error.hpp
-    evaluators/Aeras_ShallowWaterResponseL2Error_Def.hpp
-  )
-ENDIF()
-
 # ASCR
 IF(ALBANY_ASCR AND ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
@@ -680,11 +673,21 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/evaluators
                      ./ATO/utils
                      ./GOAL
+                     ./GOAL/utils
                      ./GOAL/responses
                      ./GOAL/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
+
+IF ( ENABLE_ISOLIB )
+  include_directories (${ISOLIB_INCLUDE_DIR_MAIN})
+  include_directories (${ISOLIB_INCLUDE_DIR_UTIL})
+  link_directories (${ISOLIB_LIBRARY_DIR})
+  set(ISOLIB_LIB iso)
+ELSE()
+  set(ISOLIB_LIB )
+ENDIF()
 
 IF ( ENABLE_NLopt )
   include_directories (${NLopt_INCLUDE_DIR})
@@ -707,7 +710,7 @@ ENDIF()
 IF(ALBANY_LAME)
   include_directories (${LAME_INCLUDE_DIR})
   link_directories (${LAME_LIBRARY_DIR})
-  set(LAME_LIB lame)
+  set(LAME_LIB lame ${LAME_LIBRARIES})
   include_directories (${MATH_TOOLKIT_INCLUDE_DIR})
   link_directories (${MATH_TOOLKIT_LIBRARY_DIR})
   set(MATH_TOOLKIT_LIB math_toolkit)
@@ -899,6 +902,8 @@ IF (ALBANY_ATO AND ALBANY_EPETRA)
     SET(ALBANY_LCM ON)
     add_subdirectory(ATO)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
+    # iso library uses stk
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ISOLIB_LIB})
 ENDIF()
 
 IF (ALBANY_HYDRIDE)
@@ -957,5 +962,14 @@ IF (INSTALL_ALBANY)
       ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
   ENDIF()
   INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
+
+  SET(TMP1 ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+
+  MESSAGE("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
+  STRING(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
+  STRING(REPLACE ";" " -l" ALBANY_LINK_LIBS
+        "-L ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
+        " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
+  CONFIGURE_FILE(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
 
 ENDIF()

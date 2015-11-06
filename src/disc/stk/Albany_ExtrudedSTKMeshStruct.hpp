@@ -54,6 +54,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
+    Teuchos::RCP<Albany::AbstractSTKMeshStruct> basalMeshStruct;
+
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
     enum elemShapeType {Tetrahedron, Wedge, Hexahedron};

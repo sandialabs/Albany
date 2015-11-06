@@ -29,15 +29,15 @@ else ()
   set (BUILD_ALB64 FALSE)
   set (BUILD_ALB64CLANG11 FALSE)
   set (DOWNLOAD FALSE)
-  set (BUILD_SCOREC TRUE)
+  set (BUILD_SCOREC FALSE)
   set (BUILD_TRILINOS FALSE)
   set (BUILD_PERIDIGM FALSE)
-  set (BUILD_ALB32 TRUE)
+  set (BUILD_ALB32 FALSE)
   set (BUILD_TRILINOSCLANG11 FALSE)
   set (CLEAN_BUILD FALSE)
   set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS FALSE)
-  set (BUILD_INTEL_ALBANY FALSE)
+  set (BUILD_INTEL_ALBANY TRUE)
 endif ()
 
 # Begin User inputs:
@@ -60,11 +60,13 @@ set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-gcc-4.8.2-RHEL6)
 set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2015.1.133)
 
 set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6)
-set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
+#set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
+set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.0.109/compilers_and_libraries_2016.0.109/linux)
 
 set (USE_LAME ON)
-set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include")
-set (LAME_LIB_DIR "/projects/sierra/linux_rh6/install/master/lame/lib")
+set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/include\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/include\;/projects/sierra/linux_rh6/install/master/utility/include\;/projects/sierra/linux_rh6/install/master/Sierra/include")
+set (LAME_LIB_DIR "/projects/sierra/linux_rh6/install/master/lame/lib\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/lib\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/lib\;/projects/sierra/linux_rh6/install/master/utility/lib\;/projects/sierra/linux_rh6/install/master/Sierra/lib")
+set (LAME_LIBRARIES "sierra_util_diag\;sierra_util_events\;sierra_util_user_input_function\;sierra_util_domain\;sierra_util_sctl\;stk_expreval\;utility\;sierra\;dataManager\;audit\;sierraparser")
 set (MATH_TOOLKIT_INC_DIR
   "/projects/sierra/linux_rh6/install/master/math_toolkit/include")
 set (MATH_TOOLKIT_LIB_DIR
@@ -934,6 +936,7 @@ if (BUILD_TRILINOSCLANG11)
     "-DCMAKE_C_FLAGS:STRING='-Os -w -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
@@ -1237,7 +1240,7 @@ if (BUILD_INTEL_TRILINOS)
   set (ENV{LD_LIBRARY_PATH}
     /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/compiler/lib/intel64:/sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6/lib:${INITIAL_LD_LIBRARY_PATH})
 
-  set (LABLAS_LIBRARIES "-L${MKL_PATH}/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
+  set (LABLAS_LIBRARIES "-L${MKL_PATH}/mkl/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
     "-DTPL_ENABLE_SuperLU:STRING=ON"
@@ -1321,6 +1324,15 @@ if (BUILD_INTEL_ALBANY)
   set_property (GLOBAL PROPERTY SubProject AlbanyIntel)
   set_property (GLOBAL PROPERTY Label AlbanyIntel)
 
+  # Copy from the Intel Trilinos block. Not actually needed here in practice,
+  # but if I do debugging on this script, it's nice to be able to run just this
+  # block without the Trilinos one.
+  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
+  set (ENV{PATH}
+    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/bin/intel64:${PATH})
+  set (ENV{LD_LIBRARY_PATH}
+    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/compiler/lib/intel64:/sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6/lib:${INITIAL_LD_LIBRARY_PATH})
+
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
     "-DENABLE_LCM:BOOL=ON"
@@ -1337,10 +1349,11 @@ if (BUILD_INTEL_ALBANY)
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_64BIT_INT:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_LAME:BOOL=${USE_LAME}"
     "-DLAME_INCLUDE_DIR:PATH=${LAME_INC_DIR}"
     "-DLAME_LIBRARY_DIR:PATH=${LAME_LIB_DIR}"
+    "-DLAME_LIBRARIES:PATH=${LAME_LIBRARIES}"
     "-DMATH_TOOLKIT_INCLUDE_DIR:PATH=${MATH_TOOLKIT_INC_DIR}"
     "-DMATH_TOOLKIT_LIBRARY_DIR:PATH=${MATH_TOOLKIT_LIB_DIR}")
   if (BUILD_SCOREC)

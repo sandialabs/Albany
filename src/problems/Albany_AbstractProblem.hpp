@@ -207,7 +207,7 @@ namespace Albany {
       tags =
         Teuchos::rcp(new Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >);
     }
-    template <typename T> void operator() (T x) {
+    template <typename T> void operator() (T x) const {
       tags->push_back(
         prob.template constructEvaluators<T>(fm, meshSpecs, stateMgr,
                                              fmchoice, responseList));

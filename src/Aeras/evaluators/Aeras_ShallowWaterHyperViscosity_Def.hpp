@@ -54,7 +54,7 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2]; //# of dofs/node
 
- #define ALBANY_VERBOSE
+ //#define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
   std::cout << "In hyperviscosity constructor!" << std::endl;
   std::cout << "useHyperviscosity? " << useHyperviscosity <<std::endl;
@@ -91,6 +91,9 @@ template<typename EvalT, typename Traits>
 void ShallowWaterHyperViscosity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  // WARNING: Don't use this if hyperviscosity is non-constant.
+  if (memoizer_.haveStoredData(workset)) return;
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (useHyperviscosity == false) { //no hyperviscosity
     for(std::size_t cell = 0; cell < workset.numCells; ++cell) {

@@ -1,19 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 
-#SET(CTEST_DO_SUBMIT ON)
-#SET(CTEST_TEST_TYPE Nightly)
-
-#SET(CTEST_DO_SUBMIT OFF)
-#SET(CTEST_TEST_TYPE Experimental)
-
 SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
 SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 
 # What to build and test
 SET(DOWNLOAD_TRILINOS TRUE)
 SET(DOWNLOAD_ALBANY TRUE)
+SET(DOWNLOAD_RECONDRIVER TRUE)
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
+SET(BUILD_RECONDRIVER TRUE)
 SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
@@ -56,8 +52,8 @@ ENDIF()
 configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
                ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-# Rougly midnight 0700 UTC
-SET(CTEST_NIGHTLY_START_TIME "04:00:00 UTC")
+# Run test at/after 20:00 (8:00PM MDT --> 2:00 UTC, 7:00PM MST --> 2:00 UTC)
+SET (CTEST_NIGHTLY_START_TIME "02:00:00 UTC")
 SET (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 SET (CTEST_BUILD_FLAGS "-j16")
@@ -74,6 +70,7 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
+SET(ReconDriver_REPOSITORY_LOCATION software.sandia.gov:/git/ReconDrivergit)
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
 
@@ -140,7 +137,32 @@ if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
 
 endif()
 
-ENDIF()
+ENDIF(DOWNLOAD_ALBANY)
+
+IF (DOWNLOAD_RECONDRIVER)
+
+#
+# Get ReconDriver
+#
+##########################################################################################################
+
+if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/ReconDriver")
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+    clone ${ReconDriver_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/ReconDriver
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  
+   message(STATUS "out: ${_out}")
+   message(STATUS "err: ${_err}")
+   message(STATUS "res: ${HAD_ERROR}")
+   if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot clone ReconDriver repository!")
+   endif()
+
+endif()
+
+ENDIF(DOWNLOAD_RECONDRIVER)
 
 CTEST_START(${CTEST_TEST_TYPE})
 
@@ -228,7 +250,37 @@ IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Albany!")
 endif()
 
+ENDIF(DOWNLOAD_ALBANY)
+
+IF(DOWNLOAD_RECONDRIVER)
+
+#
+# Update ReconDriver
+#
+##############################################################################################################
+
+SET_PROPERTY (GLOBAL PROPERTY SubProject ReconDriver_CUDA)
+SET_PROPERTY (GLOBAL PROPERTY Label ReconDriver_CUDA)
+
+set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/ReconDriver" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Update
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot update ReconDriver repository!")
+  endif()
 ENDIF()
+
+IF(count LESS 0)
+        message(FATAL_ERROR "Cannot update ReconDriver!")
+endif()
+
+ENDIF(DOWNLOAD_RECONDRIVER)
 
 #
 # Set the common Trilinos config options
@@ -318,7 +370,7 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
-  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=OFF"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
   "-DTrilinos_ENABLE_Teko:BOOL=OFF"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
 # Comment these out to disable stk
@@ -609,6 +661,112 @@ ENDIF()
 
 ENDIF (BUILD_ALBANY)
 
+IF (BUILD_RECONDRIVER)
+
+# Configure the ReconDriver build 
+# Builds everything!
+#
+####################################################################################################################
+
+SET_PROPERTY (GLOBAL PROPERTY SubProject ReconDriver_CUDA)
+SET_PROPERTY (GLOBAL PROPERTY Label ReconDriver_CUDA)
+
+SET(CONFIGURE_OPTIONS
+  "-DTrilinos_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DCUSTOM_CXX_FLAGS:STRING=-Wfatal-errors"
+   )
+ 
+if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/ReconDriver")
+  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/ReconDriver)
+endif()
+
+IF (CLEAN_BUILD)
+# Initial cache info
+set( CACHE_CONTENTS "
+SITE:STRING=${CTEST_SITE}
+CMAKE_BUILD_TYPE:STRING=Release
+CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
+BUILD_TESTING:BOOL=OFF
+PRODUCT_REPO:STRING=${ReconDriver_REPOSITORY_LOCATION}
+" )
+file(WRITE "${CTEST_BINARY_DIRECTORY}/ReconDriver/CMakeCache.txt" "${CACHE_CONTENTS}")
+ENDIF(CLEAN_BUILD)
+
+CTEST_CONFIGURE(
+          BUILD "${CTEST_BINARY_DIRECTORY}/ReconDriver"
+          SOURCE "${CTEST_SOURCE_DIRECTORY}/ReconDriver"
+          OPTIONS "${CONFIGURE_OPTIONS}"
+          RETURN_VALUE HAD_ERROR
+          APPEND
+)
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Configure
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit ReconDriver configure results!")
+  endif()
+ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure ReconDriver build!")
+endif()
+
+#
+# Build ReconDriver
+#
+###################################################################################################################
+
+SET(CTEST_BUILD_TARGET all)
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+CTEST_BUILD(
+          BUILD "${CTEST_BINARY_DIRECTORY}/ReconDriver"
+          RETURN_VALUE  HAD_ERROR
+          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+          APPEND
+)
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+        message(FATAL_ERROR "Cannot submit ReconDriver build results!")
+  endif()
+ENDIF(CTEST_DO_SUBMIT)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build ReconDriver!")
+endif()
+
+#
+# Run ReconDriver tests
+#
+##################################################################################################################
+
+CTEST_TEST(
+              BUILD "${CTEST_BINARY_DIRECTORY}/ReconDriver"
+#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+              #NUMBER_FAILED  TEST_NUM_FAILED
+)
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Test
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit ReconDriver test results!")
+  endif()
+ENDIF(CTEST_DO_SUBMIT)
+
+ENDIF(BUILD_RECONDRIVER)
 
 # Done!!!
 

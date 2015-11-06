@@ -144,9 +144,9 @@ cellIsInRegion(std::size_t cell)
       return false;
 
     if(bRestrictToXYPolygon) {
-      MeshScalarT pt[2]; //code below only works when MeshScalarT == double.  Need to generalize for other cases.
-      pt[0] = coordVec(cell,qp,0);
-      pt[1] = coordVec(cell,qp,1);
+      RealType pt[2]; //MP: when MeshScalarT != double we take ADValue of that, is this correct?
+      pt[0] = Albany::ADValue(coordVec(cell,qp,0));
+      pt[1] = Albany::ADValue(coordVec(cell,qp,1));
       if( !QCAD::ptInPolygon(xyPolygon, pt) ) return false;
     }
   }

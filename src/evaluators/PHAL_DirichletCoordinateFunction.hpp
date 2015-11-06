@@ -37,17 +37,26 @@ namespace PHAL {
 // **************************************************************
 // **************************************************************
 
-template<typename EvalT, typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<EvalT> >
+// After the 3 Nov 2015 Phalanx refactor, the third template parameter doesn't
+// work. That isn't actually a problem since one could never use anything except
+// IdentityCoordFunctionTraits, anyway, because of the BC field evaluator
+// factory mechanism. (Additionally, in any case, IdentityCoordFunctionTraits is
+// the only such class.) In the future, when we get around to removing the
+// factory (and all of FactoryTraits.hpp), we can go back to using it if it's of
+// use.
+
+template<typename EvalT, typename Traits/*, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<EvalT>*/ >
 class DirichletCoordFunction;
 
-template <typename EvalT, typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<EvalT> >
+template <typename EvalT, typename Traits/*, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<EvalT>*/ >
 class DirichletCoordFunction_Base : public PHAL::DirichletBase<EvalT, Traits> {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     DirichletCoordFunction_Base(Teuchos::ParameterList& p);
 
     //! Type of traits class being used
-    typedef cfunc_traits cfunc_traits_type;
+    //typedef cfunc_traits cfunc_traits_type;
+    typedef PHAL::IdentityCoordFunctionTraits<EvalT> cfunc_traits_type;
 
     cfunc_traits_type func;
 
@@ -56,10 +65,10 @@ class DirichletCoordFunction_Base : public PHAL::DirichletBase<EvalT, Traits> {
 // **************************************************************
 // Residual
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::Residual> >
-template<typename Traits, typename cfunc_traits >
-class DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::Residual, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/ >
+class DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::Residual, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -69,10 +78,10 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::Residual, Traits, cfunc_traits>
 // **************************************************************
 // Jacobian
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::Jacobian> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::Jacobian, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::Jacobian, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -82,10 +91,10 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::Jacobian, Traits, cfunc_traits>
 // **************************************************************
 // Tangent
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::Tangent> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::Tangent, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
@@ -96,24 +105,24 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::Tangent, Traits, cfunc_traits>
 // Distributed Parameter Derivative
 //  -- Currently assuming no parameter derivative
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::Tangent> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
     void evaluateFields(typename Traits::EvalData d);
 };
 
+#ifdef ALBANY_SG
 // **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
-#ifdef ALBANY_SG
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::SGResidual> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGResidual, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGResidual, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
@@ -123,10 +132,10 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::SGResidual, Traits, cfunc_trait
 // **************************************************************
 // Stochastic Galerkin Jacobian
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::SGJacobian> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGJacobian, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGJacobian, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
@@ -136,25 +145,25 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::SGJacobian, Traits, cfunc_trait
 // **************************************************************
 // Stochastic Galerkin Tangent
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::SGTangent> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::SGTangent, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGTangent, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::SGTangent, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::SGTangent, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
     void evaluateFields(typename Traits::EvalData d);
 };
 #endif 
-#ifdef ALBANY_ENSEMBLE 
 
+#ifdef ALBANY_ENSEMBLE 
 // **************************************************************
 // Multi-point Residual
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::MPResidual> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPResidual, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPResidual, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
@@ -164,10 +173,10 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::MPResidual, Traits, cfunc_trait
 // **************************************************************
 // Multi-point Jacobian
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::MPJacobian> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPJacobian, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPJacobian, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
@@ -177,10 +186,10 @@ class DirichletCoordFunction<PHAL::AlbanyTraits::MPJacobian, Traits, cfunc_trait
 // **************************************************************
 // Multi-point Tangent
 // **************************************************************
-//template<typename Traits, typename cfunc_traits = PHAL::IdentityCoordFunctionTraits<PHAL::AlbanyTraits::MPTangent> >
-template<typename Traits, typename cfunc_traits>
-class DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits, cfunc_traits>
-    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPTangent, Traits, cfunc_traits> {
+
+template<typename Traits/*, typename cfunc_traits*/>
+class DirichletCoordFunction<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/>
+    : public DirichletCoordFunction_Base<PHAL::AlbanyTraits::MPTangent, Traits/*, cfunc_traits*/> {
   public:
     DirichletCoordFunction(Teuchos::ParameterList& p);
     typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;

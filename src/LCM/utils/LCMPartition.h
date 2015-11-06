@@ -169,7 +169,6 @@ public:
   {
     return root_;
   }
-  ;
 
 private:
 

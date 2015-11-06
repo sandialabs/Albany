@@ -295,10 +295,6 @@ postEvaluate(typename Traits::PostEvalData workset)
   // only care about global response in "Fill saddle point" mode
   if(svResponseFn->getMode() == "Fill saddle point") {
 
-    // Add contributions across processors
-    Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
-      workset.serializerManager.template getValue<EvalT>();
-
     PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
 
     // Copy in position of saddle point here (no derivative info yet)

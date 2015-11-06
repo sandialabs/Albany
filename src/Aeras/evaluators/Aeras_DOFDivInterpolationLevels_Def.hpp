@@ -30,6 +30,7 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
   this->addEvaluatedField(div_val_qp);
 
   this->setName("Aeras::DOFDivInterpolationLevels"+PHX::typeAsString<EvalT>());
+  //std::cout<< "Aeras::DOFDivInterpolationLevels: " << numNodes << " " << numDims << " " << numQPs << " " << numLevels << std::endl;
 }
 
 //**********************************************************************
@@ -53,8 +54,12 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) 
       for (int node= 0 ; node < numNodes; ++node) 
         for (int level=0; level < numLevels; ++level) 
-          for (int dim=0; dim<numDims; dim++) 
+          for (int dim=0; dim<numDims; dim++) {
             div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
+            //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
+            //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
+
+         }
 }
 
 }

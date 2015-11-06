@@ -35,7 +35,11 @@
 
 #ifdef ALBANY_MUELU
 #include <Thyra_MueLuPreconditionerFactory.hpp>
+#ifdef ALBANY_USE_PUBLICTRILINOS
 #include "Stratimikos_MueluTpetraHelpers.hpp"
+#else
+#include "Stratimikos_MueLuHelpers.hpp"
+#endif
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
@@ -554,12 +558,50 @@ void renamePreconditionerParamList(
     }
   }      
 }
+
+void enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
+{
+#ifdef ALBANY_IFPACK2
+# ifdef ALBANY_64BIT_INT
+  typedef Thyra::PreconditionerFactoryBase<ST> Base;
+  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+# else
+  typedef Thyra::PreconditionerFactoryBase<double> Base;
+  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
+# endif
+  linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+#endif
+}
+
+void enableMueLu(Teuchos::RCP<Albany::Application>& albanyApp,
+                 const Teuchos::RCP<Teuchos::ParameterList>& stratList,
+                 Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
+{
+#ifdef ALBANY_MUELU
+# ifdef ALBANY_USE_PUBLICTRILINOS
+#  ifdef ALBANY_64BIT_INT
+  renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
+  Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
+  Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+#  else
+  Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+#  endif
+# else
+#  ifdef ALBANY_64BIT_INT
+  renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
+  Stratimikos::enableMueLu(linearSolverBuilder);
+  Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+#  else
+  Stratimikos::enableMueLu(linearSolverBuilder);
+#  endif
+# endif
+#endif
+}
 } // namespace
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createAndGetAlbanyAppT(
   Teuchos::RCP<Albany::Application>& albanyApp,
-//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Teuchos_Comm>& solverComm,
   const Teuchos::RCP<const Tpetra_Vector>& initial_guess, 
@@ -652,8 +694,14 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
 #ifdef ALBANY_AERAS 
   if (solutionMethod == "Aeras Hyperviscosity") {
-    std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
- 
+    //std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
+    //Check if HV coefficient tau is zero of "Explicit HV" is false. Then there is no need for Aeras HVDecorator.
+
+    bool useExplHyperviscosity = problemParams->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
+    double tau = problemParams->sublist("Shallow Water Problem").get<double>("Hyperviscosity Tau", 0.0);
+
+    if( (useExplHyperviscosity) && (tau != 0.0) ){
+
 ///// make a solver, repeated code
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
     const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
@@ -661,50 +709,32 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     Piro::SolverFactory piroFactory;
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-#ifdef ALBANY_IFPACK2
-    {
-#ifdef ALBANY_64BIT_INT
-      typedef Thyra::PreconditionerFactoryBase<ST> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
-#else
-      typedef Thyra::PreconditionerFactoryBase<double> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
-#endif
-      linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-    }
-#endif /* ALBANY_IFPACK2 */
-#ifdef ALBANY_MUELU
-#ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
-#endif
-#endif /* ALBANY_MUELU */
-
+    enableIfpack2(linearSolverBuilder);
+    enableMueLu(albanyApp, stratList, linearSolverBuilder);
     linearSolverBuilder.setParameterList(stratList);
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory = createLinearSolveStrategy(linearSolverBuilder);
 
 ///// create an app and a model evaluator
 
-  RCP<Albany::Application> app;
+    RCP<Albany::Application> app;
 
-  app = rcp(new Albany::Application(appComm, appParams, initial_guess));
-  RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelHV(new Aeras::HVDecorator(app, appParams));
+    app = rcp(new Albany::Application(appComm, appParams, initial_guess));
+    RCP<Thyra::ModelEvaluatorDefaultBase<ST> > modelHV(new Aeras::HVDecorator(app, appParams));
 
-  albanyApp = app;
+    albanyApp = app;
 
-  RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
+    RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
  
-  modelWithSolveT =
+    modelWithSolveT =
       rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
 
-  const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
 
-  return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
 
-}//if Aeras HyperViscosity 
+    }//if useExplHV=true and tau <>0.
+
+  }//if Aeras HyperViscosity
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
@@ -721,28 +751,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     Piro::SolverFactory piroFactory;
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-
-#ifdef ALBANY_IFPACK2
-    {
-#ifdef ALBANY_64BIT_INT
-      typedef Thyra::PreconditionerFactoryBase<ST> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
-#else
-      typedef Thyra::PreconditionerFactoryBase<double> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
-#endif
-      linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-    }
-#endif /* ALBANY_IFPACK2 */
-#ifdef ALBANY_MUELU
-#ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
-#endif
-#endif /* ALBANY_MUELU */
+    enableIfpack2(linearSolverBuilder);
+    enableMueLu(albanyApp, stratList, linearSolverBuilder);
 
 #ifdef ALBANY_TEKO
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
@@ -752,14 +762,14 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
     
-   const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
+    const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
                                                                          initial_guess, lowsFactory));
 
-
     const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
+
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
-    }
+  }
 #endif /* LCM and Schwarz */
 
   RCP<Albany::Application> app = albanyApp;
@@ -788,33 +798,11 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   } else {
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-#ifdef ALBANY_IFPACK2
-    {
-#ifdef ALBANY_64BIT_INT
-      typedef Thyra::PreconditionerFactoryBase<ST> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
-#else
-      typedef Thyra::PreconditionerFactoryBase<double> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
-#endif
-
-      linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-    }
-#endif /* ALBANY_IFPACK2 */
-#ifdef ALBANY_MUELU
-#ifdef ALBANY_64BIT_INT
-    renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#else
-    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
-#endif
-#endif /* ALBANY_MUELU */
-   
+    enableIfpack2(linearSolverBuilder);
+    enableMueLu(albanyApp, stratList, linearSolverBuilder);   
 #ifdef ALBANY_TEKO
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
 #endif
-
     linearSolverBuilder.setParameterList(stratList);
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
@@ -892,7 +880,6 @@ Albany::SolverFactory::createModel(
 Teuchos::RCP<Thyra::ModelEvaluator<ST> >
 Albany::SolverFactory::createAlbanyAppAndModelT(
   Teuchos::RCP<Albany::Application>& albanyApp,
-//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
   const bool createAlbanyApp)

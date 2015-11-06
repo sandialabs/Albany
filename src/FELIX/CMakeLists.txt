@@ -19,6 +19,7 @@
        evaluators/FELIX_HydrologyResidualEllipticEqn.cpp
        evaluators/FELIX_HydrologyResidualEvolutionEqn.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
+       evaluators/FELIX_ResponseSMBMismatch.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
@@ -34,7 +35,6 @@
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
        evaluators/FELIX_ViscosityL1L2.cpp
-       problems/FELIX_CoupledStokesFOHydrology.cpp
        problems/FELIX_Elliptic2D.cpp
        problems/FELIX_Hydrology.cpp
        problems/FELIX_Stokes.cpp
@@ -45,10 +45,10 @@
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.cpp
-       evaluators/FELIX_GatherThickness.cpp
+       evaluators/FELIX_Gather2DField.cpp
+       evaluators/FELIX_UpdateZCoordinate.cpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
-       evaluators/FELIX_ScatterResidualH.cpp
-
+       evaluators/FELIX_ScatterResidual2D.cpp
        problems/FELIX_StokesFOThickness.cpp
    )
 ENDIF()
@@ -93,6 +93,8 @@ ENDIF()
        evaluators/FELIX_HydrologyResidualEvolutionEqn_Def.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
+       evaluators/FELIX_ResponseSMBMismatch.hpp
+       evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        evaluators/FELIX_StokesBodyForce.hpp
        evaluators/FELIX_StokesBodyForce_Def.hpp
        evaluators/FELIX_StokesContinuityResid.hpp
@@ -119,7 +121,6 @@ ENDIF()
        evaluators/FELIX_ViscosityFO_Def.hpp
        evaluators/FELIX_ViscosityL1L2.hpp
        evaluators/FELIX_ViscosityL1L2_Def.hpp
-       problems/FELIX_CoupledStokesFOHydrology.hpp
        problems/FELIX_Elliptic2D.hpp
        problems/FELIX_Hydrology.hpp
        problems/FELIX_Stokes.hpp
@@ -129,12 +130,14 @@ ENDIF()
 
 IF (ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
-       evaluators/FELIX_GatherThickness.hpp
-       evaluators/FELIX_GatherThickness_Def.hpp
+       evaluators/FELIX_Gather2DField.hpp
+       evaluators/FELIX_Gather2DField_Def.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity.hpp
        evaluators/FELIX_GatherVerticallyAveragedVelocity_Def.hpp
-       evaluators/FELIX_ScatterResidualH.hpp
-       evaluators/FELIX_ScatterResidualH_Def.hpp
+       evaluators/FELIX_ScatterResidual2D.hpp
+       evaluators/FELIX_ScatterResidual2D_Def.hpp
+       evaluators/FELIX_UpdateZCoordinate.hpp
+       evaluators/FELIX_UpdateZCoordinate_Def.hpp
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
        problems/FELIX_StokesFOThickness.hpp

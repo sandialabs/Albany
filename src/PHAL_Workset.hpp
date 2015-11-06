@@ -31,7 +31,6 @@
 #endif
 
 #include "PHAL_AlbanyTraits.hpp"
-#include "PHAL_TypeKeyMap.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
@@ -172,7 +171,6 @@ struct Workset {
   std::string EBName;
 
   // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters.
-  // Note: also needed by OffNodeSet dirichlet BC
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 #if defined(ALBANY_LCM)
   // Needed for Schwarz coupling
@@ -268,7 +266,7 @@ struct Workset {
   template <typename T>
   struct ApplyEvalT {
     template <typename EvalT> struct apply {
-      typedef typename boost::mpl::apply<T, typename EvalT::ScalarT>::type type;
+      typedef typename Sacado::mpl::apply<T, typename EvalT::ScalarT>::type type;
     };
   };
 
@@ -281,15 +279,6 @@ struct Workset {
       typedef Teuchos::RCP< Teuchos::ValueTypeSerializer<int,T> > type;
     };
   };
-
-  // mpl::vector mapping evaluation type EvalT to serialization class
-  // ValueTypeSerializer<int, EvalT::ScalarT>, which is used for MPI
-  // communication of scalar types.
-  typedef PHAL::CreateLambdaKeyMap<AlbanyTraits::BEvalTypes,
-                                   ApplyEvalT<ApplyVTS> >::type SerializerMap;
-
-  // Container storing serializers for each evaluation type
-  PHAL::TypeKeyMap<SerializerMap> serializerManager;
 
   void print(std::ostream &os){
 
@@ -309,162 +298,6 @@ struct Workset {
   }
 
 };
-
-  template <typename EvalT> struct BuildSerializer {
-    BuildSerializer(Workset& workset) {}
-  };
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::Residual> {
-    BuildSerializer(Workset& workset) {
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::Residual>(serializer);
-    }
-  };
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::Jacobian> {
-    BuildSerializer(Workset& workset) {
-      int num_nodes = workset.wsElNodeEqID[0].size();
-      int num_eqns =  workset.wsElNodeEqID[0][0].size();
-      int num_dof = num_nodes * num_eqns;
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-        real_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,FadType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,FadType>(
-                       real_serializer, num_dof));
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::Jacobian>(serializer);
-    }
-  };
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::Tangent> {
-    BuildSerializer(Workset& workset) {
-      int num_cols_tot = workset.param_offset + workset.num_cols_p;
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-        real_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,TanFadType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,TanFadType>(
-                       real_serializer, num_cols_tot));
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::Tangent>(serializer);
-    }
-  };
-
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::DistParamDeriv> {
-     BuildSerializer(Workset& workset) {
-       const Albany::IDArray& wsElNode =
-           workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[0];
-       int num_dof = wsElNode.dimension(1)*wsElNode.dimension(2);
-       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-         real_serializer =
-         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,TanFadType> > serializer =
-         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,TanFadType>(
-                        real_serializer, num_dof));
-       workset.serializerManager.
-         setValue<PHAL::AlbanyTraits::DistParamDeriv>(serializer);
-     }
-  };
-
-#ifdef ALBANY_SG
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::SGResidual> {
-    BuildSerializer(Workset& workset) {
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-        real_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGType>(
-                       workset.sg_expansion, real_serializer));
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::SGResidual>(serializer);
-    }
-  };
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::SGJacobian> {
-    BuildSerializer(Workset& workset) {
-      int num_nodes = workset.wsElNodeEqID[0].size();
-      int num_eqns =  workset.wsElNodeEqID[0][0].size();
-      int num_dof = num_nodes * num_eqns;
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-        real_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGType> > sg_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGType>(
-                       workset.sg_expansion, real_serializer));
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGFadType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGFadType>(
-                       sg_serializer, num_dof));
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::SGJacobian>(serializer);
-    }
-  };
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::SGTangent> {
-    BuildSerializer(Workset& workset) {
-      int num_cols_tot = workset.param_offset + workset.num_cols_p;
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-        real_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGType> > sg_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGType>(
-                       workset.sg_expansion, real_serializer));
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,SGFadType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,SGFadType>(
-                       sg_serializer, num_cols_tot));
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::SGTangent>(serializer);
-    }
-  };
-#endif
-#ifdef ALBANY_ENSEMBLE
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::MPResidual> {
-    BuildSerializer(Workset& workset) {
-      int nblock = workset.mp_x->size();
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-        real_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPType>(
-                       real_serializer, nblock));
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::MPResidual>(serializer);
-    }
-  };
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::MPJacobian> {
-    BuildSerializer(Workset& workset) {
-      int nblock = workset.mp_x->size();
-      int num_nodes = workset.wsElNodeEqID[0].size();
-      int num_eqns =  workset.wsElNodeEqID[0][0].size();
-      int num_dof = num_nodes * num_eqns;
-       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-         real_serializer =
-         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPType> > mp_serializer =
-         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPType>(
-                        real_serializer, nblock));
-       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPFadType> > serializer =
-         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPFadType>(
-                        mp_serializer, num_dof));
-       workset.serializerManager.
-         setValue<PHAL::AlbanyTraits::MPJacobian>(serializer);
-    }
-  };
-  template <> struct BuildSerializer<PHAL::AlbanyTraits::MPTangent> {
-    BuildSerializer(Workset& workset) {
-      int nblock = workset.mp_x->size();
-      int num_cols_tot = workset.param_offset + workset.num_cols_p;
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
-        real_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPType> > mp_serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPType>(
-                       real_serializer, nblock));
-      Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MPFadType> > serializer =
-        Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,MPFadType>(
-                       mp_serializer, num_cols_tot));
-      workset.serializerManager.
-        setValue<PHAL::AlbanyTraits::MPTangent>(serializer);
-    }
-  };
-#endif
 
 }
 

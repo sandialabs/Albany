@@ -651,8 +651,8 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
 
    // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
-  {
+  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval)) {
+
      double time_label = monotonicTimeLabel(time);
 
      int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
@@ -3111,24 +3111,4 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
     buildSideSetProjectors();
   }
-/*
-for (int ws(0); ws<sideSets.size(); ++ws)
-{
-  std::cout << "Workset " << ws << "\n";
-  const Albany::SideSetList& ss = sideSets[ws];
-  std::map<std::string, std::vector<SideStruct> >::const_iterator it;
-  for (it=ss.begin(); it!=ss.end(); ++it)
-  {
-    std::cout << "  SideSet " << it->first << "\n";
-    for (int i(0); i<it->second.size(); ++i)
-    {
-      std::cout << "      side GID: " << it->second[i].side_GID << "\n";
-      std::cout << "      elem GID: " << it->second[i].elem_GID << "\n";
-      std::cout << "      elem LID: " << it->second[i].elem_LID << "\n";
-      std::cout << "      side local_id:" << it->second[i].side_local_id << "\n";
-    }
-  }
-}
-std::cout << "-------------------------------\n";
-*/
 }

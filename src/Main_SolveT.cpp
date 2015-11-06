@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
     int num_g = solver->Ng();  // Number of *vectors* of responses
     if (r_prod != Teuchos::null && num_g > 0) { 
       *out << "WARNING: For Thyra::ProductVectorBase, printing of responses does not work yet!  " <<
-              "No responses will be printed even though you requested " << num_g-1 << " responses. \n"; 
+              "No responses will be printed even though you requested " << num_g << " responses. \n"; 
       num_g = 1; 
     }
 

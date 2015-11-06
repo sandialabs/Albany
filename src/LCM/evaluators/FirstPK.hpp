@@ -112,48 +112,27 @@ private:
   ///
   bool small_strain_;
 
- //Kokkos
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-   public:
+public: // Kokkos
+  struct have_stab_pressure_Tag {};
+  struct have_pore_pressure_Tag {};
+  struct small_strain_Tag {};
+  struct no_small_strain_Tag {};
 
-   struct have_stab_pressure_Tag{};
-   struct have_pore_pressure_Tag{};
-   struct small_strain_Tag{};
-   struct no_small_strain_Tag{};
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef Kokkos::RangePolicy<ExecutionSpace,have_stab_pressure_Tag> have_stab_pressure_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,have_pore_pressure_Tag> have_pore_pressure_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,small_strain_Tag> small_strain_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,no_small_strain_Tag> no_small_strain_Policy;
 
-   typedef Kokkos::RangePolicy<ExecutionSpace,have_stab_pressure_Tag> have_stab_pressure_Policy;
-   typedef Kokkos::RangePolicy<ExecutionSpace,have_pore_pressure_Tag> have_pore_pressure_Policy;
-   typedef Kokkos::RangePolicy<ExecutionSpace,small_strain_Tag> small_strain_Policy;
-   typedef Kokkos::RangePolicy<ExecutionSpace,no_small_strain_Tag> no_small_strain_Policy;
-
-   KOKKOS_INLINE_FUNCTION
-   void operator() (const have_stab_pressure_Tag& tag, const int& i) const;
-   KOKKOS_INLINE_FUNCTION
-   void operator() (const have_pore_pressure_Tag& tag, const int& i) const;
-   KOKKOS_INLINE_FUNCTION
-   void operator() (const small_strain_Tag& tag, const int& i) const;
-   KOKKOS_INLINE_FUNCTION
-   void operator() (const no_small_strain_Tag& tag, const int& i) const;
-
-   typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-   std::vector<PHX::index_size_type> ddims_;
-   int derivative_dim;
-   PHX::MDField<ScalarT,Dim,Dim> I;
-   PHX::MDField<ScalarT,Cell,Dim,Dim> sig;
-   PHX::MDField<ScalarT,Cell,Dim,Dim> F;
-   PHX::MDField<ScalarT,Cell,Dim,Dim> P;
-
-   template <class ArrayT>
-   KOKKOS_INLINE_FUNCTION
-   const ScalarT trace(const ArrayT &A, const int cell) const;
- 
-   //template <class ArrayT>
-  // KOKKOS_INLINE_FUNCTION
-  // void piola(const ArrayT &P, const ArrayT &F, const ArrayT &sigma) const;
- 
-#endif
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const have_stab_pressure_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const have_pore_pressure_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const small_strain_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const no_small_strain_Tag& tag, const int& i) const;
 };
 }
 

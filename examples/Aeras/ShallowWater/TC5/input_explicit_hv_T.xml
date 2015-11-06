@@ -4,10 +4,10 @@
 <!--  </ParameterList> -->
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
-    <Parameter name="Solution Method" type="string" value="Aeras HyperViscosity"/>
+    <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-      <!-- Explicit HV runs with "Solution Method" = "Aeras HyperViscosity" -->
+      <!-- Explicit HV runs with "Solution Method" = "Aeras Hyperviscosity" -->
       <!-- and explicit timestepping. Note chat there are no checks on which --> 
       <!-- time integration is used below. -->
       <!-- Implitic HV runs with "Solution Method"="Transient". -->
@@ -41,7 +41,7 @@
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_16_quad4.g"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_16_out.exo"/>

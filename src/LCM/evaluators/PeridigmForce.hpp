@@ -41,7 +41,11 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
+  bool supportsTransient;
+
   // Input:
+  PHX::MDField<ScalarT,Cell> density;
+  PHX::MDField<RealType,Cell,Vertex> sphereVolume;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> velocity;
@@ -52,8 +56,6 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> residual;
   std::vector< LCM::PeridigmManager::OutputField > outputFieldInfo;
   std::map< std::string, PHX::MDField<ScalarT>> outputFields;
-
-  RealType density;
 
   unsigned int numQPs;
   unsigned int numDims;

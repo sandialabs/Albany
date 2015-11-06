@@ -20,6 +20,12 @@
 #ifdef ALBANY_SCOREC
 #include "AAdapt_MeshAdapt.hpp"
 #endif
+#ifdef ALBANY_AMP
+#include "AAdapt_SimAdapt.hpp"
+#endif
+#if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
+#include "Albany_APFDiscretization.hpp"
+#endif
 #include "AAdapt_RC_Manager.hpp"
 
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
@@ -52,18 +58,19 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   if (problemParams->isSublist("Adaptation")) { // If the user has specified adaptation on input, grab the sublist
     // Note that piroParams_ and adaptiveMesh_ are members of LOCA_Thyra_AdaptiveSolutionManager
     adaptParams_ = Teuchos::sublist(problemParams, "Adaptation", true);
-    if (Teuchos::nonnull(rc_mgr)) {
-      // This call stack: LOCA::*Stepper -> printSolution -> ObserverImpl ->
-      // updateStates means _new states get copied to _old any time
-      // printSolution is called. It is incorrect to call updateStates in the
-      // relaxation step. Without modifying LOCA::AdaptiveStepper, which I don't
-      // want to do right now, I can't fine-tune ObserverImpl. So disallow:
-      adaptParams_->set<bool>("Print Relaxation Solution", false);
-      // As a side effect, postProcessContinuationStep is also not called, so
-      // RFs won't be evaluated.
-    }
     adaptiveMesh_ = true;
     buildAdapter(rc_mgr);
+  }
+
+  // Want the initial time in the parameter library to be correct
+  // if this is a restart solution
+  if (disc_->hasRestartSolution()) {
+    if (paramLib_->isParameter("Time")) {
+      double initialValue =
+        appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
+        get<double>("Initial Value", 0.0);
+      paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
+    }
   }
 
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
@@ -104,6 +111,16 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
       initial_xdotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
     }
   }
+#if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
+  {
+    const Teuchos::RCP< Albany::APFDiscretization > apf_disc =
+      Teuchos::rcp_dynamic_cast< Albany::APFDiscretization >(disc_);
+    if ( ! apf_disc.is_null()) {
+      apf_disc->writeSolutionToMeshDatabaseT(*overlapped_xT, 0, true);
+      apf_disc->initTemperatureHack();
+    }
+  }
+#endif
 }
 
 void AAdapt::AdaptiveSolutionManagerT::
@@ -147,6 +164,12 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              commT_));
+  } else
+#endif
+#ifdef ALBANY_AMP
+  if (method == "Sim") {
+    adapter_ = Teuchos::rcp(
+      new AAdapt::SimAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
   } else
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)

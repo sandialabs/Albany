@@ -86,7 +86,7 @@ namespace Albany {
 
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
-
+    
     //! Destructor
     ~Application();
 
@@ -696,13 +696,13 @@ namespace Albany {
     }
 
     //! Const access to problem parameter list
-    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() const {
-        return problemParams;
+    Teuchos::RCP<const Teuchos::ParameterList> getProblemPL() const {
+      return problemParams;
     }
 
     //! Access to problem parameter list
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
-        return problemParams;
+      return problemParams;
     }
 
 #if defined(ALBANY_EPETRA)
@@ -1212,8 +1212,6 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
       for (int j=0; j< wsElNodeEqID[ws][0].size(); j++)
           for (int k=0; k<wsElNodeEqID[ws][0][0].size();k++)
               workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k]; 
-
-  PHAL::BuildSerializer<EvalT> bs(workset);
 }
 
 #endif // ALBANY_APPLICATION_HPP

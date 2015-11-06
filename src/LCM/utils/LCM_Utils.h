@@ -14,14 +14,14 @@
 
 namespace LCM {
 
-template <typename Container, typename T>
+template<typename Container, typename T>
 bool
 contains(Container const & c, T const & t)
 {
   return std::find(c.begin(), c.end(), t) != c.end();
 }
 
-template <typename T>
+template<typename T>
 T
 lcm_sqrt(T const & x)
 {
@@ -33,7 +33,7 @@ lcm_sqrt(T const & x)
   return std::sqrt(x);
 }
 
-template <typename T>
+template<typename T>
 T
 lcm_cbrt(T const & x)
 {

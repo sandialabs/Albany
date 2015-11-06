@@ -104,6 +104,9 @@ struct AbstractMeshStruct {
 #ifdef ALBANY_SCOREC
       PUMI_MS,
 #endif
+#ifdef ALBANY_GOAL
+      GOAL_MS,
+#endif
 #ifdef ALBANY_AMP
       SIM_MS,
 #endif
@@ -118,6 +121,7 @@ struct AbstractMeshStruct {
                   const unsigned int worksetSize,
                   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
+
 ;
 
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;

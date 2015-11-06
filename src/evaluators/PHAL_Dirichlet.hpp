@@ -40,8 +40,8 @@ class DirichletBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits>
-   {
-
+{
+     
 private:
 
   //typedef typename Traits::Residual::ScalarT ScalarT;

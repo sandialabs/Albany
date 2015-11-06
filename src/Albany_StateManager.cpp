@@ -330,22 +330,22 @@ Albany::StateManager::registerNodalVectorStateVariable (const std::string &state
     {
       // These entities store data as <Node,...>, so the dl rank and fieldDim are the same
       if (dl->rank() == 1) // node scalar
-        nodalDataBase->registerVectorState (stateName, 1);
+        nodalDataBase->registerVectorState (stateName_old, 1);
       else if (dl->rank() == 2) // node vector
-        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+        nodalDataBase->registerVectorState (stateName_old, pstateRef.dim[1]);
       else if (dl->rank() == 3) // node tensor
-        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
+        nodalDataBase->registerVectorState (stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
     }
     else if (stateRef.entity == StateStruct::NodalDataToElemNode ||
              stateRef.entity == Albany::StateStruct::NodalDistParameter)
     {
       // These entities store data as <Cell,Node,...>, so the dl has rank = fieldDim + 1
       if (dl->rank() == 2) // node scalar
-        nodalDataBase->registerVectorState (stateName, 1);
+        nodalDataBase->registerVectorState (stateName_old, 1);
       else if (dl->rank() == 3) // node vector
-        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
+        nodalDataBase->registerVectorState (stateName_old, pstateRef.dim[1]);
       else if (dl->rank() == 4) // node tensor
-        nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
+        nodalDataBase->registerVectorState (stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
     }
   }
 

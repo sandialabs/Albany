@@ -93,10 +93,15 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
 
+
   typedef typename Intrepid::CellTools<MeshScalarT>   ICT;
   typedef Intrepid::FunctionSpaceTools                IFST;
 
-  ICT::setJacobian    (jacobian, refPoints, coordVec, *cellType);
+#ifdef ALBANY_USE_PUBLICTRILINOS
+  ICT::setJacobian(jacobian, refPoints, coordVec, *cellType);
+#else
+  ICT::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
+#endif
   ICT::setJacobianInv (jacobian_inv, jacobian);
   ICT::setJacobianDet (jacobian_det, jacobian);
 

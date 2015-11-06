@@ -37,6 +37,10 @@
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #endif
+#ifdef ALBANY_GOAL
+#include "Albany_GOALDiscretization.hpp"
+#include "Albany_GOALMeshStruct.hpp"
+#endif
 #ifdef ALBANY_AMP
 #include "Albany_SimDiscretization.hpp"
 #include "Albany_SimMeshStruct.hpp"
@@ -302,6 +306,16 @@ Albany::DiscretizationFactory::createMeshSpecs() {
                                << " requested, but not compiled in" << std::endl);
 #endif
   }
+  else if(method == "PUMI Hierarchic") {
+#ifdef ALBANY_GOAL
+    meshStruct = Teuchos::rcp(new Albany::GOALMeshStruct(discParams, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif
+  }
   else if (method == "Sim") {
 #ifdef ALBANY_AMP
     meshStruct = Teuchos::rcp(new Albany::SimMeshStruct(discParams, commT));
@@ -315,9 +329,10 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
-                               "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams
-                               << "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss,  Ioss Aeras," <<
-                                  " Exodus, Exodus Aeras, Cubit, PUMI, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
+                               "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams <<
+                               "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
+                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Mpas, Ascii," <<
+                               " Ascii2D, Extruded" << std::endl);
   }
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
@@ -439,6 +454,14 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       }
       break;
 #endif
+#ifdef ALBANY_GOAL
+      case Albany::AbstractMeshStruct::GOAL_MS: {
+        Teuchos::RCP<Albany::GOALMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::GOALMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::GOALDiscretization(ms, commT, rigidBodyModes));
+      }
+      break;
+#endif
+
 #ifdef ALBANY_AMP
       case Albany::AbstractMeshStruct::SIM_MS: {
         Teuchos::RCP<Albany::SimMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::SimMeshStruct>(meshStruct);

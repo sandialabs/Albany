@@ -48,6 +48,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
                   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/ = {},
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/ = {});
 
+
     void splitFields(Teuchos::Array<std::string> fieldLayout);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
@@ -80,6 +81,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
 
     bool hasRestartSolution;
     double restartDataTime;
+    int restartWriteStep;
+
     int neq;
     int numDim;
     int cubatureDegree;
@@ -101,6 +104,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     std::string outputFileName;
     int outputInterval;
     bool useNullspaceTranslationOnly;
+    bool useTemperatureHack;
 
     static const char* solution_name;
     static const char* residual_name;

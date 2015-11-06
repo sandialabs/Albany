@@ -12,7 +12,7 @@
         <Parameter name="Material Model" type="string" value="Elastic Correspondence"/>
         <Parameter name="Density" type="double" value="7800.0"/>
         <Parameter name="Young's Modulus" type="double" value="200.0e9"/>
-          <Parameter name="Poisson's Ratio" type="double" value="0.25"/>
+          <Parameter name="Poisson's Ratio" type="double" value="0.23"/>
           <Parameter name="Hourglass Coefficient" type="double" value="0.05"/>
         </ParameterList>
       </ParameterList>
@@ -20,27 +20,25 @@
         <ParameterList name="Peridynamics Block">
           <Parameter name="Block Names" type="string" value="block_1"/>
           <Parameter name="Material" type="string" value="My Elastic Correspondence Material"/>
-          <Parameter name="Horizon" type="double" value="0.3"/>
+          <Parameter name="Horizon" type="double" value="0.21"/> <!-- 0.21 -->
         </ParameterList>
         <ParameterList name="Partial Stress Block">
           <Parameter name="Block Names" type="string" value="block_2"/>
           <Parameter name="Material" type="string" value="My Elastic Correspondence Material"/>
-          <Parameter name="Horizon" type="double" value="0.3"/>
+          <Parameter name="Horizon" type="double" value="0.23"/> <!-- 0.23 -->
         </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
 <!--
         <Parameter name="Output Filename" type="string" value="TensileBarPDPS_PeridigmResults"/>
--->
         <Parameter name="Output Frequency" type="int" value="1"/>
+-->
         <ParameterList name="Output Variables">
           <Parameter name="Model_Coordinates" type="bool" value="true"/>
           <Parameter name="Coordinates" type="bool" value="true"/>
           <Parameter name="Displacement" type="bool" value="true"/>
           <Parameter name="Velocity" type="bool" value="true"/>
           <Parameter name="Deformation_Gradient" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_Deformation" type="bool" value="true"/>
-          <Parameter name="Cauchy_Stress" type="bool" value="true"/>
           <Parameter name="Partial_Stress" type="bool" value="true"/>
           <Parameter name="Force" type="bool" value="true"/>
           <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
@@ -61,12 +59,12 @@
       <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_6 for DOF Z" type="double" value="0.0"/>
       <!-- These are the contrived BC -->
-      <ParameterList name="DBC on NS nodelist_7 for DOF lsfit">
-        <Parameter name="BC Function" type="string" value="Displacement"/>
-      </ParameterList>
-      <ParameterList name="DBC on NS nodelist_8 for DOF lsfit">
-        <Parameter name="BC Function" type="string" value="Displacement"/>
-      </ParameterList>
+<!--
+      <ParameterList name="DBC on NS nodelist_7 for DOF lsfit"/>
+      <ParameterList name="DBC on NS nodelist_8 for DOF lsfit"/>
+-->
+      <Parameter name="DBC on NS nodelist_7 for DOF X" type="double" value="-0.005"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF X" type="double" value="0.005"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

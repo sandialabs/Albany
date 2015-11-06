@@ -8,7 +8,6 @@
 #include "LCM_Utils.h"
 #include "PHAL_AlbanyTraits.hpp"
 #include "GOAL_MechanicsProblem.hpp"
-#include "GOAL_ProblemUtils.hpp"
 
 namespace Albany {
 
@@ -32,11 +31,25 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   // print a summary of the problem
   *out << "GOAL Mechanics Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
+
+  // fill in the dof names
+  offsets["X"] = 0;
+  if (numDims > 1)
+    offsets["Y"] = 1;
+  if (numDims > 2)
+    offsets["Z"] = 2;
 }
 
 /*****************************************************************************/
 GOALMechanicsProblem::~GOALMechanicsProblem()
 {
+}
+
+/*****************************************************************************/
+int GOALMechanicsProblem::getOffset(std::string const& var)
+{
+  assert(offsets.count(var) == 1);
+  return offsets[var];
 }
 
 /*****************************************************************************/
@@ -63,33 +76,6 @@ void GOALMechanicsProblem::buildProblem(
 }
 
 /*****************************************************************************/
-void GOALMechanicsProblem::buildAdjointProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
-    StateManager& stateMgr,
-    const Teuchos::RCP<Teuchos::ParameterList>& params)
-{
-  *out << "Building adjoint problem pde instantiations\n";
-
-  // get the number of physics sets
-  int physSets = meshSpecs.size();
-  adjFM.resize(physSets);
-
-  // build evaluators for each physics set
-  for (int ps=0; ps < physSets; ++ps)
-  {
-    adjFM[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(
-        *adjFM[ps], *meshSpecs[ps], stateMgr, BUILD_RESPONSE_FM, params);
-  }
-
-  // construct quantity of interest evaluators
-  adjQFM = Teuchos::null;
-
-  // construct dirichlet bc evaluators
-  adjDFM = Teuchos::null;
-}
-
-/*****************************************************************************/
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> > GOALMechanicsProblem::
 buildEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
@@ -101,7 +87,7 @@ buildEvaluators(
   // calls constructEvaluators<EvalT> for all EvalT
   ConstructEvaluatorsOp<GOALMechanicsProblem> op(
       *this, fm0, meshSpecs, stateMgr, fmChoice, responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
@@ -110,22 +96,14 @@ void GOALMechanicsProblem::constructDirichletEvaluators(
     const Albany::MeshSpecsStruct& meshSpecs,
     Teuchos::RCP<Teuchos::ParameterList>& bcs)
 {
-  int idx = 0;
-  std::vector<std::string> dirichletNames(neq);
-  dirichletNames[idx++] = "X";
-  if (numDims > 1) dirichletNames[idx++] = "Y";
-  if (numDims > 2) dirichletNames[idx++] = "Z";
-
-  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-  dfm = dirUtils.constructBCEvaluators(
-      meshSpecs.nsNames, dirichletNames, bcs, this->paramLib);
+  dfm = Teuchos::null;
 }
 
 /*****************************************************************************/
 void GOALMechanicsProblem::constructNeumannEvaluators(
     const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-  *out << "don't do that!" << std::endl;
+  nfm = Teuchos::null;
 }
 
 /*****************************************************************************/
@@ -135,7 +113,7 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> pl =
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
-  pl->set<bool>("Enriched Adjoint Solve", true, "");
+  pl->sublist("Hierarchic Boundary Conditions", false, "");
   return pl;
 }
 

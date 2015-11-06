@@ -67,7 +67,7 @@ protected:
   std::string betaName; //name of function betaXY to be used
   double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, GLP_SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
  
   //The following are for the lateral BC 
@@ -127,6 +127,7 @@ protected:
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
    		       const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
    		       const Intrepid::FieldContainer<ScalarT>& thickness_side,
+   		      const Intrepid::FieldContainer<ScalarT>& bedTopo_side,
    		       const Intrepid::FieldContainer<ScalarT>& dof_side,
                        const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                        const shards::CellTopology & celltopo,
@@ -163,6 +164,7 @@ protected:
   PHX::MDField<ScalarT,Cell,Node> roughness_field;
   PHX::MDField<ScalarT,Cell,Node> thickness_field;
   PHX::MDField<ScalarT,Cell,Node> elevation_field;
+  PHX::MDField<ScalarT,Cell,Node> bedTopo_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;

@@ -82,7 +82,7 @@ ComputeVolume(const double* p, double& v, double* dvdp)
       int numCells  = weighted_measure[ws].dimension(0);
       int numDims   = cubatures[physIndex]->getDimension();
   
-      Integrator<double> myDicer(cellTypes[physIndex],intrepidBasis[physIndex]);
+      SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
   
       coordCon.resize(numNodes, numDims);
       topoVals.resize(numNodes);
@@ -97,10 +97,8 @@ ComputeVolume(const double* p, double& v, double* dvdp)
         }
   
         double weight=0.0;
-        ATO::Integrator<double>::Positive positive;
-        myDicer.getMeasure(weight, topoVals, coordCon, topology->getInterfaceValue(), positive);
+        myDicer.getMeasure(weight, topoVals, coordCon, topology->getInterfaceValue(), Sense::Positive);
         localv += weight;
-
       }
     }
   } else 
@@ -275,8 +273,8 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   } else functionIndex = -1;
 
   Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
-  std::string derName = aggParams.get<std::string>("dFdTopology Name");
-  std::string objName = aggParams.get<std::string>("Objective Name");
+  std::string derName = aggParams.get<std::string>("Output Derivative Name");
+  std::string objName = aggParams.get<std::string>("Output Value Name");
 
   strIntegrationMethod = topology->getIntegrationMethod();
 

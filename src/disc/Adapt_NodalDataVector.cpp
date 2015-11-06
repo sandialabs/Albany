@@ -101,12 +101,13 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
 #endif
 }
 
-void Adapt::NodalDataVector::initializeExport()
+Teuchos::RCP<const Tpetra_Import> Adapt::NodalDataVector::initializeExport()
 {
   if (mapsHaveChanged) {
     importer = Teuchos::rcp(new Tpetra_Import(local_node_map, overlap_node_map));
     mapsHaveChanged = false;
   }
+  return importer;
 }
 
 void Adapt::NodalDataVector::exportAddNodalDataVector()

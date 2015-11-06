@@ -43,14 +43,16 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> gradBF;
-  PHX::MDField<ScalarT,Cell,Node> H;
+  PHX::MDField<ScalarT,Cell,Node> dH;
   PHX::MDField<ScalarT,Cell,Node> H0;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> InputResidual;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   std::size_t numNodes;
   std::size_t numQPs;
+  std::size_t numVecDims;
 
   double rho, g;
 

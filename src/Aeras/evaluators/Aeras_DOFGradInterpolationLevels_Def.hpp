@@ -30,6 +30,8 @@ DOFGradInterpolationLevels(Teuchos::ParameterList& p,
   this->addEvaluatedField(grad_val_qp);
 
   this->setName("Aeras::DOFGradInterpolationLevels"+PHX::typeAsString<EvalT>());
+
+  //std::cout << "Aeras::DOFGradInterpolationLevels: " << numDims << " " << numQPs << " " << numLevels << std::endl;
 }
 
 //**********************************************************************

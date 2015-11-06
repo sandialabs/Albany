@@ -14,6 +14,7 @@
 //extern void tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4]);
 extern void tetrasFromPrismStructured (int const* prismVertexMpasIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
 extern void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
+extern void procsSharingVertex(const int vertex, std::vector<int>& procIds);
 
 namespace Albany {
 
@@ -43,7 +44,8 @@ namespace Albany {
                       const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                       const unsigned int worksetSize,
-                      const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis = Teuchos::null){};
+                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}){};
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return hasRestartSol; }
@@ -96,7 +98,7 @@ namespace Albany {
     private:
 
 //    inline void tetrasFromPrismStructured (int const* prismVertexLIds, int const* prismVertexGIds, int tetrasIdsOnPrism[][4]);
- //   inline void setBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
+ //   inline voidsetBdFacesOnPrism (const std::vector<std::vector<std::vector<int> > >& prismStruct, const std::vector<int>& prismFaceIds, std::vector<int>& tetraPos, std::vector<int>& facePos);
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

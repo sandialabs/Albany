@@ -1,0 +1,125 @@
+#To configure Trilinos on Edison:
+
+#prior to configuring you need to load the following modules: 
+#module load boost cmake netcdf-hdf5parallel
+
+
+rm -rf CMakeCache.txt CMakeFiles
+
+cmake \
+      -D TPL_FIND_SHARED_LIBS:BOOL=OFF \
+      -DTrilinos_ASSERT_MISSING_PACKAGES=OFF \
+\
+      -D CMAKE_INSTALL_PREFIX:PATH="${PWD}/install" \
+      -D TPL_ENABLE_BoostLib:BOOL=ON \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
+      -D TPL_ENABLE_Boost:BOOL=ON \
+      -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D Boost_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
+      -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_Fortran:BOOL=ON \
+\
+      -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D HAVE_TEUCHOS_COMM_TIMERS=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+      -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+      -D Trilinos_ENABLE_Belos:BOOL=ON \
+      -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+      -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_NOX:BOOL=ON \
+      -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+      -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+      -D Trilinos_ENABLE_Isorropia:BOOL=ON\
+      -D Trilinos_ENABLE_Piro:BOOL=ON \
+      -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+\
+      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+      -D TriKota_ENABLE_DakotaCMake:BOOL=OFF \
+      -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
+\
+    -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+    -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+    -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+    -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+    -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+    -D Kokkos_ENABLE_Serial:BOOL=ON \
+    -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+    -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+    -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+\
+      -D Trilinos_ENABLE_ThreadPool:STRING="ON" \
+      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+\
+      -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+      -D Trilinos_ENABLE_FEI:BOOL=OFF\
+      -D Trilinos_ENABLE_Galeri:BOOL=OFF\
+\
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Piro_ENABLE_TESTS:BOOL=OFF \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D TPL_ENABLE_MPI:BOOL=ON \
+\
+      -D Anasazi_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D AztecOO_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Belos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Ifpack_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D NOX_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=OFF \
+      -D Rythmos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Thyra_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Trilinos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+\
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+      -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+      -D CMAKE_CXX_FLAGS:STRING="-O2" \
+      -D CMAKE_Fortran_FLAGS:STRING="-O2" \
+      -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
+\
+      -D CMAKE_C_COMPILER:FILEPATH="mpicc" \
+      -D CMAKE_CXX_COMPILER:FILEPATH="mpicxx" \
+      -D CMAKE_Fortran_COMPILER:FILEPATH="mpif90" \
+      -DTPL_ENABLE_Pthread:BOOL=OFF \
+      -DTPL_ENABLE_BinUtils:BOOL=OFF \
+      -D TPL_BLAS_LIBRARIES:STRING="sci_intel_mpi" \
+      -D TPL_LAPACK_LIBRARIES:STRING="sci_intel_mpi" \
+\
+  -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+  -D Tpetra_INST_INT_LONG_LONG:BOOL=OFF \
+  -D Tpetra_INST_INT_INT:BOOL=ON \
+  -D Tpetra_INST_DOUBLE:BOOL=ON \
+  -D Tpetra_INST_FLOAT:BOOL=OFF \
+  -D Tpetra_INST_COMPLEX_FLOAT:BOOL=OFF \
+  -D Tpetra_INST_COMPLEX_DOUBLE:BOOL=OFF \
+  -D Tpetra_INST_INT_LONG:BOOL=OFF \
+  -D Tpetra_INST_INT_UNSIGNED:BOOL=OFF \
+\
+      -D MPI_EXEC:FILEPATH=aprun \
+      -D MPI_EXEC_MAX_NUMPROCS:STRING=4 \
+      -D MPI_EXEC_NUMPROCS_FLAG:STRING=-n \
+\
+..
+
+#   -D Trilinos_ENABLE_Fortran:BOOL=OFF \
+#   -D TPL_BLAS_LIBRARIES:STRING="-L${ACML_DIR}/lib -lacml -lpgmp -pgcpplibs -lz" \
+#   -D TPL_LAPACK_LIBRARIES:STRING="-L${ACML_DIR}/lib -lacml -lpgmp -pgcpplibs -lz" \
+#   -D CMAKE_Fortran_FLAGS:STRING="-Mconcur -mp" \
+#   -D CMAKE_Fortran_FLAGS_DEBUG:STRING="-Mconcur -mp" \
+

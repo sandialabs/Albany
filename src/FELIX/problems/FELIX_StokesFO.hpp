@@ -339,8 +339,17 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  {
+    stateName = "bed_topography";
+    entity= Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+    ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   if (sliding)
   {
+    stateName = "basal_friction";
     if (ss_requirements.find(basalSideName)!=ss_requirements.end())
     {
       const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);

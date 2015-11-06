@@ -77,11 +77,13 @@
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
-#ifdef ALBANY_EPETRA
 #include "FELIX/problems/FELIX_Hydrology.hpp"
 #include "FELIX/problems/FELIX_Elliptic2D.hpp"
+
+#ifdef ALBANY_EPETRA
 #include "FELIX/problems/FELIX_StokesFOThickness.hpp"
 #endif
+
 #endif
 
 #ifdef ALBANY_AERAS
@@ -358,6 +360,9 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_GOAL
+  else if (method == "GOAL Mechanics 2D") {
+    strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 2, commT));
+  }
   else if (method == "GOAL Mechanics 3D") {
     strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 3, commT));
   }

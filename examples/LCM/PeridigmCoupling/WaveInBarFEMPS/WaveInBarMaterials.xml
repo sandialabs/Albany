@@ -18,11 +18,17 @@
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="Peridynamic Partial Stress"/>
       </ParameterList>
+      <ParameterList name="Density">
+        <Parameter name="Value" type="double" value="2200.0"/>
+      </ParameterList>
     </ParameterList>
 
     <ParameterList name="My Classic Elastic Material">
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="Elastic"/>
+      </ParameterList>
+      <ParameterList name="Density">
+        <Parameter name="Value" type="double" value="2200.0"/>
       </ParameterList>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>

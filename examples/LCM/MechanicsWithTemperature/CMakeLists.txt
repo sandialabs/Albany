@@ -15,6 +15,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansionT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansionT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LinearThermalExpansionT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/LinearThermalExpansionT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LinearThermalExpansionMaterials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/LinearThermalExpansionMaterials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureT.xml COPYONLY)
 endif()
@@ -30,6 +34,7 @@ endif()
 if (ALBANY_IFPACK2) 
 #  if (NOT ALBANY_64BIT_INT)
     add_test(${testName}TransientHeat2D_Tpetra ${AlbanyT.exe} MechanicsTransientHeat2DT.xml)
+    add_test(${testName}LinearThermalExpansion_Tpetra ${AlbanyT.exe} LinearThermalExpansionT.xml)
 #  endif ()
 endif()
 if (ALBANY_MUELU_EXAMPLES)

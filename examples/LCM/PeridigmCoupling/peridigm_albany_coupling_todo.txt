@@ -1,0 +1,30 @@
+
+Fix exception that gets thrown for serial runs of OBC coupling. dgdp->NumVectors() != testSensValues.size()
+
+Fix parallel bug with OBC coupling (parallel output?, glitch with OBC_PatchTest in parallel.)
+
+Once OBC bugs are fixed, get rid of OBCPatchTestSetup test, as it is redundant, and rename tests with "diffusion" and "mechanics".  Maybe create mechanics versions of the diffusion tests?
+
+Create AlbanyAnalysis test for OBC coupling (OBC_Crack and OBC_PatchTest take too long).
+
+Create proper tangent for OBC coupling
+
+
+
+
+
+
+
+Clean up OptimizationBasedCoupling test.
+
+
+Fix parallel bug in lsfit BC.
+
+Fix parallel bug with Peridigm exodus output that occurs when some processors have zero elements
+
+Debug Peridigm variable output in Albany
+
+
+
+
+

@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Sacado_ParameterAccessor.hpp" 
 #include "Albany_Layouts.hpp"
+#include "Aeras_EvaluatorUtilities.hpp"
 
 namespace Aeras {
 /** \brief Finite Element Interpolation Evaluator
@@ -58,6 +59,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> hyperviscosity;
 
   std::size_t numQPs, numDims, numNodes, vecDim, spatialDim;
+
+  MDFieldMemoizer<Traits> memoizer_;
           
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
