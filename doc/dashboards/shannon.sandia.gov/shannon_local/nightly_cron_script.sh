@@ -53,7 +53,6 @@ else
   /bin/rm -rf $TEST_DIR/buildAlbany/nightly/Albany/*
 fi
 
-
 /opt/local/slurm/default/bin/salloc -n 4 -N 4 -p stella bash -c \
 "env MV2_USE_CUDA=1 DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /home/gahanse/bin/ctest -VV -S $SCRIPT_DIR/ctest_nightly.cmake" >> $LOG_FILE 2>&1
 
