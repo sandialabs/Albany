@@ -45,6 +45,7 @@ miniMinimize(
   // Put values back in solution vector
   for (auto i = 0; i < dimension; ++i) {
     soln(i).val() = soln_val(i);
+    soln(i) = T(dimension, i, soln_val(i));
   }
 
   // Check if there is FAD info.

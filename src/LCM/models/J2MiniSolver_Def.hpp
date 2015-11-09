@@ -170,7 +170,7 @@ public:
     PT
     R = smag - (2.0 * mubar * X + sq23 * (Y + H));
 
-    //save(alpha, H);
+    r(0) = save(R, alpha, H);
 
     return r;
   }
@@ -184,9 +184,9 @@ public:
   }
 
   // Save values for later use
-  template<typename T>
-  void
-  save(T const & alpha_, T const & H_);
+  template<typename T, typename PT>
+  T
+  save(PT const & R_, T const & alpha_, PT const & H_);
 
   // Constants.
   RealType const
@@ -225,35 +225,80 @@ public:
 
 // Save nothing for general case
 template<typename S>
-template<typename T>
-void
-J2NLS<S>::save(T const & alpha_, T const & H_)
+template<typename T, typename PT>
+T
+J2NLS<S>::
+save(PT const & R_, T const & alpha_, PT const & H_)
 {
-  return;
+  return R_;
 }
 
-// Save for RealType, i.e, when computing Albany Residual
+// Save when computing Albany Residual
 template<>
-template<>
-void
+template<typename T, typename PT>
+T
 J2NLS<PHAL::AlbanyTraits::Residual::ScalarT>::
-save(RealType const & alpha_, RealType const & H_)
+save(PT const & R_, T const & alpha_, PT const & H_)
 {
-  alpha = alpha_;
-  H = H_;
-  return;
+  alpha = Sacado::Value<PT>::eval(alpha_);
+  H = Sacado::Value<PT>::eval(H_);
+  return R_;
 }
 
 // Save when computing Albany Jacobian
 template<>
-template<>
-void
+template<typename T, typename PT>
+T
 J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
-save(RealType const & alpha_, RealType const & H_)
+save(PT const & R_, T const & alpha_, PT const & H_)
 {
   alpha = alpha_;
   H = H_;
-  return;
+  return Sacado::Value<PT>::eval(R_);
+}
+
+/*
+template<>
+template<>
+Sacado::Fad::DFad<RealType>
+J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
+save<Sacado::Fad::DFad<RealType>, PHAL::AlbanyTraits::Jacobian::ScalarT>(
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & R_,
+    Sacado::Fad::DFad<RealType> const & alpha_,
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & H_)
+{
+  alpha = Sacado::Value<Sacado::Fad::DFad<RealType>>::eval(alpha_);
+  H = H_;
+  return R_;
+}
+
+template<>
+template<>
+Sacado::Fad::DFad<RealType>
+J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
+save<Sacado::Fad::DFad<RealType>, Sacado::Fad::DFad<RealType>>(
+    Sacado::Fad::DFad<RealType> const & R_,
+    Sacado::Fad::DFad<RealType> const & alpha_,
+    Sacado::Fad::DFad<RealType> const & H_)
+{
+  alpha = Sacado::Value<Sacado::Fad::DFad<RealType>>::eval(alpha_);
+  H = H_;
+  return R_;
+}
+*/
+
+template<>
+template<>
+PHAL::AlbanyTraits::Jacobian::ScalarT
+J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
+save(
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & R_,
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & alpha_,
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & H_)
+{
+  alpha = alpha_;
+  H = H_;
+  return R_;
 }
 
 //------------------------------------------------------------------------------
@@ -419,6 +464,8 @@ computeState(typename Traits::EvalData workset,
 
         ScalarT
         alpha = j2nls.alpha;
+
+        std::cout << "SOLUTION (dgam): " << x(0) << std::endl;
 
         dgam = x(0);
 
