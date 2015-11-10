@@ -34,7 +34,7 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
     AbstractSTKNodeFieldContainer(){}
     virtual ~AbstractSTKNodeFieldContainer(){}
 
-    virtual void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, 
+    virtual void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
             int offset) = 0;
     virtual Albany::MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
 
@@ -85,9 +85,9 @@ buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::si
 
   // Node Scalar
   template <typename T>
-  struct NodeData_Traits<T, 1> { 
+  struct NodeData_Traits<T, 1> {
 
-    enum { size = 1 }; // Three array dimension tags (Node, Dim, Dim), store type T values
+    enum { size = 1 }; // One array dimension tag (Node), store type T values
     typedef stk::mesh::Field<T> field_type ;
     static field_type* createField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                                    stk::mesh::MetaData* metaData){
@@ -128,7 +128,7 @@ buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::si
 
   // Node Vector
   template <typename T>
-  struct NodeData_Traits<T, 2> { 
+  struct NodeData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags (Node, Dim), store type T values
     typedef stk::mesh::Field<T, stk::mesh::Cartesian> field_type ;
@@ -172,12 +172,12 @@ buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::si
         }
       }
     }
-    
+
   };
 
   // Node Tensor
   template <typename T>
-  struct NodeData_Traits<T, 3> { 
+  struct NodeData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags (Node, Dim, Dim), store type T values
     typedef stk::mesh::Field<T, stk::mesh::Cartesian, stk::mesh::Cartesian> field_type ;
@@ -212,7 +212,7 @@ buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::si
         for(std::size_t j = 0; j < num_j_components; j++)
           for(std::size_t k = 0; k < num_i_components; k++){
 
-            Teuchos::ArrayRCP<const ST> const_overlap_node_view = 
+            Teuchos::ArrayRCP<const ST> const_overlap_node_view =
                      overlap_node_vec->getVector(offset + j*num_i_components + k)->get1dView();
 
             for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
