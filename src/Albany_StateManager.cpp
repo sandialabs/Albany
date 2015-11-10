@@ -477,13 +477,13 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
     // Register the state with the nodalDataVector also.
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getSideSetNodalDataBase(sideSetName);
 
-    // These entities store data as <Cell,Node,...>, so the dl has one more rank
-    if (dl->rank() == 2) // node scalar
+    // These entities store data as <Cell,Side,Node,...>, so the dl has one more rank
+    if (dl->rank() == 3) // node scalar
       nodalDataBase->registerVectorState (stateName, 1);
-    else if (dl->rank() == 3) // node vector
-      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]);
-    else if (dl->rank() == 4) // node tensor
-      nodalDataBase->registerVectorState (stateName, stateRef.dim[1]*stateRef.dim[2]);
+    else if (dl->rank() == 4) // node vector
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[2]);
+    else if (dl->rank() == 5) // node tensor
+      nodalDataBase->registerVectorState (stateName, stateRef.dim[2]*stateRef.dim[3]);
   }
   else
   {
