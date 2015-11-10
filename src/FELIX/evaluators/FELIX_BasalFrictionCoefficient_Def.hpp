@@ -65,27 +65,15 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
     beta_type = GIVEN_FIELD;
 
-    beta_given_field = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->node_scalar);
     if (is_hydrology)
     {
       BF = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+      beta_given_field = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->node_scalar);
     }
     else
     {
       BF = PHX::MDField<RealType>(p.get<std::string> ("BF Side Variable Name"), dl->side_node_qp_scalar);
-
-      // Index of the nodes on the sides in the numeration of the cell
-      Teuchos::RCP<shards::CellTopology> cellType;
-      cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-      int numSides = dl->side_qp_scalar->dimension(1);
-      int sideDim  = dl->side_qp_gradient->dimension(3);
-      sideNodes.resize(numSides);
-      for (int side=0; side<numSides; ++side)
-      {
-        sideNodes[side].resize(numNodes);
-        for (int node=0; node<numNodes; ++node)
-          sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-      }
+      beta_given_field = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->side_node_scalar);
     }
 
     this->addDependentField (BF);
@@ -183,8 +171,8 @@ postRegistrationSetup (typename Traits::SetupData d,
       if (is_hydrology)
       {
         for (int cell=0; cell<beta.fieldTag().dataLayout().dimension(0); ++cell)
-            for (int qp=0; qp<numQPs; ++qp)
-              beta(cell,qp) = beta_given_val;
+          for (int qp=0; qp<numQPs; ++qp)
+            beta(cell,qp) = beta_given_val;
       }
       else
       {
@@ -279,7 +267,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
             beta(cell,side,qp) = 0.;
             for (int node=0; node<numNodes; ++node)
             {
-              beta(cell,side,qp) += BF(cell,side,node,qp)*beta_given_field(cell,sideNodes[side][node]);
+              beta(cell,side,qp) += BF(cell,side,node,qp)*beta_given_field(cell,side,node);
             }
           }
           break;

@@ -51,7 +51,7 @@ private:
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node>     beta_given_field;
+  PHX::MDField<ScalarT>               beta_given_field;
   PHX::MDField<ScalarT>               u_norm;
   PHX::MDField<ScalarT>               N;
   PHX::MDField<RealType>              BF;
@@ -60,7 +60,6 @@ private:
   PHX::MDField<ScalarT>               beta;
 
   std::string                     basalSideName;
-  std::vector<std::vector<int> >  sideNodes;     // Needed only in case of given beta and stokesFO
 
   bool is_hydrology;
 

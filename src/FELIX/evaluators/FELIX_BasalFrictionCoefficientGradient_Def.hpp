@@ -48,7 +48,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_FIELD;
 
-    beta_given = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Given Beta Variable Name"), dl->node_scalar);
+    beta_given = PHX::MDField<ScalarT,Cell,Side,Node>(p.get<std::string> ("Given Beta Variable Name"), dl->side_node_scalar);
     GradBF     = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->side_node_qp_gradient);
 
     this->addDependentField (beta_given);
@@ -57,18 +57,6 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     std::vector<PHX::DataLayout::size_type> dims;
     dl->side_node_qp_gradient->dimensions(dims);
     numSideNodes = dims[2];
-
-    // Index of the nodes on the sides in the numeration of the cell
-    Teuchos::RCP<shards::CellTopology> cellType;
-    cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-    int numSides = dims[1];
-    sideNodes.resize(numSides);
-    for (int side=0; side<numSides; ++side)
-    {
-      sideNodes[side].resize(numSideNodes);
-      for (int node=0; node<numSideNodes; ++node)
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-    }
   }
 
   this->addEvaluatedField(grad_beta);
@@ -131,7 +119,7 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
             grad_beta(cell,side,qp,dim) = 0.;
             for (int node=0; node<numSideNodes; ++node)
             {
-              grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*beta_given(cell,sideNodes[side][node]);
+              grad_beta(cell,side,qp,dim) += GradBF(cell,side,node,qp,dim)*beta_given(cell,side,node);
             }
           }
         }

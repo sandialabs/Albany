@@ -50,14 +50,13 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node>                         beta_given;
+  PHX::MDField<ScalarT,Cell,Side,Node>                    beta_given;
   PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           grad_beta;
 
   std::string                     basalSideName;
-  std::vector<std::vector<int> >  sideNodes;     // Needed only in case of given beta
 
   int numSideNodes;
   int numSideQPs;
