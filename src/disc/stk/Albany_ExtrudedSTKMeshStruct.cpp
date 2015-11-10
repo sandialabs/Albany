@@ -87,14 +87,14 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
 
   basalMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
-
-  Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
-  Albany::AbstractFieldContainer::FieldContainerRequirements req;
 #else
     // Above block of code could allow for 2D mesh to come from other sources instead of Ioss
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
               std::endl << "Error in ExtrudedSTKMeshStruct: Currently Requires 2D mesh to come from exodus");
 #endif
+
+  Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
+  Albany::AbstractFieldContainer::FieldContainerRequirements req;
 
   int ws_size = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
   basalMeshStruct->setFieldAndBulkData(comm, params, 1, req, sis, ws_size);

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+#To configure Albany on Hopper: source this file 
+
+#IK, 10/1/13
+#prior to configuring you need to load the following modules: 
+
+#TRILINSTALLDIR=/global/project/projectdirs/piscees/nightlyTests/Results/Trilinos/build/install
+#TRILINSTALLDIR=/global/u1/a/agsalin/Trilinos/build-edison/install
+#TRILINSTALLDIR=/global/project/projectdirs/piscees/AlbanyTrilinos_08242015/Trilinos/build/install
+TRILINSTALLDIR=../Trilinos/build/install
+
+rm -rf CMakeCache.txt CMakeFiles
+
+cmake  \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=$TRILINSTALLDIR \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+    -D ENABLE_DEMO_PDES=OFF -D ENABLE_SG=OFF -D ENABLE_ENSEMBLE=OFF -D ENABLE_MOR=OFF -DENABLE_QCAD=OFF  -DENABLE_ASCR=OFF -D ENABLE_LCM:BOOL=OFF \
+    -D ENABLE_FELIX:BOOL=ON \
+    -D ENABLE_MPAS_INTERFACE=ON \
+    -D ENABLE_SLFAD:BOOL=ON \
+    -D SLFAD_SIZE=8 \
+    -D Albany_BUILD_STATIC_EXE:BOOL=ON \
+    -D ENABLE_INSTALL:BOOL=ON \
+    -D CMAKE_INSTALL_PREFIX:BOOL=$PWD/install \
+    -D ALBANY_LIBRARIES_ONLY=ON \
+    ..
+
+#
+#  Add this to avoid linking Albany executables
+#    -D ALBANY_LIBRARIES_ONLY=ON
+#
+#  For Albany runs that will Only be under MPAS-LI (ie Tet elements)
+#    -D SLFAD_SIZE=8 \
+

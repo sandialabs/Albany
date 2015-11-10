@@ -1,6 +1,8 @@
-#To configure Trilinos on Edison:
+#To configure Trilinos on Mira:
 #
-# AGS for ACME: removed Seacas, STKIO, netcdf, hdf5
+# AGS for ACME: removed Seacas, STKIO, netcdf, hdf5, blas, lapack
+# turned fortran off
+
 
 rm -rf CMakeCache.txt CMakeFiles
 
@@ -20,7 +22,7 @@ cmake \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
 \
-      -D Trilinos_ENABLE_Fortran:BOOL=ON \
+      -D Trilinos_ENABLE_Fortran:BOOL=OFF \
 \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D HAVE_TEUCHOS_COMM_TIMERS=ON \
@@ -89,14 +91,12 @@ cmake \
       -D CMAKE_Fortran_FLAGS:STRING="-O2" \
       -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
 \
-      -D CMAKE_C_COMPILER:FILEPATH="cc" \
-      -D CMAKE_CXX_COMPILER:FILEPATH="CC" \
-      -D CMAKE_Fortran_COMPILER:FILEPATH="ftn" \
+      -D CMAKE_CXX_COMPILER:FILEPATH="mpic++11" \
       -DTPL_ENABLE_Pthread:BOOL=OFF \
       -DTPL_ENABLE_BinUtils:BOOL=OFF \
 \
-      -D TPL_BLAS_LIBRARIES:STRING="sci" \
-      -D TPL_LAPACK_LIBRARIES:STRING="sci" \
+      -D TPL_BLAS_LIBRARIES:STRING="blas" \
+      -D TPL_LAPACK_LIBRARIES:STRING="lapack" \
 \
   -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
   -D Tpetra_INST_INT_LONG_LONG:BOOL=OFF \

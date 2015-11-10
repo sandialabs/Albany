@@ -114,9 +114,6 @@ postEvaluate(typename Traits::PostEvalData workset)
   // EGN: Removed (commented out) serializer since this gives templating compile errors
   //   for MeshScalarT.
  
-  //Teuchos::RCP< Teuchos::ValueTypeSerializer<int,MeshScalarT> > serializer =
-  //  workset.serializerManager.template getValue<EvalT>();
-
   for(std::size_t i=0; i<numDims; i++) {
     // Compute contributions across processors
     //Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_MIN, 1, 

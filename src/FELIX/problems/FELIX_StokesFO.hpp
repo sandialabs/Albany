@@ -107,7 +107,7 @@ typename EvalT::ScalarT* HomotopyParamValue<EvalT,Traits>::value = NULL;
                                  std::vector<Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > >& evaluators) :
           prob_(prob), evaluators_(evaluators) {}
       template<typename T>
-      void operator() (T x) {
+      void operator() (T x) const {
       evaluators_.push_back(prob_.template buildBasalFrictionCoefficientEvaluator<T>());
       evaluators_.push_back(prob_.template buildSlidingVelocityEvaluator<T>());
       evaluators_.push_back(prob_.template buildEffectivePressureEvaluator<T>());

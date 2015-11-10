@@ -1,19 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 
-#SET(CTEST_DO_SUBMIT ON)
-#SET(CTEST_TEST_TYPE Nightly)
-
-#SET(CTEST_DO_SUBMIT OFF)
-#SET(CTEST_TEST_TYPE Experimental)
-
 SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
 SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 
 # What to build and test
 SET(DOWNLOAD_TRILINOS TRUE)
 SET(DOWNLOAD_ALBANY TRUE)
+SET(DOWNLOAD_RECONDRIVER TRUE)
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
+SET(BUILD_RECONDRIVER TRUE)
 SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
@@ -74,6 +70,7 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
+SET(ReconDriver_REPOSITORY_LOCATION software.sandia.gov:/git/ReconDrivergit)
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
 
@@ -140,7 +137,32 @@ if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
 
 endif()
 
-ENDIF()
+ENDIF(DOWNLOAD_ALBANY)
+
+IF (DOWNLOAD_RECONDRIVER)
+
+#
+# Get ReconDriver
+#
+##########################################################################################################
+
+if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/ReconDriver")
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+    clone ${ReconDriver_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/ReconDriver
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  
+   message(STATUS "out: ${_out}")
+   message(STATUS "err: ${_err}")
+   message(STATUS "res: ${HAD_ERROR}")
+   if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot clone ReconDriver repository!")
+   endif()
+
+endif()
+
+ENDIF(DOWNLOAD_RECONDRIVER)
 
 CTEST_START(${CTEST_TEST_TYPE})
 
@@ -228,7 +250,37 @@ IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Albany!")
 endif()
 
+ENDIF(DOWNLOAD_ALBANY)
+
+IF(DOWNLOAD_RECONDRIVER)
+
+#
+# Update ReconDriver
+#
+##############################################################################################################
+
+SET_PROPERTY (GLOBAL PROPERTY SubProject ReconDriver_CUDA)
+SET_PROPERTY (GLOBAL PROPERTY Label ReconDriver_CUDA)
+
+set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/ReconDriver" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Update
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot update ReconDriver repository!")
+  endif()
 ENDIF()
+
+IF(count LESS 0)
+        message(FATAL_ERROR "Cannot update ReconDriver!")
+endif()
+
+ENDIF(DOWNLOAD_RECONDRIVER)
 
 #
 # Set the common Trilinos config options
@@ -318,7 +370,7 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
-  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=OFF"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
   "-DTrilinos_ENABLE_Teko:BOOL=OFF"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
 # Comment these out to disable stk
@@ -451,164 +503,21 @@ endif()
 
 ENDIF()
 
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/alexa_macro.cmake)
+
+IF (BUILD_RECONDRIVER)
+
+do_alexa()
+
+ENDIF(BUILD_RECONDRIVER)
+
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
+
 IF (BUILD_ALBANY)
 
-# Configure the ALBANY build 
-#
-####################################################################################################################
-
-SET_PROPERTY (GLOBAL PROPERTY SubProject Albany_CUVM)
-SET_PROPERTY (GLOBAL PROPERTY Label Albany_CUVM)
-
-SET(CONFIGURE_OPTIONS
-  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-  "-DENABLE_LCM:BOOL=ON"
-  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-  "-DENABLE_HYDRIDE:BOOL=OFF"
-  "-DENABLE_SCOREC:BOOL=ON"
-  "-DENABLE_SG:BOOL=OFF"
-  "-DENABLE_ENSEMBLE:BOOL=OFF"
-  "-DENABLE_FELIX:BOOL=ON"
-  "-DENABLE_AERAS:BOOL=ON"
-  "-DENABLE_QCAD:BOOL=OFF"
-  "-DENABLE_MOR:BOOL=OFF"
-  "-DENABLE_ATO:BOOL=OFF"
-  "-DENABLE_ASCR:BOOL=OFF"
-  "-DENABLE_CHECK_FPE:BOOL=OFF"
-  "-DENABLE_LAME:BOOL=OFF"
-  "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
-  "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-   )
- 
-if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
-  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
-endif()
-
-IF (CLEAN_BUILD)
-# Initial cache info
-set( CACHE_CONTENTS "
-SITE:STRING=${CTEST_SITE}
-CMAKE_BUILD_TYPE:STRING=Release
-CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-BUILD_TESTING:BOOL=OFF
-PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-" )
-file(WRITE "${CTEST_BINARY_DIRECTORY}/Albany/CMakeCache.txt" "${CACHE_CONTENTS}")
-ENDIF()
-
-
-CTEST_CONFIGURE(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-          OPTIONS "${CONFIGURE_OPTIONS}"
-          RETURN_VALUE HAD_ERROR
-          APPEND
-)
-
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Configure
-               RETURN_VALUE  S_HAD_ERROR
-  )
-
-  if(S_HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany configure results!")
-  endif()
-ENDIF()
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Albany build!")
-endif()
-
-#
-# Build Albany
-#
-###################################################################################################################
-
-SET(CTEST_BUILD_TARGET "Albany")
-
-MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          RETURN_VALUE  HAD_ERROR
-          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-          APPEND
-)
-
-if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  S_HAD_ERROR
-    )
-
-    if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit Albany build results!")
-    endif()
-  ENDIF()
-
-  if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany!")
-  endif()
-
-  message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
-
-endif()
-
-SET(CTEST_BUILD_TARGET "AlbanyT")
-
-MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          RETURN_VALUE  HAD_ERROR
-          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-          APPEND
-)
-
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  S_HAD_ERROR
-  )
-
-  if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit Albany build results!")
-  endif()
-ENDIF()
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build AlbanyT!")
-endif()
-
-if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in AlbanyT build. Exiting!")
-endif()
-
-#
-# Run Albany tests
-#
-##################################################################################################################
-
-CTEST_TEST(
-              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-#              INCLUDE "SCOREC_ThermoMechanicalCan_thermomech_tpetra"
-#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-              INCLUDE_LABEL "CUDA_TEST"
-              #NUMBER_FAILED  TEST_NUM_FAILED
-)
-
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Test
-               RETURN_VALUE  HAD_ERROR
-  )
-
-  if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany test results!")
-  endif()
-ENDIF()
+do_albany()
 
 ENDIF (BUILD_ALBANY)
-
 
 # Done!!!
 
