@@ -31,11 +31,15 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
   if( optPackage == "OC"  )  return Teuchos::rcp(new Optimizer_OC(optimizerParams));
 
   else
+  if( optPackage == "OCG"  )  return Teuchos::rcp(new Optimizer_OCG(optimizerParams));
+
+  else
   if( optPackage == "Pareto"  )  return Teuchos::rcp(new Optimizer_Pareto(optimizerParams));
 
 #ifdef ATO_USES_NLOPT
   else
-  if( optPackage == "NLopt"  )  return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
+  if( optPackage == "NLopt"  ) return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
+
 #endif //ATO_USES_NLOPT
 
 #ifdef ATO_USES_DOTK
@@ -143,14 +147,66 @@ Optimizer(optimizerParams)
 { 
   p = NULL;
   p_last = NULL;
-  f = 0.0;
-  f_last = 0.0;
+  objectiveValue = 0.0;
+  objectiveValue_last = 0.0;
+  constraintValue = 0.0;
+  constraintValue_last = 0.0;
   opt = NULL;
 
-  _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _optMethod     = optimizerParams.get<std::string>("Method");
   _nIterations = 0;
+
+  if( optimizerParams.isType<std::string>("Objective") ){
+    std::string objType = optimizerParams.get<std::string>("Objective");
+    if( objType == "Volume" )
+      objectiveType = ResponseType::Volume;
+    else
+    if( objType == "Aggregator" || objType == "Objective Aggregator" )
+      objectiveType = ResponseType::Aggregate;
+    else
+     TEUCHOS_TEST_FOR_EXCEPTION(
+       true, Teuchos::Exceptions::InvalidParameter, std::endl << "Unknown objective specified." << std::endl);
+  } else
+  objectiveType = ResponseType::Aggregate;
+
+  if( optimizerParams.isType<std::string>("Constraint") ){
+    std::string conType = optimizerParams.get<std::string>("Constraint");
+    if( conType == "Volume" )
+      constraintType = ResponseType::Volume;
+    else
+    if( conType == "Aggregator" || conType == "Constraint Aggregator" )
+      constraintType = ResponseType::Aggregate;
+    else
+     TEUCHOS_TEST_FOR_EXCEPTION(
+       true, Teuchos::Exceptions::InvalidParameter, std::endl << "Unknown constraint specified." << std::endl);
+  } else
+  constraintType = ResponseType::Volume;
+
+
+  if( constraintType == ResponseType::Aggregate ){
+    if( optimizerParams.isType<Teuchos::ParameterList>("Constraint Enforcement") ){
+      const Teuchos::ParameterList& 
+        conParams = optimizerParams.get<Teuchos::ParameterList>("Constraint Enforcement");
+      _conConvTol = conParams.get<double>("Convergence Tolerance");
+    } else
+      TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error! Missing 'Constraint Enforcement' ParameterList." << std::endl);
+  } else
+  if( constraintType == ResponseType::Volume ){
+    if( optimizerParams.isType<Teuchos::ParameterList>("Volume Enforcement") ){
+      const Teuchos::ParameterList& 
+        volParams = optimizerParams.get<Teuchos::ParameterList>("Volume Enforcement");
+  
+      _volConvTol    = volParams.get<double>("Convergence Tolerance");
+      _volConstraint = volParams.get<double>("Target Volume Fraction");
+    } else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error! Missing 'Volume Enforcement' ParameterList." << std::endl);
+  }
 }
+
 #endif //ATO_USES_NLOPT
 
 /**********************************************************************/
@@ -250,6 +306,97 @@ Optimizer_OC::Initialize()
   solverInterface->ComputeVolume(_optVolume);
   solverInterface->InitializeTopology(p);
 }
+/******************************************************************************/
+void
+Optimizer_OCG::Optimize()
+/******************************************************************************/
+{
+  solverInterface->Compute(p, f, dfdp, g, dgdp);
+
+  double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
+  comm->SumAll(&f, &global_f, 1);
+  convergenceChecker->initNorm(global_f, pnorm);
+
+  const Teuchos::Array<double>& bounds = topology->getBounds();
+  const double minDensity = bounds[0];
+  const double maxDensity = bounds[1];
+  const double offset = minDensity - 0.01*(maxDensity-minDensity);
+
+  int iter=0;
+  bool optimization_converged = false;
+  while(!optimization_converged) {
+
+    f_last = f; g_last = g;
+    solverInterface->Compute(p, f, dfdp, g, dgdp);
+    for(int i=0; i<numOptDofs; i++) p_last[i] = p[i];
+
+    double gmax_dgdp =0.0;
+    comm->MaxAll(std::max_element(dgdp, dgdp+numOptDofs), &gmax_dgdp, 1);
+
+    double vmid, v1=0.0, v2=0.0;
+    double dfdp_tot = 0.0, dgdp_tot = 0.0;
+    for(int i=0; i<numOptDofs; i++) {
+      dfdp_tot += dfdp[i];
+      dgdp_tot += (dgdp[i]-gmax_dgdp);
+    }
+
+    double g_dfdp_tot = 0.0, g_dgdp_tot = 0.0;
+    comm->SumAll(&dfdp_tot, &g_dfdp_tot, 1);
+    comm->SumAll(&dgdp_tot, &g_dgdp_tot, 1);
+
+    v2 = 1.0e4 * g_dfdp_tot / g_dgdp_tot;
+    int niters=0;
+    double newResidual;
+    do {
+      vmid = (v2+v1)/2.0;
+
+      // update topology
+      for(int i=0; i<numOptDofs; i++) {
+        double be = dfdp[i]/(dgdp[i]-gmax_dgdp)/vmid;
+        be = (be > 0.0) ? be : 0.0;
+        double p_old = p_last[i];
+        double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+        // limit change
+        double dval = p_new - p_old;
+        if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
+        // enforce limits
+        if( p_new < minDensity ) p_new = minDensity;
+        if( p_new > maxDensity ) p_new = maxDensity;
+        p[i] = p_new;
+      }
+
+      newResidual = -g;
+      for(int i=0; i<numOptDofs; i++)
+        newResidual += (dgdp[i]-gmax_dgdp)*(p[i] - p_last[i]);
+  
+      if( newResidual < 0.0 ){
+        v1 = vmid;
+      } else v2 = vmid;
+
+      if(comm->MyPID()==0){
+        std::cout << "Constraint enforcement (iteration " << niters << "): Residual = " << newResidual << std::endl;
+      }
+
+    } while ( niters < _volMaxIter && fabs(newResidual) > 1e-2  );
+  
+    if(comm->MyPID()==0.0){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "** Optimization Status Check *******************************************" << std::endl;
+      std::cout << "Status: Objective = " << f << std::endl;
+    }
+
+    double delta_f, ldelta_f = f-f_last;
+    comm->SumAll(&ldelta_f, &delta_f, 1);
+    double delta_p = computeDiffNorm(p, p_last, numOptDofs, /*result to cout*/ false);
+
+    optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->MyPID());
+
+    iter++;
+  }
+
+  return;
+}
+
 
 /******************************************************************************/
 void
@@ -309,7 +456,8 @@ Optimizer_OC::Optimize()
         double dgdv = global_dg/dv;
         deltav = -g / dgdv;
 
-      } else {
+      } else 
+      if( constraintGradient == "Finite Difference" ){
         if( _volConstraint != volConstraint_last ){
           dgdv_vals.push_back( (g - g_last)/(_volConstraint - volConstraint_last) );
           if( dgdv_vals.size() > 10 ) dgdv_vals.pop_front();
@@ -321,6 +469,8 @@ Optimizer_OC::Optimize()
         } else {
           deltav = 0.001;
         }
+      } else
+      if( constraintGradient == "Direct"){
       }
     
       double _dvolLimit = 0.1*_volConstraint;
@@ -759,10 +909,13 @@ Optimizer_NLopt::Initialize()
   if( _optMethod == "CCSA" )
     opt = nlopt_create(NLOPT_LD_CCSAQ, numOptDofs);
   else
+  if( _optMethod == "SLSQP" )
+    opt = nlopt_create(NLOPT_LD_SLSQP, numOptDofs);
+  else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Optimization method: " << _optMethod << " Unknown!" << std::endl 
-      << "Valid options are (MMA)" << std::endl);
+      << "Valid options are (MMA, CCSA, SLSQP)" << std::endl);
 
   
   // set bounds
@@ -776,18 +929,26 @@ Optimizer_NLopt::Initialize()
   nlopt_set_xtol_rel(opt, 1e-9);  // don't converge based on this.  I.e., use convergenceChecker.
   nlopt_set_maxeval(opt, convergenceChecker->getMaxIterations());
 
-  // set volume constraint
-  nlopt_add_inequality_constraint(opt, this->constraint, this, _volConvTol*_optVolume);
-
   p      = new double[numOptDofs];
   p_last = new double[numOptDofs];
+  x_ref  = new double[numOptDofs];
+  dfdp   = new double[numOptDofs];
+  dgdp   = new double[numOptDofs];
+  dvdp   = new double[numOptDofs];
 
+  std::fill_n(dfdp,   numOptDofs, 0.0);
+  std::fill_n(dgdp,   numOptDofs, 0.0);
+  std::fill_n(dvdp,   numOptDofs, 0.0);
   std::fill_n(p,      numOptDofs, topology->getInitialValue());
   std::fill_n(p_last, numOptDofs, 0.0);
+  std::fill_n(x_ref,  numOptDofs, 0.0);
 
-  solverInterface->ComputeVolume(_optVolume);
+  if( constraintType == ResponseType::Volume )
+    nlopt_add_inequality_constraint(opt, this->constraint, this, _volConvTol*_optVolume);
+  else
+  if( constraintType == ResponseType::Aggregate )
+    nlopt_add_inequality_constraint(opt, this->constraint, this, _conConvTol);
 }
-
 #define ATO_XTOL_REACHED 104
 
 /******************************************************************************/
@@ -826,30 +987,44 @@ double
 Optimizer_NLopt::evaluate_backend( unsigned int n, const double* x, double* grad )
 /******************************************************************************/
 {
+   
+  bool changed = isChanged(x);
 
-  f_last = f;
-  std::memcpy((void*)p_last, (void*)x, numOptDofs*sizeof(double));
+  if( changed ){
+    objectiveValue_last = objectiveValue;
+    std::memcpy((void*)p_last, (void*)x, numOptDofs*sizeof(double));
+    solverInterface->ComputeVolume(x, v, dvdp);
+    solverInterface->Compute(x, f, dfdp, g, dgdp);
+  }
 
-  solverInterface->ComputeObjective(x, f, grad);
-
+  if( objectiveType == ResponseType::Volume ){
+    std::memcpy((void*)grad, (void*)dvdp, numOptDofs*sizeof(double));
+    objectiveValue = v;
+  } else
+  if( objectiveType == ResponseType::Aggregate ){
+    std::memcpy((void*)grad, (void*)dfdp, numOptDofs*sizeof(double));
+    objectiveValue = f;
+  }
 
   if(comm->MyPID()==0){
     std::cout << "************************************************************************" << std::endl;
-    std::cout << "  Optimizer:  objective value is: " << f << std::endl;
+    std::cout << "  Optimizer:      volume: " << v << std::endl;
+    std::cout << "  Optimizer:   objective: " << objectiveValue << std::endl;
+    std::cout << "  Optimizer:  constraint: " << g << std::endl;
     std::cout << "************************************************************************" << std::endl;
   }
 
-  double delta_f, ldelta_f = f-f_last;
-  comm->SumAll(&ldelta_f, &delta_f, 1);
+  double delta_objective, ldelta_objective = objectiveValue-objectiveValue_last;
+  comm->SumAll(&ldelta_objective, &delta_objective, 1);
   double delta_p = computeDiffNorm(x, p_last, numOptDofs, /*result to cout*/ false);
 
-  if( convergenceChecker->isConverged(delta_f, delta_p, _nIterations , comm->MyPID()) ){
+  if( convergenceChecker->isConverged(delta_objective, delta_p, _nIterations , comm->MyPID()) ){
     nlopt_set_force_stop(opt, ATO_XTOL_REACHED);
     nlopt_force_stop(opt);
   }
   _nIterations++;
 
-  return f;
+  return objectiveValue;
 }
 
 /******************************************************************************/
@@ -867,15 +1042,31 @@ double
 Optimizer_NLopt::constraint_backend( unsigned int n, const double* x, double* grad )
 /******************************************************************************/
 {
-  double vol;
-  solverInterface->ComputeVolume(x, vol, grad);
+  bool changed = isChanged(x);
 
-  if(comm->MyPID()==0){
-    std::cout << "************************************************************************" << std::endl;
-    std::cout << "  Optimizer:  computed volume is: " << vol << std::endl;
-    std::cout << "************************************************************************" << std::endl;
+  if( constraintType == ResponseType::Volume ){
+    if( changed ) solverInterface->ComputeVolume(x, v, dvdp);
+    std::memcpy((void*)grad, (void*)dvdp, numOptDofs*sizeof(double));
+    constraintValue = v - _volConstraint*_optVolume;
+    if(comm->MyPID()==0){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Optimizer:  computed volume is: " << v << std::endl;
+      std::cout << "  Optimizer:    target volume is: " << _volConstraint*_optVolume << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  } else
+  if( constraintType == ResponseType::Aggregate ){
+    if( changed ) solverInterface->Compute(x, f, dfdp, g, dgdp);
+    std::memcpy((void*)grad, (void*)dgdp, numOptDofs*sizeof(double));
+    constraintValue = g;
+    if(comm->MyPID()==0){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Optimizer:  computed constraint is: " << constraintValue << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
   }
-  return vol-_volConstraint*_optVolume;
+
+  return constraintValue;
 }
 
 /******************************************************************************/
@@ -886,6 +1077,20 @@ Optimizer_NLopt::constraint( unsigned int n, const double* x,
 {
   Optimizer_NLopt* NLopt = reinterpret_cast<Optimizer_NLopt*>(data);
   return NLopt->constraint_backend(n, x, grad);
+}
+
+/******************************************************************************/
+bool
+Optimizer_NLopt::isChanged(const double* x)
+/******************************************************************************/
+{
+  for(int i=0; i<numOptDofs; i++){
+    if( x[i] != x_ref[i] ){
+      std::memcpy((void*)x_ref, (void*)x, numOptDofs*sizeof(double));
+      return true;
+    }
+  }
+  return false;
 }
 #endif //ATO_USES_NLOPT
 

@@ -150,7 +150,8 @@ evaluateFields(typename Traits::EvalData workset)
         for(int i=0; i<numDims; i++)
           devNorm += tensor(cell,qp,i)*tensor(cell,qp,i);
         ScalarT P = topology->Penalize(functionIndex, topoVal);
-        ScalarT dS = P*pow(devNorm,pVal) * qp_weights(cell,qp);
+        devNorm = P*sqrt(devNorm);
+        ScalarT dS = pow(devNorm,pVal) * qp_weights(cell,qp);
         this->local_response(cell,0) += dS;
         pNorm += dS;
       }
