@@ -82,6 +82,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     {
       // Need to allocate a fields in basal mesh database
       Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
+      this->ss_requirements[basalSideName].reserve(req.size());
       for (int i(0); i<req.size(); ++i)
         this->ss_requirements[basalSideName].push_back(req[i]);
     }
@@ -96,6 +97,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     surfaceSideName = params->get<std::string>("Surface Side Name");
 
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
+    this->ss_requirements[surfaceSideName].reserve(req.size());
     for (int i(0); i<req.size(); ++i)
       this->ss_requirements[surfaceSideName].push_back(req[i]);
   }
@@ -238,6 +240,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidStokesFOProblemParams");
 
+  validPL->set<int> ("Layered Data Length", 0, "Number of layers in input layered data files.");
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");

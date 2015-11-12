@@ -201,6 +201,23 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
+  if (sliding && ss_requirements.find(basalSideName)!=ss_requirements.end())
+  {
+    const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
+    auto it = std::find(req.begin(), req.end(), stateName);
+    if (it!=req.end())
+    {
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      // Note: temperature on side registered as node vector, since we store all layers values in the nodes on the basal mesh.
+      //       However, we need to create the layout, since the vector length is the value of the number of layers.
+      //       I don't have a clean solution now, so I just ask the user to pass me the number of layers in the temperature file.
+      int numLayers = params->get<int>("Layered Data Length",11); // Default 11 layers: 0, 0.1, ...,1.0
+      Teuchos::RCP<PHX::DataLayout> dl_temp;
+      Teuchos::RCP<PHX::DataLayout> sns = dl->side_node_scalar;
+      dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
+    }
+  }
 
   // Flow factor
   entity = Albany::StateStruct::ElemData;
@@ -217,8 +234,14 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string>("Field Name", fieldName);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
-  if (sliding)
-    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_node_scalar, basalEBName, true, &entity);
+  if (sliding && ss_requirements.find(basalSideName)!=ss_requirements.end())
+  {
+    // If requested, we also add it as side set state (e.g., needed if we load from file on the side mesh)
+    const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
+    auto it = std::find(req.begin(), req.end(), stateName);
+    if (it!=req.end())
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl->side_node_scalar, basalEBName, true, &entity);
+  }
 
 #ifdef CISM_HAS_FELIX
   // Surface Gradient-x
@@ -249,7 +272,13 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
   if (sliding)
-    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_node_scalar, basalEBName, true, &entity);
+  {
+    // If requested, we also add it as side set state (e.g., needed if we load from file on the side mesh)
+    const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
+    auto it = std::find(req.begin(), req.end(), stateName);
+    if (it!=req.end())
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl->side_node_scalar, basalEBName, true, &entity);
+  }
 
   // Basal friction
   stateName = "basal_friction";
@@ -287,8 +316,92 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     }
   }
 
+  if (sliding && ss_requirements.find(basalSideName)!=ss_requirements.end())
+  {
+    const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
+
+    // Check if the user wants to save a side-averaged beta
+    stateName = "beta_side_avg";
+    fieldName = "Beta";
+    auto it = std::find(req.begin(), req.end(), stateName);
+    if (it!=req.end())
+    {
+      // We interpolate beta from quad point to cell
+      ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // We save it on the basal mesh
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl->side_scalar, basalEBName, true);
+      p->set<bool>("Is Vector Field", false);
+      ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+      if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+      {
+        // Only PHAL::AlbanyTraits::Residual evaluates something
+        if (ev->evaluatedFields().size()>0)
+        {
+          // Require save beta
+          fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+        }
+      }
+    }
+
+    stateName = "basal_friction";
+    it = std::find(req.begin(), req.end(), stateName);
+    if (it!=req.end())
+    {
+      // In case of beta_type 'Given Field', we need the nodal state
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl->side_node_scalar, basalEBName, true, &entity);
+      ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
+
+  if(isStateAParameter)
+  {
+    stateName = "basal_friction";
+    fieldName = "Beta";
+
+    //basal friction is a distributed parameter
+    entity= Albany::StateStruct::NodalDistParameter;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, *meshPart);
+    ev = evalUtils.constructGatherScalarNodalParameter(stateName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    std::stringstream key;
+    key << stateName <<  "Is Distributed Parameter";
+    this->params->set<int>(key.str(), 1);
+
+    // Interpolate the 3D state on the side
+    ev = evalUtils.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+  else
+  {
+    // For backward compatibility: Extruded mesh can create a 3D field
+    stateName = "basal_friction";
+    fieldName = "Beta";
+    auto it = std::find(requirements.begin(), requirements.end(), stateName);
+    if (it!=requirements.end())
+    {
+      // Load the 3D state
+      entity= Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+      p->set<std::string>("Field Name",fieldName);
+      ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // Interpolate the 3D state on the side
+      ev = evalUtils.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
+  }
+
   if (sliding)
   {
+    stateName = "effective_pressure";
+    fieldName = "Effective Pressure";
     if (ss_requirements.find(basalSideName)!=ss_requirements.end())
     {
       const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
@@ -296,11 +409,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       auto it = std::find(req.begin(), req.end(), stateName);
       if (it!=req.end())
       {
-        // We interpolate beta from quad point to cell
+        // We interpolate the effective pressure from quad point to cell
         ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
         fm0.template registerEvaluator<EvalT>(ev);
 
-        // We save it on the basal mesh
+        // We register the state and build the loader
         p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
         p->set<bool>("Is Vector Field", false);
         ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
@@ -318,75 +431,12 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     }
   }
 
-  if(isStateAParameter)
-  {
-    //basal friction is a distributed parameter
-    entity= Albany::StateStruct::NodalDistParameter;
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, *meshPart);
-    ev = evalUtils.constructGatherScalarNodalParameter(stateName);
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    std::stringstream key;
-    key << stateName <<  "Is Distributed Parameter";
-    this->params->set<int>(key.str(), 1);
-  }
-  else
-  {
-    entity= Albany::StateStruct::NodalDataToElemNode;
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-    p->set<std::string>("Field Name",fieldName);
-    ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  {
-    stateName = "bed_topography";
-    entity= Albany::StateStruct::NodalDataToElemNode;
-    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
-    ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  if (sliding)
-  {
-    stateName = "basal_friction";
-    if (ss_requirements.find(basalSideName)!=ss_requirements.end())
-    {
-      const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
-
-      auto it = std::find(req.begin(), req.end(), stateName);
-      if (it!=req.end())
-      {
-        std::string beta_type = params->sublist("FELIX Basal Friction Coefficient").get<std::string>("Type");
-
-        if (beta_type=="Regularized Coulomb" || beta_type=="Power Law")
-        {
-          // We save the effective pressure too
-          stateName = "effective_pressure";
-          fieldName = "Effective Pressure";
-
-          // We interpolate the effective pressure from quad point to cell
-          ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
-          fm0.template registerEvaluator<EvalT>(ev);
-
-          // We register the state and build the loader
-          p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl->side_scalar, basalEBName, true);
-          p->set<bool>("Is Vector Field", false);
-          ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl));
-          fm0.template registerEvaluator<EvalT>(ev);
-          if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-          {
-            // Only PHAL::AlbanyTraits::Residual evaluates something
-            if (ev->evaluatedFields().size()>0)
-            {
-              // Require save beta
-              fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
-            }
-          }
-        }
-      }
-    }
-  }
+  // Bed topography
+  stateName = "bed_topography";
+  entity= Albany::StateStruct::NodalDataToElemNode;
+  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+  ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+  fm0.template registerEvaluator<EvalT>(ev);
 
 #if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
   // Dirichelt field
@@ -563,7 +613,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("BF Side Variable Name", "BF "+basalSideName);
     p->set<std::string>("Effective Pressure Side QP Variable Name", "Effective Pressure");
     p->set<std::string>("Side Set Name", basalSideName);
-    p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
     p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
 
@@ -682,7 +731,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("Given Beta Variable Name", "Beta");
     p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
     // Output
