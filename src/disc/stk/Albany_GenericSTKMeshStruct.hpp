@@ -97,15 +97,31 @@ namespace Albany {
           int worksetSize);
 
     //! Loads from file input required fields not found in the mesh
-    void loadRequiredInputFields(
-          const Teuchos::RCP<const Teuchos_Comm>& commT,
-          const AbstractFieldContainer::FieldContainerRequirements& req,
-          const std::vector<std::string>& missing = {});
+    void loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
+                                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-    void readScalarFileSerial (std::string& fname, Tpetra_MultiVector& content,
+    void loadField (const std::string& field_name, const Teuchos::ParameterList& params,
+                    const Tpetra_Import& importOperator, const std::vector<stk::mesh::Entity>& entities,
+                    const Teuchos::RCP<const Teuchos_Comm>& commT,
+                    bool node, bool scalar, bool layered);
+
+    void readScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                               const Teuchos::RCP<const Tpetra_Map>& map,
                                const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-    void readVectorFileSerial (std::string& fname,Tpetra_MultiVector& contentVec,
+
+    void readVectorFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                               const Teuchos::RCP<const Tpetra_Map>& map,
                                const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+
+    void readLayeredScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                                      const Teuchos::RCP<const Tpetra_Map>& map,
+                                      std::vector<double>& normalizedLayersCoords,
+                                      const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+
+    void readLayeredVectorFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                                      const Teuchos::RCP<const Tpetra_Map>& map,
+                                      std::vector<double>& normalizedLayersCoords,
+                                      const Teuchos::RCP<const Teuchos_Comm>& comm) const;
 
     //! Perform initial adaptation input checking
     void checkInput(std::string option, std::string value, std::string allowed_values);

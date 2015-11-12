@@ -173,7 +173,7 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
   bulkData->modification_end();
 
   // Loading the fields from file
-  this->loadRequiredInputFields (commT,req,req);
+  this->loadRequiredInputFields (req,commT);
 
   // Export the mesh in GMSH format
   if (params->isParameter("GMSH Output File Name"));

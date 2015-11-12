@@ -97,7 +97,6 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
   }
 
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> basalMeshStruct;
   if (params2D->isParameter("Method"))
   {
     std::string method = params2D->get<std::string>("Method");
@@ -302,11 +301,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     nodes_map = Tpetra::createNonContigMapWithNode<LO, GO> (
       indices(), comm, KokkosClassic::Details::getNode<KokkosNode>());
   int numMyElements = (comm->getRank() == 0) ? numGlobalVertices2D : 0;
-  //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::createUniformContigMap<LO, GO>(numMyElements, comm);
   Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
   Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_nodes_map, nodes_map));
 
-  Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(serial_nodes_map));
   Teuchos::RCP<Tpetra_Vector> sHeightVec;
   Teuchos::RCP<Tpetra_Vector> thickVec;
   Teuchos::RCP<Tpetra_Vector> bTopographyVec;
@@ -315,209 +312,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
   Teuchos::RCP<Tpetra_MultiVector> velocityRMSVec;
 
-  bool hasSurface_height =  std::find(req.begin(), req.end(), "surface_height") != req.end();
-  TEUCHOS_TEST_FOR_EXCEPTION (!hasSurface_height, std::logic_error, "Error in ExtrudedSTKMeshStruct: surface height should be a requirement!\n");
-  sHeightVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
-  if (params->isParameter("Surface Height File Name"))
-  {
-    std::string fname = params->get<std::string>("Surface Height File Name", "surface_height.ascii");
-    read2DFileSerial(fname, temp, comm);
-    sHeightVec->doImport(*temp, *importOperator, Tpetra::INSERT);
-  }
-  else if (params->isParameter("Constant Surface Height"))
-  {
-    sHeightVec->putScalar(params->get<double>("Constant Surface Height"));
-  }
-  else
-  {
-    // Try to load it from the 2D mesh
-    Albany::AbstractSTKFieldContainer::ScalarFieldType* field = 0;
-    field = metaData2D.get_field<Albany::AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-    if (field!=0)
-    {
-      Teuchos::ArrayRCP<ST> sHeightVec_view = sHeightVec->get1dViewNonConst();
-
-      stk::mesh::Entity node;
-      stk::mesh::EntityId nodeId;
-      int lid;
-      double* values;
-
-      //Now we have to stuff the vector in the mesh data
-      for (int i(0); i<nodes2D.size(); ++i)
-      {
-        nodeId = bulkData2D.identifier(nodes2D[i]) - 1;
-        lid    = nodes_map->getLocalElement((GO)(nodeId));
-
-        values = stk::mesh::field_data(*field, nodes2D[i]);
-        sHeightVec_view[lid] = values[0];
-      }
-    }
-    else
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error in ExtrudedSTKMeshStruct: no file name specified for 'surface_height', and no field retrieved from the basal mesh.\n");
-    }
-  }
-  Teuchos::ArrayRCP<const ST> sHeightVec_constView = sHeightVec->get1dView();
-
-  bool hasThickness =  std::find(req.begin(), req.end(), "thickness") != req.end();
-  TEUCHOS_TEST_FOR_EXCEPTION (!hasThickness, std::logic_error, "Error in ExtrudedSTKMeshStruct: thickness should be a requirement!\n");
-  thickVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
-  if (params->isParameter("Thickness File Name"))
-  {
-    std::string fname = params->get<std::string>("Thickness File Name", "thickness.ascii");
-    read2DFileSerial(fname, temp, comm);
-    thickVec->doImport(*temp, *importOperator, Tpetra::INSERT);
-  }
-  else if (params->isParameter("Constant Thickness"))
-  {
-    thickVec->putScalar(params->get<double>("Constant Thickness"));
-  }
-  else
-  {
-    // Try to load it from the 2D mesh
-    Albany::AbstractSTKFieldContainer::ScalarFieldType* field = 0;
-    field = metaData2D.get_field<Albany::AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, "thickness");
-    if (field!=0)
-    {
-      Teuchos::ArrayRCP<ST> thickVec_view = thickVec->get1dViewNonConst();
-
-      stk::mesh::Entity node;
-      stk::mesh::EntityId nodeId;
-      int lid;
-      double* values;
-
-      //Now we have to stuff the vector in the mesh data
-      for (int i(0); i<nodes2D.size(); ++i)
-      {
-        nodeId = bulkData2D.identifier(nodes2D[i]) - 1;
-        lid    = nodes_map->getLocalElement((GO)(nodeId));
-
-        values = stk::mesh::field_data(*field, nodes2D[i]);
-        thickVec_view[lid] = values[0];
-      }
-    }
-    else
-    {
-      std::cout << "WARNING in ExtrudedSTKMeshStruct: no file name specified for 'thickness', and no field retrieved from the basal mesh. Using a zero vector. Setting thickness = surface_height.\n";
-      thickVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
-      *thickVec = *sHeightVec;
-    }
-  }
-
-  Teuchos::ArrayRCP<const ST> thickVec_constView = thickVec->get1dView();
-
-  bool hasBedTopography =  std::find(req.begin(), req.end(), "bed_topography") != req.end();
-  {
-    std::string fname = params->get<std::string>("Bed Topography File Name", "bed_topography.ascii");
-    read2DFileSerial(fname, temp, comm);
-    bTopographyVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
-    bTopographyVec->doImport(*temp, *importOperator, Tpetra::INSERT);
-  }
-  
-  Teuchos::ArrayRCP<const ST> bTopographyVec_constView = bTopographyVec->get1dView();
-  bool hasBasal_friction = std::find(req.begin(), req.end(), "basal_friction") != req.end();
-  if(hasBasal_friction)
-  {
-    bFrictionVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
-
-    if (params->isParameter("Basal Friction File Name"))
-    {
-      std::string fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
-      read2DFileSerial(fname, temp, comm);
-      bFrictionVec->doImport(*temp, *importOperator, Tpetra::INSERT);
-    }
-    else
-    {
-      // Try to load it from the 2D mesh
-      Albany::AbstractSTKFieldContainer::ScalarFieldType* field = 0;
-      field = metaData2D.get_field<Albany::AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
-      if (field!=0)
-      {
-        Teuchos::ArrayRCP<ST> bFrictionVec_view = bFrictionVec->get1dViewNonConst();
-
-        stk::mesh::Entity node;
-        stk::mesh::EntityId nodeId;
-        int lid;
-        double* values;
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<nodes2D.size(); ++i)
-        {
-          nodeId = bulkData2D.identifier(nodes2D[i]) - 1;
-          lid    = nodes_map->getLocalElement((GO)(nodeId));
-
-          values = stk::mesh::field_data(*field, nodes2D[i]);
-          bFrictionVec_view[lid] = values[0];
-        }
-      }
-      else
-      {
-        // We use a zero vector, but we issue a warning. Just in case the user forgot to setup something
-        std::cout << "No file name specified for 'basal_friction', and no field retrieved from the mesh. Using a zero vector.\n";
-      }
-    }
-  }
-
-  bool hasTemperature = std::find(req.begin(), req.end(), "temperature") != req.end();
-  if(hasTemperature) {
-    Teuchos::RCP<Tpetra_MultiVector> temperatureVec;
-    std::string fname = params->get<std::string>("Temperature File Name", "temperature.ascii");
-    readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, temperatureVec, temperatureNormalizedZ, comm);
-    temperatureVecInterp = Teuchos::rcp(new Tpetra_MultiVector(nodes_map, numLayers + 1));
-
-
-   int il0, il1, verticalTSize(temperatureVec->getNumVectors());
-    double h0(0.0);
-
-    for (int il = 0; il < numLayers + 1; il++) {
-      if (levelsNormalizedThickness[il] <= temperatureNormalizedZ[0]) {
-        il0 = 0;
-        il1 = 0;
-        h0 = 1.0;
-      }
-
-      else if (levelsNormalizedThickness[il] >= temperatureNormalizedZ[verticalTSize - 1]) {
-        il0 = verticalTSize - 1;
-        il1 = verticalTSize - 1;
-        h0 = 0.0;
-      }
-
-      else {
-        int k = 0;
-        while (levelsNormalizedThickness[il] > temperatureNormalizedZ[++k])
-          ;
-        il0 = k - 1;
-        il1 = k;
-        h0 = (temperatureNormalizedZ[il1] - levelsNormalizedThickness[il]) / (temperatureNormalizedZ[il1] - temperatureNormalizedZ[il0]);
-      }
-      Teuchos::ArrayRCP<ST> temperatureVecInterp_nonConstView = temperatureVecInterp->getVectorNonConst(il)->get1dViewNonConst();
-      Teuchos::ArrayRCP<const ST> temperatureVec_constView_il0 = temperatureVec->getVectorNonConst(il0)->get1dView();
-      Teuchos::ArrayRCP<const ST> temperatureVec_constView_il1 = temperatureVec->getVectorNonConst(il1)->get1dView();
-
-      for (int i = 0; i < nodes_map->getNodeNumElements(); i++)
-        temperatureVecInterp_nonConstView[i] = h0 * temperatureVec_constView_il0[i] + (1.0 - h0) * temperatureVec_constView_il1[i];
-    }
-  }
-
-  Tpetra_MultiVector tempSV(serial_nodes_map,neq_);
-
-  bool hasSurfaceVelocity = std::find(req.begin(), req.end(), "surface_velocity") != req.end();
-  if(hasSurfaceVelocity) {
-    std::string fname = params->get<std::string>("Surface Velocity File Name", "surface_velocity.ascii");
-    readFileSerial(fname, tempSV, comm);
-    sVelocityVec = Teuchos::rcp(new Tpetra_MultiVector (nodes_map, neq_));
-    sVelocityVec->doImport(tempSV, *importOperator, Tpetra::INSERT);
-  }
-
-  bool hasSurfaceVelocityRMS = std::find(req.begin(), req.end(), "surface_velocity_rms") != req.end();
-  if(hasSurfaceVelocityRMS) {
-    std::string fname = params->get<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii");
-    readFileSerial(fname, tempSV, comm);
-    velocityRMSVec = Teuchos::rcp(new Tpetra_MultiVector (nodes_map, neq_));
-    velocityRMSVec->doImport(tempSV, *importOperator, Tpetra::INSERT);
-  }
-
-  if (comm->getRank() == 0) std::cout << " done." << std::endl;
+  if (comm->getRank() == 0)
+    std::cout << " done." << std::endl;
 
   GO elemColumnShift = (Ordering == 1) ? 1 : maxGlobalElements2D;
   int lElemColumnShift = (Ordering == 1) ? 1 : cells2D.size();
@@ -551,173 +347,91 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   typedef AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   // Fields required for extrusion
-  ScalarFieldType* surface_height_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-  ScalarFieldType* thickness_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "thickness");
+  ScalarFieldType* surface_height_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
+  ScalarFieldType* thickness_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "thickness");
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   stk::mesh::FieldBase const* coordinates_field2d = metaData2D.coordinate_field();
 
-  // Fields possibly needed by FELIX problems
-  VectorFieldType* surface_velocity_field = 0;
-  if (hasSurfaceVelocity)
-    surface_velocity_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "surface_velocity");
-  VectorFieldType* surface_velocity_RMS_field = 0;
-  if (hasSurfaceVelocityRMS)
-    surface_velocity_RMS_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "surface_velocity_rms");
-  ScalarFieldType* bed_topography_field = 0;
-  if(hasBedTopography)
-    bed_topography_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "bed_topography");
-  
-  ScalarFieldType* basal_friction_field = 0;
-  if (hasBasal_friction)
-    basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
-  ElemScalarFieldType* temperature_field = 0;
-  if (hasTemperature)
-    temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
-  ElemScalarFieldType* flowRate_field =  metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
   std::vector<GO> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
 
+  double *thick_val, *sHeight_val;
   for (int i = 0; i < (numLayers + 1) * nodes2D.size(); i++) {
     int ib = (Ordering == 0) * (i % lVertexColumnShift) + (Ordering == 1) * (i / vertexLayerShift);
     int il = (Ordering == 0) * (i / lVertexColumnShift) + (Ordering == 1) * (i % vertexLayerShift);
     stk::mesh::Entity node;
     stk::mesh::Entity node2d = nodes2D[ib];
     stk::mesh::EntityId node2dId = bulkData2D.identifier(node2d) - 1;
+    GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
     if (il == 0)
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, il * vertexColumnShift + vertexLayerShift * node2dId + 1, singlePartVec);
+      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVec);
     else
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, il * vertexColumnShift + vertexLayerShift * node2dId + 1, nodePartVec);
+      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, nodePartVec);
 
     std::vector<int> sharing_procs;
     bulkData2D.comm_shared_procs( bulkData2D.entity_key(node2d), sharing_procs );
     for(int iproc=0; iproc<sharing_procs.size(); ++iproc)
       bulkData->add_node_sharing(node, sharing_procs[iproc]);
 
-
     double* coord = stk::mesh::field_data(*coordinates_field, node);
     double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
     coord[0] = coord2d[0];
     coord[1] = coord2d[1];
 
-    int lid = nodes_map->getLocalElement((GO)(node2dId));
-    coord[2] = sHeightVec_constView[lid] - thickVec_constView[lid] * (1. - levelsNormalizedThickness[il]);
-
-    if(hasSurface_height && surface_height_field) {
-      double* sHeight = stk::mesh::field_data(*surface_height_field, node);
-      sHeight[0] = sHeightVec_constView[lid];
-    }
-
-    if(hasThickness && thickness_field) {
-      double* thick = stk::mesh::field_data(*thickness_field, node);
-      thick[0] = thickVec_constView[lid];
-    }
-
-    if(hasBedTopography && bed_topography_field) {
-      double* bedTopo = stk::mesh::field_data(*bed_topography_field, node);
-      bedTopo[0] = bTopographyVec_constView[lid];
-    }
-
-    if(surface_velocity_field) {
-      double* sVelocity = stk::mesh::field_data(*surface_velocity_field, node);
-      Teuchos::ArrayRCP<const ST> sVelocityVec_constView_0 = sVelocityVec->getVectorNonConst(0)->get1dView();
-      Teuchos::ArrayRCP<const ST> sVelocityVec_constView_1 = sVelocityVec->getVectorNonConst(1)->get1dView();
-      sVelocity[0] = sVelocityVec_constView_0[lid];
-      sVelocity[1] = sVelocityVec_constView_1[lid];
-    }
-
-    if(surface_velocity_RMS_field) {
-      double* velocityRMS = stk::mesh::field_data(*surface_velocity_RMS_field, node);
-      Teuchos::ArrayRCP<const ST> velocityRMSVec_constView_0 = velocityRMSVec->getVectorNonConst(0)->get1dView();
-      Teuchos::ArrayRCP<const ST> velocityRMSVec_constView_1 = velocityRMSVec->getVectorNonConst(1)->get1dView();
-      velocityRMS[0] = velocityRMSVec_constView_0[lid];
-      velocityRMS[1] = velocityRMSVec_constView_1[lid];
-
-    }
-
-    if(hasBasal_friction && basal_friction_field) {
-      double* bFriction = stk::mesh::field_data(*basal_friction_field, node);
-      bFriction[0] = bFrictionVec->get1dView()[lid];
-    }
+    thick_val = stk::mesh::field_data(*thickness_field, node2d);
+    sHeight_val = stk::mesh::field_data(*surface_height_field, node2d);
+    coord[2] = sHeight_val[0] - thick_val[0] * (1. - levelsNormalizedThickness[il]);
   }
 
   GO tetrasLocalIdsOnPrism[3][4];
-
+  singlePartVec[0] = partVec[ebNo];
   for (int i = 0; i < cells2D.size() * numLayers; i++) {
 
     int ib = (Ordering == 0) * (i % lElemColumnShift) + (Ordering == 1) * (i / elemLayerShift);
     int il = (Ordering == 0) * (i / lElemColumnShift) + (Ordering == 1) * (i % elemLayerShift);
-
     int shift = il * vertexColumnShift;
 
-    singlePartVec[0] = partVec[ebNo];
-
     //TODO: this could be done only in the first layer and then copied into the other layers
-
     stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[ib]);
-    double tempOnPrism = 0; //Set temperature constant on each prism/Hexa
-
-    Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_il;
-    if (hasTemperature)
-      temperatureVecInterp_constView_il = temperatureVecInterp->getVectorNonConst(il)->get1dView();
-    Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_ilplus1;
-    if (hasTemperature)
-      temperatureVecInterp_constView_ilplus1 = temperatureVecInterp->getVectorNonConst(il + 1)->get1dView();
-
     for (int j = 0; j < NumBaseElemeNodes; j++) {
       stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
-      int node2dLId = nodes_map->getLocalElement((GO)node2dId);
       stk::mesh::EntityId mpasLowerId = vertexLayerShift * node2dId;
       stk::mesh::EntityId lowerId = shift + vertexLayerShift * node2dId;
       prismMpasIds[j] = mpasLowerId;
       prismGlobalIds[j] = lowerId;
       prismGlobalIds[j + NumBaseElemeNodes] = lowerId + vertexColumnShift;
-      if(hasTemperature)
-        tempOnPrism += 1. / NumBaseElemeNodes / 2. * (temperatureVecInterp_constView_il[node2dLId] + temperatureVecInterp_constView_ilplus1[node2dLId]);
     }
 
-    switch (ElemShape) {
-    case Tetrahedron: {
-      tetrasFromPrismStructured(&prismMpasIds[0], &prismGlobalIds[0], tetrasLocalIdsOnPrism);
+    switch (ElemShape)
+    {
+      case Tetrahedron:
+      {
+        tetrasFromPrismStructured(&prismMpasIds[0], &prismGlobalIds[0], tetrasLocalIdsOnPrism);
 
-      stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (bulkData2D.identifier(cells2D[ib]) - 1);
-      for (int iTetra = 0; iTetra < 3; iTetra++) {
-        stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 3 * prismId + iTetra + 1, singlePartVec);
-        for (int j = 0; j < 4; j++) {
-          stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j] + 1);
+        stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (bulkData2D.identifier(cells2D[ib]) - 1);
+        for (int iTetra = 0; iTetra < 3; iTetra++) {
+          stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 3 * prismId + iTetra + 1, singlePartVec);
+          for (int j = 0; j < 4; j++) {
+            stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, tetrasLocalIdsOnPrism[iTetra][j] + 1);
+            bulkData->declare_relation(elem, node, j);
+          }
+          int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
+          p_rank[0] = comm->getRank();
+        }
+        break;
+      }
+      case Wedge:
+      case Hexahedron:
+      {
+        stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (bulkData2D.identifier(cells2D[ib]) - 1);
+        stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, prismId + 1, singlePartVec);
+        for (int j = 0; j < 2 * NumBaseElemeNodes; j++) {
+          stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
           bulkData->declare_relation(elem, node, j);
         }
         int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
         p_rank[0] = comm->getRank();
-        if(hasTemperature && temperature_field) {
-          double* temperature = stk::mesh::field_data(*temperature_field, elem);
-          temperature[0] = tempOnPrism;
-          if(flowRate_field) {
-            double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
-            flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
-          }
-        }
       }
-    }
-      break;
-    case Wedge:
-    case Hexahedron: {
-      stk::mesh::EntityId prismId = il * elemColumnShift + elemLayerShift * (bulkData2D.identifier(cells2D[ib]) - 1);
-      stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, prismId + 1, singlePartVec);
-      for (int j = 0; j < 2 * NumBaseElemeNodes; j++) {
-        stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, prismGlobalIds[j] + 1);
-        bulkData->declare_relation(elem, node, j);
-      }
-      int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
-      p_rank[0] = comm->getRank();
-      if(hasTemperature && temperature_field) {
-        double* temperature = stk::mesh::field_data(*temperature_field, elem);
-        temperature[0] = tempOnPrism;
-        if(flowRate_field) {
-          double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
-          flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
-        }
-      }
-    }
     }
   }
 
@@ -862,6 +576,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+  // Extrude fields
+  extrudeBasalFields (nodes2D,cells2D,maxGlobalElements2D,maxGlobalVertices2dId);
+  interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalElements2D,maxGlobalVertices2dId);
+
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
@@ -935,9 +653,519 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   }
 }
 
+void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
+                                                                   const std::vector<stk::mesh::Entity>& cells2d,
+                                                                   const std::vector<double>& levelsNormalizedThickness,
+                                                                   GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
+{
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  Teuchos::Array<std::string> node_fields_names, cell_fields_names;
+  Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
+  if (params->isParameter("Interpolate Basal Node Layered Fields"))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (!params->isParameter("Basal Node Layered Fields Ranks"), std::logic_error,
+                                "Error! To interpolate basal node layered fields, you also need the 'Basal Node Layered Fields Ranks' parameter.\n");
+    node_fields_names = params->get<Teuchos::Array<std::string> >("Interpolate Basal Node Layered Fields");
+    node_fields_ranks = params->get<Teuchos::Array<int> >("Basal Node Layered Fields Ranks");
+  }
+
+  if (params->isParameter("Interpolate Basal Elem Layered Fields"))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (!params->isParameter("Basal Elem Layered Fields Ranks"), std::logic_error,
+                                "Error! To interpolate basal elem layered fields, you also need the 'Basal Elem Layered Fields Ranks' parameter.\n");
+    cell_fields_names = params->get<Teuchos::Array<std::string> >("Interpolate Basal Elem Layered Fields");
+    cell_fields_ranks = params->get<Teuchos::Array<int> >("Basal Elem Layered Fields Ranks");
+  }
+
+  // NOTE: a scalar layered field is stored as a vector field,
+  //       a vector layered field is stored as a tensor field.
+
+  // Typedefs
+  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef Albany::AbstractSTKFieldContainer::TensorFieldType TFT;
+
+  // Utility constants
+  const int numLayers  = params->get("NumLayers", 10);
+  const int numNodes2d = nodes2d.size();
+  const int numCells2d = cells2d.size();
+  const bool ColOrdering  = params->get("Columnwise Ordering", false);
+
+  stk::mesh::BulkData& bulkData2d = *basalMeshStruct->bulkData;
+  stk::mesh::MetaData& metaData2d = *basalMeshStruct->metaData;
+
+  int numNodeFields = node_fields_names.size();
+  int numCellFields = cell_fields_names.size();
+  int numScalars;
+  double *values2d, *values3d;
+
+  int il0,il1;
+  double h0;
+
+  std::string ranks[4] = {"ERROR!","Scalar","Vector","Tensor"};
+  std::vector<double> fieldLayersCoords;
+  // Extrude node fields
+  for (int ifield=0; ifield<numNodeFields; ++ifield)
+  {
+    *out << "Interpolating " << ranks[node_fields_ranks[ifield]] << " field " << node_fields_names[ifield] << " from basal mesh\n";
+
+    // We also need to load the normalized layers coordinates
+    auto it = basalMeshStruct->getFieldContainer()->getMeshVectorStates().find(node_fields_names[ifield]);
+    TEUCHOS_TEST_FOR_EXCEPTION (it!=basalMeshStruct->getFieldContainer()->getMeshVectorStates().end(), std::logic_error,
+                                "Error in ExtrudedSTKMeshStruct: normalized layers coords for layered field '" <<
+                                node_fields_names[ifield] << "' not found.\n");
+
+    fieldLayersCoords = it->second;
+    int numFieldLayers = fieldLayersCoords.size();
+
+    for (int inode=0; inode<numNodes2d; ++inode)
+    {
+      const stk::mesh::Entity& node2d = nodes2d[inode];
+      stk::mesh::EntityId node2dId = bulkData2d.identifier(node2d) - 1;
+
+      // Extracting 2d data only once
+      switch (node_fields_ranks[ifield])
+      {
+        case 1:
+        {
+          VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
+          values2d = stk::mesh::field_data(*field2d,node2d);
+          break;
+        }
+        case 2:
+        {
+          TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
+          numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
+          values2d = stk::mesh::field_data(*field2d,node2d);
+          break;
+        }
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+      }
+
+      // Loop on the layers
+      for (int il=0; il<=numLayers; ++il)
+      {
+        // Retrieve 3D node
+        int node3dId = ColOrdering ? node2dId*(numLayers+1) + il + 1 : il*maxGlobalNodes2dId + node2dId + 1;
+        stk::mesh::Entity node3d = bulkData->get_entity(stk::topology::NODE_RANK, node3dId);
+
+        // Find where the mesh layer stands in the field layers
+        double meshLayerCoord = levelsNormalizedThickness[il];
+
+        auto where = std::upper_bound(fieldLayersCoords.begin(),fieldLayersCoords.end(),meshLayerCoord);
+        il1 = std::distance(where,fieldLayersCoords.begin());
+        if (il1==0) // mesh layer is below the first field layer
+        {
+          il0 = 0;
+          h0 = 0.; // Useless, (the 2 values in the convex combination will be the same) but for clarity we fix it to 0
+        }
+        else if (il1==numFieldLayers) // mesh layer is above the last field layer
+        {
+          il0 = il1 = numFieldLayers-1;
+          h0 = 0.; // Useless, (the 2 values in the convex combination will be the same) but for clarity we fix it to 0
+        }
+        else
+        {
+          il0 = il1-1;
+          h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
+        }
+
+        // Extracting 3d pointer and stuffing the right data in them
+        switch (node_fields_ranks[ifield])
+        {
+          case 1:
+          {
+            SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+            values3d = stk::mesh::field_data(*field3d,node3d);
+            values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
+            break;
+          }
+          case 2:
+          {
+            VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+            values3d = stk::mesh::field_data(*field3d,node3d);
+            for (int j=0; j<numScalars; ++j)
+              values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
+            break;
+          }
+          default:
+            TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+        }
+      }
+    }
+  }
+
+  // Extrude cell fields
+  for (int ifield=0; ifield<numCellFields; ++ifield)
+  {
+    *out << "Interpolating " << ranks[cell_fields_ranks[ifield]] << " field " << cell_fields_names[ifield] << " from basal mesh\n";
+    // We also need to load the normalized layers coordinates
+    auto it = basalMeshStruct->getFieldContainer()->getMeshVectorStates().find(cell_fields_names[ifield]);
+    TEUCHOS_TEST_FOR_EXCEPTION (it!=basalMeshStruct->getFieldContainer()->getMeshVectorStates().end(), std::logic_error,
+                                "Error in ExtrudedSTKMeshStruct: normalized layers coords for layered field '" <<
+                                cell_fields_names[ifield] << "' not found.\n");
+    fieldLayersCoords = it->second;
+
+    int numFieldLayers = fieldLayersCoords.size();
+
+    for (int icell=0; icell<numCells2d; ++icell)
+    {
+      const stk::mesh::Entity& cell2d = cells2d[icell];
+      stk::mesh::EntityId cell2dId = bulkData2d.identifier(cell2d) - 1;
+
+      // Extracting the 2d data only once
+      switch (cell_fields_ranks[ifield])
+      {
+        case 1:
+        {
+          VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+          values2d = stk::mesh::field_data(*field2d,cell2d);
+          break;
+        }
+        case 2:
+        {
+          TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+          numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
+          values2d = stk::mesh::field_data(*field2d,cell2d);
+          break;
+        }
+        default:
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+      }
+
+      // Loop on the layers
+      for (int il=0; il<numLayers; ++il)
+      {
+        // Retrieving the id of the 3d cells
+        stk::mesh::EntityId prismId = ColOrdering ? numLayers*cell2dId + il + 1 : maxGlobalCells2dId*il + cell2dId + 1;
+        std::vector<stk::mesh::Entity> cells3d;
+        switch (ElemShape)
+        {
+          case Tetrahedron:
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+2));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+          case Wedge:
+          case Hexahedron:
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+        }
+
+        // Since the
+        double meshLayerCoord = 0.5*(levelsNormalizedThickness[il] + levelsNormalizedThickness[il+1]);
+
+        // Find where the mesh layer stands in the field layers
+        auto where = std::upper_bound(fieldLayersCoords.begin(),fieldLayersCoords.end(),meshLayerCoord);
+        il1 = std::distance(where,fieldLayersCoords.begin());
+        if (il1==0) // mesh layer is below the first field layer
+        {
+          il0 = 0;
+          h0 = 0.; // Useless, (the 2 values in the convex combination will be the same) but for clarity we fix it to 0
+        }
+        else if (il1==numFieldLayers) // mesh layer is above the last field layer
+        {
+          il0 = il1 = numFieldLayers-1;
+          h0 = 0.; // Useless, (the 2 values in the convex combination will be the same) but for clarity we fix it to 0
+        }
+        else
+        {
+          il0 = il1-1;
+          h0 = (fieldLayersCoords[il1] - meshLayerCoord) / (fieldLayersCoords[il1] - fieldLayersCoords[il0]);
+        }
+
+        for (auto& cell3d : cells3d)
+        {
+          switch (cell_fields_ranks[ifield])
+          {
+            case 1:
+            {
+              SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+              values3d = stk::mesh::field_data(*field3d,cell3d);
+              values3d[0] = h0*values2d[il0]+(1-h0)*values2d[il1];
+              break;
+            }
+            case 2:
+            {
+              VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+              values3d = stk::mesh::field_data(*field3d,cell3d);
+              for (int j=0; j<numScalars; ++j)
+                values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
+              break;
+            }
+            default:
+              TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+          }
+        }
+      }
+    }
+  }
+}
+
+void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
+                                                        const std::vector<stk::mesh::Entity>& cells2d,
+                                                        GO maxGlobalCells2dId, GO maxGlobalNodes2dId)
+{
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  Teuchos::Array<std::string> node_fields_names, cell_fields_names;
+  Teuchos::Array<int> node_fields_ranks, cell_fields_ranks;
+  if (params->isParameter("Extrude Basal Node Fields"))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (!params->isParameter("Basal Node Fields Ranks"), std::logic_error,
+                                "Error! To extrude basal node fields, you also need the 'Basal Node Fields Ranks' parameter.\n");
+    node_fields_names = params->get<Teuchos::Array<std::string> >("Extrude Basal Node Fields");
+    node_fields_ranks = params->get<Teuchos::Array<int> >("Basal Node Fields Ranks");
+  }
+
+  if (params->isParameter("Extrude Basal Elem Fields"))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (!params->isParameter("Basal Elem Fields Ranks"), std::logic_error,
+                                "Error! To extrude basal elem fields, you also need the 'Basal Elem Fields Ranks' parameter.\n");
+    cell_fields_names = params->get<Teuchos::Array<std::string> >("Extrude Basal Elem Fields");
+    cell_fields_ranks = params->get<Teuchos::Array<int> >("Basal Elem Fields Ranks");
+  }
+
+  // Typedefs
+  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef Albany::AbstractSTKFieldContainer::TensorFieldType TFT;
+
+  // Utility constants
+  const int numLayers  = params->get("NumLayers", 10);
+  const int numNodes2d = nodes2d.size();
+  const int numCells2d = cells2d.size();
+  const bool ColOrdering  = params->get("Columnwise Ordering", false);
+
+  stk::mesh::BulkData& bulkData2d = *basalMeshStruct->bulkData;
+  stk::mesh::MetaData& metaData2d = *basalMeshStruct->metaData;
+
+  int numNodeFields = node_fields_names.size();
+  int numCellFields = cell_fields_names.size();
+  int numScalars;
+  double *values2d, *values3d;
+
+  // Extrude node fields
+  for (int ifield=0; ifield<numNodeFields; ++ifield)
+  {
+    switch (node_fields_ranks[ifield])
+    {
+      case 1:
+      {
+        *out << "Extruding Scalar Node field " << node_fields_names[ifield] << " from basal mesh\n";
+
+        SFT* field2d = metaData2d.get_field<SFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
+        SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+
+        for (int inode=0; inode<numNodes2d; ++inode)
+        {
+          const stk::mesh::Entity& node2d = nodes2d[inode];
+          stk::mesh::EntityId node2dId = bulkData2d.identifier(node2d) - 1;
+          values2d = stk::mesh::field_data(*field2d,node2d);
+          for (int il=0; il<=numLayers; ++il)
+          {
+            // Retrieve 3D node
+            int node3dId = ColOrdering ? node2dId*(numLayers+1) + il + 1 : il*maxGlobalNodes2dId + node2dId + 1;
+            stk::mesh::Entity node3d = bulkData->get_entity(stk::topology::NODE_RANK, node3dId);
+
+            values3d = stk::mesh::field_data(*field3d,node3d);
+            values3d[0] = values2d[0];
+          }
+        }
+        break;
+      }
+      case 2:
+      {
+        *out << "Extruding Vector Node field " << node_fields_names[ifield] << " from basal mesh\n";
+
+        VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
+        VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+        for (int inode=0; inode<numNodes2d; ++inode)
+        {
+          const stk::mesh::Entity& node2d = nodes2d[inode];
+          stk::mesh::EntityId node2dId = bulkData2d.identifier(node2d) - 1;
+          values2d = stk::mesh::field_data(*field2d,node2d);
+          numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
+          for (int il=0; il<=numLayers; ++il)
+          {
+            // Retrieve 3D node
+            int node3dId = ColOrdering ? node2dId*(numLayers+1)+il+1 : il*maxGlobalNodes2dId+node2dId + 1;
+            stk::mesh::Entity node3d = bulkData->get_entity(stk::topology::NODE_RANK, node3dId);
+
+            values3d = stk::mesh::field_data(*field3d,node3d);
+            for (int j=0; j<numScalars; ++j)
+              values3d[j] = values2d[j];
+          }
+        }
+        break;
+      }
+      case 3:
+      {
+        *out << "Extruding Tensor Node field " << node_fields_names[ifield] << " from basal mesh\n";
+
+        TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
+        TFT* field3d = metaData->get_field<TFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
+        for (int inode=0; inode<numNodes2d; ++inode)
+        {
+          const stk::mesh::Entity& node2d = nodes2d[inode];
+          stk::mesh::EntityId node2dId = bulkData2d.identifier(node2d) - 1;
+          values2d = stk::mesh::field_data(*field2d,node2d);
+          numScalars = stk::mesh::field_scalars_per_entity(*field2d,node2d);
+          for (int il=0; il<=numLayers; ++il)
+          {
+            // Retrieve 3D node
+            int node3dId = ColOrdering ? node2dId*(numLayers+1)+il+1 : il*maxGlobalNodes2dId+node2dId + 1;
+            stk::mesh::Entity node3d = bulkData->get_entity(stk::topology::NODE_RANK, node3dId);
+
+            values3d = stk::mesh::field_data(*field3d,node3d);
+            for (int j=0; j<numScalars; ++j)
+              values3d[j] = values2d[j];
+          }
+        }
+        break;
+      }
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+    }
+  }
+
+  // Extrude cell fields
+  for (int ifield=0; ifield<numCellFields; ++ifield)
+  {
+    switch (cell_fields_ranks[ifield])
+    {
+      case 1:
+      {
+        *out << "Extruding Scalar Elem field " << cell_fields_names[ifield] << " from basal mesh\n";
+
+        SFT* field2d = metaData2d.get_field<SFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+        SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+        for (int icell=0; icell<numCells2d; ++icell)
+        {
+          const stk::mesh::Entity& cell2d = cells2d[icell];
+          stk::mesh::EntityId cell2dId = bulkData2d.identifier(cell2d) - 1;
+          values2d = stk::mesh::field_data(*field2d,cell2d);
+          for (int il=0; il<numLayers; ++il)
+          {
+            // Retrieving the id of the 3d cells
+            stk::mesh::EntityId prismId = ColOrdering ? numLayers*cell2dId + il + 1 : maxGlobalCells2dId*il + cell2dId + 1;
+            std::vector<stk::mesh::Entity> cells3d;
+            switch (ElemShape)
+            {
+              case Tetrahedron:
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+2));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+              case Wedge:
+              case Hexahedron:
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+            }
+
+            // Stuffing the 3d fields
+            for (auto& cell3d : cells3d)
+            {
+              values3d = stk::mesh::field_data(*field3d,cell3d);
+              values3d[0] = values2d[0];
+            }
+          }
+        }
+        break;
+      }
+      case 2:
+      {
+        *out << "Extruding Vector Elem field " << cell_fields_names[ifield] << " from basal mesh\n";
+
+        VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+        VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+        for (int icell=0; icell<numCells2d; ++icell)
+        {
+          const stk::mesh::Entity& cell2d = cells2d[icell];
+          stk::mesh::EntityId cell2dId = bulkData2d.identifier(cell2d);
+          numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
+          values2d = stk::mesh::field_data(*field2d,cell2d);
+          for (int il=0; il<numLayers; ++il)
+          {
+            // Retrieving the id of the 3d cells
+            stk::mesh::EntityId prismId = ColOrdering ? numLayers*(cell2dId-1)+il+1 : maxGlobalCells2dId*il+cell2dId;
+            std::vector<stk::mesh::Entity> cells3d;
+            switch (ElemShape)
+            {
+              case Tetrahedron:
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+2));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+              case Wedge:
+              case Hexahedron:
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+            }
+
+            // Stuffing the 3d fields
+            for (auto& cell3d : cells3d)
+            {
+              values3d = stk::mesh::field_data(*field3d,cell3d);
+              values3d[0] = values2d[0];
+
+              for (int j=0; j<numScalars; ++j)
+                values3d[j] = values2d[j];
+            }
+          }
+        }
+        break;
+      }
+      case 3:
+      {
+        *out << "Extruding Tensor Elem field " << cell_fields_names[ifield] << " from basal mesh\n";
+
+        TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+        TFT* field3d = metaData->get_field<TFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
+        for (int icell=0; icell<numCells2d; ++icell)
+        {
+          const stk::mesh::Entity& cell2d = cells2d[icell];
+          stk::mesh::EntityId cell2dId = bulkData2d.identifier(cell2d);
+          numScalars = stk::mesh::field_scalars_per_entity(*field2d,cell2d);
+          values2d = stk::mesh::field_data(*field2d,cell2d);
+          for (int il=0; il<numLayers; ++il)
+          {
+            // Retrieving the id of the 3d cells
+            stk::mesh::EntityId prismId = ColOrdering ? numLayers*(cell2dId-1)+il+1 : maxGlobalCells2dId*il+cell2dId;
+            std::vector<stk::mesh::Entity> cells3d;
+            switch (ElemShape)
+            {
+              case Tetrahedron:
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+2));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+              case Wedge:
+              case Hexahedron:
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+            }
+
+            // Stuffing the 3d fields
+            for (auto& cell3d : cells3d)
+            {
+              values3d = stk::mesh::field_data(*field3d,cell3d);
+              values3d[0] = values2d[0];
+
+              for (int j=0; j<numScalars; ++j)
+                values3d[j] = values2d[j];
+            }
+          }
+          break;
+        }
+      }
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
+    }
+  }
+}
+
 Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getValidDiscretizationParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getValidGenericSTKParameters("Valid Extruded_DiscParams");
   validPL->set<bool>("Export 2D Data", "", "If true, exports the 2D mesh in GMSH format");
+  validPL->set<Teuchos::Array<std::string> >("Extrude Basal Node Fields", Teuchos::Array<std::string>(), "List of basal node fields to be extruded");
+  validPL->set<Teuchos::Array<std::string> >("Extrude Basal Elem Fields", Teuchos::Array<std::string>(), "List of basal elem fields to be extruded");
+  validPL->set<Teuchos::Array<int> >("Basal Node Fields Ranks", Teuchos::Array<int>(), "Ranks of basal node fields to be extruded");
+  validPL->set<Teuchos::Array<int> >("Basal Elem Fields Ranks", Teuchos::Array<int>(), "Ranks of basal elem fields to be extruded");
+  validPL->set<Teuchos::Array<std::string> >("Interpolate Basal Node Layered Fields", Teuchos::Array<std::string>(), "List of basal node layered fields to be interpolated");
+  validPL->set<Teuchos::Array<std::string> >("Interpolate Basal Elem Layered Fields", Teuchos::Array<std::string>(), "List of basal node layered fields to be interpolated");
+  validPL->set<Teuchos::Array<int> >("Basal Node Layered Fields Ranks", Teuchos::Array<int>(), "List of basal node layered fields to be interpolated");
+  validPL->set<Teuchos::Array<int> >("Basal Elem Layered Fields Ranks", Teuchos::Array<int>(), "List of basal node layered fields to be interpolated");
   validPL->set<std::string>("GMSH 2D Output File Name", "", "File Name for GMSH 2D Basal Mesh Export");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<std::string>("Surface Height File Name", "surface_height.ascii", "Name of the file containing the surface height data");
@@ -960,97 +1188,4 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
 #endif
 
   return validPL;
-}
-
-void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Vector> content, const Teuchos::RCP<const Teuchos_Comm>& comm) {
-  GO numNodes;
-  Teuchos::ArrayRCP<ST> content_nonConstView = content->get1dViewNonConst();
-  if (comm->getRank() == 0) {
-    std::ifstream ifile;
-    ifile.open(fname.c_str());
-    if (ifile.is_open()) {
-      ifile >> numNodes;
-      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != content->getLocalLength(), Teuchos::Exceptions::InvalidParameterValue, std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << content->getLocalLength() << ")" << std::endl);
-
-      for (GO i = 0; i < numNodes; i++)
-        ifile >> content_nonConstView[i];
-      ifile.close();
-    } else {
-      std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open the file " << fname << std::endl;
-    }
-  }
-}
-
-void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Tpetra_MultiVector& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm) {
-  GO numNodes, numComponents;
-  if (comm->getRank() == 0) {
-    std::ifstream ifile;
-    ifile.open(fname.c_str());
-    if (ifile.is_open()) {
-      ifile >> numNodes >> numComponents;
-      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != contentVec.getLocalLength(), Teuchos::Exceptions::InvalidParameterValue,
-          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << contentVec.getLocalLength() << ")" << std::endl);
-      TEUCHOS_TEST_FOR_EXCEPTION(numComponents != contentVec.getNumVectors(), Teuchos::Exceptions::InvalidParameterValue,
-          std::endl << "Error in ExtrudedSTKMeshStruct: Number of components in file " << fname << " (" << numComponents << ") is different from the number expected (" << contentVec.getNumVectors() << ")" << std::endl);
-      for (int il = 0; il < numComponents; ++il) {
-        Teuchos::ArrayRCP<ST> contentVec_nonConstView = contentVec.getVectorNonConst(il)->get1dViewNonConst();
-        for (GO i = 0; i < numNodes; i++)
-          ifile >> contentVec_nonConstView[i];
-      }
-      ifile.close();
-    } else {
-      std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
-      //  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-      //      std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
-    }
-  }
-}
-
-void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, Teuchos::RCP<Tpetra_MultiVector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
-  GO numNodes;
-  int numComponents;
-  std::ifstream ifile;
-  if (comm->getRank() == 0) {
-
-    ifile.open(fname.c_str());
-    if (ifile.is_open()) {
-      ifile >> numNodes >> numComponents;
-
-    //  std::cout << "numNodes >> numComponents: " << numNodes << " " << numComponents << std::endl;
-
-      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != map_serial->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map_serial->getNodeNumElements() << ")" << std::endl);
-    } else {
-      std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
-      //  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-      //      std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
-    }
-  }
-  // The first int is for Comm<int>; the second is the type of numComponents.
-  Teuchos::broadcast<int, int>(*comm, 0, 1, &numComponents);
-  zCoords.resize(numComponents);
-  Tpetra_Vector tempT(map_serial);
-
-  if (comm->getRank() == 0) {
-    for (int i = 0; i < numComponents; ++i)
-      ifile >> zCoords[i];
-  }
-  //comm->Broadcast(&zCoords[0], numComponents, 0);
-  //IK, 10/1/14: double should be ST?
-  Teuchos::broadcast<int, double>(*comm, 0, numComponents, &zCoords[0]);
-
-  temperatureVec = Teuchos::rcp(new Tpetra_MultiVector(map, numComponents));
-
-  Teuchos::ArrayRCP<ST> tempT_nonConstView = tempT.get1dViewNonConst();
-  for (int il = 0; il < numComponents; ++il) {
-    if (comm->getRank() == 0)
-      for (GO i = 0; i < numNodes; i++)
-        ifile >> tempT_nonConstView[i];
-    temperatureVec->getVectorNonConst(il)->doImport(tempT, *importOperator, Tpetra::INSERT);
-  }
-
-  if (comm->getRank() == 0)
-    ifile.close();
-
-
 }

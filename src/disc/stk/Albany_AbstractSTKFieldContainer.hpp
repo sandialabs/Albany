@@ -43,7 +43,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian> TensorFieldType ;
     // Vector per Node/Cell  - (Node, Dim) or (Cell,Dim)
     typedef stk::mesh::Field<double, stk::mesh::Cartesian> VectorFieldType ;
-    // One double scalar per Node/Cell  - (Node) or (Cell)
+    // Scalar per Node/Cell  - (Node) or (Cell)
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
     // One int scalar per Node/Cell  - (Node) or (Cell)
     typedef stk::mesh::Field<int>                         IntScalarFieldType ;
@@ -70,6 +70,9 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef std::vector<VectorFieldType*> VectorState;
     typedef std::vector<TensorFieldType*> TensorState;
 
+    typedef std::map<std::string,double>                MeshScalarState;
+    typedef std::map<std::string,std::vector<double> >  MeshVectorState;
+
     //! Destructor
     virtual ~AbstractSTKFieldContainer() {};
 
@@ -85,6 +88,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     stk::mesh::Field<double,stk::mesh::Cartesian3d>* getSphereVolumeField(){ return sphereVolume_field; }
 
     ScalarValueState& getScalarValueStates(){ return scalarValue_states;}
+    MeshScalarState& getMeshScalarStates(){return mesh_scalar_states;}
+    MeshVectorState& getMeshVectorStates(){return mesh_vector_states;}
     ScalarState& getCellScalarStates(){return cell_scalar_states;}
     VectorState& getCellVectorStates(){return cell_vector_states;}
     TensorState& getCellTensorStates(){return cell_tensor_states;}
@@ -130,13 +135,15 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field; // Required for Peridynamics in LCM
 
     ScalarValueState scalarValue_states;
-    ScalarState   cell_scalar_states;
-    VectorState   cell_vector_states;
-    TensorState   cell_tensor_states;
-    QPScalarState qpscalar_states;
-    QPVectorState qpvector_states;
-    QPTensorState qptensor_states;
-    QPTensor3State qptensor3_states;
+    MeshScalarState   mesh_scalar_states;
+    MeshVectorState   mesh_vector_states;
+    ScalarState       cell_scalar_states;
+    VectorState       cell_vector_states;
+    TensorState       cell_tensor_states;
+    QPScalarState     qpscalar_states;
+    QPVectorState     qpvector_states;
+    QPTensorState     qptensor_states;
+    QPTensor3State    qptensor3_states;
 
     StateInfoStruct nodal_sis;
     StateInfoStruct nodal_parameter_sis;

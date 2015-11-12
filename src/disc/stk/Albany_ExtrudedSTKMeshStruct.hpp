@@ -46,10 +46,14 @@ namespace Albany {
     inline void computeMap();
     inline int prismType(GO const* prismVertexMpasIds, int& minIndex);
     inline void tetrasFromPrismStructured (GO const* prismVertexMpasIds, GO const* prismVertexGIds, GO tetrasIdsOnPrism[][4]);
-    void read2DFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Vector> content, const Teuchos::RCP<const Teuchos_Comm>& comm);
-    void readFileSerial(std::string &fname, Tpetra_MultiVector& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm);
-    void readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, Teuchos::RCP<Tpetra_MultiVector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm);
 
+    void interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
+                                        const std::vector<stk::mesh::Entity>& cells2d,
+                                        const std::vector<double>& levelsNormalizedThickness,
+                                        GO numGlobalCells2d, GO numGlobalNodes2d);
+    void extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
+                             const std::vector<stk::mesh::Entity>& cells2d,
+                             GO numGlobalCells2d, GO numGlobalNodes2d);
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

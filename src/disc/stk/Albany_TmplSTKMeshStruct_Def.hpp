@@ -385,7 +385,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
-  this->loadRequiredInputFields (commT, req, req);
+  this->loadRequiredInputFields (req,commT);
 
   // Refine the mesh before starting the simulation if indicated
   uniformRefineMesh(commT);
