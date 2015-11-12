@@ -16,7 +16,7 @@ miniMinimize(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid::Vector<RealType, N> & soln)
+    Intrepid::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
 {
   minimizer.solve(step_method, function, soln);
 
@@ -31,22 +31,24 @@ miniMinimize(
     FN & function,
     Intrepid::Vector<T, N> & soln)
 {
-  // Extract values and use them to minimize the function.
+  minimizer.solve(step_method, function, soln);
+
   using ValueT = typename Sacado::ValueType<T>::type;
 
   Intrepid::Vector<ValueT, N>
   soln_val = Sacado::Value<Intrepid::Vector<T, N>>::eval(soln);
 
-  minimizer.solve(step_method, function, soln_val);
-
-  auto const
-  dimension = soln.get_dimension();
+//  auto const
+//  dimension = soln.get_dimension();
 
   // Put values back in solution vector
-  for (auto i = 0; i < dimension; ++i) {
-    soln(i).val() = soln_val(i);
-    soln(i) = T(dimension, i, soln_val(i));
-  }
+//  for (auto i = 0; i < dimension; ++i) {
+//    soln(i).val() = soln_val(i);
+//    soln(i) = T(dimension, i, soln_val(i));
+//  }
+
+  std::cout << "soln: " << soln << '\n';
+  std::cout << "_val: " << soln_val << '\n';
 
   // Check if there is FAD info.
   auto const
@@ -58,12 +60,16 @@ miniMinimize(
   Intrepid::Tensor<ValueT, N>
   DrDx = function.hessian(soln_val);
 
+  std::cout << "DrDx: " << DrDx << '\n';
+
   // Now compute gradient with solution that has Albany sensitivities.
   Intrepid::Vector<T, N>
   resi = function.gradient(soln);
 
+  std::cout << "resi: " << resi << '\n';
+
   // Solve for solution sensitivities.
-  computeFADInfo(resi, DrDx, soln);
+  // computeFADInfo(resi, DrDx, soln);
 
   return;
 }
@@ -92,6 +98,10 @@ computeFADInfo(
 
   assert(order > 0);
 
+  std::cout << "FAD Info dimension : " << dimension << '\n';
+  std::cout << "FAD Info order     : " << order << '\n';
+  std::cout << "Soln before        : " << x << '\n';
+
   // Extract sensitivities of r wrt p
   Intrepid::Matrix<S, N>
   DrDp(dimension, order);
@@ -114,6 +124,7 @@ computeFADInfo(
     }
   }
 
+  std::cout << "Soln after         : " << x << '\n';
 }
 
 } // namespace LCM

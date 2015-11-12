@@ -184,6 +184,15 @@ computeState(typename Traits::EvalData workset,
 
       if (f > 1E-12) {
         // return mapping algorithm
+
+        std::cout << "sat_mod         : " << sat_mod_ << std::endl;
+        std::cout << "sat_exp         : " << sat_exp_ << std::endl;
+        std::cout << "eqpsold         : " << eqpsold(cell, pt) << std::endl;
+        std::cout << "K               : " << K << std::endl;
+        std::cout << "smag            : " << smag << std::endl;
+        std::cout << "mubar           : " << mubar << std::endl;
+        std::cout << "Y               : " << Y << std::endl;
+
         bool converged = false;
         ScalarT g = f;
         ScalarT H = 0.0;
@@ -230,8 +239,15 @@ computeState(typename Traits::EvalData workset,
               "\ndg = " << dFdX[0] <<
               "\nalpha = " << alpha << std::endl);
         }
+        std::cout << "Soln before FAD : " << X[0] << std::endl;
         solver.computeFadInfo(dFdX, X, F);
         dgam = X[0];
+
+        std::cout << "dFdX            : " << dFdX[0] << std::endl;
+        std::cout << "F               : " << F[0] << std::endl;
+        std::cout << "Soln after FAD  : " << X[0] << std::endl;
+        std::cout << "alpha           : " << alpha << std::endl;
+        std::cout << "H               : " << H << std::endl;
 
         // plastic direction
         N = (1 / smag) * s;

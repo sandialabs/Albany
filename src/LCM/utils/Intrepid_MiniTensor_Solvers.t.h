@@ -152,7 +152,7 @@ Minimizer<T, N>::
 updateConvergenceCriterion(T const ae)
 {
   abs_error = ae;
-  rel_error = initial_norm > 0.0 ? abs_error / initial_norm : 0.0;
+  rel_error = initial_norm > 0.0 ? abs_error / initial_norm : T(0.0);
 
   bool const
   converged_absolute = abs_error <= abs_tol;

@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -148,8 +147,6 @@ public:
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x)
   {
-    using PT = typename Sacado::Promote<S, T>::type;
-
     Intrepid::Index const
     dimension = x.get_dimension();
 
@@ -161,16 +158,16 @@ public:
     T const &
     X = x(0);
 
-    T
+    T const
     alpha = eqps_old + sq23 * X;
 
-    PT
+    T const
     H = K * alpha + sat_mod * (1.0 - std::exp(-sat_exp * alpha));
 
-    PT
+    T const
     R = smag - (2.0 * mubar * X + sq23 * (Y + H));
 
-    r(0) = save(R, alpha, H);
+    r(0) = R;
 
     return r;
   }
@@ -182,11 +179,6 @@ public:
   {
     return Intrepid::Function_Base<J2NLS<S>, S>::hessian(*this, x);
   }
-
-  // Save values for later use
-  template<typename T, typename PT>
-  T
-  save(PT const & R_, T const & alpha_, PT const & H_);
 
   // Constants.
   RealType const
@@ -214,92 +206,7 @@ public:
 
   S const &
   Y;
-
-  // Outputs
-  S
-  alpha{0.0};
-
-  S
-  H{0.0};
 };
-
-// Save nothing for general case
-template<typename S>
-template<typename T, typename PT>
-T
-J2NLS<S>::
-save(PT const & R_, T const & alpha_, PT const & H_)
-{
-  return R_;
-}
-
-// Save when computing Albany Residual
-template<>
-template<typename T, typename PT>
-T
-J2NLS<PHAL::AlbanyTraits::Residual::ScalarT>::
-save(PT const & R_, T const & alpha_, PT const & H_)
-{
-  alpha = Sacado::Value<PT>::eval(alpha_);
-  H = Sacado::Value<PT>::eval(H_);
-  return R_;
-}
-
-// Save when computing Albany Jacobian
-template<>
-template<typename T, typename PT>
-T
-J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
-save(PT const & R_, T const & alpha_, PT const & H_)
-{
-  alpha = alpha_;
-  H = H_;
-  return Sacado::Value<PT>::eval(R_);
-}
-
-/*
-template<>
-template<>
-Sacado::Fad::DFad<RealType>
-J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
-save<Sacado::Fad::DFad<RealType>, PHAL::AlbanyTraits::Jacobian::ScalarT>(
-    PHAL::AlbanyTraits::Jacobian::ScalarT const & R_,
-    Sacado::Fad::DFad<RealType> const & alpha_,
-    PHAL::AlbanyTraits::Jacobian::ScalarT const & H_)
-{
-  alpha = Sacado::Value<Sacado::Fad::DFad<RealType>>::eval(alpha_);
-  H = H_;
-  return R_;
-}
-
-template<>
-template<>
-Sacado::Fad::DFad<RealType>
-J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
-save<Sacado::Fad::DFad<RealType>, Sacado::Fad::DFad<RealType>>(
-    Sacado::Fad::DFad<RealType> const & R_,
-    Sacado::Fad::DFad<RealType> const & alpha_,
-    Sacado::Fad::DFad<RealType> const & H_)
-{
-  alpha = Sacado::Value<Sacado::Fad::DFad<RealType>>::eval(alpha_);
-  H = H_;
-  return R_;
-}
-*/
-
-template<>
-template<>
-PHAL::AlbanyTraits::Jacobian::ScalarT
-J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
-save(
-    PHAL::AlbanyTraits::Jacobian::ScalarT const & R_,
-    PHAL::AlbanyTraits::Jacobian::ScalarT const & alpha_,
-    PHAL::AlbanyTraits::Jacobian::ScalarT const & H_)
-{
-  alpha = alpha_;
-  H = H_;
-  return R_;
-}
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -388,9 +295,15 @@ computeState(typename Traits::EvalData workset,
       if (f > 1E-12) {
         // return mapping algorithm
 
-        // Use minimization equivalent to return mapping
-        using ValueT = typename Sacado::ValueType<ScalarT>::type;
+        std::cout << "sat_mod         : " << sat_mod_ << std::endl;
+        std::cout << "sat_exp         : " << sat_exp_ << std::endl;
+        std::cout << "eqpsold         : " << eqpsold(cell, pt) << std::endl;
+        std::cout << "K               : " << K << std::endl;
+        std::cout << "smag            : " << smag << std::endl;
+        std::cout << "mubar           : " << mubar << std::endl;
+        std::cout << "Y               : " << Y << std::endl;
 
+        // Use minimization equivalent to return mapping
         J2NLS<ScalarT>
         j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
 
@@ -398,76 +311,35 @@ computeState(typename Traits::EvalData workset,
         Intrepid::Index
         dimension{1};
 
-        Intrepid::NewtonStep<ValueT, dimension>
+        Intrepid::NewtonStep<ScalarT, dimension>
         step;
 
-        Intrepid::Minimizer<ValueT, dimension>
+        Intrepid::Minimizer<ScalarT, dimension>
         minimizer;
+
+        ScalarT const
+        dXdR0 = 1.0 / (-2. * mubar) / (1. + H / (3. * mubar));
 
         Intrepid::Vector<ScalarT, dimension>
         x;
 
-        x(0) = 0.0;
+        x(0) = 0.0 * f;
+
+        std::cout << "GUESS           : " << x(0) << std::endl;
 
         miniMinimize(minimizer, step, j2nls, x);
-#if 0
-        bool converged = false;
-        ScalarT g = f;
-        ScalarT H = 0.0;
-        ScalarT dH = 0.0;
-        ScalarT alpha = 0.0;
-        ScalarT res = 0.0;
-        int count = 0;
-        dgam = 0.0;
 
-        int const
-        num_max_iter = 30;
+        ScalarT const
+        alpha = eqpsold(cell, pt) + sq23 * x(0);
 
-        LocalNonlinearSolver<EvalT, Traits> solver;
-
-        std::vector<ScalarT> F(1);
-        std::vector<ScalarT> dFdX(1);
-        std::vector<ScalarT> X(1);
-
-        F[0] = f;
-        X[0] = 0.0;
-        dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
-        while (!converged && count <= num_max_iter)
-        {
-          count++;
-          solver.solve(dFdX, X, F);
-          alpha = eqpsold(cell, pt) + sq23 * X[0];
-          H = K * alpha + sat_mod_ * (1. - exp(-sat_exp_ * alpha));
-          dH = K + sat_exp_ * sat_mod_ * exp(-sat_exp_ * alpha);
-          F[0] = smag - (2. * mubar * X[0] + sq23 * (Y + H));
-          dFdX[0] = -2. * mubar * (1. + dH / (3. * mubar));
-
-          res = std::abs(F[0]);
-          if (res < 1.e-11 || res / Y < 1.E-11 || res / f < 1.E-11)
-            converged = true;
-
-          TEUCHOS_TEST_FOR_EXCEPTION(count == num_max_iter, std::runtime_error,
-              std::endl <<
-              "Error in return mapping, count = " <<
-              count <<
-              "\nres = " << res <<
-              "\nrelres  = " << res/f <<
-              "\nrelres2 = " << res/Y <<
-              "\ng = " << F[0] <<
-              "\ndg = " << dFdX[0] <<
-              "\nalpha = " << alpha << std::endl);
-        }
-        solver.computeFadInfo(dFdX, X, F);
-#endif
-        ScalarT
-        H = j2nls.H;
-
-        ScalarT
-        alpha = j2nls.alpha;
-
-        std::cout << "SOLUTION (dgam): " << x(0) << std::endl;
+        ScalarT const
+        H = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
 
         dgam = x(0);
+
+        std::cout << "SOLUTION        : " << x(0) << std::endl;
+        std::cout << "alpha           : " << alpha << std::endl;
+        std::cout << "H               : " << H << std::endl;
 
         // plastic direction
         N = (1 / smag) * s;
