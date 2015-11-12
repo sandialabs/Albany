@@ -200,15 +200,21 @@ namespace Albany {
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& side_dof_name = "");
 
-    //! Function to create evaluator QuadPointToCellInterpolation
+    //! Function to create evaluator NodesToCellInterpolation (=DOFInterpolation+QuadPointsToCellInterpolation)
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructQuadPointToCellInterpolationEvaluator(
+    constructNodesToCellInterpolationEvaluator(
       const std::string& dof_name,
       bool isVectorField = false);
 
-    //! Function to create evaluator QuadPointToCellInterpolation
+    //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructSideQuadPointToSideInterpolationEvaluator(
+    constructQuadPointsToCellInterpolationEvaluator(
+      const std::string& dof_name,
+      bool isVectorField = false);
+
+    //! Function to create evaluator QuadPointsToCellInterpolation
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructSideQuadPointsToSideInterpolationEvaluator(
       const std::string& dof_name,
       const std::string& sideSetName,
       bool isVectorField = false);

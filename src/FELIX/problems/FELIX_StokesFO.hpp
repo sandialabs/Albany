@@ -196,9 +196,9 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   std::string stateName, fieldName;
 
   // Temperature
-  entity = Albany::StateStruct::ElemData;
+  entity = Albany::StateStruct::NodalDataToElemNode;
   stateName = fieldName = "temperature";
-  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity);
+  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
   if (sliding && ss_requirements.find(basalSideName)!=ss_requirements.end())
@@ -327,7 +327,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (it!=req.end())
     {
       // We interpolate beta from quad point to cell
-      ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
       fm0.template registerEvaluator<EvalT>(ev);
 
       // We save it on the basal mesh
@@ -410,7 +410,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       if (it!=req.end())
       {
         // We interpolate the effective pressure from quad point to cell
-        ev = evalUtils.constructSideQuadPointToSideInterpolationEvaluator (fieldName, basalSideName, false);
+        ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
         fm0.template registerEvaluator<EvalT>(ev);
 
         // We register the state and build the loader
@@ -474,6 +474,10 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = evalUtils.constructScatterResidualEvaluator(true, resid_names, offset, "Scatter Stokes");
   fm0.template registerEvaluator<EvalT> (ev);
   offset += numDim;
+
+  // Interpolate temperature from nodes to cell
+  ev = evalUtils.constructNodesToCellInterpolationEvaluator ("temperature",false);
+  fm0.template registerEvaluator<EvalT> (ev);
 
   // Gather coordinates
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();

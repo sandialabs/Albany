@@ -284,6 +284,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_MapToPhysicalFrame.cpp
   evaluators/PHAL_Neumann.cpp
+  evaluators/PHAL_NodesToCellInterpolation.cpp
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_QuadPointsToCellInterpolation.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
@@ -410,6 +411,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_MapToPhysicalFrame_Def.hpp
   evaluators/PHAL_Neumann.hpp
   evaluators/PHAL_Neumann_Def.hpp
+  evaluators/PHAL_NodesToCellInterpolation.hpp
+  evaluators/PHAL_NodesToCellInterpolation_Def.hpp
   evaluators/PHAL_NSMaterialProperty.hpp
   evaluators/PHAL_NSMaterialProperty_Def.hpp
   evaluators/PHAL_QuadPointsToCellInterpolation.hpp

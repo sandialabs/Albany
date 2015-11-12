@@ -26,6 +26,7 @@
 #include "PHAL_DOFVecGradInterpolation.hpp"
 #include "PHAL_DOFVecInterpolation.hpp"
 #include "PHAL_DOFVecInterpolationSide.hpp"
+#include "PHAL_NodesToCellInterpolation.hpp"
 #include "PHAL_QuadPointsToCellInterpolation.hpp"
 #include "PHAL_SideQuadPointsToSideInterpolation.hpp"
 
@@ -666,7 +667,28 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideEvaluator(
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructQuadPointToCellInterpolationEvaluator(
+Albany::EvaluatorUtils<EvalT,Traits>::constructNodesToCellInterpolationEvaluator(
+  const std::string& dof_name,
+  bool isVectorField)
+{
+  Teuchos::RCP<Teuchos::ParameterList> p;
+  p = Teuchos::rcp(new Teuchos::ParameterList("DOF Nodes to Cell Interpolation "+dof_name));
+
+  // Input
+  p->set<std::string>("BF Variable Name", "BF");
+  p->set<std::string>("Field Node Name", dof_name);
+  p->set<std::string>("Weighted Measure Name", "Weights");
+  p->set<bool>("Is Vector Field", isVectorField);
+
+  // Output
+  p->set<std::string>("Field Cell Name", dof_name);
+
+  return Teuchos::rcp(new PHAL::NodesToCellInterpolation<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructQuadPointsToCellInterpolationEvaluator(
   const std::string& dof_name,
   bool isVectorField)
 {
@@ -686,7 +708,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructQuadPointToCellInterpolationEvalu
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructSideQuadPointToSideInterpolationEvaluator(
+Albany::EvaluatorUtils<EvalT,Traits>::constructSideQuadPointsToSideInterpolationEvaluator(
   const std::string& dof_name,
   const std::string& sideSetName,
   bool isVectorField)
