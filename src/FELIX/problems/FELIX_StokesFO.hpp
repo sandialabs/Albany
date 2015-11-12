@@ -761,10 +761,10 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","Observed Surface Velocity");
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","Observed Surface Velocity RMS");
-    paramList->set<std::string>("BF Basal Name","BF " + surfaceSideName);
+    paramList->set<std::string>("BF Surface Name","BF " + surfaceSideName);
     paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure Surface Name","Weighted Measure " + surfaceSideName);
-    paramList->set<std::string>("Inverse Metric Surface Name","Inv Metric " + surfaceSideName);
+    paramList->set<std::string>("Inverse Metric Basal Name","Inv Metric " + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
 

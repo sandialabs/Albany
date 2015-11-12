@@ -44,14 +44,14 @@ namespace FELIX {
     int numSideQPs;
     int numSideDims;
 
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim> velocity;
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim> observedVelocity;
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim> observedVelocityRMS;
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim> grad_beta;
-    PHX::MDField<RealType,Cell,Side,Node,QuadPoint> BF_basal;
-    PHX::MDField<RealType,Cell,Side,QuadPoint> w_measure_basal;
-    PHX::MDField<RealType,Cell,Side,QuadPoint> w_measure_surface;
-    PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim> inv_metric_surface;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>    velocity;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>    observedVelocity;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>    observedVelocityRMS;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>       grad_beta;
+    PHX::MDField<RealType,Cell,Side,Node,QuadPoint>     BF_surface;
+    PHX::MDField<RealType,Cell,Side,QuadPoint>          w_measure_basal;
+    PHX::MDField<RealType,Cell,Side,QuadPoint>          w_measure_surface;
+    PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>  inv_metric_basal;
 
     ScalarT p_resp, p_reg, resp, reg;
     double scaling, alpha, asinh_scaling;
