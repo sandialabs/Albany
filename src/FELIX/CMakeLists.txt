@@ -13,6 +13,7 @@
        evaluators/FELIX_Elliptic2DResidual.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
+       evaluators/FELIX_FlowRate.cpp
        evaluators/FELIX_HydrologyWaterDischarge.cpp
        evaluators/FELIX_HydrologyHydrostaticPotential.cpp
        evaluators/FELIX_HydrologyMelting.cpp
@@ -81,6 +82,8 @@ ENDIF()
        evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_FieldNorm.hpp
        evaluators/FELIX_FieldNorm_Def.hpp
+       evaluators/FELIX_FlowRate.hpp
+       evaluators/FELIX_FlowRate_Def.hpp
        evaluators/FELIX_HydrologyWaterDischarge.hpp
        evaluators/FELIX_HydrologyWaterDischarge_Def.hpp
        evaluators/FELIX_HydrologyHydrostaticPotential.hpp
