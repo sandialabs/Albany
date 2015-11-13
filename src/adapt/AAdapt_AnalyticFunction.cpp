@@ -772,31 +772,42 @@ AAdapt::AerasXZHydrostaticMountain::AerasXZHydrostaticMountain(int neq_, int num
 void AAdapt::AerasXZHydrostaticMountain::compute(double* x, const double* X) {
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
-  const double SP0     =       data[2];
-  const double U0      =       data[3];
-  const double T0      =       data[4];
-  const double amp     =       data[5];
-  const double x0      =       data[6];
-  const double z0      =       data[7];
-  const double sig_x   =       data[8];
-  const double sig_z   =       data[9];
+  const double Ptop    =       data[2];
+  const double SP0     =       data[3];
+  const double U0      =       data[4];
+  const double T0      =       data[5];
+  const double amp     =       data[6];
+  const double x0      =       data[7];
+  const double z0      =       data[8];
+  const double sig_x   =       data[9];
+  const double sig_z   =       data[10];
+  const double height  =       data[11];
+  const double center  =       data[12];
+  const double width   =       data[13];
 
   const double PI = 3.14159265;
 
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
-    q0[nt] = data[10+nt];
+    q0[nt] = data[14+nt];
   }
 
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
 
-  const double Ptop = 101.325;
+  //const double Ptop = 101.325;
   const double P0   = SP0;
-  const double Ps   = P0;
+  //const double Ps   = P0;
+  const double Ps = std::abs(X[0]-center)<width/2 ? P0 * std::exp(-9.81*(0.5*height*(1+std::cos(2*PI*(X[0]-center)/width)))/(287.0*T0) ) : P0;
+  // zm = h0m * cos(0.5*pi(x-xm)/dxm) if (x-xm)<dxm
+  //const double xm   = 150.0, dxm = 50.0, am = 50.0, g=9.81, Rd = 287.0, Td= 273.0;
+  // Ps = P0 exp ( - g z / Rd T0);  
+  //std::cout << "hhhhh........" << std::endl;
+  printf(".....x=%f, z=%f, height=%f, Ps=%f, Ptop=%f\n",X[0],height*cos(0.5*PI*(X[0]-center)/width),height,Ps,Ptop);
+
 
   const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
-
+  
   for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
 
   for (int i=0; i<numLevels; ++i) {
@@ -807,7 +818,7 @@ void AAdapt::AerasXZHydrostaticMountain::compute(double* x, const double* X) {
 
   int offset = 0;
   //Surface Pressure
-  x[offset++] = SP0;
+  x[offset++] = Ps; //SP0;
   
   for (int i=0; i<numLevels; ++i) {
   //Velx
