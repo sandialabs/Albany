@@ -109,15 +109,72 @@ FELIX::StokesFO::
   // Nothing to be done here
 }
 
-void
-FELIX::StokesFO::
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                                    Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
 
- /* Construct All Phalanx Evaluators */
+  // Building cell basis and cubature
+  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
+  cellBasis = Albany::getIntrepidBasis(*cell_top);
+  cellType = rcp(new shards::CellTopology (cell_top));
+
+  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+  cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
+
+  elementBlockName = meshSpecs[0]->ebName;
+  basalEBName = "";
+  surfaceEBName = "";
+
+  if (sliding)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                              "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+    const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
+
+    basalEBName = basalMeshSpecs.ebName;
+
+    // Building also side structures
+    const CellTopologyData * const side_top = cell_top->side[0].topology;
+    sideBasis = Albany::getIntrepidBasis(*side_top);
+    sideType = rcp(new shards::CellTopology (side_top));
+    basalCubature = cubFactory.create(*sideType, basalMeshSpecs.cubatureDegree);
+
+    if (surfaceSideName!="")
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                                  "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+
+      const Albany::MeshSpecsStruct& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
+      surfaceCubature = cubFactory.create(*sideType, surfaceMeshSpecs.cubatureDegree);
+    }
+  }
+
+  const int numCellVertices = cellType->getNodeCount();
+  const int numCellNodes = cellBasis->getCardinality();
+  const int numCellQPs = cellCubature->getNumPoints();
+  const int vecDim = 2;
+  const int numCellSides = cellType->getFaceCount();
+  const int numSideNodes = (!sliding ? 0 : sideBasis->getCardinality());
+  const int numSideQPs = (!sliding ? 0 : basalCubature->getNumPoints());
+  const int worksetSize = meshSpecs[0]->worksetSize;
+
+
+#ifdef OUTPUT_TO_SCREEN
+  *out << "Field Dimensions: Workset=" << worksetSize
+       << ", Vertices= " << numCellVertices
+       << ", CellNodes= " << numCellNodes
+       << ", CellQuadPts= " << numCellQPs
+       << ", Dim= " << numDim
+       << ", VecDim= " << vecDim
+       << ", SideNodes= " << numSideNodes
+       << ", SideQuadPts= " << numSideQPs << std::endl;
+#endif
+
+  // Building the layouts
+  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs, numDim, vecDim, numCellSides, numSideNodes, numSideQPs));
+
+  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);

@@ -107,6 +107,13 @@ public:
 
 protected:
 
+  Teuchos::RCP<shards::CellTopology> cellType;
+  Teuchos::RCP<shards::CellTopology> sideType;
+
+  Teuchos::RCP <Intrepid::Cubature<RealType> > cellCubature;
+  Teuchos::RCP <Intrepid::Cubature<RealType> > basalCubature;
+  Teuchos::RCP <Intrepid::Cubature<RealType> > surfaceCubature;
+
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > cellBasis;
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > sideBasis;
 
@@ -116,6 +123,10 @@ protected:
   bool  sliding;
   std::string basalSideName;
   std::string surfaceSideName;
+
+  std::string elementBlockName;
+  std::string basalEBName;
+  std::string surfaceEBName;
 };
 
 } // Namespace FELIX
@@ -134,55 +145,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   using Teuchos::rcp;
   using Teuchos::ParameterList;
 
-  const CellTopologyData * const cell_top = &meshSpecs.ctd;
-  const CellTopologyData * const side_top = cell_top->side[0].topology;
-
-  if (cellBasis.get()==0)
-  {
-    cellBasis = Albany::getIntrepidBasis(*cell_top);
-    sideBasis = Albany::getIntrepidBasis(*side_top);
-  }
-
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (cell_top));
-  RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology (side_top));
-
-  // Building the right quadrature formula
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-
-  RCP <Intrepid::Cubature<RealType> > basalCubature;
-  if (sliding)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.sideSetMeshSpecs.find(basalSideName)==meshSpecs.sideSetMeshSpecs.end(), std::logic_error,
-                              "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-    RCP<Albany::MeshSpecsStruct> basalMeshSpecs = meshSpecs.sideSetMeshSpecs.find(basalSideName)->second[0];
-    basalCubature = cubFactory.create(*sideType, basalMeshSpecs->cubatureDegree);
-  }
-
-  const int numCellVertices = cellType->getNodeCount();
-  const int numCellNodes = cellBasis->getCardinality();
-  const int numCellQPs = cellCubature->getNumPoints();
-  const int vecDim = 2;
-  const int numCellSides = cellType->getFaceCount();
-  const int numSideNodes = (!sliding ? 0 : sideBasis->getCardinality());
-  const int numSideQPs = (!sliding ? 0 : basalCubature->getNumPoints());
-  const int worksetSize = meshSpecs.worksetSize;
-
-  const std::string& elementBlockName = meshSpecs.ebName;
-  const std::string& basalEBName = (sliding ? "" : meshSpecs.sideSetMeshSpecs.at(basalSideName)[0]->ebName);
-
-#ifdef OUTPUT_TO_SCREEN
-  *out << "Field Dimensions: Workset=" << worksetSize
-       << ", Vertices= " << numCellVertices
-       << ", CellNodes= " << numCellNodes
-       << ", CellQuadPts= " << numCellQPs
-       << ", Dim= " << numDim
-       << ", VecDim= " << vecDim
-       << ", SideNodes= " << numSideNodes
-       << ", SideQuadPts= " << numSideQPs << std::endl;
-#endif
-
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs, numDim, vecDim, numCellSides, numSideNodes, numSideQPs));
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
   int offset=0;
@@ -685,13 +647,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   if (sliding && surfaceSideName!="")
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.sideSetMeshSpecs.find(surfaceSideName)==meshSpecs.sideSetMeshSpecs.end(), std::logic_error,
-                                "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-
-    RCP<Albany::MeshSpecsStruct> surfaceMeshSpecs = meshSpecs.sideSetMeshSpecs.find(surfaceSideName)->second[0];
-    RCP <Intrepid::Cubature<RealType> > surfaceCubature = cubFactory.create(*sideType, surfaceMeshSpecs->cubatureDegree);
-    const std::string& surfaceEBName = meshSpecs.sideSetMeshSpecs.at(surfaceSideName)[0]->ebName;
-
     //---- Compute side basis functions
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, sideBasis, surfaceCubature, surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
