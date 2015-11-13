@@ -213,6 +213,9 @@ computeState(typename Traits::EvalData workset,
 
         F[0] = f;
         X[0] = 0.0;
+
+        std::cout << "GUESS           : " << X[0] << std::endl;
+
         dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
         while (!converged && count <= num_max_iter)
         {
@@ -240,10 +243,11 @@ computeState(typename Traits::EvalData workset,
               "\nalpha = " << alpha << std::endl);
         }
         std::cout << "Soln before FAD : " << X[0] << std::endl;
+        std::cout << "dFdX            : " << dFdX[0] << std::endl;
+
         solver.computeFadInfo(dFdX, X, F);
         dgam = X[0];
 
-        std::cout << "dFdX            : " << dFdX[0] << std::endl;
         std::cout << "F               : " << F[0] << std::endl;
         std::cout << "Soln after FAD  : " << X[0] << std::endl;
         std::cout << "alpha           : " << alpha << std::endl;

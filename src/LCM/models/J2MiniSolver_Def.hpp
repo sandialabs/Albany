@@ -102,6 +102,24 @@ J2MiniSolver(Teuchos::ParameterList* p,
   }
 }
 
+namespace {
+
+template<typename S, typename T>
+void
+demote(S & lhs, T const & rhs)
+{
+  lhs = rhs;
+}
+
+template<>
+void
+demote(RealType & lhs, PHAL::AlbanyTraits::Jacobian::ScalarT const & rhs)
+{
+  lhs = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(rhs);
+}
+
+} // namespace anonymous
+
 //
 // J2 nonlinear system
 //
@@ -311,7 +329,7 @@ computeState(typename Traits::EvalData workset,
         Intrepid::Index
         dimension{1};
 
-        Intrepid::NewtonStep<ScalarT, dimension>
+        Intrepid::LineSearchRegularizedStep<ScalarT, dimension>
         step;
 
         Intrepid::Minimizer<ScalarT, dimension>

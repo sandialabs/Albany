@@ -51,10 +51,10 @@ miniMinimize(
   std::cout << "_val: " << soln_val << '\n';
 
   // Check if there is FAD info.
-  auto const
-  order = soln[0].size();
+  //auto const
+  //order = soln[0].size();
 
-  if (order == 0) return;
+  //if (order == 0) return;
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
@@ -69,7 +69,7 @@ miniMinimize(
   std::cout << "resi: " << resi << '\n';
 
   // Solve for solution sensitivities.
-  // computeFADInfo(resi, DrDx, soln);
+  //computeFADInfo(resi, DrDx, soln);
 
   return;
 }
