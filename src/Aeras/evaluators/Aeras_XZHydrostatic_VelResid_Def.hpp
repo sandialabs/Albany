@@ -37,7 +37,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
                 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
                 p.get<std::string> ("Laplace Vel Name") : "None",dl->qp_scalar_level),
   density     (p.get<std::string> ("QP Density"),                       dl->qp_scalar_level),
-  sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
+  //sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   Residual    (p.get<std::string> ("Residual Name"),                    dl->node_vector_level),
 
   viscosity   (p.isParameter("XZHydrostatic Problem") ? 
@@ -63,7 +63,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addDependentField(uDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
-  this->addDependentField(sphere_coord);
+  //this->addDependentField(sphere_coord);
   if (hyperviscosity) this->addDependentField(LaplaceVelx);
   if (hyperviscosity) this->addDependentField(wGradGradBF);
 
@@ -97,6 +97,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(uDot       , fm);
   this->utils.setFieldData(wBF        , fm);
   this->utils.setFieldData(wGradBF    , fm);
+  //this->utils.setFieldData(sphere_coord,fm);
   if (hyperviscosity) this->utils.setFieldData(LaplaceVelx, fm);
   if (hyperviscosity) this->utils.setFieldData(wGradGradBF, fm);
 

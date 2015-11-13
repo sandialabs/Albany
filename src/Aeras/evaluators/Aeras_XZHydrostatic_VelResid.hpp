@@ -46,7 +46,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
+  //PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;

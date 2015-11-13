@@ -458,7 +458,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<std::string>("EtaDotdVelx",                      "EtaDotdVelx");
     p->set<std::string>("D Vel Name",                       "Component Derivative of Velocity");
     p->set<std::string>("Laplace Vel Name",                 "Laplace Velx");
-    p->set<string>("Spherical Coord Name",       "Lat-Long");
+    //p->set<string>("Spherical Coord Name",       "Lat-Long");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
