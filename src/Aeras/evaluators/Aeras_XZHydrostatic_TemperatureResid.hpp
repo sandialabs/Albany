@@ -61,6 +61,10 @@ private:
 
   ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
+  ScalarT Cp;
+  ScalarT Prandtl;
+  ScalarT viscosity;
+
   const int numNodes;
   const int numQPs;
   const int numDims;

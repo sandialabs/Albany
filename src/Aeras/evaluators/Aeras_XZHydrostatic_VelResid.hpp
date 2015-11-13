@@ -40,10 +40,13 @@ public:
 
 private:
 
+  //void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
+
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
@@ -52,13 +55,15 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  uDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>        density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      density;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> Residual;
 
   const double viscosity;
   const double hyperviscosity;
+  const double AlphaAngle;
+
   const int numNodes;
   const int numQPs;
   const int numDims;

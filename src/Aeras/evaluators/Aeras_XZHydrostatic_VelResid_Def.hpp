@@ -37,6 +37,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
                 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
                 p.get<std::string> ("Laplace Vel Name") : "None",dl->qp_scalar_level),
   density     (p.get<std::string> ("QP Density"),                       dl->qp_scalar_level),
+  sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   Residual    (p.get<std::string> ("Residual Name"),                    dl->node_vector_level),
 
   viscosity   (p.isParameter("XZHydrostatic Problem") ? 
@@ -45,6 +46,9 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   hyperviscosity(p.isParameter("XZHydrostatic Problem") ? 
                 p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("HyperViscosity", 0.0):
                 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("HyperViscosity", 0.0)),
+  AlphaAngle (p.isParameter("XZHydrostatic Problem") ? 
+                p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Rotation Angle", 0.0):
+                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Rotation Angle", 0.0)),
   numNodes    ( dl->node_scalar             ->dimension(1)),
   numQPs      ( dl->node_qp_scalar          ->dimension(2)),
   numDims     ( dl->node_qp_gradient        ->dimension(3)),
@@ -59,12 +63,23 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addDependentField(uDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
+  this->addDependentField(sphere_coord);
   if (hyperviscosity) this->addDependentField(LaplaceVelx);
   if (hyperviscosity) this->addDependentField(wGradGradBF);
 
   this->addEvaluatedField(Residual);
 
   this->setName("Aeras::XZHydrostatic_VelResid" );
+
+//std::vector<PHX::index_size_type> ddims_;
+//#ifdef  ALBANY_FAST_FELIX
+// ddims_.push_back(ALBANY_SLFAD_SIZE);
+//#else
+// ddims_.push_back(95);
+//#endif
+//coriolis=PHX::MDField<ScalarT,QuadPoint>("coriolis",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+//coriolis.setFieldData(ViewFactory::buildView(coriolis.fieldTag(),ddims_));
+
 }
 
 //**********************************************************************
@@ -113,4 +128,20 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+
+//template<typename EvalT,typename Traits>
+//void
+//XZHydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis) {
+//
+//  coriolis.initialize();
+//  double alpha = AlphaAngle; 
+//
+//  for (std::size_t qp=0; qp < numQPs; ++qp) {
+//    const MeshScalarT lambda = sphere_coord(cell, qp, 0);
+//    const MeshScalarT theta = sphere_coord(cell, qp, 1);
+//    coriolis(qp) = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha));
+//  }
+//
+//}
+
 }
