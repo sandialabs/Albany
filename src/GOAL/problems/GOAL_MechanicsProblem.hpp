@@ -64,6 +64,12 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
         <Intrepid::FieldContainer<RealType> > > > newSt) const;
 
+    //! is this the adjoint problem?
+    bool isAdjoint;
+
+    //! should the adjoint problem be solved with an enriched basis?
+    bool enrichAdjoint;
+
   private:
     
     //! private to prohibit copying
@@ -94,6 +100,9 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! number of spatial dimensions
     int numDims;
+
+    //! qoi parameters
+    Teuchos::RCP<Teuchos::ParameterList> qoiParams;
 
     //! a map of the dof offsets
     std::map<std::string, int> offsets;

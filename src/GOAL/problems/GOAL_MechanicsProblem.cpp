@@ -18,7 +18,8 @@ GOALMechanicsProblem::GOALMechanicsProblem(
     const int numDim,
     Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params, paramLib),
-  numDims(numDim)
+  numDims(numDim),
+  enrichAdjoint(false)
 {
   // compute number of equations
   int numEq = 0;
@@ -31,6 +32,16 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   // print a summary of the problem
   *out << "GOAL Mechanics Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
+
+  // if solving the adjoint problem, should we use an enriched basis?
+  if (params->isParameter("Enrich Adjoint"))
+    enrichAdjoint = params->get<bool>("Enrich Adjoint", false);
+
+  // if solving the adjoint problem, we need a quantity of interest
+  if (params->isSublist("Quantity of Interest")) {
+    Teuchos::ParameterList& p = params->sublist("Quantity of Interest", false);
+    qoiParams = Teuchos::rcpFromRef(p);
+  }
 
   // fill in the dof names
   offsets["X"] = 0;
@@ -114,6 +125,8 @@ getValidProblemParameters() const
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
   pl->sublist("Hierarchic Boundary Conditions", false, "");
+  pl->set<bool>("Enrich Adjoint", false, "should the adjoint solve be enriched");
+  pl->sublist("Quantity of Interest", false, "QoI used for adjoint solve");
   return pl;
 }
 
