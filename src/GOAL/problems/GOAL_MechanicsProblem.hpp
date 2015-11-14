@@ -416,6 +416,11 @@ constructEvaluators(
   }
   else if (fmChoice == Albany::BUILD_RESPONSE_FM)
   {
+    if (isAdjoint)
+    {
+      PHX::Tag<typename EvalT::ScalarT> resTag("Scatter", dl->dummy);
+      fm0.requireField<EvalT>(resTag);
+    }
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);
