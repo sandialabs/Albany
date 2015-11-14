@@ -42,6 +42,9 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> piTracerGrad;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerSrc;
@@ -52,8 +55,12 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level>          Residual;
 
+  ScalarT viscosity;
+  ScalarT Schmidt;
+
   const int numNodes   ;
   const int numQPs     ;
+  const int numDims;
   const int numLevels  ;
 };
 }
