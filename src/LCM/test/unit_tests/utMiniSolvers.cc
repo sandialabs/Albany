@@ -322,13 +322,13 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
   Intrepid::Index
   dimension{2};
 
-  LCM::BananaNLS<ScalarT>
+  LCM::BananaNLS<ValueT>
   banana;
 
-  Intrepid::NewtonStep<ScalarT, dimension>
+  Intrepid::NewtonStep<ValueT, dimension>
   step;
 
-  Intrepid::Minimizer<ScalarT, dimension>
+  Intrepid::Minimizer<ValueT, dimension>
   minimizer;
 
   Intrepid::Vector<ScalarT, dimension>
@@ -356,13 +356,13 @@ TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
   Intrepid::Index
   dimension{2};
 
-  LCM::BananaNLS<ScalarT>
+  LCM::BananaNLS<ValueT>
   banana;
 
-  Intrepid::NewtonStep<ScalarT, dimension>
+  Intrepid::NewtonStep<ValueT, dimension>
   step;
 
-  Intrepid::Minimizer<ScalarT, dimension>
+  Intrepid::Minimizer<ValueT, dimension>
   minimizer;
 
   Intrepid::Vector<ScalarT, dimension>

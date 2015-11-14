@@ -104,18 +104,63 @@ J2MiniSolver(Teuchos::ParameterList* p,
 
 namespace {
 
+static constexpr Intrepid::Index
+DIMENSION{1};
+
+using AD = Sacado::Fad::SFad<RealType, DIMENSION>;
+
 template<typename S, typename T>
-void
-demote(S & lhs, T const & rhs)
+T
+convert(S const & s)
 {
-  lhs = rhs;
+  T const
+  t = s;
+
+  return t;
 }
 
 template<>
-void
-demote(RealType & lhs, PHAL::AlbanyTraits::Jacobian::ScalarT const & rhs)
+RealType
+convert<PHAL::AlbanyTraits::Residual::ScalarT, RealType>(
+    PHAL::AlbanyTraits::Residual::ScalarT const & s)
 {
-  lhs = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(rhs);
+  RealType const
+  t = s;
+
+  return t;
+}
+
+template<>
+RealType
+convert<PHAL::AlbanyTraits::Jacobian::ScalarT, RealType>(
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+{
+  RealType const
+  t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+
+  return t;
+}
+
+template<>
+AD
+convert<PHAL::AlbanyTraits::Residual::ScalarT, AD>(
+    PHAL::AlbanyTraits::Residual::ScalarT const & s)
+{
+  RealType const
+  t = s;
+
+  return t;
+}
+
+template<>
+AD
+convert<PHAL::AlbanyTraits::Jacobian::ScalarT, AD>(
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+{
+  RealType const
+  t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+
+  return t;
 }
 
 } // namespace anonymous
@@ -131,17 +176,17 @@ public:
       RealType sat_mod_,
       RealType sat_exp_,
       RealType eqps_old_,
-      S const & K_,
-      S const & smag_,
-      S const & mubar_,
-      S const & Y_) :
+      S const & K,
+      S const & smag,
+      S const & mubar,
+      S const & Y) :
         sat_mod(sat_mod_),
         sat_exp(sat_exp_),
         eqps_old(eqps_old_),
-        K(K_),
-        smag(smag_),
-        mubar(mubar_),
-        Y(Y_)
+        K_(K),
+        smag_(smag),
+        mubar_(mubar),
+        Y_(Y)
   {
   }
 
@@ -169,6 +214,18 @@ public:
     dimension = x.get_dimension();
 
     assert(dimension == DIMENSION);
+
+    T const
+    K = convert<S, T>(K_);
+
+    T const
+    smag = convert<S, T>(smag_);
+
+    T const
+    mubar = convert<S, T>(mubar_);
+
+    T const
+    Y = convert<S, T>(Y_);
 
     Intrepid::Vector<T, N>
     r(dimension);
@@ -214,16 +271,16 @@ public:
 
   // Inputs
   S const &
-  K;
+  K_;
 
   S const &
-  smag;
+  smag_;
 
   S const &
-  mubar;
+  mubar_;
 
   S const &
-  Y;
+  Y_;
 };
 
 //------------------------------------------------------------------------------
@@ -311,17 +368,9 @@ computeState(typename Traits::EvalData workset,
           + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
       if (f > 1E-12) {
-        // return mapping algorithm
-
-        std::cout << "sat_mod         : " << sat_mod_ << std::endl;
-        std::cout << "sat_exp         : " << sat_exp_ << std::endl;
-        std::cout << "eqpsold         : " << eqpsold(cell, pt) << std::endl;
-        std::cout << "K               : " << K << std::endl;
-        std::cout << "smag            : " << smag << std::endl;
-        std::cout << "mubar           : " << mubar << std::endl;
-        std::cout << "Y               : " << Y << std::endl;
-
         // Use minimization equivalent to return mapping
+        using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
         J2NLS<ScalarT>
         j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
 
@@ -329,10 +378,10 @@ computeState(typename Traits::EvalData workset,
         Intrepid::Index
         dimension{1};
 
-        Intrepid::LineSearchRegularizedStep<ScalarT, dimension>
+        Intrepid::LineSearchRegularizedStep<ValueT, dimension>
         step;
 
-        Intrepid::Minimizer<ScalarT, dimension>
+        Intrepid::Minimizer<ValueT, dimension>
         minimizer;
 
         ScalarT const
@@ -341,9 +390,7 @@ computeState(typename Traits::EvalData workset,
         Intrepid::Vector<ScalarT, dimension>
         x;
 
-        x(0) = 0.0 * f;
-
-        std::cout << "GUESS           : " << x(0) << std::endl;
+        x(0) = 0.0;
 
         miniMinimize(minimizer, step, j2nls, x);
 
@@ -354,10 +401,6 @@ computeState(typename Traits::EvalData workset,
         H = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
 
         dgam = x(0);
-
-        std::cout << "SOLUTION        : " << x(0) << std::endl;
-        std::cout << "alpha           : " << alpha << std::endl;
-        std::cout << "H               : " << H << std::endl;
 
         // plastic direction
         N = (1 / smag) * s;

@@ -13,7 +13,6 @@
 
 namespace Intrepid
 {
-
 ///
 /// Function base class that defines the interface to Mini Solvers.
 ///
@@ -57,8 +56,17 @@ struct Minimizer
 {
 public:
   Minimizer():
-  max_num_iter(256), rel_tol(1.0e-12), rel_error(1.0), abs_tol(1.0e-12), abs_error(1.0), converged(false),
-  initial_norm(1.0), num_iter(0), final_value(0.0), step_method_name(nullptr), function_name(nullptr)
+  max_num_iter(256),
+  rel_tol(1.0e-12),
+  rel_error(1.0),
+  abs_tol(1.0e-12),
+  abs_error(1.0),
+  converged(false),
+  initial_norm(1.0),
+  num_iter(0),
+  final_value(0.0),
+  step_method_name(nullptr),
+  function_name(nullptr)
   {
 //    constexpr bool
 //    is_fad = Sacado::IsADType<T>::value == true;
