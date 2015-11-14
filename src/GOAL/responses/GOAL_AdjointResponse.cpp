@@ -8,21 +8,24 @@
 
 namespace GOAL {
 
-MechAdjResponse::MechAdjResponse(
-    const RCP<Application>& app,
-    const RCP<AbstractProblem>& prob,
-    const RCP<StateManager>& sm,
-    const ArrayRCP<RCP<MeshSpecsStruct> >& ms,
+using Teuchos::RCP;
+using Teuchos::ArrayRCP;
+
+AdjointResponse::AdjointResponse(
+    RCP<Albany::Application> const& app,
+    RCP<Albany::AbstractProblem> const& prob,
+    RCP<Albany::StateManager> const& sm,
+    ArrayRCP<RCP<Albany::MeshSpecsStruct> > const& ms,
     Teuchos::ParameterList& rp) :
-  ScalarResponseFunction(app->getComm()),
+  ScalarResponseFunction(app->getComm())
 {
 }
 
-MechAdjResponse::~MechAdjResponse()
+AdjointResponse::~AdjointResponse()
 {
 }
 
-void MechAdjResponse::evaluateResponseT(
+void AdjointResponse::evaluateResponseT(
     const double currentTime,
     const Tpetra_Vector* xdotT,
     const Tpetra_Vector* xdotdotT,
