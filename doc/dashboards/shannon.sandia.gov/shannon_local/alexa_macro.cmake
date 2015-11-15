@@ -12,6 +12,8 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
   "-DSEACAS_BINARY_DIR:PATH=/home/gahanse/trilinos/host_seacas/bin"
   "-DCUSTOM_CXX_FLAGS:STRING=-Wfatal-errors"
+  "-DAlexa_ENABLE_LAMBDAS:BOOL=OFF"
+  "-DAlexa_RUN_CUDA_TESTS:BOOL=ON"
   "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpirun -np 1'"
    )
  
