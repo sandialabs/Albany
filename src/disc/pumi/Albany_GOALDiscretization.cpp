@@ -93,6 +93,26 @@ void Albany::GOALDiscretization::computeSideSets()
 {
 }
 
+void Albany::GOALDiscretization::
+attachSolutionToMesh(Tpetra_Vector const& x)
+{
+  Teuchos::ArrayRCP<const ST> data = x.get1dView();
+  if (solNames.size() == 0)
+    this->setField(APFMeshStruct::solution_name, &(data[0]), false);
+  else
+    this->setSplitFields(solNames, solIndex, &(data[0]), false);
+}
+
+void Albany::GOALDiscretization::
+fillSolutionVector(Teuchos::RCP<Tpetra_Vector>& x)
+{
+  Teuchos::ArrayRCP<ST> data = x->get1dViewNonConst();
+  if (solNames.size() == 0)
+    this->getField(APFMeshStruct::solution_name, &(data[0]), true);
+  else
+    this->getSplitFields(solNames, solIndex, &(data[0]), true);
+}
+
 void Albany::GOALDiscretization::updateMesh(bool shouldTransferIPData)
 {
   apf::Mesh* m = goalMeshStruct->getMesh();

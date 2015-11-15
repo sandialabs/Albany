@@ -342,12 +342,12 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void copyNodalDataToAPF(const bool copy_all);
     void removeNodalDataFromAPF();
 
-  private:
-
     // ! Split Solution fields
     std::vector<std::string> solNames;
     std::vector<std::string> resNames;
     std::vector<int> solIndex;
+
+  private:
 
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;

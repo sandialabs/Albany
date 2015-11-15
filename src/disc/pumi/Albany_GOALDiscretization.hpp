@@ -42,6 +42,12 @@ class GOALDiscretization : public PUMIDiscretization
     //! Get the number of DOFs per element for this element block
     int getNumNodesPerElem(int ebi);
 
+    //! Attach the solution to the APF mesh from a Tpetra vector
+    void attachSolutionToMesh(Tpetra_Vector const& x);
+
+    //! Fill a solution vector from the mesh
+    void fillSolutionVector(Teuchos::RCP<Tpetra_Vector>& x);
+
     //! Update the mesh
     void updateMesh(bool shouldTransferIPData);
 

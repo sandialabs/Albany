@@ -64,6 +64,12 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
         <Intrepid::FieldContainer<RealType> > > > newSt) const;
 
+    //! is this the adjoint problem?
+    bool isAdjoint;
+
+    //! should the adjoint problem be solved with an enriched basis?
+    bool enrichAdjoint;
+
   private:
     
     //! private to prohibit copying
@@ -94,6 +100,9 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! number of spatial dimensions
     int numDims;
+
+    //! qoi parameters
+    Teuchos::RCP<Teuchos::ParameterList> qoiParams;
 
     //! a map of the dof offsets
     std::map<std::string, int> offsets;
@@ -136,6 +145,8 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 
+#include "GOAL_LpStress.hpp"
+#include "GOAL_ScatterQoI.hpp"
 #include "GOAL_ComputeHierarchicBasis.hpp"
 
 #include <apf.h>
@@ -397,6 +408,47 @@ constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (isAdjoint) {
+
+    std::string qoiName = qoiParams->get<std::string>("Name","");
+
+    if (qoiName == "Lp Stress")
+    {{
+
+       std::cout << "BUILDING LP STRESS" << std::endl;
+
+       // input
+       RCP<ParameterList> p = rcp(new ParameterList("Lp Stress"));
+       p->set<int>("Order", qoiParams->get<int>("p",1));
+       p->set<std::string>("Weights Name", "Weights");
+       p->set<std::string>("Stress Name", cauchy);
+
+       // output
+       p->set<std::string>("Lp Stress Name", qoiName);
+
+       // register evaluator
+       ev = rcp(new GOAL::LpStress<EvalT, PHAL::AlbanyTraits>(*p, dl));
+       fm0.template registerEvaluator<EvalT>(ev);
+
+     }}
+
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Invalid quantity of interest name: " + qoiName);
+
+    { // scatter qoi
+
+      // input
+      RCP<ParameterList> p = rcp(new ParameterList("Scatter QoI"));
+      p->set<std::string>("QoI Name", qoiName);
+
+      // register evaluator
+      ev = rcp(new GOAL::ScatterQoI<EvalT, PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+  }
+
   if (fmChoice == Albany::BUILD_RESID_FM)
   {
     RCP<const PHX::FieldTag> retTag;
@@ -407,6 +459,13 @@ constructEvaluators(
   }
   else if (fmChoice == Albany::BUILD_RESPONSE_FM)
   {
+    if (isAdjoint)
+    {
+      PHX::Tag<typename EvalT::ScalarT> resTag("Scatter", dl->dummy);
+      fm0.requireField<EvalT>(resTag);
+      PHX::Tag<typename EvalT::ScalarT> qoiTag("Scatter QoI", dl->dummy);
+      fm0.requireField<EvalT>(qoiTag);
+    }
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);

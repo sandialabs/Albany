@@ -25,7 +25,7 @@ cd $TEST_DIR
 
 export PATH=/home/gahanse/bin:/home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28/bin:/home/projects/gcc/4.7.2/bin:/home/projects/gmp/5.1.1/bin:/home/projects/mpfr/3.1.2/bin:/home/projects/mpc/1.0.1//bin:/home/projects/x86-64/cuda/7.0.28/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/ibutils/bin:/opt/local/slurm/default/bin
 
-export LD_LIBRARY_PATH=/home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28/lib:/home/projects/gcc/4.7.2/lib64:/home/projects/gcc/4.7.2/lib:/home/projects/gmp/5.1.1/lib:/home/projects/mpfr/3.1.2/lib:/home/projects/mpc/1.0.1//lib:/home/projects/x86-64/cuda/7.0.28/lib64:/opt/intel/mkl/lib/intel64:/opt/cray/lib64:/usr/lib64
+export LD_LIBRARY_PATH=/home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28/lib:/home/projects/gcc/4.7.2/lib64:/home/projects/gcc/4.7.2/lib:/home/projects/gmp/5.1.1/lib:/home/projects/mpfr/3.1.2/lib:/home/projects/mpc/1.0.1/lib:/home/projects/x86-64/cuda/7.0.28/lib64:/home/gahanse/lib:/opt/intel/mkl/lib/intel64:/opt/cray/lib64:/usr/lib64
 
 #export PATH=/home/gahanse/bin:/home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28/bin:/home/projects/gcc/4.7.2/bin:/home/projects/gmp/5.1.1/bin:/home/projects/mpfr/3.1.2/bin:/home/projects/mpc/1.0.1/bin:/home/projects/x86-64/cuda/7.0.28/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/ibutils/bin:/opt/local/slurm/default/bin
 
