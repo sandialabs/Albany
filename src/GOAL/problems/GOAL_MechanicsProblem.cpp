@@ -19,6 +19,7 @@ GOALMechanicsProblem::GOALMechanicsProblem(
     Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params, paramLib),
   numDims(numDim),
+  isAdjoint(false),
   enrichAdjoint(false)
 {
   // compute number of equations
