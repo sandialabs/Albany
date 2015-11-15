@@ -20,6 +20,7 @@ LpStress<EvalT, Traits>::
 LpStress(
     const Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
+  order    (p.get<int>         ("Order")),
   weight   (p.get<std::string> ("Weights Name"), dl->qp_scalar),
   stress   (p.get<std::string> ("Stress Name"), dl->qp_tensor),
   lpStress (p.get<std::string> ("Lp Stress Name"), dl->cell_scalar2)
@@ -58,13 +59,22 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   for (int cell=0; cell < workset.numCells; ++cell) {
+
+    // initialize the integrated cell value to zero
+    lpStress(cell) = 0.0;
+
     for (int qp=0; qp < numQPs; ++qp) {
 
       // get the Frobenius norm of stress
-      for (int i=0; i < numDims; ++i) {
-        for (int j=0; j < numDims; ++j) {
-        }
-      }
+      ScalarT n = 0.0;
+      for (int i=0; i < numDims; ++i)
+        for (int j=0; j < numDims; ++j)
+          n += stress(cell,qp,i,j) * stress(cell,qp,i,j);
+      n = sqrt(n);
+
+      // numerical integration
+      lpStress(cell) += std::pow(n,order) * weight(cell,qp);
+
     }
   }
 

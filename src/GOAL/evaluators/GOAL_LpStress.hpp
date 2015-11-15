@@ -48,6 +48,7 @@ class LpStress :
     int numQPs;
 
     // input:
+    int order;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weight;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 
