@@ -145,6 +145,8 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 
+#include "GOAL_LpStress.hpp"
+#include "GOAL_ScatterQoI.hpp"
 #include "GOAL_ComputeHierarchicBasis.hpp"
 
 #include <apf.h>
@@ -406,6 +408,47 @@ constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (isAdjoint) {
+
+    std::string qoiName = qoiParams->get<std::string>("Name","");
+
+    if (qoiName == "Lp Stress")
+    {{
+
+       std::cout << "BUILDING LP STRESS" << std::endl;
+
+       // input
+       RCP<ParameterList> p = rcp(new ParameterList("Lp Stress"));
+       p->set<int>("Order", qoiParams->get<int>("p",1));
+       p->set<std::string>("Weights Name", "Weights");
+       p->set<std::string>("Stress Name", cauchy);
+
+       // output
+       p->set<std::string>("Lp Stress Name", qoiName);
+
+       // register evaluator
+       ev = rcp(new GOAL::LpStress<EvalT, PHAL::AlbanyTraits>(*p, dl));
+       fm0.template registerEvaluator<EvalT>(ev);
+
+     }}
+
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Invalid quantity of interest name: " + qoiName);
+
+    { // scatter qoi
+
+      // input
+      RCP<ParameterList> p = rcp(new ParameterList("Scatter QoI"));
+      p->set<std::string>("QoI Name", qoiName);
+
+      // register evaluator
+      ev = rcp(new GOAL::ScatterQoI<EvalT, PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+  }
+
   if (fmChoice == Albany::BUILD_RESID_FM)
   {
     RCP<const PHX::FieldTag> retTag;
@@ -420,6 +463,8 @@ constructEvaluators(
     {
       PHX::Tag<typename EvalT::ScalarT> resTag("Scatter", dl->dummy);
       fm0.requireField<EvalT>(resTag);
+      PHX::Tag<typename EvalT::ScalarT> qoiTag("Scatter QoI", dl->dummy);
+      fm0.requireField<EvalT>(qoiTag);
     }
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(
