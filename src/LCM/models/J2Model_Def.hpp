@@ -184,6 +184,7 @@ computeState(typename Traits::EvalData workset,
 
       if (f > 1E-12) {
         // return mapping algorithm
+
         bool converged = false;
         ScalarT g = f;
         ScalarT H = 0.0;
@@ -204,6 +205,7 @@ computeState(typename Traits::EvalData workset,
 
         F[0] = f;
         X[0] = 0.0;
+
         dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
         while (!converged && count <= num_max_iter)
         {
@@ -230,6 +232,7 @@ computeState(typename Traits::EvalData workset,
               "\ndg = " << dFdX[0] <<
               "\nalpha = " << alpha << std::endl);
         }
+
         solver.computeFadInfo(dFdX, X, F);
         dgam = X[0];
 

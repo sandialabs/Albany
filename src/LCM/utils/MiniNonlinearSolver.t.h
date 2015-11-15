@@ -16,7 +16,7 @@ miniMinimize(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid::Vector<RealType, N> & soln)
+    Intrepid::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
 {
   minimizer.solve(step_method, function, soln);
 
@@ -31,7 +31,6 @@ miniMinimize(
     FN & function,
     Intrepid::Vector<T, N> & soln)
 {
-  // Extract values and use them to minimize the function.
   using ValueT = typename Sacado::ValueType<T>::type;
 
   Intrepid::Vector<ValueT, N>
@@ -46,12 +45,6 @@ miniMinimize(
   for (auto i = 0; i < dimension; ++i) {
     soln(i).val() = soln_val(i);
   }
-
-  // Check if there is FAD info.
-  auto const
-  order = soln[0].size();
-
-  if (order == 0) return;
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
@@ -112,7 +105,6 @@ computeFADInfo(
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
-
 }
 
 } // namespace LCM

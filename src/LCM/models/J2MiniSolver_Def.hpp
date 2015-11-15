@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -103,6 +102,69 @@ J2MiniSolver(Teuchos::ParameterList* p,
   }
 }
 
+namespace {
+
+static constexpr Intrepid::Index
+DIMENSION{1};
+
+using AD = Sacado::Fad::SFad<RealType, DIMENSION>;
+
+template<typename S, typename T>
+T
+convert(S const & s)
+{
+  T const
+  t = s;
+
+  return t;
+}
+
+template<>
+RealType
+convert<PHAL::AlbanyTraits::Residual::ScalarT, RealType>(
+    PHAL::AlbanyTraits::Residual::ScalarT const & s)
+{
+  RealType const
+  t = s;
+
+  return t;
+}
+
+template<>
+RealType
+convert<PHAL::AlbanyTraits::Jacobian::ScalarT, RealType>(
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+{
+  RealType const
+  t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+
+  return t;
+}
+
+template<>
+AD
+convert<PHAL::AlbanyTraits::Residual::ScalarT, AD>(
+    PHAL::AlbanyTraits::Residual::ScalarT const & s)
+{
+  RealType const
+  t = s;
+
+  return t;
+}
+
+template<>
+AD
+convert<PHAL::AlbanyTraits::Jacobian::ScalarT, AD>(
+    PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+{
+  RealType const
+  t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+
+  return t;
+}
+
+} // namespace anonymous
+
 //
 // J2 nonlinear system
 //
@@ -114,17 +176,17 @@ public:
       RealType sat_mod_,
       RealType sat_exp_,
       RealType eqps_old_,
-      S const & K_,
-      S const & smag_,
-      S const & mubar_,
-      S const & Y_) :
+      S const & K,
+      S const & smag,
+      S const & mubar,
+      S const & Y) :
         sat_mod(sat_mod_),
         sat_exp(sat_exp_),
         eqps_old(eqps_old_),
-        K(Sacado::Value<S>::eval(K_)),
-        smag(Sacado::Value<S>::eval(smag_)),
-        mubar(Sacado::Value<S>::eval(mubar_)),
-        Y(Sacado::Value<S>::eval(Y_))
+        K_(K),
+        smag_(smag),
+        mubar_(mubar),
+        Y_(Y)
   {
   }
 
@@ -153,24 +215,34 @@ public:
 
     assert(dimension == DIMENSION);
 
+    T const
+    K = convert<S, T>(K_);
+
+    T const
+    smag = convert<S, T>(smag_);
+
+    T const
+    mubar = convert<S, T>(mubar_);
+
+    T const
+    Y = convert<S, T>(Y_);
+
     Intrepid::Vector<T, N>
     r(dimension);
 
     T const &
     X = x(0);
 
-    T &
-    R = r(0);
-
-    T
+    T const
     alpha = eqps_old + sq23 * X;
 
-    T
+    T const
     H = K * alpha + sat_mod * (1.0 - std::exp(-sat_exp * alpha));
 
+    T const
     R = smag - (2.0 * mubar * X + sq23 * (Y + H));
 
-    save(alpha, H);
+    r(0) = R;
 
     return r;
   }
@@ -182,11 +254,6 @@ public:
   {
     return Intrepid::Function_Base<J2NLS<S>, S>::hessian(*this, x);
   }
-
-  // Save values for later use
-  template<typename T>
-  void
-  save(T const & alpha_, T const & H_);
 
   // Constants.
   RealType const
@@ -202,59 +269,19 @@ public:
   RealType const
   eqps_old{0.0};
 
-  // RealType inputs (fixed non-AD type)
-  RealType const &
-  K;
+  // Inputs
+  S const &
+  K_;
 
-  RealType const &
-  smag;
+  S const &
+  smag_;
 
-  RealType const &
-  mubar;
+  S const &
+  mubar_;
 
-  RealType const &
-  Y;
-
-  // RealType outputs (fixed non-AD type)
-  RealType
-  alpha{0.0};
-
-  RealType
-  H{0.0};
+  S const &
+  Y_;
 };
-
-// Save nothing for general case
-template<typename S>
-template<typename T>
-void
-J2NLS<S>::save(T const & alpha_, T const & H_)
-{
-  return;
-}
-
-// Save for RealType, i.e, when computing Albany Residual
-template<>
-template<>
-void
-J2NLS<PHAL::AlbanyTraits::Residual::ScalarT>::
-save(RealType const & alpha_, RealType const & H_)
-{
-  alpha = alpha_;
-  H = H_;
-  return;
-}
-
-// Save when computing Albany Jacobian
-template<>
-template<>
-void
-J2NLS<PHAL::AlbanyTraits::Jacobian::ScalarT>::
-save(RealType const & alpha_, RealType const & H_)
-{
-  alpha = alpha_;
-  H = H_;
-  return;
-}
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -341,8 +368,6 @@ computeState(typename Traits::EvalData workset,
           + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
       if (f > 1E-12) {
-        // return mapping algorithm
-
         // Use minimization equivalent to return mapping
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
@@ -353,11 +378,14 @@ computeState(typename Traits::EvalData workset,
         Intrepid::Index
         dimension{1};
 
-        Intrepid::NewtonStep<ValueT, dimension>
+        Intrepid::LineSearchRegularizedStep<ValueT, dimension>
         step;
 
         Intrepid::Minimizer<ValueT, dimension>
         minimizer;
+
+        ScalarT const
+        dXdR0 = 1.0 / (-2. * mubar) / (1. + H / (3. * mubar));
 
         Intrepid::Vector<ScalarT, dimension>
         x;
@@ -365,60 +393,12 @@ computeState(typename Traits::EvalData workset,
         x(0) = 0.0;
 
         miniMinimize(minimizer, step, j2nls, x);
-#if 0
-        bool converged = false;
-        ScalarT g = f;
-        ScalarT H = 0.0;
-        ScalarT dH = 0.0;
-        ScalarT alpha = 0.0;
-        ScalarT res = 0.0;
-        int count = 0;
-        dgam = 0.0;
 
-        int const
-        num_max_iter = 30;
+        ScalarT const
+        alpha = eqpsold(cell, pt) + sq23 * x(0);
 
-        LocalNonlinearSolver<EvalT, Traits> solver;
-
-        std::vector<ScalarT> F(1);
-        std::vector<ScalarT> dFdX(1);
-        std::vector<ScalarT> X(1);
-
-        F[0] = f;
-        X[0] = 0.0;
-        dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
-        while (!converged && count <= num_max_iter)
-        {
-          count++;
-          solver.solve(dFdX, X, F);
-          alpha = eqpsold(cell, pt) + sq23 * X[0];
-          H = K * alpha + sat_mod_ * (1. - exp(-sat_exp_ * alpha));
-          dH = K + sat_exp_ * sat_mod_ * exp(-sat_exp_ * alpha);
-          F[0] = smag - (2. * mubar * X[0] + sq23 * (Y + H));
-          dFdX[0] = -2. * mubar * (1. + dH / (3. * mubar));
-
-          res = std::abs(F[0]);
-          if (res < 1.e-11 || res / Y < 1.E-11 || res / f < 1.E-11)
-            converged = true;
-
-          TEUCHOS_TEST_FOR_EXCEPTION(count == num_max_iter, std::runtime_error,
-              std::endl <<
-              "Error in return mapping, count = " <<
-              count <<
-              "\nres = " << res <<
-              "\nrelres  = " << res/f <<
-              "\nrelres2 = " << res/Y <<
-              "\ng = " << F[0] <<
-              "\ndg = " << dFdX[0] <<
-              "\nalpha = " << alpha << std::endl);
-        }
-        solver.computeFadInfo(dFdX, X, F);
-#endif
-        ScalarT
-        H = j2nls.H;
-
-        ScalarT
-        alpha = j2nls.alpha;
+        ScalarT const
+        H = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
 
         dgam = x(0);
 
