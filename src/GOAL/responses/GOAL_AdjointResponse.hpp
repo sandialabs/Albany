@@ -72,6 +72,8 @@ class AdjointResponse :
 
     Teuchos::RCP<Tpetra_Vector> x;
     Teuchos::RCP<Tpetra_Vector> overlapX;
+    Teuchos::RCP<Tpetra_Vector> qoi;
+    Teuchos::RCP<Tpetra_Vector> overlapQoI;
     Teuchos::RCP<Tpetra_CrsMatrix> jac;
     Teuchos::RCP<Tpetra_CrsMatrix> overlapJac;
     Teuchos::RCP<Tpetra_Import> importer;

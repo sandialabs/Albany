@@ -93,6 +93,8 @@ void AdjointResponse::initializeLinearSystem()
   RCP<const Tpetra_CrsGraph> og = discretization->getOverlapJacobianGraphT();
   x = rcp(new Tpetra_Vector(m));
   overlapX = rcp(new Tpetra_Vector(om));
+  qoi = rcp(new Tpetra_Vector(m));
+  overlapQoI = rcp(new Tpetra_Vector(om));
   jac = rcp(new Tpetra_CrsMatrix(g));
   overlapJac = rcp(new Tpetra_CrsMatrix(og));
   importer = rcp(new Tpetra_Import(m, om));
@@ -113,6 +115,7 @@ void AdjointResponse::initializeWorkset(PHAL::Workset& workset)
   workset.xT = overlapX;
   workset.xdotT = dummy;
   workset.xdotdotT = dummy;
+  workset.qoi = overlapQoI;
   workset.JacT = overlapJac;
   workset.x_importerT = importer;
   workset.comm = x->getMap()->getComm();
@@ -132,6 +135,7 @@ void AdjointResponse::fillLinearSystem()
     fm[wsPhysIndex[ws]]->evaluateFields<J>(workset);
   }
   jac->doExport(*overlapJac, *exporter, Tpetra::ADD);
+  qoi->doExport(*overlapQoI, *exporter, Tpetra::ADD);
 }
 
 void AdjointResponse::evaluateResponseT(

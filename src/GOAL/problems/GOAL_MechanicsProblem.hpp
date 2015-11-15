@@ -415,8 +415,6 @@ constructEvaluators(
     if (qoiName == "Lp Stress")
     {{
 
-       std::cout << "BUILDING LP STRESS" << std::endl;
-
        // input
        RCP<ParameterList> p = rcp(new ParameterList("Lp Stress"));
        p->set<int>("Order", qoiParams->get<int>("p",1));
