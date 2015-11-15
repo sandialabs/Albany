@@ -13,6 +13,7 @@ SET(SOURCES
   utils/GOAL_BCUtils.cpp
   evaluators/GOAL_ComputeHierarchicBasis.cpp
   evaluators/GOAL_LpStress.cpp
+  evaluators/GOAL_ScatterQoI.cpp
   problems/GOAL_MechanicsProblem.cpp
   responses/GOAL_AdjointResponse.cpp)
 
@@ -22,6 +23,8 @@ SET(HEADERS
   evaluators/GOAL_ComputeHierarchicBasis_Def.hpp
   evaluators/GOAL_LpStress.hpp
   evaluators/GOAL_LpStress_Def.hpp
+  evaluators/GOAL_ScatterQoI.hpp
+  evaluators/GOAL_ScatterQoI_Def.hpp
   problems/GOAL_MechanicsProblem.hpp
   responses/GOAL_AdjointResponse.hpp)
 
