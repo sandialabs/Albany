@@ -68,10 +68,10 @@ public:
   step_method_name(nullptr),
   function_name(nullptr)
   {
-//    constexpr bool
-//    is_fad = Sacado::IsADType<T>::value == true;
+    constexpr bool
+    is_fad = Sacado::IsADType<T>::value == true;
 
-//    static_assert(is_fad == false, "AD types not allowed for type T");
+    static_assert(is_fad == false, "AD types not allowed for type T");
   }
 
   template<typename STEP, typename FN>
@@ -190,10 +190,10 @@ struct Step_Base
 {
   Step_Base()
   {
-//    constexpr bool
-//    is_fad = Sacado::IsADType<T>::value == true;
+    constexpr bool
+    is_fad = Sacado::IsADType<T>::value == true;
 
-//    static_assert(is_fad == false, "AD types not allowed for type T");
+    static_assert(is_fad == false, "AD types not allowed for type T");
   }
 };
 
