@@ -15,6 +15,7 @@
 #include "LCM/models/ConstitutiveModel.hpp"
 #include <Intrepid_MiniTensor.h>
 #include "Intrepid_MiniTensor_Solvers.h"
+#include <MiniNonlinearSolver.h>
 
 namespace LCM
 {
@@ -143,13 +144,18 @@ public:
     Fp_np1.set_dimension(num_dim_);
     Lp_np1.set_dimension(num_dim_);
     hardness_np1.set_dimension(num_slip_);
-    sigma_np1.set_dimension(num_slip_);
+    sigma_np1.set_dimension(num_dim_);
     S_np1.set_dimension(num_dim_);
     shear_np1.set_dimension(num_slip_);
     slip_residual.set_dimension(num_slip_);
 
-    // DJL todo:
-    //T const F_np1_hope = convert<ScalarT, T>(F_np1__);
+    Intrepid::Tensor<T, NumDimT> F_np1_peeled;
+    F_np1_peeled.set_dimension(num_dim_);
+    for(int i=0 ; i<num_dim_ ; ++i){
+      for(int j=0 ; j<num_dim_ ; ++j){
+	F_np1_peeled(i,j) = peel<ScalarT, T, N>()(F_np1_(i,j));
+      }
+    }
 
     // Compute Lp_np1, and Fp_np1
     CP::applySlipIncrement<NumDimT, NumSlipT>(slip_systems_, slip_n_, slip_np1, Fp_n_, Lp_np1, Fp_np1);
@@ -158,7 +164,7 @@ public:
     CP::updateHardness<NumDimT, NumSlipT>(slip_systems_, slip_np1, hardness_n_, hardness_np1);
 
     // Compute sigma_np1, S_np1, and shear_np1
-    CP::computeStress<NumDimT, NumSlipT>(slip_systems_, C_, F_np1_, Fp_np1, sigma_np1, S_np1, shear_np1);
+    CP::computeStress<NumDimT, NumSlipT>(slip_systems_, C_, F_np1_peeled, Fp_np1, sigma_np1, S_np1, shear_np1);
 
     // Compute slip_residual and norm_slip_residual
     CP::computeResidual<NumDimT, NumSlipT>(slip_systems_, dt_, slip_n_, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual_);
@@ -202,8 +208,9 @@ public:
 
   // typedef for automatic differentiation type used in internal Newton loop
   // options are:  DFad (dynamically sized), SFad (static size), SLFad (bounded)
-//   typedef typename Sacado::Fad::DFad<ScalarT> Fad;
-  typedef typename Sacado::Fad::SLFad<ScalarT, 12> Fad;
+  // typedef typename Sacado::Fad::DFad<ScalarT> Fad;
+  // typedef typename Sacado::Fad::SFad<ScalarT, CP::MAX_NUM_SLIP> Fad;
+  typedef typename Sacado::Fad::SLFad<ScalarT, CP::MAX_NUM_SLIP> Fad;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;

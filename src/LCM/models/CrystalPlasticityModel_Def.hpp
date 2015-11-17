@@ -11,7 +11,6 @@
 #include "LocalNonlinearSolver.hpp"
 
 #include <MiniLinearSolver.h>
-#include <MiniNonlinearSolver.h>
 #include "../../utils/MiniSolvers.h"
 
 //#define  PRINT_DEBUG
@@ -812,47 +811,37 @@ computeState(typename Traits::EvalData workset,
 												F_np1,
 												dt_minisolver);
 
-// 	  Intrepid::NewtonStep<ScalarT, CP::MAX_NUM_SLIP> step;
-// 	  Intrepid::Minimizer<ScalarT, CP::MAX_NUM_SLIP> minimizer;
-
-// 	  minimizer.solve(step, crystalPlasticityNLS, x);
-
 	  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 	  Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
 	  Intrepid::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
 
-
 	  miniMinimize(minimizer, step, crystalPlasticityNLS, x);
 
+// 	  for(int i=0; i<num_slip_; ++i){
+// 	    slip_np1[i] = x[i];
+// 	  }
 
+// 	  // We now have the solution for slip_np1, including sensitivities, if any
+// 	  // Re-evaluate all the other state variables based on slip_np1
 
+// 	  // Compute Lp_np1, and Fp_np1
+// 	  CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
 
+// 	  // Compute hardness_np1
+// 	  CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
 
-	  for(int i=0; i<num_slip_; ++i){
-	    slip_np1[i] = x[i];
-	  }
+// 	  // Compute sigma_np1, S_np1, and shear_np1
+// 	  CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
 
-	  // We now have the solution for slip_np1, including sensitivities, if any
-	  // Re-evaluate all the other state variables based on slip_np1
-
-	  // Compute Lp_np1, and Fp_np1
-	  CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
-
-	  // Compute hardness_np1
-	  CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
-
-	  // Compute sigma_np1, S_np1, and shear_np1
-	  CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
-
-	  // Compute slip_residual and norm_slip_residual
-	  CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
+// 	  // Compute slip_residual and norm_slip_residual
+// 	  CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
 
 #ifdef PRINTSOLVERDATA
 	  std::cout << "MiniSolver slip_np1" ;
 	  for(int i=0 ; i<num_slip_ ; ++i){
 	    std::cout << "  " << x(i);
 	  }
-	  minimizer.printReport(std::cout);
+	  //minimizer.printReport(std::cout);
 #endif
 	}
 
