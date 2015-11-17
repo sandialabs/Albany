@@ -55,6 +55,8 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure ReconDriver build!")
 endif()
 
+move_xml_file ("*Configure.xml" "Configure_ReconDriver.xml")
+
 #
 # Build ReconDriver
 #
@@ -84,6 +86,8 @@ ENDIF(CTEST_DO_SUBMIT)
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build ReconDriver!")
 endif()
+
+move_xml_file ("*Build.xml" "Build_ReconDriver.xml")
 
 #
 # Run ReconDriver tests
