@@ -45,6 +45,83 @@ computeFADInfo(
     Intrepid::Tensor<S, N> const & DrDx,
     Intrepid::Vector<T, N> & x);
 
+///
+/// Auxiliary functors that peel off derivative information from Albany::Traits
+/// types when not needed and keep it when needed. Used to convert types
+/// within MiniSolver function class methods.
+/// The type for N must be int to work with Sacado
+///
+template<typename S, typename T, int N>
+struct peel
+{
+  T
+  operator()(S const & s)
+  {
+    T const
+    t = s;
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel
+<PHAL::AlbanyTraits::Residual::ScalarT, RealType, N>
+{
+  RealType
+  operator()(PHAL::AlbanyTraits::Residual::ScalarT const & s)
+  {
+    RealType const
+    t = s;
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel
+<PHAL::AlbanyTraits::Jacobian::ScalarT, RealType, N>
+{
+  RealType
+  operator()(PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+  {
+    RealType const
+    t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel
+<PHAL::AlbanyTraits::Residual::ScalarT, Sacado::Fad::SFad<RealType, N>, N>
+{
+  Sacado::Fad::SFad<RealType, N>
+  operator()(PHAL::AlbanyTraits::Residual::ScalarT const & s)
+  {
+    RealType const
+    t = s;
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel
+<PHAL::AlbanyTraits::Jacobian::ScalarT, Sacado::Fad::SFad<RealType, N>, N>
+{
+  Sacado::Fad::SFad<RealType, N>
+  operator()(PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+  {
+    RealType const
+    t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+
+
 } //namesapce LCM
 
 #include "MiniNonlinearSolver.t.h"

@@ -102,69 +102,6 @@ J2MiniSolver(Teuchos::ParameterList* p,
   }
 }
 
-namespace {
-
-static constexpr Intrepid::Index
-DIMENSION{1};
-
-using AD = Sacado::Fad::SFad<RealType, DIMENSION>;
-
-template<typename S, typename T>
-T
-convert(S const & s)
-{
-  T const
-  t = s;
-
-  return t;
-}
-
-template<>
-RealType
-convert<PHAL::AlbanyTraits::Residual::ScalarT, RealType>(
-    PHAL::AlbanyTraits::Residual::ScalarT const & s)
-{
-  RealType const
-  t = s;
-
-  return t;
-}
-
-template<>
-RealType
-convert<PHAL::AlbanyTraits::Jacobian::ScalarT, RealType>(
-    PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
-{
-  RealType const
-  t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
-
-  return t;
-}
-
-template<>
-AD
-convert<PHAL::AlbanyTraits::Residual::ScalarT, AD>(
-    PHAL::AlbanyTraits::Residual::ScalarT const & s)
-{
-  RealType const
-  t = s;
-
-  return t;
-}
-
-template<>
-AD
-convert<PHAL::AlbanyTraits::Jacobian::ScalarT, AD>(
-    PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
-{
-  RealType const
-  t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
-
-  return t;
-}
-
-} // namespace anonymous
-
 //
 // J2 nonlinear system
 //
@@ -216,16 +153,16 @@ public:
     assert(dimension == DIMENSION);
 
     T const
-    K = convert<S, T>(K_);
+    K = peel<S, T, N>()(K_);
 
     T const
-    smag = convert<S, T>(smag_);
+    smag = peel<S, T, N>()(smag_);
 
     T const
-    mubar = convert<S, T>(mubar_);
+    mubar = peel<S, T, N>()(mubar_);
 
     T const
-    Y = convert<S, T>(Y_);
+    Y = peel<S, T, N>()(Y_);
 
     Intrepid::Vector<T, N>
     r(dimension);
