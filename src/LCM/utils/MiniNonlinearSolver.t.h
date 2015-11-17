@@ -95,7 +95,7 @@ computeFADInfo(
   auto const
   order = r[0].size();
 
-  assert(order > 0);
+  assert(order > 0 && "FATAL ERROR: Expected Fad info but there is none!");
 
   // Extract sensitivities of r wrt p
   Intrepid::Matrix<S, N>
