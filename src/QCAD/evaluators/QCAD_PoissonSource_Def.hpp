@@ -212,11 +212,21 @@ PoissonSource(Teuchos::ParameterList& p,
       ptCharge.iWorkset = ptCharge.iCell = -1;  // indicates workset & cell are unknown
       
       pointCharges.push_back(ptCharge);
+
+      // Sacado-ization
+      std::stringstream s1; s1 << "Point Charge " << i << " X";
+      this->registerSacadoParameter(s1.str(), paramLib);
+      std::stringstream s2; s2 << "Point Charge " << i << " Y";
+      this->registerSacadoParameter(s2.str(), paramLib);
+      std::stringstream s3; s3 << "Point Charge " << i << " Z";
+      this->registerSacadoParameter(s3.str(), paramLib);
+      std::stringstream s4; s4 << "Point Charge " << i << " Charge";
+      this->registerSacadoParameter(s4.str(), paramLib);
     }
     else break;
   }
 
-  //Add Cloud Charges (later add the charge as a Sacado param?)
+  //Add Cloud Charges 
   Teuchos::RCP<Teuchos::ParameterList> clChargeValidPL =
      	rcp(new Teuchos::ParameterList("Valid Cloud Charge Params"));
   clChargeValidPL->set<double>("X", 0.0, "x-coordinate of point charge");
@@ -384,6 +394,21 @@ QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
       if( n == s3.str()) return cloudCharges[i].width;
       std::stringstream s4; s4 << "Cloud Charge " << i << " Cutoff";
       if( n == s4.str()) return cloudCharges[i].cutoff;
+    }
+
+    for( std::size_t i=0; i < pointCharges.size(); ++i) {
+      std::stringstream s2; s2 << "Point Charge " << i << " X";
+      if( n == s2.str()) return pointCharges[i].position_param[0];
+      if(numDims > 1) { 
+	std::stringstream ss; ss << "Point Charge " << i << " Y";
+	if( n == ss.str()) return pointCharges[i].position_param[1];
+      } 
+      if(numDims > 2) { 
+	std::stringstream ss; ss << "Point Charge " << i << " Z";
+	if( n == ss.str()) return pointCharges[i].position_param[2];
+      }
+      std::stringstream s1; s1 << "Point Charge " << i << " Charge";
+      if( n == s1.str()) return pointCharges[i].charge;
     }
 
     TEUCHOS_TEST_FOR_EXCEPT(true); 
@@ -1830,6 +1855,20 @@ void QCAD::PoissonSource<EvalT,Traits>::source_pointcharges(typename Traits::Eva
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um] usually)
   ScalarT Lambda2 = eps0/(eleQ*X0*X0);  
 
+
+  // Copy params to positions
+  for( std::size_t i=0; i < pointCharges.size(); ++i) {
+#ifdef ALBANY_MESH_TANFAD
+    pointCharges[i].position[0] = pointCharges[i].position_param[0];
+    if(numDims > 1) pointCharges[i].position[1] = pointCharges[i].position_param[1];
+    if(numDims > 2) pointCharges[i].position[2] = pointCharges[i].position_param[2];
+#else
+    pointCharges[i].position[0] = Albany::ADValue(pointCharges[i].position_param[0]);
+    if(numDims > 1) pointCharges[i].position[1] = Albany::ADValue(pointCharges[i].position_param[1]);
+    if(numDims > 2) pointCharges[i].position[2] = Albany::ADValue(pointCharges[i].position_param[2]);
+#endif
+  }
+
   //! find cells where point charges reside if we haven't searched yet (search only occurs once)
   if(numWorksetsScannedForPtCharges <= workset.wsIndex) {
     TEUCHOS_TEST_FOR_EXCEPTION ( !(numDims == 2 || ((numNodes == 4 || numNodes == 8) && numDims == 3)), Teuchos::Exceptions::InvalidParameter,
@@ -1876,12 +1915,12 @@ void QCAD::PoissonSource<EvalT,Traits>::source_pointcharges(typename Traits::Eva
   for( std::size_t i=0; i < pointCharges.size(); ++i) {
     if( pointCharges[i].iWorkset != (int)workset.wsIndex ) continue; //skips if iWorkset == -1 (not found)
     
-    MeshScalarT cellVol = 0.0, qpChargeDen;
+    MeshScalarT cellVol = 0.0;
     std::size_t cell = pointCharges[i].iCell; // iCell should be valid here since iWorkset is
     for (std::size_t qp=0; qp < numQPs; ++qp)
 	cellVol += weights(cell,qp);
     
-    qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,3)); // 3 was (int)numDims but I think this is wrong (Suzey?); // [cm^-3] value of qps so that integrated charge is correct
+    ScalarT qpChargeDen = pointCharges[i].charge / (cellVol*pow(X0,3)); // 3 was (int)numDims but I think this is wrong (Suzey?); // [cm^-3] value of qps so that integrated charge is correct
     //std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
     //		<< workset.wsIndex << ", cell " << cell << std::endl;
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -1913,7 +1952,7 @@ pointIsInTetrahedron(const MeshScalarT* cellVertices, const MeshScalarT* positio
   }
   v1[3] = v2[3] = v3[3] = v4[3] = p[3] = 1; //last entry in each "4D position" == 1
 
-  const MeshScalarT *mx[4], *refMx[4];
+  const MeshScalarT *mx[4], *refMx[4]; 
   MeshScalarT refDet, det;
 
   refMx[0] = mx[0] = v1; refMx[1] = mx[1] = v2; 

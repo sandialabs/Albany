@@ -225,7 +225,7 @@ namespace QCAD {
     std::vector< ScalarT > meshRegionFactors;
 
     //! Point Charge parameters
-    struct PointCharge { MeshScalarT position[3]; double charge; int iWorkset, iCell; };
+    struct PointCharge { MeshScalarT position[3]; ScalarT position_param[3]; ScalarT charge; int iWorkset, iCell; };
     std::vector< PointCharge > pointCharges;
     std::size_t numWorksetsScannedForPtCharges;
     
