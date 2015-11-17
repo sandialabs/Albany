@@ -424,6 +424,41 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
   }
 
   ///
+  /// Equilibrium Concentration BC specific
+  ///
+  for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    for(std::size_t j = 0; j < bcNames.size(); j++) {
+      string ss = traits_type::constructPressureDepBCName(nodeSetIDs[i], bcNames[j]);
+      //std::stringstream ss;
+      //string ss << "Equilibrium Concentration BC on NS " << nodeSetIDs[i] << " for DOF " << bcNames[j];
+      //string ss = "Equilibrium Concentration for DOF C";
+      if(BCparams.isSublist(ss)) {
+        // grab the sublist
+        ParameterList& sub_list = BCparams.sublist(ss);
+
+        if(sub_list.get<string>("BC Function") == "Equilibrium Concentration") {
+          RCP<ParameterList> p = rcp(new ParameterList);
+          p->set<int>("Type", traits_type::typeEq);
+
+          p->set<RealType>("Term1", sub_list.get<RealType>("Term1"));
+          p->set<RealType>("Term2", sub_list.get<RealType>("Term2"));
+
+          // Fill up ParameterList with things DirichletBase wants
+          p->set< RCP<DataLayout> >("Data Layout", dummy);
+          p->set< string > ("Dirichlet Name", ss);
+          p->set< RealType >("Dirichlet Value", 0.0);
+          p->set< string > ("Node Set ID", nodeSetIDs[i]);
+          p->set< int > ("Equation Offset", j);
+
+          evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+
+          bcs->push_back(ss);
+        }
+      }
+    }
+  }
+  
+  ///
   /// Least squares fit of peridynamics neighbors BC
   ////
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
@@ -529,29 +564,6 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< Teuchos::Array<RealType> >("KI Values", sub_list.get<Teuchos::Array<RealType> >("KI Values"));
         p->set< Teuchos::Array<RealType> >("KII Values", sub_list.get<Teuchos::Array<RealType> >("KII Values"));
 
-        // // This BC needs a shear modulus and poissons ratio defined
-        // TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Shear Modulus"),
-        //               Teuchos::Exceptions::InvalidParameter,
-        //               "This BC needs a Shear Modulus");
-        // ParameterList& shmd_list = params->sublist("Shear Modulus");
-        // TEUCHOS_TEST_FOR_EXCEPTION(!(shmd_list.get("Shear Modulus Type","") == "Constant"),
-        //               Teuchos::Exceptions::InvalidParameter,
-        //               "Invalid Shear Modulus type");
-        // p->set< RealType >("Shear Modulus", shmd_list.get("Value", 1.0));
-
-        // TEUCHOS_TEST_FOR_EXCEPTION(!params->isSublist("Poissons Ratio"),
-        //               Teuchos::Exceptions::InvalidParameter,
-        //               "This BC needs a Poissons Ratio");
-        // ParameterList& pr_list = params->sublist("Poissons Ratio");
-        // TEUCHOS_TEST_FOR_EXCEPTION(!(pr_list.get("Poissons Ratio Type","") == "Constant"),
-        //               Teuchos::Exceptions::InvalidParameter,
-        //               "Invalid Poissons Ratio type");
-        // p->set< RealType >("Poissons Ratio", pr_list.get("Value", 1.0));
-
-
-        //   p->set< Teuchos::Array<RealType> >("BC Values", sub_list.get<Teuchos::Array<RealType> >("BC Values"));
-        //   p->set< RCP<DataLayout> >("Data Layout", dummy);
-
         // Extract BC parameters
         p->set< string >("Kfield KI Name", "Kfield KI");
         p->set< string >("Kfield KII Name", "Kfield KII");
@@ -559,7 +571,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< RealType >("KII Value", sub_list.get<double>("Kfield KII"));
         p->set< RealType >("Shear Modulus", sub_list.get<double>("Shear Modulus"));
         p->set< RealType >("Poissons Ratio", sub_list.get<double>("Poissons Ratio"));
-        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
+        //p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
 
         // Fill up ParameterList with things DirichletBase wants
@@ -1041,8 +1053,10 @@ Albany::DirichletTraits::getValidBCParameters(
     for(std::size_t j = 0; j < bcNames.size(); j++) {
       std::string ss = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], bcNames[j]);
       std::string tt = Albany::DirichletTraits::constructTimeDepBCName(nodeSetIDs[i], bcNames[j]);
+      std::string pp = Albany::DirichletTraits::constructPressureDepBCName(nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
       validPL->sublist(tt, false, "SubList of BC corresponding to nodeSetID and dofName");
+      validPL->sublist(pp, false, "SubList of BC corresponding to nodeSetID and dofName");
       ss = Albany::DirichletTraits::constructBCNameField(nodeSetIDs[i], bcNames[j]);
       validPL->set<std::string>(ss, "dirichlet field", "Field used to prescribe Dirichlet BCs");
     }
@@ -1135,6 +1149,13 @@ std::string
 Albany::DirichletTraits::constructTimeDepBCName(const std::string& ns, const std::string& dof) {
   std::stringstream ss;
   ss << "Time Dependent " << Albany::DirichletTraits::constructBCName(ns, dof);
+  return ss.str();
+}
+
+std::string
+Albany::DirichletTraits::constructPressureDepBCName(const std::string& ns, const std::string& dof) {
+  std::stringstream ss;
+  ss << "Pressure Dependent " << Albany::DirichletTraits::constructBCName(ns, dof);
   return ss.str();
 }
 
