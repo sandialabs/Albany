@@ -31,6 +31,19 @@ miniMinimize(
     FN & function,
     Intrepid::Vector<T, N> & soln)
 {
+// Make sure that if Albany is compiled with a static FAD type
+// there won't be confusion with MiniSolver's FAD.
+#if defined(ALBANY_SFAD_SIZE)
+  static_assert(
+      ALBANY_SFAD_SIZE != N,
+      "Albany and MiniSolver static Fad sizes not allowed to be equal.");
+#endif
+#if defined(ALBANY_SLFAD_SIZE)
+  static_assert(
+      ALBANY_SLFAD_SIZE != N,
+      "Albany and MiniSolver static Fad sizes not allowed to be equal.");
+#endif
+
   using ValueT = typename Sacado::ValueType<T>::type;
 
   Intrepid::Vector<ValueT, N>
