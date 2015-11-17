@@ -85,7 +85,7 @@ namespace PHAL {
 #elif defined(ALBANY_LCM)
     typedef boost::mpl::vector10<
 #else
-    typedef boost::mpl::vector6<
+    typedef boost::mpl::vector5<
 #endif
 #else
     typedef Sacado::mpl::vector<
