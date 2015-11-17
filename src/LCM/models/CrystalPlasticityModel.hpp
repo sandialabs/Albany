@@ -102,11 +102,11 @@ public:
 
   CrystalPlasticityNLS(Intrepid::Tensor4<RealType, NumDimT> const & C,
 		       std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-		       Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
-		       Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
-		       Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
+		       Intrepid::Tensor<RealType, NumDimT> const & Fp_n,
+		       Intrepid::Vector<RealType, NumSlipT> const & hardness_n,
+		       Intrepid::Vector<RealType, NumSlipT> const & slip_n,
 		       Intrepid::Tensor<ScalarT, NumDimT> const & F_np1,
-		       ScalarT dt)
+		       RealType dt)
     : C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
       slip_n_(slip_n), F_np1_(F_np1), dt_(dt)
   {
@@ -130,9 +130,7 @@ public:
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & slip_np1) const
   {
-    // This is a design flaw, temporaries are a bad idea here.
-    // The difficulty is that the first template argument must match T and will vary
-    // as the solver calls this function with different types (e.g., scalars, AD types).
+    // DJL todo: Experiment with how/where these are allocated.
     Intrepid::Tensor<T, NumDimT> Fp_np1;
     Intrepid::Tensor<T, NumDimT> Lp_np1;
     Intrepid::Vector<T, N> hardness_np1;
@@ -149,6 +147,9 @@ public:
     S_np1.set_dimension(num_dim_);
     shear_np1.set_dimension(num_slip_);
     slip_residual.set_dimension(num_slip_);
+
+    // DJL todo:
+    //T const F_np1_hope = convert<ScalarT, T>(F_np1__);
 
     // Compute Lp_np1, and Fp_np1
     CP::applySlipIncrement<NumDimT, NumSlipT>(slip_systems_, slip_n_, slip_np1, Fp_n_, Lp_np1, Fp_np1);
@@ -179,11 +180,11 @@ private:
   RealType num_slip_;
   Intrepid::Tensor4<RealType, NumDimT> const & C_;
   std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
-  Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n_;
-  Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n_;
-  Intrepid::Vector<ScalarT, NumSlipT> const & slip_n_;
+  Intrepid::Tensor<RealType, NumDimT> const & Fp_n_;
+  Intrepid::Vector<RealType, NumSlipT> const & hardness_n_;
+  Intrepid::Vector<RealType, NumSlipT> const & slip_n_;
   Intrepid::Tensor<ScalarT, NumDimT> const & F_np1_;
-  ScalarT dt_;
+  RealType dt_;
 };
 
 //! \brief CrystalPlasticity Plasticity Constitutive Model

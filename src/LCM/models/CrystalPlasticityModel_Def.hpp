@@ -19,7 +19,10 @@
 //#define  DECOUPLE
 #define LINE_SEARCH
 #define SLIP_PREDICTOR
+
+#define HOMEROLLEDSOLVER
 //#define MINISOLVER
+//#define PRINTSOLVERDATA
 
 #include <typeinfo>
 #include <iostream>
@@ -440,6 +443,8 @@ computeState(typename Traits::EvalData workset,
 
   // -- Local variables for implicit integration routine --
 
+  // DJL todo:  Can we just use RealType for most of these?
+
   // Known quantities
   Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> F_np1;
   F_np1.set_dimension(num_dims_);
@@ -581,6 +586,8 @@ computeState(typename Traits::EvalData workset,
 #endif
       }
       else if (integration_scheme_ == IMPLICIT) {
+
+#ifdef HOMEROLLEDSOLVER
 
         // Evaluate quantities under the initial guess for the slip increment
 	CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
@@ -749,8 +756,24 @@ computeState(typename Traits::EvalData workset,
         std::cout << "CP model final residual " << residual_val << std::endl;
 #endif
 
+#ifdef PRINTSOLVERDATA
+	std::cout << "------------------------------------\n" << std::endl;
+	std::cout << "Home-rolled solver slip_np1" ;
+	for(int i=0 ; i<num_slip_ ; ++i){
+	  // std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
+	  std::cout << "  " << slip_np1(i);
+	}
+	std::cout << std::endl;
+	std::cout << "\nHome-rolled solver num iterations = " << iteration << ", residual = " << residual_val;
+#endif
+
+#endif // HOMEROLLEDSOLVER
+
 #ifdef MINISOLVER
 	{ // MiniSolver testing
+
+	  // DJL todo:  The state N data shouldn't ever be Fad, which I think they currently are above.
+	  //            When Albany::Jacobain is called, the Fad info should be in F_np1 only.
 
 	  // MiniSolver currently does not accept AD types
 	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> Fp_n_minisolver;
@@ -759,16 +782,16 @@ computeState(typename Traits::EvalData workset,
 	  hardness_n_minisolver.set_dimension(num_slip_);
 	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> slip_n_minisolver;
 	  slip_n_minisolver.set_dimension(num_slip_);
-	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> F_np1_minisolver;
-	  F_np1_minisolver.set_dimension(num_dims_);
+// 	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> F_np1_minisolver;
+// 	  F_np1_minisolver.set_dimension(num_dims_);
 	  RealType dt_minisolver;
-	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> x; // unknowns, which are slip_np1
+	  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> x; // unknowns, which are slip_np1
 	  x.set_dimension(num_slip_);
 
 	  for(int i=0 ; i<num_dims_ ; ++i){
 	    for(int j=0 ; j<num_dims_ ; ++j){
 	      Fp_n_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp_n(i,j));
-	      F_np1_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(F_np1(i,j));
+// 	      F_np1_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(F_np1(i,j));
 	    }
 	  }
 
@@ -781,36 +804,61 @@ computeState(typename Traits::EvalData workset,
 
 	  dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
 
-	  CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, RealType> crystalPlasticityNLS(C_,
-												 slip_systems_,
-												 Fp_n_minisolver,
-												 hardness_n_minisolver,
-												 slip_n_minisolver,
-												 F_np1_minisolver,
-												 dt_minisolver);
+	  CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, ScalarT> crystalPlasticityNLS(C_,
+												slip_systems_,
+												Fp_n_minisolver,
+												hardness_n_minisolver,
+												slip_n_minisolver,
+												F_np1,
+												dt_minisolver);
 
-	  Intrepid::NewtonStep<RealType, CP::MAX_NUM_SLIP> step;
-	  Intrepid::Minimizer<RealType, CP::MAX_NUM_SLIP> minimizer;
+// 	  Intrepid::NewtonStep<ScalarT, CP::MAX_NUM_SLIP> step;
+// 	  Intrepid::Minimizer<ScalarT, CP::MAX_NUM_SLIP> minimizer;
 
-	  // LCM::miniMinimize(minimizer, step, CrystalPlsticityNLS, x);
+// 	  minimizer.solve(step, crystalPlasticityNLS, x);
 
-	  minimizer.solve(step, crystalPlasticityNLS, x);
+	  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+	  Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
+	  Intrepid::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
 
-	  std::cout << "------------------------------------\n" << std::endl;
-	  std::cout << "Home-rolled solver slip_np1" ;
-	  for(int i=0 ; i<num_slip_ ; ++i){
-	    std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
+
+	  miniMinimize(minimizer, step, crystalPlasticityNLS, x);
+
+
+
+
+
+	  for(int i=0; i<num_slip_; ++i){
+	    slip_np1[i] = x[i];
 	  }
-	  std::cout << std::endl;
+
+	  // We now have the solution for slip_np1, including sensitivities, if any
+	  // Re-evaluate all the other state variables based on slip_np1
+
+	  // Compute Lp_np1, and Fp_np1
+	  CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+
+	  // Compute hardness_np1
+	  CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
+
+	  // Compute sigma_np1, S_np1, and shear_np1
+	  CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
+
+	  // Compute slip_residual and norm_slip_residual
+	  CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
+
+#ifdef PRINTSOLVERDATA
 	  std::cout << "MiniSolver slip_np1" ;
 	  for(int i=0 ; i<num_slip_ ; ++i){
 	    std::cout << "  " << x(i);
 	  }
-	  std::cout << std::endl;
-	  std::cout << "\nHome-rolled solver num iterations = " << iteration << ", residual = " << residual_val;
 	  minimizer.printReport(std::cout);
-	}
 #endif
+	}
+
+#endif // MINISOLVER
+
+
 
       } // integration_scheme == IMPLICIT
 
