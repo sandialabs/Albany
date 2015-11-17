@@ -33,16 +33,11 @@ miniMinimize(
 {
 // Make sure that if Albany is compiled with a static FAD type
 // there won't be confusion with MiniSolver's FAD.
-#if defined(ALBANY_SFAD_SIZE)
+  using AD = Intrepid::FAD<RealType, N>;
+
   static_assert(
-      ALBANY_SFAD_SIZE != N,
-      "Albany and MiniSolver static Fad sizes not allowed to be equal.");
-#endif
-#if defined(ALBANY_SLFAD_SIZE)
-  static_assert(
-      ALBANY_SLFAD_SIZE != N,
-      "Albany and MiniSolver static Fad sizes not allowed to be equal.");
-#endif
+      std::is_same<T, AD>::value == false,
+      "Albany and MiniSolver Fad types not allowed to be equal.");
 
   using ValueT = typename Sacado::ValueType<T>::type;
 

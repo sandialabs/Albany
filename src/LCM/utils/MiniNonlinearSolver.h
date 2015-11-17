@@ -7,6 +7,8 @@
 #if !defined(LCM_MiniNonlinearSolver_h)
 #define LCM_MiniNonlinearSolver_h
 
+#include <type_traits>
+
 #include "PHAL_AlbanyTraits.hpp"
 #include "Intrepid_MiniTensor_Solvers.h"
 
