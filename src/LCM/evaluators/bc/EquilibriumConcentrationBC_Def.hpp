@@ -12,10 +12,11 @@ namespace LCM {
 template <typename EvalT, typename Traits>
 EquilibriumConcentrationBC_Base<EvalT, Traits>::
 EquilibriumConcentrationBC_Base(Teuchos::ParameterList& p) :
-  offset_(p.get<int>("Equation Offset")),
+  coffset_(p.get<int>("Equation Offset")),
+  poffset_(p.get<int>("Pressure Offset")),
   PHAL::DirichletBase<EvalT, Traits>(p),
-  term1_(p.get<RealType>("Term1")),
-  term2_(p.get<RealType>("Term2"))
+  applied_conc_(p.get<RealType>("Applied Concentration")),
+  pressure_fac_(p.get<RealType>("Pressure Factor"))
 {
 }
 //------------------------------------------------------------------------------
@@ -25,30 +26,8 @@ void
 EquilibriumConcentrationBC_Base<EvalT, Traits>::
 computeBCs(ScalarT& pressure, ScalarT& Cval)
 {
-
-  Cval = pressure*(term1_/term2_);
-/*
-//  JTO: I am going to leave this here for now...
-     std::cout << "================" << std::endl;
-     std::cout.precision(15);
-     std::cout << "X : " << X << ", Y: " << Y << ", R: " << R << std::endl;
-//     std::cout << "Node : " << nsNodes[inode] << std::endl;
-     std::cout << "KI : " << KI << ", KII: " << KII << std::endl;
-     std::cout << "theta: " << theta << std::endl;
-     std::cout << "coeff_1: " << coeff_1 << ", coeff_2: " << coeff_2 << std::endl;
-     std::cout << "KI_X: " << KI_X << ", KI_Y: " << KI_Y << std::endl;
-     std::cout << "Xval: " << Xval << ", Yval: " << Yval << std::endl;
-     std::cout << "nu: " << nu << std::endl;
-//     std::cout << "dx: " << (*x)[xlunk] << std::endl;
-//     std::cout << "dy: " << (*x)[ylunk] << std::endl;
-//     std::cout << "fx: " << ((*x)[xlunk] - Xval) << std::endl;
-//     std::cout << "fy: " << ((*x)[ylunk] - Yval) << std::endl;
-     std::cout << "sin(theta/2): " << std::sin( theta / 2.0 ) << std::endl;
-     std::cout << "cos(theta/2): " << std::cos( theta / 2.0 ) << std::endl;
-
-*/
+  Cval = applied_conc_ * std::exp(pressure_fac_ * pressure);
 }
-
 //------------------------------------------------------------------------------
 // Specialization: Residual
 //
@@ -70,7 +49,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
 
-
   // Grab the vector of node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int>>& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
@@ -80,30 +58,28 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   ScalarT pressure;
   
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    cunk = nsNodes[inode][this->offset_];
-    punk = nsNodes[inode][this->offset_+1];
+    cunk = nsNodes[inode][this->coffset_];
+    punk = nsNodes[inode][this->poffset_];
     pressure = xT_constView[punk];
     this->computeBCs(pressure, Cval);
 
     fT_nonconstView[cunk] = xT_constView[cunk] - Cval;
   }
 }
-
-// **********************************************************************
+//------------------------------------------------------------------------------  
 // Specialization: Jacobian
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -131,8 +107,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
   {
-    cunk = nsNodes[inode][this->offset_];
-    punk = nsNodes[inode][this->offset_+1];
+    cunk = nsNodes[inode][this->coffset_];
+    punk = nsNodes[inode][this->poffset_];
     pressure = xT_constView[punk];
     this->computeBCs(pressure, Cval);
     
@@ -153,17 +129,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     } 
   }
 }
-
-// **********************************************************************
+//------------------------------------------------------------------------------  
 // Specialization: Tangent
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::Tangent, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------  
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -189,8 +164,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
-    cunk = nsNodes[inode][this->offset_];
-    punk = nsNodes[inode][this->offset_+1];
+    cunk = nsNodes[inode][this->coffset_];
+    punk = nsNodes[inode][this->poffset_];
     pressure = xT_constView[punk];
     this->computeBCs(pressure, Cval);
 
@@ -220,17 +195,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   }
 }
-
-// **********************************************************************
+//------------------------------------------------------------------------------  
 // Specialization: DistParamDeriv
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------    
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -258,7 +232,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     {
       Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
       Teuchos::ArrayRCP<ST> VpT_nonconstView; 
-      cunk = nsNodes[inode][this->offset_];
+      cunk = nsNodes[inode][this->coffset_];
 
       for (int col=0; col<num_cols; ++col) {
         VpT_nonconstView = VpT->getDataNonConst(col); 
@@ -271,7 +245,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   else {
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
     {
-      cunk = nsNodes[inode][this->offset_];
+      cunk = nsNodes[inode][this->coffset_];
 
       for (int col=0; col<num_cols; ++col) {
         fpVT_nonconstView = fpVT->getDataNonConst(col);
@@ -280,10 +254,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     }
   }
 }
-
-// **********************************************************************
+//------------------------------------------------------------------------------  
 // Specialization: Stochastic Galerkin Residual
-// **********************************************************************
+//
 #ifdef ALBANY_SG
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGResidual, Traits>::
@@ -291,7 +264,7 @@ EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGResidual, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------  
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -300,17 +273,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
                              std::runtime_error,
                              "Error! This BC does not support SG Types");
 }
-
-// **********************************************************************
+//------------------------------------------------------------------------------
 // Specialization: Stochastic Galerkin Jacobian
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------  
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -319,17 +291,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
                              std::runtime_error,
                              "Error! This BC does not support SG Types");
 }
-
-// **********************************************************************
+//------------------------------------------------------------------------------  
 // Specialization: Stochastic Galerkin Tangent
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGTangent, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::SGTangent, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------  
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -341,17 +312,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
 #endif 
 #ifdef ALBANY_ENSEMBLE 
-
-// **********************************************************************
+//------------------------------------------------------------------------------  
 // Specialization: Multi-point Residual
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPResidual, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPResidual, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------  
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -360,17 +330,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
                              std::runtime_error,
                              "Error! This BC does not support ENSEMBLES");
 }
-
-// **********************************************************************
+//------------------------------------------------------------------------------  
 // Specialization: Multi-point Jacobian
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -380,16 +349,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
                              "Error! This BC does not support ENSEMBLES");
 }
 
-// **********************************************************************
+//------------------------------------------------------------------------------
 // Specialization: Multi-point Tangent
-// **********************************************************************
+//
 template<typename Traits>
 EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPTangent, Traits>::
 EquilibriumConcentrationBC(Teuchos::ParameterList& p) :
   EquilibriumConcentrationBC_Base<PHAL::AlbanyTraits::MPTangent, Traits>(p)
 {
 }
-// **********************************************************************
+//------------------------------------------------------------------------------
 template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
@@ -399,6 +368,6 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
                              "Error! This BC does not support ENSEMBLES");
 }
 #endif
-
+//------------------------------------------------------------------------------  
 } // namespace LCM
 

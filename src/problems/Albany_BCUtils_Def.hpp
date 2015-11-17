@@ -429,19 +429,25 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     for(std::size_t j = 0; j < bcNames.size(); j++) {
       string ss = traits_type::constructPressureDepBCName(nodeSetIDs[i], bcNames[j]);
-      //std::stringstream ss;
-      //string ss << "Equilibrium Concentration BC on NS " << nodeSetIDs[i] << " for DOF " << bcNames[j];
-      //string ss = "Equilibrium Concentration for DOF C";
       if(BCparams.isSublist(ss)) {
         // grab the sublist
         ParameterList& sub_list = BCparams.sublist(ss);
 
+        // get the pressure offset
+        int pressure_offset;
+        for (std::size_t k = 0; k < bcNames.size(); k++) {
+          if (bcNames[k] == "TAU") {
+            pressure_offset = k;
+            continue;
+          }
+        }
+        
         if(sub_list.get<string>("BC Function") == "Equilibrium Concentration") {
           RCP<ParameterList> p = rcp(new ParameterList);
           p->set<int>("Type", traits_type::typeEq);
 
-          p->set<RealType>("Term1", sub_list.get<RealType>("Term1"));
-          p->set<RealType>("Term2", sub_list.get<RealType>("Term2"));
+          p->set<RealType>("Applied Concentration", sub_list.get<RealType>("Applied Concentration"));
+          p->set<RealType>("Pressure Factor", sub_list.get<RealType>("Pressure Factor"));
 
           // Fill up ParameterList with things DirichletBase wants
           p->set< RCP<DataLayout> >("Data Layout", dummy);
@@ -449,6 +455,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
           p->set< RealType >("Dirichlet Value", 0.0);
           p->set< string > ("Node Set ID", nodeSetIDs[i]);
           p->set< int > ("Equation Offset", j);
+          p->set< int > ("Pressure Offset", pressure_offset);
 
           evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 

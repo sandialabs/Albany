@@ -35,10 +35,11 @@ public:
   EquilibriumConcentrationBC_Base(Teuchos::ParameterList& p);
   void computeBCs(ScalarT& pressure, ScalarT& Cval);
 
-  RealType term1_, term2_;
+  RealType applied_conc_, pressure_fac_;
 
 protected:
-  const int offset_;
+  const int coffset_;
+  const int poffset_;
 };
 
 //------------------------------------------------------------------------------
