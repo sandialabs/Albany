@@ -94,7 +94,7 @@ struct peel
 
 template<int N>
 struct peel
-<PHAL::AlbanyTraits::Residual::ScalarT, Sacado::Fad::SFad<RealType, N>, N>
+<PHAL::AlbanyTraits::Residual::ScalarT, Intrepid::FAD<RealType, N>, N>
 {
   RealType
   operator()(PHAL::AlbanyTraits::Residual::ScalarT const & s)
@@ -108,7 +108,7 @@ struct peel
 
 template<int N>
 struct peel
-<PHAL::AlbanyTraits::Jacobian::ScalarT, Sacado::Fad::SFad<RealType, N>, N>
+<PHAL::AlbanyTraits::Jacobian::ScalarT, Intrepid::FAD<RealType, N>, N>
 {
   RealType
   operator()(PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
