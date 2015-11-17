@@ -96,7 +96,7 @@ template<int N>
 struct peel
 <PHAL::AlbanyTraits::Residual::ScalarT, Sacado::Fad::SFad<RealType, N>, N>
 {
-  Sacado::Fad::SFad<RealType, N>
+  RealType
   operator()(PHAL::AlbanyTraits::Residual::ScalarT const & s)
   {
     RealType const
@@ -110,7 +110,7 @@ template<int N>
 struct peel
 <PHAL::AlbanyTraits::Jacobian::ScalarT, Sacado::Fad::SFad<RealType, N>, N>
 {
-  Sacado::Fad::SFad<RealType, N>
+  RealType
   operator()(PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
   {
     RealType const
