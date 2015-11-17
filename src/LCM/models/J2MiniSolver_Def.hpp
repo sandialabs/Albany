@@ -315,7 +315,7 @@ computeState(typename Traits::EvalData workset,
         Intrepid::Index
         dimension{1};
 
-        Intrepid::LineSearchRegularizedStep<ValueT, dimension>
+        Intrepid::NewtonStep<ValueT, dimension>
         step;
 
         Intrepid::Minimizer<ValueT, dimension>

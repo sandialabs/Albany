@@ -49,7 +49,7 @@ computeFADInfo(
 /// Auxiliary functors that peel off derivative information from Albany::Traits
 /// types when not needed and keep it when needed. Used to convert types
 /// within MiniSolver function class methods.
-/// The type for N must be int to work with Sacado
+/// The type for N must be int to work with Sacado.
 ///
 template<typename S, typename T, int N>
 struct peel
