@@ -296,29 +296,9 @@ template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f =
-    dirichletWorkset.sg_f;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
-    dirichletWorkset.sg_x;
-  const std::vector<std::vector<int>>& nsNodes =
-    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-
-  int cunk, punk;
-  ScalarT Cval;
-  ScalarT pressure;
-  
-  int nblock = x->size();
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    cunk = nsNodes[inode][0];
-    pressure = coord = nsNodeCoords[inode];
-
-    this->computeBCs(coord, Xval, Yval, time);
-
-    for (int block=0; block<nblock; block++) {
-      (*f)[block][xlunk] = ((*x)[block][xlunk] - Xval.coeff(block));
-      (*f)[block][ylunk] = ((*x)[block][ylunk] - Yval.coeff(block));
-    }
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::runtime_error,
+                             "Error! This BC does not support SG Types");
 }
 
 // **********************************************************************
@@ -335,64 +315,9 @@ template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly> f =
-    dirichletWorkset.sg_f;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>> jac =
-    dirichletWorkset.sg_Jac;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
-    dirichletWorkset.sg_x;
-  const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int>>& nsNodes =
-    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords =
-    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
-
-  RealType* matrixEntries;
-  int*    matrixIndices;
-  int     numEntries;
-  RealType diag=j_coeff;
-  bool fillResid = (f != Teuchos::null);
-
-  int nblock = 0;
-  if (f != Teuchos::null)
-    nblock = f->size();
-  int nblock_jac = jac->size();
-
-  RealType time = dirichletWorkset.current_time;
-
-  int cunk, punk;
-  ScalarT Cval;
-  ScalarT pressure;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
-  {
-    xlunk = nsNodes[inode][0];
-    ylunk = nsNodes[inode][1];
-    coord = nsNodeCoords[inode];
-
-    this->computeBCs(coord, Xval, Yval, time);
-
-    // replace jac values for the X dof
-    for (int block=0; block<nblock_jac; block++) {
-      (*jac)[block].ExtractMyRowView(xlunk, numEntries, matrixEntries,
-                                     matrixIndices);
-      for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-
-      // replace jac values for the y dof
-      (*jac)[block].ExtractMyRowView(ylunk, numEntries, matrixEntries,
-                                     matrixIndices);
-      for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-    }
-    (*jac)[0].ReplaceMyValues(xlunk, 1, &diag, &xlunk);
-    (*jac)[0].ReplaceMyValues(ylunk, 1, &diag, &ylunk);
-
-    if (fillResid)
-    {
-      for (int block=0; block<nblock; block++) {
-        (*f)[block][xlunk] = ((*x)[block][xlunk] - Xval.val().coeff(block));
-        (*f)[block][ylunk] = ((*x)[block][ylunk] - Yval.val().coeff(block));
-      }
-    }
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::runtime_error,
+                             "Error! This BC does not support SG Types");
 }
 
 // **********************************************************************
@@ -409,63 +334,9 @@ template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f =
-    dirichletWorkset.sg_f;
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> fp =
-    dirichletWorkset.sg_fp;
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> JV =
-    dirichletWorkset.sg_JV;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
-    dirichletWorkset.sg_x;
-  Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
-  const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int>>& nsNodes =
-    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords =
-    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
-
-  int nblock = x->size();
-
-  int cunk, punk;
-  ScalarT Cval;
-  ScalarT pressure;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
-  {
-    xlunk = nsNodes[inode][0];
-    ylunk = nsNodes[inode][1];
-    coord = nsNodeCoords[inode];
-
-    this->computeBCs(coord, Xval, Yval, time);
-
-    if (f != Teuchos::null)
-    {
-      for (int block=0; block<nblock; block++) {
-        (*f)[block][xlunk] = (*x)[block][xlunk] - Xval.val().coeff(block);
-        (*f)[block][ylunk] = (*x)[block][ylunk] - Yval.val().coeff(block);
-      }
-    }
-
-    if (JV != Teuchos::null) {
-      for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-      {
-        (*JV)[0][i][xlunk] = j_coeff*(*Vx)[i][xlunk];
-        (*JV)[0][i][ylunk] = j_coeff*(*Vx)[i][ylunk];
-      }
-    }
-
-    if (fp != Teuchos::null) {
-      for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-      {
-        for (int block=0; block<nblock; block++) {
-          (*fp)[block][i][xlunk] =
-            -Xval.dx(dirichletWorkset.param_offset+i).coeff(block);
-          (*fp)[block][i][ylunk] =
-            -Yval.dx(dirichletWorkset.param_offset+i).coeff(block);
-        }
-      }
-    }
-
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::runtime_error,
+                             "Error! This BC does not support SG Types");
 }
 
 #endif 
@@ -485,33 +356,9 @@ template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::ProductEpetraVector> f =
-    dirichletWorkset.mp_f;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
-    dirichletWorkset.mp_x;
-  const std::vector<std::vector<int>>& nsNodes =
-    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords =
-    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
-
-
-  int cunk, punk;
-  ScalarT Cval;
-  ScalarT pressure;
-
-  int nblock = x->size();
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-    xlunk = nsNodes[inode][0];
-    ylunk = nsNodes[inode][1];
-    coord = nsNodeCoords[inode];
-
-    this->computeBCs(coord, Xval, Yval, time);
-
-    for (int block=0; block<nblock; block++) {
-      (*f)[block][xlunk] = ((*x)[block][xlunk] - Xval.coeff(block));
-      (*f)[block][ylunk] = ((*x)[block][ylunk] - Yval.coeff(block));
-    }
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::runtime_error,
+                             "Error! This BC does not support ENSEMBLES");
 }
 
 // **********************************************************************
@@ -528,64 +375,9 @@ template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::ProductEpetraVector> f =
-    dirichletWorkset.mp_f;
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix>> jac =
-    dirichletWorkset.mp_Jac;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
-    dirichletWorkset.mp_x;
-  const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int>>& nsNodes =
-    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords =
-    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
-
-  RealType* matrixEntries;
-  int*    matrixIndices;
-  int     numEntries;
-  RealType diag=j_coeff;
-  bool fillResid = (f != Teuchos::null);
-
-  int nblock = 0;
-  if (f != Teuchos::null)
-    nblock = f->size();
-  int nblock_jac = jac->size();
-
-  RealType time = dirichletWorkset.current_time;
-
-  int cunk, punk;
-  ScalarT Cval;
-  ScalarT pressure;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
-  {
-    xlunk = nsNodes[inode][0];
-    ylunk = nsNodes[inode][1];
-    coord = nsNodeCoords[inode];
-
-    this->computeBCs(coord, Xval, Yval, time);
-
-    // replace jac values for the X dof
-    for (int block=0; block<nblock_jac; block++) {
-      (*jac)[block].ExtractMyRowView(xlunk, numEntries, matrixEntries,
-                                     matrixIndices);
-      for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-      (*jac)[block].ReplaceMyValues(xlunk, 1, &diag, &xlunk);
-
-      // replace jac values for the y dof
-      (*jac)[block].ExtractMyRowView(ylunk, numEntries, matrixEntries,
-                                     matrixIndices);
-      for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-      (*jac)[block].ReplaceMyValues(ylunk, 1, &diag, &ylunk);
-    }
-
-    if (fillResid)
-    {
-      for (int block=0; block<nblock; block++) {
-        (*f)[block][xlunk] = ((*x)[block][xlunk] - Xval.val().coeff(block));
-        (*f)[block][ylunk] = ((*x)[block][ylunk] - Yval.val().coeff(block));
-      }
-    }
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::runtime_error,
+                             "Error! This BC does not support ENSEMBLES");
 }
 
 // **********************************************************************
@@ -602,65 +394,9 @@ template<typename Traits>
 void EquilibriumConcentrationBC<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::ProductEpetraVector> f =
-    dirichletWorkset.mp_f;
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> fp =
-    dirichletWorkset.mp_fp;
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> JV =
-    dirichletWorkset.mp_JV;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
-    dirichletWorkset.mp_x;
-  Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
-  const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int>>& nsNodes =
-    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords =
-    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
-
-  int nblock = x->size();
-
-  int cunk, punk;
-  ScalarT Cval;
-  ScalarT pressure;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
-  {
-    cunk = nsNodes[inode][offset_];
-    punk = nsNodes[inode][offset_+1];
-    pressure = 
-
-    this->computeBCs(coord, Xval, Yval, time);
-
-    if (f != Teuchos::null)
-    {
-      for (int block=0; block<nblock; block++) {
-        (*f)[block][xlunk] = (*x)[block][xlunk] - Xval.val().coeff(block);
-        (*f)[block][ylunk] = (*x)[block][ylunk] - Yval.val().coeff(block);
-      }
-    }
-
-    if (JV != Teuchos::null) {
-      for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-      {
-        for (int block=0; block<nblock; block++) {
-          (*JV)[block][i][xlunk] = j_coeff*(*Vx)[i][xlunk];
-          (*JV)[block][i][ylunk] = j_coeff*(*Vx)[i][ylunk];
-        }
-      }
-    }
-
-    if (fp != Teuchos::null) {
-      for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-      {
-        for (int block=0; block<nblock; block++) {
-          (*fp)[block][i][xlunk] =
-            -Xval.dx(dirichletWorkset.param_offset+i).coeff(block);
-          (*fp)[block][i][ylunk] =
-            -Yval.dx(dirichletWorkset.param_offset+i).coeff(block);
-        }
-      }
-    }
-
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::runtime_error,
+                             "Error! This BC does not support ENSEMBLES");
 }
 #endif
 
