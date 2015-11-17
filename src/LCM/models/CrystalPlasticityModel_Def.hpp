@@ -756,14 +756,14 @@ computeState(typename Traits::EvalData workset,
 #endif
 
 #ifdef PRINTSOLVERDATA
-	std::cout << "------------------------------------\n" << std::endl;
+	std::cout << "\n\n------------------------------------\n" << std::endl;
 	std::cout << "Home-rolled solver slip_np1" ;
 	for(int i=0 ; i<num_slip_ ; ++i){
 	  // std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
 	  std::cout << "  " << slip_np1(i);
 	}
 	std::cout << std::endl;
-	std::cout << "\nHome-rolled solver num iterations = " << iteration << ", residual = " << residual_val;
+	//std::cout << "\nHome-rolled solver num iterations = " << iteration << ", residual = " << residual_val;
 #endif
 
 #endif // HOMEROLLEDSOLVER
@@ -817,30 +817,31 @@ computeState(typename Traits::EvalData workset,
 
 	  miniMinimize(minimizer, step, crystalPlasticityNLS, x);
 
-// 	  for(int i=0; i<num_slip_; ++i){
-// 	    slip_np1[i] = x[i];
-// 	  }
+	  for(int i=0; i<num_slip_; ++i){
+	    slip_np1[i] = x[i];
+	  }
 
-// 	  // We now have the solution for slip_np1, including sensitivities, if any
-// 	  // Re-evaluate all the other state variables based on slip_np1
+	  // We now have the solution for slip_np1, including sensitivities, if any
+	  // Re-evaluate all the other state variables based on slip_np1
 
-// 	  // Compute Lp_np1, and Fp_np1
-// 	  CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+	  // Compute Lp_np1, and Fp_np1
+	  CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
 
-// 	  // Compute hardness_np1
-// 	  CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
+	  // Compute hardness_np1
+	  CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
 
-// 	  // Compute sigma_np1, S_np1, and shear_np1
-// 	  CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
+	  // Compute sigma_np1, S_np1, and shear_np1
+	  CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
 
-// 	  // Compute slip_residual and norm_slip_residual
-// 	  CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
+	  // Compute slip_residual and norm_slip_residual
+	  CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
 
 #ifdef PRINTSOLVERDATA
-	  std::cout << "MiniSolver slip_np1" ;
+	  std::cout << "\nMiniSolver slip_np1" ;
 	  for(int i=0 ; i<num_slip_ ; ++i){
 	    std::cout << "  " << x(i);
 	  }
+	  std::cout << std::endl;
 	  //minimizer.printReport(std::cout);
 #endif
 	}
@@ -1126,6 +1127,7 @@ computeResidual(
     sign = shear_np1[s] < 0 ? -1 : 1;
     temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
     // establishing normalized filter for active slip systems
+#ifndef MINISOLVER
     const double active_filter = std::numeric_limits<RealType>::epsilon()
         * 10.0;
     if (temp < active_filter) {
@@ -1134,6 +1136,9 @@ computeResidual(
     else {
       dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
     }
+#else
+      dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
+#endif
 
     //The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value2 - dgamma_value1;
