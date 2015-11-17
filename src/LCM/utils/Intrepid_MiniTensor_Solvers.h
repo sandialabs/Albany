@@ -13,6 +13,10 @@
 
 namespace Intrepid
 {
+/// The Fad type to use.
+template<typename T, int N>
+using FAD = Sacado::Fad::SFad<T, N>;
+
 ///
 /// Function base class that defines the interface to Mini Solvers.
 ///

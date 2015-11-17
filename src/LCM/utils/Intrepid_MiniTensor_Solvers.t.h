@@ -36,7 +36,7 @@ Vector<T, N>
 Function_Base<Function_Derived, S>::
 gradient(Function_Derived & f, Vector<T, N> const & x)
 {
-  using AD = typename Sacado::Fad::SFad<T, N>;
+  using AD = FAD<T, N>;
 
   Index const
   dimension = x.get_dimension();
@@ -72,7 +72,7 @@ Tensor<T, N>
 Function_Base<Function_Derived, S>::
 hessian(Function_Derived & f, Vector<T, N> const & x)
 {
-  using AD = typename Sacado::Fad::SFad<T, N>;
+  using AD = FAD<T, N>;
 
   Index const
   dimension = x.get_dimension();

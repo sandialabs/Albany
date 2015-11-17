@@ -147,11 +147,15 @@ public:
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & x)
   {
+    // Firewalls.
     Intrepid::Index const
     dimension = x.get_dimension();
 
     assert(dimension == DIMENSION);
 
+    // Variables that potentially have Albany::Traits sensitivity
+    // information need to be handled by the peel functor so that
+    // proper conversions take place.
     T const
     K = peel<S, T, N>()(K_);
 
@@ -164,6 +168,7 @@ public:
     T const
     Y = peel<S, T, N>()(Y_);
 
+    // This is the actual computation of the gradient.
     Intrepid::Vector<T, N>
     r(dimension);
 
@@ -313,16 +318,13 @@ computeState(typename Traits::EvalData workset,
 
         constexpr
         Intrepid::Index
-        dimension{1};
+        dimension{j2nls.DIMENSION};
 
         Intrepid::NewtonStep<ValueT, dimension>
         step;
 
         Intrepid::Minimizer<ValueT, dimension>
         minimizer;
-
-        ScalarT const
-        dXdR0 = 1.0 / (-2. * mubar) / (1. + H / (3. * mubar));
 
         Intrepid::Vector<ScalarT, dimension>
         x;
