@@ -120,8 +120,6 @@ struct peel
   }
 };
 
-
-
 } //namesapce LCM
 
 #include "MiniNonlinearSolver.t.h"

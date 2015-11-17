@@ -547,7 +547,7 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 }
 
 //
-// Trust Region method.  See Nocedal's algorithm 11.5.
+// Line Search Newton-like method.  See Nocedal's algorithm 11.4.
 //
 template<typename T, Index N>
 template<typename FN>
