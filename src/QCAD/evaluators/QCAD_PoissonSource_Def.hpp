@@ -1872,6 +1872,7 @@ void QCAD::PoissonSource<EvalT,Traits>::source_pointcharges(typename Traits::Eva
     if(numDims > 1) update_if_changed(pointCharges[i].position[1],pointCharges[i].position_param[1],recalculate_charges);
     if(numDims > 2) update_if_changed(pointCharges[i].position[2],pointCharges[i].position_param[2],recalculate_charges);
   }
+  if(recalculate_charges) numWorksetsScannedForPtCharges=0;
 
   //! find cells where point charges reside if we haven't searched yet (search only occurs once)
   if(recalculate_charges || numWorksetsScannedForPtCharges <= workset.wsIndex) {
