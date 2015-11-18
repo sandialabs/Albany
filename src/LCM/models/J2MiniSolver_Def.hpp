@@ -318,7 +318,7 @@ computeState(typename Traits::EvalData workset,
 
         constexpr
         Intrepid::Index
-        dimension{j2nls.DIMENSION};
+        dimension{J2NLS<ScalarT>::DIMENSION};
 
         Intrepid::NewtonStep<ValueT, dimension>
         step;

@@ -56,7 +56,9 @@ computeFADInfo(
 template<typename S, typename T, int N>
 struct peel
 {
-  T
+  // This ugly return type is to avoid matching Tensor types.
+  // If it does not match then it just becomes T.
+  typename Intrepid::disable_if_c<Intrepid::order_1234<S>::value, T>::type
   operator()(S const & s)
   {
     T const
@@ -66,12 +68,21 @@ struct peel
   }
 };
 
+namespace {
+
+using RT = PHAL::AlbanyTraits::Residual::ScalarT;
+using JT = PHAL::AlbanyTraits::Jacobian::ScalarT;
+
 template<int N>
-struct peel
-<PHAL::AlbanyTraits::Residual::ScalarT, RealType, N>
+using AD = Intrepid::FAD<RealType, N>;
+
+} // anonymous namespace
+
+template<int N>
+struct peel<RT, RealType, N>
 {
   RealType
-  operator()(PHAL::AlbanyTraits::Residual::ScalarT const & s)
+  operator()(RT const & s)
   {
     RealType const
     t = s;
@@ -81,25 +92,23 @@ struct peel
 };
 
 template<int N>
-struct peel
-<PHAL::AlbanyTraits::Jacobian::ScalarT, RealType, N>
+struct peel<JT, RealType, N>
 {
   RealType
-  operator()(PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+  operator()(JT const & s)
   {
     RealType const
-    t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+    t = Sacado::Value<JT>::eval(s);
 
     return t;
   }
 };
 
 template<int N>
-struct peel
-<PHAL::AlbanyTraits::Residual::ScalarT, Intrepid::FAD<RealType, N>, N>
+struct peel<RT, AD<N>, N>
 {
   RealType
-  operator()(PHAL::AlbanyTraits::Residual::ScalarT const & s)
+  operator()(RT const & s)
   {
     RealType const
     t = s;
@@ -109,14 +118,105 @@ struct peel
 };
 
 template<int N>
-struct peel
-<PHAL::AlbanyTraits::Jacobian::ScalarT, Intrepid::FAD<RealType, N>, N>
+struct peel<JT, AD<N>, N>
 {
   RealType
-  operator()(PHAL::AlbanyTraits::Jacobian::ScalarT const & s)
+  operator()(JT const & s)
   {
     RealType const
-    t = Sacado::Value<PHAL::AlbanyTraits::Jacobian::ScalarT>::eval(s);
+    t = Sacado::Value<JT>::eval(s);
+
+    return t;
+  }
+};
+
+template<typename S, typename T, int N>
+struct peel<Intrepid::Vector<S, N>, Intrepid::Vector<T, N>, N>
+{
+  Intrepid::Vector<T, N>
+  operator()(Intrepid::Vector<S, N> const & s)
+  {
+    Intrepid::Index const
+    dimension = s.get_dimension();
+
+    Intrepid::Vector<T, N>
+    t(dimension);
+
+    Intrepid::Index const
+    num_components = s.get_number_components();
+
+    for (Intrepid::Index i = 0; i < num_components; ++i) {
+      t[i] = peel<S, T, N>()(s[i]);
+    }
+
+    return t;
+  }
+};
+
+template<typename S, typename T, int N>
+struct peel<Intrepid::Tensor<S, N>, Intrepid::Tensor<T, N>, N>
+{
+  Intrepid::Tensor<T, N>
+  operator()(Intrepid::Tensor<S, N> const & s)
+  {
+    Intrepid::Index const
+    dimension = s.get_dimension();
+
+    Intrepid::Tensor<T, N>
+    t(dimension);
+
+    Intrepid::Index const
+    num_components = s.get_number_components();
+
+    for (Intrepid::Index i = 0; i < num_components; ++i) {
+      t[i] = peel<S, T, N>()(s[i]);
+    }
+
+    return t;
+  }
+};
+
+template<typename S, typename T, int N>
+struct peel<Intrepid::Tensor3<S, N>, Intrepid::Tensor3<T, N>, N>
+{
+  Intrepid::Tensor3<T, N>
+  operator()(Intrepid::Tensor3<S, N> const & s)
+  {
+    Intrepid::Index const
+    dimension = s.get_dimension();
+
+    Intrepid::Tensor3<T, N>
+    t(dimension);
+
+    Intrepid::Index const
+    num_components = s.get_number_components();
+
+    for (Intrepid::Index i = 0; i < num_components; ++i) {
+      t[i] = peel<S, T, N>()(s[i]);
+    }
+
+    return t;
+  }
+};
+
+template<typename S, typename T, int N>
+struct peel<Intrepid::Tensor4<S, N>, Intrepid::Tensor4<T, N>, N>
+{
+  Intrepid::Tensor4<T, N>
+  operator()(Intrepid::Tensor4<S, N> const & s)
+  {
+    Intrepid::Index const
+    dimension = s.get_dimension();
+
+    Intrepid::Tensor4<T, N>
+    t(dimension);
+
+    Intrepid::Index const
+    num_components = s.get_number_components();
+
+    for (Intrepid::Index i = 0; i < num_components; ++i) {
+      t[i] = peel<S, T, N>()(s[i]);
+    }
 
     return t;
   }
