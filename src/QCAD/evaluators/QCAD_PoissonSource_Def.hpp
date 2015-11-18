@@ -205,9 +205,9 @@ PoissonSource(Teuchos::ParameterList& p,
       // Fill PointCharge struct and add to vector (list)
       // QCAD::PoissonSource<EvalT, Traits>::PointCharge ptCharge;
       PointCharge ptCharge;
-      ptCharge.position[0] = psList->sublist(subListName).get<double>("X",0.0);
-      ptCharge.position[1] = psList->sublist(subListName).get<double>("Y",0.0);
-      ptCharge.position[2] = psList->sublist(subListName).get<double>("Z",0.0);
+      ptCharge.position_param[0] = psList->sublist(subListName).get<double>("X",0.0);
+      ptCharge.position_param[1] = psList->sublist(subListName).get<double>("Y",0.0);
+      ptCharge.position_param[2] = psList->sublist(subListName).get<double>("Z",0.0);
       ptCharge.charge = psList->sublist(subListName).get<double>("Charge",+1.0);
       ptCharge.iWorkset = ptCharge.iCell = -1;  // indicates workset & cell are unknown
       
@@ -1847,6 +1847,15 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
 
 
 //! ----------------- Point charge functions ---------------------
+template<typename EvalT, typename Traits>
+void QCAD::PoissonSource<EvalT,Traits>::update_if_changed(MeshScalarT & oldval, const ScalarT & newval, bool & update_flag) const {
+  // NOTE: We're throwing away derivatives here.  This is an artifact of the whole convert from ScalarT to MeshScalarT thing.
+  if(oldval!=Albany::ADValue(newval)) {
+    oldval = Albany::ADValue(newval);
+    update_flag=true;
+  }
+}
+
 
 template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT,Traits>::source_pointcharges(typename Traits::EvalData workset)
@@ -1855,22 +1864,17 @@ void QCAD::PoissonSource<EvalT,Traits>::source_pointcharges(typename Traits::Eva
   double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um] usually)
   ScalarT Lambda2 = eps0/(eleQ*X0*X0);  
 
-
   // Copy params to positions
+  bool recalculate_charges=false;
   for( std::size_t i=0; i < pointCharges.size(); ++i) {
-#ifdef ALBANY_MESH_TANFAD
-    pointCharges[i].position[0] = pointCharges[i].position_param[0];
-    if(numDims > 1) pointCharges[i].position[1] = pointCharges[i].position_param[1];
-    if(numDims > 2) pointCharges[i].position[2] = pointCharges[i].position_param[2];
-#else
-    pointCharges[i].position[0] = Albany::ADValue(pointCharges[i].position_param[0]);
-    if(numDims > 1) pointCharges[i].position[1] = Albany::ADValue(pointCharges[i].position_param[1]);
-    if(numDims > 2) pointCharges[i].position[2] = Albany::ADValue(pointCharges[i].position_param[2]);
-#endif
+    // NOTE: Derivatives get pitched.  We should really fix the computational geometry routines to avoid having to do this.
+    update_if_changed(pointCharges[i].position[0],pointCharges[i].position_param[0],recalculate_charges);
+    if(numDims > 1) update_if_changed(pointCharges[i].position[1],pointCharges[i].position_param[1],recalculate_charges);
+    if(numDims > 2) update_if_changed(pointCharges[i].position[2],pointCharges[i].position_param[2],recalculate_charges);
   }
 
   //! find cells where point charges reside if we haven't searched yet (search only occurs once)
-  if(numWorksetsScannedForPtCharges <= workset.wsIndex) {
+  if(recalculate_charges || numWorksetsScannedForPtCharges <= workset.wsIndex) {
     TEUCHOS_TEST_FOR_EXCEPTION ( !(numDims == 2 || ((numNodes == 4 || numNodes == 8) && numDims == 3)), Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error!  Point charges are only supported for TET4 and HEX8 meshes in 3D currently." << std::endl);
 

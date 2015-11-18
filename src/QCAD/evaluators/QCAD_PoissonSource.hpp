@@ -147,6 +147,9 @@ namespace QCAD {
     //! add cloud charge contributions to source field
     void source_cloudcharges(typename Traits::EvalData workset);
 
+    //! Helper function for point charges
+    void update_if_changed(MeshScalarT & oldval, const ScalarT & newval, bool & update_flag) const;
+
     //! ----------------- Miscellaneous helper functions ---------------------
 
     //! compute the Fermi-Dirac integral of -1/2 order for calculating electron 
@@ -160,10 +163,6 @@ namespace QCAD {
     ScalarT getCellScaleFactor(std::size_t cell, const std::vector<bool>& bEBInRegion, ScalarT init_factor);
 
     ScalarT getReferencePotential(typename Traits::EvalData workset);
-
-
-
-
     
     //! input
     std::size_t numQPs;
