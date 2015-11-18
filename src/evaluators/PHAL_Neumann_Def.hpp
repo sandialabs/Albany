@@ -1116,9 +1116,12 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
       else {
         for(int cell = 0; cell < numCells; cell++) {
           for(int pt = 0; pt < numPoints; pt++) {
+            ScalarT vel=0;
             const ScalarT beta = basalFriction_side(cell, pt)*(thickness_side(cell, pt)*rho > - bedTopography_side(cell,pt)*rho_w);
+            for(int dim = 0; dim < numDOFsSet; dim++)
+              vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
             for(int dim = 0; dim < numDOFsSet; dim++) {
-              qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
+              qp_data_returned(cell, pt, dim) = betaXY*beta*std::pow(vel+1e-6, (1./3.-1.)/2.)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
             }
           }
         }
