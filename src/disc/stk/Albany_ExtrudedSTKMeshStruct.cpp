@@ -187,7 +187,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
-  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
+  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ, flowRateNormalizedZ;
 
   if(useGlimmerSpacing)
     for (int i = 0; i < numLayers+1; i++)
@@ -196,9 +196,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     for (int i = 0; i < numLayers+1; i++)
       levelsNormalizedThickness[i] = double(i) / numLayers;
 
-  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers);
-  for (int i = 0; i < numLayers; i++)
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers), layersNormalizedThickness(numLayers);
+  for (int i = 0; i < numLayers; i++) {
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+    layersNormalizedThickness[i] = 0.5*(levelsNormalizedThickness[i]+levelsNormalizedThickness[i+1]);
+  }
 
   /*std::cout<< "Levels: ";
   for (int i = 0; i < numLayers+1; i++)
@@ -264,6 +266,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   Teuchos::RCP<Tpetra_Vector> bTopographyVec;
   Teuchos::RCP<Tpetra_Vector> bFrictionVec;
   Teuchos::RCP<Tpetra_MultiVector> temperatureVecInterp;
+  Teuchos::RCP<Tpetra_MultiVector> flowRateVecInterp;
   Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
   Teuchos::RCP<Tpetra_MultiVector> velocityRMSVec;
 
@@ -343,45 +346,92 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+  bool hasFlowRate = true;//std::find(req.begin(), req.end(), "flowRate") != req.end();
+  if(hasFlowRate) {
+    Teuchos::RCP<Tpetra_MultiVector> flowRateVec;
+    flowRateVecInterp = Teuchos::rcp(new Tpetra_MultiVector(nodes_map, numLayers));
+    std::string fname = params->get<std::string>("Flow Rate File Name", "flow_rate.ascii");
+    int err = readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, flowRateVec, flowRateNormalizedZ, comm);
+
+    if(err == 0) {
+      int il0, il1, verticalTSize(flowRateVec->getNumVectors());
+      double h0(0.0);
+
+      for (int il = 0; il < numLayers; il++) {
+        if (layersNormalizedThickness[il] <= flowRateNormalizedZ[0]) {
+          il0 = 0;
+          il1 = 0;
+          h0 = 1.0;
+        }
+
+        else if (layersNormalizedThickness[il] >= flowRateNormalizedZ[verticalTSize - 1]) {
+          il0 = verticalTSize - 1;
+          il1 = verticalTSize - 1;
+          h0 = 0.0;
+        }
+
+        else {
+          int k = 0;
+          while (layersNormalizedThickness[il] > flowRateNormalizedZ[++k])
+            ;
+          il0 = k - 1;
+          il1 = k;
+          h0 = (flowRateNormalizedZ[il1] - layersNormalizedThickness[il]) / (flowRateNormalizedZ[il1] - flowRateNormalizedZ[il0]);
+        }
+        Teuchos::ArrayRCP<ST> flowRateVecInterp_nonConstView = flowRateVecInterp->getVectorNonConst(il)->get1dViewNonConst();
+        Teuchos::ArrayRCP<const ST> flowRateVec_constView_il0 = flowRateVec->getVectorNonConst(il0)->get1dView();
+        Teuchos::ArrayRCP<const ST> flowRateVec_constView_il1 = flowRateVec->getVectorNonConst(il1)->get1dView();
+
+        std::cout << layersNormalizedThickness[il] << " " << h0 <<  " " << flowRateNormalizedZ[il0] << " " << flowRateNormalizedZ[il1]<<std::endl;
+        
+        for (int i = 0; i < nodes_map->getNodeNumElements(); i++)
+          flowRateVecInterp_nonConstView[i] = h0 * flowRateVec_constView_il0[i] + (1.0 - h0) * flowRateVec_constView_il1[i];
+      }
+    }
+    else hasFlowRate=false;
+  }
+
   bool hasTemperature = std::find(req.begin(), req.end(), "temperature") != req.end();
   if(hasTemperature) {
     Teuchos::RCP<Tpetra_MultiVector> temperatureVec;
     temperatureVecInterp = Teuchos::rcp(new Tpetra_MultiVector(nodes_map, numLayers + 1));
     std::string fname = params->get<std::string>("Temperature File Name", "temperature.ascii");
-    readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, temperatureVec, temperatureNormalizedZ, comm);
+    int err = readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, temperatureVec, temperatureNormalizedZ, comm);
 
+    if(err == 0) {
+      int il0, il1, verticalTSize(temperatureVec->getNumVectors());
+      double h0(0.0);
 
-   int il0, il1, verticalTSize(temperatureVec->getNumVectors());
-    double h0(0.0);
+      for (int il = 0; il < numLayers + 1; il++) {
+        if (levelsNormalizedThickness[il] <= temperatureNormalizedZ[0]) {
+          il0 = 0;
+          il1 = 0;
+          h0 = 1.0;
+        }
 
-    for (int il = 0; il < numLayers + 1; il++) {
-      if (levelsNormalizedThickness[il] <= temperatureNormalizedZ[0]) {
-        il0 = 0;
-        il1 = 0;
-        h0 = 1.0;
+        else if (levelsNormalizedThickness[il] >= temperatureNormalizedZ[verticalTSize - 1]) {
+          il0 = verticalTSize - 1;
+          il1 = verticalTSize - 1;
+          h0 = 0.0;
+        }
+
+        else {
+          int k = 0;
+          while (levelsNormalizedThickness[il] > temperatureNormalizedZ[++k])
+            ;
+          il0 = k - 1;
+          il1 = k;
+          h0 = (temperatureNormalizedZ[il1] - levelsNormalizedThickness[il]) / (temperatureNormalizedZ[il1] - temperatureNormalizedZ[il0]);
+        }
+        Teuchos::ArrayRCP<ST> temperatureVecInterp_nonConstView = temperatureVecInterp->getVectorNonConst(il)->get1dViewNonConst();
+        Teuchos::ArrayRCP<const ST> temperatureVec_constView_il0 = temperatureVec->getVectorNonConst(il0)->get1dView();
+        Teuchos::ArrayRCP<const ST> temperatureVec_constView_il1 = temperatureVec->getVectorNonConst(il1)->get1dView();
+
+        for (int i = 0; i < nodes_map->getNodeNumElements(); i++)
+          temperatureVecInterp_nonConstView[i] = h0 * temperatureVec_constView_il0[i] + (1.0 - h0) * temperatureVec_constView_il1[i];
       }
-
-      else if (levelsNormalizedThickness[il] >= temperatureNormalizedZ[verticalTSize - 1]) {
-        il0 = verticalTSize - 1;
-        il1 = verticalTSize - 1;
-        h0 = 0.0;
-      }
-
-      else {
-        int k = 0;
-        while (levelsNormalizedThickness[il] > temperatureNormalizedZ[++k])
-          ;
-        il0 = k - 1;
-        il1 = k;
-        h0 = (temperatureNormalizedZ[il1] - levelsNormalizedThickness[il]) / (temperatureNormalizedZ[il1] - temperatureNormalizedZ[il0]);
-      }
-      Teuchos::ArrayRCP<ST> temperatureVecInterp_nonConstView = temperatureVecInterp->getVectorNonConst(il)->get1dViewNonConst();
-      Teuchos::ArrayRCP<const ST> temperatureVec_constView_il0 = temperatureVec->getVectorNonConst(il0)->get1dView();
-      Teuchos::ArrayRCP<const ST> temperatureVec_constView_il1 = temperatureVec->getVectorNonConst(il1)->get1dView();
-
-      for (int i = 0; i < nodes_map->getNodeNumElements(); i++)
-        temperatureVecInterp_nonConstView[i] = h0 * temperatureVec_constView_il0[i] + (1.0 - h0) * temperatureVec_constView_il1[i];
     }
+    else hasTemperature = false;
   }
 
   Tpetra_MultiVector tempSV(serial_nodes_map,neq_);
@@ -529,8 +579,17 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
     stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[ib]);
     double tempOnPrism = 0; //Set temperature constant on each prism/Hexa
-    Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_il = temperatureVecInterp->getVectorNonConst(il)->get1dView();
-    Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_ilplus1 = temperatureVecInterp->getVectorNonConst(il + 1)->get1dView();
+    Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_il,  temperatureVecInterp_constView_ilplus1;
+    if(hasTemperature) {
+      temperatureVecInterp_constView_il = temperatureVecInterp->getVectorNonConst(il)->get1dView();
+      temperatureVecInterp_constView_ilplus1 = temperatureVecInterp->getVectorNonConst(il + 1)->get1dView();
+    }
+
+    double flowRateOnPrism = 0; //Set temperature constant on each prism/Hexa
+    Teuchos::ArrayRCP<const ST> flowRateVecInterp_constView_il, flowRateVecInterp_constView_ilplus1;
+    if(hasFlowRate) {
+      flowRateVecInterp_constView_il = flowRateVecInterp->getVectorNonConst(il)->get1dView();
+    }
     for (int j = 0; j < NumBaseElemeNodes; j++) {
       stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
       int node2dLId = nodes_map->getLocalElement((GO)node2dId);
@@ -541,6 +600,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       prismGlobalIds[j + NumBaseElemeNodes] = lowerId + vertexColumnShift;
       if(hasTemperature)
         tempOnPrism += 1. / NumBaseElemeNodes / 2. * (temperatureVecInterp_constView_il[node2dLId] + temperatureVecInterp_constView_ilplus1[node2dLId]);
+      if(hasFlowRate)
+        flowRateOnPrism += 1. / NumBaseElemeNodes  * flowRateVecInterp_constView_il[node2dLId];
     }
 
     switch (ElemShape) {
@@ -556,13 +617,13 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         }
         int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
         p_rank[0] = comm->getRank();
+        if(hasFlowRate && flowRate_field) {
+          double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
+          flowRate[0] = flowRateOnPrism;
+        }
         if(hasTemperature && temperature_field) {
           double* temperature = stk::mesh::field_data(*temperature_field, elem);
           temperature[0] = tempOnPrism;
-          if(flowRate_field) {
-            double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
-            flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
-          }
         }
       }
     }
@@ -577,13 +638,13 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       }
       int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
       p_rank[0] = comm->getRank();
+      if(hasFlowRate && flowRate_field) {
+        double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
+        flowRate[0] = flowRateOnPrism;
+      }
       if(hasTemperature && temperature_field) {
         double* temperature = stk::mesh::field_data(*temperature_field, elem);
         temperature[0] = tempOnPrism;
-        if(flowRate_field) {
-          double* flowRate = stk::mesh::field_data(*flowRate_field, elem);
-          flowRate[0] = (temperature[0] < 263) ? 1.3e7 / std::exp (6.0e4 / 8.314 / temperature[0]) : 6.26e22 / std::exp (1.39e5 / 8.314 / temperature[0]);
-        }
       }
     }
     }
@@ -870,9 +931,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Tpetra_Mu
   }
 }
 
-void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, Teuchos::RCP<Tpetra_MultiVector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
+int Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, Teuchos::RCP<Tpetra_MultiVector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
   GO numNodes;
-  int numComponents;
+  int numComponents(0);
   std::ifstream ifile;
   if (comm->getRank() == 0) {
 
@@ -892,6 +953,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
   }
   // The first int is for Comm<int>; the second is the type of numComponents.
   Teuchos::broadcast<int, int>(*comm, 0, 1, &numComponents);
+  if(numComponents==0) //unable to open file or error with file
+    return 1;
+
   zCoords.resize(numComponents);
   Tpetra_Vector tempT(map_serial);
 
@@ -915,6 +979,8 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
 
   if (comm->getRank() == 0)
     ifile.close();
+
+  return 0;
 
 
 }
