@@ -109,6 +109,9 @@ IF(CTEST_DO_SUBMIT)
   if(HAD_ERROR)
     message(FATAL_ERROR "Cannot submit ReconDriver test results!")
   endif()
+
+move_xml_file ("*Test.xml" "Test_ReconDriver.xml")
+
 ENDIF(CTEST_DO_SUBMIT)
 
 endmacro(do_alexa)
