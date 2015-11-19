@@ -64,6 +64,7 @@ protected:
 
   Teuchos::Array<double> normalize;
   double shiftValueAggregated;
+  double scaleValueAggregated;
 };
 
 /******************************************************************************/

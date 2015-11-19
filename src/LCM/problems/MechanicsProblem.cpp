@@ -272,11 +272,13 @@ buildProblem(
         Teuchos::null);
     if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
   }
+  *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
   constructDirichletEvaluators(*meshSpecs[0]);
 
-  if (haveSidesets)
-
-  constructNeumannEvaluators(meshSpecs[0]);
+  if (haveSidesets) {
+    *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
+    constructNeumannEvaluators(meshSpecs[0]);
+  }
 
 }
 //------------------------------------------------------------------------------
@@ -440,6 +442,7 @@ getValidProblemParameters() const
   return validPL;
 }
 
+//------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::
 getAllocatedStates(

@@ -635,6 +635,8 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
   int numMyNodes = topoVec->MyLength();
   for(int i=0; i<numMyNodes; i++) ltopo[i] = p[i];
 
+  if(!_filterIsRecursive) smoothTopology();
+
   int numWorksets = wsElDofs.size();
   double matVal = _topology->getMaterialValue();
   for(int ws=0; ws<numWorksets; ws++){
@@ -958,7 +960,15 @@ ATO::Solver::Compute(double* p, double& g, double* dgdp, double& c, double* dcdp
 /******************************************************************************/
 {
   if(_iteration!=0) smoothTopology(p);
+  
+  Compute((const double*)p, g, dgdp, c, dcdp);
+}
 
+/******************************************************************************/
+void
+ATO::Solver::Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp)
+/******************************************************************************/
+{
   for(int i=0; i<_numPhysics; i++){
 
     // copy data from p into each stateManager

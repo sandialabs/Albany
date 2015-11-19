@@ -12,6 +12,8 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
   "-DSEACAS_BINARY_DIR:PATH=/home/gahanse/trilinos/host_seacas/bin"
   "-DCUSTOM_CXX_FLAGS:STRING=-Wfatal-errors"
+  "-DAlexa_ENABLE_LAMBDAS:BOOL=OFF"
+  "-DAlexa_RUN_CUDA_TESTS:BOOL=ON"
   "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpirun -np 1'"
    )
  
@@ -53,6 +55,8 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure ReconDriver build!")
 endif()
 
+move_xml_file ("*Configure.xml" "Configure_ReconDriver.xml")
+
 #
 # Build ReconDriver
 #
@@ -83,6 +87,8 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build ReconDriver!")
 endif()
 
+move_xml_file ("*Build.xml" "Build_ReconDriver.xml")
+
 #
 # Run ReconDriver tests
 #
@@ -103,6 +109,9 @@ IF(CTEST_DO_SUBMIT)
   if(HAD_ERROR)
     message(FATAL_ERROR "Cannot submit ReconDriver test results!")
   endif()
+
+move_xml_file ("*Test.xml" "Test_ReconDriver.xml")
+
 ENDIF(CTEST_DO_SUBMIT)
 
 endmacro(do_alexa)

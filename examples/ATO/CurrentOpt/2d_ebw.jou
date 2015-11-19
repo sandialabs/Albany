@@ -1,0 +1,25 @@
+## /projects/cubit/claro.Lin64.15.0/bin/cubitx
+## Cubit Version 15.0
+## Cubit Build 400425
+## Revised 2015-10-05 08:08:01 -0600 (Mon, 05 Oct 2015)
+## Running 10/21/2015 02:55:08 PM
+## Command Options:
+create brick x 2 y 1 z 0.1
+webcut volume all with plane xplane offset 0.1
+webcut volume all with plane xplane offset -0.1
+webcut volume all with plane yplane offset 0.2
+webcut volume all with plane yplane offset 0.3
+webcut volume all with plane xplane offset 0.8
+webcut volume all with plane xplane offset -0.8
+imprint all
+merge all
+volume all size 0.025
+mesh surface 145 133 123 139 131 121 76 68 39 115 103 93 109 101 91
+block 1 surface 145 133 123 139 131 121 115 103 93 109 101 91
+block 2 surface 68
+nodeset 1 curve 202
+nodeset 4 curve 146
+sideset 4 curve 146
+block all element type QUAD4
+export mesh "2d_ebw.gen" dimension 2 overwrite
+quit

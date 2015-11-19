@@ -366,6 +366,10 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 #endif
 
+#ifdef ALBANY_GOAL
+  else if (responseName == "Adjoint") {}
+#endif
+
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,

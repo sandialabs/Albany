@@ -30,7 +30,7 @@ namespace LCM {
     F_(p.get<std::string>("Deformation Gradient Name"),dl->qp_tensor),
     F_mech_(p.get<std::string>("Mechanical Deformation Gradient Name"),dl->qp_tensor),
     J_(p.get<std::string>("Determinant of F Name"),dl->qp_scalar),
-    strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
+    //strain_rate_fac_(p.get<std::string>("Strain Rate Factor Name"),dl->qp_scalar),
     weighted_average_(p.get<bool>("Weighted Volume Average J", false)),
     alpha_(p.get<RealType>("Average J Stabilization Parameter", 0.0))
   {
@@ -51,22 +51,16 @@ namespace LCM {
     a_ = mat_params->get<RealType>("A Constant");
     b_ = mat_params->get<RealType>("B Constant");
     c_ = mat_params->get<RealType>("C Constant");
-    // to express Avogadro's number in different units.
     avogadros_num_  = mat_params->get<RealType>("Avogadro's Number");
     lattice_strain_flag_= mat_params->get<bool>("Lattice Strain Flag");
-  //  avogadros_num_ = 6.0221413e23;
-
-    // if ( p.isType<bool>("Weighted Volume Average J") )
-    //   weighted_average_ = p.get<bool>("Weighted Volume Average J");
-    // if ( p.isType<RealType>("Average J Stabilization Parameter") )
-    //   alpha_ = p.get<RealType>("Average J Stabilization Parameter");
 
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
       have_eqps_ = true;
-      //PHX::MDField<ScalarT, Cell, QuadPoint> 
-      //  tmp(p.get<std::string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
-      //eqps_ = tmp;
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Strain Rate Factor Name"), dl->qp_scalar);
+      strain_rate_fac_ = tmp;
+      this->addEvaluatedField(strain_rate_fac_);
     }
 
 
@@ -74,15 +68,11 @@ namespace LCM {
     this->addDependentField(J_);
     this->addDependentField(temperature_);
     this->addDependentField(c_lattice_);
-    if (have_eqps_) {
-      //this->addDependentField(eqps_);
-    }
     this->addEvaluatedField(k_eq_);
     this->addEvaluatedField(n_trap_);
     this->addEvaluatedField(eff_diff_);
     this->addEvaluatedField(c_trapped_);
     this->addEvaluatedField(total_concentration_);
-    this->addEvaluatedField(strain_rate_fac_);
     this->addEvaluatedField(diffusion_coefficient_);
     this->addEvaluatedField(convection_coefficient_);
     this->addEvaluatedField(F_mech_);
@@ -107,15 +97,13 @@ namespace LCM {
     this->utils.setFieldData(F_,fm);
     this->utils.setFieldData(F_mech_,fm);
     this->utils.setFieldData(J_,fm);
-    if ( have_eqps_ ) {
-      //this->utils.setFieldData(eqps_,fm);
-    }
+
     this->utils.setFieldData(k_eq_,fm);
     this->utils.setFieldData(c_trapped_,fm);
     this->utils.setFieldData(total_concentration_,fm);
     this->utils.setFieldData(n_trap_,fm);
     this->utils.setFieldData(eff_diff_,fm);
-    this->utils.setFieldData(strain_rate_fac_,fm);
+    if (have_eqps_) this->utils.setFieldData(strain_rate_fac_,fm);
     this->utils.setFieldData(diffusion_coefficient_,fm);
     this->utils.setFieldData(convection_coefficient_,fm);
 
@@ -126,6 +114,8 @@ namespace LCM {
   void TransportCoefficients<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    //std::cout << "In evaluator: " << this->getName() << "\n";
+
     ScalarT theta_term(0.0);
 
     Albany::MDArray eqps;
@@ -139,9 +129,7 @@ namespace LCM {
       for (int pt=0; pt < num_pts_; ++pt) {
 
         diffusion_coefficient_(cell,pt) = pre_exponential_factor_*
-          std::exp(-1.0*Q_/
-                   (ideal_gas_constant_*
-                    temperature_(cell,pt)));
+          std::exp(-1.0*Q_/(ideal_gas_constant_*temperature_(cell,pt)));
       }
     }
 
@@ -150,9 +138,8 @@ namespace LCM {
       for (int pt=0; pt < num_pts_; ++pt) {
 
         convection_coefficient_(cell,pt) = partial_molar_volume_*
-          diffusion_coefficient_(cell,pt)/
-          (ideal_gas_constant_*
-           temperature_(cell,pt));
+          diffusion_coefficient_(cell,pt)/(ideal_gas_constant_*
+                                           temperature_(cell,pt));
       }
     }
 
@@ -182,8 +169,7 @@ namespace LCM {
       for (int cell(0); cell < workset.numCells; ++cell) {
         for (int pt(0); pt < num_pts_; ++pt) {
           n_trap_(cell,pt) = (1.0/avogadros_num_) * 
-            std::pow( 10.0, (a_ - b_ *
-                             std::exp( -c_ * eqps(cell,pt) ))  );
+            std::pow(10.0,(a_-b_*std::exp(-c_*eqps(cell,pt))));
           //     std::cout  << "ntrap" << n_trap_(cell,pt) << std::endl;
         }
       }
@@ -209,18 +195,18 @@ namespace LCM {
         }
       }
     }
-    else
-    {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
-          theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
-            ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
+    // else
+    // {
+    //   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+    //     for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    //       theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
+    //         ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
 
-          strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) *
-            std::log(10.0) * b_ * c_;
-        }
-      }
-    }
+    //       strain_rate_fac_(cell,pt) = theta_term * n_trap_(cell,pt) *
+    //         std::log(10.0) * b_ * c_;
+    //     }
+    //   }
+    // }
 
     // trapped concentration
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
