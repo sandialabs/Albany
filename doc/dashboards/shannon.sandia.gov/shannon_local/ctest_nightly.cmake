@@ -69,7 +69,8 @@ set(CTEST_DROP_SITE_USER "")
 find_program(CTEST_GIT_COMMAND NAMES git)
 
 # Point at the public Repo
-SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
+#SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
+SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
 SET(ReconDriver_REPOSITORY_LOCATION software.sandia.gov:/git/ReconDrivergit)
