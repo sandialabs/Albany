@@ -34,6 +34,8 @@ SET(BOOST_DIR /home/gahanse)
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/move_xml_macro.cmake)
+
 IF (CLEAN_BUILD)
   IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
 #  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
@@ -194,21 +196,7 @@ IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Trilinos!")
 endif()
 
-# Save a copy of the Trilinos update to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update_Trilinos.xml
-#               )
-
-# Note: CTest will store files in ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION} - ending in Update.xml.
-# Not sure what the first part of that filename is, so glob all possibliities into UPDATE_FILES. Then
-# grab the last one and rename it to Update_Trilinos.xml in the drop location. We assume there is only a 
-# single update file, if there are more skip this.
-FILE(GLOB UPDATE_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Update.xml")
-LIST(LENGTH UPDATE_FILES UP_LIST_LEN)
-IF(UP_LIST_LEN EQUAL 1)
-  LIST(GET UPDATE_FILES -1 SINGLE_UPDATE_FILE)
-  FILE(RENAME "${SINGLE_UPDATE_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Update_Trilinos.xml")
-ENDIF()
+move_xml_file ("*Update.xml" "Update_Trilinos.xml")
 
 # Get the SCOREC tools
 
@@ -447,17 +435,7 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Trilinos build!")
 endif()
 
-# Save a copy of the Trilinos configure to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure_Trilinos.xml
-#               )
-
-FILE(GLOB CONFIG_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Configure.xml")
-LIST(LENGTH CONFIG_FILES CO_LIST_LEN)
-IF(CO_LIST_LEN EQUAL 1)
-  LIST(GET CONFIG_FILES -1 SINGLE_CONFIG_FILE)
-  FILE(RENAME "${SINGLE_CONFIG_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Configure_Trilinos.xml")
-ENDIF()
+move_xml_file ("*Configure.xml" "Configure_Trilinos.xml")
 
 SET(CTEST_BUILD_TARGET install)
 
@@ -485,17 +463,7 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Trilinos!")
 endif()
 
-# Save a copy of the Trilinos build to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build_Trilinos.xml
-#               )
-
-FILE(GLOB BUILD_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Build.xml")
-LIST(LENGTH BUILD_FILES BU_LIST_LEN)
-IF(BU_LIST_LEN EQUAL 1)
-  LIST(GET BUILD_FILES -1 SINGLE_BUILD_FILE)
-  FILE(RENAME "${SINGLE_BUILD_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Build_Trilinos.xml")
-ENDIF()
+move_xml_file ("*Build.xml" "Build_Trilinos.xml")
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
         message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")

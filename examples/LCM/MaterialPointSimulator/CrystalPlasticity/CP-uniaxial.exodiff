@@ -1,0 +1,83 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.83) Modified: 2015-08-20
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2015/11/19   16:28:28 PST
+#  *****************************************************************
+
+#  FILE 1: /home/callema/LCM/Albany/examples/LCM/MaterialPointSimulator/CrystalPlasticity/CP-uniaxial.gold.exo
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 7, Sidesets = 6
+#          Vars: Global = 0, Nodal = 6, Element = 40, Nodeset = 0, Sideset = 0, Times = 11
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:              10 @ t11
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	residual_x  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	residual_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	residual_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	solution_x  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	solution_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	solution_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
+
+ELEMENT VARIABLES relative 1.e-6 floor 1e-16
+	Cauchy_Stress_1  # min:               0 @ t1,b1,e1	max:        2085.982 @ t11,b1,e1
+	Cauchy_Stress_2  # min:               0 @ t1,b1,e1	max:       71.592642 @ t11,b1,e1
+	Cauchy_Stress_3  # min:               0 @ t1,b1,e1	max:       213.94612 @ t11,b1,e1
+	Cauchy_Stress_4  # min:               0 @ t1,b1,e1	max:       71.592642 @ t11,b1,e1
+	Cauchy_Stress_5  # min:               0 @ t1,b1,e1	max:        1803.334 @ t11,b1,e1
+	Cauchy_Stress_6  # min:               0 @ t1,b1,e1	max:       95.808294 @ t11,b1,e1
+	Cauchy_Stress_7  # min:               0 @ t1,b1,e1	max:       213.94612 @ t11,b1,e1
+	Cauchy_Stress_8  # min:               0 @ t1,b1,e1	max:       95.808294 @ t11,b1,e1
+	Cauchy_Stress_9  # min:               0 @ t1,b1,e1	max:       905.10682 @ t11,b1,e1
+	CP_Residual      # min:               0 @ t1,b1,e1	max:   2.4333834e-15 @ t6,b1,e1
+	F_1              # min:               1 @ t1,b1,e1	max:            1.01 @ t11,b1,e1
+	F_2              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_3              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_4              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_5              # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	F_6              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_7              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_8              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	F_9              # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	Fp_1             # min:               1 @ t1,b1,e1	max:       1.0040369 @ t11,b1,e1
+	Fp_2             # min:               0 @ t1,b1,e1	max:    0.0040368842 @ t11,b1,e1
+	Fp_3             # min:               0 @ t1,b1,e1	max:   9.5074221e-19 @ t11,b1,e1
+	Fp_4             # min:               0 @ t1,b1,e1	max:    0.0040368842 @ t11,b1,e1
+	Fp_5             # min:      0.99596312 @ t11,b1,e1	max:               1 @ t1,b1,e1
+	Fp_6             # min:               0 @ t1,b1,e1	max:   9.5074221e-19 @ t11,b1,e1
+	Fp_7             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Fp_8             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Fp_9             # min:               1 @ t7,b1,e1	max:               1 @ t1,b1,e1
+	gamma_1          # min:               0 @ t1,b1,e1	max:    0.0080737684 @ t11,b1,e1
+	Strain_1         # min:               0 @ t1,b1,e1	max:            0.01 @ t11,b1,e1
+	Strain_2         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_3         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_4         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_5         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_6         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_7         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_8         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	Strain_9         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+	tau_1            # min:               0 @ t1,b1,e1	max:       121.98088 @ t8,b1,e1
+	tau_hard_1       # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

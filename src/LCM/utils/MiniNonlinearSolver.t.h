@@ -31,6 +31,14 @@ miniMinimize(
     FN & function,
     Intrepid::Vector<T, N> & soln)
 {
+// Make sure that if Albany is compiled with a static FAD type
+// there won't be confusion with MiniSolver's FAD.
+  using AD = Intrepid::FAD<RealType, N>;
+
+  static_assert(
+      std::is_same<T, AD>::value == false,
+      "Albany and MiniSolver Fad types not allowed to be equal.");
+
   using ValueT = typename Sacado::ValueType<T>::type;
 
   Intrepid::Vector<ValueT, N>
@@ -82,7 +90,7 @@ computeFADInfo(
   auto const
   order = r[0].size();
 
-  assert(order > 0);
+  assert(order > 0 && "FATAL ERROR: Expected Fad info but there is none!");
 
   // Extract sensitivities of r wrt p
   Intrepid::Matrix<S, N>

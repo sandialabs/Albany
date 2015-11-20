@@ -36,7 +36,7 @@ Vector<T, N>
 Function_Base<Function_Derived, S>::
 gradient(Function_Derived & f, Vector<T, N> const & x)
 {
-  using AD = typename Sacado::Fad::SFad<T, N>;
+  using AD = FAD<T, N>;
 
   Index const
   dimension = x.get_dimension();
@@ -72,7 +72,7 @@ Tensor<T, N>
 Function_Base<Function_Derived, S>::
 hessian(Function_Derived & f, Vector<T, N> const & x)
 {
-  using AD = typename Sacado::Fad::SFad<T, N>;
+  using AD = FAD<T, N>;
 
   Index const
   dimension = x.get_dimension();
@@ -547,7 +547,7 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 }
 
 //
-// Trust Region method.  See Nocedal's algorithm 11.5.
+// Line Search Newton-like method.  See Nocedal's algorithm 11.4.
 //
 template<typename T, Index N>
 template<typename FN>

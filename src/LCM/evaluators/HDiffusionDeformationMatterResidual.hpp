@@ -29,7 +29,8 @@ class HDiffusionDeformationMatterResidual : public PHX::EvaluatorWithBaseImpl<Tr
 
 public:
 
-  HDiffusionDeformationMatterResidual(const Teuchos::ParameterList& p);
+  HDiffusionDeformationMatterResidual(Teuchos::ParameterList& p,
+                                      const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -79,6 +80,8 @@ private:
   //bool haveMechSource;
   bool enableTransient;
 
+  bool have_eqps_;
+  
   unsigned int numNodes;
   unsigned int numQPs;
   unsigned int numDims;
