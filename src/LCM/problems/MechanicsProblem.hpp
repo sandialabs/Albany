@@ -1383,7 +1383,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Total Bubble Density Name", total_bubble_density);
       param_list.set<bool>("Have Bubble Volume Fraction", true);
       param_list.set<bool>("Have Total Bubble Density", true);
-      param_list.set<RealType>("Helium Radius", 
+      param_list.set<RealType>("Helium Radius",
           param_list.sublist("Tritium Coefficients").get<RealType>("Helium Radius", 0.0));
     }
 
@@ -1556,12 +1556,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           new LCM::SurfaceVectorGradient<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      // optional output
+      // optional output of the deformation gradient
       bool output_flag(false);
       if (material_db_->isElementBlockParam(eb_name,
-          "Output Deformation Gradient"))
-        output_flag =
-            material_db_->getElementBlockParam<bool>(eb_name,
+        "Output Deformation Gradient"))
+        output_flag = material_db_->getElementBlockParam<bool>(eb_name,
                 "Output Deformation Gradient");
 
       p = stateMgr.registerStateVariable(defgrad,
@@ -1570,6 +1569,25 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           eb_name,
           "identity",
           1.0,
+          false,
+          output_flag);
+      ev = Teuchos::rcp(
+          new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      // optional output of the integration weights
+      output_flag = false;
+      if (material_db_->isElementBlockParam(eb_name,
+        "Output Integration Weights"))
+        output_flag = material_db_->getElementBlockParam<bool>(eb_name,
+                "Output Integration Weights");
+
+      p = stateMgr.registerStateVariable("Weights",
+          dl_->qp_scalar,
+          dl_->dummy,
+          eb_name,
+          "scalar",
+          0.0,
           false,
           output_flag);
       ev = Teuchos::rcp(
