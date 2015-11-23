@@ -745,26 +745,22 @@ void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructsExtraction (
   }
 }
 
-void Albany::GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData){
-
+void Albany::GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData)
+{
     std::cout << "Printing all part names of the parts found in the metaData:" << std::endl;
-
     stk::mesh::PartVector all_parts = metaData->get_parts();
 
     for (stk::mesh::PartVector::iterator i_part = all_parts.begin(); i_part != all_parts.end(); ++i_part)
     {
        stk::mesh::Part *  part = *i_part ;
-
        std::cout << "\t" << part->name() << std::endl;
-
     }
-
 }
 
 void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
                                                             const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   // Load required fields
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData->universal_part()) & stk::mesh::Selector(metaData->locally_owned_part());
@@ -775,20 +771,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   stk::mesh::get_selected_entities(select_overlap_in_part, bulkData->buckets(stk::topology::NODE_RANK), nodes);
   stk::mesh::get_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::ELEM_RANK), elems);
 
-  GO numOwnedNodes(0);
-  GO numOwnedElems(0);
-  numOwnedNodes = stk::mesh::count_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::NODE_RANK));
-  numOwnedElems = stk::mesh::count_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::ELEM_RANK));
-
-  GO numGlobalVertices = 0;
-  GO numGlobalElements = 0;
-  Teuchos::reduceAll<int, GO>(*commT, Teuchos::REDUCE_SUM, 1, &numOwnedNodes, &numGlobalVertices);
-  Teuchos::reduceAll<int, GO>(*commT, Teuchos::REDUCE_SUM, 1, &numOwnedElems, &numGlobalElements);
-
-  if (commT->getRank() == 0)
-  {
-    *out << "Checking if requirements are already stored in the mesh. If not, we import them from ascii files.\n";
-  }
+  *out << "Checking if requirements are to be read from ascii file or set to constant values.\n";
 
   Teuchos::Array<GO> nodeIndices(nodes.size()), elemIndices(elems.size());
   for (int i = 0; i < nodes.size(); ++i)
@@ -805,9 +788,82 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
 
   // NOTE: the serial map cannot be created linearly, with GIDs from 0 to numGlobalNodes/Elems, since
   //       this may be a boundary mesh, and the GIDs may not start from 0, nor be contiguous.
-  //       Therefore, we must create a root map, using the Tpetra utility
-  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::Details::computeGatherMap(nodes_map,out);
-  Teuchos::RCP<const Tpetra_Map> serial_elems_map = Tpetra::Details::computeGatherMap(elems_map,out);
+  //       Therefore, we must create a root map. Moreover, we need the GIDs sorted (so that, regardless
+  //       of the GID, we read the serial input files in the correct order), and we can't sort them
+  //       once the map is created, so we cannot use the Tpetra utility gatherMap.
+
+  int num_my_nodes = nodes_map->getNodeNumElements();
+  int num_my_elems = elems_map->getNodeNumElements();
+
+  // Note: I tried to use gather, but the number of elements on each process may be different.
+  int num_proc = commT->getSize();
+  int my_rank  = commT->getRank();
+  int num_global_nodes, num_global_elems;
+  Teuchos::Array<GO> allNodesToRoot(0),allElemsToRoot(0);
+  for (int pid=0; pid<num_proc; ++pid)
+  {
+    int nb_n = num_my_nodes;
+    int nb_e = num_my_elems;
+    Teuchos::broadcast(*commT,pid,1,&nb_n);
+    Teuchos::broadcast(*commT,pid,1,&nb_e);
+
+    GO *tmp_nodes, *tmp_elems;
+    if (pid==my_rank)
+    {
+      tmp_nodes = nodeIndices.getRawPtr();
+      tmp_elems = elemIndices.getRawPtr();
+    }
+    else
+    {
+      tmp_nodes = new GO[nb_n];
+      tmp_elems = new GO[nb_e];
+    }
+
+    Teuchos::broadcast(*commT,pid,nb_n,tmp_nodes);
+    Teuchos::broadcast(*commT,pid,nb_e,tmp_elems);
+    if (my_rank==0)
+    {
+      allNodesToRoot.insert(allNodesToRoot.begin(),tmp_nodes,tmp_nodes+nb_n);
+      allElemsToRoot.insert(allElemsToRoot.begin(),tmp_elems,tmp_elems+nb_e);
+    }
+
+    if (pid!=my_rank)
+    {
+      delete[] tmp_nodes;
+      delete[] tmp_elems;
+    }
+  }
+
+  // Sorting
+  std::sort(allNodesToRoot.begin(),allNodesToRoot.end());
+  std::sort(allElemsToRoot.begin(),allElemsToRoot.end());
+
+  // Removing duplicates (should do nothing for the elements)
+  auto it_nodes = std::unique(allNodesToRoot.begin(),allNodesToRoot.end());
+  auto it_elems = std::unique(allElemsToRoot.begin(),allElemsToRoot.end());
+  allNodesToRoot.resize(std::distance(allNodesToRoot.begin(),it_nodes));    // Resize to the actual number of unique nodes
+  allElemsToRoot.resize(std::distance(allElemsToRoot.begin(),it_elems));    // Resize to the actual number of unique elements
+
+  GO node_base, elem_base;
+  if (my_rank==0)
+  {
+    node_base = *std::min_element(allNodesToRoot.begin(), allNodesToRoot.end());
+    elem_base = *std::min_element(allElemsToRoot.begin(), allElemsToRoot.end());
+  }
+  Teuchos::broadcast(*commT,0,1,&node_base);
+  Teuchos::broadcast(*commT,0,1,&elem_base);
+
+  num_global_nodes = allNodesToRoot.size();
+  num_global_elems = allElemsToRoot.size();
+  Teuchos::broadcast(*commT,0,1,&num_global_nodes);
+  Teuchos::broadcast(*commT,0,1,&num_global_elems);
+
+  Teuchos::RCP<const Tpetra_Map> serial_nodes_map, serial_elems_map;
+  serial_nodes_map = Teuchos::rcp (new Tpetra_Map (num_global_nodes,allNodesToRoot(),node_base,commT,KokkosClassic::Details::getNode<KokkosNode>()));
+  serial_elems_map = Teuchos::rcp (new Tpetra_Map (num_global_elems,allElemsToRoot(),elem_base,commT,KokkosClassic::Details::getNode<KokkosNode>()));
+
+  //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::Details::computeGatherMap(nodes_map,out);
+  //Teuchos::RCP<const Tpetra_Map> serial_elems_map = Tpetra::Details::computeGatherMap(elems_map,out);
 
   // Creating the Tpetra_Import object (to transfer from serial to parallel vectors)
   Tpetra_Import importOperatorNode (serial_nodes_map, nodes_map);
@@ -899,7 +955,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
   const Teuchos::RCP<const Tpetra_Map> serial_map = importOperator.getSourceMap();
   const Teuchos::RCP<const Tpetra_Map> map = importOperator.getTargetMap();
 
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   std::string tmp_str;
   std::string field_type = (node ? "Node" : "Elem");
@@ -1034,8 +1090,10 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
   {
     if (scalar_field!=0)
       values = stk::mesh::field_data(*scalar_field, entities[i]);
-    else
+    else if (vector_field!=0)
       values = stk::mesh::field_data(*vector_field, entities[i]);
+    else
+      values = stk::mesh::field_data(*tensor_field, entities[i]);
 
     gid    = bulkData->identifier(entities[i]) - 1;
     lid    = map->getLocalElement((GO)(gid));
@@ -1048,11 +1106,14 @@ void Albany::GenericSTKMeshStruct::readScalarFileSerial (const std::string& fnam
                                                          const Teuchos::RCP<const Tpetra_Map>& map,
                                                          const Teuchos::RCP<const Teuchos_Comm>& comm) const
 {
-  if (comm->getRank() != 0)
-    return;
-
   // It's a scalar, so we already know MultiVector has only 1 vector
   mvec = Teuchos::rcp(new Tpetra_MultiVector(map,1));
+
+  if (comm->getRank() != 0)
+  {
+    // Only process 0 will load the file...
+    return;
+  }
 
   GO numNodes;
   Teuchos::ArrayRCP<ST> nonConstView = mvec->get1dViewNonConst();
@@ -1081,35 +1142,39 @@ void Albany::GenericSTKMeshStruct::readVectorFileSerial (const std::string& fnam
                                                          const Teuchos::RCP<const Tpetra_Map>& map,
                                                          const Teuchos::RCP<const Teuchos_Comm>& comm) const
 {
-  if (comm->getRank() != 0)
-    return;
-
-  GO numNodes;
-  int numComponents;
-  std::ifstream ifile;
-  ifile.open(fname.c_str());
-  if (ifile.is_open())
+  int numComponents = 0;
+  if (comm->getRank() == 0)
   {
-    ifile >> numNodes >> numComponents;
-
-    TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-                                "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
-                                "is different from the number expected (" << map->getNodeNumElements() << ").\n");
-
-    mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numComponents));
-
-    for (int icomp(0); icomp<numComponents; ++icomp)
+    GO numNodes;
+    std::ifstream ifile;
+    ifile.open(fname.c_str());
+    if (ifile.is_open())
     {
-      Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(icomp)->get1dViewNonConst();
-      for (GO i = 0; i < numNodes; i++)
-        ifile >> nonConstView[i];
+      ifile >> numNodes >> numComponents;
+
+      TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
+                                  "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
+                                  "is different from the number expected (" << map->getNodeNumElements() << ").\n");
+
+      mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numComponents));
+
+      for (int icomp(0); icomp<numComponents; ++icomp)
+      {
+        Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(icomp)->get1dViewNonConst();
+        for (GO i = 0; i < numNodes; i++)
+          ifile >> nonConstView[i];
+      }
+      ifile.close();
     }
-    ifile.close();
+    else
+    {
+      std::cout << "Warning in GenericSTKMeshStruct: unable to open the file " << fname << std::endl;
+    }
   }
-  else
-  {
-    std::cout << "Warning in GenericSTKMeshStruct: unable to open the file " << fname << std::endl;
-  }
+
+  Teuchos::broadcast(*comm,0,1,&numComponents);
+  if (comm->getRank() != 0)
+    mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numComponents));
 }
 
 void Albany::GenericSTKMeshStruct::readLayeredScalarFileSerial (const std::string &fname, Teuchos::RCP<Tpetra_MultiVector>& mvec,
@@ -1117,40 +1182,44 @@ void Albany::GenericSTKMeshStruct::readLayeredScalarFileSerial (const std::strin
                                                                 std::vector<double>& normalizedLayersCoords,
                                                                 const Teuchos::RCP<const Teuchos_Comm>& comm) const
 {
-  if (comm->getRank() != 0)
-    return;
-
-  GO numNodes;
-  int numLayers;
-  std::ifstream ifile;
-
-  ifile.open(fname.c_str());
-  if (ifile.is_open())
+  int numLayers = 0;
+  if (comm->getRank() == 0)
   {
-    ifile >> numNodes >> numLayers;
+    GO numNodes;
+    std::ifstream ifile;
 
-    TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-                                "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
-                                "is different from the number expected (" << map->getNodeNumElements() << ").\n");
-
-    mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numLayers));
-
-    normalizedLayersCoords.resize(numLayers);
-    for (int il = 0; il < numLayers; ++il)
-      ifile >> normalizedLayersCoords[il];
-
-    for (int il(0); il<numLayers; ++il)
+    ifile.open(fname.c_str());
+    if (ifile.is_open())
     {
-      Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(il)->get1dViewNonConst();
-      for (GO i = 0; i < numNodes; i++)
-        ifile >> nonConstView[i];
+      ifile >> numNodes >> numLayers;
+
+      TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
+                                  "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
+                                  "is different from the number expected (" << map->getNodeNumElements() << ").\n");
+
+      mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numLayers));
+
+      normalizedLayersCoords.resize(numLayers);
+      for (int il = 0; il < numLayers; ++il)
+        ifile >> normalizedLayersCoords[il];
+
+      for (int il(0); il<numLayers; ++il)
+      {
+        Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(il)->get1dViewNonConst();
+        for (GO i = 0; i < numNodes; i++)
+          ifile >> nonConstView[i];
+      }
+      ifile.close();
     }
-    ifile.close();
+    else
+    {
+      std::cout << "Warning in GenericSTKMeshStruct: unable to open the file " << fname << std::endl;
+    }
   }
-  else
-  {
-    std::cout << "Warning in GenericSTKMeshStruct: unable to open the file " << fname << std::endl;
-  }
+
+  Teuchos::broadcast(*comm,0,1,&numLayers);
+  if (comm->getRank() != 0)
+    mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numLayers));
 }
 
 void Albany::GenericSTKMeshStruct::readLayeredVectorFileSerial (const std::string &fname, Teuchos::RCP<Tpetra_MultiVector>& mvec,
@@ -1158,47 +1227,53 @@ void Albany::GenericSTKMeshStruct::readLayeredVectorFileSerial (const std::strin
                                                                 std::vector<double>& normalizedLayersCoords,
                                                                 const Teuchos::RCP<const Teuchos_Comm>& comm) const
 {
+  int numVectors = 0;
   if (comm->getRank() != 0)
-    return;
-
-  GO numNodes;
-  int numLayers,numComponents;
-  std::ifstream ifile;
-
-  ifile.open(fname.c_str());
-  if (ifile.is_open())
   {
-    ifile >> numNodes >> numComponents >> numLayers;
+    GO numNodes;
+    int numLayers,numComponents;
+    std::ifstream ifile;
 
-    TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-                                "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
-                                "is different from the number expected (" << map->getNodeNumElements() << ").\n");
-
-    mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numLayers*numComponents));
-
-    normalizedLayersCoords.resize(numLayers);
-    for (int il = 0; il < numLayers; ++il)
-      ifile >> normalizedLayersCoords[il];
-
-    // Layer ordering: before switching component, we first do all the layers of the current component
-    // This is because with the stk field (natural ordering) we want to keep the layer dimension last.
-    // Ex: a 2D field f(i,j) would be stored at the raw array position i*num_cols+j. In our case,
-    //     num_cols is the number of layers, and num_rows the number of field components
-    for (int il(0); il<numLayers; ++il)
+    ifile.open(fname.c_str());
+    if (ifile.is_open())
     {
-      for (int icomp(0); icomp<numComponents; ++icomp)
+      ifile >> numNodes >> numComponents >> numLayers;
+
+      TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
+                                  "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
+                                  "is different from the number expected (" << map->getNodeNumElements() << ").\n");
+
+      numVectors = numLayers*numComponents;
+      mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numVectors));
+
+      normalizedLayersCoords.resize(numLayers);
+      for (int il = 0; il < numLayers; ++il)
+        ifile >> normalizedLayersCoords[il];
+
+      // Layer ordering: before switching component, we first do all the layers of the current component
+      // This is because with the stk field (natural ordering) we want to keep the layer dimension last.
+      // Ex: a 2D field f(i,j) would be stored at the raw array position i*num_cols+j. In our case,
+      //     num_cols is the number of layers, and num_rows the number of field components
+      for (int il(0); il<numLayers; ++il)
       {
-        Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(icomp*numLayers+il)->get1dViewNonConst();
-        for (GO i = 0; i < numNodes; i++)
-          ifile >> nonConstView[i];
+        for (int icomp(0); icomp<numComponents; ++icomp)
+        {
+          Teuchos::ArrayRCP<ST> nonConstView = mvec->getVectorNonConst(icomp*numLayers+il)->get1dViewNonConst();
+          for (GO i = 0; i < numNodes; i++)
+            ifile >> nonConstView[i];
+        }
       }
+      ifile.close();
     }
-    ifile.close();
+    else
+    {
+      std::cout << "Warning in GenericSTKMeshStruct: unable to open the file " << fname << std::endl;
+    }
   }
-  else
-  {
-    std::cout << "Warning in GenericSTKMeshStruct: unable to open the file " << fname << std::endl;
-  }
+
+  Teuchos::broadcast(*comm,0,1,&numVectors);
+  if (comm->getRank() != 0)
+    mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numVectors));
 }
 
 void
