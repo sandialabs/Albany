@@ -210,6 +210,7 @@ case "$SCRIPT_NAME" in
 			echo "*** MAKE INSTALL COMMAND FAILED ***"
 			exit 1
 		    fi
+                    ln -sf "$INSTALL_DIR/include" "$INSTALL_DIR/inc"
 		    echo SUCCESS > "$STATUS_LOG" 
 		fi
 		;;
