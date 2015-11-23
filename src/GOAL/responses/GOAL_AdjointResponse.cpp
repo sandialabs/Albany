@@ -6,6 +6,7 @@
 
 #include "GOAL_AdjointResponse.hpp"
 #include "GOAL_MechanicsProblem.hpp"
+#include "GOAL_BCUtils.hpp"
 #include "Albany_GOALDiscretization.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "PHAL_Utilities.hpp"
@@ -105,7 +106,7 @@ void AdjointResponse::initializeLinearSystem()
 
 void AdjointResponse::initializeWorkset(PHAL::Workset& workset)
 {
-  workset.is_adjoint = false;
+  workset.is_adjoint = true;
   workset.j_coeff = 1.0;
   workset.m_coeff = 0.0;
   workset.n_coeff = 0.0;
@@ -136,6 +137,7 @@ void AdjointResponse::fillLinearSystem()
   }
   jac->doExport(*overlapJac, *exporter, Tpetra::ADD);
   qoi->doExport(*overlapQoI, *exporter, Tpetra::ADD);
+  computeAdjointHierarchicBCs(time, *application.get(), qoi, jac);
 }
 
 void AdjointResponse::evaluateResponseT(

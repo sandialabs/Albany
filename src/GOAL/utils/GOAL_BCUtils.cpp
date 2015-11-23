@@ -21,51 +21,47 @@ class BCManager
 {
   public:
     BCManager(
-        Albany::Application const& application,
         const double time,
-        RCP<const Tpetra_Vector> const& solution,
-        RCP<Tpetra_Vector> const& residual,
-        RCP<Tpetra_CrsMatrix> const& jacobian);
+        Albany::Application const& application);
+    const double t;
+    Albany::Application const& app;
+    RCP<const Tpetra_Vector> sol;
+    RCP<Tpetra_Vector> res;
+    RCP<Tpetra_Vector> qoi;
+    RCP<Tpetra_CrsMatrix> jac;
+    RCP<Tpetra_CrsMatrix> jacT;
     void run();
   private:
-    void applyBC(Teuchos::ParameterList const& p);
-    void modifyLinearSystem(double v, int offset, std::string set);
-    Albany::Application const& app;
-    const double t;
-    RCP<const Tpetra_Vector> const& sol;
-    RCP<Tpetra_Vector> const& res;
-    RCP<Tpetra_CrsMatrix> const& jac;
+    bool isAdjoint;
     RCP<Albany::GOALDiscretization> disc;
     RCP<Albany::GOALMeshStruct> meshStruct;
     RCP<Albany::GOALMechanicsProblem> problem;
     Albany::GOALNodeSets ns;
     ParameterList bcParams;
+    void applyBC(ParameterList const& p);
+    void modifyPrimalSystem(double v, int offset, std::string set);
+    void modifyAdjointSystem(double v, int offset, std::string set);
 };
 
 BCManager::BCManager(
-    Albany::Application const& application,
     const double time,
-    RCP<const Tpetra_Vector> const& solution,
-    RCP<Tpetra_Vector> const& residual,
-    RCP<Tpetra_CrsMatrix> const& jacobian) :
-  app(application),
+    Albany::Application const& application) :
   t(time),
-  sol(solution),
-  res(residual),
-  jac(jacobian)
+  app(application)
 {
   RCP<const ParameterList> pl = app.getProblemPL();
   bcParams = pl->sublist("Hierarchic Boundary Conditions");
   RCP<Albany::AbstractDiscretization> ad = app.getDiscretization();
-  disc = Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
-  meshStruct = disc->getGOALMeshStruct();
+  this->disc = Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
+  this->meshStruct = disc->getGOALMeshStruct();
   RCP<Albany::AbstractProblem> ap = app.getProblem();
-  problem = Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(ap);
-  ns = disc->getGOALNodeSets();
+  this->problem = Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(ap);
+  this->ns = disc->getGOALNodeSets();
 }
 
 void BCManager::run()
 {
+  if (jacT == Teuchos::null) isAdjoint = false;
   typedef ParameterList::ConstIterator ParamIter;
   for (ParamIter i = bcParams.begin(); i != bcParams.end(); ++i)
   {
@@ -109,8 +105,11 @@ void BCManager::applyBC(ParameterList const& p)
   std::string set = p.get<std::string>("Node Set");
   std::string dof = p.get<std::string>("DOF");
 
-  // parse the value and get a double
-  double v = parseExpression(val, t);
+  // if this is the adjoint problem, set the value to 0
+  // otherwise parse the expression from the input file to get the value
+  double v = 0.0;
+  if (!isAdjoint)
+    v = parseExpression(val, t);
 
   // does this node set actually exist?
   assert(ns.count(set) == 1);
@@ -118,10 +117,13 @@ void BCManager::applyBC(ParameterList const& p)
   // does this dof actually exist?
   int offset = problem->getOffset(dof);
 
-  modifyLinearSystem(v, offset, set);
+  if (!isAdjoint)
+    modifyPrimalSystem(v, offset, set);
+  else
+    modifyAdjointSystem(v, offset, set);
 }
 
-void BCManager::modifyLinearSystem(double v, int offset, std::string set)
+void BCManager::modifyPrimalSystem(double v, int offset, std::string set)
 {
   // should we fill in BC info?
   bool fillRes = (res != Teuchos::null);
@@ -177,18 +179,66 @@ void BCManager::modifyLinearSystem(double v, int offset, std::string set)
   }
 }
 
-void computeHierarchicBCs(
-    Albany::Application const& app,
-    const double time,
-    RCP<const Tpetra_Vector> const& sol,
-    RCP<Tpetra_Vector> const& res,
-    RCP<Tpetra_CrsMatrix> const& jac)
+void BCManager::modifyAdjointSystem(double v, int offset, std::string set)
 {
-  RCP<const ParameterList> pl = app.getProblemPL();
-  std::string name = pl->get<std::string>("Name");
-  if (name.find("GOAL") != 0)
-    return;
-  BCManager bcm(app, time, sol, res, jac);
+
+  // get views of the qoi vector
+  ArrayRCP<ST> qoi_nonconst_view = qoi->get1dViewNonConst();
+
+  // set up some data for replacing jacobian values
+  Teuchos::Array<LO> index(1);
+  Teuchos::Array<ST> value(1);
+  value[0] = 1.0;
+  size_t numEntries;
+  Teuchos::Array<ST> matrixEntries;
+  Teuchos::Array<LO> matrixIndices;
+
+  // loop over all of the nodes in this node set
+  std::vector<Albany::GOALNode> nodes = ns[set];
+  for (int i=0; i < nodes.size(); ++i)
+  {
+    Albany::GOALNode node = nodes[i];
+    int lunk = disc->getDOF(node.lid, offset);
+
+    // modify the qoi vector
+    qoi_nonconst_view[lunk] = 0.0;
+
+    // modify the transpose of the jacobian
+    index[0] = lunk;
+    numEntries = jacT->getNumEntriesInLocalRow(lunk);
+    matrixEntries.resize(numEntries);
+    matrixIndices.resize(numEntries);
+    jacT->getLocalRowCopy(lunk, matrixIndices(), matrixEntries(), numEntries);
+    for (int i=0; i < numEntries; ++i)
+      matrixEntries[i] = 0.0;
+    jacT->replaceLocalValues(lunk, matrixIndices(), matrixEntries());
+    jacT->replaceLocalValues(lunk, index(), value());
+  }
+}
+
+void computeHierarchicBCs(
+    const double time,
+    Albany::Application const& app,
+    Teuchos::RCP<const Tpetra_Vector> const& sol,
+    Teuchos::RCP<Tpetra_Vector> const& res,
+    Teuchos::RCP<Tpetra_CrsMatrix> const& jac)
+{
+  BCManager bcm(time, app);
+  bcm.sol = sol;
+  bcm.res = res;
+  bcm.jac = jac;
+  bcm.run();
+}
+
+void computeAdjointHierarchicBCs(
+    const double time,
+    Albany::Application const& app,
+    Teuchos::RCP<Tpetra_Vector> const& qoi,
+    Teuchos::RCP<Tpetra_CrsMatrix> const& jacT)
+{
+  BCManager bcm(time, app);
+  bcm.qoi = qoi;
+  bcm.jacT = jacT;
   bcm.run();
 }
 
