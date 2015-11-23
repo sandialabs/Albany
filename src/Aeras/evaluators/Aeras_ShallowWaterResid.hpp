@@ -127,7 +127,7 @@ private:
 
 	PHX::MDField<ScalarT,QuadPoint, Dim> wrk1qp_vector_scope1_;
 	PHX::MDField<ScalarT,QuadPoint, Dim> wrk2qp_vector_scope1_;
-
+	PHX::MDField<ScalarT,QuadPoint, Dim> wrk3qp_vector_scope1_;
 
 	PHX::MDField<ScalarT,Node> wrk1node_scalar_scope1_;
 	PHX::MDField<ScalarT,Node> wrk2node_scalar_scope1_;

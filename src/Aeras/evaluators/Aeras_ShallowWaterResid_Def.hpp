@@ -305,6 +305,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	wrk1qp_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1qp_vector_scope1_.fieldTag(),ddims_));
 	wrk2qp_vector_scope1_ = PHX::MDField<ScalarT,QuadPoint,Dim>("wrk2qp_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
 	wrk2qp_vector_scope1_.setFieldData(ViewFactory::buildView(wrk2qp_vector_scope1_.fieldTag(),ddims_));
+	wrk3qp_vector_scope1_ = PHX::MDField<ScalarT,QuadPoint,Dim>("wrk3qp_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
+	wrk3qp_vector_scope1_.setFieldData(ViewFactory::buildView(wrk3qp_vector_scope1_.fieldTag(),ddims_));
 
 
 //	wrk3_vector_scope1_ = PHX::MDField<ScalarT,Node,VecDim>("wrk3_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,VecDim>(numNodes,3)));
@@ -790,9 +792,17 @@ BuildLaplace_for_uv (const int& cell) const
 
 	}
 
-	gradient<ScalarT>(utX, cell, utXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-	gradient<ScalarT>(utY, cell, utYgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-	gradient<ScalarT>(utZ, cell, utZgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradux_ = wrk1qp_vector_scope1_;
+	const PHX::MDField<ScalarT, QuadPoint, Dim> & graduy_ = wrk2qp_vector_scope1_;
+	const PHX::MDField<ScalarT, QuadPoint, Dim> & graduz_ = wrk3qp_vector_scope1_;
+
+	gradient3(ux_, gradux_, cell);
+	gradient3(uy_, graduy_, cell);
+	gradient3(uz_, graduz_, cell);
+
+//	gradient<ScalarT>(utX, cell, utXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+//	gradient<ScalarT>(utY, cell, utYgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+//	gradient<ScalarT>(utZ, cell, utZgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 		for (std::size_t node=0; node < numNodes; ++node) {
@@ -817,6 +827,23 @@ BuildLaplace_for_uv (const int& cell) const
 
 			//compute_coefficients_K(lam,th);
 
+
+			Residual(cell,node,1) +=
+					sHvTau*(
+							k11*( gradux_(qp,0)*wGradBF(cell,node,qp,0) + gradux_(qp,1)*wGradBF(cell,node,qp,1))
+							+ k21*( graduy_(qp,0)*wGradBF(cell,node,qp,0) + graduy_(qp,1)*wGradBF(cell,node,qp,1))
+							//k31 = 0
+					);
+
+
+			Residual(cell,node,2) +=
+					sHvTau*(
+							k12*( gradux_(qp,0)*wGradBF(cell,node,qp,0) + gradux_(qp,1)*wGradBF(cell,node,qp,1))
+							+ k22*( graduy_(qp,0)*wGradBF(cell,node,qp,0) + graduy_(qp,1)*wGradBF(cell,node,qp,1))
+							+ k32*( graduz_(qp,0)*wGradBF(cell,node,qp,0) + graduz_(qp,1)*wGradBF(cell,node,qp,1))
+					);
+
+			/*
 			Residual(cell,node,1) +=
 					sHvTau*(
 							k11*( utXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
@@ -831,7 +858,7 @@ BuildLaplace_for_uv (const int& cell) const
 							+ k22*( utYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 							+ k32*( utZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utZgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 					);
-
+*/
 
 			/*
               if(doNotDampRotation){
