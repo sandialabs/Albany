@@ -115,14 +115,34 @@ private:
 	double sHvTau;
 
 
-	PHX::MDField<ScalarT,QuadPoint> wrk1_scalar_scope1_;
-	PHX::MDField<ScalarT,QuadPoint> wrk2_scalar_scope1_;
-	PHX::MDField<ScalarT,QuadPoint> wrk3_scalar_scope1_;
-	PHX::MDField<ScalarT,QuadPoint> wrk4_scalar_scope1_;
-	PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope1_;
-	PHX::MDField<ScalarT,Node, Dim> wrk2_vector_scope1_;
+	PHX::MDField<ScalarT,QuadPoint> wrk1qp_scalar_scope1_;
+	PHX::MDField<ScalarT,QuadPoint> wrk2qp_scalar_scope1_;
+	PHX::MDField<ScalarT,QuadPoint> wrk3qp_scalar_scope1_;
+	PHX::MDField<ScalarT,QuadPoint> wrk4qp_scalar_scope1_;
 
-	PHX::MDField<ScalarT,Node, Dim> wrk1_vector_scope2_;
+//	PHX::MDField<ScalarT,Node> wrk1node_scalar_scope1_;
+//	PHX::MDField<ScalarT,Node> wrk2node_scalar_scope1_;
+//	PHX::MDField<ScalarT,QuadPoint> wrk1qp_scalar_scope1_;
+//	PHX::MDField<ScalarT,QuadPoint> wrk2qp_scalar_scope1_;
+
+	PHX::MDField<ScalarT,QuadPoint, Dim> wrk1qp_vector_scope1_;
+	PHX::MDField<ScalarT,QuadPoint, Dim> wrk2qp_vector_scope1_;
+
+
+	PHX::MDField<ScalarT,Node> wrk1node_scalar_scope1_;
+	PHX::MDField<ScalarT,Node> wrk2node_scalar_scope1_;
+	PHX::MDField<ScalarT,Node> wrk3node_scalar_scope1_;
+
+	PHX::MDField<ScalarT,Node, Dim> wrk1node_vector_scope1_;
+	PHX::MDField<ScalarT,Node, Dim> wrk2node_vector_scope1_;
+//	PHX::MDField<ScalarT,Node, Dim> wrk3_vector_scope1_;
+
+	//this is a vec of dim 3
+	//OG: There may be a confusion about what vecDim is. It is only Dim+1
+	//and I should have probably set dimension here to 3.
+	//PHX::MDField<ScalarT,Node,VecDim> wrk3_vector_scope1_;
+
+	PHX::MDField<ScalarT,Node, Dim> wrk1node_vector_scope2_;
 
 
 
@@ -175,7 +195,7 @@ public:
 	double a, myPi;
 
 
-	MeshScalarT k11, k12, k21, k22, k32;
+//	ScalarT k11, k12, k21, k22, k32;
 
 	KOKKOS_INLINE_FUNCTION
 	void divergence3(const PHX::MDField<ScalarT, Node, Dim>  & field,
@@ -183,8 +203,8 @@ public:
 			const int & cell) const;
 
 	KOKKOS_INLINE_FUNCTION
-	void gradient3(const PHX::MDField<ScalarT, QuadPoint>  & field,
-			const PHX::MDField<ScalarT, Node, Dim>  & gradient_,
+	void gradient3(const PHX::MDField<ScalarT, Node>  & field,
+			const PHX::MDField<ScalarT, QuadPoint, Dim>  & gradient_,
 			const int & cell) const;
 
 	KOKKOS_INLINE_FUNCTION
@@ -267,6 +287,14 @@ public:
 	//		                     const typename PHAL::Ref<const MeshScalarT>::type th   );
 	// KOKKOS_INLINE_FUNCTION
 	void compute_coefficients_K(const MeshScalarT lam, const MeshScalarT th   );
+
+
+	// KOKKOS_INLINE_FUNCTION
+//	void compute_3Dvelocity(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
+//			const PHX::MDField<ScalarT, Node, VecDim>  & uxyz) const;
+	void compute_3Dvelocity(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
+			const PHX::MDField<ScalarT, Node>  & ux, const PHX::MDField<ScalarT, Node>  & uy, const PHX::MDField<ScalarT, Node>  & uz) const;
+
 
 #endif
 };

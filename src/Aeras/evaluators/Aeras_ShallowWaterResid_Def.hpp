@@ -278,22 +278,40 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	utZgradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("utZgradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
 	utZgradNodes.setFieldData(ViewFactory::buildView(utZgradNodes.fieldTag(),ddims_));
 
-	wrk1_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-	wrk1_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1_scalar_scope1_.fieldTag(),ddims_));
-	wrk2_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk2_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-	wrk2_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk2_scalar_scope1_.fieldTag(),ddims_));
-	wrk3_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk3_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-	wrk3_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk3_scalar_scope1_.fieldTag(),ddims_));
-	wrk4_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk4_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
-	wrk4_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk4_scalar_scope1_.fieldTag(),ddims_));
+	wrk1qp_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk1qp_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+	wrk1qp_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1qp_scalar_scope1_.fieldTag(),ddims_));
+	wrk2qp_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk2qp_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+	wrk2qp_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk2qp_scalar_scope1_.fieldTag(),ddims_));
+	wrk3qp_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk3qp_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+	wrk3qp_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk3qp_scalar_scope1_.fieldTag(),ddims_));
+	wrk4qp_scalar_scope1_ = PHX::MDField<ScalarT,QuadPoint>("wrk4qp_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
+	wrk4qp_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk4qp_scalar_scope1_.fieldTag(),ddims_));
 
-	wrk1_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
-	wrk1_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1_vector_scope1_.fieldTag(),ddims_));
-	wrk2_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk2_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
-	wrk2_vector_scope1_.setFieldData(ViewFactory::buildView(wrk2_vector_scope1_.fieldTag(),ddims_));
+	//OG Note that when the code is clean from QuadPoint, these vars can be deleted (or more precisely, the ones on QP points should be deleted).
+	wrk1node_scalar_scope1_ = PHX::MDField<ScalarT,Node>("wrk1node_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
+	wrk1node_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk1node_scalar_scope1_.fieldTag(),ddims_));
+	wrk2node_scalar_scope1_ = PHX::MDField<ScalarT,Node>("wrk2node_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
+	wrk2node_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk2node_scalar_scope1_.fieldTag(),ddims_));
+	wrk3node_scalar_scope1_ = PHX::MDField<ScalarT,Node>("wrk3node_scalar_scope1_",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
+	wrk3node_scalar_scope1_.setFieldData(ViewFactory::buildView(wrk3node_scalar_scope1_.fieldTag(),ddims_));
 
-	wrk1_vector_scope2_ = PHX::MDField<ScalarT,Node,Dim>("wrk1_vector_scope2_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
-	wrk1_vector_scope2_.setFieldData(ViewFactory::buildView(wrk1_vector_scope2_.fieldTag(),ddims_));
+
+	wrk1node_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk1node_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+	wrk1node_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1node_vector_scope1_.fieldTag(),ddims_));
+	wrk2node_vector_scope1_ = PHX::MDField<ScalarT,Node,Dim>("wrk2node_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+	wrk2node_vector_scope1_.setFieldData(ViewFactory::buildView(wrk2node_vector_scope1_.fieldTag(),ddims_));
+
+	wrk1qp_vector_scope1_ = PHX::MDField<ScalarT,QuadPoint,Dim>("wrk1qp_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
+	wrk1qp_vector_scope1_.setFieldData(ViewFactory::buildView(wrk1qp_vector_scope1_.fieldTag(),ddims_));
+	wrk2qp_vector_scope1_ = PHX::MDField<ScalarT,QuadPoint,Dim>("wrk2qp_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
+	wrk2qp_vector_scope1_.setFieldData(ViewFactory::buildView(wrk2qp_vector_scope1_.fieldTag(),ddims_));
+
+
+//	wrk3_vector_scope1_ = PHX::MDField<ScalarT,Node,VecDim>("wrk3_vector_scope1_",Teuchos::rcp(new PHX::MDALayout<Node,VecDim>(numNodes,3)));
+//	wrk3_vector_scope1_.setFieldData(ViewFactory::buildView(wrk3_vector_scope1_.fieldTag(),ddims_));
+
+	wrk1node_vector_scope2_ = PHX::MDField<ScalarT,Node,Dim>("wrk1node_vector_scope2_",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
+	wrk1node_vector_scope2_.setFieldData(ViewFactory::buildView(wrk1node_vector_scope2_.fieldTag(),ddims_));
 
 
 	nodeToQPMap_Kokkos=Kokkos::View<int*, PHX::Device> ("nodeToQPMap_Kokkos",nNodes);
@@ -368,7 +386,7 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
 		const PHX::MDField<ScalarT,QuadPoint>  & div_,
 		const int & cell) const  {
 
-	const PHX::MDField<ScalarT,Node, Dim>  &  vcontra_ = wrk1_vector_scope2_;
+	const PHX::MDField<ScalarT,Node, Dim>  &  vcontra_ = wrk1node_vector_scope2_;
 	//og is it necessary?
 	//vcontra.deep_copy(0);
 
@@ -408,8 +426,8 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::
-gradient3(const PHX::MDField<ScalarT, QuadPoint>  & field,
-		const PHX::MDField<ScalarT, Node, Dim>  & gradient_,
+gradient3(const PHX::MDField<ScalarT, Node>  & field,
+		const PHX::MDField<ScalarT, QuadPoint, Dim>  & gradient_,
 		const int & cell) const {
 
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -438,7 +456,7 @@ void ShallowWaterResid<EvalT,Traits>::curl3(
 		const PHX::MDField<ScalarT, QuadPoint>  & curl_,
 		const int &cell) const {
 
-	const PHX::MDField<ScalarT,Node, Dim>  &  vcovar_ = wrk1_vector_scope2_;
+	const PHX::MDField<ScalarT,Node, Dim>  &  vcovar_ = wrk1node_vector_scope2_;
 
 	for (int node=0; node < numNodes; ++node) {
 
@@ -481,10 +499,10 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0(const int& cell) const
 {
-	const PHX::MDField<ScalarT,Node, Dim>  &  huv_ = wrk1_vector_scope1_;
+	const PHX::MDField<ScalarT,Node, Dim>  &  huv_ = wrk1node_vector_scope1_;
 	product_h_uv(huv_, cell);
 
-	const PHX::MDField<ScalarT,QuadPoint>  &  div_ = wrk1_scalar_scope1_;
+	const PHX::MDField<ScalarT,QuadPoint>  &  div_ = wrk1qp_scalar_scope1_;
 	divergence3(huv_, div_, cell);
 
 	for (int qp=0; qp < numQPs; ++qp) {
@@ -587,12 +605,12 @@ void ShallowWaterResid<EvalT, Traits>::
 compute_Residuals12_notprescribed (const int& cell) const
 {
 
-	const PHX::MDField<ScalarT, QuadPoint>  &  cor_ = wrk1_scalar_scope1_;
+	const PHX::MDField<ScalarT, QuadPoint>  &  cor_ = wrk1qp_scalar_scope1_;
 	//probably this call can be removed
 	get_coriolis3(cor_, cell);
-	const PHX::MDField<ScalarT, QuadPoint> & kineticenergy_ = wrk2_scalar_scope1_;
-	const PHX::MDField<ScalarT, QuadPoint> & potentialenergy_ = wrk3_scalar_scope1_;
-	const PHX::MDField<ScalarT,Node, Dim> & vectoru_ = wrk1_vector_scope1_;
+	const PHX::MDField<ScalarT, Node> & kineticenergy_ = wrk2node_scalar_scope1_;
+	const PHX::MDField<ScalarT, Node> & potentialenergy_ = wrk3node_scalar_scope1_;
+	const PHX::MDField<ScalarT,Node, Dim> & vectoru_ = wrk1node_vector_scope1_;
 
 	for (int node=0; node < numNodes; ++node) {
 		const typename PHAL::Ref<const ScalarT>::type
@@ -607,11 +625,11 @@ compute_Residuals12_notprescribed (const int& cell) const
 		vectoru_(node, 1) = utheta;
 	}
 
-	const PHX::MDField<ScalarT, QuadPoint> & curlU_ = wrk4_scalar_scope1_;
+	const PHX::MDField<ScalarT, QuadPoint> & curlU_ = wrk4qp_scalar_scope1_;
 	curl3(vectoru_, curlU_, cell);
 
-	const PHX::MDField<ScalarT, Node, Dim> & gradKineticEnergy_ = wrk1_vector_scope1_;
-	const PHX::MDField<ScalarT, Node, Dim> & gradPotentialEnergy_ = wrk2_vector_scope1_;
+	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradKineticEnergy_ = wrk1qp_vector_scope1_;
+	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradPotentialEnergy_ = wrk2qp_vector_scope1_;
 
 	gradient3(kineticenergy_, gradKineticEnergy_, cell);
 	gradient3(potentialenergy_, gradPotentialEnergy_, cell);
@@ -687,6 +705,44 @@ compute_coefficients_K(const MeshScalarT lam,
     k32 =  cos(th);
 }*/
 
+/*
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+compute_3Dvelocity(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
+		const PHX::MDField<ScalarT, Node, VecDim>  & uxyz ) const
+{
+
+	const ScalarT
+	k11 = -sin(lam),
+	k12 = -sin(th)*cos(lam),
+	k21 =  cos(lam),
+	k22 = -sin(th)*sin(lam),
+	k32 =  cos(th);
+
+	uxyz(node,0) = k11*ulambda + k12*utheta;
+	uxyz(node,1) = k21*ulambda + k22*utheta;
+	uxyz(node,2) = k32*utheta;
+}*/
+
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+compute_3Dvelocity(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
+		const PHX::MDField<ScalarT, Node>  & ux, const PHX::MDField<ScalarT, Node>  & uy, const PHX::MDField<ScalarT, Node>  & uz) const
+{
+	const ScalarT
+	k11 = -sin(lam),
+	k12 = -sin(th)*cos(lam),
+	k21 =  cos(lam),
+	k22 = -sin(th)*sin(lam),
+	k32 =  cos(th);
+
+	ux(node) = k11*ulambda + k12*utheta;
+	uy(node) = k21*ulambda + k22*utheta;
+	uz(node) = k32*utheta;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename EvalT, typename Traits>
@@ -701,6 +757,11 @@ BuildLaplace_for_uv (const int& cell) const
 		     Residual(cell,node,3) += UDot(cell,qp,3);
 		  }
 		}*/
+
+//	const PHX::MDField<ScalarT, Node, VecDim>  &  uxyz_ = wrk3_vector_scope1_;
+    const PHX::MDField<ScalarT, Node>  &  ux_ = wrk1node_scalar_scope1_;
+    const PHX::MDField<ScalarT, Node>  &  uy_ = wrk2node_scalar_scope1_;
+    const PHX::MDField<ScalarT, Node>  &  uz_ = wrk3node_scalar_scope1_;
 
 	for (std::size_t node=0; node < numNodes; ++node) {
 
@@ -724,6 +785,8 @@ BuildLaplace_for_uv (const int& cell) const
 		utX(node) = k11*utlambda + k12*uttheta;
 		utY(node) = k21*utlambda + k22*uttheta;
 		utZ(node) = k32*uttheta;
+
+		compute_3Dvelocity(node, lam, th, utlambda, uttheta, ux_, uy_, uz_ );
 
 	}
 
@@ -918,6 +981,13 @@ compute_uv_ImplHV (const int& cell) const
 			//     + k21*( (v11*utYgradNodes(qp,0) + v12*utYgradNodes(qp,1))*wGradBF(cell,node,qp,0) +
 			//             (v21*utYgradNodes(qp,0) + v22*utYgradNodes(qp,1))*wGradBF(cell,node,qp,1)
 			//           )
+			//instead of
+			//Residual(cell,node,1) -=
+			//		hyperviscosity(cell,qp,0)*(
+			//				k11*( utXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+			//				+ k21*( utYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+			//				//k31 = 0
+			//		);
 
 			Residual(cell,node,1) -=
 					hyperviscosity(cell,qp,0)*(
