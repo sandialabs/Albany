@@ -1575,24 +1575,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      // optional output of the integration weights
-      output_flag = false;
-      if (material_db_->isElementBlockParam(eb_name,
-        "Output Integration Weights"))
-        output_flag = material_db_->getElementBlockParam<bool>(eb_name,
-                "Output Integration Weights");
-
-      p = stateMgr.registerStateVariable("Weights",
-          dl_->qp_scalar,
-          dl_->dummy,
-          eb_name,
-          "scalar",
-          0.0,
-          false,
-          output_flag);
-      ev = Teuchos::rcp(
-          new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
 
       // need J and J_old to perform time integration for poromechanics problem
       output_flag = false;
@@ -1845,6 +1827,27 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             output_flag);
         ev = Teuchos::rcp(
             new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+            // optional output of the integration weights
+      output_flag = false;
+      if (material_db_->isElementBlockParam(eb_name,
+        "Output Integration Weights"))
+        output_flag = material_db_->getElementBlockParam<bool>(eb_name,
+                "Output Integration Weights");
+
+      if (output_flag) {
+        p = stateMgr.registerStateVariable("Weights",
+                                           dl_->qp_scalar,
+                                           dl_->dummy,
+                                           eb_name,
+                                           "scalar",
+                                           0.0,
+                                           false,
+                                           output_flag);
+        ev = Teuchos::rcp(
+                          new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
