@@ -7,6 +7,7 @@
 #include "GOAL_AdjointResponse.hpp"
 #include "GOAL_MechanicsProblem.hpp"
 #include "GOAL_BCUtils.hpp"
+#include "GOAL_LinearSolve.hpp"
 #include "Albany_GOALDiscretization.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "PHAL_Utilities.hpp"
@@ -94,6 +95,8 @@ void AdjointResponse::initializeLinearSystem()
   RCP<const Tpetra_CrsGraph> og = discretization->getOverlapJacobianGraphT();
   x = rcp(new Tpetra_Vector(m));
   overlapX = rcp(new Tpetra_Vector(om));
+  z = rcp(new Tpetra_Vector(m));
+  overlapZ = rcp(new Tpetra_Vector(om));
   qoi = rcp(new Tpetra_Vector(m));
   overlapQoI = rcp(new Tpetra_Vector(om));
   jac = rcp(new Tpetra_CrsMatrix(g));
@@ -138,6 +141,7 @@ void AdjointResponse::fillLinearSystem()
   jac->doExport(*overlapJac, *exporter, Tpetra::ADD);
   qoi->doExport(*overlapQoI, *exporter, Tpetra::ADD);
   computeAdjointHierarchicBCs(time, *application.get(), qoi, jac);
+  jac->fillComplete();
 }
 
 void AdjointResponse::evaluateResponseT(
@@ -156,6 +160,7 @@ void AdjointResponse::evaluateResponseT(
   postRegistrationSetup();
   initializeLinearSystem();
   fillLinearSystem();
+  solveLinearSystem(application, jac, z, qoi);
   evalCtr++;
 }
 
