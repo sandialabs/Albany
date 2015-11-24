@@ -28,6 +28,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHard_Implicit_Active_Se
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_MultiSlipPlaneHard_Active_Sets_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MultiSlipPlaneHard_Implicit_Active_Sets.xml)
+#add_test(CrystalPlasticity_MultiSlipPlaneHard_Active_Sets_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MultiSlipPlaneHard_Implicit_Active_Sets.xml)
 add_test(CrystalPlasticity_MultiSlipPlaneHard_Implicit_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MultiSlipPlaneHard_Implicit.xml)
 endif()

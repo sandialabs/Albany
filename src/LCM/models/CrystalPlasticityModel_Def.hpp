@@ -19,8 +19,8 @@
 #define LINE_SEARCH
 #define SLIP_PREDICTOR
 
-#define HOMEROLLEDSOLVER
-//#define MINISOLVER
+//#define HOMEROLLEDSOLVER
+#define MINISOLVER
 //#define PRINTSOLVERDATA
 
 #include <typeinfo>
@@ -771,6 +771,18 @@ computeState(typename Traits::EvalData workset,
 #ifdef MINISOLVER
 	{ // MiniSolver testing
 
+	  // Evaluate quantities under the initial guess for the slip increment
+	  CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+	  CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
+	  CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
+	  CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
+	  RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
+
+	  // Determine convergence tolerances for the nonlinear solver
+	  RealType residual_relative_tolerance = implicit_nonlinear_solver_relative_tolerance_ * residual_val;
+	  RealType residual_absolute_tolerance = implicit_nonlinear_solver_absolute_tolerance_;
+
+
 	  // DJL todo:  The state N data shouldn't ever be Fad, which I think they currently are above.
 	  //            When Albany::Jacobain is called, the Fad info should be in F_np1 only.
 
@@ -812,8 +824,14 @@ computeState(typename Traits::EvalData workset,
 												dt_minisolver);
 
 	  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-	  Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
+	  //Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
+	  //Intrepid::TrustRegionStep<ValueT, CP::MAX_NUM_SLIP> step;
+	  //Intrepid::ConjugateGradientStep<ValueT, CP::MAX_NUM_SLIP> step;
+	  Intrepid::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
 	  Intrepid::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
+
+	  minimizer.rel_tol = residual_relative_tolerance;
+	  minimizer.abs_tol = residual_absolute_tolerance;
 
 	  miniMinimize(minimizer, step, crystalPlasticityNLS, x);
 
