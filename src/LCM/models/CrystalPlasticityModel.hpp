@@ -96,8 +96,14 @@ namespace CP
 
 }
 
+class NLSDimension
+{
+public:
+  static Intrepid::Index DIMENSION;
+};
+
 template <Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT>
-class CrystalPlasticityNLS : public Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>
+class CrystalPlasticityNLS : public NLSDimension, public Intrepid::Function_Base<CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>
 {
 public:
 
@@ -113,9 +119,9 @@ public:
   {
     num_dim_ = Fp_n_.get_dimension();
     num_slip_ = hardness_n_.get_dimension();
+    DIMENSION = num_slip_;
   }
 
-  static constexpr Intrepid::Index DIMENSION = CP::MAX_NUM_SLIP;
   static constexpr char const * const NAME = "Crystal Plasticity Nonlinear System";
 
   // Default value.

@@ -26,6 +26,9 @@
 #include <typeinfo>
 #include <iostream>
 #include <Sacado_Traits.hpp>
+
+Intrepid::Index LCM::NLSDimension::DIMENSION;
+
 namespace LCM
 {
 
