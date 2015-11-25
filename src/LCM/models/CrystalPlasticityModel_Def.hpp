@@ -17,8 +17,6 @@
 #include <iostream>
 #include <Sacado_Traits.hpp>
 
-//#define  DECOUPLE
-
 Intrepid::Index LCM::NLSDimension::DIMENSION;
 
 namespace LCM
@@ -698,11 +696,7 @@ computeState(typename Traits::EvalData workset,
       Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> Re_np1;
       Re_np1.set_dimension(num_dims_);
       // Saint Venant–Kirchhoff model
-#ifdef DECOUPLE
-      Fe = F_np1;
-#else
       Fe = F_np1 * (Intrepid::inverse(Fp_np1));
-#endif
       Re_np1 = Intrepid::polar_rotation(Fe);
 
       // Copy data from local data structures back into Albany fields
@@ -993,6 +987,8 @@ computeStress(
   Fe.set_dimension(num_dim);
   Intrepid::Tensor<ArgT, NumDimT> E;
   E.set_dimension(num_dim);
+  Intrepid::Tensor<ArgT, NumDimT> Ce;
+  Ce.set_dimension(num_dim);
 
   Intrepid::Tensor<RealType, NumDimT> I;
   I.set_dimension(num_dim);
@@ -1003,22 +999,18 @@ computeStress(
 
   // Saint Venant–Kirchhoff model
   Fpinv = Intrepid::inverse(Fp);
-#ifdef DECOUPLE
-  std::cout << "ELASTIC STRESS ONLY\n";
-  Fe = F;
-#else
   Fe = F * Fpinv;
-#endif
-  E = 0.5 * (Intrepid::transpose(Fe) * Fe - I);
+  Ce = Intrepid::transpose(Fe) * Fe;
+  E = 0.5 * (Ce - I);
   S = Intrepid::dotdot(C, E);
-  sigma = (1.0 / Intrepid::det(F)) * F * S * Intrepid::transpose(F);
+  sigma = (1.0 / Intrepid::det(Fe)) * Fe * S * Intrepid::transpose(Fe);
   CP::confirmTensorSanity<NumDimT>(
       sigma,
       "Cauchy stress in CrystalPlasticityNLS::computeStress()");
 
   // Compute resolved shear stresses
   for (int s(0); s < num_slip; ++s) {
-    shear[s] = Intrepid::dotdot(slip_systems[s].projector_, S);
+    shear[s] = Intrepid::dotdot(slip_systems[s].projector_, Ce * S);
   }
 }
 
