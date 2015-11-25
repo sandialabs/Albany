@@ -264,19 +264,6 @@ private:
   ///
   CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
-  template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ArgT>
-  void
-  lineSearch(
-      ScalarT dt,
-      Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
-      Intrepid::Tensor<ScalarT, NumDimT> const & F_np1,
-      Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
-      Intrepid::Vector<ArgT, NumSlipT> const & slip_np1_km1,
-      Intrepid::Vector<ArgT, NumSlipT> const & delta_delta_slip,
-      Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
-      ScalarT const & norm_slip_residual,
-      RealType & alpha) const;
-
   ///
   /// explicit update of the slip
   ///
@@ -311,6 +298,9 @@ private:
   RealType implicit_nonlinear_solver_relative_tolerance_;
   RealType implicit_nonlinear_solver_absolute_tolerance_;
   int implicit_nonlinear_solver_max_iterations_;
+  bool apply_slip_predictor_;
+  int verbosity_;
+  bool write_data_file_;
 };
 }
 
