@@ -72,6 +72,20 @@ namespace {
 
 using RT = PHAL::AlbanyTraits::Residual::ScalarT;
 using JT = PHAL::AlbanyTraits::Jacobian::ScalarT;
+using TT = PHAL::AlbanyTraits::Tangent::ScalarT;
+using DT = PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
+
+#ifdef ALBANY_SG
+using SGRT = PHAL::AlbanyTraits::SGResidual::ScalarT;
+using SGJT = PHAL::AlbanyTraits::SGJacobian::ScalarT;
+using SGTT = PHAL::AlbanyTraits::SGTangent::ScalarT;
+#endif // ALBANY_SG
+
+#ifdef ALBANY_ENSEMBLE
+using MPRT = PHAL::AlbanyTraits::MPResidual::ScalarT;
+using MPJT = PHAL::AlbanyTraits::MPJacobian::ScalarT;
+using MPTT = PHAL::AlbanyTraits::MPTangent::ScalarT;
+#endif // ALBANY_ENSEMBLE
 
 template<int N>
 using AD = Intrepid::FAD<RealType, N>;
@@ -129,6 +143,90 @@ struct peel<JT, AD<N>, N>
     return t;
   }
 };
+
+#ifdef ALBANY_SG
+template<int N>
+struct peel<SGRT, RealType, N>
+{
+  RealType
+  operator()(SGRT const &)
+  {
+    return 0.0;
+  }
+};
+
+template<int N>
+struct peel<SGJT, RealType, N>
+{
+  RealType
+  operator()(SGJT const &)
+  {
+    return 0.0;
+  }
+};
+
+template<int N>
+struct peel<SGRT, AD<N>, N>
+{
+  RealType
+  operator()(SGRT const &)
+  {
+    return 0.0;
+  }
+};
+
+template<int N>
+struct peel<SGJT, AD<N>, N>
+{
+  RealType
+  operator()(SGJT const &)
+  {
+    return 0.0;
+  }
+};
+#endif // ALBANY_SG
+
+#ifdef ALBANY_ENSEMBLE
+template<int N>
+struct peel<MPRT, RealType, N>
+{
+  RealType
+  operator()(MPRT const &)
+  {
+    return 0.0;
+  }
+};
+
+template<int N>
+struct peel<MPJT, RealType, N>
+{
+  RealType
+  operator()(MPJT const &)
+  {
+    return 0.0;
+  }
+};
+
+template<int N>
+struct peel<MPRT, AD<N>, N>
+{
+  RealType
+  operator()(MPRT const &)
+  {
+    return 0.0;
+  }
+};
+
+template<int N>
+struct peel<MPJT, AD<N>, N>
+{
+  RealType
+  operator()(MPJT const &)
+  {
+    return 0.0;
+  }
+};
+#endif // ALBANY_ENSEMBLE
 
 template<typename S, typename T, int N>
 struct peel<Intrepid::Vector<S, N>, Intrepid::Vector<T, N>, N>
