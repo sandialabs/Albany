@@ -7,6 +7,7 @@ set     tool_chain      gcc
 set     build_type      release
 set     build           $arch-$tool_chain-$build_type
 set     lcm_dir         $env(LCM_DIR)
+set     module_dir      $env(MODULEPATH)
 set     install_dir     $lcm_dir/trilinos-install-$build
 set     alb_exe_dir     $lcm_dir/albany-build-$build/src
 
@@ -23,3 +24,4 @@ prepend-path            PYTHONPATH      $install_dir/bin
 prepend-path            LD_LIBRARY_PATH $install_dir/lib
 prepend-path            PATH            $alb_exe_dir
 prepend-path            PATH            $alb_exe_dir/LCM
+conflict                $module_dir
