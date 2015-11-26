@@ -46,7 +46,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
-set (Trilinos_REPOSITORY_LOCATION ikalash@software.sandia.gov:/git/Trilinos)
+set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
 
 #IKT, 8/27/15: FIXME 
