@@ -382,8 +382,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
         Teuchos::ArrayRCP<const ST> flowRateVec_constView_il0 = flowRateVec->getVectorNonConst(il0)->get1dView();
         Teuchos::ArrayRCP<const ST> flowRateVec_constView_il1 = flowRateVec->getVectorNonConst(il1)->get1dView();
 
-        std::cout << layersNormalizedThickness[il] << " " << h0 <<  " " << flowRateNormalizedZ[il0] << " " << flowRateNormalizedZ[il1]<<std::endl;
-        
         for (int i = 0; i < nodes_map->getNodeNumElements(); i++)
           flowRateVecInterp_nonConstView[i] = h0 * flowRateVec_constView_il0[i] + (1.0 - h0) * flowRateVec_constView_il1[i];
       }
@@ -875,6 +873,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii", "Name of the file containing the surface velocity RMS data");
   validPL->set<std::string>("Basal Friction File Name", "basal_friction.ascii", "Name of the file containing the basal friction data");
   validPL->set<std::string>("Temperature File Name", "temperature.ascii", "Name of the file containing the temperature data");
+  validPL->set<std::string>("Flow Rate File Name", "flow_rate.ascii", "Name of the file containing the flow rate data");
   validPL->set<std::string>("Element Shape", "Hexahedron", "Shape of the Element: Tetrahedron, Wedge, Hexahedron");
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
