@@ -223,6 +223,10 @@ void computeHierarchicBCs(
     Teuchos::RCP<Tpetra_Vector> const& res,
     Teuchos::RCP<Tpetra_CrsMatrix> const& jac)
 {
+  RCP<const ParameterList> pl = app.getProblemPL();
+  std::string name = pl->get<std::string>("Name");
+  if (name.find("GOAL") != 0)
+    return;
   BCManager bcm(time, app);
   bcm.sol = sol;
   bcm.res = res;
@@ -236,6 +240,10 @@ void computeAdjointHierarchicBCs(
     Teuchos::RCP<Tpetra_Vector> const& qoi,
     Teuchos::RCP<Tpetra_CrsMatrix> const& jacT)
 {
+  RCP<const ParameterList> pl = app.getProblemPL();
+  std::string name = pl->get<std::string>("Name");
+  if (name.find("GOAL") != 0)
+    return;
   BCManager bcm(time, app);
   bcm.qoi = qoi;
   bcm.jacT = jacT;
