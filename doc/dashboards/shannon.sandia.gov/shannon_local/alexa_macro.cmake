@@ -10,11 +10,12 @@ SET_PROPERTY (GLOBAL PROPERTY Label ReconDriver_CUDA)
 
 SET(CONFIGURE_OPTIONS
   "-DTrilinos_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DOMEGA_H_PREFIX=${CTEST_BINARY_DIRECTORY}/omega_h"
   "-DSEACAS_BINARY_DIR:PATH=/home/gahanse/trilinos/host_seacas/bin"
   "-DCUSTOM_CXX_FLAGS:STRING=-Wfatal-errors"
-  "-DAlexa_ENABLE_LAMBDAS:BOOL=OFF"
   "-DAlexa_RUN_CUDA_TESTS:BOOL=ON"
-  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpirun -np 1'"
+  "-DAlexa_DEVICE_LAMBDAS:BOOL=ON"
+  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpiexec.hydra -ppn 1 -n 1'"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/ReconDriver")
