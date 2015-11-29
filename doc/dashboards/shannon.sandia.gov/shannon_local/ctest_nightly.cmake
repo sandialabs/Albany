@@ -139,8 +139,8 @@ EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}"
 # Write build file
 
 set( OMEGA_BUILD_OPTIONS "
-CC = mpicc
-CPP = mpicc
+CC = ${MPI_BASE_DIR}/bin/mpicc
+CPP = ${MPI_BASE_DIR}/bin/mpicxx
 CPPFLAGS = -std=c99
 CFLAGS = -g -O2 
 USE_MPI = 1

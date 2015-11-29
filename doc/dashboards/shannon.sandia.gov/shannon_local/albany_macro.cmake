@@ -25,6 +25,11 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_LAME:BOOL=OFF"
   "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
   "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+  "-DALBANY_MPI_OPTIONS:BOOL=ON"
+  "-DALBANY_MPI_EXEC:STRING=/home/gahanse/gcc-4.9.0/mpich-3.1.4/bin/mpiexec.hydra"
+  "-DALBANY_MPI_EXEC_NUMPROCS_FLAG:STRING=-n"
+  "-DALBANY_MPI_EXEC_MAX_NUMPROCS:STRING=4"
+  "-DALBANY_MPI_LEADING_OPTIONS:STRING=-ppn;1;-env;LD_LIBRARY_PATH;/opt/intel/mkl/lib/intel64:/home/projects/x86-64-sandybridge-nvidia/cuda/7.5.7/lib64"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
@@ -58,12 +63,12 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany configure results!")
+    message(SEND_ERROR "Cannot submit Albany configure results!")
   endif()
 ENDIF()
 
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Albany build!")
+	message(SEND_ERROR "Cannot configure Albany build!")
 endif()
 
 #
@@ -89,15 +94,15 @@ if(BUILD_LIBS_NUM_ERRORS GREATER 0)
     )
 
     if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit Albany build results!")
+        message(SEND_ERROR "Cannot submit Albany build results!")
     endif()
   ENDIF()
 
   if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany!")
+	message(SEND_ERROR "Cannot build Albany!")
   endif()
 
-  message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+  message(SEND_ERROR "Encountered build errors in Albany build. Exiting!")
 
 endif()
 
@@ -118,16 +123,16 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit Albany build results!")
+        message(SEND_ERROR "Cannot submit Albany build results!")
   endif()
 ENDIF()
 
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build AlbanyT!")
+	message(SEND_ERROR "Cannot build AlbanyT!")
 endif()
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in AlbanyT build. Exiting!")
+    message(SEND_ERROR "Encountered build errors in AlbanyT build. Exiting!")
 endif()
 
 #
@@ -150,7 +155,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany test results!")
+    message(SEND_ERROR "Cannot submit Albany test results!")
   endif()
 ENDIF()
 
