@@ -11,19 +11,14 @@
 #include "LocalNonlinearSolver.hpp"
 
 #include <MiniLinearSolver.h>
-#include <MiniNonlinearSolver.h>
 #include "../../utils/MiniSolvers.h"
-
-//#define  PRINT_DEBUG
-//#define  PRINT_OUTPUT
-//#define  DECOUPLE
-#define LINE_SEARCH
-#define SLIP_PREDICTOR
-#define MINISOLVER
 
 #include <typeinfo>
 #include <iostream>
 #include <Sacado_Traits.hpp>
+
+Intrepid::Index LCM::NLSDimension::DIMENSION;
+
 namespace LCM
 {
 
@@ -61,12 +56,24 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       "Implicit Integration Max Iterations",
       100);
 
+  apply_slip_predictor_ = p->get<bool>(
+      "Apply Slip Predictor",
+      true);
+
+  verbosity_ = p->get<int>(
+      "Verbosity",
+      0);
+
+  write_data_file_ = p->get<bool>(
+      "Write Data File",
+      false);
+
   slip_systems_.resize(num_slip_);
 
-#ifdef PRINT_DEBUG
-  std::cout << ">>> in cp constructor\n";
-  std::cout << ">>> parameter list:\n" << *p << std::endl;
-#endif
+  if (verbosity_ > 2) {
+    std::cout << ">>> in cp constructor\n";
+    std::cout << ">>> parameter list:\n" << *p << std::endl;
+  }
 
   Teuchos::ParameterList e_list = p->sublist("Crystal Elasticity");
   // assuming cubic symmetry
@@ -102,10 +109,10 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     }
   }
 
-// print rotation tensor employed for transformations
-#ifdef PRINT_DEBUG
-  std::cout << ">>> orientation_ :\n" << orientation_ << std::endl;
-#endif
+  if (verbosity_ > 2) {
+    // print rotation tensor employed for transformations
+    std::cout << ">>> orientation_ :\n" << orientation_ << std::endl;
+  }
 
   // rotate elastic tensor and slip systems to match given orientation
   C_ = Intrepid::kronecker(orientation_, C);
@@ -118,7 +125,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
         "Slip Direction").toVector();
     Intrepid::Vector<RealType, CP::MAX_NUM_DIM> s_temp_normalized;
     s_temp_normalized.set_dimension(num_dims_);
-    for(int i=0 ; i<num_dims_ ; ++i){
+    for (int i = 0; i < num_dims_; ++i) {
       s_temp_normalized[i] = s_temp[i];
     }
     s_temp_normalized = Intrepid::unit(s_temp_normalized);
@@ -130,7 +137,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
         "Slip Normal").toVector();
     Intrepid::Vector<RealType, CP::MAX_NUM_DIM> n_temp_normalized;
     n_temp_normalized.set_dimension(num_dims_);
-    for(int i=0 ; i<num_dims_ ; ++i){
+    for (int i = 0; i < num_dims_; ++i) {
       n_temp_normalized[i] = n_temp[i];
     }
     n_temp_normalized = Intrepid::unit(n_temp_normalized);
@@ -138,10 +145,12 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     slip_systems_[num_ss].n_ = orientation_ * n_temp_normalized;
 
     // print each slip direction and slip normal after transformation
-#ifdef PRINT_DEBUG
-    std::cout << ">>> slip direction " << num_ss + 1 << ": " << slip_systems_[num_ss].s_ << std::endl;
-    std::cout << ">>> slip normal " << num_ss + 1 << ": " << slip_systems_[num_ss].n_ << std::endl;
-#endif
+    if (verbosity_ > 2) {
+      std::cout << ">>> slip direction " << num_ss + 1 << ": "
+          << slip_systems_[num_ss].s_ << std::endl;
+      std::cout << ">>> slip normal " << num_ss + 1 << ": "
+          << slip_systems_[num_ss].n_ << std::endl;
+    }
 
     slip_systems_[num_ss].projector_.set_dimension(num_dims_);
     slip_systems_[num_ss].projector_ = Intrepid::dyad(
@@ -149,9 +158,10 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
         slip_systems_[num_ss].n_);
 
     // print projector
-#ifdef PRINT_DEBUG
-    std::cout << ">>> projector_ " << num_ss + 1 << ": " << slip_systems_[num_ss].projector_ << std::endl;
-#endif
+    if (verbosity_ > 2) {
+      std::cout << ">>> projector_ " << num_ss + 1 << ": "
+          << slip_systems_[num_ss].projector_ << std::endl;
+    }
 
     slip_systems_[num_ss].tau_critical_ = ss_list.get<RealType>("Tau Critical");
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -165,10 +175,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
         "Hardening Exponent",
         0.0);
   }
-  
-#ifdef PRINT_DEBUG
-  std::cout << "<<< done with parameter list\n";
-#endif
 
   // retrive appropriate field name strings (ref to problems/FieldNameMap)
   std::string eqps_string = (*field_name_map_)["eqps"];
@@ -330,10 +336,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(
       p->get<bool>("Output CP_Residual", false));
-
-#ifdef PRINT_DEBUG
-  std::cout << "<<< done in cp constructor\n";
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -341,21 +343,14 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
+std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
 
-  bool print_debug = false;
-#ifdef PRINT_DEBUG
-  if (typeid(ScalarT) == typeid(RealType)) {
-    print_debug = true;
+  if(verbosity_ > 2) {
+    std::cout << ">>> in cp compute state\n";
   }
-  std::cout.precision(15);
-#endif
 
-#ifdef PRINT_DEBUG
-  std::cout << ">>> in cp compute state\n";
-#endif
   // retrive appropriate field name strings
   std::string eqps_string = (*field_name_map_)["eqps"];
   std::string Re_string = (*field_name_map_)["Re"];
@@ -390,7 +385,7 @@ computeState(typename Traits::EvalData workset,
     std::string gamma_string = (*field_name_map_)[g];
     slips.push_back(eval_fields[gamma_string]);
     previous_slips.push_back(
-        &((*workset.stateArrayPtr)[gamma_string + "_old"]));
+    &((*workset.stateArrayPtr)[gamma_string + "_old"]));
   }
   // extract slip rate on each slip system
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT>>> slips_dot;
@@ -400,7 +395,7 @@ computeState(typename Traits::EvalData workset,
     std::string gamma_dot_string = (*field_name_map_)[g_dot];
     slips_dot.push_back(eval_fields[gamma_dot_string]);
     previous_slips_dot.push_back(
-        &((*workset.stateArrayPtr)[gamma_dot_string + "_old"]));
+    &((*workset.stateArrayPtr)[gamma_dot_string + "_old"]));
   }
   // extract hardening on each slip system
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT>>> hards;
@@ -410,7 +405,7 @@ computeState(typename Traits::EvalData workset,
     std::string tau_hard_string = (*field_name_map_)[t_h];
     hards.push_back(eval_fields[tau_hard_string]);
     previous_hards.push_back(
-        &((*workset.stateArrayPtr)[tau_hard_string + "_old"]));
+    &((*workset.stateArrayPtr)[tau_hard_string + "_old"]));
   }
   // store shear on each slip system for output
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT>>> shears;
@@ -422,23 +417,21 @@ computeState(typename Traits::EvalData workset,
 
   // get state variables
   Albany::MDArray previous_plastic_deformation =
-      (*workset.stateArrayPtr)[Fp_string + "_old"];
+  (*workset.stateArrayPtr)[Fp_string + "_old"];
   ScalarT tau, gamma, dgamma;
   ScalarT dt = delta_time(0);
   ScalarT tcurrent = time(0);
 
-#ifdef PRINT_OUTPUT
-  std::ofstream out("output.dat", std::fstream::app);
-#endif
-
   Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> I;
   I.set_dimension(num_dims_);
   I.fill(Intrepid::ZEROS);
-  for(int i=0 ; i<num_dims_ ; ++i){
+  for(int i=0; i<num_dims_; ++i) {
     I(i,i) = 1.0;
   }
 
   // -- Local variables for implicit integration routine --
+
+  // DJL todo:  Can we just use RealType for most of these?
 
   // Known quantities
   Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> F_np1;
@@ -519,298 +512,153 @@ computeState(typename Traits::EvalData workset,
         // initialize state n+1 with either (a) zero slip incremet or (b) a predictor
         slip_np1[s] = slip_n[s];
 
-#ifdef SLIP_PREDICTOR
-        slip_dot_n[s] = (*(previous_slips_dot[s]))(cell, pt);
-        slip_np1[s] += dt * slip_dot_n[s];
-#endif
+        if(apply_slip_predictor_) {
+          slip_dot_n[s] = (*(previous_slips_dot[s]))(cell, pt);
+          slip_np1[s] += dt * slip_dot_n[s];
+        }
 
         slip_np1_km1[s] = slip_np1[s];
         hardness_n[s] = (*(previous_hards[s]))(cell, pt);
       }
 
-#ifdef PRINT_DEBUG
-      for (int s(0); s < num_slip_; ++s) {
-        std::cout << "Slip on system " << s << " before predictor: " << slip_n[s] << std::endl;
+      if(verbosity_ > 2) {
+        for (int s(0); s < num_slip_; ++s) {
+          std::cout << "Slip on system " << s << " before predictor: " << slip_n[s] << std::endl;
+        }
+        for (int s(0); s < num_slip_; ++s) {
+          std::cout << "Slip rate on system " << s << " is: " << slip_dot_n[s] << std::endl;
+        }
+        for (int s(0); s < num_slip_; ++s) {
+          std::cout << "Slip on system " << s << " after predictor: " << slip_np1[s] << std::endl;
+        }
       }
-      for (int s(0); s < num_slip_; ++s) {
-        std::cout << "Slip rate on system " << s << " is: " << slip_dot_n[s] << std::endl;
-      }
-      for (int s(0); s < num_slip_; ++s) {
-        std::cout << "Slip on system " << s << " after predictor: " << slip_np1[s] << std::endl;
-      }
-#endif
 
       if (integration_scheme_ == EXPLICIT) {
 
         // compute sigma_np1, S_np1, and shear_np1 using Fp_n
-	CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_n, sigma_np1, S_np1, shear_np1);
+        CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_n, sigma_np1, S_np1, shear_np1);
 
         // compute hardness_np1 using slip_n
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, hardness_n, hardness_np1);
 
         // compute slip_np1
         updateSlipViaExplicitIntegration<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
-            dt,
-            slip_n,
-            hardness_np1,
-            S_np1,
-            shear_np1,
-            slip_np1);
+        dt,
+        slip_n,
+        hardness_np1,
+        S_np1,
+        shear_np1,
+        slip_np1);
 
         // compute Lp_np1, and Fp_np1
-	CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+        CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
 
         // compute sigma_np1, S_np1, and shear_np1 using Fp_np1
         CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
 
         // compute slip_residual and norm_slip_residual
-	CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
-	    slip_systems_,
-            dt,
-            slip_n,
-            slip_np1,
-            hardness_np1,
-            shear_np1,
-            slip_residual,
-            norm_slip_residual);
+        CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
+        slip_systems_,
+        dt,
+        slip_n,
+        slip_np1,
+        hardness_np1,
+        shear_np1,
+        slip_residual,
+        norm_slip_residual);
         RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(
-            norm_slip_residual);
+        norm_slip_residual);
 
-#ifdef PRINT_DEBUG
-        std::cout << "CP model explicit integration residual " << residual_val << std::endl;
-#endif
+        if(verbosity_ > 2) {
+          std::cout << "CP model explicit integration residual " << residual_val << std::endl;
+        }
       }
       else if (integration_scheme_ == IMPLICIT) {
 
         // Evaluate quantities under the initial guess for the slip increment
-	CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+        CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
         CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
-	CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
-	    slip_systems_,
-            dt,
-            slip_n,
-            slip_np1,
-            hardness_np1,
-            shear_np1,
-            slip_residual,
-            norm_slip_residual);
-        RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(
-            norm_slip_residual);
+        CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
+        RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
 
         // Determine convergence tolerances for the nonlinear solver
-        RealType residual_relative_tolerance =
-            implicit_nonlinear_solver_relative_tolerance_ * residual_val;
-        RealType residual_absolute_tolerance =
-            implicit_nonlinear_solver_absolute_tolerance_;
-        int iteration = 0;
-        bool converged = false;
+        RealType residual_relative_tolerance = implicit_nonlinear_solver_relative_tolerance_ * residual_val;
+        RealType residual_absolute_tolerance = implicit_nonlinear_solver_absolute_tolerance_;
 
-#ifdef PRINT_DEBUG
-        std::cout << "CP model initial residual " << residual_val << std::endl;
-        std::cout << "CP model convergence tolerance (relative) " << residual_relative_tolerance << std::endl;
-        std::cout << "CP model convergence tolerance (absolute) " << residual_absolute_tolerance << std::endl;
-#endif
+        // DJL todo:  The state N data shouldn't ever be Fad, which I think they currently are above.
+        //            When Albany::Jacobain is called, the Fad info should be in F_np1 only.
 
-        while (!converged) {
+        // MiniSolver currently does not accept AD types
+        Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> Fp_n_minisolver;
+        Fp_n_minisolver.set_dimension(num_dims_);
+        Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> hardness_n_minisolver;
+        hardness_n_minisolver.set_dimension(num_slip_);
+        Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> slip_n_minisolver;
+        slip_n_minisolver.set_dimension(num_slip_);
+        RealType dt_minisolver;
+        Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> x;// unknowns, which are slip_np1
+        x.set_dimension(num_slip_);
 
-#ifdef LINE_SEARCH
-          // Line search
-          if (iteration > 0) {
-            for (int s = 0; s < num_slip_; s++) {
-              delta_delta_slip[s] = slip_np1[s] - slip_np1_km1[s];
-            }
-            RealType alpha;
-            lineSearch<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
-                dt,
-                Fp_n,
-                F_np1,
-                slip_n,
-                slip_np1_km1,
-                delta_delta_slip,
-                hardness_n,
-                norm_slip_residual,
-                alpha);
-            for (int s = 0; s < num_slip_; s++) {
-              slip_np1[s] = slip_np1_km1[s] + alpha * delta_delta_slip[s];
-              slip_np1_km1[s] = slip_np1[s];
-            }
-          }
-#endif
-
-          // Seed the AD objects
-          for (int s(0); s < num_slip_; ++s) {
-            ScalarT slip_np1_val = Sacado::ScalarValue<ScalarT>::eval(
-                slip_np1[s]);
-            slip_np1_ad[s] = Fad(num_slip_, s, slip_np1_val);
-          }
-
-          // Compute Lp_np1, and Fp_np1
-	  CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1_ad, Fp_n, Lp_np1_ad, Fp_np1_ad);
-
-          // Compute hardness_np1
-          CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1_ad, hardness_n, hardness_np1_ad);
-
-          // Compute sigma_np1, S_np1, and shear_np1
-          CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1_ad, sigma_np1_ad, S_np1_ad, shear_np1_ad);
-
-          // Compute slip_residual and norm_slip_residual
-	  CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
- 	      slip_systems_,
-              dt,
-              slip_n,
-              slip_np1_ad,
-              hardness_np1_ad,
-              shear_np1_ad,
-              slip_residual_ad,
-              norm_slip_residual_ad);
-          residual_val = Sacado::ScalarValue<ScalarT>::eval(
-              norm_slip_residual_ad.val());
-
-          // Copy values of slip_np1 and slip_residual from AD objects to ScalarT objects
-          // Construct the matrix for the solver using the derivative information stored in the AD objects
-          for (int i = 0; i < num_slip_; i++) {
-            slip_np1[i] = slip_np1_ad[i].val();
-            slip_residual[i] = slip_residual_ad[i].val();
-            for (int j = 0; j < num_slip_; j++) {
-              solver_matrix[num_slip_ * i + j] = slip_residual_ad[i].dx(j);
-            }
-          }
-
-          // This call solves the system for the slip increment and applies it to slip_np1
-	  for(int i=0; i<num_slip_; i++){
-	    solver_slip_np1[i] = slip_np1[i];
-	    solver_slip_residual[i] = slip_residual[i];
-	  }
-          solver.solve(solver_matrix, solver_slip_np1, solver_slip_residual);
-	  for(int i=0; i<num_slip_; i++){
-	    slip_np1[i] = solver_slip_np1[i];
-	    slip_residual[i] = solver_slip_residual[i];
-	  }
-
-          iteration += 1;
-
-          if (residual_val < residual_relative_tolerance
-              || residual_val < residual_absolute_tolerance) {
-            converged = true;
-          }
-          if (iteration >= implicit_nonlinear_solver_max_iterations_) {
-            // DJL need a graceful way to exit the constitutive model with an error if the maximum
-            // number of iterations has been reached but the system has not converged
-            std::cout
-	      << "\n****WARNING: CrystalPlasticity model failed to converge in " << iteration << " iterations!"
-	      << "  Relative tolerance = " << residual_relative_tolerance << ", absolute tolerance = " << residual_absolute_tolerance
-	      << ", final residual value = " << residual_val << ".\n" << std::endl;
-            converged = true;
-          }
-
-#ifdef PRINT_DEBUG
-          std::cout << "CP model residual iteration " << iteration << " = " << residual_val << std::endl;
-#endif
-        }
-
-        // Glue derivative information together for the case where ScalarT is an AD type (e.g., Jacobian evaluation)
-	for(int i=0; i<num_slip_; i++){
-	  solver_slip_np1[i] = slip_np1[i];
-	  solver_slip_residual[i] = slip_residual[i];
-	}
-        solver.computeFadInfo(solver_matrix, solver_slip_np1, solver_slip_residual);
-	for(int i=0; i<num_slip_; i++){
-	  slip_np1[i] = solver_slip_np1[i];
-	  slip_residual[i] = solver_slip_residual[i];
-	}
-
-        // Load data back into ScalarT objects
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            Lp_np1(i, j) = Lp_np1_ad(i, j).val();
-            Fp_np1(i, j) = Fp_np1_ad(i, j).val();
+        for(int i=0; i<num_dims_; ++i) {
+          for(int j=0; j<num_dims_; ++j) {
+            Fp_n_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp_n(i,j));
           }
         }
-        for (int s(0); s < num_slip_; ++s) {
-          hardness_np1[s] = hardness_np1_ad[s].val();
+
+        for(int i=0; i<num_slip_; ++i) {
+          hardness_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(hardness_n(i));
+          slip_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
+          // initial guess for x is slip_n
+          x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
         }
 
-        // Re-evaluate everything (and propagate derivative information) with the final values of slip_np1
-	CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+        dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
+
+        CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, ScalarT> crystalPlasticityNLS(C_,
+        slip_systems_,
+        Fp_n_minisolver,
+        hardness_n_minisolver,
+        slip_n_minisolver,
+        F_np1,
+        dt_minisolver);
+
+        using ValueT = typename Sacado::ValueType<ScalarT>::type;
+        //Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid::TrustRegionStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid::ConjugateGradientStep<ValueT, CP::MAX_NUM_SLIP> step;
+        Intrepid::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
+        Intrepid::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
+
+        minimizer.rel_tol = residual_relative_tolerance;
+        minimizer.abs_tol = residual_absolute_tolerance;
+
+        miniMinimize(minimizer, step, crystalPlasticityNLS, x);
+
+        TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
+        std::logic_error,
+        "Error: CrystalPlasticity implicit state update routine failed to converge!");
+
+        for(int i=0; i<num_slip_; ++i) {
+          slip_np1[i] = x[i];
+        }
+
+        // We now have the solution for slip_np1, including sensitivities (if any)
+        // Re-evaluate all the other state variables based on slip_np1
+
+        // Compute Lp_np1, and Fp_np1
+        CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
+
+        // Compute hardness_np1
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1, hardness_n, hardness_np1);
+
+        // Compute sigma_np1, S_np1, and shear_np1
         CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
-	CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
-	    slip_systems_,
-            dt,
-            slip_n,
-            slip_np1,
-            hardness_np1,
-            shear_np1,
-            slip_residual,
-            norm_slip_residual);
-        residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
-#ifdef PRINT_DEBUG
-        std::cout << "CP model final residual " << residual_val << std::endl;
-#endif
 
-#ifdef MINISOLVER
-	{ // MiniSolver testing
-
-	  // MiniSolver currently does not accept AD types
-	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> Fp_n_minisolver;
-	  Fp_n_minisolver.set_dimension(num_dims_);
-	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> hardness_n_minisolver;
-	  hardness_n_minisolver.set_dimension(num_slip_);
-	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> slip_n_minisolver;
-	  slip_n_minisolver.set_dimension(num_slip_);
-	  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> F_np1_minisolver;
-	  F_np1_minisolver.set_dimension(num_dims_);
-	  RealType dt_minisolver;
-	  Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> x; // unknowns, which are slip_np1
-	  x.set_dimension(num_slip_);
-
-	  for(int i=0 ; i<num_dims_ ; ++i){
-	    for(int j=0 ; j<num_dims_ ; ++j){
-	      Fp_n_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp_n(i,j));
-	      F_np1_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(F_np1(i,j));
-	    }
-	  }
-
-	  for(int i=0; i<num_slip_; ++i){
-	    hardness_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(hardness_n(i));
-	    slip_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
-	    // initial guess for x is slip_n
-	    x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
-	  }
-
-	  dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
-
-	  CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, RealType> crystalPlasticityNLS(C_,
-												 slip_systems_,
-												 Fp_n_minisolver,
-												 hardness_n_minisolver,
-												 slip_n_minisolver,
-												 F_np1_minisolver,
-												 dt_minisolver);
-
-	  Intrepid::NewtonStep<RealType, CP::MAX_NUM_SLIP> step;
-	  Intrepid::Minimizer<RealType, CP::MAX_NUM_SLIP> minimizer;
-	  minimizer.solve(step, crystalPlasticityNLS, x);
-
-	  std::cout << "------------------------------------\n" << std::endl;
-	  std::cout << "Home-rolled solver slip_np1" ;
-	  for(int i=0 ; i<num_slip_ ; ++i){
-	    std::cout << "  " << Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
-	  }
-	  std::cout << std::endl;
-	  std::cout << "MiniSolver slip_np1" ;
-	  for(int i=0 ; i<num_slip_ ; ++i){
-	    std::cout << "  " << x(i);
-	  }
-	  std::cout << std::endl;
-	  std::cout << "\nHome-rolled solver num iterations = " << iteration << ", residual = " << residual_val;
-	  minimizer.printReport(std::cout);
-	}
-#endif
+        // Compute slip_residual and norm_slip_residual
+        CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
 
       } // integration_scheme == IMPLICIT
-
 
 // The EQPS can be computed (or can it?) from the Cauchy Green strain operator applied to Fp.
 //      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
@@ -825,13 +673,13 @@ computeState(typename Traits::EvalData workset,
 //       eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
 //
       ScalarT delta_eqps = Intrepid::dotdot(
-          Intrepid::sym(Lp_np1),
-          Intrepid::sym(Lp_np1));
+      Intrepid::sym(Lp_np1),
+      Intrepid::sym(Lp_np1));
       if (delta_eqps > 0.0) {
         delta_eqps = 2.0 * (std::sqrt(delta_eqps)) / 3.0;
       } // Otherwise delta_eqps is - or BETTER be! - zero, so don't bother with the 2/3.
       else { // On second thought, let's make SURE it's zero (and specifically not negative)...
-          delta_eqps = 0.0; // Ok, this is a little paranoid but what the hey? If the Al foil hat fits...
+        delta_eqps = 0.0;// Ok, this is a little paranoid but what the hey? If the Al foil hat fits...
       }
 // ccbatta 2015/06/09: The quantity Lp_np1 is actually of the form Lp * dt,
 //    i.e. it's a velocity gradient multiplied by the time step,
@@ -849,11 +697,7 @@ computeState(typename Traits::EvalData workset,
       Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> Re_np1;
       Re_np1.set_dimension(num_dims_);
       // Saint Venant–Kirchhoff model
-#ifdef DECOUPLE
-      Fe = F_np1;
-#else
       Fe = F_np1 * (Intrepid::inverse(Fp_np1));
-#endif
       Re_np1 = Intrepid::polar_rotation(Fe);
 
       // Copy data from local data structures back into Albany fields
@@ -879,61 +723,61 @@ computeState(typename Traits::EvalData workset,
           (*(slips_dot[s]))(cell, pt) = 0.0;
         }
       }
-#ifdef PRINT_OUTPUT
-      if (cell == 0 && pt == 0) {
-        Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> P;
-	P.set_dimension(num_dims_);
-        out << "\n" << "time: ";
-        out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
-        out << "    dt: ";
-        out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(dt) << " ";
-        out << "\n";
-        for (int s(0); s < num_slip_; ++s) {
-          out << "\n" << "P" << s << ": ";
-          P = slip_systems_[s].projector_;
-          for (int i(0); i < num_dims_; ++i) {
-            for (int j(0); j < num_dims_; ++j) {
-              out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(P(i,j)) << " ";
+
+      if(write_data_file_) {
+        if (cell == 0 && pt == 0) {
+          std::ofstream data_file("output.dat", std::fstream::app);
+          Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> P;
+          P.set_dimension(num_dims_);
+          data_file << "\n" << "time: ";
+          data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
+          data_file << "    dt: ";
+          data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(dt) << " ";
+          data_file << "\n";
+          for (int s(0); s < num_slip_; ++s) {
+            data_file << "\n" << "P" << s << ": ";
+            P = slip_systems_[s].projector_;
+            for (int i(0); i < num_dims_; ++i) {
+              for (int j(0); j < num_dims_; ++j) {
+                data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(P(i,j)) << " ";
+              }
             }
           }
-        }
-        for (int s(0); s < num_slip_; ++s) {
-          out << "\n" << "slips: ";
-          out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(slip_np1[s]) << " ";
-        }
-        out << "\n" << "F: ";
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(F_np1(i,j)) << " ";
+          for (int s(0); s < num_slip_; ++s) {
+            data_file << "\n" << "slips: ";
+            data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(slip_np1[s]) << " ";
           }
-        }
-        out << "\n" << "Fp: ";
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp_np1(i,j)) << " ";
+          data_file << "\n" << "F: ";
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(F_np1(i,j)) << " ";
+            }
           }
-        }
-        out << "\n" << "Sigma: ";
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(sigma_np1(i,j)) << " ";
+          data_file << "\n" << "Fp: ";
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp_np1(i,j)) << " ";
+            }
           }
-        }
-        out << "\n" << "Lp: ";
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Lp_np1(i,j)) << " ";
+          data_file << "\n" << "Sigma: ";
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(sigma_np1(i,j)) << " ";
+            }
           }
+          data_file << "\n" << "Lp: ";
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Lp_np1(i,j)) << " ";
+            }
+          }
+          data_file << "\n";
+          data_file.close();
         }
-        out << "\n";
-      }
-#endif
+      } // end data file output
 
     }
   }
-#ifdef PRINT_DEBUG
-  std::cout << "<<< done in cp compute state\n" << std::flush;
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -948,7 +792,7 @@ updateSlipViaExplicitIntegration(
     Intrepid::Tensor<ArgT, NumDimT> const & S,
     Intrepid::Vector<ArgT, NumSlipT> const & shear,
     Intrepid::Vector<ArgT, NumSlipT> & slip_np1) const
-{
+    {
   ScalarT g0, tauC, m, temp;
 
   for (int s(0); s < num_slip_; ++s) {
@@ -965,10 +809,11 @@ updateSlipViaExplicitIntegration(
 
 //------------------------------------------------------------------------------
 
-template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
+    typename ArgT>
 void CP::
 applySlipIncrement(
-    std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
     Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
     Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
@@ -1008,10 +853,11 @@ applySlipIncrement(
 
 //------------------------------------------------------------------------------
 
-template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
+    typename ArgT>
 void CP::
 updateHardness(
-    std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> >const & slip_systems,
+    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> >const & slip_systems,
     Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
     Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
     Intrepid::Vector<ArgT, NumSlipT> & hardness_np1)
@@ -1050,10 +896,11 @@ updateHardness(
 
 //------------------------------------------------------------------------------
 
-template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
+    typename ArgT>
 void CP::
 computeResidual(
-    std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     ScalarT dt,
     Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
     Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
@@ -1085,15 +932,17 @@ computeResidual(
     // Compute slip increment using Fe_np1
     sign = shear_np1[s] < 0 ? -1 : 1;
     temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
-    // establishing normalized filter for active slip systems
-    const double active_filter = std::numeric_limits<RealType>::epsilon()
-        * 10.0;
-    if (temp < active_filter) {
-      dgamma_value2 = dt * g0 * 0.0 * sign;
-    }
-    else {
-      dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
-    }
+
+//     // establishing normalized filter for active slip systems
+//     const double active_filter = std::numeric_limits<RealType>::epsilon() * 10.0;
+//     if (temp < active_filter) {
+//       dgamma_value2 = dt * g0 * 0.0 * sign;
+//     }
+//     else {
+//       dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
+//     }
+
+    dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
 
     //The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value2 - dgamma_value1;
@@ -1122,119 +971,11 @@ computeResidual(
 
 //------------------------------------------------------------------------------
 
-template<typename EvalT, typename Traits>
-template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT,typename ArgT>
-void CrystalPlasticityModel<EvalT, Traits>::
-lineSearch(
-    ScalarT dt,
-    Intrepid::Tensor<ScalarT, NumDimT> const & Fp_n,
-    Intrepid::Tensor<ScalarT, NumDimT> const & F_np1,
-    Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
-    Intrepid::Vector<ArgT, NumSlipT> const & slip_np1_km1,
-    Intrepid::Vector<ArgT, NumSlipT> const & delta_delta_slip,
-    Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
-    ScalarT const & norm_slip_residual,
-    RealType & alpha) const
-{
-  Intrepid::Vector<ArgT, NumSlipT> slip_np1_k;
-  slip_np1_k.set_dimension(num_slip_);
-  Intrepid::Vector<ArgT, NumSlipT> hardness_np1_k;
-  hardness_np1_k.set_dimension(num_slip_);
-  Intrepid::Tensor<ArgT, NumDimT> Lp_np1_k;
-  Lp_np1_k.set_dimension(num_dims_);
-  Intrepid::Tensor<ArgT, NumDimT> Fp_np1_k;
-  Fp_np1_k.set_dimension(num_dims_);
-  Intrepid::Tensor<ArgT, NumDimT> sigma_np1_k;
-  sigma_np1_k.set_dimension(num_dims_);
-  Intrepid::Tensor<ArgT, NumDimT> S_np1_k;
-  S_np1_k.set_dimension(num_dims_);
-  Intrepid::Vector<ArgT, NumSlipT> shear_np1_k;
-  shear_np1_k.set_dimension(num_slip_);
-  Intrepid::Vector<ArgT, NumSlipT> slip_residual_unperturbed;
-  slip_residual_unperturbed.set_dimension(num_slip_);
-  Intrepid::Vector<ArgT, NumSlipT> slip_residual_k;
-  slip_residual_k.set_dimension(num_slip_);
-  ArgT slip_increment, norm_slip_residual_k;
-
-  // Line search taken from Perez & Armero, On the Formulation of Closest-Point 
-  // Projection Algorithms in Elastoplasticity . Part II: Globally Convergent Schemes
-  // (2000), Box I.1. 
-  // We denote configurations k-1 (km1) and k instead of k and k+1
-  // to be consistent with the incoming slip - slip_np1_km1
-
-  // Initialize line search parameter, alpha, for j
-  RealType alpha_j = 1.0;
-  // Initialize M and M' for km1 and k
-  RealType residual_val_k, residual_val_km1;
-  RealType M_km1, M_prime_km1, M_k;
-  residual_val_km1 = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
-  M_km1 = residual_val_km1 * residual_val_km1 / 2.0;
-  M_prime_km1 = -2.0 * M_km1;
-
-  // Initialize algorithmic parameters and convergence loop
-  RealType eta = 0.1;
-  RealType beta = 1.0e-4;
-  int max_iterations = 10;
-  int iteration = 0;
-  bool converged = false;
-  RealType arg1, arg2;
-
-  while (!converged) {
-
-    for (int s(0); s < num_slip_; ++s) {
-      slip_np1_k[s] = slip_np1_km1[s] + alpha_j * delta_delta_slip[s];
-    }
-
-    try {
-
-      // find residual for alpha_k
-      CP::applySlipIncrement<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_n, slip_np1_k, Fp_n, Lp_np1_k, Fp_np1_k);
-      CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, slip_np1_k, hardness_n, hardness_np1_k);
-      CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(slip_systems_, C_, F_np1, Fp_np1_k, sigma_np1_k, S_np1_k, shear_np1_k);
-      CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
-          slip_systems_,
-          dt,
-          slip_n,
-          slip_np1_k,
-          hardness_np1_k,
-          shear_np1_k,
-          slip_residual_unperturbed,
-          norm_slip_residual_k);
-      residual_val_k = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual_k);
-      M_k = residual_val_k * residual_val_k / 2.0;
-
-      // test residual      
-      if (M_k <= (1.0 - 2.0 * beta * alpha_j) * M_km1
-          || iteration > max_iterations) {
-        converged = true;
-      }
-      else {
-        arg1 = eta * alpha_j;
-        arg2 = -alpha_j * alpha_j * M_prime_km1 / 2.0
-            / (M_k - M_km1 - alpha_j * M_prime_km1);
-        alpha_j = std::max(arg1, arg2);
-
-        // increment iteration 
-        iteration += 1;
-      }
-    } catch (...) {
-      std::cout << "DJL DEBUGGING caught exception in line search!"
-          << std::endl;
-    }
-
-  }
-#ifdef PRINT_DEBUG
-  std::cout << "Number of line search iterations: " << iteration << ", alpha: " << alpha_j << std::endl;
-#endif
-  alpha = alpha_j;
-}
-
-//------------------------------------------------------------------------------
-
-template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT, typename ArgT>
+template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
+    typename ArgT>
 void CP::
 computeStress(
-    std::vector< CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     Intrepid::Tensor4<RealType, NumDimT> const & C,
     Intrepid::Tensor<ScalarT, NumDimT> const & F,
     Intrepid::Tensor<ArgT, NumDimT> const & Fp,
@@ -1251,32 +992,30 @@ computeStress(
   Fe.set_dimension(num_dim);
   Intrepid::Tensor<ArgT, NumDimT> E;
   E.set_dimension(num_dim);
+  Intrepid::Tensor<ArgT, NumDimT> Ce;
+  Ce.set_dimension(num_dim);
 
   Intrepid::Tensor<RealType, NumDimT> I;
   I.set_dimension(num_dim);
   I.fill(Intrepid::ZEROS);
-  for(int i=0 ; i<num_dim ; ++i){
-    I(i,i) = 1.0;
+  for (int i = 0; i < num_dim; ++i) {
+    I(i, i) = 1.0;
   }
 
   // Saint Venant–Kirchhoff model
   Fpinv = Intrepid::inverse(Fp);
-#ifdef DECOUPLE
-  std::cout << "ELASTIC STRESS ONLY\n";
-  Fe = F;
-#else
   Fe = F * Fpinv;
-#endif
-  E = 0.5 * (Intrepid::transpose(Fe) * Fe - I);
+  Ce = Intrepid::transpose(Fe) * Fe;
+  E = 0.5 * (Ce - I);
   S = Intrepid::dotdot(C, E);
-  sigma = (1.0 / Intrepid::det(F)) * F * S * Intrepid::transpose(F);
+  sigma = (1.0 / Intrepid::det(Fe)) * Fe * S * Intrepid::transpose(Fe);
   CP::confirmTensorSanity<NumDimT>(
       sigma,
       "Cauchy stress in CrystalPlasticityNLS::computeStress()");
 
   // Compute resolved shear stresses
   for (int s(0); s < num_slip; ++s) {
-    shear[s] = Intrepid::dotdot(slip_systems[s].projector_, S);
+    shear[s] = Intrepid::dotdot(slip_systems[s].projector_, Ce * S);
   }
 }
 

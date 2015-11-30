@@ -282,6 +282,12 @@ Albany::APFMeshStruct::setFieldAndBulkData(
 
   for (std::size_t i=0; i<sis->size(); i++) {
     StateStruct& st = *((*sis)[i]);
+
+#ifdef ALBANY_SCOREC
+    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
+        st.restartDataAvailable = hasRestartSolution;
+#endif
+
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
     std::vector<PHX::DataLayout::size_type>& dim = st.dim;
@@ -308,11 +314,6 @@ Albany::APFMeshStruct::setFieldAndBulkData(
          "st.entity != Albany::StateStruct::QuadPoint || " <<
          "st.entity != Albany::StateStruct::ElemNode || " <<
          "st.entity != Albany::StateStruct::NodalData" << std::endl);
-
-    // quick hack to get restarts working
-    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
-      if (hasRestartSolution)
-        st.restartDataAvailable = true;
   }
 }
 

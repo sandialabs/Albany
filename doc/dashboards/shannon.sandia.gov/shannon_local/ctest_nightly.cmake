@@ -1,19 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 
-#SET(CTEST_DO_SUBMIT ON)
-#SET(CTEST_TEST_TYPE Nightly)
-
-#SET(CTEST_DO_SUBMIT OFF)
-#SET(CTEST_TEST_TYPE Experimental)
-
 SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
 SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 
 # What to build and test
 SET(DOWNLOAD_TRILINOS TRUE)
 SET(DOWNLOAD_ALBANY TRUE)
+SET(DOWNLOAD_RECONDRIVER TRUE)
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
+SET(BUILD_RECONDRIVER TRUE)
 SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
@@ -29,18 +25,19 @@ set( CTEST_BUILD_NAME           "cuda-nvcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          buildAlbany)
 
 SET(PREFIX_DIR /home/gahanse)
-SET(MPI_BASE_DIR /home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28)
+SET(NETCDF_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
+SET(MPI_BASE_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
 SET(INTEL_DIR /opt/intel/mkl/lib/intel64)
-#SET(BOOST_DIR /home/projects/x86-64/boost/1.57.0/gnu/4.7.2)
-SET(BOOST_DIR /home/gahanse)
+SET(BOOST_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
 
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/move_xml_macro.cmake)
+
 IF (CLEAN_BUILD)
   IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
-#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
     FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
   ENDIF()
 ENDIF()
@@ -56,8 +53,8 @@ ENDIF()
 configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
                ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-# Rougly midnight 0700 UTC
-SET(CTEST_NIGHTLY_START_TIME "04:00:00 UTC")
+# Run test at/after 20:00 (8:00PM MDT --> 2:00 UTC, 7:00PM MST --> 2:00 UTC)
+SET (CTEST_NIGHTLY_START_TIME "02:00:00 UTC")
 SET (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 SET (CTEST_BUILD_FLAGS "-j16")
@@ -71,9 +68,11 @@ set(CTEST_DROP_SITE_USER "")
 find_program(CTEST_GIT_COMMAND NAMES git)
 
 # Point at the public Repo
-SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
+SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
+SET(OMEGA_REPOSITORY_LOCATION https://github.com/ibaned/omega_h)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
+SET(ReconDriver_REPOSITORY_LOCATION software.sandia.gov:/git/ReconDrivergit)
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
 
@@ -115,6 +114,54 @@ if(NOT EXISTS "${TRILINOS_HOME}/SCOREC")
    endif()
 endif()
 
+# Download and build Omega_h as a TPL
+
+IF(EXISTS "${CTEST_BINARY_DIRECTORY}/omega_h" )
+  FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/omega_h")
+ENDIF()
+
+# Clone it
+
+EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}"
+    clone ${OMEGA_REPOSITORY_LOCATION} ${CTEST_BINARY_DIRECTORY}/omega_h
+    WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+
+ message(STATUS "out: ${_out}")
+ message(STATUS "err: ${_err}")
+ message(STATUS "res: ${HAD_ERROR}")
+ if(HAD_ERROR)
+   message(FATAL_ERROR "Cannot clone OMEGA repository!")
+ endif()
+
+# Write build file
+
+set( OMEGA_BUILD_OPTIONS "
+CC = ${MPI_BASE_DIR}/bin/mpicc
+CPP = ${MPI_BASE_DIR}/bin/mpicxx
+CPPFLAGS = -std=c99
+CFLAGS = -g -O2 
+USE_MPI = 1
+" )
+file(WRITE "${CTEST_BINARY_DIRECTORY}/omega_h/config.mk" "${OMEGA_BUILD_OPTIONS}")
+
+# make it
+
+EXECUTE_PROCESS(COMMAND "/usr/bin/make"
+    WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/omega_h
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+
+ message(STATUS "out: ${_out}")
+ message(STATUS "err: ${_err}")
+ message(STATUS "res: ${HAD_ERROR}")
+ if(HAD_ERROR)
+   message(FATAL_ERROR "Cannot build OMEGA repository!")
+ endif()
+
 ENDIF()
 
 IF (DOWNLOAD_ALBANY)
@@ -140,7 +187,32 @@ if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
 
 endif()
 
-ENDIF()
+ENDIF(DOWNLOAD_ALBANY)
+
+IF (DOWNLOAD_RECONDRIVER)
+
+#
+# Get ReconDriver
+#
+##########################################################################################################
+
+if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/ReconDriver")
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+    clone ${ReconDriver_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/ReconDriver
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  
+   message(STATUS "out: ${_out}")
+   message(STATUS "err: ${_err}")
+   message(STATUS "res: ${HAD_ERROR}")
+   if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot clone ReconDriver repository!")
+   endif()
+
+endif()
+
+ENDIF(DOWNLOAD_RECONDRIVER)
 
 CTEST_START(${CTEST_TEST_TYPE})
 
@@ -172,21 +244,7 @@ IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Trilinos!")
 endif()
 
-# Save a copy of the Trilinos update to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update_Trilinos.xml
-#               )
-
-# Note: CTest will store files in ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION} - ending in Update.xml.
-# Not sure what the first part of that filename is, so glob all possibliities into UPDATE_FILES. Then
-# grab the last one and rename it to Update_Trilinos.xml in the drop location. We assume there is only a 
-# single update file, if there are more skip this.
-FILE(GLOB UPDATE_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Update.xml")
-LIST(LENGTH UPDATE_FILES UP_LIST_LEN)
-IF(UP_LIST_LEN EQUAL 1)
-  LIST(GET UPDATE_FILES -1 SINGLE_UPDATE_FILE)
-  FILE(RENAME "${SINGLE_UPDATE_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Update_Trilinos.xml")
-ENDIF()
+move_xml_file ("*Update.xml" "Update_Trilinos.xml")
 
 # Get the SCOREC tools
 
@@ -228,7 +286,37 @@ IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Albany!")
 endif()
 
+ENDIF(DOWNLOAD_ALBANY)
+
+IF(DOWNLOAD_RECONDRIVER)
+
+#
+# Update ReconDriver
+#
+##############################################################################################################
+
+SET_PROPERTY (GLOBAL PROPERTY SubProject ReconDriver_CUDA)
+SET_PROPERTY (GLOBAL PROPERTY Label ReconDriver_CUDA)
+
+set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/ReconDriver" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Update
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot update ReconDriver repository!")
+  endif()
 ENDIF()
+
+IF(count LESS 0)
+        message(FATAL_ERROR "Cannot update ReconDriver!")
+endif()
+
+ENDIF(DOWNLOAD_RECONDRIVER)
 
 #
 # Set the common Trilinos config options
@@ -241,14 +329,15 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
   "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
   "-DCMAKE_BUILD_TYPE:STRING=NONE"
-  "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper"
+  "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_gh"
   "-DCMAKE_C_COMPILER:FILEPATH=mpicc"
   "-DCMAKE_Fortran_COMPILER:FILEPATH=mpifort"
   "-DCMAKE_CXX_FLAGS:STRING='-DNDEBUG'"
+  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda --expt-relaxed-constexpr -Wno-unused-local-typedefs -Wno-sign-compare -DNDEBUG'"
   "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-#  "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
+  "-DTpetra_INST_SERIAL:BOOL=ON"
   "-DTpetra_INST_INT_LONG_LONG:BOOL=OFF"
   "-DTpetra_INST_INT_INT:BOOL=ON"
   "-DTpetra_INST_DOUBLE:BOOL=ON"
@@ -257,6 +346,9 @@ SET(CONFIGURE_OPTIONS
   "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
   "-DTpetra_INST_INT_LONG:BOOL=OFF"
   "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
+  "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
+  "-DRythmos_ENABLE_DEBUG:BOOL=ON"
 #
   "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
   "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=CUDA"
@@ -267,8 +359,8 @@ SET(CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   "-DKokkos_ENABLE_Cuda:BOOL=ON"
   "-DTPL_ENABLE_CUDA:BOOL=ON"
-  "-DTPL_ENABLE_CUSPARSE:BOOL=ON"
   "-DKokkos_ENABLE_Cuda_UVM:BOOL=ON"
+  "-DTPL_ENABLE_CUSPARSE:BOOL=ON"
 #
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
@@ -285,16 +377,16 @@ SET(CONFIGURE_OPTIONS
   "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
 #
   "-DTPL_ENABLE_Netcdf:STRING=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DTPL_ENABLE_HDF5:STRING=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DHDF5_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DTPL_ENABLE_Zlib:STRING=ON"
-  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DZlib_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DTPL_ENABLE_BLAS:BOOL=ON"
   "-DTPL_ENABLE_LAPACK:BOOL=ON"
@@ -303,13 +395,13 @@ SET(CONFIGURE_OPTIONS
   "-DLAPACK_LIBRARY_NAMES:STRING=''"
 #
   "-DTPL_ENABLE_ParMETIS:STRING=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
 #
-  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lz'"
+  "-DTrilinos_EXTRA_LINK_FLAGS='-L${NETCDF_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lz'"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
 #
   "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
@@ -317,8 +409,6 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_X11:BOOL=OFF"
   "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
-  "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
-  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=OFF"
   "-DTrilinos_ENABLE_Teko:BOOL=OFF"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
 # Comment these out to disable stk
@@ -395,17 +485,7 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Trilinos build!")
 endif()
 
-# Save a copy of the Trilinos configure to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure_Trilinos.xml
-#               )
-
-FILE(GLOB CONFIG_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Configure.xml")
-LIST(LENGTH CONFIG_FILES CO_LIST_LEN)
-IF(CO_LIST_LEN EQUAL 1)
-  LIST(GET CONFIG_FILES -1 SINGLE_CONFIG_FILE)
-  FILE(RENAME "${SINGLE_CONFIG_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Configure_Trilinos.xml")
-ENDIF()
+move_xml_file ("*Configure.xml" "Configure_Trilinos.xml")
 
 SET(CTEST_BUILD_TARGET install)
 
@@ -433,17 +513,7 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Trilinos!")
 endif()
 
-# Save a copy of the Trilinos build to post to the CDash site.
-
-#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build_Trilinos.xml
-#               )
-
-FILE(GLOB BUILD_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Build.xml")
-LIST(LENGTH BUILD_FILES BU_LIST_LEN)
-IF(BU_LIST_LEN EQUAL 1)
-  LIST(GET BUILD_FILES -1 SINGLE_BUILD_FILE)
-  FILE(RENAME "${SINGLE_BUILD_FILE}" "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Build_Trilinos.xml")
-ENDIF()
+move_xml_file ("*Build.xml" "Build_Trilinos.xml")
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
         message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
@@ -451,164 +521,21 @@ endif()
 
 ENDIF()
 
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/alexa_macro.cmake)
+
+IF (BUILD_RECONDRIVER)
+
+do_alexa()
+
+ENDIF(BUILD_RECONDRIVER)
+
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
+
 IF (BUILD_ALBANY)
 
-# Configure the ALBANY build 
-#
-####################################################################################################################
-
-SET_PROPERTY (GLOBAL PROPERTY SubProject Albany_CUVM)
-SET_PROPERTY (GLOBAL PROPERTY Label Albany_CUVM)
-
-SET(CONFIGURE_OPTIONS
-  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-  "-DENABLE_LCM:BOOL=ON"
-  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-  "-DENABLE_HYDRIDE:BOOL=OFF"
-  "-DENABLE_SCOREC:BOOL=ON"
-  "-DENABLE_SG:BOOL=OFF"
-  "-DENABLE_ENSEMBLE:BOOL=OFF"
-  "-DENABLE_FELIX:BOOL=ON"
-  "-DENABLE_AERAS:BOOL=ON"
-  "-DENABLE_QCAD:BOOL=OFF"
-  "-DENABLE_MOR:BOOL=OFF"
-  "-DENABLE_ATO:BOOL=OFF"
-  "-DENABLE_ASCR:BOOL=OFF"
-  "-DENABLE_CHECK_FPE:BOOL=OFF"
-  "-DENABLE_LAME:BOOL=OFF"
-  "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
-  "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-   )
- 
-if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
-  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
-endif()
-
-IF (CLEAN_BUILD)
-# Initial cache info
-set( CACHE_CONTENTS "
-SITE:STRING=${CTEST_SITE}
-CMAKE_BUILD_TYPE:STRING=Release
-CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-BUILD_TESTING:BOOL=OFF
-PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-" )
-file(WRITE "${CTEST_BINARY_DIRECTORY}/Albany/CMakeCache.txt" "${CACHE_CONTENTS}")
-ENDIF()
-
-
-CTEST_CONFIGURE(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-          OPTIONS "${CONFIGURE_OPTIONS}"
-          RETURN_VALUE HAD_ERROR
-          APPEND
-)
-
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Configure
-               RETURN_VALUE  S_HAD_ERROR
-  )
-
-  if(S_HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany configure results!")
-  endif()
-ENDIF()
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Albany build!")
-endif()
-
-#
-# Build Albany
-#
-###################################################################################################################
-
-SET(CTEST_BUILD_TARGET "Albany")
-
-MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          RETURN_VALUE  HAD_ERROR
-          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-          APPEND
-)
-
-if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  S_HAD_ERROR
-    )
-
-    if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit Albany build results!")
-    endif()
-  ENDIF()
-
-  if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany!")
-  endif()
-
-  message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
-
-endif()
-
-SET(CTEST_BUILD_TARGET "AlbanyT")
-
-MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          RETURN_VALUE  HAD_ERROR
-          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-          APPEND
-)
-
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  S_HAD_ERROR
-  )
-
-  if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit Albany build results!")
-  endif()
-ENDIF()
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build AlbanyT!")
-endif()
-
-if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in AlbanyT build. Exiting!")
-endif()
-
-#
-# Run Albany tests
-#
-##################################################################################################################
-
-CTEST_TEST(
-              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-#              INCLUDE "SCOREC_ThermoMechanicalCan_thermomech_tpetra"
-#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-              INCLUDE_LABEL "CUDA_TEST"
-              #NUMBER_FAILED  TEST_NUM_FAILED
-)
-
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Test
-               RETURN_VALUE  HAD_ERROR
-  )
-
-  if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany test results!")
-  endif()
-ENDIF()
+do_albany()
 
 ENDIF (BUILD_ALBANY)
-
 
 # Done!!!
 

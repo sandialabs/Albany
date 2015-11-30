@@ -54,14 +54,13 @@ class Optimizer
 
 };
 
-
 class Optimizer_OC : public Optimizer {
  public:
   Optimizer_OC(const Teuchos::ParameterList& optimizerParams);
   ~Optimizer_OC();
-  void Optimize();
+  virtual void Optimize();
   void Initialize();
- private:
+ protected:
   void computeUpdatedTopology();
 
   double* p;
@@ -95,6 +94,13 @@ class Optimizer_OC : public Optimizer {
 
 };
 
+class Optimizer_OCG : public Optimizer_OC {
+  public:
+    Optimizer_OCG(const Teuchos::ParameterList& optimizerParams) : Optimizer_OC(optimizerParams){}
+    virtual void Optimize();
+};
+
+
 #ifdef ATO_USES_NLOPT
 class Optimizer_NLopt : public Optimizer {
  public:
@@ -104,11 +110,18 @@ class Optimizer_NLopt : public Optimizer {
   void Initialize();
  private:
 
-  double* p;
-  double* p_last;
-  double f;
-  double f_last;
+  enum ResponseType {Volume, Aggregate};
+
+  ResponseType objectiveType, constraintType;
+
+  double objectiveValue, objectiveValue_last;
+  double constraintValue, constraintValue_last;
+
+  double *p, *p_last;
+  double f, g, v;
   double* dfdp;
+  double* dgdp;
+  double* dvdp;
   int numOptDofs;
 
   double _minDensity;
@@ -118,8 +131,12 @@ class Optimizer_NLopt : public Optimizer {
   double _optConvTol;
 
   std::string _optMethod;
+  double _conConvTol;
 
   nlopt_opt opt;
+
+  bool isChanged(const double* x);
+  double* x_ref;
 
   double evaluate_backend( unsigned int n, const double* x, double* grad );
   static double evaluate( unsigned int n, const double* x, double* grad, void* data);

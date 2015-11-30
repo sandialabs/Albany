@@ -5,6 +5,7 @@
 #include <SimField.h>
 #include <apfSIM.h>
 #include <spr.h>
+#include <EnergyIntegral.hpp>
 
 namespace AAdapt {
 
@@ -19,7 +20,24 @@ SimAdapt::SimAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 bool SimAdapt::queryAdaptationCriteria(int iteration)
 {
-  return true;
+  std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "Step Number");
+  if (strategy == "None")
+    return false;
+  if (strategy == "Continuous")
+    return iteration > 1;
+  if (strategy == "Step Number") {
+    TEUCHOS_TEST_FOR_EXCEPTION(!adapt_params_->isParameter("Remesh Step Number"),
+        std::logic_error,
+        "Remesh Strategy " << strategy << " but no Remesh Step Number" << '\n');
+    Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+    for(int i = 0; i < remesh_iter.size(); i++)
+      if(iteration == remesh_iter[i])
+        return true;
+    return false;
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "Unknown Remesh Strategy " << strategy << '\n');
+  return false;
 }
 
 bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
@@ -48,6 +66,8 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
+//  Estimation meshFinal;
+
   apf::destroyField(grad_ip_fld);
   /* write the mesh with size field to file */
   std::stringstream ss;
@@ -59,8 +79,10 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
   apf::MeshIterator* it = apf_m->begin(0);
+  double max_size = adapt_params_->get<double>("Max Size", 1e10);
   while ((v = apf_m->iterate(it))) {
-    double size = apf::getScalar(size_fld, v, 0);
+    double size1 = apf::getScalar(size_fld, v, 0);
+    double size = std::min(max_size, size1);
     MSA_setVertexSize(adapter, (pVertex) v, size);
   }
   apf_m->end(it);
@@ -90,6 +112,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   sprintf(simname, "preadapt_res_%d.fld", callcount);
   Field_write(sim_res_fld, simname, 0, 0, 0);
 #endif
+  Albany::debugAMPMesh(apf_m, "before");
   /* run the adapter */
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
@@ -106,8 +129,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
 
   /* run APF verification on the resulting mesh */
   apf_m->verify();
-  /* write the adapted mesh to file */
-  apf::writeVtkFiles("adapted", apf_m);
+  Albany::debugAMPMesh(apf_m, "after");
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data);
   /* see the comment in Albany_APFDiscretization.cpp */
@@ -122,6 +144,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimAdapt::getValidAdapterParameters()
     this->getGenericAdapterParams("ValidSimAdaptParams");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
+  validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
   return validPL;
 }
 

@@ -52,13 +52,15 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  uDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>        density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      density;
+
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> Residual;
 
   const double viscosity;
   const double hyperviscosity;
+
   const int numNodes;
   const int numQPs;
   const int numDims;

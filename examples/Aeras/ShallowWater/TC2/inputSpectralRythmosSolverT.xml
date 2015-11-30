@@ -36,7 +36,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_sphere10_quad9.exo"/>
     <Parameter name="Cubature Degree" type="int" value="4"/>
-    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Write Interval" type="int" value="5"/>
@@ -44,7 +44,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="6"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{798.369064681, 2998.11109442, 178397.382865, 0.523177026803, 237823.31172, 2.19985594776e-06}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{798.369064681, 2998.11109442, 178397.382865,  90209.8593045, 54923195819.6, 1.64247287432e-06}"/>
   <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -54,7 +54,7 @@
     <ParameterList name="Rythmos Solver">
 
       <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
-      <Parameter name="Lump Mass Matrix" type="bool" value="false"/>
+      <Parameter name="Lump Mass Matrix" type="bool" value="true"/>
       
       <ParameterList name="NonLinear Solver">
          <ParameterList name="VerboseObject">

@@ -50,6 +50,12 @@ Albany::PUMIDiscretization::setRestartData()
   // then we want to copy the qp data from apf to Albany's data structs
   this->copyQPStatesFromAPF();
 
+  // also want the time information to be correct
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    Albany::MDArray& told = stateArrays.elemStateArrays[b]["Time_old"];
+    told(0) = pumiMeshStruct->restartDataTime;
+  }
+
   // get rid of this qp data from apf
   this->removeQPStatesFromAPF();
 

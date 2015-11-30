@@ -189,8 +189,11 @@ computeBCs(
   // This tolerance is used for geometric approximations. It will be used
   // to determine whether a node of this_app is inside an element of
   // coupled_app within that tolerance.
+  // IKT, 10/14/15: changing tolerance to 5.0e-3; tolerance of 1.0e-3 
+  // was causing NotchedCylinder example to die (assert error) 
   double const
-  tolerance = 1.0e-3;
+  //tolerance = 1.0e-3;
+  tolerance = 5.0e-2; 
 
   double * const
   coord = ns_coord[ns_node];

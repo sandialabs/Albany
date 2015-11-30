@@ -64,6 +64,7 @@ namespace ATO {
   class OptInterface {
   public:
     virtual void Compute(double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
+    virtual void Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
 
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
 
@@ -98,6 +99,7 @@ namespace ATO {
     void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
 
     void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
+    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 

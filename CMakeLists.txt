@@ -91,6 +91,9 @@ IF (ENABLE_INSTALL)
     MESSAGE("-- Please upgrade CMAKE to version >= 2.8.8")
     MESSAGE("")
   ENDIF()
+ELSE()
+    MESSAGE("-- Not installing Albany libraries. ENABLE_INSTALL was not defined.")
+    MESSAGE("")
 ENDIF()
 
 IF (INSTALL_ALBANY)
@@ -548,6 +551,28 @@ to be ON\n")
 ELSE()
   MESSAGE("---> CISM_INTERFACE     is NOT Enabled.")
   SET(CISM_HAS_FELIX FALSE)
+ENDIF()
+
+# set optional dependency of mesh on parameters, defaults to Disabled
+OPTION(ENABLE_MESH_DEPENDS_ON_PARAMETERS "Flag to turn on dependency of mesh on parameters, e.g for shape optimization" OFF)
+IF (ENABLE_MESH_DEPENDS_ON_PARAMETERS)
+  ADD_DEFINITIONS(-DALBANY_MESH_DEPENDS_ON_PARAMETERS)
+  MESSAGE("-- MESH_DEPENDS_ON_PARAMETERS is Enabled, compiling with -DALBANY_MESH_DEPENDS_ON_PARAMETERS")
+  SET(ALBANY_MESH_DEPENDS_ON_PARAMETERS TRUE)
+ELSE()
+  MESSAGE("-- MESH_DEPENDS_ON_PARAMETERS is NOT Enabled.")
+  SET(ALBANY_MESH_DEPENDS_ON_PARAMETERS FALSE)
+ENDIF()
+
+# set optional dependency of mesh on solution, defaults to Disabled
+OPTION(ENABLE_MESH_DEPENDS_ON_SOLUTION "Flag to turn on dependency of mesh on solution" OFF)
+IF (ENABLE_MESH_DEPENDS_ON_SOLUTION)
+  ADD_DEFINITIONS(-DALBANY_MESH_DEPENDS_ON_SOLUTION)
+  MESSAGE("-- MESH_DEPENDS_ON_SOLUTION is Enabled, compiling with -DALBANY_MESH_DEPENDS_ON_SOLUTION")
+  SET(ALBANY_MESH_DEPENDS_ON_SOLUTION TRUE)
+ELSE()
+  MESSAGE("-- MESH_DEPENDS_ON_SOLUTION is NOT Enabled.")
+  SET(ALBANY_MESH_DEPENDS_ON_SOLUTION FALSE)
 ENDIF()
 
 # Set optional build of MPAS Interface for FELIX (Land Ice SciDAC project),

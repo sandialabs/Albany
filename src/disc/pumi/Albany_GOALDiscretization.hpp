@@ -12,6 +12,14 @@
 
 namespace Albany {
 
+struct GOALNode
+{
+  int lid;
+  bool higherOrder;
+};
+
+typedef std::map<std::string, std::vector<GOALNode> > GOALNodeSets;
+
 class GOALDiscretization : public PUMIDiscretization
 {
   public:
@@ -28,8 +36,17 @@ class GOALDiscretization : public PUMIDiscretization
     //! Retrieve mesh struct
     Teuchos::RCP<Albany::GOALMeshStruct> getGOALMeshStruct() {return goalMeshStruct;}
 
+    //! Retrieve the goalNodeSets
+    GOALNodeSets getGOALNodeSets() {return goalNodeSets;}
+
     //! Get the number of DOFs per element for this element block
     int getNumNodesPerElem(int ebi);
+
+    //! Attach the solution to the APF mesh from a Tpetra vector
+    void attachSolutionToMesh(Tpetra_Vector const& x);
+
+    //! Fill a solution vector from the mesh
+    void fillSolutionVector(Teuchos::RCP<Tpetra_Vector>& x);
 
     //! Update the mesh
     void updateMesh(bool shouldTransferIPData);
@@ -49,6 +66,10 @@ class GOALDiscretization : public PUMIDiscretization
     //! Process APF mesh for SideSets
     void computeSideSets();
 
+    //! Goal node sets
+    GOALNodeSets goalNodeSets;
+
+    //! Goal mesh struct
     Teuchos::RCP<Albany::GOALMeshStruct> goalMeshStruct;
 };
 

@@ -47,6 +47,10 @@
 #endif
 #endif
 
+#ifdef ALBANY_GOAL
+#include "GOAL_BCUtils.hpp"
+#endif
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -80,8 +84,6 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params,initial_guess);
-  if (noProblemParams != 1) 
-    noProblemParams = 0; 
 }
 
 
@@ -98,15 +100,6 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
-  if (noProblemParams != 1) 
-    noProblemParams = 0; 
-};
-
-
-Albany::Application::
-Application() 
-{
-  noProblemParams = 1; 
 };
 
 
@@ -1052,6 +1045,13 @@ computeGlobalResidualImplT(
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+
+#ifdef ALBANY_GOAL
+  double t = current_time;
+  if (paramLib->isParameter("Time"))
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  GOAL::computeHierarchicBCs(t, (*this), xT, fT, Teuchos::null);
+#endif
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1324,6 +1324,13 @@ computeGlobalJacobianImplT(const double alpha,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
+
+#ifdef ALBANY_GOAL
+  double t = current_time;
+  if (paramLib->isParameter("Time"))
+    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
+#endif
 
   jacT->fillComplete();
 

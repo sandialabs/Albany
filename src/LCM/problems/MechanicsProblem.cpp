@@ -272,11 +272,13 @@ buildProblem(
         Teuchos::null);
     if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
   }
+  *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
   constructDirichletEvaluators(*meshSpecs[0]);
 
-  if (haveSidesets)
-
-  constructNeumannEvaluators(meshSpecs[0]);
+  if (haveSidesets) {
+    *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
+    constructNeumannEvaluators(meshSpecs[0]);
+  }
 
 }
 //------------------------------------------------------------------------------
@@ -296,7 +298,7 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       stateMgr,
       fmchoice,
       responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 //------------------------------------------------------------------------------
@@ -440,6 +442,7 @@ getValidProblemParameters() const
   return validPL;
 }
 
+//------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::
 getAllocatedStates(

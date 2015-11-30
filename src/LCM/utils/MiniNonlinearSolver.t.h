@@ -16,7 +16,7 @@ miniMinimize(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid::Vector<RealType, N> & soln)
+    Intrepid::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
 {
   minimizer.solve(step_method, function, soln);
 
@@ -31,7 +31,14 @@ miniMinimize(
     FN & function,
     Intrepid::Vector<T, N> & soln)
 {
-  // Extract values and use them to minimize the function.
+// Make sure that if Albany is compiled with a static FAD type
+// there won't be confusion with MiniSolver's FAD.
+  using AD = Intrepid::FAD<RealType, N>;
+
+  static_assert(
+      std::is_same<T, AD>::value == false,
+      "Albany and MiniSolver Fad types not allowed to be equal.");
+
   using ValueT = typename Sacado::ValueType<T>::type;
 
   Intrepid::Vector<ValueT, N>
@@ -46,12 +53,6 @@ miniMinimize(
   for (auto i = 0; i < dimension; ++i) {
     soln(i).val() = soln_val(i);
   }
-
-  // Check if there is FAD info.
-  auto const
-  order = soln[0].size();
-
-  if (order == 0) return;
 
   // Get the Hessian evaluated at the solution.
   Intrepid::Tensor<ValueT, N>
@@ -89,7 +90,7 @@ computeFADInfo(
   auto const
   order = r[0].size();
 
-  assert(order > 0);
+  assert(order > 0 && "FATAL ERROR: Expected Fad info but there is none!");
 
   // Extract sensitivities of r wrt p
   Intrepid::Matrix<S, N>
@@ -112,7 +113,9 @@ computeFADInfo(
       x(i).fastAccessDx(j) = -DxDp(i, j);
     }
   }
-
 }
+
+#ifdef ALBANY_ENSEMBLE
+#endif // ALBANY_ENSEMBLE
 
 } // namespace LCM

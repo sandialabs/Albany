@@ -6,6 +6,8 @@
 #if !defined(LCM_MiniSolvers_h)
 #define LCM_MiniSolvers_h
 
+#include <boost/any.hpp>
+
 #include "Intrepid_MiniTensor_Solvers.h"
 
 //
@@ -26,11 +28,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 1;
+  DIMENSION{1};
 
   static constexpr
   char const * const
-  NAME = "Square Root";
+  NAME{"Square Root"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -84,11 +86,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Quadratic";
+  NAME{"Quadratic"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -149,11 +151,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Inverted Gaussian";
+  NAME{"Inverted Gaussian"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -224,11 +226,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Rosenbrock's Banana";
+  NAME{"Rosenbrock's Banana"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -279,11 +281,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Matyas";
+  NAME{"Matyas"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -334,11 +336,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "McCormick";
+  NAME{"McCormick"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -389,11 +391,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Styblinski-Tang";
+  NAME{"Styblinski-Tang"};
 
   // Default value.
   template<typename T, Intrepid::Index N>
@@ -448,11 +450,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Paraboloid";
+  NAME{"Paraboloid"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>
@@ -500,11 +502,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Beale";
+  NAME{"Beale"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>
@@ -567,11 +569,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Booth";
+  NAME{"Booth"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>
@@ -631,11 +633,11 @@ public:
 
   static constexpr
   Intrepid::Index
-  DIMENSION = 2;
+  DIMENSION{2};
 
   static constexpr
   char const * const
-  NAME = "Goldstein-Price";
+  NAME{"Goldstein-Price"};
 
   // Explicit value.
   template<typename T, Intrepid::Index N>

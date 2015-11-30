@@ -39,12 +39,8 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   density     (p.get<std::string> ("QP Density"),                       dl->qp_scalar_level),
   Residual    (p.get<std::string> ("Residual Name"),                    dl->node_vector_level),
 
-  viscosity   (p.isParameter("XZHydrostatic Problem") ? 
-                p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Viscosity", 0.0):
-                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Viscosity", 0.0)),
-  hyperviscosity(p.isParameter("XZHydrostatic Problem") ? 
-                p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("HyperViscosity", 0.0):
-                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("HyperViscosity", 0.0)),
+  viscosity      (p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Viscosity", 0.0)),
+  hyperviscosity (p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("HyperViscosity", 0.0)),
   numNodes    ( dl->node_scalar             ->dimension(1)),
   numQPs      ( dl->node_qp_scalar          ->dimension(2)),
   numDims     ( dl->node_qp_gradient        ->dimension(3)),
@@ -65,6 +61,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
   this->setName("Aeras::XZHydrostatic_VelResid" );
+
 }
 
 //**********************************************************************
@@ -113,4 +110,5 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+
 }

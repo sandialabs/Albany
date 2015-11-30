@@ -10,13 +10,25 @@ SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/GOAL)
 SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
 SET(SOURCES
+  utils/GOAL_BCUtils.cpp
+  utils/GOAL_LinearSolve.cpp
   evaluators/GOAL_ComputeHierarchicBasis.cpp
-  problems/GOAL_MechanicsProblem.cpp)
+  evaluators/GOAL_LpStress.cpp
+  evaluators/GOAL_ScatterQoI.cpp
+  problems/GOAL_MechanicsProblem.cpp
+  responses/GOAL_AdjointResponse.cpp)
 
 SET(HEADERS
+  utils/GOAL_BCUtils.hpp
+  utils/GOAL_LinearSolve.hpp
   evaluators/GOAL_ComputeHierarchicBasis.hpp
   evaluators/GOAL_ComputeHierarchicBasis_Def.hpp
-  problems/GOAL_MechanicsProblem.hpp)
+  evaluators/GOAL_LpStress.hpp
+  evaluators/GOAL_LpStress_Def.hpp
+  evaluators/GOAL_ScatterQoI.hpp
+  evaluators/GOAL_ScatterQoI_Def.hpp
+  problems/GOAL_MechanicsProblem.hpp
+  responses/GOAL_AdjointResponse.hpp)
 
 include_directories(
   ${Trilinos_INCLUDE_DIRS}

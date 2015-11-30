@@ -18,7 +18,9 @@ GOALMechanicsProblem::GOALMechanicsProblem(
     const int numDim,
     Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params, paramLib),
-  numDims(numDim)
+  numDims(numDim),
+  isAdjoint(false),
+  enrichAdjoint(false)
 {
   // compute number of equations
   int numEq = 0;
@@ -31,11 +33,35 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   // print a summary of the problem
   *out << "GOAL Mechanics Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
+
+  // if solving the adjoint problem, should we use an enriched basis?
+  if (params->isParameter("Enrich Adjoint"))
+    enrichAdjoint = params->get<bool>("Enrich Adjoint", false);
+
+  // if solving the adjoint problem, we need a quantity of interest
+  if (params->isSublist("Quantity of Interest")) {
+    Teuchos::ParameterList& p = params->sublist("Quantity of Interest", false);
+    qoiParams = Teuchos::rcpFromRef(p);
+  }
+
+  // fill in the dof names
+  offsets["X"] = 0;
+  if (numDims > 1)
+    offsets["Y"] = 1;
+  if (numDims > 2)
+    offsets["Z"] = 2;
 }
 
 /*****************************************************************************/
 GOALMechanicsProblem::~GOALMechanicsProblem()
 {
+}
+
+/*****************************************************************************/
+int GOALMechanicsProblem::getOffset(std::string const& var)
+{
+  assert(offsets.count(var) == 1);
+  return offsets[var];
 }
 
 /*****************************************************************************/
@@ -73,7 +99,7 @@ buildEvaluators(
   // calls constructEvaluators<EvalT> for all EvalT
   ConstructEvaluatorsOp<GOALMechanicsProblem> op(
       *this, fm0, meshSpecs, stateMgr, fmChoice, responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
@@ -82,22 +108,14 @@ void GOALMechanicsProblem::constructDirichletEvaluators(
     const Albany::MeshSpecsStruct& meshSpecs,
     Teuchos::RCP<Teuchos::ParameterList>& bcs)
 {
-  int idx = 0;
-  std::vector<std::string> dirichletNames(neq);
-  dirichletNames[idx++] = "X";
-  if (numDims > 1) dirichletNames[idx++] = "Y";
-  if (numDims > 2) dirichletNames[idx++] = "Z";
-
-  Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-  dfm = dirUtils.constructBCEvaluators(
-      meshSpecs.nsNames, dirichletNames, bcs, this->paramLib);
+  dfm = Teuchos::null;
 }
 
 /*****************************************************************************/
 void GOALMechanicsProblem::constructNeumannEvaluators(
     const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-  *out << "don't do that!" << std::endl;
+  nfm = Teuchos::null;
 }
 
 /*****************************************************************************/
@@ -107,6 +125,9 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> pl =
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
+  pl->sublist("Hierarchic Boundary Conditions", false, "");
+  pl->set<bool>("Enrich Adjoint", false, "should the adjoint solve be enriched");
+  pl->sublist("Quantity of Interest", false, "QoI used for adjoint solve");
   return pl;
 }
 

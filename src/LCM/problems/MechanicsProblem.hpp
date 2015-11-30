@@ -1383,7 +1383,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Total Bubble Density Name", total_bubble_density);
       param_list.set<bool>("Have Bubble Volume Fraction", true);
       param_list.set<bool>("Have Total Bubble Density", true);
-      param_list.set<RealType>("Helium Radius", 
+      param_list.set<RealType>("Helium Radius",
           param_list.sublist("Tritium Coefficients").get<RealType>("Helium Radius", 0.0));
     }
 
@@ -1556,12 +1556,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           new LCM::SurfaceVectorGradient<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      // optional output
+      // optional output of the deformation gradient
       bool output_flag(false);
       if (material_db_->isElementBlockParam(eb_name,
-          "Output Deformation Gradient"))
-        output_flag =
-            material_db_->getElementBlockParam<bool>(eb_name,
+        "Output Deformation Gradient"))
+        output_flag = material_db_->getElementBlockParam<bool>(eb_name,
                 "Output Deformation Gradient");
 
       p = stateMgr.registerStateVariable(defgrad,
@@ -1575,6 +1574,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = Teuchos::rcp(
           new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
 
       // need J and J_old to perform time integration for poromechanics problem
       output_flag = false;
@@ -1827,6 +1827,27 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             output_flag);
         ev = Teuchos::rcp(
             new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+
+            // optional output of the integration weights
+      output_flag = false;
+      if (material_db_->isElementBlockParam(eb_name,
+        "Output Integration Weights"))
+        output_flag = material_db_->getElementBlockParam<bool>(eb_name,
+                "Output Integration Weights");
+
+      if (output_flag) {
+        p = stateMgr.registerStateVariable("Weights",
+                                           dl_->qp_scalar,
+                                           dl_->dummy,
+                                           eb_name,
+                                           "scalar",
+                                           0.0,
+                                           false,
+                                           output_flag);
+        ev = Teuchos::rcp(
+                          new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
 
@@ -2314,6 +2335,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     // see below
     if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
+      p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
     }
 
     p->set<bool>("Weighted Volume Average J", volume_average_j);
@@ -2330,9 +2352,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     // FIXME: this creates a circular dependency between the constitutive model and transport
-    if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
-      p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-    }
+    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
+    //p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
+      //}
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
@@ -2682,99 +2704,29 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Input
     p->set<std::string>("Element Length Name", gradient_element_length);
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Scalar Data Layout",
-        dl_->qp_scalar);
-
     p->set<std::string>("Weighted BF Name", "wBF");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "Node QP Scalar Data Layout",
-        dl_->node_qp_scalar);
-
     p->set<std::string>("Weights Name", "Weights");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Scalar Data Layout",
-        dl_->qp_scalar);
-
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "Node QP Vector Data Layout",
-        dl_->node_qp_vector);
-
     p->set<std::string>("Gradient BF Name", "Grad BF");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "Node QP Vector Data Layout",
-        dl_->node_qp_vector);
-
-    if (have_mech_eq_) {
-      p->set<std::string>("eqps Name", eqps);
-      p->set<Teuchos::RCP<PHX::DataLayout>>(
-          "QP Scalar Data Layout",
-          dl_->qp_scalar);
-
+    if ((have_mech_ || have_mech_eq_) &&
+        (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic")) {
+      p->set<std::string>("Equivalent Plastic Strain Name", eqps);
       p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-      p->set<Teuchos::RCP<PHX::DataLayout>>(
-          "QP Scalar Data Layout",
-          dl_->qp_scalar);
-
-      p->set<std::string>("Tau Contribution Name", convectionCoefficient);
-      p->set<Teuchos::RCP<PHX::DataLayout>>(
-          "QP Scalar Data Layout",
-          dl_->qp_scalar);
     }
-
+    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
+    p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Scalar Data Layout",
-        dl_->qp_scalar);
-
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Scalar Data Layout",
-        dl_->qp_scalar);
-
     p->set<std::string>("Deformation Gradient Name", defgrad);
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Tensor Data Layout",
-        dl_->qp_tensor);
-
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Scalar Data Layout",
-        dl_->qp_scalar);
-
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Scalar Data Layout",
-        dl_->qp_scalar);
-
     p->set<std::string>("QP Variable Name", "Transport");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Scalar Data Layout",
-        dl_->qp_scalar);
-
     p->set<std::string>("Gradient QP Variable Name", "Transport Gradient");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Vector Data Layout",
-        dl_->qp_vector);
-
-    p->set<std::string>("Gradient Hydrostatic Stress Name",
-        "HydroStress Gradient");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Vector Data Layout",
-        dl_->qp_vector);
-
+    p->set<std::string>("Gradient Hydrostatic Stress Name", "HydroStress Gradient");
     p->set<std::string>("Stress Name", cauchy);
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "QP Tensor Data Layout",
-        dl_->qp_tensor);
-
     p->set<std::string>("Delta Time Name", "Delta Time");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "Workset Scalar Data Layout",
-        dl_->workset_scalar);
-
     RealType stab_param(0.0);
+
     if (material_db_->isElementBlockParam(eb_name, "Stabilization Parameter")) {
       stab_param =
           material_db_->getElementBlockParam<RealType>(eb_name,
@@ -2792,7 +2744,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     RealType decay_constant(0.0);
     // Check if Tritium Sublist exists. If true, move forward
     if (param_list.isSublist("Tritium Coefficients")) {
-
       Teuchos::ParameterList& tritium_param = material_db_->
           getElementBlockSublist(eb_name, matName).sublist(
           "Tritium Coefficients");
@@ -2802,13 +2753,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     //Output
     p->set<std::string>("Residual Name", "Transport Residual");
-    p->set<Teuchos::RCP<PHX::DataLayout>>(
-        "Node Scalar Data Layout",
-        dl_->node_scalar);
 
-    ev = Teuchos::rcp(
-        new LCM::HDiffusionDeformationMatterResidual<EvalT, PHAL::AlbanyTraits>(
-            *p));
+    ev = Teuchos::rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
 
   }

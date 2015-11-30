@@ -21,11 +21,17 @@ LaserSource(Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
   coord_        (p.get<std::string>("Coordinate Name"),
                  dl->qp_vector),
+  time        (p.get<std::string>("Time Name"),
+               dl->workset_scalar),
+  deltaTime   (p.get<std::string>("Delta Time Name"),
+               dl->workset_scalar),
   laser_source_ (p.get<std::string>("Laser Source Name"),
                  dl->qp_scalar)
 {
 
   this->addDependentField(coord_);
+  this->addDependentField(time);
+  this->addDependentField(deltaTime);
   this->addEvaluatedField(laser_source_);
  
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -107,6 +113,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coord_,fm);
+  this->utils.setFieldData(time,fm);
+  this->utils.setFieldData(deltaTime,fm);
   this->utils.setFieldData(laser_source_,fm);
 }
 
@@ -116,7 +124,7 @@ void LaserSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // current time
-  const RealType time = workset.current_time;
+ // const RealType time = workset.current_time;
 
   // source function
   ScalarT pi = 3.1415926535897932;
@@ -149,9 +157,11 @@ evaluateFields(typename Traits::EvalData workset)
     ScalarT LaserVelocity_z = 0.0;
     ScalarT Laser_Init_position_x = 0.0;
     ScalarT Laser_Init_position_z = 0.0;
-    ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*time;
-    ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*time;
-    
+  
+    ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*(time(0)-deltaTime(0));
+    ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*(time(0)-deltaTime(0));
+ //   ScalarT Laser_center_x = 0.0;
+ //   ScalarT Laser_center_z = 0.0;
 
 //  Note:(0.0003 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.
     ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*(0.0003-Y))-b1*exp(-2.0*a*beta*(0.0003-Y))) - B*(c2*exp(-2.0*a*(lambda - beta*(0.0003-Y)))-c1*exp(2.0*a*(lambda-beta*(0.0003-Y))))) + f3*(exp(-beta*(0.0003-Y))+powder_hemispherical_reflectivity*exp(beta*(0.0003-Y) - 2.0*lambda)));

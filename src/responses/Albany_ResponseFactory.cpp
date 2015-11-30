@@ -31,6 +31,10 @@
 #endif
 #endif
 
+#ifdef ALBANY_GOAL
+#include "GOAL_AdjointResponse.hpp"
+#endif
+
 #include "Teuchos_TestForException.hpp"
 
 void
@@ -118,7 +122,9 @@ createResponseFunction(
 	   name == "Field Value" ||
 	   name == "Field Average" ||
 	   name == "Surface Velocity Mismatch" ||
+	   name == "Surface Mass Balance Mismatch" ||
            name == "Aeras Shallow Water L2 Error" ||
+           name == "Aeras Shallow Water L2 Norm" ||
            name == "Aeras Total Volume" ||
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||
@@ -192,6 +198,15 @@ createResponseFunction(
     }
   }
 #endif
+#endif
+
+#ifdef ALBANY_GOAL
+  else if (name == "Adjoint") {
+    responseParams.set("Name", name);
+    responses.push_back( rcp(
+          new GOAL::AdjointResponse(
+            app, prob, stateMgr, meshSpecs, responseParams)));
+  }
 #endif
 
   else {

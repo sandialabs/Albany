@@ -161,6 +161,12 @@ IF(ALBANY_LCM)
   add_subdirectory(LCM)
 ENDIF(ALBANY_LCM)
 
+# GOAL ##############
+
+IF(ALBANY_GOAL)
+  add_subdirectory(GOAL)
+ENDIF()
+
 IF(ALBANY_HAVE_STK)
 
 # QCAD ##################

@@ -54,8 +54,8 @@ ENDIF()
 configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
                ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-# Rougly midnight 0000 MDT
-SET(CTEST_NIGHTLY_START_TIME "00:00:00 MDT")
+# Run test at/after 21:00 (9:00PM MDT --> 3:00 UTC, 8:00PM MST --> 3:00 UTC)
+SET (CTEST_NIGHTLY_START_TIME "03:00:00 UTC")
 SET (CTEST_CMAKE_COMMAND "${CMAKE_SW_INSTALL_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${CMAKE_SW_INSTALL_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 SET (CTEST_BUILD_FLAGS "-j16")
@@ -69,7 +69,8 @@ set(CTEST_DROP_SITE_USER "")
 find_program(CTEST_GIT_COMMAND NAMES git)
 
 # Point at the public Repo
-SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
+#SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
+SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
 
@@ -257,7 +258,7 @@ SET(CONFIGURE_OPTIONS
   -DTpetra_INST_INT_LONG:BOOL=OFF
   -DTpetra_INST_INT_UNSIGNED:BOOL=OFF
   -DZoltan_ENABLE_ULONG_IDS:BOOL=OFF
-  -DTeuchos_ENABLE_LONG_LONG_INT:BOOL=OFF
+  -DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON
 #
   -DTrilinos_ENABLE_Kokkos:BOOL=ON
   -DTrilinos_ENABLE_KokkosCore:BOOL=ON

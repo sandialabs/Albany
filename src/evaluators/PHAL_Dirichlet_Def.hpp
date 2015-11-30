@@ -26,7 +26,8 @@ DirichletBase(Teuchos::ParameterList& p) :
   value = p.get<RealType>("Dirichlet Value");
 
   std::string name = p.get< std::string >("Dirichlet Name");
-  PHX::Tag<ScalarT> fieldTag(name, p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
+  const Teuchos::RCP<PHX::DataLayout> dummy = p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
+  const PHX::Tag<ScalarT> fieldTag(name, dummy);
 
   this->addEvaluatedField(fieldTag);
 
@@ -37,6 +38,20 @@ DirichletBase(Teuchos::ParameterList& p) :
                ("Parameter Library", Teuchos::null);
 
   this->registerSacadoParameter(name, paramLib);
+
+  {
+    // Impose an ordering on DBC evaluators. This code works with the function
+    // imposeOrder defined elsewhere. It happens that "Data Layout" is Dummy, so
+    // we can use it.
+    if (p.isType<std::string>("BCOrder Dependency")) {
+      PHX::Tag<ScalarT> order_depends_on(p.get<std::string>("BCOrder Dependency"), dummy);
+      this->addDependentField(order_depends_on);
+    }
+    if (p.isType<std::string>("BCOrder Evaluates")) {
+      PHX::Tag<ScalarT> order_evaluates(p.get<std::string>("BCOrder Evaluates"), dummy);
+      this->addEvaluatedField(order_evaluates);
+    }
+  }
 }
 
 template<typename EvalT, typename Traits>

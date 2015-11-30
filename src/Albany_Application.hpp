@@ -87,9 +87,6 @@ namespace Albany {
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
     
-    //! Dummy constructor (only used for Coupled Schwarz problems)
-    Application();
-
     //! Destructor
     ~Application();
 
@@ -699,19 +696,13 @@ namespace Albany {
     }
 
     //! Const access to problem parameter list
-    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() const {
-        if (noProblemParams == 1) 
-          return problemParams;
-        else 
-          return Teuchos::null; 
+    Teuchos::RCP<const Teuchos::ParameterList> getProblemPL() const {
+      return problemParams;
     }
 
     //! Access to problem parameter list
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
-        if (noProblemParams == 1)
-          return problemParams;
-        else
-          return Teuchos::null; 
+      return problemParams;
     }
 
 #if defined(ALBANY_EPETRA)
@@ -1018,9 +1009,6 @@ namespace Albany {
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos_Comm> commT;
 
-    //Boolean flag used for Schwarz multiscale problems
-    int noProblemParams; 
-
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -1224,8 +1212,6 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
       for (int j=0; j< wsElNodeEqID[ws][0].size(); j++)
           for (int k=0; k<wsElNodeEqID[ws][0][0].size();k++)
               workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k]; 
-
-  PHAL::BuildSerializer<EvalT> bs(workset);
 }
 
 #endif // ALBANY_APPLICATION_HPP

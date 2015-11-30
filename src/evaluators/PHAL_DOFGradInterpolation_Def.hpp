@@ -117,11 +117,19 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t dim=0; dim<numDims; dim++) {
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+            grad_val_qp(cell,qp,dim) = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
+#else
             grad_val_qp(cell,qp,dim) = ScalarT(num_dof, val_node(cell, 0).val() * GradBF(cell, 0, qp, dim));
             (grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * GradBF(cell, 0, qp, dim);
+#endif            
             for (std::size_t node= 1 ; node < numNodes; ++node) {
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+              grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
+#else
               (grad_val_qp(cell,qp,dim)).val() += val_node(cell, node).val() * GradBF(cell, node, qp, dim);
               (grad_val_qp(cell,qp,dim)).fastAccessDx(neq*node+offset) += val_node(cell, node).fastAccessDx(neq*node+offset) * GradBF(cell, node, qp, dim);
+#endif
           }
         }
       }

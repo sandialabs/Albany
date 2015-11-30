@@ -13,6 +13,9 @@
 
 namespace Intrepid
 {
+/// The Fad type to use.
+template<typename T, int N>
+using FAD = Sacado::Fad::SLFad<T, N>;
 
 ///
 /// Function base class that defines the interface to Mini Solvers.
@@ -23,10 +26,6 @@ class Function_Base
 public:
   Function_Base()
   {
-    //constexpr bool
-    //is_fad = Sacado::IsADType<S>::value == true;
-
-    //static_assert(is_fad == false, "AD types not allowed for type S");
   }
 
   ///
@@ -60,7 +59,18 @@ template<typename T, Index N>
 struct Minimizer
 {
 public:
-  Minimizer()
+  Minimizer():
+  max_num_iter(256),
+  rel_tol(1.0e-12),
+  rel_error(1.0),
+  abs_tol(1.0e-12),
+  abs_error(1.0),
+  converged(false),
+  initial_norm(1.0),
+  num_iter(0),
+  final_value(0.0),
+  step_method_name(nullptr),
+  function_name(nullptr)
   {
     constexpr bool
     is_fad = Sacado::IsADType<T>::value == true;

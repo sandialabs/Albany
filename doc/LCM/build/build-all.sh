@@ -63,65 +63,59 @@ case "$SCRIPT_NAME" in
 	exit 1
 	;;
 esac
-
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
-# Packages in innermost loop so that test results are reported as soon
-# as they are available.
-for TOOL_CHAIN in $TOOL_CHAINS; do
-    for BUILD_TYPE in $BUILD_TYPES; do
-	for ARCH in $ARCHS; do
-	    for PACKAGE in $PACKAGES; do
-		"$COMMAND" \
-		"$PACKAGE" "$ARCH" "$TOOL_CHAIN" "$BUILD_TYPE" "$NUM_PROCS"
-	    done
-	    # Update wiki after compiling Albany with gcc debug only.
-	    case "$PACKAGE" in
-		albany)
-		    case "$ARCH" in
-			serial)
-			    case "$BUILD_TYPE" in
-				debug)
-				    case "$TOOL_CHAIN" in
-					gcc)
-					    update_wiki
-					    ;;
-					clang)
-					    ;;
-					intel)
-					    ;;
-					*)
-					    echo "Unrecognized tool chain option"
-					    exit 1
-					    ;;
-				    esac
-				    ;;
-				release)
-				    ;;
-				*)
-				    echo "Unrecognized build type option"
-				    exit 1
-				    ;;
-			    esac
-			    ;;
-			openmp)
-			    ;;
-			cuda)
-			    ;;
-			*)
-			    echo "Unrecongnized architecture option"
-			    exit 1
-			    ;;
-		    esac
-		    ;;
-		trilinos)
-	            ;;
-		*)
-		    echo "Unrecognized package option"
-		    exit 1
-		    ;;
-	    esac
-	done
-    done
+
+for PACKAGE in $PACKAGES; do
+    MODULE="$ARCH"-"$TOOL_CHAIN"-"$BUILD_TYPE"
+    echo "MODULE: $MODULE"
+    module load "$MODULE"
+    "$COMMAND" "$PACKAGE" "$NUM_PROCS"
 done
+# Update wiki after compiling Albany with gcc debug only.
+case "$PACKAGE" in
+    albany)
+	case "$ARCH" in
+	    serial)
+		case "$BUILD_TYPE" in
+		    debug)
+			case "$TOOL_CHAIN" in
+			    gcc)
+				update_wiki
+				;;
+			    clang)
+				;;
+			    intel)
+				;;
+			    *)
+				echo "Unrecognized tool chain option"
+				exit 1
+				;;
+			esac
+			;;
+		    release)
+			;;
+		    *)
+			echo "Unrecognized build type option"
+			exit 1
+			;;
+		esac
+		;;
+	    openmp)
+		;;
+	    cuda)
+		;;
+	    *)
+		echo "Unrecongnized architecture option"
+		exit 1
+		;;
+	esac
+	;;
+    trilinos)
+	;;
+    *)
+	echo "Unrecognized package option"
+	exit 1
+	;;
+esac
 
 cd "$LCM_DIR"

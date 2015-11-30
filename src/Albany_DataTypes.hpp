@@ -44,14 +44,14 @@
 typedef double RealType;
 
 // SG data types
-typedef Stokhos::StandardStorage<int,double> StorageType;
-typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
+typedef Stokhos::StandardStorage<int,RealType> StorageType;
+typedef Sacado::PCE::OrthogPoly<RealType,StorageType> SGType;
 
 // Ensemble (a.k.a. MP) data types
 #ifndef ALBANY_ENSEMBLE_SIZE
 #define ALBANY_ENSEMBLE_SIZE 1
 #endif
-typedef Stokhos::StaticFixedStorage<int,double,ALBANY_ENSEMBLE_SIZE,PHX::Device> MPStorageType;
+typedef Stokhos::StaticFixedStorage<int,RealType,ALBANY_ENSEMBLE_SIZE,PHX::Device> MPStorageType;
 typedef Sacado::MP::Vector<MPStorageType> MPType;
 
 // Switch between dynamic and static FAD types
@@ -59,17 +59,17 @@ typedef Sacado::MP::Vector<MPStorageType> MPType;
   // Code templated on data type need to know if FadType and TanFadType
   // are the same or different typdefs
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-  typedef Sacado::Fad::SLFad<double, ALBANY_SLFAD_SIZE> FadType;
+  typedef Sacado::Fad::SLFad<RealType, ALBANY_SLFAD_SIZE> FadType;
   typedef Sacado::Fad::SLFad<SGType, ALBANY_SLFAD_SIZE> SGFadType;
   typedef Sacado::Fad::SLFad<MPType, ALBANY_SLFAD_SIZE> MPFadType;
 #else
 #define ALBANY_SFAD_SIZE 300
-  typedef Sacado::Fad::DFad<double> FadType;
+  typedef Sacado::Fad::DFad<RealType> FadType;
   typedef Sacado::Fad::DFad<SGType> SGFadType;
   typedef Sacado::Fad::DFad<MPType> MPFadType;
 #endif
 
-typedef Sacado::Fad::DFad<double> TanFadType;
+typedef Sacado::Fad::DFad<RealType> TanFadType;
 
 //Tpetra includes
 #include "Teuchos_DefaultComm.hpp"
@@ -90,7 +90,7 @@ typedef Sacado::Fad::DFad<double> TanFadType;
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
 //Tpetra typedefs
-typedef double                                      ST;
+typedef RealType                                    ST;
 #ifdef ALBANY_64BIT_INT
 typedef long long int                               GO;
 #else

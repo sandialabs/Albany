@@ -191,11 +191,19 @@ namespace PHAL {
           for (std::size_t i=0; i<vecDim; i++) {
             for (std::size_t dim=0; dim<numDims; dim++) {
               // For node==0, overwrite. Then += for 1 to numNodes.
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+              grad_val_qp(cell,qp,i,dim) = val_node(cell, 0, i)* GradBF(cell, 0, qp, dim);
+#else
               grad_val_qp(cell,qp,i,dim) = ScalarT(num_dof, val_node(cell, 0, i).val() * GradBF(cell, 0, qp, dim));
               (grad_val_qp(cell,qp,i,dim)).fastAccessDx(offset+i) = val_node(cell, 0, i).fastAccessDx(offset+i) * GradBF(cell, 0, qp, dim);
+#endif
               for (std::size_t node= 1 ; node < numNodes; ++node) {
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+                grad_val_qp(cell,qp,i,dim) += val_node(cell, node, i) * GradBF(cell, node, qp, dim);
+#else
                 (grad_val_qp(cell,qp,i,dim)).val() += val_node(cell, node, i).val() * GradBF(cell, node, qp, dim);
                 (grad_val_qp(cell,qp,i,dim)).fastAccessDx(neq*node+offset+i) += val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * GradBF(cell, node, qp, dim);
+#endif
            }
          } 
         } 

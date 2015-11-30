@@ -22,19 +22,27 @@ XZHydrostatic_TracerResid<EvalT, Traits>::
 XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
                       const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF        (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar   ),
+  wGradBF         (p.get<std::string> ("Weighted Gradient BF Name"),   dl->node_qp_gradient),
+  piTracerGrad (p.get<std::string> ("Gradient QP PiTracer"),           dl->qp_gradient_level),
   TracerDot  (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level  ),        
   TracerSrc  (p.get<std::string> ("Tracer Source Name"),               dl->qp_scalar_level  ),        
   UTracerDiv (p.get<std::string> ("Divergence QP UTracer"),            dl->qp_scalar_level),        
-  //etadotdTracer (p.get<std::string> ("Tracer EtaDotd Name"),           dl->qp_scalar_level  ),        
-  dedotpiTracerde (p.get<std::string> ("Tracer EtaDotd Name"),           dl->qp_scalar_level  ),        
+  //etadotdTracer (p.get<std::string> ("Tracer EtaDotd Name"),         dl->qp_scalar_level  ),        
+  dedotpiTracerde (p.get<std::string> ("Tracer EtaDotd Name"),         dl->qp_scalar_level  ),        
+  viscosity       (p.isParameter("XZHydrostatic Problem") ? 
+                   p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Viscosity", 0.0):
+                   p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Viscosity", 0.0)),
   Residual   (p.get<std::string> ("Residual Name"),                    dl->node_scalar_level),        
   numNodes   (dl->node_scalar             ->dimension(1)),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
+  numDims    (dl->node_qp_gradient        ->dimension(3)),
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
   this->addDependentField(TracerDot);
   this->addDependentField(UTracerDiv);
   this->addDependentField(wBF);
+  this->addDependentField(wGradBF);
+  this->addDependentField(piTracerGrad);
   this->addDependentField(TracerSrc);
   //this->addDependentField(etadotdTracer);
   this->addDependentField(dedotpiTracerde);
@@ -42,6 +50,8 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
   this->setName("Aeras::XZHydrostatic_TracerResid" );
+
+  Schmidt = 1.0;
 }
 
 //**********************************************************************
@@ -53,6 +63,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(TracerDot,      fm);
   this->utils.setFieldData(UTracerDiv,     fm);
   this->utils.setFieldData(wBF,            fm);
+  this->utils.setFieldData(wGradBF,        fm);
+  this->utils.setFieldData(piTracerGrad,   fm);
   this->utils.setFieldData(TracerSrc,      fm);
   //this->utils.setFieldData(etadotdTracer,  fm);
   this->utils.setFieldData(dedotpiTracerde,  fm);
@@ -75,6 +87,9 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,level) +=    UTracerDiv(cell,qp,level) * wBF(cell,node,qp);
           //Residual(cell,node,level) += etadotdTracer(cell,qp,level) * wBF(cell,node,qp);
           Residual(cell,node,level) += dedotpiTracerde(cell,qp,level) * wBF(cell,node,qp);
+          for (int dim=0; dim < numDims; ++dim) {
+            Residual(cell,node,level) += (viscosity/Schmidt)*piTracerGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+          }
         }
       }
     }

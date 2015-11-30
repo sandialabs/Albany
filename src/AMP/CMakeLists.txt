@@ -20,14 +20,23 @@ file (GLOB amp-evaluator-headers
   "${AMP_DIR}/evaluators/*.hpp"
 )
 
+file (GLOB amp-response-sources
+  "${AMP_DIR}/responses/*.cpp"
+)
+file (GLOB amp-response-headers
+  "${AMP_DIR}/responses/*.hpp"
+)
+
 set(SOURCES
   ${amp-problem-sources}
   ${amp-evaluator-sources}
+  ${amp-response-sources}
   )
 
 set(HEADERS
   ${amp-problem-headers}
   ${amp-evaluator-headers}
+  ${amp-response-headers}
  )
 
 set(INCLUDE_DIRS
@@ -36,7 +45,7 @@ set(INCLUDE_DIRS
   ${Albany_SOURCE_DIR}/src/evaluators
   ${Albany_SOURCE_DIR}/src/problems 
   ${Albany_SOURCE_DIR}/src/responses
-  ${Albany_SOURCE_DIR}/src/disc/stk
+  ${Albany_SOURCE_DIR}/src/disc/pumi
   ${Albany_SOURCE_DIR}/src/adapt
   ${AMP_DIR}/problems
   ${AMP_DIR}/evaluators

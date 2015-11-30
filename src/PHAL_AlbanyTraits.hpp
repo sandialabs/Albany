@@ -11,12 +11,14 @@
 
 #include "Sacado_mpl_vector.hpp"
 #include "Sacado_mpl_find.hpp"
-#include "boost/mpl/map.hpp"
-#include "boost/mpl/find.hpp"
-#include "boost/mpl/vector.hpp"
 
 // traits Base Class
+#ifdef ALBANY_USE_PUBLICTRILINOS
+#include "Albany_PublicTrilinosTrickery.hpp"
 #include "Phalanx_Traits_Base.hpp"
+#else
+#include "Phalanx_Traits.hpp"
+#endif
 
 // Include User Data Types
 #include "Phalanx_config.hpp"
@@ -65,15 +67,24 @@ namespace PHAL {
     };
 
     struct Residual : EvaluationType<RealType, RealType> {};
-    struct Jacobian : EvaluationType<FadType,  RealType> {};
-    struct Tangent  : EvaluationType<TanFadType,
-#ifdef ALBANY_MESH_TANFAD
-                                     TanFadType // Use this for shape opt
+#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
+    struct Jacobian : EvaluationType<FadType,  FadType> {};
 #else
-                                     RealType // Uncomment for no shape opt
+    struct Jacobian : EvaluationType<FadType,  RealType> {};
 #endif
-                                     > {};
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION) || defined(ALBANY_MESH_TANFAD)
+    struct Tangent  : EvaluationType<TanFadType,TanFadType> {};
+#else
+    struct Tangent  : EvaluationType<TanFadType, RealType> {};
+#endif
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    struct DistParamDeriv : EvaluationType<TanFadType,TanFadType> {};
+#else
     struct DistParamDeriv : EvaluationType<TanFadType, RealType> {};
+#endif
+
 
 #ifdef ALBANY_SG
     struct SGResidual : EvaluationType<SGType,    RealType> {};
@@ -91,24 +102,24 @@ namespace PHAL {
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 SGResidual, SGJacobian, SGTangent,
                                 MPResidual, MPJacobian, MPTangent> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                SGResidual, SGJacobian, SGTangent,
                                MPResidual, MPJacobian, MPTangent> BEvalTypes;
 #else
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 SGResidual, SGJacobian, SGTangent> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                SGResidual, SGJacobian, SGTangent> BEvalTypes;
 #endif
 #else
 #ifdef ALBANY_ENSEMBLE 
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                 MPResidual, MPJacobian, MPTangent> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv,
                                MPResidual, MPJacobian, MPTangent> BEvalTypes;
 #else
     typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> EvalTypes;
-    typedef boost::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
+    typedef Sacado::mpl::vector<Residual, Jacobian, Tangent, DistParamDeriv> BEvalTypes;
 #endif
 #endif
 
@@ -155,6 +166,22 @@ namespace PHAL {
     typedef Sacado::mpl::vector<MPFadType,RealType> MPTangentDataTypes;
 #endif
 
+    // ******************************************************************
+    // *** Allocator Type
+    // ******************************************************************
+ //   typedef PHX::NewAllocator Allocator;
+    //typedef PHX::ContiguousAllocator<RealType> Allocator;
+
+    // ******************************************************************
+    // *** User Defined Object Passed in for Evaluation Method
+    // ******************************************************************
+    typedef const std::string& SetupData;
+    //typedef const Albany::AbstractDiscretization& SetupData;
+    typedef Workset& EvalData;
+    typedef Workset& PreEvalData;
+    typedef Workset& PostEvalData;
+ 
+#ifdef ALBANY_USE_PUBLICTRILINOS
     // Maps the key EvalType a vector of DataTypes
 #ifdef ALBANY_SG
 #ifdef ALBANY_ENSEMBLE 
@@ -201,31 +228,8 @@ namespace PHAL {
     >::type EvalToDataMap;
 #endif
 #endif
-
-    // ******************************************************************
-    // *** Allocator Type
-    // ******************************************************************
- //   typedef PHX::NewAllocator Allocator;
-    //typedef PHX::ContiguousAllocator<RealType> Allocator;
-
-    // ******************************************************************
-    // *** User Defined Object Passed in for Evaluation Method
-    // ******************************************************************
-    typedef const std::string& SetupData;
-    //typedef const Albany::AbstractDiscretization& SetupData;
-    typedef Workset& EvalData;
-    typedef Workset& PreEvalData;
-    typedef Workset& PostEvalData;
-
+#endif // ALBANY_USE_PUBLICTRILINOS
   };
- 
-  // ******************************************************************
-  // ******************************************************************
-  // Debug strings.  Specialize the Evaluation and Data types for the
-  // TypeString object in phalanx/src/Phalanx_TypeStrings.hpp.
-  // ******************************************************************
-  // ******************************************************************
-
 }
 
 namespace PHX {
@@ -262,6 +266,33 @@ namespace PHX {
 
   template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPTangent>()
   { return "<MPTangent>"; }
+#endif
+
+#ifndef ALBANY_USE_PUBLICTRILINOS
+// Once the publicTrilinos issue goes away, rewrite the following to use the
+// Sacado::mpl::vector directly in the typedef and remove the *DataTypes
+// typedefs above.
+#define DECLARE_EVAL_SCALAR_TYPES(Type)                                 \
+  template<> struct eval_scalar_types<PHAL::AlbanyTraits::Type> {       \
+    typedef PHAL::AlbanyTraits::Type##DataTypes type;                   \
+  };
+
+  DECLARE_EVAL_SCALAR_TYPES(Residual)
+  DECLARE_EVAL_SCALAR_TYPES(Jacobian)
+  DECLARE_EVAL_SCALAR_TYPES(Tangent)
+  DECLARE_EVAL_SCALAR_TYPES(DistParamDeriv)
+#ifdef ALBANY_SG
+  DECLARE_EVAL_SCALAR_TYPES(SGResidual)
+  DECLARE_EVAL_SCALAR_TYPES(SGJacobian)
+  DECLARE_EVAL_SCALAR_TYPES(SGTangent)
+#endif
+#ifdef ALBANY_ENSEMBLE
+  DECLARE_EVAL_SCALAR_TYPES(MPResidual)
+  DECLARE_EVAL_SCALAR_TYPES(MPJacobian)
+  DECLARE_EVAL_SCALAR_TYPES(MPTangent)
+#endif
+
+#undef DECLARE_EVAL_SCALAR_TYPES
 #endif
 }
 

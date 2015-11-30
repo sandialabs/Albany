@@ -11,7 +11,6 @@
 
 namespace
 {
-
 //
 // Test the solution methods by themselves.
 //
@@ -371,6 +370,17 @@ TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
 
   x(0) = 0.0;
   x(1) = 3.0;
+
+  // Fill in some Fad info
+  constexpr
+  Intrepid::Index
+  order{1};
+
+  x(0).resize(order);
+  x(1).resize(order);
+
+  x(0).fastAccessDx(0) = 1.0;
+  x(1).fastAccessDx(0) = 1.0;
 
   LCM::miniMinimize(minimizer, step, banana, x);
 

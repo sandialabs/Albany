@@ -30,9 +30,10 @@
       <Parameter name="Parameter 0" type="string" value="Time" />
     </ParameterList>
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="Sim" />
-      <Parameter name="Remesh Strategy" type="string" value="Continuous" />
-      <Parameter name="Error Bound" type="double" value="0.13" />
+      <Parameter name="Equilibrate" type="bool" value="false"/>
+      <Parameter name="Remesh Strategy" type="string" value="Continuous"/>
+      <Parameter name="Method" type="string" value="Sim"/>
+      <Parameter name="Error Bound" type="double" value="0.09"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -89,7 +90,7 @@
         <Parameter name="Method" type="string" value="Newton" />
         <ParameterList name="Newton">
           <ParameterList name="Linear Solver">
-            <Parameter name="Tolerance" type="double" value="1e-10"/>
+            <Parameter name="Tolerance" type="double" value="1e-8"/>
           </ParameterList>
           <Parameter name="Forcing Term Method" type="string" value="Constant" />
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1" />
@@ -102,16 +103,16 @@
                   <ParameterList name="VerboseObject">
                     <Parameter name="Verbosity Level" type="string" value="medium"/>
                   </ParameterList>
-                  <Parameter name="Solver Type" type="string" value="Block GMRES" />
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
                     <ParameterList name="Block GMRES">
                       <Parameter name="Convergence Tolerance" type="double" value="1e-8" />
-                      <Parameter name="Output Frequency" type="int" value="1" />
-                      <Parameter name="Output Style" type="int" value="1" />
-                      <Parameter name="Verbosity" type="int" value="33" />
-                      <Parameter name="Maximum Iterations" type="int" value="1200" />
-                      <Parameter name="Block Size" type="int" value="1" />
-                      <Parameter name="Num Blocks" type="int" value="1200" />
+                      <Parameter name="Output Frequency" type="int" value="1"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Verbosity" type="int" value="33"/>
+                      <Parameter name="Maximum Iterations" type="int" value="1200"/>
+                      <Parameter name="Block Size" type="int" value="1"/>
+                      <Parameter name="Num Blocks" type="int" value="1200"/>
                       <Parameter name="Flexible Gmres" type="bool" value="0" />
                     </ParameterList>
                   </ParameterList>
@@ -163,7 +164,7 @@
           <Parameter name="Test Type" type="string" value="NormF" />
           <Parameter name="Norm Type" type="string" value="Two Norm" />
           <Parameter name="Scale Type" type="string" value="Scaled" />
-          <Parameter name="Tolerance" type="double" value="1.0e-12" />
+          <Parameter name="Tolerance" type="double" value="1.0e-6" />
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="MaxIters" />

@@ -67,7 +67,7 @@ buildEvaluators(
 {
   ConstructEvaluatorsOp<PhaseProblem> op(
     *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
-  boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 
@@ -76,7 +76,7 @@ void Albany::PhaseProblem::constructDirichletEvaluators(
     const std::vector<std::string>& nodeSetIDs)
 {
   std::vector<std::string> bcNames(neq);
-  bcNames[0] = "T";
+  bcNames[0] = "Temperature";
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
       this->params, this->paramLib);

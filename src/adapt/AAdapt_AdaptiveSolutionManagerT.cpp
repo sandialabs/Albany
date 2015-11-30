@@ -62,6 +62,17 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
     buildAdapter(rc_mgr);
   }
 
+  // Want the initial time in the parameter library to be correct
+  // if this is a restart solution
+  if (disc_->hasRestartSolution()) {
+    if (paramLib_->isParameter("Time")) {
+      double initialValue =
+        appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
+        get<double>("Initial Value", 0.0);
+      paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
+    }
+  }
+
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
   const Teuchos::RCP<const Tpetra_Map> overlapMapT = disc_->getOverlapMapT();
   const Teuchos::RCP<const Tpetra_CrsGraph> overlapJacGraphT = disc_

@@ -12,6 +12,10 @@
 
 #include "Albany_AbstractProblem.hpp"
 
+#ifdef ALBANY_EPETRA
+  #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
+#endif
+
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
@@ -103,7 +107,7 @@ typename EvalT::ScalarT* HomotopyParamValue<EvalT,Traits>::value = NULL;
                                  std::vector<Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > >& evaluators) :
           prob_(prob), evaluators_(evaluators) {}
       template<typename T>
-      void operator() (T x) {
+      void operator() (T x) const {
       evaluators_.push_back(prob_.template buildBasalFrictionCoefficientEvaluator<T>());
       evaluators_.push_back(prob_.template buildSlidingVelocityEvaluator<T>());
       evaluators_.push_back(prob_.template buildEffectivePressureEvaluator<T>());
@@ -295,6 +299,15 @@ FELIX::StokesFO::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(ev);
      }
    }
+
+   {
+      std::string stateName("bed_topography");
+      entity= Albany::StateStruct::NodalDataToElemNode;
+      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
 
 #if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
    {
@@ -501,6 +514,27 @@ FELIX::StokesFO::constructEvaluators(
       ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
+
+    if(this->params->isSublist("Parameter Fields"))
+    {
+      Teuchos::ParameterList& params_list =  this->params->sublist("Parameter Fields");
+      if(params_list.get<int>("Register Surface Mass Balance",0)){
+        std::string stateName("surface_mass_balance");
+        RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+        ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+    }
+
+#ifdef ALBANY_EPETRA
+    {
+       RCP<ParameterList> p = rcp(new ParameterList("Gather Averaged Velocity"));
+       p->set<string>("Averaged Velocity Name", "Averaged Velocity");
+       p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
+       ev = rcp(new GatherVerticallyAveragedVelocity<EvalT,AlbanyTraits>(*p,dl));
+       fm0.template registerEvaluator<EvalT>(ev);
+    }
+#endif
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);

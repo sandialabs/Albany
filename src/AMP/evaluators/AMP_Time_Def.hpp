@@ -30,12 +30,14 @@ Time(Teuchos::ParameterList& p) :
   Teuchos::RCP<ParamLib> paramLib = 
     p.get< Teuchos::RCP<ParamLib>>("Parameter Library", Teuchos::null);
   this->registerSacadoParameter("Time", paramLib);
+ 
 
   this->addEvaluatedField(time);
   this->addEvaluatedField(deltaTime);
 
   timeName = p.get<std::string>("Time Name")+"_old";;
   this->setName("Time"+PHX::typeAsString<EvalT>());
+ 
 }
 
 // **********************************************************************
