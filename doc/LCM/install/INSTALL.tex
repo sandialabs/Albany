@@ -1,4 +1,4 @@
-\documentclass[10pt,a4paper]{article}
+\documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -68,6 +68,9 @@ boost-openmpi-devel
 matio
 matio-devel
 cmake
+\end{verbatim}
+
+\begin{verbatim}
 gcc-c++
 git
 hwloc-libs
@@ -315,7 +318,7 @@ amounts of memory because of the huge size of the symbolic information
 required for debugging. Thus, if the compiling procedure stalls, try
 reducing the number of processors.
 
-\section{Running and Bebugging \lcm{}} 
+\section{Running and Debugging \lcm{}} 
 
 After building \albany{}, you might want to run and/or debug the code.
 Tools were built in \trilinos{} (decomp, epu, etc.) that are necessary
