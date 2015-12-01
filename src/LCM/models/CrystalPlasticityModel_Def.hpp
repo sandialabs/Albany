@@ -615,13 +615,15 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
         dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
 
-        CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, ScalarT> crystalPlasticityNLS(C_,
-        slip_systems_,
-        Fp_n_minisolver,
-        hardness_n_minisolver,
-        slip_n_minisolver,
-        F_np1,
-        dt_minisolver);
+        CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, EvalT>
+        crystalPlasticityNLS(
+            C_,
+            slip_systems_,
+            Fp_n_minisolver,
+            hardness_n_minisolver,
+            slip_n_minisolver,
+            F_np1,
+            dt_minisolver);
 
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
         //Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;

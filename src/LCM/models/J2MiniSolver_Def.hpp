@@ -108,9 +108,12 @@ J2MiniSolver(Teuchos::ParameterList* p,
 //
 // J2 nonlinear system
 //
-template<typename S>
-class J2NLS: public Intrepid::Function_Base<J2NLS<S>, S>
+template<typename EvalT>
+class J2NLS:
+    public Intrepid::Function_Base<J2NLS<EvalT>, typename EvalT::ScalarT>
 {
+  using S = typename EvalT::ScalarT;
+
 public:
   J2NLS(
       RealType sat_mod_,
@@ -142,7 +145,7 @@ public:
   T
   value(Intrepid::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<J2NLS<S>, S>::value(*this, x);
+    return Intrepid::Function_Base<J2NLS<EvalT>, S>::value(*this, x);
   }
 
   // Explicit gradient.
@@ -160,16 +163,16 @@ public:
     // information need to be handled by the peel functor so that
     // proper conversions take place.
     T const
-    K = peel<S, T, N>()(K_);
+    K = peel<EvalT, T, N>()(K_);
 
     T const
-    smag = peel<S, T, N>()(smag_);
+    smag = peel<EvalT, T, N>()(smag_);
 
     T const
-    mubar = peel<S, T, N>()(mubar_);
+    mubar = peel<EvalT, T, N>()(mubar_);
 
     T const
-    Y = peel<S, T, N>()(Y_);
+    Y = peel<EvalT, T, N>()(Y_);
 
     // This is the actual computation of the gradient.
     Intrepid::Vector<T, N>
@@ -197,7 +200,7 @@ public:
   Intrepid::Tensor<T, N>
   hessian(Intrepid::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<J2NLS<S>, S>::hessian(*this, x);
+    return Intrepid::Function_Base<J2NLS<EvalT>, S>::hessian(*this, x);
   }
 
   // Constants.
@@ -320,12 +323,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         // Use minimization equivalent to return mapping
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
-        J2NLS<ScalarT>
+        J2NLS<EvalT>
         j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
 
         constexpr
         Intrepid::Index
-        dimension{J2NLS<ScalarT>::DIMENSION};
+        dimension{J2NLS<EvalT>::DIMENSION};
 
         Intrepid::NewtonStep<ValueT, dimension>
         step;

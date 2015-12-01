@@ -109,10 +109,14 @@ public:
   static Intrepid::Index DIMENSION;
 };
 
-template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT>
-class CrystalPlasticityNLS: public NLSDimension, public Intrepid::Function_Base<
-    CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>
+template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename EvalT>
+class CrystalPlasticityNLS:
+    public NLSDimension,
+    public Intrepid::Function_Base<
+    CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 {
+  using ScalarT = typename EvalT::ScalarT;
+
 public:
 
   CrystalPlasticityNLS(
@@ -142,7 +146,7 @@ public:
   value(Intrepid::Vector<T, N> const & x)
   {
     return Intrepid::Function_Base<
-        CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>::value(
+        CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::value(
         *this,
         x);
   }
@@ -174,7 +178,7 @@ public:
     F_np1_peeled.set_dimension(num_dim_);
     for (int i = 0; i < num_dim_; ++i) {
       for (int j = 0; j < num_dim_; ++j) {
-        F_np1_peeled(i, j) = peel<ScalarT, T, N>()(F_np1_(i, j));
+        F_np1_peeled(i, j) = peel<EvalT, T, N>()(F_np1_(i, j));
       }
     }
 
@@ -224,7 +228,7 @@ public:
   hessian(Intrepid::Vector<T, N> const & x)
   {
     return Intrepid::Function_Base<
-        CrystalPlasticityNLS<NumDimT, NumSlipT, ScalarT>, ScalarT>::hessian(
+        CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::hessian(
         *this,
         x);
   }
