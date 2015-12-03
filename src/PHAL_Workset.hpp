@@ -163,6 +163,9 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
 
   Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos;
+  std::vector<PHX::index_size_type> Jacobian_deriv_dims;
+  std::vector<PHX::index_size_type> Tangent_deriv_dims;
+
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;

@@ -65,6 +65,13 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct ShallowWaterHyperViscosity_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterHyperViscosity_Tag> ShallowWaterHyperViscosity_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const ShallowWaterHyperViscosity_Tag& tag, const int& cell) const;
 
 #endif
           

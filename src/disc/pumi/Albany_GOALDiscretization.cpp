@@ -6,12 +6,14 @@
 
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_GOALDiscretization.hpp"
+#include <apfShape.h>
 
 Albany::GOALDiscretization::GOALDiscretization(
     Teuchos::RCP<Albany::GOALMeshStruct> meshStruct_,
     const Teuchos::RCP<const Teuchos_Comm>& commT_,
     const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_):
-  PUMIDiscretization(meshStruct_, commT_, rigidBodyModes_)
+  PUMIDiscretization(meshStruct_, commT_, rigidBodyModes_),
+  vtxNumbering(0)
 {
   goalMeshStruct = meshStruct_;
   init();
@@ -26,6 +28,32 @@ int Albany::GOALDiscretization::getNumNodesPerElem(int ebi)
   return goalMeshStruct->getNumNodesPerElem(ebi);
 }
 
+void Albany::GOALDiscretization::setupMLCoords()
+{
+  return;
+}
+
+const Teuchos::ArrayRCP<double>&
+Albany::GOALDiscretization::getCoordinates() const
+{
+  const int spdim = getNumDim();
+  coordinates.resize(spdim * numOverlapVertices);
+  apf::Field* f = meshStruct->getMesh()->getCoordinateField();
+  for (size_t i = 0; i < vertices.getSize(); ++i)
+  {
+    if (spdim == 3)
+      apf::getComponents(f, vertices[i].entity, vertices[i].node,
+          &coordinates[3*i]);
+    else {
+      double buf[3];
+      apf::getComponents(f, vertices[i].entity, vertices[i].node, buf);
+      double* const c = &coordinates[spdim*i];
+      for (int j = 0; j < spdim; ++j) c[j] = buf[j];
+    }
+  }
+  return coordinates;
+}
+
 void Albany::GOALDiscretization::computeOwnedNodesAndUnknowns()
 {
   apf::FieldShape* s = goalMeshStruct->getShape();
@@ -34,6 +62,11 @@ void Albany::GOALDiscretization::computeOwnedNodesAndUnknowns()
 
 void Albany::GOALDiscretization::computeOverlapNodesAndUnknowns()
 {
+  apf::Mesh* m = goalMeshStruct->getMesh();
+  if (vtxNumbering) apf::destroyNumbering(vtxNumbering);
+  vtxNumbering = apf::numberOverlapNodes(m, "vtx", m->getShape());
+  apf::getNodes(vtxNumbering, vertices);
+  numOverlapVertices = vertices.getSize();
   apf::FieldShape* s = goalMeshStruct->getShape();
   computeOverlapNodesAndUnknownsBase(s);
 }
@@ -46,6 +79,9 @@ void Albany::GOALDiscretization::computeGraphs()
 
 void Albany::GOALDiscretization::computeWorksetInfo()
 {
+  // bng: I think computeWorksetInfoBase may be
+  // filling in the coords structure with garbage
+  // need to look into that
   apf::FieldShape* s = goalMeshStruct->getShape();
   computeWorksetInfoBase(s);
 }
@@ -116,9 +152,5 @@ fillSolutionVector(Teuchos::RCP<Tpetra_Vector>& x)
 void Albany::GOALDiscretization::updateMesh(bool shouldTransferIPData)
 {
   apf::Mesh* m = goalMeshStruct->getMesh();
-  apf::FieldShape* s = goalMeshStruct->getShape();
-  apf::FieldShape* ms = m->getShape();
-  apf::changeMeshShape(m, s);
   updateMeshBase(shouldTransferIPData);
-  apf::changeMeshShape(m, ms);
 }
