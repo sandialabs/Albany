@@ -47,7 +47,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{5380.35101725}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{5389.09147944}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -55,8 +55,12 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="20000"/>
-      <Parameter name="Final Time" type="double" value= "200000."/>
+        <Parameter name="Num Time Steps" type="int" value="1"/>
+        <!--12/2/15, IKT: uncomment the following for a 2.3 day simulation-->
+        <!--Parameter name="Num Time Steps" type="int" value="20000"/-->
+      <Parameter name="Final Time" type="double" value= "100."/>
+      <!--12/2/15, IKT: uncomment the following for a 2.3 day simulation-->
+      <!--Parameter name="Final Time" type="double" value= "200000.0"/-->
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">
