@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_EffectivePressureSurrogate.hpp"
-#include "FELIX_EffectivePressureSurrogate_Def.hpp"
+#include "FELIX_EffectivePressure.hpp"
+#include "FELIX_EffectivePressure_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::EffectivePressureSurrogate)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::EffectivePressure)

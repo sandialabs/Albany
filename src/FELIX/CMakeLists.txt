@@ -9,7 +9,7 @@
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
        evaluators/FELIX_BasalFrictionCoefficientGradient.cpp
-       evaluators/FELIX_EffectivePressureSurrogate.cpp
+       evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_Elliptic2DResidual.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
@@ -74,8 +74,8 @@ ENDIF()
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
        evaluators/FELIX_BasalFrictionCoefficientGradient.hpp
        evaluators/FELIX_BasalFrictionCoefficientGradient_Def.hpp
-       evaluators/FELIX_EffectivePressureSurrogate.hpp
-       evaluators/FELIX_EffectivePressureSurrogate_Def.hpp
+       evaluators/FELIX_EffectivePressure.hpp
+       evaluators/FELIX_EffectivePressure_Def.hpp
        evaluators/FELIX_Elliptic2DResidual.hpp
        evaluators/FELIX_Elliptic2DResidual_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
