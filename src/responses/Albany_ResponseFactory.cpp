@@ -65,7 +65,7 @@ createResponseFunction(
 
   else if (name == "Solution Max Value") {
     int eq = responseParams.get("Equation", 0);
-    int neq = responseParams.get("Num Equations", 1);
+    int neq = app->getNumEquations(); 
     bool inor =  responseParams.get("Interleaved Ordering", true);
 
     responses.push_back(
