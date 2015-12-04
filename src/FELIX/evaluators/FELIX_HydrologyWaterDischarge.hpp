@@ -41,8 +41,7 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT>  gradN;
-  PHX::MDField<ScalarT>  gradPhiH;
+  PHX::MDField<ScalarT>  gradPhi;
   PHX::MDField<ScalarT>  h;
 
   // Output:

@@ -29,12 +29,12 @@ HydrologyResidualEllipticEqn<EvalT, Traits>::HydrologyResidualEllipticEqn (const
     GradBF      = PHX::MDField<RealType>(p.get<std::string> ("Gradient BF Name"), dl->side_node_qp_gradient);
     w_measure   = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->side_qp_scalar);
 
-    q           = PHX::MDField<ScalarT>(p.get<std::string> ("Discharge QP Variable Name"), dl->side_qp_gradient);
+    q           = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->side_qp_gradient);
     N           = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->side_qp_scalar);
     h           = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->side_qp_scalar);
     m           = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl->side_qp_scalar);
     omega       = PHX::MDField<ScalarT>(p.get<std::string> ("Surface Water Input QP Variable Name"), dl->side_qp_scalar);
-    u_b         = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Name"), dl->side_qp_scalar);
+    u_b         = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->side_qp_scalar);
 
     numNodes = dl->side_node_scalar->dimension(2);
     numQPs   = dl->side_qp_scalar->dimension(2);
@@ -51,23 +51,27 @@ HydrologyResidualEllipticEqn<EvalT, Traits>::HydrologyResidualEllipticEqn (const
     sideNodes.resize(numSides);
     for (int side=0; side<numSides; ++side)
     {
-      sideNodes[side].resize(numNodes);
-      for (int node=0; node<numNodes; ++node)
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+      int thisSideNodes = cellType->getNodeCount(sideDims,side);
+      sideNodes[side].resize(thisSideNodes);
+      for (int node=0; node<thisSideNodes; ++node)
+      {
+        sideNodes[side][node] = cellType->getNodeMap(sideDims,side,node);
+      }
     }
   }
   else
   {
     BF          = PHX::MDField<RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
     GradBF      = PHX::MDField<RealType>(p.get<std::string> ("Gradient BF Name"), dl->node_qp_gradient);
-    w_measure   = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->side_qp_scalar);
+    w_measure   = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
 
-    q           = PHX::MDField<ScalarT>(p.get<std::string> ("Discharge QP Variable Name"), dl->qp_gradient);
+    q           = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->qp_gradient);
     N           = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
     h           = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
     m           = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar);
     omega       = PHX::MDField<ScalarT>(p.get<std::string> ("Surface Water Input QP Variable Name"), dl->qp_scalar);
-    u_b         = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Name"), dl->qp_scalar);
+    u_b         = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
 
     numNodes = dl->node_scalar->dimension(1);
     numQPs   = dl->qp_scalar->dimension(1);

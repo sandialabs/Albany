@@ -13,7 +13,7 @@
 #include "FELIX_HomotopyParameter.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 namespace FELIX
 {
@@ -29,8 +29,8 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
-  std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "From File");
-  is_hydrology         = (beta_list.isParameter("Hydrology") ? beta_list.get<bool>("Hydrology") : false);
+  std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
+  is_hydrology         = (p.isParameter("Hydrology") ? p.get<bool>("Hydrology") : false);
 
   if (is_hydrology)
   {

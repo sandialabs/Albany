@@ -78,6 +78,7 @@ evaluateFields(typename Traits::EvalData workset)
         gradS_qp(cell,qp,1) += dsdy_node(cell, node) * BF(cell, node, qp);
       }
     }
+  }
 }
-}
-}
+
+} // Namespace FELIX

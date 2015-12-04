@@ -28,19 +28,9 @@ StokesFOResid(const Teuchos::ParameterList& p,
   Ugrad    (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   force    (p.get<std::string> ("Body Force Variable Name"), dl->qp_vector),
   muFELIX  (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
-  basalRes (p.get<std::string> ("Basal Residual Variable Name"), dl->node_vector),
   Residual (p.get<std::string> ("Residual Variable Name"), dl->node_vector)
 {
-
-  Teuchos::ParameterList* list =
-    p.get<Teuchos::ParameterList*>("Parameter List");
-
-  stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
-  useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
-
-  if(useStereographicMap)
-    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-              p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
+  Teuchos::ParameterList* list = p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string type = list->get("Type", "FELIX");
 
@@ -74,15 +64,20 @@ StokesFOResid(const Teuchos::ParameterList& p,
 
   needsBasalResidual = p.get<bool>("Needs Basal Residual");
   if (needsBasalResidual)
+  {
+    basalRes  = PHX::MDField<ScalarT,Cell,Node,VecDim>(p.get<std::string> ("Basal Residual Variable Name"), dl->node_vector);
     this->addDependentField(basalRes);
-  else
-    this->addEvaluatedField(basalRes);
+  }
 
+  stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+  useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
   if(useStereographicMap)
+  {
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
     this->addDependentField(coordVec);
+  }
 
   this->addEvaluatedField(Residual);
-
 
   this->setName("StokesFOResid"+PHX::typeAsString<EvalT>());
 
@@ -96,25 +91,28 @@ StokesFOResid(const Teuchos::ParameterList& p,
   vecDimFO = std::min(PHX::DataLayout::size_type(2), numDims);
 
 #ifdef OUTPUT_TO_SCREEN
-*out << " in FELIX Stokes FO residual! " << std::endl;
-*out << " vecDimFO = " << vecDimFO << std::endl;
-*out << " numDims = " << numDims << std::endl;
-*out << " numQPs = " << numQPs << std::endl;
-*out << " numNodes = " << numNodes << std::endl;
+  *out << " in FELIX Stokes FO residual! " << std::endl;
+  *out << " vecDimFO = " << vecDimFO << std::endl;
+  *out << " numDims = " << numDims << std::endl;
+  *out << " numQPs = " << numQPs << std::endl;
+  *out << " numNodes = " << numNodes << std::endl;
 #endif
 
-if (vecDimFO != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
-          "Invalid Parameter vecDim.  Problem implemented for at least 2 dofs per node (u and v). " << std::endl);}
-if (vecDimFO != 1 & eqn_type == POISSON)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
-          "Invalid Parameter vecDim.  Poisson problem implemented for 1 dof per node only. " << std::endl);}
-if (vecDimFO != 1 & eqn_type == FELIX_XZ)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
-          "Invalid Parameter vecDim.  FELIX XZ problem implemented for 1 dof per node only. " << std::endl);}
-if (numDims != 2 & eqn_type == FELIX_XZ)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
-          "Invalid Parameter numDims.  FELIX XZ problem is 2D. " << std::endl);}
+  TEUCHOS_TEST_FOR_EXCEPTION (vecDimFO != 2 && eqn_type == FELIX, Teuchos::Exceptions::InvalidParameter,
+                              std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
+                              "Invalid Parameter vecDim.  Problem implemented for at least 2 dofs per node (u and v). " << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION (vecDimFO != 1 && eqn_type == POISSON, Teuchos::Exceptions::InvalidParameter,
+                              std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
+                              "Invalid Parameter vecDim.  Poisson problem implemented for 1 dof per node only. " << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION (vecDimFO != 1 && eqn_type == FELIX_XZ, Teuchos::Exceptions::InvalidParameter,
+                              std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
+                              "Invalid Parameter vecDim.  FELIX XZ problem implemented for 1 dof per node only. " << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION (numDims != 2 && eqn_type == FELIX_XZ, Teuchos::Exceptions::InvalidParameter,
+                              std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
+                              "Invalid Parameter numDims.  FELIX XZ problem is 2D. " << std::endl);
 }
 
 //**********************************************************************
@@ -129,18 +127,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(muFELIX,fm);
-  this->utils.setFieldData(basalRes,fm);
-
-  if (!needsBasalResidual)
-  {
-    std::vector<PHX::Device::size_type> dims;
-    basalRes.fieldTag().dataLayout().dimensions(dims);
-    for (int cell(0); cell<dims[0]; ++cell)
-      for (int node(0); node<dims[1]; ++node)
-        for (int dim(0); dim<vecDimFO; ++dim)
-          basalRes(cell,node,dim) = 0.;
-  }
-
+  if (needsBasalResidual)
+    this->utils.setFieldData(basalRes,fm);
   if(useStereographicMap)
     this->utils.setFieldData(coordVec, fm);
 
@@ -154,9 +142,19 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const FELIX_3D_Tag& tag, const int& cell) const{
 
- for (int node=0; node<numNodes; ++node){
-     Residual(cell,node,0)=basalRes(cell,node,0);
-     Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual)
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=basalRes(cell,node,0);
+      Residual(cell,node,1)=basalRes(cell,node,1);
+    }
+  }
+  else
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=0.;
+      Residual(cell,node,1)=0.;
+    }
   }
 
   if(useStereographicMap) {
@@ -243,9 +241,19 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_3D_Tag& tag, const int& cell) const{
 
- for (int node=0; node<numNodes; ++node){
-     Residual(cell,node,0)=basalRes(cell,node,0);
-     Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual)
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=basalRes(cell,node,0);
+      Residual(cell,node,1)=basalRes(cell,node,1);
+    }
+  }
+  else
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=0.;
+      Residual(cell,node,1)=0.;
+    }
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -263,9 +271,19 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const FELIX_2D_Tag& tag, const int& cell) const{
 
-   for (int node=0; node<numNodes; ++node){
-     Residual(cell,node,0)=basalRes(cell,node,0);
-     Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual)
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=basalRes(cell,node,0);
+      Residual(cell,node,1)=basalRes(cell,node,1);
+    }
+  }
+  else
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=0.;
+      Residual(cell,node,1)=0.;
+    }
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -284,9 +302,19 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const FELIX_XZ_2D_Tag& tag, const int& cell) const{
 
-  for (int node=0; node<numNodes; ++node){
-     Residual(cell,node,0)=basalRes(cell,node,0);
-     Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual)
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=basalRes(cell,node,0);
+      Residual(cell,node,1)=basalRes(cell,node,1);
+    }
+  }
+  else
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=0.;
+      Residual(cell,node,1)=0.;
+    }
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -305,9 +333,19 @@ KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
 operator() (const POISSON_2D_Tag& tag, const int& cell) const{
 
-  for (int node=0; node<numNodes; ++node){
-     Residual(cell,node,0)=basalRes(cell,node,0);
-     Residual(cell,node,1)=basalRes(cell,node,1);
+  if (needsBasalResidual)
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=basalRes(cell,node,0);
+      Residual(cell,node,1)=basalRes(cell,node,1);
+    }
+  }
+  else
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(cell,node,0)=0.;
+      Residual(cell,node,1)=0.;
+    }
   }
 
   for (int node=0; node < numNodes; ++node) {
@@ -357,9 +395,19 @@ class StokesFOResid_3D_FELIX  {
  KOKKOS_INLINE_FUNCTION
  void operator () (const int i) const
  {
-  for (int node=0; node<numNodes_; ++node){
-     Residual_(i,node,0)=basalRes_(i,node,0);
-     Residual_(i,node,1)=basalRes_(i,node,1);
+  if (needsBasalResidual)
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(i,node,0)=basalRes(i,node,0);
+      Residual(i,node,1)=basalRes(i,node,1);
+    }
+  }
+  else
+  {
+    for (int node=0; node<numNodes; ++node){
+      Residual(i,node,0)=0.;
+      Residual(i,node,1)=0.;
+    }
   }
 
   for (int j=0; j<numQPs_; j++)
@@ -405,14 +453,29 @@ evaluateFields(typename Traits::EvalData workset)
 
 //  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
 
-  for (int cell=0; cell<workset.numCells; ++cell)
+  if (needsBasalResidual)
   {
-    for (int node=0; node<numNodes; ++node)
+    for (int cell=0; cell<workset.numCells; ++cell)
     {
-      Residual(cell,node,0)=basalRes(cell,node,0);
-      Residual(cell,node,1)=basalRes(cell,node,1);
+      for (int node=0; node<numNodes; ++node)
+      {
+        Residual(cell,node,0)=basalRes(cell,node,0);
+        Residual(cell,node,1)=basalRes(cell,node,1);
+      }
     }
   }
+  else
+  {
+    for (int cell=0; cell<workset.numCells; ++cell)
+    {
+      for (int node=0; node<numNodes; ++node)
+      {
+        Residual(cell,node,0)=0.;
+        Residual(cell,node,1)=0.;
+      }
+    }
+  }
+
 
 //  Residual.deep_copy(ScalarT(0.0));
   if (numDims == 3) { //3D case

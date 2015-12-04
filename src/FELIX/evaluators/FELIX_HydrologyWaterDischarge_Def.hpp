@@ -29,27 +29,24 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   {
     sideSetName = p.get<std::string>("Side Set Name");
 
-    gradN    = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Gradient QP Variable Name"), dl->side_qp_gradient);
-    gradPhiH = PHX::MDField<ScalarT>(p.get<std::string> ("Hydrostatic Potential Gradient QP Variable Name"), dl->side_qp_gradient);
-    h        = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->side_qp_scalar);
-    q        = PHX::MDField<ScalarT>(p.get<std::string> ("WaterDischarge QP Variable Name"), dl->side_qp_gradient);
+    gradPhi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->side_qp_gradient);
+    h       = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->side_qp_scalar);
+    q       = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->side_qp_gradient);
 
-    numQPs   = dl->side_qp_gradient->dimension(2);
-    numDim   = dl->side_qp_gradient->dimension(3);
+    numQPs  = dl->side_qp_gradient->dimension(2);
+    numDim  = dl->side_qp_gradient->dimension(3);
   }
   else
   {
-    gradN    = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Gradient QP Variable Name"), dl->qp_gradient);
-    gradPhiH = PHX::MDField<ScalarT>(p.get<std::string> ("Hydrostatic Potential Gradient QP Variable Name"), dl->qp_gradient);
-    h        = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
-    q        = PHX::MDField<ScalarT>(p.get<std::string> ("WaterDischarge QP Variable Name"), dl->qp_gradient);
+    gradPhi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->qp_gradient);
+    h       = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
+    q       = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->qp_gradient);
 
-    numQPs   = dl->qp_gradient->dimension(1);
-    numDim   = dl->qp_gradient->dimension(2);
+    numQPs  = dl->qp_gradient->dimension(1);
+    numDim  = dl->qp_gradient->dimension(2);
   }
 
-  this->addDependentField(gradN);
-  this->addDependentField(gradPhiH);
+  this->addDependentField(gradPhi);
   this->addDependentField(h);
 
   this->addEvaluatedField(q);
@@ -70,8 +67,7 @@ void HydrologyWaterDischarge<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(gradN,fm);
-  this->utils.setFieldData(gradPhiH,fm);
+  this->utils.setFieldData(gradPhi,fm);
   this->utils.setFieldData(h,fm);
 
   this->utils.setFieldData(q,fm);
@@ -90,7 +86,7 @@ void HydrologyWaterDischarge<EvalT, Traits>::evaluateFields (typename Traits::Ev
       {
         for (int dim(0); dim<numDim; ++dim)
         {
-          q(cell,qp,dim) = -k * std::pow(h(cell,qp),3) * (gradPhiH(cell,qp,dim)-gradN(cell,qp,dim)) / mu_w;
+          q(cell,qp,dim) = -k * std::pow(h(cell,qp),3) * gradPhi(cell,qp,dim) / mu_w;
         }
       }
     }
@@ -111,7 +107,7 @@ void HydrologyWaterDischarge<EvalT, Traits>::evaluateFields (typename Traits::Ev
       {
         for (int dim(0); dim<numDim; ++dim)
         {
-          q(cell,qp,dim) = -k * std::pow(h(cell,side,qp),3) * (gradPhiH(cell,side,qp,dim)-gradN(cell,side,qp,dim)) / mu_w;
+          q(cell,qp,dim) = -k * std::pow(h(cell,side,qp),3) * gradPhi(cell,side,qp,dim) / mu_w;
         }
       }
     }

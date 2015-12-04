@@ -22,6 +22,7 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include <string>
 
@@ -58,14 +59,14 @@ buildProblem(
 {
   using Teuchos::rcp;
 
-  std::cout << "In StokesL1L2 Problem!" << std::endl; 
+  std::cout << "In StokesL1L2 Problem!" << std::endl;
 
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
-		  Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
+      Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
 }
 

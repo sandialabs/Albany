@@ -15,16 +15,9 @@ HydrologyHydrostaticPotential<EvalT, Traits>::
 HydrologyHydrostaticPotential (const Teuchos::ParameterList& p,
                                const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  if (p.isParameter("stokes_coupling"))
-  {
-    stokes_coupling = p.get<bool>("stokes_coupling");
-  }
-  else
-  {
-    stokes_coupling = false;
-  }
+  stokes = p.isParameter("Stokes") ? p.get<bool>("Stokes") : false;
 
-  if (stokes_coupling)
+  if (stokes)
   {
     sideSetNames = *p.get<std::set<std::string>*>("Side Set Names");
 
@@ -78,7 +71,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void HydrologyHydrostaticPotential<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
-  if (!stokes_coupling)
+  if (!stokes)
   {
     for (int cell=0; cell < workset.numCells; ++cell)
     {

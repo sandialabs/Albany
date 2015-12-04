@@ -49,9 +49,13 @@ HydrologyResidualEvolutionEqn<EvalT, Traits>::HydrologyResidualEvolutionEqn (con
     sideNodes.resize(numSides);
     for (int side=0; side<numSides; ++side)
     {
-      sideNodes[side].resize(numNodes);
-      for (int node=0; node<numNodes; ++node)
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+      int thisSideNodes = cellType->getNodeCount(sideDims,side);
+      sideNodes[side].resize(thisSideNodes);
+      for (int node=0; node<thisSideNodes; ++node)
+      {
+        sideNodes[side][node] = cellType->getNodeMap(sideDims,side,node);
+      }
     }
   }
   else

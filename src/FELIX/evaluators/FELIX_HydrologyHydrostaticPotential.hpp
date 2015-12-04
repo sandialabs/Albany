@@ -50,7 +50,7 @@ private:
 
   int numNodes;
 
-  bool stokes_coupling;
+  bool stokes;
 
   double rho_i;
   double rho_w;

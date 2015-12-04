@@ -11,6 +11,7 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include <string>
 
@@ -59,6 +60,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
   else
   {
+    // Old fashion of setting requirements (hard coded instead of loaded from file)
     this->requirements.push_back("surface_height");
 #ifdef CISM_HAS_FELIX
     this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM
@@ -73,31 +75,30 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     this->requirements.push_back("bed_topography");
   }
 
-  if (params->isSublist("FELIX Basal Friction Coefficient"))
-  {
-    sliding = true;
-    basalSideName = params->sublist("FELIX Basal Friction Coefficient").get<std::string>("Basal Side Name");
+  basalSideName   = params->isParameter("Basal Side Name")   ? params->get<std::string>("Basal Side Name")   : "INVALID";
+  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
+  basalEBName = "INVALID";
+  surfaceEBName = "INVALID";
+  sliding = params->isSublist("FELIX Basal Friction Coefficient");
+  TEUCHOS_TEST_FOR_EXCEPTION (sliding && basalSideName=="INVALID", std::logic_error,
+                              "Error! With sliding, you need to provide a valid 'Basal Side Name',\n" );
 
-    if (params->isParameter("Required Basal Fields"))
-    {
-      // Need to allocate a fields in basal mesh database
-      Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
-      this->ss_requirements[basalSideName].reserve(req.size());
-      for (int i(0); i<req.size(); ++i)
-        this->ss_requirements[basalSideName].push_back(req[i]);
-    }
-  }
-  else
+  if (params->isParameter("Required Basal Fields"))
   {
-    sliding = false;
-    basalSideName = "";
+    TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify basal requirements, you must also specify a valid 'Basal Side Name'.\n");
+
+    // Need to allocate a fields in basal mesh database
+    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
+    this->ss_requirements[basalSideName].reserve(req.size()); // Note: this is not for performance, but to guarantee
+    for (int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
+      this->ss_requirements[basalSideName].push_back(req[i]); //       throw, even if it's empty...
   }
   if (params->isParameter("Required Surface Fields"))
   {
-    surfaceSideName = params->get<std::string>("Surface Side Name");
+    TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify surface requirements, you must also specify a valid 'Surface Side Name'.\n");
 
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
-    this->ss_requirements[surfaceSideName].reserve(req.size());
+    this->ss_requirements[surfaceSideName].reserve(req.size()); // Note: same motivation as for the basal side
     for (int i(0); i<req.size(); ++i)
       this->ss_requirements[surfaceSideName].push_back(req[i]);
   }
@@ -123,63 +124,86 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
   cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
-  basalEBName = "";
-  surfaceEBName = "";
 
-  if (sliding)
+  if (basalSideName!="INVALID")
   {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                              "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+                                "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
     const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
 
-    basalEBName = basalMeshSpecs.ebName;
+    // Building also basal side structures
+    const CellTopologyData * const side_top = &basalMeshSpecs.ctd;
+    basalSideBasis = Albany::getIntrepidBasis(*side_top);
+    basalSideType = rcp(new shards::CellTopology (side_top));
 
-    // Building also side structures
-    const CellTopologyData * const side_top = cell_top->side[0].topology;
-    sideBasis = Albany::getIntrepidBasis(*side_top);
-    sideType = rcp(new shards::CellTopology (side_top));
-    basalCubature = cubFactory.create(*sideType, basalMeshSpecs.cubatureDegree);
-
-    if (surfaceSideName!="")
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                                  "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
-
-      const Albany::MeshSpecsStruct& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
-      surfaceCubature = cubFactory.create(*sideType, surfaceMeshSpecs.cubatureDegree);
-    }
+    basalEBName   = basalMeshSpecs.ebName;
+    basalCubature = cubFactory.create(*basalSideType, basalMeshSpecs.cubatureDegree);
   }
 
-  const int numCellVertices = cellType->getNodeCount();
-  const int numCellNodes = cellBasis->getCardinality();
-  const int numCellQPs = cellCubature->getNumPoints();
-  const int vecDim = 2;
-  const int numCellSides = cellType->getFaceCount();
-  const int numSideNodes = (!sliding ? 0 : sideBasis->getCardinality());
-  const int numSideQPs = (!sliding ? 0 : basalCubature->getNumPoints());
-  const int worksetSize = meshSpecs[0]->worksetSize;
+  if (surfaceSideName!="INVALID")
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(surfaceSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                                  "Error! Either 'Surface Side Name' is wrong or something went wrong while building the side mesh specs.\n");
 
+    const Albany::MeshSpecsStruct& surfaceMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(surfaceSideName)[0];
+
+    // Building also surface side structures
+    const CellTopologyData * const side_top = &surfaceMeshSpecs.ctd;
+    surfaceSideBasis = Albany::getIntrepidBasis(*side_top);
+    surfaceSideType = rcp(new shards::CellTopology (side_top));
+
+    surfaceEBName   = surfaceMeshSpecs.ebName;
+    surfaceCubature = cubFactory.create(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
+  }
+
+  const int numCellVertices     = cellType->getNodeCount();
+  const int numCellNodes        = cellBasis->getCardinality();
+  const int numCellQPs          = cellCubature->getNumPoints();
+  const int vecDim              = 2;
+  const int numCellSides        = cellType->getFaceCount();
+  const int numBasalSideNodes   = (basalSideName=="INVALID" ? 0 : basalSideBasis->getCardinality());
+  const int numBasalQPs         = (basalSideName=="INVALID" ? 0 : basalCubature->getNumPoints());
+  const int numSurfaceSideNodes = (surfaceSideName=="INVALID" ? 0 : surfaceSideBasis->getCardinality());
+  const int numSurfaceQPs       = (surfaceSideName=="INVALID" ? 0 : surfaceCubature->getNumPoints());
+  const int worksetSize         = meshSpecs[0]->worksetSize;
 
 #ifdef OUTPUT_TO_SCREEN
-  *out << "Field Dimensions: Workset=" << worksetSize
-       << ", Vertices= " << numCellVertices
-       << ", CellNodes= " << numCellNodes
-       << ", CellQuadPts= " << numCellQPs
-       << ", Dim= " << numDim
-       << ", VecDim= " << vecDim
-       << ", SideNodes= " << numSideNodes
-       << ", SideQuadPts= " << numSideQPs << std::endl;
+  *out << "Field Dimensions: \n"
+       << "  Workset            = " << worksetSize << "\n"
+       << "  Vertices           = " << numCellVertices << "\n"
+       << "  CellNodes          = " << numCellNodes << "\n"
+       << "  CellQuadPts        = " << numCellQPs << "\n"
+       << "  Dim                = " << numDim << "\n"
+       << "  VecDim             = " << vecDim << "\n"
+       << "  BasalSideNodes     = " << numBasalSideNodes << "\n"
+       << "  BasalSideQuadPts   = " << numBasalQPs << "\n"
+       << "  SurfaceSideNodes   = " << numSurfaceSideNodes << "\n"
+       << "  SurfaceSideQuadPts = " << numSurfaceQPs << std::endl;
 #endif
 
   // Building the layouts
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs, numDim, vecDim, numCellSides, numSideNodes, numSideQPs));
+  // NOTE: we build two side layouts, since basal and surface cubatures may differ
+  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDim));
+  dls["default"] = dl;
+
+  if (basalSideName!="INVALID")
+  {
+    dl_basal = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,
+                                       numDim,vecDim,numCellSides,numBasalSideNodes,numBasalQPs));
+    dls[basalSideName] = dl_basal;
+  }
+  if (surfaceSideName!="INVALID")
+  {
+    dl_surface = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,
+                                         numDim,vecDim,numCellSides,numSurfaceSideNodes,numSurfaceQPs));
+    dls[surfaceSideName] = dl_surface;
+  }
 
   /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,
-      Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
 
   if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
@@ -301,6 +325,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");
+  validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");
   validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
   validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
