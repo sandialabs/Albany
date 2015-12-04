@@ -21,6 +21,12 @@ if os.path.isfile(outFileName):
   os.system(cmdLine)
 outFile = copy_mesh(inFileName, outFileName)
 
+# get number of dimensions
+num_dims = inFile.num_dimensions()
+
+print "Dimensions?"
+print num_dims
+
 # get times
 times = inFile.get_times()
 print "Print the times"
@@ -42,10 +48,23 @@ for name in elem_var_names:
 # create any global variables
 
 
+# figure out number of integration points
+#print dir(elem_var_names[0])
+# check that "Weights" exist as an element variable
+
+num_points = 0
+for name in elem_var_names:
+  if (name.startswith("Weights_")):
+      num_points += 1
+
+if (num_points == 0):
+  raise Exception("The weights field is not available...try again.")
+      
+print "Number of Integration points?"
+print num_points
+
 # write times to outFile
 for step in range(len(times)):
-  #print step
-  #print times[step]
   outFile.put_time(step+1,times[step])
 
 # write out displacement vector
@@ -65,7 +84,10 @@ for step in range(len(times)):
   outFile.put_node_variable_values('displacement_x',step+1,dx)
   outFile.put_node_variable_values('displacement_y',step+1,dy)
   outFile.put_node_variable_values('displacement_z',step+1,dz)
+#
+
 # 
 
+#print dir(inFile)
 
 outFile.close()
