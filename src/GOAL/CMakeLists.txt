@@ -11,6 +11,7 @@ SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
 SET(SOURCES
   utils/GOAL_BCUtils.cpp
+  utils/GOAL_LinearSolve.cpp
   evaluators/GOAL_ComputeHierarchicBasis.cpp
   evaluators/GOAL_LpStress.cpp
   evaluators/GOAL_ScatterQoI.cpp
@@ -19,6 +20,7 @@ SET(SOURCES
 
 SET(HEADERS
   utils/GOAL_BCUtils.hpp
+  utils/GOAL_LinearSolve.hpp
   evaluators/GOAL_ComputeHierarchicBasis.hpp
   evaluators/GOAL_ComputeHierarchicBasis_Def.hpp
   evaluators/GOAL_LpStress.hpp

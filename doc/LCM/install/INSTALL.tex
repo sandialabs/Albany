@@ -1,7 +1,17 @@
-\documentclass[10pt,a4paper]{article} \usepackage[utf8]{inputenc}
-\usepackage{amsmath} \usepackage{amsfonts} \usepackage{amssymb}
-\usepackage{graphicx} \usepackage{fancyvrb} \usepackage{color}
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\usepackage{color}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\newcommand{\trilinos}{\textsc{Trilinos}}
+\newcommand{\albany}{\textsc{Albany}}
+\newcommand{\lcm}{\textsc{LCM}}
+\newcommand{\kokkos}{\textsc{Kokkos}}
 
 \let\oldv\verbatim \let\oldendv\endverbatim
 
@@ -11,30 +21,28 @@
 \def\endverbatim
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
-\author{The Albany/LCM team\thanks{Original version by Juli\'an R\'imoli}}
-\title{Instructions for Installing Albany/LCM and Trilinos on Fedora 21/22}
+\author{The \albany{}/\lcm{} team\thanks{Original version by Juli\'an
+    R\'imoli}} \title{Installing \albany{}/\lcm{} and
+  \trilinos{} on Fedora 22/23}
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-This document describes the necessary steps to install Albany/LCM and
-Trilinos on a machine with Fedora Linux. The procedures described
-herein were tested using Fedora 22 and Fedora 21.
-
+This document describes the necessary steps to install
+\albany{}/\lcm{} and \trilinos{} on a machine with Fedora Linux. The
+procedures described herein were tested using Fedora 22 and Fedora 23.
 If you want a shortcut obtain the script \verb+install_albany.sh+
-(stored in \verb+Albany/doc/LCM/build+) and then try:
+(stored in \verb+Albany/doc/LCM/install+) and then try
 \begin{verbatim}
 ./install_albany
 \end{verbatim}
-This will install and build Trilinos and Albany in the current
+This will install and build \trilinos{} and \albany{} in the current
 directory.  If the script does not complete it will tell you why and
 with help from this document you will be able to complete the install.
 
-\section{Required packages}
-After installing Fedora, the following packages should be installed
-using the {\tt dnf} command in Fedora 22 or the {\tt yum} command in
-Fedora 21:
+\section{Required Packages}
+The following packages should be installed using the {\tt dnf} command
 \begin{verbatim}
 blas
 blas-devel
@@ -60,19 +68,19 @@ boost-openmpi-devel
 matio
 matio-devel
 cmake
+\end{verbatim}
+
+\begin{verbatim}
 gcc-c++
 git
 hwloc-libs
 hwloc-devel
+environment-modules
 \end{verbatim}
 
-For example, to install the first package you should type in Fedora 22
+For example, to install the first package you should type
 \begin{verbatim}
 sudo dnf install blas
-\end{verbatim}
-or in Fedora 21
-\begin{verbatim}
-sudo yum install blas
 \end{verbatim}
 
 Make sure that all these packages are installed, specially if you
@@ -86,13 +94,13 @@ clang-devel
 gitk
 \end{verbatim}
 
-\section{Git repository setup with Github}
+\section{Repository Setup with GitHub}
 
 In a web browser go to \verb+www.github.com+, create an account and
-set up ssh public keys. If you require push privilges for Albany,
+set up ssh public keys. If you require push privilges for \albany{},
 email Glen Hansen at \verb+gahanse@sandia.gov+ and let him know
-that. On the other hand, if you require push privileges for Trilinos,
-it is best if you contact the Trilinos developers directly. Go to
+that. On the other hand, if you require push privileges for \trilinos{},
+it is best if you contact the \trilinos{} developers directly. Go to
 \verb+www.trilinos.org+ for more information.
 
 It is strongly recommended that you join the \verb+AlbanyLCM+ Google
@@ -101,7 +109,7 @@ group to receive commit notices. Go to
 group. You can also browse the source code at
 \verb+github.com/gahansen/Albany+.
 
-\section{Directory structure}
+\section{Directory Structure}
 In your home directory, create a directory with the name \verb+LCM+:
 \begin{verbatim}
 mkdir LCM
@@ -112,19 +120,13 @@ Change directory to the newly created one:
 cd LCM
 \end{verbatim}
 
-Now, check out the latest version of Trilinos. If you have an account on
-\verb+software.sandia.gov+, then use:
+Check out the latest version of \trilinos{}, which is hosted now on
+GitHub:
 \begin{verbatim}
-git clone software.sandia.gov:/space/git/Trilinos Trilinos
+git clone git@github.com:trilinos/Trilinos.git Trilinos
 \end{verbatim}
-Otherwise clone with:
-\begin{verbatim}
-git clone git@github.com:trilinos/trilinos.git Trilinos
-\end{verbatim}
-This last public Trilinos repository is a few days behind the one at
-\verb+software.sandia.gov+ which for most purposes will not be an issue.
 
-Finally, check out the latest version of Albany:
+Finally, check out the latest version of \albany{}:
 \begin{verbatim}
 git clone git@github.com:gahansen/Albany.git Albany
 \end{verbatim}
@@ -136,7 +138,16 @@ LCM
   |- Trilinos
 \end{verbatim}
 
-\section{Installation scripts}
+\section{Environment Variables}
+In \verb+~/.bashrc+, the following variables are needed:
+\begin{verbatim}
+export LCM_DIR=~/LCM
+export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles
+\end{verbatim}
+The \verb+LCM_DIR+ variable should contain the location of the
+top-level \verb+LCM+ directory.
+
+\section{Installation Scripts}
 Create symbolic links to the installation scripts inside the directory
 \verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+
 directory. If you intend to modify these scripts, it is better to copy
@@ -162,9 +173,27 @@ chmod 0555 *.sh
 \end{verbatim}
 
 The \verb+build.sh+ and \verb+build-all.sh+ scripts perform different
-actions according to the name with which they are invoked. See
-\verb+LCM/Albany/doc/LCM/build/README+ for more details. 
+actions according to the name with which they are invoked. This is
+accomplshed by creating symlinks to build.sh and using them to run
+it. For example:
+\begin{itemize}
+\item clean.sh will delete all traces of the corresponding build and
+  will create a new configuration script based on the corresponding
+  template.
 
+\item config.sh will attempt to reconfigure the build.
+
+\item build.sh (original name) will build using cmake.
+
+\item test.sh will run the cmake tests.
+
+\item mail.sh will mail the results of the ctest to the email address
+  configured in env-single.sh.
+
+\item symlinks with combinations of the above
+  (e.g. clean-config-build.sh) will perform the specified actions in
+  sequence. See build.sh for valid sequences.
+\end{itemize}
 For example, the following symbolic links will create separate
 commands for clean up, configuring and testing:
 \begin{verbatim}
@@ -184,130 +213,134 @@ There is also a script
 \verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
 that will create the appropriate symbolic links. 
 
-\section{Environment variables}
-The following additions to the command shell environment variables are
-required for proper Albany compilation and execution in this setup:
+It is recommended that at least the *-config.sh be made read and
+execute only, as erroneous modifications to the build.sh script may
+result in their being overwritten.
+
+\section{Modules}
+\label{sec:modules}
+
+Modules are used to create different environments for the
+configuration and compilation of both \albany{} and \trilinos{}. To
+see the available modules that correspond to different thread models,
+compilers and build types:
 \begin{verbatim}
-export PATH=/usr/lib64/openmpi/bin:$PATH
-export LD_LIBRARY_PATH=/usr/lib64/openmpi/lib:$LD_LIBRARY_PATH
+module avail
 \end{verbatim}
+This results in something like:
+\begin{verbatim}
+------------------ /home/amota/LCM/Albany/doc/LCM/modulefiles ------------------
+openmp-gcc-debug     pthreads-gcc-release serial-gcc-debug
+openmp-gcc-profile   pthreads-gcc-small   serial-gcc-profile
+openmp-gcc-release   serial-clang-debug   serial-gcc-release
+openmp-gcc-small     serial-clang-profile serial-gcc-small
+pthreads-gcc-debug   serial-clang-release
+pthreads-gcc-profile serial-clang-small
+\end{verbatim}
+The naming convention for the modules follows the pattern
+\begin{verbatim}
+[thread model]-[toolchain]-[build type]
+\end{verbatim}
+The \verb+[thread model]+ option refers to the thread parallelism
+model that the code will use by means of the \kokkos{} package in
+\trilinos{}. Currently the sopported models are: \verb+serial+ that
+works for all supported compilers, \verb+openmp+ that works with the
+\verb+GCC+ and \verb+Intel+ toolchains, \verb+pthreads+ that works for
+all supported compilers, and \verb+cuda+ that is only supported for
+the \verb+GCC+ toolchain. The installation and configuration of the
+Cuda framework is complex. Much more detailed information can be found
+at \verb+http://developer.nvidia.com/cuda+.
+
+Currently the options for \verb+[toolchain]+ are \verb+gcc+,
+\verb+clang+ and \verb+intel+ if the Intel compilers are installed,
+and for \verb+[build type]+ are \verb+debug+ (includes symbolic
+information), \verb+release+ (optimization enabled), \verb+profile+
+(symbolic information and optimization enabled for profiling) and
+\verb+small+ (minimizes size of executables). The \verb+clang+
+toolchain requires installation of the \verb+clang+ and
+\verb+clang-devel+ packages.
+
+Build directories are created within the \lcm{} top-level directory
+and named according to the loaded module and package specified to the
+build.sh script, e.g.:
+\begin{verbatim}
+albany-build-gcc-release
+\end{verbatim}
+In addition, for \trilinos{} an install directory similarly named is
+created at the \lcm{} top-level directory.
 
 \section{Configuring and compiling}
-First, configure and compile Trilinos. Within the top-level \verb+LCM+
-directory type:
+
+Assuming that we want to compile with a \verb+serial+ thread model
+using the \verb+gcc+ tool chain in \verb+debug+ mode, load the
+appropriate module:
 \begin{verbatim}
-./config-build.sh trilinos [thread model] [toolchain] [build type] [# processors]
+module load serial-gcc-debug
+\end{verbatim}
+Now first configure and compile \trilinos{}. Within the top-level
+\verb+LCM+ directory type:
+\begin{verbatim}
+./config-build.sh trilinos [# processors]
+\end{verbatim}
+For example, if you want to build using 16 processors, type:
+\begin{verbatim}
+./config-build.sh trilinos 16
+\end{verbatim}
+Finally, repeat the procedure for \albany{}:
+\begin{verbatim}
+./config-build.sh albany [# processors]
+\end{verbatim}
+For example, if you want to build a version of the code using 16
+processors, type:
+\begin{verbatim}
+./config-build.sh albany 16
 \end{verbatim}
 
-For example, if you want to use the \verb+GCC+ toolchain to build a
-serial release version of the code using 16 processors, type:
-\begin{verbatim}
-./config-build.sh trilinos serial gcc release 16
-\end{verbatim}
-
-Finally, repeat the procedure for Albany:
-\begin{verbatim}
-./config-build.sh albany [thread model] [toolchain] [build type] [# processors]
-\end{verbatim}
-
-For example, if you want to use the GCC toolchain to build a
-serial release version of the code using 16 processors, type:
-\begin{verbatim}
-./config-build.sh albany serial gcc release 16
-\end{verbatim}
-
-Note that to compile a version of Albany with a specific thread model,
-toolchain and build type, the corresponding version of Trilinos must
+Note that to compile a version of \albany{} with a specific thread model,
+toolchain and build type, the corresponding version of \trilinos{} must
 exist.
 
-Note also that the \verb+thread model+ option refers to the thread
-parallelism model that the code will use by means of the Kokkos
-package in Trilinos. Currently the sopported models are: \verb+serial+
-that works for all supported compilers, \verb+openmp+ that works with
-the GCC and Intel toolchains, \verb+pthreads+ that works for all
-supported compilers, and \verb+cuda+ that is only supported for the
-GCC toolchain. The installation and configuration of the Cuda
-framework is complex. Much more detailed information can be found at
-\verb+http://developer.nvidia.com/cuda+.
-
-Currently the options for the toolchain are \verb+gcc+, \verb+clang+
-and \verb+intel+ if the Intel compilers are installed, and for build
-type are \verb+debug+ (includes symbolic information), \verb+release+
-(optimization enabled), \verb+profile+ (symbolic information and
-optimization enabled for profiling) and \verb+small+ (minimizes size
-of executables). The \verb+clang+ toolchain requires installation of
-the \verb+clang+ and \verb+clang-devel+ packages.
-
-\section{After initial setup}
-The procedure described before configures and compiles the code. From
+\section{After Initial Setup}
+The procedure described above configures and compiles the code. From
 now on, configuration is no longer required so you can rebuild the
 code after any modification by simply using the \verb+build.sh+
 script. For example:
 \begin{verbatim}
-./build.sh albany gcc release 16
+./build.sh albany 16
 \end{verbatim}
-
 There are times when it is necessary to reconfigure, for example when
 adding or deleting files under the \verb+LCM/Albany/src/LCM+
 directory. This is generally anounced in the commit notices.
 
-Also, note that both Trilinos and Albany are heavily templetized C++
-codes. Building the debug version of Albany requires large amounts of
-memory because the huge size of the symbolic information required for
-debugging. Thus, if the compiling procedure stalls, try reducing the
-number of processors.
+Also, note that both \trilinos{} and \albany{} are heavily templetized
+C++ codes. Building the debug version of \albany{} requires large
+amounts of memory because of the huge size of the symbolic information
+required for debugging. Thus, if the compiling procedure stalls, try
+reducing the number of processors.
 
-\section{Running and debugging LCM} 
+\section{Running and Debugging \lcm{}} 
 
-After building Albany, you might want to run and/or debug the code.
-Tools were built in Trilinos (decomp, epu, etc.) that are necessary
-for parallel execution. Modify your path
-\begin{verbatim}
-export PATH=$HOME/LCM/trilinos-install-serial-gcc-release/bin:$PATH
-\end{verbatim}
-and include the necessary libraries
-\begin{verbatim}
-export LD_LIBRARY_PATH=$HOME/LCM/trilinos-install-serial-gcc-release/lib:$LD_LIBRARY_PATH
-\end{verbatim}
-prior to execution. Note that in this specific case, we are pointing
-to a \verb+serial-gcc-release+ compiled version of the code.  If you
-attempt to execute a different version, the \verb+LD_LIBRARY_PATH+
-will be invalid and you may get execution errors. As the building
-scripts are today, one is required to change the
-\verb+LD_LIBRARY_PATH+ for each thread model, toolchain and build
-type.  To select different thread models, toolchains and build types
-for execution, you can create configuration scripts in the top-level LCM
-directory. Each configuration script might be named something akin to
-\verb+LCM_gcc_release.conf+ and contain the necessary changes to
-\verb+PATH+ and \verb+LD_LIBRARY_PATH+. For example, prior to
-debugging the code one would construct the configuration file
-\verb+$HOME/LCM/LCM_gcc_debug.conf+
-\begin{verbatim}
-export PATH=$HOME/LCM/trilinos-install-serial-gcc-debug/bin:$PATH
-export LD_LIBRARY_PATH=/$HOME/LCM/trilinos-install-serial-gcc-debug/lib:$LD_LIBRARY_PATH
-\end{verbatim}
-and then \verb+source $HOME/LCM/LCM_gcc_debug.conf+ prior to
-execution. We note that these environment variables are temporarily
-set by the build scripts when configuring and building Trilinos and
-Albany. One may have a variety of thread models, toolchains and build
-types. Currently, however, the user must specify the environment
-variables necessary for execution.
+After building \albany{}, you might want to run and/or debug the code.
+Tools were built in \trilinos{} (decomp, epu, etc.) that are necessary
+for parallel execution. The environment created by loading the
+appropriate module sets the proper paths so that the executables that
+correspond to the type of build are accessible.
 
-\section{Policies}
-Albany is a simulation code for researchers by researchers. As such,
-vibrant development of new and exciting capabilities is strongly
+\section{Commiting Changes and Code Style}
+\albany{} is a simulation code for researchers by researchers. As
+such, vibrant development of new and exciting capabilities is strongly
 encouraged. For these reasons, don't be afraid to commit changes to
 the master git repository. We only ask that you don't break
 compilation or testing. So please make sure that the tests pass before
 you commit changes.
 
-In addition, within LCM we strongly encourage you to follow the C++
+In addition, within \lcm{} we strongly encourage you to follow the C++
 Google style guide that can be found at
 \verb+http://google-styleguide.googlecode.com/svn/trunk/cppguide.html+.
 This style is somewhat different to what is currently used in the rest
-of Albany, but we believe that the Google style helps the developer
-more in that it advocates more style differentiation between the
-different syntactic elements of C++. This in turn makes reading code
-easier and helps to avoid coding errors.
+of \albany{}, but we believe that the Google style is better in that
+it advocates more style differentiation between the different
+syntactic elements of C++. This in turn makes reading code easier and
+helps to avoid coding errors.
 
 \end{document}

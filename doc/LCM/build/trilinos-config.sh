@@ -88,7 +88,6 @@ cmake \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
  -D Trilinos_ENABLE_ML:BOOL=ON \
- -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
  -D Trilinos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \

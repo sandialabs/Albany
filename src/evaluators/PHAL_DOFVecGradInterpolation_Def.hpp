@@ -59,6 +59,12 @@ namespace PHAL {
   void DOFVecGradInterpolation<EvalT, Traits>::
   operator() (const DOFVecGradInterpolation_Residual_Tag& tag, const int& cell) const {
 
+
+  for (int qp=0; qp < numQPs; ++qp)
+    for (int i=0; i<vecDim; i++)
+      for (int dim=0; dim<numDims; dim++)
+           grad_val_qp(cell,qp,i,dim)=0.0;
+
    for (int qp=0; qp < numQPs; ++qp) {
           for (int i=0; i<vecDim; i++) {
             for (int dim=0; dim<numDims; dim++) {
@@ -103,7 +109,7 @@ namespace PHAL {
  PHX::Device::fence();
  auto start = std::chrono::high_resolution_clock::now(); 
 #endif
-  Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
+  //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
   Kokkos::parallel_for(DOFVecGradInterpolation_Residual_Policy(0,workset.numCells),*this);
 
 #ifdef ALBANY_TIMER

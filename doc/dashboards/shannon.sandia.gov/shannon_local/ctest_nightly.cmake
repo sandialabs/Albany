@@ -25,10 +25,10 @@ set( CTEST_BUILD_NAME           "cuda-nvcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          buildAlbany)
 
 SET(PREFIX_DIR /home/gahanse)
-SET(MPI_BASE_DIR /home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28)
+SET(NETCDF_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
+SET(MPI_BASE_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
 SET(INTEL_DIR /opt/intel/mkl/lib/intel64)
-#SET(BOOST_DIR /home/projects/x86-64/boost/1.57.0/gnu/4.7.2)
-SET(BOOST_DIR /home/gahanse)
+SET(BOOST_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
 
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -38,7 +38,6 @@ INCLUDE(${CTEST_SCRIPT_DIRECTORY}/move_xml_macro.cmake)
 
 IF (CLEAN_BUILD)
   IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
-#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
     FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
   ENDIF()
 ENDIF()
@@ -69,8 +68,9 @@ set(CTEST_DROP_SITE_USER "")
 find_program(CTEST_GIT_COMMAND NAMES git)
 
 # Point at the public Repo
-SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
+SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
+SET(OMEGA_REPOSITORY_LOCATION https://github.com/ibaned/omega_h)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
 SET(ReconDriver_REPOSITORY_LOCATION software.sandia.gov:/git/ReconDrivergit)
 
@@ -113,6 +113,54 @@ if(NOT EXISTS "${TRILINOS_HOME}/SCOREC")
     message(FATAL_ERROR "Cannot checkout SCOREC repository!")
    endif()
 endif()
+
+# Download and build Omega_h as a TPL
+
+IF(EXISTS "${CTEST_BINARY_DIRECTORY}/omega_h" )
+  FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/omega_h")
+ENDIF()
+
+# Clone it
+
+EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}"
+    clone ${OMEGA_REPOSITORY_LOCATION} ${CTEST_BINARY_DIRECTORY}/omega_h
+    WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+
+ message(STATUS "out: ${_out}")
+ message(STATUS "err: ${_err}")
+ message(STATUS "res: ${HAD_ERROR}")
+ if(HAD_ERROR)
+   message(FATAL_ERROR "Cannot clone OMEGA repository!")
+ endif()
+
+# Write build file
+
+set( OMEGA_BUILD_OPTIONS "
+CC = ${MPI_BASE_DIR}/bin/mpicc
+CPP = ${MPI_BASE_DIR}/bin/mpicxx
+CPPFLAGS = -std=c99
+CFLAGS = -g -O2 
+USE_MPI = 1
+" )
+file(WRITE "${CTEST_BINARY_DIRECTORY}/omega_h/config.mk" "${OMEGA_BUILD_OPTIONS}")
+
+# make it
+
+EXECUTE_PROCESS(COMMAND "/usr/bin/make"
+    WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/omega_h
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+
+ message(STATUS "out: ${_out}")
+ message(STATUS "err: ${_err}")
+ message(STATUS "res: ${HAD_ERROR}")
+ if(HAD_ERROR)
+   message(FATAL_ERROR "Cannot build OMEGA repository!")
+ endif()
 
 ENDIF()
 
@@ -281,14 +329,15 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
   "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
   "-DCMAKE_BUILD_TYPE:STRING=NONE"
-  "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper"
+  "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_gh"
   "-DCMAKE_C_COMPILER:FILEPATH=mpicc"
   "-DCMAKE_Fortran_COMPILER:FILEPATH=mpifort"
   "-DCMAKE_CXX_FLAGS:STRING='-DNDEBUG'"
+  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda --expt-relaxed-constexpr -Wno-unused-local-typedefs -Wno-sign-compare -DNDEBUG'"
   "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-#  "-DTpetra_INST_INT_LONG_LONG:BOOL=ON"
+  "-DTpetra_INST_SERIAL:BOOL=ON"
   "-DTpetra_INST_INT_LONG_LONG:BOOL=OFF"
   "-DTpetra_INST_INT_INT:BOOL=ON"
   "-DTpetra_INST_DOUBLE:BOOL=ON"
@@ -297,6 +346,9 @@ SET(CONFIGURE_OPTIONS
   "-DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF"
   "-DTpetra_INST_INT_LONG:BOOL=OFF"
   "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
+  "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
+  "-DRythmos_ENABLE_DEBUG:BOOL=ON"
 #
   "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
   "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=CUDA"
@@ -307,8 +359,8 @@ SET(CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   "-DKokkos_ENABLE_Cuda:BOOL=ON"
   "-DTPL_ENABLE_CUDA:BOOL=ON"
-  "-DTPL_ENABLE_CUSPARSE:BOOL=ON"
   "-DKokkos_ENABLE_Cuda_UVM:BOOL=ON"
+  "-DTPL_ENABLE_CUSPARSE:BOOL=ON"
 #
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
@@ -325,16 +377,16 @@ SET(CONFIGURE_OPTIONS
   "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib"
 #
   "-DTPL_ENABLE_Netcdf:STRING=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DTPL_ENABLE_HDF5:STRING=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DHDF5_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DTPL_ENABLE_Zlib:STRING=ON"
-  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DZlib_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DTPL_ENABLE_BLAS:BOOL=ON"
   "-DTPL_ENABLE_LAPACK:BOOL=ON"
@@ -343,13 +395,13 @@ SET(CONFIGURE_OPTIONS
   "-DLAPACK_LIBRARY_NAMES:STRING=''"
 #
   "-DTPL_ENABLE_ParMETIS:STRING=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
 #
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
 #
-  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lz'"
+  "-DTrilinos_EXTRA_LINK_FLAGS='-L${NETCDF_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lz'"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
 #
   "-DTrilinos_ENABLE_Moertel:BOOL=OFF"
@@ -357,8 +409,6 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_X11:BOOL=OFF"
   "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=OFF"
-  "-DZoltan_ENABLE_ULONG_IDS:BOOL=OFF"
-  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
   "-DTrilinos_ENABLE_Teko:BOOL=OFF"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
 # Comment these out to disable stk

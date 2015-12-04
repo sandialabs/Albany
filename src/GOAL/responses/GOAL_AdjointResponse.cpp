@@ -6,6 +6,8 @@
 
 #include "GOAL_AdjointResponse.hpp"
 #include "GOAL_MechanicsProblem.hpp"
+#include "GOAL_BCUtils.hpp"
+#include "GOAL_LinearSolve.hpp"
 #include "Albany_GOALDiscretization.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "PHAL_Utilities.hpp"
@@ -93,6 +95,10 @@ void AdjointResponse::initializeLinearSystem()
   RCP<const Tpetra_CrsGraph> og = discretization->getOverlapJacobianGraphT();
   x = rcp(new Tpetra_Vector(m));
   overlapX = rcp(new Tpetra_Vector(om));
+  z = rcp(new Tpetra_Vector(m));
+  overlapZ = rcp(new Tpetra_Vector(om));
+  qoi = rcp(new Tpetra_Vector(m));
+  overlapQoI = rcp(new Tpetra_Vector(om));
   jac = rcp(new Tpetra_CrsMatrix(g));
   overlapJac = rcp(new Tpetra_CrsMatrix(og));
   importer = rcp(new Tpetra_Import(m, om));
@@ -103,7 +109,7 @@ void AdjointResponse::initializeLinearSystem()
 
 void AdjointResponse::initializeWorkset(PHAL::Workset& workset)
 {
-  workset.is_adjoint = false;
+  workset.is_adjoint = true;
   workset.j_coeff = 1.0;
   workset.m_coeff = 0.0;
   workset.n_coeff = 0.0;
@@ -113,6 +119,7 @@ void AdjointResponse::initializeWorkset(PHAL::Workset& workset)
   workset.xT = overlapX;
   workset.xdotT = dummy;
   workset.xdotdotT = dummy;
+  workset.qoi = overlapQoI;
   workset.JacT = overlapJac;
   workset.x_importerT = importer;
   workset.comm = x->getMap()->getComm();
@@ -132,6 +139,9 @@ void AdjointResponse::fillLinearSystem()
     fm[wsPhysIndex[ws]]->evaluateFields<J>(workset);
   }
   jac->doExport(*overlapJac, *exporter, Tpetra::ADD);
+  qoi->doExport(*overlapQoI, *exporter, Tpetra::ADD);
+  computeAdjointHierarchicBCs(time, *application.get(), qoi, jac);
+  jac->fillComplete();
 }
 
 void AdjointResponse::evaluateResponseT(
@@ -150,6 +160,7 @@ void AdjointResponse::evaluateResponseT(
   postRegistrationSetup();
   initializeLinearSystem();
   fillLinearSystem();
+  solveLinearSystem(application, jac, z, qoi);
   evalCtr++;
 }
 

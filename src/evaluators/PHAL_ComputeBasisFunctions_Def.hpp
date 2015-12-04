@@ -437,6 +437,12 @@ void ComputeBasisFunctions<EvalT, Traits>:: operator () (const int i) const
   int numDims_=GradBF.dimension(3);
   int numNodes_= GradBF.dimension(1);
 
+  for(int nodes = 0; nodes < numNodes_; nodes++) 
+     for(int pt = 0; pt < numQPs_; pt++) 
+       for(int row = 0; row < numDims_; row++)
+              GradBF(i, nodes, pt, row) = 0.0;
+
+
   //Intrepid::setJacobian
 //PHX::MDField <MeshScalarT,Cell,QuadPoint,Dim,Dim> 
   int dim0 = refPoints_CUDA.dimension(0);
@@ -634,7 +640,6 @@ evaluateFields(typename Traits::EvalData workset)
     // final workset. Ideally, these are size numCells.
   //int containerSize = workset.numCells;
     //
-  Kokkos::deep_copy(GradBF.get_kokkos_view(),0.0); 
   Kokkos::parallel_for (GradBF.dimension(0), *this);
 //std::cout << "ComputeBasisFunction" <<std::endl;
 //std::cout << wGradBF(1, 1, 1, 1) <<"  " <<jacobian_inv(1,1,1,1) <<"   "<<grad_at_cub_points_CUDA(1,1,1) <<"   "<< weighted_measure(1,1)<<std::endl; 
