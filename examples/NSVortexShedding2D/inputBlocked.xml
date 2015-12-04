@@ -20,7 +20,6 @@
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Equation" type="int" value="0" />
-        <Parameter name="Num Equations" type="int" value="3" />
         <Parameter name="Interleaved Ordering" type="bool" value="false"/>
       </ParameterList>
     </ParameterList>
