@@ -22,7 +22,6 @@
 
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Albany_BCUtils.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"

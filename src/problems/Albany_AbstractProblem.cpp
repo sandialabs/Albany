@@ -71,6 +71,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<bool>("Use Physics-Based Preconditioner", false,
       "Flag to create signal that this problem will creat its own preconditioner");
 
+  validPL->set<Teuchos::Array<std::string> >("Required Fields",Teuchos::Array<std::string>(),"List of field requirements");
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
   validPL->sublist("Source Functions", false, "");
@@ -94,7 +95,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   // Contact PL
   validPL->sublist("Contact", false, "");
-
 
   // Candidates for deprecation. Pertain to the solution rather than the problem definition.
   validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
