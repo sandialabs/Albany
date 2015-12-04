@@ -661,6 +661,15 @@ getInitialSolutionDot() const
   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
   return initial_x_dot;
 }
+
+RCP<const Epetra_Vector>
+Albany::Application::
+getInitialSolutionDotDot() const
+{
+  const Teuchos::RCP<Epetra_Vector>& initial_x_dotdot = solMgr->get_initial_xdotdot();
+  Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotDotT(), *initial_x_dotdot, comm);
+  return initial_x_dotdot;
+}
 #endif
 
 RCP<const Tpetra_Vector>
@@ -668,6 +677,13 @@ Albany::Application::
 getInitialSolutionDotT() const
 {
   return solMgrT->getInitialSolutionDotT();
+}
+
+RCP<const Tpetra_Vector>
+Albany::Application::
+getInitialSolutionDotDotT() const
+{
+  return solMgrT->getInitialSolutionDotDotT();
 }
 
 RCP<ParamLib>
@@ -2079,10 +2095,8 @@ applyGlobalDistParamDerivImplT(const double current_time,
   {
     PHAL::Workset workset;
     if (!paramLib->isParameter("Time"))
-//      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
       loadBasicWorksetInfoT( workset, current_time );
     else
-//      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
       loadBasicWorksetInfoT( workset,
                             paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
 
@@ -2996,12 +3010,6 @@ computeGlobalMPResidual(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
   }
 
   if (mp_overlapped_f == Teuchos::null ||
@@ -3155,11 +3163,6 @@ computeGlobalMPJacobian(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
   }
 
@@ -3348,11 +3351,6 @@ computeGlobalMPTangent(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
   }
 

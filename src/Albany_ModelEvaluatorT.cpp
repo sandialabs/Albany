@@ -33,7 +33,7 @@
 Albany::ModelEvaluatorT::ModelEvaluatorT(
     const Teuchos::RCP<Albany::Application>& app_,
     const Teuchos::RCP<Teuchos::ParameterList>& appParams)
-: app(app_)
+: app(app_), isTransient(false)
 {
 
   Teuchos::RCP<Teuchos::FancyOStream> out =
@@ -43,6 +43,10 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
   Teuchos::ParameterList& parameterParams =
     problemParams.sublist("Parameters");
+
+  std::string solution_method = problemParams.get<std::string>("Solution Method", "None");
+  if(solution_method == "Transient")
+     isTransient = true;
 
   num_param_vecs =
     parameterParams.get("Number of Parameter Vectors", 0);
@@ -219,8 +223,7 @@ Albany::ModelEvaluatorT::allocateVectors()
       // Create Tpetra objects to be wrapped in Thyra
       const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();
       const Teuchos::RCP<const Tpetra_Vector> x_dotT_init = app->getInitialSolutionDotT();
-      const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init =
-            Teuchos::rcp(new const Tpetra_Vector(app->getInitialSolutionDotT()->getMap()));
+      const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = app->getInitialSolutionDotDotT();
       const Teuchos::RCP<const Tpetra_Map> map = app->getMapT();
       const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > xT_space = Thyra::createVectorSpace<ST>(map);
 
@@ -231,6 +234,13 @@ Albany::ModelEvaluatorT::allocateVectors()
 
       nominalValues.set_x(Thyra::createVector(xT_init_nonconst, xT_space));
       nominalValues.set_x_dot(Thyra::createVector(x_dotT_init_nonconst, xT_space));
+
+      // Set xdotdot in parent class to pass to time integrator as it is not supported in Thyra
+
+      // GAH set x_dotdot for transient simulations
+
+      if(isTransient)
+        this->set_x_dotdot(Thyra::createVector(x_dotdotT_init_nonconst, xT_space));
 
     }
 
@@ -405,20 +415,18 @@ Albany::ModelEvaluatorT::create_DgDx_op_impl(int j) const
 }
 
 // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-//Teuchos::RCP<Thyra::LinearOpBase<ST> >
-//Albany::ModelEvaluatorT::create_DgDx_dotdot_op_impl(int j) const
-//{
-//  TEUCHOS_TEST_FOR_EXCEPTION(
-//    j >= app->getNumResponses() || j < 0,
-//    Teuchos::Exceptions::InvalidParameter,
-//    std::endl <<
-//    "Error!  Albany::ModelEvaluatorT::create_DgDx_dotdot_op():  " <<
-//    "Invalid response index j = " << j << std::endl);
-//
-//  return Thyra::createLinearOp(app->getResponse(j)->createGradientOpT());
-//}
+Teuchos::RCP<Thyra::LinearOpBase<ST> >
+Albany::ModelEvaluatorT::create_DgDx_dotdot_op_impl(int j) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= app->getNumResponses() || j < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluatorT::create_DgDx_dotdot_op():  " <<
+    "Invalid response index j = " << j << std::endl);
 
-
+  return Thyra::createLinearOp(app->getResponse(j)->createGradientOpT());
+}
 
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 Albany::ModelEvaluatorT::create_DgDx_dot_op_impl(int j) const
@@ -540,18 +548,14 @@ Albany::ModelEvaluatorT::evalModelImpl(
     ConverterT::getConstTpetraVector(inArgsT.get_x_dot()) :
     Teuchos::null;
 
-  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
-  //  Teuchos::nonnull(inArgsT.get_x_dotdot()) ?
-  //  ConverterT::getConstTpetraVector(inArgsT.get_x_dotdot()) :
-  //  Teuchos::null;
-  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::null;
 
+  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
+    (isTransient && Teuchos::nonnull(this->get_x_dotdot())) ?
+    ConverterT::getConstTpetraVector(this->get_x_dotdot()) :
+    Teuchos::null;
 
   const double alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_alpha() : 0.0;
-  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  // const double omega = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_omega() : 0.0;
-  const double omega = 0.0;
+  const double omega = Teuchos::nonnull(x_dotdotT) ? this->get_omega() : 0.0;
   const double beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_beta() : 1.0;
   const double curr_time = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? inArgsT.get_t() : 0.0;
 
@@ -686,7 +690,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
 
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out = outArgsT.get_DgDx(j);
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out = outArgsT.get_DgDx_dot(j);
-    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+//    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out = this->get_DgDx_dotdot(j);
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
     sanitize_nans(dgdxT_out);
     sanitize_nans(dgdxdotT_out);
@@ -731,6 +735,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
           sacado_param_vec, *gT_out);
     }
   }
+
 }
 
 

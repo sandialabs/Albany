@@ -31,11 +31,11 @@
     <Parameter name="2D Elements" type="int" value="8"/>
     <Parameter name="2D Scale" type="double" value="0.2"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="quad2d.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="quad2d_tpetra.e"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>
-    <Parameter name="Test Values" type="Array(double)" value="{-0.00528631}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{-0.00528632686501}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
@@ -75,11 +75,12 @@
                 </ParameterList>
                 <Parameter name="Preconditioner Type" type="string" value="None"/>
                 <ParameterList name="Preconditioner Types">
-                  <ParameterList name="Ifpack">
+                  <ParameterList name="Ifpack2">
                     <Parameter name="Overlap" type="int" value="1"/>
-                    <Parameter name="Prec Type" type="string" value="ILU"/>
-                    <ParameterList name="Ifpack Settings">
-                      <Parameter name="fact: level-of-fill" type="int" value="1"/>
+                    <Parameter name="Prec Type" type="string" value="ILUT"/>
+                    <ParameterList name="Ifpack2 Settings">
+                      <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+                      <Parameter name="fact: drop tolerance" type="double" value="0"/>
                     </ParameterList>
                   </ParameterList>
                 </ParameterList>
@@ -137,13 +138,14 @@
             </ParameterList>
           </ParameterList>
         </ParameterList>
-        <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+        <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
         <ParameterList name="Preconditioner Types">
-          <ParameterList name="Ifpack">
-            <Parameter name="Prec Type" type="string" value="ILU"/>
+          <ParameterList name="Ifpack2">
             <Parameter name="Overlap" type="int" value="1"/>
-            <ParameterList name="Ifpack Settings">
-              <Parameter name="fact: level-of-fill" type="int" value="1"/>
+            <Parameter name="Prec Type" type="string" value="ILUT"/>
+            <ParameterList name="Ifpack2 Settings">
+               <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+               <Parameter name="fact: drop tolerance" type="double" value="0"/>
             </ParameterList>
           </ParameterList>
         </ParameterList>
@@ -212,15 +214,14 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
-                <ParameterList name="Ifpack">
-                  <Parameter name="Overlap" type="int" value="2"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
-                    <Parameter name="fact: drop tolerance" type="double" value="0"/>
-                    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
-                    <Parameter name="fact: level-of-fill" type="int" value="1"/>
+                <ParameterList name="Ifpack2">
+                  <Parameter name="Overlap" type="int" value="1"/>
+                  <Parameter name="Prec Type" type="string" value="ILUT"/>
+                  <ParameterList name="Ifpack2 Settings">
+                     <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+                     <Parameter name="fact: drop tolerance" type="double" value="0"/>
                   </ParameterList>
                 </ParameterList>
               </ParameterList>

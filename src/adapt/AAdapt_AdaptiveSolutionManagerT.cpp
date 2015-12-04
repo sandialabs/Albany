@@ -98,6 +98,8 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
       initial_xT = Teuchos::rcp(new Tpetra_Vector(*initial_guessT));
     } else {
       overlapped_xT->doImport(*initial_xT, *importerT, Tpetra::INSERT);
+      overlapped_xdotT->doImport(*initial_xdotT, *importerT, Tpetra::INSERT);
+      overlapped_xdotdotT->doImport(*initial_xdotdotT, *importerT, Tpetra::INSERT);
 
       AAdapt::InitialConditionsT(
           overlapped_xT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
@@ -106,9 +108,13 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
       AAdapt::InitialConditionsT(
           overlapped_xdotT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
           problemParams->sublist("Initial Condition Dot"));
+      AAdapt::InitialConditionsT(
+          overlapped_xdotdotT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
+          problemParams->sublist("Initial Condition DotDot"));
 
       initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
       initial_xdotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
+      initial_xdotdotT->doExport(*overlapped_xdotdotT, *exporterT, Tpetra::INSERT);
     }
   }
 #if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
@@ -286,6 +292,7 @@ void AAdapt::AdaptiveSolutionManagerT::resizeMeshDataArrays(
 
   initial_xT = disc_->getSolutionFieldT();
   initial_xdotT = Teuchos::rcp(new Tpetra_Vector(mapT));
+  initial_xdotdotT = Teuchos::rcp(new Tpetra_Vector(mapT));
 
 }
 

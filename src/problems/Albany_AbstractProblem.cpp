@@ -69,6 +69,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
+  validPL->sublist("Initial Condition DotDot", false, "");
   validPL->sublist("Source Functions", false, "");
   validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");

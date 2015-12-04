@@ -137,8 +137,10 @@ namespace Albany {
     //! Get initial solution dot
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
+    Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
 #endif
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotDotT() const;
 
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager

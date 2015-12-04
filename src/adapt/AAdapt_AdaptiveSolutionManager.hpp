@@ -43,7 +43,6 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     virtual Teuchos::RCP<AAdapt::AdaptiveModelFactory> modelFactory() const;
 
     AdaptSolutionObserverType getSolObserver(){ return solutionObserver; }
-//    Teuchos::RCP<SolutionObserver> getSolObserver(){ return solutionObserver; }
 
     //! Remap the solution
     virtual void
@@ -63,7 +62,6 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     //! The adaptive thyra model factory object
     Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyra_model_factory;
 
-//    AdaptSolutionObserverType solutionObserver;
     Teuchos::RCP<SolutionObserver> solutionObserver;
 
 };

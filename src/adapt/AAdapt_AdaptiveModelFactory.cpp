@@ -48,10 +48,10 @@ RCP<ParameterList> AdaptiveModelFactory::extractAdaptiveModelParams(const RCP<Pa
 
 }
 
-Teuchos::RCP<Thyra::ModelEvaluator<double> > 
+Teuchos::RCP<Thyra::ModelEvaluator<ST> > 
 AdaptiveModelFactory::create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& child,
-         const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > &W_factory){
-  Teuchos::RCP<Thyra::ModelEvaluator<double> > result;
+         const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > &W_factory){
+  Teuchos::RCP<Thyra::ModelEvaluator<ST> > result;
   if(useAdaptiveModel()) {
       result = Teuchos::rcp(new ThyraAdaptiveModelEvaluator(child, W_factory));
   }

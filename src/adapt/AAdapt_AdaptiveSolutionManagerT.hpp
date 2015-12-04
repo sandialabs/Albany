@@ -44,6 +44,7 @@ public:
 
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const { return initial_xT; }
    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const { return initial_xdotT; }
+   Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotDotT() const { return initial_xdotdotT; }
    Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT);
 
    Teuchos::RCP<Tpetra_Vector>& get_overlapped_xT() {return overlapped_xT;}
@@ -74,6 +75,7 @@ private:
 
     Teuchos::RCP<Tpetra_Vector> initial_xT;
     Teuchos::RCP<Tpetra_Vector> initial_xdotT;
+    Teuchos::RCP<Tpetra_Vector> initial_xdotdotT;
 
     const Teuchos::RCP<Teuchos::ParameterList> appParams_;
     const Teuchos::RCP<Albany::AbstractDiscretization> disc_;

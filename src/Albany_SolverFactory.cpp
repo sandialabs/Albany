@@ -9,12 +9,12 @@
 
 #include "Albany_SolverFactory.hpp"
 #if defined(ALBANY_EPETRA)
-#include "Albany_PiroObserver.hpp"
-#include "Piro_Epetra_SolverFactory.hpp"
-#include "Petra_Converters.hpp"
-#include "Albany_SaveEigenData.hpp"
-#include "Albany_ObserverFactory.hpp"
-#include "NOX_Epetra_Observer.H"
+#  include "Albany_PiroObserver.hpp"
+#  include "Piro_Epetra_SolverFactory.hpp"
+#  include "Petra_Converters.hpp"
+#  include "Albany_SaveEigenData.hpp"
+#  include "Albany_ObserverFactory.hpp"
+#  include "NOX_Epetra_Observer.H"
 #endif
 #include "Albany_PiroObserverT.hpp"
 #include "Albany_ModelFactory.hpp"
@@ -29,21 +29,21 @@
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
 #ifdef ALBANY_IFPACK2
-#include "Teuchos_AbstractFactoryStd.hpp"
-#include "Thyra_Ifpack2PreconditionerFactory.hpp"
+#  include "Teuchos_AbstractFactoryStd.hpp"
+#  include "Thyra_Ifpack2PreconditionerFactory.hpp"
 #endif /* ALBANY_IFPACK2 */
 
 #ifdef ALBANY_MUELU
-#include <Thyra_MueLuPreconditionerFactory.hpp>
-#ifdef ALBANY_USE_PUBLICTRILINOS
-#include "Stratimikos_MueluTpetraHelpers.hpp"
-#else
-#include "Stratimikos_MueLuHelpers.hpp"
-#endif
+#  include <Thyra_MueLuPreconditionerFactory.hpp>
+#  ifdef ALBANY_USE_PUBLICTRILINOS
+#     include "Stratimikos_MueluTpetraHelpers.hpp"
+#  else
+#     include "Stratimikos_MueLuHelpers.hpp"
+#  endif
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
-#include "Teko_StratimikosFactory.hpp"
+#  include "Teko_StratimikosFactory.hpp"
 #endif
 
 #ifdef ALBANY_QCAD
@@ -69,9 +69,6 @@
 #ifdef ALBANY_AERAS
   #include "Aeras/Aeras_HVDecorator.hpp"
 #endif
-
-//#include "Thyra_EpetraModelEvaluator.hpp"
-//#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
@@ -788,6 +785,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 	*out << "Error: cannot locate Stratimikos solver parameters in the input file." << std::endl;
     *out << "Printing the Piro parameter list:" << std::endl;
     piroParams->print(*out);
+// GAH: this is an error - should be fatal
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error: cannot locate Stratimikos solver parameters in the input file." << "\n");
   }
 
 
