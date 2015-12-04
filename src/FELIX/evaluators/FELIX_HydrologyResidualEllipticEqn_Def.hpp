@@ -52,11 +52,11 @@ HydrologyResidualEllipticEqn<EvalT, Traits>::HydrologyResidualEllipticEqn (const
     for (int side=0; side<numSides; ++side)
     {
       // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-      int thisSideNodes = cellType->getNodeCount(sideDims,side);
+      int thisSideNodes = cellType->getNodeCount(sideDim,side);
       sideNodes[side].resize(thisSideNodes);
       for (int node=0; node<thisSideNodes; ++node)
       {
-        sideNodes[side][node] = cellType->getNodeMap(sideDims,side,node);
+        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
       }
     }
   }

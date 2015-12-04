@@ -10,7 +10,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 namespace PHAL {
 
@@ -48,7 +48,6 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   sideDims     = dim[4];
   cellDims     = sideDims+1;
 
-
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
   *output << "Compute Basis Functions Side has: "
@@ -83,8 +82,10 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   sideNodes.resize(numSides);
   for (int side=0; side<numSides; ++side)
   {
-    sideNodes[side].resize(numSideNodes);
-    for (int node=0; node<numSideNodes; ++node)
+    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+    int thisSideNodes = cellType->getNodeCount(sideDims,side);
+    sideNodes[side].resize(thisSideNodes);
+    for (int node=0; node<thisSideNodes; ++node)
     {
       sideNodes[side][node] = cellType->getNodeMap(sideDims,side,node);
     }
