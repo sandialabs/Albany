@@ -248,7 +248,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
   }
 
-  this->initializeSideSetMeshStructsExtraction(commT);
+  this->initializeSideSetMeshStructs(commT);
 }
 
 Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
@@ -431,7 +431,9 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   computeAddlConnectivity();
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
+
+  fieldAndBulkDataSet = true;
 }
 
 double

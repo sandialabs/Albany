@@ -10,6 +10,7 @@
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
+#include "Albany_IossSTKMeshStruct.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
@@ -100,6 +101,8 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
+
+  fieldAndBulkDataSet = false;
 }
 
 Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
@@ -684,7 +687,7 @@ void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
 
 }
 
-void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructsExtraction (const Teuchos::RCP<const Teuchos_Comm>& commT)
+void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   if (params->isSublist ("Side Set Discretizations"))
   {
@@ -696,13 +699,24 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructsExtraction (const
     {
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
-      if (params_ss->get<std::string>("Method")=="SideSetSTK")
+      std::string method = params_ss->get<std::string>("Method");
+      if (method=="SideSetSTK")
       {
         // The user said this mesh is extracted from a higher dimensional one
         TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1, std::logic_error,
                                     "Error! So far, side set mesh extraction is allowed only from STK meshes with 1 element block.\n");
 
-        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, commT));
+        this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, adaptParams, commT));
+      }
+      else if (method=="Ioss" || method=="Exodus")
+      {
+        // We check, cause the basal mesh for extruded stk mesh should be already created
+        if (sideSetMeshStructs.find(ss_name)==sideSetMeshStructs.end())
+          this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params_ss, adaptParams, commT));
+      }
+      else
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid discretization method for the side discretization.\n");
       }
 
       // Update the side set mesh specs pointer in the mesh specs of this mesh
@@ -711,7 +725,7 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructsExtraction (const
   }
 }
 
-void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructsExtraction (
+void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructs (
           const Teuchos::RCP<const Teuchos_Comm>& commT,
           const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
           const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
@@ -731,15 +745,20 @@ void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructsExtraction (
       sideMesh = Teuchos::rcp_dynamic_cast<Albany::SideSetSTKMeshStruct>(it.second,false);
       if (sideMesh!=Teuchos::null)
       {
+        // SideSetSTK mesh need to build the mesh
         sideMesh->setParentMeshInfo(*this, it.first);
+      }
 
+      // We check since the basal mesh for extruded stk mesh should already have it set
+      if (!it.second->fieldAndBulkDataSet)
+      {
         auto it_req = side_set_req.find(it.first);
         auto it_sis = side_set_sis.find(it.first);
 
         auto& req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
-        sideMesh->setFieldAndBulkData(commT,params,neq,req,sis,worksetSize);
+        it.second->setFieldAndBulkData(commT,params,neq,req,sis,worksetSize);
       }
     }
   }
@@ -1124,7 +1143,7 @@ void Albany::GenericSTKMeshStruct::readScalarFileSerial (const std::string& fnam
   {
     ifile >> numNodes;
     TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-                                "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
+                                "Error in GenericSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
                                 "is different from the number expected (" << map->getNodeNumElements() << ").\n");
 
     for (GO i = 0; i < numNodes; i++)
@@ -1153,7 +1172,7 @@ void Albany::GenericSTKMeshStruct::readVectorFileSerial (const std::string& fnam
       ifile >> numNodes >> numComponents;
 
       TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-                                  "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
+                                  "Error in GenericSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
                                   "is different from the number expected (" << map->getNodeNumElements() << ").\n");
 
       mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numComponents));
@@ -1194,7 +1213,7 @@ void Albany::GenericSTKMeshStruct::readLayeredScalarFileSerial (const std::strin
       ifile >> numNodes >> numLayers;
 
       TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-                                  "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
+                                  "Error in GenericSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
                                   "is different from the number expected (" << map->getNodeNumElements() << ").\n");
 
       mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numLayers));
@@ -1240,7 +1259,7 @@ void Albany::GenericSTKMeshStruct::readLayeredVectorFileSerial (const std::strin
       ifile >> numNodes >> numComponents >> numLayers;
 
       TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
-                                  "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
+                                  "Error in GenericSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
                                   "is different from the number expected (" << map->getNodeNumElements() << ").\n");
 
       numVectors = numLayers*numComponents;

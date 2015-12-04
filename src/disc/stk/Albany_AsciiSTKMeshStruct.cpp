@@ -386,7 +386,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                              ebNameToIndex, this->interleavedOrdering));
 
 
-  this->initializeSideSetMeshStructsExtraction (commT);
+  this->initializeSideSetMeshStructs (commT);
 }
 
 Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
@@ -707,7 +707,8 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
-  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
+  fieldAndBulkDataSet = true;
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

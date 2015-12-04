@@ -191,7 +191,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
                                    this->interleavedOrdering));
   std::cout << "Spatial dim: " << metaData->spatial_dimension() << std::endl;
 
-  this->initializeSideSetMeshStructsExtraction(commT);
+  this->initializeSideSetMeshStructs(commT);
 }
 
 Albany::AsciiSTKMesh2D::~AsciiSTKMesh2D() {
@@ -308,9 +308,10 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 
 #endif
 
-  // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
-  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
+  fieldAndBulkDataSet = true;
 
+  // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> Albany::AsciiSTKMesh2D::getValidDiscretizationParameters() const {

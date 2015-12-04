@@ -324,7 +324,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     }
   }
 
-  this->initializeSideSetMeshStructsExtraction(commT);
+  this->initializeSideSetMeshStructs(commT);
 }
 
 template<unsigned Dim, class traits>
@@ -396,8 +396,10 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
 
+  fieldAndBulkDataSet = true;
+
   // Finally, setup the side set meshes (if any)
-  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 template <unsigned Dim, class traits>

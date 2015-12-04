@@ -178,8 +178,8 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
 
-  // Initialize the extraction of other side set meshes
-  this->initializeSideSetMeshStructsExtraction(comm);
+  // Initialize the (possible) other side set meshes
+  this->initializeSideSetMeshStructs(comm);
 }
 
 Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
@@ -582,9 +582,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
+  fieldAndBulkDataSet = true;
 
   // We can finally extract the side set meshes and set the fields and bulk data in all of them
-  this->finalizeSideSetMeshStructsExtraction(comm, side_set_req, side_set_sis, worksetSize);
+  this->finalizeSideSetMeshStructs(comm, side_set_req, side_set_sis, worksetSize);
 
   if (params->get("Export 2D Data",false))
   {

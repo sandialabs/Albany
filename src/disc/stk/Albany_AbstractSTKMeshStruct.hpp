@@ -103,6 +103,8 @@ namespace Albany {
 
     std::map<std::string,Teuchos::RCP<Albany::AbstractSTKMeshStruct> >  sideSetMeshStructs;
 
+    bool fieldAndBulkDataSet;
+
   protected:
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> fieldContainer;

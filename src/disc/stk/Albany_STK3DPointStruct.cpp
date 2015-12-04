@@ -34,7 +34,7 @@ Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::Parameter
                                              ebNameToIndex, this->interleavedOrdering));
   std::cout << "---3DPoint constructor done---" << std::endl;
 
-  this->initializeSideSetMeshStructsExtraction (commT);
+  this->initializeSideSetMeshStructs(commT);
 }
 
 Albany::STK3DPointStruct::~STK3DPointStruct() {};
@@ -68,7 +68,8 @@ Albany::STK3DPointStruct::setFieldAndBulkData(
 
   bulkData->modification_end();
 
-  this->finalizeSideSetMeshStructsExtraction(commT, side_set_req, side_set_sis, worksetSize);
+  fieldAndBulkDataSet = true;
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 void

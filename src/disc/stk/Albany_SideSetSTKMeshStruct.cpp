@@ -26,8 +26,9 @@ namespace Albany
 
 SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                            const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
                                             const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params, Teuchos::null)
+  GenericSTKMeshStruct(params, adaptParams)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (inputMeshSpecs.numDim!=3, std::logic_error,
                               "Error! For now nput mesh has to be 3D.\n");
@@ -57,7 +58,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 #endif
 
   std::string input_elem_name = inputMeshSpecs.ctd.base->name;
-  if (input_elem_name=="Tetrahedron_4")
+  if (input_elem_name=="Tetrahedron_4" || input_elem_name=="Wedge_6")
   {
     stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
   }
