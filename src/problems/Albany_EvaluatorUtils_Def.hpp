@@ -218,7 +218,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransie
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarNodalParameter(
-       const std::string& dof_name)
+       const std::string& param_name,
+       const std::string& field_name)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -226,7 +227,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarNodalParameter(
     using std::string;
 
     RCP<ParameterList> p = rcp(new ParameterList("Gather Parameter"));
-    p->set<std::string>("Parameter Name", dof_name);
+    p->set<std::string>("Parameter Name", param_name);
+    if (field_name!="")
+      p->set<std::string>("Field Name", field_name);
+    else
+      p->set<std::string>("Field Name", param_name);
 
     return rcp(new PHAL::GatherScalarNodalParameter<EvalT,Traits>(*p,dl));
 }

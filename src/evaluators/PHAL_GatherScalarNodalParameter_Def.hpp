@@ -18,7 +18,8 @@ GatherScalarNodalParameterBase(const Teuchos::ParameterList& p,
                                const Teuchos::RCP<Albany::Layouts>& dl)
 {
   param_name = p.get<std::string>("Parameter Name");
-  val = PHX::MDField<ScalarT,Cell,Node>(param_name,dl->node_scalar);
+  std::string field_name = p.get<std::string>("Field Name");
+  val = PHX::MDField<ScalarT,Cell,Node>(field_name,dl->node_scalar);
   numNodes = 0;
 
   this->addEvaluatedField(val);

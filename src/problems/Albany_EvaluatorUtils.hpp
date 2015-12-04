@@ -106,7 +106,8 @@ namespace Albany {
     //! Function to create parameter list for construction of GatherScalarNodalParameter
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructGatherScalarNodalParameter(
-        const std::string& dof_name);
+        const std::string& param_name,
+        const std::string& field_name="");
 
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
