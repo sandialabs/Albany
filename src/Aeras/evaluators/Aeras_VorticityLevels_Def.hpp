@@ -45,22 +45,63 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+//Kokkos kernals
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void VorticityLevels<EvalT, Traits>::
+operator() (const Vorticity_Tag& tag, const int & cell) const {
+
+   
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int node= 0 ; node < numNodes; ++node) { 
+      for (int level=0; level < numLevels; ++level) {
+         vort_val_qp(cell,qp,level) = 0.0;
+      }
+    }
+  }
+
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int node= 0 ; node < numNodes; ++node) { 
+      for (int level=0; level < numLevels; ++level) {
+         vort_val_qp(cell,qp,level) += (val_node(cell,node,level,1) * GradBF(cell,node,qp,0) 
+                                     -  val_node(cell,node,level,0) * GradBF(cell,node,qp,1));
+      }
+    }
+  }
+
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void VorticityLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::set(vort_val_qp, 0.0);
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int node= 0 ; node < numNodes; ++node) 
-        for (int level=0; level < numLevels; ++level) {
-          //for (int dim=0; dim<numDims; dim++) {
-            vort_val_qp(cell,qp,level) += (val_node(cell,node,level,1) * GradBF(cell,node,qp,0) -  val_node(cell,node,level,0) * GradBF(cell,node,qp,1));
-            //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
-            //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
 
-         //}
+
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+  PHAL::set(vort_val_qp, 0.0);
+
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int node= 0 ; node < numNodes; ++node) { 
+        for (int level=0; level < numLevels; ++level) {
+            vort_val_qp(cell,qp,level) += (val_node(cell,node,level,1) * GradBF(cell,node,qp,0) 
+                                        -  val_node(cell,node,level,0) * GradBF(cell,node,qp,1));
         }
+      }
+    }
+  }
+
+#else
+
+  Kokkos::parallel_for(Vorticity_Policy(0,workset.numCells),*this);
+
+#endif
+
 }
 
 }
