@@ -23,15 +23,16 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits>
 class StokesFOImplicitThicknessUpdateResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-		        public PHX::EvaluatorDerived<EvalT, Traits>  {
+            public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
   StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+                const Teuchos::RCP<Albany::Layouts>& dl_full,
+                const Teuchos::RCP<Albany::Layouts>& dl_ice);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+           PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -46,7 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> dH;
   PHX::MDField<ScalarT,Cell,Node> H0;
   PHX::MDField<ScalarT,Cell,Node,VecDim> InputResidual;
-  
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
