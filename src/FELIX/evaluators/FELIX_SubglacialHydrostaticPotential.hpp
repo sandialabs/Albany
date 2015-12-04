@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_HYDROSTATIC_POTENTIAL_HPP
-#define FELIX_HYDROLOGY_HYDROSTATIC_POTENTIAL_HPP 1
+#ifndef FELIX_SUBGLACIAL_HYDROSTATIC_POTENTIAL_HPP
+#define FELIX_SUBGLACIAL_HYDROSTATIC_POTENTIAL_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -16,20 +16,20 @@
 namespace FELIX
 {
 
-/** \brief Hydrology Residual Evaluator
+/** \brief Ice Overburden Evaluator
 
-    This evaluator evaluates the residual of the Hydrology model
+    This evaluator evaluates the ice hydrostatic pressure
 */
 
 template<typename EvalT, typename Traits>
-class HydrologyHydrostaticPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
+class SubglacialHydrostaticPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
                                       public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  HydrologyHydrostaticPotential (const Teuchos::ParameterList& p,
+  SubglacialHydrostaticPotential (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -40,13 +40,13 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT>     z_s;
-  PHX::MDField<ScalarT>     H;
+  PHX::MDField<ScalarT> z_s;
+  PHX::MDField<ScalarT> H;
 
   // Output:
-  PHX::MDField<ScalarT>     phi_H;
+  PHX::MDField<ScalarT> phi_H;
 
-  std::set<std::string>     sideSetNames;
+  std::string           basalSideName;
 
   int numNodes;
 
@@ -59,4 +59,4 @@ private:
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_HYDROSTATIC_POTENTIAL_HPP
+#endif // FELIX_SUBGLACIAL_HYDROSTATIC_POTENTIAL_HPP

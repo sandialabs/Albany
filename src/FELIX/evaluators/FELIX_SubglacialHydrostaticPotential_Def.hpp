@@ -11,15 +11,15 @@ namespace FELIX {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-HydrologyHydrostaticPotential<EvalT, Traits>::
-HydrologyHydrostaticPotential (const Teuchos::ParameterList& p,
+SubglacialHydrostaticPotential<EvalT, Traits>::
+SubglacialHydrostaticPotential (const Teuchos::ParameterList& p,
                                const Teuchos::RCP<Albany::Layouts>& dl)
 {
   stokes = p.isParameter("Stokes") ? p.get<bool>("Stokes") : false;
 
   if (stokes)
   {
-    sideSetNames = *p.get<std::set<std::string>*>("Side Set Names");
+    basalSideName = p.get<std::string>("Side Set Name");
 
     H     = PHX::MDField<ScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->side_node_scalar);
     z_s   = PHX::MDField<ScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->side_node_scalar);
@@ -52,12 +52,12 @@ HydrologyHydrostaticPotential (const Teuchos::ParameterList& p,
   rho_w = physics.get<double>("Water Density");
   g     = physics.get<double>("Gravity Acceleration");
 
-  this->setName("HydrologyHydrostaticPotential"+PHX::typeAsString<EvalT>());
+  this->setName("SubglacialHydrostaticPotential"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void HydrologyHydrostaticPotential<EvalT, Traits>::
+void SubglacialHydrostaticPotential<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -69,7 +69,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void HydrologyHydrostaticPotential<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+void SubglacialHydrostaticPotential<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
   if (!stokes)
   {
@@ -83,26 +83,19 @@ void HydrologyHydrostaticPotential<EvalT, Traits>::evaluateFields (typename Trai
   }
   else
   {
-    for (std::set<std::string>::const_iterator it_names=sideSetNames.begin(); it_names!=sideSetNames.end(); ++it_names)
+    if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
+      return;
+
+    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
+    for (auto const& it_side : sideSet)
     {
-      const Albany::SideSetList& ssList = *(workset.sideSets);
-      Albany::SideSetList::const_iterator it_ss = ssList.find(*it_names);
+      // Get the local data of side and cell
+      const int cell = it_side.elem_LID;
+      const int side = it_side.side_local_id;
 
-      if (it_ss==ssList.end())
-        continue;
-
-      const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-      std::vector<Albany::SideStruct>::const_iterator iter_s;
-      for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
+      for (int node=0; node < numNodes; ++node)
       {
-        // Get the local data of side and cell
-        const int cell = iter_s->elem_LID;
-        const int side = iter_s->side_local_id;
-
-        for (int node=0; node < numNodes; ++node)
-        {
-          phi_H(cell,side,node) = rho_i*g*H(cell,side,node) + rho_w*g*(z_s(cell,side,node) - H(cell,side,node));
-        }
+        phi_H(cell,side,node) = rho_i*g*H(cell,side,node) + rho_w*g*(z_s(cell,side,node) - H(cell,side,node));
       }
     }
   }

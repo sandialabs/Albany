@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_HydrologyHydrostaticPotential.hpp"
-#include "FELIX_HydrologyHydrostaticPotential_Def.hpp"
+#include "FELIX_SubglacialHydrostaticPotential.hpp"
+#include "FELIX_SubglacialHydrostaticPotential_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyHydrostaticPotential)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::SubglacialHydrostaticPotential)

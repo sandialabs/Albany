@@ -125,7 +125,6 @@ namespace FELIX {
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
 #include "FELIX_EffectivePressure.hpp"
-#include "FELIX_HydrologyHydrostaticPotential.hpp"
 #include "FELIX_FieldNorm.hpp"
 #include "FELIX_Gather2DField.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
@@ -135,6 +134,7 @@ namespace FELIX {
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
 #include "FELIX_StokesFOImplicitThicknessUpdateResid.hpp"
+#include "FELIX_SubglacialHydrostaticPotential.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #ifdef CISM_HAS_FELIX
 #include "FELIX_CismSurfaceGradFO.hpp"
@@ -654,23 +654,23 @@ FELIX::StokesFOThickness::constructEvaluators(
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Hydrostatic Potential"));
 
     // Input
-    p->set<std::string>("Ice Thickness QP Variable Name","Ice Thickness");
-    p->set<std::string>("Surface Height QP Variable Name","Surface Height");
+    p->set<std::string>("Ice Thickness Variable Name","Ice Thickness");
+    p->set<std::string>("Surface Height Variable Name","Surface Height");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
     p->set<bool>("Stokes", true);
 
     // Output
-    p->set<std::string>("Hydrostatic Potential Variable Name","Phi H");
+    p->set<std::string>("Hydrostatic Potential Variable Name","Subglacial Hydrostatic Potential");
 
-    ev = Teuchos::rcp(new FELIX::HydrologyHydrostaticPotential<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::SubglacialHydrostaticPotential<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Effective pressure (surrogate) calculation ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
 
     // Input
-    p->set<std::string>("Hydrostatic Potential Variable Name","Phi H");
+    p->set<std::string>("Hydrostatic Potential Variable Name","Subglacial Hydrostatic Potential");
     p->set<std::string>("Side Set Name", basalSideName);
     double alpha = params->sublist("FELIX Basal Friction Coefficient").get<double>("Hydraulic-Over-Hydrostatic Potential Ratio",0.0);
     p->set<double>("Hydraulic-Over-Hydrostatic Potential Ratio",alpha);
