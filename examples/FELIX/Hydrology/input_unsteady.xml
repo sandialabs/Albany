@@ -7,7 +7,7 @@
 
     <ParameterList name="Problem">
         <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-        <Parameter name="Solution Method" type="string" value="Steady"/>
+        <Parameter name="Solution Method" type="string" value="Unsteady"/>
         <Parameter name="Name" type="string" value="FELIX Hydrology 2D"/>
 
         <ParameterList name="Dirichlet BCs">
