@@ -23,6 +23,9 @@ namespace FELIX {
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p,
+       const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
+
+    ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p,
        const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
@@ -41,7 +44,8 @@ namespace FELIX {
     std::string basalSideName;
 
     int numSideNodes;
-    int numSideQPs;
+    int numBasalQPs;
+    int numSurfaceQPs;
     int numSideDims;
 
     PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>    velocity;
@@ -51,7 +55,6 @@ namespace FELIX {
     PHX::MDField<RealType,Cell,Side,Node,QuadPoint>     BF_surface;
     PHX::MDField<RealType,Cell,Side,QuadPoint>          w_measure_basal;
     PHX::MDField<RealType,Cell,Side,QuadPoint>          w_measure_surface;
-    PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>  inv_metric_basal;
 
     ScalarT p_resp, p_reg, resp, reg;
     double scaling, alpha, asinh_scaling;

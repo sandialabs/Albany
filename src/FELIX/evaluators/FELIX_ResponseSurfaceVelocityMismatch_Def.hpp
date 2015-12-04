@@ -13,36 +13,115 @@
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
+FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
+ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls)
+{
+  // get and validate Response parameter list
+  Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
+  Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
+  scaling = plist->get<double>("Scaling Coefficient", 1.0);
+  alpha = plist->get<double>("Regularization Coefficient", 0.0);
+  asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
 
+  const std::string& velocity_name           = paramList->get<std::string>("Surface Velocity Side QP Variable Name");
+  const std::string& obs_velocity_name       = paramList->get<std::string>("Observed Surface Velocity Side QP Variable Name");
+  const std::string& obs_velocityRMS_name    = paramList->get<std::string>("Observed Surface Velocity RMS Side QP Variable Name");
+  const std::string& BF_surface_name         = paramList->get<std::string>("BF Surface Name");
+  const std::string& w_measure_surface_name  = paramList->get<std::string>("Weighted Measure Surface Name");
+
+  surfaceSideName = paramList->get<std::string> ("Surface Side Name");
+  TEUCHOS_TEST_FOR_EXCEPTION (dls.find(surfaceSideName)==dls.end(), std::logic_error, "Error! Surface side data layout not found.\n");
+
+  Teuchos::RCP<Albany::Layouts> dl_surface = dls.at(surfaceSideName);
+
+  velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl_surface->side_qp_vector);
+  observedVelocity    = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl_surface->side_qp_vector);
+  observedVelocityRMS = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl_surface->side_qp_vector);
+  BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl_surface->side_node_qp_scalar);
+  w_measure_surface   = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->side_qp_scalar);
+
+  Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
+  Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
+  plist->validateParameters(*reflist, 0);
+
+  // Get Dimensions
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl_surface->side_node_qp_gradient->dimensions(dims);
+  numSideNodes  = dims[2];
+  numSideDims   = dims[4];
+  numSurfaceQPs = dl_surface->side_qp_scalar->dimension(2);
+
+  // add dependent fields
+  this->addDependentField(velocity);
+  this->addDependentField(observedVelocity);
+  this->addDependentField(observedVelocityRMS);
+  this->addDependentField(BF_surface);
+  this->addDependentField(w_measure_surface);
+
+  if (alpha!=0)
+  {
+    // Adding the regularization required fields
+
+    basalSideName = paramList->get<std::string> ("Basal Side Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (dls.find(basalSideName)==dls.end(), std::logic_error, "Error! Basal side data layout not found.\n");
+    Teuchos::RCP<Albany::Layouts> dl_basal = dls.at(basalSideName);
+
+    const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
+    const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
+
+    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl_basal->side_qp_gradient);
+    w_measure_basal     = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->side_qp_scalar);
+
+    numBasalQPs = dl_basal->side_qp_scalar->dimension(2);
+
+    this->addDependentField(w_measure_basal);
+    this->addDependentField(grad_beta);
+  }
+
+  this->setName("Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
+
+  using PHX::MDALayout;
+
+  // Setup scatter evaluator
+  p.set("Stand-alone Evaluator", false);
+  std::string local_response_name = "Local Response surface_velocity Mismatch";
+  std::string global_response_name = "Global Response surface_velocity Mismatch";
+  int worksetSize = dl_surface->qp_scalar->dimension(0);
+  int responseSize = 1;
+  Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
+  Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
+  PHX::Tag<ScalarT> local_response_tag(local_response_name, local_response_layout);
+  PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
+  p.set("Local Response Field Tag", local_response_tag);
+  p.set("Global Response Field Tag", global_response_tag);
+  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl_surface);
+}
+
+template<typename EvalT, typename Traits>
 FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   // get and validate Response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
-  std::string fieldName ="";
   Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
   scaling = plist->get<double>("Scaling Coefficient", 1.0);
   alpha = plist->get<double>("Regularization Coefficient", 0.0);
   asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
 
-  const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
   const std::string& velocity_name           = paramList->get<std::string>("Surface Velocity Side QP Variable Name");
   const std::string& obs_velocity_name       = paramList->get<std::string>("Observed Surface Velocity Side QP Variable Name");
   const std::string& obs_velocityRMS_name    = paramList->get<std::string>("Observed Surface Velocity RMS Side QP Variable Name");
   const std::string& BF_surface_name         = paramList->get<std::string>("BF Surface Name");
-  const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
   const std::string& w_measure_surface_name  = paramList->get<std::string>("Weighted Measure Surface Name");
-  const std::string& inv_metric_basal_name   = paramList->get<std::string>("Inverse Metric Basal Name");
 
-  grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl->side_qp_gradient);
   velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl->side_qp_vector);
   observedVelocity    = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl->side_qp_vector);
   observedVelocityRMS = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl->side_qp_vector);
   BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl->side_node_qp_scalar);
-  w_measure_basal     = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_basal_name, dl->side_qp_scalar);
   w_measure_surface   = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_surface_name, dl->side_qp_scalar);
-  inv_metric_basal    = PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>(inv_metric_basal_name, dl->side_qp_tensor);
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
@@ -52,10 +131,9 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   std::vector<PHX::DataLayout::size_type> dims;
   dl->side_node_qp_gradient->dimensions(dims);
   numSideNodes = dims[2];
-  numSideQPs   = dims[3];
+  numBasalQPs = numSurfaceQPs = dims[3];
   numSideDims  = dims[4];
 
-  basalSideName = paramList->get<std::string> ("Basal Side Name");
   surfaceSideName = paramList->get<std::string> ("Surface Side Name");
 
   // add dependent fields
@@ -63,22 +141,34 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   this->addDependentField(observedVelocity);
   this->addDependentField(observedVelocityRMS);
   this->addDependentField(BF_surface);
-  this->addDependentField(w_measure_basal);
   this->addDependentField(w_measure_surface);
-  this->addDependentField(inv_metric_basal);
+
   if (alpha!=0)
   {
+    // Adding the regularization required fields
+
+    basalSideName = paramList->get<std::string> ("Basal Side Name");
+
+    const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
+    const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
+
+    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl->side_qp_gradient);
+    w_measure_basal     = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_basal_name, dl->side_qp_scalar);
+
+    numBasalQPs = dl->side_qp_scalar->dimension(2);
+
+    this->addDependentField(w_measure_basal);
     this->addDependentField(grad_beta);
   }
 
-  this->setName(fieldName + " Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
+  this->setName("Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
 
   using PHX::MDALayout;
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = fieldName + " Local Response surface_velocity Mismatch";
-  std::string global_response_name = fieldName + " Global Response surface_velocity Mismatch";
+  std::string local_response_name = "Local Response surface_velocity Mismatch";
+  std::string global_response_name = "Global Response surface_velocity Mismatch";
   int worksetSize = dl->qp_scalar->dimension(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
@@ -99,11 +189,12 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(observedVelocity, fm);
   this->utils.setFieldData(observedVelocityRMS, fm);
   this->utils.setFieldData(BF_surface, fm);
-  this->utils.setFieldData(w_measure_basal, fm);
   this->utils.setFieldData(w_measure_surface, fm);
-  this->utils.setFieldData(inv_metric_basal, fm);
+
   if (alpha!=0)
   {
+    // Regularization-related fields
+    this->utils.setFieldData(w_measure_basal, fm);
     this->utils.setFieldData(grad_beta, fm);
   }
 
@@ -145,7 +236,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
       ScalarT t = 0;
       ScalarT data = 0;
-      for (int qp=0; qp<numSideQPs; ++qp)
+      for (int qp=0; qp<numSurfaceQPs; ++qp)
       {
         ScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
         ScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
@@ -166,7 +257,6 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
   // --------------- Regularization term on the basal side ----------------- //
 
-
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end() && alpha!=0)
   {
     const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
@@ -175,19 +265,15 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       // Get the local data of side and cell
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
-
-
       ScalarT t = 0;
-      for (int qp=0; qp<numSideQPs; ++qp)
+      for (int qp=0; qp<numBasalQPs; ++qp)
       {
         ScalarT sum=0;
         for (int idim=0; idim<numSideDims; ++idim)
-          for (int jdim=0; jdim<numSideDims; ++jdim)
-            sum += grad_beta(cell,side,qp,idim)*inv_metric_basal(cell,side,qp,idim,jdim)*grad_beta(cell,side,qp,jdim);
+          sum += grad_beta(cell,side,qp,idim)*grad_beta(cell,side,qp,idim);
 
-        t += sum * w_measure_surface(cell,side,qp);
+        t += sum * w_measure_basal(cell,side,qp);
       }
-
       this->local_response(cell, 0) += t*scaling*alpha;//*50.0;
       this->global_response(0) += t*scaling*alpha;//*50.0;
       p_reg += t*scaling*alpha;
