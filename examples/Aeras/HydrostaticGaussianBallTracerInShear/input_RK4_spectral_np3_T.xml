@@ -27,9 +27,9 @@
   </ParameterList>
   <ParameterList name="Debug Output">
      <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/-->
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
      <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
-     <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
+     <Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
      <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
      <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
   </ParameterList>
@@ -41,7 +41,7 @@
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_rk4_np3_out.exo"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="50"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->

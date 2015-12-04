@@ -41,7 +41,7 @@
     <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_rk4_np4_out.exo"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="200"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
@@ -101,7 +101,7 @@
                  value="Simple Integration Control Strategy"/>
            <ParameterList name="Simple Integration Control Strategy">
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
-             <Parameter name="Number of Time Steps" type="int" value="20000"/>
+             <Parameter name="Number of Time Steps" type="int" value="80000"/>
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>
              </ParameterList>
