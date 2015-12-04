@@ -803,9 +803,8 @@ updateSlipViaExplicitIntegration(
     m = slip_systems_[s].gamma_exp_;
     g0 = slip_systems_[s].gamma_dot_0_;
 
-    int sign = shear[s] < 0 ? -1 : 1;
-    temp = std::fabs(shear[s] / (tauC + hardness[s]));
-    slip_np1[s] = slip_n[s] + dt * g0 * std::pow(temp, m) * sign;
+    temp = shear[s] / (tauC + hardness[s]);
+    slip_np1[s] = slip_n[s] + dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
   }
 }
 
@@ -917,7 +916,6 @@ computeResidual(
   //ScalarT one_over_m;
   ArgT dgamma_value1, dgamma_value2, temp;
   //ArgT temp2;
-  int sign;
 
   for (int s(0); s < num_slip; ++s) {
 
@@ -932,19 +930,18 @@ computeResidual(
     dgamma_value1 = slip_np1[s] - slip_n[s];
 
     // Compute slip increment using Fe_np1
-    sign = shear_np1[s] < 0 ? -1 : 1;
-    temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
+    temp = shear_np1[s] / (tauC + hardness_np1[s]);
 
 //     // establishing normalized filter for active slip systems
 //     const double active_filter = std::numeric_limits<RealType>::epsilon() * 10.0;
 //     if (temp < active_filter) {
-//       dgamma_value2 = dt * g0 * 0.0 * sign;
+//       dgamma_value2 = dt * g0 * 0.0;
 //     }
 //     else {
 //       dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
 //     }
 
-    dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
+    dgamma_value2 = dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
 
     //The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value2 - dgamma_value1;
@@ -956,6 +953,7 @@ computeResidual(
     //  slip_residual[s] = dgamma_value2 - dgamma_value1;
     //}
     //else {
+    //  int sign = shear_np1[s] < 0 ? -1 : 1;
     //  temp2 = dgamma_value1 / (dt * g0 * sign);
     //  slip_residual[s] = -std::pow(temp2, one_over_m) + temp;
     //}

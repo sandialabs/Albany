@@ -211,6 +211,7 @@ case "$SCRIPT_NAME" in
 			exit 1
 		    fi
                     ln -sf "$INSTALL_DIR/include" "$INSTALL_DIR/inc"
+                    ln -sf /usr/lib64/libnetcdf.so "$INSTALL_DIR/lib/libnetcdf.so"
 		    echo SUCCESS > "$STATUS_LOG" 
 		fi
 		;;
