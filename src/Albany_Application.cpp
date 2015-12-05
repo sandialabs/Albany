@@ -1485,12 +1485,12 @@ computeGlobalJacobianT(
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-      jacT.describe(*out, Teuchos::VERB_HIGH);
+      jacT.describe(*out, Teuchos::VERB_EXTREME);
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
         std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-        jacT.describe(*out, Teuchos::VERB_HIGH);
+        jacT.describe(*out, Teuchos::VERB_EXTREME);
       }
     }
   }
