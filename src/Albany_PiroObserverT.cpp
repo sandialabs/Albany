@@ -40,6 +40,13 @@ Albany::PiroObserverT::observeSolution(
   this->observeSolutionImpl(solution, solution_dot, stamp);
 }
 
+void
+Albany::PiroObserverT::observeSolution(
+      const Piro::SolnSet<ST> &solution)
+{
+  this->observeSolutionImpl(solution);
+}
+
 namespace { // anonymous
 
 Teuchos::RCP<const Tpetra_Vector>
@@ -87,6 +94,22 @@ Albany::PiroObserverT::observeSolutionImpl(
 }
 
 void
+Albany::PiroObserverT::observeSolutionImpl(
+    const Piro::SolnSet<ST> &solution_)
+{
+
+  const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
+    tpetraFromThyra(*solution_.solution);
+  const Teuchos::RCP<const Tpetra_Vector> solution_dot_tpetra =
+    tpetraFromThyra(*solution_.solution_dot);
+  const Teuchos::RCP<const Tpetra_Vector> solution_dotdot_tpetra =
+    tpetraFromThyra(*solution_.solution_dotdot);
+
+  impl_.observeSolutionT(solution_.stamp, *solution_tpetra, 
+       solution_dot_tpetra.ptr(), solution_dotdot_tpetra.ptr());
+}
+
+void
 Albany::PiroObserverT::observeTpetraSolutionImpl(
     const Tpetra_Vector &solution,
     Teuchos::Ptr<const Tpetra_Vector> solution_dot,
@@ -97,3 +120,4 @@ Albany::PiroObserverT::observeTpetraSolutionImpl(
 
   impl_.observeSolutionT(stamp, solution, solution_dot);
 }
+

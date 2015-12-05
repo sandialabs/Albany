@@ -6,6 +6,7 @@
 #ifndef AADAPT_ADAPTIVEMODELFACTORY_HPP
 #define AADAPT_ADAPTIVEMODELFACTORY_HPP
 
+#include "Albany_DataTypes.hpp"
 #include "EpetraExt_ModelEvaluator.h"
 #include "Thyra_EpetraModelEvaluator.hpp"
 #include "Thyra_LinearOpWithSolveFactoryBase.hpp"
@@ -25,11 +26,11 @@ class AdaptiveModelFactory {
 
     ~AdaptiveModelFactory();
 
-    Teuchos::RCP<Thyra::ModelEvaluator<double> > create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& epetraModel,
-         const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > &W_factory);
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > create(const Teuchos::RCP<EpetraExt::ModelEvaluator>& epetraModel,
+         const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > &W_factory);
 
     // Returns a weak pointer to the Thyra model
-    Teuchos::RCP<Thyra::ModelEvaluator<double> > 
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > 
        getThyraModel(){ return thyra_model; }
 
     void releaseModel(){ thyra_model = Teuchos::null; }
@@ -44,7 +45,7 @@ class AdaptiveModelFactory {
     bool useAdaptiveModel() const;
 
     //! The adaptive thyra model built by the factory
-    Teuchos::RCP<Thyra::ModelEvaluator<double> > thyra_model;
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > thyra_model;
 
     // Disallow copy & assignment
     AdaptiveModelFactory(const AdaptiveModelFactory&);

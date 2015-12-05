@@ -62,7 +62,7 @@ class AdjointResponse :
     bool enrichAdjoint;
 
     Teuchos::RCP<Albany::Application> application;
-    Teuchos::RCP<Albany::GOALMechanicsProblem> problem;
+    Teuchos::RCP<Albany::AbstractProblem> problem;
     Teuchos::RCP<Albany::StateManager> stateManager;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
     Teuchos::ParameterList params;

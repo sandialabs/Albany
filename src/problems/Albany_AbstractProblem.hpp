@@ -115,6 +115,12 @@ namespace Albany {
     //! Get a list of the Special fields needed to implement the problem
     const AbstractFieldContainer::FieldContainerRequirements getFieldRequirements(){ return requirements; }
 
+    //! Is this the adjoint problem
+    bool isAdjoint;
+
+    //! Should the adjoint problem be solved with an enriched basis
+    bool enrichAdjoint;
+
   protected:
 
     //! List of valid problem params common to all problems, as

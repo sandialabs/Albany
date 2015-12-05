@@ -156,7 +156,7 @@
 		         <Parameter name="fact: drop tolerance"
 				    type="double" value="0"/>
 		         <Parameter name="fact: ilut level-of-fill"
-				    type="double" value="1"/>
+				    type="double" value="10"/>
 		         <Parameter name="fact: level-of-fill"
 				    type="int" value="1"/>
 		       </ParameterList>
@@ -169,7 +169,7 @@
 		         <Parameter name="fact: drop tolerance"
 				    type="double" value="0"/>
 		         <Parameter name="fact: ilut level-of-fill"
-				    type="double" value="3"/>
+				    type="double" value="10"/>
 		         <Parameter name="fact: level-of-fill"
 				    type="int" value="1"/>
 		       </ParameterList>

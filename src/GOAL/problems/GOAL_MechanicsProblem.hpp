@@ -64,12 +64,6 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
         <Intrepid::FieldContainer<RealType> > > > newSt) const;
 
-    //! is this the adjoint problem?
-    bool isAdjoint;
-
-    //! should the adjoint problem be solved with an enriched basis?
-    bool enrichAdjoint;
-
   private:
     
     //! private to prohibit copying

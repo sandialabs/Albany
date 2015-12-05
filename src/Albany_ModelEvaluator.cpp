@@ -252,10 +252,10 @@ Albany::ModelEvaluator::get_x_dot_init() const
 Teuchos::RCP<const Epetra_Vector>
 Albany::ModelEvaluator::get_x_dotdot_init() const
 {
-  Teuchos::RCP<const Epetra_Vector> x_dotdot_init
-    = Teuchos::rcp(new Epetra_Vector(app->getAdaptSolMgr()->getInitialSolutionDot()->Map()));
-  
-  return x_dotdot_init;
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  return app->getAdaptSolMgr()->getInitialSolutionDotDot();
+#endif
+   return app->getInitialSolutionDotDot();
 }
 
 
@@ -626,6 +626,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     beta = inArgs.get_beta();
     curr_time  = inArgs.get_t();
   }
+
   for (int i=0; i<num_param_vecs; i++) {
     Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
     if (p != Teuchos::null) {
