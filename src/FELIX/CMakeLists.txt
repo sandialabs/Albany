@@ -51,7 +51,7 @@ IF (ALBANY_EPETRA)
        evaluators/FELIX_GatherVerticallyAveragedVelocity.cpp
        evaluators/FELIX_ScatterResidual2D.cpp
        problems/FELIX_StokesFOThickness.cpp
-       problems/FELIX_StokesFOHydrology.cpp
+       problems/FELIX_Hydrology.cpp
    )
 ENDIF()
 
@@ -145,7 +145,7 @@ IF (ALBANY_EPETRA)
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid.hpp
        evaluators/FELIX_StokesFOImplicitThicknessUpdateResid_Def.hpp
        problems/FELIX_StokesFOThickness.hpp
-       problems/FELIX_StokesFOHydrology.hpp
+       problems/FELIX_Hydrology.hpp
   )
 ENDIF()
 

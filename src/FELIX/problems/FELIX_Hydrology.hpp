@@ -30,7 +30,7 @@
 #include "FELIX_HydrologyMelting.hpp"
 #include "FELIX_HydrologyResidualEllipticEqn.hpp"
 #include "FELIX_HydrologyResidualEvolutionEqn.hpp"
-#include "FELIX_IceHydrostaticPotential.hpp"
+#include "FELIX_SubglacialHydrostaticPotential.hpp"
 
 namespace FELIX
 {
@@ -248,7 +248,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Output
   p->set<std::string> ("Ice Potential Variable Name","Ice Overburden");
 
-  ev = rcp(new FELIX::IceHydrostaticPotential<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = rcp(new FELIX::SubglacialHydrostaticPotential<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Hydrology Water Discharge -------- //
