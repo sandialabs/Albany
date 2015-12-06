@@ -8,10 +8,11 @@
       <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Snow}"/>
       <Parameter name="P0" type="double" value="101325.0"/>
       <Parameter name="Ptop" type="double" value="101.325"/>
+      <Parameter name="Viscosity" type="double" value="1.0E9"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Aeras Hydrostatic"/>
-       <Parameter name="Function Data" type="Array(double)" value="{3, 3, 101325.0, 1.0, 0.0, 300.0, 0.333, 0.333, 0.333}"/>
+       <Parameter name="Function Data" type="Array(double)" value="{3, 1, 101325.0, 100.0, 0.0, 300.0, 0.333}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -40,14 +41,14 @@
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_be_np3_out.exo"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="50"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{5380.35101725}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{5389.09148282}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -63,8 +64,12 @@
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
         <Parameter name="Number of Time Steps" type="int" value="1"/>
+        <!--12/2/15, IKT: uncomment the following for a 2.3 day simulation-->
+        <!--Parameter name="Number of Time Steps" type="int" value="20000"/-->
       </ParameterList>
       <Parameter name="Final Time" type="double" value= "100."/>
+      <!--12/2/15, IKT: uncomment the following for a 2.3 day simulation-->
+      <!--Parameter name="Final Time" type="double" value= "200000.0"/-->
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">

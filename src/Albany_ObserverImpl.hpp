@@ -22,7 +22,8 @@ public:
 
   virtual void observeSolutionT(
     double stamp, const Tpetra_Vector& nonOverlappedSolutionT,
-    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT);
+    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
+    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT = Teuchos::null);
 
 private:
   ObserverImpl(const ObserverImpl&);

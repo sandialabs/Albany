@@ -36,6 +36,12 @@ class GOALDiscretization : public PUMIDiscretization
     //! Retrieve mesh struct
     Teuchos::RCP<Albany::GOALMeshStruct> getGOALMeshStruct() {return goalMeshStruct;}
 
+    //! Get the coordinate vector
+    const Teuchos::ArrayRCP<double>& getCoordinates() const;
+
+    //! Setup coordinates for MueLu
+    void setupMLCoords();
+
     //! Retrieve the goalNodeSets
     GOALNodeSets getGOALNodeSets() {return goalNodeSets;}
 
@@ -71,6 +77,11 @@ class GOALDiscretization : public PUMIDiscretization
 
     //! Goal mesh struct
     Teuchos::RCP<Albany::GOALMeshStruct> goalMeshStruct;
+
+    //! Vertex information
+    int numOverlapVertices;
+    apf::Numbering* vtxNumbering;
+    apf::DynamicArray<apf::Node> vertices;
 };
 
 }

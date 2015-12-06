@@ -56,6 +56,18 @@ private:
   const int numDims;
   const int numQPs;
   const int numLevels;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+struct Vorticity_Tag{};
+
+typedef Kokkos::RangePolicy<ExecutionSpace, Vorticity_Tag> Vorticity_Policy;
+KOKKOS_INLINE_FUNCTION
+void operator() (const Vorticity_Tag& tag, const int& i) const;
+#endif
+
 };
 
 }

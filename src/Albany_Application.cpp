@@ -661,6 +661,15 @@ getInitialSolutionDot() const
   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
   return initial_x_dot;
 }
+
+RCP<const Epetra_Vector>
+Albany::Application::
+getInitialSolutionDotDot() const
+{
+  const Teuchos::RCP<Epetra_Vector>& initial_x_dotdot = solMgr->get_initial_xdotdot();
+  Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotDotT(), *initial_x_dotdot, comm);
+  return initial_x_dotdot;
+}
 #endif
 
 RCP<const Tpetra_Vector>
@@ -668,6 +677,13 @@ Albany::Application::
 getInitialSolutionDotT() const
 {
   return solMgrT->getInitialSolutionDotT();
+}
+
+RCP<const Tpetra_Vector>
+Albany::Application::
+getInitialSolutionDotDotT() const
+{
+  return solMgrT->getInitialSolutionDotDotT();
 }
 
 RCP<ParamLib>
@@ -1271,6 +1287,13 @@ computeGlobalJacobianImplT(const double alpha,
     workset.JacT      = overlapped_jacT;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
+   //fill Jacobian derivative dimensions:
+   for (int ps=0; ps < fm.size(); ps++){
+      (workset.Jacobian_deriv_dims).push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+   }
+
+
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
 
@@ -1478,12 +1501,12 @@ computeGlobalJacobianT(
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-      jacT.describe(*out, Teuchos::VERB_HIGH);
+      jacT.describe(*out, Teuchos::VERB_EXTREME);
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
         std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-        jacT.describe(*out, Teuchos::VERB_HIGH);
+        jacT.describe(*out, Teuchos::VERB_EXTREME);
       }
     }
   }
@@ -1782,6 +1805,12 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       if (nfm!=Teuchos::null)
         deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
     }
+
+   //fill Tangent derivative dimensions
+   for (int ps=0; ps < fm.size(); ps++){
+      (workset.Tangent_deriv_dims).push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
+   }
   }
 
   params = Teuchos::null;
@@ -2066,10 +2095,8 @@ applyGlobalDistParamDerivImplT(const double current_time,
   {
     PHAL::Workset workset;
     if (!paramLib->isParameter("Time"))
-//      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
       loadBasicWorksetInfoT( workset, current_time );
     else
-//      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
       loadBasicWorksetInfoT( workset,
                             paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
 
@@ -2983,12 +3010,6 @@ computeGlobalMPResidual(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
   }
 
   if (mp_overlapped_f == Teuchos::null ||
@@ -3142,11 +3163,6 @@ computeGlobalMPJacobian(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
   }
 
@@ -3335,11 +3351,6 @@ computeGlobalMPTangent(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
   }
 

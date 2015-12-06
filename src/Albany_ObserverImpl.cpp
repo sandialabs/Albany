@@ -88,7 +88,8 @@ void ObserverImpl::observeSolution (
 
 void ObserverImpl::observeSolutionT(
   double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
-  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT)
+  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
+  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT)
 {
   app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT,
                                    Teuchos::null, nonOverlappedSolutionT);
