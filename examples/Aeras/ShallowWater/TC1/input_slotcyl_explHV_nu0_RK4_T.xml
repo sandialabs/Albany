@@ -19,11 +19,26 @@
     </ParameterList>
     
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="3"/>
+      <Parameter name="Number" type="int" value="4"/>
+      <!-- HERE ONLY 1st equation is of interest, because 2 and 3rd are momentum eqn and velocities are prescribed -->
       <Parameter name="Response 0" type="string" value="Solution Average"/>
+            <ParameterList name="ResponseParams 0">
+            <Parameter name="Equation" type="int" value="0" />
+            <Parameter name="Num Equations" type="int" value="3" />   
+            </ParameterList>   
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
-      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+            <ParameterList name="ResponseParams 1">
+            <Parameter name="Equation" type="int" value="0" />
+            <Parameter name="Num Equations" type="int" value="3" />
+            </ParameterList>      
+      <Parameter name="Response 2" type="string" value="Solution Min Value"/>
+            <ParameterList name="ResponseParams 2">
+            <Parameter name="Equation" type="int" value="0" />
+            <Parameter name="Num Equations" type="int" value="3" />
+            </ParameterList>
+      <Parameter name="Response 3" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
+
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
       <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF Depth"/>
@@ -52,8 +67,16 @@
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{   15.3063405503,  1339.89636103, 10704.4167321}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="4"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{ 
+                        16.955418512,
+                    1455.63810676,
+                    -292.370576817,
+                    5016926703.92
+                    356238476.044
+                    616482944.649
+                    5067199485.45
+    }"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -74,7 +97,7 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="21600"/>
+           <Parameter name="Final Time" type="double" value="172800"/>
            <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
            <!--Parameter name="Final Time" type="double" value="86400"/-->
            <!-- change to 12*24*3600 to get full 12 days -->
