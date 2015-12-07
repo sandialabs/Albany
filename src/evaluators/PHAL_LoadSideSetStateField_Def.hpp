@@ -25,8 +25,7 @@ LoadSideSetStateField (const Teuchos::ParameterList& p)
   fieldName = p.get<std::string>("Field Name");
   stateName = p.get<std::string>("State Name");
 
-  PHX::MDField<ScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
-  field = f;
+  field  = PHX::MDField<ScalarT>(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
 
   this->addEvaluatedField (field);
 
@@ -64,6 +63,9 @@ evaluateFields(typename Traits::EvalData workset)
                               "Error! No discretization found for side set " << sideSetName << ".\n");
 
   Teuchos::RCP<Albany::AbstractDiscretization> ss_disc = ssDiscs.at(sideSetName);
+
+  TEUCHOS_TEST_FOR_EXCEPTION (ss_disc==Teuchos::null, std::logic_error,
+                              "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
 
   const std::map<std::string,std::map<GO,GO> >& ss_maps = workset.disc->getSideIdToSideSetElemIdMap();
 
@@ -121,7 +123,7 @@ evaluateFields(typename Traits::EvalData workset)
         field(cell,side) = state(ss_cell);
         break;
       case 3:
-        // side set node scalar or side set cell scalar
+        // side set node scalar or side set cell vector
         for (int i=0; i<dims[2]; ++i)
         {
           field(cell,side,i) = state(ss_cell,i);
