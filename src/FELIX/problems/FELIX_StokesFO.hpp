@@ -312,14 +312,14 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     if (std::find(req.begin(), req.end(), stateName)!=req.end())
     {
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
       if (isStateAParameter)
       {
         //basal friction is a distributed 3D parameter. We already took care of this case
       }
-      else
+      else if (std::find(requirements.begin(),requirements.end(),stateName)==requirements.end()) //otherwise see below
       {
-        entity = Albany::StateStruct::NodalDataToElemNode;
-        p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
         ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
@@ -358,6 +358,24 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   else if (isStateAParameter)
   {
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! basal_friction is a parameter, but there are no basal requirements.\n");
+  }
+
+  if (std::find(requirements.begin(),requirements.end(),"basal_friction")!=requirements.end())
+  {
+    stateName = "basal_friction";
+    fieldName = "Beta";
+
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    p->set<std::string>("Field Name", fieldName);
+
+    // We are (for some mystic reason) extruding beta to the whole 3D mesh
+    ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // We restrict it back to the 2D mesh. Clearly, this is not optimal. Just add 'basal_friction' to the Basal Requirements!
+    ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
+    fm0.template registerEvaluator<EvalT> (ev);
   }
 
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
