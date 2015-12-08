@@ -11,9 +11,7 @@
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionValuesResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
-
 #include "Albany_SolutionMinValueResponseFunction.hpp"
-
 #include "Albany_SolutionFileResponseFunction.hpp"
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
@@ -77,7 +75,7 @@ createResponseFunction(
 
   else if (name == "Solution Min Value") {
     int eq = responseParams.get("Equation", 0);
-    int neq = responseParams.get("Num Equations", 1);
+    int neq = app->getNumEquations();
     bool inor =  responseParams.get("Interleaved Ordering", true);
 
     responses.push_back(
