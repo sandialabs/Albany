@@ -504,7 +504,8 @@ void ShallowWaterResid<EvalT, Traits>::
 product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_, const int& cell) const{
 
 	for (int node=0; node < numNodes; ++node) {
-		const typename PHAL::Ref<const ScalarT>::type
+		//const typename PHAL::Ref<const ScalarT>::type
+		const ScalarT
 		unodal0 = UNodal(cell,node,0);
 		huv_(node,0)= unodal0*UNodal(cell,node,1);
 		huv_(node,1)= unodal0*UNodal(cell,node,2);
@@ -538,23 +539,29 @@ compute_h_ImplHV(const int& cell) const
 {
 
 	///impl hv
+    const PHX::MDField<ScalarT, Node>  &  surftilde_ = wrk1node_scalar_scope1_;
 	for (std::size_t node=0; node < numNodes; ++node)
-		surftilde(node) = UNodal(cell,node,3);
+		surftilde_(node) = UNodal(cell,node,3);
 
-	gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-	///
+	//gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+
+	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradsurftilde_ = wrk1qp_vector_scope1_;
+	gradient3(surftilde_, gradsurftilde_, cell);
 
 	for (int qp=0; qp < numQPs; ++qp) {
 		for (int node=0; node < numNodes; ++node) {
-			Residual(cell,node,0) -= hyperviscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
-	                        				 + hyperviscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
+			Residual(cell,node,0) -= hyperviscosity(cell,qp,0)*gradsurftilde_(qp,0)*wGradBF(cell,node,qp,0)
+	                        				 + hyperviscosity(cell,qp,0)*gradsurftilde_(qp,1)*wGradBF(cell,node,qp,1);
 		}
 	}
 
+    const PHX::MDField<ScalarT, Node>  &  surf_ = wrk1node_scalar_scope1_;
 	for (std::size_t node=0; node < numNodes; ++node)
-		surf(node) = UNodal(cell,node,0);
+		surf_(node) = UNodal(cell,node,0);
 
-	gradient<ScalarT>(surf, cell, hgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+	//gradient<ScalarT>(surf, cell, hgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradsurf_ = wrk1qp_vector_scope1_;
+	gradient3(surf_, gradsurf_, cell);
 
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 		size_t node = qp;
@@ -562,8 +569,8 @@ compute_h_ImplHV(const int& cell) const
 	}
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 		for (std::size_t node=0; node < numNodes; ++node) {
-			Residual(cell,node,3) += hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                            				+ hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
+			Residual(cell,node,3) += gradsurf_(qp,0)*wGradBF(cell,node,qp,0)
+                            				+ gradsurf_(qp,1)*wGradBF(cell,node,qp,1);
 		}
 	}
 }
