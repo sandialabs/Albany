@@ -25,22 +25,18 @@
       <Parameter name="Response 0" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 0">
             <Parameter name="Equation" type="int" value="1" />
-            <Parameter name="Num Equations" type="int" value="3" />
             </ParameterList>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
             <ParameterList name="ResponseParams 1">
             <Parameter name="Equation" type="int" value="1" />
-            <Parameter name="Num Equations" type="int" value="3" />
             </ParameterList>
       <Parameter name="Response 2" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 2">
             <Parameter name="Equation" type="int" value="2" />
-            <Parameter name="Num Equations" type="int" value="3" />
             </ParameterList>
       <Parameter name="Response 3" type="string" value="Solution Max Value"/>
             <ParameterList name="ResponseParams 3">
             <Parameter name="Equation" type="int" value="2" />
-            <Parameter name="Num Equations" type="int" value="3" />
             </ParameterList>            
       <Parameter name="Response 4" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
@@ -63,7 +59,7 @@
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
     <Parameter  name="Test Values" type="Array(double)" value="{
-                        -3.26648086823e-11,
+                    0.0389777762779,
                     21.3988071702,
                     -6.72759714734,
                     2.32024032337,

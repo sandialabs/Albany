@@ -35,32 +35,26 @@
       <Parameter name="Response 0" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 0">
             <Parameter name="Equation" type="int" value="1" />
-            <Parameter name="Num Equations" type="int" value="4" />
             </ParameterList>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
             <ParameterList name="ResponseParams 1">
             <Parameter name="Equation" type="int" value="1" />
-            <Parameter name="Num Equations" type="int" value="4" />
             </ParameterList>
       <Parameter name="Response 2" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 2">
             <Parameter name="Equation" type="int" value="2" />
-            <Parameter name="Num Equations" type="int" value="4" />
             </ParameterList>
       <Parameter name="Response 3" type="string" value="Solution Max Value"/>
             <ParameterList name="ResponseParams 3">
             <Parameter name="Equation" type="int" value="2" />
-            <Parameter name="Num Equations" type="int" value="4" />
             </ParameterList>         
       <Parameter name="Response 4" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 4">
             <Parameter name="Equation" type="int" value="3" />
-            <Parameter name="Num Equations" type="int" value="4" />
             </ParameterList>
       <Parameter name="Response 5" type="string" value="Solution Max Value"/>
             <ParameterList name="ResponseParams 5">
             <Parameter name="Equation" type="int" value="3" />
-            <Parameter name="Num Equations" type="int" value="4" />
             </ParameterList>     
       <Parameter name="Response 6" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
