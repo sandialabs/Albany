@@ -37,11 +37,20 @@ GOALAdvDiffProblem::GOALAdvDiffProblem(
     qoiParams = Teuchos::rcpFromRef(p);
   }
 
+  // fill in the dof names
+  offsets["U"] = 0;
 }
 
 /*****************************************************************************/
 GOALAdvDiffProblem::~GOALAdvDiffProblem()
 {
+}
+
+/*****************************************************************************/
+int GOALAdvDiffProblem::getOffset(std::string const& var)
+{
+  assert(offsets.count(var) == 1);
+  return offsets[var];
 }
 
 /*****************************************************************************/

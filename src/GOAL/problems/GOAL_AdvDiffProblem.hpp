@@ -37,6 +37,9 @@ class GOALAdvDiffProblem: public Albany::AbstractProblem
     //! return number of spatial dimensions
     int spatialDimension() const {return numDims;}
 
+    //! get the offset corresponding to a variable name
+    int getOffset(std::string const& var);
+
     //! build the pde instantiations for the primal problem
     void buildProblem(
         Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > meshSpecs,
@@ -81,6 +84,9 @@ class GOALAdvDiffProblem: public Albany::AbstractProblem
         const Teuchos::RCP<MeshSpecsStruct>& meshSpecs);
 
   protected:
+
+    //! a map of the dof offsets
+    std::map<std::string, int> offsets;
 
     //! number of spatial dimensions
     int numDims;
@@ -153,19 +159,19 @@ constructEvaluators(
 
   fm0.template registerEvaluator<EvalT>(
       evalUtils.constructGatherSolutionEvaluator_noTransient(
-        true, dofNames));
+        false, dofNames));
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructGatherCoordinateVectorEvaluator());
+      evalUtils.constructDOFInterpolationEvaluator(dofNames[0]));
 
   fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructDOFVecInterpolationEvaluator(dofNames[0]));
+      evalUtils.constructDOFGradInterpolationEvaluator(dofNames[0]));
 
   fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructDOFVecGradInterpolationEvaluator(dofNames[0]));
-
-  fm0.template registerEvaluator<EvalT>(
-      evalUtils.constructScatterResidualEvaluator(true, residNames));
+      evalUtils.constructScatterResidualEvaluator(false, residNames));
 
   // store velocity and acceleration
   RCP<ParameterList> pFromProb = rcp(
@@ -195,9 +201,9 @@ constructEvaluators(
   { // residual
 
     // input
-    RCP<ParameterList> p = rcp(new ParameterList("Displacement Residual"));
-    p->set<std::string>("U Name", dofNames[0]);
-    p->set<std::string>("Gradient U Name", dofNames[0] + " Gradient");
+    RCP<ParameterList> p = rcp(new ParameterList("U Residual"));
+    p->set<std::string>("U Name", "U");
+    p->set<std::string>("Gradient U Name", "U Gradient");
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
 
@@ -211,11 +217,9 @@ constructEvaluators(
 
   if (fmChoice == Albany::BUILD_RESID_FM)
   {
-    RCP<const PHX::FieldTag> retTag;
     PHX::Tag<typename EvalT::ScalarT> resTag("Scatter", dl->dummy);
     fm0.requireField<EvalT>(resTag);
-    retTag = resTag.clone();
-    return retTag;
+    return resTag.clone();
   }
   else if (fmChoice == Albany::BUILD_RESPONSE_FM)
   {
