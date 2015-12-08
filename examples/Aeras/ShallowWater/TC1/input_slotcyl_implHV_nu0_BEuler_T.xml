@@ -23,17 +23,14 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
             <ParameterList name="ResponseParams 0">
             <Parameter name="Equation" type="int" value="0" />
-            <Parameter name="Num Equations" type="int" value="3" />   
             </ParameterList>   
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
             <ParameterList name="ResponseParams 1">
             <Parameter name="Equation" type="int" value="0" />
-            <Parameter name="Num Equations" type="int" value="3" />
             </ParameterList>      
       <Parameter name="Response 2" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 2">
             <Parameter name="Equation" type="int" value="0" />
-            <Parameter name="Num Equations" type="int" value="3" />
             </ParameterList>
       <Parameter name="Response 3" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
