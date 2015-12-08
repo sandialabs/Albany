@@ -394,20 +394,29 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
 
 	for (std::size_t node=0; node < numNodes; ++node) {
 
-		const MeshScalarT & jinv00 = nodal_inv_jacobian(node, 0, 0);
+/*		const MeshScalarT & jinv00 = nodal_inv_jacobian(node, 0, 0);
 		const MeshScalarT & jinv01 = nodal_inv_jacobian(node, 0, 1);
 		const MeshScalarT & jinv10 = nodal_inv_jacobian(node, 1, 0);
 		const MeshScalarT & jinv11 = nodal_inv_jacobian(node, 1, 1);
+		*/
 
-		vcontra_(node, 0 ) = nodal_det_j(node)*(
+		const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
+		const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
+		const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
+		const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
+		const MeshScalarT det_j  = jacobian_det(cell,node);
+
+		vcontra_(node, 0 ) = det_j*(
 				jinv00*fieldAtNodes(node, 0) + jinv01*fieldAtNodes(node, 1) );
-		vcontra_(node, 1 ) = nodal_det_j(node)*(
+		vcontra_(node, 1 ) = det_j*(
 				jinv10*fieldAtNodes(node, 0)+ jinv11*fieldAtNodes(node, 1) );
 	}
 
 
 	for (int qp=0; qp < numQPs; ++qp) {
 		for (int node=0; node < numNodes; ++node) {
+
+			//OG What is this commented code?
 			//      ScalarT tempAdd =vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
 			//                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
 			//     Kokkos::atomic_fetch_add(&div_hU(qp), tempAdd);
@@ -438,14 +447,16 @@ gradient3(const PHX::MDField<ScalarT, Node>  & field,
 		ScalarT gy = 0;
 		for (std::size_t node=0; node < numNodes; ++node) {
 
-			const typename PHAL::Ref<const ScalarT>::type
-			field_ = field(node);
+			//OG One can use
+			//const typename PHAL::Ref<const ScalarT>::type
+			//but it is better to use const ScalarT because of fast access to cash on device.
+			const ScalarT field_ = field(node);
 			gx += field_*grad_at_cub_points_Kokkos(node, qp,0);
 			gy += field_*grad_at_cub_points_Kokkos(node, qp,1);
 		}
 
-		gradient_(qp, 0) = nodal_inv_jacobian(qp, 0, 0)*gx + nodal_inv_jacobian(qp, 1, 0)*gy;
-		gradient_(qp, 1) = nodal_inv_jacobian(qp, 0, 1)*gx + nodal_inv_jacobian(qp, 1, 1)*gy;
+		gradient_(qp, 0) = jacobian_inv(cell, qp, 0, 0)*gx + jacobian_inv(cell, qp, 1, 0)*gy;
+		gradient_(qp, 1) = jacobian_inv(cell, qp, 0, 1)*gx + jacobian_inv(cell, qp, 1, 1)*gy;
 	}
 
 }
@@ -462,10 +473,15 @@ void ShallowWaterResid<EvalT,Traits>::curl3(
 
 	for (int node=0; node < numNodes; ++node) {
 
-		const MeshScalarT & j00 = nodal_jacobian(node, 0, 0);
+/*		const MeshScalarT & j00 = nodal_jacobian(node, 0, 0);
 		const MeshScalarT & j01 = nodal_jacobian(node, 0, 1);
 		const MeshScalarT & j10 = nodal_jacobian(node, 1, 0);
-		const MeshScalarT & j11 = nodal_jacobian(node, 1, 1);
+		const MeshScalarT & j11 = nodal_jacobian(node, 1, 1);*/
+
+		const MeshScalarT j00 = jacobian(cell, node, 0, 0);
+		const MeshScalarT j01 = jacobian(cell, node, 0, 1);
+		const MeshScalarT j10 = jacobian(cell, node, 1, 0);
+		const MeshScalarT j11 = jacobian(cell, node, 1, 1);
 
 		vcovar_(node, 0 ) = j00*field(node, 0) + j10*field(node, 1);
 		vcovar_(node, 1 ) = j01*field(node, 0) + j11*field(node, 1);
