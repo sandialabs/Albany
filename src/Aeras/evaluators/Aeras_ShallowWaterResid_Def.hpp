@@ -800,9 +800,9 @@ BuildLaplace_for_uv (const int& cell) const
 
 		// compute_coefficients_K(lam,th);
 
-		utX(node) = k11*utlambda + k12*uttheta;
-		utY(node) = k21*utlambda + k22*uttheta;
-		utZ(node) = k32*uttheta;
+		//utX(node) = k11*utlambda + k12*uttheta;
+		//utY(node) = k21*utlambda + k22*uttheta;
+		//utZ(node) = k32*uttheta;
 
 		compute_3Dvelocity(node, lam, th, utlambda, uttheta, ux_, uy_, uz_ );
 
@@ -828,8 +828,9 @@ BuildLaplace_for_uv (const int& cell) const
 			//since trig. functions of lam/th are differentiated.
 			const typename PHAL::Ref<const ScalarT>::type
 			lam = sphere_coord(cell, qp, 0),
-			th = sphere_coord(cell, qp, 1);
-
+			th = sphere_coord(cell, qp, 1),
+			wgradbf0_ = wGradBF(cell,node,qp,0),
+			wgradbf1_ = wGradBF(cell,node,qp,1);
 			//K = -sin L    -sin T cos L
 			//     cos L    -sin T sin L
 			//     0         cos T
@@ -846,17 +847,17 @@ BuildLaplace_for_uv (const int& cell) const
 
 			Residual(cell,node,1) +=
 					sHvTau*(
-							k11*( gradux_(qp,0)*wGradBF(cell,node,qp,0) + gradux_(qp,1)*wGradBF(cell,node,qp,1))
-							+ k21*( graduy_(qp,0)*wGradBF(cell,node,qp,0) + graduy_(qp,1)*wGradBF(cell,node,qp,1))
+							k11*( gradux_(qp,0)*wgradbf0_ + gradux_(qp,1)*wgradbf1_)
+							+ k21*( graduy_(qp,0)*wgradbf0_ + graduy_(qp,1)*wgradbf1_)
 							//k31 = 0
 					);
 
 
 			Residual(cell,node,2) +=
 					sHvTau*(
-							k12*( gradux_(qp,0)*wGradBF(cell,node,qp,0) + gradux_(qp,1)*wGradBF(cell,node,qp,1))
-							+ k22*( graduy_(qp,0)*wGradBF(cell,node,qp,0) + graduy_(qp,1)*wGradBF(cell,node,qp,1))
-							+ k32*( graduz_(qp,0)*wGradBF(cell,node,qp,0) + graduz_(qp,1)*wGradBF(cell,node,qp,1))
+							k12*( gradux_(qp,0)*wgradbf0_ + gradux_(qp,1)*wgradbf1_)
+							+ k22*( graduy_(qp,0)*wgradbf0_ + graduy_(qp,1)*wgradbf1_)
+							+ k32*( graduz_(qp,0)*wgradbf0_ + graduz_(qp,1)*wgradbf1_)
 					);
 
 			/*
