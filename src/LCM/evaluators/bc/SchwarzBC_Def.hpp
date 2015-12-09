@@ -35,10 +35,13 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
     PHAL::DirichletBase<EvalT, Traits>(p),
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
+    p_(p), 
     coupled_apps_(app_->getApplications()),
     coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
     coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
 {
+  //p_ = Schwarz parameterlist 
+
   std::string const &
   nodeset_name = this->nodeSetID;
 
@@ -548,13 +551,10 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
 
   //Solution transfer
 
-  //IKT, FIXME: get "DataTransferKit" sublist from parameterlist
-  //Create a map operator. The operator settings are in the
-  //"DataTransferKit" parameter list.
-  //Teuchos::ParameterList&
-  //dtk_list = plist->sublist("DataTransferKit");
-  Teuchos::ParameterList
-  dtk_list;
+  //IKT, 12/9/15: I am assuming DTK sublist will be under the Schwarz BC parameter list. 
+  //Is that reasonable? 
+  Teuchos::ParameterList&
+  dtk_list = p_.sublist("DataTransferKit");
 
   DataTransferKit::MapOperatorFactory
   op_factory;

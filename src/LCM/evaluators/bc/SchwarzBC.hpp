@@ -114,6 +114,9 @@ public:
 
 protected:
 
+  Teuchos::ParameterList 
+  p_; 
+ 
   Teuchos::RCP<Albany::Application>
   app_;
 
