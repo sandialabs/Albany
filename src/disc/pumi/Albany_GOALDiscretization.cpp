@@ -120,6 +120,8 @@ void Albany::GOALDiscretization::computeNodeSets()
       GOALNode gn;
       gn.lid = node_lid;
       gn.higherOrder = higherOrder;
+      if (!higherOrder)
+        m->getPoint(node.entity, node.node, gn.coord);
       goalNodeSets[NS_name].push_back(gn);
     }
   }

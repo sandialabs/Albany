@@ -16,6 +16,7 @@ struct GOALNode
 {
   int lid;
   bool higherOrder;
+  apf::Vector3 coord;
 };
 
 typedef std::map<std::string, std::vector<GOALNode> > GOALNodeSets;
