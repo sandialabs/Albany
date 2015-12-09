@@ -706,6 +706,11 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
       return problemParams;
     }
+    
+   //! Const access to app parameter list
+    Teuchos::RCP<const Teuchos::ParameterList> getAppPL() const {
+      return params_;
+    }
 
 #if defined(ALBANY_EPETRA)
     //! Accessor function to Epetra_Import the solution from other PEs for output
@@ -1028,6 +1033,9 @@ namespace Albany {
 
     //! Problem Parameters
     Teuchos::RCP<Teuchos::ParameterList> problemParams;
+    
+    //! App Parameters
+    Teuchos::RCP<Teuchos::ParameterList> params_;
 
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;

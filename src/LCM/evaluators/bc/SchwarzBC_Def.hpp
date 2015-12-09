@@ -473,11 +473,18 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<stk::mesh::MetaData const>
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
-  //IKT, 12/8/15, FIXME: get solution_name from input file rather
-  //hard-coding here.
-  std::string const
-  solution_name = "solution";
+  //Get coupled_app parameter list 
+  Teuchos::RCP<const Teuchos::ParameterList> 
+  coupled_app_params = coupled_app.getAppPL();
 
+  //Get discretization sublist from coupled_app parameter list
+  Teuchos::RCP<Teuchos::ParameterList> 
+  coupled_disc_params = Teuchos::sublist(coupled_app_params, "Discretization", true);
+
+  //Get solution name from Discretization sublist
+  std::string solution_name = 
+  coupled_disc_params->get("Exodus Solution Name", "solution");
+  
   using Field = stk::mesh::Field<double>;
 
   Field *
@@ -496,6 +503,27 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
   //get pointer to metadata from this_stk_disc
   Teuchos::RCP<const stk::mesh::MetaData>
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
+  
+  //Get this_app parameter list -- this is to get the solution_name string, only needed 
+  //for error checking. 
+
+  Teuchos::RCP<const Teuchos::ParameterList> 
+  this_app_params = this_app.getAppPL();
+
+  //Get discretization sublist from this_app parameter list
+  Teuchos::RCP<Teuchos::ParameterList> 
+  this_disc_params = Teuchos::sublist(this_app_params, "Discretization", true);
+
+  //Get solution name from Discretization sublist
+  std::string solution_name_this = 
+  this_disc_params->get("Exodus Solution Name", "solution");
+
+  //Error check: Exodus Solution Name should be the same for the target and source input files.
+  if (solution_name_this != solution_name) 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                     std::endl << "Error in SchwarzBC:  " <<
+                                    "Exodus Solution Name in source and target input files do not match!" << std::endl);
+
 
   Field *
   this_field = this_meta_data->
