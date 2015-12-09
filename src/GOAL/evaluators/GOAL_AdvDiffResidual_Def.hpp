@@ -15,6 +15,8 @@ AdvDiffResidual<EvalT, Traits>::
 AdvDiffResidual(
     const Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
+  k        (p.get<double>("Diffusivity Coefficient")),
+  a        (p.get<Teuchos::Array<double> >("Advection Vector")),
   u        (p.get<std::string>("U Name"), dl->qp_scalar),
   gradU    (p.get<std::string>("Gradient U Name"), dl->qp_gradient),
   wBF      (p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
@@ -33,7 +35,7 @@ AdvDiffResidual(
   numNodes = dim[1];
   numQPs = dim[2];
   numDims = dim[3];
-  
+
   this->setName("AdvDiffResidual"+PHX::typeAsString<EvalT>());
 }
 
@@ -56,6 +58,25 @@ template<typename EvalT, typename Traits>
 void AdvDiffResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  for (int cell=0; cell < workset.numCells; ++cell) {
+
+    // zero out the residual
+    for (int node=0; node < numNodes; ++node)
+      residual(cell, node) = 0.0;
+
+    // advection diffusion equation
+    for (int node=0; node < numNodes; ++node) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int dim=0; dim < numDims; ++dim) {
+          residual(cell, node) +=
+            k * gradU(cell, qp, dim) *  wGradBF(cell, node, qp, dim) +
+            wBF(cell, node, qp) * a[dim] * gradU(cell, qp, dim);
+        }
+      }
+    }
+  }
+
 }
 
 }
