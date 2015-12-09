@@ -171,6 +171,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	numNodes = dims[1];
 	numQPs   = dims[2];
 	numDims  = dims[3];
+	numCells = dims[0];
 
 	if (nNodes != numQPs) {
 		TEUCHOS_TEST_FOR_EXCEPTION(true,
@@ -250,6 +251,17 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	hgradNodes.setFieldData(ViewFactory::buildView(hgradNodes.fieldTag(),ddims_));
 	htildegradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("htildegradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
 	htildegradNodes.setFieldData(ViewFactory::buildView(htildegradNodes.fieldTag(),ddims_));
+
+	csurf=PHX::MDField<ScalarT,Cell,Node>("csurf",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	csurf.setFieldData(ViewFactory::buildView(csurf.fieldTag(),ddims_));
+	csurftilde=PHX::MDField<ScalarT,Cell,Node>("csurftilde",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	csurftilde.setFieldData(ViewFactory::buildView(csurftilde.fieldTag(),ddims_));
+	cgradsurf=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradsurf",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradsurf.setFieldData(ViewFactory::buildView(cgradsurf.fieldTag(),ddims_));
+	cgradsurftilde=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradsurftilde",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradsurftilde.setFieldData(ViewFactory::buildView(cgradsurftilde.fieldTag(),ddims_));
+
+
 
 	//og synchronize changes with latest code modifications for HV
 	uX=PHX::MDField<ScalarT,Node>("uX",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
@@ -464,6 +476,34 @@ gradient3(const PHX::MDField<ScalarT, Node>  & field,
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT,Traits>::
+gradient4(const PHX::MDField<ScalarT, Cell, Node>  & field,
+		const PHX::MDField<ScalarT, Cell, QuadPoint, Dim>  & gradient_,
+		const int & cell) const {
+
+	for (std::size_t qp=0; qp < numQPs; ++qp) {
+
+		ScalarT gx = 0;
+		ScalarT gy = 0;
+		for (std::size_t node=0; node < numNodes; ++node) {
+
+			//OG One can use
+			//const typename PHAL::Ref<const ScalarT>::type
+			//but it is better to use const ScalarT because of fast access to cash on device.
+			const ScalarT field_ = field(cell,node);
+			gx += field_*grad_at_cub_points_Kokkos(node, qp,0);
+			gy += field_*grad_at_cub_points_Kokkos(node, qp,1);
+		}
+
+		gradient_(cell,qp, 0) = jacobian_inv(cell, qp, 0, 0)*gx + jacobian_inv(cell, qp, 1, 0)*gy;
+		gradient_(cell,qp, 1) = jacobian_inv(cell, qp, 0, 1)*gx + jacobian_inv(cell, qp, 1, 1)*gy;
+	}
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT,typename Traits>
+KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::curl3(
 		const PHX::MDField<ScalarT, Node, Dim>  & field,
 		const PHX::MDField<ScalarT, QuadPoint>  & curl_,
@@ -538,30 +578,22 @@ void ShallowWaterResid<EvalT, Traits>::
 compute_h_ImplHV(const int& cell) const
 {
 
-	///impl hv
-    const PHX::MDField<ScalarT, Node>  &  surftilde_ = wrk1node_scalar_scope1_;
 	for (std::size_t node=0; node < numNodes; ++node)
-		surftilde_(node) = UNodal(cell,node,3);
+		csurftilde(cell,node) = UNodal(cell,node,3);
 
-	//gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-
-	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradsurftilde_ = wrk1qp_vector_scope1_;
-	gradient3(surftilde_, gradsurftilde_, cell);
+	gradient4(csurftilde, cgradsurftilde, cell);
 
 	for (int qp=0; qp < numQPs; ++qp) {
 		for (int node=0; node < numNodes; ++node) {
-			Residual(cell,node,0) -= hyperviscosity(cell,qp,0)*gradsurftilde_(qp,0)*wGradBF(cell,node,qp,0)
-	                        				 + hyperviscosity(cell,qp,0)*gradsurftilde_(qp,1)*wGradBF(cell,node,qp,1);
+			Residual(cell,node,0) -= hyperviscosity(cell,qp,0)*cgradsurftilde(cell,qp,0)*wGradBF(cell,node,qp,0)
+	                        				 + hyperviscosity(cell,qp,0)*cgradsurftilde(cell,qp,1)*wGradBF(cell,node,qp,1);
 		}
 	}
 
-    const PHX::MDField<ScalarT, Node>  &  surf_ = wrk1node_scalar_scope1_;
 	for (std::size_t node=0; node < numNodes; ++node)
-		surf_(node) = UNodal(cell,node,0);
+		csurf(cell,node) = UNodal(cell,node,0);
 
-	//gradient<ScalarT>(surf, cell, hgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradsurf_ = wrk1qp_vector_scope1_;
-	gradient3(surf_, gradsurf_, cell);
+	gradient4(csurf, cgradsurf, cell);
 
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 		size_t node = qp;
@@ -569,8 +601,8 @@ compute_h_ImplHV(const int& cell) const
 	}
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 		for (std::size_t node=0; node < numNodes; ++node) {
-			Residual(cell,node,3) += gradsurf_(qp,0)*wGradBF(cell,node,qp,0)
-                            				+ gradsurf_(qp,1)*wGradBF(cell,node,qp,1);
+			Residual(cell,node,3) += cgradsurf(cell,qp,0)*wGradBF(cell,node,qp,0)
+                            	  +  cgradsurf(cell,qp,1)*wGradBF(cell,node,qp,1);
 		}
 	}
 }

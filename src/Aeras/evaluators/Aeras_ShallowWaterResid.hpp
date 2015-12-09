@@ -105,6 +105,7 @@ private:
 	bool doNotDampRotation;
 	bool obtainLaplaceOp;
 
+	int numCells;
 	int numNodes;
 	int numQPs;
 	int numDims;
@@ -170,15 +171,19 @@ public:
 
 	//OG why is everything here public?
 
+	//these three lines will go away
 	Kokkos::View<MeshScalarT***, PHX::Device> nodal_jacobian;
 	Kokkos::View<MeshScalarT***, PHX::Device> nodal_inv_jacobian;
 	Kokkos::View<MeshScalarT*, PHX::Device> nodal_det_j;
+
+	//this will stay
 	Kokkos::View<MeshScalarT*, PHX::Device> refWeights_Kokkos;
 	Kokkos::View<MeshScalarT***, PHX::Device> grad_at_cub_points_Kokkos;
 	Kokkos::View<MeshScalarT**, PHX::Device> refPoints_kokkos;
 
 	typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
 
+	//this needs cell dimensions
 	PHX::MDField<ScalarT,Node> surf;
 	PHX::MDField<ScalarT,Node> surftilde;
 	PHX::MDField<ScalarT,QuadPoint, Dim> hgradNodes;
@@ -187,6 +192,15 @@ public:
 	PHX::MDField<ScalarT,Node> uX, uY, uZ, utX, utY,utZ;
 	PHX::MDField<ScalarT,QuadPoint, Dim> uXgradNodes, uYgradNodes, uZgradNodes;
 	PHX::MDField<ScalarT,QuadPoint, Dim> utXgradNodes, utYgradNodes, utZgradNodes;
+//end of the block that needs cell dim
+	PHX::MDField<ScalarT,Cell,Node> csurf;
+	PHX::MDField<ScalarT,Cell,Node> csurftilde;
+	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cgradsurf;
+	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cgradsurftilde;
+	PHX::MDField<ScalarT,Cell,Node> cuX, cuY, cuZ, cutX, cutY, cutZ;
+	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cuXgradNodes, cuYgradNodes, cuZgradNodes;
+	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cutXgradNodes, cutYgradNodes, cutZgradNodes;
+
 
 	std::vector<LO> qpToNodeMap;
 	std::vector<LO> nodeToQPMap;
@@ -205,6 +219,11 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void gradient3(const PHX::MDField<ScalarT, Node>  & field,
 			const PHX::MDField<ScalarT, QuadPoint, Dim>  & gradient_,
+			const int & cell) const;
+
+	KOKKOS_INLINE_FUNCTION
+	void gradient4(const PHX::MDField<ScalarT, Cell, Node>  & field,
+			const PHX::MDField<ScalarT, Cell, QuadPoint, Dim>  & gradient_,
 			const int & cell) const;
 
 	KOKKOS_INLINE_FUNCTION
