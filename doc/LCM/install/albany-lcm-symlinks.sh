@@ -1,4 +1,4 @@
-cd ~/LCM
+cd "$LCM_DIR"
 ln -s Albany/doc/LCM/build/env-single.sh .
 ln -s Albany/doc/LCM/build/env-all.sh .
 ln -s Albany/doc/LCM/build/trilinos-config.sh .
