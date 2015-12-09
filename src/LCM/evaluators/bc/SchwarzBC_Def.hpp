@@ -113,7 +113,7 @@ computeBCs(
 
   auto &
   coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
-    (*(coupled_stk_disc->getSTKMeshStruct()));
+      (*(coupled_stk_disc->getSTKMeshStruct()));
 
   auto const &
   coupled_ws_eb_names = coupled_disc->getWsEBNames();
@@ -198,11 +198,8 @@ computeBCs(
   // This tolerance is used for geometric approximations. It will be used
   // to determine whether a node of this_app is inside an element of
   // coupled_app within that tolerance.
-  // IKT, 10/14/15: changing tolerance to 5.0e-3; tolerance of 1.0e-3 
-  // was causing NotchedCylinder example to die (assert error) 
   double const
-  //tolerance = 1.0e-3;
-  tolerance = 5.0e-2; 
+  tolerance = 5.0e-2;
 
   double * const
   coord = ns_coord[ns_node];
@@ -372,7 +369,7 @@ computeBCs(
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
     for (auto j = 0; j < coupled_dimension; ++j) {
-      nodal_coordinates(0,i,j) = coupled_element_vertices[i](j);
+      nodal_coordinates(0, i, j) = coupled_element_vertices[i](j);
     }
   }
 
@@ -383,7 +380,7 @@ computeBCs(
       nodal_coordinates,
       coupled_cell_topology,
       0
-  );
+      );
 
   // Evaluate shape functions at parametric point.
   auto const
@@ -436,8 +433,7 @@ computeBCs(
 template<typename EvalT, typename Traits>
 void
 SchwarzBC_Base<EvalT, Traits>::
-computeBCsDTK(
-    typename Traits::EvalData dirichlet_workset)
+computeBCsDTK(typename Traits::EvalData dirichlet_workset)
 {
   auto const
   this_app_index = getThisAppIndex();
@@ -464,32 +460,33 @@ computeBCsDTK(
 
   auto *
   coupled_stk_disc =
-      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+  static_cast<Albany::STKDiscretization *>(coupled_disc.get());
 
   //Source Mesh
-  const Teuchos::RCP<Albany::AbstractSTKMeshStruct>
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> const
   coupled_stk_mesh_struct = coupled_stk_disc->getSTKMeshStruct();
+
   //get pointer to metadata from coupled_stk_disc
-  Teuchos::RCP<const stk::mesh::MetaData>
+  Teuchos::RCP<stk::mesh::MetaData const>
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
   //IKT, 12/8/15, FIXME: get solution_name from input file rather
   //hard-coding here.
-
   std::string const
   solution_name = "solution";
 
-  stk::mesh::Field<double>*
-  coupled_field = coupled_meta_data->
-  get_field<stk::mesh::Field<double>>(stk::topology::NODE_RANK, solution_name);
+  using Field = stk::mesh::Field<double>;
+
+  Field *
+  coupled_field =
+  coupled_meta_data->get_field<Field>(stk::topology::NODE_RANK, solution_name);
 
   stk::mesh::Selector
   coupled_stk_selector =
-      stk::mesh::Selector(coupled_meta_data->universal_part());
+  stk::mesh::Selector(coupled_meta_data->universal_part());
 
   Teuchos::RCP<stk::mesh::BulkData>
   coupled_bulk_data = Teuchos::rcpFromRef(coupled_field->get_mesh());
-
 
   //Target Mesh
 
@@ -497,84 +494,86 @@ computeBCsDTK(
   Teuchos::RCP<const stk::mesh::MetaData>
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
 
-  stk::mesh::Field<double>*
+  Field *
   this_field = this_meta_data->
-  get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, solution_name);
+  get_field<Field>(stk::topology::NODE_RANK, solution_name);
 
   // Get the part corresponding to this nodeset.
   std::string const &
   nodeset_name = this->nodeSetID;
 
-  stk::mesh::Part*
+  stk::mesh::Part *
   this_part = this_meta_data->get_part(nodeset_name);
 
   Teuchos::RCP<stk::mesh::BulkData>
-    this_bulk_data = Teuchos::rcpFromRef(this_field->get_mesh());
+  this_bulk_data = Teuchos::rcpFromRef(this_field->get_mesh());
 
   //Solution Transfer Setup
 
   // Create a manager for the source part elements.
   DataTransferKit::STKMeshManager
-  coupled_manager( coupled_bulk_data, coupled_stk_selector );
+  coupled_manager(coupled_bulk_data, coupled_stk_selector);
 
   // Create a manager for the target part nodes.
   stk::mesh::Selector
-  this_stk_selector( *this_part );
+  this_stk_selector(*this_part);
+
   DataTransferKit::STKMeshManager
-  this_manager( this_bulk_data, this_stk_selector );
+  this_manager(this_bulk_data, this_stk_selector);
 
   // Create a solution vector for the source.
-  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId> >
-  coupled_vector = coupled_manager.createFieldMultiVector<stk::mesh::Field<double>>(
-                                       Teuchos::ptr(coupled_field), 1 );
+  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId>>
+  coupled_vector =
+  coupled_manager.createFieldMultiVector<Field>(
+      Teuchos::ptr(coupled_field), 1);
 
   // Create a solution vector for the target.
-  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId> >
-  this_vector = this_manager.createFieldMultiVector<stk::mesh::Field<double> >(
-                           Teuchos::ptr(this_field), 1 );
+  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId>>
+  this_vector = this_manager.createFieldMultiVector<Field>(
+      Teuchos::ptr(this_field), 1);
 
-   // Print out source mesh info.
-   Teuchos::RCP<Teuchos::Describable>
-   coupled_describe = coupled_manager.functionSpace()->entitySet();
-   std::cout << "Source Mesh" << std::endl;
-   coupled_describe->describe( std::cout );
-   std::cout << std::endl;
+  // Print out source mesh info.
+  Teuchos::RCP<Teuchos::Describable>
+  coupled_describe = coupled_manager.functionSpace()->entitySet();
+  std::cout << "Source Mesh" << std::endl;
+  coupled_describe->describe(std::cout);
+  std::cout << std::endl;
 
-   // Print out target mesh info.
-   Teuchos::RCP<Teuchos::Describable>
-   this_describe = this_manager.functionSpace()->entitySet();
-   std::cout << "Target Mesh" << std::endl;
-   this_describe->describe( std::cout );
-   std::cout << std::endl;
+  // Print out target mesh info.
+  Teuchos::RCP<Teuchos::Describable>
+  this_describe = this_manager.functionSpace()->entitySet();
+  std::cout << "Target Mesh" << std::endl;
+  this_describe->describe(std::cout);
+  std::cout << std::endl;
 
-   //Solution transfer
+  //Solution transfer
 
-   //IKT, FIXME: get "DataTransferKit" sublist from parameterlist
-   //Create a map operator. The operator settings are in the
-   //"DataTransferKit" parameter list.
-   //Teuchos::ParameterList&
-   //dtk_list = plist->sublist("DataTransferKit");
-   Teuchos::ParameterList
-   dtk_list;
+  //IKT, FIXME: get "DataTransferKit" sublist from parameterlist
+  //Create a map operator. The operator settings are in the
+  //"DataTransferKit" parameter list.
+  //Teuchos::ParameterList&
+  //dtk_list = plist->sublist("DataTransferKit");
+  Teuchos::ParameterList
+  dtk_list;
 
-   DataTransferKit::MapOperatorFactory
-   op_factory;
+  DataTransferKit::MapOperatorFactory
+  op_factory;
 
-   Teuchos::RCP<DataTransferKit::MapOperator> map_op =
-           op_factory.create( coupled_vector->getMap(),
-                              this_vector->getMap(),
-                              dtk_list );
+  Teuchos::RCP<DataTransferKit::MapOperator> map_op =
+  op_factory.create( coupled_vector->getMap(),
+      this_vector->getMap(),
+      dtk_list );
 
-   // Setup the map operator. This creates the underlying linear operators.
-   map_op->setup( coupled_manager.functionSpace(), this_manager.functionSpace() );
+  // Setup the map operator. This creates the underlying linear operators.
+  map_op->setup(coupled_manager.functionSpace(), this_manager.functionSpace());
 
   // Apply the map operator. This interpolates the data from one STK field
   // to the other.
-   map_op->apply( *coupled_vector, *this_vector );
+  map_op->apply(*coupled_vector, *this_vector);
 
-   //FIXME: cast *this_vector to Tpetra_MultiVector and return.
-   //This requires changing type of function from void to Teuchos::RCP to a
-   //Tpetra_MultiVector.
+  //FIXME: cast *this_vector to Tpetra_MultiVector and return.
+  //This requires changing type of function from void to Teuchos::RCP to a
+  //Tpetra_MultiVector.
 
 }
 #endif //ALBANY_DTK
@@ -1528,4 +1527,5 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 }
 #endif
 
-} // namespace LCM
+}
+ // namespace LCM

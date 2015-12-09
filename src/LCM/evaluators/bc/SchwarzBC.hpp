@@ -49,8 +49,7 @@ public:
 
 #if defined(ALBANY_DTK)
   void
-  computeBCsDTK(
-      typename Traits::EvalData dirichlet_workset);
+  computeBCsDTK(typename Traits::EvalData dirichlet_workset);
 #endif //ALBANY_DTK
 
   void
