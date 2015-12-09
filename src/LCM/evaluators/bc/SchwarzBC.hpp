@@ -47,6 +47,12 @@ public:
       ScalarT & y_val,
       ScalarT & z_val);
 
+#if defined(ALBANY_DTK)
+  void
+  computeBCsDTK(
+      typename Traits::EvalData dirichlet_workset);
+#endif //ALBANY_DTK
+
   void
   setCoupledAppName(std::string const & can)
   {

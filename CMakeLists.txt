@@ -437,6 +437,17 @@ ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
 ENDIF()
+  
+# Check if Trilinos has DTK
+LIST(FIND Trilinos_PACKAGE_LIST DataTransferKit DataTransferKit_List_ID)
+IF (DataTransferKit_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_DTK)
+  MESSAGE("-- Looking for DTK in Trilinos: Found, compiling with -DALBANY_DTK")
+    SET(ALBANY_DTK TRUE)
+  ELSE()
+    MESSAGE("-- Looking for DTK in Trilinos: NOT found.")
+    SET(ALBANY_DTK FALSE)
+ENDIF()
 
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)

@@ -12,6 +12,12 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#if defined(ALBANY_DTK)
+#include "DTK_STKMeshHelpers.hpp"
+#include "DTK_STKMeshManager.hpp"
+#include "DTK_MapOperatorFactory.hpp"
+#endif
+
 //#define DEBUG_LCM_SCHWARZ
 
 //
@@ -20,6 +26,9 @@
 
 namespace LCM {
 
+//
+//
+//
 template<typename EvalT, typename Traits>
 SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
@@ -416,12 +425,159 @@ computeBCs(
   x_val = value(0);
   y_val = value(1);
   z_val = value(2);
-//  x_val = 0.0;
-//  y_val = 0.0;
-//  z_val = 0.0;
 
   return;
 }
+
+//
+//
+//
+#if defined(ALBANY_DTK)
+template<typename EvalT, typename Traits>
+void
+SchwarzBC_Base<EvalT, Traits>::
+computeBCsDTK(
+    typename Traits::EvalData dirichlet_workset)
+{
+  auto const
+  this_app_index = getThisAppIndex();
+
+  auto const
+  coupled_app_index = getCoupledAppIndex();
+
+  Albany::Application const &
+  this_app = getApplication(this_app_index);
+
+  Albany::Application const &
+  coupled_app = getApplication(coupled_app_index);
+
+  //this_disc = target mesh
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  this_disc = this_app.getDiscretization();
+
+  auto *
+  this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
+
+  //coupled_disc = source mesh
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  coupled_disc = coupled_app.getDiscretization();
+
+  auto *
+  coupled_stk_disc =
+      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+
+  //Source Mesh
+  const Teuchos::RCP<Albany::AbstractSTKMeshStruct>
+  coupled_stk_mesh_struct = coupled_stk_disc->getSTKMeshStruct();
+  //get pointer to metadata from coupled_stk_disc
+  Teuchos::RCP<const stk::mesh::MetaData>
+  coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
+
+  //IKT, 12/8/15, FIXME: get solution_name from input file rather
+  //hard-coding here.
+
+  std::string const
+  solution_name = "solution";
+
+  stk::mesh::Field<double>*
+  coupled_field = coupled_meta_data->
+  get_field<stk::mesh::Field<double>>(stk::topology::NODE_RANK, solution_name);
+
+  stk::mesh::Selector
+  coupled_stk_selector =
+      stk::mesh::Selector(coupled_meta_data->universal_part());
+
+  Teuchos::RCP<stk::mesh::BulkData>
+  coupled_bulk_data = Teuchos::rcpFromRef(coupled_field->get_mesh());
+
+
+  //Target Mesh
+
+  //get pointer to metadata from this_stk_disc
+  Teuchos::RCP<const stk::mesh::MetaData>
+  this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
+
+  stk::mesh::Field<double>*
+  this_field = this_meta_data->
+  get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, solution_name);
+
+  // Get the part corresponding to this nodeset.
+  std::string const &
+  nodeset_name = this->nodeSetID;
+
+  stk::mesh::Part*
+  this_part = this_meta_data->get_part(nodeset_name);
+
+  Teuchos::RCP<stk::mesh::BulkData>
+    this_bulk_data = Teuchos::rcpFromRef(this_field->get_mesh());
+
+  //Solution Transfer Setup
+
+  // Create a manager for the source part elements.
+  DataTransferKit::STKMeshManager
+  coupled_manager( coupled_bulk_data, coupled_stk_selector );
+
+  // Create a manager for the target part nodes.
+  stk::mesh::Selector
+  this_stk_selector( *this_part );
+  DataTransferKit::STKMeshManager
+  this_manager( this_bulk_data, this_stk_selector );
+
+  // Create a solution vector for the source.
+  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId> >
+  coupled_vector = coupled_manager.createFieldMultiVector<stk::mesh::Field<double>>(
+                                       Teuchos::ptr(coupled_field), 1 );
+
+  // Create a solution vector for the target.
+  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId> >
+  this_vector = this_manager.createFieldMultiVector<stk::mesh::Field<double> >(
+                           Teuchos::ptr(this_field), 1 );
+
+   // Print out source mesh info.
+   Teuchos::RCP<Teuchos::Describable>
+   coupled_describe = coupled_manager.functionSpace()->entitySet();
+   std::cout << "Source Mesh" << std::endl;
+   coupled_describe->describe( std::cout );
+   std::cout << std::endl;
+
+   // Print out target mesh info.
+   Teuchos::RCP<Teuchos::Describable>
+   this_describe = this_manager.functionSpace()->entitySet();
+   std::cout << "Target Mesh" << std::endl;
+   this_describe->describe( std::cout );
+   std::cout << std::endl;
+
+   //Solution transfer
+
+   //IKT, FIXME: get "DataTransferKit" sublist from parameterlist
+   //Create a map operator. The operator settings are in the
+   //"DataTransferKit" parameter list.
+   //Teuchos::ParameterList&
+   //dtk_list = plist->sublist("DataTransferKit");
+   Teuchos::ParameterList
+   dtk_list;
+
+   DataTransferKit::MapOperatorFactory
+   op_factory;
+
+   Teuchos::RCP<DataTransferKit::MapOperator> map_op =
+           op_factory.create( coupled_vector->getMap(),
+                              this_vector->getMap(),
+                              dtk_list );
+
+   // Setup the map operator. This creates the underlying linear operators.
+   map_op->setup( coupled_manager.functionSpace(), this_manager.functionSpace() );
+
+  // Apply the map operator. This interpolates the data from one STK field
+  // to the other.
+   map_op->apply( *coupled_vector, *this_vector );
+
+   //FIXME: cast *this_vector to Tpetra_MultiVector and return.
+   //This requires changing type of function from void to Teuchos::RCP to a
+   //Tpetra_MultiVector.
+
+}
+#endif //ALBANY_DTK
 
 //
 // Specialization: Residual
@@ -556,11 +712,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_nodes[ns_node][2];
 
-    ScalarT
-    x_val, y_val, z_val;
-
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
-
     // replace jac values for the X dof
     auto
     num_entries = jacT->getNumEntriesInLocalRow(x_dof);
@@ -623,6 +774,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     jacT->replaceLocalValues(z_dof, index(), value());
 
     if (fill_residual == true) {
+      ScalarT
+      x_val, y_val, z_val;
+
+      this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+
       fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
       fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
       fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
