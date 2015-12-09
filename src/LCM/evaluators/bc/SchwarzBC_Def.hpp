@@ -434,7 +434,7 @@ computeBCs(
 //
 #if defined(ALBANY_DTK)
 template<typename EvalT, typename Traits>
-void
+Teuchos::RCP<Tpetra_MultiVector> 
 SchwarzBC_Base<EvalT, Traits>::
 computeBCsDTK(typename Traits::EvalData dirichlet_workset)
 {
@@ -571,10 +571,11 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
-  //FIXME: cast *this_vector to Tpetra_MultiVector and return.
-  //This requires changing type of function from void to Teuchos::RCP to a
-  //Tpetra_MultiVector.
+  //Cast *this_vector to Tpetra_MultiVector and return.
 
+  Teuchos::RCP<Tpetra_MultiVector> 
+  t_vector = Teuchos::rcp_dynamic_cast<Tpetra::MultiVector<double,int,DataTransferKit::SupportId>>(this_vector, false); 
+  return t_vector; 
 }
 #endif //ALBANY_DTK
 

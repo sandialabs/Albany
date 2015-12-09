@@ -48,7 +48,7 @@ public:
       ScalarT & z_val);
 
 #if defined(ALBANY_DTK)
-  void
+  Teuchos::RCP<Tpetra_MultiVector> 
   computeBCsDTK(typename Traits::EvalData dirichlet_workset);
 #endif //ALBANY_DTK
 
