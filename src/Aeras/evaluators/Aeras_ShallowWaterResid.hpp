@@ -193,14 +193,17 @@ public:
 	PHX::MDField<ScalarT,QuadPoint, Dim> uXgradNodes, uYgradNodes, uZgradNodes;
 	PHX::MDField<ScalarT,QuadPoint, Dim> utXgradNodes, utYgradNodes, utZgradNodes;
 //end of the block that needs cell dim
-	PHX::MDField<ScalarT,Cell,Node> csurf;
-	PHX::MDField<ScalarT,Cell,Node> csurftilde;
-	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cgradsurf;
-	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cgradsurftilde;
-	PHX::MDField<ScalarT,Cell,Node> cuX, cuY, cuZ, cutX, cutY, cutZ;
-	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cuXgradNodes, cuYgradNodes, cuZgradNodes;
-	PHX::MDField<ScalarT,Cell,QuadPoint, Dim> cutXgradNodes, cutYgradNodes, cutZgradNodes;
-
+	PHX::MDField<ScalarT, Cell, Node> csurf;
+	PHX::MDField<ScalarT, Cell, Node> csurftilde;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradsurf;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradsurftilde;
+	PHX::MDField<ScalarT, Cell, Node> cuX, cuY, cuZ, cutX, cutY, cutZ;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cuXgradNodes, cuYgradNodes, cuZgradNodes;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cutXgradNodes, cutYgradNodes, cutZgradNodes;
+	PHX::MDField<ScalarT, Cell, Node, Dim> tempnodalvec1, tempnodalvec2;
+	PHX::MDField<ScalarT, Cell, Node, Dim> chuv;
+	PHX::MDField<ScalarT, Cell, QuadPoint> cdiv;
+	PHX::MDField<ScalarT, Cell, QuadPoint> ccor;
 
 	std::vector<LO> qpToNodeMap;
 	std::vector<LO> nodeToQPMap;
@@ -214,6 +217,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void divergence3(const PHX::MDField<ScalarT, Node, Dim>  & field,
 			const PHX::MDField<ScalarT, QuadPoint>  & div_,
+			const int & cell) const;
+
+	void divergence4(const PHX::MDField<ScalarT, Cell, Node, Dim>  & field,
+			const PHX::MDField<ScalarT, Cell, QuadPoint>  & div_,
 			const int & cell) const;
 
 	KOKKOS_INLINE_FUNCTION
@@ -231,17 +238,27 @@ public:
 			const PHX::MDField<ScalarT, QuadPoint>  & curl_,
 			const int &cell) const;
 
-	//This function puts (Residual(0)*Residual(1), Residual(0)*residual(2)) into huv_ .
 	KOKKOS_INLINE_FUNCTION
-	void product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_,
-			const int & cell) const;
+	void curl4(const PHX::MDField<ScalarT, Cell, Node, Dim>  & field,
+			const PHX::MDField<ScalarT, Cell, QuadPoint>  & curl_,
+			const int &cell) const;
+
+	KOKKOS_INLINE_FUNCTION
+	void get_coriolis3(const PHX::MDField<ScalarT,QuadPoint>  & cor_,
+			const int &cell) const;
+
+	KOKKOS_INLINE_FUNCTION
+	void get_coriolis4(const PHX::MDField<ScalarT, Cell, QuadPoint>  & cor_,
+			const int &cell) const;
+
+	//This function puts (Residual(0)*Residual(1), Residual(0)*residual(2)) into huv_ .
+	//KOKKOS_INLINE_FUNCTION
+	//void product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_,
+	//		const int & cell) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void fill_nodal_metrics (const int &cell) const;
 
-	KOKKOS_INLINE_FUNCTION
-	void get_coriolis3(const PHX::MDField<ScalarT,QuadPoint>  & cor_,
-			const int &cell)const;
 
 
 	typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;

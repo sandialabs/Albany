@@ -260,8 +260,16 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	cgradsurf.setFieldData(ViewFactory::buildView(cgradsurf.fieldTag(),ddims_));
 	cgradsurftilde=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradsurftilde",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
 	cgradsurftilde.setFieldData(ViewFactory::buildView(cgradsurftilde.fieldTag(),ddims_));
-
-
+	tempnodalvec1=PHX::MDField<ScalarT,Cell,Node,Dim>("tempnodalvec1",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
+	tempnodalvec1.setFieldData(ViewFactory::buildView(tempnodalvec1.fieldTag(),ddims_));
+	tempnodalvec2=PHX::MDField<ScalarT,Cell,Node,Dim>("tempnodalvec2",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
+	tempnodalvec2.setFieldData(ViewFactory::buildView(tempnodalvec2.fieldTag(),ddims_));
+	chuv=PHX::MDField<ScalarT,Cell,Node,Dim>("chuv",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
+	chuv.setFieldData(ViewFactory::buildView(chuv.fieldTag(),ddims_));
+	cdiv=PHX::MDField<ScalarT,Cell,QuadPoint>("cdiv",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numCells,numQPs)));
+	cdiv.setFieldData(ViewFactory::buildView(cdiv.fieldTag(),ddims_));
+	ccor=PHX::MDField<ScalarT,Cell,QuadPoint>("ccor",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numCells,numQPs)));
+	ccor.setFieldData(ViewFactory::buildView(ccor.fieldTag(),ddims_));
 
 	//og synchronize changes with latest code modifications for HV
 	uX=PHX::MDField<ScalarT,Node>("uX",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
@@ -444,6 +452,57 @@ void ShallowWaterResid<EvalT,Traits>::divergence3(const PHX::MDField<ScalarT,Nod
 
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT,typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT,Traits>::divergence4(const PHX::MDField<ScalarT, Cell, Node, Dim>  & fieldAtNodes,
+		const PHX::MDField<ScalarT,Cell,QuadPoint>  & div_,
+		const int & cell) const  {
+
+	//const PHX::MDField<ScalarT,Node, Dim>  &  vcontra_ = wrk1node_vector_scope2_;
+	//og is it necessary?
+	//vcontra.deep_copy(0);
+
+	for (std::size_t node=0; node < numNodes; ++node) {
+
+/*		const MeshScalarT & jinv00 = nodal_inv_jacobian(node, 0, 0);
+		const MeshScalarT & jinv01 = nodal_inv_jacobian(node, 0, 1);
+		const MeshScalarT & jinv10 = nodal_inv_jacobian(node, 1, 0);
+		const MeshScalarT & jinv11 = nodal_inv_jacobian(node, 1, 1);
+		*/
+
+		const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
+		const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
+		const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
+		const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
+		const MeshScalarT det_j  = jacobian_det(cell,node);
+
+		// constructing contravariant velocity
+		tempnodalvec1(cell, node, 0 ) = det_j*(
+				jinv00*fieldAtNodes(cell, node, 0) + jinv01*fieldAtNodes(cell, node, 1) );
+		tempnodalvec1(cell, node, 1 ) = det_j*(
+				jinv10*fieldAtNodes(cell, node, 0) + jinv11*fieldAtNodes(cell, node, 1) );
+	}
+
+	for (int qp=0; qp < numQPs; ++qp) {
+		for (int node=0; node < numNodes; ++node) {
+
+			//OG What is this commented code?
+			//      ScalarT tempAdd =vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
+			//                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
+			//     Kokkos::atomic_fetch_add(&div_hU(qp), tempAdd);
+			div_(cell, qp) += tempnodalvec1(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 0)
+                	       +  tempnodalvec1(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 1);
+		}
+
+	}
+
+	for (int qp=0; qp < numQPs; ++qp) {
+		div_(cell, qp) = div_(cell, qp)/jacobian_det(cell,qp);
+	}
+
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename EvalT,typename Traits>
@@ -538,7 +597,68 @@ void ShallowWaterResid<EvalT,Traits>::curl3(
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-template<typename EvalT, typename Traits>
+template<typename EvalT,typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT,Traits>::curl4(
+		const PHX::MDField<ScalarT, Cell, Node, Dim>  & field,
+		const PHX::MDField<ScalarT, Cell, QuadPoint>  & curl_,
+		const int &cell) const {
+
+	//const PHX::MDField<ScalarT,Node, Dim>  &  vcovar_ = wrk1node_vector_scope2_;
+
+	for (int node=0; node < numNodes; ++node) {
+
+/*		const MeshScalarT & j00 = nodal_jacobian(node, 0, 0);
+		const MeshScalarT & j01 = nodal_jacobian(node, 0, 1);
+		const MeshScalarT & j10 = nodal_jacobian(node, 1, 0);
+		const MeshScalarT & j11 = nodal_jacobian(node, 1, 1);*/
+
+		const MeshScalarT j00 = jacobian(cell, node, 0, 0);
+		const MeshScalarT j01 = jacobian(cell, node, 0, 1);
+		const MeshScalarT j10 = jacobian(cell, node, 1, 0);
+		const MeshScalarT j11 = jacobian(cell, node, 1, 1);
+
+		//forming covariant vector
+		tempnodalvec2(cell, node, 0 ) = j00*field(cell, node, 0) + j10*field(cell, node, 1);
+		tempnodalvec2(cell, node, 1 ) = j01*field(cell, node, 0) + j11*field(cell, node, 1);
+	}
+
+	for (int qp=0; qp < numQPs; ++qp) {
+		for (int node=0; node < numNodes; ++node) {
+
+			curl_(cell, qp) += tempnodalvec2(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 0)
+                		    -  tempnodalvec2(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 1);
+		}
+		curl_(cell, qp) = curl_(cell, qp)/jacobian_det(cell, qp);
+	}
+}
+
+// *********************************************************************
+//Kokkos functors
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT,typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT,Traits>::
+get_coriolis4(const PHX::MDField<ScalarT,Cell,QuadPoint>  & cor_,
+		const int &cell) const {
+
+	//double alpha = AlphaAngle; //must match what is in initial condition for TC2 and TC5.
+	//see AAdatpt::AerasZonal analytic function.
+	//
+	for (int qp=0; qp < numQPs; ++qp) {
+		const MeshScalarT lambda = sphere_coord(cell, qp, 0);
+		const MeshScalarT theta = sphere_coord(cell, qp, 1);
+		cor_(cell,qp) = 2*Omega*( -cos(lambda)*cos(theta)*sin(AlphaAngle) + sin(theta)*cos(AlphaAngle));
+	}
+}
+
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+/*template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_, const int& cell) const{
@@ -550,7 +670,7 @@ product_h_uv(const PHX::MDField<ScalarT,Node, Dim>  & huv_, const int& cell) con
 		huv_(node,0)= unodal0*UNodal(cell,node,1);
 		huv_(node,1)= unodal0*UNodal(cell,node,2);
 	}
-}
+}*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename EvalT, typename Traits>
@@ -558,15 +678,22 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0(const int& cell) const
 {
-	const PHX::MDField<ScalarT,Node, Dim>  &  huv_ = wrk1node_vector_scope1_;
-	product_h_uv(huv_, cell);
+//	const PHX::MDField<ScalarT,Node, Dim>  &  huv_ = wrk1node_vector_scope1_;
+//	product_h_uv(huv_, cell);
+	for (int node=0; node < numNodes; ++node) {
+		//const typename PHAL::Ref<const ScalarT>::type
+		const ScalarT
+		unodal0 = UNodal(cell,node,0);
+		chuv(cell,node,0) = unodal0*UNodal(cell,node,1);
+		chuv(cell,node,1) = unodal0*UNodal(cell,node,2);
+	}
 
-	const PHX::MDField<ScalarT,QuadPoint>  &  div_ = wrk1qp_scalar_scope1_;
-	divergence3(huv_, div_, cell);
+	//const PHX::MDField<ScalarT,QuadPoint>  &  div_ = wrk1qp_scalar_scope1_;
+	divergence4(chuv, cdiv, cell);
 
 	for (int qp=0; qp < numQPs; ++qp) {
 		int node = qp;
-		Residual(cell,node,0) += (UDot(cell,qp,0) + div_(qp))*wBF(cell, node, qp);
+		Residual(cell,node,0) += (UDot(cell,qp,0) + cdiv(cell,qp))*wBF(cell, node, qp);
 	}
 }
 
@@ -645,7 +772,8 @@ compute_Residuals12_prescribed(const int& cell) const
 	for (int qp=0; qp < numQPs; ++qp) {
 		// before this loop used int node = qp;
 		//  ... wBF(cell, node, qp), ...Residual(cell,node,1)
-		const typename PHAL::Ref<const ScalarT>::type
+		//const typename PHAL::Ref<const ScalarT>::type
+		const ScalarT
 		wbf = wBF(cell, qp, qp);
 
 		//OG Something should be done about this source,
@@ -662,9 +790,9 @@ void ShallowWaterResid<EvalT, Traits>::
 compute_Residuals12_notprescribed (const int& cell) const
 {
 
-	const PHX::MDField<ScalarT, QuadPoint>  &  cor_ = wrk1qp_scalar_scope1_;
+	//const PHX::MDField<ScalarT, QuadPoint>  &  cor_ = wrk1qp_scalar_scope1_;
 	//probably this call can be removed
-	get_coriolis3(cor_, cell);
+	get_coriolis4(ccor, cell);
 	const PHX::MDField<ScalarT, Node> & kineticenergy_ = wrk2node_scalar_scope1_;
 	const PHX::MDField<ScalarT, Node> & potentialenergy_ = wrk3node_scalar_scope1_;
 	const PHX::MDField<ScalarT,Node, Dim> & vectoru_ = wrk1node_vector_scope1_;
@@ -694,7 +822,7 @@ compute_Residuals12_notprescribed (const int& cell) const
 	for (int qp=0; qp < numQPs; ++qp) {
 		//int node = qp;
 		const typename PHAL::Ref<const ScalarT>::type
-		coriolis_ = cor_(qp),
+		coriolis_ = ccor(cell,qp),
 		curl_ = curlU_(qp),//  old code curl_ = curlU(qp)
 		wbf_ = wBF(cell, qp, qp);
 
@@ -957,15 +1085,15 @@ BuildLaplace_for_h (const int& cell) const
 	//laplace forming for h field
 
 	for (std::size_t node=0; node < numNodes; ++node)
-		surftilde(node) = UDotDotNodal(cell,node,0);
+		csurf(cell,node) = UDotDotNodal(cell,node,0);
 
-	gradient<ScalarT>(surftilde, cell, htildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+	gradient4(csurf, cgradsurf, cell);
 
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 		for (std::size_t node=0; node < numNodes; ++node) {
 
-			Residual(cell,node,0) += sHvTau*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                                				  +  sHvTau*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
+			Residual(cell,node,0) += sHvTau*cgradsurf(cell,qp,0)*wGradBF(cell,node,qp,0)
+                                  +  sHvTau*cgradsurf(cell,qp,1)*wGradBF(cell,node,qp,1);
 
 		}
 	}
@@ -1852,29 +1980,7 @@ ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldC
 }
 #endif
 
-// *********************************************************************
-//Kokkos functors
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
-///////////////////////////////////////////////////////////////////////////////////////////////
-template<typename EvalT,typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ShallowWaterResid<EvalT,Traits>::
-get_coriolis3(const PHX::MDField<ScalarT,QuadPoint>  & cor_,
-		const int &cell) const {
-
-	//double alpha = AlphaAngle; //must match what is in initial condition for TC2 and TC5.
-	//see AAdatpt::AerasZonal analytic function.
-	//
-	for (int qp=0; qp < numQPs; ++qp) {
-		const MeshScalarT lambda = sphere_coord(cell, qp, 0);
-		const MeshScalarT theta = sphere_coord(cell, qp, 1);
-		cor_(qp) = 2*Omega*( -cos(lambda)*cos(theta)*sin(AlphaAngle) + sin(theta)*cos(AlphaAngle));
-	}
-}
-
-
-#endif
 //**********************************************************************
 
 }
