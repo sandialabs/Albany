@@ -712,6 +712,11 @@ namespace Albany {
       return params_;
     }
 
+    //! Access to app parameter list
+    Teuchos::RCP<Teuchos::ParameterList> getAppPL() {
+      return params_;
+    }
+
 #if defined(ALBANY_EPETRA)
     //! Accessor function to Epetra_Import the solution from other PEs for output
     Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {

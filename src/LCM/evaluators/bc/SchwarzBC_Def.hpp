@@ -13,6 +13,10 @@
 #include "Teuchos_TestForException.hpp"
 
 #if defined(ALBANY_DTK)
+#undef ALBANY_DTK
+#endif
+
+#if defined(ALBANY_DTK)
 #include "DTK_STKMeshHelpers.hpp"
 #include "DTK_STKMeshManager.hpp"
 #include "DTK_MapOperatorFactory.hpp"
@@ -35,7 +39,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
     PHAL::DirichletBase<EvalT, Traits>(p),
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
-    p_(p), 
+    p_(p),
     coupled_apps_(app_->getApplications()),
     coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
     coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
@@ -83,7 +87,6 @@ template<typename EvalT, typename Traits>
 void
 SchwarzBC_Base<EvalT, Traits>::
 computeBCs(
-    typename Traits::EvalData dirichlet_workset,
     size_t const ns_node,
     ScalarT & x_val,
     ScalarT & y_val,
@@ -434,9 +437,9 @@ computeBCs(
 //
 #if defined(ALBANY_DTK)
 template<typename EvalT, typename Traits>
-Teuchos::RCP<Tpetra_MultiVector> 
+Teuchos::RCP<Tpetra_MultiVector>
 SchwarzBC_Base<EvalT, Traits>::
-computeBCsDTK(typename Traits::EvalData dirichlet_workset)
+computeBCsDTK()
 {
   auto const
   this_app_index = getThisAppIndex();
@@ -463,37 +466,42 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
 
   auto *
   coupled_stk_disc =
-  static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
 
   //Source Mesh
   Teuchos::RCP<Albany::AbstractSTKMeshStruct> const
   coupled_stk_mesh_struct = coupled_stk_disc->getSTKMeshStruct();
 
   //get pointer to metadata from coupled_stk_disc
-  Teuchos::RCP<stk::mesh::MetaData const>
+  Teuchos::RCP<stk::mesh::MetaData const> const
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
   //Get coupled_app parameter list 
-  Teuchos::RCP<const Teuchos::ParameterList> 
+  Teuchos::RCP<Teuchos::ParameterList> const
   coupled_app_params = coupled_app.getAppPL();
 
   //Get discretization sublist from coupled_app parameter list
-  Teuchos::RCP<Teuchos::ParameterList> 
-  coupled_disc_params = Teuchos::sublist(coupled_app_params, "Discretization", true);
+  Teuchos::RCP<Teuchos::ParameterList> const
+  coupled_disc_params = Teuchos::sublist(
+      coupled_app_params,
+      "Discretization",
+      true);
 
   //Get solution name from Discretization sublist
-  std::string solution_name = 
-  coupled_disc_params->get("Exodus Solution Name", "solution");
-  
+  std::string coupled_solution_name =
+      coupled_disc_params->get("Exodus Solution Name", "solution");
+
   using Field = stk::mesh::Field<double>;
 
   Field *
   coupled_field =
-  coupled_meta_data->get_field<Field>(stk::topology::NODE_RANK, solution_name);
+      coupled_meta_data->get_field<Field>(
+          stk::topology::NODE_RANK,
+          coupled_solution_name);
 
   stk::mesh::Selector
   coupled_stk_selector =
-  stk::mesh::Selector(coupled_meta_data->universal_part());
+      stk::mesh::Selector(coupled_meta_data->universal_part());
 
   Teuchos::RCP<stk::mesh::BulkData>
   coupled_bulk_data = Teuchos::rcpFromRef(coupled_field->get_mesh());
@@ -501,33 +509,29 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
   //Target Mesh
 
   //get pointer to metadata from this_stk_disc
-  Teuchos::RCP<const stk::mesh::MetaData>
+  Teuchos::RCP<stk::mesh::MetaData const>
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
-  
+
   //Get this_app parameter list -- this is to get the solution_name string, only needed 
   //for error checking. 
 
-  Teuchos::RCP<const Teuchos::ParameterList> 
+  Teuchos::RCP<Teuchos::ParameterList const>
   this_app_params = this_app.getAppPL();
 
   //Get discretization sublist from this_app parameter list
-  Teuchos::RCP<Teuchos::ParameterList> 
+  Teuchos::RCP<Teuchos::ParameterList>
   this_disc_params = Teuchos::sublist(this_app_params, "Discretization", true);
 
   //Get solution name from Discretization sublist
-  std::string solution_name_this = 
-  this_disc_params->get("Exodus Solution Name", "solution");
+  std::string this_solution_name =
+      this_disc_params->get("Exodus Solution Name", "solution");
 
   //Error check: Exodus Solution Name should be the same for the target and source input files.
-  if (solution_name_this != solution_name) 
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                     std::endl << "Error in SchwarzBC:  " <<
-                                    "Exodus Solution Name in source and target input files do not match!" << std::endl);
-
+  assert(this_solution_name == coupled_solution_name);
 
   Field *
   this_field = this_meta_data->
-  get_field<Field>(stk::topology::NODE_RANK, solution_name);
+      get_field<Field>(stk::topology::NODE_RANK, coupled_solution_name);
 
   // Get the part corresponding to this nodeset.
   std::string const &
@@ -553,13 +557,13 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
   this_manager(this_bulk_data, this_stk_selector);
 
   // Create a solution vector for the source.
-  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId>>
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   coupled_vector =
-  coupled_manager.createFieldMultiVector<Field>(
-      Teuchos::ptr(coupled_field), 1);
+      coupled_manager.createFieldMultiVector<Field>(
+          Teuchos::ptr(coupled_field), 1);
 
   // Create a solution vector for the target.
-  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId>>
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   this_vector = this_manager.createFieldMultiVector<Field>(
       Teuchos::ptr(this_field), 1);
 
@@ -579,8 +583,6 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
 
   //Solution transfer
 
-  //IKT, 12/9/15: I am assuming DTK sublist will be under the Schwarz BC parameter list. 
-  //Is that reasonable? 
   Teuchos::ParameterList&
   dtk_list = p_.sublist("DataTransferKit");
 
@@ -588,9 +590,9 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
   op_factory;
 
   Teuchos::RCP<DataTransferKit::MapOperator> map_op =
-  op_factory.create( coupled_vector->getMap(),
-      this_vector->getMap(),
-      dtk_list );
+      op_factory.create(coupled_vector->getMap(),
+          this_vector->getMap(),
+          dtk_list);
 
   // Setup the map operator. This creates the underlying linear operators.
   map_op->setup(coupled_manager.functionSpace(), this_manager.functionSpace());
@@ -601,9 +603,12 @@ computeBCsDTK(typename Traits::EvalData dirichlet_workset)
 
   //Cast *this_vector to Tpetra_MultiVector and return.
 
-  Teuchos::RCP<Tpetra_MultiVector> 
-  t_vector = Teuchos::rcp_dynamic_cast<Tpetra::MultiVector<double,int,DataTransferKit::SupportId>>(this_vector, false); 
-  return t_vector; 
+  Teuchos::RCP<Tpetra_MultiVector>
+  t_vector = Teuchos::rcp_dynamic_cast<
+      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>(
+      this_vector,
+      false);
+  return t_vector;
 }
 #endif //ALBANY_DTK
 
@@ -645,12 +650,33 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   auto const
   ns_number_nodes = ns_dof.size();
 
+#if defined(ALBANY_DTK)
+  Teuchos::RCP<Tpetra_MultiVector> const
+  schwarz_bcs = this->computeBCsDTK();
+
+  Teuchos::ArrayRCP<ST const>
+  schwarz_bcs_const_view = schwarz_bcs->get1dView();
+
+  Teuchos::RCP<Tpetra_Map const>
+  schwarz_bcs_map = schwarz_bcs->getMap();
+
+  Teuchos::ArrayView<const GO>
+  schwarz_bcs_global_indices = schwarz_bcs_map->getNodeElementList();
+
+  for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
+    GO go = schwarz_bcs_global_indices[i];
+    LO lo = schwarz_bcs_map->getLocalElement(go);
+    ScalarT diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
+    fT_view[lo] = diff;
+  }
+
+#else
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
     ScalarT
     x_val, y_val, z_val;
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     auto const
     x_dof = ns_dof[ns_node][0];
@@ -666,7 +692,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     fT_view[z_dof] = xT_const_view[z_dof] - z_val;
 
   } // node in node set loop
-
+#endif //ALBANY_DTK
   return;
 }
 
@@ -805,7 +831,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       ScalarT
       x_val, y_val, z_val;
 
-      this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+      this->computeBCs(ns_node, x_val, y_val, z_val);
 
       fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
       fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
@@ -878,7 +904,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     ScalarT
     x_val, y_val, z_val;
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     if (fT != Teuchos::null) {
       fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
@@ -954,13 +980,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<double *> const &
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
-  // global and local indices into unknown vector
-  // double *
-  // coord;
-
-  // ScalarT
-  // x_val, y_val, z_val;
-
   // For (df/dp)^T*V we zero out corresponding entries in V
   if (trans == true) {
     Teuchos::RCP<Tpetra_MultiVector>
@@ -979,14 +998,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
       auto const
       z_dof = ns_nodes[inode][2];
-      // coord = ns_coord[inode];
-
-      // this->computeBCs(coord, x_val, y_val, z_val);
 
       for (auto col = 0; col < num_cols; ++col) {
-        //(*Vp)[col][x_dof] = 0.0;
-        //(*Vp)[col][y_dof] = 0.0;
-        //(*Vp)[col][z_dof] = 0.0;
+
         VpT_view = VpT->getDataNonConst(col);
         VpT_view[x_dof] = 0.0;
         VpT_view[y_dof] = 0.0;
@@ -1007,14 +1021,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
       auto const
       z_dof = ns_nodes[inode][2];
-      // coord = ns_coord[inode];
-
-      // this->computeBCs(coord, x_val, y_val, z_val);
 
       for (auto col = 0; col < num_cols; ++col) {
-        //(*fpV)[col][x_dof] = 0.0;
-        //(*fpV)[col][y_dof] = 0.0;
-        //(*fpV)[col][z_dof] = 0.0;
+
         fpVT_view = fpVT->getDataNonConst(col);
         fpVT_view[x_dof] = 0.0;
         fpVT_view[y_dof] = 0.0;
@@ -1073,7 +1082,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     z_dof = ns_nodes[ns_node][2];
     coord = ns_coord[ns_node];
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     for (int block = 0; block < nblock; ++block) {
       (*f)[block][x_dof] = (*x)[block][x_dof] - x_val.coeff(block);
@@ -1159,7 +1168,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     z_dof = ns_nodes[ns_node][2];
     coord = ns_coord[ns_node];
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     // replace jac values for the X dof
     for (int block = 0; block < nblock_jac; ++block) {
@@ -1253,7 +1262,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     z_dof = ns_nodes[ns_node][2];
     coord = ns_coord[ns_node];
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     if (f != Teuchos::null) {
 
@@ -1338,7 +1347,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     z_dof = ns_nodes[ns_node][2];
     coord = ns_coord[ns_node];
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     for (int block = 0; block < nblock; ++block) {
       (*f)[block][x_dof] = (*x)[block][x_dof] - x_val.coeff(block);
@@ -1424,7 +1433,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     z_dof = ns_nodes[ns_node][2];
     coord = ns_coord[ns_node];
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     // replace jac values for the X dof
     for (int block=0; block<nblock_jac; ++block) {
@@ -1517,7 +1526,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     z_dof = ns_nodes[ns_node][2];
     coord = ns_coord[ns_node];
 
-    this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
+    this->computeBCs(ns_node, x_val, y_val, z_val);
 
     if (f != Teuchos::null) {
 
@@ -1557,4 +1566,4 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #endif
 
 }
- // namespace LCM
+  // namespace LCM

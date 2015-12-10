@@ -41,7 +41,6 @@ public:
 
   void
   computeBCs(
-      typename Traits::EvalData dirichlet_workset,
       size_t const ns_node,
       ScalarT & x_val,
       ScalarT & y_val,
@@ -49,7 +48,7 @@ public:
 
 #if defined(ALBANY_DTK)
   Teuchos::RCP<Tpetra_MultiVector> 
-  computeBCsDTK(typename Traits::EvalData dirichlet_workset);
+  computeBCsDTK();
 #endif //ALBANY_DTK
 
   void
