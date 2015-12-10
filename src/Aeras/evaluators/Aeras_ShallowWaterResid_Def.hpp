@@ -1007,8 +1007,8 @@ BuildLaplace_for_uv (const int& cell) const
 	for (std::size_t node=0; node < numNodes; ++node) {
 
 		const typename PHAL::Ref<const ScalarT>::type
-		utlambda = UDotDotNodal(cell, node,1),
-		uttheta  = UDotDotNodal(cell, node,2);
+		ulambda = UDotDotNodal(cell, node,1),
+		utheta  = UDotDotNodal(cell, node,2);
 
 		//const typename PHAL::Ref<const ScalarT>::type
 		const ScalarT
@@ -1028,7 +1028,7 @@ BuildLaplace_for_uv (const int& cell) const
 		//utY(node) = k21*utlambda + k22*uttheta;
 		//utZ(node) = k32*uttheta;
 
-		compute_3Dvelocity4(node, lam, th, utlambda, uttheta, cUX, cUY, cUZ, cell);
+		compute_3Dvelocity4(node, lam, th, ulambda, utheta, cUX, cUY, cUZ, cell);
 
 	}
 
@@ -1181,18 +1181,20 @@ compute_uv_ImplHV (const int& cell) const
 {
 	for (int node=0; node < numNodes; ++node) {
 
-		const typename PHAL::Ref<const ScalarT>::type
+		//const typename PHAL::Ref<const ScalarT>::type
+		const ScalarT
 		ulambda = UNodal(cell, node,1),
 		utheta  = UNodal(cell, node,2),
 		utlambda = UNodal(cell, node,4),
 		uttheta = UNodal(cell, node,5);
 
-		const typename PHAL::Ref<const ScalarT>::type
+		//const typename PHAL::Ref<const ScalarT>::type
+		const ScalarT
 		lam = lambda_nodal(cell, node),
 		th = theta_nodal(cell, node);
 
 
-		const ScalarT
+		/*const ScalarT
 		k11 = -sin(lam),
 		k12 = -sin(th)*cos(lam),
 		k21 =  cos(lam),
@@ -1206,23 +1208,40 @@ compute_uv_ImplHV (const int& cell) const
 
 		utX(node) = k11*utlambda + k12*uttheta;
 		utY(node) = k21*utlambda + k22*uttheta;
-		utZ(node) = k32*uttheta;
+		utZ(node) = k32*uttheta;*/
+
+		compute_3Dvelocity4(node, lam, th, ulambda, utheta, cUX, cUY, cUZ, cell);
+		compute_3Dvelocity4(node, lam, th, utlambda, uttheta, cUTX, cUTY, cUTZ, cell);
+
 	}
 
-	gradient<ScalarT>(uX, cell, uXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+	/*gradient<ScalarT>(uX, cell, uXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 	gradient<ScalarT>(uY, cell, uYgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 	gradient<ScalarT>(uZ, cell, uZgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 
 	gradient<ScalarT>(utX, cell, utXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 	gradient<ScalarT>(utY, cell, utYgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
-	gradient<ScalarT>(utZ, cell, utZgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+	gradient<ScalarT>(utZ, cell, utZgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);*/
+
+	gradient4(cUX, cgradUX, cell);
+	gradient4(cUY, cgradUY, cell);
+	gradient4(cUZ, cgradUZ, cell);
+
+	gradient4(cUTX, cgradUTX, cell);
+	gradient4(cUTY, cgradUTY, cell);
+	gradient4(cUTZ, cgradUTZ, cell);
+
 
 	for (int qp=0; qp < numQPs; ++qp) {
 		for (int node=0; node < numNodes; ++node) {
 
-			const typename PHAL::Ref<const ScalarT>::type
+			const ScalarT
 			lam = sphere_coord(cell, qp, 0),
-			th = sphere_coord(cell, qp, 1);
+			th  = sphere_coord(cell, qp, 1),
+			wgradbf0_ = wGradBF(cell, node, qp, 0),
+			wgradbf1_ = wGradBF(cell, node, qp, 1),
+			wbf_      = wBF(cell,node,qp);
+
 
 			//K = -sin L    -sin T cos L
 			//     cos L    -sin T sin L
@@ -1257,6 +1276,53 @@ compute_uv_ImplHV (const int& cell) const
 			//				+ k21*( utYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 			//				//k31 = 0
 			//		);
+
+
+
+			Residual(cell,node,1) -=
+					hyperviscosity(cell,qp,0)*(
+							  k11*( cgradUTX(cell, qp, 0)*wgradbf0_ + cgradUTX(cell, qp, 1)*wgradbf1_ )
+							+ k21*( cgradUTY(cell, qp, 0)*wgradbf0_ + cgradUTY(cell, qp, 1)*wgradbf1_ )
+							//k31 = 0
+					);
+
+
+			Residual(cell,node,2) -=
+					hyperviscosity(cell,qp,0)*(
+							  k12*( cgradUTX(cell, qp, 0)*wgradbf0_ + cgradUTX(cell, qp, 1)*wgradbf1_)
+							+ k22*( cgradUTY(cell, qp, 0)*wgradbf0_ + cgradUTY(cell, qp, 1)*wgradbf1_)
+							+ k32*( cgradUTZ(cell, qp, 0)*wgradbf0_ + cgradUTZ(cell, qp, 1)*wgradbf1_)
+					);
+
+
+			Residual(cell,node,4) += U(cell,qp,4)*wbf_
+							      +  k11*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_ )
+							      + k21*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_ );
+							//k31 = 0
+
+			Residual(cell,node,5) += U(cell,qp,5)*wbf_
+							      + k12*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_)
+							      + k22*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_)
+							      + k32*( cgradUZ(cell, qp, 0)*wgradbf0_ + cgradUZ(cell, qp, 1)*wgradbf1_);
+
+
+			if(doNotDampRotation){
+				//adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
+
+				Residual(cell,node,1) +=
+						-hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wbf_;
+
+				Residual(cell,node,2) +=
+						-hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wbf_;
+
+				Residual(cell,node,4) += -2.0*U(cell,qp,1)*RRadius*RRadius*wbf_;
+
+				Residual(cell,node,5) += -2.0*U(cell,qp,2)*RRadius*RRadius*wbf_;
+			}
+
+
+
+		/*
 
 			Residual(cell,node,1) -=
 					hyperviscosity(cell,qp,0)*(
@@ -1297,7 +1363,7 @@ compute_uv_ImplHV (const int& cell) const
 
 				Residual(cell,node,5) += -2.0*U(cell,qp,2)*wBF(cell,node,qp)*RRadius*RRadius;
 			}
-
+*/
 		}
 	}
 }
