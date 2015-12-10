@@ -122,8 +122,12 @@ updateHardness(
     Intrepid::Vector<ArgT, NumSlipT> & hardness_np1)
 {
   ScalarT H, Rd;
-  ArgT temp;
+  ArgT temp, slipEffective(0.0);
   Intrepid::Index num_slip = slip_np1.get_dimension();
+
+  for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
+	  slipEffective += fabs(slip_np1[iSlipSystem]);
+  }
 
   for (int s(0); s < num_slip; ++s) {
 
@@ -141,10 +145,10 @@ updateHardness(
     // for reference, another flavor is A*(1 - exp(-B/A*eqps)) where H = B and Rd = B/A
     // if H is not specified, H = 0.0, if Rd is not specified, Rd = 0.0
     if (Rd > 0.0) {
-      temp = H / Rd * (1.0 - std::exp(-Rd * fabs(slip_np1[s])));
+      temp = H / Rd * (1.0 - std::exp(-Rd * slipEffective));
     }
     else {
-      temp = H * fabs(slip_np1[s]);
+      temp = H * slipEffective;
     }
     // only evolve if hardness increases
     if (temp > hardness_np1[s]) {
@@ -202,7 +206,7 @@ computeResidual(
     dgamma_value2 = dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
 
     //The difference between the slip increment calculations is the residual for this slip system
-    slip_residual[s] = dgamma_value2 - dgamma_value1;
+    slip_residual[s] = dgamma_value1 - dgamma_value2;
 
     //residual can take two forms - see Steinmann and Stein, CMAME (2006)
     //establishing filter for gamma, 1.0e-4 for now
