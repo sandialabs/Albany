@@ -204,6 +204,12 @@ public:
 	PHX::MDField<ScalarT, Cell, Node, Dim> chuv;
 	PHX::MDField<ScalarT, Cell, QuadPoint> cdiv;
 	PHX::MDField<ScalarT, Cell, QuadPoint> ccor;
+	PHX::MDField<ScalarT, Cell, QuadPoint> cvort;
+	PHX::MDField<ScalarT, Cell, Node> ckineticEnergy, cpotentialEnergy;
+	PHX::MDField<ScalarT, Cell, Node, Dim> cvelocityVec;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradKineticEnergy;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradPotentialEnergy;
+
 
 	std::vector<LO> qpToNodeMap;
 	std::vector<LO> nodeToQPMap;
