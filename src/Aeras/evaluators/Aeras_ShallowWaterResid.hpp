@@ -197,9 +197,9 @@ public:
 	PHX::MDField<ScalarT, Cell, Node> csurftilde;
 	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradsurf;
 	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradsurftilde;
-	PHX::MDField<ScalarT, Cell, Node> cuX, cuY, cuZ, cutX, cutY, cutZ;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cuXgradNodes, cuYgradNodes, cuZgradNodes;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cutXgradNodes, cutYgradNodes, cutZgradNodes;
+	PHX::MDField<ScalarT, Cell, Node> cUX, cUY, cUZ, cUTX, cUTY, cUTZ;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradUX, cgradUY, cgradUZ;
+	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradUTX, cgradUTY, cgradUTZ;
 	PHX::MDField<ScalarT, Cell, Node, Dim> tempnodalvec1, tempnodalvec2;
 	PHX::MDField<ScalarT, Cell, Node, Dim> chuv;
 	PHX::MDField<ScalarT, Cell, QuadPoint> cdiv;
@@ -303,8 +303,8 @@ public:
 	void operator() (const ShallowWaterResid_BuildLaplace_for_huv_Tag& tag, const int& cell) const;
 
 
-	KOKKOS_INLINE_FUNCTION
-	void compute_product_h_vel(const int& cell) const;
+//	KOKKOS_INLINE_FUNCTION
+//	void compute_product_h_vel(const int& cell) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void compute_Residual0(const int& cell) const;
@@ -337,6 +337,9 @@ public:
 	void compute_3Dvelocity(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
 			const PHX::MDField<ScalarT, Node>  & ux, const PHX::MDField<ScalarT, Node>  & uy, const PHX::MDField<ScalarT, Node>  & uz) const;
 
+	void compute_3Dvelocity4(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
+			const PHX::MDField<ScalarT, Cell, Node>  & ux, const PHX::MDField<ScalarT, Cell, Node>  & uy,
+			const PHX::MDField<ScalarT, Cell, Node>  & uz, const int& cell) const;
 
 #endif
 };

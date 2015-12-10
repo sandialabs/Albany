@@ -282,7 +282,30 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	cgradKineticEnergy.setFieldData(ViewFactory::buildView(cgradKineticEnergy.fieldTag(),ddims_));
 	cgradPotentialEnergy=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradPotentialEnergy",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
 	cgradPotentialEnergy.setFieldData(ViewFactory::buildView(cgradPotentialEnergy.fieldTag(),ddims_));
-
+	cUX=PHX::MDField<ScalarT,Cell,Node>("cUX",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	cUX.setFieldData(ViewFactory::buildView(cUX.fieldTag(),ddims_));
+	cUY=PHX::MDField<ScalarT,Cell,Node>("cUY",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	cUY.setFieldData(ViewFactory::buildView(cUY.fieldTag(),ddims_));
+	cUZ=PHX::MDField<ScalarT,Cell,Node>("cUZ",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	cUZ.setFieldData(ViewFactory::buildView(cUZ.fieldTag(),ddims_));
+	cUTX=PHX::MDField<ScalarT,Cell,Node>("cUTX",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	cUTX.setFieldData(ViewFactory::buildView(cUTX.fieldTag(),ddims_));
+	cUTY=PHX::MDField<ScalarT,Cell,Node>("cUTY",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	cUTY.setFieldData(ViewFactory::buildView(cUTY.fieldTag(),ddims_));
+	cUTZ=PHX::MDField<ScalarT,Cell,Node>("cUTZ",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
+	cUTZ.setFieldData(ViewFactory::buildView(cUTZ.fieldTag(),ddims_));
+	cgradUX=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUX",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradUX.setFieldData(ViewFactory::buildView(cgradUX.fieldTag(),ddims_));
+	cgradUY=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUY",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradUY.setFieldData(ViewFactory::buildView(cgradUY.fieldTag(),ddims_));
+	cgradUZ=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUZ",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradUZ.setFieldData(ViewFactory::buildView(cgradUZ.fieldTag(),ddims_));
+	cgradUTX=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUTX",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradUTX.setFieldData(ViewFactory::buildView(cgradUTX.fieldTag(),ddims_));
+	cgradUTY=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUTY",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradUTY.setFieldData(ViewFactory::buildView(cgradUTY.fieldTag(),ddims_));
+	cgradUTZ=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUTZ",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
+	cgradUTZ.setFieldData(ViewFactory::buildView(cgradUTZ.fieldTag(),ddims_));
 
 	//og synchronize changes with latest code modifications for HV
 	uX=PHX::MDField<ScalarT,Node>("uX",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
@@ -941,6 +964,27 @@ compute_3Dvelocity(std::size_t node, const ScalarT lam, const ScalarT th, const 
 	uz(node) = k32*utheta;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+compute_3Dvelocity4(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
+		const PHX::MDField<ScalarT, Cell, Node>  & ux, const PHX::MDField<ScalarT, Cell, Node>  & uy,
+		const PHX::MDField<ScalarT, Cell, Node>  & uz, const int& cell) const
+{
+	const ScalarT
+	k11 = -sin(lam),
+	k12 = -sin(th)*cos(lam),
+	k21 =  cos(lam),
+	k22 = -sin(th)*sin(lam),
+	k32 =  cos(th);
+
+	ux(cell, node) = k11*ulambda + k12*utheta;
+	uy(cell, node) = k21*ulambda + k22*utheta;
+	uz(cell, node) = k32*utheta;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -956,9 +1000,9 @@ BuildLaplace_for_uv (const int& cell) const
 		}*/
 
 //	const PHX::MDField<ScalarT, Node, VecDim>  &  uxyz_ = wrk3_vector_scope1_;
-    const PHX::MDField<ScalarT, Node>  &  ux_ = wrk1node_scalar_scope1_;
-    const PHX::MDField<ScalarT, Node>  &  uy_ = wrk2node_scalar_scope1_;
-    const PHX::MDField<ScalarT, Node>  &  uz_ = wrk3node_scalar_scope1_;
+//    const PHX::MDField<ScalarT, Node>  &  ux_ = wrk1node_scalar_scope1_;
+//    const PHX::MDField<ScalarT, Node>  &  uy_ = wrk2node_scalar_scope1_;
+//    const PHX::MDField<ScalarT, Node>  &  uz_ = wrk3node_scalar_scope1_;
 
 	for (std::size_t node=0; node < numNodes; ++node) {
 
@@ -966,16 +1010,17 @@ BuildLaplace_for_uv (const int& cell) const
 		utlambda = UDotDotNodal(cell, node,1),
 		uttheta  = UDotDotNodal(cell, node,2);
 
-		const typename PHAL::Ref<const ScalarT>::type
+		//const typename PHAL::Ref<const ScalarT>::type
+		const ScalarT
 		lam = lambda_nodal(cell, node),
 		th = theta_nodal(cell, node);
 
-		const ScalarT
-		k11 = -sin(lam),
-		k12 = -sin(th)*cos(lam),
-		k21 =  cos(lam),
-		k22 = -sin(th)*sin(lam),
-		k32 =  cos(th);
+		//const ScalarT
+		//k11 = -sin(lam),
+		//k12 = -sin(th)*cos(lam),
+		//k21 =  cos(lam),
+		//k22 = -sin(th)*sin(lam),
+		//k32 =  cos(th);
 
 		// compute_coefficients_K(lam,th);
 
@@ -983,17 +1028,17 @@ BuildLaplace_for_uv (const int& cell) const
 		//utY(node) = k21*utlambda + k22*uttheta;
 		//utZ(node) = k32*uttheta;
 
-		compute_3Dvelocity(node, lam, th, utlambda, uttheta, ux_, uy_, uz_ );
+		compute_3Dvelocity4(node, lam, th, utlambda, uttheta, cUX, cUY, cUZ, cell);
 
 	}
 
-	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradux_ = wrk1qp_vector_scope1_;
-	const PHX::MDField<ScalarT, QuadPoint, Dim> & graduy_ = wrk2qp_vector_scope1_;
-	const PHX::MDField<ScalarT, QuadPoint, Dim> & graduz_ = wrk3qp_vector_scope1_;
+//	const PHX::MDField<ScalarT, QuadPoint, Dim> & gradux_ = wrk1qp_vector_scope1_;
+//	const PHX::MDField<ScalarT, QuadPoint, Dim> & graduy_ = wrk2qp_vector_scope1_;
+//	const PHX::MDField<ScalarT, QuadPoint, Dim> & graduz_ = wrk3qp_vector_scope1_;
 
-	gradient3(ux_, gradux_, cell);
-	gradient3(uy_, graduy_, cell);
-	gradient3(uz_, graduz_, cell);
+	gradient4(cUX, cgradUX, cell);
+	gradient4(cUY, cgradUY, cell);
+	gradient4(cUZ, cgradUZ, cell);
 
 //	gradient<ScalarT>(utX, cell, utXgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
 //	gradient<ScalarT>(utY, cell, utYgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
@@ -1005,11 +1050,12 @@ BuildLaplace_for_uv (const int& cell) const
 			//OG Changing MeshScalarT to ScalarT type.
 			//As a wild guess, this can be contributing to a bug in Laplace (Laplace is not symmetric?),
 			//since trig. functions of lam/th are differentiated.
-			const typename PHAL::Ref<const ScalarT>::type
+			//const typename PHAL::Ref<const ScalarT>::type
+			const ScalarT
 			lam = sphere_coord(cell, qp, 0),
-			th = sphere_coord(cell, qp, 1),
-			wgradbf0_ = wGradBF(cell,node,qp,0),
-			wgradbf1_ = wGradBF(cell,node,qp,1);
+			th  = sphere_coord(cell, qp, 1),
+			wgradbf0_ = wGradBF(cell, node, qp, 0),
+			wgradbf1_ = wGradBF(cell, node, qp, 1);
 			//K = -sin L    -sin T cos L
 			//     cos L    -sin T sin L
 			//     0         cos T
@@ -1026,17 +1072,17 @@ BuildLaplace_for_uv (const int& cell) const
 
 			Residual(cell,node,1) +=
 					sHvTau*(
-							k11*( gradux_(qp,0)*wgradbf0_ + gradux_(qp,1)*wgradbf1_)
-							+ k21*( graduy_(qp,0)*wgradbf0_ + graduy_(qp,1)*wgradbf1_)
+							  k11*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_ )
+							+ k21*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_ )
 							//k31 = 0
 					);
 
 
 			Residual(cell,node,2) +=
 					sHvTau*(
-							k12*( gradux_(qp,0)*wgradbf0_ + gradux_(qp,1)*wgradbf1_)
-							+ k22*( graduy_(qp,0)*wgradbf0_ + graduy_(qp,1)*wgradbf1_)
-							+ k32*( graduz_(qp,0)*wgradbf0_ + graduz_(qp,1)*wgradbf1_)
+							  k12*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_)
+							+ k22*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_)
+							+ k32*( cgradUZ(cell, qp, 0)*wgradbf0_ + cgradUZ(cell, qp, 1)*wgradbf1_)
 					);
 
 			/*
