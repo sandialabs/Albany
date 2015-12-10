@@ -13,10 +13,6 @@
 #include "Teuchos_TestForException.hpp"
 
 #if defined(ALBANY_DTK)
-#undef ALBANY_DTK
-#endif
-
-#if defined(ALBANY_DTK)
 #include "DTK_STKMeshHelpers.hpp"
 #include "DTK_STKMeshManager.hpp"
 #include "DTK_MapOperatorFactory.hpp"
@@ -477,19 +473,16 @@ computeBCsDTK()
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
   //Get coupled_app parameter list 
-  Teuchos::RCP<Teuchos::ParameterList> const
+  Teuchos::RCP<const Teuchos::ParameterList> 
   coupled_app_params = coupled_app.getAppPL();
 
   //Get discretization sublist from coupled_app parameter list
-  Teuchos::RCP<Teuchos::ParameterList> const
-  coupled_disc_params = Teuchos::sublist(
-      coupled_app_params,
-      "Discretization",
-      true);
-
+  Teuchos::ParameterList 
+  coupled_disc_params = coupled_app_params->sublist("Discretization");
+  
   //Get solution name from Discretization sublist
   std::string coupled_solution_name =
-      coupled_disc_params->get("Exodus Solution Name", "solution");
+      coupled_disc_params.get("Exodus Solution Name", "solution");
 
   using Field = stk::mesh::Field<double>;
 
@@ -515,16 +508,18 @@ computeBCsDTK()
   //Get this_app parameter list -- this is to get the solution_name string, only needed 
   //for error checking. 
 
-  Teuchos::RCP<Teuchos::ParameterList const>
+  //Get this_app parameter list 
+  Teuchos::RCP<const Teuchos::ParameterList> 
   this_app_params = this_app.getAppPL();
 
   //Get discretization sublist from this_app parameter list
-  Teuchos::RCP<Teuchos::ParameterList>
-  this_disc_params = Teuchos::sublist(this_app_params, "Discretization", true);
+  Teuchos::ParameterList 
+  this_disc_params = this_app_params->sublist("Discretization");
+
 
   //Get solution name from Discretization sublist
   std::string this_solution_name =
-      this_disc_params->get("Exodus Solution Name", "solution");
+      this_disc_params.get("Exodus Solution Name", "solution");
 
   //Error check: Exodus Solution Name should be the same for the target and source input files.
   assert(this_solution_name == coupled_solution_name);
@@ -603,11 +598,11 @@ computeBCsDTK()
 
   //Cast *this_vector to Tpetra_MultiVector and return.
 
-  Teuchos::RCP<Tpetra_MultiVector>
+ Teuchos::RCP<Tpetra_MultiVector>
   t_vector = Teuchos::rcp_dynamic_cast<
-      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>(
-      this_vector,
-      false);
+      Tpetra_MultiVector>(
+      this_vector, false);
+  
   return t_vector;
 }
 #endif //ALBANY_DTK
