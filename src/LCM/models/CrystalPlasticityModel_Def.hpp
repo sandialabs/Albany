@@ -627,16 +627,20 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             dt_minisolver);
 
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
-        //Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
+        Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
         //Intrepid::TrustRegionStep<ValueT, CP::MAX_NUM_SLIP> step;
         //Intrepid::ConjugateGradientStep<ValueT, CP::MAX_NUM_SLIP> step;
-        Intrepid::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
         Intrepid::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
 
         minimizer.rel_tol = residual_relative_tolerance;
         minimizer.abs_tol = residual_absolute_tolerance;
 
         miniMinimize(minimizer, step, crystalPlasticityNLS, x);
+
+        if(!minimizer.converged){
+          minimizer.printReport(std::cout);
+        }
 
         TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
         std::logic_error,
