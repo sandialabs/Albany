@@ -441,6 +441,7 @@ Teuchos::RCP<Tpetra_MultiVector>
 SchwarzBC_Base<EvalT, Traits>::
 computeBCsDTK()
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   auto const
   this_app_index = getThisAppIndex();
 
@@ -650,6 +651,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ns_number_nodes = ns_dof.size();
 
 #if defined(ALBANY_DTK)
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   Teuchos::RCP<Tpetra_MultiVector> const
   schwarz_bcs = this->computeBCsDTK();
 
@@ -829,6 +831,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   if (fill_residual == true) {
 
 #if defined(ALBANY_DTK)
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
     Teuchos::RCP<Tpetra_MultiVector> const
     schwarz_bcs = this->computeBCsDTK();
 
@@ -951,6 +954,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   if (fT != Teuchos::null || fpT != Teuchos::null) {
 
 #if defined(ALBANY_DTK)
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
     if (fT != Teuchos::null) {
       Teuchos::RCP<Tpetra_MultiVector> const
       schwarz_bcs = this->computeBCsDTK();
