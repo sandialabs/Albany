@@ -19,7 +19,7 @@
 #include <Intrepid_Cubature.hpp>
 
 
-#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 
 namespace Aeras {
