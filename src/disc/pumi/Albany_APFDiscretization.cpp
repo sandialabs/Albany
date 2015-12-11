@@ -693,6 +693,19 @@ void Albany::APFDiscretization::computeSideSets()
   computeSideSetsBase();
 }
 
+static void offsetNumbering(
+    apf::GlobalNumbering* n,
+    apf::DynamicArray<apf::Node> const& nodes)
+{
+  const GO startIdx = 2147483647L;
+  for (int i=0; i < nodes.getSize(); ++i)
+  {
+    GO oldIdx = apf::getNumber(n, nodes[i]);
+    GO newIdx = startIdx + oldIdx;
+    number(n, nodes[i], newIdx);
+  }
+}
+
 void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
     apf::FieldShape* shape)
 {
@@ -701,6 +714,8 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
   globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned",shape));
   apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
+  if (meshStruct->useDOFOffsetHack)
+    offsetNumbering(globalNumbering, ownedNodes);
   numOwnedNodes = ownedNodes.getSize();
   apf::synchronize(globalNumbering);
   Teuchos::Array<GO> indices(numOwnedNodes);

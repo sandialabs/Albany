@@ -41,11 +41,15 @@ public:
 
   void
   computeBCs(
-      typename Traits::EvalData dirichlet_workset,
       size_t const ns_node,
       ScalarT & x_val,
       ScalarT & y_val,
       ScalarT & z_val);
+
+#if defined(ALBANY_DTK)
+  Teuchos::RCP<Tpetra_MultiVector> 
+  computeBCsDTK();
+#endif //ALBANY_DTK
 
   void
   setCoupledAppName(std::string const & can)
@@ -109,6 +113,9 @@ public:
 
 protected:
 
+  Teuchos::ParameterList 
+  p_; 
+ 
   Teuchos::RCP<Albany::Application>
   app_;
 

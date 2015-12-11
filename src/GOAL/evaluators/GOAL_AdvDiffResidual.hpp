@@ -40,7 +40,7 @@ class AdvDiffResidual :
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     double k;
-    double a[3];
+    Teuchos::Array<double> a;
 
     int numDims;
     int numNodes;
@@ -53,7 +53,7 @@ class AdvDiffResidual :
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
     // Output
-    PHX::MDField<MeshScalarT,Cell,Node> residual;
+    PHX::MDField<ScalarT,Cell,Node> residual;
 
 };
 
