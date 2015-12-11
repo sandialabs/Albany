@@ -60,7 +60,6 @@ namespace Albany {
 		    Tpetra_MultiVector* gp);
 
 #if defined(ALBANY_EPETRA)
-    /*
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -74,7 +73,6 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dxdotdot,
 		     Epetra_MultiVector* dg_dp);
-		     */
 #endif
     
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra version
@@ -92,7 +90,6 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dpT);
 
 #if defined(ALBANY_EPETRA)
-    /*
     //! Evaluate distributed parameter derivative dg/dp
     virtual void
     evaluateDistParamDeriv(
@@ -102,7 +99,7 @@ namespace Albany {
         const Epetra_Vector& x,
         const Teuchos::Array<ParamVec>& param_array,
         const std::string& dist_param_name,
-        Epetra_MultiVector* dg_dp);*/
+        Epetra_MultiVector* dg_dp);
 #endif
 
   private:
