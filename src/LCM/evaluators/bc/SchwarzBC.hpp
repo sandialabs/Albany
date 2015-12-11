@@ -113,8 +113,8 @@ public:
 
 protected:
 
-  Teuchos::ParameterList 
-  p_; 
+  Teuchos::RCP<Teuchos::ParameterList>
+  dtk_params_; 
  
   Teuchos::RCP<Albany::Application>
   app_;

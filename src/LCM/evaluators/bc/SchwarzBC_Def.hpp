@@ -40,12 +40,13 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
     PHAL::DirichletBase<EvalT, Traits>(p),
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
-    p_(p),
     coupled_apps_(app_->getApplications()),
     coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
     coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
 {
-  //p_ = Schwarz parameterlist 
+  //p = Schwarz parameterlist 
+  //We are assuming the DTK parameter list is a sublist of the Schwarz parameter list
+  dtk_params_ = Teuchos::rcp(&(p.sublist("DataTransferKit")),false);
 
   std::string const &
   nodeset_name = this->nodeSetID;
@@ -551,16 +552,13 @@ computeBCsDTK()
 
   //Solution transfer
 
-  Teuchos::ParameterList&
-  dtk_list = p_.sublist("DataTransferKit");
-
   DataTransferKit::MapOperatorFactory
   op_factory;
 
   Teuchos::RCP<DataTransferKit::MapOperator> map_op =
       op_factory.create(coupled_vector->getMap(),
           this_vector->getMap(),
-          dtk_list);
+          *dtk_params_);
 
   // Setup the map operator. This creates the underlying linear operators.
   map_op->setup(coupled_manager.functionSpace(), this_manager.functionSpace());
