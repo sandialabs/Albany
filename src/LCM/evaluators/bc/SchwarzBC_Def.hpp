@@ -16,6 +16,7 @@
 #include "DTK_STKMeshHelpers.hpp"
 #include "DTK_STKMeshManager.hpp"
 #include "DTK_MapOperatorFactory.hpp"
+#include "Albany_OrdinarySTKFieldContainer.hpp"
 #endif
 
 //IKT, FIXME, 12/10/15: 
@@ -477,25 +478,11 @@ computeBCsDTK()
   Teuchos::RCP<stk::mesh::MetaData const> const
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
-  //Get coupled_app parameter list 
-  Teuchos::RCP<const Teuchos::ParameterList> 
-  coupled_app_params = coupled_app.getAppPL();
-
-  //Get discretization sublist from coupled_app parameter list
-  Teuchos::ParameterList 
-  coupled_disc_params = coupled_app_params->sublist("Discretization");
-  
-  //Get solution name from Discretization sublist
-  std::string coupled_solution_name =
-      coupled_disc_params.get("Exodus Solution Name", "solution");
-
   using Field = stk::mesh::Field<double>;
 
-  Field *
-  coupled_field =
-      coupled_meta_data->get_field<Field>(
-          stk::topology::NODE_RANK,
-          coupled_solution_name);
+  Albany::AbstractSTKFieldContainer::VectorFieldType*
+  coupled_field = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+                  coupled_stk_disc->getSTKMeshStruct()->getFieldContainer())->getSolutionField();
 
   stk::mesh::Selector
   coupled_stk_selector =
@@ -510,28 +497,9 @@ computeBCsDTK()
   Teuchos::RCP<stk::mesh::MetaData const>
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
 
-  //Get this_app parameter list -- this is to get the solution_name string, only needed 
-  //for error checking. 
-
-  //Get this_app parameter list 
-  Teuchos::RCP<const Teuchos::ParameterList> 
-  this_app_params = this_app.getAppPL();
-
-  //Get discretization sublist from this_app parameter list
-  Teuchos::ParameterList 
-  this_disc_params = this_app_params->sublist("Discretization");
-
-
-  //Get solution name from Discretization sublist
-  std::string this_solution_name =
-      this_disc_params.get("Exodus Solution Name", "solution");
-
-  //Error check: Exodus Solution Name should be the same for the target and source input files.
-  assert(this_solution_name == coupled_solution_name);
-
-  Field *
-  this_field = this_meta_data->
-      get_field<Field>(stk::topology::NODE_RANK, coupled_solution_name);
+  Albany::AbstractSTKFieldContainer::VectorFieldType*
+  this_field = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+                  this_stk_disc->getSTKMeshStruct()->getFieldContainer())->getSolutionField();
 
   // Get the part corresponding to this nodeset.
   std::string const &
@@ -559,12 +527,12 @@ computeBCsDTK()
   // Create a solution vector for the source.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   coupled_vector =
-      coupled_manager.createFieldMultiVector<Field>(
+      coupled_manager.createFieldMultiVector<Albany::AbstractSTKFieldContainer::VectorFieldType>(
           Teuchos::ptr(coupled_field), 1);
 
   // Create a solution vector for the target.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
-  this_vector = this_manager.createFieldMultiVector<Field>(
+  this_vector = this_manager.createFieldMultiVector<Albany::AbstractSTKFieldContainer::VectorFieldType>(
       Teuchos::ptr(this_field), 1);
 
   // Print out source mesh info.
