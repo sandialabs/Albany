@@ -18,6 +18,10 @@
 #include "DTK_MapOperatorFactory.hpp"
 #endif
 
+//IKT, FIXME, 12/10/15: 
+//SG and MP specializations are not implemented when ALBANY_DTK is ON. 
+//This may never be needed... 
+
 //#define DEBUG_LCM_SCHWARZ
 
 //
@@ -661,10 +665,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
     GO go = schwarz_bcs_global_indices[i];
     LO lo = schwarz_bcs_map->getLocalElement(go);
-    ScalarT diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
+    ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
     fT_view[lo] = diff;
   }
-
 #else
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -821,8 +824,41 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     jacT->replaceLocalValues(z_dof, matrix_indices(), matrix_entries());
     index[0] = z_dof;
     jacT->replaceLocalValues(z_dof, index(), value());
+  }
 
-    if (fill_residual == true) {
+  if (fill_residual == true) {
+
+#if defined(ALBANY_DTK)
+    Teuchos::RCP<Tpetra_MultiVector> const
+    schwarz_bcs = this->computeBCsDTK();
+
+    Teuchos::ArrayRCP<ST const>
+    schwarz_bcs_const_view = schwarz_bcs->get1dView();
+
+    Teuchos::RCP<Tpetra_Map const>
+    schwarz_bcs_map = schwarz_bcs->getMap();
+
+    Teuchos::ArrayView<const GO>
+    schwarz_bcs_global_indices = schwarz_bcs_map->getNodeElementList();
+
+    for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
+      GO go = schwarz_bcs_global_indices[i];
+      LO lo = schwarz_bcs_map->getLocalElement(go);
+      ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
+      fT_view[lo] = diff;
+    }
+#else    
+    for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    
+      auto const
+      x_dof = ns_nodes[ns_node][0];
+
+      auto const
+      y_dof = ns_nodes[ns_node][1];
+
+      auto const
+      z_dof = ns_nodes[ns_node][2];
+
       ScalarT
       x_val, y_val, z_val;
 
@@ -832,6 +868,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
       fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
     }
+#endif //ALBANY_DTK
   }
 }
 
@@ -887,6 +924,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   }
 
   for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+   
     auto const
     x_dof = ns_nodes[ns_node][0];
 
@@ -895,17 +933,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     auto const
     z_dof = ns_nodes[ns_node][2];
-
-    ScalarT
-    x_val, y_val, z_val;
-
-    this->computeBCs(ns_node, x_val, y_val, z_val);
-
-    if (fT != Teuchos::null) {
-      fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
-      fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
-      fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
-    }
 
     if (JVT != Teuchos::null) {
       Teuchos::ArrayRCP<ST>
@@ -919,18 +946,70 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         JVT_view[z_dof] = j_coeff * VxT_const_view[z_dof];
       }
     }
+  }
 
-    if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST>
-      fpT_view;
+  if (fT != Teuchos::null || fpT != Teuchos::null) {
 
-      for (auto i = 0; i < dirichlet_workset.num_cols_p; ++i) {
-        fpT_view = fpT->getDataNonConst(i);
-        fpT_view[x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
-        fpT_view[y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
-        fpT_view[z_dof] = -z_val.dx(dirichlet_workset.param_offset + i);
+#if defined(ALBANY_DTK)
+    if (fT != Teuchos::null) {
+      Teuchos::RCP<Tpetra_MultiVector> const
+      schwarz_bcs = this->computeBCsDTK();
+
+      Teuchos::ArrayRCP<ST const>
+      schwarz_bcs_const_view = schwarz_bcs->get1dView();
+
+      Teuchos::RCP<Tpetra_Map const>
+      schwarz_bcs_map = schwarz_bcs->getMap();
+
+      Teuchos::ArrayView<const GO>
+      schwarz_bcs_global_indices = schwarz_bcs_map->getNodeElementList();
+
+      for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
+        GO go = schwarz_bcs_global_indices[i];
+        LO lo = schwarz_bcs_map->getLocalElement(go);
+        ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
+        fT_view[lo] = diff;
       }
     }
+
+    if (fpT != Teuchos::null) {
+      std::cout << "WARNING: fpT requested by not set yet when ALBANY_DTK is ON!" << std::endl; 
+    }
+#else  
+    for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+
+      auto const
+      x_dof = ns_nodes[ns_node][0];
+
+      auto const
+      y_dof = ns_nodes[ns_node][1];
+
+      auto const
+      z_dof = ns_nodes[ns_node][2];
+
+      ScalarT
+      x_val, y_val, z_val;
+
+      this->computeBCs(ns_node, x_val, y_val, z_val);
+      
+      if (fT != Teuchos::null) {
+        fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
+        fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
+        fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
+      }
+      if (fpT != Teuchos::null) {
+        Teuchos::ArrayRCP<ST>
+        fpT_view;
+
+        for (auto i = 0; i < dirichlet_workset.num_cols_p; ++i) {
+          fpT_view = fpT->getDataNonConst(i);
+          fpT_view[x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
+          fpT_view[y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
+          fpT_view[z_dof] = -z_val.dx(dirichlet_workset.param_offset + i);
+        }
+      }
+    }
+#endif //ALBANY_DTK
   }
 }
 
