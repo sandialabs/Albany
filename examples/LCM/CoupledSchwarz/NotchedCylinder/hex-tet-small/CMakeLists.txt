@@ -21,17 +21,19 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials-1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials-1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
-#ifdef ALBANY_DTK
+if (ALBANY_DTK)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-dtk-0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-dtk-0.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-dtk-1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-dtk-1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-dtk-S.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-dtk-S.xml COPYONLY)
-#endif
+endif()
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (NOT ALBANY_DTK) 
 add_test(NAME CoupledSchwarz_NotchedCylinder_${testName} COMMAND "python" "runtestT.py")
+endif()
