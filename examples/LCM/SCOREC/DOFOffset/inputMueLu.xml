@@ -31,6 +31,8 @@
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="false"/>
     <Parameter name="Offset DOF Hack" type="bool" value="true"/>
+    <Parameter name="Resize Input Mesh Element Size" type="double" value=".001"/>
+    <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="3"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>

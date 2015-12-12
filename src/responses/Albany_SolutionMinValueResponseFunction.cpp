@@ -78,9 +78,7 @@ evaluateTangentT(const double alpha,
   }
 }
 
-//OG:This Epetra code could not be not tested so it is not modifiet to have min instead of max.
 #if defined(ALBANY_EPETRA)
-/*
 void
 Albany::SolutionMinValueResponseFunction::
 evaluateGradient(const double current_time,
@@ -95,6 +93,11 @@ evaluateGradient(const double current_time,
 		 Epetra_MultiVector* dg_dxdotdot,
 		 Epetra_MultiVector* dg_dp)
 {
+  //OG:This Epetra code could not be not tested so it is not modifiet to have min instead of max.
+  //amb, later: I'm uncommenting this implementation so that the Epetra executable will build but inserting an exception.
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+                             "This Epetra code has not been tested and so should be considered unimplemented.");
+#if 0
   int global_index;
   double mxv;
   computeMinValue(x, mxv, global_index);
@@ -119,7 +122,8 @@ evaluateGradient(const double current_time,
   // Evaluate dg/dp
   if (dg_dp != NULL)
     dg_dp->PutScalar(0.0);
-}*/
+#endif
+}
 #endif
 
 void
@@ -173,10 +177,9 @@ evaluateGradientT(const double current_time,
 }
 
 #if defined(ALBANY_EPETRA)
-/*
 //! Evaluate distributed parameter derivative dg/dp
 void
-Albany::SolutionMaxValueResponseFunction::
+Albany::SolutionMinValueResponseFunction::
 evaluateDistParamDeriv(
     const double current_time,
     const Epetra_Vector* xdot,
@@ -189,7 +192,7 @@ evaluateDistParamDeriv(
   if (dg_dp) {
       dg_dp->PutScalar(0.0);
   }
-}*/
+}
 #endif
 
 #if defined(ALBANY_EPETRA)
