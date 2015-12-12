@@ -44,10 +44,6 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
     coupled_app_name_(p.get<std::string>("Coupled Application", "SELF")),
     coupled_block_name_(p.get<std::string>("Coupled Block", "NONE"))
 {
-  //p = Schwarz parameterlist 
-  //We are assuming the DTK parameter list is a sublist of the Schwarz parameter list
-  dtk_params_ = Teuchos::rcp(&(p.sublist("DataTransferKit")),false);
-
   std::string const &
   nodeset_name = this->nodeSetID;
 
@@ -479,6 +475,20 @@ computeBCsDTK()
   Teuchos::RCP<stk::mesh::MetaData const> const
   coupled_meta_data = Teuchos::rcpFromRef(coupled_stk_disc->getSTKMetaData());
 
+  //Get coupled_app parameter list 
+  Teuchos::RCP<const Teuchos::ParameterList>
+  coupled_app_params = coupled_app.getAppPL();
+
+  //Get discretization sublist from coupled_app parameter list
+  Teuchos::ParameterList
+  dtk_params = coupled_app_params->sublist("DataTransferKit");
+   
+  //Get solution name from Discretization sublist
+  std::string map_name =
+  dtk_params.get("Map Type", "Consistent Interpolation");
+
+  std::cout << "DEBUG: map_name: " << map_name << std::endl; 
+
   using Field = stk::mesh::Field<double>;
 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
@@ -558,7 +568,7 @@ computeBCsDTK()
   Teuchos::RCP<DataTransferKit::MapOperator> map_op =
       op_factory.create(coupled_vector->getMap(),
           this_vector->getMap(),
-          *dtk_params_);
+          dtk_params);
 
   // Setup the map operator. This creates the underlying linear operators.
   map_op->setup(coupled_manager.functionSpace(), this_manager.functionSpace());
