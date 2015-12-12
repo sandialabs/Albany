@@ -13,9 +13,6 @@
 #include "Teuchos_TestForException.hpp"
 
 #if defined(ALBANY_DTK)
-#include "DTK_STKMeshHelpers.hpp"
-#include "DTK_STKMeshManager.hpp"
-#include "DTK_MapOperatorFactory.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #endif
 
@@ -435,7 +432,7 @@ computeBCs(
 //
 #if defined(ALBANY_DTK)
 template<typename EvalT, typename Traits>
-Teuchos::RCP<Tpetra_MultiVector>
+Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
 SchwarzBC_Base<EvalT, Traits>::
 computeBCsDTK()
 {
@@ -577,14 +574,8 @@ computeBCsDTK()
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
-  //Cast *this_vector to Tpetra_MultiVector and return.
-
- Teuchos::RCP<Tpetra_MultiVector>
-  t_vector = Teuchos::rcp_dynamic_cast<
-      Tpetra_MultiVector>(
-      this_vector, false);
-  
-  return t_vector;
+  std::cout << "DEBUG: this_vector: " << this_vector << std::endl; 
+  return this_vector;
 }
 #endif //ALBANY_DTK
 
@@ -628,21 +619,21 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
 #if defined(ALBANY_DTK)
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  Teuchos::RCP<Tpetra_MultiVector> const
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
   schwarz_bcs = this->computeBCsDTK();
+
+  std::cout << "DEBUG: schwarz_bcs: " << schwarz_bcs << std::endl; 
 
   Teuchos::ArrayRCP<ST const>
   schwarz_bcs_const_view = schwarz_bcs->get1dView();
 
-  Teuchos::RCP<Tpetra_Map const>
-  schwarz_bcs_map = schwarz_bcs->getMap();
-
-  Teuchos::ArrayView<const GO>
-  schwarz_bcs_global_indices = schwarz_bcs_map->getNodeElementList();
-
+  //IKT, 12/11/15: FIXME check types
+  Teuchos::ArrayView<const long long unsigned int>
+  schwarz_bcs_global_indices = schwarz_bcs->getMap()->getNodeElementList();
+ 
   for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
     GO go = schwarz_bcs_global_indices[i];
-    LO lo = schwarz_bcs_map->getLocalElement(go);
+    LO lo = schwarz_bcs->getMap()->getLocalElement(go);
     ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
     fT_view[lo] = diff;
   }
@@ -808,21 +799,19 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
 #if defined(ALBANY_DTK)
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-    Teuchos::RCP<Tpetra_MultiVector> const
+    Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
     schwarz_bcs = this->computeBCsDTK();
 
     Teuchos::ArrayRCP<ST const>
     schwarz_bcs_const_view = schwarz_bcs->get1dView();
 
-    Teuchos::RCP<Tpetra_Map const>
-    schwarz_bcs_map = schwarz_bcs->getMap();
-
-    Teuchos::ArrayView<const GO>
-    schwarz_bcs_global_indices = schwarz_bcs_map->getNodeElementList();
+    //IKT, 12/11/15: FIXME check types
+    Teuchos::ArrayView<const long long unsigned int>
+    schwarz_bcs_global_indices = schwarz_bcs->getMap()->getNodeElementList();
 
     for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
       GO go = schwarz_bcs_global_indices[i];
-      LO lo = schwarz_bcs_map->getLocalElement(go);
+      LO lo = schwarz_bcs->getMap()->getLocalElement(go);
       ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
       fT_view[lo] = diff;
     }
@@ -932,21 +921,19 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #if defined(ALBANY_DTK)
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
     if (fT != Teuchos::null) {
-      Teuchos::RCP<Tpetra_MultiVector> const
+      Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
       schwarz_bcs = this->computeBCsDTK();
 
       Teuchos::ArrayRCP<ST const>
       schwarz_bcs_const_view = schwarz_bcs->get1dView();
 
-      Teuchos::RCP<Tpetra_Map const>
-      schwarz_bcs_map = schwarz_bcs->getMap();
-
-      Teuchos::ArrayView<const GO>
-      schwarz_bcs_global_indices = schwarz_bcs_map->getNodeElementList();
+      //IKT, 12/11/15: FIXME check types
+      Teuchos::ArrayView<const long long unsigned int>
+      schwarz_bcs_global_indices = schwarz_bcs->getMap()->getNodeElementList();
 
       for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
         GO go = schwarz_bcs_global_indices[i];
-        LO lo = schwarz_bcs_map->getLocalElement(go);
+        LO lo = schwarz_bcs->getMap()->getLocalElement(go);
         ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
         fT_view[lo] = diff;
       }
