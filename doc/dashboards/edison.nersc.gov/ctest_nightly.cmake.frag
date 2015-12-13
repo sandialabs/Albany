@@ -208,6 +208,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Belos:BOOL=ON"
     "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
+    "-DTrilinos_ENABLE_IntrepidIntrepid2:BOOL=ON"
     "-DTrilinos_ENABLE_ML:BOOL=ON"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
@@ -265,7 +266,7 @@ if (BUILD_TRILINOS)
     #
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
-    "-DCMAKE_CXX_FLAGS:STRING=-O2"
+    "-DCMAKE_CXX_FLAGS:STRING=-O2 -DBUILD_PHALANX_FOR_ALBANY"
     "-DCMAKE_Fortran_FLAGS:STRING=-O2" 
     "-DTrilinos_ENABLE_Export_Makefiles:BOOL=ON"
     #
