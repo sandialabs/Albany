@@ -47,7 +47,7 @@ AdvDiffResidual(
 
   aMagnitude = 0.0;
   for (int i=0; i < numDims; ++i)
-    aMagnitude += a[i];
+    aMagnitude += a[i] * a[i];
   aMagnitude = std::sqrt(aMagnitude);
 
   this->setName("AdvDiffResidual"+PHX::typeAsString<EvalT>());
@@ -144,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int dim=0; dim < numDims; ++dim) {
             residual(cell, node) +=
               tau * a[dim] * wGradBF(cell, node, qp, dim) *
-              ( a[dim] * gradU(cell, qp, dim));
+              (a[dim] * gradU(cell, qp, dim));
           }
         }
       }
