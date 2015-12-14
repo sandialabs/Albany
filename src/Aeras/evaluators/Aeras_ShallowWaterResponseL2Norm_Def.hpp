@@ -121,10 +121,6 @@ evaluateFields(typename Traits::EvalData workset)
      }
    }
 
-  //Get final time from workset.  This is for setting time-dependent exact solution. 
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  const RealType final_time  = workset.current_time;
-  *out << "final time = " << final_time << std::endl; 
  
   //Calculate L2 norm squared of each component of solution
   ScalarT wm;
@@ -149,6 +145,9 @@ void Aeras::ShallowWaterResponseL2Norm<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  //Get final time from workset.  This is for setting time-dependent exact solution. 
+  const RealType final_time  = workset.current_time;
+  *out << "final time = " << final_time << std::endl; 
 #if 0
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
