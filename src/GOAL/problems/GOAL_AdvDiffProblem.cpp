@@ -34,6 +34,9 @@ GOALAdvDiffProblem::GOALAdvDiffProblem(
   Teuchos::Array<double> dummy;
   a = params->get<Teuchos::Array<double> >("Advection Vector", dummy);
 
+  // determine if supg stabilization should be used
+  useSUPG = params->get<bool>("SUPG", false);
+
   // if solving the adjoint problem, should we use an enriched basis?
   if (params->isParameter("Enrich Adjoint"))
     enrichAdjoint = params->get<bool>("Enrich Adjoint", false);
@@ -108,6 +111,7 @@ getValidProblemParameters() const
   pl->sublist("Quantity of Interest", false, "QoI used for adjoint solve");
   pl->set<Teuchos::Array<double> >("Advection Vector", dummy, "");
   pl->set<double>("Diffusivity Coefficient", 1.0, "");
+  pl->set<bool>("SUPG", false, "");
   return pl;
 }
 
