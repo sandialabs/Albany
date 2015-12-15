@@ -161,6 +161,7 @@ void AdjointResponse::evaluateResponseT(
   initializeLinearSystem();
   fillLinearSystem();
   solveLinearSystem(application, jac, z, qoi);
+  discretization->attachAdjointSolutionToMesh(*z);
   evalCtr++;
 }
 
