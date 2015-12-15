@@ -7,6 +7,7 @@
 #if !defined(LCM_CrystalPlasticityModel_hpp)
 #define LCM_CrystalPlasticityModel_hpp
 
+#include "CrystalPlasticityCore.hpp"
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -16,7 +17,6 @@
 #include <Intrepid_MiniTensor.h>
 #include "Intrepid_MiniTensor_Solvers.h"
 #include <MiniNonlinearSolver.h>
-#include "CrystalPlasticityCore.hpp"
 
 namespace LCM
 {
