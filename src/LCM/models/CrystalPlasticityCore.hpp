@@ -4,14 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_CrystalPlasticityCore_hpp)
-#define LCM_CrystalPlasticityCore_hpp
+#if !defined(CrystalPlasticityCore_hpp)
+#define CrystalPlasticityCore_hpp
 
 #include <Intrepid_MiniTensor.h>
 #include <MiniNonlinearSolver.h>
-
-namespace LCM
-{
 
 namespace CP
 {
@@ -105,8 +102,6 @@ updateSlipViaExplicitIntegration(
     Intrepid::Vector<ArgT, NumSlipT> const & shear,
     Intrepid::Vector<ArgT, NumSlipT> & slip_np1);
 
-}
-
 //! Base class for recording the dimension of a Nonlinear Solver (NLS) class, required because templates..
 class NLSDimension
 {
@@ -166,7 +161,7 @@ private:
   RealType dt_;
 };
 
-}
+} // namespace CP
 
 #include "CrystalPlasticityCore_Def.hpp"
 

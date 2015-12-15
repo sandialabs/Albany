@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
-// #include <boost/math/special_functions/fpclassify.hpp>
 #include "LocalNonlinearSolver.hpp"
 
 #include <MiniLinearSolver.h>
@@ -17,7 +16,7 @@
 #include <iostream>
 #include <Sacado_Traits.hpp>
 
-Intrepid::Index LCM::NLSDimension::DIMENSION;
+Intrepid::Index CP::NLSDimension::DIMENSION;
 
 namespace LCM
 {
@@ -616,7 +615,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
         dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
 
-        CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, EvalT>
+	CP::CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, EvalT>
         crystalPlasticityNLS(
             C_,
             slip_systems_,

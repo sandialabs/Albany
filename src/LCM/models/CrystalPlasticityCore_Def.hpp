@@ -8,7 +8,7 @@
 
 template<Intrepid::Index NumDimT, typename ArgT>
 void
-LCM::CP::confirmTensorSanity(
+CP::confirmTensorSanity(
     Intrepid::Tensor<ArgT, NumDimT> const & input,
     std::string const & message)
 {
@@ -33,7 +33,7 @@ LCM::CP::confirmTensorSanity(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
     typename ArgT>
 void
-LCM::CP::applySlipIncrement(
+CP::applySlipIncrement(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
     Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
@@ -75,7 +75,7 @@ LCM::CP::applySlipIncrement(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
     typename ArgT>
 void
-LCM::CP::updateHardness(
+CP::updateHardness(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
     Intrepid::Vector<ScalarT, NumSlipT> const & hardness_n,
@@ -120,7 +120,7 @@ LCM::CP::updateHardness(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
     typename ArgT>
 void
-LCM::CP::computeResidual(
+CP::computeResidual(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     ScalarT dt,
     Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
@@ -192,7 +192,7 @@ LCM::CP::computeResidual(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
     typename ArgT>
 void
-LCM::CP::computeStress(
+CP::computeStress(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     Intrepid::Tensor4<RealType, NumDimT> const & C,
     Intrepid::Tensor<ScalarT, NumDimT> const & F,
@@ -240,7 +240,7 @@ LCM::CP::computeStress(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename ScalarT,
     typename ArgT>
 void
-LCM::CP::updateSlipViaExplicitIntegration(
+CP::updateSlipViaExplicitIntegration(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     ScalarT dt,
     Intrepid::Vector<ScalarT, NumSlipT> const & slip_n,
@@ -264,7 +264,7 @@ LCM::CP::updateSlipViaExplicitIntegration(
 }
 
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename EvalT>
-LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::CrystalPlasticityNLS(
+CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::CrystalPlasticityNLS(
       Intrepid::Tensor4<RealType, NumDimT> const & C,
       std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
       Intrepid::Tensor<RealType, NumDimT> const & Fp_n,
@@ -285,7 +285,7 @@ LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::CrystalPlasticityNLS(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename EvalT>
 template<typename T, Intrepid::Index N>
 T
-LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::value(
+CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::value(
     Intrepid::Vector<T, N> const & x)
 {
   return Intrepid::Function_Base<
@@ -297,7 +297,7 @@ LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::value(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename EvalT>
 template<typename T, Intrepid::Index N>
 Intrepid::Vector<T, N>
-LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
+CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
     Intrepid::Vector<T, N> const & slip_np1) const
 {
   // DJL todo: Experiment with how/where these are allocated.
@@ -322,7 +322,7 @@ LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
   F_np1_peeled.set_dimension(num_dim_);
   for (int i = 0; i < num_dim_; ++i) {
     for (int j = 0; j < num_dim_; ++j) {
-      F_np1_peeled(i, j) = peel<EvalT, T, N>()(F_np1_(i, j));
+      F_np1_peeled(i, j) = LCM::peel<EvalT, T, N>()(F_np1_(i, j));
     }
   }
 
@@ -369,7 +369,7 @@ LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
 template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename EvalT>
 template<typename T, Intrepid::Index N>
 Intrepid::Tensor<T, N>
-LCM::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::hessian(
+CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::hessian(
     Intrepid::Vector<T, N> const & x)
 {
   return Intrepid::Function_Base<
