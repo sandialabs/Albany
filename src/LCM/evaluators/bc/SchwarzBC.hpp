@@ -21,6 +21,12 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
 
+#if defined(ALBANY_DTK)
+#include "DTK_STKMeshHelpers.hpp"
+#include "DTK_STKMeshManager.hpp"
+#include "DTK_MapOperatorFactory.hpp"
+#endif
+
 namespace LCM {
 
 //
@@ -47,7 +53,7 @@ public:
       ScalarT & z_val);
 
 #if defined(ALBANY_DTK)
-  Teuchos::RCP<Tpetra_MultiVector> 
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> 
   computeBCsDTK();
 #endif //ALBANY_DTK
 
@@ -113,9 +119,6 @@ public:
 
 protected:
 
-  Teuchos::ParameterList 
-  p_; 
- 
   Teuchos::RCP<Albany::Application>
   app_;
 

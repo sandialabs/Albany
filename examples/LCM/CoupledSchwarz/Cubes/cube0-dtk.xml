@@ -1,0 +1,66 @@
+<ParameterList>
+  <ParameterList name="DataTransferKit">
+    <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>
+    <ParameterList name="L2 Projection">
+      <Parameter name="Integration Order" type="int" value="2"/>
+    </ParameterList>
+    <ParameterList name="Consistent Interpolation">
+    </ParameterList>
+    <ParameterList name="Point Cloud">
+      <Parameter name="Map Type" type="string" value="Moving Least Square Reconstruction"/>
+      <Parameter name="Basis Type" type="string" value="Wu"/>
+      <Parameter name="Basis Order" type="int" value="4"/>
+      <Parameter name="Spatial Dimension" type="int" value="3"/>
+      <Parameter name="RBF Radius" type="double" value="1.0"/>
+    </ParameterList>
+    <ParameterList name="Search">
+      <Parameter name="Track Missed Range Entities" type="bool" value="true"/>
+    </ParameterList>
+  </ParameterList>
+  <!-- MODEL DECLARATION, Look in the "Problem" directory -->
+  <ParameterList name="Problem">
+    <!-- Declare your Physics (What you intend to model)! -->
+    <Parameter name="Name" type="string" value="Mechanics 3D"/>
+    <!-- Have Phalanx output a graph of the used evaluators -->
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
+    <!-- XML filename with material definitions -->
+    <Parameter name="MaterialDB Filename" type="string" value="materials0.xml"/>
+    
+    <!-- BOUNDARY CONDITIONS on node sets -->
+    <ParameterList name="Dirichlet BCs">
+
+      <Parameter name="DBC on NS nodelist_1 for DOF X"
+		 type="double" value="0.0"/>
+      
+      <Parameter name="DBC on NS nodelist_1 for DOF Y"
+		 type="double" value="0.0"/>
+      
+      <Parameter name="DBC on NS nodelist_1 for DOF Z"
+		 type="double" value="0.0"/>
+
+      <ParameterList name="DBC on NS nodelist_2 for DOF Schwarz">
+	 <Parameter name="BC Function" type="string" value="Schwarz"/>
+	 <Parameter name="Coupled Application" type="string" value="cube1-dtk.xml"/>
+	 <Parameter name="Coupled Block" type="string" value="coarse"/>
+      </ParameterList>
+
+    </ParameterList>
+    
+  </ParameterList>
+
+  <!-- MESH, done here, or input from file.
+       If the latter, the domain decomposition must
+       already be performed for parallel jobs. -->
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="Ioss"/>
+    <Parameter name="Exodus Input File Name"
+	       type="string" value="cube0.exo"/>
+    <Parameter name="Exodus Output File Name"
+	       type="string" value="cube0_out.exo"/>
+    <Parameter name="Exodus Solution Name" type="string" value="disp"/>
+    <Parameter name="Exodus Residual Name" type="string" value="resid"/>
+    <Parameter name="Separate Evaluators by Element Block"
+	       type="bool" value="true"/>
+  </ParameterList>
+  
+</ParameterList>

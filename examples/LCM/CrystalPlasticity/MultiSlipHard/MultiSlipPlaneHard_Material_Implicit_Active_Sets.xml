@@ -28,8 +28,8 @@
       </ParameterList>
 
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
+      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-20"/>
+      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-14"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
