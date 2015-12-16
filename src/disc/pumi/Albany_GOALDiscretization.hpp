@@ -52,6 +52,9 @@ class GOALDiscretization : public PUMIDiscretization
     //! Attach the solution to the APF mesh from a Tpetra vector
     void attachSolutionToMesh(Tpetra_Vector const& x);
 
+    //! Attach the solution to the APF mesh from a Tpetra vector
+    void attachAdjointSolutionToMesh(Tpetra_Vector const& x);
+
     //! Fill a solution vector from the mesh
     void fillSolutionVector(Teuchos::RCP<Tpetra_Vector>& x);
 
@@ -72,6 +75,9 @@ class GOALDiscretization : public PUMIDiscretization
     void computeNodeSets();
     //! Process APF mesh for SideSets
     void computeSideSets();
+
+    //! Create the APF adjoint field
+    void createAdjointField();
 
     //! Goal node sets
     GOALNodeSets goalNodeSets;

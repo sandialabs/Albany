@@ -1,4 +1,9 @@
 <ParameterList>
+  
+  <ParameterList name="Debug Output">
+     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+  </ParameterList>
 
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
@@ -28,7 +33,6 @@
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0, 3.87e-5, 0.0}"/>
     </ParameterList>
-
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">

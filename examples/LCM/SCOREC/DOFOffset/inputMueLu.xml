@@ -25,7 +25,7 @@
     <Parameter name="Method" type="string" value="PUMI"/>
     <Parameter name="Workset Size" type="int" value="50"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/cube/cube.dmg"/>
-    <Parameter name="PUMI Input File Name" type="string" value="../meshes/cube/cube.smb"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/cube/cube-serial.smb"/>
     <Parameter name="PUMI Output File Name" type="string" value="outMueLu.vtk"/>
     <Parameter name="Model Associations File Name" type="string" value="assoc.txt"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
@@ -182,7 +182,7 @@
                 <ParameterList name="MueLu">
                   <Parameter name="verbosity" type="string" value="high"/>
                   <Parameter name="max levels" type="int" value="10"/>
-                  <Parameter name="repartition: enable" type="bool" value="1"/>
+                  <Parameter name="repartition: enable" type="bool" value="false"/>
                   <Parameter name="repartition: min rows per proc" type="int" value="1000"/>
                   <Parameter name="sa: damping factor" type="double" value="0.5"/>
                   <Parameter name="smoother: pre or post" type="string" value="both"/>

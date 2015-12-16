@@ -131,6 +131,22 @@ void Albany::GOALDiscretization::computeSideSets()
 {
 }
 
+void Albany::GOALDiscretization::createAdjointField()
+{
+  int valueType;
+  int neq = goalMeshStruct->neq; 
+  if (neq==1)
+    valueType = apf::SCALAR;
+  else if (neq == 2 || neq == 3)
+    valueType = apf::VECTOR;
+  else {
+    assert(neq == 4 || neq == 9);
+    valueType = apf::MATRIX;
+  }
+  std::string n = std::string(APFMeshStruct::solution_name) + "_adj";
+  goalMeshStruct->createNodalField(n.c_str(), valueType);
+}
+
 void Albany::GOALDiscretization::
 attachSolutionToMesh(Tpetra_Vector const& x)
 {
@@ -139,6 +155,18 @@ attachSolutionToMesh(Tpetra_Vector const& x)
     this->setField(APFMeshStruct::solution_name, &(data[0]), false);
   else
     this->setSplitFields(solNames, solIndex, &(data[0]), false);
+}
+
+void Albany::GOALDiscretization::
+attachAdjointSolutionToMesh(Tpetra_Vector const& x)
+{
+  assert (solNames.size() == 0);
+  std::string n = std::string(APFMeshStruct::solution_name) + "_adj";
+  apf::Field* f = goalMeshStruct->getMesh()->findField(n.c_str());
+  if (!f)
+    createAdjointField();
+  Teuchos::ArrayRCP<const ST> data = x.get1dView();
+  this->setField(n.c_str(), &(data[0]), false);
 }
 
 void Albany::GOALDiscretization::

@@ -103,6 +103,9 @@ class GOALAdvDiffProblem: public Albany::AbstractProblem
     //! advection vector
     Teuchos::Array<double> a;
 
+    //! use supg stabilization
+    bool useSUPG;
+
 };
 
 }
@@ -214,6 +217,8 @@ constructEvaluators(
     p->set<std::string>("Gradient U Name", "U Gradient");
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<RCP<Albany::Application> >("Application", this->getApplication());
+    p->set<bool>("Use SUPG", useSUPG);
 
     // output
     p->set<std::string>("Residual Name", residNames[0]);
