@@ -187,12 +187,13 @@ CP::updateHardness(
       }
 
     }
-    else {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        "\n**** Error in CrystalPlasticityModel, invalid hardening law\n");
-    }
+    //TODO: Re-implement this when rateSlip is the right size
+    // else {
+    //   TEUCHOS_TEST_FOR_EXCEPTION(
+    //     true,
+    //     std::logic_error,
+    //     "\n**** Error in CrystalPlasticityModel, invalid hardening law\n");
+    // }
   }
 }
 
@@ -387,6 +388,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
   Intrepid::Tensor<T, NumDimT> S_np1;
   Intrepid::Vector<T, N> shear_np1;
   Intrepid::Vector<T, N> slip_residual;
+  Intrepid::Vector<T, N> rateSlip;
   T norm_slip_residual_;
 
   Fp_np1.set_dimension(num_dim_);
@@ -396,6 +398,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
   S_np1.set_dimension(num_dim_);
   shear_np1.set_dimension(num_slip_);
   slip_residual.set_dimension(num_slip_);
+  rateSlip.set_dimension(num_slip_);
 
   Intrepid::Tensor<T, NumDimT> F_np1_peeled;
   F_np1_peeled.set_dimension(num_dim_);
@@ -414,7 +417,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Lp_np1,
       Fp_np1);
 
-  Intrepid::Vector<T, N> rateSlip = dt_ > 0.0 ? (slip_np1 - slip_n_) / dt_ : 
+  rateSlip = dt_ > 0.0 ? (slip_np1 - slip_n_) / dt_ : 
         Intrepid::Vector<T, N>(Intrepid::ZEROS);
 
   // Compute hardness_np1
