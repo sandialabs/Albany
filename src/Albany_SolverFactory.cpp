@@ -1304,6 +1304,7 @@ Albany::SolverFactory::getValidAppParameters() const
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));;
   validPL->sublist("Problem",            false, "Problem sublist");
   validPL->sublist("Debug Output",       false, "Debug Output sublist");
+  validPL->sublist("Scaling",            false, "Jacobian/Residual Scaling sublist");
   validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist");
   validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Consistent Interpolation",    false, "DTK Consistent Interpolation sublist");
   validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Search",    false, "DTK Search sublist");
