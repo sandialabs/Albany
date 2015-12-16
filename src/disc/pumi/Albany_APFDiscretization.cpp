@@ -453,7 +453,7 @@ void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
 static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
 {
-  if (!(meshStruct->useTemperatureHack && meshStruct->solutionInitialized))
+  if (!meshStruct->useTemperatureHack)
     return;
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* t = m->findField("temp");
@@ -473,14 +473,13 @@ void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
-  saveOldTemperature(meshStruct);
   (void) time_value;
   if (solNames.size() == 0)
     this->setField(APFMeshStruct::solution_name,soln,overlapped);
   else
     this->setSplitFields(solNames,solIndex,soln,overlapped);
-
   meshStruct->solutionInitialized = true;
+  saveOldTemperature(meshStruct);
 }
 
 void Albany::APFDiscretization::writeAnySolutionToFile(
