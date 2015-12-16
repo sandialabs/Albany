@@ -449,6 +449,9 @@ computeBCsDTK()
   Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
 
+  //Check that neq is the same for this_app and coupled_app, which they should be
+  assert(this_app.getNumEquations() == coupled_app.getNumEquations());  
+  //Get number of equations from this_app 
   int neq = this_app.getNumEquations(); 
 
   //this_disc = target mesh
