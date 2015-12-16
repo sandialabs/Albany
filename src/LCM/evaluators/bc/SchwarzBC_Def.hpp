@@ -578,8 +578,12 @@ computeBCsDTK()
   // Apply the map operator. This interpolates the data from one STK field
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
+  /*std::cout << "coupled vec global length: " << coupled_vector->getGlobalLength() << std::endl; 
+  std::cout << "this vec global length: " << this_vector->getGlobalLength() << std::endl; 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  std::cout << "this_vector: " << std::endl; 
+  this_vector->describe(*out, Teuchos::VERB_EXTREME);  */
 
-  std::cout << "DEBUG: this_vector: " << this_vector << std::endl; 
   return this_vector;
 }
 #endif //ALBANY_DTK
@@ -626,22 +630,19 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
   schwarz_bcs = this->computeBCsDTK();
+  std::cout << " length of fT, xT, schwarz_bcs: " << fT->getGlobalLength() << ", " 
+            << xT->getGlobalLength() << ", " << schwarz_bcs->getGlobalLength() << std::endl; 
 
-  std::cout << "DEBUG: schwarz_bcs: " << schwarz_bcs << std::endl; 
-
-  Teuchos::ArrayRCP<ST const>
-  schwarz_bcs_const_view = schwarz_bcs->get1dView();
-
-  //IKT, 12/11/15: FIXME check types
-  Teuchos::ArrayView<const long long unsigned int>
-  schwarz_bcs_global_indices = schwarz_bcs->getMap()->getNodeElementList();
- 
-  for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
-    GO go = schwarz_bcs_global_indices[i];
-    LO lo = schwarz_bcs->getMap()->getLocalElement(go);
-    ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
-    fT_view[lo] = diff;
+  int num_local_nodes = schwarz_bcs->getLocalLength(); 
+  int neq = schwarz_bcs->getNumVectors(); 
+  for (int i=0; i<num_local_nodes; ++i) {
+    for (int j=0; j<neq; ++j) {
+      Teuchos::ArrayRCP<const ST> schwarz_bcs_const_view = schwarz_bcs->getData(j); 
+      int index = neq*i + j;
+      fT_view[index] = xT_const_view[index] - schwarz_bcs_const_view[i];  
+    }
   }
+  
 #else
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
