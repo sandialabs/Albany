@@ -449,6 +449,8 @@ computeBCsDTK()
   Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
 
+  int neq = this_app.getNumEquations(); 
+
   //this_disc = target mesh
   Teuchos::RCP<Albany::AbstractDiscretization>
   this_disc = this_app.getDiscretization();
@@ -536,12 +538,12 @@ computeBCsDTK()
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   coupled_vector =
       coupled_manager.createFieldMultiVector<Albany::AbstractSTKFieldContainer::VectorFieldType>(
-          Teuchos::ptr(coupled_field), 1);
+          Teuchos::ptr(coupled_field), neq);
 
   // Create a solution vector for the target.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   this_vector = this_manager.createFieldMultiVector<Albany::AbstractSTKFieldContainer::VectorFieldType>(
-      Teuchos::ptr(this_field), 1);
+      Teuchos::ptr(this_field), neq);
 
   // Print out source mesh info.
   Teuchos::RCP<Teuchos::Describable>
