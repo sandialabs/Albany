@@ -17,6 +17,7 @@ cmake \
  -D BUILD_SHARED_LIBS:BOOL=ON \
  -D CMAKE_BUILD_TYPE:STRING="lcm_build_type" \
  -D CMAKE_CXX_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicxx" \
+ -D CMAKE_CXX_FLAGS:STRING="-DBUILD_PHALANX_FOR_ALBANY" \
  -D CMAKE_C_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicc" \
  -D CMAKE_Fortran_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpif90" \
  -D CMAKE_INSTALL_PREFIX:PATH=lcm_install_dir \

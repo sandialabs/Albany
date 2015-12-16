@@ -29,8 +29,15 @@ struct SlipSystemStruct
   //! Schmid Tensor.
   Intrepid::Tensor<RealType, NumDimT> projector_;
 
-  //! Flow rule parameters.
-  RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_, Rd_;
+  //! Flow rule parameters
+  int flowRule;
+  RealType rateSlipReference_, exponentRate_, energyActivation_;
+
+  // hardening law parameters
+  int hardeningLaw;
+  RealType tau_critical_, H_, Rd_, resistanceSlipInitial_,
+    rateHardening_, stressSaturationInitial_, exponentSaturation_;
+
 };
 
 //! Check tensor for NaN and inf values.
@@ -58,7 +65,8 @@ template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename DataT,
 void
 updateHardness(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
+    DataT dt,
+    Intrepid::Vector<ArgT, NumSlipT> const & rateSlip,
     Intrepid::Vector<DataT, NumSlipT> const & hardness_n,
     Intrepid::Vector<ArgT, NumSlipT> & hardness_np1);
 
@@ -142,6 +150,7 @@ public:
   template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>
   Intrepid::Vector<T, N>
   gradient(Intrepid::Vector<T, N> const & slip_np1) const;
+
 
   //! Default implementation of hessian.
   template<typename T, Intrepid::Index N = Intrepid::DYNAMIC>

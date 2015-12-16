@@ -6,6 +6,23 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
+  enum FlowRule
+  {
+    POWER_LAW = 0, THERMAL_ACTIVATION = 1
+  };
+
+  enum HardeningLaw
+  {
+    EXPONENTIAL = 0, SATURATION = 1
+  };
+
+  enum TypeResidual
+  {
+    SLIP_INCREMENT = 0, SLIP_HARDENING = 1
+  };
+
+  
+
 template<Intrepid::Index NumDimT, typename ArgT>
 void
 CP::confirmTensorSanity(
@@ -77,42 +94,104 @@ template<Intrepid::Index NumDimT, Intrepid::Index NumSlipT, typename DataT,
 void
 CP::updateHardness(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid::Vector<ArgT, NumSlipT> const & slip_np1,
+    DataT dt,
+    Intrepid::Vector<ArgT, NumSlipT> const & rateSlip,
     Intrepid::Vector<DataT, NumSlipT> const & hardness_n,
     Intrepid::Vector<ArgT, NumSlipT> & hardness_np1)
 {
   DataT H, Rd;
   ArgT temp, slipEffective(0.0);
-  Intrepid::Index num_slip = slip_np1.get_dimension();
+  Intrepid::Index num_slip = rateSlip.get_dimension();
 
   for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
-	  slipEffective += fabs(slip_np1[iSlipSystem]);
+	  slipEffective += dt * fabs(rateSlip[iSlipSystem]);
   }
 
   for (int s(0); s < num_slip; ++s) {
 
-    // material parameters
-    H = slip_systems[s].H_;
-    Rd = slip_systems[s].Rd_;
+    // 
+    if (slip_systems[s].hardeningLaw == EXPONENTIAL) {
 
-    hardness_np1[s] = hardness_n[s];
+      DataT H, Rd;
+      ArgT temp, slipEffective(0.0);
+      H = slip_systems[s].H_;
+      Rd = slip_systems[s].Rd_;
 
-    // calculate additional hardening
+      hardness_np1[s] = hardness_n[s];
+
+      for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
+        slipEffective += dt * fabs(rateSlip[iSlipSystem]);
+      }
+
+      // calculate additional hardening
+      //
+      // total hardness = tauC + hardness_np1[s]
+      // TODO: tauC -> tau0. This is a bit confusing.
+      // function form is hardening minus recovery, H/Rd*(1 - exp(-Rd*eqps))
+      // for reference, another flavor is A*(1 - exp(-B/A*eqps)) where H = B and Rd = B/A
+      // if H is not specified, H = 0.0, if Rd is not specified, Rd = 0.0
+
+      hardness_np1[s] = hardness_n[s] + (H - Rd * hardness_n[s]) * slipEffective;
+
+    } 
     //
-    // total hardness = tauC + hardness_np1[s]
-    // TODO: tauC -> tau0. This is a bit confusing.
-    // function form is hardening minus recovery, H/Rd*(1 - exp(-Rd*eqps))
-    // for reference, another flavor is A*(1 - exp(-B/A*eqps)) where H = B and Rd = B/A
-    // if H is not specified, H = 0.0, if Rd is not specified, Rd = 0.0
-    if (Rd > 0.0) {
-      temp = H / Rd * (1.0 - std::exp(-Rd * slipEffective));
+    else if (slip_systems[s].hardeningLaw == SATURATION) {
+
+      DataT stressSaturationInitial, rateHardening, resistanceSlipInitial,
+        exponentSaturation, rateSlipReference;
+
+      ArgT driverHardening, stressSaturation;
+
+      Intrepid::Index num_slip = rateSlip.get_dimension();
+
+      for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
+
+          // material parameters
+        rateSlipReference = slip_systems[iSlipSystem].rateSlipReference_;
+        stressSaturationInitial = 
+          slip_systems[iSlipSystem].stressSaturationInitial_;
+        rateHardening = slip_systems[iSlipSystem].rateHardening_;
+        resistanceSlipInitial = 
+          slip_systems[iSlipSystem].resistanceSlipInitial_;
+        exponentSaturation = slip_systems[iSlipSystem].exponentSaturation_;
+
+        stressSaturation = stressSaturationInitial * std::pow(std::fabs(
+          rateSlip[iSlipSystem] / rateSlipReference), exponentSaturation);
+
+        driverHardening = 0.0;
+
+        if (exponentSaturation > 0.0){
+          for (int jSlipSystem(0); jSlipSystem < num_slip; ++jSlipSystem) {
+
+            driverHardening += 2.0 *
+                Intrepid::dotdot
+                (
+                  slip_systems[iSlipSystem].projector_,
+                  slip_systems[jSlipSystem].projector_
+                ) *
+                std::fabs(rateSlip[jSlipSystem]);
+
+          }
+        }
+        else {
+
+          driverHardening = std::fabs(rateSlip[iSlipSystem]);
+
+        }
+
+        hardness_np1[iSlipSystem] = hardness_n[iSlipSystem] +
+            dt * rateHardening *
+            (stressSaturation - hardness_n[iSlipSystem]) / 
+              (stressSaturation - resistanceSlipInitial) * driverHardening;
+
+      }
+
     }
     else {
-      temp = H * slipEffective;
-    }
-    // only evolve if hardness increases
-    if (temp > hardness_np1[s]) {
-      hardness_np1[s] = temp;
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "\n**** Error in CrystalPlasticityModel, invalid hardening law\n");
     }
   }
 }
@@ -141,10 +220,10 @@ CP::computeResidual(
 
     // Material properties
     tauC = slip_systems[s].tau_critical_;
-    m = slip_systems[s].gamma_exp_;
+    m = slip_systems[s].exponentRate_;
     //one_over_m = 1.0/m;
 
-    g0 = slip_systems[s].gamma_dot_0_;
+    g0 = slip_systems[s].rateSlipReference_;
 
     // The current computed value of dgamma
     dgamma_value1 = slip_np1[s] - slip_n[s];
@@ -255,8 +334,8 @@ CP::updateSlipViaExplicitIntegration(
   for (int s(0); s < num_slip; ++s) {
 
     tauC = slip_systems[s].tau_critical_;
-    m = slip_systems[s].gamma_exp_;
-    g0 = slip_systems[s].gamma_dot_0_;
+    m = slip_systems[s].exponentRate_;
+    g0 = slip_systems[s].rateSlipReference_;
 
     temp = shear[s] / (tauC + hardness[s]);
     slip_np1[s] = slip_n[s] + dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
@@ -335,10 +414,14 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Lp_np1,
       Fp_np1);
 
+  Intrepid::Vector<T, N> rateSlip = dt_ > 0.0 ? (slip_np1 - slip_n_) / dt_ : 
+        Intrepid::Vector<T, N>(Intrepid::ZEROS);
+
   // Compute hardness_np1
   CP::updateHardness<NumDimT, NumSlipT>(
       slip_systems_,
-      slip_np1,
+      dt_,
+      rateSlip,
       hardness_n_,
       hardness_np1);
 
