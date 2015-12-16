@@ -18,6 +18,12 @@
       <Parameter name="Track Missed Range Entities" type="bool" value="true"/>
     </ParameterList>
   </ParameterList>
+  <!--ParameterList name="Debug Output">
+    <Parameter name="Write Solution to MatrixMarket"
+	       type="bool" value="true"/>
+    <Parameter name="Write Solution to Standard Output"
+	       type="bool" value="true"/>
+  </ParameterList-->
   <ParameterList name="Problem">
     <!-- Declare your Physics (What you intend to model)! -->
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
