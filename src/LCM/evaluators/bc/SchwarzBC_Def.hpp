@@ -654,7 +654,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_dof[ns_node][2];
 
-    int dof = x_dof % 3; 
+    int dof = x_dof/3; 
+    
+    std::cout << "ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
+              << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
+              << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << std::endl; 
 
     fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
     fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
