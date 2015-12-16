@@ -3,13 +3,6 @@
     <Parameter name="Model XML Files" type="Array(string)"
 	       value="{cube0.xml, cube1.xml}"/>
   </ParameterList>
-  <ParameterList name="Debug Output">
-    <Parameter name="Write Solution to MatrixMarket"
-	       type="bool" value="true"/>
-    <Parameter name="Write Solution to Standard Output"
-	       type="bool" value="true"/>
-  </ParameterList>
-
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
     <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->

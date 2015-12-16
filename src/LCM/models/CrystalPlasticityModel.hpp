@@ -92,7 +92,7 @@ public:
       ///
       /// Crystal elasticity parameters
       ///
-      RealType c11_, c12_, c44_;
+      RealType c11_, c12_, c44_, ctest_;
       Intrepid::Tensor4<RealType, CP::MAX_NUM_DIM> C_;
       Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> orientation_;
 
@@ -104,9 +104,15 @@ public:
       ///
       /// Crystal Plasticity parameters
       ///
-      std::vector< CP::SlipSystemStruct<CP::MAX_NUM_DIM,CP::MAX_NUM_SLIP> > slip_systems_;
+      RealType rateSlipReference_, exponentRate_, energyActivation_, H_, Rd_, tau_critical_,
+        resistanceSlipInitial_, rateHardening_, stressSaturationInitial_,
+        exponentSaturation_;
+      std::vector< CP::SlipSystemStruct<CP::MAX_NUM_DIM,CP::MAX_NUM_SLIP> > 
+      slip_systems_;
 
       IntegrationScheme integration_scheme_;
+      FlowRule flowRule_;
+      HardeningLaw hardeningLaw_;
       RealType implicit_nonlinear_solver_relative_tolerance_;
       RealType implicit_nonlinear_solver_absolute_tolerance_;
       int implicit_nonlinear_solver_max_iterations_;
