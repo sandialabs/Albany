@@ -5,6 +5,9 @@
     <Parameter name="Write Solution to Standard Output"
 	       type="bool" value="true"/>
   </ParameterList-->
+  <ParameterList name="Scaling">
+    <Parameter name="Scale" type="double" value="1e9"/>
+  </ParameterList>
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
     <!-- Declare your Physics (What you intend to model)! -->
