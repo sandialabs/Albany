@@ -633,16 +633,34 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::cout << " length of fT, xT, schwarz_bcs: " << fT->getGlobalLength() << ", " 
             << xT->getGlobalLength() << ", " << schwarz_bcs->getGlobalLength() << std::endl; 
 
-  int num_local_nodes = schwarz_bcs->getLocalLength(); 
-  int neq = schwarz_bcs->getNumVectors(); 
-  for (int i=0; i<num_local_nodes; ++i) {
-    for (int j=0; j<neq; ++j) {
-      Teuchos::ArrayRCP<const ST> schwarz_bcs_const_view = schwarz_bcs->getData(j); 
-      int index = neq*i + j;
-      fT_view[index] = xT_const_view[index] - schwarz_bcs_const_view[i];  
-    }
-  }
   
+  Teuchos::ArrayRCP<const ST> 
+  schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
+
+  Teuchos::ArrayRCP<const ST> 
+  schwarz_bcs_const_view_y = schwarz_bcs->getData(1); 
+
+  Teuchos::ArrayRCP<const ST> 
+  schwarz_bcs_const_view_z = schwarz_bcs->getData(2); 
+
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+
+    auto const
+    x_dof = ns_dof[ns_node][0];
+
+    auto const
+    y_dof = ns_dof[ns_node][1];
+
+    auto const
+    z_dof = ns_dof[ns_node][2];
+
+    int dof = x_dof % 3; 
+
+    fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
+    fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
+    fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
+
+  } 
 #else
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
