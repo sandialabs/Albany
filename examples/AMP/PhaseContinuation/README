@@ -1,0 +1,28 @@
+=====================================
+
+INSTRUCTIONS TO TEST MESH ADAPTATION
+
+=====================================
+
+1) Run case without mesh adaptation:
+   /Albany/build/src/AlbanyT input.xml
+
+2) Open paraview and save data points all time steps.
+   Name file "temperature.cvs"
+
+3) Run case with mesh adaptation every 4 time steps:
+   /Albany/build/src/AlbanyT input4.xml
+
+4) Open paraview and save data points all time steps.
+   Name file "temperatureAdapt4.csv"
+
+5) Open matlab and run: plotMaxTemp
+
+=====================================
+
+If everything is correct then the maximum temperature without
+mesh adaptation and with mesh adaptation should converge to the
+same value.
+
+
+
