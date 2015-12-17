@@ -1202,7 +1202,7 @@ evaluateFields(typename Traits::EvalData workset)
 					lam = lambda_nodal(cell, node),
 					th = theta_nodal(cell, node);
 
-					const MeshScalarT
+					const ScalarT
 					k11 = -sin(lam),
 					k12 = -sin(th)*cos(lam),
 					k21 =  cos(lam),
@@ -1224,7 +1224,7 @@ evaluateFields(typename Traits::EvalData workset)
 					lam = lambda_nodal(cell, node),
 					th = theta_nodal(cell, node);
 
-					const MeshScalarT
+					const ScalarT
 					k11 = -sin(lam),
 					k12 = -sin(th)*cos(lam),
 					k21 =  cos(lam),
@@ -1302,7 +1302,7 @@ evaluateFields(typename Traits::EvalData workset)
 								//     cos L    -sin T sin L
 								//     0         cos T
 								//K^{-1} = K^T
-								const MeshScalarT
+								const ScalarT
 								k11 = -sin(lam),
 								k12 = -sin(th)*cos(lam),
 								k21 =  cos(lam),
@@ -1380,7 +1380,7 @@ evaluateFields(typename Traits::EvalData workset)
 								//     cos L    -sin T sin L
 						//     0         cos T
 						//K^{-1} = K^T
-						const MeshScalarT
+						const ScalarT
 						k11 = -sin(lam),
 						k12 = -sin(th)*cos(lam),
 						k21 =  cos(lam),
