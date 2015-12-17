@@ -21,7 +21,7 @@
 //This may never be needed... 
 
 //#define DEBUG_LCM_SCHWARZ
-#define DEBUG_LCM_SCHWARZ_DTK
+//#define DEBUG_LCM_SCHWARZ_DTK
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
@@ -244,7 +244,7 @@ computeBCs(
 
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
   if (ns_node == 0) { 
-    *out << "coupled_solution: \n" << std::endl; 
+    *out << "coupled_solution: \n"; 
     coupled_solution->describe(*out, Teuchos::VERB_EXTREME);  
   }
 #endif 
@@ -506,7 +506,7 @@ computeBCsDTK()
   dtk_params.get("Map Type", "Consistent Interpolation");
 
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
-  *out << "DEBUG: map_name: " << map_name << std::endl;
+  *out << "DEBUG: map_name: " << map_name << "\n";
 #endif  
 
   using Field = stk::mesh::Field<double>;
@@ -570,16 +570,16 @@ computeBCsDTK()
   // Print out source mesh info.
   Teuchos::RCP<Teuchos::Describable>
   coupled_describe = coupled_manager.functionSpace()->entitySet();
-  std::cout << "Source Mesh" << std::endl;
+  std::cout << "Source Mesh \n";
   coupled_describe->describe(std::cout);
-  std::cout << std::endl;
+  std::cout << "\n";
 
   // Print out target mesh info.
   Teuchos::RCP<Teuchos::Describable>
   this_describe = this_manager.functionSpace()->entitySet();
-  std::cout << "Target Mesh" << std::endl;
+  std::cout << "Target Mesh \n";
   this_describe->describe(std::cout);
-  std::cout << std::endl;
+  std::cout << "\n";
 #endif
 
   //Solution transfer
@@ -725,6 +725,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   } // node in node set loop
 #endif //ALBANY_DTK
+#if defined(DEBUG_LCM_SCHWARZ_DTK)
+  *out << "fT: \n ";
+  fT->describe(*out, Teuchos::VERB_EXTREME);
+#endif
   return;
 }
 
@@ -932,6 +936,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 #endif //ALBANY_DTK
   }
+#if defined(DEBUG_LCM_SCHWARZ_DTK)
+  if (fill_residual == true) {
+    *out << "fT: \n ";
+    fT->describe(*out, Teuchos::VERB_EXTREME);
+  }
+#endif
 }
 
 //
@@ -1063,7 +1073,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     } 
 
     if (fpT != Teuchos::null) {
-      std::cout << "WARNING: fpT requested by not set yet when ALBANY_DTK is ON!" << std::endl; 
+      std::cout << "WARNING: fpT requested by not set yet when ALBANY_DTK is ON! \n"; 
     }
 #else  
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
@@ -1101,6 +1111,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 #endif //ALBANY_DTK
   }
+#if defined(DEBUG_LCM_SCHWARZ_DTK)
+  if (fT != Teuchos::null) {
+    *out << "fT: \n ";
+    fT->describe(*out, Teuchos::VERB_EXTREME);
+  }
+#endif
+  return;
 }
 
 //
