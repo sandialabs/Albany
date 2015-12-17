@@ -826,23 +826,41 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   if (fill_residual == true) {
 
 #if defined(ALBANY_DTK)
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+    std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
     Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
+    
     schwarz_bcs = this->computeBCsDTK();
+  
+    Teuchos::ArrayRCP<const ST> 
+    schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
 
-    Teuchos::ArrayRCP<ST const>
-    schwarz_bcs_const_view = schwarz_bcs->get1dView();
+    Teuchos::ArrayRCP<const ST> 
+    schwarz_bcs_const_view_y = schwarz_bcs->getData(1); 
 
-    //IKT, 12/11/15: FIXME check types
-    Teuchos::ArrayView<const long long unsigned int>
-    schwarz_bcs_global_indices = schwarz_bcs->getMap()->getNodeElementList();
+    Teuchos::ArrayRCP<const ST> 
+    schwarz_bcs_const_view_z = schwarz_bcs->getData(2); 
 
-    for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
-      GO go = schwarz_bcs_global_indices[i];
-      LO lo = schwarz_bcs->getMap()->getLocalElement(go);
-      ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
-      fT_view[lo] = diff;
-    }
+    for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+
+      auto const
+      x_dof = ns_nodes[ns_node][0];
+
+      auto const
+      y_dof = ns_nodes[ns_node][1];
+
+      auto const
+      z_dof = ns_nodes[ns_node][2];
+
+      int dof = x_dof/3; 
+    
+      std::cout << "ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
+                << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
+                << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << std::endl; 
+
+      fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
+      fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
+      fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
+    } 
 #else    
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
     
@@ -952,20 +970,37 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
       schwarz_bcs = this->computeBCsDTK();
 
-      Teuchos::ArrayRCP<ST const>
-      schwarz_bcs_const_view = schwarz_bcs->get1dView();
+      Teuchos::ArrayRCP<const ST> 
+      schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
 
-      //IKT, 12/11/15: FIXME check types
-      Teuchos::ArrayView<const long long unsigned int>
-      schwarz_bcs_global_indices = schwarz_bcs->getMap()->getNodeElementList();
+      Teuchos::ArrayRCP<const ST> 
+      schwarz_bcs_const_view_y = schwarz_bcs->getData(1); 
 
-      for (auto i = 0; i < schwarz_bcs_global_indices.size(); ++i) {
-        GO go = schwarz_bcs_global_indices[i];
-        LO lo = schwarz_bcs->getMap()->getLocalElement(go);
-        ST diff = xT_const_view[lo] - schwarz_bcs_const_view[i];
-        fT_view[lo] = diff;
+      Teuchos::ArrayRCP<const ST> 
+      schwarz_bcs_const_view_z = schwarz_bcs->getData(2); 
+
+      for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+
+        auto const
+        x_dof = ns_nodes[ns_node][0];
+
+        auto const
+        y_dof = ns_nodes[ns_node][1];
+
+        auto const
+        z_dof = ns_nodes[ns_node][2];
+
+        int dof = x_dof/3; 
+    
+        std::cout << "ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
+                  << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
+                  << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << std::endl; 
+
+        fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
+        fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
+        fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
       }
-    }
+    } 
 
     if (fpT != Teuchos::null) {
       std::cout << "WARNING: fpT requested by not set yet when ALBANY_DTK is ON!" << std::endl; 
