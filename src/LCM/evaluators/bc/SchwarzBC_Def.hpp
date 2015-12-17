@@ -655,8 +655,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
+
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
   schwarz_bcs = this->computeBCsDTK();
+  
+  Teuchos::RCP<const Teuchos::Comm<int> > 
+  commT = schwarz_bcs->getMap()->getComm(); 
   
   Teuchos::ArrayRCP<const ST> 
   schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
@@ -681,9 +685,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     int dof = x_dof/3; 
     
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
-    std::cout << "ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
+    std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
+              << commT->getRank() << ", " << ns_node <<  ", " 
               << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
-              << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << std::endl;
+              << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
 #endif 
 
     fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
@@ -867,6 +872,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
     
     schwarz_bcs = this->computeBCsDTK();
+     
+    Teuchos::RCP<const Teuchos::Comm<int> > 
+    commT = schwarz_bcs->getMap()->getComm(); 
   
     Teuchos::ArrayRCP<const ST> 
     schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
@@ -891,9 +899,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       int dof = x_dof/3; 
     
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
-      std::cout << "ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
+      std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
+                << commT->getRank() << ", " << ns_node <<  ", " 
                 << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
-                << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << std::endl;
+                << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
 #endif 
 
       fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
@@ -1011,8 +1020,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
     if (fT != Teuchos::null) {
+
       Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
       schwarz_bcs = this->computeBCsDTK();
+    
+      Teuchos::RCP<const Teuchos::Comm<int> > 
+      commT = schwarz_bcs->getMap()->getComm(); 
 
       Teuchos::ArrayRCP<const ST> 
       schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
@@ -1037,9 +1050,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         int dof = x_dof/3; 
     
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
-        std::cout << "ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
+        std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
+                  << commT->getRank() << ", " << ns_node <<  ", " 
                   << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
-                  << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << std::endl;
+                  << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
 #endif 
 
         fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
