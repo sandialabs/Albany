@@ -242,6 +242,13 @@ computeBCs(
   Teuchos::RCP<Tpetra_Vector const>
   coupled_solution = coupled_stk_disc->getSolutionFieldT();
 
+#if defined(DEBUG_LCM_SCHWARZ_DTK)
+  if (ns_node == 0) { 
+    *out << "coupled_solution: \n" << std::endl; 
+    coupled_solution->describe(*out, Teuchos::VERB_EXTREME);  
+  }
+#endif 
+ 
   Teuchos::ArrayRCP<ST const>
   coupled_solution_view = coupled_solution->get1dView();
 
@@ -592,6 +599,13 @@ computeBCsDTK()
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
+#if defined(DEBUG_LCM_SCHWARZ_DTK)
+  *out << "coupled_vector: \n ";
+  coupled_vector->describe(*out, Teuchos::VERB_EXTREME);
+  *out << "this_vector: \n ";
+  this_vector->describe(*out, Teuchos::VERB_EXTREME);
+#endif
+
   return this_vector;
 }
 #endif //ALBANY_DTK
@@ -693,6 +707,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     auto const
     z_dof = ns_dof[ns_node][2];
+
+#if defined(DEBUG_LCM_SCHWARZ_DTK)
+    std::cout << "ns_node, x_dof, y_dof, z_dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
+              << x_dof << ", " << y_dof << ", " << z_dof <<  ", " << x_val 
+              << ", " << y_val << ", " << z_val << "\n";
+#endif 
 
     fT_view[x_dof] = xT_const_view[x_dof] - x_val;
     fT_view[y_dof] = xT_const_view[y_dof] - y_val;
