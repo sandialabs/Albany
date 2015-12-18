@@ -29,5 +29,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials1.xml COPYONLY)
 
 add_subdirectory(Cubes)
+add_subdirectory(ParallelCubes)
 add_subdirectory(NotchedCylinder)
 

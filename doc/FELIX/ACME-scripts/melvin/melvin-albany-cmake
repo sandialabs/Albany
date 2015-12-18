@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#To configure Albany on Titan: source this file 
+#To configure Albany on Hopper: source this file 
 
 #IK, 10/1/13
 #prior to configuring you need to load the following modules: 
@@ -18,7 +18,6 @@ cmake  \
     -D ENABLE_DEMO_PDES=OFF -D ENABLE_SG=OFF -D ENABLE_ENSEMBLE=OFF -D ENABLE_MOR=OFF -DENABLE_QCAD=OFF  -DENABLE_ASCR=OFF -D ENABLE_LCM:BOOL=OFF \
     -D ENABLE_FELIX:BOOL=ON \
     -D ENABLE_MPAS_INTERFACE=ON \
-    -D ENABLE_MPAS_EPETRA=ON \
     -D ENABLE_SLFAD:BOOL=ON \
     -D SLFAD_SIZE=8 \
     -D Albany_BUILD_STATIC_EXE:BOOL=ON \
@@ -26,4 +25,11 @@ cmake  \
     -D CMAKE_INSTALL_PREFIX:BOOL=$PWD/install \
     -D ALBANY_LIBRARIES_ONLY=ON \
     ..
+
+#
+#  Add this to avoid linking Albany executables
+#    -D ALBANY_LIBRARIES_ONLY=ON
+#
+#  For Albany runs that will Only be under MPAS-LI (ie Tet elements)
+#    -D SLFAD_SIZE=8 \
 

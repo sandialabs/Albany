@@ -25,10 +25,13 @@ set( CTEST_BUILD_NAME           "cuda-nvcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          buildAlbany)
 
 SET(PREFIX_DIR /home/gahanse)
-SET(NETCDF_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
-SET(MPI_BASE_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
+#SET(NETCDF_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
+#SET(MPI_BASE_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
+SET(NETCDF_DIR /home/gahanse/gcc-4.9.0/openmpi-1.10.1)
+SET(MPI_BASE_DIR /home/gahanse/gcc-4.9.0/openmpi-1.10.1)
 SET(INTEL_DIR /opt/intel/mkl/lib/intel64)
-SET(BOOST_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
+#SET(BOOST_DIR /home/gahanse/gcc-4.9.0/mpich-3.1.4)
+SET(BOOST_DIR /home/gahanse/gcc-4.9.0/openmpi-1.10.1)
 
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
@@ -329,11 +332,11 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
   "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
   "-DCMAKE_BUILD_TYPE:STRING=NONE"
-  "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_gh"
+  "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper_gh_ompi"
   "-DCMAKE_C_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpicc"
   "-DCMAKE_Fortran_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpifort"
   "-DCMAKE_CXX_FLAGS:STRING='-DNDEBUG'"
-  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda --expt-relaxed-constexpr -Wno-unused-local-typedefs -Wno-sign-compare -DNDEBUG'"
+  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda --expt-relaxed-constexpr -Wno-unused-local-typedefs -Wno-sign-compare -DNDEBUG -DBUILD_PHALANX_FOR_ALBANY'"
   "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
