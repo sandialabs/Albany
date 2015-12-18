@@ -30,6 +30,8 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasSphereVolumeField(){ return buildSphereVolume; }
 
     AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field; };
+    
+    AbstractSTKFieldContainer::VectorFieldType* getResidualField(){ return residual_field; };
 
 #if defined(ALBANY_EPETRA)
     void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
