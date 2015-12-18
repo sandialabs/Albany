@@ -21,7 +21,7 @@
 //This may never be needed... 
 
 //#define DEBUG_LCM_SCHWARZ
-//#define DEBUG_LCM_SCHWARZ_DTK
+#define DEBUG_LCM_SCHWARZ_DTK
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
@@ -450,6 +450,9 @@ computeBCsDTK()
   Teuchos::RCP<Teuchos::FancyOStream> 
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
 
+  Teuchos::RCP<Teuchos::FancyOStream> 
+  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif //DEBUG_LCM_SCHWARZ_DTK
@@ -601,9 +604,9 @@ computeBCsDTK()
 
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
   *out << "coupled_vector: \n ";
-  coupled_vector->describe(*out, Teuchos::VERB_EXTREME);
+  coupled_vector->describe(*outc, Teuchos::VERB_EXTREME);
   *out << "this_vector: \n ";
-  this_vector->describe(*out, Teuchos::VERB_EXTREME);
+  this_vector->describe(*outc, Teuchos::VERB_EXTREME);
 #endif
 
   return this_vector;
@@ -630,6 +633,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Teuchos::FancyOStream> 
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
+  
+  Teuchos::RCP<Teuchos::FancyOStream> 
+  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   // Solution
   Teuchos::RCP<const Tpetra_Vector>
@@ -727,7 +733,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #endif //ALBANY_DTK
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
   *out << "fT: \n ";
-  fT->describe(*out, Teuchos::VERB_EXTREME);
+  fT->describe(*outc, Teuchos::VERB_EXTREME);
 #endif
   return;
 }
@@ -751,6 +757,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Teuchos::FancyOStream> 
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  Teuchos::RCP<Teuchos::FancyOStream> 
+  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   Teuchos::RCP<Tpetra_Vector>
   fT = dirichlet_workset.fT;
@@ -939,7 +948,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
   if (fill_residual == true) {
     *out << "fT: \n ";
-    fT->describe(*out, Teuchos::VERB_EXTREME);
+    fT->describe(*outc, Teuchos::VERB_EXTREME);
   }
 #endif
 }
@@ -963,6 +972,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Teuchos::FancyOStream> 
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
+  
+  Teuchos::RCP<Teuchos::FancyOStream> 
+  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   Teuchos::RCP<Tpetra_Vector>
   fT = dirichlet_workset.fT;
@@ -1114,7 +1126,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #if defined(DEBUG_LCM_SCHWARZ_DTK)
   if (fT != Teuchos::null) {
     *out << "fT: \n ";
-    fT->describe(*out, Teuchos::VERB_EXTREME);
+    fT->describe(*outc, Teuchos::VERB_EXTREME);
   }
 #endif
   return;
