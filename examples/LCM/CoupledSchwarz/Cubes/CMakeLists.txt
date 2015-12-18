@@ -26,12 +26,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 if (ALBANY_DTK)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cubes.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0-dtk.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0-dtk.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1-dtk.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1-dtk.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes-dtk.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/cubes-dtk.xml COPYONLY)
 endif()
 
 #create symlink to AlbanyT
