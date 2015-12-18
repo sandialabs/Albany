@@ -3,6 +3,7 @@
 #prior to configuring you need to load the following modules: 
 #module load boost cmake netcdf-hdf5parallel
 
+BOOST_DIR=${SEMS_BOOST_ROOT}
 
 rm -rf CMakeCache.txt CMakeFiles
 
@@ -87,9 +88,9 @@ cmake \
       -D Thyra_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Trilinos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
 \
-      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-      -D CMAKE_CXX_FLAGS:STRING="-std=c++11 -O2 -DBUILD_PHALANX_FOR_ALBANY" \
+      -D CMAKE_CXX_FLAGS:STRING="-O2  -DBUILD_PHALANX_FOR_ALBANY" \
       -D CMAKE_Fortran_FLAGS:STRING="-O2" \
       -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
 \
@@ -98,8 +99,8 @@ cmake \
       -D CMAKE_Fortran_COMPILER:FILEPATH="mpif90" \
       -DTPL_ENABLE_Pthread:BOOL=OFF \
       -DTPL_ENABLE_BinUtils:BOOL=OFF \
-      -D TPL_BLAS_LIBRARIES:STRING="sci_intel_mpi" \
-      -D TPL_LAPACK_LIBRARIES:STRING="sci_intel_mpi" \
+      -D TPL_BLAS_LIBRARIES:STRING="blas" \
+      -D TPL_LAPACK_LIBRARIES:STRING="lapack" \
 \
   -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
   -D Tpetra_INST_INT_LONG_LONG:BOOL=OFF \
