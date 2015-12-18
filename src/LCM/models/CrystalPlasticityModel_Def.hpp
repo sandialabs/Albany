@@ -665,8 +665,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           Lp_np1, 
           Fp_np1);
 
-        rateSlip = dt > 0.0 ? (slip_np1 - slip_n) / dt : 
-          Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP>(Intrepid::ZEROS);
+	if(dt > 0.0){
+	  rateSlip = (slip_np1 - slip_n) / dt;
+	}
+	else{
+	  rateSlip.fill(Intrepid::ZEROS);
+	}
 
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
@@ -778,8 +782,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           Lp_np1, 
           Fp_np1);
 
-        rateSlip = dt > 0.0 ? (slip_np1 - slip_n) / dt : 
-          Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP>(Intrepid::ZEROS);
+	if(dt > 0.0){
+	  rateSlip = (slip_np1 - slip_n) / dt;
+	}
+	else{
+	  rateSlip.fill(Intrepid::ZEROS);
+	}
 
         // Compute hardness_np1
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
