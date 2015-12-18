@@ -5,7 +5,6 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-if (ALBANY_DTK)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo
                ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.2.0
@@ -28,5 +27,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials0.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials1.xml COPYONLY)
-endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_dtk.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT_dtk.py COPYONLY)
+
+#create symlink to AlbanyT
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+# 3. Create the test with this name and standard executable
+add_test(NAME CoupledSchwarz_${testName} COMMAND "python" "runtestT_dtk.py")
 
