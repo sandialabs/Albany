@@ -63,11 +63,11 @@
 
                     <Parameter name="Gamma Dot" 
                                type="double" 
-                               value="1.0e00"/>
+                               value="1.0e0"/>
 
                     <Parameter name="Gamma Exponent" 
                                type="double" 
-                               value="5.0e01"/>
+                               value="5.0e1"/>
 
       </ParameterList>
 
