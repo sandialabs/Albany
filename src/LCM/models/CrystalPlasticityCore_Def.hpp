@@ -417,8 +417,12 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Lp_np1,
       Fp_np1);
 
-  rateSlip = dt_ > 0.0 ? (slip_np1 - slip_n_) / dt_ : 
-        Intrepid::Vector<T, N>(Intrepid::ZEROS);
+  if(dt_ > 0.0){
+    rateSlip = (slip_np1 - slip_n_) / dt_;
+  }
+  else{
+    rateSlip.fill(Intrepid::ZEROS);
+  }
 
   // Compute hardness_np1
   CP::updateHardness<NumDimT, NumSlipT>(
