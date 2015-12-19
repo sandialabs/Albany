@@ -113,25 +113,33 @@ CP::updateHardness(
     if (slip_systems[s].hardeningLaw == EXPONENTIAL) {
 
       DataT H, Rd;
-      ArgT temp, slipEffective(0.0);
+      ArgT effective_slip_n(0.0), effective_slip_increment(0.0);
       H = slip_systems[s].H_;
       Rd = slip_systems[s].Rd_;
 
       hardness_np1[s] = hardness_n[s];
 
+      // TODO: This will be slow in that it loops over all systems for each slip slip system
       for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
-        slipEffective += dt * fabs(rateSlip[iSlipSystem]);
+        effective_slip_increment += dt * fabs(rateSlip[iSlipSystem]);
       }
 
       // calculate additional hardening
       //
       // total hardness = tauC + hardness_np1[s]
-      // TODO: tauC -> tau0. This is a bit confusing.
-      // function form is hardening minus recovery, H/Rd*(1 - exp(-Rd*eqps))
-      // for reference, another flavor is A*(1 - exp(-B/A*eqps)) where H = B and Rd = B/A
+      // function form is hardening minus recovery, H/Rd*(1 - exp(-Rd*effective_slip))
+      // for reference, another flavor is A*(1 - exp(-B/A*effective_slip)) where H = B and Rd = B/A
       // if H is not specified, H = 0.0, if Rd is not specified, Rd = 0.0
-
-      hardness_np1[s] = hardness_n[s] + (H - Rd * hardness_n[s]) * slipEffective;
+ 
+      if (Rd > 0.0) {
+        //
+        effective_slip_n = -1.0/Rd * std::log(1.0 - Rd/H * hardness_n[s]);
+        hardness_np1[s] = H / Rd * (1.0 - 
+                          std::exp(-Rd * (effective_slip_n + effective_slip_increment)));  
+      }
+      else {
+        hardness_np1[s] = hardness_n[s] + H *effective_slip_increment;
+      }
 
     } 
     //
