@@ -273,6 +273,41 @@ fillStateVariableStruct(int state_var)
 }
 
 //------------------------------------------------------------------------------
+
+// declare template instantiations externally to cut down on compile time
+
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::NeohookeanModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::ParallelNeohookeanModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::CreepModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::J2Model)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::NewtonianFluidModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::CrystalPlasticityModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::AnisotropicHyperelasticDamageModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::GursonModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::GursonHMRModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::MooneyRivlinModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::RIHMRModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::J2FiberModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::AnisotropicDamageModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::ElasticDamageModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::StVenantKirchhoffModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::AAAModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::LinearElasticModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::HyperelasticDamageModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::CapExplicitModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::CapImplicitModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::DruckerPragerModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::TvergaardHutchinsonModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::AnisotropicViscoplasticModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::LinearHMCModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::J2HMCModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::LinearPiezoModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::FerroicModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::OrtizPandolfiModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::ElastoViscoplasticModel)
+PHAL_EXTERNAL_TEMPLATE_CLASS(LCM::J2MiniSolver)
+
+//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModelInterface<EvalT, Traits>::
 initializeModel(Teuchos::ParameterList* p,
