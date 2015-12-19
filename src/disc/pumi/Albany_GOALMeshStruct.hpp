@@ -31,7 +31,7 @@ class GOALMeshStruct : public PUMIMeshStruct {
 
     apf::FieldShape* getShape() {return shape;}
 
-    void changeShape(apf::FieldShape* s) {shape = s;}
+    void changeShape(apf::FieldShape* s);
 
   private:
 

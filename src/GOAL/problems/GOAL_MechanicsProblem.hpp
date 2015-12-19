@@ -187,6 +187,8 @@ constructEvaluators(
 
   // do some work to create a data layout
   int pOrder = meshSpecs.polynomialOrder;
+  if (enrichAdjoint && isAdjoint)
+    pOrder += 1;
   int qOrder = meshSpecs.cubatureDegree;
   apf::Mesh::Type type = apf::Mesh::simplexTypes[numDims];
   apf::FieldShape* shape = apf::getHierarchic(pOrder);

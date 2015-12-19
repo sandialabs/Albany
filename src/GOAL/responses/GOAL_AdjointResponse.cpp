@@ -157,11 +157,15 @@ void AdjointResponse::evaluateResponseT(
   time = currentTime;
   discretization = getDiscretization(application);
   discretization->attachSolutionToMesh(xT);
+  if (enrichAdjoint)
+    discretization->changeP(1);
   postRegistrationSetup();
   initializeLinearSystem();
   fillLinearSystem();
   solveLinearSystem(application, jac, z, qoi);
   discretization->attachAdjointSolutionToMesh(*z);
+  if (enrichAdjoint)
+    discretization->changeP(-1);
   evalCtr++;
 }
 
