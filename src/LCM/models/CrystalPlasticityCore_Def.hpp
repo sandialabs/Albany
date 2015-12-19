@@ -100,11 +100,12 @@ CP::updateHardness(
     Intrepid::Vector<ArgT, NumSlipT> & hardness_np1)
 {
   DataT H, Rd;
-  ArgT temp, slipEffective(0.0);
+  ArgT temp, effective_slip_increment(0.0);
   Intrepid::Index num_slip = rateSlip.get_dimension();
 
+  // calculate effective slip increment
   for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
-	  slipEffective += dt * fabs(rateSlip[iSlipSystem]);
+	  effective_slip_increment += dt * fabs(rateSlip[iSlipSystem]);
   }
 
   for (int s(0); s < num_slip; ++s) {
@@ -113,16 +114,11 @@ CP::updateHardness(
     if (slip_systems[s].hardeningLaw == EXPONENTIAL) {
 
       DataT H, Rd;
-      ArgT effective_slip_n(0.0), effective_slip_increment(0.0);
+      ArgT effective_slip_n(0.0);
       H = slip_systems[s].H_;
       Rd = slip_systems[s].Rd_;
 
       hardness_np1[s] = hardness_n[s];
-
-      // TODO: This will be slow in that it loops over all systems for each slip slip system
-      for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
-        effective_slip_increment += dt * fabs(rateSlip[iSlipSystem]);
-      }
 
       // calculate additional hardening
       //
