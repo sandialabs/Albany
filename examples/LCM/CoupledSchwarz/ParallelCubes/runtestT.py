@@ -23,7 +23,7 @@ tolerance = 1.0e-9;
 meanvalue = 0.00166150834953;
 
 # run AlbanyT 
-command = ["mpirun", "-np", "2", "AlbanyT", "cubes-dtk.xml"]
+command = ["./AlbanyT", "cubes.xml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

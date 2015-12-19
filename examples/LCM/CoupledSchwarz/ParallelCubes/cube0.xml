@@ -1,7 +1,4 @@
 <ParameterList>
- <ParameterList name="Scaling">
-    <Parameter name="Scale" type="double" value="1e9"/>
-  </ParameterList>
   <ParameterList name="DataTransferKit">
     <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>
     <ParameterList name="L2 Projection">
@@ -43,7 +40,7 @@
 
       <ParameterList name="DBC on NS nodelist_2 for DOF Schwarz">
 	 <Parameter name="BC Function" type="string" value="Schwarz"/>
-	 <Parameter name="Coupled Application" type="string" value="cube1-dtk.xml"/>
+	 <Parameter name="Coupled Application" type="string" value="cube1.xml"/>
 	 <Parameter name="Coupled Block" type="string" value="coarse"/>
       </ParameterList>
 
