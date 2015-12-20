@@ -21,10 +21,16 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
 endif()
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+
+IF (NOT ALBANY_64BIT_INT)
+  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+ENDIF()
+
 if (NOT ALBANY_EPETRA) 
-add_test(Aeras_${testName}_Tpetra_Spectral_np2 ${AlbanyT.exe} input_spectralT.xml) 
-add_test(Aeras_${testName}_Tpetra_Spectral_np4 ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 
+  IF (NOT ALBANY_64BIT_INT)
+    add_test(Aeras_${testName}_Tpetra_Spectral_np2 ${AlbanyT.exe} input_spectralT.xml) 
+  ENDIF()
+  add_test(Aeras_${testName}_Tpetra_Spectral_np4 ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 
 endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
