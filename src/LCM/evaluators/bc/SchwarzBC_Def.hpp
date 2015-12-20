@@ -21,7 +21,6 @@
 //This may never be needed... 
 
 //#define DEBUG_LCM_SCHWARZ
-#define DEBUG_LCM_SCHWARZ_DTK
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
@@ -242,12 +241,12 @@ computeBCs(
   Teuchos::RCP<Tpetra_Vector const>
   coupled_solution = coupled_stk_disc->getSolutionFieldT();
 
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   if (ns_node == 0) { 
     *out << "coupled_solution: \n"; 
     coupled_solution->describe(*out, Teuchos::VERB_EXTREME);  
   }
-#endif 
+#endif //DEBUG_LCM_SCHWARZ  
  
   Teuchos::ArrayRCP<ST const>
   coupled_solution_view = coupled_solution->get1dView();
@@ -453,9 +452,9 @@ computeBCsDTK()
   Teuchos::RCP<Teuchos::FancyOStream> 
   outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif //DEBUG_LCM_SCHWARZ_DTK
+#endif //DEBUG_LCM_SCHWARZ
   auto const
   this_app_index = getThisAppIndex();
 
@@ -508,9 +507,9 @@ computeBCsDTK()
   std::string map_name =
   dtk_params.get("Map Type", "Consistent Interpolation");
 
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   *out << "DEBUG: map_name: " << map_name << "\n";
-#endif  
+#endif //DEBUG_LCM_SCHWARZ  
 
   using Field = stk::mesh::Field<double>;
 
@@ -572,7 +571,7 @@ computeBCsDTK()
   this_vector = this_manager.createFieldMultiVector<Albany::AbstractSTKFieldContainer::VectorFieldType>(
       Teuchos::ptr(this_field), neq);
 
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   // Print out source mesh info.
   Teuchos::RCP<Teuchos::Describable>
   coupled_describe = coupled_manager.functionSpace()->entitySet();
@@ -586,7 +585,7 @@ computeBCsDTK()
   std::cout << "Target Mesh \n";
   this_describe->describe(std::cout);
   std::cout << "\n";
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
 
   //Solution transfer
 
@@ -605,12 +604,12 @@ computeBCsDTK()
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
 
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   *out << "coupled_vector: \n ";
   coupled_vector->describe(*outc, Teuchos::VERB_EXTREME);
   *out << "this_vector: \n ";
   this_vector->describe(*outc, Teuchos::VERB_EXTREME);
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
 
   return this_vector;
 }
@@ -661,9 +660,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ns_number_nodes = ns_dof.size();
 
 #if defined(ALBANY_DTK)
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
 
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
   schwarz_bcs = this->computeBCsDTK();
@@ -693,12 +692,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     int dof = x_dof/3; 
     
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
     std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
               << commT->getRank() << ", " << ns_node <<  ", " 
               << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
               << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
-#endif 
+#endif //DEBUG_LCM_SCHWARZ  
 
     fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
     fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
@@ -722,11 +721,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_dof[ns_node][2];
 
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
     std::cout << "ns_node, x_dof, y_dof, z_dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
               << x_dof << ", " << y_dof << ", " << z_dof <<  ", " << x_val 
               << ", " << y_val << ", " << z_val << "\n";
-#endif 
+#endif //DEBUG_LCM_SCHWARZ  
 
     fT_view[x_dof] = xT_const_view[x_dof] - x_val;
     fT_view[y_dof] = xT_const_view[y_dof] - y_val;
@@ -734,10 +733,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   } // node in node set loop
 #endif //ALBANY_DTK
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   *out << "fT: \n ";
   fT->describe(*outc, Teuchos::VERB_EXTREME);
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
   return;
 }
 
@@ -882,9 +881,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   if (fill_residual == true) {
 
 #if defined(ALBANY_DTK)
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
     *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
     Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
     
     schwarz_bcs = this->computeBCsDTK();
@@ -914,12 +913,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
       int dof = x_dof/3; 
     
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
       std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
                 << commT->getRank() << ", " << ns_node <<  ", " 
                 << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
                 << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
-#endif 
+#endif //DEBUG_LCM_SCHWARZ  
 
       fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
       fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
@@ -948,12 +947,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 #endif //ALBANY_DTK
   }
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   if (fill_residual == true) {
     *out << "fT: \n ";
     fT->describe(*outc, Teuchos::VERB_EXTREME);
   }
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
 }
 
 //
@@ -1041,9 +1040,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   if (fT != Teuchos::null || fpT != Teuchos::null) {
 
 #if defined(ALBANY_DTK)
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
     if (fT != Teuchos::null) {
 
       Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
@@ -1074,12 +1073,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
         int dof = x_dof/3; 
     
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
         std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
                   << commT->getRank() << ", " << ns_node <<  ", " 
                   << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
                   << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
-#endif 
+#endif //DEBUG_LCM_SCHWARZ  
 
         fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
         fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
@@ -1126,12 +1125,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 #endif //ALBANY_DTK
   }
-#if defined(DEBUG_LCM_SCHWARZ_DTK)
+#if defined(DEBUG_LCM_SCHWARZ)
   if (fT != Teuchos::null) {
     *out << "fT: \n ";
     fT->describe(*outc, Teuchos::VERB_EXTREME);
   }
-#endif
+#endif //DEBUG_LCM_SCHWARZ  
   return;
 }
 

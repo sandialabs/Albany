@@ -738,6 +738,13 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
+
+#ifndef ALBANY_DTK 
+    if (appComm->getSize() > 1) 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error: cannot run Coupled Schwarz problem on > 1 procs when DTK is disabled.  " 
+        <<"Rebuild Trilinos and Albany with DTK to run Coupled Schwarz in parallel." << "\n");
+#endif //ALBANY_DTK  
  
     //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input 
     //files for each model).  This makes sense I think.  
