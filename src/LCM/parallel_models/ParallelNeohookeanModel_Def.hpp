@@ -92,6 +92,7 @@ KOKKOS_INLINE_FUNCTION void
 NeohookeanKernel<EvalT, Traits>::
 operator()(int cell) const
 {
+#if !defined(ALBANY_NIGHTLY_TEST)
   ScalarT kappa;
   ScalarT mu, mubar;
   ScalarT Jm53, Jm23;
@@ -163,6 +164,7 @@ operator()(int cell) const
       }
     }
   }
+#endif
 }
 }
 

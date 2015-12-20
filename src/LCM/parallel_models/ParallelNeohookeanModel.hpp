@@ -101,6 +101,4 @@ protected:
 };
 }
 
-#include "ParallelNeohookeanModel_Def.hpp"
-
 #endif

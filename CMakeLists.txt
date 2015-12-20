@@ -861,6 +861,19 @@ ELSE()
   ENDIF()
 ENDIF()
 
+# Set option to disable compiling some code for nightly tests
+# Some code sections take so long to compile with NVCC that nightly tests are
+# timing out. This option allows disabling those sections.
+OPTION(NIGHTLY_TESTING "Flag to turn off selected code during nightly testing" OFF)
+IF (NIGHTLY_TESTING)
+  ADD_DEFINITIONS(-DALBANY_NIGHTLY_TEST)
+  MESSAGE("-- NIGHTLY_TESTING is Enabled, compiling with -DALBANY_NIGHTLY_TEST")
+  SET(ALBANY_NIGHTLY_TESTING TRUE)
+ELSE()
+  MESSAGE("-- NIGHTLY_TESTING is NOT Enabled.")
+  SET(ALBANY_NIGHTLY_TESTING FALSE)
+ENDIF()
+
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 
