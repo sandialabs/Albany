@@ -140,6 +140,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D DataTransferKit_ENABLE_DBC:BOOL=ON \
       -D DataTransferKit_ENABLE_TESTS:BOOL=ON \
       -D DataTransferKit_ENABLE_EXAMPLES:BOOL=ON \
+      -D TPL_ENABLE_MOAB:BOOL=OFF \
+      -D TPL_ENABLE_Libmesh:BOOL=OFF \
 \
       -D Trilinos_ENABLE_CXX11:BOOL=ON \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
