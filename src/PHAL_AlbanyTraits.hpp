@@ -306,21 +306,51 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name) \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>;
 
+// Define macro to declare that template instantiation is handled elsewhere (save compile time)
+// Requires cxx11
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_RESIDUAL(name) \
+  extern template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>;
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_JACOBIAN(name) \
+  extern template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits>;
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_TANGENT(name) \
+  extern template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits>;
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_DISTPARAMDERIV(name) \
+  extern template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>;
+
 #ifdef ALBANY_SG
+
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::SGResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::SGJacobian, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name) \
   template class name<PHAL::AlbanyTraits::SGTangent, PHAL::AlbanyTraits>;
+
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_SGRESIDUAL(name) \
+  extern template class name<PHAL::AlbanyTraits::SGResidual, PHAL::AlbanyTraits>;
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_SGJACOBIAN(name) \
+  extern template class name<PHAL::AlbanyTraits::SGJacobian, PHAL::AlbanyTraits>;
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_SGTANGENT(name) \
+  extern template class name<PHAL::AlbanyTraits::SGTangent, PHAL::AlbanyTraits>;
+
 #endif 
+
 #ifdef ALBANY_ENSEMBLE 
+
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name) \
   template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>;
+
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_MPRESIDUAL(name) \
+  extern template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>;
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_MPJACOBIAN(name) \
+  extern template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>;
+#define PHAL_EXTERNAL_TEMPLATE_CLASS_MPTANGENT(name) \
+  extern template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>;
+
 #endif
 
 #ifdef ALBANY_SG
@@ -336,6 +366,17 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name)
+#define PHAL_EXTERNAL_TEMPLATE_CLASS(name)            \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_RESIDUAL(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_JACOBIAN(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_TANGENT(name)          \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_SGRESIDUAL(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_SGJACOBIAN(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_SGTANGENT(name)        \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_MPRESIDUAL(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_MPJACOBIAN(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_MPTANGENT(name)
 #else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
@@ -345,6 +386,14 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name)
+#define PHAL_EXTERNAL_TEMPLATE_CLASS(name)            \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_RESIDUAL(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_JACOBIAN(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_TANGENT(name)          \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_SGRESIDUAL(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_SGJACOBIAN(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_SGTANGENT(name)
 #endif
 #else
 #ifdef ALBANY_ENSEMBLE
@@ -356,12 +405,25 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name)       \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name)
+#define PHAL_EXTERNAL_TEMPLATE_CLASS(name)            \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_RESIDUAL(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_JACOBIAN(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_TANGENT(name)          \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_DISTPARAMDERIV(name)   \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_MPRESIDUAL(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_MPJACOBIAN(name)       \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_MPTANGENT(name)
 #else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name)
+#define PHAL_EXTERNAL_TEMPLATE_CLASS(name)            \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_RESIDUAL(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_JACOBIAN(name)         \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_TANGENT(name)          \
+  PHAL_EXTERNAL_TEMPLATE_CLASS_DISTPARAMDERIV(name)
 #endif
 #endif
 

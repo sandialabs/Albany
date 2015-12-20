@@ -1,0 +1,8 @@
+MAILTO=""
+# Note: Westley runs MDT time, so start the nightly at 0000 MDT (midnight local)
+# Albany MIC Dashboard
+# Run test at 21:00 (9:00PM MDT --> 3:00 UTC, 8:00PM MST --> 3:00 UTC)
+00 21 * * * /home/gahanse/Codes/Albany/doc/dashboards/westley.srn.sandia.gov/nightly_cron_script.sh
+
+# Minicontact Dashboard
+00 00 * * * /home/gahanse/Codes/minicontact-kokkos-son/doc/dashboards/westley.srn.sandia.gov/nightly_cron_script.sh
