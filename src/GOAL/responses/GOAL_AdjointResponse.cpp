@@ -54,6 +54,9 @@ AdjointResponse::~AdjointResponse()
 
 void AdjointResponse::buildFieldManagers()
 {
+  if (enrichAdjoint)
+    for (int i=0; i < meshSpecs.size(); ++i)
+      meshSpecs[i]->polynomialOrder += 1;
   problem->isAdjoint = true;
   int physSets = meshSpecs.size();
   fm.resize(physSets);
@@ -64,6 +67,9 @@ void AdjointResponse::buildFieldManagers()
         Albany::BUILD_RESPONSE_FM, rcp(&params, false));
   }
   problem->isAdjoint = false;
+  if (enrichAdjoint)
+    for (int i=0; i < meshSpecs.size(); ++i)
+      meshSpecs[i]->polynomialOrder -= 1;
 }
 
 static RCP<Albany::GOALDiscretization> getDiscretization(
