@@ -11,19 +11,19 @@ result = 0
 ######################
 # Test 1 
 ######################
-print "test 1 - Cubes"
-name = "Cubes"
+print "test - Parallel Cubes 1 proc"
+name = "Parallel_Cubes_1"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
-tolerance = 1.0e-9; 
-meanvalue = 0.00166150834953;
+tolerance = 1.0e-8; 
+meanvalue = 0.00125303498563;
 
 # run AlbanyT 
-command = ["mpirun", "-np", "2", "AlbanyT", "cubes-dtk.xml"]
+command = ["./AlbanyT", "cubes-dtk.xml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

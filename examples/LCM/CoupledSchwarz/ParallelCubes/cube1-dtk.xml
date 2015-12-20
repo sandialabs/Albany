@@ -68,7 +68,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name"
-	       type="string" value="cube1_ns1.exo"/>
+	       type="string" value="cube1.exo"/>
     <Parameter name="Exodus Output File Name"
 	       type="string" value="cube1_out.exo"/>
     <Parameter name="Exodus Solution Name" type="string" value="disp"/>
