@@ -49,6 +49,10 @@ class GOALDiscretization : public PUMIDiscretization
     //! Get the number of DOFs per element for this element block
     int getNumNodesPerElem(int ebi);
 
+    //! Change the polynomial order by the amount p + add
+    //! Negative numbers can be used to decrease the polynomial order
+    void changeP(int add);
+
     //! Attach the solution to the APF mesh from a Tpetra vector
     void attachSolutionToMesh(Tpetra_Vector const& x);
 
@@ -77,7 +81,7 @@ class GOALDiscretization : public PUMIDiscretization
     void computeSideSets();
 
     //! Create the APF adjoint field
-    void createAdjointField();
+    void createAdjointFields();
 
     //! Goal node sets
     GOALNodeSets goalNodeSets;
@@ -89,6 +93,14 @@ class GOALDiscretization : public PUMIDiscretization
     int numOverlapVertices;
     apf::Numbering* vtxNumbering;
     apf::DynamicArray<apf::Node> vertices;
+
+    //! Solution field information
+    void setFieldInformation();
+    std::vector<std::string> goalSolutionNames;
+    std::vector<std::string> goalAdjointSolutionNames;
+    std::vector<int> goalSolutionIndices;
+    std::vector<apf::ValueType> goalSolutionTypes;
+
 };
 
 }
