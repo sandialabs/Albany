@@ -27,14 +27,21 @@ struct DynamicDataArray {
    typedef Teuchos::ArrayRCP<Teuchos::RCP<T> > type;
 };
 
+enum class LayeredMeshOrdering
+{
+  LAYER  = 0,
+  COLUMN = 1
+};
+
 template <typename T>
 struct LayeredMeshNumbering {
   T stride;
-  bool ordering; //0 for layer wise, 1 for column wise
+
+  LayeredMeshOrdering ordering;
   Teuchos::ArrayRCP<double> layers_ratio;
   T numLevels, numLayers;
 
-  LayeredMeshNumbering(const T _stride, const bool  _ordering, const Teuchos::ArrayRCP<double>& _layers_ratio){
+  LayeredMeshNumbering(const T _stride, const LayeredMeshOrdering _ordering, const Teuchos::ArrayRCP<double>& _layers_ratio){
     stride = _stride;
     ordering = _ordering;
     layers_ratio= _layers_ratio;
@@ -43,13 +50,13 @@ struct LayeredMeshNumbering {
   }
 
   T getId(const T column_id, const T level_index) const {
-      return  (ordering == 0) ?
+      return  (ordering == LayeredMeshOrdering::LAYER) ?
           column_id + level_index*stride :
           column_id * stride + level_index;
   }
 
   void getIndices(const T id, T& column_id, T& level_index) const {
-    if(ordering)  {
+    if(ordering == LayeredMeshOrdering::COLUMN)  {
       level_index = id%stride;
       column_id = id/stride;
     } else {
