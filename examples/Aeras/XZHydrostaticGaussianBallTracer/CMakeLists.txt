@@ -22,14 +22,10 @@ if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe})
 endif()
 
-IF (NOT ALBANY_64BIT_INT)
-  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
-ENDIF()
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 
 if (NOT ALBANY_EPETRA) 
-  IF (NOT ALBANY_64BIT_INT)
-    add_test(Aeras_${testName}_Tpetra_Spectral_np2 ${AlbanyT.exe} input_spectralT.xml) 
-  ENDIF()
+  add_test(Aeras_${testName}_Tpetra_Spectral_np2 ${AlbanyT.exe} input_spectralT.xml) 
   add_test(Aeras_${testName}_Tpetra_Spectral_np4 ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 
 endif()
 

@@ -136,7 +136,7 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
+              <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack2">
                   <Parameter name="Prec Type" type="string" value="RILUK"/>
@@ -149,7 +149,7 @@
                     <Parameter name="schwarz: overlap level" type="int" value="0"/>
                   </ParameterList>
                 </ParameterList>
-                <ParameterList name="MueLu-Tpetra">
+                <ParameterList name="MueLu">
                   <Parameter name="verbosity" type="string" value="high"/>
                   <Parameter name="max levels" type="int" value="10"/>
                   <Parameter name="repartition: enable" type="bool" value="false"/>
