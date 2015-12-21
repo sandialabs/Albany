@@ -397,6 +397,7 @@ constructEvaluators(
 
   if (isAdjoint) {
 
+    assert(Teuchos::nonnull(qoiParams));
     std::string qoiName = qoiParams->get<std::string>("Name","");
 
     if (qoiName == "Lp Stress")
