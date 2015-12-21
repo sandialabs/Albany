@@ -108,6 +108,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_STKUnit_tests:BOOL=ON \
       -D Trilinos_ENABLE_STKIO:BOOL=ON \
       -D Trilinos_ENABLE_STKMesh:BOOL=ON \
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
