@@ -176,7 +176,7 @@ void Albany::GOALDiscretization::changeP(int add)
   int p = goalMeshStruct->getP();
   int pnew = p+add;
   if (!PCU_Comm_Self())
-    printf(" changing mesh p from %d to %d\n", p, pnew);
+    printf(" changing solution p from %d to %d\n", p, pnew);
   apf::FieldShape* s = apf::getHierarchic(pnew);
   goalMeshStruct->changeShape(s);
   apf::Mesh* m = goalMeshStruct->getMesh();
