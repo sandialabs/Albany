@@ -22,12 +22,12 @@
 
 COORDINATES absolute 1.e-6    # min separation not calculated
 
-TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:              10 @ t11
+TIME STEPS relative 1.e-6 floor 1.0e-12     # min:               0 @ t1 max:              10 @ t11
 
 
 # No GLOBAL VARIABLES
 
-NODAL VARIABLES relative 1.e-6 floor 0.0
+NODAL VARIABLES relative 1.e-6 floor 1.0e-12
 	residual_x  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	residual_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	residual_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
@@ -35,7 +35,7 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	solution_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	solution_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
 
-ELEMENT VARIABLES relative 1.e-6 floor 0.0
+ELEMENT VARIABLES relative 1.e-6 floor 1.0e-12
 	Cauchy_Stress_1  # min:               0 @ t1,b1,e1	max:       2063.6263 @ t11,b1,e1
 	Cauchy_Stress_2  # min:               0 @ t1,b1,e1	max:       72.463173 @ t11,b1,e1
 	Cauchy_Stress_3  # min:               0 @ t1,b1,e1	max:       210.37377 @ t11,b1,e1
