@@ -186,6 +186,14 @@ namespace Albany {
       const Teuchos::RCP<shards::CellTopology>& cellType,
       const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
 
+    //! Function to create parameter list for construction of MapToPhysicalFrameSide
+    //! evaluator with standard Field names
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructMapToPhysicalFrameSideEvaluator(
+      const Teuchos::RCP<shards::CellTopology>& cellType,
+      const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature,
+      const std::string& sideSetName);
+
     //! Function to create evaluator for restriction to side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFCellToSideEvaluator(
@@ -193,6 +201,7 @@ namespace Albany {
        const std::string& sideSetName,
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& side_dof_name = "");
+
     //! Same as above, for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecCellToSideEvaluator(

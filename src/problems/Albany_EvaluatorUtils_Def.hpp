@@ -13,6 +13,7 @@
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
+#include "PHAL_MapToPhysicalFrameSide.hpp"
 #include "PHAL_ComputeBasisFunctions.hpp"
 #include "PHAL_ComputeBasisFunctionsSide.hpp"
 #include "PHAL_DOFCellToSide.hpp"
@@ -329,6 +330,30 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     // Output: X, Y at Quad Points (same name as input)
 
     return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameSideEvaluator(
+    const Teuchos::RCP<shards::CellTopology>& cellType,
+    const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature,
+    const std::string& sideSetName)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame Side"));
+
+    // Input: X, Y at vertices
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Coordinate Side QP Vector Name", "Coord Vec " + sideSetName);
+    p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<std::string>("Side Set Name", sideSetName);
+
+    // Output: X, Y at Quad Points (same name as input)
+    return rcp(new PHAL::MapToPhysicalFrameSide<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>

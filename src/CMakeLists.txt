@@ -283,6 +283,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_LoadSideSetStateField.cpp
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_MapToPhysicalFrame.cpp
+  evaluators/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_NodesToCellInterpolation.cpp
   evaluators/PHAL_NSMaterialProperty.cpp
@@ -409,6 +410,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_LoadStateField_Def.hpp
   evaluators/PHAL_MapToPhysicalFrame.hpp
   evaluators/PHAL_MapToPhysicalFrame_Def.hpp
+  evaluators/PHAL_MapToPhysicalFrameSide.hpp
+  evaluators/PHAL_MapToPhysicalFrameSide_Def.hpp
   evaluators/PHAL_Neumann.hpp
   evaluators/PHAL_Neumann_Def.hpp
   evaluators/PHAL_NodesToCellInterpolation.hpp

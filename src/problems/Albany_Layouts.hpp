@@ -96,6 +96,8 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> side_qp_scalar;
     //! Data Layout for a vector on the side quadrature points
     Teuchos::RCP<PHX::DataLayout> side_qp_vector;
+    //! Data Layout for quantity that lives at the quad points of the cell sides with dimension = cellDimension
+    Teuchos::RCP<PHX::DataLayout> side_qp_coords;
     //! Data Layout for gradient quantity that lives at the quad points of the cell sides
     Teuchos::RCP<PHX::DataLayout> side_qp_gradient;
     //! Data Layout for tensor quantity that lives at the quad points of the cell sides

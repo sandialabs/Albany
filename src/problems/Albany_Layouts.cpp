@@ -78,6 +78,7 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices, int numNodes, int n
   side_qp_scalar   = rcp(new MDALayout<Cell,Side,QuadPoint>(worksetSize,numSides,numSideQPs));
   side_qp_vector   = rcp(new MDALayout<Cell,Side,QuadPoint,VecDim>(worksetSize,numSides,numSideQPs,vecDim));
   side_qp_gradient = rcp(new MDALayout<Cell,Side,QuadPoint,Dim>(worksetSize,numSides,numSideQPs,numSideDim));
+  side_qp_coords   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim>(worksetSize,numSides,numSideQPs,numCellDim));
   side_qp_tensor   = rcp(new MDALayout<Cell,Side,QuadPoint,Dim,Dim>(worksetSize,numSides,numSideQPs,numSideDim,numSideDim));
 
   node_node_scalar = rcp(new MDALayout<Node,Dim>(worksetSize,1));
