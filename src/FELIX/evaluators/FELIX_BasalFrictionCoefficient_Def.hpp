@@ -27,7 +27,6 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
 
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
   is_hydrology         = (p.isParameter("Hydrology") ? p.get<bool>("Hydrology") : false);
@@ -154,6 +153,23 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
         std::endl << "Error in FELIX::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
   }
 
+  auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+  use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
+  if(use_stereographic_map)
+  {
+    if (is_hydrology)
+      coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
+    else
+      coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), dl->side_qp_coords);
+
+    double R = stereographicMapList->get<double>("Earth Radius", 6371);
+    x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+    y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+    R2 = std::pow(R,2);
+
+    this->addDependentField(coordVec);
+  }
+
   this->setName("BasalFrictionCoefficient"+PHX::typeAsString<EvalT>());
 }
 
@@ -191,6 +207,9 @@ postRegistrationSetup (typename Traits::SetupData d,
       this->utils.setFieldData(N,fm);
       this->utils.setFieldData(u_norm,fm);
   }
+
+  if (use_stereographic_map)
+    this->utils.setFieldData(coordVec,fm);
 }
 
 //**********************************************************************
@@ -237,6 +256,21 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
                           / std::pow( std::pow(u_norm(cell,qp),1-ff) + lambda*A*std::pow(N(cell,qp),1./power), power);
           }
         break;
+    }
+
+    // Correct the value if we are using a stereographic map
+    if (use_stereographic_map)
+    {
+      for (int cell=0; cell<workset.numCells; ++cell)
+      {
+        for (int qp=0; qp<numQPs; ++qp)
+        {
+          MeshScalarT x = coordVec(cell,qp,0) - x_0;
+          MeshScalarT y = coordVec(cell,qp,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          beta(cell,qp) *= h*h;
+        }
+      }
     }
   }
   else
@@ -286,6 +320,18 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
                                / std::pow( std::pow(u_norm(cell,side,qp),1-ff) + lambda*A*std::pow(N(cell,side,qp),1./power), power);
           }
           break;
+      }
+
+      // Correct the value if we are using a stereographic map
+      if (use_stereographic_map)
+      {
+        for (int qp=0; qp<numQPs; ++qp)
+        {
+          MeshScalarT x = coordVec(cell,side,qp,0) - x_0;
+          MeshScalarT y = coordVec(cell,side,qp,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          beta(cell,side,qp) *= h*h;
+        }
       }
     }
   }

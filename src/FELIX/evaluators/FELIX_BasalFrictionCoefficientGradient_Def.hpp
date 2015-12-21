@@ -61,6 +61,20 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(grad_beta);
 
+  auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+  use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
+  if(use_stereographic_map)
+  {
+    coordVec = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
+
+    double R = stereographicMapList->get<double>("Earth Radius", 6371);
+    x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+    y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+    R2 = std::pow(R,2);
+
+    this->addDependentField(coordVec);
+  }
+
   this->setName("BasalFrictionCoefficientGradient"+PHX::typeAsString<EvalT>());
 }
 
@@ -77,6 +91,9 @@ postRegistrationSetup (typename Traits::SetupData d,
     this->utils.setFieldData(GradBF,fm);
     this->utils.setFieldData(beta_given,fm);
   }
+
+  if (use_stereographic_map)
+    this->utils.setFieldData(coordVec,fm);
 }
 
 //**********************************************************************
@@ -124,6 +141,19 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
           }
         }
         break;
+    }
+
+    // Correct the value if we are using a stereographic map
+    if (use_stereographic_map)
+    {
+      for (int qp=0; qp<numSideQPs; ++qp)
+      {
+        MeshScalarT x = coordVec(cell,side,qp,0) - x_0;
+        MeshScalarT y = coordVec(cell,side,qp,1) - y_0;
+        MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+        for (int dim=0; dim<sideDim; ++dim)
+          grad_beta(cell,side,qp,dim) *= h*h;
+      }
     }
   }
 }

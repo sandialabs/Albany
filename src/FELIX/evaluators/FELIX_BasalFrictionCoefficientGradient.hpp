@@ -52,6 +52,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,Side,Node>                    beta_given;
   PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
+  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           grad_beta;
@@ -61,6 +62,11 @@ private:
   int numSideNodes;
   int numSideQPs;
   int sideDim;
+
+  bool use_stereographic_map;
+  double x_0;
+  double y_0;
+  double R2;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;

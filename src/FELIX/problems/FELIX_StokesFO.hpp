@@ -487,6 +487,10 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = evalUtilsBasal.constructDOFVecCellToSideEvaluator("Velocity",basalSideName,cellType,"Basal Velocity");
     fm0.template registerEvaluator<EvalT> (ev);
 
+    //---- Compute Quad Points coordinates on the side set
+    ev = evalUtilsBasal.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     //---- Restrict ice thickness from cell-based to cell-side-based
     ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,cellType);
     fm0.template registerEvaluator<EvalT> (ev);
@@ -630,11 +634,12 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     //Input
     p->set<std::string>("Sliding Velocity Side QP Variable Name", "Sliding Velocity");
-    p->set<std::string>("BF Side Variable Name", "BF "+basalSideName);
+    p->set<std::string>("BF Side Variable Name", "BF " + basalSideName);
     p->set<std::string>("Effective Pressure Side QP Variable Name", "Effective Pressure");
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec " + basalSideName);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
-    p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
 
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "Beta");
@@ -721,6 +726,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("Given Beta Variable Name", "Beta");
     p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
     // Output

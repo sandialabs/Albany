@@ -54,6 +54,7 @@ private:
   PHX::MDField<ScalarT>               beta_given_field;
   PHX::MDField<ScalarT>               u_norm;
   PHX::MDField<ScalarT>               N;
+  PHX::MDField<MeshScalarT>           coordVec;
   PHX::MDField<RealType>              BF;
 
   // Output:
@@ -62,6 +63,10 @@ private:
   std::string                     basalSideName;
 
   bool is_hydrology;
+  bool use_stereographic_map;
+  double x_0;
+  double y_0;
+  double R2;
 
   int numNodes;
   int numQPs;
