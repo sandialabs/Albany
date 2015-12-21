@@ -59,6 +59,4 @@ protected:
 
 }
 
-#include "ParallelConstitutiveModel_Def.hpp"
-
 #endif

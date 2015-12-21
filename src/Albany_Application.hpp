@@ -137,8 +137,10 @@ namespace Albany {
     //! Get initial solution dot
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
+    Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
 #endif
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotDotT() const;
 
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
@@ -704,6 +706,16 @@ namespace Albany {
     Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
       return problemParams;
     }
+    
+   //! Const access to app parameter list
+    Teuchos::RCP<const Teuchos::ParameterList> getAppPL() const {
+      return params_;
+    }
+
+    //! Access to app parameter list
+    Teuchos::RCP<Teuchos::ParameterList> getAppPL() {
+      return params_;
+    }
 
 #if defined(ALBANY_EPETRA)
     //! Accessor function to Epetra_Import the solution from other PEs for output
@@ -1026,7 +1038,10 @@ namespace Albany {
 
     //! Problem Parameters
     Teuchos::RCP<Teuchos::ParameterList> problemParams;
-
+    
+    //! App Parameters
+    Teuchos::RCP<Teuchos::ParameterList> params_;
+    
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
 
@@ -1120,6 +1135,9 @@ namespace Albany {
     //! Integer specifying whether user wants to write Jacobian and residual to Standard output (cout)
     int writeToCoutJac;
     int writeToCoutRes;
+
+    //Value to scale Jacobian/Residual by to possibly improve conditioning
+    double scale; 
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;

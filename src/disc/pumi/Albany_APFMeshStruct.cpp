@@ -126,6 +126,7 @@ void Albany::APFMeshStruct::init(
 
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
   useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
+  useDOFOffsetHack = params->get<bool>("Offset DOF Hack", false);
 
   compositeTet = false;
 
@@ -421,6 +422,9 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<bool>("QP Temperature from Nodes", false,
                      "Hack to initialize QP Temperature from Solution");
+
+  validPL->set<bool>("Offset DOF Hack", false,
+      "Offset DOF numberings to start at 2^31 - 1 to test GO types");
 
   return validPL;
 }

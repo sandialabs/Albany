@@ -51,11 +51,11 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams, const bool hasRestartSolution) {
 
-  // Called twice, with x and xdot. Different param lists are sent in.
+  // Called three times, with x, xdot, and xdotdot. Different param lists are sent in.
   icParams.validateParameters(*AAdapt::getValidInitialConditionParameters(wsEBNames), 0);
 
   // Default function is Constant, unless a Restart solution vector
-  // was used, in which case the Init COnd defaults to Restart.
+  // was used, in which case the Init Cond defaults to Restart.
   std::string name;
 
   if(!hasRestartSolution) name = icParams.get("Function", "Constant");
@@ -279,7 +279,7 @@ void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
 {
 
   Teuchos::ArrayRCP<ST> solnT_nonconstView = solnT->get1dViewNonConst();
-  // Called twice, with x and xdot. Different param lists are sent in.
+  // Called three times, with x, xdot, and xdotdot. Different param lists are sent in.
   icParams.validateParameters(*AAdapt::getValidInitialConditionParameters(wsEBNames), 0);
 
   // Default function is Constant, unless a Restart solution vector

@@ -437,6 +437,17 @@ ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
 ENDIF()
+  
+# Check if Trilinos has DTK
+LIST(FIND Trilinos_PACKAGE_LIST DataTransferKit DataTransferKit_List_ID)
+IF (DataTransferKit_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_DTK)
+  MESSAGE("-- Looking for DTK in Trilinos: Found, compiling with -DALBANY_DTK")
+    SET(ALBANY_DTK TRUE)
+  ELSE()
+    MESSAGE("-- Looking for DTK in Trilinos: NOT found.")
+    SET(ALBANY_DTK FALSE)
+ENDIF()
 
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
@@ -850,6 +861,19 @@ ELSE()
   ENDIF()
 ENDIF()
 
+# Set option to disable compiling some code for nightly tests
+# Some code sections take so long to compile with NVCC that nightly tests are
+# timing out. This option allows disabling those sections.
+OPTION(NIGHTLY_TESTING "Flag to turn off selected code during nightly testing" OFF)
+IF (NIGHTLY_TESTING)
+  ADD_DEFINITIONS(-DALBANY_NIGHTLY_TEST)
+  MESSAGE("-- NIGHTLY_TESTING is Enabled, compiling with -DALBANY_NIGHTLY_TEST")
+  SET(ALBANY_NIGHTLY_TESTING TRUE)
+ELSE()
+  MESSAGE("-- NIGHTLY_TESTING is NOT Enabled.")
+  SET(ALBANY_NIGHTLY_TESTING FALSE)
+ENDIF()
+
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 
@@ -1151,15 +1175,19 @@ IF(ALBANY_MPI)
     SET(MPINPF ${ALBANY_MPI_EXEC_NUMPROCS_FLAG})
     SET(MPIMNP ${ALBANY_MPI_EXEC_MAX_NUMPROCS})
     SET(MPIPRE ${ALBANY_MPI_LEADING_OPTIONS})
+    SET(MPIPOST ${ALBANY_MPI_TRAILING_OPTIONS})
+    SEPARATE_ARGUMENTS(MPIPRE)
+    SEPARATE_ARGUMENTS(MPIPOST)
     # For now - assume ALBANY_MPI_OPTIONS means to ONLY attempt the parallel
     # tests
     SET(ALBANY_PARALLEL_ONLY true)
-    MESSAGE("-- CTest mpi_exec call:  ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP}")
+    MESSAGE("-- CTest mpi_exec call:  ${MPIEX} ${ALBANY_MPI_LEADING_OPTIONS} ${MPINPF} ${MPIMNP} ${ALBANY_MPI_TRAILING_OPTIONS}")
   ELSE()
     SET(MPIEX  ${Trilinos_MPI_EXEC})
     SET(MPINPF ${Trilinos_MPI_EXEC_NUMPROCS_FLAG})
     SET(MPIMNP ${Trilinos_MPI_EXEC_MAX_NUMPROCS})
     SET(MPIPRE "")
+    SET(MPIPOST "")
     SET(ALBANY_PARALLEL_ONLY false)
     MESSAGE("-- CTest mpi_exec call:  ${MPIEX} ${MPINPF} ${MPIMNP}")
   ENDIF()

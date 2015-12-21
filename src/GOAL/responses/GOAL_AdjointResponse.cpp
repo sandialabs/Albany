@@ -38,12 +38,12 @@ AdjointResponse::AdjointResponse(
   time(0),
   enrichAdjoint(false),
   application(app),
+  problem(prob),
   stateManager(sm),
   meshSpecs(ms),
   params(rp)
 {
   print("Building adjoint pde instantiations");
-  problem = Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(prob);
   enrichAdjoint = problem->enrichAdjoint;
   buildFieldManagers();
 }
@@ -54,6 +54,9 @@ AdjointResponse::~AdjointResponse()
 
 void AdjointResponse::buildFieldManagers()
 {
+  if (enrichAdjoint)
+    for (int i=0; i < meshSpecs.size(); ++i)
+      meshSpecs[i]->polynomialOrder += 1;
   problem->isAdjoint = true;
   int physSets = meshSpecs.size();
   fm.resize(physSets);
@@ -64,6 +67,9 @@ void AdjointResponse::buildFieldManagers()
         Albany::BUILD_RESPONSE_FM, rcp(&params, false));
   }
   problem->isAdjoint = false;
+  if (enrichAdjoint)
+    for (int i=0; i < meshSpecs.size(); ++i)
+      meshSpecs[i]->polynomialOrder -= 1;
 }
 
 static RCP<Albany::GOALDiscretization> getDiscretization(
@@ -157,10 +163,15 @@ void AdjointResponse::evaluateResponseT(
   time = currentTime;
   discretization = getDiscretization(application);
   discretization->attachSolutionToMesh(xT);
+  if (enrichAdjoint)
+    discretization->changeP(1);
   postRegistrationSetup();
   initializeLinearSystem();
   fillLinearSystem();
   solveLinearSystem(application, jac, z, qoi);
+  discretization->attachAdjointSolutionToMesh(*z);
+  if (enrichAdjoint)
+    discretization->changeP(-1);
   evalCtr++;
 }
 

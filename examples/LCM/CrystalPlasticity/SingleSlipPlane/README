@@ -1,0 +1,22 @@
+This is a test for single slip. It is still evolving.
+
+We will revise the *Explcit* test soon. Right now it is still uniaxial stress.
+
+The *Implicit* test is now uniaxial strain and compares will with a numerical solution from Mathematica.
+
+Mathematica files:
+
+singleSlipPlane.nb - numerical solution to single slip
+singleSlipPlane.pdf - pdf of Mathematica solution
+slipsTausMath.dat - dump of the slip vs. the shear stress (intermediate configuration)
+fpCauchy11Math.dat - dump of Fp(1,1) vs. Cauchy_Stres(1,1) 
+
+Python scripts:
+
+postSingleSlipPlan.py - dumps slip, shear stress, Fp, and Cauchy stress for comparison.
+
+- the python script should probably compare quantities. Right now the norms are compared in Mathematica.
+
+More work to come....
+
+NOTE: We still need to resolve a few significant figures in the Cauchy stress.

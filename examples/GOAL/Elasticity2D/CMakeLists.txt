@@ -9,6 +9,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputP1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputP1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputP2.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputP2.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdjoint.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAdjoint.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 
@@ -21,5 +23,6 @@ IF(ENABLE_MESHMODEL)
   IF(ALBANY_IFPACK2)
     add_test(NAME ${testName}_P1 COMMAND ${AlbanyT.exe} inputP1.xml)
     add_test(NAME ${testName}_P2 COMMAND ${AlbanyT.exe} inputP2.xml)
+    add_test(NAME ${testName}_Adjoint COMMAND ${AlbanyT.exe} inputAdjoint.xml)
   ENDIF()
 ENDIF()

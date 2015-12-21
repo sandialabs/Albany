@@ -2373,32 +2373,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       //wsElNodeID[b][i].resize(nodes_per_element);
       //coords[b][i].resize(nodes_per_element);
 
-#if defined(ALBANY_EPETRA)
-/*      for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
-      {
-        Albany::IDArray& wsElNodeEqID_array = it->second.wsElNodeEqID[b];
-        GIDArray& wsElNodeID_array = it->second.wsElNodeID[b];
-        int nComp = it->first.second;
-        for (int j = 0; j < nodes_per_element; ++j)
-        {
-          const int node = node_rels[j];
-          wsElNodeID_array((int)i,j) = gid(node);
-          for (int k=0; k < nComp; k++)
-          {
-            const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(node,k);
-            const int node_lid = it->second.overlap_map->LID(
-#ifdef ALBANY_64BIT_INT
-              static_cast<long long int>(node_gid)
-#else
-              node_gid
-#endif
-              );
-            wsElNodeEqID_array((int)i,j,k) = node_lid;
-          }
-        }
-      }*/
-#endif
-
       // loop over local nodes
       for (int j = 0; j < nodes_per_element; ++j)
       {

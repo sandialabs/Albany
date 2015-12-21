@@ -8,5 +8,6 @@
 
 #include "ParallelNeohookeanModel.hpp"
 #include "ParallelNeohookeanModel_Def.hpp"
+#include "ParallelConstitutiveModel_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::ParallelNeohookeanModel)

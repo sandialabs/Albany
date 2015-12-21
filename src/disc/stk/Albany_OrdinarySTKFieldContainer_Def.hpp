@@ -39,12 +39,18 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   residual_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                                      params_->get<std::string>("Exodus Residual Name", "residual"));
 #endif
-
+#if defined(ALBANY_DTK) 
+  solution_field_dtk = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
+                                                     params_->get<std::string>("Exodus Residual Name", "solution dtk"));
+#endif
   stk::mesh::put_field(*this->coordinates_field , metaData_->universal_part(), numDim_);
   stk::mesh::put_field(*solution_field , metaData_->universal_part(), neq_);
 
 #if defined(ALBANY_LCM)
   stk::mesh::put_field(*residual_field , metaData_->universal_part() , neq_);
+#endif
+#if defined(ALBANY_DTK) 
+  stk::mesh::put_field(*solution_field_dtk , metaData_->universal_part() , neq_);
 #endif
 
 #ifdef ALBANY_SEACAS
@@ -53,7 +59,9 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 #if defined(ALBANY_LCM)
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
 #endif
-
+#if defined(ALBANY_DTK) 
+  stk::io::set_field_role(*solution_field_dtk, Ioss::Field::TRANSIENT);
+#endif
 #endif
 
 #if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)

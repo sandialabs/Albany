@@ -307,20 +307,25 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>;
 
 #ifdef ALBANY_SG
+
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::SGResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::SGJacobian, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGTANGENT(name) \
   template class name<PHAL::AlbanyTraits::SGTangent, PHAL::AlbanyTraits>;
+
 #endif 
+
 #ifdef ALBANY_ENSEMBLE 
+
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPRESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPJACOBIAN(name) \
   template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>;
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_MPTANGENT(name) \
   template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>;
+
 #endif
 
 #ifdef ALBANY_SG

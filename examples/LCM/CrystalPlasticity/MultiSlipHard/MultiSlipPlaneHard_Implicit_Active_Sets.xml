@@ -1,4 +1,10 @@
 <ParameterList>
+  <!-- Dumping Matrix Market to file
+  <ParameterList name="Debug Output">
+     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+  </ParameterList>
+  -->
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
@@ -33,13 +39,13 @@
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
   <!-- The regression test examines "Response 0", as defined above. -->
-<!--
+  <!--
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
     <Parameter  name="Test Values" type="Array(double)" value="{0.025}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-12"/>
   </ParameterList>
--->
+  -->
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
@@ -130,6 +136,7 @@
           </ParameterList>
         </ParameterList>
       </ParameterList>
+      <!--
       <ParameterList name="Line Search">
         <ParameterList name="Backtrack">
           <Parameter name="Reduction Factor" type="double" value="0.5"/>
@@ -137,6 +144,7 @@
         </ParameterList>
         <Parameter name="Method" type="string" value="Backtrack"/>
       </ParameterList>
+      -->
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
         <Parameter name="Output Precision" type="int" value="3"/>

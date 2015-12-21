@@ -19,7 +19,7 @@
 #ifndef ALBANY_MODELEVALUATORT_HPP
 #define ALBANY_MODELEVALUATORT_HPP
 
-#include "Thyra_ModelEvaluatorDefaultBase.hpp"
+#include "Piro_TransientDecorator.hpp"
 
 #include "Albany_Application.hpp"
 
@@ -27,7 +27,7 @@
 
 namespace Albany {
 
-class ModelEvaluatorT : public Thyra::ModelEvaluatorDefaultBase<ST> {
+class ModelEvaluatorT : public Piro::TransientDecorator<ST> {
 public:
 
   // Constructor
@@ -94,6 +94,9 @@ protected:
   //! Create operator form of dg/dx_dot for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dot_op_impl(int j) const;
 
+  //! Create operator form of dg/dx_dotdot for distributed responses
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dotdot_op_impl(int j) const;
+
   //! Create OutArgs
   Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;
 
@@ -144,6 +147,10 @@ private:
 
   //! Distributed parameter library
   Teuchos::RCP<DistParamLib> distParamLib;
+
+  //! Model uses time integration
+  bool isTransient;
+
 };
 
 }

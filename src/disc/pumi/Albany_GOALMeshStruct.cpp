@@ -42,3 +42,12 @@ Albany::GOALMeshStruct::createNodalField(char const* name, int valueType)
 {
   return apf::createField(this->mesh, name, valueType, shape);
 }
+
+void Albany::GOALMeshStruct::changeShape(apf::FieldShape* s)
+{
+  shape = s;
+  int p = s->getOrder();
+  polynomialOrder = p;
+  for (int ps=0; ps < meshSpecs.size(); ++ps)
+    meshSpecs[ps]->polynomialOrder = p;
+}

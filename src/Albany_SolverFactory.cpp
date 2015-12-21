@@ -9,12 +9,12 @@
 
 #include "Albany_SolverFactory.hpp"
 #if defined(ALBANY_EPETRA)
-#include "Albany_PiroObserver.hpp"
-#include "Piro_Epetra_SolverFactory.hpp"
-#include "Petra_Converters.hpp"
-#include "Albany_SaveEigenData.hpp"
-#include "Albany_ObserverFactory.hpp"
-#include "NOX_Epetra_Observer.H"
+#  include "Albany_PiroObserver.hpp"
+#  include "Piro_Epetra_SolverFactory.hpp"
+#  include "Petra_Converters.hpp"
+#  include "Albany_SaveEigenData.hpp"
+#  include "Albany_ObserverFactory.hpp"
+#  include "NOX_Epetra_Observer.H"
 #endif
 #include "Albany_PiroObserverT.hpp"
 #include "Albany_ModelFactory.hpp"
@@ -29,21 +29,24 @@
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
 #ifdef ALBANY_IFPACK2
-#include "Teuchos_AbstractFactoryStd.hpp"
-#include "Thyra_Ifpack2PreconditionerFactory.hpp"
+#  include "Teuchos_AbstractFactoryStd.hpp"
+#  include "Thyra_Ifpack2PreconditionerFactory.hpp"
 #endif /* ALBANY_IFPACK2 */
 
 #ifdef ALBANY_MUELU
-#include <Thyra_MueLuPreconditionerFactory.hpp>
-#ifdef ALBANY_USE_PUBLICTRILINOS
-#include "Stratimikos_MueluTpetraHelpers.hpp"
-#else
-#include "Stratimikos_MueLuHelpers.hpp"
-#endif
+#  ifdef ALBANY_USE_PUBLICTRILINOS
+#     include <Thyra_MueLuPreconditionerFactory.hpp>
+#     include "Stratimikos_MueluTpetraHelpers.hpp"
+#  else
+#     include "Stratimikos_MueLuHelpers.hpp"
+// Humm - ETI doesn't seem to be working. Include the def files to get things running the old fashioned way.
+#     include "Thyra_MueLuPreconditionerFactory_def.hpp"
+#     include "Thyra_XpetraLinearOp_def.hpp"
+#  endif
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
-#include "Teko_StratimikosFactory.hpp"
+#  include "Teko_StratimikosFactory.hpp"
 #endif
 
 #ifdef ALBANY_QCAD
@@ -69,9 +72,6 @@
 #ifdef ALBANY_AERAS
   #include "Aeras/Aeras_HVDecorator.hpp"
 #endif
-
-//#include "Thyra_EpetraModelEvaluator.hpp"
-//#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
@@ -318,6 +318,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
 	// LOCA auxiliary objects -- needed?
       }
+    // Piro::Epetra::SolverFactory
       return piroFactory.createSolver(piroParams, ps_model);
 
 #else /* ALBANY_QCAD */
@@ -422,6 +423,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       }
     }
 
+    // Piro::Epetra::SolverFactory
     return piroFactory.createSolver(piroParams, model);
 }
 
@@ -562,13 +564,8 @@ void renamePreconditionerParamList(
 void enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
 {
 #ifdef ALBANY_IFPACK2
-# ifdef ALBANY_64BIT_INT
   typedef Thyra::PreconditionerFactoryBase<ST> Base;
-  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
-# else
-  typedef Thyra::PreconditionerFactoryBase<double> Base;
-  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
-# endif
+  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra_CrsMatrix> Impl;
   linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
 #endif
 }
@@ -587,13 +584,7 @@ void enableMueLu(Teuchos::RCP<Albany::Application>& albanyApp,
   Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #  endif
 # else
-#  ifdef ALBANY_64BIT_INT
-  renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-  Stratimikos::enableMueLu(linearSolverBuilder);
-  Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#  else
-  Stratimikos::enableMueLu(linearSolverBuilder);
-#  endif
+  Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder);
 # endif
 #endif
 }
@@ -654,7 +645,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
         // LOCA auxiliary objects -- needed?
          }
       */
-      return piroFactory.createSolver<ST>(piroParams, ps_model);
+      // Piro::SolverFactory
+//      return piroFactory.createSolver<ST>(piroParams, ps_model);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, ps_model);
 
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
@@ -730,7 +723,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
     const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
 
-    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    // Piro::SolverFactory
+//    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, observer);
 
     }//if useExplHV=true and tau <>0.
 
@@ -741,6 +736,13 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
+
+#ifndef ALBANY_DTK 
+    if (appComm->getSize() > 1) 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error: cannot run Coupled Schwarz problem on > 1 procs when DTK is disabled.  " 
+        <<"Rebuild Trilinos and Albany with DTK to run Coupled Schwarz in parallel." << "\n");
+#endif //ALBANY_DTK  
  
     //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input 
     //files for each model).  This makes sense I think.  
@@ -768,7 +770,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
 
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
-    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
+    // Piro::SolverFactory
+//    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
+    return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, coupled_model_with_solveT, observer);
   }
 #endif /* LCM and Schwarz */
 
@@ -788,6 +792,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 	*out << "Error: cannot locate Stratimikos solver parameters in the input file." << std::endl;
     *out << "Printing the Piro parameter list:" << std::endl;
     piroParams->print(*out);
+// GAH: this is an error - should be fatal
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error: cannot locate Stratimikos solver parameters in the input file." << "\n");
   }
 
 
@@ -818,12 +825,16 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     Piro::AdaptiveSolverFactory piroFactory;
     if(TpetraBuild){
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+      // Piro::AdaptiveSolverFactory
+//      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, solMgrT, observer);
     }
 #if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+      // Piro::AdaptiveSolverFactory 
+//      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, solMgrT, observer);
     }
 #endif
   }
@@ -831,12 +842,16 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     Piro::SolverFactory piroFactory;
     if(TpetraBuild){
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+      // Piro::SolverFactory 
+//      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, observer);
     }
 #if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+      // Piro::SolverFactory 
+//      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, observer);
     }
 #endif
   }
@@ -1304,6 +1319,12 @@ Albany::SolverFactory::getValidAppParameters() const
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));;
   validPL->sublist("Problem",            false, "Problem sublist");
   validPL->sublist("Debug Output",       false, "Debug Output sublist");
+  validPL->sublist("Scaling",            false, "Jacobian/Residual Scaling sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Consistent Interpolation",    false, "DTK Consistent Interpolation sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Search",    false, "DTK Search sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("L2 Projection",    false, "DTK L2 Projection sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Point Cloud",    false, "DTK Point Cloud sublist");
   validPL->sublist("Discretization",     false, "Discretization sublist");
   validPL->sublist("Quadrature",         false, "Quadrature sublist");
   validPL->sublist("Regression Results", false, "Regression Results sublist");

@@ -395,10 +395,10 @@ namespace Aeras
       return stkMeshStruct->hasRestartSolution();
     }
 
-    //! STK supports MOR
+    //! Spectral supports MOR
     virtual bool supportsMOR() const
     {
-      return true;
+      return false;
     }
 
     //! If restarting, convenience function to return restart data time

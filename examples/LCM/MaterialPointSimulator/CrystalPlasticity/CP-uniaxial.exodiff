@@ -3,10 +3,10 @@
 #             EXODIFF	(Version: 2.83) Modified: 2015-08-20
 #             Authors:  Richard Drake, rrdrake@sandia.gov           
 #                       Greg Sjaardema, gdsjaar@sandia.gov          
-#             Run on    2015/11/19   16:28:28 PST
+#             Run on    2015/12/09   08:15:37 PST
 #  *****************************************************************
 
-#  FILE 1: /home/callema/LCM/Albany/examples/LCM/MaterialPointSimulator/CrystalPlasticity/CP-uniaxial.gold.exo
+#  FILE 1: /home/callema/LCM/albany-build-serial-gcc-release/examples/LCM/MaterialPointSimulator/CrystalPlasticity/CP-uniaxial.exo
 #   Title: Sierra Output Default Title
 #          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 7, Sidesets = 6
 #          Vars: Global = 0, Nodal = 6, Element = 40, Nodeset = 0, Sideset = 0, Times = 11
@@ -22,12 +22,12 @@
 
 COORDINATES absolute 1.e-6    # min separation not calculated
 
-TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:              10 @ t11
+TIME STEPS relative 1.e-6 floor 1.0e-12     # min:               0 @ t1 max:              10 @ t11
 
 
 # No GLOBAL VARIABLES
 
-NODAL VARIABLES relative 1.e-6 floor 0.0
+NODAL VARIABLES relative 1.e-6 floor 1.0e-12
 	residual_x  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	residual_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	residual_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
@@ -35,17 +35,17 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	solution_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	solution_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
 
-ELEMENT VARIABLES relative 1.e-6 floor 1e-16
-	Cauchy_Stress_1  # min:               0 @ t1,b1,e1	max:        2085.982 @ t11,b1,e1
-	Cauchy_Stress_2  # min:               0 @ t1,b1,e1	max:       71.592642 @ t11,b1,e1
-	Cauchy_Stress_3  # min:               0 @ t1,b1,e1	max:       213.94612 @ t11,b1,e1
-	Cauchy_Stress_4  # min:               0 @ t1,b1,e1	max:       71.592642 @ t11,b1,e1
-	Cauchy_Stress_5  # min:               0 @ t1,b1,e1	max:        1803.334 @ t11,b1,e1
-	Cauchy_Stress_6  # min:               0 @ t1,b1,e1	max:       95.808294 @ t11,b1,e1
-	Cauchy_Stress_7  # min:               0 @ t1,b1,e1	max:       213.94612 @ t11,b1,e1
-	Cauchy_Stress_8  # min:               0 @ t1,b1,e1	max:       95.808294 @ t11,b1,e1
-	Cauchy_Stress_9  # min:               0 @ t1,b1,e1	max:       905.10682 @ t11,b1,e1
-	CP_Residual      # min:               0 @ t1,b1,e1	max:   2.4333834e-15 @ t6,b1,e1
+ELEMENT VARIABLES relative 1.e-6 floor 1.0e-12
+	Cauchy_Stress_1  # min:               0 @ t1,b1,e1	max:       2063.6263 @ t11,b1,e1
+	Cauchy_Stress_2  # min:               0 @ t1,b1,e1	max:       72.463173 @ t11,b1,e1
+	Cauchy_Stress_3  # min:               0 @ t1,b1,e1	max:       210.37377 @ t11,b1,e1
+	Cauchy_Stress_4  # min:               0 @ t1,b1,e1	max:       72.463173 @ t11,b1,e1
+	Cauchy_Stress_5  # min:               0 @ t1,b1,e1	max:       1823.4362 @ t11,b1,e1
+	Cauchy_Stress_6  # min:               0 @ t1,b1,e1	max:        99.34528 @ t11,b1,e1
+	Cauchy_Stress_7  # min:               0 @ t1,b1,e1	max:       210.37377 @ t11,b1,e1
+	Cauchy_Stress_8  # min:               0 @ t1,b1,e1	max:        99.34528 @ t11,b1,e1
+	Cauchy_Stress_9  # min:               0 @ t1,b1,e1	max:       905.09651 @ t11,b1,e1
+	CP_Residual      # min:               0 @ t1,b1,e1	max:   7.3520057e-11 @ t10,b1,e1
 	F_1              # min:               1 @ t1,b1,e1	max:            1.01 @ t11,b1,e1
 	F_2              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	F_3              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
@@ -55,16 +55,16 @@ ELEMENT VARIABLES relative 1.e-6 floor 1e-16
 	F_7              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	F_8              # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	F_9              # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
-	Fp_1             # min:               1 @ t1,b1,e1	max:       1.0040369 @ t11,b1,e1
-	Fp_2             # min:               0 @ t1,b1,e1	max:    0.0040368842 @ t11,b1,e1
-	Fp_3             # min:               0 @ t1,b1,e1	max:   9.5074221e-19 @ t11,b1,e1
-	Fp_4             # min:               0 @ t1,b1,e1	max:    0.0040368842 @ t11,b1,e1
-	Fp_5             # min:      0.99596312 @ t11,b1,e1	max:               1 @ t1,b1,e1
-	Fp_6             # min:               0 @ t1,b1,e1	max:   9.5074221e-19 @ t11,b1,e1
+	Fp_1             # min:               1 @ t1,b1,e1	max:       1.0040738 @ t11,b1,e1
+	Fp_2             # min:               0 @ t1,b1,e1	max:    0.0040738161 @ t11,b1,e1
+	Fp_3             # min:               0 @ t1,b1,e1	max:   9.5944018e-19 @ t11,b1,e1
+	Fp_4             # min:               0 @ t1,b1,e1	max:    0.0040738161 @ t11,b1,e1
+	Fp_5             # min:      0.99592618 @ t11,b1,e1	max:               1 @ t1,b1,e1
+	Fp_6             # min:               0 @ t1,b1,e1	max:   9.5944018e-19 @ t11,b1,e1
 	Fp_7             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	Fp_8             # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	Fp_9             # min:               1 @ t7,b1,e1	max:               1 @ t1,b1,e1
-	gamma_1          # min:               0 @ t1,b1,e1	max:    0.0080737684 @ t11,b1,e1
+	Fp_9             # min:               1 @ t1,b1,e1	max:               1 @ t5,b1,e1
+	gamma_1          # min:               0 @ t1,b1,e1	max:    0.0081476321 @ t11,b1,e1
 	Strain_1         # min:               0 @ t1,b1,e1	max:            0.01 @ t11,b1,e1
 	Strain_2         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	Strain_3         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
@@ -74,7 +74,7 @@ ELEMENT VARIABLES relative 1.e-6 floor 1e-16
 	Strain_7         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	Strain_8         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	Strain_9         # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
-	tau_1            # min:               0 @ t1,b1,e1	max:       121.98088 @ t8,b1,e1
+	tau_1            # min:               0 @ t1,b1,e1	max:       122.02578 @ t7,b1,e1
 	tau_hard_1       # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 
 # No NODESET VARIABLES

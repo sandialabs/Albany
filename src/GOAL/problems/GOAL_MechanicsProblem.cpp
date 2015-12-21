@@ -18,9 +18,7 @@ GOALMechanicsProblem::GOALMechanicsProblem(
     const int numDim,
     Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params, paramLib),
-  numDims(numDim),
-  isAdjoint(false),
-  enrichAdjoint(false)
+  numDims(numDim)
 {
   // compute number of equations
   int numEq = 0;
@@ -83,8 +81,6 @@ void GOALMechanicsProblem::buildProblem(
         *fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, Teuchos::null);
   }
 
-  // construct dirichlet bc evaluators
-  constructDirichletEvaluators(*meshSpecs[0], this->params);
 }
 
 /*****************************************************************************/
@@ -101,21 +97,6 @@ buildEvaluators(
       *this, fm0, meshSpecs, stateMgr, fmChoice, responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
-}
-
-/*****************************************************************************/
-void GOALMechanicsProblem::constructDirichletEvaluators(
-    const Albany::MeshSpecsStruct& meshSpecs,
-    Teuchos::RCP<Teuchos::ParameterList>& bcs)
-{
-  dfm = Teuchos::null;
-}
-
-/*****************************************************************************/
-void GOALMechanicsProblem::constructNeumannEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
-{
-  nfm = Teuchos::null;
 }
 
 /*****************************************************************************/

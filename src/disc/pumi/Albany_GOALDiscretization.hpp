@@ -16,6 +16,7 @@ struct GOALNode
 {
   int lid;
   bool higherOrder;
+  apf::Vector3 coord;
 };
 
 typedef std::map<std::string, std::vector<GOALNode> > GOALNodeSets;
@@ -48,8 +49,15 @@ class GOALDiscretization : public PUMIDiscretization
     //! Get the number of DOFs per element for this element block
     int getNumNodesPerElem(int ebi);
 
+    //! Change the polynomial order by the amount p + add
+    //! Negative numbers can be used to decrease the polynomial order
+    void changeP(int add);
+
     //! Attach the solution to the APF mesh from a Tpetra vector
     void attachSolutionToMesh(Tpetra_Vector const& x);
+
+    //! Attach the solution to the APF mesh from a Tpetra vector
+    void attachAdjointSolutionToMesh(Tpetra_Vector const& x);
 
     //! Fill a solution vector from the mesh
     void fillSolutionVector(Teuchos::RCP<Tpetra_Vector>& x);
@@ -72,6 +80,9 @@ class GOALDiscretization : public PUMIDiscretization
     //! Process APF mesh for SideSets
     void computeSideSets();
 
+    //! Create the APF adjoint field
+    void createAdjointFields();
+
     //! Goal node sets
     GOALNodeSets goalNodeSets;
 
@@ -82,6 +93,14 @@ class GOALDiscretization : public PUMIDiscretization
     int numOverlapVertices;
     apf::Numbering* vtxNumbering;
     apf::DynamicArray<apf::Node> vertices;
+
+    //! Solution field information
+    void setFieldInformation();
+    std::vector<std::string> goalSolutionNames;
+    std::vector<std::string> goalAdjointSolutionNames;
+    std::vector<int> goalSolutionIndices;
+    std::vector<apf::ValueType> goalSolutionTypes;
+
 };
 
 }
