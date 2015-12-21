@@ -1,4 +1,7 @@
 <ParameterList>
+ <ParameterList name="Scaling">
+    <Parameter name="Scale" type="double" value="1e9"/>
+  </ParameterList>
   <ParameterList name="DataTransferKit">
     <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>
     <ParameterList name="L2 Projection">

@@ -62,6 +62,7 @@ fi
 
 #/usr/local/bin/salloc -n 4 -w compton37 bash -c \
 #/usr/local/bin/salloc -w compton17 bash -c \
+#/usr/local/bin/salloc -w compton32 bash -c \
 bash -c \
 "env DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /home/projects/x86-64/cmake/3.0.2/bin/ctest -VV -S $SCRIPT_DIR/ctest_nightly.cmake" >> $LOG_FILE 2>&1
 

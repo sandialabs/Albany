@@ -150,50 +150,6 @@
               <!-- Preconditioner -->
               <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
-
-
-                <ParameterList name="MueLu">
-
-                  <!-- used by Repartition test "CoordinateMap" -->
-                  <!--Parameter        name="verbosity"                            type="string"   value="high"/-->
-                  <Parameter name="verbosity" type="string" value="none"/>
-                  <Parameter name="coarse: max size" type="int" value="20"/>
-                  <Parameter name="multigrid algorithm" type="string" value="sa"/>
-                  <!-- ===========  AGGREGATION  =========== -->
-                  <Parameter name="aggregation: type" type="string" value="uncoupled"/>
-                  <Parameter name="aggregation: drop scheme" type="string" value="classical"/>
-                  <!--Parameter        name="aggregation: drop tol"                type="double"   value="1.0"/-->
-                  <!-- ===========  SMOOTHING  =========== -->
-                  <Parameter name="smoother: type" type="string" value="CHEBYSHEV"/>
-                  <ParameterList name="smoother: params">
-                    <!--Parameter name="chebyshev: degree" type="int" value="2"/-->
-                    <Parameter name="chebyshev: degree" type="int" value="5"/>
-                    <Parameter name="chebyshev: ratio eigenvalue" type="double" value="7"/>
-                    <Parameter name="chebyshev: min eigenvalue" type="double" value="1.0"/>
-                    <Parameter name="chebyshev: zero starting solution" type="bool" value="true"/>
-                  </ParameterList>
-                  <!-- ===========  REPARTITIONING  =========== -->
-                  <Parameter name="repartition: enable" type="bool" value="true"/>
-                  <Parameter name="repartition: partitioner" type="string" value="zoltan"/>
-                  <Parameter name="repartition: start level" type="int" value="1"/>
-                  <Parameter name="repartition: min rows per proc" type="int" value="40"/>
-                  <Parameter name="repartition: max imbalance" type="double" value="1.01"/>
-                  <Parameter name="repartition: remap parts" type="bool" value="true"/>
-                </ParameterList>
-
-
-
-                <!-- Ifpack -->
-                <!--ParameterList name="Ifpack">
-                  <Parameter name="Overlap" type="int" value="2"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
-                    <Parameter name="fact: drop tolerance" type="double" value="0"/>
-                    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
-                    <Parameter name="fact: level-of-fill" type="int" value="1"/>
-                  </ParameterList>
-                </ParameterList-->
-                <!-- ML -->
               </ParameterList>
             </ParameterList>
           </ParameterList>

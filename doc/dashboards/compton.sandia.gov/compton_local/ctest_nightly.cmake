@@ -474,7 +474,11 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
   "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
   "-DENABLE_CROSS_COMPILE:BOOL=ON"
-#  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+  "-DALBANY_MPI_OPTIONS:BOOL=ON"
+  "-DALBANY_MPI_EXEC:STRING=/home/software/intel/ics_install/impi/4.1.1.036/intel64/bin/mpiexec.hydra"
+  "-DALBANY_MPI_EXEC_NUMPROCS_FLAG:STRING=-n"
+  "-DALBANY_MPI_EXEC_MAX_NUMPROCS:STRING=4"
+  "-DALBANY_MPI_TRAILING_OPTIONS:STRING='-hosts compton32-mic0 -ppn 4 -env OMP_NUM_THREADS 56 -env KMP_AFFINITY balanced -binding domain=omp -env LD_LIBRARY_PATH /home/projects/x86-64/intel/compilers/2015/mkl/lib/mic:/home/projects/x86-64/intel/compilers/2015/composer_xe_2015.2.164/compiler/lib/mic'"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
@@ -551,24 +555,24 @@ endif()
 #
 ##################################################################################################################
 
-#CTEST_TEST(
-#              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-##              INCLUDE "SCOREC_ThermoMechanicalCan_thermomech_tpetra"
-##              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-##              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-##              INCLUDE_LABEL "CUDA_TEST"
-#              #NUMBER_FAILED  TEST_NUM_FAILED
-#)
+CTEST_TEST(
+              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+#              INCLUDE "SCOREC_ThermoMechanicalCan_thermomech_tpetra"
+#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#              INCLUDE_LABEL "CUDA_TEST"
+              #NUMBER_FAILED  TEST_NUM_FAILED
+)
 
-#IF(CTEST_DO_SUBMIT)
-#  CTEST_SUBMIT(PARTS Test
-#               RETURN_VALUE  HAD_ERROR
-#  )
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Test
+               RETURN_VALUE  HAD_ERROR
+  )
 
-#  if(HAD_ERROR)
-#    message(FATAL_ERROR "Cannot submit Albany test results!")
-#  endif()
-#ENDIF(CTEST_DO_SUBMIT)
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Albany test results!")
+  endif()
+ENDIF(CTEST_DO_SUBMIT)
 
 ENDIF (BUILD_ALBANY)
 

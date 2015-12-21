@@ -14,5 +14,8 @@ add_test(Aeras_${testName}_Spectral_Large_Quad9_Tpetra ${AlbanyT.exe}
 inputSpectralT.xml) 
 add_test(Aeras_${testName}_Spectral_24Eles_Quad25_Tpetra ${AlbanyT.exe}
 input_24elesSpectralT.xml) 
-add_test(Aeras_${testName}_Spectral_RythmosSolver_Tpetra ${AlbanyT.exe}
-inputSpectralRythmosSolverT.xml) 
+
+IF (NOT ALBANY_64BIT_INT)
+   add_test(Aeras_${testName}_Spectral_RythmosSolver_Tpetra ${AlbanyT.exe}
+       inputSpectralRythmosSolverT.xml) 
+ENDIF()

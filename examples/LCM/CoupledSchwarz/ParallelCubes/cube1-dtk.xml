@@ -1,4 +1,7 @@
 <ParameterList>
+ <ParameterList name="Scaling">
+    <Parameter name="Scale" type="double" value="1e9"/>
+  </ParameterList>
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="DataTransferKit">
     <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>
@@ -65,7 +68,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name"
-	       type="string" value="cube1_ns1.exo"/>
+	       type="string" value="cube1.exo"/>
     <Parameter name="Exodus Output File Name"
 	       type="string" value="cube1_out.exo"/>
     <Parameter name="Exodus Solution Name" type="string" value="disp"/>
