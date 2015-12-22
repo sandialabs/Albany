@@ -8,7 +8,7 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Coupled FO H 3D"/>
     <Parameter name="Time Step" type="double" value="0.2"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{temperature,thickness,surface_height}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness,temperature,surface_height}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
@@ -18,9 +18,6 @@
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Surface Velocity Mismatch"/>
-      <ParameterList name="ResponseParams 0">
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
@@ -29,7 +26,6 @@
     </ParameterList>
     <ParameterList name="Neumann BCs">
        <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
-       <Parameter name="BetaXY" type="string" value="Scalar Field"/>
        <Parameter name="Cubature Degree" type="int" value="3"/>
     </ParameterList>
     <ParameterList name="Parameters">
@@ -60,9 +56,7 @@
       <Parameter name="Type" type="string" value="FO INTERP SURF GRAD"/>
     </ParameterList>
     <ParameterList name="FELIX Basal Friction Coefficient">
-      <Parameter name="Basal Side Name" type="string" value="basalside"/>
       <Parameter name="Type" type="string" value="Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
-      <Parameter name="Side Cubature Degree" type="int" value="3"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

@@ -56,7 +56,6 @@
     <ParameterList name="FELIX Basal Friction Coefficient">
       <Parameter name="Basal Side Name" type="string" value="basalside"/>
       <Parameter name="Type" type="string" value="Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
-      <Parameter name="Side Cubature Degree" type="int" value="3"/>
     </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="FO INTERP SURF GRAD"/>
@@ -108,14 +107,14 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{332548255.436}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{338374202.002}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{13363631.242}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17367520.1638}"/>
     </ParameterList>
     <ParameterList name="Sensitivity Comparisons 1">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{2615921.47859}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{2634304.99503}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>

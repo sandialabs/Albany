@@ -8,7 +8,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{temperature,thickness,surface_height}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness,temperature,surface_height}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
@@ -54,9 +54,7 @@
     </ParameterList>
 
     <ParameterList name="FELIX Basal Friction Coefficient">
-      <Parameter name="Basal Side Name" type="string" value="basalside"/>
       <Parameter name="Type" type="string" value="Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
-      <Parameter name="Side Cubature Degree" type="int" value="3"/>
     </ParameterList>
 
     <ParameterList name="Body Force">
@@ -65,7 +63,7 @@
   </ParameterList> <!-- Problem -->
 
   <ParameterList name="Discretization">
-    <Parameter name="Columnwise Ordering" type="bool" value="false"/>
+    <Parameter name="Columnwise Ordering" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct.exo"/>
@@ -111,9 +109,9 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{106126343.963}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{107604493.807}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{20008255.149}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{19948298.8019}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

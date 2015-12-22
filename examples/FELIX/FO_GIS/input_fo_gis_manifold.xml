@@ -7,7 +7,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{temperature,thickness,surface_height}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness,temperature,surface_height}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
@@ -17,10 +17,6 @@
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Surface Velocity Mismatch"/>
-      <ParameterList name="ResponseParams 0">
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-        <Parameter name="Field Name" type="string" value="Velocity"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
@@ -28,9 +24,7 @@
       <!--Parameter name="DBC on NS bottom for DOF U1" type="double" value="0.0"/-->
     </ParameterList>
     <ParameterList name="Neumann BCs">
-       <Parameter name="NBC on SS basalside for DOF all set basal" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
        <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
-       <Parameter name="BetaXY" type="string" value="Scalar Field"/>
        <Parameter name="Cubature Degree" type="int" value="3"/>
     </ParameterList>
     <ParameterList name="Parameters">
@@ -53,9 +47,7 @@
       <Parameter name="Flow Rate Type" type="string" value="Temperature Based"/>
     </ParameterList>
     <ParameterList name="FELIX Basal Friction Coefficient">
-      <Parameter name="Basal Side Name" type="string" value="basalside"/>
       <Parameter name="Type" type="string" value="Given Field"/> <!-- "Given Field","Power Law","Regularized Coulomb"-->
-      <Parameter name="Side Cubature Degree" type="int" value="3"/>
     </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="FO INTERP SURF GRAD"/>
