@@ -31,4 +31,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml
 add_subdirectory(Cubes)
 add_subdirectory(ParallelCubes)
 add_subdirectory(NotchedCylinder)
+add_subdirectory(LaserWeld)
 
