@@ -431,6 +431,12 @@ namespace Aeras
       return neq;
     }
 
+    //! Get number of levels (for hydrostatic problems) 
+    int getNumLevels() const { return numLevels; }
+
+    //! Get number of tracers (for hydrostatic problems) 
+    int getNumTracers() const { return numTracers; }
+
     //! Locate nodal dofs in non-overlapping vectors using local indexing
     int getOwnedDOF(const int inode,
                     const int eq) const;
