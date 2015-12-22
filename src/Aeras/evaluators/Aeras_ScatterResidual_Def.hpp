@@ -195,7 +195,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cell) const{
 
- LO colT[500];
+ LO* colT = new LO[nunk];
  LO rowT;
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -252,7 +252,7 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
      }
       eq += this->numTracerVar;
     }    
-
+    delete colT; 
 }
 
 template<typename Traits>
@@ -260,9 +260,9 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cell) const{
 
-  LO colT[500];
+  LO* colT = new LO[nunk];
+  ST* vals = new ST[nunk]; 
   LO rowT;
-  ST vals[500];
  
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -276,7 +276,7 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
         rowT = Index(cell,node,n);
         if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
         for (unsigned int i=0; i<nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true); 
+        jacobian.sumIntoValues(rowT, colT, nunk,  vals, true); 
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) {
@@ -286,7 +286,7 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
             rowT = Index(cell,node,n);
             if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
             for (int i=0; i<nunk; ++i)vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+            jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
         }
          for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
@@ -294,7 +294,7 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
           for (int i=0; i<nunk; ++i)vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+          jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
         }
       }
      }
@@ -305,13 +305,13 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
           for (int i=0; i<nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+          jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
       }
      }
       eq += this->numTracerVar;
     }
-
-
+    delete colT;
+    delete vals;  
 }
 
 #endif
