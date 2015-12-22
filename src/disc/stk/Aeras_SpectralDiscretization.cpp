@@ -123,7 +123,8 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
   *out << "spatial_dim: " << spatial_dim << std::endl; 
-  *out << "nodes_per_element: " << nodes_per_element << std::endl;  
+  *out << "nodes_per_element: " << nodes_per_element << std::endl; 
+  *out << "neq: " << neq << std::endl;  
 #endif
   Aeras::SpectralDiscretization::updateMesh();
 }
