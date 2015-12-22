@@ -36,15 +36,9 @@ if (ALBANY_IFPACK2)
     add_test(${testName}LinearThermalExpansion_Tpetra ${AlbanyT.exe} LinearThermalExpansionT.xml)
 endif()
 if (ALBANY_MUELU_EXAMPLES)
-  if (ALBANY_64BIT_INT)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT_MueLu_64.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT_MueLu_64.xml COPYONLY)
-    add_test(${testName}TransientHeat2D_Tpetra_64 ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu_64.xml)
-  else ()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT_MueLu.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT_MueLu.xml COPYONLY)
     add_test(${testName}TransientHeat2D_Tpetra_MueLu ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu.xml)
-  endif ()
 endif()
 
 # Thermal Expansion test
