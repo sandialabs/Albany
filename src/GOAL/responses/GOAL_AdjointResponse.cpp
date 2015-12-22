@@ -52,11 +52,20 @@ AdjointResponse::~AdjointResponse()
 {
 }
 
+static void changeMeshSpecs(
+    int add,
+    ArrayRCP<RCP<Albany::MeshSpecsStruct> >& ms)
+{
+  for (int i=0; i < ms.size(); ++i){
+    ms[i]->polynomialOrder += add;
+    ms[i]->cubatureDegree += add;
+  }
+}
+
 void AdjointResponse::buildFieldManagers()
 {
   if (enrichAdjoint)
-    for (int i=0; i < meshSpecs.size(); ++i)
-      meshSpecs[i]->polynomialOrder += 1;
+    changeMeshSpecs(1, meshSpecs);
   problem->isAdjoint = true;
   int physSets = meshSpecs.size();
   fm.resize(physSets);
@@ -68,8 +77,7 @@ void AdjointResponse::buildFieldManagers()
   }
   problem->isAdjoint = false;
   if (enrichAdjoint)
-    for (int i=0; i < meshSpecs.size(); ++i)
-      meshSpecs[i]->polynomialOrder -= 1;
+    changeMeshSpecs(-1, meshSpecs);
 }
 
 static RCP<Albany::GOALDiscretization> getDiscretization(
