@@ -67,7 +67,7 @@ evaluateFields(typename Traits::EvalData workset)
   TEUCHOS_TEST_FOR_EXCEPTION (ss_disc==Teuchos::null, std::logic_error,
                               "Error! Side discretization is invalid for side set " << sideSetName << ".\n");
 
-  const std::map<std::string,std::map<GO,GO> >& ss_maps = workset.disc->getSideIdToSideSetElemIdMap();
+  const std::map<std::string,std::map<GO,GO> >& ss_maps = workset.disc->getSideToSideSetCellMap();
 
   TEUCHOS_TEST_FOR_EXCEPTION (ss_maps.find(sideSetName)==ss_maps.end(), std::logic_error,
                               "Error! Something is off: the mesh has side discretization but no sideId-to-sideSetElemId map.\n");
@@ -79,6 +79,19 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::StateArrayVec& esa = state_arrays.elemStateArrays;
   Albany::WsLIDList& elemGIDws3D = workset.disc->getElemGIDws();
   Albany::WsLIDList& elemGIDws2D = ss_disc->getElemGIDws();
+
+  // Get side_node->side_set_cell_node map from discretization
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.disc->getSideNodeNumerationMap().find(sideSetName)==workset.disc->getSideNodeNumerationMap().end(),
+                              std::logic_error, "Error! Sideset " << sideSetName << " has no sideNodeNumeration map.\n");
+  const std::map<GO,std::vector<int>>& sideNodeNumerationMap = workset.disc->getSideNodeNumerationMap().at(sideSetName);
+
+  // Establishing the kind of field layout
+  std::vector<PHX::DataLayout::size_type> dims;
+  field.dimensions(dims);
+  int size = dims.size();
+  const std::string& tag2 = size>2 ? field.fieldTag().dataLayout().name(2) : "";
+  TEUCHOS_TEST_FOR_EXCEPTION (size>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
+                              "Error! Invalid field layout in LoadSideSetStateField.\n");
 
   // Loop on the sides of this sideSet that are in this workset
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
@@ -106,15 +119,13 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Then, after a safety check, we extract the StateArray of the desired state in the right 2D-ws
     TEUCHOS_TEST_FOR_EXCEPTION (esa[wsIndex2D].find(stateName) == esa[wsIndex2D].end(), std::logic_error,
-                                "Error! Cannot locate " << stateName << " in PHAL_SaveSideSetStateField_Def.\n");
+                                "Error! Cannot locate " << stateName << " in PHAL_LoadSideSetStateField_Def.\n");
     Albany::MDArray state = esa[wsIndex2D].at(stateName);
+
+    const std::vector<int>& nodeMap = sideNodeNumerationMap.at(side_GID);
 
     // Now we have the two arrays: 3D and 2D. We need to take the 2D one
     // and put it at the right place in the 3D one
-
-    std::vector<PHX::DataLayout::size_type> dims;
-    field.dimensions(dims);
-    int size = dims.size();
 
     switch (size)
     {
@@ -122,20 +133,44 @@ evaluateFields(typename Traits::EvalData workset)
         // side set cell scalar
         field(cell,side) = state(ss_cell);
         break;
+
       case 3:
-        // side set node scalar or side set cell vector
-        for (int i=0; i<dims[2]; ++i)
+        if (tag2=="Node")
         {
-          field(cell,side,i) = state(ss_cell,i);
+          // side set node scalar
+          for (int node=0; node<dims[2]; ++node)
+          {
+            field(cell,side,node) = state(ss_cell,nodeMap[node]);
+          }
+        }
+        else
+        {
+          // side set cell vector/gradient
+          for (int idim=0; idim<dims[2]; ++idim)
+          {
+            field(cell,side,idim) = state(ss_cell,idim);
+          }
         }
         break;
 
       case 4:
-        // side set node/qp vector
-        for (int pt=0; pt<dims[2]; ++pt)
+        if (tag2=="Node")
         {
-          for (int dim=0; dim<dims[3]; ++dim)
-            field(cell,side,pt,dim) = state(ss_cell,pt,dim);
+          // side set node vector/gradient
+          for (int node=0; node<dims[2]; ++node)
+          {
+            for (int dim=0; dim<dims[3]; ++dim)
+              field(cell,side,node,dim) = state(ss_cell,nodeMap[node],dim);
+          }
+        }
+        else
+        {
+          // side set cell tensor
+          for (int idim=0; idim<dims[2]; ++idim)
+          {
+            for (int jdim=0; jdim<dims[3]; ++jdim)
+              field(cell,side,idim,jdim) = state(ss_cell,idim,jdim);
+          }
         }
         break;
 
