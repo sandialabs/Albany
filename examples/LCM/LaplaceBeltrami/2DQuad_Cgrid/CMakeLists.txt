@@ -40,7 +40,6 @@ if (ALBANY_IFPACK2)
   set_tests_properties(LaplaceBeltrami:${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 endif()
 #if (ALBANY_MUELU_EXAMPLES) 
-#  if (ALBANY_64BIT_INT)
 #    set(testName ${testDirName})
 #    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu_64 
 #         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
@@ -88,5 +87,4 @@ endif()
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 #    set_tests_properties(LaplaceBeltrami:${testName}_Tpetra_MueLu  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
-#  endif()
 ##endif()

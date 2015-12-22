@@ -76,6 +76,27 @@ Albany::DiscretizationFactory::DiscretizationFactory(
 
       catalystParams = Teuchos::sublist(problemParams, "Catalyst", true);
 
+#ifdef ALBANY_AERAS
+    Teuchos::RCP<Teuchos::ParameterList> hsParams;
+    Teuchos::ArrayRCP<std::string> dof_names_tracers; 
+    if (problemParams->isSublist("Hydrostatic Problem")) {
+      hsParams = Teuchos::sublist(problemParams, "Hydrostatic Problem", true); 
+      numLevels = hsParams->get("Number of Vertical Levels", 0);
+      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
+            Teuchos::Array<std::string>()));
+      numTracers = dof_names_tracers.size();  
+ 
+    }
+
+    if (problemParams->isSublist("XZHydrostatic Problem")) {
+      hsParams = Teuchos::sublist(problemParams, "XZHydrostatic Problem", true); 
+      numLevels = hsParams->get("Number of Vertical Levels", 0); 
+      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
+            Teuchos::Array<std::string>())); 
+      numTracers = dof_names_tracers.size();  
+    }
+#endif
+
   }
 
 }
@@ -473,7 +494,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     //the code is structured.  That should be OK since meshSpecsType() is not used anywhere except this function.
     //But one may want to change it to, e.g., AERAS_MS, to prevent confusion.
       Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, commT, rigidBodyModes));
+      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, numLevels, numTracers, commT, rigidBodyModes));
     }
 #endif
   return Teuchos::null;

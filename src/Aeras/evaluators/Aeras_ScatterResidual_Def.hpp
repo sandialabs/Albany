@@ -195,7 +195,7 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cell) const{
 
- LO colT[500];
+ LO* colT = new LO[nunk];
  LO rowT;
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -210,8 +210,9 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
         rowT = Index(cell,node,n);
         if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
         for (unsigned int i=0; i<nunk; ++i) {
-                ST val = valptr.fastAccessDx(i);
-                jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
+          ST val = valptr.fastAccessDx(i);
+          if (val != 0) 
+            jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
         }
       }
       eq += this->numNodeVar;
@@ -222,7 +223,8 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
             rowT = Index(cell,node,n);
             if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
             for (int i=0; i<nunk; ++i){
-                ST val = valptr.fastAccessDx(i);
+              ST val = valptr.fastAccessDx(i);
+              if (val != 0) 
                 jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
          }
         }
@@ -232,8 +234,9 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
           for (int i=0; i<nunk; ++i){ 
-                ST val = valptr.fastAccessDx(i);
-                jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
+            ST val = valptr.fastAccessDx(i);
+            if (val != 0) 
+              jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
           }
         }
       }
@@ -246,13 +249,14 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
           for (int i=0; i<nunk; ++i) {
             ST val = valptr.fastAccessDx(i);
-            jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
+            if (val != 0) 
+              jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
         }
       }
      }
       eq += this->numTracerVar;
     }    
-
+    delete colT; 
 }
 
 template<typename Traits>
@@ -260,9 +264,8 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cell) const{
 
-  LO colT[500];
+  LO* colT = new LO[nunk];
   LO rowT;
-  ST vals[500];
  
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -275,8 +278,12 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
         const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
         rowT = Index(cell,node,n);
         if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-        for (unsigned int i=0; i<nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true); 
+        for (unsigned int i=0; i<nunk; ++i) { 
+          ST val = valptr.fastAccessDx(i);
+          if (val != 0) 
+            jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+        }
+        //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true); 
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) {
@@ -285,16 +292,24 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
             const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
             rowT = Index(cell,node,n);
             if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-            for (int i=0; i<nunk; ++i)vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+            for (int i=0; i<nunk; ++i) { 
+              ST val = valptr.fastAccessDx(i);
+              if (val != 0) 
+                jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+            }
+            //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
         }
          for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
           const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
-          for (int i=0; i<nunk; ++i)vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+          for (int i=0; i<nunk; ++i) {
+            ST val = valptr.fastAccessDx(i);
+            if (val != 0) 
+              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+          }
+          //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
         }
       }
      }
@@ -304,14 +319,17 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
           const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
-          for (int i=0; i<nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+          for (int i=0; i<nunk; ++i) {
+            ST val = valptr.fastAccessDx(i);
+            if (val != 0) 
+              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+          }
+          //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
       }
      }
       eq += this->numTracerVar;
     }
-
-
+    delete colT;
 }
 
 #endif
@@ -332,7 +350,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     const int neq = nodeID[0].size();
-    colT.resize(neq * this->numNodes); 
+    colT.resize(neq * this->numNodes);
     
     for (int node=0; node<this->numNodes; node++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -348,15 +366,24 @@ evaluateFields(typename Traits::EvalData workset)
         if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
         if (valptr.hasFastAccess()) {
           if (workset.is_adjoint) {
-          // Sum Jacobian transposed
-          for (unsigned int i=0; i<colT.size(); ++i) {
-              //Jac->SumIntoMyValues(colT[i], 1, &(valptr.fastAccessDx(i)), &eqID[n]);
-              JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&(valptr.fastAccessDx(i)),1));
+            // Sum Jacobian transposed
+            for (unsigned int i=0; i<colT.size(); ++i) {
+              ST val = valptr.fastAccessDx(i); 
+              if (val != 0.0) { 
+                JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
+              }
             }
-          } else {
+          } 
+          else {
+            //Sum Jacobian entries 
+            for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+              ST val = valptr.fastAccessDx(i);
+              if (val != 0.0) {
+                JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
+              }
+            }
             // Sum Jacobian entries all at once
-            //             //Jac->SumIntoMyValues(eqID[n], colT.size(), &(valptr.fastAccessDx(0)), &colT[0]);
-            JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+            // JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
           }
         } // has fast access
       }
@@ -370,11 +397,23 @@ evaluateFields(typename Traits::EvalData workset)
             if (valptr.hasFastAccess()) {
               if (workset.is_adjoint) {
                 // Sum Jacobian transposed
-                for (int i=0; i<colT.size(); ++i)
-                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&(valptr.fastAccessDx(i)),1));
-              } else {
+                for (int i=0; i<colT.size(); ++i) {
+                  ST val = valptr.fastAccessDx(i); 
+                  if (val != 0.0) { 
+                    JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
+                  }
+                }
+              } 
+              else {
+                //Sum Jacobian entries 
+                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+                  ST val = valptr.fastAccessDx(i);
+                  if (val != 0.0) {
+                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
+                  }
+                }
                 // Sum Jacobian entries all at once
-                JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+                //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
               }
             }
           }
@@ -388,13 +427,22 @@ evaluateFields(typename Traits::EvalData workset)
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               for (unsigned int i=0; i<colT.size(); ++i) {
-                //Jac->SumIntoMyValues(colT[i], 1, &(valptr.fastAccessDx(i)), &eqID[n]);
-                JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&(valptr.fastAccessDx(i)),1));
+                ST val = valptr.fastAccessDx(i); 
+                if (val != 0.0) { 
+                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
+                }
               }
-            } else {
+            } 
+            else {
+                //Sum Jacobian entries 
+                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+                  ST val = valptr.fastAccessDx(i);
+                  if (val != 0.0) {
+                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
+                  }
+                }
               // Sum Jacobian entries all at once
-              //Jac->SumIntoMyValues(eqID[n], colT.size(), &(valptr.fastAccessDx(0)), &colT[0]);
-              JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
             }
           } // has fast access
         }
@@ -409,13 +457,22 @@ evaluateFields(typename Traits::EvalData workset)
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               for (unsigned int i=0; i<colT.size(); ++i) {
-                //Jac->SumIntoMyValues(colT[i], 1, &(valptr.fastAccessDx(i)), &eqID[n]);
-                JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&(valptr.fastAccessDx(i)),1));
+                ST val = valptr.fastAccessDx(i); 
+                if (val != 0.0) { 
+                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
+                }
               }
-            } else {
+            } 
+            else {
+              //Sum Jacobian entries 
+                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+                  ST val = valptr.fastAccessDx(i);
+                  if (val != 0.0) {
+                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
+                  }
+                }
               // Sum Jacobian entries all at once
-              //Jac->SumIntoMyValues(eqID[n], colT.size(), &(valptr.fastAccessDx(0)), &colT[0]);
-              JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
+              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
             }
           } // has fast access
         }

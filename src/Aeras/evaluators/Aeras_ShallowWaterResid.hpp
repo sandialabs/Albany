@@ -54,7 +54,7 @@ private:
 	// Input:
 	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-	PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1
+	PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1?
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
 	PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
@@ -107,9 +107,9 @@ private:
 
 	int numCells;
 	int numNodes;
-	int numQPs;
+	int numQPs; //the same as vecDims
 	int numDims;
-	int vecDim;
+	int vecDim; //the same as numDims, why doubled?
 	int spatialDim;
 
 	//OG: this is temporary
@@ -248,6 +248,10 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void compute_Residuals12_notprescribed (const int& cell) const;
+
+	KOKKOS_INLINE_FUNCTION
+	void zeroing_Residual (const int& cell) const;
+
 
 	// KOKKOS_INLINE_FUNCTION
 	//void compute_coefficients_K(const MeshScalarT lam, const MeshScalarT th   );

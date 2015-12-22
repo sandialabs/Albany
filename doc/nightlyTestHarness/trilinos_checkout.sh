@@ -46,11 +46,19 @@ cd $TRILDIR/packages/TriKota
 export https_proxy="https://wwwproxy.ca.sandia.gov:80"
 export http_proxy="http://wwwproxy.ca.sandia.gov:80"
 wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.2-public.src.tar.gz -v
-#scp ikalash@ceerws2801b.sandia.gov:/ascldap/users/ikalash/dakota-6.2-public.src.tar.gz .
 tar -zxvf dakota-6.2-public.src.tar.gz 
 rm -rf dakota-6.2-public.src.tar.gz 
 mv dakota-6.2.0.src Dakota
 echo; echo "   ...finished Dakota checkout."
+
+echo; echo "   Starting DTK checkout..."
+cd $TRILDIR
+git clone git@github.com:ORNL-CEES/DataTransferKit.git
+cd DataTransferKit
+git clone git@github.com:ORNL-CEES/DTKData.git
+echo; echo "   ...finished DTK checkout."
+
+
 
 #echo; echo "   Starting SCOREC checkout..."
 #git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1

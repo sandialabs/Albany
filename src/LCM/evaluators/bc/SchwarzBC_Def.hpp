@@ -530,12 +530,9 @@ computeBCsDTK()
   Teuchos::RCP<stk::mesh::MetaData const>
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
 
-  //IKT, 12/18/15: this is a hack.  Need to figure out how to get a copy of 
-  //this_field so that when this_field is modified in this function, the solution 
-  //known to Albany is not modified. 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
   this_field = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
-                  this_stk_disc->getSTKMeshStruct()->getFieldContainer())->getResidualField();
+                  this_stk_disc->getSTKMeshStruct()->getFieldContainer())->getSolutionFieldDTK();
 
   // Get the part corresponding to this nodeset.
   std::string const &
