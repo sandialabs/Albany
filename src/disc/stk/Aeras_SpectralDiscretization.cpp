@@ -2065,6 +2065,8 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
 #endif
 
   overlap_graphT = Teuchos::null; // delete existing graph here on remesh
+  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
+  //to have a smaller stencil here. 
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
                                                     neq*points_per_edge));
 
@@ -2095,13 +2097,41 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
       {
         const GO rowNode = node_rels[j];
         // loop over eqs
-        for (std::size_t k=0; k < neq; k++)
+        for (std::size_t k=0; k < 1; k++) //Ps0 equation
         {
           row = getGlobalDOF(rowNode, k);
           for (std::size_t l=0; l < points_per_edge; l++)
           {
             const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++)
+            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
+            {
+              col = getGlobalDOF(colNode, m);
+              colAV = Teuchos::arrayView(&col, 1);
+              overlap_graphT->insertGlobalIndices(row, colAV);
+            }
+          }
+        }
+        for (std::size_t k=1; k < 2*numLevels+1; k++) //u and T equations
+        {
+          row = getGlobalDOF(rowNode, k);
+          for (std::size_t l=0; l < points_per_edge; l++)
+          {
+            const GO colNode = node_rels[l];
+            for (std::size_t m=0; m < neq; m++)  //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
+            {
+              col = getGlobalDOF(colNode, m);
+              colAV = Teuchos::arrayView(&col, 1);
+              overlap_graphT->insertGlobalIndices(row, colAV);
+            }
+          }
+        }
+        for (std::size_t k=2*numLevels+1; k < neq; k++) //scalar equations
+        {
+          row = getGlobalDOF(rowNode, k);
+          for (std::size_t l=0; l < points_per_edge; l++)
+          {
+            const GO colNode = node_rels[l];
+            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
             {
               col = getGlobalDOF(colNode, m);
               colAV = Teuchos::arrayView(&col, 1);
@@ -2116,6 +2146,8 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
 
   // Create Owned graph by exporting overlap with known row map
   graphT = Teuchos::null; // delete existing graph happens here on remesh
+  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
+  //to have a smaller stencil here. 
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
 
   // Create non-overlapped matrix using two maps and export object
