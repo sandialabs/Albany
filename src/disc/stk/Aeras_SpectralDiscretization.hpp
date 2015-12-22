@@ -194,6 +194,8 @@ namespace Aeras
     SpectralDiscretization(
        const Teuchos::RCP<Teuchos::ParameterList>& discParams,
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+       const int numTracers, 
+       const int numLevels, 
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
@@ -642,6 +644,12 @@ namespace Aeras
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
+
+    //! Number of levels (for hydrostatic equations) 
+    const int numLevels; 
+    
+    //! number of tracers (for hydristatic equations) 
+    const int numTracers; 
 
     //! Number of elements on this processor
     unsigned int numMyElements;

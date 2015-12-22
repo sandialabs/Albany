@@ -69,12 +69,15 @@ const Tpetra::global_size_t INVALID =
 Aeras::SpectralDiscretization::
 SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                   Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+                  const int numLevels_, const int numTracers_, 
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
+  numLevels(numLevels_), 
+  numTracers(numTracers_), 
   commT(commT_),
   rigidBodyModes(rigidBodyModes_),
   discParams(discParams_), 
@@ -124,7 +127,9 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   *out << "element name: " << element_name << std::endl;
   *out << "spatial_dim: " << spatial_dim << std::endl; 
   *out << "nodes_per_element: " << nodes_per_element << std::endl; 
-  *out << "neq: " << neq << std::endl;  
+  *out << "neq: " << neq << std::endl;
+  *out << "numLevels: " << numLevels << std::endl; 
+  *out << "numTracers: " << numTracers << std::endl;  
 #endif
   Aeras::SpectralDiscretization::updateMesh();
 }
