@@ -18,6 +18,8 @@
 namespace Aeras {
 
 
+//OG: A debugging statement prints evaluator's name
+//#define AERAS_OUTPUT
 //#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 
@@ -53,6 +55,10 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 		RRadius(1.0/Aeras::ShallowWaterConstants::self().earthRadius),
 		doNotDampRotation(true)
 		{
+
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::Constructor" << std::endl;
+#endif
 
 	//OG I noticed that source(...,0) is never used, it means TC4 is broken.
 
@@ -190,16 +196,11 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
 #endif
 
-	//can I resize all the time?
-	//wrk2_.resize(numQPs);
-
-
 	cubature->getCubature(refPoints, refWeights);
 
 	intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
 	this->setName("Aeras::ShallowWaterResid"+PHX::typeAsString<EvalT>());
-
 
 	U.fieldTag().dataLayout().dimensions(dims);
 	vecDim  = dims[2];
@@ -311,6 +312,11 @@ void ShallowWaterResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
 		PHX::FieldManager<Traits>& fm)
 		{
+
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::postRegistrationSetup" << std::endl;
+#endif
+
 	this->utils.setFieldData(U,fm);
 	this->utils.setFieldData(UNodal,fm);
 	this->utils.setFieldData(UDot,fm);
@@ -343,6 +349,11 @@ KOKKOS_INLINE_FUNCTION
 void gradient(const ArrayT1  & fieldAtNodes,
 		const int &cell, ArrayT2  & gradField, ArrayJac &jacobian_inv, ArrayGrad &grad_at_cub_points_Kokkos) {
 
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::gradient (kokkos)" << std::endl;
+#endif
+
+
 	for (int qp=0; qp < grad_at_cub_points_Kokkos.dimension(1); ++qp) {
 
 		ScalarT gx = 0;
@@ -369,6 +380,10 @@ void ShallowWaterResid<EvalT,Traits>::divergence4(const PHX::MDField<ScalarT, Ce
 		const PHX::MDField<ScalarT,Cell,QuadPoint>  & div_,
 		const int & cell) const  {
 
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::divergence4 (kokkos)" << std::endl;
+#endif
+
 	for (std::size_t node=0; node < numNodes; ++node) {
 
 		const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
@@ -385,6 +400,7 @@ void ShallowWaterResid<EvalT,Traits>::divergence4(const PHX::MDField<ScalarT, Ce
 	}
 
 	for (int qp=0; qp < numQPs; ++qp) {
+		div_(cell, qp) = 0.0;
 		for (int node=0; node < numNodes; ++node) {
 
 			//OG What is this commented code?
@@ -410,6 +426,10 @@ void ShallowWaterResid<EvalT,Traits>::
 gradient4(const PHX::MDField<ScalarT, Cell, Node>  & field,
 		const PHX::MDField<ScalarT, Cell, QuadPoint, Dim>  & gradient_,
 		const int & cell) const {
+
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::gradient4 (kokkos)" << std::endl;
+#endif
 
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 
@@ -440,6 +460,10 @@ void ShallowWaterResid<EvalT,Traits>::curl4(
 		const PHX::MDField<ScalarT, Cell, QuadPoint>  & curl_,
 		const int &cell) const {
 
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::curl4 (kokkos)" << std::endl;
+#endif
+
 	for (int node=0; node < numNodes; ++node) {
 
 		const MeshScalarT j00 = jacobian(cell, node, 0, 0);
@@ -453,6 +477,7 @@ void ShallowWaterResid<EvalT,Traits>::curl4(
 	}
 
 	for (int qp=0; qp < numQPs; ++qp) {
+		curl_(cell, qp) = 0.0;
 		for (int node=0; node < numNodes; ++node) {
 
 			curl_(cell, qp) += tempnodalvec2(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 0)
@@ -468,6 +493,10 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::
 get_coriolis4(const PHX::MDField<ScalarT,Cell,QuadPoint>  & cor_,
 		const int &cell) const {
+
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::get_coriolis4 (kokkos)" << std::endl;
+#endif
 
 	//double alpha = AlphaAngle; //must match what is in initial condition for TC2 and TC5.
 	//see AAdatpt::AerasZonal analytic function.
@@ -486,20 +515,46 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residual0(const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::compute_Residual0 (kokkos)" << std::endl;
+#endif
+
+	//OG This is where to my best knowledge code with kossos and FPE check crashes.
+	//So print statements are left.
 
 	for (int node=0; node < numNodes; ++node) {
-		//const typename PHAL::Ref<const ScalarT>::type
-		const ScalarT
-		unodal0 = UNodal(cell,node,0);
-		chuv(cell,node,0) = unodal0*UNodal(cell,node,1);
-		chuv(cell,node,1) = unodal0*UNodal(cell,node,2);
+
+//		const ScalarT
+//		unodal0 = UNodal(cell,node,0);
+
+/*		std::cout << "ShallowWaterResid::compute_Residual0  inside loop 2 after assign unodal0"  << std::endl;
+		std::cout << "address chuv(cell,node,0)"  << chuv(cell,node,0) << std::endl;
+		std::cout << "address UNodal(cell,node,1)"  << UNodal(cell,node,1) << std::endl;
+		std::cout << "address unodal0"  << unodal0 << std::endl;
+		std::cout << "address UNodal(cell,node,2)"  << UNodal(cell,node,2) << std::endl;
+		std::cout << "address chuv(cell,node,1)"  << chuv(cell,node,1) << std::endl; */
+
+//		chuv(cell,node,0) = unodal0*UNodal(cell,node,1);
+//		chuv(cell,node,1) = unodal0*UNodal(cell,node,2);
+
+//		std::cout << "ShallowWaterResid::compute_Residual0  inside loop 3 after assign chuv"  << std::endl;
+
+
+
+		chuv(cell,node,0) = UNodal(cell,node,0)*UNodal(cell,node,1);
+		chuv(cell,node,1) = UNodal(cell,node,0)*UNodal(cell,node,2);
+
+
 	}
 
+//	std::cout << "ShallowWaterResid::compute_Residual0 before div4"  << std::endl;
 	divergence4(chuv, cdiv, cell);
-
+//	std::cout << "ShallowWaterResid::compute_Residual0 after div4"  << std::endl;
 	for (int qp=0; qp < numQPs; ++qp) {
+//		std::cout << "ShallowWaterResid::compute_Residual0 in loop before resid assignment"  << std::endl;
 		int node = qp;
 		Residual(cell,node,0) += (UDot(cell,qp,0) + cdiv(cell,qp))*wBF(cell, node, qp);
+//		std::cout << "ShallowWaterResid::compute_Residual0 in loop after resid assignment"  << std::endl;
 	}
 }
 
@@ -510,6 +565,9 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_h_ImplHV(const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::compute_h_ImplHV (kokkos)" << std::endl;
+#endif
 
 	for (std::size_t node=0; node < numNodes; ++node)
 		csurftilde(cell,node) = UNodal(cell,node,3);
@@ -545,8 +603,30 @@ compute_h_ImplHV(const int& cell) const
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
+zeroing_Residual(const int& cell) const
+{
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::zeroing_Residual (kokkos)" << std::endl;
+#endif
+
+	for(std::size_t node=0; node < numNodes; ++node)
+       for(std::size_t neq=0; neq < vecDim; ++neq)
+    	   Residual(cell, node, neq) = 0.0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::() tag ShallowWaterResid_VecDim3_usePrescribedVelocity  (kokkos)" << std::endl;
+#endif
+
+	zeroing_Residual(cell);
+
 	compute_Residual0(cell);
 	compute_Residuals12_prescribed(cell);
 }
@@ -558,6 +638,12 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::() tag ShallowWaterResid_VecDim4  (kokkos)" << std::endl;
+#endif
+
+	zeroing_Residual(cell);
+
 	compute_Residual0(cell);
 	compute_h_ImplHV(cell);
 	compute_Residuals12_prescribed(cell);
@@ -570,17 +656,25 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residuals12_prescribed(const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::compute_Residuals12_prescribed  (kokkos)" << std::endl;
+#endif
+
 	for (int qp=0; qp < numQPs; ++qp) {
 		// before this loop used int node = qp;
 		//  ... wBF(cell, node, qp), ...Residual(cell,node,1)
-		//const typename PHAL::Ref<const ScalarT>::type
-		const ScalarT
-		wbf = wBF(cell, qp, qp);
+
+		//const ScalarT
+		//wbf = wBF(cell, qp, qp);
 
 		//OG Something should be done about this source,
 		//it is there for TC4 and is hardly in use (not to mention TC4 is broken).
-		Residual(cell,qp,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wbf;
-		Residual(cell,qp,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wbf;
+		//Residual(cell,qp,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wbf;
+		//Residual(cell,qp,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wbf;
+
+		Residual(cell,qp,1) += (UDot(cell,qp,1) + source(cell,qp,1))*wBF(cell, qp, qp);
+		Residual(cell,qp,2) += (UDot(cell,qp,2) + source(cell,qp,2))*wBF(cell, qp, qp);
+
 	}
 }
 
@@ -590,11 +684,14 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_Residuals12_notprescribed (const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::compute_Residuals12_notprescribed  (kokkos)" << std::endl;
+#endif
 	get_coriolis4(ccor, cell);
 
 	for (int node=0; node < numNodes; ++node) {
 		//const typename PHAL::Ref<const ScalarT>::type
-		const ScalarT
+		/*const ScalarT
 		depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]),
 		ulambda = UNodal(cell, node,1),
 		utheta  = UNodal(cell, node,2);
@@ -603,7 +700,18 @@ compute_Residuals12_notprescribed (const int& cell) const
 		cpotentialEnergy(cell, node) = gravity*depth;
 
 		cvelocityVec(cell, node, 0) = ulambda;
-		cvelocityVec(cell, node, 1) = utheta;
+		cvelocityVec(cell, node, 1) = utheta;*/
+
+
+
+				ckineticEnergy(cell, node) = 0.5*(UNodal(cell, node,1)*UNodal(cell, node,1) + UNodal(cell, node,2)*UNodal(cell, node,2));
+				cpotentialEnergy(cell, node) = gravity*(UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]));
+
+				cvelocityVec(cell, node, 0) = UNodal(cell, node,1);
+				cvelocityVec(cell, node, 1) = UNodal(cell, node,2);
+
+
+
 	}
 
     curl4(cvelocityVec, cvort, cell);
@@ -635,6 +743,12 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::() tag ShallowWaterResid_VecDim3_no_usePrescribedVelocity  (kokkos)" << std::endl;
+#endif
+
+	zeroing_Residual(cell);
+
 	compute_Residual0(cell);
 	compute_Residuals12_notprescribed(cell);
 }
@@ -645,13 +759,17 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_BuildLaplace_for_huv_Tag& tag, const int& cell) const
 {
-
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::() tag ShallowWaterResid_BuildLaplace_for_huv  (kokkos)" << std::endl;
+#endif
 	/*if((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)){
 		for (std::size_t qp=0; qp < numQPs; ++qp) {
 		  for (std::size_t node=0; node < numNodes; ++node) {
 		     Residual(cell,node,3) += UDot(cell,qp,3);
 		  }
 		}*/
+
+	zeroing_Residual(cell);
 
 	BuildLaplace_for_h(cell);
 	BuildLaplace_for_uv(cell);
@@ -667,6 +785,9 @@ compute_3Dvelocity4(std::size_t node, const ScalarT lam, const ScalarT th, const
 		const PHX::MDField<ScalarT, Cell, Node>  & ux, const PHX::MDField<ScalarT, Cell, Node>  & uy,
 		const PHX::MDField<ScalarT, Cell, Node>  & uz, const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::compute_3Dvelocity4 (kokkos)" << std::endl;
+#endif
 	const ScalarT
 	k11 = -sin(lam),
 	k12 = -sin(th)*cos(lam),
@@ -685,7 +806,9 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 BuildLaplace_for_uv (const int& cell) const
 {
-
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::BuildLaplace_for_uv (kokkos)" << std::endl;
+#endif
 	/*if((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)){
 		for (std::size_t qp=0; qp < numQPs; ++qp) {
 		  for (std::size_t node=0; node < numNodes; ++node) {
@@ -775,6 +898,12 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_BuildLaplace_for_h_Tag& tag, const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::() tag ShallowWaterResid_BuildLaplace_for_h (kokkos)" << std::endl;
+#endif
+
+	zeroing_Residual(cell);
+
 	BuildLaplace_for_h(cell);
 }
 
@@ -785,6 +914,9 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 BuildLaplace_for_h (const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::BuildLaplace_for_h (kokkos)" << std::endl;
+#endif
 
 	//laplace forming for h field
 
@@ -810,6 +942,12 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::() ShallowWaterResid_VecDim6 tag  (kokkos)" << std::endl;
+#endif
+
+	zeroing_Residual(cell);
+
 	compute_Residual0(cell);
 	compute_h_ImplHV(cell);
 	compute_Residuals12_notprescribed(cell);
@@ -823,6 +961,10 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_uv_ImplHV (const int& cell) const
 {
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::compute_uv_ImplHV (kokkos)" << std::endl;
+#endif
+
 	for (int node=0; node < numNodes; ++node) {
 
 		const ScalarT
@@ -1443,8 +1585,8 @@ evaluateFields(typename Traits::EvalData workset)
 	a = Aeras::ShallowWaterConstants::self().earthRadius;
 	myPi = Aeras::ShallowWaterConstants::self().pi;
 
-	Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
-	//every policy should start with fill_nodal_metrics
+	//Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+
 	if (usePrescribedVelocity) {
 		if (useImplHyperviscosity)
 			Kokkos::parallel_for(ShallowWaterResid_VecDim4_Policy(0,workset.numCells),*this);
@@ -1473,6 +1615,10 @@ evaluateFields(typename Traits::EvalData workset)
 		else
 			Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
 	}
+
+#ifdef AERAS_OUTPUT
+	std::cout << "ShallowWaterResid::end of evaluateFields (kokkos)" << std::endl;
+#endif
 
 #endif
 }
