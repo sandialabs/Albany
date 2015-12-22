@@ -181,7 +181,10 @@ class AbstractDiscretization {
     virtual const SideSetDiscretizationsType& getSideSetDiscretizations () const = 0;
 
     //! Get the map side_id->side_set_elem_id
-    virtual const std::map<std::string,std::map<GO,GO> >& getSideIdToSideSetElemIdMap () const = 0;
+    virtual const std::map<std::string,std::map<GO,GO>>& getSideToSideSetCellMap () const = 0;
+
+    //! Get the map side_node_id->side_set_cell_node_id
+    virtual const std::map<std::string,std::map<GO,std::vector<int> > >& getSideNodeNumerationMap () const = 0;
 
     //! Get MeshStruct
     virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
@@ -200,6 +203,7 @@ class AbstractDiscretization {
 
     //! Retrieve connectivity map from elementGID to workset
     virtual WsLIDList&  getElemGIDws() = 0;
+    virtual const WsLIDList&  getElemGIDws() const = 0;
 
 #if defined(ALBANY_EPETRA)
     //! Get solution vector from mesh database

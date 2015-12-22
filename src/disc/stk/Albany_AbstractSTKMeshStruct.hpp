@@ -105,6 +105,11 @@ namespace Albany {
 
     bool fieldAndBulkDataSet;
 
+    virtual void buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                                 std::map<GO,GO>& sideMap,
+                                                 std::map<GO,std::vector<int>>& sideNodeMap) = 0;
+
+    bool side_maps_present;
   protected:
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> fieldContainer;

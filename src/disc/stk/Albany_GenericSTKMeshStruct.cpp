@@ -15,7 +15,6 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
 
-
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #endif
@@ -103,6 +102,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   meshSpecs.resize(1);
 
   fieldAndBulkDataSet = false;
+  side_maps_present = false;
 }
 
 Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
@@ -721,6 +721,22 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
 
       // Update the side set mesh specs pointer in the mesh specs of this mesh
       this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
+
+      // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
+      typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
+      ISFT* side_to_cell_map = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<ISFT> (stk::topology::ELEM_RANK, "side_to_cell_map");
+      stk::mesh::put_field(*side_to_cell_map, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), 1);
+#ifdef ALBANY_SEACAS
+      stk::io::set_field_role(*side_to_cell_map, Ioss::Field::TRANSIENT);
+#endif
+      // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
+      const int num_nodes = sideSetMeshStructs[ss_name]->getMeshSpecs()[0]->ctd.node_count;
+      typedef AbstractSTKFieldContainer::IntVectorFieldType IVFT;
+      IVFT* side_nodes_ids = &this->sideSetMeshStructs[ss_name]->metaData->declare_field<IVFT> (stk::topology::ELEM_RANK, "side_nodes_ids");
+      stk::mesh::put_field(*side_nodes_ids, this->sideSetMeshStructs[ss_name]->metaData->universal_part(), num_nodes);
+#ifdef ALBANY_SEACAS
+      stk::io::set_field_role(*side_nodes_ids, Ioss::Field::TRANSIENT);
+#endif
     }
   }
 }
@@ -764,16 +780,145 @@ void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructs (
   }
 }
 
+void Albany::GenericSTKMeshStruct::buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                                                   std::map<GO,GO>& sideMap,
+                                                                   std::map<GO,std::vector<GO>>& sideNodeMap)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (sideSetMeshStructs.find(sideSetName)==sideSetMeshStructs.end(), Teuchos::Exceptions::InvalidParameter,
+                              "Error in 'buildSideNodeToSideSetCellNodeMap': side set " << sideSetName << " does not have a mesh.\n");
+
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> side_mesh = sideSetMeshStructs.at(sideSetName);
+
+  // NOTE 1: the stk fields memorize maps from 2D to 3D values (since fields are defined on 2D mesh), while the input
+  //         maps map 3D values to 2D ones. For instance, if node 0 of side3D 41 is mapped to node 2 of cell2D 12, the
+  //         stk field values will be field(12) = [*, *, 0], while the input map will be sideNodeMap[41] = [2, *, *]
+  //         This is because in Load/SaveSideSetStateField we can only use 3D data to access the map. On the other hand,
+  //         the stk fields are defined in 2D, so it makes sense to have them indicized on the 2D values.
+  // NOTE 2: The stk side_map maps a 2D cell id to a pair <cell3D_GID, side_lid>, where side_lid is the lid of the side
+  //         within the element. The input map, instead, maps the directly side3D_GID into the cell3D_GID..
+
+  // Extract 2D cells
+  stk::mesh::Selector selector = stk::mesh::Selector(side_mesh->metaData->locally_owned_part());
+  std::vector<stk::mesh::Entity> cells2D;
+  stk::mesh::get_selected_entities(selector, side_mesh->bulkData->buckets(stk::topology::ELEM_RANK), cells2D);
+
+  if (cells2D.size()==0)
+  {
+    // It can happen if the mesh is partitioned and this process does not own the side
+    return;
+  }
+
+  const stk::topology::rank_t SIDE_RANK = metaData->side_rank();
+  const int num_nodes = side_mesh->bulkData->num_nodes(cells2D[0]);
+  GO* cell3D_id;
+  GO* side_nodes_ids;
+  GO cell2D_GID, side3D_GID;
+  int side_lid;
+  int num_sides;
+  typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
+  typedef AbstractSTKFieldContainer::IntVectorFieldType IVFT;
+  ISFT* side_to_cell_map   = this->sideSetMeshStructs[sideSetName]->metaData->get_field<ISFT> (stk::topology::ELEM_RANK, "side_to_cell_map");
+  IVFT* side_nodes_ids_map = this->sideSetMeshStructs[sideSetName]->metaData->get_field<IVFT> (stk::topology::ELEM_RANK, "side_nodes_ids");
+  std::vector<stk::mesh::EntityId> cell2D_nodes_ids(num_nodes), side3D_nodes_ids(num_nodes);
+  const stk::mesh::Entity* side3D_nodes;
+  const stk::mesh::Entity* cell2D_nodes;
+  if (side_mesh->side_maps_present)
+  {
+    // This mesh was loaded from a file that stored the side maps.
+    // Hence, we just read it and stuff the map with it
+    for (const auto& cell2D : cells2D)
+    {
+      // Get the stk field data
+      cell3D_id      = stk::mesh::field_data(*side_to_cell_map, cell2D);
+      side_nodes_ids = stk::mesh::field_data(*side_nodes_ids_map, cell2D);
+      stk::mesh::Entity cell3D = bulkData->get_entity(stk::topology::ELEM_RANK,*cell3D_id);
+
+      num_sides = bulkData->num_sides(cell3D);
+      const stk::mesh::Entity* cell_sides = bulkData->begin(cell3D,SIDE_RANK);
+      side_lid = -1;
+      for (int iside(0); iside<num_sides; ++iside)
+      {
+        side3D_nodes = bulkData->begin_nodes(cell_sides[iside]);
+        for (int inode(0); inode<num_nodes; ++inode)
+        {
+          side3D_nodes_ids[inode] = bulkData->identifier(side3D_nodes[inode]);
+        }
+        if (std::is_permutation(side3D_nodes_ids.begin(),side3D_nodes_ids.end(), side_nodes_ids))
+        {
+          side_lid = iside;
+          side3D_GID = bulkData->identifier(cell_sides[iside])-1;
+          break;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPTION (side_lid==-1, std::logic_error, "Error! Cannot locate the right side in the cell.\n");
+
+      sideMap[side3D_GID] = side_mesh->bulkData->identifier(cell2D)-1;
+      sideNodeMap[side3D_GID].resize(num_nodes);
+      cell2D_nodes = side_mesh->bulkData->begin_nodes(cell2D);
+      for (int i(0); i<num_nodes; ++i)
+      {
+        auto it = std::find(side3D_nodes_ids.begin(),side3D_nodes_ids.end(),side_nodes_ids[i]);
+        sideNodeMap[side3D_GID][std::distance(side3D_nodes_ids.begin(),it)] = i;
+      }
+    }
+
+    return;
+  }
+
+  const stk::mesh::Entity* side_cells;
+  for (const auto& cell2D : cells2D)
+  {
+    // Get the stk field data
+    cell3D_id      = stk::mesh::field_data(*side_to_cell_map, cell2D);
+    side_nodes_ids = stk::mesh::field_data(*side_nodes_ids_map, cell2D);
+
+    // The side-id is assumed equal to the cell-id in the side mesh...
+    side3D_GID = cell2D_GID = side_mesh->bulkData->identifier(cell2D)-1;
+    stk::mesh::Entity side3D = bulkData->get_entity(SIDE_RANK, side3D_GID+1);
+
+    // Safety check
+    TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_elements(side3D)!=1, std::logic_error,
+                                "Error! Side " << side3D_GID << " has more/less than 1 adjacent element.\n");
+
+    side_cells = bulkData->begin_elements(side3D);
+    stk::mesh::Entity cell3D = side_cells[0];
+
+    *cell3D_id = bulkData->identifier(cell3D);
+
+    sideMap[side3D_GID] = cell2D_GID;
+    sideNodeMap[side3D_GID].resize(num_nodes);
+
+    // Now we determine the lid of the side within the element and also the node ordering
+    cell2D_nodes = side_mesh->bulkData->begin_nodes(cell2D);
+    side3D_nodes = bulkData->begin_nodes(side3D);
+    for (int i(0); i<num_nodes; ++i)
+    {
+      cell2D_nodes_ids[i] = side_mesh->bulkData->identifier(cell2D_nodes[i]);
+      side3D_nodes_ids[i] = bulkData->identifier(side3D_nodes[i]);
+    }
+
+    for (int i(0); i<num_nodes; ++i)
+    {
+      auto it = std::find(cell2D_nodes_ids.begin(),cell2D_nodes_ids.end(),side3D_nodes_ids[i]);
+      sideNodeMap[side3D_GID][i] = std::distance(cell2D_nodes_ids.begin(),it);
+      side_nodes_ids[std::distance(cell2D_nodes_ids.begin(),it)] = side3D_nodes_ids[i];
+    }
+  }
+
+  // Just in case this method gets called twice
+  side_mesh->side_maps_present = true;
+}
+
 void Albany::GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData)
 {
-    std::cout << "Printing all part names of the parts found in the metaData:" << std::endl;
-    stk::mesh::PartVector all_parts = metaData->get_parts();
+  std::cout << "Printing all part names of the parts found in the metaData:" << std::endl;
+  stk::mesh::PartVector all_parts = metaData->get_parts();
 
-    for (stk::mesh::PartVector::iterator i_part = all_parts.begin(); i_part != all_parts.end(); ++i_part)
-    {
-       stk::mesh::Part *  part = *i_part ;
-       std::cout << "\t" << part->name() << std::endl;
-    }
+  for (stk::mesh::PartVector::iterator i_part = all_parts.begin(); i_part != all_parts.end(); ++i_part)
+  {
+    stk::mesh::Part* part = *i_part ;
+    std::cout << "\t" << part->name() << std::endl;
+  }
 }
 
 void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -1018,7 +1163,6 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
         temp_str = field_name + " Normalized Layers Coords";
         TEUCHOS_TEST_FOR_EXCEPTION (fieldContainer->getMeshVectorStates().find(temp_str)!=fieldContainer->getMeshVectorStates().end(),
                                     std::logic_error, "Error in GenericSTKMeshStruct: mesh vector state already exists.\n");
-        fieldContainer->getMeshVectorStates()[temp_str] = norm_layers_coords;
       }
       else
       {
@@ -1033,7 +1177,6 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
         temp_str = field_name + " Normalized Layers Coords";
         TEUCHOS_TEST_FOR_EXCEPTION (fieldContainer->getMeshVectorStates().find(temp_str)!=fieldContainer->getMeshVectorStates().end(),
                                     std::logic_error, "Error in GenericSTKMeshStruct: mesh vector state already exists.\n");
-        fieldContainer->getMeshVectorStates()[temp_str] = norm_layers_coords;
       }
       else
       {
@@ -1064,6 +1207,17 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
   for (int i(0); i<req_mvec.getNumVectors(); ++i)
     req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
+
+  if (layered)
+  {
+    // Broadcast the normalized layers coordinates
+    int size = norm_layers_coords.size();
+    Teuchos::broadcast(*commT,0,1,&size);
+    norm_layers_coords.resize(size);
+    Teuchos::broadcast(*commT,0,size,norm_layers_coords.data());
+    temp_str = field_name + " Normalized Layers Coords";
+    fieldContainer->getMeshVectorStates()[temp_str] = norm_layers_coords;
+  }
 
   //Now we have to stuff the vector in the mesh data
   typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;

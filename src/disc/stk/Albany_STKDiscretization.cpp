@@ -656,6 +656,7 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
      double time_label = monotonicTimeLabel(time);
 
      int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
+     mesh_data->write_output_mesh(outputFileIdx);
 
      if (mapT->getComm()->getRank()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
@@ -728,6 +729,7 @@ writeSolutionToFileT(const Tpetra_Vector& solnT, const double time,
    double time_label = monotonicTimeLabel(time);
 
      int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
+     mesh_data->write_output_mesh(outputFileIdx);
 
      if (mapT->getComm()->getRank()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
@@ -2803,163 +2805,6 @@ Albany::STKDiscretization::printVertexConnectivity(){
    }
 }
 
-void
-Albany::STKDiscretization::buildSideIdToSideSetElemIdMap (const std::string& sideSetName)
-{
-  Teuchos::RCP<STKDiscretization>& side_disc = sideSetDiscretizationsSTK.find(sideSetName)->second;
-  Teuchos::RCP<Albany::AbstractSTKMeshStruct> side_mesh_struct = side_disc->getSTKMeshStruct();
-
-  std::map<GO,GO>& map = sideIdToSideSetElemIdMap[sideSetName];
-
-  // We assume the side-id is equal to the cell-id in the side mesh, so we build an identity map
-
-  const stk::mesh::MetaData& meta_data = *stkMeshStruct->metaData;
-  const stk::mesh::BulkData& bulk_data = *stkMeshStruct->bulkData;
-  const stk::mesh::MetaData& side_meta_data = *side_mesh_struct->metaData;
-  const stk::mesh::BulkData& side_bulk_data = *side_mesh_struct->bulkData;
-
-  // Extracting sides in this sideSet
-  stk::mesh::Part& ss_part = *stkMeshStruct->ssPartVec.find(sideSetName)->second;
-  stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector(ss_part) & stk::mesh::Selector(meta_data.locally_owned_part() );
-  std::vector< stk::mesh::Entity > sides ;
-  stk::mesh::get_selected_entities( select_owned_in_sspart, bulk_data.buckets( meta_data.side_rank() ), sides);
-
-  // Extracting cells in this sideSet mesh
-  stk::mesh::Selector ss_select_owned_in_part (meta_data.locally_owned_part());
-  std::vector< stk::mesh::Entity > ss_cells;
-  stk::mesh::get_selected_entities (ss_select_owned_in_part, side_bulk_data.buckets(stk::topology::ELEM_RANK), ss_cells);
-
-  // Sanity check
-  TEUCHOS_TEST_FOR_EXCEPTION (ss_cells.size()!=sides.size(), std::logic_error, "Error! Something is wrong with the sides or ss cells count.\n");
-
-  // Loop over the sides
-  bool all_good = true;
-  for (int is(0); is<sides.size(); ++is)
-  {
-    stk::mesh::Entity side = sides[is];
-    stk::mesh::Entity ss_cell = ss_cells[is];
-    stk::mesh::EntityId side_id = bulk_data.identifier(side)-1;
-    stk::mesh::EntityId side_cell_id = side_bulk_data.identifier(ss_cell)-1;
-
-    // NOTE: given how things are now, the map is basically an identity. Why have it then? Glad you asked.
-    //       Unfortunately it is not an identity for Extruded meshes with column-wise ordering. However,
-    //       so far I could not figure how to build the map in that case. Hopefully will figure it out.
-    //       Meanwhile, we still create a map (an identity), to prepare for more general scenarios,
-    //       and, for now, we issue warnings if the map does not yield an identity.
-    if (side_id!=side_cell_id)
-      all_good = false;
-
-    map[side_id] = side_cell_id;
-  }
-
-  if (!all_good)
-    std::cout << "WARNING! Something went wrong when building a the map side_id->ss_cell_id."
-              << "         A possible reason is that you are using an Extruded mesh with"
-              << "         column-wise ordering. If this is the case and you do need the map,"
-              << "         please, do not use column-wise ordering. If this is not the case,"
-              << "         there may be a bug in the creation of the side set mesh."
-              << "         However, if you don't need this map, you're not affected by the bug.\n";
-
-/*
-  const stk::mesh::MetaData& side_meta_data = *side_mesh_struct->metaData;
-  const stk::mesh::MetaData& meta_data = *stkMeshStruct->metaData;
-
-  stk::mesh::BulkData& side_bulk_data = *side_mesh_struct->bulkData;
-  stk::mesh::BulkData& bulk_data = *stkMeshStruct->bulkData;
-
-  // Extracting side cells
-  stk::mesh::Selector select_overlap_in_part = stk::mesh::Selector(side_meta_data.universal_part()) & (stk::mesh::Selector(side_meta_data.locally_owned_part()) | stk::mesh::Selector(side_meta_data.globally_shared_part()));
-
-  std::vector<stk::mesh::Entity> side_cells;
-  stk::mesh::get_selected_entities(select_overlap_in_part, side_bulk_data.buckets(stk::topology::ELEMENT_RANK), side_cells);
-
-  // Extracting coordinates (both meshes)
-  AbstractSTKFieldContainer::VectorFieldType* side_coordinates_field = side_mesh_struct->getCoordinatesField();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-
-  // Extracting sides in this sideSet
-  stk::mesh::Part& ss_part = *stkMeshStruct->ssPartVec.find(sideSetName)->second;
-  stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector(ss_part) & stk::mesh::Selector(meta_data.locally_owned_part() );
-  std::vector< stk::mesh::Entity > sides ;
-  stk::mesh::get_selected_entities( select_owned_in_sspart, bulk_data.buckets( meta_data.side_rank() ), sides); // store the result in "sides"
-
-  // Loop over the sides
-  for (int is(0); is<sides.size(); ++is)
-  {
-    stk::mesh::Entity side = sides[is];
-    stk::mesh::EntityId side_id = bulk_data.identifier(side)-1;
-
-    stk::mesh::Entity const* start = bulk_data.begin_nodes(side);
-    stk::mesh::Entity const* end   = bulk_data.end_nodes(side);
-    std::vector<std::vector<double> > nodes;
-    for (stk::mesh::Entity const* it = start; it!=end; ++it)
-    {
-      std::vector<double> coords(3);
-
-      double const* coords_ptr = (double const*) stk::mesh::field_data(*coordinates_field, *it);
-      coords[0] = coords_ptr[0];
-      coords[1] = coords_ptr[1];
-      coords[2] = coords_ptr[2];
-
-      nodes.push_back(coords);
-    }
-
-    // Now we loop on the sideSet cells
-    bool found = false;
-    for (size_t icell(0); icell<side_cells.size(); ++icell)
-    {
-      stk::mesh::EntityId side_cell_id = side_bulk_data.identifier(side_cells[icell]) - 1;
-
-      std::vector<std::vector<double> > side_nodes;
-
-      stk::mesh::Entity const* side_start = side_bulk_data.begin_nodes(side_cells[icell]);
-      stk::mesh::Entity const* side_end   = side_bulk_data.end_nodes(side_cells[icell]);
-
-      // Assume this is the right cell
-      found = true;
-      for (stk::mesh::Entity const* it = side_start; it!=side_end; ++it)
-      {
-        double const* coords = (double const*) stk::mesh::field_data(*side_coordinates_field, *it);
-
-        bool good = false;
-        for (int iP(0); iP<3; ++iP)
-        {
-          double diff = std::sqrt(std::pow(nodes[iP][0]-coords[0],2) + std::pow(nodes[iP][1]-coords[1],2));// + std::pow(nodes[iP][2]-coords[2],2));
-          if (diff<1e-6)
-          {
-            good=true;
-            break;
-          }
-        }
-
-        if (!good)
-        {
-          // this cell point had not mathc in the side points, so this cell can't be the right one
-          found=false;
-          break;
-        }
-      }
-      if (found)
-      {
-        map[side_id] = side_cell_id;
-        break;
-      }
-    }
-
-    if (!found)
-    {
-      std::cout << "WARNING: can't find a correspondence for side " << side_id << " with nodes";
-      for (stk::mesh::Entity const* it = start; it!=end; ++it)
-      {
-        std::cout << " " << bulk_data.identifier(*it)-1;
-      }
-      std::cout << "\n";
-    }
-
-  }
-*/
-}
-
 void Albany::STKDiscretization::buildSideSetProjectors()
 {
   // Note: the Global index of a node should be the same in both this and the side discretizations
@@ -3106,7 +2951,7 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
       sideSetDiscretizations.insert(std::make_pair(it.first,side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first,side_disc));
 
-      buildSideIdToSideSetElemIdMap(it.first);
+      stkMeshStruct->buildCellSideNodeNumerationMap (it.first, sideToSideSetCellMap[it.first], sideNodeNumerationMap[it.first]);
     }
 
     buildSideSetProjectors();

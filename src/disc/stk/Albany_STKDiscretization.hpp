@@ -154,6 +154,7 @@ namespace Albany {
 
     //! Get connectivity map from elementGID to workset
     WsLIDList& getElemGIDws() { return elemGIDws; };
+    const WsLIDList& getElemGIDws() const { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
@@ -232,9 +233,14 @@ namespace Albany {
       return sideSetDiscretizations;
     }
 
-    const std::map<std::string,std::map<GO,GO> >& getSideIdToSideSetElemIdMap () const
+    const std::map<std::string,std::map<GO,GO> >& getSideToSideSetCellMap () const
     {
-      return sideIdToSideSetElemIdMap;
+      return sideToSideSetCellMap;
+    }
+
+    const std::map<std::string,std::map<GO,std::vector<int>>>& getSideNodeNumerationMap () const
+    {
+      return sideNodeNumerationMap;
     }
 
     //! Flag if solution has a restart values -- used in Init Cond
@@ -360,8 +366,6 @@ namespace Albany {
 
     void writeCoordsToMatrixMarket() const;
 
-    void buildSideIdToSideSetElemIdMap (const std::string& sideSetName);
-
     void buildSideSetProjectors ();
 
     double previous_time_label;
@@ -481,7 +485,8 @@ namespace Albany {
     // Sideset discretizations
     std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;
     std::map<std::string,Teuchos::RCP<Albany::STKDiscretization> >      sideSetDiscretizationsSTK;
-    std::map<std::string,std::map<GO,GO> >                              sideIdToSideSetElemIdMap;
+    std::map<std::string,std::map<GO,GO> >                              sideToSideSetCellMap;
+    std::map<std::string,std::map<GO,std::vector<int> > >               sideNodeNumerationMap;
     std::map<std::string,Teuchos::RCP<Tpetra_CrsMatrix> >               projectorsT;
     std::map<std::string,Teuchos::RCP<Tpetra_CrsMatrix> >               ov_projectorsT;
 #ifdef ALBANY_EPETRA

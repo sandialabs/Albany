@@ -47,6 +47,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
     // One int scalar per Node/Cell  - (Node) or (Cell)
     typedef stk::mesh::Field<int>                         IntScalarFieldType ;
+    // int vector per Node/Cell  - (Node,Dim/VecDim) or (Cell,Dim/VecDim)
+    typedef stk::mesh::Field<int, stk::mesh::Cartesian>   IntVectorFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
     // Tensor3 per QP   - (Cell, QP, Dim, Dim, Dim)

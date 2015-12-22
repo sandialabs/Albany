@@ -51,6 +51,14 @@ namespace Albany {
     const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
         { return meshDynamicData; }
 
+    // This routine builds two maps: side3D_id->cell2D_id, and side3D_node_lid->cell2D_node_lid.
+    // These maps are used because the side id may differ from the cell id and the nodes order
+    // in a 2D cell may not be the same as in the corresponding 3D side. The second map works
+    // as follows: map[3DsideGID][3Dside_local_node] = 2Dcell_local_node
+    void buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                         std::map<GO,GO>& sideMap,
+                                         std::map<GO,std::vector<int>>& sideNodeMap);
+
     protected:
     GenericSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,

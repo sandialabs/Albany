@@ -40,6 +40,11 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return -1.0; }
 
+    // Overrides the method in GenericSTKMeshStruct
+    void buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                         std::map<GO,GO>& sideMap,
+                                         std::map<GO,std::vector<int>>& sideNodeMap);
+
     private:
     //Ioss::Init::Initializer ioInit;
 
@@ -64,11 +69,14 @@ namespace Albany {
     bool periodic;
     enum elemShapeType {Tetrahedron, Wedge, Hexahedron};
     elemShapeType ElemShape;
+
+    LayeredMeshOrdering Ordering;
+    int numLayers;
     int NumBaseElemeNodes;
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBdEdges; //number of faces on basal boundary
-  };
+  }; // Class ExtrudedSTKMeshStruct
 
 
 

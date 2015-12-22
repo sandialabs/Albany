@@ -417,6 +417,26 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
           }
     }
   }
+  else
+  {
+    // We put all the fields as 'missing'
+    const stk::mesh::FieldVector& fields = metaData->get_fields();
+    for (int i(0); i<fields.size(); ++i)
+      missing.emplace_back(fields[i],fields[i]->name());
+  }
+
+  // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
+  side_maps_present = true;
+  bool coherence = true;
+  for (const auto& it : missing)
+  {
+    if (it.field()->name()=="side_to_cell_map" || it.field()->name()=="side_nodes_ids")
+    {
+      side_maps_present = false;
+      coherence = !coherence; // Both fields should be present or absent so coherence should change exactly twice
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (!coherence, std::runtime_error, "Error! The maps 'side_map' and 'side_node_map' should either both be present or both missing, but only one of them was found in the mesh file.\n");
 
   // Loading required input fields from file
   this->loadRequiredInputFields (req,commT);
