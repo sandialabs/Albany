@@ -24,10 +24,8 @@ endif()
 
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 
-if (NOT ALBANY_EPETRA) 
-  add_test(Aeras_${testName}_Tpetra_Spectral_np2 ${AlbanyT.exe} input_spectralT.xml) 
-  add_test(Aeras_${testName}_Tpetra_Spectral_np4 ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 
-endif()
+add_test(Aeras_${testName}_Tpetra_Spectral_np2 ${AlbanyT.exe} input_spectralT.xml) 
+add_test(Aeras_${testName}_Tpetra_Spectral_np4 ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_STOKHOS)
