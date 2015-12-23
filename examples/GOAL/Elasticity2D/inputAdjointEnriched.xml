@@ -40,7 +40,7 @@
     <Parameter name="Workset Size" type="int" value="50"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="../../LCM/SCOREC/meshes/notch/notch.dmg"/>
     <Parameter name="PUMI Input File Name" type="string" value="../../LCM/SCOREC/meshes/notch/notch.smb"/>
-    <Parameter name="PUMI Output File Name" type="string" value="out_adjoint.vtk"/>
+    <Parameter name="PUMI Output File Name" type="string" value="out_adjoint_enriched.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{1, eb_1}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x3:{5,3,4, ns_1, ns_3, ns_2}"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
