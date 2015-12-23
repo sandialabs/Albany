@@ -49,7 +49,13 @@ BCManager::BCManager(
     const double time,
     Albany::Application const& application) :
   t(time),
-  app(application)
+  app(application),
+  sol(Teuchos::null),
+  res(Teuchos::null),
+  qoi(Teuchos::null),
+  jac(Teuchos::null),
+  jacT(Teuchos::null),
+  isAdjoint(false)
 {
   RCP<const ParameterList> pl = app.getProblemPL();
   bcParams = pl->sublist("Hierarchic Boundary Conditions");
@@ -62,7 +68,7 @@ BCManager::BCManager(
 
 void BCManager::run()
 {
-  if (jacT == Teuchos::null) isAdjoint = false;
+  if (jacT != Teuchos::null) isAdjoint = true;
   typedef ParameterList::ConstIterator ParamIter;
   for (ParamIter i = bcParams.begin(); i != bcParams.end(); ++i)
   {
