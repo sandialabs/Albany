@@ -78,7 +78,7 @@ computeTau(apf::MeshEntity* e)
   apf::Downward edges;
   int ne = mesh->getDownward(e,1,edges);
   for (int i=0; i < ne; ++i)
-    h = std::max(h, measure(mesh, edges[i]));
+    h = std::max(h, apf::measure(mesh, edges[i]));
 
   // return the stabilization parameter
   // advective limit assumed for now
