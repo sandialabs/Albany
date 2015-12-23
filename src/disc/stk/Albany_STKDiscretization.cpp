@@ -56,7 +56,7 @@ const double pi = 3.1415926535897932385;
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-// #define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::
 STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -1290,6 +1290,31 @@ void Albany::STKDiscretization::computeGraphs()
       }
     }
   }
+
+#ifdef ALBANY_PERIDIGM
+  // For the initial implementation, allocate all possible entries
+  // in rows corresponding to peridynamic nodes.  I.e., assume
+  // all peridynamic nodes are bonded to each other.
+  for (std::size_t i=0; i < cells.size(); i++) {
+    stk::mesh::Entity e = cells[i];
+    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
+    const size_t num_nodes = bulkData.num_nodes(e);
+    if(num_nodes == 1){
+      stk::mesh::Entity rowNode = node_rels[0];
+      for (std::size_t k=0; k < neq; k++) {
+        row = getGlobalDOF(gid(rowNode), k);
+	for (std::size_t l=0; l < cells.size(); l++) {
+	  for (std::size_t m=0; m < neq; m++) {
+            col = getGlobalDOF(l, m);
+            colAV = Teuchos::arrayView(&col, 1);
+            overlap_graphT->insertGlobalIndices(row, colAV);
+	  }
+	}
+      }
+    }
+  }
+#endif
+
   overlap_graphT->fillComplete();
 
   // Create Owned graph by exporting overlap with known row map
