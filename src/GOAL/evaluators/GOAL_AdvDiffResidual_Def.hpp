@@ -73,16 +73,18 @@ double AdvDiffResidual<EvalT, Traits>::
 computeTau(apf::MeshEntity* e)
 {
   // get the current element size
-  // max edge length for now
+  // average edge length for now
   double h = 0;
   apf::Downward edges;
   int ne = mesh->getDownward(e,1,edges);
   for (int i=0; i < ne; ++i)
-    h = std::max(h, apf::measure(mesh, edges[i]));
+    h += apf::measure(mesh, edges[i]);
+  h /= ne;
 
   // return the stabilization parameter
-  // advective limit assumed for now
-  return h / ( 2.0 * aMagnitude );
+  double c1 = 4.0*k/(h*h);
+  double c2 = 2.0*aMagnitude/h;
+  return 1.0/(c1 + c2);
 }
 
 //**********************************************************************
