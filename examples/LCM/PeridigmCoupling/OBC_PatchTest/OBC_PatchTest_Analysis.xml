@@ -97,7 +97,7 @@
   <ParameterList name="Piro">
     <Parameter name="Sensitivity Method" type="string" value="Adjoint"/>
 
-    <Parameter name="Jacobian Operator" type="string" value="Finite Difference"/>
+    <!--Parameter name="Jacobian Operator" type="string" value="Finite Difference"/-->
     
     <ParameterList name="Analysis">
       <Parameter name="Analysis Package" type="string" value="ROL"/>
