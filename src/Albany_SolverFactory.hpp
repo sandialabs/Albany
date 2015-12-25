@@ -9,7 +9,6 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_Application.hpp"
-//#include "Albany_ApplicationT.hpp"
 
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_VectorBase.hpp"
@@ -82,8 +81,8 @@ namespace Albany {
 //      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null, 
-      bool createAlbanyApp = true);  
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
+      bool createAlbanyApp = true);
 
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
@@ -150,7 +149,7 @@ namespace Albany {
     SolverFactory& operator=(const SolverFactory&);
 
   public:
-#if defined(ALBANY_EPETRA) 
+#if defined(ALBANY_EPETRA)
    /** \brief Function that does regression testing for problem solves. */
     int checkSolveTestResults(
       int response_index,

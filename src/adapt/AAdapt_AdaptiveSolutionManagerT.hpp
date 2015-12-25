@@ -12,7 +12,7 @@
 #include "AAdapt_InitialCondition.hpp"
 #include "AAdapt_AbstractAdapterT.hpp"
 
-#include "LOCA_Thyra_AdaptiveSolutionManager.H"
+#include "Thyra_AdaptiveSolutionManager.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -21,7 +21,7 @@ namespace AAdapt {
 
 namespace rc { class Manager; }
 
-class AdaptiveSolutionManagerT : public LOCA::Thyra::AdaptiveSolutionManager {
+class AdaptiveSolutionManagerT : public Thyra::AdaptiveSolutionManager {
 public:
     AdaptiveSolutionManagerT(
         const Teuchos::RCP<Teuchos::ParameterList>& appParams,
@@ -31,11 +31,11 @@ public:
         const Teuchos::RCP<rc::Manager>& rc_mgr,
         const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-   //! Method called by LOCA Solver to determine if the mesh needs adapting
+   //! Method called by the solver implementation to determine if the mesh needs adapting
    // A return type of true means that the mesh should be adapted
    virtual bool queryAdaptationCriteria(){ return adapter_->queryAdaptationCriteria(iter_); }
 
-   //! Method called by LOCA Solver to actually adapt the mesh
+   //! Method called by solver implementation to actually adapt the mesh
    //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
    virtual bool adaptProblem();
 

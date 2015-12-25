@@ -263,7 +263,7 @@ namespace {
 
 void AAdapt::MeshAdapt::afterAdapt()
 {
-  Teuchos::Array<std::string> defaultStArgs = 
+  Teuchos::Array<std::string> defaultStArgs =
      Teuchos::tuple<std::string>("zoltan", "parma", "parma");
   double maxImb = adapt_params_->get<double>("Maximum LB Imbalance", 1.30);
 
@@ -469,7 +469,7 @@ adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
     // Copy ref config data, now interp'ed to new mesh, into it.
     pumi_discretization->getField(
       "x_accum", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
-    
+
     if (alpha == 1) { success = true; break; }
   }
 
@@ -531,6 +531,10 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
+  // For the new adaptive model, we preallocate all vectors larger than will be needed during the calculation.
+  // We can adapt the mesh up to that point, but an exception will be thrown if the number of nodes grow beyond
+  // the high water mark on the processor.
+  validPL->set<int>("High Water Mark", 1, "Number of nodes to allocate space for on each rank");
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;
@@ -732,7 +736,7 @@ double findAlpha (
   const int n_iterations_to_fail)
 {
   CoordState cs(pumi_disc);
-  
+
   // Temp storage for proposed new coordinates.
   const Teuchos::ArrayRCP<double> x(cs.coords.size());
 

@@ -52,11 +52,11 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   Teuchos::RCP<Teuchos::ParameterList> problemParams =
       Teuchos::sublist(appParams_, "Problem", true);
 
-  // Note that piroParams_ is a member of LOCA_Thyra_AdaptiveSolutionManager
+  // Note that piroParams_ is a member of Thyra_AdaptiveSolutionManager
   piroParams_ = Teuchos::sublist(appParams_, "Piro", true);
 
   if (problemParams->isSublist("Adaptation")) { // If the user has specified adaptation on input, grab the sublist
-    // Note that piroParams_ and adaptiveMesh_ are members of LOCA_Thyra_AdaptiveSolutionManager
+    // Note that piroParams_ and adaptiveMesh_ are members of Thyra_AdaptiveSolutionManager
     adaptParams_ = Teuchos::sublist(problemParams, "Adaptation", true);
     adaptiveMesh_ = true;
     buildAdapter(rc_mgr);
@@ -66,9 +66,14 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   // if this is a restart solution
   if (disc_->hasRestartSolution()) {
     if (paramLib_->isParameter("Time")) {
-      double initialValue =
-        appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
-        get<double>("Initial Value", 0.0);
+      double initialValue = 0.0;
+        if(appParams->get<std::string>("Solution Method", "Steady") == "Continuation")
+          initialValue =
+            appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
+            get<double>("Initial Value", 0.0);
+        else if(appParams->get<std::string>("Solution Method", "Steady") == "Transient")
+          initialValue =
+            appParams->sublist("Piro").sublist("Trapezoid Rule").get<double>("Initial Time", 0.0);
       paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
     }
   }
@@ -218,8 +223,10 @@ AAdapt::AdaptiveSolutionManagerT::
 adaptProblem()
 {
 
+  Teuchos::RCP<Thyra::ModelEvaluator<double> > model = this->getState()->getModel();
+
   const Teuchos::RCP<const Tpetra_Vector> oldSolution =
-      ConverterT::getConstTpetraVector(model_->getNominalValues().get_x());
+      ConverterT::getConstTpetraVector(model->getNominalValues().get_x());
 
   Teuchos::RCP<Tpetra_Vector> oldOvlpSolution = getOverlapSolutionT(
       *oldSolution);
@@ -232,7 +239,7 @@ adaptProblem()
 
     Teuchos::RCP<Thyra::ModelEvaluatorDelegatorBase<ST> > base =
         Teuchos::rcp_dynamic_cast<Thyra::ModelEvaluatorDelegatorBase<ST> >(
-            model_);
+            model);
 
     // If dynamic cast fails
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -254,8 +261,8 @@ adaptProblem()
     // Allocate storage in the model evaluator
     me->allocateVectors();
 
-    // Build the solution group down in LOCA_Thyra_AdaptiveSolutionManager.C
-    this->buildSolutionGroup();
+    // Build the solution group down in Thyra_AdaptiveSolutionManager.cpp
+    this->getState()->buildSolutionGroup();
 
     // getSolutionField() below returns the new solution vector with the fields transferred to it
     initial_xT = disc_->getSolutionFieldT();
