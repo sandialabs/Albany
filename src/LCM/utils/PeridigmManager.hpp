@@ -75,8 +75,8 @@ public:
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
 
-  //! Return the tangent stiffness matrix from Peridigm
-  Teuchos::RCP<const Epetra_FECrsMatrix> getTangentStiffnessMatrix(){ return peridigm->getTangentStiffnessMatrix(); }
+  //! Copy values from the Peridigm tangent stiffness matrix into the Albany jacobian.
+  bool copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(Teuchos::RCP<Tpetra_CrsMatrix> jacT);
 
   //! Evaluate the peridynamic internal force
   void evaluateInternalForce();

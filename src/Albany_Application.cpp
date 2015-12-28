@@ -417,8 +417,9 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())){
     LCM::PeridigmManager::self()->setDirichletFields(disc);
+  }
 #endif
 #endif
 
@@ -1318,6 +1319,15 @@ computeGlobalJacobianImplT(const double alpha,
 
   // Assemble global Jacobian
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
+    LCM::PeridigmManager::self()->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+  }
+#endif
+#endif
+
   jacT->scale(1.0/scale); 
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)

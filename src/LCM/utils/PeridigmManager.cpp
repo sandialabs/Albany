@@ -1070,6 +1070,55 @@ void LCM::PeridigmManager::writePeridigmSubModel(RealType currentTime)
     peridigm->writePeridigmSubModel(currentTime);
 }
 
+bool LCM::PeridigmManager::copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
+{
+  if(!peridigm->hasTangentStiffnessMatrix())
+    return false;
+
+  jacT->globalAssemble();
+  evaluateTangentStiffnessMatrix();
+  Teuchos::RCP<const Epetra_FECrsMatrix> peridigmTangent = peridigm->getTangentStiffnessMatrix();
+  //   char name[100];
+  //   sprintf(name, "peridigmJac%i.mm", countJac);
+  //   EpetraExt::RowMatrixToMatrixMarketFile(name, *peridigmTangent);
+
+  for(int peridigmLocalRow=0 ; peridigmLocalRow<peridigmTangent->NumMyRows() ; peridigmLocalRow++){
+
+    int globalRow = peridigmTangent->RowMatrixRowMap().GID(peridigmLocalRow);
+
+    int peridigmNumEntries;
+    double* peridigmValues;
+    int* peridigmLocalColIndices;
+    peridigmTangent->ExtractMyRowView(peridigmLocalRow, peridigmNumEntries, peridigmValues, peridigmLocalColIndices);
+
+    std::vector<int> globalColIndices(peridigmNumEntries);
+    for(int i=0 ; i<peridigmNumEntries ; i++){
+      globalColIndices[i] = peridigmTangent->ColMap().GID(peridigmLocalColIndices[i]);
+    }
+
+    LO albanyLocalRow = jacT->getRowMap()->getLocalElement(globalRow);
+
+    std::vector<LO> albanyLocalColIndices(peridigmNumEntries);
+    for(int i=0 ; i<peridigmNumEntries ; i++){
+      albanyLocalColIndices[i] = jacT->getColMap()->getLocalElement( static_cast<GO>(globalColIndices[i]) );
+    }
+    Teuchos::ArrayView<LO> albanyLocalColIndicesView(&albanyLocalColIndices[0], peridigmNumEntries);
+
+    std::vector<RealType> albanyValues(peridigmNumEntries);
+    for(int i=0 ; i<peridigmNumEntries ; i++){
+      albanyValues[i] = static_cast<RealType>(peridigmValues[i]);
+    }
+    Teuchos::ArrayView<RealType> albanyValuesView(&albanyValues[0], peridigmNumEntries);
+
+    LO numReplaced = jacT->replaceLocalValues(albanyLocalRow, albanyLocalColIndicesView, albanyValuesView);
+
+    TEUCHOS_TEST_FOR_EXCEPTION(numReplaced != peridigmNumEntries, std::logic_error, "Error copying Peridigm Jacobian values into Albany Jacobian.\n");
+  }
+  jacT->globalAssemble();
+
+  return true;
+}
+
 void LCM::PeridigmManager::evaluateInternalForce()
 {
   if(hasPeridynamics)

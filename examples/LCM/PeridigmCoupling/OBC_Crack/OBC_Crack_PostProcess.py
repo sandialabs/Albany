@@ -17,7 +17,7 @@ import string
 
 if __name__ == "__main__":
 
-    inFileName = "OBC_Crack.e"
+    inFileName = "OBC_Crack_Analysis.e"
     inFile = exodus.exodus(inFileName, mode='r')
 
     outFileLabel = string.splitfields(inFileName, '.')[0]
