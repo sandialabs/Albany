@@ -1010,7 +1010,7 @@ div_check(const int spatialDim, const int numelements) const
                     <<") divergence_v, div_v:("<<divergence_v[q] <<","<<div_v(q)/rrearth
                     <<")" <<std::endl;
       }
-      if (!c) e==numelements;
+      if (!c) e = numelements;
     }
   }
 }
