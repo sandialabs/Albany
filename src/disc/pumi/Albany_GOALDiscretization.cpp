@@ -6,7 +6,9 @@
 
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_GOALDiscretization.hpp"
+#include <apf.h>
 #include <apfShape.h>
+#include <PCU.h>
 
 Albany::GOALDiscretization::GOALDiscretization(
     Teuchos::RCP<Albany::GOALMeshStruct> meshStruct_,
@@ -17,15 +19,47 @@ Albany::GOALDiscretization::GOALDiscretization(
 {
   goalMeshStruct = meshStruct_;
   init();
+  setFieldInformation();
 }
 
 Albany::GOALDiscretization::~GOALDiscretization()
 {
 }
 
-int Albany::GOALDiscretization::getNumNodesPerElem(int ebi)
+static apf::ValueType getAPFType(int neq)
 {
-  return goalMeshStruct->getNumNodesPerElem(ebi);
+  apf::ValueType valuetype;
+  if (neq == 1)
+    valuetype = apf::SCALAR;
+  else if (neq == 2 || neq == 3)
+    valuetype = apf::VECTOR;
+  else {
+    assert(neq == 4 || neq == 9);
+    valuetype = apf::MATRIX;
+  }
+  return valuetype;
+}
+
+void Albany::GOALDiscretization::setFieldInformation()
+{
+  if (solNames.size() > 0) {
+    goalSolutionNames = solNames;
+    goalSolutionIndices = solIndex;
+    goalSolutionTypes.resize(solNames.size());
+    goalAdjointSolutionNames.resize(solNames.size());
+  }
+  else {
+    goalSolutionNames.resize(1);
+    goalSolutionNames[0] = APFMeshStruct::solution_name;
+    goalSolutionIndices.resize(1);
+    goalSolutionIndices[0] = goalMeshStruct->neq;
+    goalSolutionTypes.resize(1);
+    goalAdjointSolutionNames.resize(1);
+  }
+  for (int i=0; i < goalSolutionNames.size(); ++i) {
+    goalAdjointSolutionNames[i] = goalSolutionNames[i] + "_adj";
+    goalSolutionTypes[i] = getAPFType(goalSolutionIndices[i]);
+  }
 }
 
 void Albany::GOALDiscretization::setupMLCoords()
@@ -120,6 +154,8 @@ void Albany::GOALDiscretization::computeNodeSets()
       GOALNode gn;
       gn.lid = node_lid;
       gn.higherOrder = higherOrder;
+      if (!higherOrder)
+        m->getPoint(node.entity, node.node, gn.coord);
       goalNodeSets[NS_name].push_back(gn);
     }
   }
@@ -129,24 +165,69 @@ void Albany::GOALDiscretization::computeSideSets()
 {
 }
 
+int Albany::GOALDiscretization::getNumNodesPerElem(int ebi)
+{
+  return goalMeshStruct->getNumNodesPerElem(ebi);
+}
+
+void Albany::GOALDiscretization::changeP(int add)
+{
+  assert(solNames.size() == 0);
+  int p = goalMeshStruct->getP();
+  int pnew = p+add;
+  if (!PCU_Comm_Self())
+    printf(" changing solution p from %d to %d\n", p, pnew);
+  apf::FieldShape* s = apf::getHierarchic(pnew);
+  goalMeshStruct->changeShape(s);
+  apf::Mesh* m = goalMeshStruct->getMesh();
+  for (int i=0; i < goalSolutionNames.size(); ++i) {
+    int valuetype = getAPFType(goalSolutionIndices[i]);
+    goalMeshStruct->createNodalField("tmp", valuetype);
+    apf::Field* newfield = m->findField("tmp");
+    const char* name = goalSolutionNames[i].c_str();
+    apf::Field* oldfield = m->findField(name);
+    apf::projectHierarchicField(newfield, oldfield);
+    apf::destroyField(oldfield);
+    apf::renameField(newfield, name);
+  }
+  updateMesh(false);
+}
+
 void Albany::GOALDiscretization::
 attachSolutionToMesh(Tpetra_Vector const& x)
 {
   Teuchos::ArrayRCP<const ST> data = x.get1dView();
-  if (solNames.size() == 0)
-    this->setField(APFMeshStruct::solution_name, &(data[0]), false);
-  else
-    this->setSplitFields(solNames, solIndex, &(data[0]), false);
+  this->setSplitFields(
+      goalSolutionNames, goalSolutionIndices, &(data[0]), false);
+}
+
+void Albany::GOALDiscretization::createAdjointFields()
+{
+  for (int i=0; i < goalAdjointSolutionNames.size(); ++i) {
+    int valuetype = getAPFType(goalSolutionIndices[i]);
+    goalMeshStruct->createNodalField(
+        goalAdjointSolutionNames[i].c_str(), valuetype);
+  }
+}
+
+void Albany::GOALDiscretization::
+attachAdjointSolutionToMesh(Tpetra_Vector const& x)
+{
+  apf::Mesh* m = goalMeshStruct->getMesh();
+  apf::Field* f = m->findField(goalAdjointSolutionNames[0].c_str());
+  if (!f)
+    createAdjointFields();
+  Teuchos::ArrayRCP<const ST> data = x.get1dView();
+  this->setSplitFields(
+      goalAdjointSolutionNames, goalSolutionIndices, &(data[0]), false);
 }
 
 void Albany::GOALDiscretization::
 fillSolutionVector(Teuchos::RCP<Tpetra_Vector>& x)
 {
   Teuchos::ArrayRCP<ST> data = x->get1dViewNonConst();
-  if (solNames.size() == 0)
-    this->getField(APFMeshStruct::solution_name, &(data[0]), true);
-  else
-    this->getSplitFields(solNames, solIndex, &(data[0]), true);
+  this->getSplitFields(
+      goalSolutionNames, goalSolutionIndices, &(data[0]), true);
 }
 
 void Albany::GOALDiscretization::updateMesh(bool shouldTransferIPData)

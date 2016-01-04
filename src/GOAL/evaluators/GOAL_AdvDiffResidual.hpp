@@ -14,6 +14,11 @@
 
 #include "Albany_Layouts.hpp"
 
+namespace apf {
+class Mesh;
+class MeshEntity;
+}
+
 namespace GOAL {
 
 template<typename EvalT, typename Traits>
@@ -40,20 +45,27 @@ class AdvDiffResidual :
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     double k;
-    double a[3];
+    Teuchos::Array<double> a;
+    double aMagnitude;
 
     int numDims;
     int numNodes;
     int numQPs;
+
+    apf::Mesh* mesh;
+    std::vector<std::vector<apf::MeshEntity*> > buckets;
+    double computeTau(apf::MeshEntity* e);
 
     // Input
     PHX::MDField<ScalarT,Cell,QuadPoint> u;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradU;
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
     PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+    Teuchos::RCP<Albany::Application> app;
+    bool useSUPG;
 
     // Output
-    PHX::MDField<MeshScalarT,Cell,Node> residual;
+    PHX::MDField<ScalarT,Cell,Node> residual;
 
 };
 

@@ -20,10 +20,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_RK4_spectral_np5_T.xml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-if (NOT ALBANY_EPETRA) 
 add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} input_BE_T.xml)
 add_test(Aeras_${testName}_Spectral_np3_Tpetra ${AlbanyT.exe} input_BE_spectral_np3_T.xml)
-else()
+if (ALBANY_EPETRA)
 add_test(Aeras_${testName} ${Albany.exe} input_BE.xml)
 endif()
 

@@ -4,6 +4,8 @@
     <Parameter name="MaterialDB Filename" type="string" value="VectorPoissonMaterials.xml"/>
     <ParameterList name="Peridigm Parameters">
 
+      <ParameterList name="Optimization Based Coupling">
+      </ParameterList>
       <ParameterList name="Discretization">
 	    <Parameter name="Type" type="string" value="Albany" />
       </ParameterList>
@@ -52,7 +54,6 @@
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
   <ParameterList name="Piro">
-    <Parameter name="Jacobian Operator" type="string" value="Finite Difference"/>
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>

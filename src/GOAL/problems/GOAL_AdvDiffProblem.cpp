@@ -21,11 +21,21 @@ GOALAdvDiffProblem::GOALAdvDiffProblem(
   numDims(numDim)
 {
   // compute number of equations
-  this->setNumEquations(numDims);
+  this->setNumEquations(1);
 
   // print a summary of the problem
   *out << "GOAL AdvDiff Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
+
+  // get the diffusivity coefficient
+  k = params->get<double>("Diffusivity Coefficient", 1.0);
+
+  // get the advection vector
+  Teuchos::Array<double> dummy;
+  a = params->get<Teuchos::Array<double> >("Advection Vector", dummy);
+
+  // determine if supg stabilization should be used
+  useSUPG = params->get<bool>("SUPG", false);
 
   // if solving the adjoint problem, should we use an enriched basis?
   if (params->isParameter("Enrich Adjoint"))
@@ -95,9 +105,13 @@ getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> pl =
       this->getGenericProblemParams("ValidGOALAdvDiffProblemParams");
+  Teuchos::Array<double> dummy;
   pl->sublist("Hierarchic Boundary Conditions", false, "");
   pl->set<bool>("Enrich Adjoint", false, "should the adjoint solve be enriched");
   pl->sublist("Quantity of Interest", false, "QoI used for adjoint solve");
+  pl->set<Teuchos::Array<double> >("Advection Vector", dummy, "");
+  pl->set<double>("Diffusivity Coefficient", 1.0, "");
+  pl->set<bool>("SUPG", false, "");
   return pl;
 }
 

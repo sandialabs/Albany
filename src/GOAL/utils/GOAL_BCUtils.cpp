@@ -39,15 +39,23 @@ class BCManager
     Albany::GOALNodeSets ns;
     ParameterList bcParams;
     void applyBC(ParameterList const& p);
-    void modifyPrimalSystem(double v, int offset, std::string set);
-    void modifyAdjointSystem(double v, int offset, std::string set);
+    void modifyPrimalSystem(
+        std::string const& val, int offset, std::string const& set);
+    void modifyAdjointSystem(
+        int offset, std::string const& set);
 };
 
 BCManager::BCManager(
     const double time,
     Albany::Application const& application) :
   t(time),
-  app(application)
+  app(application),
+  sol(Teuchos::null),
+  res(Teuchos::null),
+  qoi(Teuchos::null),
+  jac(Teuchos::null),
+  jacT(Teuchos::null),
+  isAdjoint(false)
 {
   RCP<const ParameterList> pl = app.getProblemPL();
   bcParams = pl->sublist("Hierarchic Boundary Conditions");
@@ -60,7 +68,7 @@ BCManager::BCManager(
 
 void BCManager::run()
 {
-  if (jacT == Teuchos::null) isAdjoint = false;
+  if (jacT != Teuchos::null) isAdjoint = true;
   typedef ParameterList::ConstIterator ParamIter;
   for (ParamIter i = bcParams.begin(); i != bcParams.end(); ++i)
   {
@@ -80,15 +88,26 @@ static RCP<ParameterList> getValidBCParameters()
   return p;
 }
 
-static double parseExpression(std::string const& val, const double t)
+static double parseExpression(
+    std::string const& val,
+    const double x,
+    const double y,
+    const double z,
+    const double t)
 {
   bool success;
   PG_RuntimeCompiler::Function f;
+  f.addVar("double", "x");
+  f.addVar("double", "y");
+  f.addVar("double", "z");
   f.addVar("double", "t");
   f.addVar("double", "value");
   success = f.addBody(val); assert(success);
-  success = f.varValueFill(0, t); assert(success);
-  success = f.varValueFill(1, 0); assert(success);
+  success = f.varValueFill(0, x); assert(success);
+  success = f.varValueFill(1, y); assert(success);
+  success = f.varValueFill(2, z); assert(success);
+  success = f.varValueFill(3, t); assert(success);
+  success = f.varValueFill(4, 0); assert(success);
   success = f.execute(); assert(success);
   return f.getValueOfVar("value");
 }
@@ -104,12 +123,6 @@ void BCManager::applyBC(ParameterList const& p)
   std::string set = p.get<std::string>("Node Set");
   std::string dof = p.get<std::string>("DOF");
 
-  // if this is the adjoint problem, set the value to 0
-  // otherwise parse the expression from the input file to get the value
-  double v = 0.0;
-  if (!isAdjoint)
-    v = parseExpression(val, t);
-
   // does this node set actually exist?
   assert(ns.count(set) == 1);
 
@@ -117,12 +130,13 @@ void BCManager::applyBC(ParameterList const& p)
   int offset = problem->getOffset(dof);
 
   if (!isAdjoint)
-    modifyPrimalSystem(v, offset, set);
+    modifyPrimalSystem(val, offset, set);
   else
-    modifyAdjointSystem(v, offset, set);
+    modifyAdjointSystem(offset, set);
 }
 
-void BCManager::modifyPrimalSystem(double v, int offset, std::string set)
+void BCManager::modifyPrimalSystem(
+    std::string const& val, int offset, std::string const& set)
 {
   // should we fill in BC info?
   bool fillRes = (res != Teuchos::null);
@@ -153,10 +167,12 @@ void BCManager::modifyPrimalSystem(double v, int offset, std::string set)
     int lunk = disc->getDOF(node.lid, offset);
 
     // if the node is higher order, we set the value of the DBC to be 0
+    // if it is not, we parse the expression from the input file to get the value
     // note: this assumes that bcs are either constant or linear in space
     // anything else would require a linear solve to find coefficients v
-    if (node.higherOrder)
-      v = 0.0;
+    double v = 0.0;
+    if (!node.higherOrder)
+      v = parseExpression(val, node.coord[0], node.coord[1], node.coord[2], t);
 
     // modify the residual if necessary
     if (fillRes)
@@ -178,7 +194,7 @@ void BCManager::modifyPrimalSystem(double v, int offset, std::string set)
   }
 }
 
-void BCManager::modifyAdjointSystem(double v, int offset, std::string set)
+void BCManager::modifyAdjointSystem(int offset, std::string const& set)
 {
 
   // get views of the qoi vector

@@ -131,11 +131,9 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
-        <ParameterList name="Backtrack">
-          <Parameter name="Reduction Factor" type="double" value="0.5"/>
-          <Parameter name="Max Iters" type="int" value="10"/>
+        <ParameterList name="Full Step">
         </ParameterList>
-        <Parameter name="Method" type="string" value="Backtrack"/>
+        <Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">

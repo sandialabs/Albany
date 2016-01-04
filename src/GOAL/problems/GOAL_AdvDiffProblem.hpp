@@ -97,6 +97,15 @@ class GOALAdvDiffProblem: public Albany::AbstractProblem
     //! data layouts
     Teuchos::RCP<Layouts> dl;
 
+    //! diffusivity coefficient
+    double k;
+
+    //! advection vector
+    Teuchos::Array<double> a;
+
+    //! use supg stabilization
+    bool useSUPG;
+
 };
 
 }
@@ -202,10 +211,14 @@ constructEvaluators(
 
     // input
     RCP<ParameterList> p = rcp(new ParameterList("U Residual"));
+    p->set<double>("Diffusivity Coefficient", k);
+    p->set<Teuchos::Array<double> >("Advection Vector", a);
     p->set<std::string>("U Name", "U");
     p->set<std::string>("Gradient U Name", "U Gradient");
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<RCP<Albany::Application> >("Application", this->getApplication());
+    p->set<bool>("Use SUPG", useSUPG);
 
     // output
     p->set<std::string>("Residual Name", residNames[0]);

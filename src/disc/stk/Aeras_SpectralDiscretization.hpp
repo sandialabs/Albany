@@ -194,6 +194,8 @@ namespace Aeras
     SpectralDiscretization(
        const Teuchos::RCP<Teuchos::ParameterList>& discParams,
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+       const int numTracers, 
+       const int numLevels, 
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
@@ -395,10 +397,10 @@ namespace Aeras
       return stkMeshStruct->hasRestartSolution();
     }
 
-    //! STK supports MOR
+    //! Spectral supports MOR
     virtual bool supportsMOR() const
     {
-      return true;
+      return false;
     }
 
     //! If restarting, convenience function to return restart data time
@@ -428,6 +430,12 @@ namespace Aeras
     {
       return neq;
     }
+
+    //! Get number of levels (for hydrostatic problems) 
+    int getNumLevels() const { return numLevels; }
+
+    //! Get number of tracers (for hydrostatic problems) 
+    int getNumTracers() const { return numTracers; }
 
     //! Locate nodal dofs in non-overlapping vectors using local indexing
     int getOwnedDOF(const int inode,
@@ -642,6 +650,12 @@ namespace Aeras
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
+
+    //! Number of levels (for hydrostatic equations) 
+    const int numLevels; 
+    
+    //! number of tracers (for hydristatic equations) 
+    const int numTracers; 
 
     //! Number of elements on this processor
     unsigned int numMyElements;

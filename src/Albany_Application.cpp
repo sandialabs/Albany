@@ -233,6 +233,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
 #endif
+  
+  //get info from Scaling parameter list (for scaling Jacobian/residual)
+  RCP<Teuchos::ParameterList> scalingParams = Teuchos::sublist(params, "Scaling", true);
+  scale = scalingParams->get("Scale", 1.0); 
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -413,8 +417,9 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())){
     LCM::PeridigmManager::self()->setDirichletFields(disc);
+  }
 #endif
 #endif
 
@@ -1031,7 +1036,7 @@ computeGlobalResidualImplT(
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-
+  fT->scale(1.0/scale); 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
@@ -1309,12 +1314,22 @@ computeGlobalJacobianImplT(const double alpha,
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+    fT->scale(1.0/scale);
   }
 
   // Assemble global Jacobian
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
-  } // End timer
 
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
+    LCM::PeridigmManager::self()->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+  }
+#endif
+#endif
+
+  jacT->scale(1.0/scale); 
+  } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
@@ -1819,14 +1834,17 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+    fT->scale(1.0/scale); 
   }
 
   // Assemble derivatives
   if (Teuchos::nonnull(JVT)) {
     JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
+    JVT->scale(1.0/scale); 
   }
   if (Teuchos::nonnull(fpT)) {
     fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
+    fpT->scale(1.0/scale); 
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2129,6 +2147,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
   }
+  fpVT->scale(1.0/scale); 
   } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)

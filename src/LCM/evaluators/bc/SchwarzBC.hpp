@@ -21,6 +21,12 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
 
+#if defined(ALBANY_DTK)
+#include "DTK_STKMeshHelpers.hpp"
+#include "DTK_STKMeshManager.hpp"
+#include "DTK_MapOperatorFactory.hpp"
+#endif
+
 namespace LCM {
 
 //
@@ -41,15 +47,14 @@ public:
 
   void
   computeBCs(
-      typename Traits::EvalData dirichlet_workset,
       size_t const ns_node,
       ScalarT & x_val,
       ScalarT & y_val,
       ScalarT & z_val);
 
 #if defined(ALBANY_DTK)
-  Teuchos::RCP<Tpetra_MultiVector> 
-  computeBCsDTK(typename Traits::EvalData dirichlet_workset);
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> 
+  computeBCsDTK();
 #endif //ALBANY_DTK
 
   void
@@ -114,9 +119,6 @@ public:
 
 protected:
 
-  Teuchos::ParameterList 
-  p_; 
- 
   Teuchos::RCP<Albany::Application>
   app_;
 

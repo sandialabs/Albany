@@ -162,11 +162,6 @@ constructEvaluators(
   using Teuchos::ArrayRCP;
   using Teuchos::ParameterList;
 
-  typedef Intrepid::FieldContainer<RealType> FieldContainer;
-  typedef RCP<Intrepid::Basis<RealType, FieldContainer> > Basis;
-  typedef Intrepid::DefaultCubatureFactory<RealType> CubatureFactory;
-  typedef RCP<Intrepid::Cubature<RealType> > Cubature;
-
   // get the name of the current element block
   std::string ebName = meshSpecs.ebName;
 
@@ -186,8 +181,6 @@ constructEvaluators(
 
   // name variables
   ArrayRCP<std::string> dofNames(1);
-  ArrayRCP<std::string> dofDotNames(1);
-  ArrayRCP<std::string> dofDotDotNames(1);
   ArrayRCP<std::string> residNames(1);
   dofNames[0] = "Displacement";
   residNames[0] = dofNames[0] + " Residual";
@@ -404,6 +397,7 @@ constructEvaluators(
 
   if (isAdjoint) {
 
+    assert(Teuchos::nonnull(qoiParams));
     std::string qoiName = qoiParams->get<std::string>("Name","");
 
     if (qoiName == "Lp Stress")

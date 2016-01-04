@@ -3,7 +3,8 @@
     <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
     <Parameter name="MaterialDB Filename" type="string" value="TensileBarPDMaterials.xml"/>
     <ParameterList name="Peridigm Parameters">
-
+      <ParameterList name="Optimization Based Coupling">
+      </ParameterList>
       <ParameterList name="Discretization">
 	    <Parameter name="Type" type="string" value="Albany" />
       </ParameterList>
@@ -39,6 +40,7 @@
     </ParameterList>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
+
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.04"/>
@@ -47,6 +49,7 @@
       <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_6 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
+
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
@@ -58,7 +61,8 @@
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
   <ParameterList name="Piro">
-    <Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/>
+    <!--Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/-->
+    <!--Parameter name="Jacobian Operator" type="string" value="Finite Difference"/-->
     <!--
          The Matrix-Free Perturbation is lambda in the equation for determination of the probe length epsilon
          epsilon = lambda( norm(x) + lambda )
@@ -117,7 +121,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="None"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/> <!-- None, Ifpack -->
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="1"/>
@@ -149,7 +153,7 @@
 	      <Parameter name="Test Type" type="string" value="NormF"/>
 	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	      <Parameter name="Scale Type" type="string" value="Scaled"/>
-	      <Parameter name="Tolerance" type="double" value="1e-6"/>
+	      <Parameter name="Tolerance" type="double" value="2e-6"/>
 	    </ParameterList>
 	    <ParameterList name="Test 1">
 	      <Parameter name="Test Type" type="string" value="MaxIters"/>

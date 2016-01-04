@@ -89,7 +89,7 @@ cmake \
 \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-      -D CMAKE_CXX_FLAGS:STRING="-O2" \
+      -D CMAKE_CXX_FLAGS:STRING="-std=c++11 -O2 -DBUILD_PHALANX_FOR_ALBANY" \
       -D CMAKE_Fortran_FLAGS:STRING="-O2" \
       -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
 \
