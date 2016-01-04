@@ -71,6 +71,10 @@
       <Parameter name="elementBlock" type="string" value="silicon.insulator" />
     </ParameterList>
 
+    <ParameterList name="sioxideinterface">
+      <Parameter name="elementBlock" type="string" value="silicon.psubstrate" />
+    </ParameterList>
+
   </ParameterList>
 
 

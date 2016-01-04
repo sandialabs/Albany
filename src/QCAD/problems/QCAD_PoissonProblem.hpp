@@ -85,7 +85,9 @@ namespace QCAD {
 
     Teuchos::RCP< Teuchos::ParameterList > 
     getPoissonSourceNeumannEvaluatorParams(const Teuchos::RCP<const Albany::MeshSpecsStruct>& meshSpecs);
-
+    
+    Teuchos::RCP< Teuchos::ParameterList > 
+    getPoissonSourceInterfaceEvaluatorParams(const Teuchos::RCP<const Albany::MeshSpecsStruct>& meshSpecs);
 
   protected:
 
