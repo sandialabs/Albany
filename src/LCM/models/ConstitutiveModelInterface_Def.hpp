@@ -301,6 +301,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new NewtonianFluidModel<EvalT, Traits>(p, dl));
   } else if (model_name == "CrystalPlasticity") {
     model = rcp(new CrystalPlasticityModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "ElasticCrystal") {
+    model = rcp(new ElasticCrystalModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     model = rcp(new AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Gurson") {
