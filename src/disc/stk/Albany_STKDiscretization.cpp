@@ -56,7 +56,7 @@ const double pi = 3.1415926535897932385;
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-// #define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::
 STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -1290,6 +1290,63 @@ void Albany::STKDiscretization::computeGraphs()
       }
     }
   }
+
+#ifdef ALBANY_PERIDIGM
+  // For the initial implementation, allocate all possible entries
+  // in rows corresponding to peridynamic nodes.  I.e., assume
+  // all peridynamic nodes are bonded to each other.
+
+  // Create a list of all the global row numbers associated with peridynamics
+  std::vector<int> onProcPeridynamicGlobalDOF;
+  for (std::size_t i=0; i < cells.size(); i++) {
+    stk::mesh::Entity e = cells[i];
+    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
+    const size_t num_nodes = bulkData.num_nodes(e);
+    if(num_nodes == 1){
+      stk::mesh::Entity rowNode = node_rels[0];
+      for (std::size_t k=0; k < neq; k++) {
+	row = getGlobalDOF(gid(rowNode), k);
+	onProcPeridynamicGlobalDOF.push_back(row);
+      }
+    }
+  }
+  int numProc = commT->getSize();
+  int myProc = commT->getRank();
+  std::vector<int> numPeridynamicDOFPerProc(numProc, 0), numPeridynamicDOFPerProc_Local(numProc, 0);
+  numPeridynamicDOFPerProc_Local[myProc] = static_cast<int>( onProcPeridynamicGlobalDOF.size() );
+  comm->SumAll(&numPeridynamicDOFPerProc_Local[0], &numPeridynamicDOFPerProc[0], numProc);
+  int totalNumPeridynamicDOF(0), offset(0);
+  for(int i=0 ; i<numProc ; i++){
+    if(i < myProc){
+      offset += numPeridynamicDOFPerProc[i];
+    }
+    totalNumPeridynamicDOF += numPeridynamicDOFPerProc[i];
+  }
+  std::vector<int> peridynamicGlobalDOF_Local(totalNumPeridynamicDOF, 0), peridynamicGlobalDOF(totalNumPeridynamicDOF, 0);
+  for(unsigned int i=0 ; i<onProcPeridynamicGlobalDOF.size() ; i++){
+    peridynamicGlobalDOF_Local[offset + i] = onProcPeridynamicGlobalDOF[i];
+  }
+  comm->SumAll(&peridynamicGlobalDOF_Local[0], &peridynamicGlobalDOF[0], totalNumPeridynamicDOF);
+
+  // Load all possible peridynamic bonds into the graph
+  for (std::size_t i=0; i < cells.size(); i++) {
+    stk::mesh::Entity e = cells[i];
+    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
+    const size_t num_nodes = bulkData.num_nodes(e);
+    if(num_nodes == 1){
+      stk::mesh::Entity rowNode = node_rels[0];
+      for (std::size_t k=0; k < neq; k++) {
+        row = getGlobalDOF(gid(rowNode), k);
+	for (unsigned int j=0 ; j<totalNumPeridynamicDOF ; j++){
+	  col = peridynamicGlobalDOF[j];
+	  colAV = Teuchos::arrayView(&col, 1);
+	  overlap_graphT->insertGlobalIndices(row, colAV);
+	}
+      }
+    }
+  }
+#endif // ALBANY_PERIDIGM
+
   overlap_graphT->fillComplete();
 
   // Create Owned graph by exporting overlap with known row map

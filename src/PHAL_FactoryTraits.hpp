@@ -27,6 +27,7 @@
 #include "QCAD_PoissonDirichlet.hpp"
 #include "QCAD_PoissonNeumann.hpp"
 #include "QCAD_PoissonSourceNeumann.hpp"
+#include "QCAD_PoissonSourceInterface.hpp"
 #endif
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
@@ -119,22 +120,23 @@ namespace PHAL {
   template<typename Traits>
   struct NeumannFactoryTraits {
 
-    static const int id_neumann                   =  0;
-    static const int id_neumann_aggregator        =  1;
-    static const int id_gather_coord_vector       =  2;
-    static const int id_gather_solution           =  3;
-    static const int id_load_stateField           =  4;
-    static const int id_GatherScalarNodalParameter=  5;
-    static const int id_qcad_poisson_neumann      =  6; // Only for QCAD probs
-    static const int id_qcad_poissonsource_neumann=  7; // Only for QCAD probs
-    static const int id_timedep_bc                =  8; // Only for LCM probs
+    static const int id_neumann                    =  0;
+    static const int id_neumann_aggregator         =  1;
+    static const int id_gather_coord_vector        =  2;
+    static const int id_gather_solution            =  3;
+    static const int id_load_stateField            =  4;
+    static const int id_GatherScalarNodalParameter =  5;
+    static const int id_qcad_poisson_neumann       =  6; // Only for QCAD probs
+    static const int id_qcad_poissonsource_neumann =  7; // Only for QCAD probs
+    static const int id_qcad_poissonsource_interface =  8; // Only for QCAD probs
+    static const int id_timedep_bc                =  9; // Only for LCM probs
 
 
 #ifdef ALBANY_USE_PUBLICTRILINOS
 #if defined(ALBANY_LCM)
-    typedef boost::mpl::vector9<
+    typedef boost::mpl::vector10<
 #else
-    typedef boost::mpl::vector8<
+    typedef boost::mpl::vector9<
 #endif
 #else
     typedef Sacado::mpl::vector<
@@ -147,13 +149,15 @@ namespace PHAL {
        PHAL::GatherScalarNodalParameter<_,Traits>,//  5
 #ifdef ALBANY_QCAD
        QCAD::PoissonNeumann<_,Traits>,            //  6
-       QCAD::PoissonSourceNeumann<_,Traits>       //  7
+       QCAD::PoissonSourceNeumann<_,Traits>,      //  7
+       QCAD::PoissonSourceInterface<_,Traits>     //  8
 #else
        PHAL::Neumann<_,Traits>,                   //  6 dummy
-       PHAL::Neumann<_,Traits>                    //  7 dummy
+       PHAL::Neumann<_,Traits>,                   //  7 dummy
+       PHAL::Neumann<_,Traits>                    //  8 dummy
 #endif
 #if defined(ALBANY_LCM)
-       , LCM::TimeTracBC<_, Traits>               //  8
+       , LCM::TimeTracBC<_, Traits>               //  9
 #endif
 	  > EvaluatorTypes;
 };

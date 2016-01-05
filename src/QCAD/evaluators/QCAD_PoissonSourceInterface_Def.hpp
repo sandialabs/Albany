@@ -17,105 +17,111 @@
 
 
 namespace QCAD {
-const double pi = 3.1415926535897932385;
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-PoissonSourceNeumannBase<EvalT, Traits>::
-PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
+PoissonSourceInterfaceBase<EvalT, Traits>::
+PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
 
   dl             (p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
   meshSpecs      (p.get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
   offset         (p.get<Teuchos::Array<int> >("Equation Offset")),
   sideSetIDs     (p.get<Teuchos::Array<std::string> >("Side Set IDs")),
-  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
-  surfaceElectronDensity("Surface Electron Density",dl->node_scalar)
+  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 {
   // The DOF offsets are contained in the Equation Offset array. The length of this array are the
   // number of DOFs we will set each call
-  numDOFsSet = offset.size();
+  numDOFsSet = offset.size();  // always 1 for Poisson problems
 
-  // Set up values as parameters for parameter library
-  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library");
-  TEUCHOS_ASSERT( p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB") );
-
-  responseOnly = p.get< bool >("Response Only"); 
-    //when true, just compute output fields and don't try to change the workset's residual
-    // vector (as per a usual Neumann BC) since this memory hasn't been allocated.
+  TEUCHOS_ASSERT(p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB") );
 
   //! Material database - holds the scaling we need
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
 
   //! Energy unit of phi in eV
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
+  length_unit_in_meters = p.get<double>("Length unit in meters");
   temperature = p.get<double>("Temperature");
-  double length_unit_in_meters = p.get<double>("Length unit in meters");
-
-  V0 = kbBoltz*temperature / energy_unit_in_eV; // kb*T in desired energy unit ( or kb*T/q in desired voltage unit) [myV]
-
+  
+  // length scaling to get to [cm] (structure dimension in [um] usually)
+  X0 = length_unit_in_meters / 1e-2; 
+  
+  // kb*T in desired energy unit ( or kb*T/q in desired voltage unit) of [eV]
+  kbT = kbBoltz*temperature / energy_unit_in_eV;  
+  
+  //! Get the "Interface Traps" parameter list
+  Teuchos::ParameterList& trapsPList = *p.get<Teuchos::ParameterList*>("Interface Traps Parameter List"); 
+  
   //! Constant energy reference for heterogeneous structures
-  ScalarT qPhiRef = getReferencePotential(); // in [myV]
+  qPhiRef = getReferencePotential(); // in [eV]
 
-  //! Get prefactor and exponent offset term for each sideset
+  //! Get electron affinity, band gap, fermi energy, and trap params for each sideset
   std::size_t nSidesets = this->sideSetIDs.size();
-  prefactors.resize(nSidesets);
-  phiOffsets.resize(nSidesets);
+  elecAffinity.resize(nSidesets);
+  bandGap.resize(nSidesets);
+  fermiEnergy.resize(nSidesets); 
 
-  for(std::size_t i=0; i < nSidesets; ++i) {
+  trapSpectrum.resize(nSidesets);
+  trapDensity.resize(nSidesets);
+  acceptorDegFac.resize(nSidesets);
+  donorDegFac.resize(nSidesets); 
+
+  for(std::size_t i=0; i < nSidesets; ++i) 
+  {
     std::string ebName = materialDB->getSideSetParam<std::string>(this->sideSetIDs[i],"elementBlock","");
-    double mdn = materialDB->getElementBlockParam<double>(ebName,"Electron DOS Effective Mass");
-    double Tref = materialDB->getElementBlockParam<double>(ebName,"Reference Temperature"); // in [K]
+    
     double Chi = materialDB->getElementBlockParam<double>(ebName,"Electron Affinity") / energy_unit_in_eV; // in [myV]
+    double Eg0 = materialDB->getElementBlockParam<double>(ebName,"Zero Temperature Band Gap") / energy_unit_in_eV; // in [myV];
+    double alpha = materialDB->getElementBlockParam<double>(ebName,"Band Gap Alpha Coefficient");
+    double beta = materialDB->getElementBlockParam<double>(ebName,"Band Gap Beta Coefficient");
 
-    //! constant prefactor in calculating Nc and Nv in [cm-2]
-    double NcvFactor2D = (m0*kbBoltz*eleQ*Tref)/(pi*pow(hbar,2)) * 1e-4;  // m*kbT/pi*hbar^2
-    // eleQ converts kbBoltz in [eV/K] to [J/K], 1e-4 converts [m-2] to [cm-2]
-    // NcvFactor2D * cm^2 = [kg * J / (J*s)^2 * m^2/cm^2] * cm^2 = kg m^2 / (J*s^2) = 1 (unitless),
-    //  so NcvFactor2D has units of [cm-2]
-
-    double Nc = NcvFactor2D*mdn*temperature/Tref;  // in [cm-2]
-
-    //Flux Scale factor, which converts an area electron density [cm-2] to slope units [myV]/[myL]
-    double convert_densityToDeltaSlope = 1.0 / eps0 * eleQ * (length_unit_in_meters*1e2) / energy_unit_in_eV;
-    //  (1 e/cm^-2) / [ C/(V*cm) ] = [eV/(C*cm)] => * [C/e] = [V/cm] => * [cm/myL] * [myV/V] = [myV/myL]
+    elecAffinity[i] = Chi; 
+    bandGap[i] = Eg0 - (alpha*std::pow(temperature,2.0)/(beta+temperature)) / energy_unit_in_eV; // in [myV]
     
-    prefactors[i] = convert_densityToDeltaSlope / 2 * Nc;  // [myV/myL] 
-    // divide by 2 because we assume there are 2 sideset contributions for each patch of surface, and we 
-    //  want the sum of these two contributions to equal the change in solution slope.
-    
-    double kbT = kbBoltz*temperature / energy_unit_in_eV; // in [myV] -- same as V0
-    ScalarT eArgOffset = (-qPhiRef+Chi)/kbT; //unitless
-
     //HACK -- need to get fermiE from DBCs in the case when element block is in electrical contact with a nodeset (see QCAD_PoissonSource_Def.hpp)
-    ScalarT fermiE = 0.0; 
-
-    phiOffsets[i] = eArgOffset + fermiE/kbT; //unitless
-
-    //Note on "Flux Scale" in materials.xml files:  areal density is typically given in [1e11 cm-2] units and the
-    //  mesh given in [myL] = um.  The "Flux Scale" parameter converts between density units and 
-    //  [V]/[myL], with an additional division by 2 b/c there are 2 sideset faces for each patch of surface,
-    //  which in the typical case is:
-    //  1e11 e/cm^-2 => 1e15 e/m^-2 then / e0 = 8.85e-12 C/(V*m) => 0.113e27 e*V/(C*m) * 1.602e-19 C/e
-    //  => 0.181e8 V/m * 1m/1e6 um => 0.181e8e2 V/um / 2 (for the two sides?) ~= 9.05 V/um
+    fermiEnergy[i] = 0.0; 
+    
+    // Obtain trap parameters for each sideset
+    std::stringstream intrapsstrm;
+    intrapsstrm << "Interface Trap for SS " << sideSetIDs[i];
+    std::string intrapstr = intrapsstrm.str();
+    
+    if (!trapsPList.isSublist(intrapstr))
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, std::endl << "Error: " 
+        << intrapstr << " parameterlist is NOT found !" << std::endl);
+    
+    Teuchos::ParameterList& trapSublist = trapsPList.sublist(intrapstr); 
+    trapSpectrum[i] = trapSublist.get<std::string>("Energy Spectrum");     
+    trapDensity[i] = trapSublist.get<double>("Trap Density"); 
+    
+    acceptorDegFac[i] = 1; // by default; 
+    if (trapSublist.isParameter("Acceptor Degeneracy Factor"))
+      acceptorDegFac[i] = trapSublist.get<double>("Acceptor Degeneracy Factor");
+    
+    donorDegFac[i] = 1; // by default  
+    if (trapSublist.isParameter("Donor Degeneracy Factor"))
+      donorDegFac[i] = trapSublist.get<double>("Donor Degeneracy Factor");
   }
 
   //currently this evaluator doesn't support the case when the DOF is a vector
   TEUCHOS_TEST_FOR_EXCEPTION(p.get<bool>("Vector Field") == true,
                              Teuchos::Exceptions::InvalidParameter,
-                             std::endl << "Error: PoissonSource Neumann boundary conditions "
-                             << "only supported when the DOF is not a vector" << std::endl);
+                             std::endl << "Error: PoissonSource Interface boundary conditions "
+                             << "are only supported when the DOF is not a vector" << std::endl);
 
-  PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
-				      p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-  dof = tmp;
+  //PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
+  //p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+  //dof = tmp;
+  
+  dof = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string>("DOF Name"),
+				     p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
   this->addDependentField(dof);
   this->addDependentField(coordVec);
 
-  std::string name = "Neumann Poisson Source Evaluator";
+  std::string name = "Poisson Source Interface Evaluator";
   PHX::Tag<ScalarT> fieldTag(name, dl->dummy);
 
   this->addEvaluatedField(fieldTag);
-  this->addEvaluatedField(surfaceElectronDensity);
 
   // Build element and side integration support (Copied from PHAL_Neumann_Def.hpp)
 
@@ -139,7 +145,8 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
   int maxSideDim(0), maxNumQpSide(0);
   const char* sideTypeName;
 
-  for(int i=0; i<numSidesOnElem; ++i) {
+  for(int i = 0; i < numSidesOnElem; ++i) 
+  {
     sideType[i] = Teuchos::rcp(new shards::CellTopology(elem_top->side[i].topology));
     cubatureSide[i] = cubFactory.create(*sideType[i], cubatureDegree);
     maxSideDim = std::max( maxSideDim, (int)sideType[i]->getDimension());
@@ -153,22 +160,21 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
       side_type[i] = QUAD;
     else
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "QCAD_PoissonSourceNeumann: side type : " << sideTypeName << " is not supported." << std::endl);
+        "QCAD_PoissonSourceInterface: side type : " << sideTypeName << " is not supported." << std::endl);
   }
 
-  numNodes = intrepidBasis->getCardinality();
+  numNodes = intrepidBasis->getCardinality();  // number of nodes in a volume cell
 
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dim;
   dl->qp_tensor->dimensions(dim);
-  int containerSize = dim[0];
-  numQPs = dim[1];
-  cellDims = dim[2];
+  int containerSize = dim[0];  // number of volume cells
+  numQPs = dim[1];             // number of QPs in a cell
+  cellDims = dim[2];           // number of spatial dimensions in a cell
 
   // Allocate Temporary FieldContainers
   physPointsCell.resize(1, numNodes, cellDims);
   dofCell.resize(1, numNodes);
-  dofCellVec.resize(1, numNodes, numDOFsSet);
   neumann.resize(containerSize, numNodes, numDOFsSet);
 
   // Allocate Temporary FieldContainers based on max sizes of sides. Need to be resized later for each side.
@@ -177,7 +183,6 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
   cubWeightsSide.resize(maxNumQpSide);
   physPointsSide.resize(1, maxNumQpSide, cellDims);
   dofSide.resize(1, maxNumQpSide);
-  dofSideVec.resize(1, maxNumQpSide, numDOFsSet);
 
   // Do the BC one side at a time for now
   jacobianSide.resize(1, maxNumQpSide, cellDims, cellDims);
@@ -190,28 +195,23 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
 
   data.resize(1, maxNumQpSide, numDOFsSet);
 
-
   this->setName(name);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void PoissonSourceNeumannBase<EvalT, Traits>::
+void PoissonSourceInterfaceBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(dof,fm);
-  this->utils.setFieldData(surfaceElectronDensity,fm);
-  // Note, we do not need to add dependent field to fm here for output - that is done
-  // by PoissonSourceNeumann Aggregator
 }
 
 template<typename EvalT, typename Traits>
-void PoissonSourceNeumannBase<EvalT, Traits>::
-evaluateNeumannContribution(typename Traits::EvalData workset)
+void PoissonSourceInterfaceBase<EvalT, Traits>::
+evaluateInterfaceContribution(typename Traits::EvalData workset)
 {
-
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
@@ -220,64 +220,50 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   // $TRILINOS_DIR/packages/intrepid/test/Discretization/Basis/HGRAD_QUAD_C1_FEM/test_02.cpp
 
   //Zero out outputs
-  std::cout << "DEBUG: PSN eval neumann contribution: zeroing out fields" << std::endl;
+  // std::cout << "DEBUG: PSI eval interface contribution: zeroing out fields" << std::endl;
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
     for (std::size_t node=0; node < numNodes; ++node)
       for (std::size_t dim=0; dim < numDOFsSet; ++dim) 
-	neumann(cell, node, dim) = 0.0;
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    for (std::size_t node=0; node < numNodes; ++node)
-      surfaceElectronDensity(cell, node) = 0.0;
-
+        neumann(cell, node, dim) = 0.0;
 
   // Loop over each sideset
-  for(std::size_t i = 0; i < this->sideSetIDs.size(); i++) {
-
+  for(std::size_t i = 0; i < this->sideSetIDs.size(); i++) 
+  {
     if(workset.sideSets == Teuchos::null || this->sideSetIDs[i].length() == 0)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-	 "Side sets defined in input file but not properly specified on the mesh" << std::endl);
-
+	      "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
     const Albany::SideSetList& ssList = *(workset.sideSets);
     Albany::SideSetList::const_iterator it = ssList.find(this->sideSetIDs[i]);
-    if(it == ssList.end()) 
-      std::cout << "DEBUG: Poisson Source Neumann: sideset " << this->sideSetIDs[i] << " does not exist in this workset!" << std::endl;
-    else
-      std::cout << "DEBUG: Poisson Source Neumann filling sideset " << this->sideSetIDs[i] << " for current workset" << std::endl;
+    //if(it == ssList.end()) 
+    //  std::cout << "DEBUG: Poisson Source Interface: sideset " << this->sideSetIDs[i] << " does not exist in this workset!" << std::endl;
+    //else
+    //  std::cout << "DEBUG: Poisson Source Interface filling sideset " << this->sideSetIDs[i] << " for current workset" << std::endl;
 
     if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
                                    // once we move logic to BCUtils
 
-
-    Intrepid::FieldContainer<ScalarT> betaOnSide;
-    Intrepid::FieldContainer<ScalarT> thicknessOnSide;
-    Intrepid::FieldContainer<ScalarT> elevationOnSide;
-
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    // Loop over the sides that form the boundary condition
-    for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
+    // Loop over the side edges/faces that are a part of a given sideset and belong to the current workset
+    for (std::size_t side = 0; side < sideSet.size(); ++side) 
+    { 
+      // Get the data that correspond to the side
+      const int elem_GID = sideSet[side].elem_GID;       // the global id of the element containing the side 
+      const int elem_LID = sideSet[side].elem_LID;       // the local id of the element containing the side
+      const int elem_side = sideSet[side].side_local_id; // the local id of the side relative to the owning element
 
-      // Get the data that corresponds to the side
+      int sideDims = sideType[elem_side]->getDimension();       // spatial dimensions of a side (1 for edge, 2 for face)
+      int numQPsSide = cubatureSide[elem_side]->getNumPoints(); // ??? number of QPs on a side or element ???
 
-      const int elem_GID = sideSet[side].elem_GID;
-      const int elem_LID = sideSet[side].elem_LID;
-      const int elem_side = sideSet[side].side_local_id;
-
-      int sideDims = sideType[elem_side]->getDimension();
-      int numQPsSide = cubatureSide[elem_side]->getNumPoints();
-
-
-      //need to resize containers because they depend on side topology
+      // Need to resize containers because they depend on side topology
       cubPointsSide.resize(numQPsSide, sideDims);
       refPointsSide.resize(numQPsSide, cellDims);
       cubWeightsSide.resize(numQPsSide);
       physPointsSide.resize(1, numQPsSide, cellDims);
       dofSide.resize(1, numQPsSide);
-      dofSideVec.resize(1, numQPsSide, numDOFsSet);
       
-      // Do the BC one side at a time for now
+      // Do the BC one side edge/face at a time for now
       jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
       jacobianSide_det.resize(1, numQPsSide);
       
@@ -287,61 +273,59 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
       data.resize(1, numQPsSide, numDOFsSet);
       
-      betaOnSide.resize(1,numQPsSide);
-      thicknessOnSide.resize(1,numQPsSide);
-      elevationOnSide.resize(1,numQPsSide);
+      // Return cubature points and weights for a side in a reference frame
+      cubatureSide[elem_side]->getCubature(cubPointsSide, cubWeightsSide);  
       
-      cubatureSide[elem_side]->getCubature(cubPointsSide, cubWeightsSide);
+      // Copy the coordinate data of the element to a temp container
+      for (std::size_t node = 0; node < numNodes; ++node)
+        for (std::size_t dim = 0; dim < cellDims; ++dim)
+	        physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
       
-      // Copy the coordinate data over to a temp container
-      
-      for (std::size_t node=0; node < numNodes; ++node)
-	for (std::size_t dim=0; dim < cellDims; ++dim)
-	  physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
-      
-
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
+      // refPointsSide is the QPs of the side in form of (numQPsSide, cellDims), 
+      // while cubPointsSide is the QPs of the side in form of (numQPsSide, sideDims).
       Intrepid::CellTools<RealType>::mapToReferenceSubcell
-	(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
+        (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
-      // Calculate side geometry
-      Intrepid::CellTools<MeshScalarT>::setJacobian
-	(jacobianSide, refPointsSide, physPointsCell, *cellType);
+      // Calculate Jacobian for refPointsSide on the side
+      Intrepid::CellTools<MeshScalarT>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
 
       Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
       
-      if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
-	Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
-	  (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+      if (sideDims < 2)  //for 1 and 2D, get weighted edge measure
+      {
+        Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
+          (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
       }
-      else { //for 3D, get weighted face measure
-	Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
-	  (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+      else  //for 3D, get weighted face measure for the side
+      {
+        Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
+          (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
       }
 
       // Values of the basis functions at side cubature points, in the reference parent cell domain
       intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
 
-      // Transform values of the basis functions
+      // Transform values of the basis functions to physical frame
       Intrepid::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
-	(trans_basis_refPointsSide, basis_refPointsSide);
+        (trans_basis_refPointsSide, basis_refPointsSide);
 
       // Multiply with weighted measure
       Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-	(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
+        (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
       
 #ifdef ALBANY_USE_PUBLICTRILINOS
-      // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
+      // Map the side cubature points in reference frame to physical frame
       Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
-	(physPointsSide, refPointsSide, physPointsCell, *cellType);
+        (physPointsSide, refPointsSide, physPointsCell, *cellType);
 #else
       Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
-	(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
+        (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 #endif
       
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       for (std::size_t node=0; node < numNodes; ++node)
-	dofCell(0, node) = dof(elem_LID, node);
+        dofCell(0, node) = dof(elem_LID, node);
 
       // This is needed, since evaluate currently sums into
       for (int k=0; k < numQPsSide ; k++) dofSide(0,k) = 0.0;
@@ -350,55 +334,89 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       Intrepid::FunctionSpaceTools::evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
       
       // Transform the given BC data to the physical space QPs in each side (elem_side)
-      calc_dudn_2DThomasFermi(data, physPointsSide, dofSide, jacobianSide, *cellType, cellDims, elem_side, i);
-
+      calcInterfaceTrapChargDensity(data, dofSide, i); 
+      
       // Put this side's contribution into the vector
-      for (std::size_t node=0; node < numNodes; ++node) {
-	for (std::size_t qp=0; qp < numQPsSide; ++qp) {
-	  for (std::size_t dim=0; dim < numDOFsSet; ++dim) {
-	    neumann(elem_LID, node, dim) +=
-	      data(0, qp, dim) * weighted_trans_basis_refPointsSide(0, node, qp);
-	  }
-	}
-	if(responseOnly) {
-	  surfaceElectronDensity(elem_LID, node) = neumann(elem_LID, node, 0);
-	  //std::cout << "DEBUG: Setting Poisson Source Neumann (" << elem_LID << "," << node << ") = " << surfaceElectronDensity(elem_LID, node) << std::endl;
-	}  
-      }
-
-    }
-  }
+      for (std::size_t node=0; node < numNodes; ++node) 
+        for (std::size_t qp=0; qp < numQPsSide; ++qp) 
+          for (std::size_t dim=0; dim < numDOFsSet; ++dim) 
+            neumann(elem_LID, node, dim) += data(0, qp, dim) * weighted_trans_basis_refPointsSide(0, node, qp);
+	  
+    }  // end of loop over sides for a given sideset
+  }  // end of loop over sidesets
 }
 
+
 template<typename EvalT, typename Traits>
-void PoissonSourceNeumannBase<EvalT, Traits>::
-calc_dudn_2DThomasFermi(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-			const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-			const Intrepid::FieldContainer<ScalarT>& dof_side,
-			const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-			const shards::CellTopology & celltopo,
-			const int cellDims,
-			int local_side_id, int iSideset){
-
-  int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
+void PoissonSourceInterfaceBase<EvalT, Traits>::
+calcInterfaceTrapChargDensity(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+			const Intrepid::FieldContainer<ScalarT>& dof_side, int iSideset) 
+{			
+  int numCells = qp_data_returned.dimension(0);  // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
-  int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
+  int numDOFs = qp_data_returned.dimension(2);   // How many DOFs per node to calculate?
 
-  for(int pt = 0; pt < numPoints; pt++) {
-    for(int dim = 0; dim < numDOFsSet; dim++) {
+  for(int pt = 0; pt < numPoints; pt++) 
+  {
+    for(int dim = 0; dim < numDOFsSet; dim++) 
+    {
       //ScalarT ten = 10.0;
       //qp_data_returned(0, pt, dim) = ten; //for DEBUG
 
-      const ScalarT& unscaled_phi = dof_side(0,pt); // [myV]
-      ScalarT phi = unscaled_phi / V0; // unitless, as V0 == kbT in [myV]
-      qp_data_returned(0, pt, dim) = prefactors[iSideset] * log (1.0 + exp(phi + phiOffsets[iSideset]) ); // [myV/myL] (for delta(slope) of soln)
+      const ScalarT& us_phi = dof_side(0,pt); // unscaled phi in unit of [V]
+      
+      // compute conduction band (Ec), valence band (Ev), and intrinsic Fermi level (Ei) 
+      ScalarT Ec = qPhiRef - elecAffinity[iSideset] - us_phi*1.0/energy_unit_in_eV;  // in [eV]
+      ScalarT Ev = Ec - bandGap[iSideset]; 
+      ScalarT Ei = (Ec + Ev) / 2.0; 
+      ScalarT Ef = fermiEnergy[iSideset]; 
+      
+      double Dit = trapDensity[iSideset];  // in unit of [#/(eV.cm^2)]
+      double aDegFac = acceptorDegFac[iSideset]; // degeneracy factor for acceptor traps
+      double dDegFac = donorDegFac[iSideset];    // degeneracy factor for donor traps
+      
+      ScalarT aUpperLimit = (Ef - Ec) / kbT; 
+      ScalarT aLowerLimit = (Ef - Ei) / kbT; 
+      ScalarT dUpperLimit = (Ei - Ef) / kbT; 
+      ScalarT dLowerLimit = (Ev - Ef) / kbT; 
+      ScalarT kbT_eV = kbT * energy_unit_in_eV;   // make sure kbT in unit of [eV]
+      
+      ScalarT atmp1, atmp2, dtmp1, dtmp2; 
+      if (aUpperLimit > MAX_EXPONENT)  
+        atmp1 = aUpperLimit;  // log(degfac+exp(x)) = x when x > MAX_EXPONENT
+      else
+        atmp1 = std::log(aDegFac + std::exp(aUpperLimit)); 
+        
+      if (aLowerLimit > MAX_EXPONENT)
+        atmp2 = aLowerLimit; 
+      else
+        atmp2 = std::log(aDegFac + std::exp(aLowerLimit));   
+        
+      if (dUpperLimit > MAX_EXPONENT)
+        dtmp1 = dUpperLimit; 
+      else
+        dtmp1 = std::log(dDegFac + std::exp(dUpperLimit));   
+
+      if (dLowerLimit > MAX_EXPONENT)
+        dtmp2 = dLowerLimit; 
+      else
+        dtmp2 = std::log(dDegFac + std::exp(dLowerLimit));   
+      
+      // compute interface trap charge density in [#/cm^2]
+      // when Dit = constant, the integration over energy for Nit can be carried out analytically
+      ScalarT Nit = kbT_eV * Dit * (atmp1 - atmp2 + dtmp1 - dtmp2 );  
+      
+      // compute -q*X0/eps0*Nit, which is in unit of [V]
+      qp_data_returned(0, pt, dim) = -eleQ * X0 / eps0 * Nit; 
+      
+      // std::cout << "pt=" << pt << ", dofset=" << dim << ", Nit=" << Nit << ", data=" << qp_data_returned(0,pt,dim) << std::endl; 
     }
   }
 }
 
 template<typename EvalT, typename Traits>
-typename QCAD::PoissonSourceNeumannBase<EvalT,Traits>::ScalarT 
-PoissonSourceNeumannBase<EvalT, Traits>::getReferencePotential()
+typename QCAD::PoissonSourceInterfaceBase<EvalT,Traits>::ScalarT 
+PoissonSourceInterfaceBase<EvalT, Traits>::getReferencePotential()
 {
   //! Constant energy reference for heterogeneous structures
   ScalarT qPhiRef;
@@ -406,8 +424,8 @@ PoissonSourceNeumannBase<EvalT, Traits>::getReferencePotential()
   std::string refMtrlName, category;
   refMtrlName = materialDB->getParam<std::string>("Reference Material");
   category = materialDB->getMaterialParam<std::string>(refMtrlName,"Category");
-  if (category == "Semiconductor") {
- 
+  if (category == "Semiconductor") 
+  {
     // Get quantities in desired energy (voltage) units, which we denote "[myV]"
  
     // Same qPhiRef needs to be used for the entire structure
@@ -423,15 +441,18 @@ PoissonSourceNeumannBase<EvalT, Traits>::getReferencePotential()
     ScalarT Eic = -Eg/2. + 3./4.*kbT*log(mdp/mdn);  // (Ei-Ec) in [myV]
     qPhiRef = Chi - Eic;  // (Evac-Ei) in [myV] where Evac = vacuum level
   }
-  else if (category == "Insulator") {
+  else if (category == "Insulator") 
+  {
     double Chi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
     qPhiRef = Chi / energy_unit_in_eV; // in [myV]
   }
-  else if (category == "Metal") {
+  else if (category == "Metal") 
+  {
     double workFn = materialDB->getMaterialParam<double>(refMtrlName,"Work Function"); 
     qPhiRef = workFn / energy_unit_in_eV; // in [myV]
   }
-  else {
+  else 
+  {
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
  			  << "Error!  Invalid category " << category 
  			  << " for reference material !" << std::endl);
@@ -446,37 +467,36 @@ PoissonSourceNeumannBase<EvalT, Traits>::getReferencePotential()
 // Specialization: Residual
 // **********************************************************************
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::Residual,Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::Residual,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::Residual,Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::Residual,Traits>(p)
 {
 }
 
 
 
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::Residual, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill in "neumann" array
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   ScalarT *valptr;
 
   // Place it at the appropriate offset into F
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) 
+  {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-
-      valptr = &(this->neumann)(cell, node, dim);
-     fT_nonconstView[nodeID[node][this->offset[dim]]] += *valptr;
-
+    {
+      for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim)
+      {
+        valptr = &(this->neumann)(cell, node, dim);
+        fT_nonconstView[nodeID[node][this->offset[dim]]] += *valptr;
+      }
     }
   }
 }
@@ -486,21 +506,19 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::Jacobian, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::Jacobian, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::Jacobian,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::Jacobian, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill in "neumann" array
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
@@ -513,46 +531,52 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::Array<LO> colT(1);
   Teuchos::Array<ST> value(1);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) 
+  {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
     for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
-
+    {
+      for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim)
+      {
         valptr = &(this->neumann)(cell, node, dim);
 
-      rowT[0] = nodeID[node][this->offset[dim]];
+        rowT[0] = nodeID[node][this->offset[dim]];
 
-      int neq = nodeID[node].size();
+        int neq = nodeID[node].size();
 
-      if (fT != Teuchos::null) {
-         fT->sumIntoLocalValue(rowT[0], valptr->val());
-      }
+        if (fT != Teuchos::null) 
+        {
+          fT->sumIntoLocalValue(rowT[0], valptr->val());
+        }
 
         // Check derivative array is nonzero
-        if (valptr->hasFastAccess()) {
-
+        if (valptr->hasFastAccess()) 
+        {
           // Loop over nodes in element
-          for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-
+          for (unsigned int node_col=0; node_col<this->numNodes; node_col++)
+          {
             // Loop over equations per node
-            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+            for (unsigned int eq_col=0; eq_col<neq; eq_col++) 
+            {
               lcol = neq * node_col + eq_col;
 
-            // Global column
-            colT[0] =  nodeID[node_col][eq_col];
-            value[0] = valptr->fastAccessDx(lcol);   
-            if (workset.is_adjoint) {
-              // Sum Jacobian transposed
-              JacT->sumIntoLocalValues(colT[0], rowT(), value());
-            }
-            else {
-              // Sum Jacobian
-            JacT->sumIntoLocalValues(rowT[0], colT(), value());
-            }
-          } // column equations
-        } // column nodes
-      } // has fast access
+              // Global column
+              colT[0] =  nodeID[node_col][eq_col];
+              value[0] = valptr->fastAccessDx(lcol);   
+              if (workset.is_adjoint) 
+              {
+                // Sum Jacobian transposed
+                JacT->sumIntoLocalValues(colT[0], rowT(), value());
+              }
+              else 
+              {
+                // Sum Jacobian
+                JacT->sumIntoLocalValues(rowT[0], colT(), value());
+              }
+            } // column equations
+          } // column nodes
+        } // has fast access
+      }  // loop over numDOFsSet  
     }
   }
 }
@@ -562,22 +586,20 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::Tangent, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::Tangent,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::Tangent, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::Tangent,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::Tangent, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
@@ -615,22 +637,20 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
@@ -692,23 +712,21 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifdef ALBANY_SG
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::SGResidual, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::SGResidual,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::SGResidual, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::SGResidual,Traits>(p)
 {
 }
 
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::SGResidual, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   ScalarT *valptr;
@@ -736,22 +754,20 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::SGJacobian, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::SGJacobian, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
@@ -826,22 +842,20 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::SGTangent, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::SGTangent,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::SGTangent, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::SGTangent,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::SGTangent, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
@@ -895,26 +909,23 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::MPResidual, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::MPResidual,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::MPResidual, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::MPResidual,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::MPResidual, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   ScalarT *valptr;
-
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -937,22 +948,20 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::MPJacobian, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::MPJacobian, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
@@ -1017,28 +1026,25 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-PoissonSourceNeumann<PHAL::AlbanyTraits::MPTangent, Traits>::
-PoissonSourceNeumann(Teuchos::ParameterList& p)
-  : PoissonSourceNeumannBase<PHAL::AlbanyTraits::MPTangent,Traits>(p)
+PoissonSourceInterface<PHAL::AlbanyTraits::MPTangent, Traits>::
+PoissonSourceInterface(Teuchos::ParameterList& p)
+  : PoissonSourceInterfaceBase<PHAL::AlbanyTraits::MPTangent,Traits>(p)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void PoissonSourceNeumann<PHAL::AlbanyTraits::MPTangent, Traits>::
+void PoissonSourceInterface<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Fill the local "neumann" array with cell contributions
 
-  this->evaluateNeumannContribution(workset);
-
-  if(this->responseOnly) return; //short-circuit for "response only" mode
+  this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
   ScalarT *valptr;
-
 
   int nblock = 0;
   if (f != Teuchos::null)
