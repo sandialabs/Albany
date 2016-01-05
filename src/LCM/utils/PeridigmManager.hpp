@@ -75,6 +75,12 @@ public:
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
 
+  //! Modify Albany graphs for tangent stiffness matrix to include Peridigm nonzeros.
+  void insertPeridigmNonzerosIntoAlbanyGraph()
+  {
+    stkDisc->insertPeridigmNonzerosIntoGraph();
+  }
+
   //! Copy values from the Peridigm tangent stiffness matrix into the Albany jacobian.
   bool copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(Teuchos::RCP<Tpetra_CrsMatrix> jacT);
 
