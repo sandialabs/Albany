@@ -100,12 +100,12 @@ CP::updateHardness(
     Intrepid::Vector<ArgT, NumSlipT> & hardness_np1)
 {
   DataT H, Rd;
-  ArgT temp, effective_slip_increment(0.0);
+  ArgT temp, effective_slip_rate(0.0);
   Intrepid::Index num_slip = rateSlip.get_dimension();
 
   // calculate effective slip increment
   for (int iSlipSystem(0); iSlipSystem < num_slip; ++iSlipSystem) {
-	  effective_slip_increment += dt * fabs(rateSlip[iSlipSystem]);
+	  effective_slip_rate += fabs(rateSlip[iSlipSystem]);
   }
 
   for (int s(0); s < num_slip; ++s) {
@@ -131,10 +131,10 @@ CP::updateHardness(
         //
         effective_slip_n = -1.0/Rd * std::log(1.0 - Rd/H * hardness_n[s]);
         hardness_np1[s] = H / Rd * (1.0 - 
-                          std::exp(-Rd * (effective_slip_n + effective_slip_increment)));  
+                          std::exp(-Rd * (effective_slip_n + dt * effective_slip_rate)));  
       }
       else {
-        hardness_np1[s] = hardness_n[s] + H *effective_slip_increment;
+        hardness_np1[s] = hardness_n[s] + H * dt * effective_slip_rate;
       }
 
     } 
@@ -159,36 +159,43 @@ CP::updateHardness(
           slip_systems[iSlipSystem].resistanceSlipInitial_;
         exponentSaturation = slip_systems[iSlipSystem].exponentSaturation_;
 
-        stressSaturation = stressSaturationInitial * std::pow(std::fabs(
-          rateSlip[iSlipSystem] / rateSlipReference), exponentSaturation);
+        if (exponentSaturation == 0.0) {
+          stressSaturation = stressSaturationInitial;
+        }
+        else {
+          stressSaturation = stressSaturationInitial * std::pow(
+            effective_slip_rate / rateSlipReference, exponentSaturation);
+        }
 
         driverHardening = 0.0;
 
-        if (exponentSaturation > 0.0){
-          for (int jSlipSystem(0); jSlipSystem < num_slip; ++jSlipSystem) {
+        for (int jSlipSystem(0); jSlipSystem < num_slip; ++jSlipSystem) {
 
-            driverHardening += 2.0 *
+          // TODO: calculate hardening matrix during initialization
+          driverHardening += 0.5 *
+              std::fabs
+              (
                 Intrepid::dotdot
                 (
-                  slip_systems[iSlipSystem].projector_,
-                  slip_systems[jSlipSystem].projector_
-                ) *
-                std::fabs(rateSlip[jSlipSystem]);
-
-          }
-        }
-        else {
-
-          driverHardening = std::fabs(rateSlip[iSlipSystem]);
+                  slip_systems[iSlipSystem].projector_ + 
+                    Intrepid::transpose(slip_systems[iSlipSystem].projector_),
+                  slip_systems[jSlipSystem].projector_ + 
+                    Intrepid::transpose(slip_systems[jSlipSystem].projector_)
+                )
+              ) *
+              std::fabs(rateSlip[jSlipSystem]);
 
         }
 
+        // TODO: make hardness_n* equal g rather than g-g0
         hardness_np1[iSlipSystem] = hardness_n[iSlipSystem] +
             dt * rateHardening *
-            (stressSaturation - hardness_n[iSlipSystem]) / 
+            (stressSaturation - hardness_n[iSlipSystem] - resistanceSlipInitial) / 
               (stressSaturation - resistanceSlipInitial) * driverHardening;
 
       }
+
+      //std::cout << "Hardening driver " << driverHardening << std::endl;
 
     }
     //TODO: Re-implement this when rateSlip is the right size

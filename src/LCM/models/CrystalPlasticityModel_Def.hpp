@@ -209,9 +209,23 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     else if (typeHardeningLaw == "Saturation") {
       slip_systems_[num_ss].hardeningLaw = SATURATION;
       slip_systems_[num_ss].resistanceSlipInitial_ = h_list.get<RealType>("Initial Slip Resistance", 0.0);
+      // temporary workaround
+      slip_systems_[num_ss].tau_critical_ = slip_systems_[num_ss].resistanceSlipInitial_;
       slip_systems_[num_ss].rateHardening_ = h_list.get<RealType>("Hardening Rate", 0.0);
       slip_systems_[num_ss].stressSaturationInitial_ = h_list.get<RealType>("Initial Saturation Stress", 0.0);
       slip_systems_[num_ss].exponentSaturation_ = h_list.get<RealType>("Saturation Exponent", 0.0);
+    }
+
+    if (verbosity_ > 2) {
+      std::cout << "Slip system number " << num_ss << std::endl;
+      std::cout << "Hardening law " << slip_systems_[num_ss].hardeningLaw << std::endl;
+      std::cout << "H " << slip_systems_[num_ss].H_ << std::endl;
+      std::cout << "Rd " << slip_systems_[num_ss].Rd_ << std::endl;
+      std::cout << "Tau critical " << slip_systems_[num_ss].tau_critical_ << std::endl;
+      std::cout << "Initial slip resistance " << slip_systems_[num_ss].resistanceSlipInitial_ << std::endl;
+      std::cout << "Hardening rate " << slip_systems_[num_ss].rateHardening_ << std::endl;
+      std::cout << "Initial saturation stress " << slip_systems_[num_ss].stressSaturationInitial_ << std::endl;
+      std::cout << "Saturation exponent " << slip_systems_[num_ss].exponentSaturation_ << std::endl;
     }
 
   }
@@ -679,6 +693,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           hardness_n, 
           hardness_np1);
 
+        if(verbosity_ > 2) {
+          std::cout << "CP model implicit integration hardness " << hardness_np1 << std::endl;
+        }
+
         CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
           C_, 
@@ -687,6 +705,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           sigma_np1, 
           S_np1, 
           shear_np1);
+
+        if(verbosity_ > 2) {
+          std::cout << "CP model implicit integration stress " << shear_np1 << std::endl;
+        }
 
         CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
@@ -697,6 +719,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           shear_np1, 
           slip_residual, 
           norm_slip_residual);
+
+        if(verbosity_ > 2) {
+          std::cout << "CP model implicit integration residual " << slip_residual << std::endl;
+        }
 
         RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(
           norm_slip_residual);
