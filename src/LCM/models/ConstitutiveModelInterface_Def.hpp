@@ -24,6 +24,7 @@
 #include "AAAModel.hpp"
 #include "LinearElasticModel.hpp"
 #include "LinearHMCModel.hpp"
+#include "ElasticCrystalModel.hpp"
 #include "J2HMCModel.hpp"
 #include "LinearPiezoModel.hpp"
 #include "FerroicModel.hpp"
