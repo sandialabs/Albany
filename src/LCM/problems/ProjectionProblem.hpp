@@ -18,7 +18,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
-using Intrepid::FieldContainer;
+using Intrepid2::FieldContainer;
 using PHAL::AlbanyTraits;
 using PHX::DataLayout;
 using PHX::MDALayout;
@@ -221,8 +221,8 @@ Albany::ProjectionProblem::constructEvaluators(
   RCP<shards::CellTopology>
   cell_type = rcp(new shards::CellTopology(&mesh_specs.ctd));
 
-  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>>>
-  intrepid_basis = Albany::getIntrepidBasis(mesh_specs.ctd);
+  RCP<Intrepid2::Basis<RealType, FieldContainer<RealType>>>
+  intrepid_basis = Albany::getIntrepid2Basis(mesh_specs.ctd);
 
   int const
   number_nodes = intrepid_basis->getCardinality();
@@ -230,25 +230,25 @@ Albany::ProjectionProblem::constructEvaluators(
   int const
   workset_size = mesh_specs.worksetSize;
 
-  Intrepid::DefaultCubatureFactory<RealType>
+  Intrepid2::DefaultCubatureFactory<RealType>
   cubature_factory;
 
-  RCP<Intrepid::Cubature<RealType>>
+  RCP<Intrepid2::Cubature<RealType>>
   cubature = cubature_factory.create(*cell_type, mesh_specs.cubatureDegree);
 
   // Create intrepid basis and cubature for the face averaging. Not the best
   // way of defining the basis functions: requires to know the face type at
   // compile time
-  RCP<Intrepid::Basis<RealType, FieldContainer<RealType>>>
+  RCP<Intrepid2::Basis<RealType, FieldContainer<RealType>>>
   face_intrepid_basis;
 
   face_intrepid_basis = rcp(
-      new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType,
+      new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<RealType,
       FieldContainer<RealType>>());
 
   // the quadrature is general to the
   // topology of the faces of the volume elements
-  RCP<Intrepid::Cubature<RealType>>
+  RCP<Intrepid2::Cubature<RealType>>
   face_cubature = cubature_factory.create(
       cell_type->getCellTopologyData()->side->topology,
       mesh_specs.cubatureDegree);
@@ -1172,12 +1172,12 @@ Albany::ProjectionProblem::constructEvaluators(
         projection_layout->node_vector);
 
     // the cubature and basis function information
-    p->set<RCP<Intrepid::Cubature<RealType>>>(
+    p->set<RCP<Intrepid2::Cubature<RealType>>>(
         "Face Cubature",
         face_cubature);
 
-    p->set<RCP<Intrepid::Basis<RealType, FieldContainer<RealType>>>>(
-        "Face Intrepid Basis",
+    p->set<RCP<Intrepid2::Basis<RealType, FieldContainer<RealType>>>>(
+        "Face Intrepid2 Basis",
         face_intrepid_basis);
 
     p->set<RCP<shards::CellTopology>>("Cell Type", cell_type);

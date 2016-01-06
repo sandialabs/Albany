@@ -7,8 +7,8 @@
 // Author: Mario J. Juha (juham@rpi.edu)
 
 #include <cmath>
-#include "Intrepid_MiniTensor.h"
-#include "Intrepid_MiniTensor_Definitions.h"
+#include "Intrepid2_MiniTensor.h"
+#include "Intrepid2_MiniTensor_Definitions.h"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -53,12 +53,12 @@ namespace LCM
     Phi_ = Phid*degtorad;
     phi2_ = phi2d*degtorad;
 
-    const Intrepid::Index IndexM = 3;
-    const Intrepid::Index IndexN = 3;
+    const Intrepid2::Index IndexM = 3;
+    const Intrepid2::Index IndexN = 3;
 
     // Initialize rotation matrix
-    Intrepid::Matrix<double, IndexM, IndexN> rl;
-    rl.fill(Intrepid::ZEROS);
+    Intrepid2::Matrix<double, IndexM, IndexN> rl;
+    rl.fill(Intrepid2::ZEROS);
 
     // Compute rotation matrix
     rl(0,0) = cos(phi1_)*cos(phi2_) - sin(phi1_)*cos(Phi_)*sin(phi2_);
@@ -72,10 +72,10 @@ namespace LCM
     rl(2,2) = cos(Phi_);
 
     // Set elastic tensor in lattice frame
-    Intrepid::Tensor4<RealType, EC::MAX_NUM_DIM> C;
+    Intrepid2::Tensor4<RealType, EC::MAX_NUM_DIM> C;
     C.set_dimension(num_dims_);
     // Initialize with zeros
-    C.fill(Intrepid::ZEROS);
+    C.fill(Intrepid2::ZEROS);
     // fill tensor
     C(0,0,0,0) = c11_;
     C(1,1,1,1) = c22_;
@@ -195,13 +195,13 @@ namespace LCM
   //   ScalarT Jm53, Jm23;
   //   ScalarT smag;
 
-  //   Intrepid::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
-  //   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  //   Intrepid::Tensor<ScalarT> s(num_dims_), n(num_dims_);
+  //   Intrepid2::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
+  //   Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  //   Intrepid2::Tensor<ScalarT> s(num_dims_), n(num_dims_);
 
-  //   Intrepid::Tensor4<ScalarT> dsigmadb;
-  //   Intrepid::Tensor4<ScalarT> I1(Intrepid::identity_1<ScalarT>(num_dims_));
-  //   Intrepid::Tensor4<ScalarT> I3(Intrepid::identity_3<ScalarT>(num_dims_));
+  //   Intrepid2::Tensor4<ScalarT> dsigmadb;
+  //   Intrepid2::Tensor4<ScalarT> I1(Intrepid2::identity_1<ScalarT>(num_dims_));
+  //   Intrepid2::Tensor4<ScalarT> I3(Intrepid2::identity_3<ScalarT>(num_dims_));
 
   //   for (int cell(0); cell < workset.numCells; ++cell) 
   //     {
@@ -217,10 +217,10 @@ namespace LCM
 
   //   	    F.fill(def_grad,cell, pt,0,0);
   //   	    b = F * transpose(F);
-  //   	    mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid::trace(b);
+  //   	    mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid2::trace(b);
 
   //   	    sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
-  //   	      + mu * Jm53 * Intrepid::dev(b);
+  //   	      + mu * Jm53 * Intrepid2::dev(b);
 
   //   	    for (int i = 0; i < num_dims_; ++i) 
   //   	      {
@@ -236,13 +236,13 @@ namespace LCM
   //   		  0.5 * kappa
   //   		  * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0)
   //   		     - std::log(J(cell, pt)))
-  //   		  + 0.5 * mu * (Jm23 * Intrepid::trace(b) - 3.0);
+  //   		  + 0.5 * mu * (Jm23 * Intrepid2::trace(b) - 3.0);
   //   	      }
 
   //   	    if (compute_tangent_) 
   //   	      { // compute tangent
-  //   		s = Intrepid::dev(sigma);
-  //   		smag = Intrepid::norm(s);
+  //   		s = Intrepid2::dev(sigma);
+  //   		smag = Intrepid2::norm(s);
   //   		n = s / smag;
 
   //   		dsigmadb =
@@ -250,7 +250,7 @@ namespace LCM
   //   		  - kappa * (J(cell, pt) * J(cell, pt) - 1.0) * I1
   //   		  + 2.0 * mubar * (I1 - (1.0 / 3.0) * I3)
   //   		  - 2.0 / 3.0 * smag
-  //   		  * (Intrepid::tensor(n, I) + Intrepid::tensor(I, n));
+  //   		  * (Intrepid2::tensor(n, I) + Intrepid2::tensor(I, n));
 
   //   		for (int i = 0; i < num_dims_; ++i) 
   //   		  {
@@ -276,7 +276,7 @@ namespace LCM
   //   	    for (int pt(0); pt < num_pts_; ++pt) 
   //   	      {
   //   		F.fill(def_grad,cell,pt,0,0);
-  //   		ScalarT J = Intrepid::det(F);
+  //   		ScalarT J = Intrepid2::det(F);
   //   		sigma.fill(stress,cell,pt,0,0);
   //   		sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
   //   		  * (temperature_(cell,pt) - ref_temperature_) * I;

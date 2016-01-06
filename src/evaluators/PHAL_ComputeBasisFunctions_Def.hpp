@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -16,8 +16,8 @@ ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
-  cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
   jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
@@ -58,8 +58,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   this->setName("ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 }
@@ -93,19 +93,19 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
 
-  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
-  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-  Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
-  Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
-  Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
+  Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<RealType>
     (BF, val_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wBF, weighted_measure, BF);
-  Intrepid::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
     (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 }
 /*#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -115,8 +115,8 @@ ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
-  cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
@@ -165,8 +165,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
 
   for (int i=0; i < numQPs; i++)
@@ -439,7 +439,7 @@ void ComputeBasisFunctions<EvalT, Traits>:: operator () (const int i) const
               GradBF(i, nodes, pt, row) = 0.0;
 
 
-  //Intrepid::setJacobian
+  //Intrepid2::setJacobian
 //PHX::MDField <MeshScalarT,Cell,QuadPoint,Dim,Dim> 
   int dim0 = refPoints_CUDA.dimension(0);
   double x = 0.0;
@@ -504,7 +504,7 @@ void ComputeBasisFunctions<EvalT, Traits>:: operator () (const int i) const
         } // row
      } // qp
 
-   // Intrepid::setJacobianInv & setJacobianDet
+   // Intrepid2::setJacobianInv & setJacobianDet
    
   for (int i1=0; i1<numQPs_; i1++) {
     int k, j, rowID = 0, colID = 0;
@@ -640,19 +640,19 @@ evaluateFields(typename Traits::EvalData workset)
 //std::cout << "ComputeBasisFunction" <<std::endl;
 //std::cout << wGradBF(1, 1, 1, 1) <<"  " <<jacobian_inv(1,1,1,1) <<"   "<<grad_at_cub_points_CUDA(1,1,1) <<"   "<< weighted_measure(1,1)<<std::endl; 
 
-//  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-//  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-//  Intrepid::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
+//  Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+//  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+//  Intrepid2::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
   
-//  Intrepid::FunctionSpaceTools::computeCellMeasureTemp(weighted_measure, jacobian_det, refWeights);
+//  Intrepid2::FunctionSpaceTools::computeCellMeasureTemp(weighted_measure, jacobian_det, refWeights);
 //  computeCellMeasure<MeshScalarT>(weighted_measure, jacobian_det, refWeights);
-//  Intrepid::FunctionSpaceTools::HGRADtransformVALUETemp<RealType> (BF, val_at_cub_points); 
-//  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>(wBF, weighted_measure, BF);
+//  Intrepid2::FunctionSpaceTools::HGRADtransformVALUETemp<RealType> (BF, val_at_cub_points); 
+//  Intrepid2::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>(wBF, weighted_measure, BF);
    
 
- // Intrepid::FunctionSpaceTools::HGRADtransformGRADTemp<MeshScalarT>
+ // Intrepid2::FunctionSpaceTools::HGRADtransformGRADTemp<MeshScalarT>
 //    (GradBF, jacobian_inv, grad_at_cub_points);
-//  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>
+//  Intrepid2::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>
 //    (wGradBF, weighted_measure, GradBF);
 
 }

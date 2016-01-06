@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Intrepid_MiniTensor.h"
+#include "Intrepid2_MiniTensor.h"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -23,10 +23,10 @@ SurfaceBasis(
     reference_coords_(
         p.get<std::string>("Reference Coordinates Name"),
         dl->vertices_vector),
-    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
+    cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")),
     intrepid_basis_(
-        p.get<Teuchos::RCP<Intrepid::Basis<RealType,
-        Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
+        p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
+        Intrepid2::FieldContainer<RealType>>>>("Intrepid2 Basis")),
     ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     ref_dual_basis_(
@@ -100,8 +100,8 @@ SurfaceBasis(
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
   intrepid_basis_->getValues(
-      ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
-  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
+      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 
   this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
 }
@@ -174,7 +174,7 @@ void
 SurfaceBasis<EvalT, Traits>::
 computeMidplaneCoords(
     PHX::MDField<ST, Cell, Vertex, Dim> const coords,
-    Intrepid::FieldContainer<ST> & midplane_coords)
+    Intrepid2::FieldContainer<ST> & midplane_coords)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
@@ -198,31 +198,31 @@ template<typename EvalT, typename Traits>
 template<typename ST>
 void
 SurfaceBasis<EvalT, Traits>::
-computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
+computeBasisVectors(Intrepid2::FieldContainer<ST> const & midplane_coords,
     PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid::Vector<ST>>
+    std::vector<Intrepid2::Vector<ST>>
     midplane_nodes(num_surf_nodes_);
 
     for (int node(0); node < num_surf_nodes_; ++node) {
       midplane_nodes[node] =
-          Intrepid::Vector<ST>(3, midplane_coords, cell, node, 0);
+          Intrepid2::Vector<ST>(3, midplane_coords, cell, node, 0);
     }
 
-    Intrepid::Vector<ST>
+    Intrepid2::Vector<ST>
     g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
 
     //compute the base vectors
     for (int pt(0); pt < num_qps_; ++pt) {
-      g_0.fill(Intrepid::ZEROS);
-      g_1.fill(Intrepid::ZEROS);
+      g_0.fill(Intrepid2::ZEROS);
+      g_1.fill(Intrepid2::ZEROS);
       for (int node(0); node < num_surf_nodes_; ++node) {
         g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
         g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];
       }
-      g_2 = Intrepid::unit(Intrepid::cross(g_0, g_1));
+      g_2 = Intrepid2::unit(Intrepid2::cross(g_0, g_1));
 
       basis(cell, pt, 0, 0) = g_0(0);
       basis(cell, pt, 0, 1) = g_0(1);
@@ -244,32 +244,32 @@ template<typename EvalT, typename Traits>
 void
 SurfaceBasis<EvalT, Traits>::
 computeDualBasisVectors(
-    Intrepid::FieldContainer<MeshScalarT> const & midplane_coords,
+    Intrepid2::FieldContainer<MeshScalarT> const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis)
 {
   int worksetSize = midplane_coords.dimension(0);
 
-  Intrepid::Vector<MeshScalarT>
+  Intrepid2::Vector<MeshScalarT>
   g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
 
-  Intrepid::Vector<MeshScalarT>
+  Intrepid2::Vector<MeshScalarT>
   g0(0, 0, 0), g1(0, 0, 0), g2(0, 0, 0);
 
   for (int cell(0); cell < worksetSize; ++cell) {
     for (int pt(0); pt < num_qps_; ++pt) {
-      g_0 = Intrepid::Vector<MeshScalarT>(3, basis, cell, pt, 0, 0);
-      g_1 = Intrepid::Vector<MeshScalarT>(3, basis, cell, pt, 1, 0);
-      g_2 = Intrepid::Vector<MeshScalarT>(3, basis, cell, pt, 2, 0);
+      g_0 = Intrepid2::Vector<MeshScalarT>(3, basis, cell, pt, 0, 0);
+      g_1 = Intrepid2::Vector<MeshScalarT>(3, basis, cell, pt, 1, 0);
+      g_2 = Intrepid2::Vector<MeshScalarT>(3, basis, cell, pt, 2, 0);
 
       normal(cell, pt, 0) = g_2(0);
       normal(cell, pt, 1) = g_2(1);
       normal(cell, pt, 2) = g_2(2);
 
-      g0 = Intrepid::cross(g_1, g_2);
-      g1 = Intrepid::cross(g_0, g_2);
-      g2 = Intrepid::cross(g_0, g_1);
+      g0 = Intrepid2::cross(g_1, g_2);
+      g1 = Intrepid2::cross(g_0, g_2);
+      g2 = Intrepid2::cross(g_0, g_1);
 
       g0 = g0 / dot(g_0, g0);
       g1 = g1 / dot(g_1, g1);
@@ -303,14 +303,14 @@ computeJacobian(
 
   for (int cell(0); cell < worksetSize; ++cell) {
     for (int pt(0); pt < num_qps_; ++pt) {
-      Intrepid::Tensor<MeshScalarT> dPhiInv(3, dual_basis, cell, pt, 0, 0);
-      Intrepid::Tensor<MeshScalarT> dPhi(3, basis, cell, pt, 0, 0);
-      Intrepid::Vector<MeshScalarT> G_2(3, basis, cell, pt, 2, 0);
-      MeshScalarT j0 = Intrepid::det(dPhi);
+      Intrepid2::Tensor<MeshScalarT> dPhiInv(3, dual_basis, cell, pt, 0, 0);
+      Intrepid2::Tensor<MeshScalarT> dPhi(3, basis, cell, pt, 0, 0);
+      Intrepid2::Vector<MeshScalarT> G_2(3, basis, cell, pt, 2, 0);
+      MeshScalarT j0 = Intrepid2::det(dPhi);
       MeshScalarT jacobian = j0
           * std::sqrt(
-              Intrepid::dot(
-                  Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv),
+              Intrepid2::dot(
+                  Intrepid2::dot(G_2, Intrepid2::transpose(dPhiInv) * dPhiInv),
                   G_2));
       area(cell, pt) = jacobian * ref_weights_(pt);
     }

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_FunctionSpaceTools.hpp>
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_FunctionSpaceTools.hpp>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include <typeinfo>
@@ -114,16 +114,16 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
   Albany::MDArray frictionold = (*workset.stateArrayPtr)[friction_string + "_old"];
 
-  Intrepid::Tensor<ScalarT> id(Intrepid::eye<ScalarT>(num_dims_));    
-  Intrepid::Tensor4<ScalarT> id1(Intrepid::identity_1<ScalarT>(num_dims_));
-  Intrepid::Tensor4<ScalarT> id2(Intrepid::identity_2<ScalarT>(num_dims_));
-  Intrepid::Tensor4<ScalarT> id3(Intrepid::identity_3<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> id(Intrepid2::eye<ScalarT>(num_dims_));    
+  Intrepid2::Tensor4<ScalarT> id1(Intrepid2::identity_1<ScalarT>(num_dims_));
+  Intrepid2::Tensor4<ScalarT> id2(Intrepid2::identity_2<ScalarT>(num_dims_));
+  Intrepid2::Tensor4<ScalarT> id3(Intrepid2::identity_3<ScalarT>(num_dims_));
     
-  Intrepid::Tensor4<ScalarT> Celastic (num_dims_);
-  Intrepid::Tensor<ScalarT> sigma(num_dims_), sigmaN(num_dims_), s(num_dims_);
-  Intrepid::Tensor<ScalarT> epsilon(num_dims_), epsilonN(num_dims_);
-  Intrepid::Tensor<ScalarT> depsilon(num_dims_);
-  Intrepid::Tensor<ScalarT> nhat(num_dims_);
+  Intrepid2::Tensor4<ScalarT> Celastic (num_dims_);
+  Intrepid2::Tensor<ScalarT> sigma(num_dims_), sigmaN(num_dims_), s(num_dims_);
+  Intrepid2::Tensor<ScalarT> epsilon(num_dims_), epsilonN(num_dims_);
+  Intrepid2::Tensor<ScalarT> depsilon(num_dims_);
+  Intrepid2::Tensor<ScalarT> nhat(num_dims_);
     
   ScalarT lambda, mu, kappa;
   ScalarT alpha, alphaN;
@@ -166,10 +166,10 @@ computeState(typename Traits::EvalData workset,
       eqN = eqpsold(cell,pt);
         
       // trial state
-      sigma = sigmaN + Intrepid::dotdot(Celastic,depsilon);
-      ptr = Intrepid::trace(sigma) / 3.0;
+      sigma = sigmaN + Intrepid2::dotdot(Celastic,depsilon);
+      ptr = Intrepid2::trace(sigma) / 3.0;
       s = sigma - ptr * id;
-      snorm = Intrepid::dotdot(s,s);  
+      snorm = Intrepid2::dotdot(s,s);  
       if(snorm > 0) snorm = std::sqrt(snorm);
       qtr = sqrt(3.0/2.0) * snorm;
 

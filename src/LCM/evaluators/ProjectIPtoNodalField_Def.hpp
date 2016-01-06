@@ -16,10 +16,10 @@
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif
 
-#include <Intrepid_CellTools.hpp>
-#include <Intrepid_FunctionSpaceTools.hpp>
-#include <Intrepid_FieldContainer.hpp>
-#include <Intrepid_DefaultCubatureFactory.hpp>
+#include <Intrepid2_CellTools.hpp>
+#include <Intrepid2_FunctionSpaceTools.hpp>
+#include <Intrepid2_FieldContainer.hpp>
+#include <Intrepid2_DefaultCubatureFactory.hpp>
 #include <Shards_CellTopology.hpp>
 
 #include "Albany_Utils.hpp"
@@ -56,18 +56,18 @@ private:
   int nwrkr_, prectr_, postctr_;
 };
 
-typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>
-        IntrepidBasis;
+typedef Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>
+        Intrepid2Basis;
 
 class ProjectIPtoNodalFieldQuadrature {
   typedef PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
   PHX::MDField<RealType,Cell,Node,QuadPoint> bf_;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wbf_;
 
-  Teuchos::RCP<IntrepidBasis> intrepid_basis_;
+  Teuchos::RCP<Intrepid2Basis> intrepid_basis_;
   CellTopologyData ctd_;
   Teuchos::RCP<shards::CellTopology> cell_topo_;
-  Intrepid::FieldContainer<RealType> ref_points_, ref_weights_;
+  Intrepid2::FieldContainer<RealType> ref_points_, ref_weights_;
 
 public:
   ProjectIPtoNodalFieldQuadrature(
@@ -88,8 +88,8 @@ ProjectIPtoNodalFieldQuadrature (
   : ctd_(ctd)
 {
   cell_topo_ = Teuchos::rcp(new shards::CellTopology(&ctd_));
-  Intrepid::DefaultCubatureFactory<RealType> cub_factory;
-  Teuchos::RCP<Intrepid::Cubature<RealType>>
+  Intrepid2::DefaultCubatureFactory<RealType> cub_factory;
+  Teuchos::RCP<Intrepid2::Cubature<RealType>>
     cubature = cub_factory.create(*cell_topo_, degree);
   const int nqp = cubature->getNumPoints(), nd = cubature->getDimension();
   ref_points_.resize(nqp, nd);
@@ -105,7 +105,7 @@ ProjectIPtoNodalFieldQuadrature (
                                                   Teuchos::null);
   const bool composite = pfp.is_null() ? false :
     pfp->get<bool>("Use Composite Tet 10", false);
-  intrepid_basis_ = Albany::getIntrepidBasis(ctd, composite);
+  intrepid_basis_ = Albany::getIntrepid2Basis(ctd, composite);
 
   typedef PHX::MDALayout<Cell,Node,QuadPoint> Layout;
   Teuchos::RCP<Layout> node_qp_scalar = Teuchos::rcp(
@@ -124,7 +124,7 @@ ProjectIPtoNodalFieldQuadrature (
 
 void ProjectIPtoNodalFieldQuadrature::
 evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
-  using namespace Intrepid;
+  using namespace Intrepid2;
   typedef CellTools<RealType> CellTools;
   const int nqp = ref_points_.dimension(0), nd = ref_points_.dimension(1),
     nc = coord_vert.dimension(0), nn = coord_vert.dimension(1);
@@ -133,7 +133,7 @@ evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
   CellTools::setJacobian(jacobian, ref_points_, coord_vert, *cell_topo_);
   CellTools::setJacobianDet(jacobian_det, jacobian);
   intrepid_basis_->getValues(val_ref_points, ref_points_,
-                             Intrepid::OPERATOR_VALUE);
+                             Intrepid2::OPERATOR_VALUE);
   FunctionSpaceTools::computeCellMeasure<RealType>(weighted_measure,
                                                    jacobian_det, ref_weights_);
   FunctionSpaceTools::HGRADtransformVALUE<RealType>(bf_, val_ref_points);

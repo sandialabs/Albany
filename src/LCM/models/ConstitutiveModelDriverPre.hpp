@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 namespace LCM {
 
@@ -45,10 +45,10 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    Intrepid::Tensor<ScalarT>
+    Intrepid2::Tensor<ScalarT>
     computeLoading(std::string load, double inc);
     
-    Intrepid::Tensor<ScalarT> F0_;
+    Intrepid2::Tensor<ScalarT> F0_;
 
     ///
     /// solution field

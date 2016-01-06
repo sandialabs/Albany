@@ -11,7 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
 
@@ -413,7 +413,7 @@ KOKKOS_INLINE_FUNCTION
 
   
 template<typename EvalT,typename Traits>
-void ShallowWaterSource<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis) {
+void ShallowWaterSource<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis) {
     
     coriolis.initialize();
     double alpha = 0.0;//1.047;  /*must match what is in initial condition for TC2 and TC5.

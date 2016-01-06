@@ -7,8 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 namespace LCM {
 
@@ -95,8 +95,8 @@ template<typename EvalT, typename Traits>
 void TLPoroPlasticityResidMomentum<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
-  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
   RST::inverse(F_inv, defgrad);
   RST::transpose(F_invT, F_inv);
   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
@@ -121,7 +121,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 
 
-//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
 }
 

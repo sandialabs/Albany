@@ -11,7 +11,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "PHAL_Utilities.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
 
@@ -87,7 +87,7 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   //refPoints         .resize               (numQPs, 2);
 
   //cubature->getCubature(refPoints, refWeights);
-  //intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+  //intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
 }
 
@@ -124,8 +124,8 @@ void Hydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::set(Residual, 0.0);
-  Intrepid::FieldContainer<ScalarT>  coriolis(numQPs);
-  //Intrepid::FieldContainer<ScalarT>  vorticity(numQPs);
+  Intrepid2::FieldContainer<ScalarT>  coriolis(numQPs);
+  //Intrepid2::FieldContainer<ScalarT>  vorticity(numQPs);
 
 
   for (int cell=0; cell < workset.numCells; ++cell) {
@@ -155,7 +155,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT,typename Traits>
 void
-Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis) {
+Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis) {
 
   coriolis.initialize();
   double alpha = AlphaAngle; 
@@ -172,10 +172,10 @@ Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::Fie
 
 //template<typename EvalT,typename Traits>
 //void
-//Hydrostatic_VelResid<EvalT,Traits>::get_vorticity(const Intrepid::FieldContainer<ScalarT>  & nodalVector,
-//    std::size_t cell, std::size_t level, Intrepid::FieldContainer<ScalarT>  & curl) {
+//Hydrostatic_VelResid<EvalT,Traits>::get_vorticity(const Intrepid2::FieldContainer<ScalarT>  & nodalVector,
+//    std::size_t cell, std::size_t level, Intrepid2::FieldContainer<ScalarT>  & curl) {
 //
-//  Intrepid::FieldContainer<ScalarT>& covariantVector = wrk_;
+//  Intrepid2::FieldContainer<ScalarT>& covariantVector = wrk_;
 //  covariantVector.initialize();
 //
 //  fill_nodal_metrics(cell);

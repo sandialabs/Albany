@@ -209,7 +209,7 @@ void createInterfaceParts(
   bool const
   is_interleaved = last_mesh_specs_struct.interleavedOrdering;
 
-  Intrepid::EIntrepidPLPoly const
+  Intrepid2::EIntrepidPLPoly const
   cubature_rule = last_mesh_specs_struct.cubatureRule;
 
   mesh_specs_struct.resize(number_blocks + 1);

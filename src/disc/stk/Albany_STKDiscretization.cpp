@@ -18,9 +18,9 @@
 
 #include <Shards_BasicTopologies.hpp>
 
-#include <Intrepid_CellTools.hpp>
-#include <Intrepid_Basis.hpp>
-#include <Intrepid_HGRAD_QUAD_Cn_FEM.hpp>
+#include <Intrepid2_CellTools.hpp>
+#include <Intrepid2_Basis.hpp>
+#include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -2068,16 +2068,16 @@ namespace {
   }
 
 
-  const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > >
+  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid::FieldContainer< double > Field_t;
-    typedef Intrepid::Basis< double, Field_t > Basis_t;
+    typedef Intrepid2::FieldContainer< double > Field_t;
+    typedef Intrepid2::Basis< double, Field_t > Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
 
     // Check for valid value of C
     int deg = (int) std::sqrt((double)C);
@@ -2093,23 +2093,23 @@ namespace {
 
     // Spectral bases
     return Teuchos::rcp(
-      new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
-        deg, Intrepid::POINTTYPE_SPECTRAL) );
+      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
+        deg, Intrepid2::POINTTYPE_SPECTRAL) );
   }
 
   double value(const std::vector<double> &soln,
                const std::pair<double, double> &ref) {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     double x = 0;
     for (unsigned j=0; j<C; ++j) x += soln[j] * basisVals(j,0);
@@ -2121,15 +2121,15 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     for (unsigned i=0; i<3; ++i) x[i] = 0;
     for (unsigned i=0; i<3; ++i)
@@ -2142,15 +2142,15 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid::FieldContainer<double> basisGrad (C, numPoints, 2);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisGrad (C, numPoints, 2);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid::OPERATOR_GRAD);
+    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid2::OPERATOR_GRAD);
 
     for (unsigned i=0; i<3; ++i) x[i][0] = x[i][1] = 0;
     for (unsigned i=0; i<3; ++i)

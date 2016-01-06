@@ -8,7 +8,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -66,11 +66,11 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   const CellTopologyData * const elem_top = &meshSpecs->ctd;
 
-  intrepidBasis = Albany::getIntrepidBasis(*elem_top);
+  intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
 
   cellType = Teuchos::rcp(new shards::CellTopology(elem_top));
 
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
   cubatureDegree = p.isParameter("Cubature Degree") ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
   numNodes = intrepidBasis->getCardinality();
 
@@ -106,7 +106,7 @@ template<typename EvalT, typename Traits>
 void ThicknessResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST; 
+  typedef Intrepid2::FunctionSpaceTools FST; 
 
   // Initialize residual to 0.0
   Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
@@ -118,10 +118,10 @@ evaluateFields(typename Traits::EvalData workset)
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    Intrepid::FieldContainer<ScalarT> dH_Side;
-    Intrepid::FieldContainer<ScalarT> SMB_Side;
-    Intrepid::FieldContainer<ScalarT> H0_Side;
-    Intrepid::FieldContainer<ScalarT> V_Side;
+    Intrepid2::FieldContainer<ScalarT> dH_Side;
+    Intrepid2::FieldContainer<ScalarT> SMB_Side;
+    Intrepid2::FieldContainer<ScalarT> H0_Side;
+    Intrepid2::FieldContainer<ScalarT> V_Side;
 
     // Loop over the sides that form the boundary condition
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
@@ -134,7 +134,7 @@ evaluateFields(typename Traits::EvalData workset)
       const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
       sideType = Teuchos::rcp(new shards::CellTopology(side.topology));
       int numSideNodes = sideType->getNodeCount();
-      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
       cubatureSide = cubFactory.create(*sideType, cubatureDegree);
       sideDims = sideType->getDimension();
       numQPsSide = cubatureSide->getNumPoints();
@@ -177,44 +177,44 @@ evaluateFields(typename Traits::EvalData workset)
        physPointsCell(0, side.node[i], cellDims-1) = 0.0;  //set z=0 on side
 
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-      Intrepid::CellTools<RealType>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
+      Intrepid2::CellTools<RealType>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
       // Calculate side geometry
-      Intrepid::CellTools<MeshScalarT>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
+      Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
 
-      Intrepid::CellTools<MeshScalarT>::setJacobianInv(invJacobianSide, jacobianSide);
+      Intrepid2::CellTools<MeshScalarT>::setJacobianInv(invJacobianSide, jacobianSide);
 
-      Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
+      Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
 
       if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
-        Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+        Intrepid2::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
       } else { //for 3D, get weighted face measure
-        Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+        Intrepid2::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
       }
 
       // Values of the basis functions at side cubature points, in the reference parent cell domain
-      intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
+      intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
 
-      intrepidBasis->getValues(basisGrad_refPointsSide, refPointsSide, Intrepid::OPERATOR_GRAD);
+      intrepidBasis->getValues(basisGrad_refPointsSide, refPointsSide, Intrepid2::OPERATOR_GRAD);
 
       // Transform values of the basis functions
-      Intrepid::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>(trans_basis_refPointsSide, basis_refPointsSide);
+      Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>(trans_basis_refPointsSide, basis_refPointsSide);
 
-      Intrepid::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>(trans_gradBasis_refPointsSide, invJacobianSide, basisGrad_refPointsSide);
+      Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>(trans_gradBasis_refPointsSide, invJacobianSide, basisGrad_refPointsSide);
 
       // Multiply with weighted measure
-      Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
+      Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
+      Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid::FieldContainer<ScalarT> dH_Cell(numNodes);
-      Intrepid::FieldContainer<ScalarT> SMB_Cell(numNodes);
-      Intrepid::FieldContainer<ScalarT> H0_Cell(numNodes);
-      Intrepid::FieldContainer<ScalarT> V_Cell(numNodes, numVecFODims);
-      Intrepid::FieldContainer<ScalarT> gradH_Side(numQPsSide, numVecFODims);
-      Intrepid::FieldContainer<ScalarT> divV_Side(numQPsSide);
+      Intrepid2::FieldContainer<ScalarT> dH_Cell(numNodes);
+      Intrepid2::FieldContainer<ScalarT> SMB_Cell(numNodes);
+      Intrepid2::FieldContainer<ScalarT> H0_Cell(numNodes);
+      Intrepid2::FieldContainer<ScalarT> V_Cell(numNodes, numVecFODims);
+      Intrepid2::FieldContainer<ScalarT> gradH_Side(numQPsSide, numVecFODims);
+      Intrepid2::FieldContainer<ScalarT> divV_Side(numQPsSide);
 
       gradH_Side.initialize();
       divV_Side.initialize();

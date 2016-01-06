@@ -5,8 +5,8 @@
 //*****************************************************************//
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
-#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
 #include "ProjectionProblem.hpp"
 #include "Shards_CellTopology.hpp"
 

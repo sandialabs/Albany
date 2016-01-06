@@ -9,7 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include <string>
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -316,11 +316,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   const CellTopologyData * const elem_top = &meshSpecs->ctd;
 
-  intrepidBasis = Albany::getIntrepidBasis(*elem_top);
+  intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
 
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
   cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
@@ -447,10 +447,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
                                   // once we move logic to BCUtils
 
-  Intrepid::FieldContainer<ScalarT> betaOnSide;
-  Intrepid::FieldContainer<ScalarT> thicknessOnSide;
-  Intrepid::FieldContainer<ScalarT> bedTopoOnSide;
-  Intrepid::FieldContainer<ScalarT> elevationOnSide;
+  Intrepid2::FieldContainer<ScalarT> betaOnSide;
+  Intrepid2::FieldContainer<ScalarT> thicknessOnSide;
+  Intrepid2::FieldContainer<ScalarT> bedTopoOnSide;
+  Intrepid2::FieldContainer<ScalarT> elevationOnSide;
 
   const std::vector<Albany::SideStruct>& sideSet = it->second;
 
@@ -501,37 +501,37 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-    Intrepid::CellTools<RealType>::mapToReferenceSubcell
+    Intrepid2::CellTools<RealType>::mapToReferenceSubcell
       (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
     // Calculate side geometry
-    Intrepid::CellTools<MeshScalarT>::setJacobian
+    Intrepid2::CellTools<MeshScalarT>::setJacobian
        (jacobianSide, refPointsSide, physPointsCell, *cellType);
 
-    Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
+    Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
 
     if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
-      Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
+      Intrepid2::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
         (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
     }
     else { //for 3D, get weighted face measure
-      Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
+      Intrepid2::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
         (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
     }
 
     // Values of the basis functions at side cubature points, in the reference parent cell domain
-    intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
+    intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
 
     // Transform values of the basis functions
-    Intrepid::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
+    Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
       (trans_basis_refPointsSide, basis_refPointsSide);
 
     // Multiply with weighted measure
-    Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+    Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
       (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-    Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
+    Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
 
@@ -544,15 +544,15 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       for (int i=0; i < numQPsSide ; i++) dofSide(0,i) = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFInterpolation evaluator)
-      Intrepid::FunctionSpaceTools::
+      Intrepid2::FunctionSpaceTools::
         evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     else if(bc_type == BASAL || bc_type == BASAL_SCALAR_FIELD) {
-      Intrepid::FieldContainer<ScalarT> betaOnCell(1, numNodes);
-      Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-      Intrepid::FieldContainer<ScalarT> bedTopoOnCell(1, numNodes);
+      Intrepid2::FieldContainer<ScalarT> betaOnCell(1, numNodes);
+      Intrepid2::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
+      Intrepid2::FieldContainer<ScalarT> bedTopoOnCell(1, numNodes);
       for (std::size_t node=0; node < numNodes; ++node)
       {
         betaOnCell(0,node) = beta_field(elem_LID,node);
@@ -585,13 +585,13 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
        }
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      //Intrepid::FunctionSpaceTools::
+      //Intrepid2::FunctionSpaceTools::
         //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 #ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
-          Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-          Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
+          Intrepid2::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
+          Intrepid2::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
           for (std::size_t node=0; node < numNodes; ++node)
           {
                 thicknessOnCell(0,node) = thickness_field(elem_LID,node);
@@ -620,7 +620,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
            }
 
           // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-          //Intrepid::FunctionSpaceTools::
+          //Intrepid2::FunctionSpaceTools::
         //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 #endif
@@ -729,9 +729,9 @@ getValue(const std::string &n) {
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_traction_components(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_traction_components(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -740,7 +740,7 @@ calc_traction_components(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid::FieldContainer<ScalarT> traction(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer<ScalarT> traction(numCells, numPoints, cellDims);
 
 /*
   double traction[3];
@@ -762,9 +762,9 @@ calc_traction_components(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_gradu_dotn_const(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -773,9 +773,9 @@ calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid::FieldContainer<ScalarT> grad_T(numCells, numPoints, cellDims);
-  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer<ScalarT> grad_T(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
 
 /*
   double kdTdx[3];
@@ -790,16 +790,16 @@ calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
         grad_T(cell, pt, dim) = dudx[dim]; // k grad T in the x direction goes in the x spot, and so on
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   // take grad_T dotted with the unit normal
-//  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>(qp_data_returned,
+//  Intrepid2::FunctionSpaceTools::dotMultiplyDataData<ScalarT>(qp_data_returned,
 //    grad_T, side_normals);
 
   for(int pt = 0; pt < numPoints; pt++)
@@ -810,9 +810,9 @@ calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_const(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id,
@@ -833,10 +833,10 @@ calc_dudn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                const Intrepid::FieldContainer<ScalarT>& dof_side,
-                const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_robin(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                const Intrepid2::FieldContainer<ScalarT>& dof_side,
+                const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                 const shards::CellTopology & celltopo,
                 const int cellDims,
                 int local_side_id,
@@ -861,9 +861,9 @@ calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_press(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -872,23 +872,23 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
-  Intrepid::FieldContainer<MeshScalarT> ref_normal(cellDims);
+  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer<MeshScalarT> ref_normal(cellDims);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // for this side in the reference cell, get the constant normal vector to the side for area calc
-  Intrepid::CellTools<MeshScalarT>::getReferenceSideNormal(ref_normal, local_side_id, celltopo);
+  Intrepid2::CellTools<MeshScalarT>::getReferenceSideNormal(ref_normal, local_side_id, celltopo);
   /* Note: if the side is 1D the length of the normal times 2 is the side length
      If the side is a 2D quad, the length of the normal is the area of the side
      If the side is a 2D triangle, the length of the normal times 1/2 is the area of the side
    */
 
   MeshScalarT area =
-    Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(ref_normal, Intrepid::NORM_TWO);
+    Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(ref_normal, Intrepid2::NORM_TWO);
 
   // Calculate proper areas
 
@@ -916,8 +916,8 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   }
 
   // scale normals (unity)
-  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   // Pressure is a force of magnitude P along the normal to the side, divided by the side area (det)
@@ -934,12 +934,12 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-                                  const Intrepid::FieldContainer<ScalarT>& thickness_side,
-                                  const Intrepid::FieldContainer<ScalarT>& bedTopography_side,
-                                  const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_basal(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                                  const Intrepid2::FieldContainer<ScalarT>& basalFriction_side,
+                                  const Intrepid2::FieldContainer<ScalarT>& thickness_side,
+                                  const Intrepid2::FieldContainer<ScalarT>& bedTopography_side,
+                                  const Intrepid2::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -956,16 +956,16 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   const ScalarT& beta2 = robin_vals[3];
   const ScalarT& beta3 = robin_vals[4];
 
-  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   const double a = 1.0;
@@ -1277,10 +1277,10 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-                                  const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_basal_scalar_field(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                                  const Intrepid2::FieldContainer<ScalarT>& basalFriction_side,
+                                  const Intrepid2::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -1293,16 +1293,16 @@ calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returne
 
   const ScalarT& scale = robin_vals[0];
 
-  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   for(int cell = 0; cell < numCells; cell++) {
@@ -1316,11 +1316,11 @@ calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returne
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                                  const Intrepid::FieldContainer<ScalarT>& thickness_side,
-                                  const Intrepid::FieldContainer<ScalarT>& elevation_side,
-                                  const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_lateral(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+                                  const Intrepid2::FieldContainer<ScalarT>& thickness_side,
+                                  const Intrepid2::FieldContainer<ScalarT>& elevation_side,
+                                  const Intrepid2::FieldContainer<ScalarT>& dof_side,
+                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -1330,16 +1330,16 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
   //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
 
-  Intrepid::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid::NORM_TWO);
-  Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   const ScalarT &immersedRatioProvided = robin_vals[0];

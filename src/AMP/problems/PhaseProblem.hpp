@@ -92,8 +92,8 @@ protected:
 
 //******************************************************************************
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -130,15 +130,15 @@ Albany::PhaseProblem::constructEvaluators(
 
   std::string eb_name = meshSpecs.ebName;
  
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepid_basis = Albany::getIntrepidBasis(*elem_top);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+    intrepid_basis = Albany::getIntrepid2Basis(*elem_top);
 
   RCP<shards::CellTopology> elem_type = 
     rcp(new shards::CellTopology (elem_top));
 
-  Intrepid::DefaultCubatureFactory<RealType> cub_factory;
+  Intrepid2::DefaultCubatureFactory<RealType> cub_factory;
 
-  RCP <Intrepid::Cubature<RealType> > elem_cubature = 
+  RCP <Intrepid2::Cubature<RealType> > elem_cubature = 
     cub_factory.create(*elem_type, meshSpecs.cubatureDegree);
 
   const int workset_size = meshSpecs.worksetSize;

@@ -52,7 +52,7 @@ private:
   std::string homogenizedConstantsName;
   int cellForcingColumn;
 
-  Intrepid::FieldContainer<RealType> subTensor;
+  Intrepid2::FieldContainer<RealType> subTensor;
 };
 }
 

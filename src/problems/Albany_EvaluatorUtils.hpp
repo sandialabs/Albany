@@ -21,9 +21,9 @@
 
 #include "Albany_ProblemUtils.hpp"
 
-#include "Intrepid_Basis.hpp"
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_Basis.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 
@@ -165,15 +165,15 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructMapToPhysicalFrameEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
+      const Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature);
 
     //! Function to create parameter list for construction of ComputeBasisFunctions
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructComputeBasisFunctionsEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis,
-      const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature);
+      const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis,
+      const Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature);
 
   private:
 

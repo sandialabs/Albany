@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-namespace Intrepid
+namespace Intrepid2
 {
 
 //
@@ -249,10 +249,10 @@ step(Tensor<T, N> const & Hessian, Vector<T, N> const & gradient)
     Tensor<T, N> const
     L = cholesky(K).first;
 
-    step = - Intrepid::solve(K, gradient);
+    step = - Intrepid2::solve(K, gradient);
 
     Vector<T, N> const
-    q = Intrepid::solve(L, step);
+    q = Intrepid2::solve(L, step);
 
     T const
     np = norm(step);
@@ -351,7 +351,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
   Hessian = fn.hessian(soln);
 
   Vector<T, N> const
-  step = - Intrepid::solve(Hessian, resi);
+  step = - Intrepid2::solve(Hessian, resi);
 
   return step;
 }
@@ -453,7 +453,7 @@ initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   Tensor<T, N> const
   Hessian = fn.hessian(soln);
 
-  precon_resi = - Intrepid::solve(Hessian, gradient);
+  precon_resi = - Intrepid2::solve(Hessian, gradient);
 
   search_direction = precon_resi;
 
@@ -502,7 +502,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
   Tensor<T, N> const
   Hessian = fn.hessian(soln_next);
 
-  precon_resi = - Intrepid::solve(Hessian, gradient_next);
+  precon_resi = - Intrepid2::solve(Hessian, gradient_next);
 
   projection_new = - dot(gradient_next, precon_resi);
 
@@ -588,7 +588,7 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   } else {
 
     // Standard Newton step
-    step = - Intrepid::solve(Hessian, gradient);
+    step = - Intrepid2::solve(Hessian, gradient);
 
   }
 
@@ -602,4 +602,4 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   return ls_step;
 }
 
-} // namespace Intrepid
+} // namespace Intrepid2

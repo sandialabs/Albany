@@ -8,7 +8,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -376,7 +376,7 @@ template<typename EvalT, typename Traits>
 void StokesFOResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST; 
+  typedef Intrepid2::FunctionSpaceTools FST; 
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 

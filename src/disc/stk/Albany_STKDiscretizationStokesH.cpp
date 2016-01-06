@@ -18,9 +18,9 @@
 
 #include <Shards_BasicTopologies.hpp>
 
-#include <Intrepid_CellTools.hpp>
-#include <Intrepid_Basis.hpp>
-#include <Intrepid_HGRAD_QUAD_Cn_FEM.hpp>
+#include <Intrepid2_CellTools.hpp>
+#include <Intrepid2_Basis.hpp>
+#include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
 
 #include <stk_util/parallel/Parallel.hpp>
 

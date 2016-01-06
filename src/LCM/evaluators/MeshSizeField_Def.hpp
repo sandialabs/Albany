@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 template<typename ScalarT>
 inline ScalarT Sqr (const ScalarT& num) {
@@ -24,9 +24,9 @@ namespace LCM {
     MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     isoMeshSizeField (p.get<std::string>("IsoTropic MeshSizeField Name"), dl->qp_scalar),
-    cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType>>>("Cubature")),
-    intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, 
-         Intrepid::FieldContainer<RealType>>>> ("Intrepid Basis"))
+    cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType>>>("Cubature")),
+    intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<RealType, 
+         Intrepid2::FieldContainer<RealType>>>> ("Intrepid2 Basis"))
 
   {
 
@@ -62,7 +62,7 @@ namespace LCM {
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   }
 
@@ -140,9 +140,9 @@ namespace LCM {
     MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     anisoMeshSizeField (p.get<std::string>("AnisoTropic MeshSizeField Name"), dl->qp_scalar),
-    cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType>>>("Cubature")),
-    intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, 
-         Intrepid::FieldContainer<RealType>>>> ("Intrepid Basis"))
+    cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType>>>("Cubature")),
+    intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<RealType, 
+         Intrepid2::FieldContainer<RealType>>>> ("Intrepid2 Basis"))
 
   {
 
@@ -177,7 +177,7 @@ namespace LCM {
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   }
 

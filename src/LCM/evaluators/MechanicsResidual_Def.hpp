@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
-#include <Intrepid_MiniTensor_Mechanics.h>
+#include <Intrepid2_MiniTensor.h>
+#include <Intrepid2_MiniTensor_Mechanics.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <Sacado_ParameterRegistration.hpp>
@@ -194,9 +194,9 @@ evaluateFields(typename Traits::EvalData workset)
         residual_(cell, node, dim) = ScalarT(0);
     if (def_grad_rc_) {
       for (int pt = 0; pt < num_pts_; ++pt) {
-        Intrepid::Tensor<RealType> F(num_dims_);
+        Intrepid2::Tensor<RealType> F(num_dims_);
         F.fill(def_grad_rc_(), cell, pt, 0, 0);
-        const RealType F_det = Intrepid::det(F);
+        const RealType F_det = Intrepid2::det(F);
         for (int node = 0; node < num_nodes_; ++node) {
           MeshScalarT w[3];
           AAdapt::rc::transformWeightedGradientBF(

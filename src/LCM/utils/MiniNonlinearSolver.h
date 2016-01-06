@@ -18,21 +18,21 @@ namespace LCM{
 /// miniMinimize function that wraps the MiniTensor Nonlinear Solvers
 /// and deals with Albany traits and AD sensitivities.
 ///
-template<typename MIN, typename STEP, typename FN, Intrepid::Index N>
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
 void
 miniMinimize(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid::Vector<RealType, N> & soln);
+    Intrepid2::Vector<RealType, N> & soln);
 
-template<typename MIN, typename STEP, typename FN, typename T, Intrepid::Index N>
+template<typename MIN, typename STEP, typename FN, typename T, Intrepid2::Index N>
 void
 miniMinimize(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid::Vector<T, N> & soln);
+    Intrepid2::Vector<T, N> & soln);
 
 ///
 /// Deal with derivative information for all the mini solvers.
@@ -40,12 +40,12 @@ miniMinimize(
 /// typed on a FAD type.
 /// Assuming that T is a FAD type and S is a simple type.
 ///
-template<typename T, typename S, Intrepid::Index N>
+template<typename T, typename S, Intrepid2::Index N>
 void
 computeFADInfo(
-    Intrepid::Vector<T, N> const & r,
-    Intrepid::Tensor<S, N> const & DrDx,
-    Intrepid::Vector<T, N> & x);
+    Intrepid2::Vector<T, N> const & r,
+    Intrepid2::Tensor<S, N> const & DrDx,
+    Intrepid2::Vector<T, N> & x);
 
 ///
 /// Auxiliary functors that peel off derivative information from Albany::Traits
@@ -61,7 +61,7 @@ struct peel
   // This ugly return type is to avoid matching Tensor types.
   // If it does not match then it just becomes T.
   using RET = typename
-      Intrepid::disable_if_c<Intrepid::order_1234<T>::value, T>::type;
+      Intrepid2::disable_if_c<Intrepid2::order_1234<T>::value, T>::type;
 
   RET
   operator()(S const & s)
@@ -93,7 +93,7 @@ using MPTE = PHAL::AlbanyTraits::MPTangent;
 #endif // ALBANY_ENSEMBLE
 
 template<int N>
-using AD = Intrepid::FAD<RealType, N>;
+using AD = Intrepid2::FAD<RealType, N>;
 
 } // anonymous namespace
 
@@ -290,19 +290,19 @@ struct peel_vector
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid::Vector<T, N>
-  operator()(Intrepid::Vector<S, N> const & s)
+  Intrepid2::Vector<T, N>
+  operator()(Intrepid2::Vector<S, N> const & s)
   {
-    Intrepid::Index const
+    Intrepid2::Index const
     dimension = s.get_dimension();
 
-    Intrepid::Vector<T, N>
+    Intrepid2::Vector<T, N>
     t(dimension);
 
-    Intrepid::Index const
+    Intrepid2::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid::Index i = 0; i < num_components; ++i) {
+    for (Intrepid2::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, N>()(s[i]);
     }
 
@@ -315,19 +315,19 @@ struct peel_tensor
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid::Tensor<T, N>
-  operator()(Intrepid::Tensor<S, N> const & s)
+  Intrepid2::Tensor<T, N>
+  operator()(Intrepid2::Tensor<S, N> const & s)
   {
-    Intrepid::Index const
+    Intrepid2::Index const
     dimension = s.get_dimension();
 
-    Intrepid::Tensor<T, N>
+    Intrepid2::Tensor<T, N>
     t(dimension);
 
-    Intrepid::Index const
+    Intrepid2::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid::Index i = 0; i < num_components; ++i) {
+    for (Intrepid2::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, N>()(s[i]);
     }
 
@@ -340,19 +340,19 @@ struct peel_tensor3
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid::Tensor3<T, N>
-  operator()(Intrepid::Tensor3<S, N> const & s)
+  Intrepid2::Tensor3<T, N>
+  operator()(Intrepid2::Tensor3<S, N> const & s)
   {
-    Intrepid::Index const
+    Intrepid2::Index const
     dimension = s.get_dimension();
 
-    Intrepid::Tensor3<T, N>
+    Intrepid2::Tensor3<T, N>
     t(dimension);
 
-    Intrepid::Index const
+    Intrepid2::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid::Index i = 0; i < num_components; ++i) {
+    for (Intrepid2::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, N>()(s[i]);
     }
 
@@ -365,19 +365,19 @@ struct peel_tensor4
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid::Tensor4<T, N>
-  operator()(Intrepid::Tensor4<S, N> const & s)
+  Intrepid2::Tensor4<T, N>
+  operator()(Intrepid2::Tensor4<S, N> const & s)
   {
-    Intrepid::Index const
+    Intrepid2::Index const
     dimension = s.get_dimension();
 
-    Intrepid::Tensor4<T, N>
+    Intrepid2::Tensor4<T, N>
     t(dimension);
 
-    Intrepid::Index const
+    Intrepid2::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid::Index i = 0; i < num_components; ++i) {
+    for (Intrepid2::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, N>()(s[i]);
     }
 
