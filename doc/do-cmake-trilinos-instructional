@@ -30,7 +30,6 @@ rm -f CMakeCache.txt;
 #   Block 7 handles Kokkos flags to set up the Serial node, which matches
 # pre-Kokkos behavior.
 cmake \
- -D CMAKE_CXX_FLAGS:STRING="-DBUILD_PHALANX_FOR_ALBANY" \
  -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
  -D CMAKE_BUILD_TYPE:STRING=RELEASE \
@@ -54,6 +53,7 @@ cmake \
  -D Trilinos_ENABLE_ML:BOOL=ON \
  -D Trilinos_ENABLE_Phalanx:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
  -D Trilinos_ENABLE_Thyra:BOOL=ON \
