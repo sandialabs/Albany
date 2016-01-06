@@ -73,8 +73,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0), 
-  params_(params)  
+  stateGraphVisDetail(0),
+  params_(params)
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -191,14 +191,29 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     tangent_deriv_dim = 1;
   }
 
+  // Pull the number of solution vectors out of the problem and send them to the discretization list, if the
+  // user specifies this in the problem
+  Teuchos::ParameterList& discParams = params->sublist("Discretization");
+  int num_sol_vecs_from_prob = problemParams->get<int>("Number Of Solution Vectors", -1);
+  int num_sol_vecs_from_input = discParams.get<int>("Number Of Solution Vectors", -1);
+  if(num_sol_vecs_from_input > 0) // Use the value the user specified if it is present
+      discParams.set<int>("Number Of Solution Vectors", num_sol_vecs_from_input);
+  else if(num_sol_vecs_from_prob > 0) // Else, use what is specified in the problem, if it is
+      discParams.set<int>("Number Of Solution Vectors", num_sol_vecs_from_prob);
+
   // Save the solution method to be used
   std::string solutionMethod = problemParams->get("Solution Method", "Steady");
   if(solutionMethod == "Steady")
     solMethod = Steady;
   else if(solutionMethod == "Continuation")
     solMethod = Continuation;
-  else if(solutionMethod == "Transient")
+  else if(solutionMethod == "Transient"){
     solMethod = Transient;
+    // If the number of time derivatives to handle are not set in the problem or by the user, default to the max available
+    // (solution, solution_dot, and solution_dotdot)
+    if(discParams.get<int>("Number Of Solution Vectors", -1) == -1)
+      discParams.set<int>("Number Of Solution Vectors", 3);
+  }
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
   else if(solutionMethod == "Aeras Hyperviscosity")
@@ -238,6 +253,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   }
   //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl; 
 
+  // If the number of time derivatives to handle are not set above, default to zero
+  if(discParams.get<int>("Number Of Solution Vectors", -1) == -1)
+    discParams.set<int>("Number Of Solution Vectors", 1);
+
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
 #ifdef ALBANY_CUTR
@@ -263,10 +282,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
 #endif
-  
+
   //get info from Scaling parameter list (for scaling Jacobian/residual)
   RCP<Teuchos::ParameterList> scalingParams = Teuchos::sublist(params, "Scaling", true);
-  scale = scalingParams->get("Scale", 1.0); 
+  scale = scalingParams->get("Scale", 1.0);
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -1067,7 +1086,7 @@ computeGlobalResidualImplT(
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-  fT->scale(1.0/scale); 
+  fT->scale(1.0/scale);
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
@@ -1359,7 +1378,7 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 #endif
 
-  jacT->scale(1.0/scale); 
+  jacT->scale(1.0/scale);
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
@@ -1865,17 +1884,17 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    fT->scale(1.0/scale); 
+    fT->scale(1.0/scale);
   }
 
   // Assemble derivatives
   if (Teuchos::nonnull(JVT)) {
     JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
-    JVT->scale(1.0/scale); 
+    JVT->scale(1.0/scale);
   }
   if (Teuchos::nonnull(fpT)) {
     fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
-    fpT->scale(1.0/scale); 
+    fpT->scale(1.0/scale);
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2178,7 +2197,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
   }
-  fpVT->scale(1.0/scale); 
+  fpVT->scale(1.0/scale);
   } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -3729,6 +3748,25 @@ evaluateStateFieldManager(const double current_time,
   this->evaluateStateFieldManagerT(current_time, xdotT.ptr(), xdotdotT.ptr(), *xT);
 }
 #endif
+
+void
+Albany::Application::
+evaluateStateFieldManagerT(
+    const double current_time,
+    const Tpetra_MultiVector& xT)
+{
+   int num_vecs = xT.getNumVectors();
+
+   if(num_vecs == 1)
+     this->evaluateStateFieldManagerT(current_time, Teuchos::null,
+         Teuchos::null, *xT.getVector(0));
+   else if(num_vecs == 2)
+     this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
+         Teuchos::null, *xT.getVector(0));
+   else
+     this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
+         xT.getVector(2).ptr(), *xT.getVector(0));
+}
 
 void
 Albany::Application::

@@ -263,7 +263,7 @@ private:
 
 private:
 
-  TensorFieldType const &
+  TensorFieldType const * const
   stress_field_;
 
   double

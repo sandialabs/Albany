@@ -504,53 +504,6 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 #endif
 
 namespace {
-//   Problem: Instead of renaming the sublist MueLu to MueLu-Tpetra,
-// Piro::renamePreconditionerParamList caused a new empty sublist called
-// MueLu-Tpetra to be created. Because it was empty, MueLu would behave badly,
-// being given no user-set parameter values. Hence the worst-case bug was
-// occurring: the program would run, but the performance would be terrible.
-//   Analysis: Piro::renamePreconditionerParamList uses setName to change the
-// sublist MueLu to MueLu-Tpetra. That does not actually work. But I think it's
-// possible there is a bug in Teuchos::ParameterList, and setName should in fact
-// work. The implementation of setName simply sets the private variable name_ to
-// the new name, but it does not change the associated key in params_. I think
-// that, or something related, is causing the problem. If I pin down the problem
-// as a bug in Teuchos::ParameterList, then I'll submit a bug report and revert
-// the following change.
-//   (Temporary) Solution: Here I implement a version of
-// renamePreconditionerParamList that uses set and then remove to do the
-// renaming. That works, although it's probably inefficient.
-//   Followup: Once I determine the exact issue with setName, I'll either (1)
-// move this implementation to Piro or (2) submit a bug report and remove this
-// implementation once the fix is in Teuchos::ParameterList.
-void renamePreconditionerParamList(
-  const Teuchos::RCP<Albany::Application>& app,
-  const Teuchos::RCP<Teuchos::ParameterList>& stratParams,
-  const std::string &oldname, const std::string& newname)
-{
-  if (stratParams->isType<std::string>("Preconditioner Type")) {
-    const std::string&
-      currentval = stratParams->get<std::string>("Preconditioner Type");
-    if (currentval == oldname) {
-      stratParams->set<std::string>("Preconditioner Type", newname);
-      // Does the old sublist exist?
-      if (stratParams->isSublist("Preconditioner Types") &&
-          stratParams->sublist("Preconditioner Types", true).isSublist(oldname)) {
-        Teuchos::ParameterList& ptypes =
-          stratParams->sublist("Preconditioner Types", true);
-        Teuchos::ParameterList& mlist = ptypes.sublist(oldname, true);
-        // Copy the oldname sublist to the newname sublist.
-        ptypes.set(newname, mlist);
-        // Remove the oldname sublist.
-        ptypes.remove(oldname);
-
-         const Teuchos::RCP<Albany::RigidBodyModes>&
-            rbm = app->getProblem()->getNullSpace();
-         rbm->updatePL(sublist(sublist(stratParams, "Preconditioner Types"), newname));
-      }
-    }
-  }
-}
 
 void enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
 {

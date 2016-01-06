@@ -721,8 +721,8 @@ postEvaluate (typename Traits::PostEvalData workset) {
     nsA = lowsFactory_->createOp();
   Thyra::initializeOp<ST>(*lowsFactory_, A, nsA.ptr());
   Teuchos::RCP< Thyra::MultiVectorBase<ST>>
-    x = Thyra::createMultiVector(node_projected_ip_field),
-    b = Thyra::createMultiVector(mgr_->ip_field);
+    x = Thyra::createMultiVector<ST, LO, GO, KokkosNode>(node_projected_ip_field),
+    b = Thyra::createMultiVector<ST, LO, GO, KokkosNode>(mgr_->ip_field);
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to
   // proceed.

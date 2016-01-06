@@ -43,6 +43,9 @@ StokesL1L2( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->requirements.push_back("temperature");
   this->requirements.push_back("flow_factor");
 
+  // Problem supports transient
+//  params->set<int>("Number Of Solution Vectors", 2);
+
 }
 
 FELIX::StokesL1L2::

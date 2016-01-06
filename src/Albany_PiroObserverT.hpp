@@ -36,6 +36,10 @@ public:
       const ST stamp);
 
   virtual void observeSolution(
+      const Thyra::MultiVectorBase<ST> &solution,
+      const ST stamp);
+
+  virtual void observeSolution(
       const Piro::SolnSet<ST> &solution);
 
 private:
@@ -46,6 +50,10 @@ private:
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
       const Thyra::VectorBase<ST> &solution_dot,
+      const ST defaultStamp);
+
+  void observeSolutionImpl(
+      const Thyra::MultiVectorBase<ST> &solution,
       const ST defaultStamp);
 
   void observeSolutionImpl(

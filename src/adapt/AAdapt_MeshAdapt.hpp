@@ -37,9 +37,12 @@ public:
   bool queryAdaptationCriteria(int iteration);
 
   //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+/*
   bool adaptMesh(
     const Teuchos::RCP<const Tpetra_Vector>& solution,
     const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
+*/
+  bool adaptMesh();
 
   void adaptInPartition();
 

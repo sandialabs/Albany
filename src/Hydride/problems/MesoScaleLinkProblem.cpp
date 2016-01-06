@@ -40,6 +40,9 @@ MesoScaleLinkProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::string& method = params->get("Name", "MesoScaleLink ");
   *out << "Problem Name = " << method << std::endl;
 
+  // Problem supports transient
+  params->set<int>("Number Of Solution Vectors", 2);
+
   haveSource =  params->isSublist("Source Functions");
 
   matModel = params->sublist("Material Model").get("Model Name", "LinearMesoScaleLink");

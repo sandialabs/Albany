@@ -95,6 +95,7 @@ typename XZHydrostatic_SPressureResid<EvalT,Traits>::ScalarT&
 XZHydrostatic_SPressureResid<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n=="SPressure") return sp0;
+  return sp0;
 }
 
 }

@@ -19,6 +19,9 @@ ODEProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_, 2),
   numDim(numDim_)
 {
+   // Problem supports transient
+   params->set<int>("Number Of Solution Vectors", 2);
+
 }
 
 Albany::ODEProblem::

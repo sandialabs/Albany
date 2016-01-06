@@ -46,7 +46,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
-    void splitFields(Teuchos::Array<std::string> fieldLayout);
+    void splitFields(Teuchos::Array<Teuchos::Array<std::string> >& fieldLayout);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
@@ -87,8 +87,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     bool solutionInitialized;
     bool residualInitialized;
 
-    Teuchos::Array<std::string> solVectorLayout;
-    Teuchos::Array<std::string> resVectorLayout;
+    Teuchos::Array<Teuchos::Array<std::string> > solVectorLayout;
 
     double time;
 
@@ -104,7 +103,10 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     bool useTemperatureHack;
     bool useDOFOffsetHack;
 
-    static const char* solution_name;
+    // Number of distinct solution vectors handled (<=3)
+    int num_sol_vecs;
+
+    static const char* solution_name[3];
     static const char* residual_name;
 
 protected:

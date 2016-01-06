@@ -334,9 +334,7 @@ bool correctnessTestSkip () {
 void adaptShrunken(apf::Mesh2* m, double min_part_density,
                    Parma_GroupCode& callback);
 
-bool AAdapt::MeshAdapt::adaptMesh(
-  const Teuchos::RCP<const Tpetra_Vector>& solution,
-  const Teuchos::RCP<const Tpetra_Vector>&)
+bool AAdapt::MeshAdapt::adaptMesh()
 {
 #ifdef AMBDEBUG
   al::anlzCoords(pumi_discretization);

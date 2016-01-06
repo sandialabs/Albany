@@ -413,12 +413,21 @@ namespace Aeras
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const double time,
                        const bool overlapped = false);
+   void writeSolutionMV(const Tpetra_MultiVector& solnT,
+                       const double time,
+                       const bool overlapped = false);
 
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const double time,
                                      const bool overlapped = false);
+   void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT,
+                                     const double time,
+                                     const bool overlapped = false);
 
    void writeSolutionToFileT(const Tpetra_Vector& solnT,
+                             const double time,
+                             const bool overlapped = false);
+   void writeSolutionMVToFile(const Tpetra_MultiVector& solnT,
                              const double time,
                              const bool overlapped = false);
 
@@ -429,6 +438,9 @@ namespace Aeras
     //Tpetra analog
     Teuchos::RCP<Tpetra_Vector>
     getSolutionFieldT(const bool overlapped=false) const;
+
+    Teuchos::RCP<Tpetra_MultiVector>
+    getSolutionMV(const bool overlapped=false) const;
 
     int getSolutionFieldHistoryDepth() const;
 #if defined(ALBANY_EPETRA)
@@ -552,6 +564,9 @@ namespace Aeras
     void getSolutionFieldT(Tpetra_Vector &resultT,
                            bool overlapped=false) const;
 
+    void getSolutionMV(Tpetra_MultiVector &resultT,
+                           bool overlapped=false) const;
+
 #if defined(ALBANY_EPETRA)
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getField(Epetra_Vector &field_vector,
@@ -572,6 +587,7 @@ namespace Aeras
 #endif
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
+    void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
@@ -580,6 +596,7 @@ namespace Aeras
 #endif
     //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
+    void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);

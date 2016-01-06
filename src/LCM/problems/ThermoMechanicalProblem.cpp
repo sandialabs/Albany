@@ -23,6 +23,9 @@ ThermoMechanicalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   
   haveSource =  params->isSublist("Source Functions");
 
+  // Problem supports transient
+//  params->set<int>("Number Of Solution Vectors", 2);
+
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST

@@ -66,4 +66,14 @@ void StatelessObserverImpl::observeSolutionT (
     *overlappedSolutionT, stamp, /*overlapped =*/ true);
 }
 
+void StatelessObserverImpl::observeSolutionT (
+  double stamp, const Tpetra_MultiVector &nonOverlappedSolutionT)
+{
+  Teuchos::TimeMonitor timer(*solOutTime_);
+  const Teuchos::RCP<const Tpetra_MultiVector> overlappedSolutionT =
+    app_->getOverlapSolutionMV(nonOverlappedSolutionT);
+  app_->getDiscretization()->writeSolutionMV(
+    *overlappedSolutionT, stamp, /*overlapped =*/ true);
+}
+
 } // namespace Albany

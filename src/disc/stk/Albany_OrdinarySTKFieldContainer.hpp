@@ -19,6 +19,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
     OrdinarySTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                               const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+                              const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
                               const int neq_,
                               const AbstractFieldContainer::FieldContainerRequirements& req,
                               const int numDim_,
@@ -29,19 +30,22 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasResidualField(){ return (residual_field != NULL); }
     bool hasSphereVolumeField(){ return buildSphereVolume; }
 
-    AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field; };
+    AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field[0]; };
    
 #if defined(ALBANY_LCM)  
     AbstractSTKFieldContainer::VectorFieldType* getResidualField(){ return residual_field; };
 #endif
 #if defined(ALBANY_DTK) 
-    AbstractSTKFieldContainer::VectorFieldType* getSolutionFieldDTK(){ return solution_field_dtk; };
+    AbstractSTKFieldContainer::VectorFieldType* getSolutionFieldDTK(){ return solution_field_dtk[0]; };
 #endif
 
 #if defined(ALBANY_EPETRA)
     void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 #endif
     void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
+    void fillSolnMultiVector(Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
 #if defined(ALBANY_EPETRA)
     void fillVector(Epetra_Vector& field_vector, const std::string& field_name, stk::mesh::Selector& field_selection,
                     const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
@@ -53,9 +57,13 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 #endif
     //Tpetra version of above
     void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
+    void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
 #if defined(ALBANY_EPETRA)
     void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 #endif
+
     void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
 
     void transferSolutionToCoords();
@@ -66,9 +74,9 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
     bool buildSphereVolume;
 
-    AbstractSTKFieldContainer::VectorFieldType* solution_field;
+    Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field;
+    Teuchos::Array<AbstractSTKFieldContainer::VectorFieldType*> solution_field_dtk;
     AbstractSTKFieldContainer::VectorFieldType* residual_field;
-    AbstractSTKFieldContainer::VectorFieldType* solution_field_dtk;
 
 };
 

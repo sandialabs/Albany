@@ -22,6 +22,9 @@ GradientDamageProblem(
   
   haveSource =  params->isSublist("Source Functions");
 
+  // Problem supports transient
+//  params->set<int>("Number Of Solution Vectors", 2);
+
 // Changing this ifdef changes ordering from  (X,Y,D) to (D,X,Y)
 //#define NUMBER_D_FIRST
 #ifdef NUMBER_D_FIRST

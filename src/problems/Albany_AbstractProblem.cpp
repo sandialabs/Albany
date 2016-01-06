@@ -81,6 +81,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Adaptation", false, "");
   validPL->sublist("Catalyst", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
+  validPL->set<int>("Number Of Solution Vectors", 1, "Number of time derivatives in use in the problem");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false,
                      "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
@@ -109,6 +110,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   
   // Add "Interface Traps" for QCAD (Suzey Gao, 12/22/2015)
   validPL->sublist("Interface Traps", false, ""); 
-   
+
   return validPL;
 }

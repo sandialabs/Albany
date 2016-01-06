@@ -109,8 +109,10 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 #endif
     //Tpetra version of above
     virtual void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
+    virtual void fillSolnMultiVector(Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
     virtual void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
     virtual void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) = 0;
+    virtual void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
 
     virtual void transferSolutionToCoords() = 0;
 

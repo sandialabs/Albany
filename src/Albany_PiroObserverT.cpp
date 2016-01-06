@@ -42,6 +42,14 @@ Albany::PiroObserverT::observeSolution(
 
 void
 Albany::PiroObserverT::observeSolution(
+    const Thyra::MultiVectorBase<ST> &solution,
+    const ST stamp)
+{
+  this->observeSolutionImpl(solution, stamp);
+}
+
+void
+Albany::PiroObserverT::observeSolution(
       const Piro::SolnSet<ST> &solution)
 {
   this->observeSolutionImpl(solution);
@@ -58,6 +66,17 @@ tpetraFromThyra(const Thyra::VectorBase<double> &v)
     Teuchos::rcpFromRef(v);
 
   return ConverterT::getConstTpetraVector(v_nonowning_rcp);
+}
+
+Teuchos::RCP<const Tpetra_MultiVector>
+tpetraMVFromThyraMV(const Thyra::MultiVectorBase<double> &v)
+{
+  // Create non-owning RCP to solution to use the Thyra -> Epetra converter
+  // This is safe since we will not be creating any persisting relations
+  const Teuchos::RCP<const Thyra::MultiVectorBase<double> > v_nonowning_rcp =
+    Teuchos::rcpFromRef(v);
+
+  return ConverterT::getConstTpetraMultiVector(v_nonowning_rcp);
 }
 
 } // anonymous namespace
@@ -91,6 +110,18 @@ Albany::PiroObserverT::observeSolutionImpl(
       *solution_tpetra,
       solution_dot_tpetra.ptr(),
       defaultStamp);
+}
+
+void
+Albany::PiroObserverT::observeSolutionImpl(
+    const Thyra::MultiVectorBase<ST> &solution,
+    const ST defaultStamp)
+{
+  const Teuchos::RCP<const Tpetra_MultiVector> solution_tpetraMV =
+    tpetraMVFromThyraMV(solution);
+
+  impl_.observeSolutionT(defaultStamp, *solution_tpetraMV);
+
 }
 
 void

@@ -23,6 +23,8 @@ CahnHillProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   haveNoise(false),
   commT(commT_)
 {
+   // Problem supports transient
+   params->set<int>("Number Of Solution Vectors", 2);
 }
 
 Albany::CahnHillProblem::

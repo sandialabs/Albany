@@ -1629,7 +1629,8 @@ typename ShallowWaterResid<EvalT,Traits>::ScalarT&
 ShallowWaterResid<EvalT,Traits>::getValue(const std::string &n)
 {
 	if (n=="Gravity") return gravity;
-	else if (n=="Omega") return Omega;
+//	else if (n=="Omega") return Omega;
+    return Omega;
 }
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT

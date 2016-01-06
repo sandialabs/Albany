@@ -62,6 +62,7 @@
        already be performed for parallel jobs. -->
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
+    <Parameter name="Number Of Solution Vectors" type="int" value="2"/>
     <Parameter name="Exodus Input File Name"
 	       type="string" value="cube0.exo"/>
     <Parameter name="Exodus Output File Name"

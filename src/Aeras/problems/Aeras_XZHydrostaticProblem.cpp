@@ -37,6 +37,9 @@ XZHydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   neq       = 1 + (2*numLevels) + (numTracers*numLevels);
 
+  // Problem supports transient
+  params->set<int>("Number Of Solution Vectors", 2);
+
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
 

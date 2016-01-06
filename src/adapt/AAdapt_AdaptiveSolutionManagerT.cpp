@@ -45,12 +45,17 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
     disc_(stateMgr.getDiscretization()),
     paramLib_(param_lib),
     stateMgr_(stateMgr),
+    num_sol_vec(1),
     commT_(commT)
 {
 
   // Create problem PL
   Teuchos::RCP<Teuchos::ParameterList> problemParams =
       Teuchos::sublist(appParams_, "Problem", true);
+
+  Teuchos::ParameterList& discParams = appParams_->sublist("Discretization");
+
+  num_sol_vec = discParams.get<int>("Number Of Solution Vectors");
 
   // Note that piroParams_ is a member of Thyra_AdaptiveSolutionManager
   piroParams_ = Teuchos::sublist(appParams_, "Piro", true);
@@ -109,25 +114,31 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
         true);
     if (Teuchos::nonnull(initial_guessT)) {
       initial_xT = Teuchos::rcp(new Tpetra_Vector(*initial_guessT));
+// GAH need to do more here.
     } else {
       overlapped_xT->doImport(*initial_xT, *importerT, Tpetra::INSERT);
-      overlapped_xdotT->doImport(*initial_xdotT, *importerT, Tpetra::INSERT);
-      overlapped_xdotdotT->doImport(*initial_xdotdotT, *importerT, Tpetra::INSERT);
 
       AAdapt::InitialConditionsT(
           overlapped_xT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
           problemParams->sublist("Initial Condition"),
           disc_->hasRestartSolution());
-      AAdapt::InitialConditionsT(
-          overlapped_xdotT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
-          problemParams->sublist("Initial Condition Dot"));
-      AAdapt::InitialConditionsT(
-          overlapped_xdotdotT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
-          problemParams->sublist("Initial Condition DotDot"));
 
       initial_xT->doExport(*overlapped_xT, *exporterT, Tpetra::INSERT);
-      initial_xdotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
-      initial_xdotdotT->doExport(*overlapped_xdotdotT, *exporterT, Tpetra::INSERT);
+
+      if(num_sol_vec > 1){
+        overlapped_xdotT->doImport(*initial_xdotT, *importerT, Tpetra::INSERT);
+        AAdapt::InitialConditionsT(
+          overlapped_xdotT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
+          problemParams->sublist("Initial Condition Dot"));
+        initial_xdotT->doExport(*overlapped_xdotT, *exporterT, Tpetra::INSERT);
+      }
+      if(num_sol_vec > 2){
+        overlapped_xdotdotT->doImport(*initial_xdotdotT, *importerT, Tpetra::INSERT);
+        AAdapt::InitialConditionsT(
+          overlapped_xdotdotT, wsElNodeEqID, wsEBNames, coords, neq, numDim,
+          problemParams->sublist("Initial Condition DotDot"));
+        initial_xdotdotT->doExport(*overlapped_xdotdotT, *exporterT, Tpetra::INSERT);
+      }
     }
   }
 #if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
@@ -225,14 +236,8 @@ adaptProblem()
 
   Teuchos::RCP<Thyra::ModelEvaluator<double> > model = this->getState()->getModel();
 
-  const Teuchos::RCP<const Tpetra_Vector> oldSolution =
-      ConverterT::getConstTpetraVector(model->getNominalValues().get_x());
-
-  Teuchos::RCP<Tpetra_Vector> oldOvlpSolution = getOverlapSolutionT(
-      *oldSolution);
-
   // resize problem if the mesh adapts
-  if (adapter_->adaptMesh(oldSolution, oldOvlpSolution)) {
+  if (adapter_->adaptMesh()) {
 
     resizeMeshDataArrays(disc_->getMapT(),
         disc_->getOverlapMapT(), disc_->getOverlapJacobianGraphT());
@@ -265,7 +270,11 @@ adaptProblem()
     this->getState()->buildSolutionGroup();
 
     // getSolutionField() below returns the new solution vector with the fields transferred to it
-    initial_xT = disc_->getSolutionFieldT();
+    current_soln = disc_->getSolutionMV();
+// need to only access the ones we have here
+    initial_xT = current_soln->getVectorNonConst(0);
+    initial_xdotT = current_soln->getVectorNonConst(1);
+    initial_xdotdotT = current_soln->getVectorNonConst(2);
 
     *out << "Mesh adaptation was successfully performed!" << std::endl;
 
@@ -303,11 +312,20 @@ void AAdapt::AdaptiveSolutionManagerT::resizeMeshDataArrays(
   overlapped_fT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
   overlapped_jacT = Teuchos::rcp(new Tpetra_CrsMatrix(overlapJacGraphT));
 
-  tmp_ovlp_solT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
+  tmp_ovlp_solMV = Teuchos::rcp(new Tpetra_MultiVector(overlapMapT, num_sol_vec, false));
+  tmp_ovlp_solT = tmp_ovlp_solMV->getVectorNonConst(0);
 
-  initial_xT = disc_->getSolutionFieldT();
-  initial_xdotT = Teuchos::rcp(new Tpetra_Vector(mapT));
-  initial_xdotdotT = Teuchos::rcp(new Tpetra_Vector(mapT));
+  current_soln = disc_->getSolutionMV();
+// need to only access the ones we have here
+  initial_xT = current_soln->getVectorNonConst(0);
+  if(current_soln->getNumVectors() > 1)
+    initial_xdotT = current_soln->getVectorNonConst(1);
+  else
+    initial_xdotT = Teuchos::null;
+  if(current_soln->getNumVectors() > 2)
+    initial_xdotdotT = current_soln->getVectorNonConst(2);
+  else
+    initial_xdotdotT = Teuchos::null;
 
 }
 
@@ -317,6 +335,14 @@ AAdapt::AdaptiveSolutionManagerT::getOverlapSolutionT(
 {
   tmp_ovlp_solT->doImport(solutionT, *importerT, Tpetra::INSERT);
   return tmp_ovlp_solT;
+}
+
+Teuchos::RCP<Tpetra_MultiVector>
+AAdapt::AdaptiveSolutionManagerT::getOverlapSolutionMV(
+    const Tpetra_MultiVector& solutionT)
+{
+  tmp_ovlp_solMV->doImport(solutionT, *importerT, Tpetra::INSERT);
+  return tmp_ovlp_solMV;
 }
 
 void
@@ -332,6 +358,13 @@ AAdapt::AdaptiveSolutionManagerT::scatterXT(
   if (x_dotdotT)
     overlapped_xdotdotT->doImport(*x_dotdotT, *importerT, Tpetra::INSERT);
 
+}
+
+Teuchos::RCP<Thyra::MultiVectorBase<double> >
+AAdapt::AdaptiveSolutionManagerT::
+getCurrentSolution()
+{
+   return Thyra::createMultiVector<ST, LO, GO, KokkosNode>(current_soln);
 }
 
 void

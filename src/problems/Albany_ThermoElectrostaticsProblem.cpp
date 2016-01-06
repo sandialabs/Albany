@@ -21,6 +21,8 @@ ThermoElectrostaticsProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_
   Albany::AbstractProblem(params_, paramLib_, 2),
   numDim(numDim_)
 {
+   // Problem does not support transient
+   // params->set<int>("Number Of Solution Vectors", 2);
 }
 
 Albany::ThermoElectrostaticsProblem::

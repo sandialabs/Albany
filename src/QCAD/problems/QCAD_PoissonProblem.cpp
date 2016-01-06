@@ -24,6 +24,9 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveSource =  params->isSublist("Poisson Source");
 
+  // Problem does not support transient
+  // params->set<int>("Number Of Solution Vectors", 2);
+
   TEUCHOS_TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
 		     "\nError! Poisson problem does not parse Source Functions sublist\n" 
                      << "\tjust Poisson Source sublist " << std::endl);

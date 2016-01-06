@@ -21,6 +21,10 @@ Helmholtz2DProblem(
   ksqr = params->get<double>("Ksqr",1.0);
 
   haveSource =  params->isSublist("Source Functions");
+
+  // Problem does not support transient
+  // params->set<int>("Number Of Solution Vectors", 2);
+
 }
 
 Albany::Helmholtz2DProblem::

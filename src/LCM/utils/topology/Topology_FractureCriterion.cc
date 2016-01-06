@@ -16,13 +16,13 @@ FractureCriterionTraction::FractureCriterionTraction(
     double const beta) :
     AbstractFractureCriterion(topology),
     stress_field_(
-        *(get_meta_data().get_field<TensorFieldType>(
+        get_meta_data().get_field<TensorFieldType>(
             stk::topology::NODE_RANK,
-            stress_name))),
+            stress_name)),
     critical_traction_(critical_traction),
     beta_(beta)
 {
-  if (&stress_field_ == 0) {
+  if (stress_field_ == NULL) {
     std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
     std::cerr << '\n';
     std::cerr << "Cannot find field for traction criterion: ";
@@ -90,7 +90,7 @@ FractureCriterionTraction::check(
     node = nodes[i];
 
     double * const
-    pstress = stk::mesh::field_data(stress_field_, node);
+    pstress = stk::mesh::field_data(*stress_field_, node);
 
     nodal_stress.fill(pstress);
 

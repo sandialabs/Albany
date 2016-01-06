@@ -24,6 +24,7 @@
   <ParameterList name="Discretization">
     <Parameter name="1D Elements" type="int" value="100"/>
     <Parameter name="Method" type="string" value="STK1D"/>
+    <Parameter name="Number Of Solution Vectors" type="int" value="2"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

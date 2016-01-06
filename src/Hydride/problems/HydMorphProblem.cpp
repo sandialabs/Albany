@@ -33,6 +33,8 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   }
 
+  // Problem supports transient
+  params->set<int>("Number Of Solution Vectors", 2);
 
 }
 

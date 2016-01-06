@@ -191,10 +191,10 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
 
   Teuchos::ArrayRCP<std::string> dof_names(1);
   dof_names[0] = "Displacement";
-  Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
+  Teuchos::ArrayRCP<std::string> dof_names_dot(1);
 
   if(supportsTransient)
-    dof_names_dotdot[0] = dof_names[0] + "_dotdot";
+    dof_names_dot[0] = dof_names[0] + "_dot";
 
   Teuchos::ArrayRCP<std::string> resid_names(1);
   resid_names[0] = dof_names[0] + " Residual";
@@ -203,13 +203,13 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
   (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
 
   if(supportsTransient) fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
 
   fm0.template registerEvaluator<EvalT>
   (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
   if(supportsTransient) fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dotdot));
+    (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot));
 
   else fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
@@ -384,7 +384,7 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
     // extra input for time dependent term
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
+    p->set<std::string>("Time Dependent Variable Name", "Displacement_dot");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     //Output

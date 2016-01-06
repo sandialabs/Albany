@@ -79,6 +79,7 @@ typename SurfaceHeight<EvalT,Traits>::ScalarT&
 SurfaceHeight<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n=="Mountain Height") return hs0;
+  return hs0;
 }
 
 //**********************************************************************

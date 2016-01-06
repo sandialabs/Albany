@@ -108,10 +108,10 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     int getNumEq() const { return neq; }
 
     //! Get the names of the solution fields
-    virtual std::vector<std::string> getSolNames() const { return solNames; }
+    virtual std::vector<std::vector<std::string> > getSolNames() const { return solNames; }
 
     //! Get the solution index offsets
-    virtual std::vector<int> getSolIndex() const { return solIndex; }
+    virtual std::vector<std::vector<int> > getSolIndex() const { return solIndex; }
 
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
@@ -120,17 +120,22 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    void writeAnySolutionToMeshDatabase(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToMeshDatabase(const ST* soln, const int index, const double time, const bool overlapped = false);
     void writeAnySolutionToFile(const ST* soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionMV(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionMVToFile(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
 
     void writeRestartFile(const double time);
 
     virtual void writeMeshDebug (const std::string& filename);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
+
+    Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const;
 
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -343,9 +348,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void removeNodalDataFromAPF();
 
     // ! Split Solution fields
-    std::vector<std::string> solNames;
-    std::vector<std::string> resNames;
-    std::vector<int> solIndex;
+    std::vector<std::vector<std::string> > solNames; // solNames[time_deriv_vector][DOF_component]
+    std::vector<std::string> resNames; // resNames[DOF_component]
+    std::vector<std::vector<int> > solIndex; // solIndex[time_deriv_vector][DOF_component]
 
   private:
 

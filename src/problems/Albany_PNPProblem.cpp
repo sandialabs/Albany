@@ -28,6 +28,10 @@ PNPProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Print out a summary of the problem
   *out << "PNP problem: with numSpecies = " << numSpecies << std::endl;
+
+  // Problem supports transient
+  params->set<int>("Number Of Solution Vectors", 2);
+
 }
 
 Albany::PNPProblem::

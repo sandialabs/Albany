@@ -204,6 +204,8 @@ class AbstractDiscretization {
 #endif
     virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const = 0;
 
+    virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
+
 #if defined(ALBANY_EPETRA)
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const = 0;
@@ -245,10 +247,13 @@ class AbstractDiscretization {
 
     //! Write the solution to the output file - Tpetra version. Calls next two together.
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionMV(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
     //! Write the solution to the mesh database.
     virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
     //! Write the solution to file. Must call writeSolutionT first.
     virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionMVToFile(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
     
     //! update the mesh
     virtual void updateMesh(bool shouldTransferIPData = false) = 0;

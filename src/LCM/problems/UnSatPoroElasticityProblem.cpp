@@ -29,6 +29,9 @@ UnSatPoroElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   matModel = params->sublist("Material Model").get("Model Name", "LinearElasticity");
 
+  // Problem supports transient
+//  params->set<int>("Number Of Solution Vectors", 2);
+
 // Changing this ifdef changes ordering from  (X,Y,T) to (T,X,Y)
 //#define NUMBER_T_FIRST
 #ifdef NUMBER_T_FIRST

@@ -148,8 +148,11 @@ private:
   //! Distributed parameter library
   Teuchos::RCP<DistParamLib> distParamLib;
 
-  //! Model uses time integration
-  bool isTransient;
+  //! Model uses time integration (velocities)
+  bool supports_xdot;
+
+  //! Model uses time integration (accelerations)
+  bool supports_xdotdot;
 
 };
 

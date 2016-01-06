@@ -692,6 +692,10 @@ namespace Albany {
         Teuchos::Ptr<const Tpetra_Vector> xdotdot,
         const Tpetra_Vector& x);
 
+    void evaluateStateFieldManagerT(
+        const double current_time,
+        const Tpetra_MultiVector& x);
+
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() {
         return disc->getWsElNodeEqID().size();
@@ -726,6 +730,10 @@ namespace Albany {
 
     Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT) {
       return solMgrT->getOverlapSolutionT(solutionT);
+    }
+
+    Teuchos::RCP<Tpetra_MultiVector> getOverlapSolutionMV(const Tpetra_MultiVector& solutionT) {
+      return solMgrT->getOverlapSolutionMV(solutionT);
     }
 
     bool is_adjoint;

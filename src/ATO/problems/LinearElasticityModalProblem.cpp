@@ -19,6 +19,9 @@ LinearElasticityModalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
   std::string& method = params->get("Name", "Linear Elasticity ");
   *out << "Problem Name = " << method << std::endl;
 
+   // Problem supports transient (_dot and _dotdot)
+//   params->set<int>("Number Of Solution Vectors", 3);
+
 //  material_db_ = LCM::createMaterialDatabase(params, comm);
 
 // the following function returns the problem information required 

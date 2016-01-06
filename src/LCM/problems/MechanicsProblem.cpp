@@ -31,6 +31,7 @@ getVariableType(Teuchos::ParameterList& param_list,
         "Unknown variable type " << type << '\n');
   have_variable = (variable_type != MECH_VAR_TYPE_NONE);
   have_equation = (variable_type == MECH_VAR_TYPE_DOF);
+
 }
 //------------------------------------------------------------------------------
 std::string
@@ -245,6 +246,14 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
     have_topmod_adaptation_ = adaptation_method_name == "Topmod";
   }
+
+  std::string solutionMethod = params->get<std::string>("Solution Method");
+  if(solutionMethod == "Transient")
+    // Problem supports transient
+    params->set<int>("Number Of Solution Vectors", 3);
+//  else
+//    params->set<int>("Number Of Solution Vectors", 2);
+
 
 }
 //------------------------------------------------------------------------------

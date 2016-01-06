@@ -30,6 +30,9 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     else { modelDim=2; neq=3; } 
   }
 
+  // Problem supports transient
+  params->set<int>("Number Of Solution Vectors", 3);
+
   bool useExplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
   bool useImplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Implicit Hyperviscosity", false);
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 
@@ -49,13 +52,14 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //No need to plot vorticity when prescrVel == 1.
 //Also, plotVorticity is ignored under Kokkos.
-  if (plotVorticity)
+  if (plotVorticity){
      if(!usePrescribedVelocity){
        //one extra stationary equation for vorticity
        neq++;
      }else{
        std::cout << "Prescribed Velocity is ON, in this case option PlotVorticity=true is ignored." << std::endl; 
      }
+  }
 #endif 
 
 
