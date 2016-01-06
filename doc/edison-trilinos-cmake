@@ -1,0 +1,169 @@
+# Used compiler flags and blas from glimmer xk6 script 
+# assuming someone chose them on purpose.
+#
+#To configure Trilinos on Hopper: source this file 
+
+#IK, 10/1/13
+#prior to configuring you need to load the following modules: 
+#module unload cmake netcdf-hdf5parallel/4.2.0 python
+#module swap PrgEnv-pgi PrgEnv-gnu; module load cmake/2.8.7 python netcdf-hdf5parallel/4.2.0 usg-default-modules/1.0
+#module load boost
+#/opt/modules/3.2.6.6/bin/modulecmd bash unload cmake netcdf-hdf5parallel/4.2.0 python
+#/opt/modules/3.2.6.6/bin/modulecmd bash swap PrgEnv-pgi PrgEnv-gnu; /opt/modules/3.2.6.6/bin/modulecmd bash load cmake/2.8.7 python netcdf-hdf5parallel/4.2.0 usg-default-modules/1.0
+#/opt/modules/3.2.6.6/bin/modulecmd bash load boost
+
+PWD=`pwd`
+
+TRILINSTALLDIR=$PWD/install
+
+rm -f CMake*
+
+cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
+      -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D Netcdf_LIBRARY_DIRS:FILEPATH="${NETCDF_DIR}/lib" \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH="${NETCDF_DIR}/include" \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
+      -D BoostAlbLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D BoostAlbLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
+      -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_Fortran:BOOL=ON \
+\
+      -D TPL_ENABLE_SuperLU:BOOL=OFF \
+      -D Amesos2_ENABLE_KLU2:BOOL=ON \
+\
+      -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
+      -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D HAVE_TEUCHOS_COMM_TIMERS=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+      -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+      -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+      -D Trilinos_ENABLE_Belos:BOOL=ON \
+      -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
+      -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+      -D Trilinos_ENABLE_IntrepidIntrepid2:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+      -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_MueLu:BOOL=ON \
+      -D Trilinos_ENABLE_NOX:BOOL=ON \
+      -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+      -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
+      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+      -D Trilinos_ENABLE_OptiPack:BOOL=ON \
+      -D Trilinos_ENABLE_GlobiPack:BOOL=ON \
+      -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+      -D Trilinos_ENABLE_Isorropia:BOOL=ON\
+      -D Trilinos_ENABLE_Piro:BOOL=ON \
+      -D Trilinos_ENABLE_STKIO:BOOL=ON \
+      -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+      -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D TPL_FIND_SHARED_LIBS:BOOL=OFF \
+      -D BUILD_SHARED_LIBS:BOOL=OFF \
+      -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=ON \
+\
+      -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+      -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+      -D Kokkos_ENABLE_Serial:BOOL=ON \
+      -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+      -D Boost_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
+\
+      -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+      -D Trilinos_ENABLE_ThreadPool:STRING="ON" \
+      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+      -D TPL_ENABLE_Netcdf:BOOL=ON \
+\
+      -D TPL_ENABLE_BLAS:BOOL=ON \
+      -D BLAS_LIBRARY_NAMES:STRING="" \
+      -D LAPACK_LIBRARY_NAMES:STRING="" \
+      -D TPL_ENABLE_GLM:BOOL=OFF \
+      -D TPL_ENABLE_Matio:BOOL=OFF \
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
+      -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
+      -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
+      -D Zoltan2_ENABLE_Experimental:BOOL=ON\
+      -D Trilinos_ENABLE_FEI:BOOL=OFF\
+\
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Piro_ENABLE_TESTS:BOOL=OFF \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D TPL_ENABLE_MPI:BOOL=ON \
+      -D TPL_ENABLE_Boost:BOOL=ON \
+      -D TPL_ENABLE_BoostLib:BOOL=ON \
+\
+      -D Anasazi_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D AztecOO_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Belos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Ifpack_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D NOX_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=OFF \
+      -D Rythmos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Thyra_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+      -D Trilinos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
+\
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+      -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+      -D Tpetra_INST_INT_LONG_LONG:BOOL=OFF \
+      -D Tpetra_INST_INT_INT:BOOL=ON \
+      -D Tpetra_INST_DOUBLE:BOOL=ON \
+      -D Tpetra_INST_FLOAT:BOOL=OFF \
+      -D Tpetra_INST_COMPLEX_FLOAT:BOOL=OFF \
+      -D Tpetra_INST_COMPLEX_DOUBLE:BOOL=OFF \
+      -D Tpetra_INST_INT_LONG:BOOL=OFF \
+      -D Tpetra_INST_INT_UNSIGNED:BOOL=OFF \
+\
+      -D MPI_USE_COMPILER_WRAPPERS:BOOL=OFF \
+      -D CMAKE_CXX_COMPILER:FILEPATH="CC" \
+      -D CMAKE_C_COMPILER:FILEPATH="cc" \
+      -D CMAKE_Fortran_COMPILER:FILEPATH="ftn" \
+      -D Trilinos_ENABLE_Fortran=ON \
+      -D CMAKE_C_FLAGS:STRING="-O3 -DREDUCE_SCATTER_BUG" \
+      -D CMAKE_CXX_FLAGS:STRING="-O3 -DREDUCE_SCATTER_BUG -DBOOST_NO_HASH -DBUILD_PHALANX_FOR_ALBANY" \
+      -D Trilinos_ENABLE_SHADOW_WARNINGS=OFF \
+      -D Trilinos_ENABLE_CXX11=ON \
+      -DTPL_ENABLE_Pthread:BOOL=OFF \
+      -DTPL_ENABLE_BinUtils:BOOL=OFF \
+      -DTrilinos_ENABLE_ROL:BOOL=ON \
+\
+      -D MPI_EXEC:FILEPATH=srun \
+      -D MPI_EXEC_MAX_NUMPROCS:STRING=4 \
+      -D MPI_EXEC_NUMPROCS_FLAG:STRING=-n \
+\
+..
+
+#   -D Trilinos_ENABLE_Fortran:BOOL=OFF \
+#   -D TPL_BLAS_LIBRARIES:STRING="-L${ACML_DIR}/lib -lacml -lpgmp -pgcpplibs -lz" \
+#   -D TPL_LAPACK_LIBRARIES:STRING="-L${ACML_DIR}/lib -lacml -lpgmp -pgcpplibs -lz" \
+#   -D CMAKE_Fortran_FLAGS:STRING="-Mconcur -mp" \
+#   -D CMAKE_Fortran_FLAGS_DEBUG:STRING="-Mconcur -mp" \
+
