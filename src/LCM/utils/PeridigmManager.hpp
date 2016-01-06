@@ -90,6 +90,15 @@ public:
   //! Evaluate the peridynamic tangent stiffness matrix
   void evaluateTangentStiffnessMatrix();
 
+  //! Query existance of the Peridigm tangent stiffness matrix
+  bool hasTangentStiffnessMatrix()
+  {
+    return peridigm->hasTangentStiffnessMatrix();
+  }
+
+  //! Access the Peridigm tangent stiffness matrix
+  Teuchos::RCP<const Epetra_FECrsMatrix> getTangentStiffnessMatrix();
+
   //! Update the state within Peridigm following a successful load step.
   void updateState();
 

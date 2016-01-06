@@ -1131,6 +1131,13 @@ void LCM::PeridigmManager::evaluateTangentStiffnessMatrix()
     peridigm->evaluateTangentStiffnessMatrix();
 }
 
+Teuchos::RCP<const Epetra_FECrsMatrix> LCM::PeridigmManager::getTangentStiffnessMatrix()
+{
+  Teuchos::RCP<const Epetra_FECrsMatrix> matrix;
+  if(hasPeridynamics)
+    matrix = peridigm->getTangentStiffnessMatrix();
+  return matrix;
+}
 
 double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
 {

@@ -1317,60 +1317,37 @@ void Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
 {
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self())){
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()) && LCM::PeridigmManager::self()->hasTangentStiffnessMatrix()){
+
+    // The Peridigm matrix is a subset of the Albany matrix.  The global ids are the same and the parallel
+    // partitioning is the same.  fillComplete() has already been called for the Peridigm matrix.
+    Teuchos::RCP<const Epetra_FECrsMatrix> peridigmMatrix = LCM::PeridigmManager::self()->getTangentStiffnessMatrix();
 
     // Allocate nonzeros for the standard FEM portion of the graph
     computeGraphs();
 
     // Allocate nonzeros for the peridynamic portion of the graph
-    GO row, col;
-    Teuchos::ArrayView<GO> colAV;
-
-    // Create a list of all the global row numbers associated with peridynamics
-    std::vector<int> onProcPeridynamicGlobalDOF;
+    GO globalRow, globalCol;
+    Teuchos::ArrayView<GO> globalColAV;
+    int peridigmLocalRow;
+    int numEntries;
+    double* values;
+    int* indices;
     for (std::size_t i=0; i < cells.size(); i++) {
       stk::mesh::Entity e = cells[i];
       stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
       const size_t num_nodes = bulkData.num_nodes(e);
+      // Search for sphere elements (they contain a single node)
       if(num_nodes == 1){
 	stk::mesh::Entity rowNode = node_rels[0];
 	for (std::size_t k=0; k < neq; k++) {
-	  row = getGlobalDOF(gid(rowNode), k);
-	  onProcPeridynamicGlobalDOF.push_back(row);
-	}
-      }
-    }
-    int numProc = commT->getSize();
-    int myProc = commT->getRank();
-    std::vector<int> numPeridynamicDOFPerProc(numProc, 0), numPeridynamicDOFPerProc_Local(numProc, 0);
-    numPeridynamicDOFPerProc_Local[myProc] = static_cast<int>( onProcPeridynamicGlobalDOF.size() );
-    comm->SumAll(&numPeridynamicDOFPerProc_Local[0], &numPeridynamicDOFPerProc[0], numProc);
-    int totalNumPeridynamicDOF(0), offset(0);
-    for(int i=0 ; i<numProc ; i++){
-      if(i < myProc){
-	offset += numPeridynamicDOFPerProc[i];
-      }
-      totalNumPeridynamicDOF += numPeridynamicDOFPerProc[i];
-    }
-    std::vector<int> peridynamicGlobalDOF_Local(totalNumPeridynamicDOF, 0), peridynamicGlobalDOF(totalNumPeridynamicDOF, 0);
-    for(unsigned int i=0 ; i<onProcPeridynamicGlobalDOF.size() ; i++){
-      peridynamicGlobalDOF_Local[offset + i] = onProcPeridynamicGlobalDOF[i];
-    }
-    comm->SumAll(&peridynamicGlobalDOF_Local[0], &peridynamicGlobalDOF[0], totalNumPeridynamicDOF);
-
-    // Load all possible peridynamic bonds into the graph
-    for (std::size_t i=0; i < cells.size(); i++) {
-      stk::mesh::Entity e = cells[i];
-      stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
-      const size_t num_nodes = bulkData.num_nodes(e);
-      if(num_nodes == 1){
-	stk::mesh::Entity rowNode = node_rels[0];
-	for (std::size_t k=0; k < neq; k++) {
-	  row = getGlobalDOF(gid(rowNode), k);
-	  for (unsigned int j=0 ; j<totalNumPeridynamicDOF ; j++){
-	    col = peridynamicGlobalDOF[j];
-	    colAV = Teuchos::arrayView(&col, 1);
-	    overlap_graphT->insertGlobalIndices(row, colAV);
+	  globalRow = getGlobalDOF(gid(rowNode), k);
+	  peridigmLocalRow = peridigmMatrix->RowMap().LID(globalRow);
+	  peridigmMatrix->ExtractMyRowView(peridigmLocalRow, numEntries, values, indices);
+	  for(int i=0 ; i<numEntries ; ++i){
+	    globalCol = peridigmMatrix->ColMap().GID(indices[i]);
+	    globalColAV = Teuchos::arrayView(&globalCol, 1);
+	    overlap_graphT->insertGlobalIndices(globalRow, globalColAV);
 	  }
 	}
       }
