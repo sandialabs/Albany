@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 
 //**********************************************************************
@@ -72,7 +72,7 @@ template<typename EvalT, typename Traits>
 void PNP::ConcentrationResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
   // Scale gradient into a flux, reusing same memory
 //  FST::scalarMultiplyDataData<ScalarT> (PhiFlux, Permittivity, PhiGrad);

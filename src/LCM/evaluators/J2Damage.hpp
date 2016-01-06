@@ -6,7 +6,7 @@
 #ifndef J2DAMAGE_HPP
 #define J2DAMAGE_HPP
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -61,9 +61,9 @@ namespace LCM {
     unsigned int numQPs;
     unsigned int numDims;
 
-    Intrepid::FieldContainer<ScalarT> Fpinv;
-    Intrepid::FieldContainer<ScalarT> FpinvT;
-    Intrepid::FieldContainer<ScalarT> Cpinv;
+    Intrepid2::FieldContainer<ScalarT> Fpinv;
+    Intrepid2::FieldContainer<ScalarT> FpinvT;
+    Intrepid2::FieldContainer<ScalarT> Cpinv;
 
   };
 }

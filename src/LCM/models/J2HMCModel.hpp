@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 #include "Sacado.hpp"
 
@@ -106,32 +106,32 @@ void
 computeResidualandJacobian(
   std::vector<int> & yieldMask, std::vector<int> & yieldMap,
   std::vector<ScalarT> & X, std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-  Intrepid::Tensor<ScalarT> & elTrialMacroStress,
-  Intrepid::Tensor<ScalarT> & macroBackStress, ScalarT & alpha,
-  std::vector<Intrepid::Tensor<ScalarT>> & elTrialMicroStress,
-  std::vector<Intrepid::Tensor<ScalarT>> & microBackStress,
+  Intrepid2::Tensor<ScalarT> & elTrialMacroStress,
+  Intrepid2::Tensor<ScalarT> & macroBackStress, ScalarT & alpha,
+  std::vector<Intrepid2::Tensor<ScalarT>> & elTrialMicroStress,
+  std::vector<Intrepid2::Tensor<ScalarT>> & microBackStress,
   std::vector<ScalarT> & microAlpha,
-  std::vector<Intrepid::Tensor3<ScalarT>> & elTrialDoubleStress,
-  std::vector<Intrepid::Tensor3<ScalarT>> & doubleBackStress,
+  std::vector<Intrepid2::Tensor3<ScalarT>> & elTrialDoubleStress,
+  std::vector<Intrepid2::Tensor3<ScalarT>> & doubleBackStress,
   std::vector<ScalarT> & doubleAlpha);
 
-template <typename T> T devMag( const Intrepid::Tensor<T> & );
-template <typename T> T devMag( const Intrepid::Tensor3<T> & );
+template <typename T> T devMag( const Intrepid2::Tensor<T> & );
+template <typename T> T devMag( const Intrepid2::Tensor3<T> & );
 
-template <typename T> Intrepid::Tensor<T> devNorm( const Intrepid::Tensor<T> & t );
-template <typename T> Intrepid::Tensor3<T> devNorm( const Intrepid::Tensor3<T> & t );
+template <typename T> Intrepid2::Tensor<T> devNorm( const Intrepid2::Tensor<T> & t );
+template <typename T> Intrepid2::Tensor3<T> devNorm( const Intrepid2::Tensor3<T> & t );
 
 void
 yieldFunction( std::vector<typename EvalT::ScalarT>&      Fvals,
-               Intrepid::Tensor<ScalarT>&                 macStress,
+               Intrepid2::Tensor<ScalarT>&                 macStress,
                ScalarT&                                   macroAlpha,
-               Intrepid::Tensor<ScalarT>&                 macroBackStress,
-               std::vector< Intrepid::Tensor<ScalarT>>&  micStress,
+               Intrepid2::Tensor<ScalarT>&                 macroBackStress,
+               std::vector< Intrepid2::Tensor<ScalarT>>&  micStress,
                std::vector<ScalarT>&                      microAlpha,
-               std::vector< Intrepid::Tensor<ScalarT>>&  microBackStress,
-               std::vector< Intrepid::Tensor3<ScalarT>>& doubleStress,
+               std::vector< Intrepid2::Tensor<ScalarT>>&  microBackStress,
+               std::vector< Intrepid2::Tensor3<ScalarT>>& doubleStress,
                std::vector<ScalarT>&                      doubleAlpha,
-               std::vector< Intrepid::Tensor3<ScalarT>>& doubleBackStress);
+               std::vector< Intrepid2::Tensor3<ScalarT>>& doubleBackStress);
 
 void initializeElasticConstants();
 
@@ -139,10 +139,10 @@ void initializeElasticConstants();
 bool 
 converged(std::vector<ScalarT> & R, int iteration, ScalarT& initNorm);
 
-Intrepid::Tensor3<typename EvalT::ScalarT> 
+Intrepid2::Tensor3<typename EvalT::ScalarT> 
 dotdotdot( 
-  Intrepid::Tensor4<ScalarT> & doubleCelastic, 
-  Intrepid::Tensor3<ScalarT> & elTrialDoubleStress);
+  Intrepid2::Tensor4<ScalarT> & doubleCelastic, 
+  Intrepid2::Tensor3<ScalarT> & elTrialDoubleStress);
 
   ///
   /// Private to prohibit copying
@@ -170,9 +170,9 @@ dotdotdot(
   std::vector<RealType> doubleKinematicModulus;
   std::vector<RealType> doubleIsotropicModulus;
 
-  Intrepid::Tensor4<ScalarT> macroCelastic;
-  std::vector<Intrepid::Tensor4<ScalarT>> microCelastic;
-  std::vector<Intrepid::Tensor4<ScalarT>> doubleCelastic;
+  Intrepid2::Tensor4<ScalarT> macroCelastic;
+  std::vector<Intrepid2::Tensor4<ScalarT>> microCelastic;
+  std::vector<Intrepid2::Tensor4<ScalarT>> doubleCelastic;
   ///
   /// model parameters
   ///

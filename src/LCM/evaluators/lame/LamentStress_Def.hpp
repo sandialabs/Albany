@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 
 using namespace std;
@@ -169,33 +169,33 @@ evaluateFields(typename Traits::EvalData workset)
       // The incremental deformation gradient is computed as F_new F_old^-1
 
       // JTO:  here is how I think this will go (of course the first two lines won't work as is...)
-      // Intrepid::Tensor<RealType> F = newDefGrad;
-      // Intrepid::Tensor<RealType> Fn = oldDefGrad;
-      // Intrepid::Tensor<RealType> f = F*Intrepid::inverse(Fn);
-      // Intrepid::Tensor<RealType> V;
-      // Intrepid::Tensor<RealType> R;
-      // boost::tie(V,R) = Intrepid::polar_left(F);
-      // Intrepid::Tensor<RealType> Vinc;
-      // Intrepid::Tensor<RealType> Rinc;
-      // Intrepid::Tensor<RealType> logVinc;
-      // boost::tie(Vinc,Rinc,logVinc) = Intrepid::polar_left_logV(f)
-      // Intrepid::Tensor<RealType> logRinc = Intrepid::log_rotation(Rinc);
-      // Intrepid::Tensor<RealType> logf = Intrepid::bch(logVinc,logRinc);
-      // Intrepid::Tensor<RealType> L = (1.0/deltaT)*logf;
-      // Intrepid::Tensor<RealType> D = Intrepid::sym(L);
-      // Intrepid::Tensor<RealType> W = Intrepid::skew(L);
+      // Intrepid2::Tensor<RealType> F = newDefGrad;
+      // Intrepid2::Tensor<RealType> Fn = oldDefGrad;
+      // Intrepid2::Tensor<RealType> f = F*Intrepid2::inverse(Fn);
+      // Intrepid2::Tensor<RealType> V;
+      // Intrepid2::Tensor<RealType> R;
+      // boost::tie(V,R) = Intrepid2::polar_left(F);
+      // Intrepid2::Tensor<RealType> Vinc;
+      // Intrepid2::Tensor<RealType> Rinc;
+      // Intrepid2::Tensor<RealType> logVinc;
+      // boost::tie(Vinc,Rinc,logVinc) = Intrepid2::polar_left_logV(f)
+      // Intrepid2::Tensor<RealType> logRinc = Intrepid2::log_rotation(Rinc);
+      // Intrepid2::Tensor<RealType> logf = Intrepid2::bch(logVinc,logRinc);
+      // Intrepid2::Tensor<RealType> L = (1.0/deltaT)*logf;
+      // Intrepid2::Tensor<RealType> D = Intrepid2::sym(L);
+      // Intrepid2::Tensor<RealType> W = Intrepid2::skew(L);
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-      Intrepid::Tensor<ScalarT> Fnew( 3, defGradField,cell,qp,0,0);
+      Intrepid2::Tensor<ScalarT> Fnew( 3, defGradField,cell,qp,0,0);
 
       // old deformation gradient (deformation gradient at previous load step)
-      Intrepid::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+      Intrepid2::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
                                     oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
                                     oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      Intrepid::Tensor<ScalarT> Finc = Fnew * Intrepid::inverse(Fold);
+      Intrepid2::Tensor<ScalarT> Finc = Fnew * Intrepid2::inverse(Fold);
 
       
       // DEBUGGING //
@@ -213,8 +213,8 @@ evaluateFields(typename Traits::EvalData workset)
       // END DEBUGGING //
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
-      Intrepid::Tensor<ScalarT> V(3), R(3), U(3);
-      boost::tie(V,R) = Intrepid::polar_left(Fnew);
+      Intrepid2::Tensor<ScalarT> V(3), R(3), U(3);
+      boost::tie(V,R) = Intrepid2::polar_left(Fnew);
       //V = R * U * transpose(R);
       
       // DEBUGGING //
@@ -253,26 +253,26 @@ evaluateFields(typename Traits::EvalData workset)
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
       
-      Intrepid::Tensor<ScalarT> Uinc(3), Vinc(3), Rinc(3), logVinc(3);
-      //boost::tie(Vinc,Rinc,logVinc) = Intrepid::polar_left_logV(Finc);
-      boost::tie(Vinc,Rinc) = Intrepid::polar_left(Finc);
+      Intrepid2::Tensor<ScalarT> Uinc(3), Vinc(3), Rinc(3), logVinc(3);
+      //boost::tie(Vinc,Rinc,logVinc) = Intrepid2::polar_left_logV(Finc);
+      boost::tie(Vinc,Rinc) = Intrepid2::polar_left(Finc);
       //Vinc = Rinc * Uinc * transpose(Rinc);
-      logVinc = Intrepid::log(Vinc);
+      logVinc = Intrepid2::log(Vinc);
 
       // log of incremental rotation
-      Intrepid::Tensor<ScalarT> logRinc = Intrepid::log_rotation(Rinc);
+      Intrepid2::Tensor<ScalarT> logRinc = Intrepid2::log_rotation(Rinc);
 
       // log of incremental deformation gradient
-      Intrepid::Tensor<ScalarT> logFinc = Intrepid::bch(logVinc, logRinc);
+      Intrepid2::Tensor<ScalarT> logFinc = Intrepid2::bch(logVinc, logRinc);
 
       // velocity gradient
-      Intrepid::Tensor<ScalarT> L = (1.0/deltaT)*logFinc;
+      Intrepid2::Tensor<ScalarT> L = (1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      Intrepid::Tensor<ScalarT> D = Intrepid::sym(L);
+      Intrepid2::Tensor<ScalarT> D = Intrepid2::sym(L);
 
       // spin
-      Intrepid::Tensor<ScalarT> W = Intrepid::skew(L);
+      Intrepid2::Tensor<ScalarT> W = Intrepid2::skew(L);
 
       // load everything into the Lament data structure
 
@@ -340,10 +340,10 @@ evaluateFields(typename Traits::EvalData workset)
       // std::cout << "after calling lament->getStress() 2" << std::endl;
 
       // rotate to get the Cauchy Stress
-      Intrepid::Tensor<ScalarT> lameStress( stressNew[0], stressNew[3], stressNew[5],
+      Intrepid2::Tensor<ScalarT> lameStress( stressNew[0], stressNew[3], stressNew[5],
                                           stressNew[3], stressNew[1], stressNew[4],
                                           stressNew[5], stressNew[4], stressNew[2] );
-      Intrepid::Tensor<ScalarT> cauchy = R * lameStress * transpose(R);
+      Intrepid2::Tensor<ScalarT> cauchy = R * lameStress * transpose(R);
 
       // DEBUGGING //
       //if(cell==0 && qp==0){

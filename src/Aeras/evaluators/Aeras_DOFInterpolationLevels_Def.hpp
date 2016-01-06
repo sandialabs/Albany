@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace Aeras {
 
@@ -46,9 +46,9 @@ template<typename EvalT, typename Traits>
 void DOFInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid version:
+  //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {

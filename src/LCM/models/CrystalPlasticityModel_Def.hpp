@@ -16,7 +16,7 @@
 #include <iostream>
 #include <Sacado_Traits.hpp>
 
-Intrepid::Index CP::NLSDimension::DIMENSION;
+Intrepid2::Index CP::NLSDimension::DIMENSION;
 
 namespace LCM
 {
@@ -85,9 +85,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   c12_ = e_list.get<RealType>("C12");
   c44_ = e_list.get<RealType>("C44");
 
-  Intrepid::Tensor4<RealType, CP::MAX_NUM_DIM> C;
+  Intrepid2::Tensor4<RealType, CP::MAX_NUM_DIM> C;
   C.set_dimension(num_dims_);
-  C.fill(Intrepid::ZEROS);
+  C.fill(Intrepid2::ZEROS);
   for (int i = 0; i < num_dims_; ++i) {
     C(i, i, i, i) = c11_;
     for (int j = i + 1; j < num_dims_; ++j) {
@@ -124,7 +124,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   //
   // rotate elastic tensor and slip systems to match given orientation
   //
-  C_ = Intrepid::kronecker(orientation_, C);
+  C_ = Intrepid2::kronecker(orientation_, C);
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss + 1));
 
@@ -133,12 +133,12 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     //
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType>>(
         "Slip Direction").toVector();
-    Intrepid::Vector<RealType, CP::MAX_NUM_DIM> s_temp_normalized;
+    Intrepid2::Vector<RealType, CP::MAX_NUM_DIM> s_temp_normalized;
     s_temp_normalized.set_dimension(num_dims_);
     for (int i = 0; i < num_dims_; ++i) {
       s_temp_normalized[i] = s_temp[i];
     }
-    s_temp_normalized = Intrepid::unit(s_temp_normalized);
+    s_temp_normalized = Intrepid2::unit(s_temp_normalized);
     slip_systems_[num_ss].s_.set_dimension(num_dims_);
     slip_systems_[num_ss].s_ = orientation_ * s_temp_normalized;
 
@@ -147,12 +147,12 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     //
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType>>(
         "Slip Normal").toVector();
-    Intrepid::Vector<RealType, CP::MAX_NUM_DIM> n_temp_normalized;
+    Intrepid2::Vector<RealType, CP::MAX_NUM_DIM> n_temp_normalized;
     n_temp_normalized.set_dimension(num_dims_);
     for (int i = 0; i < num_dims_; ++i) {
       n_temp_normalized[i] = n_temp[i];
     }
-    n_temp_normalized = Intrepid::unit(n_temp_normalized);
+    n_temp_normalized = Intrepid2::unit(n_temp_normalized);
     slip_systems_[num_ss].n_.set_dimension(num_dims_);
     slip_systems_[num_ss].n_ = orientation_ * n_temp_normalized;
 
@@ -165,7 +165,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     }
 
     slip_systems_[num_ss].projector_.set_dimension(num_dims_);
-    slip_systems_[num_ss].projector_ = Intrepid::dyad(
+    slip_systems_[num_ss].projector_ = Intrepid2::dyad(
         slip_systems_[num_ss].s_,
         slip_systems_[num_ss].n_);
 
@@ -209,9 +209,23 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     else if (typeHardeningLaw == "Saturation") {
       slip_systems_[num_ss].hardeningLaw = SATURATION;
       slip_systems_[num_ss].resistanceSlipInitial_ = h_list.get<RealType>("Initial Slip Resistance", 0.0);
+      // temporary workaround
+      slip_systems_[num_ss].tau_critical_ = slip_systems_[num_ss].resistanceSlipInitial_;
       slip_systems_[num_ss].rateHardening_ = h_list.get<RealType>("Hardening Rate", 0.0);
       slip_systems_[num_ss].stressSaturationInitial_ = h_list.get<RealType>("Initial Saturation Stress", 0.0);
       slip_systems_[num_ss].exponentSaturation_ = h_list.get<RealType>("Saturation Exponent", 0.0);
+    }
+
+    if (verbosity_ > 2) {
+      std::cout << "Slip system number " << num_ss << std::endl;
+      std::cout << "Hardening law " << slip_systems_[num_ss].hardeningLaw << std::endl;
+      std::cout << "H " << slip_systems_[num_ss].H_ << std::endl;
+      std::cout << "Rd " << slip_systems_[num_ss].Rd_ << std::endl;
+      std::cout << "Tau critical " << slip_systems_[num_ss].tau_critical_ << std::endl;
+      std::cout << "Initial slip resistance " << slip_systems_[num_ss].resistanceSlipInitial_ << std::endl;
+      std::cout << "Hardening rate " << slip_systems_[num_ss].rateHardening_ << std::endl;
+      std::cout << "Initial saturation stress " << slip_systems_[num_ss].stressSaturationInitial_ << std::endl;
+      std::cout << "Saturation exponent " << slip_systems_[num_ss].exponentSaturation_ << std::endl;
     }
 
   }
@@ -469,9 +483,9 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   ScalarT dt = delta_time(0);
   ScalarT tcurrent = time(0);
 
-  Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> I;
+  Intrepid2::Tensor<RealType, CP::MAX_NUM_DIM> I;
   I.set_dimension(num_dims_);
-  I.fill(Intrepid::ZEROS);
+  I.fill(Intrepid2::ZEROS);
   for(int i=0; i<num_dims_; ++i) {
     I(i,i) = 1.0;
   }
@@ -481,40 +495,40 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   // DJL todo:  Can we just use RealType for most of these?
 
   // Known quantities
-  Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> F_np1;
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> F_np1;
   F_np1.set_dimension(num_dims_);
-  Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> Fp_n;
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Fp_n;
   Fp_n.set_dimension(num_dims_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_n;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_n;
   slip_n.set_dimension(num_slip_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_dot_n;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_dot_n;
   slip_dot_n.set_dimension(num_slip_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_n;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_n;
   hardness_n.set_dimension(num_slip_);
 
   // Unknown quantities
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> 
-  rateSlip(Intrepid::ZEROS);
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> 
+  rateSlip(Intrepid2::ZEROS);
   rateSlip.set_dimension(num_slip_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1;
   slip_np1.set_dimension(num_slip_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1_km1;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1_km1;
   slip_np1_km1.set_dimension(num_slip_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> delta_delta_slip;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> delta_delta_slip;
   delta_delta_slip.set_dimension(num_slip_);
-  Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> Lp_np1;
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Lp_np1;
   Lp_np1.set_dimension(num_dims_);
-  Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> Fp_np1;
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Fp_np1;
   Fp_np1.set_dimension(num_dims_);
-  Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> sigma_np1;
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> sigma_np1;
   sigma_np1.set_dimension(num_dims_);
-  Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> S_np1;
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> S_np1;
   S_np1.set_dimension(num_dims_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> shear_np1;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> shear_np1;
   shear_np1.set_dimension(num_slip_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_residual;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_residual;
   slip_residual.set_dimension(num_slip_);
-  Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_np1;
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_np1;
   hardness_np1.set_dimension(num_slip_);
   ScalarT norm_slip_residual;
   ScalarT equivalent_plastic_strain;
@@ -527,21 +541,21 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
   // The following variables are dependent on the slip increment
   // Create AD objects for use in the implicit integration routine
-  Intrepid::Vector<Fad, CP::MAX_NUM_SLIP> slip_np1_ad;
+  Intrepid2::Vector<Fad, CP::MAX_NUM_SLIP> slip_np1_ad;
   slip_np1_ad.set_dimension(num_slip_);
-  Intrepid::Tensor<Fad, CP::MAX_NUM_DIM> Lp_np1_ad;
+  Intrepid2::Tensor<Fad, CP::MAX_NUM_DIM> Lp_np1_ad;
   Lp_np1_ad.set_dimension(num_dims_);
-  Intrepid::Tensor<Fad, CP::MAX_NUM_DIM> Fp_np1_ad;
+  Intrepid2::Tensor<Fad, CP::MAX_NUM_DIM> Fp_np1_ad;
   Fp_np1_ad.set_dimension(num_dims_);
-  Intrepid::Tensor<Fad, CP::MAX_NUM_DIM> sigma_np1_ad;
+  Intrepid2::Tensor<Fad, CP::MAX_NUM_DIM> sigma_np1_ad;
   sigma_np1_ad.set_dimension(num_dims_);
-  Intrepid::Tensor<Fad, CP::MAX_NUM_DIM> S_np1_ad;
+  Intrepid2::Tensor<Fad, CP::MAX_NUM_DIM> S_np1_ad;
   S_np1_ad.set_dimension(num_dims_);
-  Intrepid::Vector<Fad, CP::MAX_NUM_SLIP> shear_np1_ad;
+  Intrepid2::Vector<Fad, CP::MAX_NUM_SLIP> shear_np1_ad;
   shear_np1_ad.set_dimension(num_slip_);
-  Intrepid::Vector<Fad, CP::MAX_NUM_SLIP> slip_residual_ad;
+  Intrepid2::Vector<Fad, CP::MAX_NUM_SLIP> slip_residual_ad;
   slip_residual_ad.set_dimension(num_slip_);
-  Intrepid::Vector<Fad, CP::MAX_NUM_SLIP> hardness_np1_ad;
+  Intrepid2::Vector<Fad, CP::MAX_NUM_SLIP> hardness_np1_ad;
   hardness_np1_ad.set_dimension(num_slip_);
   Fad norm_slip_residual_ad;
 
@@ -669,7 +683,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 	  rateSlip = (slip_np1 - slip_n) / dt;
 	}
 	else{
-	  rateSlip.fill(Intrepid::ZEROS);
+	  rateSlip.fill(Intrepid2::ZEROS);
 	}
 
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
@@ -678,6 +692,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           rateSlip, 
           hardness_n, 
           hardness_np1);
+
+        if(verbosity_ > 2) {
+          std::cout << "CP model implicit integration hardness " << hardness_np1 << std::endl;
+        }
 
         CP::computeStress<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
@@ -688,6 +706,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           S_np1, 
           shear_np1);
 
+        if(verbosity_ > 2) {
+          std::cout << "CP model implicit integration stress " << shear_np1 << std::endl;
+        }
+
         CP::computeResidual<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
           dt, 
@@ -697,6 +719,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           shear_np1, 
           slip_residual, 
           norm_slip_residual);
+
+        if(verbosity_ > 2) {
+          std::cout << "CP model implicit integration residual " << slip_residual << std::endl;
+        }
 
         RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(
           norm_slip_residual);
@@ -711,14 +737,14 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         //            When Albany::Jacobain is called, the Fad info should be in F_np1 only.
 
         // MiniSolver currently does not accept AD types
-        Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> Fp_n_minisolver;
+        Intrepid2::Tensor<RealType, CP::MAX_NUM_DIM> Fp_n_minisolver;
         Fp_n_minisolver.set_dimension(num_dims_);
-        Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> hardness_n_minisolver;
+        Intrepid2::Vector<RealType, CP::MAX_NUM_SLIP> hardness_n_minisolver;
         hardness_n_minisolver.set_dimension(num_slip_);
-        Intrepid::Vector<RealType, CP::MAX_NUM_SLIP> slip_n_minisolver;
+        Intrepid2::Vector<RealType, CP::MAX_NUM_SLIP> slip_n_minisolver;
         slip_n_minisolver.set_dimension(num_slip_);
         RealType dt_minisolver;
-        Intrepid::Vector<ScalarT, CP::MAX_NUM_SLIP> x;// unknowns, which are slip_np1
+        Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> x;// unknowns, which are slip_np1
         x.set_dimension(num_slip_);
 
         for(int i=0; i<num_dims_; ++i) {
@@ -747,11 +773,11 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             dt_minisolver);
 
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
-        Intrepid::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
-        //Intrepid::TrustRegionStep<ValueT, CP::MAX_NUM_SLIP> step;
-        //Intrepid::ConjugateGradientStep<ValueT, CP::MAX_NUM_SLIP> step;
-        //Intrepid::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
-        Intrepid::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
+        Intrepid2::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid2::TrustRegionStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid2::ConjugateGradientStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid2::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
+        Intrepid2::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
 
         minimizer.rel_tol = residual_relative_tolerance;
         minimizer.abs_tol = residual_absolute_tolerance;
@@ -786,7 +812,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 	  rateSlip = (slip_np1 - slip_n) / dt;
 	}
 	else{
-	  rateSlip.fill(Intrepid::ZEROS);
+	  rateSlip.fill(Intrepid2::ZEROS);
 	}
 
         // Compute hardness_np1
@@ -821,9 +847,9 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       } // integration_scheme == IMPLICIT
 
 // The EQPS can be computed (or can it?) from the Cauchy Green strain operator applied to Fp.
-//      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
-//      CGS_Fp = 0.5*(((Intrepid::transpose(Fp_np1))*Fp_np1) - I);
-//      equivalent_plastic_strain = (2.0/3.0)*Intrepid::dotdot(CGS_Fp, CGS_Fp);
+//      Intrepid2::Tensor<ScalarT> CGS_Fp(num_dims_);
+//      CGS_Fp = 0.5*(((Intrepid2::transpose(Fp_np1))*Fp_np1) - I);
+//      equivalent_plastic_strain = (2.0/3.0)*Intrepid2::dotdot(CGS_Fp, CGS_Fp);
 //      if(equivalent_plastic_strain > 0.0){
 //        equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
 //      }
@@ -832,9 +858,9 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 // Compute the equivalent plastic strain from the velocity gradient:
 //       eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
 //
-      ScalarT delta_eqps = Intrepid::dotdot(
-      Intrepid::sym(Lp_np1),
-      Intrepid::sym(Lp_np1));
+      ScalarT delta_eqps = Intrepid2::dotdot(
+      Intrepid2::sym(Lp_np1),
+      Intrepid2::sym(Lp_np1));
       if (delta_eqps > 0.0) {
         delta_eqps = 2.0 * (std::sqrt(delta_eqps)) / 3.0;
       } // Otherwise delta_eqps is - or BETTER be! - zero, so don't bother with the 2/3.
@@ -852,13 +878,13 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       eqps(cell, pt) = equivalent_plastic_strain;
 //
 // The xtal rotation from the polar decomp of Fe.
-      Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> Fe;
+      Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Fe;
       Fe.set_dimension(num_dims_);
-      Intrepid::Tensor<ScalarT, CP::MAX_NUM_DIM> Re_np1;
+      Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Re_np1;
       Re_np1.set_dimension(num_dims_);
       // Saint Venant–Kirchhoff model
-      Fe = F_np1 * (Intrepid::inverse(Fp_np1));
-      Re_np1 = Intrepid::polar_rotation(Fe);
+      Fe = F_np1 * (Intrepid2::inverse(Fp_np1));
+      Re_np1 = Intrepid2::polar_rotation(Fe);
 
       // Copy data from local data structures back into Albany fields
       source(cell, pt) = 0.0;
@@ -887,7 +913,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       if(write_data_file_) {
         if (cell == 0 && pt == 0) {
           std::ofstream data_file("output.dat", std::fstream::app);
-          Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> P;
+          Intrepid2::Tensor<RealType, CP::MAX_NUM_DIM> P;
           P.set_dimension(num_dims_);
           data_file << "\n" << "time: ";
           data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";

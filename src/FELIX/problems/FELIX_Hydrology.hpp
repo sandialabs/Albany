@@ -7,8 +7,8 @@
 #ifndef FELIX_HYDROLOGY_PROBLEM_HPP
 #define FELIX_HYDROLOGY_PROBLEM_HPP 1
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
@@ -97,7 +97,7 @@ protected:
 
   Teuchos::RCP<Albany::Layouts> dl;
 
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
 };
 
 // ===================================== IMPLEMENTATION ======================================= //
@@ -118,13 +118,13 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Retrieving FE information (basis and cell type)
   if (intrepidBasis.get()==0)
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
   // Building the right quadrature formula
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   // Some constants
   const int numNodes = intrepidBasis->getCardinality();

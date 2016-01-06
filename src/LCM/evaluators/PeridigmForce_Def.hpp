@@ -7,7 +7,7 @@
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Epetra_Vector.h"
 #include "PHAL_Utilities.hpp"
 

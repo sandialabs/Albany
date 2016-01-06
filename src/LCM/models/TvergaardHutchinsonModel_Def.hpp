@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 
@@ -113,26 +113,26 @@ computeState(typename Traits::EvalData workset,
     for (int pt(0); pt < num_pts_; ++pt) {
       
       //current basis vector
-      Intrepid::Vector<ScalarT> g_0(3, basis,cell, pt, 0, 0);
-      Intrepid::Vector<ScalarT> g_1(3, basis,cell, pt, 1, 0);
-      Intrepid::Vector<ScalarT> n(3, basis,cell, pt, 2, 0);
+      Intrepid2::Vector<ScalarT> g_0(3, basis,cell, pt, 0, 0);
+      Intrepid2::Vector<ScalarT> g_1(3, basis,cell, pt, 1, 0);
+      Intrepid2::Vector<ScalarT> n(3, basis,cell, pt, 2, 0);
 
       //construct orthogonal unit basis
-      Intrepid::Vector<ScalarT> t_0(0.0,0.0,0.0), t_1(0.0,0.0,0.0);
+      Intrepid2::Vector<ScalarT> t_0(0.0,0.0,0.0), t_1(0.0,0.0,0.0);
       t_0 = g_0 / norm(g_0);
       t_1 = cross(n,t_0);
 
       //construct transformation matrix Q (2nd order tensor)
-      Intrepid::Tensor<ScalarT> Q(3, Intrepid::ZEROS);
+      Intrepid2::Tensor<ScalarT> Q(3, Intrepid2::ZEROS);
       // manually fill Q = [t_0; t_1; n];
       Q(0,0) = t_0(0); Q(1,0) = t_0(1);  Q(2,0) = t_0(2);
       Q(0,1) = t_1(0); Q(1,1) = t_1(1);  Q(2,1) = t_1(2);
       Q(0,2) = n(0);   Q(1,2) = n(1);    Q(2,2) = n(2);
 
       //global and local jump
-      Intrepid::Vector<ScalarT> jump_global(3, jump,cell, pt, 0);
-      Intrepid::Vector<ScalarT> jump_local(3);
-      jump_local = Intrepid::dot(Intrepid::transpose(Q), jump_global);
+      Intrepid2::Vector<ScalarT> jump_global(3, jump,cell, pt, 0);
+      Intrepid2::Vector<ScalarT> jump_local(3);
+      jump_local = Intrepid2::dot(Intrepid2::transpose(Q), jump_global);
 
       // define shear and normal components of jump
       // needed for interpenetration
@@ -146,12 +146,12 @@ computeState(typename Traits::EvalData workset,
         JumpShear = 0.0;
 
       // matrix beta that controls relative effect of shear and normal opening
-      Intrepid::Tensor<ScalarT> beta(3, Intrepid::ZEROS);
+      Intrepid2::Tensor<ScalarT> beta(3, Intrepid2::ZEROS);
       beta(0,0) = beta_0; beta(1,1) = beta_1; beta(2,2) = beta_2;
 
       // compute scalar effective jump
       ScalarT jump_eff;
-      IntermediateValue = Intrepid::dot(jump_local,Intrepid::dot(beta,jump_local));
+      IntermediateValue = Intrepid2::dot(jump_local,Intrepid2::dot(beta,jump_local));
       if (IntermediateValue > 0.0) 
         jump_eff = sqrt(IntermediateValue);
       else
@@ -170,10 +170,10 @@ computeState(typename Traits::EvalData workset,
         sigma_eff = 0.0;
 
       // construct traction vector
-      Intrepid::Vector<ScalarT> traction_local(3);
+      Intrepid2::Vector<ScalarT> traction_local(3);
       traction_local.clear();
       if(jump_eff != 0)
-        traction_local = Intrepid::dot(beta,jump_local) * sigma_eff / jump_eff;
+        traction_local = Intrepid2::dot(beta,jump_local) * sigma_eff / jump_eff;
 
       // norm of the local shear components of the traction
       ScalarT TractionShear;
@@ -185,8 +185,8 @@ computeState(typename Traits::EvalData workset,
 
 
       // global traction vector
-      Intrepid::Vector<ScalarT> traction_global(3);
-      traction_global = Intrepid::dot(Q, traction_local);
+      Intrepid2::Vector<ScalarT> traction_global(3);
+      traction_global = Intrepid2::dot(Q, traction_local);
 
       traction(cell,pt,0) = traction_global(0);
       traction(cell,pt,1) = traction_global(1);

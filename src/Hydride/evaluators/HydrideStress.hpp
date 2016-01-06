@@ -48,7 +48,7 @@ private:
   unsigned int numDims;
 
   // The elasticity tensor
-  Intrepid::FieldContainer<ScalarT> ElastTensor;
+  Intrepid2::FieldContainer<ScalarT> ElastTensor;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

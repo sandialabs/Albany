@@ -121,8 +121,8 @@ namespace Albany {
 
 #include <boost/type_traits/is_same.hpp>
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -165,15 +165,15 @@ Albany::NavierStokes::constructEvaluators(
  
   const CellTopologyData * const elem_top = &meshSpecs.ctd;
  
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -358,7 +358,7 @@ Albany::NavierStokes::constructEvaluators(
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Cubature", cubature);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
@@ -727,18 +727,18 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
     
     RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+    RCP <Intrepid2::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
   
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Node Variable Name", "Neumannx");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Cubature", cubature);
     
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Side Cubature", sideCubature);
     
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<RCP<shards::CellTopology> >("Side Type", sideType);
@@ -767,18 +767,18 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
 
     RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+    RCP <Intrepid2::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Node Variable Name", "Neumanny");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Cubature", cubature);
 
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Side Cubature", sideCubature);
 
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<RCP<shards::CellTopology> >("Side Type", sideType);
@@ -807,18 +807,18 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
 
     RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+    RCP <Intrepid2::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Node Variable Name", "Neumannz");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Cubature", cubature);
 
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Side Cubature", sideCubature);
 
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<RCP<shards::CellTopology> >("Side Type", sideType);

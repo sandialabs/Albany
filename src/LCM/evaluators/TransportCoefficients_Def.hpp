@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 #include <typeinfo>
 
@@ -237,7 +237,7 @@ namespace LCM {
     }
 
     // deformation gradient volumetric split for lattice concentration
-    Intrepid::Tensor<ScalarT> Fmech(num_dims_);
+    Intrepid2::Tensor<ScalarT> Fmech(num_dims_);
 
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
@@ -250,7 +250,7 @@ namespace LCM {
       }
     }
 
-    // Since Intrepid will later perform calculations on the entire workset size
+    // Since Intrepid2 will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to inversion of 0 tensors.
     for (int cell=workset.numCells; cell < worksetSize; ++cell)

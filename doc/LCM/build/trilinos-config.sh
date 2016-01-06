@@ -17,7 +17,6 @@ cmake \
  -D BUILD_SHARED_LIBS:BOOL=ON \
  -D CMAKE_BUILD_TYPE:STRING="lcm_build_type" \
  -D CMAKE_CXX_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicxx" \
- -D CMAKE_CXX_FLAGS:STRING="-DBUILD_PHALANX_FOR_ALBANY" \
  -D CMAKE_C_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicc" \
  -D CMAKE_Fortran_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpif90" \
  -D CMAKE_INSTALL_PREFIX:PATH=lcm_install_dir \
@@ -83,6 +82,7 @@ cmake \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \

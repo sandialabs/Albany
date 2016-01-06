@@ -13,12 +13,7 @@
 #include "Sacado_mpl_find.hpp"
 
 // traits Base Class
-#ifdef ALBANY_USE_PUBLICTRILINOS
-#include "Albany_PublicTrilinosTrickery.hpp"
-#include "Phalanx_Traits_Base.hpp"
-#else
 #include "Phalanx_Traits.hpp"
-#endif
 
 // Include User Data Types
 #include "Phalanx_config.hpp"
@@ -124,49 +119,6 @@ namespace PHAL {
 #endif
 
     // ******************************************************************
-    // *** Data Types
-    // ******************************************************************
-
-    // Create the data types for each evaluation type
-    //AGS RPP 3/2010: Added RealType as acceptible Field
-    //   type for all EvalT so that coordVec(double) for
-    //   all EvalT
-
-    // Residual (default scalar type is RealType)
-    typedef Sacado::mpl::vector<RealType> ResidualDataTypes;
-
-    // Jacobian (default scalar type is Fad<double, double>)
-    typedef Sacado::mpl::vector<FadType,RealType> JacobianDataTypes;
-
-    // Tangent (default scalar type is Fad<double>)
-    typedef Sacado::mpl::vector<TanFadType,RealType> TangentDataTypes;
-
-    // DistParamDeriv (default scalar type is Fad<double>)
-    typedef Sacado::mpl::vector<TanFadType,RealType> DistParamDerivDataTypes;
-
-#ifdef ALBANY_SG
-    // SG Residual (default scalar type is SGType)
-    typedef Sacado::mpl::vector<SGType,RealType> SGResidualDataTypes;
-
-    // SG Jacobian (default scalar type is Fad<SGType>)
-    typedef Sacado::mpl::vector<SGFadType,RealType> SGJacobianDataTypes;
-
-    // SG Tangent (default scalar type is Fad<SGType>)
-    typedef Sacado::mpl::vector<SGFadType,RealType> SGTangentDataTypes;
-#endif 
-#ifdef ALBANY_ENSEMBLE 
-
-    // MP Residual (default scalar type is MPType)
-    typedef Sacado::mpl::vector<MPType,RealType> MPResidualDataTypes;
-
-    // MP Jacobian (default scalar type is Fad<MPType>)
-    typedef Sacado::mpl::vector<MPFadType,RealType> MPJacobianDataTypes;
-
-    // MP Tangent (default scalar type is Fad<MPType>)
-    typedef Sacado::mpl::vector<MPFadType,RealType> MPTangentDataTypes;
-#endif
-
-    // ******************************************************************
     // *** Allocator Type
     // ******************************************************************
  //   typedef PHX::NewAllocator Allocator;
@@ -179,56 +131,7 @@ namespace PHAL {
     //typedef const Albany::AbstractDiscretization& SetupData;
     typedef Workset& EvalData;
     typedef Workset& PreEvalData;
-    typedef Workset& PostEvalData;
- 
-#ifdef ALBANY_USE_PUBLICTRILINOS
-    // Maps the key EvalType a vector of DataTypes
-#ifdef ALBANY_SG
-#ifdef ALBANY_ENSEMBLE 
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
-      boost::mpl::pair<SGResidual, SGResidualDataTypes>,
-      boost::mpl::pair<SGJacobian, SGJacobianDataTypes>,
-      boost::mpl::pair<SGTangent,  SGTangentDataTypes>,
-      boost::mpl::pair<MPResidual, MPResidualDataTypes>,
-      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>,
-      boost::mpl::pair<MPTangent,  MPTangentDataTypes >
-    >::type EvalToDataMap;
-#else
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
-      boost::mpl::pair<SGResidual, SGResidualDataTypes>,
-      boost::mpl::pair<SGJacobian, SGJacobianDataTypes>,
-      boost::mpl::pair<SGTangent,  MPTangentDataTypes >
-    >::type EvalToDataMap;
-#endif
-#else
-#ifdef ALBANY_ENSEMBLE 
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>,
-      boost::mpl::pair<MPResidual, MPResidualDataTypes>,
-      boost::mpl::pair<MPJacobian, MPJacobianDataTypes>,
-      boost::mpl::pair<MPTangent,  MPTangentDataTypes >
-    >::type EvalToDataMap;
-#else
-    typedef boost::mpl::map<
-      boost::mpl::pair<Residual, ResidualDataTypes>,
-      boost::mpl::pair<Jacobian, JacobianDataTypes>,
-      boost::mpl::pair<Tangent,  TangentDataTypes>,
-      boost::mpl::pair<DistParamDeriv, DistParamDerivDataTypes>
-    >::type EvalToDataMap;
-#endif
-#endif
-#endif // ALBANY_USE_PUBLICTRILINOS
+    typedef Workset& PostEvalData; 
   };
 }
 
@@ -268,32 +171,35 @@ namespace PHX {
   { return "<MPTangent>"; }
 #endif
 
-#ifndef ALBANY_USE_PUBLICTRILINOS
-// Once the publicTrilinos issue goes away, rewrite the following to use the
-// Sacado::mpl::vector directly in the typedef and remove the *DataTypes
-// typedefs above.
-#define DECLARE_EVAL_SCALAR_TYPES(Type)                                 \
-  template<> struct eval_scalar_types<PHAL::AlbanyTraits::Type> {       \
-    typedef PHAL::AlbanyTraits::Type##DataTypes type;                   \
+  // ******************************************************************
+  // *** Data Types
+  // ******************************************************************
+
+  // Create the data types for each evaluation type
+
+#define DECLARE_EVAL_SCALAR_TYPES(EvalType, Type1, Type2)               \
+  template<> struct eval_scalar_types<PHAL::AlbanyTraits::EvalType> {   \
+    typedef Sacado::mpl::vector<Type1, Type2> type;                     \
   };
 
-  DECLARE_EVAL_SCALAR_TYPES(Residual)
-  DECLARE_EVAL_SCALAR_TYPES(Jacobian)
-  DECLARE_EVAL_SCALAR_TYPES(Tangent)
-  DECLARE_EVAL_SCALAR_TYPES(DistParamDeriv)
+  template<> struct eval_scalar_types<PHAL::AlbanyTraits::Residual> {
+    typedef Sacado::mpl::vector<RealType> type;
+  };
+  DECLARE_EVAL_SCALAR_TYPES(Jacobian, FadType, RealType)
+  DECLARE_EVAL_SCALAR_TYPES(Tangent, TanFadType, RealType)
+  DECLARE_EVAL_SCALAR_TYPES(DistParamDeriv, TanFadType, RealType)
 #ifdef ALBANY_SG
-  DECLARE_EVAL_SCALAR_TYPES(SGResidual)
-  DECLARE_EVAL_SCALAR_TYPES(SGJacobian)
-  DECLARE_EVAL_SCALAR_TYPES(SGTangent)
+  DECLARE_EVAL_SCALAR_TYPES(SGResidual, SGType, RealType)
+  DECLARE_EVAL_SCALAR_TYPES(SGJacobian, SGFadType, RealType)
+  DECLARE_EVAL_SCALAR_TYPES(SGTangent, SGFadType, RealType)
 #endif
 #ifdef ALBANY_ENSEMBLE
-  DECLARE_EVAL_SCALAR_TYPES(MPResidual)
-  DECLARE_EVAL_SCALAR_TYPES(MPJacobian)
-  DECLARE_EVAL_SCALAR_TYPES(MPTangent)
+  DECLARE_EVAL_SCALAR_TYPES(MPResidual, MPType, RealType)
+  DECLARE_EVAL_SCALAR_TYPES(MPJacobian, MPFadType, RealType)
+  DECLARE_EVAL_SCALAR_TYPES(MPTangent, MPFadType, RealType)
 #endif
 
 #undef DECLARE_EVAL_SCALAR_TYPES
-#endif
 }
 
 // Define macro for explicit template instantiation

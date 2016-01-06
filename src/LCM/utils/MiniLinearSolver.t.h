@@ -14,28 +14,28 @@ namespace LCM
 //
 // Residual
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Residual, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
-  x = Intrepid::solve(A, b);
+  x = Intrepid2::solve(A, b);
   return;
 }
 
 //
 // Jacobian
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
   //
   // First deal with values
@@ -43,10 +43,10 @@ solve(
   auto const
   dimension = b.get_dimension();
 
-  Intrepid::Vector<ValueT, N>
+  Intrepid2::Vector<ValueT, N>
   Df(dimension);
 
-  Intrepid::Tensor<ValueT, N>
+  Intrepid2::Tensor<ValueT, N>
   DfDx(dimension);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -57,8 +57,8 @@ solve(
     }
   }
 
-  Intrepid::Vector<ValueT, N> const
-  Dx = Intrepid::solve(DfDx, Df);
+  Intrepid2::Vector<ValueT, N> const
+  Dx = Intrepid2::solve(DfDx, Df);
 
   for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
@@ -67,7 +67,7 @@ solve(
   //
   // Then deal with derivatives
   //
-  Intrepid::Tensor<ValueT>
+  Intrepid2::Tensor<ValueT>
   DbDx(dimension);
 
   // extract the jacobian
@@ -85,13 +85,13 @@ solve(
 //
 // Tangent
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::Tangent, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
   //
   // First deal with values
@@ -99,10 +99,10 @@ solve(
   auto const
   dimension = b.get_dimension();
 
-  Intrepid::Vector<ValueT, N>
+  Intrepid2::Vector<ValueT, N>
   Df(dimension);
 
-  Intrepid::Tensor<ValueT, N>
+  Intrepid2::Tensor<ValueT, N>
   DfDx(dimension);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -113,8 +113,8 @@ solve(
     }
   }
 
-  Intrepid::Vector<ValueT, N> const
-  Dx = Intrepid::solve(DfDx, Df);
+  Intrepid2::Vector<ValueT, N> const
+  Dx = Intrepid2::solve(DfDx, Df);
 
   for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
@@ -123,7 +123,7 @@ solve(
   //
   // Then deal with derivatives
   //
-  Intrepid::Tensor<ValueT>
+  Intrepid2::Tensor<ValueT>
   DbDx(dimension);
 
   // extract the jacobian
@@ -141,13 +141,13 @@ solve(
 //
 // DistParamDeriv
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
   //
   // First deal with values
@@ -155,10 +155,10 @@ solve(
   auto const
   dimension = b.get_dimension();
 
-  Intrepid::Vector<ValueT, N>
+  Intrepid2::Vector<ValueT, N>
   Df(dimension);
 
-  Intrepid::Tensor<ValueT, N>
+  Intrepid2::Tensor<ValueT, N>
   DfDx(dimension);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -169,8 +169,8 @@ solve(
     }
   }
 
-  Intrepid::Vector<ValueT, N> const
-  Dx = Intrepid::solve(DfDx, Df);
+  Intrepid2::Vector<ValueT, N> const
+  Dx = Intrepid2::solve(DfDx, Df);
 
   for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
@@ -179,7 +179,7 @@ solve(
   //
   // Then deal with derivatives
   //
-  Intrepid::Tensor<ValueT>
+  Intrepid2::Tensor<ValueT>
   DbDx(dimension);
 
   // extract the jacobian
@@ -198,28 +198,28 @@ solve(
 //
 // SGResidual
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
-  x = Intrepid::solve(A, b);
+  x = Intrepid2::solve(A, b);
   return;
 }
 
 //
 // SGJacobian
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
   //
   // First deal with values
@@ -227,10 +227,10 @@ solve(
   auto const
   dimension = b.get_dimension();
 
-  Intrepid::Vector<SGType, N>
+  Intrepid2::Vector<SGType, N>
   Df(dimension);
 
-  Intrepid::Tensor<SGType, N>
+  Intrepid2::Tensor<SGType, N>
   DfDx(dimension);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -241,8 +241,8 @@ solve(
     }
   }
 
-  Intrepid::Vector<SGType, N> const
-  Dx = Intrepid::solve(DfDx, Df);
+  Intrepid2::Vector<SGType, N> const
+  Dx = Intrepid2::solve(DfDx, Df);
 
   for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
@@ -251,7 +251,7 @@ solve(
   //
   // Then deal with derivatives
   //
-  Intrepid::Tensor<SGType>
+  Intrepid2::Tensor<SGType>
   DbDx(dimension);
 
   // extract the jacobian
@@ -269,13 +269,13 @@ solve(
 //
 // SGTangent
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
   //
   // First deal with values
@@ -283,10 +283,10 @@ solve(
   auto const
   dimension = b.get_dimension();
 
-  Intrepid::Vector<SGType, N>
+  Intrepid2::Vector<SGType, N>
   Df(dimension);
 
-  Intrepid::Tensor<SGType, N>
+  Intrepid2::Tensor<SGType, N>
   DfDx(dimension);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -297,8 +297,8 @@ solve(
     }
   }
 
-  Intrepid::Vector<SGType, N> const
-  Dx = Intrepid::solve(DfDx, Df);
+  Intrepid2::Vector<SGType, N> const
+  Dx = Intrepid2::solve(DfDx, Df);
 
   for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
@@ -307,7 +307,7 @@ solve(
   //
   // Then deal with derivatives
   //
-  Intrepid::Tensor<SGType>
+  Intrepid2::Tensor<SGType>
   DbDx(dimension);
 
   // extract the jacobian
@@ -328,28 +328,28 @@ solve(
 //
 // MPResidual
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
-  x = Intrepid::solve(A, b);
+  x = Intrepid2::solve(A, b);
   return;
 }
 
 //
 // MPJacobian
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
   //
   // First deal with values
@@ -357,10 +357,10 @@ solve(
   auto const
   dimension = b.get_dimension();
 
-  Intrepid::Vector<MPType, N>
+  Intrepid2::Vector<MPType, N>
   Df(dimension);
 
-  Intrepid::Tensor<MPType, N>
+  Intrepid2::Tensor<MPType, N>
   DfDx(dimension);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -371,8 +371,8 @@ solve(
     }
   }
 
-  Intrepid::Vector<MPType, N> const
-  Dx = Intrepid::solve(DfDx, Df);
+  Intrepid2::Vector<MPType, N> const
+  Dx = Intrepid2::solve(DfDx, Df);
 
   for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
@@ -381,7 +381,7 @@ solve(
   //
   // Then deal with derivatives
   //
-  Intrepid::Tensor<MPType>
+  Intrepid2::Tensor<MPType>
   DbDx(dimension);
 
   // extract the jacobian
@@ -399,13 +399,13 @@ solve(
 //
 // MPTangent
 //
-template<Intrepid::Index N>
+template<Intrepid2::Index N>
 void
 MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, N>::
 solve(
-    Intrepid::Tensor<ScalarT, N> const & A,
-    Intrepid::Vector<ScalarT, N> const & b,
-    Intrepid::Vector<ScalarT, N> & x)
+    Intrepid2::Tensor<ScalarT, N> const & A,
+    Intrepid2::Vector<ScalarT, N> const & b,
+    Intrepid2::Vector<ScalarT, N> & x)
 {
   //
   // First deal with values
@@ -413,10 +413,10 @@ solve(
   auto const
   dimension = b.get_dimension();
 
-  Intrepid::Vector<MPType, N>
+  Intrepid2::Vector<MPType, N>
   Df(dimension);
 
-  Intrepid::Tensor<MPType, N>
+  Intrepid2::Tensor<MPType, N>
   DfDx(dimension);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -427,8 +427,8 @@ solve(
     }
   }
 
-  Intrepid::Vector<MPType, N> const
-  Dx = Intrepid::solve(DfDx, Df);
+  Intrepid2::Vector<MPType, N> const
+  Dx = Intrepid2::solve(DfDx, Df);
 
   for (auto i = 0; i < dimension; ++i) {
     x(i).val() = Dx(i);
@@ -437,7 +437,7 @@ solve(
   //
   // Then deal with derivatives
   //
-  Intrepid::Tensor<MPType>
+  Intrepid2::Tensor<MPType>
   DbDx(dimension);
 
   // extract the jacobian

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor_Mechanics.h>
+#include <Intrepid2_MiniTensor_Mechanics.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <Sacado_ParameterRegistration.hpp>
@@ -75,11 +75,11 @@ template<typename EvalT, typename Traits>
 void CMResidualCoarse<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT>
   F(num_dims_), P(num_dims_), sig(num_dims_);
 
-  Intrepid::Tensor<ScalarT>
-  I(Intrepid::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT>
+  I(Intrepid2::eye<ScalarT>(num_dims_));
 
   // initialize residual
   for (int cell = 0; cell < workset.numCells; ++cell) {
@@ -93,7 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
        sig.fill(stress_,cell, pt,0,0);
 
        // map Cauchy stress to 1st PK
-       P = Intrepid::piola(F, sig);
+       P = Intrepid2::piola(F, sig);
 
        for (int node = 0; node < num_nodes_; ++node) {
          for (int i = 0; i < num_dims_; ++i) {

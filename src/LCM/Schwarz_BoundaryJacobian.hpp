@@ -19,7 +19,7 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Intrepid_MiniTensor.h"
+#include "Intrepid2_MiniTensor.h"
 
 namespace LCM {
 

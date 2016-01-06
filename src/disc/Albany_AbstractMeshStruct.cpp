@@ -6,5 +6,5 @@
 
 #include "Albany_AbstractMeshStruct.hpp"
 
-Intrepid::DefaultCubatureFactory<RealType>
+Intrepid2::DefaultCubatureFactory<RealType>
   Albany::CellSpecs::cubFactory;

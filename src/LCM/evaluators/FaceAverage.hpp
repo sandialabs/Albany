@@ -11,8 +11,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace LCM {
 /** \brief Computes the face average of a nodal value
@@ -55,9 +55,9 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       // The field that was projected to the nodes
       PHX::MDField<ScalarT,Cell,Node,VecDim> projected;
       //Numerical integration rule
-      Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
+      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
       // FE basis
-      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
+      Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> intrepidBasis;
       // The cell type
       Teuchos::RCP<shards::CellTopology> cellType;
 
@@ -69,9 +69,9 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::MDField<ScalarT,Cell,QuadPoint> temp;
 
       // For creating the quadrature weights
-      Intrepid::FieldContainer<RealType> refPoints;
-      Intrepid::FieldContainer<RealType> refWeights;
-      Intrepid::FieldContainer<RealType> refValues;
+      Intrepid2::FieldContainer<RealType> refPoints;
+      Intrepid2::FieldContainer<RealType> refWeights;
+      Intrepid2::FieldContainer<RealType> refValues;
 
       // Face topology data
       const struct CellTopologyData_Subcell * sides;

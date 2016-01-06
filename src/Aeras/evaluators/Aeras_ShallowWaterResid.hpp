@@ -15,8 +15,8 @@
 #include "Sacado_ParameterAccessor.hpp"
 
 #include <Shards_CellTopology.hpp>
-#include <Intrepid_Basis.hpp>
-#include <Intrepid_Cubature.hpp>
+#include <Intrepid2_Basis.hpp>
+#include <Intrepid2_Cubature.hpp>
 
 
 //#define ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -69,7 +69,7 @@ private:
 	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
 	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
 	PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
-	Intrepid::FieldContainer<RealType>    grad_at_cub_points;
+	Intrepid2::FieldContainer<RealType>    grad_at_cub_points;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> hyperviscosity;
 
 	// Output:
@@ -81,15 +81,15 @@ private:
 	bool useImplHyperviscosity;
 	bool plotVorticity;
 
-	Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-	Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-	Intrepid::FieldContainer<RealType>    refPoints;
-	Intrepid::FieldContainer<RealType>    refWeights;
+	Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
+	Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
+	Intrepid2::FieldContainer<RealType>    refPoints;
+	Intrepid2::FieldContainer<RealType>    refWeights;
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-	Intrepid::FieldContainer<MeshScalarT>  nodal_jacobian;
-	Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
-	Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
-	Intrepid::FieldContainer<ScalarT> wrk_;
+	Intrepid2::FieldContainer<MeshScalarT>  nodal_jacobian;
+	Intrepid2::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
+	Intrepid2::FieldContainer<MeshScalarT>  nodal_det_j;
+	Intrepid2::FieldContainer<ScalarT> wrk_;
 #endif
 
 	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
@@ -117,20 +117,20 @@ private:
 
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-	void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
-			std::size_t cell, Intrepid::FieldContainer<ScalarT>  & div);
+	void divergence(const Intrepid2::FieldContainer<ScalarT>  & fieldAtNodes,
+			std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & div);
 
 	//gradient returns vector in physical basis
-	void gradient(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
-			std::size_t cell, Intrepid::FieldContainer<ScalarT>  & gradField);
+	void gradient(const Intrepid2::FieldContainer<ScalarT>  & fieldAtNodes,
+			std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & gradField);
 
 	// curl only returns the component in the radial direction
-	void curl(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
-			std::size_t cell, Intrepid::FieldContainer<ScalarT>  & curl);
+	void curl(const Intrepid2::FieldContainer<ScalarT>  & fieldAtNodes,
+			std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & curl);
 
 	void fill_nodal_metrics(std::size_t cell);
 
-	void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
+	void get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis);
 
 	std::vector<LO> qpToNodeMap;
 	std::vector<LO> nodeToQPMap;

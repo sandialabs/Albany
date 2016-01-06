@@ -6,8 +6,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 #include <typeinfo>
 
@@ -20,9 +20,9 @@ FaceAverage(const Teuchos::ParameterList& p) :
     p.get<Teuchos::RCP<PHX::DataLayout>>("Vertex Vector Data Layout")),
   projected(p.get<std::string>("Projected Field Name"),
     p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout")),
-  cubature(p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Face Cubature")),
-  intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis
-    <RealType, Intrepid::FieldContainer<RealType>>>>("Face Intrepid Basis")),
+  cubature(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Face Cubature")),
+  intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis
+    <RealType, Intrepid2::FieldContainer<RealType>>>>("Face Intrepid2 Basis")),
   cellType(p.get<Teuchos::RCP<shards::CellTopology>>("Cell Type")),
   faceAve(p.get<std::string>("Face Average Name"),
     p.get<Teuchos::RCP<PHX::DataLayout>>("Face Vector Data Layout")),
@@ -80,7 +80,7 @@ FaceAverage(const Teuchos::ParameterList& p) :
     refValues.resize(numFaceNodes,numQPs);
 
     cubature->getCubature(refPoints,refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
 
 
     this->setName("FaceAverage"+PHX::typeAsString<EvalT>());

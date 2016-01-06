@@ -93,8 +93,8 @@ namespace Aeras {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -124,15 +124,15 @@ Aeras::XScalarAdvectionProblem::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
   
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();

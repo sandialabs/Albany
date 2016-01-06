@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -17,8 +17,8 @@ namespace LCM {
   SurfaceScalarGradient(const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")), 
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")), 
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>>("Intrepid2 Basis")),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     jump           (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
@@ -62,8 +62,8 @@ namespace LCM {
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
   }
 
   //**********************************************************************
@@ -89,25 +89,25 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        Intrepid::Vector<MeshScalarT> G_0(3, refDualBasis, cell, pt, 0, 0);
-        Intrepid::Vector<MeshScalarT> G_1(3, refDualBasis, cell, pt, 1, 0);
-        Intrepid::Vector<MeshScalarT> G_2(3, refDualBasis, cell, pt, 2, 0);
-        Intrepid::Vector<MeshScalarT> N(3, refNormal,cell, pt, 0);
+        Intrepid2::Vector<MeshScalarT> G_0(3, refDualBasis, cell, pt, 0, 0);
+        Intrepid2::Vector<MeshScalarT> G_1(3, refDualBasis, cell, pt, 1, 0);
+        Intrepid2::Vector<MeshScalarT> G_2(3, refDualBasis, cell, pt, 2, 0);
+        Intrepid2::Vector<MeshScalarT> N(3, refNormal,cell, pt, 0);
 
-        Intrepid::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
-        Intrepid::Vector<ScalarT> scalarGradParallel(0, 0, 0);
+        Intrepid2::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
+        Intrepid2::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
        // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-        Intrepid::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt, 0, 0);
-        Intrepid::Tensor<MeshScalarT> invRefDualBasis(3);
+        Intrepid2::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt, 0, 0);
+        Intrepid2::Tensor<MeshScalarT> invRefDualBasis(3);
 
         // This map the position vector from parent to current configuration in R^3
-        gBasis = Intrepid::transpose(gBasis);
-       invRefDualBasis = Intrepid::inverse(gBasis);
+        gBasis = Intrepid2::transpose(gBasis);
+       invRefDualBasis = Intrepid2::inverse(gBasis);
 
-        Intrepid::Vector<MeshScalarT> invG_0(3, &invRefDualBasis( 0, 0));
-        Intrepid::Vector<MeshScalarT> invG_1(3, &invRefDualBasis( 1, 0));
-        Intrepid::Vector<MeshScalarT> invG_2(3, &invRefDualBasis( 2, 0));
+        Intrepid2::Vector<MeshScalarT> invG_0(3, &invRefDualBasis( 0, 0));
+        Intrepid2::Vector<MeshScalarT> invG_1(3, &invRefDualBasis( 1, 0));
+        Intrepid2::Vector<MeshScalarT> invG_2(3, &invRefDualBasis( 2, 0));
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {

@@ -10,7 +10,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -102,7 +102,7 @@ namespace PHAL {
       } 
     }
 
-    //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+    //  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 #else
 
 #ifdef ALBANY_TIMER
@@ -215,7 +215,7 @@ namespace PHAL {
         } 
       } 
     }
-    //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+    //  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 #else
 #ifdef ALBANY_TIMER
@@ -299,7 +299,7 @@ namespace PHAL {
         } 
       } 
     }
-    //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+    //  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 /*#else
   
@@ -372,7 +372,7 @@ namespace PHAL {
         } 
       } 
     }
-    //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+    //  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 /*#else
   

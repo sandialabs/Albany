@@ -108,8 +108,8 @@ getValidProblemParameters() const
 void
 Albany::ConstitutiveDriverProblem::
 getAllocatedStates(
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> old_state,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> new_state) const
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>> old_state,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>> new_state) const
 {
   old_state = old_state_;
   new_state = new_state_;

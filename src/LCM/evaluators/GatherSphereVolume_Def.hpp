@@ -61,7 +61,7 @@ void GatherSphereVolume<EvalT, Traits>::evaluateFields(typename Traits::EvalData
     sphereVolume(cell,v) = wsSphereVolume[cell,v];
   }
 
-  // Since Intrepid will later perform calculations on the entire workset size
+  // Since Intrepid2 will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to calculations on singular elements.
   for (int cell=numCells; cell < worksetSize; ++cell) {

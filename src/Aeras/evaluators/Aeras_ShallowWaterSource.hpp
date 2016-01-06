@@ -46,7 +46,7 @@ public:
 private:
 
           
-  void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
+  void get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis);
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;

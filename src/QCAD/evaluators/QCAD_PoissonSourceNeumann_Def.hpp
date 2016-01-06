@@ -9,7 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include <string>
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 //#include "Sacado_ParameterRegistration.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -121,11 +121,11 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
 
   const CellTopologyData * const elem_top = &meshSpecs->ctd;
 
-  intrepidBasis = Albany::getIntrepidBasis(*elem_top);
+  intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
 
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
   cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
@@ -250,9 +250,9 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
                                    // once we move logic to BCUtils
 
 
-    Intrepid::FieldContainer<ScalarT> betaOnSide;
-    Intrepid::FieldContainer<ScalarT> thicknessOnSide;
-    Intrepid::FieldContainer<ScalarT> elevationOnSide;
+    Intrepid2::FieldContainer<ScalarT> betaOnSide;
+    Intrepid2::FieldContainer<ScalarT> thicknessOnSide;
+    Intrepid2::FieldContainer<ScalarT> elevationOnSide;
 
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
@@ -301,43 +301,38 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       
 
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-      Intrepid::CellTools<RealType>::mapToReferenceSubcell
+      Intrepid2::CellTools<RealType>::mapToReferenceSubcell
 	(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
       // Calculate side geometry
-      Intrepid::CellTools<MeshScalarT>::setJacobian
+      Intrepid2::CellTools<MeshScalarT>::setJacobian
 	(jacobianSide, refPointsSide, physPointsCell, *cellType);
 
-      Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
+      Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
       
       if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
-	Intrepid::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
+	Intrepid2::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
 	  (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
       }
       else { //for 3D, get weighted face measure
-	Intrepid::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
+	Intrepid2::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
 	  (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
       }
 
       // Values of the basis functions at side cubature points, in the reference parent cell domain
-      intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
+      intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
 
       // Transform values of the basis functions
-      Intrepid::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
+      Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
 	(trans_basis_refPointsSide, basis_refPointsSide);
 
       // Multiply with weighted measure
-      Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+      Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
 	(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
       
-#ifdef ALBANY_USE_PUBLICTRILINOS
       // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
-	(physPointsSide, refPointsSide, physPointsCell, *cellType);
-#else
-      Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
+      Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame
 	(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
-#endif
       
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       for (std::size_t node=0; node < numNodes; ++node)
@@ -347,13 +342,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       for (int k=0; k < numQPsSide ; k++) dofSide(0,k) = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFInterpolation evaluator)
-      Intrepid::FunctionSpaceTools::
-	evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+      Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
       
-      // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      //Intrepid::FunctionSpaceTools::
-      //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
-
       // Transform the given BC data to the physical space QPs in each side (elem_side)
       calc_dudn_2DThomasFermi(data, physPointsSide, dofSide, jacobianSide, *cellType, cellDims, elem_side, i);
 
@@ -377,10 +367,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void PoissonSourceNeumannBase<EvalT, Traits>::
-calc_dudn_2DThomasFermi(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-			const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-			const Intrepid::FieldContainer<ScalarT>& dof_side,
-			const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_2DThomasFermi(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
+			const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
+			const Intrepid2::FieldContainer<ScalarT>& dof_side,
+			const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
 			const shards::CellTopology & celltopo,
 			const int cellDims,
 			int local_side_id, int iSideset){

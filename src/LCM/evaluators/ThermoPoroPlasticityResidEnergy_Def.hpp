@@ -7,8 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 #include <typeinfo>
 
@@ -58,7 +58,7 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
 	coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
 				 p.get<Teuchos::RCP<PHX::DataLayout>>("Coordinate Data Layout") ),
-    cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType>>>("Cubature")),
+    cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType>>>("Cubature")),
 	cellType      (p.get<Teuchos::RCP <shards::CellTopology>> ("Cell Type")),
 	weights       (p.get<std::string>                   ("Weights Name"),
 		         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
@@ -236,8 +236,8 @@ template<typename EvalT, typename Traits>
 void ThermoPoroPlasticityResidEnergy<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
-  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
   Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
@@ -266,7 +266,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
+   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid2::COMP_CPP, false); // "true" sums into
 
   // Heat Convection Term
    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);

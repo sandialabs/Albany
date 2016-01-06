@@ -44,15 +44,15 @@ public virtual Albany::AbstractProblem {
    Albany::StateManager* stateMgr;
 
    std::vector<Teuchos::RCP<shards::CellTopology> > cellTypes;
-   std::vector<Teuchos::RCP<Intrepid::Cubature<double> > > cubatures;
-   std::vector<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
+   std::vector<Teuchos::RCP<Intrepid2::Cubature<double> > > cubatures;
+   std::vector<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >
      intrepidBasis;
 
 
-   std::vector<Intrepid::FieldContainer<double> > refPoints;
-   std::vector<Intrepid::FieldContainer<double> > refWeights;
-   std::vector<Intrepid::FieldContainer<double> > basisAtQPs;
-   std::vector<Intrepid::FieldContainer<double> > weighted_measure;
+   std::vector<Intrepid2::FieldContainer<double> > refPoints;
+   std::vector<Intrepid2::FieldContainer<double> > refWeights;
+   std::vector<Intrepid2::FieldContainer<double> > basisAtQPs;
+   std::vector<Intrepid2::FieldContainer<double> > weighted_measure;
 
    Teuchos::RCP<Epetra_Vector> overlapVec;
    Teuchos::RCP<Epetra_Vector> localVec;

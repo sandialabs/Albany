@@ -447,10 +447,10 @@ void
 Albany::MechanicsProblem::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>>
     new_state
     ) const
     {

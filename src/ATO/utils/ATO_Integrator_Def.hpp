@@ -5,18 +5,18 @@
 //*****************************************************************/
 
 #include <Shards_CellTopology.hpp>
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Shards_CellTopologyData.h>
 #include <map>
-#include <Intrepid_HGRAD_TET_C1_FEM.hpp>
-#include <Intrepid_HGRAD_HEX_C1_FEM.hpp>
+#include <Intrepid2_HGRAD_TET_C1_FEM.hpp>
+#include <Intrepid2_HGRAD_HEX_C1_FEM.hpp>
 
 //******************************************************************************//
 template<typename C>
 void ATO::Integrator::getMeasure(
      RealType& measure, 
-     const Intrepid::FieldContainer<RealType>& topoVals, 
-     const Intrepid::FieldContainer<RealType>& coordCon, 
+     const Intrepid2::FieldContainer<RealType>& topoVals, 
+     const Intrepid2::FieldContainer<RealType>& coordCon, 
      const RealType zeroVal, const C compare)
 //******************************************************************************//
 {
@@ -32,7 +32,7 @@ void ATO::Integrator::getMeasure(
     // if there are topoVals that are exactly equal to or very near zeroVal, 
     // there will be all sorts of special cases.  If necessary, nudge values
     // away from zeroVal.  
-    Intrepid::FieldContainer<RealType> vals(topoVals);
+    Intrepid2::FieldContainer<RealType> vals(topoVals);
     int nvals = vals.dimension(0);
     for(int i=0; i<nvals; i++){
       if( fabs(vals(i) - zeroVal) < 1e-9 ) vals(i) = zeroVal + 1e-9;
@@ -55,8 +55,8 @@ void ATO::Integrator::getMeasure(
 //******************************************************************************//
 void ATO::SubIntegrator::getMeasure(
      RealType& measure, 
-     const Intrepid::FieldContainer<RealType>& topoVals, 
-     const Intrepid::FieldContainer<RealType>& coordCon, 
+     const Intrepid2::FieldContainer<RealType>& topoVals, 
+     const Intrepid2::FieldContainer<RealType>& coordCon, 
      const RealType zeroVal, Sense sense)
 //******************************************************************************//
 {
@@ -103,9 +103,9 @@ void ATO::SubIntegrator::getMeasure(
 //******************************************************************************//
 void ATO::SubIntegrator::getMeasure(
      RealType& measure, 
-     Intrepid::FieldContainer<RealType>& dMdtopo,
-     const Intrepid::FieldContainer<RealType>& topoVals, 
-     const Intrepid::FieldContainer<RealType>& coordCon, 
+     Intrepid2::FieldContainer<RealType>& dMdtopo,
+     const Intrepid2::FieldContainer<RealType>& topoVals, 
+     const Intrepid2::FieldContainer<RealType>& coordCon, 
      const RealType zeroVal, Sense sense)
 //******************************************************************************//
 {
@@ -116,8 +116,8 @@ void ATO::SubIntegrator::getMeasure(
 
   uint nTopoVals = topoVals.size();
   DFadType Mfad;
-  Intrepid::FieldContainer<DFadType> Tfad(nTopoVals);
-  Intrepid::FieldContainer<RealType> Tval(nTopoVals);
+  Intrepid2::FieldContainer<DFadType> Tfad(nTopoVals);
+  Intrepid2::FieldContainer<RealType> Tval(nTopoVals);
   for(uint i=0; i<nTopoVals; i++){
     Tval(i) = Sacado::ScalarValue<RealType>::eval(topoVals(i));
     Tfad(i) = DFadType(nTopoVals, i, Tval(i));
@@ -292,7 +292,7 @@ void ATO::SubIntegrator::Refine(
 //******************************************************************************//
 template<typename N, typename V, typename P>
 void ATO::SubIntegrator::Project(
-     const Intrepid::FieldContainer<N>& topoVals, 
+     const Intrepid2::FieldContainer<N>& topoVals, 
      std::vector<Simplex<V,P> >& implicitPolys)
 //******************************************************************************//
 {
@@ -300,8 +300,8 @@ void ATO::SubIntegrator::Project(
   int numNodes = basis->getCardinality();
   int nPoints = implicitPolys[0].points.size();
 
-  Intrepid::FieldContainer<V> Nvals(numNodes, nPoints);
-  Intrepid::FieldContainer<P> evalPoints(nPoints, nDims);
+  Intrepid2::FieldContainer<V> Nvals(numNodes, nPoints);
+  Intrepid2::FieldContainer<P> evalPoints(nPoints, nDims);
 
   typename std::vector<Simplex<V,P> >::iterator it;
   for(it=implicitPolys.begin(); it!=implicitPolys.end(); it++){
@@ -461,39 +461,39 @@ void ATO::SubIntegrator::Dice(
 namespace ATO {
 //******************************************************************************//
 template<>
-void SubIntegrator::getValues<>( Intrepid::FieldContainer<RealType>& Nvals,
-                                 const Intrepid::FieldContainer<RealType>& evalPoints)
+void SubIntegrator::getValues<>( Intrepid2::FieldContainer<RealType>& Nvals,
+                                 const Intrepid2::FieldContainer<RealType>& evalPoints)
 //******************************************************************************//
-{ basis->getValues(Nvals, evalPoints, Intrepid::OPERATOR_VALUE); }
+{ basis->getValues(Nvals, evalPoints, Intrepid2::OPERATOR_VALUE); }
 
 //******************************************************************************//
 template<>
-void SubIntegrator::getValues<>( Intrepid::FieldContainer<DFadType>& Nvals,
-                                 const Intrepid::FieldContainer<DFadType>& evalPoints)
+void SubIntegrator::getValues<>( Intrepid2::FieldContainer<DFadType>& Nvals,
+                                 const Intrepid2::FieldContainer<DFadType>& evalPoints)
 //******************************************************************************//
-{ DFadBasis->getValues(Nvals, evalPoints, Intrepid::OPERATOR_VALUE); }
+{ DFadBasis->getValues(Nvals, evalPoints, Intrepid2::OPERATOR_VALUE); }
 }
 
 //******************************************************************************//
 template<typename N, typename V, typename P>
 V ATO::SubIntegrator::Volume(Simplex<V,P>& simplex,
-                             const Intrepid::FieldContainer<N>& coordCon)
+                             const Intrepid2::FieldContainer<N>& coordCon)
 //******************************************************************************//
 {
   int numNodes = basis->getCardinality();
   int nPoints = simplex.points.size();
-  Intrepid::FieldContainer<P> evalPoints(nPoints, nDims);
+  Intrepid2::FieldContainer<P> evalPoints(nPoints, nDims);
 
   for(int i=0; i<nPoints; i++)
     for(uint j=0; j<nDims; j++)
       evalPoints(i, j) = simplex.points[i](j);
 
 
-  Intrepid::FieldContainer<P> Nvals(numNodes, nPoints);
+  Intrepid2::FieldContainer<P> Nvals(numNodes, nPoints);
   getValues<V,P>(Nvals, evalPoints);
 
 
-  Intrepid::FieldContainer<P> pnts(nPoints, nDims);
+  Intrepid2::FieldContainer<P> pnts(nPoints, nDims);
   for(int i=0; i<nPoints; i++)
     for(uint j=0; j<nDims; j++){
       pnts(i,j) = 0.0;
@@ -606,19 +606,19 @@ void SubIntegrator::SortMap<DFadType>(const std::vector<typename Vector3D<DFadTy
   // sort by counterclockwise angle about surface normal
   RealType pi = acos(-1.0);
   typename Vector3D<RealType>::Type X(rpoints[0]-center);
-  RealType xnorm = Intrepid::norm(X);
+  RealType xnorm = Intrepid2::norm(X);
   X /= xnorm;
   typename Vector3D<RealType>::Type X1(rpoints[1]-center);
-  typename Vector3D<RealType>::Type Z = Intrepid::cross(X, X1);
-  RealType znorm = Intrepid::norm(Z);
+  typename Vector3D<RealType>::Type Z = Intrepid2::cross(X, X1);
+  RealType znorm = Intrepid2::norm(Z);
   Z /= znorm;
-  typename Vector3D<RealType>::Type Y = Intrepid::cross(Z, X);
+  typename Vector3D<RealType>::Type Y = Intrepid2::cross(Z, X);
 
   std::map<RealType, uint> angles;
   angles.insert( std::pair<RealType, uint>(0.0,0) );
   for(uint i=1; i<nPoints; i++){
     typename Vector3D<RealType>::Type comp = rpoints[i] - center;
-    RealType compnorm = Intrepid::norm(comp);
+    RealType compnorm = Intrepid2::norm(comp);
     comp /= compnorm;
     RealType prod = X*comp;
     RealType angle = acos((float)prod);
@@ -651,19 +651,19 @@ void SubIntegrator::SortMap<RealType>(const std::vector<typename Vector3D<RealTy
   // sort by counterclockwise angle about surface normal
   RealType pi = acos(-1.0);
   typename Vector3D<RealType>::Type X(points[0]-center);
-  RealType xnorm = Intrepid::norm(X);
+  RealType xnorm = Intrepid2::norm(X);
   X /= xnorm;
   typename Vector3D<RealType>::Type X1(points[1]-center);
-  typename Vector3D<RealType>::Type Z = Intrepid::cross(X, X1);
-  RealType znorm = Intrepid::norm(Z);
+  typename Vector3D<RealType>::Type Z = Intrepid2::cross(X, X1);
+  RealType znorm = Intrepid2::norm(Z);
   Z /= znorm;
-  typename Vector3D<RealType>::Type Y = Intrepid::cross(Z, X);
+  typename Vector3D<RealType>::Type Y = Intrepid2::cross(Z, X);
 
   std::map<RealType, uint> angles;
   angles.insert( std::pair<RealType, uint>(0.0,0) );
   for(uint i=1; i<nPoints; i++){
     typename Vector3D<RealType>::Type comp = points[i] - center;
-    RealType compnorm = Intrepid::norm(comp);
+    RealType compnorm = Intrepid2::norm(comp);
     comp /= compnorm;
     RealType prod = X*comp;
     RealType angle = acos((float)prod);
@@ -687,8 +687,8 @@ template<typename C>
 void ATO::Integrator::getSurfaceTris(
             std::vector< Vector3D >& points,
             std::vector< Tri >& tris,
-            const Intrepid::FieldContainer<RealType>& topoVals, 
-            const Intrepid::FieldContainer<RealType>& coordCon, 
+            const Intrepid2::FieldContainer<RealType>& topoVals, 
+            const Intrepid2::FieldContainer<RealType>& coordCon, 
             RealType zeroVal, C compare)
 //******************************************************************************//
 {
@@ -702,7 +702,7 @@ void ATO::Integrator::getSurfaceTris(
     for(uint edge=0; edge<nEdges; edge++){
       uint i = cellData.edge[edge].node[0], j = cellData.edge[edge].node[1];
       if((topoVals(i)-zeroVal)*(topoVals(j)-zeroVal) < 0.0){
-        Vector3D newpoint(Intrepid::ZEROS);
+        Vector3D newpoint(Intrepid2::ZEROS);
         RealType factor = fabs(topoVals(i)-zeroVal)/(fabs(topoVals(i)-zeroVal)+fabs(topoVals(j)-zeroVal));
         for(int k=0; k<nDims; k++) newpoint(k) = (1.0-factor)*coordCon(i,k) + factor*coordCon(j,k);
         std::pair<int,int> newIntx(i,j);
@@ -781,7 +781,7 @@ void ATO::Integrator::getSurfaceTris(
 template<typename C>
 bool ATO::Integrator::included(
      Teuchos::RCP<MiniPoly> poly,
-     const Intrepid::FieldContainer<RealType>& topoVals, 
+     const Intrepid2::FieldContainer<RealType>& topoVals, 
      RealType zeroVal, C compare)
 //******************************************************************************//
 {
@@ -834,19 +834,19 @@ void ATO::Integrator::trisFromPoly(
   // sort by counterclockwise angle about surface normal
   RealType pi = acos(-1.0);
   Vector3D X(polyPoints[0]-center);
-  RealType xnorm = Intrepid::norm(X);
+  RealType xnorm = Intrepid2::norm(X);
   X /= xnorm;
   Vector3D X1(polyPoints[1]-center);
-  Vector3D Z = Intrepid::cross(X, X1);
-  RealType znorm = Intrepid::norm(Z);
+  Vector3D Z = Intrepid2::cross(X, X1);
+  RealType znorm = Intrepid2::norm(Z);
   Z /= znorm;
-  Vector3D Y = Intrepid::cross(Z, X);
+  Vector3D Y = Intrepid2::cross(Z, X);
 
   std::map<RealType, uint> angles;
   angles.insert( std::pair<RealType, uint>(0.0,0) );
   for(uint i=1; i<nPoints; i++){
     Vector3D comp = polyPoints[i] - center;
-    RealType compnorm = Intrepid::norm(comp);
+    RealType compnorm = Intrepid2::norm(comp);
     comp /= compnorm;
     RealType prod = X*comp;
     RealType angle = acos((float)prod);
@@ -899,7 +899,7 @@ void ATO::Integrator::partitionBySegment(
     }
     std::vector<int> map = poly->mapToBase;
     Vector3D relvec = pnt[0] - p1;
-    Vector3D dotvec = Intrepid::cross(relvec,crossvec);
+    Vector3D dotvec = Intrepid2::cross(relvec,crossvec);
 
     Teuchos::RCP<MiniPoly> apoly = Teuchos::rcp(new MiniPoly);
     Teuchos::RCP<MiniPoly> bpoly = Teuchos::rcp(new MiniPoly);
@@ -911,7 +911,7 @@ void ATO::Integrator::partitionBySegment(
     amap.push_back(map[0]);
     for(int pt=1; pt<npoints; pt++){
       Vector3D relvec = pnt[pt] - p1;
-      RealType proj = dotvec*Intrepid::cross(relvec,crossvec);
+      RealType proj = dotvec*Intrepid2::cross(relvec,crossvec);
       if(proj > 0.0){
         apnt.push_back(pnt[pt]);
         amap.push_back(map[pt]);
@@ -943,14 +943,14 @@ RealType ATO::Integrator::getTriMeasure(
          const Tri& tri)
 //******************************************************************************//
 {
-  return Intrepid::norm(Intrepid::cross(points[tri(1)]-points[tri(0)],points[tri(2)]-points[tri(0)]))/2.0;
+  return Intrepid2::norm(Intrepid2::cross(points[tri(1)]-points[tri(0)],points[tri(2)]-points[tri(0)]))/2.0;
 }
 
 //******************************************************************************//
 void ATO::Integrator::getCubature(std::vector<std::vector<RealType> >& refPoints, 
                                   std::vector<RealType>& weights, 
-                                  const Intrepid::FieldContainer<RealType>& coordCon, 
-                                  const Intrepid::FieldContainer<RealType>& topoVals, RealType zeroVal)
+                                  const Intrepid2::FieldContainer<RealType>& coordCon, 
+                                  const Intrepid2::FieldContainer<RealType>& topoVals, RealType zeroVal)
 //******************************************************************************//
 {
 }
@@ -979,7 +979,7 @@ void ATO::Integrator::addCubature(std::vector<std::vector<RealType> >& refPoints
 //******************************************************************************//
 ATO::Integrator::
 Integrator(Teuchos::RCP<shards::CellTopology> _celltype,
-Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > _basis):
+Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > _basis):
    cellTopology(_celltype),
    basis(_basis){}
 //******************************************************************************//
@@ -987,7 +987,7 @@ Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > _b
 //******************************************************************************//
 ATO::SubIntegrator::
 SubIntegrator(Teuchos::RCP<shards::CellTopology> _celltype,
-Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > _basis,
+Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > _basis,
 uint _maxRefs, RealType _maxErr):
    cellTopology(_celltype),
    basis(_basis),
@@ -1002,9 +1002,9 @@ uint _maxRefs, RealType _maxErr):
   parentCoords.resize(basis->getCardinality(),nDims);
   
   try {
-    Teuchos::RCP<Intrepid::DofCoordsInterface<Intrepid::FieldContainer<RealType> > > 
+    Teuchos::RCP<Intrepid2::DofCoordsInterface<Intrepid2::FieldContainer<RealType> > > 
       coords_interface = 
-       Teuchos::rcp_dynamic_cast<Intrepid::DofCoordsInterface<Intrepid::FieldContainer<RealType> > >
+       Teuchos::rcp_dynamic_cast<Intrepid2::DofCoordsInterface<Intrepid2::FieldContainer<RealType> > >
         (basis,true);
   
     coords_interface->getDofCoords(parentCoords);
@@ -1024,7 +1024,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Tetrahedron<4> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-      new Intrepid::Basis_HGRAD_TET_C1_FEM<DFadType, Intrepid::FieldContainer<DFadType> >() );
+      new Intrepid2::Basis_HGRAD_TET_C1_FEM<DFadType, Intrepid2::FieldContainer<DFadType> >() );
 
     int nVerts = topo.vertex_count;
 
@@ -1045,7 +1045,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Hexahedron<8> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-     new Intrepid::Basis_HGRAD_HEX_C1_FEM<DFadType, Intrepid::FieldContainer<DFadType> >() );
+     new Intrepid2::Basis_HGRAD_HEX_C1_FEM<DFadType, Intrepid2::FieldContainer<DFadType> >() );
 
     Vector3D<RealType>::Type bodyCenter(0.0, 0.0, 0.0);
 
@@ -1081,12 +1081,12 @@ uint _maxRefs, RealType _maxErr):
 
     if( cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<4> >()->name ){
       DFadBasis = Teuchos::rcp(
-       new Intrepid::Basis_HGRAD_QUAD_C1_FEM<DFadType, Intrepid::FieldContainer<DFadType> >() );
+       new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<DFadType, Intrepid2::FieldContainer<DFadType> >() );
     } else 
     if( cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<8> >()->name 
      || cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<9> >()->name ){
       DFadBasis = Teuchos::rcp(
-       new Intrepid::Basis_HGRAD_QUAD_C2_FEM<DFadType, Intrepid::FieldContainer<DFadType> >() );
+       new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<DFadType, Intrepid2::FieldContainer<DFadType> >() );
     }
 
     const int nVerts = topo.vertex_count;
@@ -1115,7 +1115,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Triangle<3> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-     new Intrepid::Basis_HGRAD_TRI_C1_FEM<DFadType, Intrepid::FieldContainer<DFadType> >() );
+     new Intrepid2::Basis_HGRAD_TRI_C1_FEM<DFadType, Intrepid2::FieldContainer<DFadType> >() );
 
     const int nVerts = topo.vertex_count;
     Simplex<RealType,RealType> tri(nVerts);

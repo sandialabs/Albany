@@ -18,10 +18,10 @@
 // Trilinos includes
 #include <Teuchos_TwoDArray.hpp>
 #include <Shards_BasicTopologies.hpp>
-#include <Intrepid_CellTools.hpp>
-#include <Intrepid_Basis.hpp>
-#include <Intrepid_HGRAD_QUAD_Cn_FEM.hpp>
-#include <Intrepid_CubaturePolylib.hpp>
+#include <Intrepid2_CellTools.hpp>
+#include <Intrepid2_Basis.hpp>
+#include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
+#include <Intrepid2_CubaturePolylib.hpp>
 #include <stk_util/parallel/Parallel.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/base/Entity.hpp>
@@ -1875,16 +1875,16 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid::FieldContainer< double > Field_t;
+  typedef Intrepid2::FieldContainer< double > Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-  Teuchos::RCP< Intrepid::Cubature< double, Field_t, Field_t > > gl1D =
+  Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > gl1D =
     Teuchos::rcp(
-      new Intrepid::CubaturePolylib< double, Field_t, Field_t >(
-        2*deg-1, Intrepid::PL_GAUSS_LOBATTO));
+      new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
+        2*deg-1, Intrepid2::PL_GAUSS_LOBATTO));
   Field_t refCoords(np, 1);
   Field_t refWeights(np);
   gl1D->getCubature(refCoords, refWeights);
@@ -1968,25 +1968,25 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid::FieldContainer< double > Field_t;
+  typedef Intrepid2::FieldContainer< double > Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int np2 = np * np;
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-  Teuchos::RCP< Intrepid::Cubature< double, Field_t, Field_t > > gl1D =
+  Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > gl1D =
     Teuchos::rcp(
-      new Intrepid::CubaturePolylib< double, Field_t, Field_t >(
-        2*deg-1, Intrepid::PL_GAUSS_LOBATTO));
+      new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
+        2*deg-1, Intrepid2::PL_GAUSS_LOBATTO));
 
   // Compute the 2D Gauss-Lobatto cubature.  These will be the nodal
   // points of the reference spectral element
   std::vector<
-    Teuchos::RCP< Intrepid::Cubature< double, Field_t, Field_t > > > axes;
+    Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > > axes;
   axes.push_back(gl1D);
   axes.push_back(gl1D);
-  Intrepid::CubatureTensor< double, Field_t, Field_t > gl2D(axes);
+  Intrepid2::CubatureTensor< double, Field_t, Field_t > gl2D(axes);
   Field_t refCoords(np2, 2);
   Field_t refWeights(np2);
   gl2D.getCubature(refCoords, refWeights);
@@ -2970,16 +2970,16 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   }
 
 
-  const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > >
+  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid::FieldContainer< double > Field_t;
-    typedef Intrepid::Basis< double, Field_t > Basis_t;
+    typedef Intrepid2::FieldContainer< double > Field_t;
+    typedef Intrepid2::Basis< double, Field_t > Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
 
     // Check for valid value of C
     int deg = (int) std::sqrt((double)C);
@@ -2995,8 +2995,8 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
 
     // Spectral bases
     return Teuchos::rcp(
-      new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
-        deg, Intrepid::POINTTYPE_SPECTRAL) );
+      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
+        deg, Intrepid2::POINTTYPE_SPECTRAL) );
   }
 
   double value(const std::vector<double> &soln,
@@ -3004,17 +3004,17 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid::Basis<double,
-                                       Intrepid::FieldContainer<double> > >
+    const Teuchos::RCP<Intrepid2::Basis<double,
+                                       Intrepid2::FieldContainer<double> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     double x = 0;
     for (unsigned j=0; j<C; ++j) x += soln[j] * basisVals(j,0);
@@ -3027,17 +3027,17 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   {
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double,
-                                       Intrepid::FieldContainer<double> > >
+    const Teuchos::RCP<Intrepid2::Basis<double,
+                                       Intrepid2::FieldContainer<double> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     for (unsigned i = 0; i < 3; ++i)
       x[i] = 0;
@@ -3051,17 +3051,17 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
             const std::pair<double, double> &ref)
   {
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double,
-                                       Intrepid::FieldContainer<double> > >
+    const Teuchos::RCP<Intrepid2::Basis<double,
+                                       Intrepid2::FieldContainer<double> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid::FieldContainer<double> basisGrad (C, numPoints, 2);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisGrad (C, numPoints, 2);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid::OPERATOR_GRAD);
+    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid2::OPERATOR_GRAD);
 
     for (unsigned i = 0; i < 3; ++i)
       x[i][0] = x[i][1] = 0;

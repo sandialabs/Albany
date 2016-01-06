@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 
 //**********************************************************************
@@ -98,7 +98,7 @@ template<typename EvalT, typename Traits>
 void QCAD::SchrodingerResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
   bool bValidRegion = true;
   double invEffMass = 1.0; 
 
@@ -212,18 +212,18 @@ evaluateFields(typename Traits::EvalData workset)
     }    
 
     //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
-    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
   
     //Potential term: add integral( psi * V * BF dV ) to residual
     if (havePotential) {
       FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
-      FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+      FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
     }
 
     //**Note: I think this should always be used with enableTransient = True
     //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
     if (workset.transientTerms && enableTransient) 
-      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
       
   }  // end of if(bValidRegion)
   
@@ -248,7 +248,7 @@ evaluateFields(typename Traits::EvalData workset)
           
       FST::scalarMultiplyDataData<ScalarT> (psiV, V_barrier, psi);
       // FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
-      FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, false); // "false" overwrites
+      FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid2::COMP_CPP, false); // "false" overwrites
     }
 
 
@@ -264,17 +264,17 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
     //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
-    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+    FST::integrate<ScalarT>(psiResidual, psiGradWithMass, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
   
     //Potential term: add integral( psi * V * BF dV ) to residual
     FST::scalarMultiplyDataData<ScalarT> (psiV, V_barrier, psi);
     //FST::scalarMultiplyDataData<ScalarT> (psiV, V, psi);
-    FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    FST::integrate<ScalarT>(psiResidual, psiV, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
 
     // **Note: I think this should always be used with enableTransient = True
     //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
     if (workset.transientTerms && enableTransient) 
-      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+      FST::integrate<ScalarT>(psiResidual, psiDot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
     */
   }
 }

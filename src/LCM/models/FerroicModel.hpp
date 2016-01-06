@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 #include "Sacado.hpp"
 
@@ -71,28 +71,28 @@ private:
   ///
   template<typename T>
   void computeState(Teuchos::Array<T>& fractions,
-                    Intrepid::Tensor<ScalarT>& x, 
-                    Intrepid::Tensor<T>& X, 
-                    Intrepid::Tensor<T>& linear_x,
-                    Intrepid::Vector<ScalarT>& E, 
-                    Intrepid::Vector<T>& D, 
-                    Intrepid::Vector<T>& linear_D);
+                    Intrepid2::Tensor<ScalarT>& x, 
+                    Intrepid2::Tensor<T>& X, 
+                    Intrepid2::Tensor<T>& linear_x,
+                    Intrepid2::Vector<ScalarT>& E, 
+                    Intrepid2::Vector<T>& D, 
+                    Intrepid2::Vector<T>& linear_D);
 
-  void findActiveTransitions(Intrepid::FieldContainer<int>& transitionMap,
+  void findActiveTransitions(Intrepid2::FieldContainer<int>& transitionMap,
                              Teuchos::Array<ScalarT>& fractions,
-                             Intrepid::Tensor<ScalarT>& X, Intrepid::Tensor<ScalarT>& linear_x,
-                             Intrepid::Vector<ScalarT>& E, Intrepid::Vector<ScalarT>& linear_D);
+                             Intrepid2::Tensor<ScalarT>& X, Intrepid2::Tensor<ScalarT>& linear_x,
+                             Intrepid2::Vector<ScalarT>& E, Intrepid2::Vector<ScalarT>& linear_D);
 
-  void findEquilibriumState(Intrepid::FieldContainer<int>& transitionMap,
+  void findEquilibriumState(Intrepid2::FieldContainer<int>& transitionMap,
                             Teuchos::Array<ScalarT>& oldfractions,
                             Teuchos::Array<ScalarT>& newfractions,
-                            Intrepid::Tensor<ScalarT>& x, Intrepid::Vector<ScalarT>& E);
+                            Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E);
 
   bool converged(std::vector<ScalarT>& R, int iteration, ScalarT& initNorm);
 
 
-  void computeResidualandJacobian(Intrepid::FieldContainer<int> transitionMap,
-                                  Intrepid::Tensor<ScalarT>& x, Intrepid::Vector<ScalarT>& E,
+  void computeResidualandJacobian(Intrepid2::FieldContainer<int> transitionMap,
+                                  Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E,
                                   Teuchos::Array<ScalarT>& fractions,
                                   std::vector<ScalarT>& X, std::vector<ScalarT>& R,
                                   std::vector<ScalarT>& dRdX);
@@ -110,11 +110,11 @@ private:
   ///
   /// material parameters
   ///
-  Intrepid::Tensor<RealType> R;
+  Intrepid2::Tensor<RealType> R;
 
-//  Intrepid::Tensor4<RealType> C;
-//  Intrepid::Tensor3<RealType> h;
-//  Intrepid::Tensor<RealType> beta;
+//  Intrepid2::Tensor4<RealType> C;
+//  Intrepid2::Tensor3<RealType> h;
+//  Intrepid2::Tensor<RealType> beta;
 
 
   ///
@@ -136,11 +136,11 @@ private:
 
   class CrystalPhase {
    public:
-    CrystalPhase(Intrepid::Tensor<RealType>& R, Teuchos::ParameterList& p);
+    CrystalPhase(Intrepid2::Tensor<RealType>& R, Teuchos::ParameterList& p);
 
-    Intrepid::Tensor4<RealType> C;
-    Intrepid::Tensor3<RealType> h;
-    Intrepid::Tensor<RealType> beta;
+    Intrepid2::Tensor4<RealType> C;
+    Intrepid2::Tensor3<RealType> h;
+    Intrepid2::Tensor<RealType> beta;
 
     // Rhombohedral ?
     RealType C11, C33, C12, C23, C44, C66;
@@ -154,12 +154,12 @@ private:
   class CrystalVariant {
    public:
     CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase>>& phases, Teuchos::ParameterList& p);
-    Intrepid::Tensor4<RealType> C;
-    Intrepid::Tensor3<RealType> h;
-    Intrepid::Tensor<RealType> beta;
-    Intrepid::Tensor<RealType> R;
-    Intrepid::Tensor<RealType> spontStrain;
-    Intrepid::Vector<RealType> spontEDisp;
+    Intrepid2::Tensor4<RealType> C;
+    Intrepid2::Tensor3<RealType> h;
+    Intrepid2::Tensor<RealType> beta;
+    Intrepid2::Tensor<RealType> R;
+    Intrepid2::Tensor<RealType> spontStrain;
+    Intrepid2::Vector<RealType> spontEDisp;
   };
 
   class Transition {
@@ -167,8 +167,8 @@ private:
     Transition(Teuchos::RCP<CrystalVariant> from, Teuchos::RCP<CrystalVariant> to);
     Teuchos::RCP<CrystalVariant> fromVariant;
     Teuchos::RCP<CrystalVariant> toVariant;
-    Intrepid::Tensor<RealType> transStrain;
-    Intrepid::Vector<RealType> transEDisp;
+    Intrepid2::Tensor<RealType> transStrain;
+    Intrepid2::Vector<RealType> transEDisp;
   };
 
   Teuchos::Array<RealType> initialBinFractions;
@@ -177,21 +177,21 @@ private:
   Teuchos::Array<Teuchos::RCP<Transition>> transitions;
   Teuchos::Array<ScalarT> tBarrier;
   RealType alphaParam, gammaParam;
-  Intrepid::FieldContainer<RealType> aMatrix;
+  Intrepid2::FieldContainer<RealType> aMatrix;
 
 };
 
-void parseBasis(const Teuchos::ParameterList& pBasis, Intrepid::Tensor<RealType>& R);
+void parseBasis(const Teuchos::ParameterList& pBasis, Intrepid2::Tensor<RealType>& R);
 
-void changeBasis(Intrepid::Tensor4<RealType>& inMatlBasis, 
-                 const Intrepid::Tensor4<RealType>& inGlobalBasis,
-                 const Intrepid::Tensor<RealType>& Basis);
-void changeBasis(Intrepid::Tensor3<RealType>& inMatlBasis, 
-                 const Intrepid::Tensor3<RealType>& inGlobalBasis,
-                 const Intrepid::Tensor<RealType>& Basis);
-void changeBasis(Intrepid::Tensor<RealType>& inMatlBasis, 
-                 const Intrepid::Tensor<RealType>& inGlobalBasis,
-                 const Intrepid::Tensor<RealType>& Basis);
+void changeBasis(Intrepid2::Tensor4<RealType>& inMatlBasis, 
+                 const Intrepid2::Tensor4<RealType>& inGlobalBasis,
+                 const Intrepid2::Tensor<RealType>& Basis);
+void changeBasis(Intrepid2::Tensor3<RealType>& inMatlBasis, 
+                 const Intrepid2::Tensor3<RealType>& inGlobalBasis,
+                 const Intrepid2::Tensor<RealType>& Basis);
+void changeBasis(Intrepid2::Tensor<RealType>& inMatlBasis, 
+                 const Intrepid2::Tensor<RealType>& inGlobalBasis,
+                 const Intrepid2::Tensor<RealType>& Basis);
 
 }
 

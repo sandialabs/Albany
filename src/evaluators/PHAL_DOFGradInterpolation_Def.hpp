@@ -11,7 +11,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -109,9 +109,9 @@ template<typename EvalT, typename Traits>
 void DOFGradInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid Version:
+  //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -216,9 +216,9 @@ template<typename Traits>
 void DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid Version:
+  //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
@@ -326,9 +326,9 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  //Intrepid Version:
+  //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -400,9 +400,9 @@ template<typename Traits>
 void DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid Version:
+  //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 
   const int num_dof = val_node(0,0).size();
@@ -464,9 +464,9 @@ template<typename Traits>
 void DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid Version:
+  //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 
   const int num_dof = val_node(0,0).size();

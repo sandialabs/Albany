@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Layouts.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace ATO {
 
@@ -87,7 +87,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     std::string K(homogenizedConstantsName);
 
-    Intrepid::FieldContainer<RealType> Kval(numDims,numDims);
+    Intrepid2::FieldContainer<RealType> Kval(numDims,numDims);
     for(int i=0; i<numDims; i++)
       for(int j=i; j<numDims; j++){
         if( j>=i){

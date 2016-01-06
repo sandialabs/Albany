@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #define DEBUG_FREQ 100000000000
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "LocalNonlinearSolver.hpp"
@@ -188,12 +188,12 @@ computeState(typename Traits::EvalData workset,
   ScalarT Jm23, p, dgam, dgam_plastic, a0, a1, f, smag, temp_adj_relaxation_para_;
   ScalarT sq23(std::sqrt(2. / 3.));
 
-  Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
+  Intrepid2::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
       num_dims_);
-  Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
+  Intrepid2::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
       num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
 
   long int debug_output_counter = 0;
 
@@ -236,18 +236,18 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute trial state
-      Fpinv = Intrepid::inverse(Fpn);
-      Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-      be = Jm23 * F * Cpinv * Intrepid::transpose(F);
+      Fpinv = Intrepid2::inverse(Fpn);
+      Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+      be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
 
-      a0 = Intrepid::norm(Intrepid::dev(be));
-      a1 = Intrepid::trace(be);
+      a0 = Intrepid2::norm(Intrepid2::dev(be));
+      a1 = Intrepid2::trace(be);
 
-      s = mu * Intrepid::dev(be);
+      s = mu * Intrepid2::dev(be);
 
-      mubar = Intrepid::trace(be) * mu / (num_dims_);
+      mubar = Intrepid2::trace(be) * mu / (num_dims_);
 
-      smag = Intrepid::norm(s);
+      smag = Intrepid2::norm(s);
 
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
@@ -347,7 +347,7 @@ computeState(typename Traits::EvalData workset,
           dgam = X[0];
       
           // plastic direction
-          N =  s / Intrepid::norm(s);
+          N =  s / Intrepid2::norm(s);
 
           // update s
           s -= 2.0 * mubar * dgam * N;
@@ -361,7 +361,7 @@ computeState(typename Traits::EvalData workset,
           // exponential map to get Fpnew
           A = dgam * N;
           eqps(cell, pt) = eqpsold(cell, pt);
-          expA = Intrepid::exp(A);
+          expA = Intrepid2::exp(A);
           Fpnew = expA * Fpn;
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
@@ -432,18 +432,18 @@ computeState(typename Traits::EvalData workset,
         dgam_plastic = X[0];
 
         // plastic direction
-        N =  s / Intrepid::norm(s);
+        N =  s / Intrepid2::norm(s);
 
         // update s
 
         s -= 2.0 * mubar * dgam_plastic * N + f * N - 2. * mubar * ( 1. + K/(3. * mubar)) * dgam_plastic * N;
 
-        dgam = dgam_plastic + delta_time(0) * temp_adj_relaxation_para_ * std::pow(Intrepid::norm(s), strain_rate_expo_ );
+        dgam = dgam_plastic + delta_time(0) * temp_adj_relaxation_para_ * std::pow(Intrepid2::norm(s), strain_rate_expo_ );
 
         alpha = eqpsold(cell, pt) + sq23 * dgam_plastic ;
 
         // plastic direction
-        N =  s / Intrepid::norm(s);
+        N =  s / Intrepid2::norm(s);
 
         // update eqps
         eqps(cell, pt) = alpha;
@@ -456,7 +456,7 @@ computeState(typename Traits::EvalData workset,
 
         // exponential map to get Fpnew
         A = dgam * N;
-        expA = Intrepid::exp(A);
+        expA = Intrepid2::exp(A);
         Fpnew = expA * Fpn;
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -488,7 +488,7 @@ if (have_temperature_) {
         ScalarT three_kappa = elastic_modulus(cell,pt) /
           (1.0 - 2.0*poissons_ratio(cell,pt));
         F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid::det(F);
+        ScalarT J = Intrepid2::det(F);
         sigma.fill(stress,cell,pt,0,0);
         sigma -= three_kappa * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;

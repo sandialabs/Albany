@@ -148,7 +148,7 @@ Albany::FromCubitSTKMeshStruct::getValidDiscretizationParameters() const
     "Number of samples in Longitude direction for NetCDF output. Default is 100.");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
+  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
 
   return validPL;
 }

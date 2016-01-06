@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -144,12 +144,12 @@ computeState(typename Traits::EvalData workset,
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
   ScalarT sq23(std::sqrt(2. / 3.));
 
-  Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
+  Intrepid2::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
       num_dims_);
-  Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
+  Intrepid2::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
       num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -169,16 +169,16 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute trial state
-      Fpinv = Intrepid::inverse(Fpn);
+      Fpinv = Intrepid2::inverse(Fpn);
 
-      Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-      be = Jm23 * F * Cpinv * Intrepid::transpose(F);
-      s = mu * Intrepid::dev(be);
+      Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+      be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
+      s = mu * Intrepid2::dev(be);
 
-      mubar = Intrepid::trace(be) * mu / (num_dims_);
+      mubar = Intrepid2::trace(be) * mu / (num_dims_);
 
       // check yield condition
-      smag = Intrepid::norm(s);
+      smag = Intrepid2::norm(s);
       f = smag - sq23 * (Y + K * eqpsold(cell, pt)
           + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
@@ -253,7 +253,7 @@ computeState(typename Traits::EvalData workset,
 
         // exponential map to get Fpnew
         A = dgam * N;
-        expA = Intrepid::exp(A);
+        expA = Intrepid2::exp(A);
         Fpnew = expA * Fpn;
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -291,7 +291,7 @@ computeState(typename Traits::EvalData workset,
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid::det(F);
+        ScalarT J = Intrepid2::det(F);
         sigma.fill(stress,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
@@ -499,10 +499,10 @@ compute_common(const int cell) const{
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23,  smag2, smag, f, p, dgam;
  
-  Intrepid::Tensor<ScalarT> F(dims_), be(dims_), s(dims_), sigma(dims_);
-  Intrepid::Tensor<ScalarT> N(dims_), A(dims_), expA(dims_), Fpnew(dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(dims_));
-  Intrepid::Tensor<ScalarT> Fpn(dims_), Fpinv(dims_), Cpinv(dims_);
+  Intrepid2::Tensor<ScalarT> F(dims_), be(dims_), s(dims_), sigma(dims_);
+  Intrepid2::Tensor<ScalarT> N(dims_), A(dims_), expA(dims_), Fpnew(dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(dims_));
+  Intrepid2::Tensor<ScalarT> Fpn(dims_), Fpinv(dims_), Cpinv(dims_);
 
 
   for (int pt(0); pt < num_pts; ++pt) {
@@ -522,11 +522,11 @@ compute_common(const int cell) const{
         }
        }
       
-     Fpinv=Intrepid::inverse(Fpn); 
+     Fpinv=Intrepid2::inverse(Fpn); 
 
-     Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-     be = Jm23 * F * Cpinv * Intrepid::transpose(F);
-     s = mu * Intrepid::dev(be);
+     Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+     be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
+     s = mu * Intrepid2::dev(be);
 
 /*     for (int i(0); i < dims_; ++i) {
         for (int j(0); j < dims_; ++j) {  
@@ -536,12 +536,12 @@ compute_common(const int cell) const{
       }
      for (int i(0); i < dims_; ++i) {
         for (int j(0); j < dims_; ++j) {
-          ScalarT theta=(1.0/dims_) * Intrepid::trace(be);
+          ScalarT theta=(1.0/dims_) * Intrepid2::trace(be);
           s(i,j) = mu * (be(i,j)-theta*I(i,j));
       }
     }*/
-     mubar = Intrepid::trace(be) * mu / (dims_);
-     smag = Intrepid::norm(s);
+     mubar = Intrepid2::trace(be) * mu / (dims_);
+     smag = Intrepid2::norm(s);
      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
          + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
@@ -616,7 +616,7 @@ compute_common(const int cell) const{
           A(i,j) = dgam * N(i,j);
         }
        }
-          expA = Intrepid::exp(A);
+          expA = Intrepid2::exp(A);
        for (int i(0); i < dims_; ++i) {
         for (int j(0); j < dims_; ++j) {
           Fpnew(i,j) = expA(i,j) * Fpn(i,j);
@@ -658,8 +658,8 @@ KOKKOS_INLINE_FUNCTION
 void J2Model<EvalT, Traits>::computeStateKernel::
 compute_with_temperature(const int cell) const{
 
-  Intrepid::Tensor<ScalarT> sigma(dims_), F(dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(dims_));
+  Intrepid2::Tensor<ScalarT> sigma(dims_), F(dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(dims_));
 
 
   for (int pt(0); pt < num_pts; ++pt) {
@@ -669,7 +669,7 @@ compute_with_temperature(const int cell) const{
                 F(i,j)=def_grad(cell,pt,i,j);
        for (int i=0; i<dims_;i++){
          for (int j=0; j<dims_;j++){
-            ScalarT J = Intrepid::det(F);
+            ScalarT J = Intrepid2::det(F);
             sigma(i,j)=stress(cell,pt,i,j);
             sigma(i,j) -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
               * (temperature_(cell,pt) - ref_temperature_) * I(i,j);

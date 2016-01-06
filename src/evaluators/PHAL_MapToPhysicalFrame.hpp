@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -47,11 +47,11 @@ private:
   // Input:
   //! Values at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_vertices;
-  Teuchos::RCP <Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP <Intrepid2::Cubature<RealType> > cubature;
   Teuchos::RCP <shards::CellTopology> cellType;
 
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer<RealType> refWeights;
 
   // Output:
   //! Values at quadrature points

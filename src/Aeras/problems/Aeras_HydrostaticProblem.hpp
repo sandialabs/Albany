@@ -118,9 +118,9 @@ namespace Aeras {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_CubaturePolylib.hpp"
-#include "Intrepid_CubatureTensor.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_CubaturePolylib.hpp"
+#include "Intrepid2_CubatureTensor.hpp"
 
 #include "Shards_CellTopology.hpp"
 
@@ -160,16 +160,16 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
 
 
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid::CubaturePolylib<RealType> > polylib = rcp(new Intrepid::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
-  std::vector< Teuchos::RCP<Intrepid::Cubature<RealType> > > cubatures(2, polylib); 
-  RCP <Intrepid::Cubature<RealType> > cubature = rcp( new Intrepid::CubatureTensor<RealType>(cubatures));
+  RCP <Intrepid2::CubaturePolylib<RealType> > polylib = rcp(new Intrepid2::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType> > > cubatures(2, polylib); 
+  RCP <Intrepid2::Cubature<RealType> > cubature = rcp( new Intrepid2::CubatureTensor<RealType>(cubatures));
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -325,10 +325,10 @@ Aeras::HydrostaticProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Cubature", cubature);
  
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > 
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > > 
+        ("Intrepid2 Basis", intrepidBasis);
  
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space

@@ -11,7 +11,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "PHAL_Utilities.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
 
 namespace Aeras {

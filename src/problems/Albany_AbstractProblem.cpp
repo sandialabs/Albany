@@ -106,6 +106,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   
   // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015) 
   validPL->sublist("Schottky Barrier", false, "");
+  
+  // Add "Interface Traps" for QCAD (Suzey Gao, 12/22/2015)
+  validPL->sublist("Interface Traps", false, ""); 
    
   return validPL;
 }

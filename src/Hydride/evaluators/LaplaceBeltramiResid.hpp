@@ -13,8 +13,8 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace PHAL {
 
@@ -47,17 +47,17 @@ class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     //! Coordinate vector at vertices being solved for
     PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
 
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+    Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
     Teuchos::RCP<shards::CellTopology> cellType;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Gc;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
 
     // Temporary FieldContainers
-    Intrepid::FieldContainer<RealType> grad_at_cub_points;
-    Intrepid::FieldContainer<RealType> refPoints;
-    Intrepid::FieldContainer<RealType> refWeights;
-    Intrepid::FieldContainer<ScalarT> jacobian;
-    Intrepid::FieldContainer<ScalarT> jacobian_det;
+    Intrepid2::FieldContainer<RealType> grad_at_cub_points;
+    Intrepid2::FieldContainer<RealType> refPoints;
+    Intrepid2::FieldContainer<RealType> refWeights;
+    Intrepid2::FieldContainer<ScalarT> jacobian;
+    Intrepid2::FieldContainer<ScalarT> jacobian_det;
 
     // Output:
     PHX::MDField<ScalarT, Cell, Node, Dim> solnResidual;

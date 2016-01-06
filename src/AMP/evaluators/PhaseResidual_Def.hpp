@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace AMP {
 
@@ -101,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
  // time step
   ScalarT dt = deltaTime(0);
 //  std::cout<<"dt value ="<<dt<<std::endl;
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
  
   if (dt == 0.0) dt = 1.0e-15;
   //grab old temperature
@@ -118,19 +118,19 @@ evaluateFields(typename Traits::EvalData workset)
   }
       // diffusive term
   FST::scalarMultiplyDataData<ScalarT> (term1_,k_,T_grad_);
-  FST::integrate<ScalarT>(residual_,term1_,w_grad_bf_,Intrepid::COMP_CPP,false);
+  FST::integrate<ScalarT>(residual_,term1_,w_grad_bf_,Intrepid2::COMP_CPP,false);
 
   // transient term
   FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
-  FST::integrate<ScalarT>(residual_,term2_,w_bf_,Intrepid::COMP_CPP,true);
+  FST::integrate<ScalarT>(residual_,term2_,w_bf_,Intrepid2::COMP_CPP,true);
 
   // heat source from laser 
   PHAL::scale(laser_source_, -1.0);
-  FST::integrate<ScalarT>(residual_,laser_source_,w_bf_,Intrepid::COMP_CPP,true);  
+  FST::integrate<ScalarT>(residual_,laser_source_,w_bf_,Intrepid2::COMP_CPP,true);  
 
   // all other problem sources
   PHAL::scale(source_, -1.0);
-  FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid::COMP_CPP,true);
+  FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid2::COMP_CPP,true);
 
 /*
 //print terms:

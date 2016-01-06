@@ -60,9 +60,9 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     //! retrieve the state data
     void getAllocatedStates(
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-        <Intrepid::FieldContainer<RealType> > > > oldSt,
+        <Intrepid2::FieldContainer<RealType> > > > oldSt,
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-        <Intrepid::FieldContainer<RealType> > > > newSt) const;
+        <Intrepid2::FieldContainer<RealType> > > > newSt) const;
 
   private:
     
@@ -109,11 +109,11 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! old state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > oldState;
+      <Intrepid2::FieldContainer<RealType> > > > oldState;
 
     //! new state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > newState;
+      <Intrepid2::FieldContainer<RealType> > > > newState;
 
 };
 

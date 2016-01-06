@@ -7,7 +7,7 @@
 // To do:
 //  1.  Expand to symmetry group (See Nye).
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
@@ -139,8 +139,8 @@ computeState(typename Traits::EvalData workset,
   if( num_dims_ == 2 ){
   } else 
   if( num_dims_ == 3 ){
-    Intrepid::Tensor<ScalarT> x(num_dims_), X(num_dims_);
-    Intrepid::Vector<ScalarT> E(num_dims_), D(num_dims_);
+    Intrepid2::Tensor<ScalarT> x(num_dims_), X(num_dims_);
+    Intrepid2::Vector<ScalarT> E(num_dims_), D(num_dims_);
     // Compute Stress
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < num_pts_; ++qp) {
@@ -209,9 +209,9 @@ initializeConstants()
   e.set_dimension(num_dims_);
   eps.set_dimension(num_dims_);
 
-  Intrepid::Tensor4<ScalarT> Ctmp(num_dims_); Ctmp.clear();
-  Intrepid::Tensor3<ScalarT> etmp(num_dims_); etmp.clear();
-  Intrepid::Tensor<ScalarT> epstmp(num_dims_); epstmp.clear();
+  Intrepid2::Tensor4<ScalarT> Ctmp(num_dims_); Ctmp.clear();
+  Intrepid2::Tensor3<ScalarT> etmp(num_dims_); etmp.clear();
+  Intrepid2::Tensor<ScalarT> epstmp(num_dims_); epstmp.clear();
 
   // create constants in tensor form
   Ctmp(0,0,0,0) = C11; Ctmp(0,0,1,1) = C12; Ctmp(0,0,2,2) = C23;

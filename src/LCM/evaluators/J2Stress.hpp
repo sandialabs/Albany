@@ -38,8 +38,8 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  typename EvalT::ScalarT norm(Intrepid::FieldContainer<ScalarT>);
-  void exponential_map(Intrepid::FieldContainer<ScalarT> &, const Intrepid::FieldContainer<ScalarT>);
+  typename EvalT::ScalarT norm(Intrepid2::FieldContainer<ScalarT>);
+  void exponential_map(Intrepid2::FieldContainer<ScalarT> &, const Intrepid2::FieldContainer<ScalarT>);
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
@@ -62,17 +62,17 @@ private:
   unsigned int worksetSize;
 
   // scratch space FCs
-  Intrepid::FieldContainer<ScalarT> be;
-  Intrepid::FieldContainer<ScalarT> s;
-  Intrepid::FieldContainer<ScalarT> N;
-  Intrepid::FieldContainer<ScalarT> A;
-  Intrepid::FieldContainer<ScalarT> expA;
-  Intrepid::FieldContainer<ScalarT> Fpinv;
-  Intrepid::FieldContainer<ScalarT> FpinvT;
-  Intrepid::FieldContainer<ScalarT> Cpinv;
+  Intrepid2::FieldContainer<ScalarT> be;
+  Intrepid2::FieldContainer<ScalarT> s;
+  Intrepid2::FieldContainer<ScalarT> N;
+  Intrepid2::FieldContainer<ScalarT> A;
+  Intrepid2::FieldContainer<ScalarT> expA;
+  Intrepid2::FieldContainer<ScalarT> Fpinv;
+  Intrepid2::FieldContainer<ScalarT> FpinvT;
+  Intrepid2::FieldContainer<ScalarT> Cpinv;
 
-  Intrepid::FieldContainer<ScalarT> tmp;
-  Intrepid::FieldContainer<ScalarT> tmp2;
+  Intrepid2::FieldContainer<ScalarT> tmp;
+  Intrepid2::FieldContainer<ScalarT> tmp2;
 
 };
 }

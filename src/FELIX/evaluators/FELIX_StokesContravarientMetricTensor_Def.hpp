@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -17,7 +17,7 @@ StokesContravarientMetricTensor<EvalT, Traits>::
 StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
                                 const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
-  cubature (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  cubature (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
   cellType (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   Gc       (p.get<std::string> ("Contravarient Metric Tensor Name"), dl->qp_tensor)
 {
@@ -67,8 +67,8 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
   
-  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {      

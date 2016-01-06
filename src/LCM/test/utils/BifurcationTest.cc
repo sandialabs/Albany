@@ -26,7 +26,7 @@
 #include <Albany_TmplSTKMeshStruct.hpp>
 #include <Albany_STKDiscretization.hpp>
 #include <Albany_Layouts.hpp>
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <typeinfo>
 
 #include "Phalanx_config.hpp"
@@ -51,7 +51,7 @@ bool TpetraBuild = false;
 // Spherical parametrization sweep
 //
 void
-spherical_sweep(Intrepid::Tensor4<double, 3> const & CC)
+spherical_sweep(Intrepid2::Tensor4<double, 3> const & CC)
 {
   // Build a grid to sample the parametrization.
   // The spherical parametrization has two parameters.
@@ -72,27 +72,27 @@ spherical_sweep(Intrepid::Tensor4<double, 3> const & CC)
   double const
   theta_max = pi;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   phi_num_points = 256;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   theta_num_points = 256;
 
-  Intrepid::Vector<double, 2> const
+  Intrepid2::Vector<double, 2> const
   sphere_min(phi_min, theta_min);
 
-  Intrepid::Vector<double, 2> const
+  Intrepid2::Vector<double, 2> const
   sphere_max(phi_max, theta_max);
 
-  Intrepid::Vector<Intrepid::Index, 2> const
+  Intrepid2::Vector<Intrepid2::Index, 2> const
   sphere_num_points(phi_num_points, theta_num_points);
 
   // Build the parametric grid with the specified parameters.
-  Intrepid::ParametricGrid<double, 2>
+  Intrepid2::ParametricGrid<double, 2>
   sphere_grid(sphere_min, sphere_max, sphere_num_points);
 
   // Build a spherical parametrization for this elasticity.
-  Intrepid::SphericalParametrization<double, 3>
+  Intrepid2::SphericalParametrization<double, 3>
   sphere_param(CC);
 
   // Traverse the grid with the parametrization.
@@ -118,7 +118,7 @@ spherical_sweep(Intrepid::Tensor4<double, 3> const & CC)
 // Stereographic parametrization sweep
 //
 void
-stereographic_sweep(Intrepid::Tensor4<double, 3> const & CC)
+stereographic_sweep(Intrepid2::Tensor4<double, 3> const & CC)
 {
   // Build a grid to sample the parametrization.
   // The stereographic parametrization has two parameters.
@@ -136,27 +136,27 @@ stereographic_sweep(Intrepid::Tensor4<double, 3> const & CC)
   double const
   y_max = 1.0;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   x_num_points = 256;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   y_num_points = 256;
 
-  Intrepid::Vector<double, 2> const
+  Intrepid2::Vector<double, 2> const
   stereo_min(x_min, y_min);
 
-  Intrepid::Vector<double, 2> const
+  Intrepid2::Vector<double, 2> const
   stereo_max(x_max, y_max);
 
-  Intrepid::Vector<Intrepid::Index, 2> const
+  Intrepid2::Vector<Intrepid2::Index, 2> const
   stereo_num_points(x_num_points, y_num_points);
 
   // Build the parametric grid with the specified parameters.
-  Intrepid::ParametricGrid<double, 2>
+  Intrepid2::ParametricGrid<double, 2>
   stereo_grid(stereo_min, stereo_max, stereo_num_points);
 
   // Build a stereographic parametrization for this elasticity.
-  Intrepid::StereographicParametrization<double, 3>
+  Intrepid2::StereographicParametrization<double, 3>
   stereo_param(CC);
 
   // Traverse the grid with the parametrization.
@@ -182,7 +182,7 @@ stereographic_sweep(Intrepid::Tensor4<double, 3> const & CC)
 // Projective parametrization sweep
 //
 void
-projective_sweep(Intrepid::Tensor4<double, 3> const & CC)
+projective_sweep(Intrepid2::Tensor4<double, 3> const & CC)
 {
   // Build a grid to sample the parametrization.
   // The projective parametrization has three parameters.
@@ -206,30 +206,30 @@ projective_sweep(Intrepid::Tensor4<double, 3> const & CC)
   double const
   z_max = 1.0;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   x_num_points = 64;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   y_num_points = 64;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   z_num_points = 64;
 
-  Intrepid::Vector<double, 3> const
+  Intrepid2::Vector<double, 3> const
   project_min(x_min, y_min, z_min);
 
-  Intrepid::Vector<double, 3> const
+  Intrepid2::Vector<double, 3> const
   project_max(x_max, y_max, z_max);
 
-  Intrepid::Vector<Intrepid::Index, 3> const
+  Intrepid2::Vector<Intrepid2::Index, 3> const
   project_num_points(x_num_points, y_num_points, z_num_points);
 
   // Build the parametric grid with the specified parameters.
-  Intrepid::ParametricGrid<double, 3>
+  Intrepid2::ParametricGrid<double, 3>
   project_grid(project_min, project_max, project_num_points);
 
   // Build a projective parametrization for this elasticity.
-  Intrepid::ProjectiveParametrization<double, 3>
+  Intrepid2::ProjectiveParametrization<double, 3>
   project_param(CC);
 
   // Traverse the grid with the parametrization.
@@ -255,7 +255,7 @@ projective_sweep(Intrepid::Tensor4<double, 3> const & CC)
 // Tangent parametrization sweep
 //
 void
-tangent_sweep(Intrepid::Tensor4<double, 3> const & CC)
+tangent_sweep(Intrepid2::Tensor4<double, 3> const & CC)
 {
   // Build a grid to sample the parametrization.
   // The tangent parametrization has two parameters.
@@ -273,27 +273,27 @@ tangent_sweep(Intrepid::Tensor4<double, 3> const & CC)
   double const
   y_max = 1.0;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   x_num_points = 256;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   y_num_points = 256;
 
-  Intrepid::Vector<double, 2> const
+  Intrepid2::Vector<double, 2> const
   tangent_min(x_min, y_min);
 
-  Intrepid::Vector<double, 2> const
+  Intrepid2::Vector<double, 2> const
   tangent_max(x_max, y_max);
 
-  Intrepid::Vector<Intrepid::Index, 2> const
+  Intrepid2::Vector<Intrepid2::Index, 2> const
   tangent_num_points(x_num_points, y_num_points);
 
   // Build the parametric grid with the specified parameters.
-  Intrepid::ParametricGrid<double, 2>
+  Intrepid2::ParametricGrid<double, 2>
   tangent_grid(tangent_min, tangent_max, tangent_num_points);
 
   // Build a tangent parametrization for this elasticity.
-  Intrepid::TangentParametrization<double, 3>
+  Intrepid2::TangentParametrization<double, 3>
   tangent_param(CC);
 
   // Traverse the grid with the parametrization.
@@ -319,7 +319,7 @@ tangent_sweep(Intrepid::Tensor4<double, 3> const & CC)
 // Cartesian parametrization sweep
 //
 void
-cartesian_sweep(Intrepid::Tensor4<double, 3> const & CC)
+cartesian_sweep(Intrepid2::Tensor4<double, 3> const & CC)
 {
   // Build a grid to sample the parametrization.
   // The cartesian parametrization has three parameters.
@@ -343,30 +343,30 @@ cartesian_sweep(Intrepid::Tensor4<double, 3> const & CC)
   double const
   z_max = 1.0;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   x_num_points = 64;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   y_num_points = 64;
 
-  Intrepid::Index const
+  Intrepid2::Index const
   z_num_points = 64;
 
-  Intrepid::Vector<double, 3> const
+  Intrepid2::Vector<double, 3> const
   cartesian_min(x_min, y_min, z_min);
 
-  Intrepid::Vector<double, 3> const
+  Intrepid2::Vector<double, 3> const
   cartesian_max(x_max, y_max, z_max);
 
-  Intrepid::Vector<Intrepid::Index, 3> const
+  Intrepid2::Vector<Intrepid2::Index, 3> const
   cartesian_num_points(x_num_points, y_num_points, z_num_points);
 
   // Build the parametric grid with the specified parameters.
-  Intrepid::ParametricGrid<double, 3>
+  Intrepid2::ParametricGrid<double, 3>
   cartesian_grid(cartesian_min, cartesian_max, cartesian_num_points);
 
   // Build a projective parametrization for this elasticity.
-  Intrepid::CartesianParametrization<double, 3>
+  Intrepid2::CartesianParametrization<double, 3>
   cartesian_param(CC);
 
   // Traverse the grid with the parametrization.
@@ -389,10 +389,10 @@ cartesian_sweep(Intrepid::Tensor4<double, 3> const & CC)
 }
 
 //----------------------------------------------------------------------------
-Intrepid::Vector<D2FadType, 3> 
-spherical_get_normal(Intrepid::Vector<D2FadType, 2> & parameters)
+Intrepid2::Vector<D2FadType, 3> 
+spherical_get_normal(Intrepid2::Vector<D2FadType, 2> & parameters)
 {
-  Intrepid::Vector<D2FadType, 3> 
+  Intrepid2::Vector<D2FadType, 3> 
   normal(sin(parameters[0]) * sin(parameters[1]), 
   cos(parameters[0]), sin(parameters[0]) * cos(parameters[1]));
   
@@ -400,12 +400,12 @@ spherical_get_normal(Intrepid::Vector<D2FadType, 2> & parameters)
 }
   
 //----------------------------------------------------------------------------  
-Intrepid::Vector<D2FadType, 3> 
-stereographic_get_normal(Intrepid::Vector<D2FadType, 2> & parameters)
+Intrepid2::Vector<D2FadType, 3> 
+stereographic_get_normal(Intrepid2::Vector<D2FadType, 2> & parameters)
 {
   D2FadType r2 = parameters[0] * parameters[0] + parameters[1] * parameters[1];
 
-  Intrepid::Vector<D2FadType, 3> 
+  Intrepid2::Vector<D2FadType, 3> 
   normal(2.0 * parameters[0], 2.0 * parameters[1], r2 - 1.0);
   normal /= (r2 + 1.0);
       
@@ -413,19 +413,19 @@ stereographic_get_normal(Intrepid::Vector<D2FadType, 2> & parameters)
 }
   
 //----------------------------------------------------------------------------
-Intrepid::Vector<D2FadType, 3> 
-projective_get_normal(Intrepid::Vector<D2FadType, 3> & parameters)
+Intrepid2::Vector<D2FadType, 3> 
+projective_get_normal(Intrepid2::Vector<D2FadType, 3> & parameters)
 {
-  Intrepid::Vector<D2FadType, 3>
+  Intrepid2::Vector<D2FadType, 3>
   normal(parameters[0], parameters[1], parameters[2]);
 
   D2FadType const
-  n = Intrepid::norm(normal);
+  n = Intrepid2::norm(normal);
      
   if ( (n.val()).val()==0 ) {
 
-    Intrepid::Vector<DFadType, 3> Xfad;
-    Intrepid::Vector<D2FadType, 3> Xfad2;
+    Intrepid2::Vector<DFadType, 3> Xfad;
+    Intrepid2::Vector<D2FadType, 3> Xfad2;
     
     for ( int i = 0; i < 3; ++i ) {
       Xfad[i] = DFadType(3, i, 1.0/sqrt(3.0));
@@ -443,14 +443,14 @@ projective_get_normal(Intrepid::Vector<D2FadType, 3> & parameters)
 }
   
 //----------------------------------------------------------------------------
-Intrepid::Vector<D2FadType, 3> 
-tangent_get_normal(Intrepid::Vector<D2FadType, 2> & parameters)
+Intrepid2::Vector<D2FadType, 3> 
+tangent_get_normal(Intrepid2::Vector<D2FadType, 2> & parameters)
 {
   D2FadType const
   r = sqrt(parameters[0] * parameters[0] + parameters[1] * parameters[1]);
 
-  Intrepid::Vector<D2FadType, 3>
-  normal(3, Intrepid::ZEROS);
+  Intrepid2::Vector<D2FadType, 3>
+  normal(3, Intrepid2::ZEROS);
 
    if ( (r.val()).val() > 0.0 ) {
     normal[0] = parameters[0] * sin(r) / r;
@@ -466,28 +466,28 @@ tangent_get_normal(Intrepid::Vector<D2FadType, 2> & parameters)
 }
   
 //----------------------------------------------------------------------------
-Intrepid::Vector<D2FadType, 3> 
-cartesian_get_normal1(Intrepid::Vector<D2FadType, 2> & parameters)
+Intrepid2::Vector<D2FadType, 3> 
+cartesian_get_normal1(Intrepid2::Vector<D2FadType, 2> & parameters)
 {
-  Intrepid::Vector<D2FadType, 3> 
+  Intrepid2::Vector<D2FadType, 3> 
   normal(1, parameters[0], parameters[1]);
             
   return normal;
 }
 
-Intrepid::Vector<D2FadType, 3> 
-cartesian_get_normal2(Intrepid::Vector<D2FadType, 2> & parameters)
+Intrepid2::Vector<D2FadType, 3> 
+cartesian_get_normal2(Intrepid2::Vector<D2FadType, 2> & parameters)
 {
-  Intrepid::Vector<D2FadType, 3> 
+  Intrepid2::Vector<D2FadType, 3> 
   normal(parameters[0], 1, parameters[1]);
             
   return normal;
 }
 
-Intrepid::Vector<D2FadType, 3> 
-cartesian_get_normal3(Intrepid::Vector<D2FadType, 2> & parameters)
+Intrepid2::Vector<D2FadType, 3> 
+cartesian_get_normal3(Intrepid2::Vector<D2FadType, 2> & parameters)
 {
-  Intrepid::Vector<D2FadType, 3> 
+  Intrepid2::Vector<D2FadType, 3> 
   normal(parameters[0], parameters[1], 1);
             
   return normal;
@@ -495,15 +495,15 @@ cartesian_get_normal3(Intrepid::Vector<D2FadType, 2> & parameters)
 
 //----------------------------------------------------------------------------//
 void
-spherical_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
-  Intrepid::Vector<ScalarT, 2> & parameters,
-  Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA)
+spherical_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> & tangent,
+  Intrepid2::Vector<ScalarT, 2> & parameters,
+  Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
 {    
-  Intrepid::Vector<ScalarT, 2> Xval;
-  Intrepid::Vector<DFadType, 2> Xfad;
-  Intrepid::Vector<D2FadType, 2> Xfad2;
-  Intrepid::Vector<DFadType, 2> Rfad;
-  Intrepid::Vector<D2FadType, 3> n;
+  Intrepid2::Vector<ScalarT, 2> Xval;
+  Intrepid2::Vector<DFadType, 2> Xfad;
+  Intrepid2::Vector<D2FadType, 2> Xfad2;
+  Intrepid2::Vector<DFadType, 2> Rfad;
+  Intrepid2::Vector<D2FadType, 3> n;
 
   D2FadType detA;
     
@@ -534,7 +534,7 @@ spherical_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
       
     n = spherical_get_normal(Xfad2);     
 
-    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid2::det(Intrepid2::dot2(n,Intrepid2::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -603,15 +603,15 @@ spherical_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
   
 //----------------------------------------------------------------------------
 void
-stereographic_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
-  Intrepid::Vector<ScalarT, 2> & parameters,
-  Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA)
+stereographic_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> & tangent,
+  Intrepid2::Vector<ScalarT, 2> & parameters,
+  Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
 {    
-  Intrepid::Vector<ScalarT, 2> Xval;
-  Intrepid::Vector<DFadType, 2> Xfad;
-  Intrepid::Vector<D2FadType, 2> Xfad2;
-  Intrepid::Vector<DFadType, 2> Rfad;
-  Intrepid::Vector<D2FadType, 3> n;
+  Intrepid2::Vector<ScalarT, 2> Xval;
+  Intrepid2::Vector<DFadType, 2> Xfad;
+  Intrepid2::Vector<D2FadType, 2> Xfad2;
+  Intrepid2::Vector<DFadType, 2> Rfad;
+  Intrepid2::Vector<D2FadType, 3> n;
 
   D2FadType detA;
     
@@ -642,7 +642,7 @@ stereographic_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
       
     n = stereographic_get_normal(Xfad2);     
 
-    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid2::det(Intrepid2::dot2(n,Intrepid2::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -711,23 +711,23 @@ stereographic_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
   
 //----------------------------------------------------------------------------
 void
-projective_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
-  Intrepid::Vector<ScalarT, 3> & parameters,
-  Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA)
+projective_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> & tangent,
+  Intrepid2::Vector<ScalarT, 3> & parameters,
+  Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
 { 
-  Intrepid::Vector<ScalarT, 4> parameters_new;
-  ScalarT nNorm = Intrepid::norm(parameters);
+  Intrepid2::Vector<ScalarT, 4> parameters_new;
+  ScalarT nNorm = Intrepid2::norm(parameters);
   for ( int i = 0; i < 3; ++i ) {
     parameters_new[i] = parameters[i];
     if ( nNorm==0 ) parameters_new[i] = 1.0;
   }
   parameters_new[3] = 0;
       
-  Intrepid::Vector<ScalarT, 4> Xval;
-  Intrepid::Vector<DFadType, 4> Xfad;
-  Intrepid::Vector<D2FadType, 4> Xfad2;
-  Intrepid::Vector<DFadType, 4> Rfad;
-  Intrepid::Vector<D2FadType, 3> n;
+  Intrepid2::Vector<ScalarT, 4> Xval;
+  Intrepid2::Vector<DFadType, 4> Xfad;
+  Intrepid2::Vector<D2FadType, 4> Xfad2;
+  Intrepid2::Vector<DFadType, 4> Rfad;
+  Intrepid2::Vector<D2FadType, 3> n;
 
   D2FadType detA;
     
@@ -756,13 +756,13 @@ projective_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
       Xfad2[i] = D2FadType(4, i, Xfad[i]);
     }
       
-    Intrepid::Vector<D2FadType, 3> Xfad2_sub;
+    Intrepid2::Vector<D2FadType, 3> Xfad2_sub;
     for ( int i = 0; i < 3; ++i ) {
       Xfad2_sub[i] = Xfad2[i];
     }
     n = projective_get_normal(Xfad2_sub);    
 
-    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n))) 
+    detA = Intrepid2::det(Intrepid2::dot2(n,Intrepid2::dot(tangent, n))) 
       + Xfad2[3] 
       * (Xfad2[0] * Xfad2[0] + Xfad2[1] * Xfad2[1] + Xfad2[2] * Xfad2[2] - 1);
      
@@ -833,15 +833,15 @@ projective_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
   
 //----------------------------------------------------------------------------
 void
-tangent_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
-  Intrepid::Vector<ScalarT, 2> & parameters,
-  Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA)
+tangent_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> & tangent,
+  Intrepid2::Vector<ScalarT, 2> & parameters,
+  Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
 {    
-  Intrepid::Vector<ScalarT, 2> Xval;
-  Intrepid::Vector<DFadType, 2> Xfad;
-  Intrepid::Vector<D2FadType, 2> Xfad2;
-  Intrepid::Vector<DFadType, 2> Rfad;
-  Intrepid::Vector<D2FadType, 3> n;
+  Intrepid2::Vector<ScalarT, 2> Xval;
+  Intrepid2::Vector<DFadType, 2> Xfad;
+  Intrepid2::Vector<D2FadType, 2> Xfad2;
+  Intrepid2::Vector<DFadType, 2> Rfad;
+  Intrepid2::Vector<D2FadType, 3> n;
 
   D2FadType detA;
     
@@ -872,7 +872,7 @@ tangent_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
       
     n = tangent_get_normal(Xfad2);     
 
-    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid2::det(Intrepid2::dot2(n,Intrepid2::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -941,15 +941,15 @@ tangent_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
 
 //----------------------------------------------------------------------------
 void
-cartesian_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
-  Intrepid::Vector<ScalarT, 2> & parameters, int surface_index,
-  Intrepid::Vector<ScalarT> & direction, ScalarT & min_detA)
+cartesian_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> & tangent,
+  Intrepid2::Vector<ScalarT, 2> & parameters, int surface_index,
+  Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
 {    
-  Intrepid::Vector<ScalarT, 2> Xval;
-  Intrepid::Vector<DFadType, 2> Xfad;
-  Intrepid::Vector<D2FadType, 2> Xfad2;
-  Intrepid::Vector<DFadType, 2> Rfad;
-  Intrepid::Vector<D2FadType, 3> n;
+  Intrepid2::Vector<ScalarT, 2> Xval;
+  Intrepid2::Vector<DFadType, 2> Xfad;
+  Intrepid2::Vector<D2FadType, 2> Xfad2;
+  Intrepid2::Vector<DFadType, 2> Rfad;
+  Intrepid2::Vector<D2FadType, 3> n;
 
   D2FadType detA;
     
@@ -993,7 +993,7 @@ cartesian_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
         break;
     }    
 
-    detA = Intrepid::det(Intrepid::dot2(n,Intrepid::dot(tangent, n)));
+    detA = Intrepid2::det(Intrepid2::dot2(n,Intrepid2::dot(tangent, n)));
      
     std::cout << "parameters: " << Xval << std::endl;
     std::cout << "determinant: " << (detA.val()).val() << std::endl;
@@ -1065,7 +1065,7 @@ cartesian_newton_raphson(Intrepid::Tensor4<ScalarT, 3> & tangent,
 //
 int main(int ac, char* av[])
 {
-  Intrepid::Tensor4<ScalarT, 3> tangent;
+  Intrepid2::Tensor4<ScalarT, 3> tangent;
   
   // To get tangent for testing:
   // Option 1: read tangent from file
@@ -1095,17 +1095,17 @@ int main(int ac, char* av[])
   double const
   mu = 7.6e10;
 
-  Intrepid::Tensor4<double, 3> const
-  I1 = Intrepid::identity_1<double, 3>() +
-    0.1 * Intrepid::Tensor4<double, 3>(Intrepid::RANDOM_NORMAL);
+  Intrepid2::Tensor4<double, 3> const
+  I1 = Intrepid2::identity_1<double, 3>() +
+    0.1 * Intrepid2::Tensor4<double, 3>(Intrepid2::RANDOM_NORMAL);
 
-  Intrepid::Tensor4<double, 3> const
-  I2 = Intrepid::identity_2<double, 3>() +
-    0.1 * Intrepid::Tensor4<double, 3>(Intrepid::RANDOM_NORMAL);
+  Intrepid2::Tensor4<double, 3> const
+  I2 = Intrepid2::identity_2<double, 3>() +
+    0.1 * Intrepid2::Tensor4<double, 3>(Intrepid2::RANDOM_NORMAL);
 
-  Intrepid::Tensor4<double, 3> const
-  I3 = Intrepid::identity_3<double, 3>() +
-    0.1 * Intrepid::Tensor4<double, 3>(Intrepid::RANDOM_NORMAL);
+  Intrepid2::Tensor4<double, 3> const
+  I3 = Intrepid2::identity_3<double, 3>() +
+    0.1 * Intrepid2::Tensor4<double, 3>(Intrepid2::RANDOM_NORMAL);
 
   tangent = lambda * I3 + mu * (I1 + I2);
  
@@ -1119,11 +1119,11 @@ int main(int ac, char* av[])
   std::mt19937 mt_eng(rd());
   std::uniform_real_distribution<ScalarT> real_dist(-1.0, 1.0);
   
-  Intrepid::Vector<ScalarT, 2> arg_minimum;
+  Intrepid2::Vector<ScalarT, 2> arg_minimum;
   arg_minimum(0) =  real_dist(mt_eng);
   arg_minimum(1) =  real_dist(mt_eng);
   
-  Intrepid::Vector<ScalarT> direction(1.0, 0.0, 0.0);
+  Intrepid2::Vector<ScalarT> direction(1.0, 0.0, 0.0);
   ScalarT min_detA(1.0);
   
   // Get start time 
