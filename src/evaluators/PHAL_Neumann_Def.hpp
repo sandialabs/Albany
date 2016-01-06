@@ -531,13 +531,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-#ifdef ALBANY_USE_PUBLICTRILINOS
-    Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
-      (physPointsSide, refPointsSide, physPointsCell, *cellType);
-#else
     Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
-#endif
 
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)

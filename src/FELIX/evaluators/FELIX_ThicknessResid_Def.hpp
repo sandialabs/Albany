@@ -205,12 +205,8 @@ evaluateFields(typename Traits::EvalData workset)
       // Multiply with weighted measure
       Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
-#ifdef ALBANY_USE_PUBLICTRILINOS
       // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, *cellType);
-#else
       Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
-#endif
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       Intrepid::FieldContainer<ScalarT> dH_Cell(numNodes);

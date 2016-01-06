@@ -314,14 +314,9 @@ evaluateInterfaceContribution(typename Traits::EvalData workset)
       Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
         (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
       
-#ifdef ALBANY_USE_PUBLICTRILINOS
       // Map the side cubature points in reference frame to physical frame
       Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
-        (physPointsSide, refPointsSide, physPointsCell, *cellType);
-#else
-      Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
         (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
-#endif
       
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       for (std::size_t node=0; node < numNodes; ++node)

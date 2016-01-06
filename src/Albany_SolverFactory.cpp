@@ -34,15 +34,10 @@
 #endif /* ALBANY_IFPACK2 */
 
 #ifdef ALBANY_MUELU
-#  ifdef ALBANY_USE_PUBLICTRILINOS
-#     include <Thyra_MueLuPreconditionerFactory.hpp>
-#     include "Stratimikos_MueluTpetraHelpers.hpp"
-#  else
 #     include "Stratimikos_MueLuHelpers.hpp"
 // Humm - ETI doesn't seem to be working. Include the def files to get things running the old fashioned way.
 #     include "Thyra_MueLuPreconditionerFactory_def.hpp"
 #     include "Thyra_XpetraLinearOp_def.hpp"
-#  endif
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
@@ -575,17 +570,7 @@ void enableMueLu(Teuchos::RCP<Albany::Application>& albanyApp,
                  Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
 {
 #ifdef ALBANY_MUELU
-# ifdef ALBANY_USE_PUBLICTRILINOS
-#  ifdef ALBANY_64BIT_INT
-  renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-  Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
-  Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#  else
-  Stratimikos::enableMueLuTpetra(linearSolverBuilder);
-#  endif
-# else
   Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder);
-# endif
 #endif
 }
 } // namespace
