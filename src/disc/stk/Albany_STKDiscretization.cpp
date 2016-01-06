@@ -1249,6 +1249,12 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
 void Albany::STKDiscretization::computeGraphs()
 {
+  computeGraphsUpToFillComplete();
+  fillCompleteGraphs();
+}
+
+void Albany::STKDiscretization::computeGraphsUpToFillComplete()
+{
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
 // int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
@@ -1298,7 +1304,7 @@ void Albany::STKDiscretization::computeGraphs()
   }
 }
 
-void Albany::STKDiscretization::finializeGraphs()
+void Albany::STKDiscretization::fillCompleteGraphs()
 {
   overlap_graphT->fillComplete();
 
@@ -1324,7 +1330,7 @@ void Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
     Teuchos::RCP<const Epetra_FECrsMatrix> peridigmMatrix = LCM::PeridigmManager::self()->getTangentStiffnessMatrix();
 
     // Allocate nonzeros for the standard FEM portion of the graph
-    computeGraphs();
+    computeGraphsUpToFillComplete();
 
     // Allocate nonzeros for the peridynamic portion of the graph
     GO globalRow, globalCol;
@@ -1354,7 +1360,7 @@ void Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
     }
 
     // Call fillComplete() for the overlap graph and create the non-overlap map
-    finializeGraphs();
+    fillCompleteGraphs();
   }
 #endif
 #endif
@@ -2708,8 +2714,7 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   transformMesh();
 
-  computeGraphs();   // Determine nonzeros for overlapping graph
-  finializeGraphs(); // Call fillComplete() for overlappig graph and create non-overlapping graph
+  computeGraphs();
 
   computeWorksetInfo();
 #ifdef OUTPUT_TO_SCREEN

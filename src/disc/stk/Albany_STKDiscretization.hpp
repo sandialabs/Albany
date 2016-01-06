@@ -319,10 +319,8 @@ namespace Albany {
     void computeNodalEpetraMaps(bool overlapped);
 #endif
 
-    //! Process STK mesh for CRS Graphs (does not call fillComplete() or create non-ovelapping graph)
+    //! Process STK mesh for CRS Graphs
     virtual void computeGraphs();
-    //! Finalize STK mesh for CRS Graphs (calls fillComplete() and creates non-overlapping graph)
-    virtual void finializeGraphs();
     //! Process STK mesh for Owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
     //! Process coords for ML
@@ -511,6 +509,9 @@ namespace Albany {
     }
 
     void printVertexConnectivity();
+
+    void computeGraphsUpToFillComplete();
+    void fillCompleteGraphs();
 
   };
 
