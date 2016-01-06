@@ -47,17 +47,17 @@ private:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<RealType> val_at_cub_points;
-  Intrepid2::FieldContainer<RealType> grad_at_cub_points;
-  Intrepid2::FieldContainer<RealType> refPoints;
-  Intrepid2::FieldContainer<RealType> refWeights;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian_inv;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> val_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> grad_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> refWeights;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT,PHX::Layout,PHX::Device> jacobian;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT,PHX::Layout,PHX::Device> jacobian_inv;
 
   // Output:
   //! Basis Functions at quadrature points
@@ -95,23 +95,23 @@ private:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<RealType> val_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> val_at_cub_points;
   Kokkos::View <RealType**, PHX::Device> val_at_cub_points_CUDA;
-  Intrepid2::FieldContainer<RealType> grad_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> grad_at_cub_points;
   Kokkos::View <RealType***, PHX::Device> grad_at_cub_points_CUDA;
 
-  Intrepid2::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> refPoints;
   Kokkos::View <RealType**, PHX::Device> refPoints_CUDA; 
-  Intrepid2::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> refWeights;
   Kokkos::View <RealType*, PHX::Device> refWeights_CUDA;
-//  Intrepid2::FieldContainer<MeshScalarT> jacobian;
+//  Intrepid2::FieldContainer_Kokkos<MeshScalarT,PHX::Layout,PHX::Device> jacobian;
   PHX::MDField <MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian; 
-  //Intrepid2::FieldContainer<MeshScalarT> jacobian_inv;
+  //Intrepid2::FieldContainer_Kokkos<MeshScalarT,PHX::Layout,PHX::Device> jacobian_inv;
   PHX::MDField <MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   // Output:
   //! Basis Functions at quadrature points
