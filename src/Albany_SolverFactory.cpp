@@ -34,10 +34,7 @@
 #endif /* ALBANY_IFPACK2 */
 
 #ifdef ALBANY_MUELU
-#     include "Stratimikos_MueLuHelpers.hpp"
-// Humm - ETI doesn't seem to be working. Include the def files to get things running the old fashioned way.
-#     include "Thyra_MueLuPreconditionerFactory_def.hpp"
-#     include "Thyra_XpetraLinearOp_def.hpp"
+#  include "Stratimikos_MueLuHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
