@@ -86,6 +86,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_IntrepidIntrepid2:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON\
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
