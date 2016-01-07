@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -48,9 +48,9 @@ private:
   //! Length scale parameter for localization zone
   ScalarT thickness;
   //! Numerical integration rule
-  Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> intrepidBasis;
   //! Scalar Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator
@@ -88,22 +88,22 @@ private:
    PHX::MDField<ScalarT,Dummy> deltaTime;
 
   //! Reference Cell FieldContainers
-  Intrepid::FieldContainer<RealType> refValues;
-  Intrepid::FieldContainer<RealType> refGrads;
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer<RealType> refValues;
+  Intrepid2::FieldContainer<RealType> refGrads;
+  Intrepid2::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer<RealType> refWeights;
 
   // Work space FCs
-  Intrepid::FieldContainer<ScalarT> F_inv;
-  Intrepid::FieldContainer<ScalarT> F_invT;
-  Intrepid::FieldContainer<ScalarT> C;
-  Intrepid::FieldContainer<ScalarT> Cinv;
-  Intrepid::FieldContainer<ScalarT> JF_invT;
-  Intrepid::FieldContainer<ScalarT> KJF_invT;
-  Intrepid::FieldContainer<ScalarT> Kref;
+  Intrepid2::FieldContainer<ScalarT> F_inv;
+  Intrepid2::FieldContainer<ScalarT> F_invT;
+  Intrepid2::FieldContainer<ScalarT> C;
+  Intrepid2::FieldContainer<ScalarT> Cinv;
+  Intrepid2::FieldContainer<ScalarT> JF_invT;
+  Intrepid2::FieldContainer<ScalarT> KJF_invT;
+  Intrepid2::FieldContainer<ScalarT> Kref;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid2::FieldContainer<ScalarT> flux;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> poroMassResidual;

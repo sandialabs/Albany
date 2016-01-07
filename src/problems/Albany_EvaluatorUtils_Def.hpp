@@ -6,7 +6,7 @@
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_DataTypes.hpp"
 
-#include "Intrepid_HGRAD_LINE_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
 
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherScalarNodalParameter.hpp"
@@ -297,7 +297,7 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature)
+    const Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -308,7 +308,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
 
     // Input: X, Y at vertices
     p->set<string>("Coordinate Vector Name", "Coord Vec");
-    p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set<RCP <Intrepid2::Cubature<RealType> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
     // Output: X, Y at Quad Points (same name as input)
@@ -320,8 +320,8 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis,
-    const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature)
+    const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis,
+    const Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -332,10 +332,10 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType> > >("Cubature", cubature);
 
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space

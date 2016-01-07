@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace LCM {
 /** \brief
@@ -88,18 +88,18 @@ private:
   unsigned int worksetSize;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<ScalarT> Hflux;
-  Intrepid::FieldContainer<ScalarT> C;
-  Intrepid::FieldContainer<ScalarT> Cinv;
-  Intrepid::FieldContainer<ScalarT> CinvTgrad;
-  Intrepid::FieldContainer<ScalarT> CinvTgrad_old;
-  Intrepid::FieldContainer<ScalarT> artificalDL;
-  Intrepid::FieldContainer<ScalarT> stabilizedDL;
-  Intrepid::FieldContainer<ScalarT> tauStress;
-  Intrepid::FieldContainer<ScalarT> pterm;
-  Intrepid::FieldContainer<ScalarT> tpterm;
-  Intrepid::FieldContainer<ScalarT> tauH;
-  Intrepid::FieldContainer<ScalarT> CinvTaugrad;
+  Intrepid2::FieldContainer<ScalarT> Hflux;
+  Intrepid2::FieldContainer<ScalarT> C;
+  Intrepid2::FieldContainer<ScalarT> Cinv;
+  Intrepid2::FieldContainer<ScalarT> CinvTgrad;
+  Intrepid2::FieldContainer<ScalarT> CinvTgrad_old;
+  Intrepid2::FieldContainer<ScalarT> artificalDL;
+  Intrepid2::FieldContainer<ScalarT> stabilizedDL;
+  Intrepid2::FieldContainer<ScalarT> tauStress;
+  Intrepid2::FieldContainer<ScalarT> pterm;
+  Intrepid2::FieldContainer<ScalarT> tpterm;
+  Intrepid2::FieldContainer<ScalarT> tauH;
+  Intrepid2::FieldContainer<ScalarT> CinvTaugrad;
 
 
   ScalarT CLbar, vol ;

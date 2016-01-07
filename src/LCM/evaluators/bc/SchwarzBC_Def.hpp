@@ -7,7 +7,7 @@
 #include "Albany_Application.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Intrepid_MiniTensor.h"
+#include "Intrepid2_MiniTensor.h"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -176,7 +176,7 @@ computeBCs(
 
   auto const
   coupled_element_type =
-      Intrepid::find_type(coupled_dimension, coupled_vertex_count);
+      Intrepid2::find_type(coupled_dimension, coupled_vertex_count);
 
   std::string const &
   coupled_nodeset_name = this_app.getNodesetName(coupled_app_index);
@@ -188,10 +188,10 @@ computeBCs(
   auto const &
   ws_elem_2_node_id = coupled_stk_disc->getWsElNodeID();
 
-  std::vector<Intrepid::Vector<double>>
+  std::vector<Intrepid2::Vector<double>>
   coupled_element_vertices(coupled_vertex_count);
 
-  std::vector<Intrepid::Vector<double>>
+  std::vector<Intrepid2::Vector<double>>
   coupled_element_solution(coupled_vertex_count);
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
@@ -208,7 +208,7 @@ computeBCs(
   double * const
   coord = ns_coord[ns_node];
 
-  Intrepid::Vector<double>
+  Intrepid2::Vector<double>
   point;
 
   point.set_dimension(coupled_dimension);
@@ -232,7 +232,7 @@ computeBCs(
   auto
   parametric_dimension = 0;
 
-  Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
+  Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double>>>
   basis;
 
   Teuchos::ArrayRCP<double> const &
@@ -301,13 +301,13 @@ computeBCs(
         exit(1);
         break;
 
-      case Intrepid::ELEMENT::TETRAHEDRAL:
+      case Intrepid2::ELEMENT::TETRAHEDRAL:
         parametric_dimension = 3;
 
-        basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM<
-            double, Intrepid::FieldContainer<double>>());
+        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<
+            double, Intrepid2::FieldContainer<double>>());
 
-        in_element = Intrepid::in_tetrahedron(
+        in_element = Intrepid2::in_tetrahedron(
             point,
             coupled_element_vertices[0],
             coupled_element_vertices[1],
@@ -316,13 +316,13 @@ computeBCs(
             tolerance);
         break;
 
-      case Intrepid::ELEMENT::HEXAHEDRAL:
+      case Intrepid2::ELEMENT::HEXAHEDRAL:
         parametric_dimension = 3;
 
-        basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<
-            double, Intrepid::FieldContainer<double>>());
+        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<
+            double, Intrepid2::FieldContainer<double>>());
 
-        in_element = Intrepid::in_hexahedron(
+        in_element = Intrepid2::in_hexahedron(
             point,
             coupled_element_vertices[0],
             coupled_element_vertices[1],
@@ -357,7 +357,7 @@ computeBCs(
   number_cells = 1;
 
   // Container for the parametric coordinates
-  Intrepid::FieldContainer<double>
+  Intrepid2::FieldContainer<double>
   parametric_point(number_cells, parametric_dimension);
 
   for (auto j = 0; j < parametric_dimension; ++j) {
@@ -365,7 +365,7 @@ computeBCs(
   }
 
   // Container for the physical point
-  Intrepid::FieldContainer<double>
+  Intrepid2::FieldContainer<double>
   physical_coordinates(number_cells, coupled_dimension);
 
   for (auto i = 0; i < coupled_dimension; ++i) {
@@ -375,7 +375,7 @@ computeBCs(
   // Container for the physical nodal coordinates
   // TODO: matToReference more general, accepts more topologies.
   // Use it to find if point is contained in element as well.
-  Intrepid::FieldContainer<double>
+  Intrepid2::FieldContainer<double>
   nodal_coordinates(number_cells, coupled_vertex_count, coupled_dimension);
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
@@ -385,7 +385,7 @@ computeBCs(
   }
 
   // Get parametric coordinates
-  Intrepid::CellTools<double>::mapToReferenceFrame(
+  Intrepid2::CellTools<double>::mapToReferenceFrame(
       parametric_point,
       physical_coordinates,
       nodal_coordinates,
@@ -397,15 +397,15 @@ computeBCs(
   auto const
   number_points = 1;
 
-  Intrepid::FieldContainer<double>
+  Intrepid2::FieldContainer<double>
   basis_values(coupled_vertex_count, number_points);
 
-  basis->getValues(basis_values, parametric_point, Intrepid::OPERATOR_VALUE);
+  basis->getValues(basis_values, parametric_point, Intrepid2::OPERATOR_VALUE);
 
   // Evaluate solution at parametric point using values of shape
   // functions just computed.
-  Intrepid::Vector<double>
-  value(coupled_dimension, Intrepid::ZEROS);
+  Intrepid2::Vector<double>
+  value(coupled_dimension, Intrepid2::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
   std::cout << "NODE   BASIS                     VALUE\n";

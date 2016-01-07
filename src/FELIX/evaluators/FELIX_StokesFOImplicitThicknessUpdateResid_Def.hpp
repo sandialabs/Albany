@@ -8,7 +8,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "PHAL_Utilities.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -124,10 +124,10 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  typedef Intrepid::FunctionSpaceTools FST; 
+  typedef Intrepid2::FunctionSpaceTools FST; 
 
   // Initialize residual to 0.0
-  Intrepid::FieldContainer<ScalarT> res(numNodes,2);
+  Intrepid2::FieldContainer<ScalarT> res(numNodes,2);
 
   double rho_g=rho*g;
 

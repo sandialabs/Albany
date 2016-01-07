@@ -133,6 +133,9 @@ namespace Albany {
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
+    //! Modify CRS Graphs for Peridigm-Albany coupling
+    void insertPeridigmNonzerosIntoGraph();
+
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
@@ -506,6 +509,9 @@ namespace Albany {
     }
 
     void printVertexConnectivity();
+
+    void computeGraphsUpToFillComplete();
+    void fillCompleteGraphs();
 
   };
 

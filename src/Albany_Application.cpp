@@ -542,6 +542,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 #if defined(ALBANY_EPETRA)
   if (Teuchos::nonnull(LCM::PeridigmManager::self())){
     LCM::PeridigmManager::self()->initialize(params, disc, commT);
+    LCM::PeridigmManager::self()->insertPeridigmNonzerosIntoAlbanyGraph();
   }
 #endif
 #endif

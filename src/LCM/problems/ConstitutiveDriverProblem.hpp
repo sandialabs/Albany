@@ -28,7 +28,7 @@ class ConstitutiveDriverProblem: public Albany::AbstractProblem
 {
 public:
 
-  typedef Intrepid::FieldContainer<RealType> FC;
+  typedef Intrepid2::FieldContainer<RealType> FC;
 
   ///
   /// Default constructor

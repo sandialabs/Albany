@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -49,9 +49,9 @@ private:
   //! Length scale parameter for localization zone
   RealType thickness;
   //! Numerical integration rule
-  Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> intrepidBasis;
   //! Scalar Gradient for H1 projection (not yet implemented)
   //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator for H1 projection (not yet implemented)
@@ -73,10 +73,10 @@ private:
 //  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   //! Reference Cell FieldContainers
-  Intrepid::FieldContainer<RealType> refValues;
-  Intrepid::FieldContainer<RealType> refGrads;
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer<RealType> refValues;
+  Intrepid2::FieldContainer<RealType> refGrads;
+  Intrepid2::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer<RealType> refWeights;
 
 
   // Output:

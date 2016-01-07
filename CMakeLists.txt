@@ -1114,21 +1114,6 @@ IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
   MESSAGE("-- WARNING: ATO                is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 
-# Introduce a compiler flag that lets us deal with desynced internal and public
-# Trilinos repos when necessary.
-option (USE_PUBLICTRILINOS "Flag to deal with desynced internal and public Trilinos repos" OFF)
-# If the user explicitly provides it, use it. But if not, detect whether it's
-# needed.
-if (NOT USE_PUBLICTRILINOS)
-  if (${Trilinos_VERSION} LESS 12.4)
-    set (USE_PUBLICTRILINOS ON)
-  endif ()
-endif ()
-if (USE_PUBLICTRILINOS)
-  message ("-- INFO: Building with the assumption that we're linking against publicTrilinos rather than the internal Trilinos repo")
-  add_definitions (-DALBANY_USE_PUBLICTRILINOS)
-endif ()
-
 IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
   MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with
 ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you

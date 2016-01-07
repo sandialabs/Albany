@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Phalanx_DataLayout.hpp>
 #include <Teuchos_TestForException.hpp>
 
@@ -17,8 +17,8 @@ namespace LCM {
   SurfaceScalarGradientOperator(const Teuchos::ParameterList& p,
                                 const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")), 
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")), 
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>>("Intrepid2 Basis")),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     val_node   (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
@@ -65,8 +65,8 @@ namespace LCM {
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
   }
 
   //**********************************************************************
@@ -87,17 +87,17 @@ namespace LCM {
   void SurfaceScalarGradientOperator<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    Intrepid::Vector<MeshScalarT> Parent_Grad_plus(3);
-    Intrepid::Vector<MeshScalarT> Parent_Grad_minor(3);
+    Intrepid2::Vector<MeshScalarT> Parent_Grad_plus(3);
+    Intrepid2::Vector<MeshScalarT> Parent_Grad_minor(3);
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        Intrepid::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
+        Intrepid2::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
 
-        Intrepid::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
+        Intrepid2::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
 
-        gBasis = Intrepid::transpose(gBasis);
+        gBasis = Intrepid2::transpose(gBasis);
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {
@@ -115,8 +115,8 @@ namespace LCM {
           Parent_Grad_minor(numPlaneDims) = -invh * refValues(node,pt);
 
           // Mapping from parent to the physical domain
-          Intrepid::Vector<MeshScalarT> Transformed_Grad_plus(Intrepid::dot(gBasis, Parent_Grad_plus));
-          Intrepid::Vector<MeshScalarT> Transformed_Grad_minor(Intrepid::dot(gBasis,Parent_Grad_minor));
+          Intrepid2::Vector<MeshScalarT> Transformed_Grad_plus(Intrepid2::dot(gBasis, Parent_Grad_plus));
+          Intrepid2::Vector<MeshScalarT> Transformed_Grad_minor(Intrepid2::dot(gBasis,Parent_Grad_minor));
 
           // assign components to MDfield ScalarGrad
           for (int j(0); j < numDims; ++j ){

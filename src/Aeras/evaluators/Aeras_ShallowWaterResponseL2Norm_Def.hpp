@@ -103,7 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
-  Intrepid::FieldContainer<ScalarT> flow_state_field_qp(workset.numCells, numQPs, nPrimaryDOFs); //flow_state_field at quad points
+  Intrepid2::FieldContainer<ScalarT> flow_state_field_qp(workset.numCells, numQPs, nPrimaryDOFs); //flow_state_field at quad points
   
   //Interpolate flow_state_field from nodes -> quadrature points.  
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

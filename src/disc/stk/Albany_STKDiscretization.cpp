@@ -18,9 +18,9 @@
 
 #include <Shards_BasicTopologies.hpp>
 
-#include <Intrepid_CellTools.hpp>
-#include <Intrepid_Basis.hpp>
-#include <Intrepid_HGRAD_QUAD_Cn_FEM.hpp>
+#include <Intrepid2_CellTools.hpp>
+#include <Intrepid2_Basis.hpp>
+#include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -49,6 +49,12 @@ extern "C" {
 #include "Epetra_Export.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "Petra_Converters.hpp"
+#endif
+
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+#include "PeridigmManager.hpp"
+#endif
 #endif
 
 const double pi = 3.1415926535897932385;
@@ -1243,6 +1249,12 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
 void Albany::STKDiscretization::computeGraphs()
 {
+  computeGraphsUpToFillComplete();
+  fillCompleteGraphs();
+}
+
+void Albany::STKDiscretization::computeGraphsUpToFillComplete()
+{
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
 // int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
@@ -1290,63 +1302,10 @@ void Albany::STKDiscretization::computeGraphs()
       }
     }
   }
+}
 
-#ifdef ALBANY_PERIDIGM
-  // For the initial implementation, allocate all possible entries
-  // in rows corresponding to peridynamic nodes.  I.e., assume
-  // all peridynamic nodes are bonded to each other.
-
-  // Create a list of all the global row numbers associated with peridynamics
-  std::vector<int> onProcPeridynamicGlobalDOF;
-  for (std::size_t i=0; i < cells.size(); i++) {
-    stk::mesh::Entity e = cells[i];
-    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
-    const size_t num_nodes = bulkData.num_nodes(e);
-    if(num_nodes == 1){
-      stk::mesh::Entity rowNode = node_rels[0];
-      for (std::size_t k=0; k < neq; k++) {
-	row = getGlobalDOF(gid(rowNode), k);
-	onProcPeridynamicGlobalDOF.push_back(row);
-      }
-    }
-  }
-  int numProc = commT->getSize();
-  int myProc = commT->getRank();
-  std::vector<int> numPeridynamicDOFPerProc(numProc, 0), numPeridynamicDOFPerProc_Local(numProc, 0);
-  numPeridynamicDOFPerProc_Local[myProc] = static_cast<int>( onProcPeridynamicGlobalDOF.size() );
-  comm->SumAll(&numPeridynamicDOFPerProc_Local[0], &numPeridynamicDOFPerProc[0], numProc);
-  int totalNumPeridynamicDOF(0), offset(0);
-  for(int i=0 ; i<numProc ; i++){
-    if(i < myProc){
-      offset += numPeridynamicDOFPerProc[i];
-    }
-    totalNumPeridynamicDOF += numPeridynamicDOFPerProc[i];
-  }
-  std::vector<int> peridynamicGlobalDOF_Local(totalNumPeridynamicDOF, 0), peridynamicGlobalDOF(totalNumPeridynamicDOF, 0);
-  for(unsigned int i=0 ; i<onProcPeridynamicGlobalDOF.size() ; i++){
-    peridynamicGlobalDOF_Local[offset + i] = onProcPeridynamicGlobalDOF[i];
-  }
-  comm->SumAll(&peridynamicGlobalDOF_Local[0], &peridynamicGlobalDOF[0], totalNumPeridynamicDOF);
-
-  // Load all possible peridynamic bonds into the graph
-  for (std::size_t i=0; i < cells.size(); i++) {
-    stk::mesh::Entity e = cells[i];
-    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
-    const size_t num_nodes = bulkData.num_nodes(e);
-    if(num_nodes == 1){
-      stk::mesh::Entity rowNode = node_rels[0];
-      for (std::size_t k=0; k < neq; k++) {
-        row = getGlobalDOF(gid(rowNode), k);
-	for (unsigned int j=0 ; j<totalNumPeridynamicDOF ; j++){
-	  col = peridynamicGlobalDOF[j];
-	  colAV = Teuchos::arrayView(&col, 1);
-	  overlap_graphT->insertGlobalIndices(row, colAV);
-	}
-      }
-    }
-  }
-#endif // ALBANY_PERIDIGM
-
+void Albany::STKDiscretization::fillCompleteGraphs()
+{
   overlap_graphT->fillComplete();
 
   // Create Owned graph by exporting overlap with known row map
@@ -1358,6 +1317,53 @@ void Albany::STKDiscretization::computeGraphs()
   Teuchos::RCP<Tpetra_Export> exporterT = Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
   graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
   graphT->fillComplete();
+}
+
+void Albany::STKDiscretization::insertPeridigmNonzerosIntoGraph()
+{
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()) && LCM::PeridigmManager::self()->hasTangentStiffnessMatrix()){
+
+    // The Peridigm matrix is a subset of the Albany matrix.  The global ids are the same and the parallel
+    // partitioning is the same.  fillComplete() has already been called for the Peridigm matrix.
+    Teuchos::RCP<const Epetra_FECrsMatrix> peridigmMatrix = LCM::PeridigmManager::self()->getTangentStiffnessMatrix();
+
+    // Allocate nonzeros for the standard FEM portion of the graph
+    computeGraphsUpToFillComplete();
+
+    // Allocate nonzeros for the peridynamic portion of the graph
+    GO globalRow, globalCol;
+    Teuchos::ArrayView<GO> globalColAV;
+    int peridigmLocalRow;
+    int numEntries;
+    double* values;
+    int* indices;
+    for (std::size_t i=0; i < cells.size(); i++) {
+      stk::mesh::Entity e = cells[i];
+      stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
+      const size_t num_nodes = bulkData.num_nodes(e);
+      // Search for sphere elements (they contain a single node)
+      if(num_nodes == 1){
+	stk::mesh::Entity rowNode = node_rels[0];
+	for (std::size_t k=0; k < neq; k++) {
+	  globalRow = getGlobalDOF(gid(rowNode), k);
+	  peridigmLocalRow = peridigmMatrix->RowMap().LID(globalRow);
+	  peridigmMatrix->ExtractMyRowView(peridigmLocalRow, numEntries, values, indices);
+	  for(int i=0 ; i<numEntries ; ++i){
+	    globalCol = peridigmMatrix->ColMap().GID(indices[i]);
+	    globalColAV = Teuchos::arrayView(&globalCol, 1);
+	    overlap_graphT->insertGlobalIndices(globalRow, globalColAV);
+	  }
+	}
+      }
+    }
+
+    // Call fillComplete() for the overlap graph and create the non-overlap map
+    fillCompleteGraphs();
+  }
+#endif
+#endif
 }
 
 void Albany::STKDiscretization::computeWorksetInfo()
@@ -2062,16 +2068,16 @@ namespace {
   }
 
 
-  const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > >
+  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid::FieldContainer< double > Field_t;
-    typedef Intrepid::Basis< double, Field_t > Basis_t;
+    typedef Intrepid2::FieldContainer< double > Field_t;
+    typedef Intrepid2::Basis< double, Field_t > Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
 
     // Check for valid value of C
     int deg = (int) std::sqrt((double)C);
@@ -2087,23 +2093,23 @@ namespace {
 
     // Spectral bases
     return Teuchos::rcp(
-      new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
-        deg, Intrepid::POINTTYPE_SPECTRAL) );
+      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
+        deg, Intrepid2::POINTTYPE_SPECTRAL) );
   }
 
   double value(const std::vector<double> &soln,
                const std::pair<double, double> &ref) {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     double x = 0;
     for (unsigned j=0; j<C; ++j) x += soln[j] * basisVals(j,0);
@@ -2115,15 +2121,15 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     for (unsigned i=0; i<3; ++i) x[i] = 0;
     for (unsigned i=0; i<3; ++i)
@@ -2136,15 +2142,15 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid::FieldContainer<double> basisGrad (C, numPoints, 2);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer<double> basisGrad (C, numPoints, 2);
+    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid::OPERATOR_GRAD);
+    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid2::OPERATOR_GRAD);
 
     for (unsigned i=0; i<3; ++i) x[i][0] = x[i][1] = 0;
     for (unsigned i=0; i<3; ++i)

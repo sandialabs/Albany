@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include <PHAL_Utilities.hpp>
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #ifdef ALBANY_TIMER
 #include <chrono>
 #endif
@@ -334,9 +334,9 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
 template<typename EvalT, typename Traits>
 bool Kinematics<EvalT, Traits>::
 check_det (typename Traits::EvalData workset, int cell, int pt) {
-  Intrepid::Tensor<ScalarT> F(num_dims_);
+  Intrepid2::Tensor<ScalarT> F(num_dims_);
   F.fill(def_grad_, cell, pt, 0, 0);
-  j_(cell, pt) = Intrepid::det(F);
+  j_(cell, pt) = Intrepid2::det(F);
   bool neg_det = false;
   if (pt == 0 && j_(cell, pt) < 1e-16) {
     neg_det = true;
@@ -372,8 +372,8 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
   evaluateFields(typename Traits::EvalData workset)
   {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    Intrepid::Tensor<ScalarT> F(num_dims_), strain(num_dims_), gradu(num_dims_);
-    Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+    Intrepid2::Tensor<ScalarT> F(num_dims_), strain(num_dims_), gradu(num_dims_);
+    Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
 
     // Compute DefGrad tensor from displacement gradient
     if ( ! def_grad_rc_) {
@@ -381,7 +381,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
         for (int pt(0); pt < num_pts_; ++pt) {
           gradu.fill(grad_u_,cell,pt,0,0);
           F = I + gradu;
-          j_(cell,pt) = Intrepid::det(F);
+          j_(cell,pt) = Intrepid2::det(F);
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
               def_grad_(cell,pt,i,j) = F(i,j);
@@ -402,7 +402,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
           // F[n,0] = F[n,n-1] F[n-1,0].
           def_grad_rc_.multiplyInto<ScalarT>(def_grad_, cell, pt);
           F.fill(def_grad_,cell,pt,0,0);
-          j_(cell,pt) = Intrepid::det(F);
+          j_(cell,pt) = Intrepid2::det(F);
         }
     }
 
@@ -438,7 +438,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
         for (int cell(0); cell < workset.numCells; ++cell) {
           for (int pt(0); pt < num_pts_; ++pt) {
             gradu.fill(grad_u_,cell,pt,0,0);
-            strain = 0.5 * (gradu + Intrepid::transpose(gradu));
+            strain = 0.5 * (gradu + Intrepid2::transpose(gradu));
             for (int i(0); i < num_dims_; ++i) {
               for (int j(0); j < num_dims_; ++j) {
                 strain_(cell,pt,i,j) = strain(i,j);
@@ -453,7 +453,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
             gradu = F - I;
             // dU/dx[0] = dx[n]/dx[0] - dx[0]/dx[0] = F[n,0] - I.
             // strain = 1/2 (dU/dx[0] + dU/dx[0]^T).
-            strain = 0.5 * (gradu + Intrepid::transpose(gradu));
+            strain = 0.5 * (gradu + Intrepid2::transpose(gradu));
             for (int i = 0; i < num_dims_; ++i)
               for (int j = 0; j < num_dims_; ++j)
                 strain_(cell, pt, i, j) = strain(i, j);

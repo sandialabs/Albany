@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -80,13 +80,13 @@ computeState(typename Traits::EvalData workset,
   ScalarT dt = delta_time(0);
 
   // containers
-  Intrepid::Tensor<ScalarT> Fnew(num_dims_);
-  Intrepid::Tensor<ScalarT> Fold(num_dims_);
-  Intrepid::Tensor<ScalarT> Finc(num_dims_);
-  Intrepid::Tensor<ScalarT> L(num_dims_);
-  Intrepid::Tensor<ScalarT> D(num_dims_);
-  Intrepid::Tensor<ScalarT> sigma(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> Fnew(num_dims_);
+  Intrepid2::Tensor<ScalarT> Fold(num_dims_);
+  Intrepid2::Tensor<ScalarT> Finc(num_dims_);
+  Intrepid2::Tensor<ScalarT> L(num_dims_);
+  Intrepid2::Tensor<ScalarT> D(num_dims_);
+  Intrepid2::Tensor<ScalarT> sigma(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -108,16 +108,16 @@ computeState(typename Traits::EvalData workset,
         Fnew.fill(def_grad,cell,pt,0,0);
 
         // incremental deformation gradient
-        Finc = Fnew * Intrepid::inverse(Fold);
+        Finc = Fnew * Intrepid2::inverse(Fold);
 
         // velocity gradient
-        L = (1.0/dt) * Intrepid::log(Finc);
+        L = (1.0/dt) * Intrepid2::log(Finc);
 
         // strain rate (a.k.a rate of deformation)
-        D = Intrepid::sym(L);
+        D = Intrepid2::sym(L);
 
         // stress tensor
-        sigma = -p*I +  2.0*mu_*( D - (2.0/3.0)*Intrepid::trace(D)*I);
+        sigma = -p*I +  2.0*mu_*( D - (2.0/3.0)*Intrepid2::trace(D)*I);
 
         // update stress state
         for (int i=0; i < num_dims_; ++i)

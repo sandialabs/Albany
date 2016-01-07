@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace HYD {
 
@@ -74,13 +74,13 @@ template<typename EvalT, typename Traits>
 void HydrideWResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
-  FST::integrate<ScalarT>(wResidual, wGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(wResidual, wGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
   if(!lump){
-    // Consistent mass matrix, the Intrepid way
-    FST::integrate<ScalarT>(wResidual, cDot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    // Consistent mass matrix, the Intrepid2 way
+    FST::integrate<ScalarT>(wResidual, cDot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
 
     // Consistent mass matrix, done manually
 /*

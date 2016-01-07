@@ -93,10 +93,10 @@ private:
   ///
   // template<typename ArgT>
   // void
-  // computeStress(Intrepid::Tensor<ScalarT> const & F,
-  //     Intrepid::Tensor<ArgT> const & Fp,
-  //     Intrepid::Tensor<ArgT> & T,
-  //     Intrepid::Tensor<ArgT> & S,
+  // computeStress(Intrepid2::Tensor<ScalarT> const & F,
+  //     Intrepid2::Tensor<ArgT> const & Fp,
+  //     Intrepid2::Tensor<ArgT> & T,
+  //     Intrepid2::Tensor<ArgT> & S,
   //     std::vector<ArgT> & shear) const;
 
   ///

@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace PHAL {
 /** \brief Finite Element Interpolation Evaluator
@@ -44,14 +44,14 @@ private:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
+  Intrepid2::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer<MeshScalarT> jacobian;
+  Intrepid2::FieldContainer<MeshScalarT> jacobian_inv;
 
   // Output:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;

@@ -65,11 +65,11 @@ private:
   ScalarT dTemp;
 
   // Work space FCs
-  Intrepid::FieldContainer<ScalarT> F_inv;
-  Intrepid::FieldContainer<ScalarT> F_invT;
-  Intrepid::FieldContainer<ScalarT> JF_invT;
-//  Intrepid::FieldContainer<ScalarT> P;
-  Intrepid::FieldContainer<ScalarT> thermoEPS;
+  Intrepid2::FieldContainer<ScalarT> F_inv;
+  Intrepid2::FieldContainer<ScalarT> F_invT;
+  Intrepid2::FieldContainer<ScalarT> JF_invT;
+//  Intrepid2::FieldContainer<ScalarT> P;
+  Intrepid2::FieldContainer<ScalarT> thermoEPS;
 
 };
 }

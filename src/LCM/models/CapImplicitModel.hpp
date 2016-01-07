@@ -6,7 +6,7 @@
 #if !defined(CapImplicitModel_hpp)
 #define CapImplicitModel_hpp
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -88,37 +88,37 @@ namespace LCM
     
     // yield function  
     template<typename T> T
-    compute_f(Intrepid::Tensor<T> & sigma, Intrepid::Tensor<T> & alpha, T & kappa);        
+    compute_f(Intrepid2::Tensor<T> & sigma, Intrepid2::Tensor<T> & alpha, T & kappa);        
     
     // unknow variable value list
     std::vector<ScalarT>
-    initialize(Intrepid::Tensor<ScalarT> & sigmaVal,
-        Intrepid::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
+    initialize(Intrepid2::Tensor<ScalarT> & sigmaVal,
+        Intrepid2::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
         ScalarT & dgammaVal);
     
     // local iteration jacobian
     void
     compute_ResidJacobian(std::vector<ScalarT> const & XXVal,
         std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-        const Intrepid::Tensor<ScalarT> & sigmaVal,
-        const Intrepid::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
-        Intrepid::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
+        const Intrepid2::Tensor<ScalarT> & sigmaVal,
+        const Intrepid2::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
+        Intrepid2::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
     
     // plastic potential    
     template<typename T> T
-    compute_g(Intrepid::Tensor<T> & sigma, Intrepid::Tensor<T> & alpha, T & kappa);                
+    compute_g(Intrepid2::Tensor<T> & sigma, Intrepid2::Tensor<T> & alpha, T & kappa);                
     
     // derivative
-    Intrepid::Tensor<ScalarT>
+    Intrepid2::Tensor<ScalarT>
     compute_dfdsigma(std::vector<ScalarT> const & XX);
         
     ScalarT
     compute_dfdkappa(std::vector<ScalarT> const & XX);
     
-    Intrepid::Tensor<ScalarT>
+    Intrepid2::Tensor<ScalarT>
     compute_dgdsigma(std::vector<ScalarT> const & XX);    
     
-    Intrepid::Tensor<DFadType>
+    Intrepid2::Tensor<DFadType>
     compute_dgdsigma(std::vector<DFadType> const & XX);
     
     // hardening functions
@@ -126,8 +126,8 @@ namespace LCM
     compute_Galpha(T J2_alpha);    
     
     template<typename T>     
-    Intrepid::Tensor<T>
-    compute_halpha(Intrepid::Tensor<T> const & dgdsigma,
+    Intrepid2::Tensor<T>
+    compute_halpha(Intrepid2::Tensor<T> const & dgdsigma,
         T const J2_alpha); 
 
     template<typename T> T
@@ -137,12 +137,12 @@ namespace LCM
     compute_hkappa(T const I1_dgdsigma, T const dedkappa);
     
     // elasto-plastic tangent modulus
-    Intrepid::Tensor4<ScalarT>
-    compute_Cep(Intrepid::Tensor4<ScalarT> & Celastic, Intrepid::Tensor<ScalarT> & sigma,
-        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa, ScalarT & dgamma);
-    Intrepid::Tensor4<ScalarT>
-    compute_Cepp(Intrepid::Tensor4<ScalarT> & Celastic, Intrepid::Tensor<ScalarT> & sigma,
-        Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa, ScalarT & dgamma);
+    Intrepid2::Tensor4<ScalarT>
+    compute_Cep(Intrepid2::Tensor4<ScalarT> & Celastic, Intrepid2::Tensor<ScalarT> & sigma,
+        Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa, ScalarT & dgamma);
+    Intrepid2::Tensor4<ScalarT>
+    compute_Cepp(Intrepid2::Tensor4<ScalarT> & Celastic, Intrepid2::Tensor<ScalarT> & sigma,
+        Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa, ScalarT & dgamma);
 
     // local temp variables
     RealType A;

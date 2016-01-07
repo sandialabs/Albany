@@ -81,7 +81,7 @@ protected:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
 //! Temporary containers
-  Intrepid::FieldContainer<MeshScalarT> physPointsCell;
+  Intrepid2::FieldContainer<MeshScalarT> physPointsCell;
 
 
 

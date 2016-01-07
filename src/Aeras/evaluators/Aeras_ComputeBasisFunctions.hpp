@@ -15,8 +15,8 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_EvaluatorUtilities.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace Albany { class StateManager; }
 
@@ -52,17 +52,17 @@ private:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
   //PHX::MDField<RealType,Node,QuadPoint>    val_at_cub_points;
-  Intrepid::FieldContainer<RealType>    val_at_cub_points;
-  Intrepid::FieldContainer<RealType>    grad_at_cub_points;
-  Intrepid::FieldContainer<RealType>    D2_at_cub_points;
-  Intrepid::FieldContainer<RealType>    refPoints;
-  Intrepid::FieldContainer<RealType>    refWeights;
+  Intrepid2::FieldContainer<RealType>    val_at_cub_points;
+  Intrepid2::FieldContainer<RealType>    grad_at_cub_points;
+  Intrepid2::FieldContainer<RealType>    D2_at_cub_points;
+  Intrepid2::FieldContainer<RealType>    refPoints;
+  Intrepid2::FieldContainer<RealType>    refWeights;
 
   // Output:
   //! Basis Functions at quadrature points
@@ -83,11 +83,11 @@ private:
          
   const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
-  void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
-                            const Intrepid::FieldContainer<MeshScalarT> &,
+  void spherical_divergence(Intrepid2::FieldContainer<MeshScalarT> &,
+                            const Intrepid2::FieldContainer<MeshScalarT> &,
                             const int e,
                             const double rrearth=1) const;
-  void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
+  void initialize_grad(Intrepid2::FieldContainer<RealType> &) const;
 
   MDFieldMemoizer<Traits> memoizer_;
 

@@ -22,7 +22,7 @@
 #include "Albany_StateManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
-#include <Intrepid_FieldContainer.hpp>
+#include <Intrepid2_FieldContainer.hpp>
 
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #if defined(ALBANY_EPETRA)

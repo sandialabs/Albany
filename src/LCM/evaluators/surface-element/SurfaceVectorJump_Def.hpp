@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -15,10 +15,10 @@ template<typename EvalT, typename Traits>
 SurfaceVectorJump<EvalT, Traits>::
 SurfaceVectorJump(const Teuchos::ParameterList & p,
     const Teuchos::RCP<Albany::Layouts> & dl) :
-    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
-    intrepid_basis_(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
-        Intrepid::FieldContainer<RealType>>>>(
-            "Intrepid Basis")),
+    cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")),
+    intrepid_basis_(p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
+        Intrepid2::FieldContainer<RealType>>>>(
+            "Intrepid2 Basis")),
     vector_(p.get<std::string>("Vector Name"), dl->node_vector),
     jump_(p.get<std::string>("Vector Jump Name"), dl->qp_vector)
 {
@@ -61,8 +61,8 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
   intrepid_basis_->getValues(
       ref_values_,
       ref_points_,
-      Intrepid::OPERATOR_VALUE);
-  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
+      Intrepid2::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //**********************************************************************
@@ -79,20 +79,20 @@ template<typename EvalT, typename Traits>
 void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
-  Intrepid::Vector<ScalarT>
+  Intrepid2::Vector<ScalarT>
   vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_qps_; ++pt) {
-      vecA.fill(Intrepid::ZEROS);
-      vecB.fill(Intrepid::ZEROS);
+      vecA.fill(Intrepid2::ZEROS);
+      vecB.fill(Intrepid2::ZEROS);
       for (int node = 0; node < num_plane_nodes_; ++node) {
         int topNode = node + num_plane_nodes_;
-        vecA += Intrepid::Vector<ScalarT>(
+        vecA += Intrepid2::Vector<ScalarT>(
             ref_values_(node, pt) * vector_(cell, node, 0),
             ref_values_(node, pt) * vector_(cell, node, 1),
             ref_values_(node, pt) * vector_(cell, node, 2));
-        vecB += Intrepid::Vector<ScalarT>(
+        vecB += Intrepid2::Vector<ScalarT>(
             ref_values_(node, pt) * vector_(cell, topNode, 0),
             ref_values_(node, pt) * vector_(cell, topNode, 1),
             ref_values_(node, pt) * vector_(cell, topNode, 2));

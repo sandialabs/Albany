@@ -14,8 +14,8 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace LCM {
 
@@ -63,7 +63,7 @@ public:
   void
   computeMidplaneCoords(
       PHX::MDField<ST, Cell, Vertex, Dim> const coords,
-      Intrepid::FieldContainer<ST> & midplane_coords);
+      Intrepid2::FieldContainer<ST> & midplane_coords);
 
   ///
   /// Computes basis from the reference midplane
@@ -72,7 +72,7 @@ public:
   ///
   template<typename ST>
   void
-  computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
+  computeBasisVectors(Intrepid2::FieldContainer<ST> const & midplane_coords,
       PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
@@ -84,7 +84,7 @@ public:
   ///
   void
   computeDualBasisVectors(
-      Intrepid::FieldContainer<MeshScalarT> const & midplane_coords,
+      Intrepid2::FieldContainer<MeshScalarT> const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);
@@ -117,25 +117,25 @@ private:
   ///
   /// Input: Numerical integration rule
   ///
-  Teuchos::RCP<Intrepid::Cubature<RealType>>
+  Teuchos::RCP<Intrepid2::Cubature<RealType>>
   cubature_;
 
   ///
   /// Input: Finite element basis for the midplane
   ///
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>
   intrepid_basis_;
 
   ///
   /// Local FieldContainer to store the reference midplane_coords
   ///
-  Intrepid::FieldContainer<MeshScalarT>
+  Intrepid2::FieldContainer<MeshScalarT>
   ref_midplane_coords_;
 
   ///
   /// Local FieldContainer to store the current midplane_coords
   ///
-  Intrepid::FieldContainer<ScalarT>
+  Intrepid2::FieldContainer<ScalarT>
   current_midplane_coords_;
 
   ///
@@ -178,25 +178,25 @@ private:
   ///
   /// Reference Cell FieldContainer for basis values
   ///
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer<RealType>
   ref_values_;
 
   ///
   /// Reference Cell FieldContainer for basis gradients
   ///
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer<RealType>
   ref_grads_;
 
   ///
   /// Reference Cell FieldContainer for integration point locations
   ///
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer<RealType>
   ref_points_;
 
   ///
   /// Reference Cell FieldContainer for integration weights
   ///
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer<RealType>
   ref_weights_;
 };
 }

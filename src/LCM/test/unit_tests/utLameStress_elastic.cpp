@@ -16,7 +16,7 @@
 #include "Albany_MultiSTKFieldContainer.hpp"
 #include "LCM/evaluators/lame/LameStress.hpp"
 #include "LCM/evaluators/SetField.hpp"
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 namespace {
 
@@ -145,7 +145,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 //   stressField.dimensions(stressFieldDimensions);
 
   // Record the expected stress, which will be used to check the computed stress
-  Intrepid::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
+  Intrepid2::Tensor<PHAL::AlbanyTraits::Residual::ScalarT>
     expectedStress(materialModelParametersList.get<double>("Youngs Modulus") * 0.01,
                    0.0,
                    0.0,

@@ -974,7 +974,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   //
   // For each state, create storage for the data for on processor elements
   // elemGIDws.size() is the number of elements on this processor ...
-  // Note however that Intrepid will stride over numBuckets * worksetSize
+  // Note however that Intrepid2 will stride over numBuckets * worksetSize
   // so we must allocate enough storage for that
 
   std::size_t numElementsAccessed = numBuckets * worksetSize;

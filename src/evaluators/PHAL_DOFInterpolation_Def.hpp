@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -48,9 +48,9 @@ template<typename EvalT, typename Traits>
 void DOFInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid version:
+  //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -102,9 +102,9 @@ template<typename Traits>
 void DOFInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid version:
+  //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
   const int num_dof = val_node(0,0).size();
   const int neq = workset.wsElNodeEqID[0][0].size();
@@ -162,9 +162,9 @@ template<typename Traits>
 void DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid version:
+  //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
   const int num_dof = val_node(0,0).size();
   const int neq = workset.wsElNodeEqID[0][0].size();
@@ -223,9 +223,9 @@ template<typename Traits>
 void DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid version:
+  //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
   const int num_dof = val_node(0,0).size();
   const int neq = workset.wsElNodeEqID[0][0].size();

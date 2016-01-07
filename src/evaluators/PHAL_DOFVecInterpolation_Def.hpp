@@ -9,7 +9,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -104,7 +104,7 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
-//  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
+//  Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
 
 #ifdef ALBANY_TIMER
@@ -233,7 +233,7 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
-//Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
+//Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
   Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <ScalarT,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
 #endif
@@ -298,7 +298,7 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
-//Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
+//Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
   Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <ScalarT,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
 #endif
@@ -364,7 +364,7 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
-//Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
+//Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
 
 #ifdef ALBANY_TIMER
