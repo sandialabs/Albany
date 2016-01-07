@@ -59,7 +59,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
       -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
-      -D Trilinos_ENABLE_IntrepidIntrepid2:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
