@@ -983,6 +983,9 @@ compute_uv_ImplHV (const int& cell) const
 	gradient4(cUTY, cgradUTY, cell);
 	gradient4(cUTZ, cgradUTZ, cell);
 
+
+	//OG It seems that reversing these loops (nodal first, qp second)
+	//will make it more efficient because of lam, th, weights assignments. Something to consider.
 	for (int qp=0; qp < numQPs; ++qp) {
 		for (int node=0; node < numNodes; ++node) {
 
