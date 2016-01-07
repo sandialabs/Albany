@@ -437,9 +437,7 @@ gradient4(const PHX::MDField<ScalarT, Cell, Node>  & field,
 		ScalarT gy = 0;
 		for (std::size_t node=0; node < numNodes; ++node) {
 
-			//OG One can use
 			//const typename PHAL::Ref<const ScalarT>::type
-			//but it is better to use const ScalarT because of fast access to cash on device.
 			const ScalarT field_ = field(cell,node);
 			gx += field_*grad_at_cub_points_Kokkos(node, qp,0);
 			gy += field_*grad_at_cub_points_Kokkos(node, qp,1);
@@ -524,8 +522,11 @@ compute_Residual0(const int& cell) const
 
 	for (int node=0; node < numNodes; ++node) {
 
-//		const ScalarT
-//		unodal0 = UNodal(cell,node,0);
+		//const ScalarT
+		//unodal0 = UNodal(cell,node,0);
+
+		const typename PHAL::Ref<const ScalarT>::type
+		unodal0 = UNodal(cell,node,0);
 
 /*		std::cout << "ShallowWaterResid::compute_Residual0  inside loop 2 after assign unodal0"  << std::endl;
 		std::cout << "address chuv(cell,node,0)"  << chuv(cell,node,0) << std::endl;
@@ -534,15 +535,10 @@ compute_Residual0(const int& cell) const
 		std::cout << "address UNodal(cell,node,2)"  << UNodal(cell,node,2) << std::endl;
 		std::cout << "address chuv(cell,node,1)"  << chuv(cell,node,1) << std::endl; */
 
-//		chuv(cell,node,0) = unodal0*UNodal(cell,node,1);
-//		chuv(cell,node,1) = unodal0*UNodal(cell,node,2);
+		chuv(cell,node,0) = unodal0*UNodal(cell,node,1);
+		chuv(cell,node,1) = unodal0*UNodal(cell,node,2);
 
 //		std::cout << "ShallowWaterResid::compute_Residual0  inside loop 3 after assign chuv"  << std::endl;
-
-
-
-		chuv(cell,node,0) = UNodal(cell,node,0)*UNodal(cell,node,1);
-		chuv(cell,node,1) = UNodal(cell,node,0)*UNodal(cell,node,2);
 
 
 	}
@@ -837,13 +833,10 @@ BuildLaplace_for_uv (const int& cell) const
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
 		for (std::size_t node=0; node < numNodes; ++node) {
 
-			//OG Changing MeshScalarT to ScalarT type.
-			//As a wild guess, this can be contributing to a bug in Laplace (Laplace is not symmetric?),
-			//since trig. functions of lam/th are differentiated.
 			//const typename PHAL::Ref<const ScalarT>::type
 			const ScalarT
-			lam = sphere_coord(cell, qp, 0),
-			th  = sphere_coord(cell, qp, 1),
+			lam = sphere_coord(cell, node, 0),
+			th  = sphere_coord(cell, node, 1),
 			wgradbf0_ = wGradBF(cell, node, qp, 0),
 			wgradbf1_ = wGradBF(cell, node, qp, 1);
 			//K = -sin L    -sin T cos L
@@ -994,8 +987,8 @@ compute_uv_ImplHV (const int& cell) const
 		for (int node=0; node < numNodes; ++node) {
 
 			const ScalarT
-			lam = sphere_coord(cell, qp, 0),
-			th  = sphere_coord(cell, qp, 1),
+			lam = sphere_coord(cell, node, 0),
+			th  = sphere_coord(cell, node, 1),
 			wgradbf0_ = wGradBF(cell, node, qp, 0),
 			wgradbf1_ = wGradBF(cell, node, qp, 1),
 			wbf_      = wBF(cell,node,qp);
@@ -1437,8 +1430,8 @@ evaluateFields(typename Traits::EvalData workset)
 				for (std::size_t qp=0; qp < numQPs; ++qp) {
 					for (std::size_t node=0; node < numNodes; ++node) {
 						const typename PHAL::Ref<const MeshScalarT>::type
-						lam = sphere_coord(cell, qp, 0),
-						th = sphere_coord(cell, qp, 1);
+						lam = sphere_coord(cell, node, 0),
+						th = sphere_coord(cell, node, 1);
 
 						//K = -sin L    -sin T cos L
 								//     cos L    -sin T sin L
@@ -1515,8 +1508,8 @@ evaluateFields(typename Traits::EvalData workset)
 					for (std::size_t node=0; node < numNodes; ++node) {
 
 						const typename PHAL::Ref<const MeshScalarT>::type
-						lam = sphere_coord(cell, qp, 0),
-						th = sphere_coord(cell, qp, 1);
+						lam = sphere_coord(cell, node, 0),
+						th = sphere_coord(cell, node, 1);
 
 						//K = -sin L    -sin T cos L
 								//     cos L    -sin T sin L
