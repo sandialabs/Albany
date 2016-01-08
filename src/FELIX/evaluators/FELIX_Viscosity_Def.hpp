@@ -10,7 +10,7 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 

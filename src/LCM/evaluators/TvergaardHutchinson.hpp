@@ -13,8 +13,8 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace LCM {
 /** \brief
@@ -44,9 +44,9 @@ private:
 
 	// Input
 	//! Numerical integration rule
-	Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
+	Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
 	//! Finite element basis for the midplane
-	Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
+	Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> intrepidBasis;
 	// current basis vector of the surface element
 	PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
 	// displacement jump

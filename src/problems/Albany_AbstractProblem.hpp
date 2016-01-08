@@ -29,21 +29,21 @@
 #include "PHAL_Dimension.hpp"
 
 #include "Teuchos_VerboseObject.hpp"
-#include <Intrepid_FieldContainer.hpp>
+#include <Intrepid2_FieldContainer.hpp>
 
-#include "Intrepid_HGRAD_LINE_C1_FEM.hpp"
-#include "Intrepid_HGRAD_LINE_Cn_FEM.hpp"
-#include "Intrepid_HGRAD_QUAD_C1_FEM.hpp"
-#include "Intrepid_HGRAD_QUAD_C2_FEM.hpp"
-#include "Intrepid_HGRAD_TRI_C1_FEM.hpp"
-#include "Intrepid_HGRAD_TRI_C2_FEM.hpp"
-#include "Intrepid_HGRAD_HEX_C1_FEM.hpp"
-#include "Intrepid_HGRAD_HEX_C2_FEM.hpp"
-#include "Intrepid_HGRAD_TET_C1_FEM.hpp"
-#include "Intrepid_HGRAD_TET_C2_FEM.hpp"
-#include "Intrepid_HGRAD_TET_COMP12_FEM.hpp"
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_QUAD_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_QUAD_C2_FEM.hpp"
+#include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_TRI_C2_FEM.hpp"
+#include "Intrepid2_HGRAD_HEX_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_HEX_C2_FEM.hpp"
+#include "Intrepid2_HGRAD_TET_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_TET_C2_FEM.hpp"
+#include "Intrepid2_HGRAD_TET_COMP12_FEM.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 
@@ -108,8 +108,8 @@ namespace Albany {
 
     virtual void
       getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType> > > > oldState_,
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType> > > > newState_
          ) const  {};
 
     //! Get a list of the Special fields needed to implement the problem

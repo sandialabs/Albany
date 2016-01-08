@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace LCM {
 /** \brief Finite Element Interpolation Evaluator
@@ -58,7 +58,7 @@ private:
   unsigned int worksetSize;
 
 
-  Intrepid::FieldContainer<ScalarT> tauH;
+  Intrepid2::FieldContainer<ScalarT> tauH;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

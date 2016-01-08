@@ -6,9 +6,9 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
-#include <Intrepid_MiniTensor.h>
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
+#include <Intrepid2_MiniTensor.h>
 
 #include <typeinfo>
 
@@ -214,8 +214,8 @@ template<typename EvalT, typename Traits>
 void ThermoPoroPlasticityResidMass<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
-  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
@@ -262,7 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
   // Pore-fluid diffusion coupling.
   for (int cell=0; cell < workset.numCells; ++cell) {

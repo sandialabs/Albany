@@ -17,7 +17,8 @@
       <Parameter name="RBF Radius" type="double" value="1.0"/>
     </ParameterList>
     <ParameterList name="Search">
-      <Parameter name="Track Missed Range Entities" type="bool" value="true"/>
+      <Parameter name="Track Missed Range Entities" type="bool" value="false"/>
+      <Parameter name="Point Inclusion Tolerance" value="1.0e-12" type="double"/>
     </ParameterList>
   </ParameterList>
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->

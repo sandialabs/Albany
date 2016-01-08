@@ -7,7 +7,7 @@
 #if !defined(LCM_DruckerPragerModel_hpp)
 #define LCM_DruckerPragerModel_hpp
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"

@@ -7,8 +7,8 @@
 // Author: Mario J. Juha (juham@rpi.edu)
 
 #include <cmath>
-#include "Intrepid_MiniTensor.h"
-#include "Intrepid_MiniTensor_Definitions.h"
+#include "Intrepid2_MiniTensor.h"
+#include "Intrepid2_MiniTensor_Definitions.h"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -57,12 +57,12 @@ namespace LCM
     Phi_ = Phid*degtorad;
     phi2_ = phi2d*degtorad;
 
-    const Intrepid::Index IndexM = 3;
-    const Intrepid::Index IndexN = 3;
+    const Intrepid2::Index IndexM = 3;
+    const Intrepid2::Index IndexN = 3;
 
     // Initialize rotation matrix
-    Intrepid::Matrix<double, IndexM, IndexN> rl;
-    rl.fill(Intrepid::ZEROS);
+    Intrepid2::Matrix<double, IndexM, IndexN> rl;
+    rl.fill(Intrepid2::ZEROS);
 
     // Compute rotation matrix
     rl(0,0) = cos(phi1_)*cos(phi2_) - sin(phi1_)*cos(Phi_)*sin(phi2_);
@@ -76,10 +76,10 @@ namespace LCM
     rl(2,2) = cos(Phi_);
 
     // Set elastic tensor in lattice frame
-    Intrepid::Tensor4<RealType, EC::MAX_NUM_DIM> C;
+    Intrepid2::Tensor4<RealType, EC::MAX_NUM_DIM> C;
     C.set_dimension(num_dims_);
     // Initialize with zeros
-    C.fill(Intrepid::ZEROS);
+    C.fill(Intrepid2::ZEROS);
     // fill tensor
     C(0,0,0,0) = c11_;
     C(1,1,1,1) = c22_;

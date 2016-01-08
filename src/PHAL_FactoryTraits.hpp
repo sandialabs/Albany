@@ -41,17 +41,10 @@
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
 
-#ifndef ALBANY_USE_PUBLICTRILINOS
 #include "Sacado_mpl_placeholders.hpp"
 // \cond  Have doxygern ignore this namespace
 using namespace Sacado::mpl::placeholders;
 // \endcond
-#else
-#include "Albany_PublicTrilinosTrickery.hpp"
-// \cond  Have doxygern ignore this namespace
-using namespace boost::mpl::placeholders;
-// \endcond
-#endif
 
 namespace PHAL {
 /*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
@@ -80,17 +73,7 @@ namespace PHAL {
     static const int id_schwarz_bc                     = 10; // Only for LCM probs
     static const int id_pd_neigh_fit_bc                = 11; // Only for LCM-Peridigm coupling
 
-#ifdef ALBANY_USE_PUBLICTRILINOS
-#if defined(ALBANY_LCM) && defined(HAVE_STK)
-    typedef boost::mpl::vector12<
-#elif defined(ALBANY_LCM)
-    typedef boost::mpl::vector10<
-#else
-    typedef boost::mpl::vector5<
-#endif
-#else
     typedef Sacado::mpl::vector<
-#endif
         PHAL::Dirichlet<_,Traits>,                 //  0
         PHAL::DirichletAggregator<_,Traits>,       //  1
         PHAL::DirichletCoordFunction<_,Traits>,    //  2
@@ -132,15 +115,7 @@ namespace PHAL {
     static const int id_timedep_bc                =  9; // Only for LCM probs
 
 
-#ifdef ALBANY_USE_PUBLICTRILINOS
-#if defined(ALBANY_LCM)
-    typedef boost::mpl::vector10<
-#else
-    typedef boost::mpl::vector9<
-#endif
-#else
     typedef Sacado::mpl::vector<
-#endif
        PHAL::Neumann<_,Traits>,                   //  0
        PHAL::NeumannAggregator<_,Traits>,         //  1
        PHAL::GatherCoordinateVector<_,Traits>,    //  2

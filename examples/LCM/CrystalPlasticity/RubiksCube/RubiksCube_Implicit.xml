@@ -8,7 +8,7 @@
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
         <Parameter name="Time Values" type="Array(double)" value="{0.00, 1.0, 2.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{0.00, 0.10, 0.20}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{0.00, 1.0, 2.0}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
@@ -21,7 +21,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube_Mesh3.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="RubiksCube_Implicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
@@ -51,11 +51,11 @@
       </ParameterList>
       <ParameterList name="Step Size">
         <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.0005"/>
-       <Parameter name="Max Step Size" type="double" value="0.02"/>
+       <Parameter name="Initial Step Size" type="double" value="0.00005"/>
+       <Parameter name="Max Step Size" type="double" value="0.001"/>
        <Parameter name="Min Step Size" type="double" value="0.00000001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Aggressiveness" type="double" value="0.2"/>
+       <Parameter name="Aggressiveness" type="double" value="0.1"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">

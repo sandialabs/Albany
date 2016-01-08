@@ -162,8 +162,8 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       peridynamicPartialStressBlocks.push_back(blockName);
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
-      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numQPts = cubature->getNumPoints();
       numPartialStressIds += numQPts * elementsInElementBlock.size();
     }
@@ -320,29 +320,29 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
-      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
       const int numCells = 1;
 
       // Get the quadrature points and weights
-      Intrepid::FieldContainer<RealType> quadratureRefPoints;
-      Intrepid::FieldContainer<RealType> quadratureRefWeights;
+      Intrepid2::FieldContainer<RealType> quadratureRefPoints;
+      Intrepid2::FieldContainer<RealType> quadratureRefWeights;
       quadratureRefPoints.resize(numQuadPoints, numDim);
       quadratureRefWeights.resize(numQuadPoints);
       cubature->getCubature(quadratureRefPoints, quadratureRefWeights);
 
       // Container for the Jacobians, Jacobian determinants, and weighted measures
-      Intrepid::FieldContainer<RealType> jacobians;
-      Intrepid::FieldContainer<RealType> jacobianDeterminants;
-      Intrepid::FieldContainer<RealType> weightedMeasures;
+      Intrepid2::FieldContainer<RealType> jacobians;
+      Intrepid2::FieldContainer<RealType> jacobianDeterminants;
+      Intrepid2::FieldContainer<RealType> weightedMeasures;
       jacobians.resize(numCells, numQuadPoints, numDim, numDim);
       jacobianDeterminants.resize(numCells, numQuadPoints);
       weightedMeasures.resize(numCells, numQuadPoints);
 
-      // Create data structures for passing information to/from Intrepid.
+      // Create data structures for passing information to/from Intrepid2.
 
       typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
 
@@ -361,7 +361,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
       cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
 
-      // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
+      // Copy the reference points from the Intrepid2::FieldContainer to a PHX::MDField
       for(int qp=0 ; qp<numQuadPoints ; ++qp){
         for(int dof=0 ; dof<3 ; ++dof){
           refPoints(0, qp, dof) = quadratureRefPoints(qp, dof);
@@ -379,12 +379,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	}
 
 	// Determine the global (x,y,z) coordinates of the quadrature points
-  	Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
+  	Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
 	// Determine the weighted integration measures, which are the volumes that will be assigned to the peridynamic material points
- 	Intrepid::CellTools<RealType>::setJacobian(jacobians, refPoints, cellWorkset, cellTopology);
- 	Intrepid::CellTools<RealType>::setJacobianDet(jacobianDeterminants, jacobians);
- 	Intrepid::FunctionSpaceTools::computeCellMeasure<RealType>(weightedMeasures, jacobianDeterminants, quadratureRefWeights);
+ 	Intrepid2::CellTools<RealType>::setJacobian(jacobians, refPoints, cellWorkset, cellTopology);
+ 	Intrepid2::CellTools<RealType>::setJacobianDet(jacobianDeterminants, jacobians);
+ 	Intrepid2::FunctionSpaceTools::computeCellMeasure<RealType>(weightedMeasures, jacobianDeterminants, quadratureRefWeights);
 
 	// Bookkeeping for use downstream
 	PartialStressElement partialStressElement;
@@ -709,15 +709,15 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	  int numDim = 3;
 
 	  // Physical points, which are the physical (x, y, z) values of the peridynamic node (pay no attention to the "quadrature point" descriptor)
-	  Intrepid::FieldContainer<RealType> physPoints;
+	  Intrepid2::FieldContainer<RealType> physPoints;
 	  physPoints.resize(numCells, numQuadPoints, numDim);
 
 	  // Reference points, which are the natural coordinates of the quadrature points
-	  Intrepid::FieldContainer<RealType> refPoints;
+	  Intrepid2::FieldContainer<RealType> refPoints;
 	  refPoints.resize(numCells, numQuadPoints, numDim);
 
 	  // Cell workset, which is the set of nodes for the given element
-	  Intrepid::FieldContainer<RealType> cellWorkset;
+	  Intrepid2::FieldContainer<RealType> cellWorkset;
 	  cellWorkset.resize(numCells, numNodesInElement, numDim);
 
  	  for(int dof=0 ; dof<3 ; dof++){
@@ -731,7 +731,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
  	    }
  	  }
 
-	  Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology, -1);
+	  Intrepid2::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology, -1);
 
 	  bool refPointsAreNan = !boost::math::isfinite(refPoints(0,0,0)) || !boost::math::isfinite(refPoints(0,0,1)) || !boost::math::isfinite(refPoints(0,0,2));
 	  TEUCHOS_TEST_FOR_EXCEPT_MSG(refPointsAreNan, "\n**** Error in PeridigmManager::obcOverlappingElementSearch(), NaN in refPoints.\n");
@@ -740,7 +740,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	  for(int dof=0 ; dof<3 ; dof++){
 	    point[dof] = refPoints(0, 0, dof);
 	  }
-	  int inElement = Intrepid::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
+	  int inElement = Intrepid2::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
 
 	  if(inElement){
 	    OBCDataPoint dataPoint;
@@ -832,10 +832,10 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
   int numPoints = 1;
   int numDim = 3;
 
-  Intrepid::FieldContainer<RealType> physPoints;
+  Intrepid2::FieldContainer<RealType> physPoints;
   physPoints.resize(numCells, numPoints, numDim);
 
-  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer<RealType> refPoints;
   refPoints.resize(numCells, numPoints, numDim);
 
   // Compute the difference in displacements at each peridynamic node
@@ -850,7 +850,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     int numNodes = bulkData->num_nodes((*obcDataPoints)[iEvalPt].albanyElement);
     const stk::mesh::Entity* nodes = bulkData->begin_nodes((*obcDataPoints)[iEvalPt].albanyElement);
 
-    Intrepid::FieldContainer<RealType> cellWorkset;
+    Intrepid2::FieldContainer<RealType> cellWorkset;
     cellWorkset.resize(numCells, numNodes, numDim);
     for(int i=0 ; i<numNodes ; i++){
       int globalAlbanyNodeId = bulkData->identifier(nodes[i]) - 1;
@@ -863,9 +863,9 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
     shards::CellTopology cellTopology(&(*obcDataPoints)[iEvalPt].cellTopologyData);
 
-    Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
+    Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
-    // Record the difference between the Albany displacement at the point (which was just computed using Intrepid) and
+    // Record the difference between the Albany displacement at the point (which was just computed using Intrepid2) and
     // the Peridigm displacement at the point
     for(int dof=0 ; dof<3 ; dof++){
       displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
@@ -874,14 +874,14 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     }
 
     if(obcFunctionalDerivWrtDisplacement != NULL) {
-      Intrepid::FieldContainer<RealType> refPoint;
+      Intrepid2::FieldContainer<RealType> refPoint;
       refPoint.resize(numPoints, numDim);
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> refBasis = Albany::getIntrepidBasis((*obcDataPoints)[iEvalPt].cellTopologyData);
-      Intrepid::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
-      refBasis->getValues(basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
+      Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> refBasis = Albany::getIntrepid2Basis((*obcDataPoints)[iEvalPt].cellTopologyData);
+      Intrepid2::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
+      refBasis->getValues(basisOnRefPoint, refPoint, Intrepid2::OPERATOR_VALUE);
 
       // Derivatives corresponding to nodal dof in Albany element
       double deriv[3];
@@ -982,16 +982,16 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       // Can probably store things by block and use worksets to compute things in one big call.
 
       shards::CellTopology cellTopology(&it->cellTopologyData);
-      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
       const int numCells = 1;
 
       // Get the quadrature points and weights
-      Intrepid::FieldContainer<RealType> quadratureRefPoints;
-      Intrepid::FieldContainer<RealType> quadratureRefWeights;
+      Intrepid2::FieldContainer<RealType> quadratureRefPoints;
+      Intrepid2::FieldContainer<RealType> quadratureRefWeights;
       quadratureRefPoints.resize(numQuadPoints, numDim);
       quadratureRefWeights.resize(numQuadPoints);
       cubature->getCubature(quadratureRefPoints, quadratureRefWeights);
@@ -1013,7 +1013,7 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
       cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
 
-      // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
+      // Copy the reference points from the Intrepid2::FieldContainer to a PHX::MDField
       for(int qp=0 ; qp<numQuadPoints ; ++qp){
 	for(int dof=0 ; dof<3 ; ++dof){
 	  refPoints(0, qp, dof) = quadratureRefPoints(qp, dof);
@@ -1034,7 +1034,7 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       }
 
       // Determine the global (x,y,z) coordinates of the quadrature points
-      Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
+      Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
       for(unsigned int i=0 ; i<it->peridigmGlobalIds.size() ; ++i){
 	peridigmLocalId = peridigmGlobalIdToPeridigmLocalId[it->peridigmGlobalIds[i]];
@@ -1131,6 +1131,13 @@ void LCM::PeridigmManager::evaluateTangentStiffnessMatrix()
     peridigm->evaluateTangentStiffnessMatrix();
 }
 
+Teuchos::RCP<const Epetra_FECrsMatrix> LCM::PeridigmManager::getTangentStiffnessMatrix()
+{
+  Teuchos::RCP<const Epetra_FECrsMatrix> matrix;
+  if(hasPeridynamics)
+    matrix = peridigm->getTangentStiffnessMatrix();
+  return matrix;
+}
 
 double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
 {

@@ -1,20 +1,21 @@
 #!/bin/csh
 
-cd /project/projectdirs/piscees/nightlyEdisonCDash
+BASE_DIR=/project/projectdirs/piscees/nightlyEdisonCDash
+cd $BASE_DIR
 
 source edison_modules.sh 
 
-rm -rf /project/projectdirs/piscees/nightlyEdisonCDash/repos
-rm -rf /project/projectdirs/piscees/nightlyEdisonCDash/build
-rm -rf /project/projectdirs/piscees/nightlyEdisonCDash/ctest_nightly.cmake.work
-rm -rf /project/projectdirs/piscees/nightlyEdisonCDash/nightly_log*
-rm -rf /project/projectdirs/piscees/nightlyEdisonCDash/results*
-rm -rf /project/projectdirs/piscees/nightlyEdisonCDash/test_summary.txt
+rm -rf $BASE_DIR/repos
+rm -rf $BASE_DIR/build
+rm -rf $BASE_DIR/ctest_nightly.cmake.work
+rm -rf $BASE_DIR/nightly_log*
+rm -rf $BASE_DIR/results*
+rm -rf $BASE_DIR/test_summary.txt
 
 cat trilinosFELIX ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 now=$(date +"%m_%d_%Y-%H_%M")
-LOG_FILE=/project/projectdirs/piscees/nightlyEdisonCDash/nightly_log_edisonTrilinos.txt
+LOG_FILE=$BASE_DIR/nightly_log_edisonTrilinos.txt
 
-eval "env  TEST_DIRECTORY=/project/projectdirs/piscees/nightlyEdisonCDash SCRIPT_DIRECTORY=/project/projectdirs/piscees/nightlyEdisonCDash ctest -VV -S /project/projectdirs/piscees/nightlyEdisonCDash/ctest_nightly.cmake" > $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=$BASE_DIR SCRIPT_DIRECTORY=$BASE_DIR ctest -VV -S $BASE_DIR/ctest_nightly.cmake" > $LOG_FILE 2>&1
 

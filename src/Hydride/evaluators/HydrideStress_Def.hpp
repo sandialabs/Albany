@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace HYD {
 
@@ -84,7 +84,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   switch (numDims) {
   case 1:
-    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
+    Intrepid2::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
     break;
   case 2:
     // Compute Stress (with the plane strain assumption for now)

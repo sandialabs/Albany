@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -83,7 +83,7 @@ template<typename EvalT, typename Traits>
 void NSContinuityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -94,7 +94,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   
-  FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid::COMP_CPP,  
+  FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid2::COMP_CPP,  
                           false); // "false" overwrites
 
   if (havePSPG) {

@@ -51,7 +51,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node> CResidual;
 
   unsigned int numQPs, numDims, numNodes;
-  Intrepid::FieldContainer<ScalarT> divergence;
+  Intrepid2::FieldContainer<ScalarT> divergence;
   bool havePSPG;
 };
 }

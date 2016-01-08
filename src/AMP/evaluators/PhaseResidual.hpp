@@ -64,8 +64,8 @@ private:
 
   bool enable_transient_;
   std::string Temperature_Name_;
-  Intrepid::FieldContainer<ScalarT> term1_;
-  Intrepid::FieldContainer<ScalarT> term2_;
+  Intrepid2::FieldContainer<ScalarT> term1_;
+  Intrepid2::FieldContainer<ScalarT> term2_;
 
 };
 }

@@ -14,7 +14,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Intrepid_MiniTensor_Solvers.h"
 #include <MiniNonlinearSolver.h>
 
@@ -93,8 +93,8 @@ public:
       /// Crystal elasticity parameters
       ///
       RealType c11_, c12_, c44_, ctest_;
-      Intrepid::Tensor4<RealType, CP::MAX_NUM_DIM> C_;
-      Intrepid::Tensor<RealType, CP::MAX_NUM_DIM> orientation_;
+      Intrepid2::Tensor4<RealType, CP::MAX_NUM_DIM> C_;
+      Intrepid2::Tensor<RealType, CP::MAX_NUM_DIM> orientation_;
 
       ///
       /// Number of slip systems

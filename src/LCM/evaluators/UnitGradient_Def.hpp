@@ -6,7 +6,7 @@
 
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 namespace LCM {
 
@@ -44,12 +44,12 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     ScalarT scalar_mag(0.0);
-    Intrepid::Vector<ScalarT> grad(num_dims_), unit(num_dims_);
+    Intrepid2::Vector<ScalarT> grad(num_dims_), unit(num_dims_);
 
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         grad.fill( scalar_grad_, cell,pt,0 );
-        scalar_mag = Intrepid::norm(grad);
+        scalar_mag = Intrepid2::norm(grad);
         if (scalar_mag > 0) {
           unit = grad / scalar_mag;
           for (int i(0); i < num_dims_; i++) {

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -121,17 +121,17 @@ computeState(typename Traits::EvalData workset,
       (*workset.stateArrayPtr)[isoHardening_string + "_old"];
 
   // scratch space FCs
-  Intrepid::Tensor<ScalarT> be(num_dims_);
-  Intrepid::Tensor<ScalarT> s(num_dims_);
-  Intrepid::Tensor<ScalarT> n(num_dims_);
-  Intrepid::Tensor<ScalarT> A(num_dims_);
-  Intrepid::Tensor<ScalarT> expA(num_dims_);
+  Intrepid2::Tensor<ScalarT> be(num_dims_);
+  Intrepid2::Tensor<ScalarT> s(num_dims_);
+  Intrepid2::Tensor<ScalarT> n(num_dims_);
+  Intrepid2::Tensor<ScalarT> A(num_dims_);
+  Intrepid2::Tensor<ScalarT> expA(num_dims_);
 
-  Intrepid::Tensor<ScalarT> logFp_n(num_dims_);
-  Intrepid::Tensor<ScalarT> Fp(num_dims_);
-  Intrepid::Tensor<ScalarT> Fpold(num_dims_);
-  Intrepid::Tensor<ScalarT> Cpinv(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> logFp_n(num_dims_);
+  Intrepid2::Tensor<ScalarT> Fp(num_dims_);
+  Intrepid2::Tensor<ScalarT> Fpold(num_dims_);
+  Intrepid2::Tensor<ScalarT> Cpinv(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
 
   ScalarT kappa, Rd;
   ScalarT mu, mubar;
@@ -159,10 +159,10 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-      Fp = Intrepid::exp(logFp_n);
+      Fp = Intrepid2::exp(logFp_n);
       Fpold = Fp;
-      Cpinv = Intrepid::dot(Intrepid::inverse(Fp),
-          Intrepid::transpose(Intrepid::inverse(Fp)));
+      Cpinv = Intrepid2::dot(Intrepid2::inverse(Fp),
+          Intrepid2::transpose(Intrepid2::inverse(Fp)));
 
       kappa = elastic_modulus(cell, pt)
           / (3.0 * (1.0 - 2.0 * poissons_ratio(cell, pt)));
@@ -182,14 +182,14 @@ computeState(typename Traits::EvalData workset,
               be(i, j) += Jm23 * def_grad(cell, pt, i, p) * Cpinv(p, q)
                   * def_grad(cell, pt, j, q);
 
-      trd3 = Intrepid::trace(be) / 3.;
+      trd3 = Intrepid2::trace(be) / 3.;
       mubar = trd3 * mu;
       s = mu * (be - trd3 * I);
 
       isoH = isoHardening_old(cell, pt);
 
       // check for yielding
-      smag = Intrepid::norm(s);
+      smag = Intrepid2::norm(s);
       Phi = smag - sq23 * (Y + isoH);
 
       if (Phi > 1e-11) { // plastic yielding
@@ -249,7 +249,7 @@ computeState(typename Traits::EvalData workset,
 
         // exponential map to get Fp
         A = dgam * n;
-        expA = Intrepid::exp<ScalarT>(A);
+        expA = Intrepid2::exp<ScalarT>(A);
 
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
@@ -269,7 +269,7 @@ computeState(typename Traits::EvalData workset,
       }
 
       // store logFp as the state variable
-      logFp_n = Intrepid::log(Fp);
+      logFp_n = Intrepid2::log(Fp);
       for (int i = 0; i < num_dims_; ++i)
         for (int j = 0; j < num_dims_; ++j)
           logFp(cell, pt, i, j) = logFp_n(i, j);

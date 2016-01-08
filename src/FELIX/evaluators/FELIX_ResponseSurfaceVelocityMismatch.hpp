@@ -9,8 +9,8 @@
 
 //#include "FELIX_MeshRegion.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace FELIX {
 /** 
@@ -53,38 +53,38 @@ namespace FELIX {
 
     Teuchos::RCP<shards::CellTopology> cellType;
     Teuchos::RCP<shards::CellTopology> sideType;
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureSide;
+    Teuchos::RCP<Intrepid2::Cubature<RealType> > cubatureCell;
+    Teuchos::RCP<Intrepid2::Cubature<RealType> > cubatureSide;
 
     // The basis
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
 
     // Temporary FieldContainers
-    Intrepid::FieldContainer<RealType> cubPointsSide;
+    Intrepid2::FieldContainer<RealType> cubPointsSide;
     //const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
-    Intrepid::FieldContainer<RealType> refPointsSide;
-    Intrepid::FieldContainer<RealType> cubWeightsSide;
-    Intrepid::FieldContainer<MeshScalarT> physPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> jacobianSide;
-    Intrepid::FieldContainer<MeshScalarT> invJacobianSide;
-    Intrepid::FieldContainer<MeshScalarT> jacobianSide_det;
+    Intrepid2::FieldContainer<RealType> refPointsSide;
+    Intrepid2::FieldContainer<RealType> cubWeightsSide;
+    Intrepid2::FieldContainer<MeshScalarT> physPointsSide;
+    Intrepid2::FieldContainer<MeshScalarT> jacobianSide;
+    Intrepid2::FieldContainer<MeshScalarT> invJacobianSide;
+    Intrepid2::FieldContainer<MeshScalarT> jacobianSide_det;
 
-    Intrepid::FieldContainer<MeshScalarT> physPointsCell;
+    Intrepid2::FieldContainer<MeshScalarT> physPointsCell;
 
-    Intrepid::FieldContainer<MeshScalarT> weighted_measure;
-    Intrepid::FieldContainer<RealType> basis_refPointsSide;
-    Intrepid::FieldContainer<RealType> basisGrad_refPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> trans_gradBasis_refPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
+    Intrepid2::FieldContainer<MeshScalarT> weighted_measure;
+    Intrepid2::FieldContainer<RealType> basis_refPointsSide;
+    Intrepid2::FieldContainer<RealType> basisGrad_refPointsSide;
+    Intrepid2::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
+    Intrepid2::FieldContainer<MeshScalarT> trans_gradBasis_refPointsSide;
+    Intrepid2::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
 
-    Intrepid::FieldContainer<ScalarT> dofCell;
-    Intrepid::FieldContainer<ScalarT> dofSide;
+    Intrepid2::FieldContainer<ScalarT> dofCell;
+    Intrepid2::FieldContainer<ScalarT> dofSide;
 
-    Intrepid::FieldContainer<ScalarT> dofCellVec;
-    Intrepid::FieldContainer<ScalarT> dofSideVec;
+    Intrepid2::FieldContainer<ScalarT> dofCellVec;
+    Intrepid2::FieldContainer<ScalarT> dofSideVec;
 
-    Intrepid::FieldContainer<ScalarT> data;
+    Intrepid2::FieldContainer<ScalarT> data;
 
     std::string sideSetID;
     Teuchos::Array<RealType> inputValues;

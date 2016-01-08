@@ -13,8 +13,8 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace PHAL {
 
@@ -47,14 +47,14 @@ private:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
-  Intrepid::FieldContainer<ScalarT> jacobian;
-  Intrepid::FieldContainer<ScalarT> jacobian_inv;
+  Intrepid2::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer<ScalarT> jacobian;
+  Intrepid2::FieldContainer<ScalarT> jacobian_inv;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Gc;

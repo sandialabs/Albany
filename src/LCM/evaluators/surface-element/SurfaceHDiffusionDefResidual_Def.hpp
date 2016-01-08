@@ -8,10 +8,10 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
-//#include "Intrepid_FunctionSpaceTools.hpp"
-//#include "Intrepid_RealSpaceTools.hpp"
+//#include "Intrepid2_FunctionSpaceTools.hpp"
+//#include "Intrepid2_RealSpaceTools.hpp"
 
 #include <typeinfo>
 
@@ -23,8 +23,8 @@ namespace LCM {
   SurfaceHDiffusionDefResidual(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness                          (p.get<double>("thickness")),
-    cubature                           (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
-    intrepidBasis                    (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
+    cubature                           (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")),
+    intrepidBasis                    (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>>("Intrepid2 Basis")),
     scalarGrad                       (p.get<std::string>("Surface Transport Gradient Name"),dl->qp_vector),
     surface_Grad_BF           (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis                    (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
@@ -114,8 +114,8 @@ namespace LCM {
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
 
     transportName = p.get<std::string>("Transport Name")+"_old";
     if (haveMech) eqpsName =p.get<std::string>("eqps Name")+"_old";
@@ -156,8 +156,8 @@ namespace LCM {
   void SurfaceHDiffusionDefResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
- //   typedef Intrepid::FunctionSpaceTools FST;
-//    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+ //   typedef Intrepid2::FunctionSpaceTools FST;
+//    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];
     Albany::MDArray scalarGrad_old = (*workset.stateArrayPtr)[CLGradName];
@@ -193,11 +193,11 @@ namespace LCM {
      for (int cell=0; cell < workset.numCells; ++cell) {
        for (int pt=0; pt < numQPs; ++pt) {
 
-    	  Intrepid::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
-    	  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
-    	  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
-    	  Intrepid::Vector<ScalarT> C_grad_(numDims, scalarGrad,cell, pt,0);
-    	  Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+    	  Intrepid2::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
+    	  Intrepid2::Tensor<ScalarT> C_tensor_ = Intrepid2::t_dot(F,F);
+    	  Intrepid2::Tensor<ScalarT> C_inv_tensor_ = Intrepid2::inverse(C_tensor_);
+    	  Intrepid2::Vector<ScalarT> C_grad_(numDims, scalarGrad,cell, pt,0);
+    	  Intrepid2::Vector<ScalarT> C_grad_in_ref_ = Intrepid2::dot(C_inv_tensor_, C_grad_ );
 
          for (int j=0; j<numDims; j++){
              flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
@@ -270,11 +270,11 @@ namespace LCM {
 		        // MUST BE FIXED: Add C_inverse term into hydrostatic residual - added but need to do this nicely. 
         		for (int dim=0; dim < numDims; ++dim) {
 
-                                    Intrepid::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
-                                    Intrepid::Tensor<ScalarT> C_tensor = Intrepid::t_dot(F,F);
-                                    Intrepid::Tensor<ScalarT> C_inv_tensor = Intrepid::inverse(C_tensor);
-                                    Intrepid::Vector<ScalarT> hydro_stress_grad(numDims, hydro_stress_gradient_,cell, pt,0);
-                                    Intrepid::Vector<ScalarT> C_inv_hydro_stress_grad = Intrepid::dot(C_inv_tensor, hydro_stress_grad);
+                                    Intrepid2::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
+                                    Intrepid2::Tensor<ScalarT> C_tensor = Intrepid2::t_dot(F,F);
+                                    Intrepid2::Tensor<ScalarT> C_inv_tensor = Intrepid2::inverse(C_tensor);
+                                    Intrepid2::Vector<ScalarT> hydro_stress_grad(numDims, hydro_stress_gradient_,cell, pt,0);
+                                    Intrepid2::Vector<ScalarT> C_inv_hydro_stress_grad = Intrepid2::dot(C_inv_tensor, hydro_stress_grad);
 
         			    transport_residual_(cell, node) -= surface_Grad_BF(cell, node, pt, dim)*
         			    				              convection_coefficient_(cell,pt)*transport_(cell,pt)*

@@ -20,7 +20,7 @@ setenv                  INSTALL_DIR     $install_dir
 prepend-path            PATH            /usr/lib64/openmpi/bin
 prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
 prepend-path            PATH            $install_dir/bin
-prepend-path            PYTHONPATH      $install_dir/bin
+prepend-path            PYTHONPATH      $install_dir/lib
 prepend-path            LD_LIBRARY_PATH $install_dir/lib
 prepend-path            PATH            $alb_exe_dir
 prepend-path            PATH            $alb_exe_dir/LCM

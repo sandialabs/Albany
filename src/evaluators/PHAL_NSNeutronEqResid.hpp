@@ -53,8 +53,8 @@ private:
 
   bool haveNeutSource;
   unsigned int numQPs, numDims, numNodes;
-  Intrepid::FieldContainer<ScalarT> flux;
-  Intrepid::FieldContainer<ScalarT> abscoeff;
+  Intrepid2::FieldContainer<ScalarT> flux;
+  Intrepid2::FieldContainer<ScalarT> abscoeff;
 
  };
 }

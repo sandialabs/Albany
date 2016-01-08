@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -90,9 +90,9 @@ computeState(typename Traits::EvalData workset,
   ScalarT energy;
   ScalarT dt = delta_time(0);
 
-  Intrepid::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> s(num_dims_), n(num_dims_);
+  Intrepid2::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> s(num_dims_), n(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -104,13 +104,13 @@ computeState(typename Traits::EvalData workset,
 
       F.fill(def_grad,cell, pt,0,0);
       b = F * transpose(F);
-      mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid::trace(b);
+      mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid2::trace(b);
       sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
-          + mu * Jm53 * Intrepid::dev(b);
+          + mu * Jm53 * Intrepid2::dev(b);
 
       energy = 0.5 * kappa
           * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0) - std::log(J(cell, pt)))
-          + 0.5 * mu * (Jm23 * Intrepid::trace(b) - 3.0);
+          + 0.5 * mu * (Jm23 * Intrepid2::trace(b) - 3.0);
 
       if (have_temperature_) {
         ScalarT delta_temp = temperature_(cell, pt) - ref_temperature_;

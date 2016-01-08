@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -17,7 +17,7 @@ namespace LCM {
   SurfaceVectorGradient(Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")), 
+    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")), 
     currentBasis   (p.get<std::string>("Current Basis Name"),dl->qp_tensor),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -78,23 +78,23 @@ namespace LCM {
   {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
-        Intrepid::Vector<ScalarT> g_0(3, currentBasis,cell, pt, 0, 0);
-        Intrepid::Vector<ScalarT> g_1(3, currentBasis,cell, pt, 1, 0);
-        Intrepid::Vector<ScalarT> g_2(3, currentBasis,cell, pt, 2, 0);
-        Intrepid::Vector<MeshScalarT> G_2(3, refNormal,cell, pt, 0);
-        Intrepid::Vector<ScalarT> d(3, jump,cell, pt, 0);
-        Intrepid::Vector<MeshScalarT> G0(3, refDualBasis,cell, pt, 0, 0);
-        Intrepid::Vector<MeshScalarT> G1(3, refDualBasis,cell, pt, 1, 0);
-        Intrepid::Vector<MeshScalarT> G2(3, refDualBasis,cell, pt, 2, 0);
+        Intrepid2::Vector<ScalarT> g_0(3, currentBasis,cell, pt, 0, 0);
+        Intrepid2::Vector<ScalarT> g_1(3, currentBasis,cell, pt, 1, 0);
+        Intrepid2::Vector<ScalarT> g_2(3, currentBasis,cell, pt, 2, 0);
+        Intrepid2::Vector<MeshScalarT> G_2(3, refNormal,cell, pt, 0);
+        Intrepid2::Vector<ScalarT> d(3, jump,cell, pt, 0);
+        Intrepid2::Vector<MeshScalarT> G0(3, refDualBasis,cell, pt, 0, 0);
+        Intrepid2::Vector<MeshScalarT> G1(3, refDualBasis,cell, pt, 1, 0);
+        Intrepid2::Vector<MeshScalarT> G2(3, refDualBasis,cell, pt, 2, 0);
 
-        Intrepid::Tensor<ScalarT>
-        Fpar(Intrepid::bun(g_0, G0) +
-            Intrepid::bun(g_1, G1) +
-            Intrepid::bun(g_2, G2));
+        Intrepid2::Tensor<ScalarT>
+        Fpar(Intrepid2::bun(g_0, G0) +
+            Intrepid2::bun(g_1, G1) +
+            Intrepid2::bun(g_2, G2));
         // for Jay: bun()
-        Intrepid::Tensor<ScalarT> Fper((1 / thickness) * Intrepid::bun(d, G_2));
+        Intrepid2::Tensor<ScalarT> Fper((1 / thickness) * Intrepid2::bun(d, G_2));
 
-        Intrepid::Tensor<ScalarT> F = Fpar + Fper;
+        Intrepid2::Tensor<ScalarT> F = Fpar + Fper;
 
         defGrad(cell, pt, 0, 0) = F(0, 0);
         defGrad(cell, pt, 0, 1) = F(0, 1);
@@ -105,7 +105,7 @@ namespace LCM {
         defGrad(cell, pt, 2, 0) = F(2, 0);
         defGrad(cell, pt, 2, 1) = F(2, 1);
         defGrad(cell, pt, 2, 2) = F(2, 2);
-        J(cell,pt) = Intrepid::det(F);
+        J(cell,pt) = Intrepid2::det(F);
       }
     }
 

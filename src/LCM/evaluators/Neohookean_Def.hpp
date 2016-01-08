@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include <typeinfo>
@@ -39,10 +39,10 @@ namespace LCM {
     this->setName("Neohookean Stress"+PHX::typeAsString<EvalT>());
 
     // initilize Tensors
-    F = Intrepid::Tensor<ScalarT>(numDims);
-    b = Intrepid::Tensor<ScalarT>(numDims);
-    sigma = Intrepid::Tensor<ScalarT>(numDims);
-    I = Intrepid::eye<ScalarT>(numDims);
+    F = Intrepid2::Tensor<ScalarT>(numDims);
+    b = Intrepid2::Tensor<ScalarT>(numDims);
+    sigma = Intrepid2::Tensor<ScalarT>(numDims);
+    I = Intrepid2::eye<ScalarT>(numDims);
   }
 
   //----------------------------------------------------------------------------
@@ -82,7 +82,7 @@ namespace LCM {
         F.fill(defGrad,cell,qp,0,0);
         b = F*transpose(F);
         sigma = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) * I
-          + mu * Jm53 * Intrepid::dev(b);
+          + mu * Jm53 * Intrepid2::dev(b);
 
         for (int i=0; i < numDims; ++i)
           for (int j=0; j < numDims; ++j)

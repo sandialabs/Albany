@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Phalanx_DataLayout.hpp>
 #include <Teuchos_TestForException.hpp>
 
@@ -104,8 +104,8 @@ class computeVolumeAverageKernel {
  {
 #ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
     ScalarT volume, pbar, p;
-    Intrepid::Tensor<ScalarT> sig(num_dims_);
-    Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+    Intrepid2::Tensor<ScalarT> sig(num_dims_);
+    Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
 
     volume = pbar = 0.0;
 
@@ -115,7 +115,7 @@ class computeVolumeAverageKernel {
        for (int j = 0; j < num_dims_; ++j)
          sig(i,j)=stress(cell,pt,i,j);
 
-      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
+      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid2::trace(sig);
       volume += weights_(cell,pt) * j_(cell,pt);
     }
 
@@ -127,7 +127,7 @@ class computeVolumeAverageKernel {
        for (int j = 0; j < num_dims_; ++j)
          sig(i,j)=stress(cell,pt,i,j);     
 
-      p = (1./num_dims_) * Intrepid::trace(sig);
+      p = (1./num_dims_) * Intrepid2::trace(sig);
       sig += (pbar - p)*I;
 
       for (int i = 0; i < num_dims_; ++i) {
@@ -213,8 +213,8 @@ computeVolumeAverage(typename Traits::EvalData workset,
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Intrepid::Tensor<ScalarT> sig(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> sig(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
 
   ScalarT volume, pbar, p;
 
@@ -222,7 +222,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
     volume = pbar = 0.0;
     for (int pt(0); pt < num_pts_; ++pt) {
       sig.fill(stress,cell,pt,0,0);
-      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
+      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid2::trace(sig);
       volume += weights_(cell,pt) * j_(cell,pt);
     }
 
@@ -230,7 +230,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
 
     for (int pt(0); pt < num_pts_; ++pt) {
       sig.fill(stress,cell,pt,0,0);
-      p = (1./num_dims_) * Intrepid::trace(sig);
+      p = (1./num_dims_) * Intrepid2::trace(sig);
       sig += (pbar - p)*I;
 
       for (int i = 0; i < num_dims_; ++i) {

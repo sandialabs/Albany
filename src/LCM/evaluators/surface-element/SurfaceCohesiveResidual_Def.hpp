@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -17,10 +17,10 @@ SurfaceCohesiveResidual<EvalT, Traits>::
 SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     cubature_(
-        p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
+        p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")),
     intrepid_basis_(
-        p.get<Teuchos::RCP<Intrepid::Basis<RealType,
-            Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
+        p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
+            Intrepid2::FieldContainer<RealType>>>>("Intrepid2 Basis")),
     ref_area_(
         p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     cohesive_traction_(
@@ -59,10 +59,10 @@ SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
   intrepid_basis_->getValues(
-      ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
 
   intrepid_basis_->getValues(
-      ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
+      ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //**********************************************************************
@@ -81,7 +81,7 @@ template<typename EvalT, typename Traits>
 void SurfaceCohesiveResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::Vector<ScalarT>
+  Intrepid2::Vector<ScalarT>
   f_plus(0, 0, 0);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
@@ -90,7 +90,7 @@ evaluateFields(typename Traits::EvalData workset)
       int top_node = bottom_node + num_surf_nodes_;
 
       // initialize force vector
-      f_plus.fill(Intrepid::ZEROS);
+      f_plus.fill(Intrepid2::ZEROS);
 
       for (int pt(0); pt < num_qps_; ++pt) {
 

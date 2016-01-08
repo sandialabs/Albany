@@ -6,9 +6,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Sacado_MathFunctions.hpp>
 
 #include <typeinfo>
@@ -121,8 +121,8 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     // local Tensors
-    Intrepid::Tensor<ScalarT> F(3), Fpold(3), Fpinv(3), Cpinv(3);
-    Intrepid::Tensor<ScalarT> be(3), s(3), N(3), A(3), expA(3);
+    Intrepid2::Tensor<ScalarT> F(3), Fpold(3), Fpinv(3), Cpinv(3);
+    Intrepid2::Tensor<ScalarT> be(3), s(3), N(3), A(3), expA(3);
 
     // grab the time step
     ScalarT dt = deltaTime(0);
@@ -161,15 +161,15 @@ namespace LCM {
                 - 3 * thermalExpansionCoeff * deltaTemp * (1 + 1 / (J * J)));
 
         // compute trial intermediate configuration
-        Fpinv = Intrepid::inverse(Fpold);
-        Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-        be = F * Cpinv * Intrepid::transpose(F);
+        Fpinv = Intrepid2::inverse(Fpold);
+        Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+        be = F * Cpinv * Intrepid2::transpose(F);
 
         // compute the trial deviatoric stress
-        mubar = ScalarT(Intrepid::trace(be) / 3.) * mu;
-        s = mu * Intrepid::dev(be);
+        mubar = ScalarT(Intrepid2::trace(be) / 3.) * mu;
+        s = mu * Intrepid2::dev(be);
 
-        smag = Intrepid::norm(s);
+        smag = Intrepid2::norm(s);
         f = smag
             - sq23
                 * (Y + H * eqpsold(cell, qp)
@@ -224,7 +224,7 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-         expA = Intrepid::exp<ScalarT>(A);
+         expA = Intrepid2::exp<ScalarT>(A);
 
           // set plastic work
           if (dt > 0.0) mechSource(cell, qp) = sq23 * dgam / dt
@@ -257,7 +257,7 @@ namespace LCM {
 
         // update be
       be = ScalarT(1 / mu) * s +
-            ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
+            ScalarT(Intrepid2::trace(be) / 3) * Intrepid2::eye<ScalarT>(3);
 
         if (print) {
           std::cout << "    sig : ";
@@ -275,7 +275,7 @@ namespace LCM {
           std::cout << "    work: " << mechSource(cell, qp) << std::endl;
           std::cout << "    dgam: " << dgam << std::endl;
           std::cout << "    smag: " << smag << std::endl;
-          std::cout << "    n(s): " << Intrepid::norm(s) << std::endl;
+          std::cout << "    n(s): " << Intrepid2::norm(s) << std::endl;
           std::cout << "    temp: " << temperature(cell, qp) << std::endl;
           std::cout << "    Dtem: " << deltaTemp << std::endl;
           std::cout << "       Y: " << yieldStrength(cell, qp) << std::endl;

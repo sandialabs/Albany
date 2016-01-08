@@ -7,9 +7,9 @@
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 
-#include <Intrepid_FunctionSpaceTools.hpp>
-//#include <Intrepid_RealSpaceTools.hpp>
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_FunctionSpaceTools.hpp>
+//#include <Intrepid2_RealSpaceTools.hpp>
+#include <Intrepid2_MiniTensor.h>
 
 #include <typeinfo>
 
@@ -166,8 +166,8 @@ namespace LCM {
   {
     //std::cout << "In evaluator: " << this->getName() << "\n";
         
-    typedef Intrepid::FunctionSpaceTools FST;
-    //	 typedef Intrepid::RealSpaceTools<ScalarT> RST;
+    typedef Intrepid2::FunctionSpaceTools FST;
+    //	 typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray Clattice_old = (*workset.stateArrayPtr)[ClatticeName];
     //Albany::MDArray eqps_old = (*workset.stateArrayPtr)[eqpsName];
@@ -204,12 +204,12 @@ namespace LCM {
       for (int qp=0; qp < numQPs; ++qp) {
 
 
-        Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
-        Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
-        Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+        Intrepid2::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+        Intrepid2::Tensor<ScalarT> C_tensor_ = Intrepid2::t_dot(F,F);
+        Intrepid2::Tensor<ScalarT> C_inv_tensor_ = Intrepid2::inverse(C_tensor_);
 
-        Intrepid::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
-        Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
+        Intrepid2::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
+        Intrepid2::Vector<ScalarT> C_grad_in_ref_ = Intrepid2::dot(C_inv_tensor_, C_grad_ );
         temp =  ( DL(cell,qp)  + artificalDL(cell,qp)  ); //**GB changed 08/14/2015
         // Note: Now temp is the diffusivity
 
@@ -218,7 +218,7 @@ namespace LCM {
         }
       }
     }
-    FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
+    FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid2::COMP_CPP, false); // this also works
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
@@ -247,11 +247,11 @@ namespace LCM {
           // Need to be done: Add C_inverse term into hydrostatic residual
           // This is horribly inefficient - will refactor to a single loop 
                      
-          Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
-          Intrepid::Tensor<ScalarT> C_tensor = Intrepid::t_dot(F,F);
-          Intrepid::Tensor<ScalarT> C_inv_tensor = Intrepid::inverse(C_tensor);
-          Intrepid::Vector<ScalarT> stress_grad(numDims, stressGrad, cell, qp, 0);
-          Intrepid::Vector<ScalarT> C_inv_stress_grad = Intrepid::dot(C_inv_tensor, stress_grad);
+          Intrepid2::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+          Intrepid2::Tensor<ScalarT> C_tensor = Intrepid2::t_dot(F,F);
+          Intrepid2::Tensor<ScalarT> C_inv_tensor = Intrepid2::inverse(C_tensor);
+          Intrepid2::Vector<ScalarT> stress_grad(numDims, stressGrad, cell, qp, 0);
+          Intrepid2::Vector<ScalarT> C_inv_stress_grad = Intrepid2::dot(C_inv_tensor, stress_grad);
 
           for (int dim=0; dim < numDims; ++dim) {
             TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*

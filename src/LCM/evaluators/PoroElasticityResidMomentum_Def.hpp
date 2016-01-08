@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace LCM {
 
@@ -79,7 +79,7 @@ template<typename EvalT, typename Traits>
 void PoroElasticityResidMomentum<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
@@ -100,7 +100,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 
 //Irina comment : was commented out 
-//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
 }
 

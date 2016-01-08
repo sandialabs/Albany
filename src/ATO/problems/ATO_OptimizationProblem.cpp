@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "ATO_OptimizationProblem.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Epetra_Export.h"
@@ -70,8 +70,8 @@ ComputeVolume(const double* p, double& v, double* dvdp)
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
           coords = disc->getCoords();
   
-    Intrepid::FieldContainer<double> coordCon;
-    Intrepid::FieldContainer<double> topoVals;
+    Intrepid2::FieldContainer<double> coordCon;
+    Intrepid2::FieldContainer<double> topoVals;
     std::vector<double> weights;
     std::vector<std::vector<double> > refPoints;
   
@@ -289,9 +289,9 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   basisAtQPs.resize(numPhysSets);
   for(int i=0; i<numPhysSets; i++){
     cellTypes[i] = Teuchos::rcp(new shards::CellTopology (&meshSpecs[i]->ctd));
-    Intrepid::DefaultCubatureFactory<double> cubFactory;
+    Intrepid2::DefaultCubatureFactory<double> cubFactory;
     cubatures[i] = cubFactory.create(*(cellTypes[i]), meshSpecs[i]->cubatureDegree);
-    intrepidBasis[i] = Albany::getIntrepidBasis(meshSpecs[i]->ctd);
+    intrepidBasis[i] = Albany::getIntrepid2Basis(meshSpecs[i]->ctd);
 
     int wsSize   = meshSpecs[i]->worksetSize;
     int numVerts = cellTypes[i]->getNodeCount();
@@ -304,7 +304,7 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
     basisAtQPs[i].resize(numNodes, numQPs);
     cubatures[i]->getCubature(refPoints[i],refWeights[i]);
 
-    intrepidBasis[i]->getValues(basisAtQPs[i], refPoints[i], Intrepid::OPERATOR_VALUE);
+    intrepidBasis[i]->getValues(basisAtQPs[i], refPoints[i], Intrepid2::OPERATOR_VALUE);
 
     Teuchos::RCP<Albany::Layouts> dl = 
       Teuchos::rcp( new Albany::Layouts(wsSize, numVerts, numNodes, numQPs, numDims));
@@ -365,9 +365,9 @@ ATO::OptimizationProblem::InitTopOpt()
   Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
 
   int numWorksets = wsElNodeEqID.size();
-  Intrepid::FieldContainer<double> jacobian;
-  Intrepid::FieldContainer<double> jacobian_det;
-  Intrepid::FieldContainer<double> coordCon;
+  Intrepid2::FieldContainer<double> jacobian;
+  Intrepid2::FieldContainer<double> jacobian_det;
+  Intrepid2::FieldContainer<double> coordCon;
 
   weighted_measure.resize(numWorksets);
   for(int ws=0; ws<numWorksets; ws++){
@@ -388,10 +388,10 @@ ATO::OptimizationProblem::InitTopOpt()
         for(int dim=0; dim<numDims; dim++)
           coordCon(cell,node,dim) = coords[ws][cell][node][dim];
 
-    Intrepid::CellTools<double>::setJacobian(jacobian, refPoints[physIndex], 
+    Intrepid2::CellTools<double>::setJacobian(jacobian, refPoints[physIndex], 
                                              coordCon, *(cellTypes[physIndex]));
-    Intrepid::CellTools<double>::setJacobianDet(jacobian_det, jacobian);
-    Intrepid::FunctionSpaceTools::computeCellMeasure<double>
+    Intrepid2::CellTools<double>::setJacobianDet(jacobian_det, jacobian);
+    Intrepid2::FunctionSpaceTools::computeCellMeasure<double>
      (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
 
   }

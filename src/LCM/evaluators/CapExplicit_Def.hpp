@@ -6,7 +6,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace LCM
 {
@@ -79,35 +79,35 @@ namespace LCM
     this->setName("Stress" + PHX::typeAsString<EvalT>());
 
     // initialize tensor
-    I = Intrepid::eye<ScalarT>(numDims);
-    id1 = Intrepid::identity_1<ScalarT>(numDims);
-    id2 = Intrepid::identity_2<ScalarT>(numDims);
-    id3 = Intrepid::identity_3<ScalarT>(numDims);
-    Celastic = Intrepid::Tensor4<ScalarT>(numDims);
-    compliance = Intrepid::Tensor4<ScalarT>(numDims);
-    depsilon = Intrepid::Tensor<ScalarT>(numDims);
-    sigmaN = Intrepid::Tensor<ScalarT>(numDims);
-    strainN = Intrepid::Tensor<ScalarT>(numDims);
-    sigmaVal = Intrepid::Tensor<ScalarT>(numDims);
-    alphaVal = Intrepid::Tensor<ScalarT>(numDims);
-    deps_plastic = Intrepid::Tensor<ScalarT>(numDims);
-    sigmaTr = Intrepid::Tensor<ScalarT>(numDims);
-    alphaTr = Intrepid::Tensor<ScalarT>(numDims);
-    dfdsigma = Intrepid::Tensor<ScalarT>(numDims);
-    dgdsigma = Intrepid::Tensor<ScalarT>(numDims);
-    dfdalpha = Intrepid::Tensor<ScalarT>(numDims);
-    halpha = Intrepid::Tensor<ScalarT>(numDims);
-    dfdotCe = Intrepid::Tensor<ScalarT>(numDims);
-    sigmaK = Intrepid::Tensor<ScalarT>(numDims);
-    alphaK = Intrepid::Tensor<ScalarT>(numDims);
-    dsigma = Intrepid::Tensor<ScalarT>(numDims);
-    dev_plastic = Intrepid::Tensor<ScalarT>(numDims);
-    xi = Intrepid::Tensor<ScalarT>(numDims);
-    sN = Intrepid::Tensor<ScalarT>(numDims);
-    s = Intrepid::Tensor<ScalarT>(numDims);
-    strainCurrent = Intrepid::Tensor<ScalarT>(numDims);
-    dJ3dsigma = Intrepid::Tensor<ScalarT>(numDims);
-    eps_dev = Intrepid::Tensor<ScalarT>(numDims);
+    I = Intrepid2::eye<ScalarT>(numDims);
+    id1 = Intrepid2::identity_1<ScalarT>(numDims);
+    id2 = Intrepid2::identity_2<ScalarT>(numDims);
+    id3 = Intrepid2::identity_3<ScalarT>(numDims);
+    Celastic = Intrepid2::Tensor4<ScalarT>(numDims);
+    compliance = Intrepid2::Tensor4<ScalarT>(numDims);
+    depsilon = Intrepid2::Tensor<ScalarT>(numDims);
+    sigmaN = Intrepid2::Tensor<ScalarT>(numDims);
+    strainN = Intrepid2::Tensor<ScalarT>(numDims);
+    sigmaVal = Intrepid2::Tensor<ScalarT>(numDims);
+    alphaVal = Intrepid2::Tensor<ScalarT>(numDims);
+    deps_plastic = Intrepid2::Tensor<ScalarT>(numDims);
+    sigmaTr = Intrepid2::Tensor<ScalarT>(numDims);
+    alphaTr = Intrepid2::Tensor<ScalarT>(numDims);
+    dfdsigma = Intrepid2::Tensor<ScalarT>(numDims);
+    dgdsigma = Intrepid2::Tensor<ScalarT>(numDims);
+    dfdalpha = Intrepid2::Tensor<ScalarT>(numDims);
+    halpha = Intrepid2::Tensor<ScalarT>(numDims);
+    dfdotCe = Intrepid2::Tensor<ScalarT>(numDims);
+    sigmaK = Intrepid2::Tensor<ScalarT>(numDims);
+    alphaK = Intrepid2::Tensor<ScalarT>(numDims);
+    dsigma = Intrepid2::Tensor<ScalarT>(numDims);
+    dev_plastic = Intrepid2::Tensor<ScalarT>(numDims);
+    xi = Intrepid2::Tensor<ScalarT>(numDims);
+    sN = Intrepid2::Tensor<ScalarT>(numDims);
+    s = Intrepid2::Tensor<ScalarT>(numDims);
+    strainCurrent = Intrepid2::Tensor<ScalarT>(numDims);
+    dJ3dsigma = Intrepid2::Tensor<ScalarT>(numDims);
+    eps_dev = Intrepid2::Tensor<ScalarT>(numDims);
 
   }
 
@@ -166,7 +166,7 @@ namespace LCM
             + (1. / mu / 2.) * (0.5 * (id1 + id2)- (1. / 3.) * id3);
 
         // trial state
-        Intrepid::Tensor<ScalarT> depsilon(3);
+        Intrepid2::Tensor<ScalarT> depsilon(3);
         for (int i = 0; i < numDims; ++i) {
           for (int j = 0; j < numDims; ++j) {
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
@@ -176,7 +176,7 @@ namespace LCM
           }
         }
 
-        sigmaVal = sigmaN + Intrepid::dotdot(Celastic, depsilon);
+        sigmaVal = sigmaN + Intrepid2::dotdot(Celastic, depsilon);
         ScalarT kappaVal = capParameterold(cell, qp);
 
         // initialize friction and dilatancy
@@ -210,11 +210,11 @@ namespace LCM
 
           ScalarT dfdkappa = compute_dfdkappa(sigmaN, alphaVal, kappaVal);
 
-          ScalarT J2_alpha = 0.5 * Intrepid::dotdot(alphaVal, alphaVal);
+          ScalarT J2_alpha = 0.5 * Intrepid2::dotdot(alphaVal, alphaVal);
 
           halpha = compute_halpha(dgdsigma, J2_alpha);
 
-          ScalarT I1_dgdsigma = Intrepid::trace(dgdsigma);
+          ScalarT I1_dgdsigma = Intrepid2::trace(dgdsigma);
 
           ScalarT dedkappa = compute_dedkappa(kappaVal);
 
@@ -225,20 +225,20 @@ namespace LCM
             hkappa = 0.0;
 
           ScalarT kai(0.0);
-          kai = Intrepid::dotdot(dfdsigma, Intrepid::dotdot(Celastic, dgdsigma))
-              - Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+          kai = Intrepid2::dotdot(dfdsigma, Intrepid2::dotdot(Celastic, dgdsigma))
+              - Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-          //H = -Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+          //H = -Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-          dfdotCe = Intrepid::dotdot(dfdsigma, Celastic);
+          dfdotCe = Intrepid2::dotdot(dfdsigma, Celastic);
 
           if (kai != 0.0)
-            dgamma = Intrepid::dotdot(dfdotCe, depsilon) / kai;
+            dgamma = Intrepid2::dotdot(dfdotCe, depsilon) / kai;
           else
             dgamma = 0.0;
 
           // update
-          sigmaVal -= dgamma * Intrepid::dotdot(Celastic, dgdsigma);
+          sigmaVal -= dgamma * Intrepid2::dotdot(Celastic, dgdsigma);
 
           alphaVal += dgamma * halpha;
 
@@ -246,7 +246,7 @@ namespace LCM
           ScalarT dkappa = dgamma * hkappa;
           if (dkappa > 0) {
             dkappa = 0;
-            //H = -Intrepid::dotdot(dfdalpha, halpha);
+            //H = -Intrepid2::dotdot(dfdalpha, halpha);
           }
 
           kappaVal += dkappa;
@@ -267,11 +267,11 @@ namespace LCM
 
             ScalarT dfdkappa = compute_dfdkappa(sigmaVal, alphaVal, kappaVal);
 
-            J2_alpha = 0.5 * Intrepid::dotdot(alphaVal, alphaVal);
+            J2_alpha = 0.5 * Intrepid2::dotdot(alphaVal, alphaVal);
 
             halpha = compute_halpha(dgdsigma, J2_alpha);
 
-            I1_dgdsigma = Intrepid::trace(dgdsigma);
+            I1_dgdsigma = Intrepid2::trace(dgdsigma);
 
             dedkappa = compute_dedkappa(kappaVal);
 
@@ -281,11 +281,11 @@ namespace LCM
               hkappa = 0;
 
             //generalized plastic hardening modulus
-            //H = -Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+            //H = -Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-            kai = Intrepid::dotdot(dfdsigma,
-                Intrepid::dotdot(Celastic, dgdsigma));
-            kai = kai - Intrepid::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+            kai = Intrepid2::dotdot(dfdsigma,
+                Intrepid2::dotdot(Celastic, dgdsigma));
+            kai = kai - Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
             if (std::abs(f) < tolerance)
               break;
@@ -307,12 +307,12 @@ namespace LCM
             dkappa = delta_gamma * hkappa;
             if (dkappa > 0.0) {
               dkappa = 0.0;
-              //H = -Intrepid::dotdot(dfdalpha, halpha);
+              //H = -Intrepid2::dotdot(dfdalpha, halpha);
             }
 
             // update
             sigmaK = sigmaVal
-                - delta_gamma * Intrepid::dotdot(Celastic, dgdsigma);
+                - delta_gamma * Intrepid2::dotdot(Celastic, dgdsigma);
             alphaK = alphaVal + delta_gamma * halpha;
             ScalarT kappaK = kappaVal + dkappa;
 
@@ -321,7 +321,7 @@ namespace LCM
             if (std::abs(fK) > std::abs(f)) {
               // if the corrected stress is further away from yield surface,
               // then use normal correction
-              ScalarT dfdotdf = Intrepid::dotdot(dfdsigma, dfdsigma);
+              ScalarT dfdotdf = Intrepid2::dotdot(dfdsigma, dfdsigma);
               if (dfdotdf != 0)
                 delta_gamma = f / dfdotdf;
               else
@@ -345,14 +345,14 @@ namespace LCM
           // compute plastic strain increment
           // deps_plastic = compliance ( sigma_tr - sigma_(n+1));
           dsigma = sigmaTr - sigmaVal;
-          deps_plastic = Intrepid::dotdot(compliance, dsigma);
+          deps_plastic = Intrepid2::dotdot(compliance, dsigma);
 
           // compute its two invariants
           // devolps (volumetric) and deqps (deviatoric)
-          devolps = Intrepid::trace(deps_plastic);
+          devolps = Intrepid2::trace(deps_plastic);
           dev_plastic = deps_plastic - (1. / 3.) * devolps * I;
           // use altenative definition, differ by constants
-          deqps = std::sqrt(2) * Intrepid::norm(dev_plastic);
+          deqps = std::sqrt(2) * Intrepid2::norm(dev_plastic);
 
           // dilatancy
           //if (deqps != 0)
@@ -363,18 +363,18 @@ namespace LCM
           // previous p and tau
           //ScalarT pN(0.0), tauN(0.0);
           //xi = sigmaN - alphaTr;
-          //pN = Intrepid::trace(xi);
+          //pN = Intrepid2::trace(xi);
           //pN = pN / 3.;
           //sN = xi - pN * I;
-          //tauN = sqrt(1. / 2.) * Intrepid::norm(sN);
+          //tauN = sqrt(1. / 2.) * Intrepid2::norm(sN);
 
           // current p, and tau
           //ScalarT p(0.0), tau(0.0);
           //xi = sigmaVal - alphaVal;
-          //p = Intrepid::trace(xi);
+          //p = Intrepid2::trace(xi);
           //p = p / 3.;
           //s = xi - p * I;
-          //tau = sqrt(1. / 2.) * Intrepid::norm(s);
+          //tau = sqrt(1. / 2.) * Intrepid2::norm(s);
 
           // difference
           //ScalarT dtau = tau - tauN;
@@ -387,17 +387,17 @@ namespace LCM
           //  friction(cell, qp) = 0.0;
 
           // previous gamma(gamma)
-          //ScalarT evol3 = Intrepid::trace(strainN);
+          //ScalarT evol3 = Intrepid2::trace(strainN);
           //evol3 = evol3 / 3.;
           //eps_dev = strainN - evol3 * I;
-          //ScalarT gammaN = sqrt(2.) * Intrepid::norm(eps_dev);
+          //ScalarT gammaN = sqrt(2.) * Intrepid2::norm(eps_dev);
 
           // current gamma(gamma)
           //strainCurrent = strainN + depsilon;
-          //evol3 = Intrepid::trace(strainCurrent);
+          //evol3 = Intrepid2::trace(strainCurrent);
           //evol3 = evol3 / 3.;
           //eps_dev = strainCurrent - evol3 * I;
-          //ScalarT gamma = sqrt(2.) * Intrepid::norm(eps_dev);
+          //ScalarT gamma = sqrt(2.) * Intrepid2::norm(eps_dev);
 
           // difference
           //ScalarT dGamma = gamma - gammaN;
@@ -435,19 +435,19 @@ namespace LCM
   template<typename EvalT, typename Traits>
   typename CapExplicit<EvalT, Traits>::ScalarT
   CapExplicit<EvalT, Traits>::compute_f(
-      Intrepid::Tensor<ScalarT> & sigma, Intrepid::Tensor<ScalarT> & alpha,
+      Intrepid2::Tensor<ScalarT> & sigma, Intrepid2::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
 
     xi = sigma - alpha;
 
-    ScalarT I1 = Intrepid::trace(xi), p = I1 / 3;
+    ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3;
 
-    s = xi - p * Intrepid::identity<ScalarT>(3);
+    s = xi - p * Intrepid2::identity<ScalarT>(3);
 
-    ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
+    ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
 
-    ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid2::det(s);
 
     ScalarT Gamma = 1.0;
     if (psi != 0 && J2 != 0)
@@ -470,21 +470,21 @@ namespace LCM
   }
 
   template<typename EvalT, typename Traits>
-  Intrepid::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT>
+  Intrepid2::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT>
   CapExplicit<EvalT, Traits>::compute_dfdsigma(
-    Intrepid::Tensor<ScalarT> & sigma,
-    Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa)
+    Intrepid2::Tensor<ScalarT> & sigma,
+    Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa)
   {
 
     xi = sigma - alpha;
 
-    ScalarT I1 = Intrepid::trace(xi), p = I1 / 3;
+    ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3;
 
-    s = xi - p * Intrepid::identity<ScalarT>(3);
+    s = xi - p * Intrepid2::identity<ScalarT>(3);
 
-    ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
+    ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
 
-    ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid2::det(s);
 
     //dI1dsigma = I;
     //dJ2dsigma = s;
@@ -538,21 +538,21 @@ namespace LCM
   }
 
   template<typename EvalT, typename Traits>
-  Intrepid::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT>
+  Intrepid2::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT>
   CapExplicit<EvalT, Traits>::compute_dgdsigma(
-    Intrepid::Tensor<ScalarT> & sigma,
-    Intrepid::Tensor<ScalarT> & alpha, ScalarT & kappa)
+    Intrepid2::Tensor<ScalarT> & sigma,
+    Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa)
   {
 
     xi = sigma - alpha;
 
-    ScalarT I1 = Intrepid::trace(xi), p = I1 / 3;
+    ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3;
 
-    s = xi - p * Intrepid::identity<ScalarT>(3);
+    s = xi - p * Intrepid2::identity<ScalarT>(3);
 
-    ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
+    ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
 
-    ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid2::det(s);
 
     //dJ2dsigma = s;
     //dJ3dsigma(3);
@@ -608,20 +608,20 @@ namespace LCM
   template<typename EvalT, typename Traits>
   typename CapExplicit<EvalT, Traits>::ScalarT
   CapExplicit<EvalT, Traits>::compute_dfdkappa(
-    Intrepid::Tensor<ScalarT> & sigma, Intrepid::Tensor<ScalarT> & alpha,
+    Intrepid2::Tensor<ScalarT> & sigma, Intrepid2::Tensor<ScalarT> & alpha,
       ScalarT & kappa)
   {
     ScalarT dfdkappa;
 
     xi = sigma - alpha;
 
-    ScalarT I1 = Intrepid::trace(xi), p = I1 / 3.0;
+    ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3.0;
 
-    s = xi - p * Intrepid::identity<ScalarT>(3);
+    s = xi - p * Intrepid2::identity<ScalarT>(3);
 
-    ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
+    ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
 
-    ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid2::det(s);
 
     ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
 
@@ -653,14 +653,14 @@ namespace LCM
   }
 
   template<typename EvalT, typename Traits>
-  Intrepid::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT>
-  CapExplicit<EvalT, Traits>::compute_halpha(Intrepid::Tensor<ScalarT> & dgdsigma,
+  Intrepid2::Tensor<typename CapExplicit<EvalT, Traits>::ScalarT>
+  CapExplicit<EvalT, Traits>::compute_halpha(Intrepid2::Tensor<ScalarT> & dgdsigma,
       ScalarT & J2_alpha)
   {
 
     ScalarT Galpha = compute_Galpha(J2_alpha);
 
-    ScalarT I1 = Intrepid::trace(dgdsigma), p = I1 / 3;
+    ScalarT I1 = Intrepid2::trace(dgdsigma), p = I1 / 3;
 
     s = dgdsigma - p * I;
 

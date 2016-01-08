@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Intrepid_MiniTensor_Solvers.h"
-#include "Intrepid_MiniTensor.h"
+#include "Intrepid2_MiniTensor.h"
 #include "MiniNonlinearSolver.h"
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -110,7 +110,7 @@ J2MiniSolver(Teuchos::ParameterList* p,
 //
 template<typename EvalT>
 class J2NLS:
-    public Intrepid::Function_Base<J2NLS<EvalT>, typename EvalT::ScalarT>
+    public Intrepid2::Function_Base<J2NLS<EvalT>, typename EvalT::ScalarT>
 {
   using S = typename EvalT::ScalarT;
 
@@ -133,7 +133,7 @@ public:
   {
   }
 
-  static constexpr Intrepid::Index
+  static constexpr Intrepid2::Index
   DIMENSION{1};
 
   static constexpr
@@ -141,20 +141,20 @@ public:
   NAME{"J2 NLS"};
 
   // Default value.
-  template<typename T, Intrepid::Index N>
+  template<typename T, Intrepid2::Index N>
   T
-  value(Intrepid::Vector<T, N> const & x)
+  value(Intrepid2::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<J2NLS<EvalT>, S>::value(*this, x);
+    return Intrepid2::Function_Base<J2NLS<EvalT>, S>::value(*this, x);
   }
 
   // Explicit gradient.
-  template<typename T, Intrepid::Index N>
-  Intrepid::Vector<T, N>
-  gradient(Intrepid::Vector<T, N> const & x)
+  template<typename T, Intrepid2::Index N>
+  Intrepid2::Vector<T, N>
+  gradient(Intrepid2::Vector<T, N> const & x)
   {
     // Firewalls.
-    Intrepid::Index const
+    Intrepid2::Index const
     dimension = x.get_dimension();
 
     assert(dimension == DIMENSION);
@@ -175,7 +175,7 @@ public:
     Y = peel<EvalT, T, N>()(Y_);
 
     // This is the actual computation of the gradient.
-    Intrepid::Vector<T, N>
+    Intrepid2::Vector<T, N>
     r(dimension);
 
     T const &
@@ -196,11 +196,11 @@ public:
   }
 
   // Default AD hessian.
-  template<typename T, Intrepid::Index N>
-  Intrepid::Tensor<T, N>
-  hessian(Intrepid::Vector<T, N> const & x)
+  template<typename T, Intrepid2::Index N>
+  Intrepid2::Tensor<T, N>
+  hessian(Intrepid2::Vector<T, N> const & x)
   {
-    return Intrepid::Function_Base<J2NLS<EvalT>, S>::hessian(*this, x);
+    return Intrepid2::Function_Base<J2NLS<EvalT>, S>::hessian(*this, x);
   }
 
   // Constants.
@@ -276,16 +276,16 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   ScalarT sq23(std::sqrt(2. / 3.));
   ScalarT H {0.0};
 
-  Intrepid::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT>
   F(num_dims_), be(num_dims_), s(num_dims_), sigma(num_dims_);
 
-  Intrepid::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT>
   N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
 
-  Intrepid::Tensor<ScalarT>
-  I(Intrepid::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT>
+  I(Intrepid2::eye<ScalarT>(num_dims_));
 
-  Intrepid::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT>
   Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
@@ -306,16 +306,16 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       }
 
       // compute trial state
-      Fpinv = Intrepid::inverse(Fpn);
+      Fpinv = Intrepid2::inverse(Fpn);
 
-      Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-      be = Jm23 * F * Cpinv * Intrepid::transpose(F);
-      s = mu * Intrepid::dev(be);
+      Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+      be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
+      s = mu * Intrepid2::dev(be);
 
-      mubar = Intrepid::trace(be) * mu / (num_dims_);
+      mubar = Intrepid2::trace(be) * mu / (num_dims_);
 
       // check yield condition
-      smag = Intrepid::norm(s);
+      smag = Intrepid2::norm(s);
       f = smag - sq23 * (Y + K * eqpsold(cell, pt)
       + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
@@ -327,16 +327,16 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
 
         constexpr
-        Intrepid::Index
+        Intrepid2::Index
         dimension{J2NLS<EvalT>::DIMENSION};
 
-        Intrepid::NewtonStep<ValueT, dimension>
+        Intrepid2::NewtonStep<ValueT, dimension>
         step;
 
-        Intrepid::Minimizer<ValueT, dimension>
+        Intrepid2::Minimizer<ValueT, dimension>
         minimizer;
 
-        Intrepid::Vector<ScalarT, dimension>
+        Intrepid2::Vector<ScalarT, dimension>
         x;
 
         x(0) = 0.0;
@@ -368,7 +368,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
         // exponential map to get Fpnew
         A = dgam * N;
-        expA = Intrepid::exp(A);
+        expA = Intrepid2::exp(A);
         Fpnew = expA * Fpn;
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -406,7 +406,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid::det(F);
+        ScalarT J = Intrepid2::det(F);
         sigma.fill(stress,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
         * (temperature_(cell,pt) - ref_temperature_) * I;

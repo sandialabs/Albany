@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace Aeras {
 
@@ -47,9 +47,9 @@ template<typename EvalT, typename Traits>
 void DOFGradInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid Version:
+  //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
@@ -100,9 +100,9 @@ template<typename EvalT, typename Traits>
 void DOFGradInterpolation_noDeriv<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //Intrepid Version:
+  //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
+  // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
   PHAL::set(grad_val_qp, 0.0);
   for (int cell=0; cell < workset.numCells; ++cell) 

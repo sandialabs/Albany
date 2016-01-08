@@ -60,11 +60,11 @@ private:
   PHX::MDField<ScalarT,Cell,Node> FhResidual;
 
   unsigned int numQPs, numDims, numNodes, worksetSize;
-  Intrepid::FieldContainer<ScalarT> JGrad;
-  Intrepid::FieldContainer<ScalarT> fh_coef;
-  Intrepid::FieldContainer<ScalarT> fh_time_term;
-  Intrepid::FieldContainer<ScalarT> CHZr_coef;
-  Intrepid::FieldContainer<ScalarT> CH_time_term;
+  Intrepid2::FieldContainer<ScalarT> JGrad;
+  Intrepid2::FieldContainer<ScalarT> fh_coef;
+  Intrepid2::FieldContainer<ScalarT> fh_time_term;
+  Intrepid2::FieldContainer<ScalarT> CHZr_coef;
+  Intrepid2::FieldContainer<ScalarT> CH_time_term;
 
  //! Conductivity type
   std::string type; 

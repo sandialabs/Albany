@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -160,13 +160,13 @@ computeState(typename Traits::EvalData workset,
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
   ScalarT sq23(std::sqrt(2. / 3.));
 
-  Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
+  Intrepid2::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
       num_dims_);
-  Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
+  Intrepid2::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
       num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> Fpn(num_dims_), Cpinv(num_dims_), Fe(num_dims_);
-  Intrepid::Tensor<ScalarT> tau(num_dims_), M(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> Fpn(num_dims_), Cpinv(num_dims_), Fe(num_dims_);
+  Intrepid2::Tensor<ScalarT> tau(num_dims_), M(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -189,21 +189,21 @@ computeState(typename Traits::EvalData workset,
       // compute trial state
       // compute the Kirchhoff stress in the current configuration
       //
-      Fe = F * Intrepid::inverse(Fpn);
-      Cpinv = Intrepid::inverse(Fpn) * Intrepid::transpose(Intrepid::inverse(Fpn));
-      be = F * Cpinv * Intrepid::transpose(F);
-      ScalarT Je = std::sqrt( Intrepid::det(be));
-      s = mu * Intrepid::dev(be);
+      Fe = F * Intrepid2::inverse(Fpn);
+      Cpinv = Intrepid2::inverse(Fpn) * Intrepid2::transpose(Intrepid2::inverse(Fpn));
+      be = F * Cpinv * Intrepid2::transpose(F);
+      ScalarT Je = std::sqrt( Intrepid2::det(be));
+      s = mu * Intrepid2::dev(be);
       p = 0.5 * bulk * (Je * Je - 1.);
       tau = p * I + s;
       
       // pull back the Kirchhoff stress to the intermediate configuration
       // this is the Mandel stress
       //
-      M = Intrepid::transpose(Fe) * tau * Intrepid::inverse(Intrepid::transpose(Fe));
+      M = Intrepid2::transpose(Fe) * tau * Intrepid2::inverse(Intrepid2::transpose(Fe));
       
       // check yield condition
-      smag = Intrepid::norm(s);
+      smag = Intrepid2::norm(s);
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
       if (f > 1E-12) {
@@ -270,7 +270,7 @@ computeState(typename Traits::EvalData workset,
 
         // exponential map to get Fpnew
         A = dgam * N;
-        expA = Intrepid::exp(A);
+        expA = Intrepid2::exp(A);
         Fpnew = expA * Fpn;
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -304,7 +304,7 @@ computeState(typename Traits::EvalData workset,
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid::det(F);
+        ScalarT J = Intrepid2::det(F);
         sigma.fill(stress,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;

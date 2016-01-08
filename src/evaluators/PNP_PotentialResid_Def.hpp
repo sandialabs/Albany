@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 
 //**********************************************************************
@@ -65,11 +65,11 @@ template<typename EvalT, typename Traits>
 void PNP::PotentialResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
   // Scale gradient into a flux, reusing same memory
   FST::scalarMultiplyDataData<ScalarT> (PotentialGrad, Permittivity, PotentialGrad);
-  FST::integrate<ScalarT>(PotentialResidual, PotentialGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(PotentialResidual, PotentialGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
     
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

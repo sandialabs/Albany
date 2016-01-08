@@ -89,7 +89,7 @@ namespace Aeras
       bool orig_interleavedOrdering =
         orig_mesh_specs_struct->interleavedOrdering;
       bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
-      const Intrepid::EIntrepidPLPoly orig_cubatureRule =
+      const Intrepid2::EIntrepidPLPoly orig_cubatureRule =
         orig_mesh_specs_struct->cubatureRule;
       // Create enriched MeshSpecsStruct object, to be returned.  It
       // will have the same everything as the original mesh struct
@@ -119,7 +119,7 @@ namespace Aeras
       std::copy(new_name.begin(), new_name.end(), new_name_char);
       new_name_char[new_name.size()] = '\0';
       new_ctd.name = new_name_char;  
-      //For 1D elements, create a new key for the ctd -- this is needed for Intrepid
+      //For 1D elements, create a new key for the ctd -- this is needed for Intrepid2
       //setJacobian function. 
       if (orig_numDim == 1) 
         new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, 2, np); 

@@ -53,7 +53,7 @@ private:
   bool enableTransient;
   bool haveHeat;
 
-  Intrepid::FieldContainer<ScalarT> normV;
+  Intrepid2::FieldContainer<ScalarT> normV;
  
 };
 }

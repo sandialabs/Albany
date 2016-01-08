@@ -37,7 +37,6 @@ BUILD_DIR=`pwd`
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D CMAKE_CXX_FLAGS:STRING="-DBUILD_PHALANX_FOR_ALBANY" \
       -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
 \
@@ -85,7 +84,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
-      -D Trilinos_ENABLE_IntrepidIntrepid2:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON\
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
