@@ -131,6 +131,12 @@
                     <Parameter name="fact: level-of-fill" type="int" value="1"/>
                   </ParameterList>
                 </ParameterList>
+                <ParameterList name="MueLu">
+                  <ParameterList name="MueLu Settings">
+                    <Parameter name="max levels" type="int"  value="1"/>
+                    <Parameter name="verbosity" type="string"   value="high"/>
+                  </ParameterList>
+                </ParameterList>
               </ParameterList>
             </ParameterList>
           </ParameterList>
