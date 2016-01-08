@@ -59,14 +59,14 @@
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
     <Parameter  name="Test Values" type="Array(double)" value="{
-                    0.0389777762779,
-                    21.3988071702,
-                    -6.72759714734,
-                    2.32024032337,
-                    127141817913
-                    368838646.828
-                    11207626.0731
-                    127142353407
+                    -0.0159715948643,
+                    21.3987579334,
+                    -6.72804615728,
+                    2.32111330383,
+                    127141817995
+                    368838627.778
+                    11207645.552
+                    127142353489
 }"/> 
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>

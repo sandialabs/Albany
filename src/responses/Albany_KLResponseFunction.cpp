@@ -7,7 +7,9 @@
 //IK, 9/13/14: Epetra ifdef'ed out except SG and MP when ALBANY_EPETRA_EXE is off.
 
 #include "Albany_KLResponseFunction.hpp"
-#include "Stokhos_PCEAnasaziKL.hpp"
+#if defined(ALBANY_EPETRA)
+#  include "Stokhos_PCEAnasaziKL.hpp"
+#endif
 #include "Teuchos_Array.hpp"
 #include "Teuchos_VerboseObject.hpp"
 

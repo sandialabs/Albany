@@ -135,16 +135,6 @@
               </ParameterList>
               <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
-                <ParameterList name="Ifpack">
-                  <Parameter name="Overlap" type="int" value="2"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
-                    <Parameter name="fact: drop tolerance" type="double" value="0"/>
-                    <Parameter name="fact: level-of-fill" type="int" value="1"/>
-                    <Parameter name="schwarz: filter singletons" type="bool" value="1"/>
-                    <Parameter name="schwarz: reordering type" type="string" value="rcm"/>
-                  </ParameterList>
-                </ParameterList>
                 <ParameterList name="Ifpack2">
                   <Parameter name="Prec Type" type="string" value="RILUK"/>
                   <ParameterList name="Ifpack2 Settings">

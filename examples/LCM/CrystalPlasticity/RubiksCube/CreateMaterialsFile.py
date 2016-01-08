@@ -148,6 +148,7 @@ def FCCSlipSystems():
 
 def StartParamList(param_list_name, file, indent):
 
+    file.write("\n")
     file.write(" "*INDENTATION*indent)
     file.write("<ParameterList")
     if param_list_name != None:
@@ -203,6 +204,7 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
     # Give the material model parameters for each material
     indent = StartParamList("Materials", mat_file, indent)
     for iBlock in range(num_blocks):
+        mat_file.write("\n")
         indent = StartParamList(material_names[iBlock], mat_file, indent)
 
         # Obtain the specifics for this grain
@@ -214,6 +216,9 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         indent = StartParamList("Material Model", mat_file, indent)
         WriteParameter("Model Name", "string", "CrystalPlasticity", mat_file, indent)
         indent = EndParamList(mat_file, indent)
+
+        # Number of slip systems
+        WriteParameter("Number of Slip Systems", "int", len(slip_systems), mat_file, indent) 
 
         # Integration scheme
         WriteParameter("Integration Scheme", "string", mat_params["integration_scheme"], mat_file, indent)
@@ -250,20 +255,31 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         WriteParameter("Basis Vector 2", "Array(double)", VectorToString(vec2), mat_file, indent)
         WriteParameter("Basis Vector 3", "Array(double)", VectorToString(vec3), mat_file, indent)
         indent = EndParamList(mat_file, indent)        
+ 
+        # Flow rule
+        indent = StartParamList("Flow Rule", mat_file, indent)
+        WriteParameter("Type", "string", "Power Law", mat_file, indent)
+        WriteParameter("Gamma Dot", "double", mat_params["gamma_dot"], mat_file, indent)
+        WriteParameter("Gamma Exponent", "double", mat_params["gamma_exponent"], mat_file, indent)
+        indent = EndParamList(mat_file, indent)
+
+        # Hardening law
+        indent = StartParamList("Hardening Law", mat_file, indent)
+        WriteParameter("Type", "string", "Exponential", mat_file, indent)
+        WriteParameter("Hardening", "double", mat_params["hardening"], mat_file, indent)
+        WriteParameter("Hardening Exponent", "double", mat_params["hardening_exponent"], mat_file, indent)
+        WriteParameter("Tau Critical", "double", mat_params["tau_critical"], mat_file, indent)
+        indent = EndParamList(mat_file, indent)
 
         # Crystal plasticity slip systems
-        WriteParameter("Number of Slip Systems", "int", len(slip_systems), mat_file, indent)
         for iSS in range(num_slip_systems):
             direction = slip_systems[iSS][0]
             normal = slip_systems[iSS][1]
             indent = StartParamList("Slip System " + str(iSS+1), mat_file, indent)
             WriteParameter("Slip Direction", "Array(double)", VectorToString(direction), mat_file, indent)
             WriteParameter("Slip Normal", "Array(double)", VectorToString(normal), mat_file, indent)
-            WriteParameter("Tau Critical", "double", mat_params["tau_critical"], mat_file, indent)
-            WriteParameter("Gamma Dot", "double", mat_params["gamma_dot"], mat_file, indent)
-            WriteParameter("Gamma Exponent", "double", mat_params["gamma_exponent"], mat_file, indent)
-            WriteParameter("Hardening", "double", mat_params["hardening"], mat_file, indent)
-            WriteParameter("Hardening Exponent", "double", mat_params["hardening_exponent"], mat_file, indent)
+            WriteParameter("Flow Rule", "string", "Flow Rule", mat_file, indent)
+            WriteParameter("Hardening Law", "string", "Hardening Law", mat_file, indent)
             indent = EndParamList(mat_file, indent)
 
         indent = EndParamList(mat_file, indent)

@@ -106,6 +106,9 @@ namespace LCM
 
     // Bunge angles
     RealType phi1_, Phi_, phi2_;
+
+    // Gas constant
+    RealType R_;
     
 
   };

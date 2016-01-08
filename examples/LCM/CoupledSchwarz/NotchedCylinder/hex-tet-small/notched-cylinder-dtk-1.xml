@@ -21,6 +21,7 @@
     </ParameterList>
     <ParameterList name="Search">
       <Parameter name="Track Missed Range Entities" type="bool" value="true"/>
+      <Parameter name="Point Inclusion Tolerance" value="1.0e-1" type="double"/>
     </ParameterList>
   </ParameterList>
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
@@ -31,6 +32,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <!-- XML filename with material definitions -->
     <Parameter name="MaterialDB Filename" type="string" value="materials-1.xml"/>
+    
     <!-- BOUNDARY CONDITIONS on node sets -->
     <ParameterList name="Dirichlet BCs">
 
@@ -38,9 +40,11 @@
 	<Parameter name="BC Function"
 		   type="string" value="Schwarz"/>
 	<Parameter name="Coupled Application"
-		   type="string" value="notched-cylinder-0.xml"/>
+		   type="string" value="notched-cylinder-dtk-0.xml"/>
 	<Parameter name="Coupled Block"
 		   type="string" value="fine"/>
+      </ParameterList>
+      
       <Parameter name="DBC on NS nodelist_4 for DOF Z"
 		 type="double" value="0.0"/>
 
