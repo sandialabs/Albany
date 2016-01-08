@@ -165,6 +165,15 @@ IF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
   MESSAGE("-- Building Albany with static executables")
 ENDIF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
 
+# Option to turn on and off deprecation warnings
+OPTION(Albany_DEPRECATED_DECLARATIONS "Flag to turn on warnings for deprecated code" ON)
+IF (Albany_DEPRECATED_DECLARATIONS)
+  ADD_DEFINITIONS(-DALBANY_ENABLE_DEPRECATED)
+  MESSAGE("-- Deprecated code warnings Enabled, compiling with -DALBANY_ENABLE_DEPRECATED")
+ELSE()
+  MESSAGE("-- Deprecated code warnings are NOT Enabled.")
+ENDIF()
+
 
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement

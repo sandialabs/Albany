@@ -10,7 +10,6 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#include "AAdapt_AbstractAdapter.hpp"
 #include "AAdapt_AbstractAdapterT.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #include "Albany_PUMIDiscretization.hpp"

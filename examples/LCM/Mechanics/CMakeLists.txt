@@ -19,10 +19,12 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  if (ALBANY_EPETRA) 
+  if (ALBANY_EPETRA)
     add_test(${testName}_SERIAL ${SerialAlbany.exe})
   endif()
-  IF(ALBANY_IFPACK2)
+#  IF(ALBANY_IFPACK2)
+  # Teko needs Epetra - this now uses Teko preconditioning
+  if (ALBANY_EPETRA)
     add_test(${testName}_Tpetra_SERIAL ${SerialAlbanyT.exe} inputT.xml)
   ENDIF()
 ENDIF()
@@ -39,7 +41,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(${testName}2D_Blocked ${Albany.exe} inputBlocked.xml)
 endif()
 IF(ALBANY_IFPACK2)
@@ -60,12 +62,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/J2.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(${testName}2D_J2 ${Albany.exe} inputJ2Plasticity2D.xml)
 endif()
 IF(ALBANY_IFPACK2)
   add_test(${testName}2D_J2_Tpetra ${AlbanyT.exe} inputJ2Plasticity2DT.xml)
 ENDIF()
-if (ALBANY_EPETRA) 
+if (ALBANY_EPETRA)
 add_test(${testName}2D_J2_Trac ${Albany.exe} inputJ2Plast2DTraction.xml)
 endif()

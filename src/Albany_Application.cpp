@@ -6,7 +6,6 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
-#include "AAdapt_AdaptationFactory.hpp"
 #include "AAdapt_RC_Manager.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
