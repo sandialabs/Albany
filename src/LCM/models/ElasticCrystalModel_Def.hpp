@@ -190,36 +190,36 @@ namespace LCM
     PHX::MDField< ScalarT > stress = *eval_fields[cauchy];
 
     // deformation gradient
-    Intrepid::Tensor<ScalarT> F(num_dims_);
+    Intrepid2::Tensor<ScalarT> F(num_dims_);
 
     // Inverse deformation gradient
-    Intrepid::Tensor<ScalarT> Finv(num_dims_);
+    Intrepid2::Tensor<ScalarT> Finv(num_dims_);
     
     // Right Cauchy-Green deformation tensor (do not confuse with C_). C = F^{T}*F
-    Intrepid::Tensor<ScalarT> C(num_dims_);
+    Intrepid2::Tensor<ScalarT> C(num_dims_);
 
     // Inverse of Cauchy-Green deformation tensor.
-    Intrepid::Tensor<ScalarT> Cinv(num_dims_);
+    Intrepid2::Tensor<ScalarT> Cinv(num_dims_);
 
     // Right Cauchy-Green deformation tensor times J^{-2/3}. C23 = J^{-2/3}*C
-    Intrepid::Tensor<ScalarT> C23(num_dims_);
+    Intrepid2::Tensor<ScalarT> C23(num_dims_);
 
     // Modified Green-Lagrange deformation tensor. E = 1/2*(C23-I)
-    Intrepid::Tensor<ScalarT> E(num_dims_);
+    Intrepid2::Tensor<ScalarT> E(num_dims_);
 
     // S = C_:E
-    Intrepid::Tensor<ScalarT> S(num_dims_);
+    Intrepid2::Tensor<ScalarT> S(num_dims_);
 
     // First Piola-Kirchhoff stress
-    Intrepid::Tensor<ScalarT> PK(num_dims_);
+    Intrepid2::Tensor<ScalarT> PK(num_dims_);
 
     // sigma (Cauchy stress)
-    Intrepid::Tensor<ScalarT> sigma(num_dims_);
+    Intrepid2::Tensor<ScalarT> sigma(num_dims_);
 
     // Temporal variables
-    Intrepid::Tensor<ScalarT> tmp1(num_dims_);
+    Intrepid2::Tensor<ScalarT> tmp1(num_dims_);
 
-    Intrepid::Tensor<ScalarT> Dev_Stress(num_dims_);
+    Intrepid2::Tensor<ScalarT> Dev_Stress(num_dims_);
     
     // Jacobian
     ScalarT Jac;
@@ -240,7 +240,7 @@ namespace LCM
     ScalarT pressure;
 
     // Identity tensor
-    Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+    Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
 
     for (int cell(0); cell < workset.numCells; ++cell) 
       {
@@ -259,9 +259,9 @@ namespace LCM
 	    // Compute Green-Lagrange deformation tensor. E = 1/2*(C23-I)
 	    E = 0.5*(C23 - I);
 	    // compute inverse of C
-	    Cinv = Intrepid::inverse(C);
+	    Cinv = Intrepid2::inverse(C);
 	    // Inverse deformation gradient
-	    Finv = Intrepid::inverse(F);
+	    Finv = Intrepid2::inverse(F);
 
 	    // compute S = C_*E
 	    for ( int i = 0; i < num_dims_; ++i )
@@ -281,7 +281,7 @@ namespace LCM
 
 	     // temporal variable
 	    tmp1 = S*C;
-	    ScalarT tmp = (1.0/3.0)*Intrepid::trace(tmp1);
+	    ScalarT tmp = (1.0/3.0)*Intrepid2::trace(tmp1);
 
 	    tmp1 = tmp*Cinv;
 	    Dev_Stress = Jac23*(S - tmp1);
