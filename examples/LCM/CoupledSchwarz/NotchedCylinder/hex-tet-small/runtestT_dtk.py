@@ -11,8 +11,8 @@ result = 0
 ######################
 # Test 1 
 ######################
-print "test 1 - NotchedCylinder"
-name = "NotchedCylinder"
+print "test 1 - NotchedCylinder DTK 1 Proc"
+name = "NotchedCylinder_DTK_1"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
@@ -23,7 +23,7 @@ tolerance = 1.0e-6;
 meanvalue = 0.000895993786998; 
 
 # run AlbanyT 
-command = ["./AlbanyT", "notched-cylinder-S.xml"]
+command = ["./AlbanyT", "notched-cylinder-dtk-S.xml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

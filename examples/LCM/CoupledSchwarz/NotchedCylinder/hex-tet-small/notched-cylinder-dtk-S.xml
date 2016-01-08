@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Coupled System">
     <Parameter name="Model XML Files" type="Array(string)"
-	       value="{notched-cylinder-0.xml, notched-cylinder-1.xml}"/>
+	       value="{notched-cylinder-dtk-0.xml, notched-cylinder-dtk-1.xml}"/>
   </ParameterList>
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
