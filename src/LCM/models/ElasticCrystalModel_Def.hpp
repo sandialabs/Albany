@@ -47,6 +47,10 @@ namespace LCM
     RealType phi2d = e_list.get<RealType>("phi2");
 
     
+    // Read gas constant
+    e_list = p->sublist("Gas Constant");
+    R_ = e_list.get<RealType>("R");
+
     // From degree to rad
     RealType degtorad = atan(1.0)/45.0;
     phi1_ = phi1d*degtorad;
@@ -206,6 +210,9 @@ namespace LCM
     // S = C_:E
     Intrepid::Tensor<ScalarT> S(num_dims_);
 
+    // First Piola-Kirchhoff stress
+    Intrepid::Tensor<ScalarT> PK(num_dims_);
+
     // sigma (Cauchy stress)
     Intrepid::Tensor<ScalarT> sigma(num_dims_);
 
@@ -219,6 +226,18 @@ namespace LCM
 
     // Jacobian^{-2/3}
     ScalarT Jac23;
+
+    // p_star = \rho * R * T
+    ScalarT p_star;
+
+    // p_0 = \rho_0 * R * T_0
+    ScalarT p_0;
+
+    // compute initial pressure
+    p_0 = density_ * R_ * ref_temperature_;
+
+    // pressure = p_start - p_0
+    ScalarT pressure;
 
     // Identity tensor
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
@@ -238,7 +257,7 @@ namespace LCM
 	    // compute modified right Cauchy-Green deformation tensor ==> C = J^{-2/3}*F^{T}*F
     	    C23 = Jac23*C;
 	    // Compute Green-Lagrange deformation tensor. E = 1/2*(C23-I)
-	    E = 0.5*(C - I);
+	    E = 0.5*(C23 - I);
 	    // compute inverse of C
 	    Cinv = Intrepid::inverse(C);
 	    // Inverse deformation gradient
@@ -259,105 +278,37 @@ namespace LCM
 		      } // end k
 		  } // end j
 	      } // end i
-	    
-	    // transform it to Cauchy stress (true stress)
-	    sigma = (1.0/Jac)*F*S*transpose(F);
 
+	     // temporal variable
+	    tmp1 = S*C;
+	    ScalarT tmp = (1.0/3.0)*Intrepid::trace(tmp1);
+
+	    tmp1 = tmp*Cinv;
+	    Dev_Stress = Jac23*(S - tmp1);
+
+	    // compute p_0 using gas law
+	    p_star = density_ * (1.0/Jac) * R_ * temperature_(cell,pt);
+	    
+	    // compute pressure
+	    pressure = p_star - p_0;
+
+	    // compute first Piola-Kirchhoff stress tensor
+	    PK = F * Dev_Stress - Jac * pressure * transpose(Finv);
+
+	    // transform it to Cauchy stress (true stress)
+	    sigma = (1.0/Jac) * PK * transpose(F);
+	   
 	    // fill Cauchy stress
-	    for (int i = 0; i < num_dims_; ++i)
+	    for (int i = 0; i < num_dims_; i++)
 	      {
-	    	for (int j = 0; j < num_dims_; ++j)
-	    	  {
-	    	    stress(cell,pt,i,j) = sigma(i,j);
-	    	  }
+		for (int j = 0; j < num_dims_; j++)
+		  {
+		    stress(cell,pt,i,j) = sigma(i,j);
+		  }
 	      }
 
-	    // // temporal variable
-	    // tmp1 = sigma*C;
-	    // ScalarT tmp = (1.0/3.0)*Intrepid::trace(tmp1);
-	    // tmp1 = tmp*Cinv;
-	    // Dev_Stress = Jac23*(sigma - tmp1);
-	     
 	  } // end pt
       } // end cell
-
-
-
-
-    	    // mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid::trace(b);
-
-    	    // sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
-    	    //   + mu * Jm53 * Intrepid::dev(b);
-
-    	    // for (int i = 0; i < num_dims_; ++i) 
-    	    //   {
-    	    // 	for (int j = 0; j < num_dims_; ++j) 
-    	    // 	  {
-    	    // 	    stress(cell, pt, i, j) = sigma(i, j);
-    	    // 	  }
-    	    //   }
-
-    // 	    if (compute_energy_) 
-    // 	      { // compute energy
-    // 		energy(cell, pt) =
-    // 		  0.5 * kappa
-    // 		  * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0)
-    // 		     - std::log(J(cell, pt)))
-    // 		  + 0.5 * mu * (Jm23 * Intrepid::trace(b) - 3.0);
-    // 	      }
-
-    // 	    if (compute_tangent_) 
-    // 	      { // compute tangent
-    // 		s = Intrepid::dev(sigma);
-    // 		smag = Intrepid::norm(s);
-    // 		n = s / smag;
-
-    // 		dsigmadb =
-    // 		  kappa * J(cell, pt) * J(cell, pt) * I3
-    // 		  - kappa * (J(cell, pt) * J(cell, pt) - 1.0) * I1
-    // 		  + 2.0 * mubar * (I1 - (1.0 / 3.0) * I3)
-    // 		  - 2.0 / 3.0 * smag
-    // 		  * (Intrepid::tensor(n, I) + Intrepid::tensor(I, n));
-
-    // 		for (int i = 0; i < num_dims_; ++i) 
-    // 		  {
-    // 		    for (int j = 0; j < num_dims_; ++j) 
-    // 		      {
-    // 			for (int k = 0; k < num_dims_; ++k) 
-    // 			  {
-    // 			    for (int l = 0; l < num_dims_; ++l) 
-    // 			      {
-    // 				tangent(cell, pt, i, j, k, l) = dsigmadb(i, j, k, l);
-    // 			      }
-    // 			  }
-    // 		      }
-    // 		  }
-    // 	      }
-    // 	  }
-    //   }
-
-    // if (have_temperature_) 
-    //   {
-    // 	for (int cell(0); cell < workset.numCells; ++cell) 
-    // 	  {
-    // 	    for (int pt(0); pt < num_pts_; ++pt) 
-    // 	      {
-    // 		F.fill(def_grad,cell,pt,0,0);
-    // 		ScalarT J = Intrepid::det(F);
-    // 		sigma.fill(stress,cell,pt,0,0);
-    // 		sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
-    // 		  * (temperature_(cell,pt) - ref_temperature_) * I;
-
-    // 		for (int i = 0; i < num_dims_; ++i) 
-    // 		  {
-    // 		    for (int j = 0; j < num_dims_; ++j)
-    // 		      {
-    // 			stress(cell, pt, i, j) = sigma(i, j);
-    // 		      }
-    // 		  }
-    // 	      }
-    // 	  }
-    //   }
   }
   //----------------------------------------------------------------------------
 
