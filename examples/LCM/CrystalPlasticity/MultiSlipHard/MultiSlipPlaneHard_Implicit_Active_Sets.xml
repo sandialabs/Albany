@@ -114,13 +114,14 @@
                       <Parameter name="Verbosity" type="int" value="33"/>
                       <Parameter name="Maximum Iterations" type="int" value="500"/>
                       <Parameter name="Block Size" type="int" value="1"/>
-                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Num Blocks" type="int" value="24"/>
                       <Parameter name="Flexible Gmres" type="bool" value="0"/>
                     </ParameterList>
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+              <!-- <Parameter name="Preconditioner Type" type="string" value="MueLu"/> -->
+              <Parameter name="Preconditioner Type" type="string" value="IfPack2"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="2"/>
@@ -132,10 +133,8 @@
                   </ParameterList>
                 </ParameterList>
                 <ParameterList name="MueLu">
-                  <ParameterList name="MueLu Settings">
                     <Parameter name="max levels" type="int"  value="1"/>
                     <Parameter name="verbosity" type="string"   value="high"/>
-                  </ParameterList>
                 </ParameterList>
               </ParameterList>
             </ParameterList>
