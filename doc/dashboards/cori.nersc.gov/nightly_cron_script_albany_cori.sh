@@ -1,7 +1,7 @@
 #!/bin/csh
 
-BASE_DIR=/project/projectdirs/piscees/nightlyEdisonCDash
-EXE_DIR=/project/projectdirs/piscees/nightlyEdisonCDashExe
+BASE_DIR=/project/projectdirs/piscees/nightlyCoriCDash
+EXE_DIR=/project/projectdirs/piscees/nightlyCoriCDashExe
 cd $BASE_DIR
 
 source cori_modules.sh 

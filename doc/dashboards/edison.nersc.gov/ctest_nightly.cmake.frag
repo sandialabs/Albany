@@ -49,11 +49,11 @@ set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
 
+
 #IKT, 8/27/15: FIXME 
-#Why does CDash script not find BOOST_DIR, NETCDF_DIR, HDF5_DIR from loaded modules? 
-set(BOOST_DIR /usr/common/usg/boost/1.54/intel)
-set(NETCDF_DIR /opt/cray/netcdf-hdf5parallel/4.3.0/INTEL/130)
-set(HDF5_DIR /opt/cray/hdf5-parallel/1.8.12/INTEL/130)
+#Why does CDash script not find BOOST_DIR, NETCDF_DIR from loaded modules? 
+set(BOOST_DIR /usr/common/graphics/boost/1.58.0)
+set(NETCDF_DIR /opt/cray/netcdf-hdf5parallel/4.3.3.1/GNU/5.1)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -172,85 +172,100 @@ if (BUILD_TRILINOS)
 
 
   set (CONFIGURE_OPTIONS
-    "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
-    "-DTrilinos_ASSERT_MISSING_PACKAGES=OFF"
-    #
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DTPL_ENABLE_BoostLib:BOOL=ON"
-    "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
+    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF_DIR}/lib"
+    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include" 
     "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
-    "-DTPL_ENABLE_Boost:BOOL=ON"
-    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
-    "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
-    "-DNetcdf_INCLUDE_DIRS:FILEPATH=${NETCDF_DIR}/include" 
-    "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF_DIR}/lib" 
-    "-DTPL_ENABLE_HDF5:BOOL=ON"
-    "-DHDF5_INCLUDE_DIRS:FILEPATH=${HDF5_DIR}/include"
-    "-DHDF5_LIBRARY_DIRS:FILEPATH=${HDF5_DIR}/lib"
+    "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
+    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
+    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
-    "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
-    "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
+    "-D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
+    "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF" 
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
-    #
     "-DTrilinos_ENABLE_Fortran:BOOL=ON"
-    #
+    "-DTPL_ENABLE_SuperLU:BOOL=OFF"
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+    "-DTrilinos_ASSERT_MISSING_PACKAGES=OFF"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
     "-DHAVE_TEUCHOS_COMM_TIMERS=ON"
     "-DTrilinos_ENABLE_Shards:BOOL=ON"
     "-DTrilinos_ENABLE_Sacado:BOOL=ON"
     "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+    "-DTrilinos_ENABLE_Tpetra:BOOL=ON"
     "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
     "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
     "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
     "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
     "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+    "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
     "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
     "-DTrilinos_ENABLE_Belos:BOOL=ON"
     "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
+    "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
+    "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
+    "-DTrilinos_ENABLE_KokkosContainers:BOOL=ON"
+    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
-    "-DTrilinos_ENABLE_IntrepidIntrepid2:BOOL=ON"
+    "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
     "-DTrilinos_ENABLE_ML:BOOL=ON"
+    "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+    "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
+    "-DTrilinos_ENABLE_TrilinosCouplings:BOOL=ON"
     "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
+    "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
+    "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
     "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
     "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
-    "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
+    "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
-    "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
-    #
-    "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
-    "-DTriKota_ENABLE_DakotaCMake:BOOL=OFF"
-    "-DDAKOTA_ENABLE_TESTS:BOOL=OFF"
+    "-DTrilinos_ENABLE_Teko:BOOL=ON"
+    "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
+    "-DBUILD_SHARED_LIBS:BOOL=OFF"
+    "-DTrilinos_LINK_SEARCH_START_STATIC:BOOL=ON"
     #
     "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
-    "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL"
+    "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL" 
     "-DPhalanx_INDEX_SIZE_TYPE:STRING=INT"
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
     "-DKokkos_ENABLE_Serial:BOOL=ON"
     "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
     "-DKokkos_ENABLE_Pthread:BOOL=OFF"
-    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
+    #
+    "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
+    "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
     #
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
-    "-DTrilinos_ENABLE_ThreadPool:STRING=ON" 
-    "-DTrilinos_ENABLE_Pamgen:BOOL=ON" 
+    "-D Trilinos_ENABLE_ThreadPool:STRING=ON"
+    "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
-    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include" 
-    "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib" 
     #
-    "-DTrilinos_ENABLE_Mesquite:BOOL=OFF"
+    "-DTPL_ENABLE_BLAS:BOOL=ON"
+    "-DBLAS_LIBRARY_NAMES:STRING="
+    "-DLAPACK_LIBRARY_NAMES:STRING="
+    "-DTPL_ENABLE_GLM:BOOL=OFF"
+    "-DTPL_ENABLE_Matio:BOOL=OFF"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+    "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
+    "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+    "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
+    "-DZoltan2_ENABLE_Experimental:BOOL=ON"
     "-DTrilinos_ENABLE_FEI:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
     "-DPiro_ENABLE_TESTS:BOOL=OFF"
     "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTPL_ENABLE_MPI:BOOL=ON"
+    "-DTPL_ENABLE_Boost:BOOL=ON"
+    "-DTPL_ENABLE_BoostLib:BOOL=ON"
     #
     "-DAnasazi_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DAztecOO_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
@@ -266,17 +281,6 @@ if (BUILD_TRILINOS)
     #
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
-    "-DCMAKE_CXX_FLAGS:STRING=-O2 -DBUILD_PHALANX_FOR_ALBANY"
-    "-DCMAKE_Fortran_FLAGS:STRING=-O2" 
-    "-DTrilinos_ENABLE_Export_Makefiles:BOOL=ON"
-    #
-    "-DCMAKE_C_COMPILER:FILEPATH=cc" 
-    "-DCMAKE_CXX_COMPILER:FILEPATH=CC"
-    "-DCMAKE_Fortran_COMPILER:FILEPATH=ftn"
-    "-DTPL_ENABLE_Pthread:BOOL=OFF"
-    "-DTPL_ENABLE_BinUtils:BOOL=OFF"
-    "-DTPL_BLAS_LIBRARIES:STRING=sci_intel_mpi" 
-    "-DTPL_LAPACK_LIBRARIES:STRING=sci_intel_mpi" 
     #
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTpetra_INST_INT_LONG_LONG:BOOL=OFF"
@@ -288,7 +292,20 @@ if (BUILD_TRILINOS)
     "-DTpetra_INST_INT_LONG:BOOL=OFF"
     "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
     #
-    "-DMPI_EXEC:FILEPATH=aprun"
+    "-DMPI_USE_COMPILER_WRAPPERS:BOOL=OFF"
+    "-DCMAKE_CXX_COMPILER:FILEPATH=CC"
+    "-DCMAKE_C_COMPILER:FILEPATH=cc"
+    "-DCMAKE_Fortran_COMPILER:FILEPATH=ftn"
+    "-DTrilinos_ENABLE_Fortran=ON"
+    "-DCMAKE_C_FLAGS:STRING=-O3 -DREDUCE_SCATTER_BUG"
+    "-DCMAKE_CXX_FLAGS:STRING=-O3 -DREDUCE_SCATTER_BUG -DBOOST_NO_HASH"
+    "-DTrilinos_ENABLE_SHADOW_WARNINGS=OFF"
+    "-DTrilinos_ENABLE_CXX11=ON"
+    "-DTPL_ENABLE_Pthread:BOOL=OFF"
+    "-DTPL_ENABLE_BinUtils:BOOL=OFF"
+    "-DTrilinos_ENABLE_ROL:BOOL=ON"
+    #
+    "-DMPI_EXEC:FILEPATH=srun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING=4"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
   )
@@ -492,7 +509,6 @@ if (BUILD_CISM_PISCEES)
 
   set (CONFIGURE_OPTIONS
     "-DCISM_MPI_MODE:BOOL=ON"
-    "-DCISM_MPI_EXEC:FILEPATH=aprun"
     "-DCISM_SERIAL_MODE:BOOL=OFF"
     "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
     "-DCISM_USE_GPTL_INSTRUMENTATION:BOOL=OFF"
