@@ -21,8 +21,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               spatialDimension( p.get<std::size_t>("spatialDim") ),
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"),
       spatialDimension == 3 ? dl->node_3vector : dl->node_vector ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > > ("Intrepid2 Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
@@ -814,7 +814,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
-initialize_grad(Intrepid2::FieldContainer<RealType> &grad_at_quadrature_points) const
+initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device > &grad_at_quadrature_points) const
 {
   const unsigned N = static_cast<unsigned>(std::floor(std::sqrt(numQPs)+.1));
   Intrepid2::FieldContainer<RealType> dLdx(N,N); dLdx.initialize(); 
@@ -848,7 +848,7 @@ spherical_divergence (Intrepid2::FieldContainer<MeshScalarT> &div_v,
                       const int e,
                       const double rrearth) const
 {
-  Intrepid2::FieldContainer<RealType> grad_at_quadrature_points(numQPs,numQPs,2);
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_quadrature_points(numQPs,numQPs,2);
   static bool init_grad = true;
   if (init_grad) initialize_grad(grad_at_quadrature_points);
   init_grad = false;

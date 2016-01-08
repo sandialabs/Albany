@@ -12,14 +12,14 @@
 
 /*********************** Helper Functions*********************************/
 
-Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
 Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
 {
-   typedef Intrepid2::FieldContainer< RealType > Field_t;
+   typedef Intrepid2::FieldContainer_Kokkos< RealType, PHX::Layout, PHX::Device > Field_t;
    using Teuchos::rcp;
    using std::cout;
    using std::endl;
-   using Intrepid2::FieldContainer;
+   using Intrepid2::FieldContainer_Kokkos;
    Teuchos::RCP<Intrepid2::Basis< RealType, Field_t > > intrepidBasis;
    const int & numNodes = ctd.node_count;
    const int & numDim   = ctd.dimension;
