@@ -467,8 +467,9 @@ computeBCsDTK()
   Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
 
-  //Check that neq is the same for this_app and coupled_app, which they should be
-  assert(this_app.getNumEquations() == coupled_app.getNumEquations());  
+  // neq should be the same for this_app and coupled_app.
+  assert(this_app.getNumEquations() == coupled_app.getNumEquations());
+
   //Get number of equations from this_app 
   int neq = this_app.getNumEquations(); 
 
@@ -510,8 +511,6 @@ computeBCsDTK()
 #if defined(DEBUG_LCM_SCHWARZ)
   *out << "DEBUG: map_name: " << map_name << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
-
-  using Field = stk::mesh::Field<double>;
 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
   coupled_field = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
