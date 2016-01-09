@@ -174,10 +174,18 @@ Minimizer<T, N>::
 continueSolve() const
 {
   bool const
-  is_max_iter = num_iter >= max_num_iter;
+  exceeds_max_iter = num_iter >= max_num_iter;
 
   bool const
-  continue_solve = is_max_iter == false && converged == false;
+  exceeds_min_iter = num_iter >= min_num_iter;
+
+  bool const
+  is_max_or_converged = exceeds_max_iter == false && converged == false;
+
+  // Regardless of what we just determined, continue solving if
+  // we have not exceeded the minimum number of iterations.
+  bool const
+  continue_solve = is_max_or_converged == true || exceeds_min_iter == false;
 
   return continue_solve;
 }

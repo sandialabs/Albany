@@ -61,6 +61,7 @@ struct Minimizer
 public:
   Minimizer():
   max_num_iter(256),
+  min_num_iter(0),
   rel_tol(1.0e-12),
   rel_error(1.0),
   abs_tol(1.0e-12),
@@ -105,6 +106,9 @@ private:
 public:
   Index
   max_num_iter{256};
+
+  Index
+  min_num_iter{0};
 
   T
   rel_tol{1.0e-12};
