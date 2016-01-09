@@ -189,7 +189,7 @@ public:
 //
 // Stochastic Galerkin Residual
 //
-#ifdef ALBANY_SG
+#if defined(ALBANY_SG)
 template<typename Traits>
 class SchwarzBC<PHAL::AlbanyTraits::SGResidual,Traits>
    : public SchwarzBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -222,9 +222,9 @@ public:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif // ALBANY_SG
 
+#if defined(ALBANY_ENSEMBLE)
 //
 // Multi-point Residual
 //
@@ -261,8 +261,8 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#endif
+#endif // ALBANY_ENSEMBLE
 
-}
+} // namespace LCM
 
 #endif // LCM_SchwarzBC_hpp
