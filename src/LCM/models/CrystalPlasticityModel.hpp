@@ -15,7 +15,7 @@
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
 #include <Intrepid2_MiniTensor.h>
-#include "Intrepid_MiniTensor_Solvers.h"
+#include "Intrepid2_MiniTensor_Solvers.h"
 #include <MiniNonlinearSolver.h>
 
 namespace LCM
