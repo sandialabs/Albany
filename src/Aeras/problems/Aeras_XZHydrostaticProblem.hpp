@@ -114,7 +114,7 @@ namespace Aeras {
 }
 
 #include "Intrepid2_FieldContainer.hpp"
-#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Intrepid2_CubaturePolylib.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Aeras_Eta.hpp"
@@ -158,8 +158,13 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  RCP <Intrepid2::CubaturePolylib<RealType> > polylib = rcp(new Intrepid2::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType> > > cubatures(1, polylib); 
+  RCP <Intrepid2::Cubature<RealType> > cubature = rcp( new Intrepid2::CubatureTensor<RealType>(cubatures));
+
+  //Regular Gauss Quadrature.
+  //Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  //RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = meshSpecs.ctd.node_count;
