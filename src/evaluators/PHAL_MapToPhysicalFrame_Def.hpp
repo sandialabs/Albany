@@ -18,6 +18,11 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coords_vertices  (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector),
   cubature         (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
+#if defined ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > > ("Intrepid2 Basis") ),
+#else
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >("Intrepid2 Basis") ),
+#endif
   cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   coords_qp        (p.get<std::string>  ("Coordinate Vector Name"), dl->qp_gradient)
 {
@@ -163,8 +168,16 @@ template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid2::CellTools<RealType>::mapToPhysicalFrame
-       (coords_qp, refPoints, coords_vertices, *cellType);
+  //IKT, 1/9/16: the following needs to be uncommented once mapToPhysicalFrame
+  //overloading is fixed in Intrepid2. 
+  /*if (intrepidBasis != Teuchos::null){ 
+    Intrepid2::CellTools<RealType>::mapToPhysicalFrame
+         (coords_qp, refPoints, coords_vertices, intrepidBasis);
+  }
+  else {*/
+    Intrepid2::CellTools<RealType>::mapToPhysicalFrame
+         (coords_qp, refPoints, coords_vertices, *cellType);
+  //}
  // mapToPhysicalFrame<RealType>(coords_qp, refPoints, coords_vertices, *cellType);
   
 }

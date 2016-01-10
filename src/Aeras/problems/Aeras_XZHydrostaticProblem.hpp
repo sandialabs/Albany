@@ -300,7 +300,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     (evalUtils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature, intrepidBasis));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
