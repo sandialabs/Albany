@@ -97,7 +97,7 @@ protected:
 
   Teuchos::RCP<Albany::Layouts> dl;
 
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
 };
 
 // ===================================== IMPLEMENTATION ======================================= //
@@ -123,8 +123,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
   // Building the right quadrature formula
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   // Some constants
   const int numNodes = intrepidBasis->getCardinality();

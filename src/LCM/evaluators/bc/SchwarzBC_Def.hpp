@@ -232,7 +232,7 @@ computeBCs(
   auto
   parametric_dimension = 0;
 
-  Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double>>>
+  Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>>
   basis;
 
   Teuchos::ArrayRCP<double> const &
@@ -305,7 +305,7 @@ computeBCs(
         parametric_dimension = 3;
 
         basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<
-            double, Intrepid2::FieldContainer<double>>());
+            double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>());
 
         in_element = Intrepid2::in_tetrahedron(
             point,
@@ -320,7 +320,7 @@ computeBCs(
         parametric_dimension = 3;
 
         basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<
-            double, Intrepid2::FieldContainer<double>>());
+            double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>());
 
         in_element = Intrepid2::in_hexahedron(
             point,
@@ -357,7 +357,7 @@ computeBCs(
   number_cells = 1;
 
   // Container for the parametric coordinates
-  Intrepid2::FieldContainer<double>
+  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
   parametric_point(number_cells, parametric_dimension);
 
   for (auto j = 0; j < parametric_dimension; ++j) {
@@ -365,7 +365,7 @@ computeBCs(
   }
 
   // Container for the physical point
-  Intrepid2::FieldContainer<double>
+  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
   physical_coordinates(number_cells, coupled_dimension);
 
   for (auto i = 0; i < coupled_dimension; ++i) {
@@ -375,7 +375,7 @@ computeBCs(
   // Container for the physical nodal coordinates
   // TODO: matToReference more general, accepts more topologies.
   // Use it to find if point is contained in element as well.
-  Intrepid2::FieldContainer<double>
+  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
   nodal_coordinates(number_cells, coupled_vertex_count, coupled_dimension);
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
@@ -397,7 +397,7 @@ computeBCs(
   auto const
   number_points = 1;
 
-  Intrepid2::FieldContainer<double>
+  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
   basis_values(coupled_vertex_count, number_points);
 
   basis->getValues(basis_values, parametric_point, Intrepid2::OPERATOR_VALUE);

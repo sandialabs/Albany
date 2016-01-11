@@ -438,16 +438,16 @@ evaluateFields(typename Traits::EvalData workset)
                                "to call this function for a higher order element. \n"); 
     Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   } else {
-    Intrepid2::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
-    Intrepid2::FieldContainer<MeshScalarT> dphi(numQPs,spatialDim,basisDim);
-    Intrepid2::FieldContainer<MeshScalarT> norm(numQPs);
-    Intrepid2::FieldContainer<MeshScalarT> sinL(numQPs);
-    Intrepid2::FieldContainer<MeshScalarT> cosL(numQPs);
-    Intrepid2::FieldContainer<MeshScalarT> sinT(numQPs);
-    Intrepid2::FieldContainer<MeshScalarT> cosT(numQPs);
-    Intrepid2::FieldContainer<MeshScalarT>   D1(numQPs,basisDim,spatialDim);
-    Intrepid2::FieldContainer<MeshScalarT>   D2(numQPs,spatialDim,spatialDim);
-    Intrepid2::FieldContainer<MeshScalarT>   D3(numQPs,basisDim,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  phi(numQPs,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> dphi(numQPs,spatialDim,basisDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> norm(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> sinL(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> cosL(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> sinT(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> cosT(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(numQPs,basisDim,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(numQPs,spatialDim,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(numQPs,basisDim,spatialDim);
     
     for (int e = 0; e<numelements;      ++e) {
       for (int v = 0; v<numNodes;      ++v) {
@@ -585,16 +585,16 @@ evaluateFields(typename Traits::EvalData workset)
   /////////////no generality.
   if(0){
   
-  Intrepid2::FieldContainer<MeshScalarT>   Q(4);
-  Intrepid2::FieldContainer<MeshScalarT>   C(3,4);
-  Intrepid2::FieldContainer<MeshScalarT>   xx(3);
-  Intrepid2::FieldContainer<MeshScalarT>   CartC(3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   Q(4);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   C(3,4);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   xx(3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   CartC(3);
   
-  Intrepid2::FieldContainer<MeshScalarT>   dd(4,2);
-  Intrepid2::FieldContainer<MeshScalarT>   D1(2,3);
-  Intrepid2::FieldContainer<MeshScalarT>   D2(3,3);
-  Intrepid2::FieldContainer<MeshScalarT>   D3(3,2);
-  Intrepid2::FieldContainer<MeshScalarT>   D4(3,2);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   dd(4,2);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(2,3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(3,3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(3,2);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D4(3,2);
   
   for (int e = 0; e<numelements; ++e) {
     
@@ -817,7 +817,7 @@ void ComputeBasisFunctions<EvalT, Traits>::
 initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device > &grad_at_quadrature_points) const
 {
   const unsigned N = static_cast<unsigned>(std::floor(std::sqrt(numQPs)+.1));
-  Intrepid2::FieldContainer<RealType> dLdx(N,N); dLdx.initialize(); 
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> dLdx(N,N); dLdx.initialize(); 
 
   for (unsigned m=0; m<N; ++m) {
     for (unsigned n=0; n<N; ++n) {
@@ -843,8 +843,8 @@ initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Dev
 
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
-spherical_divergence (Intrepid2::FieldContainer<MeshScalarT> &div_v,
-                      const Intrepid2::FieldContainer<MeshScalarT> &v_lambda_theta,
+spherical_divergence (Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &div_v,
+                      const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &v_lambda_theta,
                       const int e,
                       const double rrearth) const
 {
@@ -892,7 +892,7 @@ div_check(const int spatialDim, const int numelements) const
     for (int e = 0; e<numelements;      ++e) {
       static const MeshScalarT DIST_THRESHOLD = 1.0e-6;
 
-      Intrepid2::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
+      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  phi(numQPs,spatialDim);
       phi.initialize(); 
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
@@ -900,7 +900,7 @@ div_check(const int spatialDim, const int numelements) const
             phi(q,d) += earthRadius*coordVec(e,v,d) * val_at_cub_points(v,q);
 
       std::vector<MeshScalarT> divergence_v(numQPs);
-      Intrepid2::FieldContainer<MeshScalarT> v_lambda_theta(numQPs,2);
+      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> v_lambda_theta(numQPs,2);
       switch (c) {
         case 0: {
           //  Example copied from homme, the climate code, from function divergence_sphere()
@@ -1001,7 +1001,7 @@ div_check(const int spatialDim, const int numelements) const
       }
       
 
-      Intrepid2::FieldContainer<MeshScalarT> div_v(numQPs);
+      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> div_v(numQPs);
       spherical_divergence(div_v, v_lambda_theta, e, rrearth);
       for (int q = 0; q<numQPs;          ++q) {
         if (DIST_THRESHOLD<std::abs(div_v(q)/rrearth - divergence_v[q])) 

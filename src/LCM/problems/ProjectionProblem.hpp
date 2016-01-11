@@ -18,7 +18,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 
-using Intrepid2::FieldContainer;
+using Intrepid2::FieldContainer_Kokkos;
 using PHAL::AlbanyTraits;
 using PHX::DataLayout;
 using PHX::MDALayout;
@@ -92,8 +92,8 @@ public:
   ///
   void
   getAllocatedStates(
-      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> old_state,
-      ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>> new_state) const;
+      ArrayRCP<ArrayRCP<RCP<FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> old_state,
+      ArrayRCP<ArrayRCP<RCP<FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> new_state) const;
 
   ///
   /// Main problem setup routine. Not directly called,
@@ -158,10 +158,10 @@ protected:
   std::string
   insertion_criterion_;
 
-  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>>
+  ArrayRCP<ArrayRCP<RCP<FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
   old_state_;
 
-  ArrayRCP<ArrayRCP<RCP<FieldContainer<RealType>>>>
+  ArrayRCP<ArrayRCP<RCP<FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
   new_state_;
 };
 
@@ -221,7 +221,7 @@ Albany::ProjectionProblem::constructEvaluators(
   RCP<shards::CellTopology>
   cell_type = rcp(new shards::CellTopology(&mesh_specs.ctd));
 
-  RCP<Intrepid2::Basis<RealType, FieldContainer<RealType>>>
+  RCP<Intrepid2::Basis<RealType, FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
   intrepid_basis = Albany::getIntrepid2Basis(mesh_specs.ctd);
 
   int const
@@ -230,25 +230,25 @@ Albany::ProjectionProblem::constructEvaluators(
   int const
   workset_size = mesh_specs.worksetSize;
 
-  Intrepid2::DefaultCubatureFactory<RealType>
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >
   cubature_factory;
 
-  RCP<Intrepid2::Cubature<RealType>>
+  RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>
   cubature = cubature_factory.create(*cell_type, mesh_specs.cubatureDegree);
 
   // Create intrepid basis and cubature for the face averaging. Not the best
   // way of defining the basis functions: requires to know the face type at
   // compile time
-  RCP<Intrepid2::Basis<RealType, FieldContainer<RealType>>>
+  RCP<Intrepid2::Basis<RealType, FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
   face_intrepid_basis;
 
   face_intrepid_basis = rcp(
       new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<RealType,
-      FieldContainer<RealType>>());
+      FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>());
 
   // the quadrature is general to the
   // topology of the faces of the volume elements
-  RCP<Intrepid2::Cubature<RealType>>
+  RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>
   face_cubature = cubature_factory.create(
       cell_type->getCellTopologyData()->side->topology,
       mesh_specs.cubatureDegree);
@@ -1172,11 +1172,11 @@ Albany::ProjectionProblem::constructEvaluators(
         projection_layout->node_vector);
 
     // the cubature and basis function information
-    p->set<RCP<Intrepid2::Cubature<RealType>>>(
+    p->set<RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>(
         "Face Cubature",
         face_cubature);
 
-    p->set<RCP<Intrepid2::Basis<RealType, FieldContainer<RealType>>>>(
+    p->set<RCP<Intrepid2::Basis<RealType, FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>(
         "Face Intrepid2 Basis",
         face_intrepid_basis);
 

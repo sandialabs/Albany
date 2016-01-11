@@ -54,7 +54,7 @@ private:
   std::string homogenizedConstantsName;
   int cellForcingColumn;
 
-  Intrepid2::FieldContainer<RealType> subTensor;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> subTensor;
 };
 }
 

@@ -428,7 +428,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   typedef Teuchos::RCP<
-      Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>
+      Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
   Intrepid2Basis;
 
   // Collect problem-specific response parameters
@@ -573,7 +573,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       surfaceBasis =
           Teuchos::rcp(
               new Intrepid2::Basis_HGRAD_LINE_C1_FEM<RealType,
-                  Intrepid2::FieldContainer<RealType>>());
+                  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>());
       surfaceTopology =
           Teuchos::rcp(
               new shards::CellTopology(
@@ -585,7 +585,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       surfaceBasis =
           Teuchos::rcp(
               new Intrepid2::Basis_HGRAD_TRI_C1_FEM<RealType,
-                  Intrepid2::FieldContainer<RealType>>());
+                  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>());
       surfaceTopology =
           Teuchos::rcp(
               new shards::CellTopology(
@@ -597,7 +597,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       surfaceBasis =
           Teuchos::rcp(
               new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<RealType,
-                  Intrepid2::FieldContainer<RealType>>());
+                  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>());
       surfaceTopology =
           Teuchos::rcp(
               new shards::CellTopology(
@@ -1144,7 +1144,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     p->set<const Teuchos::RCP<
-      Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>>("Intrepid2 Basis", intrepidBasis);
+      Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis", intrepidBasis);
     ev = Teuchos::rcp(
         new LCM::IsoMeshSizeField<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);

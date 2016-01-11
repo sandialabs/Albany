@@ -92,10 +92,10 @@ protected:
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
    // dudn for 2D Thomas-Fermi poisson source
-  void calc_dudn_2DThomasFermi(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-			       const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
-			       const Intrepid2::FieldContainer<ScalarT>& dof_side,
-			       const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+  void calc_dudn_2DThomasFermi(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+			       const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
+			       const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
+			       const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
 			       const shards::CellTopology & celltopo,
 			       const int cellDims,
 			       int local_side_id, int iSideset);
@@ -116,37 +116,37 @@ protected:
   PHX::MDField<ScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
-  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubatureCell;
-  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::Cubature<RealType> > > cubatureSide;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureCell;
+  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > > cubatureSide;
 
   // The basis
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<RealType> cubPointsSide;
-  Intrepid2::FieldContainer<RealType> refPointsSide;
-  Intrepid2::FieldContainer<RealType> cubWeightsSide;
-  Intrepid2::FieldContainer<MeshScalarT> physPointsSide;
-  Intrepid2::FieldContainer<MeshScalarT> jacobianSide;
-  Intrepid2::FieldContainer<MeshScalarT> jacobianSide_det;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubPointsSide;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPointsSide;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubWeightsSide;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsSide;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide_det;
 
-  Intrepid2::FieldContainer<MeshScalarT> physPointsCell;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsCell;
 
-  Intrepid2::FieldContainer<MeshScalarT> weighted_measure;
-  Intrepid2::FieldContainer<RealType> basis_refPointsSide;
-  Intrepid2::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
-  Intrepid2::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_measure;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> basis_refPointsSide;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> trans_basis_refPointsSide;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_trans_basis_refPointsSide;
 
-  Intrepid2::FieldContainer<ScalarT> dofCell;
-  Intrepid2::FieldContainer<ScalarT> dofSide;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCell;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSide;
 
-  Intrepid2::FieldContainer<ScalarT> dofCellVec;
-  Intrepid2::FieldContainer<ScalarT> dofSideVec;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCellVec;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSideVec;
   
-  Intrepid2::FieldContainer<ScalarT> data;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> data;
 
   // Output:
-  Intrepid2::FieldContainer<ScalarT>   neumann;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>   neumann;
   PHX::MDField<ScalarT,Cell,Node> surfaceElectronDensity; // electron density in [cm-2]
 
   Teuchos::Array<std::string> sideSetIDs;

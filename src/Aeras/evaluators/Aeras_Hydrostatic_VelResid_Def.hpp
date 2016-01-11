@@ -124,8 +124,8 @@ void Hydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::set(Residual, 0.0);
-  Intrepid2::FieldContainer<ScalarT>  coriolis(numQPs);
-  //Intrepid2::FieldContainer<ScalarT>  vorticity(numQPs);
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  coriolis(numQPs);
+  //Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  vorticity(numQPs);
 
 
   for (int cell=0; cell < workset.numCells; ++cell) {
@@ -155,7 +155,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT,typename Traits>
 void
-Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis) {
+Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis) {
 
   coriolis.initialize();
   double alpha = AlphaAngle; 
@@ -172,10 +172,10 @@ Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::Fi
 
 //template<typename EvalT,typename Traits>
 //void
-//Hydrostatic_VelResid<EvalT,Traits>::get_vorticity(const Intrepid2::FieldContainer<ScalarT>  & nodalVector,
-//    std::size_t cell, std::size_t level, Intrepid2::FieldContainer<ScalarT>  & curl) {
+//Hydrostatic_VelResid<EvalT,Traits>::get_vorticity(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & nodalVector,
+//    std::size_t cell, std::size_t level, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & curl) {
 //
-//  Intrepid2::FieldContainer<ScalarT>& covariantVector = wrk_;
+//  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& covariantVector = wrk_;
 //  covariantVector.initialize();
 //
 //  fill_nodal_metrics(cell);

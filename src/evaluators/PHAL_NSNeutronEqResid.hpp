@@ -53,8 +53,8 @@ private:
 
   bool haveNeutSource;
   unsigned int numQPs, numDims, numNodes;
-  Intrepid2::FieldContainer<ScalarT> flux;
-  Intrepid2::FieldContainer<ScalarT> abscoeff;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> abscoeff;
 
  };
 }

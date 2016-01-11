@@ -50,10 +50,10 @@ private:
   /// Length scale parameter for localization zone
   ScalarT thickness;
   /// Numerical integration rule
-  Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
 
   /// for the parallel gradient term
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
   // nodal value used to construct in-plan gradient
   PHX::MDField<ScalarT,Cell,Node> nodalScalar;
 
@@ -64,10 +64,10 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
 
   //! Reference Cell FieldContainers
-  Intrepid2::FieldContainer<RealType> refValues;
-  Intrepid2::FieldContainer<RealType> refGrads;
-  Intrepid2::FieldContainer<RealType> refPoints;
-  Intrepid2::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refValues;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refGrads;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
 

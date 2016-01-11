@@ -320,7 +320,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
@@ -447,10 +447,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
                                   // once we move logic to BCUtils
 
-  Intrepid2::FieldContainer<ScalarT> betaOnSide;
-  Intrepid2::FieldContainer<ScalarT> thicknessOnSide;
-  Intrepid2::FieldContainer<ScalarT> bedTopoOnSide;
-  Intrepid2::FieldContainer<ScalarT> elevationOnSide;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> betaOnSide;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thicknessOnSide;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> bedTopoOnSide;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> elevationOnSide;
 
   const std::vector<Albany::SideStruct>& sideSet = it->second;
 
@@ -550,9 +550,9 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     else if(bc_type == BASAL || bc_type == BASAL_SCALAR_FIELD) {
-      Intrepid2::FieldContainer<ScalarT> betaOnCell(1, numNodes);
-      Intrepid2::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-      Intrepid2::FieldContainer<ScalarT> bedTopoOnCell(1, numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> betaOnCell(1, numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thicknessOnCell(1, numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> bedTopoOnCell(1, numNodes);
       for (std::size_t node=0; node < numNodes; ++node)
       {
         betaOnCell(0,node) = beta_field(elem_LID,node);
@@ -590,8 +590,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     }
 #ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
-          Intrepid2::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-          Intrepid2::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
+          Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thicknessOnCell(1, numNodes);
+          Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> elevationOnCell(1, numNodes);
           for (std::size_t node=0; node < numNodes; ++node)
           {
                 thicknessOnCell(0,node) = thickness_field(elem_LID,node);
@@ -729,9 +729,9 @@ getValue(const std::string &n) {
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_traction_components(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_traction_components(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -740,7 +740,7 @@ calc_traction_components(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid2::FieldContainer<ScalarT> traction(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> traction(numCells, numPoints, cellDims);
 
 /*
   double traction[3];
@@ -762,9 +762,9 @@ calc_traction_components(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_gradu_dotn_const(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_gradu_dotn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -773,9 +773,9 @@ calc_gradu_dotn_const(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid2::FieldContainer<ScalarT> grad_T(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> grad_T(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
 
 /*
   double kdTdx[3];
@@ -810,9 +810,9 @@ calc_gradu_dotn_const(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_const(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id,
@@ -833,10 +833,10 @@ calc_dudn_const(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_robin(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                const Intrepid2::FieldContainer<ScalarT>& dof_side,
-                const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_robin(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
+                const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
+                const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                 const shards::CellTopology & celltopo,
                 const int cellDims,
                 int local_side_id,
@@ -861,9 +861,9 @@ calc_dudn_robin(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_press(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_press(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -872,9 +872,9 @@ calc_press(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
-  Intrepid2::FieldContainer<MeshScalarT> ref_normal(cellDims);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> ref_normal(cellDims);
 
   // for this side in the reference cell, get the components of the normal direction vector
   Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
@@ -934,12 +934,12 @@ calc_press(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_basal(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                                  const Intrepid2::FieldContainer<ScalarT>& basalFriction_side,
-                                  const Intrepid2::FieldContainer<ScalarT>& thickness_side,
-                                  const Intrepid2::FieldContainer<ScalarT>& bedTopography_side,
-                                  const Intrepid2::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_basal(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& basalFriction_side,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& thickness_side,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& bedTopography_side,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -956,8 +956,8 @@ calc_dudn_basal(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
   const ScalarT& beta2 = robin_vals[3];
   const ScalarT& beta3 = robin_vals[4];
 
-  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
@@ -1277,10 +1277,10 @@ calc_dudn_basal(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_basal_scalar_field(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                                  const Intrepid2::FieldContainer<ScalarT>& basalFriction_side,
-                                  const Intrepid2::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_basal_scalar_field(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& basalFriction_side,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -1293,8 +1293,8 @@ calc_dudn_basal_scalar_field(Intrepid2::FieldContainer<ScalarT> & qp_data_return
 
   const ScalarT& scale = robin_vals[0];
 
-  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
@@ -1316,11 +1316,11 @@ calc_dudn_basal_scalar_field(Intrepid2::FieldContainer<ScalarT> & qp_data_return
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_lateral(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-                                  const Intrepid2::FieldContainer<ScalarT>& thickness_side,
-                                  const Intrepid2::FieldContainer<ScalarT>& elevation_side,
-                                  const Intrepid2::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_lateral(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& thickness_side,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& elevation_side,
+                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
+                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -1330,8 +1330,8 @@ calc_dudn_lateral(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
 
   //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
 
-  Intrepid2::FieldContainer<MeshScalarT> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer<MeshScalarT> normal_lengths(numCells, numPoints);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,

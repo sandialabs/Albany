@@ -48,12 +48,12 @@ private:
   thickness_;
 
   /// Numerical integration rule
-  Teuchos::RCP<Intrepid2::Cubature<RealType>>
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>
   cubature_;
 
   /// Finite element basis for the midplane
   Teuchos::RCP<Intrepid2::Basis<RealType,
-    Intrepid2::FieldContainer<RealType>>>
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
   intrepid_basis_;
 
   /// First PK Stress
@@ -81,16 +81,16 @@ private:
   detF_;
 
   /// Reference Cell FieldContainers
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_values_;
 
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_grads_;
 
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_points_;
 
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_weights_;
 
   /// Optional Cohesive Traction

@@ -48,9 +48,9 @@ private:
   //! Length scale parameter for localization zone
   ScalarT thickness;
   //! Numerical integration rule
-  Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
   //! Scalar Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator
@@ -88,22 +88,22 @@ private:
    PHX::MDField<ScalarT,Dummy> deltaTime;
 
   //! Reference Cell FieldContainers
-  Intrepid2::FieldContainer<RealType> refValues;
-  Intrepid2::FieldContainer<RealType> refGrads;
-  Intrepid2::FieldContainer<RealType> refPoints;
-  Intrepid2::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refValues;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refGrads;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
 
   // Work space FCs
-  Intrepid2::FieldContainer<ScalarT> F_inv;
-  Intrepid2::FieldContainer<ScalarT> F_invT;
-  Intrepid2::FieldContainer<ScalarT> C;
-  Intrepid2::FieldContainer<ScalarT> Cinv;
-  Intrepid2::FieldContainer<ScalarT> JF_invT;
-  Intrepid2::FieldContainer<ScalarT> KJF_invT;
-  Intrepid2::FieldContainer<ScalarT> Kref;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> KJF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Kref;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<ScalarT> flux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> poroMassResidual;

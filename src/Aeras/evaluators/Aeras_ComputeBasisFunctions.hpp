@@ -83,8 +83,8 @@ private:
          
   const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
-  void spherical_divergence(Intrepid2::FieldContainer<MeshScalarT> &,
-                            const Intrepid2::FieldContainer<MeshScalarT> &,
+  void spherical_divergence(Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &,
+                            const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &,
                             const int e,
                             const double rrearth=1) const;
   void initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> &) const;

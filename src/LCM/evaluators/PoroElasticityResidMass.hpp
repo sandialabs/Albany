@@ -62,7 +62,7 @@ private:
 
   // stabilization term
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
   Teuchos::RCP<shards::CellTopology> cellType;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
@@ -85,17 +85,17 @@ private:
   unsigned int worksetSize;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<ScalarT> flux;
-  Intrepid2::FieldContainer<ScalarT> fluxdt;
-  Intrepid2::FieldContainer<ScalarT> pterm;
-  Intrepid2::FieldContainer<ScalarT> tpterm;
-  Intrepid2::FieldContainer<ScalarT> aterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> fluxdt;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tpterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> aterm;
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<RealType> refPoints;
-  Intrepid2::FieldContainer<RealType> refWeights;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian_inv;
-  Intrepid2::FieldContainer<MeshScalarT> Gc;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian_inv;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> Gc;
 
 
   ScalarT porePbar, vol;
