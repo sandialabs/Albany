@@ -24,6 +24,22 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_dtk.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT_dtk.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_dtk_4proc.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT_dtk_4proc.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-0.g.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-0.g.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-0.g.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-0.g.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-0.g.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-0.g.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-0.g.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-0.g.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-1.g.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-1.g.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-1.g.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-1.g.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-1.g.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-1.g.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-1.g.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-1.g.4.3 COPYONLY)
 else()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-0.xml COPYONLY)
