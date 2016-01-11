@@ -58,6 +58,9 @@ private:
   const int numLevels;
 
   ScalarT sp0;
+
+  bool obtainLaplaceOp;
+
 };
 }
 

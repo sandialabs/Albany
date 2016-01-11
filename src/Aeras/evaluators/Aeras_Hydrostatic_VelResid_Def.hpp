@@ -123,6 +123,10 @@ template<typename EvalT, typename Traits>
 void Hydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  double n_coeff = workset.n_coeff;
+  obtainLaplaceOp = (n_coeff == 1) ? true : false;
+
   PHAL::set(Residual, 0.0);
   Intrepid2::FieldContainer<ScalarT>  coriolis(numQPs);
   //Intrepid2::FieldContainer<ScalarT>  vorticity(numQPs);

@@ -30,12 +30,13 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     else { modelDim=2; neq=3; } 
   }
 
-  //OG: FIXME: Here (or/and in SW_Resid) should be a check for the case when both Explicit and Implicit HV are on.
-  //Should not be allowed.
   bool useExplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
   bool useImplHyperviscosity = params_->sublist("Shallow Water Problem").get<bool>("Use Implicit Hyperviscosity", false);
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 
   bool plotVorticity = params_->sublist("Shallow Water Problem").get<bool>("Plot Vorticity", false); 
+
+  TEUCHOS_TEST_FOR_EXCEPTION( useExplHyperviscosity && useImplHyperviscosity ,std::logic_error,"Use only explicit or implicit hyperviscosity, not both.");
+
 
   if (useImplHyperviscosity) {
     if (usePrescribedVelocity) //TC1 case: only 1 extra hyperviscosity dof 

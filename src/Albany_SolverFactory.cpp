@@ -672,8 +672,33 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     //std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
     //Check if HV coefficient tau is zero of "Explicit HV" is false. Then there is no need for Aeras HVDecorator.
 
-    bool useExplHyperviscosity = problemParams->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
-    double tau = problemParams->sublist("Shallow Water Problem").get<double>("Hyperviscosity Tau", 0.0);
+    double tau;
+    bool useExplHyperviscosity;
+
+    std::string swProblem_name    = "Shallow Water Problem",
+    		    hydroProblem_name = "Hydrostatic Problem";
+
+    bool swProblem = problemParams->isSublist(swProblem_name);
+    bool hydroProblem = problemParams->isSublist(hydroProblem_name);
+
+    if( (!swProblem) && (!hydroProblem) ){
+
+  	  *out << "Error: Hyperviscosity can only be used with Aeras:Shallow Water or Aeras:Hydrostatic." << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Error: cannot locate " << swProblem_name <<" or " << hydroProblem_name << " sublist in the input file." << "\n");
+    }
+
+    if ( swProblem ){
+       tau = problemParams->sublist(swProblem_name).get<double>("Hyperviscosity Tau", 0.0);
+       useExplHyperviscosity = problemParams->sublist(swProblem_name).get<bool>("Use Explicit Hyperviscosity", false);
+       *out << "Reading Shallow Water Problem List: Using explicit hyperviscosity? " <<useExplHyperviscosity << "\n";
+    }
+    if ( hydroProblem ){
+       tau = problemParams->sublist(hydroProblem_name).get<double>("Hyperviscosity Tau", 0.0);
+       useExplHyperviscosity = problemParams->sublist(hydroProblem_name).get<bool>("Use Explicit Hyperviscosity", false);
+       *out << "Reading Hydrostatic Problem List: Using explicit hyperviscosity? " <<useExplHyperviscosity << "\n";
+    }
+
 
     if( (useExplHyperviscosity) && (tau != 0.0) ){
 
