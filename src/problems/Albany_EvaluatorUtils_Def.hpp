@@ -298,6 +298,8 @@ Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature)
+    const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis)
+
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -310,6 +312,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set<RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     // Output: X, Y at Quad Points (same name as input)
 

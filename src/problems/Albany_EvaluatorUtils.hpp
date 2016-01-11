@@ -166,6 +166,7 @@ namespace Albany {
     constructMapToPhysicalFrameEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
       const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature);
+      const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis = Teuchos::null);
 
     //! Function to create parameter list for construction of ComputeBasisFunctions
     //! evaluator with standard Field names

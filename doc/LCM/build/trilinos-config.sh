@@ -44,7 +44,7 @@ cmake \
 \
  -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
  -D Kokkos_ENABLE_CXX11:BOOL=ON \
- -D Kokkos_ENABLE_Cuda_UVM=lcm_enable_uvm \
+ -D Kokkos_ENABLE_Cuda_UVM:BOOL=lcm_enable_uvm \
  -D Kokkos_ENABLE_EXAMPLES:BOOL=lcm_enable_kokkos_examples \
  -D Kokkos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Kokkos_ENABLE_Pthread:BOOL=lcm_enable_pthreads \

@@ -85,8 +85,6 @@
           <Parameter name="Forcing Term Method" type="string" value="Constant"/>
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
           <ParameterList name="Stratimikos Linear Solver">
-            <ParameterList name="NOX Stratimikos Options"> 	  
-            </ParameterList>
             <ParameterList name="Stratimikos">
               <Parameter name="Linear Solver Type" type="string" value="Belos"/>
               <ParameterList name="Linear Solver Types">
@@ -120,8 +118,8 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <!-- <Parameter name="Preconditioner Type" type="string" value="MueLu"/> -->
-              <Parameter name="Preconditioner Type" type="string" value="IfPack2"/>
+              <!-- <Parameter name="Preconditioner Type" type="string" value="MueLu"/-->
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="2"/>
@@ -141,11 +139,8 @@
           </ParameterList>
         </ParameterList>
       </ParameterList>
-      
       <ParameterList name="Line Search">
         <Parameter name="Method" type="string" value="Full Step"/>
-        <ParameterList name="Full Step">
-        </ParameterList>
         <!--
         <Parameter name="Method" type="string" value="Backtrack"/>
         <ParameterList name="Backtrack">

@@ -9,7 +9,7 @@
 
 #include <type_traits>
 
-#include "Intrepid_MiniTensor_Solvers.h"
+#include "Intrepid2_MiniTensor_Solvers.h"
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace LCM{

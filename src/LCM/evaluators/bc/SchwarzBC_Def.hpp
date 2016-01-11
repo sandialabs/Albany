@@ -467,8 +467,9 @@ computeBCsDTK()
   Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
 
-  //Check that neq is the same for this_app and coupled_app, which they should be
-  assert(this_app.getNumEquations() == coupled_app.getNumEquations());  
+  // neq should be the same for this_app and coupled_app.
+  assert(this_app.getNumEquations() == coupled_app.getNumEquations());
+
   //Get number of equations from this_app 
   int neq = this_app.getNumEquations(); 
 
@@ -511,11 +512,11 @@ computeBCsDTK()
   *out << "DEBUG: map_name: " << map_name << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
 
-  using Field = stk::mesh::Field<double>;
-
   Albany::AbstractSTKFieldContainer::VectorFieldType*
-  coupled_field = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
-                  coupled_stk_disc->getSTKMeshStruct()->getFieldContainer())->getSolutionField();
+  coupled_field =
+      Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+          coupled_stk_disc->getSTKMeshStruct()->getFieldContainer()
+      )->getSolutionField();
 
   stk::mesh::Selector
   coupled_stk_selector =
@@ -531,8 +532,10 @@ computeBCsDTK()
   this_meta_data = Teuchos::rcpFromRef(this_stk_disc->getSTKMetaData());
 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
-  this_field = Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
-                  this_stk_disc->getSTKMeshStruct()->getFieldContainer())->getSolutionFieldDTK();
+  this_field =
+      Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
+          this_stk_disc->getSTKMeshStruct()->getFieldContainer()
+      )->getSolutionFieldDTK();
 
   // Get the part corresponding to this nodeset.
   std::string const &
@@ -560,13 +563,16 @@ computeBCsDTK()
   // Create a solution vector for the source.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   coupled_vector =
-      coupled_manager.createFieldMultiVector<Albany::AbstractSTKFieldContainer::VectorFieldType>(
-          Teuchos::ptr(coupled_field), neq);
+      coupled_manager.createFieldMultiVector<
+        Albany::AbstractSTKFieldContainer::VectorFieldType
+      >(Teuchos::ptr(coupled_field), neq);
 
   // Create a solution vector for the target.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
-  this_vector = this_manager.createFieldMultiVector<Albany::AbstractSTKFieldContainer::VectorFieldType>(
-      Teuchos::ptr(this_field), neq);
+  this_vector =
+      this_manager.createFieldMultiVector<
+        Albany::AbstractSTKFieldContainer::VectorFieldType
+      >(Teuchos::ptr(this_field), neq);
 
 #if defined(DEBUG_LCM_SCHWARZ)
   // Print out source mesh info.
@@ -589,7 +595,8 @@ computeBCsDTK()
   DataTransferKit::MapOperatorFactory
   op_factory;
 
-  Teuchos::RCP<DataTransferKit::MapOperator> map_op =
+  Teuchos::RCP<DataTransferKit::MapOperator>
+  map_op =
       op_factory.create(coupled_vector->getMap(),
           this_vector->getMap(),
           dtk_params);
@@ -661,7 +668,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
 
-  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
+  Teuchos::RCP<
+    Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
+  > const
   schwarz_bcs = this->computeBCsDTK();
   
   Teuchos::RCP<const Teuchos::Comm<int> > 
@@ -690,10 +699,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     int dof = x_dof/3; 
     
 #if defined(DEBUG_LCM_SCHWARZ)
-    std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
-              << commT->getRank() << ", " << ns_node <<  ", " 
-              << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
-              << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
+    std::cout
+    << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
+    << commT->getRank() << ", " << ns_node <<  ", "
+    << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
+    << schwarz_bcs_const_view_x[dof] << ", "
+    << schwarz_bcs_const_view_y[dof] << ", "
+    << schwarz_bcs_const_view_z[dof] << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
 
     fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
@@ -701,7 +713,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
 
   } 
-#else
+#else // ALBANY_DTK
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
     ScalarT
@@ -719,9 +731,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     z_dof = ns_dof[ns_node][2];
 
 #if defined(DEBUG_LCM_SCHWARZ)
-    std::cout << "ns_node, x_dof, y_dof, z_dof, x_val, y_val, z_val: "  << ns_node <<  ", " 
-              << x_dof << ", " << y_dof << ", " << z_dof <<  ", " << x_val 
-              << ", " << y_val << ", " << z_val << "\n";
+    std::cout
+    << "ns_node, x_dof, y_dof, z_dof, x_val, y_val, z_val: "
+    << ns_node <<  ", "
+    << x_dof << ", " << y_dof << ", " << z_dof <<  ", "
+    << x_val << ", " << y_val << ", " << z_val << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
 
     fT_view[x_dof] = xT_const_view[x_dof] - x_val;
@@ -881,8 +895,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #if defined(DEBUG_LCM_SCHWARZ)
     *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
-    Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
-    
+    Teuchos::RCP<
+      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
+    > const
     schwarz_bcs = this->computeBCsDTK();
      
     Teuchos::RCP<const Teuchos::Comm<int> > 
@@ -911,17 +926,19 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       int dof = x_dof/3; 
     
 #if defined(DEBUG_LCM_SCHWARZ)
-      std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
-                << commT->getRank() << ", " << ns_node <<  ", " 
-                << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
-                << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
+      std::cout
+      << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
+      << commT->getRank() << ", " << ns_node <<  ", "
+      << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
+      << schwarz_bcs_const_view_x[dof] << ", "
+      << schwarz_bcs_const_view_y[dof] << ", "
+      << schwarz_bcs_const_view_z[dof] << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
-
       fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
       fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
       fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
     } 
-#else    
+#else // ALBANY_DTK
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
     
       auto const
@@ -1042,7 +1059,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #endif //DEBUG_LCM_SCHWARZ  
     if (fT != Teuchos::null) {
 
-      Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> const
+      Teuchos::RCP<
+        Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
+      > const
       schwarz_bcs = this->computeBCsDTK();
     
       Teuchos::RCP<const Teuchos::Comm<int> > 
@@ -1071,12 +1090,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         int dof = x_dof/3; 
     
 #if defined(DEBUG_LCM_SCHWARZ)
-        std::cout << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: " 
-                  << commT->getRank() << ", " << ns_node <<  ", " 
-                  << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", " << schwarz_bcs_const_view_x[dof] 
-                  << ", " << schwarz_bcs_const_view_y[dof] << ", " << schwarz_bcs_const_view_z[dof] << "\n";
+        std::cout
+        << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
+        << commT->getRank() << ", " << ns_node <<  ", "
+        << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
+        << schwarz_bcs_const_view_x[dof] << ", "
+        << schwarz_bcs_const_view_y[dof] << ", "
+        << schwarz_bcs_const_view_z[dof] << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
-
         fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
         fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
         fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
@@ -1084,7 +1105,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     } 
 
     if (fpT != Teuchos::null) {
-      std::cout << "WARNING: fpT requested by not set yet when ALBANY_DTK is ON! \n"; 
+      std::cout << "WARNING: fpT requested but unset when ALBANY_DTK is ON!\n";
     }
 #else  
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
@@ -1228,7 +1249,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 //
 // Specialization: Stochastic Galerkin Residual
 //
-#ifdef ALBANY_SG
+#if defined(ALBANY_SG)
 template<typename Traits>
 SchwarzBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 SchwarzBC(Teuchos::ParameterList & p) :
@@ -1488,9 +1509,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   }
 }
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif // ALBANY_SG
 
+#if defined(ALBANY_ENSEMBLE)
 //
 // Specialization: Multi-point Residual
 //
@@ -1755,7 +1776,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   }
 }
-#endif
+#endif // ALBANY_ENSEMBLE
 
-}
-  // namespace LCM
+} // namespace LCM

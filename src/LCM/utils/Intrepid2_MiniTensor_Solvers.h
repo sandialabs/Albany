@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(Intrepid_MiniTensor_Solvers_h)
-#define Intrepid_MiniTensor_Solvers_h
+#if !defined(Intrepid2_MiniTensor_Solvers_h)
+#define Intrepid2_MiniTensor_Solvers_h
 
 #include <utility>
 
@@ -61,6 +61,7 @@ struct Minimizer
 public:
   Minimizer():
   max_num_iter(256),
+  min_num_iter(0),
   rel_tol(1.0e-12),
   rel_error(1.0),
   abs_tol(1.0e-12),
@@ -105,6 +106,9 @@ private:
 public:
   Index
   max_num_iter{256};
+
+  Index
+  min_num_iter{0};
 
   T
   rel_tol{1.0e-12};
@@ -317,6 +321,6 @@ struct LineSearchRegularizedStep : public Step_Base<T>
 
 } // namespace Intrepid2
 
-#include "Intrepid_MiniTensor_Solvers.t.h"
+#include "Intrepid2_MiniTensor_Solvers.t.h"
 
-#endif // Intrepid_MiniTensor_Solvers_h
+#endif // Intrepid2_MiniTensor_Solvers_h
