@@ -66,14 +66,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
-//  Estimation meshFinal;
-
   apf::destroyField(grad_ip_fld);
-  /* write the mesh with size field to file */
-  std::stringstream ss;
-  ss << "size_" << callcount << '_';
-  std::string s = ss.str();
-  apf::writeVtkFiles(s.c_str(), apf_m);
   /* create the Simmetrix adapter */
   pMSAdapt adapter = MSA_new(sim_pm, 1);
   /* copy the size field from APF to the Simmetrix adapter */
@@ -112,7 +105,6 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   sprintf(simname, "preadapt_res_%d.fld", callcount);
   Field_write(sim_res_fld, simname, 0, 0, 0);
 #endif
-  Albany::debugAMPMesh(apf_m, "before");
   /* run the adapter */
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
@@ -129,7 +121,6 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
 
   /* run APF verification on the resulting mesh */
   apf_m->verify();
-  Albany::debugAMPMesh(apf_m, "after");
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data);
   /* see the comment in Albany_APFDiscretization.cpp */
