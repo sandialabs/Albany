@@ -160,7 +160,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   
   RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
   std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > cubatures(1, polylib); 
-  RCP <Intrepid2::Cubature<RealType> > cubature = rcp( new Intrepid2::CubatureTensor<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(cubatures));
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(cubatures));
 
   //Regular Gauss Quadrature.
   //Intrepid2::DefaultCubatureFactory<RealType> cubFactory;

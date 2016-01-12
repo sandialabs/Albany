@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
 #endif
 
-  Kokkos::initialize(argc, argv);
+  Kokkos::initialize();
 
 #ifdef ALBANY_FLUSH_DENORMALS
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);

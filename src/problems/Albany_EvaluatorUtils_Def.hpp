@@ -297,7 +297,7 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature)
+    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature,
     const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis)
 
 {
