@@ -17,12 +17,8 @@ MapToPhysicalFrame<EvalT, Traits>::
 MapToPhysicalFrame(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coords_vertices  (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector),
-  cubature         (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
-#if defined ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  cubature         (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > > ("Intrepid2 Basis") ),
-#else
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >("Intrepid2 Basis") ),
-#endif
   cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   coords_qp        (p.get<std::string>  ("Coordinate Vector Name"), dl->qp_gradient)
 {

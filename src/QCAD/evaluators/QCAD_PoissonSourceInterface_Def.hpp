@@ -131,7 +131,7 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
 
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
@@ -344,8 +344,8 @@ evaluateInterfaceContribution(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void PoissonSourceInterfaceBase<EvalT, Traits>::
-calcInterfaceTrapChargDensity(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-			const Intrepid2::FieldContainer<ScalarT>& dof_side, int iSideset) 
+calcInterfaceTrapChargDensity(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+			const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side, int iSideset) 
 {			
   int numCells = qp_data_returned.dimension(0);  // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?

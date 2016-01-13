@@ -94,6 +94,10 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  double n_coeff = workset.n_coeff;
+  obtainLaplaceOp = (n_coeff == 1) ? true : false;
+
   PHAL::set(Residual, 0.0);
 
   for (int cell=0; cell < workset.numCells; ++cell) {

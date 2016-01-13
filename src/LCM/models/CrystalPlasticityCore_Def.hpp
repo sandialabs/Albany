@@ -467,6 +467,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
   return slip_residual;
 }
 
+// Nonlinear system, residual based on slip increments
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Tensor<T, N>
@@ -475,6 +476,153 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::hessian(
 {
   return Intrepid2::Function_Base<
       CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, DataT>::hessian(
+      *this,
+      x);
+}
+
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
+      Intrepid2::Tensor4<RealType, NumDimT> const & C,
+      std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+      Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
+      Intrepid2::Tensor<DataT, NumDimT> const & F_np1,
+      RealType dt)
+  :
+      C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
+      slip_n_(slip_n),
+      F_np1_(F_np1), dt_(dt)
+{
+  num_dim_ = Fp_n_.get_dimension();
+  num_slip_ = hardness_n_.get_dimension();
+  DIMENSION = num_slip_;
+}
+
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+template<typename T, Intrepid2::Index N>
+T
+CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::value(
+    Intrepid2::Vector<T, N> const & x)
+{
+  return Intrepid2::Function_Base<
+  ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, DataT>::value(
+      *this,
+      x);
+}
+
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+template<typename T, Intrepid2::Index N>
+Intrepid2::Vector<T, N>
+CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
+    Intrepid2::Vector<T, N> const & x) const
+{
+  // DJL todo: Experiment with how/where these are allocated.
+  Intrepid2::Tensor<T, NumDimT> Fp_np1;
+  Intrepid2::Tensor<T, NumDimT> Lp_np1;
+  Intrepid2::Vector<T, NumSlipT> hardness_np1;
+  Intrepid2::Vector<T, NumSlipT> hardness_computed;
+  Intrepid2::Vector<T, NumSlipT> hardness_residual;
+  Intrepid2::Tensor<T, NumDimT> sigma_np1;
+  Intrepid2::Tensor<T, NumDimT> S_np1;
+  Intrepid2::Vector<T, NumSlipT> slip_np1;
+  Intrepid2::Vector<T, NumSlipT> shear_np1;
+  Intrepid2::Vector<T, NumSlipT> slip_residual;
+  Intrepid2::Vector<T, NumSlipT> rateSlip;
+  T norm_slip_residual_;
+  Intrepid2::Vector<T, N> residual;
+
+  Fp_np1.set_dimension(num_dim_);
+  Lp_np1.set_dimension(num_dim_);
+  hardness_np1.set_dimension(num_slip_);
+  hardness_computed.set_dimension(num_slip_);
+  hardness_residual.set_dimension(num_slip_);
+  sigma_np1.set_dimension(num_dim_);
+  S_np1.set_dimension(num_dim_);
+  slip_np1.set_dimension(num_slip_);
+  shear_np1.set_dimension(num_slip_);
+  slip_residual.set_dimension(num_slip_);
+  rateSlip.set_dimension(num_slip_);
+
+  for (int i = 0; i< num_slip_; ++i){
+    slip_np1[i] = x[i];
+    hardness_np1[i] = x[i + num_slip_];
+  }
+  
+  Intrepid2::Tensor<T, NumDimT> F_np1_peeled;
+  F_np1_peeled.set_dimension(num_dim_);
+  for (int i = 0; i < num_dim_; ++i) {
+    for (int j = 0; j < num_dim_; ++j) {
+      F_np1_peeled(i, j) = LCM::peel<EvalT, T, N>()(F_np1_(i, j));
+    }
+  }
+
+  // Compute Lp_np1, and Fp_np1
+  CP::applySlipIncrement<NumDimT, NumSlipT>(
+      slip_systems_,
+      slip_n_,
+      slip_np1,
+      Fp_n_,
+      Lp_np1,
+      Fp_np1);
+
+  if(dt_ > 0.0){
+    rateSlip = (slip_np1 - slip_n_) / dt_;
+  }
+  else{
+    rateSlip.fill(Intrepid2::ZEROS);
+  }
+
+  // Compute hardness_np1
+  CP::updateHardness<NumDimT, NumSlipT>(
+      slip_systems_,
+      dt_,
+      rateSlip,
+      hardness_n_,
+      hardness_computed);
+
+  for (int i = 0; i< num_slip_; ++i){
+    hardness_residual[i] = hardness_np1[i] - hardness_computed[i];
+  }
+  
+  // Compute sigma_np1, S_np1, and shear_np1
+  CP::computeStress<NumDimT, NumSlipT>(
+      slip_systems_,
+      C_,
+      F_np1_peeled,
+      Fp_np1,
+      sigma_np1,
+      S_np1,
+      shear_np1);
+
+  // Compute slip_residual and norm_slip_residual
+  CP::computeResidual<NumDimT, NumSlipT>(
+      slip_systems_,
+      dt_,
+      slip_n_, 
+      slip_np1,
+      hardness_np1,
+      shear_np1,
+      slip_residual,
+      norm_slip_residual_);
+
+  for (int i = 0; i< num_slip_; ++i){
+    residual[i] = slip_residual[i];
+    residual[i + num_slip_] = hardness_residual[i];
+  }
+  
+  return residual;
+}
+
+// Nonlinear system, residual based on slip increments and hardnesses
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+template<typename T, Intrepid2::Index N>
+Intrepid2::Tensor<T, N>
+CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::hessian(
+    Intrepid2::Vector<T, N> const & x)
+{
+  return Intrepid2::Function_Base<
+      ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, DataT>::hessian(
       *this,
       x);
 }

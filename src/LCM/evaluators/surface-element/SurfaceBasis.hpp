@@ -63,7 +63,7 @@ public:
   void
   computeMidplaneCoords(
       PHX::MDField<ST, Cell, Vertex, Dim> const coords,
-      Intrepid2::FieldContainer<ST> & midplane_coords);
+      Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> & midplane_coords);
 
   ///
   /// Computes basis from the reference midplane
@@ -72,7 +72,7 @@ public:
   ///
   template<typename ST>
   void
-  computeBasisVectors(Intrepid2::FieldContainer<ST> const & midplane_coords,
+  computeBasisVectors(Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> const & midplane_coords,
       PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
@@ -84,7 +84,7 @@ public:
   ///
   void
   computeDualBasisVectors(
-      Intrepid2::FieldContainer<MeshScalarT> const & midplane_coords,
+      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);
@@ -117,25 +117,25 @@ private:
   ///
   /// Input: Numerical integration rule
   ///
-  Teuchos::RCP<Intrepid2::Cubature<RealType>>
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>
   cubature_;
 
   ///
   /// Input: Finite element basis for the midplane
   ///
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
   intrepid_basis_;
 
   ///
   /// Local FieldContainer to store the reference midplane_coords
   ///
-  Intrepid2::FieldContainer<MeshScalarT>
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>
   ref_midplane_coords_;
 
   ///
   /// Local FieldContainer to store the current midplane_coords
   ///
-  Intrepid2::FieldContainer<ScalarT>
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>
   current_midplane_coords_;
 
   ///
@@ -178,25 +178,25 @@ private:
   ///
   /// Reference Cell FieldContainer for basis values
   ///
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_values_;
 
   ///
   /// Reference Cell FieldContainer for basis gradients
   ///
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_grads_;
 
   ///
   /// Reference Cell FieldContainer for integration point locations
   ///
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_points_;
 
   ///
   /// Reference Cell FieldContainer for integration weights
   ///
-  Intrepid2::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_weights_;
 };
 }

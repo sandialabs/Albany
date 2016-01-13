@@ -136,9 +136,9 @@ namespace LCM {
     Intrepid2::Tensor<ScalarT> expA(3);
 
     //Albany::StateVariables  oldState = *workset.oldState;
-    //Intrepid2::FieldContainer<RealType>& Fpold   = *oldState[fpName];
-    //Intrepid2::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
-    //Intrepid2::FieldContainer<RealType>& phi_old_FC = *oldState["Damage"];
+    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& Fpold   = *oldState[fpName];
+    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& eqpsold = *oldState[eqpsName];
+    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& phi_old_FC = *oldState["Damage"];
 
     Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];

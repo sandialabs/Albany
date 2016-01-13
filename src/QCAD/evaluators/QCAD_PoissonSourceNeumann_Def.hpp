@@ -125,7 +125,7 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
 
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
@@ -250,9 +250,9 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
                                    // once we move logic to BCUtils
 
 
-    Intrepid2::FieldContainer<ScalarT> betaOnSide;
-    Intrepid2::FieldContainer<ScalarT> thicknessOnSide;
-    Intrepid2::FieldContainer<ScalarT> elevationOnSide;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> betaOnSide;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thicknessOnSide;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> elevationOnSide;
 
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
@@ -367,10 +367,10 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void PoissonSourceNeumannBase<EvalT, Traits>::
-calc_dudn_2DThomasFermi(Intrepid2::FieldContainer<ScalarT> & qp_data_returned,
-			const Intrepid2::FieldContainer<MeshScalarT>& phys_side_cub_points,
-			const Intrepid2::FieldContainer<ScalarT>& dof_side,
-			const Intrepid2::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+calc_dudn_2DThomasFermi(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
+			const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
+			const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
+			const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
 			const shards::CellTopology & celltopo,
 			const int cellDims,
 			int local_side_id, int iSideset){

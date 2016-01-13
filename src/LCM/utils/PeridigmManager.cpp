@@ -162,8 +162,8 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       peridynamicPartialStressBlocks.push_back(blockName);
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
-      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+      Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numQPts = cubature->getNumPoints();
       numPartialStressIds += numQPts * elementsInElementBlock.size();
     }
@@ -320,24 +320,24 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
-      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+      Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
       const int numCells = 1;
 
       // Get the quadrature points and weights
-      Intrepid2::FieldContainer<RealType> quadratureRefPoints;
-      Intrepid2::FieldContainer<RealType> quadratureRefWeights;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> quadratureRefPoints;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> quadratureRefWeights;
       quadratureRefPoints.resize(numQuadPoints, numDim);
       quadratureRefWeights.resize(numQuadPoints);
       cubature->getCubature(quadratureRefPoints, quadratureRefWeights);
 
       // Container for the Jacobians, Jacobian determinants, and weighted measures
-      Intrepid2::FieldContainer<RealType> jacobians;
-      Intrepid2::FieldContainer<RealType> jacobianDeterminants;
-      Intrepid2::FieldContainer<RealType> weightedMeasures;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> jacobians;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> jacobianDeterminants;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> weightedMeasures;
       jacobians.resize(numCells, numQuadPoints, numDim, numDim);
       jacobianDeterminants.resize(numCells, numQuadPoints);
       weightedMeasures.resize(numCells, numQuadPoints);
@@ -709,15 +709,15 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	  int numDim = 3;
 
 	  // Physical points, which are the physical (x, y, z) values of the peridynamic node (pay no attention to the "quadrature point" descriptor)
-	  Intrepid2::FieldContainer<RealType> physPoints;
+	  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> physPoints;
 	  physPoints.resize(numCells, numQuadPoints, numDim);
 
 	  // Reference points, which are the natural coordinates of the quadrature points
-	  Intrepid2::FieldContainer<RealType> refPoints;
+	  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
 	  refPoints.resize(numCells, numQuadPoints, numDim);
 
 	  // Cell workset, which is the set of nodes for the given element
-	  Intrepid2::FieldContainer<RealType> cellWorkset;
+	  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cellWorkset;
 	  cellWorkset.resize(numCells, numNodesInElement, numDim);
 
  	  for(int dof=0 ; dof<3 ; dof++){
@@ -832,10 +832,10 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
   int numPoints = 1;
   int numDim = 3;
 
-  Intrepid2::FieldContainer<RealType> physPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> physPoints;
   physPoints.resize(numCells, numPoints, numDim);
 
-  Intrepid2::FieldContainer<RealType> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
   refPoints.resize(numCells, numPoints, numDim);
 
   // Compute the difference in displacements at each peridynamic node
@@ -850,7 +850,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     int numNodes = bulkData->num_nodes((*obcDataPoints)[iEvalPt].albanyElement);
     const stk::mesh::Entity* nodes = bulkData->begin_nodes((*obcDataPoints)[iEvalPt].albanyElement);
 
-    Intrepid2::FieldContainer<RealType> cellWorkset;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cellWorkset;
     cellWorkset.resize(numCells, numNodes, numDim);
     for(int i=0 ; i<numNodes ; i++){
       int globalAlbanyNodeId = bulkData->identifier(nodes[i]) - 1;
@@ -874,13 +874,13 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     }
 
     if(obcFunctionalDerivWrtDisplacement != NULL) {
-      Intrepid2::FieldContainer<RealType> refPoint;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoint;
       refPoint.resize(numPoints, numDim);
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> refBasis = Albany::getIntrepid2Basis((*obcDataPoints)[iEvalPt].cellTopologyData);
-      Intrepid2::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
+      Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> refBasis = Albany::getIntrepid2Basis((*obcDataPoints)[iEvalPt].cellTopologyData);
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> basisOnRefPoint(numNodes, 1);
       refBasis->getValues(basisOnRefPoint, refPoint, Intrepid2::OPERATOR_VALUE);
 
       // Derivatives corresponding to nodal dof in Albany element
@@ -982,16 +982,16 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       // Can probably store things by block and use worksets to compute things in one big call.
 
       shards::CellTopology cellTopology(&it->cellTopologyData);
-      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature = cubFactory.create(cellTopology, cubatureDegree);
+      Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+      Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature = cubFactory.create(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
       const int numCells = 1;
 
       // Get the quadrature points and weights
-      Intrepid2::FieldContainer<RealType> quadratureRefPoints;
-      Intrepid2::FieldContainer<RealType> quadratureRefWeights;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> quadratureRefPoints;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> quadratureRefWeights;
       quadratureRefPoints.resize(numQuadPoints, numDim);
       quadratureRefWeights.resize(numQuadPoints);
       cubature->getCubature(quadratureRefPoints, quadratureRefWeights);

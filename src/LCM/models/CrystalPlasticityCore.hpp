@@ -117,7 +117,8 @@ public:
   static Intrepid2::Index DIMENSION;
 };
 
-//! Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip increments as unknowns.
+//! Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip 
+//  increments as unknowns.
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 class CrystalPlasticityNLS:
     public NLSDimension,
@@ -150,6 +151,60 @@ public:
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
   Intrepid2::Vector<T, N>
   gradient(Intrepid2::Vector<T, N> const & slip_np1) const;
+
+
+  //! Default implementation of hessian.
+  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  Intrepid2::Tensor<T, N>
+  hessian(Intrepid2::Vector<T, N> const & x);
+
+private:
+
+  RealType num_dim_;
+  RealType num_slip_;
+  Intrepid2::Tensor4<RealType, NumDimT> const & C_;
+  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
+  Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
+  Intrepid2::Vector<RealType, NumSlipT> const & hardness_n_;
+  Intrepid2::Vector<RealType, NumSlipT> const & slip_n_;
+  Intrepid2::Tensor<DataT, NumDimT> const & F_np1_;
+  RealType dt_;
+};
+
+//! Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip 
+//  increments and hardnesses as unknowns.
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+class ResidualSlipHardnessNLS:
+    public NLSDimension,
+    public Intrepid2::Function_Base<
+    ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
+{
+  using DataT = typename EvalT::ScalarT;
+
+public:
+
+  //! Constructor.
+  ResidualSlipHardnessNLS(
+      Intrepid2::Tensor4<RealType, NumDimT> const & C,
+      std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+      Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
+      Intrepid2::Tensor<DataT, NumDimT> const & F_np1,
+      RealType dt);
+
+  static constexpr char const * const NAME =
+      "Slip and Hardness Residual Nonlinear System";
+
+  //! Default implementation of value.
+  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  T
+  value(Intrepid2::Vector<T, N> const & x);
+
+  //! Gradient function; returns the residual vector as a function of the slip at step N+1.
+  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  Intrepid2::Vector<T, N>
+  gradient(Intrepid2::Vector<T, N> const & x) const;
 
 
   //! Default implementation of hessian.

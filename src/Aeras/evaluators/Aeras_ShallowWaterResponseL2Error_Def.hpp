@@ -138,9 +138,9 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
-  Intrepid2::FieldContainer<ScalarT> flow_state_field_qp(workset.numCells, numQPs, vecDim); //flow_state_field at quad points
-  Intrepid2::FieldContainer<ScalarT> flow_state_field_ref_qp(workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
-  Intrepid2::FieldContainer<ScalarT> err_qp(workset.numCells, numQPs, vecDim); //error at quadrature points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_qp(workset.numCells, numQPs, vecDim); //flow_state_field at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_ref_qp(workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> err_qp(workset.numCells, numQPs, vecDim); //error at quadrature points
 
   //Interpolate flow_state_field from nodes -> quadrature points.  
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

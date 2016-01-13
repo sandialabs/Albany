@@ -60,15 +60,15 @@ private:
   Intrepid2::FieldContainer_Kokkos<MeshScalarT,PHX::Layout,PHX::Device> jacobian;
   Intrepid2::FieldContainer_Kokkos<MeshScalarT,PHX::Layout,PHX::Device> jacobian_inv;
 #else
-  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
 
-  Intrepid2::FieldContainer<RealType> val_at_cub_points;
-  Intrepid2::FieldContainer<RealType> grad_at_cub_points;
-  Intrepid2::FieldContainer<RealType> refPoints;
-  Intrepid2::FieldContainer<RealType> refWeights;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian_inv;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> val_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian_inv;
 #endif
 
   // Output:

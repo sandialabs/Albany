@@ -56,7 +56,7 @@ private:
   int nwrkr_, prectr_, postctr_;
 };
 
-typedef Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>
+typedef Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>
         Intrepid2Basis;
 
 class ProjectIPtoNodalFieldQuadrature {
@@ -67,7 +67,7 @@ class ProjectIPtoNodalFieldQuadrature {
   Teuchos::RCP<Intrepid2Basis> intrepid_basis_;
   CellTopologyData ctd_;
   Teuchos::RCP<shards::CellTopology> cell_topo_;
-  Intrepid2::FieldContainer<RealType> ref_points_, ref_weights_;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> ref_points_, ref_weights_;
 
 public:
   ProjectIPtoNodalFieldQuadrature(
@@ -88,8 +88,8 @@ ProjectIPtoNodalFieldQuadrature (
   : ctd_(ctd)
 {
   cell_topo_ = Teuchos::rcp(new shards::CellTopology(&ctd_));
-  Intrepid2::DefaultCubatureFactory<RealType> cub_factory;
-  Teuchos::RCP<Intrepid2::Cubature<RealType>>
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cub_factory;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>
     cubature = cub_factory.create(*cell_topo_, degree);
   const int nqp = cubature->getNumPoints(), nd = cubature->getDimension();
   ref_points_.resize(nqp, nd);
@@ -128,7 +128,7 @@ evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
   typedef CellTools<RealType> CellTools;
   const int nqp = ref_points_.dimension(0), nd = ref_points_.dimension(1),
     nc = coord_vert.dimension(0), nn = coord_vert.dimension(1);
-  FieldContainer<RealType> jacobian(nc, nqp, nd, nd), jacobian_det(nc, nqp),
+  FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> jacobian(nc, nqp, nd, nd), jacobian_det(nc, nqp),
     weighted_measure(nc, nqp), val_ref_points(nn, nqp);
   CellTools::setJacobian(jacobian, ref_points_, coord_vert, *cell_topo_);
   CellTools::setJacobianDet(jacobian_det, jacobian);

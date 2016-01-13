@@ -70,7 +70,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
 
   cellType = Teuchos::rcp(new shards::CellTopology(elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   cubatureDegree = p.isParameter("Cubature Degree") ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
   numNodes = intrepidBasis->getCardinality();
 
@@ -118,10 +118,10 @@ evaluateFields(typename Traits::EvalData workset)
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    Intrepid2::FieldContainer<ScalarT> dH_Side;
-    Intrepid2::FieldContainer<ScalarT> SMB_Side;
-    Intrepid2::FieldContainer<ScalarT> H0_Side;
-    Intrepid2::FieldContainer<ScalarT> V_Side;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dH_Side;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> SMB_Side;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> H0_Side;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> V_Side;
 
     // Loop over the sides that form the boundary condition
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
@@ -134,7 +134,7 @@ evaluateFields(typename Traits::EvalData workset)
       const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
       sideType = Teuchos::rcp(new shards::CellTopology(side.topology));
       int numSideNodes = sideType->getNodeCount();
-      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+      Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
       cubatureSide = cubFactory.create(*sideType, cubatureDegree);
       sideDims = sideType->getDimension();
       numQPsSide = cubatureSide->getNumPoints();
@@ -209,12 +209,12 @@ evaluateFields(typename Traits::EvalData workset)
       Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid2::FieldContainer<ScalarT> dH_Cell(numNodes);
-      Intrepid2::FieldContainer<ScalarT> SMB_Cell(numNodes);
-      Intrepid2::FieldContainer<ScalarT> H0_Cell(numNodes);
-      Intrepid2::FieldContainer<ScalarT> V_Cell(numNodes, numVecFODims);
-      Intrepid2::FieldContainer<ScalarT> gradH_Side(numQPsSide, numVecFODims);
-      Intrepid2::FieldContainer<ScalarT> divV_Side(numQPsSide);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dH_Cell(numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> SMB_Cell(numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> H0_Cell(numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> V_Cell(numNodes, numVecFODims);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> gradH_Side(numQPsSide, numVecFODims);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> divV_Side(numQPsSide);
 
       gradH_Side.initialize();
       divV_Side.initialize();

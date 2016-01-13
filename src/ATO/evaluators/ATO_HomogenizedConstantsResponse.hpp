@@ -126,7 +126,7 @@ namespace ATO
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::RCP< PHX::Tag<ScalarT> > objective_tag;
 
-    Intrepid2::FieldContainer<int> components;
+    Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device> components;
     int tensorRank;
 
     RealType local_measure;

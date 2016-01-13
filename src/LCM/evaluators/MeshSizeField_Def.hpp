@@ -24,9 +24,9 @@ namespace LCM {
     MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     isoMeshSizeField (p.get<std::string>("IsoTropic MeshSizeField Name"), dl->qp_scalar),
-    cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType>>>("Cubature")),
+    cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
     intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<RealType, 
-         Intrepid2::FieldContainer<RealType>>>> ("Intrepid2 Basis"))
+         Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> ("Intrepid2 Basis"))
 
   {
 
@@ -140,9 +140,9 @@ namespace LCM {
     MeshSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits> (dl),
     currentCoords (p.get<std::string>("Current Coordinates Name"), dl->node_vector),
     anisoMeshSizeField (p.get<std::string>("AnisoTropic MeshSizeField Name"), dl->qp_scalar),
-    cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType>>>("Cubature")),
+    cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
     intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<RealType, 
-         Intrepid2::FieldContainer<RealType>>>> ("Intrepid2 Basis"))
+         Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> ("Intrepid2 Basis"))
 
   {
 

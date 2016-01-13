@@ -413,7 +413,7 @@ KOKKOS_INLINE_FUNCTION
 
   
 template<typename EvalT,typename Traits>
-void ShallowWaterSource<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis) {
+void ShallowWaterSource<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis) {
     
     coriolis.initialize();
     double alpha = 0.0;//1.047;  /*must match what is in initial condition for TC2 and TC5.

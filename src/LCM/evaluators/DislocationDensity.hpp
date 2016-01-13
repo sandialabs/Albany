@@ -54,8 +54,8 @@ private:
   PHX::MDField<double,Cell,QuadPoint,Dim,Dim> G;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<double> nodalFp;
-  Intrepid2::FieldContainer<double> curlFp;
+  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> nodalFp;
+  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> curlFp;
 
 };
 }

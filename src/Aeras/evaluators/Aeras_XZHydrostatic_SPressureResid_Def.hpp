@@ -58,6 +58,9 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {  
+  double n_coeff = workset.n_coeff;
+  obtainLaplaceOp = (n_coeff == 1) ? true : false;
+
   const Eta<EvalT> &E = Eta<EvalT>::self();
   PHAL::set(Residual, 0.0);
 
