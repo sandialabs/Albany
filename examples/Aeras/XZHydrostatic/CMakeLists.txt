@@ -83,24 +83,24 @@ if (ALBANY_ENSEMBLE)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputDakota_list.xml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputDakota_list.xml COPYONLY)
     get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota_List NAME)
-    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputDakota_list.xml)
+#    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputDakota_list.xml)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_list_mp.in
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_list_mp.in COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMPDakota_list.xml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputMPDakota_list.xml COPYONLY)
     get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota_List_Ensemble NAME)
-    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputMPDakota_list.xml)
+#    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputMPDakota_list.xml)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_uniform.in
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_uniform.in COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputDakota_uniform.xml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputDakota_uniform.xml COPYONLY)
     get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota_Uniform NAME)
-    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputDakota_uniform.xml)
+#    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputDakota_uniform.xml)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota_uniform_mp.in
                    ${CMAKE_CURRENT_BINARY_DIR}/dakota_uniform_mp.in COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMPDakota_uniform.xml
                    ${CMAKE_CURRENT_BINARY_DIR}/inputMPDakota_uniform.xml COPYONLY)
     get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Dakota_Uniform_Ensemble NAME)
-    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputMPDakota_uniform.xml)
+#    add_test(Aeras_${testName} ${AlbanyDakota.exe} inputMPDakota_uniform.xml)
   endif ()
 endif ()
