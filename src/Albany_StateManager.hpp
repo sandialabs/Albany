@@ -15,7 +15,6 @@
 #include <vector>
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid2_FieldContainer.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_AbstractDiscretization.hpp"

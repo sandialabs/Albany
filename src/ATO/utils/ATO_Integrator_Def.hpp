@@ -33,6 +33,7 @@ void ATO::Integrator::getMeasure(
     // there will be all sorts of special cases.  If necessary, nudge values
     // away from zeroVal.  
     Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> vals(topoVals);
+
     int nvals = vals.dimension(0);
     for(int i=0; i<nvals; i++){
       if( fabs(vals(i) - zeroVal) < 1e-9 ) vals(i) = zeroVal + 1e-9;
@@ -154,7 +155,7 @@ void ATO::SubIntegrator::getMeasure(
      for (int i=0;i<newVolume.size();i++)
       dMdtopo[i]=newVolume.dx(i);
     }
-   //dMdtopo.setValues(newVolume.dx(),newVolume.size());
+   //if(newVolume.size()) dMdtopo.setValues(newVolume.dx(),newVolume.size());
   
     level++;
 

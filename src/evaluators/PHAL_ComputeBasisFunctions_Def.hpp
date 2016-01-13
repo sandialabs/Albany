@@ -16,13 +16,8 @@ ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
-#if defined ALBANY_KOKKOS_UNDER_DEVELOPMENT
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > > ("Intrepid2 Basis") ),
-#else
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Intrepid2 Basis") ),
-#endif
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
   jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),

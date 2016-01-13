@@ -73,7 +73,7 @@ ComputeVolume(const double* p, double& v, double* dvdp)
     Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> coordCon;
     Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> topoVals;
     std::vector<double> weights;
-    std::vector<std::vector<double> > refPoints;
+    //std::vector<std::vector<double> > refPoints;
   
     for(int ws=0; ws<numWorksets; ws++){
   
@@ -387,13 +387,12 @@ ATO::OptimizationProblem::InitTopOpt()
       for(int node=0; node<numNodes; node++)
         for(int dim=0; dim<numDims; dim++)
           coordCon(cell,node,dim) = coords[ws][cell][node][dim];
-
     Intrepid2::CellTools<double>::setJacobian(jacobian, refPoints[physIndex], 
                                              coordCon, *(cellTypes[physIndex]));
     Intrepid2::CellTools<double>::setJacobianDet(jacobian_det, jacobian);
     Intrepid2::FunctionSpaceTools::computeCellMeasure<double>
      (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
-
+ 
   }
 //  overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
 //  localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
