@@ -113,8 +113,8 @@
         <Parameter name="Continuation Method" type="string" value="Natural"/>
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="30"/>
-        <Parameter name="Max Value" type="double" value="30e-5"/>
+        <Parameter name="Max Steps" type="int" value="60"/>
+        <Parameter name="Max Value" type="double" value="60e-5"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
         <ParameterList name="Eigensolver">
@@ -145,7 +145,7 @@
               <ParameterList name="Linear Solver Types">
                 <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                    <Parameter name="Verbosity Level" type="string" value="low"/>
                   </ParameterList>
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
@@ -153,11 +153,11 @@
                       <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
                       <Parameter name="Output Frequency" type="int" value="1"/>
                       <Parameter name="Output Style" type="int" value="1"/>
-                      <Parameter name="Verbosity" type="int" value="33"/>
+                      <Parameter name="Verbosity" type="int" value="0"/>
                       <Parameter name="Maximum Iterations" type="int" value="1200"/>
-                      <Parameter name="Block Size" type="int" value="1"/>
-                      <Parameter name="Num Blocks" type="int" value="1200"/>
-                      <Parameter name="Flexible Gmres" type="bool" value="0" />
+                      <Parameter name="Block Size" type="int" value="20"/>
+                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="true" />
                       <Parameter name="Orthogonalization" type="string" value="DGKS"/>
                       <Parameter name="Implicit Residual Scaling" type="string" value="Norm of Preconditioned Initial Residual"/>
                       <Parameter name="Explicit Residual Scaling" type="string" value="Norm of RHS"/>
@@ -173,7 +173,7 @@
                   <ParameterList name="Ifpack Settings">
                     <Parameter name="fact: drop tolerance" type="double" value="0"/>
                     <Parameter name="fact: level-of-fill" type="int" value="1"/>
-                    <Parameter name="schwarz: filter singletons" type="bool" value="1"/>
+                    <Parameter name="schwarz: filter singletons" type="bool" value="true"/>
                     <Parameter name="schwarz: reordering type" type="string" value="rcm"/>
                   </ParameterList>
                 </ParameterList>
@@ -183,8 +183,8 @@
                     <Parameter name="fact: drop tolerance" type="double" value="0"/>
                     <Parameter name="fact: iluk level-of-fill" type="int" value="0"/>
                     <Parameter name="fact: ilut level-of-fill" type="double" value="0"/>
-                    <Parameter name="schwarz: filter singletons" type="bool" value="1"/>
-                    <Parameter name="schwarz: use reordering" type="bool" value="1"/>
+                    <Parameter name="schwarz: filter singletons" type="bool" value="true"/>
+                    <Parameter name="schwarz: use reordering" type="bool" value="true"/>
                     <Parameter name="schwarz: overlap level" type="int" value="0"/>
                   </ParameterList>
                 </ParameterList>
@@ -202,15 +202,15 @@
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
         <ParameterList name="Output Information">
-          <Parameter name="Error" type="bool" value="1"/>
-          <Parameter name="Warning" type="bool" value="1"/>
-          <Parameter name="Outer Iteration" type="bool" value="1"/>
-          <Parameter name="Parameters" type="bool" value="0"/>
-          <Parameter name="Details" type="bool" value="0"/>
-          <Parameter name="Linear Solver Details" type="bool" value="0"/>
-          <Parameter name="Stepper Iteration" type="bool" value="1"/>
-          <Parameter name="Stepper Details" type="bool" value="1"/>
-          <Parameter name="Stepper Parameters" type="bool" value="0"/>
+          <Parameter name="Error" type="bool" value="true"/>
+          <Parameter name="Warning" type="bool" value="true"/>
+          <Parameter name="Outer Iteration" type="bool" value="true"/>
+          <Parameter name="Parameters" type="bool" value="false"/>
+          <Parameter name="Details" type="bool" value="false"/>
+          <Parameter name="Linear Solver Details" type="bool" value="false"/>
+          <Parameter name="Stepper Iteration" type="bool" value="true"/>
+          <Parameter name="Stepper Details" type="bool" value="true"/>
+          <Parameter name="Stepper Parameters" type="bool" value="false"/>
         </ParameterList>
         <Parameter name="Output Precision" type="int" value="3"/>
         <Parameter name="Output Processor" type="int" value="0"/>

@@ -20,9 +20,23 @@ INSTRUCTIONS TO TEST MESH ADAPTATION
 
 =====================================
 
-If everything is correct then the maximum temperature without
-mesh adaptation and with mesh adaptation should converge to the
-same value.
+*****************
 
+IMPORTANT
+
+*****************
+
+File LaserCenter.txt MUST be present in the folder directory
+where you run this problem.
+
+LaserCenter.txt contains the position of the laser as a function
+of time. This is the structure of the file:
+
+time x-coordinate z-coordinate Power_Flag
+
+where x- and z-coordinate are the position of the laser center at time t
+and power_flag is equal to 1 if laser is active and 0 otherwise.
+
+Note that LaserCenter.txt is an input file.
 
 
