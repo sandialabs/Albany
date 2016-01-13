@@ -28,15 +28,15 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
                p.get<std::string> ("Weighted Gradient Gradient BF Name") : "None", dl->node_qp_tensor) ,
   keGrad      (p.get<std::string> ("Gradient QP Kinetic Energy"),       dl->qp_gradient_level),
   PhiGrad     (p.get<std::string> ("Gradient QP GeoPotential"),         dl->qp_gradient_level),
-  etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->qp_vector_level),
+  etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->node_vector_level),
   pGrad       (p.get<std::string> ("Gradient QP Pressure"),             dl->qp_gradient_level),
 
-  uDot        (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector_level),
+  uDot        (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector_level),
   DVelx       (p.get<std::string> ("D Vel Name"),                       dl->qp_vector_level),
   LaplaceVelx (p.isParameter("Hydrostatic Problem") &&
                 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
                 p.get<std::string> ("Laplace Vel Name") : "None",dl->qp_scalar_level),
-  density     (p.get<std::string> ("QP Density"),                       dl->qp_scalar_level),
+  density     (p.get<std::string> ("QP Density"),                       dl->node_scalar_level),
   Residual    (p.get<std::string> ("Residual Name"),                    dl->node_vector_level),
 
   viscosity      (p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Viscosity", 0.0)),

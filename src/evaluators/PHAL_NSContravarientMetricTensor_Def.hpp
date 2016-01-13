@@ -17,7 +17,7 @@ NSContravarientMetricTensor<EvalT, Traits>::
 NSContravarientMetricTensor(const Teuchos::ParameterList& p) :
   coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )

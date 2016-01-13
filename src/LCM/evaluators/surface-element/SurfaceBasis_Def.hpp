@@ -23,10 +23,10 @@ SurfaceBasis(
     reference_coords_(
         p.get<std::string>("Reference Coordinates Name"),
         dl->vertices_vector),
-    cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")),
+    cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
     intrepid_basis_(
         p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
-        Intrepid2::FieldContainer<RealType>>>>("Intrepid2 Basis")),
+        Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
     ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     ref_dual_basis_(
@@ -174,7 +174,7 @@ void
 SurfaceBasis<EvalT, Traits>::
 computeMidplaneCoords(
     PHX::MDField<ST, Cell, Vertex, Dim> const coords,
-    Intrepid2::FieldContainer<ST> & midplane_coords)
+    Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> & midplane_coords)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
@@ -198,7 +198,7 @@ template<typename EvalT, typename Traits>
 template<typename ST>
 void
 SurfaceBasis<EvalT, Traits>::
-computeBasisVectors(Intrepid2::FieldContainer<ST> const & midplane_coords,
+computeBasisVectors(Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> const & midplane_coords,
     PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
@@ -244,7 +244,7 @@ template<typename EvalT, typename Traits>
 void
 SurfaceBasis<EvalT, Traits>::
 computeDualBasisVectors(
-    Intrepid2::FieldContainer<MeshScalarT> const & midplane_coords,
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis)

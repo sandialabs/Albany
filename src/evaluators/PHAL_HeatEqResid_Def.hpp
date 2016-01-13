@@ -163,7 +163,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   if (haveConvection)  {
-    Intrepid2::FieldContainer<ScalarT> convection(worksetSize, numQPs);
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> convection(worksetSize, numQPs);
 
     for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
       for (std::size_t qp=0; qp < numQPs; ++qp)

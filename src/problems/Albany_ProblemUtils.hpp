@@ -24,7 +24,7 @@
 namespace Albany {
 
   //! Helper Factory function to construct Intrepid2 Basis from Shards CellTopologyData
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
   getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet=false);
 }
 

@@ -41,13 +41,13 @@ public:
 private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      divpivelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint>            pdotP0;
+  PHX::MDField<ScalarT,Cell,Node>            pdotP0;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pi;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  Velx;
+  PHX::MDField<ScalarT,Cell,Node,Level>      Temperature;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velx;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotdT;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  etadotdVelx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
 
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > Tracer;

@@ -55,9 +55,9 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       // The field that was projected to the nodes
       PHX::MDField<ScalarT,Cell,Node,VecDim> projected;
       //Numerical integration rule
-      Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
+      Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
       // FE basis
-      Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>> intrepidBasis;
+      Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
       // The cell type
       Teuchos::RCP<shards::CellTopology> cellType;
 
@@ -69,9 +69,9 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::MDField<ScalarT,Cell,QuadPoint> temp;
 
       // For creating the quadrature weights
-      Intrepid2::FieldContainer<RealType> refPoints;
-      Intrepid2::FieldContainer<RealType> refWeights;
-      Intrepid2::FieldContainer<RealType> refValues;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refValues;
 
       // Face topology data
       const struct CellTopologyData_Subcell * sides;

@@ -70,7 +70,7 @@ private:
 
   // stabilization term
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid2::Cubature<RealType>> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
   Teuchos::RCP<shards::CellTopology> cellType;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
@@ -94,29 +94,29 @@ private:
   unsigned int worksetSize;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<ScalarT> flux;
-  Intrepid2::FieldContainer<ScalarT> fgravity;
-  Intrepid2::FieldContainer<ScalarT> fluxdt;
-  Intrepid2::FieldContainer<ScalarT> pterm;
-  Intrepid2::FieldContainer<ScalarT> Tterm;
-  Intrepid2::FieldContainer<ScalarT> aterm;
-  Intrepid2::FieldContainer<ScalarT> tpterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> fgravity;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> fluxdt;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Tterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> aterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tpterm;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<RealType> refPoints;
-  Intrepid2::FieldContainer<RealType> refWeights;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian;
-  Intrepid2::FieldContainer<MeshScalarT> jacobian_inv;
-  Intrepid2::FieldContainer<MeshScalarT> Gc;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian_inv;
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> Gc;
 
   // Work space FCs
-  Intrepid2::FieldContainer<ScalarT> F_inv;
-  Intrepid2::FieldContainer<ScalarT> F_invT;
-  Intrepid2::FieldContainer<ScalarT> C;
-  Intrepid2::FieldContainer<ScalarT> Cinv;
-  Intrepid2::FieldContainer<ScalarT> JF_invT;
-  Intrepid2::FieldContainer<ScalarT> KJF_invT;
-  Intrepid2::FieldContainer<ScalarT> Kref;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> KJF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Kref;
 
   ScalarT porePbar, Tempbar, vol;
   ScalarT trialPbar;

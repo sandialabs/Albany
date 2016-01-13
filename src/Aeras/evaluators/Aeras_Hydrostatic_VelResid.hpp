@@ -40,17 +40,17 @@ public:
 
 private:
 
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > intrepidBasis;
-  Teuchos::RCP<Intrepid2::Cubature<RealType> > cubature;
-  Intrepid2::FieldContainer<RealType>    refPoints;
-  Intrepid2::FieldContainer<RealType>    refWeights;
-  Intrepid2::FieldContainer<RealType>    grad_at_cub_points;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
 
   // vorticity only returns the component in the radial direction
-  //void get_vorticity(const Intrepid2::FieldContainer<ScalarT>  & fieldAtNodes,
-  //    std::size_t cell, std::size_t level, Intrepid2::FieldContainer<ScalarT>  & curl);
+  //void get_vorticity(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & fieldAtNodes,
+  //    std::size_t cell, std::size_t level, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & curl);
 
-  void get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis);
+  void get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis);
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
@@ -63,14 +63,14 @@ private:
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  etadotdVelx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  pGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  Velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velx;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>       VelxNode;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  VelxDot;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  VelxDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      density;
+  PHX::MDField<ScalarT,Cell,Node,Level>      density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      vorticity;
 
 

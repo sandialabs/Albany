@@ -61,9 +61,9 @@ namespace LCM {
     unsigned int numQPs;
     unsigned int numDims;
 
-    Intrepid2::FieldContainer<ScalarT> Fpinv;
-    Intrepid2::FieldContainer<ScalarT> FpinvT;
-    Intrepid2::FieldContainer<ScalarT> Cpinv;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Fpinv;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> FpinvT;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cpinv;
 
   };
 }

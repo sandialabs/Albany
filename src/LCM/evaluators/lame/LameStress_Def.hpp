@@ -458,7 +458,7 @@ void LameStressBase<EvalT, Traits>::
       // copy data from the state manager to the LAME data structure
       for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateOldPtr++){
         //std::string& variableName = this->lameMaterialModelStateVariableNames[iVar];
-        //const Intrepid2::FieldContainer<RealType>& stateVar = *oldState[variableName];
+        //const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& stateVar = *oldState[variableName];
         const std::string& variableName = this->lameMaterialModelStateVariableNames[iVar]+"_old";
         Albany::MDArray stateVar = (*workset.stateArrayPtr)[variableName];
         *stateOldPtr = stateVar(cell,qp);

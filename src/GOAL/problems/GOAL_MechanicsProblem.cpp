@@ -115,9 +115,9 @@ getValidProblemParameters() const
 /*****************************************************************************/
 void GOALMechanicsProblem::getAllocatedStates(
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid2::FieldContainer<RealType> > > > oldSt,
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldSt,
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid2::FieldContainer<RealType> > > > newSt) const
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newSt) const
 {
   oldSt = oldState;
   newSt = newState;

@@ -58,11 +58,11 @@ namespace LCM {
     bool haveSource;
     std::string tempName;
     unsigned int numQPs, numDims, worksetSize;
-    Intrepid2::FieldContainer<ScalarT> flux;
-    Intrepid2::FieldContainer<ScalarT> C;
-    Intrepid2::FieldContainer<ScalarT> Cinv;
-    Intrepid2::FieldContainer<ScalarT> CinvTgrad;
-    Intrepid2::FieldContainer<ScalarT> Tdot;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTgrad;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Tdot;
   };
 }
 
