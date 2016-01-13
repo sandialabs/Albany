@@ -393,8 +393,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void
-J2Stress<EvalT, Traits>::exponential_map(Intrepid2::FieldContainer<ScalarT> & expA,
-		const Intrepid2::FieldContainer<ScalarT> A)
+J2Stress<EvalT, Traits>::exponential_map(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & expA,
+		const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> A)
 {
   tmp.initialize(0.0);
   expA.initialize(0.0);
@@ -433,14 +433,14 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid2::FieldContainer<ScalarT> & ex
                           std::endl << "Error in exponential map, k = " << k <<
                           "\nnorm0 = " << norm0 <<
                           "\nnorm = " << norm(tmp)/norm0 <<
-                          "\nA = \n" << A << std::endl);
+                           std::endl);
 
   }
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
 typename EvalT::ScalarT
-J2Stress<EvalT, Traits>::norm(Intrepid2::FieldContainer<ScalarT> A)
+J2Stress<EvalT, Traits>::norm(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> A)
 {
   ScalarT max(0.0), colsum;
 

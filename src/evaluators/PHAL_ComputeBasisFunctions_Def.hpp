@@ -20,8 +20,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > > ("Intrepid2 Basis") ),
 #else
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > >("Intrepid2 Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Intrepid2 Basis") ),
 #endif
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
@@ -98,6 +98,10 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
 
+  //IKT, 11/9/16: the following needs to be uncommented for XZHydrostatic tests in Aeras to pass. 
+  //Currently it is commented out, as the overloaded version of setJacobian that takes in intrepidBasis 
+  //is broken. 
+  //Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
   Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);

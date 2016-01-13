@@ -69,6 +69,9 @@ private:
   const int numQPs;
   const int numDims;
   const int numLevels;
+
+  bool obtainLaplaceOp;
+
 };
 }
 

@@ -127,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid2::FunctionSpaceTools FST; 
 
   // Initialize residual to 0.0
-  Intrepid2::FieldContainer<ScalarT> res(numNodes,2);
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> res(numNodes,2);
 
   double rho_g=rho*g;
 

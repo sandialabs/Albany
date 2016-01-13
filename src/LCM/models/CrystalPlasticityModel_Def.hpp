@@ -577,6 +577,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         slip_np1[s] = slip_n[s];
 
         if(apply_slip_predictor_) {
+//	  std::cout << "DJL DEBUGGING WE'RE IN THE PREDICTOR!!" << std::endl;
           slip_dot_n[s] = (*(previous_slips_dot[s]))(cell, pt);
           slip_np1[s] += dt * slip_dot_n[s];
         }
@@ -756,8 +757,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         for(int i=0; i<num_slip_; ++i) {
           hardness_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(hardness_n(i));
           slip_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
-          // initial guess for x is slip_n
-          x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
+          // initial guess for x is slip_np1 (predictor, see above)
+          x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
         }
 
         dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);

@@ -39,7 +39,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
 
   cellType = Teuchos::rcp(new shards::CellTopology(elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   cubatureCell = cubFactory.create(*cellType, 1); //meshSpecs->cubatureDegree);
   cubatureDegree = plist->isParameter("Cubature Degree") ? plist->get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
 
@@ -121,9 +121,9 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    Intrepid2::FieldContainer<ScalarT> surfaceVelocityOnSide;
-    Intrepid2::FieldContainer<ScalarT> velocityRMSOnSide;
-    Intrepid2::FieldContainer<ScalarT> velocityOnSide;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> surfaceVelocityOnSide;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocityRMSOnSide;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocityOnSide;
 
     // Zero out local response
     PHAL::set(this->local_response, 0.0);
@@ -137,7 +137,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       const int elem_side = sideSet[side].side_local_id;
 
       sideType = Teuchos::rcp(new shards::CellTopology(cellType->getCellTopologyData()->side[elem_side].topology));
-      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+      Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
       cubatureSide = cubFactory.create(*sideType, cubatureDegree);
       sideDims = sideType->getDimension();
       numQPsSide = cubatureSide->getNumPoints();
@@ -203,9 +203,9 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid2::FieldContainer<ScalarT> surfaceVelocityOnCell(1, numNodes, numVecDim);
-      Intrepid2::FieldContainer<ScalarT> velocityRMSOnCell(1, numNodes, numVecDim);
-      Intrepid2::FieldContainer<ScalarT> velocityOnCell(1, numNodes, numVecDim);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> surfaceVelocityOnCell(1, numNodes, numVecDim);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocityRMSOnCell(1, numNodes, numVecDim);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocityOnCell(1, numNodes, numVecDim);
       for (std::size_t node = 0; node < numNodes; ++node)
         for (std::size_t dim = 0; dim < numVecDim; ++dim) {
           surfaceVelocityOnCell(0, node, dim) = surfaceVelocity_field(elem_LID, node, dim);
@@ -265,9 +265,9 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
   if (ib != ssList.end() && (alpha != 0)) {
     const std::vector<Albany::SideStruct>& sideSet = ib->second;
 
-    Intrepid2::FieldContainer<ScalarT> basalFrictionOnSide(1, numQPsSide);
-    Intrepid2::FieldContainer<ScalarT> basalFrictionGradOnSide(1, numQPsSide, cellDims);
-    Intrepid2::FieldContainer<ScalarT> basalFrictionGradOnSideT(1, numQPsSide, cellDims);
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> basalFrictionOnSide(1, numQPsSide);
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> basalFrictionGradOnSide(1, numQPsSide, cellDims);
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> basalFrictionGradOnSideT(1, numQPsSide, cellDims);
 
     // Loop over the sides that form the boundary condition
     for (std::size_t side = 0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
@@ -308,7 +308,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
       Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>(trans_gradBasis_refPointsSide, invJacobianSide, basisGrad_refPointsSide);
 
-      Intrepid2::FieldContainer<ScalarT> uTan(1, numQPsSide, cellDims), vTan(1, numQPsSide, cellDims);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uTan(1, numQPsSide, cellDims), vTan(1, numQPsSide, cellDims);
       Intrepid2::CellTools<MeshScalarT>::getPhysicalFaceTangents(uTan, vTan,jacobianSide,elem_side,*cellType);
 
       // Multiply with weighted measure
@@ -318,7 +318,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid2::FieldContainer<ScalarT> basalFrictionOnCell(1, numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> basalFrictionOnCell(1, numNodes);
 
       for (std::size_t node = 0; node < numNodes; ++node) {
         basalFrictionOnCell(0,node) = basal_friction_field(elem_LID, node);

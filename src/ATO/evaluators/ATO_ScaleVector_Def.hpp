@@ -87,7 +87,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     std::string K(homogenizedConstantsName);
 
-    Intrepid2::FieldContainer<RealType> Kval(numDims,numDims);
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> Kval(numDims,numDims);
     for(int i=0; i<numDims; i++)
       for(int j=i; j<numDims; j++){
         if( j>=i){

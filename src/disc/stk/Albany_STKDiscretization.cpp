@@ -2068,11 +2068,11 @@ namespace {
   }
 
 
-  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > >
+  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid2::FieldContainer< double > Field_t;
+    typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
     typedef Intrepid2::Basis< double, Field_t > Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
       Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
@@ -2101,11 +2101,11 @@ namespace {
                const std::pair<double, double> &ref) {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -2121,11 +2121,11 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -2142,11 +2142,11 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer<double> basisGrad (C, numPoints, 2);
-    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisGrad (C, numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 

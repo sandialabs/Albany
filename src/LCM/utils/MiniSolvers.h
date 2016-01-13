@@ -8,7 +8,7 @@
 
 #include <boost/any.hpp>
 
-#include "Intrepid_MiniTensor_Solvers.h"
+#include "Intrepid2_MiniTensor_Solvers.h"
 
 //
 // Define some nonlinear systems (NLS) to test nonlinear solution methods.

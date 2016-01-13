@@ -45,13 +45,14 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > intrepidBasis;
   //! Values at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_vertices;
-  Teuchos::RCP <Intrepid2::Cubature<RealType> > cubature;
+  Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature;
   Teuchos::RCP <shards::CellTopology> cellType;
 
-  Intrepid2::FieldContainer<RealType> refPoints;
-  Intrepid2::FieldContainer<RealType> refWeights;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
 
   // Output:
   //! Values at quadrature points

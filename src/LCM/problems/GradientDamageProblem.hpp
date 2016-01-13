@@ -51,8 +51,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>> oldState_,
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>> newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> oldState_,
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> newState_
          ) const;
 
   private:
@@ -95,8 +95,8 @@ namespace Albany {
     std::string matModel;
 
     // state containers
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>> oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer<RealType>>>> newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> newState;
   };
 
 }
@@ -143,14 +143,14 @@ Albany::GradientDamageProblem::constructEvaluators(
    std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType>>>
+   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
      intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid2::Cubature<RealType>> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();

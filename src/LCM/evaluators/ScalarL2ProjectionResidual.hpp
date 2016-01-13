@@ -58,7 +58,7 @@ private:
   unsigned int worksetSize;
 
 
-  Intrepid2::FieldContainer<ScalarT> tauH;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tauH;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
