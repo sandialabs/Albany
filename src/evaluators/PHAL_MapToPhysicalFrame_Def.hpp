@@ -164,16 +164,14 @@ template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //IKT, 1/9/16: the following needs to be uncommented once mapToPhysicalFrame
-  //overloading is fixed in Intrepid2. 
-  /*if (intrepidBasis != Teuchos::null){ 
+  if (intrepidBasis != Teuchos::null){ 
     Intrepid2::CellTools<RealType>::mapToPhysicalFrame
          (coords_qp, refPoints, coords_vertices, intrepidBasis);
   }
-  else {*/
+  else {
     Intrepid2::CellTools<RealType>::mapToPhysicalFrame
          (coords_qp, refPoints, coords_vertices, *cellType);
-  //}
+  }
  // mapToPhysicalFrame<RealType>(coords_qp, refPoints, coords_vertices, *cellType);
   
 }
