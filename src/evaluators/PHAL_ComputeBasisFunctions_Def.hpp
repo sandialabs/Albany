@@ -98,11 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
 
-  //IKT, 11/9/16: the following needs to be uncommented for XZHydrostatic tests in Aeras to pass. 
-  //Currently it is commented out, as the overloaded version of setJacobian that takes in intrepidBasis 
-  //is broken. 
-  //Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
-  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
   Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
