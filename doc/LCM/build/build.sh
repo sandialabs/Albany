@@ -95,14 +95,19 @@ case "$SCRIPT_NAME" in
 		;;
 	esac
 	cd "$BUILD_DIR"
+        # Add DTK fragment to Trilinos config script and disable ETI as
+        # it is not supported for DTK due to incompatible Global Index types.
 	case "$PACKAGE" in
 	    trilinos)
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
                     TMP_FILE="/tmp/_TMP_FILE_"
+                    ETION="Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+                    ETIOFF="Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
                     sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
                     cat "$CONFIG_FILE" "$DTK_FRAG" > "$TMP_FILE"
                     mv "$TMP_FILE" "$CONFIG_FILE"
                     chmod 0755 "$CONFIG_FILE"
+                    sed -i -e "s|$ETION|$ETIOFF|g;" "$CONFIG_FILE"
 	        fi
 		;;
 	    *)
