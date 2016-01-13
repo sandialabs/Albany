@@ -30,16 +30,16 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
                p.get<std::string> ("Weighted Gradient Gradient BF Name") : "None", dl->node_qp_tensor) ,
   keGrad      (p.get<std::string> ("Gradient QP Kinetic Energy"),       dl->qp_gradient_level),
   PhiGrad     (p.get<std::string> ("Gradient QP GeoPotential"),         dl->qp_gradient_level),
-  etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->qp_vector_level),
+  etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->node_vector_level),
   pGrad       (p.get<std::string> ("Gradient QP Pressure"),             dl->qp_gradient_level),
   VelxNode    (p.get<std::string> ("Velx"),                             dl->node_vector_level),
-  Velx        (p.get<std::string> ("QP Velx"),                          dl->qp_vector_level),
-  VelxDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector_level),
+  Velx        (p.get<std::string> ("QP Velx"),                          dl->node_vector_level),
+  VelxDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector_level),
   DVelx       (p.get<std::string> ("D Vel Name"),                       dl->qp_vector_level),
   LaplaceVelx (p.isParameter("Hydrostatic Problem") &&
                 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
                 p.get<std::string> ("Laplace Vel Name") : "None",dl->qp_scalar_level),
-  density     (p.get<std::string> ("QP Density"),                       dl->qp_scalar_level),
+  density     (p.get<std::string> ("QP Density"),                       dl->node_scalar_level),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   vorticity    (p.get<std::string>  ("QP Vorticity"), dl->qp_scalar_level ),
   jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
@@ -131,27 +131,36 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  coriolis(numQPs);
   //Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  vorticity(numQPs);
 
-
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
 
-        get_coriolis(cell, coriolis);
         //get_vorticity(VelxNode, cell, level, vorticity);
 
         for (int qp=0; qp < numQPs; ++qp) {
           for (int dim=0; dim < numDims; ++dim) {
-            Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp);
-            Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp);
-            Residual(cell,node,level,dim) +=   etadotdVelx(cell,qp,level,dim)                          *wBF(cell,node,qp);
-            Residual(cell,node,level,dim) +=   VelxDot(cell,qp,level,dim)                              *wBF(cell,node,qp);
-            Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim)                    *wGradBF(cell,node,qp,dim);
+            Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
             if (hyperviscosity) 
               Residual(cell,node,level,dim) -= hyperviscosity * LaplaceVelx(cell,qp,level) * wGradGradBF(cell,node,qp,dim,dim);
           }
-          Residual(cell,node,level,0) -= (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,1)*wBF(cell,node,qp);
-          Residual(cell,node,level,1) += (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,0)*wBF(cell,node,qp);
         }
+      }
+    }
+  }
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int level=0; level < numLevels; ++level) {
+      get_coriolis(cell, coriolis);
+      //get_vorticity(VelxNode, cell, level, vorticity);
+      for (int qp=0; qp < numQPs; ++qp) {
+        int node = qp; 
+        for (int dim=0; dim < numDims; ++dim) {
+          Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp);
+          Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp);
+          Residual(cell,node,level,dim) +=   etadotdVelx(cell,qp,level,dim)                          *wBF(cell,node,qp);
+          Residual(cell,node,level,dim) +=   VelxDot(cell,qp,level,dim)                              *wBF(cell,node,qp);
+        }
+        Residual(cell,node,level,0) -= (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,1)*wBF(cell,node,qp);
+        Residual(cell,node,level,1) += (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,0)*wBF(cell,node,qp);
       }
     }
   }

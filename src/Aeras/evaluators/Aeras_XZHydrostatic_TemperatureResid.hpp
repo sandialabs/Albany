@@ -48,12 +48,12 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperature;
+  PHX::MDField<ScalarT,Cell,Node,Level>     temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> temperatureGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureDot;
+  PHX::MDField<ScalarT,Cell,Node,Level>     temperatureDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> velx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     omega;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> velx;
+  PHX::MDField<ScalarT,Cell,Node,Level>     omega;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdT;
 
   // Output:

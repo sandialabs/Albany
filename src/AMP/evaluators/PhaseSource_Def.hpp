@@ -12,6 +12,7 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
+
 namespace AMP {
 
 //**********************************************************************
@@ -55,6 +56,7 @@ PhaseSource(Teuchos::ParameterList& p,
   init_constant(value,p);
 
   this->setName("PhaseSource"+PHX::typeAsString<EvalT>());
+
 }
 
 //**********************************************************************
@@ -82,7 +84,16 @@ void PhaseSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // current time
- // const RealType time = workset.current_time;
+  const RealType t = workset.current_time;
+  
+  AMP::LaserCenter Val;
+  Val.t = t;
+  
+  RealType x, z;
+  int power;
+  LaserData_.getLaserPosition(t,Val,x,z,power);
+  ScalarT Laser_center_x = x;
+  ScalarT Laser_center_z = z;
 
   //source function
   ScalarT laser_beam_radius = 60.0e-6;
@@ -92,7 +103,17 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT lambda =2.50;
   ScalarT pi = 3.1415926535897932;
 //  ScalarT laser_power = 30;
-  ScalarT LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power;
+  ScalarT LaserFlux_Max;
+  // laser on or off
+  if ( power == 1 )
+    {
+      LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power;
+    }
+  else
+    {
+      LaserFlux_Max = 0.0;
+    }
+  //ScalarT LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power;
   ScalarT beta = 1.5*(1.0 - porosity)/(porosity*particle_dia);
   // Few parameters:
   ScalarT a = sqrt(1.0 - powder_hemispherical_reflectivity);
@@ -124,18 +145,19 @@ evaluateFields(typename Traits::EvalData workset)
         MeshScalarT X = coord_(cell,qp,0);
         MeshScalarT Y = coord_(cell,qp,1);
         MeshScalarT Z = coord_(cell,qp,2);
-      
-  //  Code for moving laser point
-        ScalarT LaserVelocity_x = 1.0;
-        ScalarT LaserVelocity_z = 0.0;
-        ScalarT Laser_Init_position_x = 0.0;
-        ScalarT Laser_Init_position_z = 0.0;
 
-   //     ScalarT Laser_center_x = 0.0;
-   //     ScalarT Laser_center_z = 0.0;
+
+  // //  Code for moving laser point
+  //       ScalarT LaserVelocity_x = 1.0;
+  //       ScalarT LaserVelocity_z = 0.0;
+  //       ScalarT Laser_Init_position_x = 0.0;
+  //       ScalarT Laser_Init_position_z = 0.0;
+
+  //  //     ScalarT Laser_center_x = 0.0;
+  //  //     ScalarT Laser_center_z = 0.0;
         
-        ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*(time(0)-deltaTime(0));
-        ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*(time(0)-deltaTime(0));
+  //       ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*(time(0)-deltaTime(0));
+  //       ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*(time(0)-deltaTime(0));
 
 
   //  Note:(0.0003 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.                                  

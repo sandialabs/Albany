@@ -22,7 +22,7 @@ XZHydrostatic_SPressureResid<EvalT, Traits>::
 XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
-  spDot    (p.get<std::string> ("Pressure QP Time Derivative Variable Name"), dl->qp_scalar),
+  spDot    (p.get<std::string> ("Pressure QP Time Derivative Variable Name"), dl->node_scalar),
   divpivelx(p.get<std::string>("Divergence QP PiVelx"),              dl->qp_scalar_level),
   Residual (p.get<std::string> ("Residual Name"),                    dl->node_scalar),
   numNodes ( dl->node_scalar             ->dimension(1)),
@@ -68,8 +68,13 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       ScalarT sum = 0;
       for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level); 
-      for (int node=0; node < numNodes; ++node) 
+        int node = qp; 
         Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+    /*    if (cell == 0) 
+          if (node == qp) 
+            std::cout << "cell, node, wBF, res, spDot: " << cell 
+                                 << ", " << node << ", " << wBF(cell,node,qp) << ", " 
+                                 << Residual(cell,node) <<", " << spDot(cell,qp) << std::endl; */
     }
   }
 }

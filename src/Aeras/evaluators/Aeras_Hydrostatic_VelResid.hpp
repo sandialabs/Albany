@@ -63,14 +63,14 @@ private:
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  etadotdVelx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  pGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  Velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velx;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>       VelxNode;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  VelxDot;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  VelxDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      density;
+  PHX::MDField<ScalarT,Cell,Node,Level>      density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      vorticity;
 
 
