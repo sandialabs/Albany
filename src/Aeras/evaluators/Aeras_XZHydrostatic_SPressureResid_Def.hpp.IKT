@@ -65,13 +65,15 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       ScalarT sum = 0;
       for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level); 
-        int node = qp; 
+      for (int node=0; node < numNodes; ++node) { 
+      //int node = qp; 
         Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
-    /*    if (cell == 0) 
+        if (cell == 0) 
           if (node == qp) 
             std::cout << "cell, node, wBF, res, spDot: " << cell 
                                  << ", " << node << ", " << wBF(cell,node,qp) << ", " 
-                                 << Residual(cell,node) <<", " << spDot(cell,qp) << std::endl; */
+                                 << Residual(cell,node) <<", " << spDot(cell,qp) << std::endl; 
+     }
     }
   }
 }

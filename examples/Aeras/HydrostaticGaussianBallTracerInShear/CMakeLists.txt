@@ -1,10 +1,6 @@
  
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_BE.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_BE.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_BE_T.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_BE_T.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_BE_spectral_np3_T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_BE_spectral_np3_T.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_BE_spectral_np4_T.xml
@@ -20,11 +16,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_RK4_spectral_np5_T.xml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} input_BE_T.xml)
 add_test(Aeras_${testName}_Spectral_np3_Tpetra ${AlbanyT.exe} input_BE_spectral_np3_T.xml)
-if (ALBANY_EPETRA)
-add_test(Aeras_${testName} ${Albany.exe} input_BE.xml)
-endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_STOKHOS)

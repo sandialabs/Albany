@@ -46,7 +46,7 @@ private:
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> piTracerGrad;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerDot;
+  PHX::MDField<ScalarT,Cell,Node,Level>     TracerDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerSrc;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     UTracerDiv;
   //PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdTracer;
