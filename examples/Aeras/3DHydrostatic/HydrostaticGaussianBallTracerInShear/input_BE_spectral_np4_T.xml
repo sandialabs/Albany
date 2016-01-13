@@ -35,12 +35,12 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD4/uniform_10_quad4.g"/>
-    <Parameter name="Cubature Degree" type="int" value="8"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
+    <Parameter name="Cubature Degree" type="int" value="4"/>
     <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
-    <Parameter name="Element Degree" type="int" value="4"/>
+    <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_be_np5_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9_spectral_be_np4_out.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="50"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
@@ -61,7 +61,7 @@
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
         <Parameter name="Number of Time Steps" type="int" value="20000"/>
       </ParameterList>
-      <Parameter name="Final Time" type="double" value= "200000."/>
+      <Parameter name="Final Time" type="double" value= "200000"/>
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">
