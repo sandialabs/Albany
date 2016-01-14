@@ -285,7 +285,9 @@ struct peel<MPJE, AD<N>, N>
 };
 #endif // ALBANY_ENSEMBLE
 
-template<typename EvalT, typename T, int N>
+// M: number of derivatives
+// N: vector/tensor dimension
+template<typename EvalT, typename T, int M, int N>
 struct peel_vector
 {
   using S = typename EvalT::ScalarT;
@@ -303,14 +305,14 @@ struct peel_vector
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;
   }
 };
 
-template<typename EvalT, typename T, int N>
+template<typename EvalT, typename T, int M, int N>
 struct peel_tensor
 {
   using S = typename EvalT::ScalarT;
@@ -328,14 +330,14 @@ struct peel_tensor
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;
   }
 };
 
-template<typename EvalT, typename T, int N>
+template<typename EvalT, typename T, int M, int N>
 struct peel_tensor3
 {
   using S = typename EvalT::ScalarT;
@@ -353,14 +355,14 @@ struct peel_tensor3
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;
   }
 };
 
-template<typename EvalT, typename T, int N>
+template<typename EvalT, typename T, int M, int N>
 struct peel_tensor4
 {
   using S = typename EvalT::ScalarT;
@@ -378,7 +380,7 @@ struct peel_tensor4
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;

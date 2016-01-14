@@ -413,11 +413,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   Intrepid2::Tensor<T, NumDimT> F_np1_peeled;
   F_np1_peeled.set_dimension(num_dim_);
-  for (int i = 0; i < num_dim_; ++i) {
-    for (int j = 0; j < num_dim_; ++j) {
-      F_np1_peeled(i, j) = LCM::peel<EvalT, T, N>()(F_np1_(i, j));
-    }
-  }
+  F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT>(
