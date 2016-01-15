@@ -110,18 +110,11 @@ updateSlipViaExplicitIntegration(
     Intrepid2::Vector<ArgT, NumSlipT> const & shear,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_np1);
 
-//! Base class for recording the dimension of a Nonlinear Solver (NLS) class, required because templates..
-class NLSDimension
-{
-public:
-  static Intrepid2::Index DIMENSION;
-};
 
 //! Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip 
 //  increments as unknowns.
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 class CrystalPlasticityNLS:
-    public NLSDimension,
     public Intrepid2::Function_Base<
     CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 {
@@ -150,7 +143,7 @@ public:
   //! Gradient function; returns the residual vector as a function of the slip at step N+1.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
   Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & slip_np1) const;
+  gradient(Intrepid2::Vector<T, N> const & x) const;
 
 
   //! Default implementation of hessian.
@@ -175,7 +168,6 @@ private:
 //  increments and hardnesses as unknowns.
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 class ResidualSlipHardnessNLS:
-    public NLSDimension,
     public Intrepid2::Function_Base<
     ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 {

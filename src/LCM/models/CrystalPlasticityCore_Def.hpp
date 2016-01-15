@@ -354,6 +354,11 @@ CP::updateSlipViaExplicitIntegration(
   }
 }
 
+
+
+//
+// Define nonlinear system based on residual of slip values
+//
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::CrystalPlasticityNLS(
       Intrepid2::Tensor4<RealType, NumDimT> const & C,
@@ -370,7 +375,6 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::CrystalPlasticityNLS(
 {
   num_dim_ = Fp_n_.get_dimension();
   num_slip_ = hardness_n_.get_dimension();
-  DIMENSION = num_slip_;
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
@@ -389,17 +393,19 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Vector<T, N>
 CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
-    Intrepid2::Vector<T, N> const & slip_np1) const
+    Intrepid2::Vector<T, N> const & x) const
 {
   // DJL todo: Experiment with how/where these are allocated.
   Intrepid2::Tensor<T, NumDimT> Fp_np1;
   Intrepid2::Tensor<T, NumDimT> Lp_np1;
-  Intrepid2::Vector<T, N> hardness_np1;
+  Intrepid2::Vector<T, NumSlipT> hardness_np1;
   Intrepid2::Tensor<T, NumDimT> sigma_np1;
   Intrepid2::Tensor<T, NumDimT> S_np1;
-  Intrepid2::Vector<T, N> shear_np1;
-  Intrepid2::Vector<T, N> slip_residual;
-  Intrepid2::Vector<T, N> rateSlip;
+  Intrepid2::Vector<T, NumSlipT> slip_np1;
+  Intrepid2::Vector<T, NumSlipT> shear_np1;
+  Intrepid2::Vector<T, NumSlipT> slip_residual;
+  Intrepid2::Vector<T, NumSlipT> rateSlip;
+  Intrepid2::Vector<T, N> residual;
   T norm_slip_residual_;
 
   Fp_np1.set_dimension(num_dim_);
@@ -407,12 +413,22 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
   hardness_np1.set_dimension(num_slip_);
   sigma_np1.set_dimension(num_dim_);
   S_np1.set_dimension(num_dim_);
+  slip_np1.set_dimension(num_slip_);
   shear_np1.set_dimension(num_slip_);
   slip_residual.set_dimension(num_slip_);
   rateSlip.set_dimension(num_slip_);
 
+  auto const
+  num_unknowns = x.get_dimension();
+
+  residual.set_dimension(num_unknowns);
+
   Intrepid2::Tensor<T, NumDimT>
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
+
+  for (int i = 0; i< num_slip_; ++i){
+    slip_np1[i] = x[i];
+  }
 
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT>(
@@ -459,7 +475,12 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
       slip_residual,
       norm_slip_residual_);
 
-  return slip_residual;
+  for (int i = 0; i< num_slip_; ++i){
+    residual[i] = slip_residual[i];
+  }
+  
+  return residual;
+
 }
 
 // Nonlinear system, residual based on slip increments
@@ -475,6 +496,10 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::hessian(
       x);
 }
 
+
+//
+// Define nonlinear system based on residual of slip and hardness values
+//
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
       Intrepid2::Tensor4<RealType, NumDimT> const & C,
@@ -491,7 +516,6 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
 {
   num_dim_ = Fp_n_.get_dimension();
   num_slip_ = hardness_n_.get_dimension();
-  DIMENSION = num_slip_;
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
@@ -538,6 +562,11 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   shear_np1.set_dimension(num_slip_);
   slip_residual.set_dimension(num_slip_);
   rateSlip.set_dimension(num_slip_);
+
+  auto const
+  num_unknowns = x.get_dimension();
+
+  residual.set_dimension(num_unknowns);
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];

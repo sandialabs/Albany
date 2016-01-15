@@ -19,8 +19,6 @@ value(Function_Derived & f, Vector<T, N> const & x)
   Index const
   dimension = x.get_dimension();
 
-  assert(dimension == Function_Derived::DIMENSION);
-
   Vector<T, N> const
   r = f.gradient(x);
 
@@ -40,8 +38,6 @@ gradient(Function_Derived & f, Vector<T, N> const & x)
 
   Index const
   dimension = x.get_dimension();
-
-  assert(dimension == Function_Derived::DIMENSION);
 
   Vector<AD, N>
   x_ad(dimension);
@@ -76,8 +72,6 @@ hessian(Function_Derived & f, Vector<T, N> const & x)
 
   Index const
   dimension = x.get_dimension();
-
-  assert(dimension == Function_Derived::DIMENSION);
 
   Vector<AD, N>
   x_ad(dimension);

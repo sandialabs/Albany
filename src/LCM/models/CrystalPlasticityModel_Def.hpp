@@ -16,8 +16,6 @@
 #include <iostream>
 #include <Sacado_Traits.hpp>
 
-Intrepid2::Index CP::NLSDimension::DIMENSION;
-
 namespace LCM
 {
 
@@ -42,9 +40,30 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "\n**** Error in CrystalPlasticityModel, invalid value for \"Integration Scheme\", must be \"Implicit\" or \"Explicit\".\n");
+          "\n**** Error in CrystalPlasticityModel, invalid value for \
+          \"Integration Scheme\", must be \"Implicit\" or \"Explicit\".\n");
     }
   }
+
+  residual_type_ = SLIP_RESIDUAL;
+  if (p->isParameter("Residual Type")) {
+    std::string residualTypeString = p->get<std::string>(
+        "Residual Type");
+    if (residualTypeString == "Slip") {
+      residual_type_ = SLIP_RESIDUAL;
+    }
+    else if (residualTypeString == "Slip Hardness") {
+      residual_type_ = SLIP_HARDNESS_RESIDUAL;
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "\n**** Error in CrystalPlasticityModel, invalid value for \
+            \"Residual Type\", must be \"Slip\" or \"Slip Hardness\".\n");
+    }
+  }
+
   implicit_nonlinear_solver_relative_tolerance_ = p->get<double>(
       "Implicit Integration Relative Tolerance",
       1.0e-6);
@@ -680,12 +699,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           Lp_np1, 
           Fp_np1);
 
-	if(dt > 0.0){
-	  rateSlip = (slip_np1 - slip_n) / dt;
-	}
-	else{
-	  rateSlip.fill(Intrepid2::ZEROS);
-	}
+        if(dt > 0.0){
+          rateSlip = (slip_np1 - slip_n) / dt;
+        }
+        else{
+          rateSlip.fill(Intrepid2::ZEROS);
+        }
 
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
@@ -745,8 +764,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         Intrepid2::Vector<RealType, CP::MAX_NUM_SLIP> slip_n_minisolver;
         slip_n_minisolver.set_dimension(num_slip_);
         RealType dt_minisolver;
-        Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> x;// unknowns, which are slip_np1
-        x.set_dimension(num_slip_);
 
         for(int i=0; i<num_dims_; ++i) {
           for(int j=0; j<num_dims_; ++j) {
@@ -757,33 +774,101 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         for(int i=0; i<num_slip_; ++i) {
           hardness_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(hardness_n(i));
           slip_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
-          // initial guess for x is slip_np1 (predictor, see above)
-          x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
         }
 
         dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
 
-	CP::CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, EvalT>
-        crystalPlasticityNLS(
-            C_,
-            slip_systems_,
-            Fp_n_minisolver,
-            hardness_n_minisolver,
-            slip_n_minisolver,
-            F_np1,
-            dt_minisolver);
-
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
-        Intrepid2::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
-        //Intrepid2::TrustRegionStep<ValueT, CP::MAX_NUM_SLIP> step;
-        //Intrepid2::ConjugateGradientStep<ValueT, CP::MAX_NUM_SLIP> step;
-        //Intrepid2::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
-        Intrepid2::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
+
+        // unknowns array
+        Intrepid2::Vector<ScalarT, 2 * CP::MAX_NUM_SLIP> x;
+
+        Intrepid2::NewtonStep<ValueT, 2 * CP::MAX_NUM_SLIP> step;
+        Intrepid2::Minimizer<ValueT, 2 * CP::MAX_NUM_SLIP> minimizer;
 
         minimizer.rel_tol = residual_relative_tolerance;
         minimizer.abs_tol = residual_absolute_tolerance;
 
-        miniMinimize(minimizer, step, crystalPlasticityNLS, x);
+        //
+        // Chose residual type
+        //
+        switch (residual_type_)
+        {
+          
+          case SLIP_RESIDUAL:
+          {
+
+            // unknowns, which are slip_np1
+            x.set_dimension(num_slip_);
+
+            for(int i=0; i<num_slip_; ++i) {
+              // initial guess for x is slip_np1 (predictor, see above)
+              x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
+            }
+
+            CP::CrystalPlasticityNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, EvalT>
+            crystalPlasticityNLS(
+                C_,
+                slip_systems_,
+                Fp_n_minisolver,
+                hardness_n_minisolver,
+                slip_n_minisolver,
+                F_np1,
+                dt_minisolver);
+
+            miniMinimize(minimizer, step, crystalPlasticityNLS, x);
+
+            for(int i=0; i<num_slip_; ++i) {
+              slip_np1[i] = x[i];
+            }
+
+          }
+        break;
+
+        case SLIP_HARDNESS_RESIDUAL:
+        {
+          // unknowns, which are slip_np1 followed by hardness_np1
+          x.set_dimension(2 * num_slip_);
+
+          for(int i=0; i<num_slip_; ++i) {
+            // initial guess for x(0:num_slip_-1) is slip_np1 (predictor, see above)
+            x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
+            // initial guess for x(num_slip_:2*num_slip_) is slip_np1 (predictor, see above)
+            x(i + num_slip_) = Sacado::ScalarValue<ScalarT>::eval(hardness_np1(i));
+          }
+
+          CP::ResidualSlipHardnessNLS<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP, EvalT>
+          residualSlipHardnessNLS(
+              C_,
+              slip_systems_,
+              Fp_n_minisolver,
+              hardness_n_minisolver,
+              slip_n_minisolver,
+              F_np1,
+              dt_minisolver);
+
+          miniMinimize(minimizer, step, residualSlipHardnessNLS, x);
+
+          for(int i=0; i<num_slip_; ++i) {
+            slip_np1[i] = x[i];
+            hardness_np1[i] = x[i + num_slip_];
+          }
+
+        }
+        break;
+
+        default:
+          std::cerr << "You must supply a residual type." << std::endl;
+          exit(1);
+        break;
+
+      }
+
+        //Intrepid2::NewtonStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid2::TrustRegionStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid2::ConjugateGradientStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid2::LineSearchRegularizedStep<ValueT, CP::MAX_NUM_SLIP> step;
+        //Intrepid2::Minimizer<ValueT, CP::MAX_NUM_SLIP> minimizer;
 
         if(!minimizer.converged){
           minimizer.printReport(std::cout);
@@ -792,10 +877,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
         std::logic_error,
         "Error: CrystalPlasticity implicit state update routine failed to converge!");
-
-        for(int i=0; i<num_slip_; ++i) {
-          slip_np1[i] = x[i];
-        }
 
         // We now have the solution for slip_np1, including sensitivities (if any)
         // Re-evaluate all the other state variables based on slip_np1
@@ -809,12 +890,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           Lp_np1, 
           Fp_np1);
 
-	if(dt > 0.0){
-	  rateSlip = (slip_np1 - slip_n) / dt;
-	}
-	else{
-	  rateSlip.fill(Intrepid2::ZEROS);
-	}
+        if(dt > 0.0){
+          rateSlip = (slip_np1 - slip_n) / dt;
+        }
+        else{
+          rateSlip.fill(Intrepid2::ZEROS);
+        }
 
         // Compute hardness_np1
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(

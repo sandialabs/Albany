@@ -29,7 +29,12 @@ public:
 
   enum IntegrationScheme
   {
-    EXPLICIT = 0, IMPLICIT = 1
+    UNDEFINED_INTEGRATION_SCHEME = 0, EXPLICIT = 1, IMPLICIT = 2
+  };
+
+  enum ResidualType
+  {
+    UNDEFINED_RESIDUAL_TYPE = 0, SLIP_RESIDUAL = 1, SLIP_HARDNESS_RESIDUAL = 2
   };
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -111,6 +116,7 @@ public:
       slip_systems_;
 
       IntegrationScheme integration_scheme_;
+      ResidualType residual_type_;
       FlowRule flowRule_;
       HardeningLaw hardeningLaw_;
       RealType implicit_nonlinear_solver_relative_tolerance_;
