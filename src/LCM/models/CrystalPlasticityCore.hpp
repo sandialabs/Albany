@@ -91,8 +91,8 @@ void
 computeStress(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     Intrepid2::Tensor4<RealType, NumDimT> const & C,
-    Intrepid2::Tensor<DataT, NumDimT> const & F,
-    Intrepid2::Tensor<ArgT, NumDimT> const & Fp,
+    Intrepid2::Tensor<ArgT, NumDimT> const & F,
+    Intrepid2::Tensor<DataT, NumDimT> const & Fp,
     Intrepid2::Tensor<ArgT, NumDimT> & sigma,
     Intrepid2::Tensor<ArgT, NumDimT> & S,
     Intrepid2::Vector<ArgT, NumSlipT> & shear);
@@ -105,7 +105,7 @@ updateSlipViaExplicitIntegration(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness,
+    Intrepid2::Vector<ArgT, NumSlipT> const & hardness,
     Intrepid2::Tensor<ArgT, NumDimT> const & S,
     Intrepid2::Vector<ArgT, NumSlipT> const & shear,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_np1);
@@ -118,7 +118,7 @@ class CrystalPlasticityNLS:
     public Intrepid2::Function_Base<
     CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 {
-  using DataT = typename EvalT::ScalarT;
+  using ArgT = typename EvalT::ScalarT;
 
 public:
 
@@ -129,7 +129,7 @@ public:
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<DataT, NumDimT> const & F_np1,
+      Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt);
 
   static constexpr char const * const NAME =
@@ -160,7 +160,7 @@ private:
   Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
   Intrepid2::Vector<RealType, NumSlipT> const & hardness_n_;
   Intrepid2::Vector<RealType, NumSlipT> const & slip_n_;
-  Intrepid2::Tensor<DataT, NumDimT> const & F_np1_;
+  Intrepid2::Tensor<ArgT, NumDimT> const & F_np1_;
   RealType dt_;
 };
 
@@ -171,7 +171,7 @@ class ResidualSlipHardnessNLS:
     public Intrepid2::Function_Base<
     ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 {
-  using DataT = typename EvalT::ScalarT;
+  using ArgT = typename EvalT::ScalarT;
 
 public:
 
@@ -182,7 +182,7 @@ public:
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<DataT, NumDimT> const & F_np1,
+      Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt);
 
   static constexpr char const * const NAME =
@@ -213,7 +213,7 @@ private:
   Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
   Intrepid2::Vector<RealType, NumSlipT> const & hardness_n_;
   Intrepid2::Vector<RealType, NumSlipT> const & slip_n_;
-  Intrepid2::Tensor<DataT, NumDimT> const & F_np1_;
+  Intrepid2::Tensor<ArgT, NumDimT> const & F_np1_;
   RealType dt_;
 };
 

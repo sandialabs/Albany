@@ -289,8 +289,8 @@ void
 CP::computeStress(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     Intrepid2::Tensor4<RealType, NumDimT> const & C,
-    Intrepid2::Tensor<DataT, NumDimT> const & F,
-    Intrepid2::Tensor<ArgT, NumDimT> const & Fp,
+    Intrepid2::Tensor<ArgT, NumDimT> const & F,
+    Intrepid2::Tensor<DataT, NumDimT> const & Fp,
     Intrepid2::Tensor<ArgT, NumDimT> & sigma,
     Intrepid2::Tensor<ArgT, NumDimT> & S,
     Intrepid2::Vector<ArgT, NumSlipT> & shear)
@@ -298,7 +298,7 @@ CP::computeStress(
   Intrepid2::Index num_dim = F.get_dimension();
   Intrepid2::Index num_slip = shear.get_dimension();
 
-  Intrepid2::Tensor<ArgT, NumDimT> Fpinv;
+  Intrepid2::Tensor<DataT, NumDimT> Fpinv;
   Fpinv.set_dimension(num_dim);
   Intrepid2::Tensor<ArgT, NumDimT> Fe;
   Fe.set_dimension(num_dim);
@@ -338,12 +338,13 @@ CP::updateSlipViaExplicitIntegration(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness,
+    Intrepid2::Vector<ArgT, NumSlipT> const & hardness,
     Intrepid2::Tensor<ArgT, NumDimT> const & S,
     Intrepid2::Vector<ArgT, NumSlipT> const & shear,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_np1)
     {
-  DataT g0, tauC, m, temp;
+  DataT g0, tauC, m;
+  ArgT temp;
   Intrepid2::Index num_slip = hardness.get_dimension();
 
   for (int s(0); s < num_slip; ++s) {
@@ -369,7 +370,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::CrystalPlasticityNLS(
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<DataT, NumDimT> const & F_np1,
+      Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt)
   :
       C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
@@ -387,7 +388,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::value(
     Intrepid2::Vector<T, N> const & x)
 {
   return Intrepid2::Function_Base<
-  CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, DataT>::value(
+  CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, ArgT>::value(
       *this,
       x);
 }
@@ -486,7 +487,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::hessian(
     Intrepid2::Vector<T, N> const & x)
 {
   return Intrepid2::Function_Base<
-      CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, DataT>::hessian(
+      CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, ArgT>::hessian(
       *this,
       x);
 }
@@ -502,7 +503,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<DataT, NumDimT> const & F_np1,
+      Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt)
   :
       C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
@@ -520,7 +521,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::value(
     Intrepid2::Vector<T, N> const & x)
 {
   return Intrepid2::Function_Base<
-  ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, DataT>::value(
+  ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ArgT>::value(
       *this,
       x);
 }
@@ -626,7 +627,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::hessian(
     Intrepid2::Vector<T, N> const & x)
 {
   return Intrepid2::Function_Base<
-      ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, DataT>::hessian(
+      ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ArgT>::hessian(
       *this,
       x);
 }

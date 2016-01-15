@@ -499,8 +499,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   Albany::MDArray previous_plastic_deformation =
   (*workset.stateArrayPtr)[Fp_string + "_old"];
   ScalarT tau, gamma, dgamma;
-  ScalarT dt = delta_time(0);
-  ScalarT tcurrent = time(0);
+  RealType dt = Sacado::ScalarValue<ScalarT>::eval(delta_time(0));
+  RealType tcurrent = Sacado::ScalarValue<ScalarT>::eval(time(0));
 
   Intrepid2::Tensor<RealType, CP::MAX_DIM> I;
   I.set_dimension(num_dims_);
@@ -515,10 +515,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
   // Known quantities
   Intrepid2::Tensor<ScalarT, CP::MAX_DIM> F_np1(num_dims_);
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Fp_n(num_dims_);
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_n(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_dot_n(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> hardness_n(num_slip_);
+  Intrepid2::Tensor<RealType, CP::MAX_DIM> Fp_n(num_dims_);
+  Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_n(num_slip_);
+  Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_dot_n(num_slip_);
+  Intrepid2::Vector<RealType, CP::MAX_SLIP> hardness_n(num_slip_);
 
   // Unknown quantities
   Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Lp_np1;
@@ -661,28 +661,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       }
       else if (integration_scheme_ == IntegrationScheme::IMPLICIT) {
 
-        // DJL todo:  The state N data shouldn't ever be Fad, which I think they currently are above.
-        //            When Albany::Jacobain is called, the Fad info should be in F_np1 only.
-
-        // MiniSolver currently does not accept AD types
-        Intrepid2::Tensor<RealType, CP::MAX_DIM> Fp_n_minisolver(num_dims_);
-        Intrepid2::Vector<RealType, CP::MAX_SLIP> hardness_n_minisolver(num_slip_);
-        Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_n_minisolver(num_slip_);
-        RealType dt_minisolver;
-
-        for(int i=0; i<num_dims_; ++i) {
-          for(int j=0; j<num_dims_; ++j) {
-            Fp_n_minisolver(i,j) = Sacado::ScalarValue<ScalarT>::eval(Fp_n(i,j));
-          }
-        }
-
-        for(int i=0; i<num_slip_; ++i) {
-          hardness_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(hardness_n(i));
-          slip_n_minisolver(i) = Sacado::ScalarValue<ScalarT>::eval(slip_n(i));
-        }
-
-        dt_minisolver = Sacado::ScalarValue<ScalarT>::eval(dt);
-
         constexpr
         Intrepid2::Index
         NLS_DIM = 2 * CP::MAX_SLIP;
@@ -718,11 +696,11 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             slip_nls(
                 C_,
                 slip_systems_,
-                Fp_n_minisolver,
-                hardness_n_minisolver,
-                slip_n_minisolver,
+                Fp_n,
+                hardness_n,
+                slip_n,
                 F_np1,
-                dt_minisolver);
+                dt);
 
             // unknowns, which are slip_np1
             x.set_dimension(num_slip_);
@@ -752,11 +730,11 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           slip_hardness_nls(
               C_,
               slip_systems_,
-              Fp_n_minisolver,
-              hardness_n_minisolver,
-              slip_n_minisolver,
+              Fp_n,
+              hardness_n,
+              slip_n,
               F_np1,
-              dt_minisolver);
+              dt);
 
           // unknowns, which are slip_np1 followed by hardness_np1
           x.set_dimension(2 * num_slip_);
