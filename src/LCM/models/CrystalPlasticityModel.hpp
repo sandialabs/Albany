@@ -105,7 +105,7 @@ public:
       ///
       /// Crystal elasticity parameters
       ///
-      RealType c11_, c12_, c44_, ctest_;
+      RealType c11_, c12_, c44_;
       Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
       Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
 
@@ -117,9 +117,11 @@ public:
       ///
       /// Crystal Plasticity parameters
       ///
-      RealType rate_slip_reference_, exponent_rate_, energy_activation_, H_, Rd_, tau_critical_,
+      RealType rate_slip_reference_, exponent_rate_, energy_activation_, 
+        H_, Rd_, tau_critical_,
         resistance_slip_initial_, rate_hardening_, stress_saturation_initial_,
         exponent_saturation_;
+
       std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
       slip_systems_;
 

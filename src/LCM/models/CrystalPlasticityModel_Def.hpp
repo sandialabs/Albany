@@ -687,69 +687,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       }
       else if (integration_scheme_ == IMPLICIT) {
 
-        // Evaluate quantities under the initial guess for the slip increment
-        CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP>(
-          slip_systems_, 
-          slip_n, 
-          slip_np1, 
-          Fp_n, 
-          Lp_np1, 
-          Fp_np1);
-
-        if(dt > 0.0){
-          rate_slip = (slip_np1 - slip_n) / dt;
-        }
-        else{
-          rate_slip.fill(Intrepid2::ZEROS);
-        }
-
-        CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP>(
-          slip_systems_, 
-          dt,
-          rate_slip, 
-          hardness_n, 
-          hardness_np1);
-
-        if(verbosity_ > 2) {
-          std::cout << "CP model implicit integration hardness " << hardness_np1 << std::endl;
-        }
-
-        CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP>(
-          slip_systems_, 
-          C_, 
-          F_np1, 
-          Fp_np1, 
-          sigma_np1, 
-          S_np1, 
-          shear_np1);
-
-        if(verbosity_ > 2) {
-          std::cout << "CP model implicit integration stress " << shear_np1 << std::endl;
-        }
-
-        CP::computeResidual<CP::MAX_DIM, CP::MAX_SLIP>(
-          slip_systems_, 
-          dt, 
-          slip_n, 
-          slip_np1, 
-          hardness_np1, 
-          shear_np1, 
-          slip_residual, 
-          norm_slip_residual);
-
-        if(verbosity_ > 2) {
-          std::cout << "CP model implicit integration residual " << slip_residual << std::endl;
-        }
-
-        RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(
-          norm_slip_residual);
-
-        // Determine convergence tolerances for the nonlinear solver
-        RealType residual_relative_tolerance = 
-          implicit_nonlinear_solver_relative_tolerance_ * residual_val;
-        RealType residual_absolute_tolerance = 
-          implicit_nonlinear_solver_absolute_tolerance_;
-
         // DJL todo:  The state N data shouldn't ever be Fad, which I think they currently are above.
         //            When Albany::Jacobain is called, the Fad info should be in F_np1 only.
 
@@ -792,8 +729,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         // unknowns array
         Intrepid2::Vector<ScalarT, 2 * CP::MAX_SLIP> x;
 
-        minimizer.rel_tol = residual_relative_tolerance;
-        minimizer.abs_tol = residual_absolute_tolerance;
+        minimizer.rel_tol = implicit_nonlinear_solver_relative_tolerance_;
+        minimizer.abs_tol = implicit_nonlinear_solver_absolute_tolerance_;
 
         //
         // Chose residual type
