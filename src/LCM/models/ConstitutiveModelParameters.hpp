@@ -87,6 +87,9 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> poissons_ratio_;
     PHX::MDField<ScalarT,Cell,QuadPoint> bulk_mod_;
     PHX::MDField<ScalarT,Cell,QuadPoint> shear_mod_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> c11_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> c12_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> c44_;
     /// Plasticity Parameters
     PHX::MDField<ScalarT,Cell,QuadPoint> yield_strength_;
     PHX::MDField<ScalarT,Cell,QuadPoint> hardening_mod_;

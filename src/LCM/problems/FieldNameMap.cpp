@@ -39,7 +39,7 @@ namespace LCM {
     name_map->insert( std::make_pair("J","J") );
     name_map->insert( std::make_pair("Velocity_Gradient","Velocity_Gradient") );
     // Crystal plasticity model
-    const int max_slip_systems = 24;
+    const int max_slip_systems = 48;
     // field names for slip on each slip system
     for (int i=0; i < max_slip_systems; ++i) {
       std::string g = Albany::strint("gamma", i+1,'_');

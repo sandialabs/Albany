@@ -50,6 +50,14 @@ public:
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
+  // optional temperature support
+  using ConstitutiveModel<EvalT, Traits>::have_temperature_;
+  using ConstitutiveModel<EvalT, Traits>::expansion_coeff_;
+  using ConstitutiveModel<EvalT, Traits>::ref_temperature_;
+  using ConstitutiveModel<EvalT, Traits>::heat_capacity_;
+  using ConstitutiveModel<EvalT, Traits>::density_;
+  using ConstitutiveModel<EvalT, Traits>::temperature_;
+  
   ///
   /// Constructor
   ///
