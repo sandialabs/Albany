@@ -125,6 +125,15 @@ public:
   bool
   converged{false};
 
+  T
+  final_value{0.0};
+
+  Vector<T, N>
+  final_gradient;
+
+  Tensor<T, N>
+  final_hessian;
+
 private:
   T
   initial_norm{1.0};
@@ -137,15 +146,6 @@ private:
 
   Vector<T, N>
   final_soln;
-
-  T
-  final_value{0.0};
-
-  Vector<T, N>
-  final_gradient;
-
-  Tensor<T, N>
-  final_hessian;
 
   char const *
   step_method_name{nullptr};

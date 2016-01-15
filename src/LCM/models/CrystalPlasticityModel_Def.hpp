@@ -26,15 +26,15 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
     num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
-  integration_scheme_ = EXPLICIT;
+  integration_scheme_ = IntegrationScheme::EXPLICIT;
   if (p->isParameter("Integration Scheme")) {
     std::string integrationSchemeString = p->get<std::string>(
         "Integration Scheme");
     if (integrationSchemeString == "Implicit") {
-      integration_scheme_ = IMPLICIT;
+      integration_scheme_ = IntegrationScheme::IMPLICIT;
     }
     else if (integrationSchemeString == "Explicit") {
-      integration_scheme_ = EXPLICIT;
+      integration_scheme_ = IntegrationScheme::EXPLICIT;
     }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(
@@ -45,15 +45,15 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     }
   }
 
-  residual_type_ = SLIP_RESIDUAL;
+  residual_type_ = ResidualType::SLIP;
   if (p->isParameter("Residual Type")) {
     std::string residualTypeString = p->get<std::string>(
         "Residual Type");
     if (residualTypeString == "Slip") {
-      residual_type_ = SLIP_RESIDUAL;
+      residual_type_ = ResidualType::SLIP;
     }
     else if (residualTypeString == "Slip Hardness") {
-      residual_type_ = SLIP_HARDNESS_RESIDUAL;
+      residual_type_ = ResidualType::SLIP_HARDNESS;
     }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(
@@ -549,32 +549,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   ScalarT norm_slip_residual;
   ScalarT equivalent_plastic_strain;
 
-  // LocalNonlinearSolver
-  LocalNonlinearSolver<EvalT, Traits> solver;
-  std::vector<ScalarT> solver_slip_np1(num_slip_);
-  std::vector<ScalarT> solver_slip_residual(num_slip_);
-  std::vector<ScalarT> solver_matrix(num_slip_ * num_slip_);
-
-  // The following variables are dependent on the slip increment
-  // Create AD objects for use in the implicit integration routine
-  Intrepid2::Vector<Fad, CP::MAX_SLIP> slip_np1_ad;
-  slip_np1_ad.set_dimension(num_slip_);
-  Intrepid2::Tensor<Fad, CP::MAX_DIM> Lp_np1_ad;
-  Lp_np1_ad.set_dimension(num_dims_);
-  Intrepid2::Tensor<Fad, CP::MAX_DIM> Fp_np1_ad;
-  Fp_np1_ad.set_dimension(num_dims_);
-  Intrepid2::Tensor<Fad, CP::MAX_DIM> sigma_np1_ad;
-  sigma_np1_ad.set_dimension(num_dims_);
-  Intrepid2::Tensor<Fad, CP::MAX_DIM> S_np1_ad;
-  S_np1_ad.set_dimension(num_dims_);
-  Intrepid2::Vector<Fad, CP::MAX_SLIP> shear_np1_ad;
-  shear_np1_ad.set_dimension(num_slip_);
-  Intrepid2::Vector<Fad, CP::MAX_SLIP> slip_residual_ad;
-  slip_residual_ad.set_dimension(num_slip_);
-  Intrepid2::Vector<Fad, CP::MAX_SLIP> hardness_np1_ad;
-  hardness_np1_ad.set_dimension(num_slip_);
-  Fad norm_slip_residual_ad;
-
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
@@ -614,7 +588,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         }
       }
 
-      if (integration_scheme_ == EXPLICIT) {
+      if (integration_scheme_ == IntegrationScheme::EXPLICIT) {
 
         // compute sigma_np1, S_np1, and shear_np1 using Fp_n
         CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP>(
@@ -685,18 +659,15 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           std::cout << "CP model explicit integration residual " << residual_val << std::endl;
         }
       }
-      else if (integration_scheme_ == IMPLICIT) {
+      else if (integration_scheme_ == IntegrationScheme::IMPLICIT) {
 
         // DJL todo:  The state N data shouldn't ever be Fad, which I think they currently are above.
         //            When Albany::Jacobain is called, the Fad info should be in F_np1 only.
 
         // MiniSolver currently does not accept AD types
-        Intrepid2::Tensor<RealType, CP::MAX_DIM> Fp_n_minisolver;
-        Fp_n_minisolver.set_dimension(num_dims_);
-        Intrepid2::Vector<RealType, CP::MAX_SLIP> hardness_n_minisolver;
-        hardness_n_minisolver.set_dimension(num_slip_);
-        Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_n_minisolver;
-        slip_n_minisolver.set_dimension(num_slip_);
+        Intrepid2::Tensor<RealType, CP::MAX_DIM> Fp_n_minisolver(num_dims_);
+        Intrepid2::Vector<RealType, CP::MAX_SLIP> hardness_n_minisolver(num_slip_);
+        Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_n_minisolver(num_slip_);
         RealType dt_minisolver;
 
         for(int i=0; i<num_dims_; ++i) {
@@ -738,7 +709,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         switch (residual_type_)
         {
           
-          case SLIP_RESIDUAL:
+          case ResidualType::SLIP:
           {
             using NLS =
                 CP::CrystalPlasticityNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
@@ -772,7 +743,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           }
         break;
 
-        case SLIP_HARDNESS_RESIDUAL:
+        case ResidualType::SLIP_HARDNESS:
         {
           using NLS =
               CP::ResidualSlipHardnessNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
@@ -866,16 +837,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           S_np1, 
           shear_np1);
 
-        // Compute slip_residual and norm_slip_residual
-        CP::computeResidual<CP::MAX_DIM, CP::MAX_SLIP>(
-          slip_systems_, 
-          dt, 
-          slip_n, 
-          slip_np1, 
-          hardness_np1, 
-          shear_np1, 
-          slip_residual, 
-          norm_slip_residual);
+          // Compute slip_residual and norm_slip_residual 
+          norm_slip_residual = std::sqrt(2.0 * minimizer.final_value);
 
       } // integration_scheme == IMPLICIT
 
@@ -892,8 +855,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 //       eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
 //
       ScalarT delta_eqps = Intrepid2::dotdot(
-      Intrepid2::sym(Lp_np1),
-      Intrepid2::sym(Lp_np1));
+        Intrepid2::sym(Lp_np1),
+        Intrepid2::sym(Lp_np1));
       if (delta_eqps > 0.0) {
         delta_eqps = 2.0 * (std::sqrt(delta_eqps)) / 3.0;
       } // Otherwise delta_eqps is - or BETTER be! - zero, so don't bother with the 2/3.
@@ -909,12 +872,11 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 //      delta_eqps *= dt;
       equivalent_plastic_strain += delta_eqps;
       eqps(cell, pt) = equivalent_plastic_strain;
-//
-// The xtal rotation from the polar decomp of Fe.
-      Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Fe;
-      Fe.set_dimension(num_dims_);
-      Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Re_np1;
-      Re_np1.set_dimension(num_dims_);
+
+      // The xtal rotation from the polar decomp of Fe.
+      Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Fe(num_dims_);
+      Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Re_np1(num_dims_);
+
       // Saint Venant–Kirchhoff model
       Fe = F_np1 * (Intrepid2::inverse(Fp_np1));
       Re_np1 = Intrepid2::polar_rotation(Fe);
