@@ -197,54 +197,54 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     //
     // Obtain flow rule parameters
     //
-    std::string nameFlowRule = ss_list.get<std::string>("Flow Rule");
-    Teuchos::ParameterList f_list = p->sublist(nameFlowRule);
-    std::string typeFlowRule = f_list.get<std::string>("Type");
+    std::string name_flow_rule = ss_list.get<std::string>("Flow Rule");
+    Teuchos::ParameterList f_list = p->sublist(name_flow_rule);
+    std::string type_flow_rule = f_list.get<std::string>("Type");
 
-    if (typeFlowRule == "Power Law") {
-      slip_systems_[num_ss].flowRule = POWER_LAW;
-      slip_systems_[num_ss].rateSlipReference_ = f_list.get<RealType>("Gamma Dot", 0.0);
-      slip_systems_[num_ss].exponentRate_ = f_list.get<RealType>("Gamma Exponent", 0.0);
+    if (type_flow_rule == "Power Law") {
+      slip_systems_[num_ss].flow_rule = POWER_LAW;
+      slip_systems_[num_ss].rate_slip_reference_ = f_list.get<RealType>("Gamma Dot", 0.0);
+      slip_systems_[num_ss].exponent_rate_ = f_list.get<RealType>("Gamma Exponent", 0.0);
     }
-    else if (typeFlowRule == "Thermal Activation") {
-      slip_systems_[num_ss].flowRule = THERMAL_ACTIVATION;
-      slip_systems_[num_ss].rateSlipReference_ = f_list.get<RealType>("Gamma Dot", 0.0);
-      slip_systems_[num_ss].energyActivation_ = f_list.get<RealType>("Activation Energy", 0.0);
+    else if (type_flow_rule == "Thermal Activation") {
+      slip_systems_[num_ss].flow_rule = THERMAL_ACTIVATION;
+      slip_systems_[num_ss].rate_slip_reference_ = f_list.get<RealType>("Gamma Dot", 0.0);
+      slip_systems_[num_ss].energy_activation_ = f_list.get<RealType>("Activation Energy", 0.0);
     }
 
     //
     // Obtain hardening law parameters
     //
-    std::string nameHardeningLaw = ss_list.get<std::string>("Hardening Law");
-    Teuchos::ParameterList h_list = p->sublist(nameHardeningLaw);
-    std::string typeHardeningLaw = h_list.get<std::string>("Type");
+    std::string name_hardening_law = ss_list.get<std::string>("Hardening Law");
+    Teuchos::ParameterList h_list = p->sublist(name_hardening_law);
+    std::string type_hardening_law = h_list.get<std::string>("Type");
 
-    if (typeHardeningLaw == "Exponential") {
-      slip_systems_[num_ss].hardeningLaw = EXPONENTIAL;
+    if (type_hardening_law == "Exponential") {
+      slip_systems_[num_ss].hardening_law = EXPONENTIAL;
       slip_systems_[num_ss].H_ = h_list.get<RealType>("Hardening", 0.0);
       slip_systems_[num_ss].Rd_ = h_list.get<RealType>("Hardening Exponent", 0.0);
       slip_systems_[num_ss].tau_critical_ = h_list.get<RealType>("Tau Critical", 0.0);
     }
-    else if (typeHardeningLaw == "Saturation") {
-      slip_systems_[num_ss].hardeningLaw = SATURATION;
-      slip_systems_[num_ss].resistanceSlipInitial_ = h_list.get<RealType>("Initial Slip Resistance", 0.0);
+    else if (type_hardening_law == "Saturation") {
+      slip_systems_[num_ss].hardening_law = SATURATION;
+      slip_systems_[num_ss].resistance_slip_initial_ = h_list.get<RealType>("Initial Slip Resistance", 0.0);
       // temporary workaround
-      slip_systems_[num_ss].tau_critical_ = slip_systems_[num_ss].resistanceSlipInitial_;
-      slip_systems_[num_ss].rateHardening_ = h_list.get<RealType>("Hardening Rate", 0.0);
-      slip_systems_[num_ss].stressSaturationInitial_ = h_list.get<RealType>("Initial Saturation Stress", 0.0);
-      slip_systems_[num_ss].exponentSaturation_ = h_list.get<RealType>("Saturation Exponent", 0.0);
+      slip_systems_[num_ss].tau_critical_ = slip_systems_[num_ss].resistance_slip_initial_;
+      slip_systems_[num_ss].rate_hardening_ = h_list.get<RealType>("Hardening Rate", 0.0);
+      slip_systems_[num_ss].stress_saturation_initial_ = h_list.get<RealType>("Initial Saturation Stress", 0.0);
+      slip_systems_[num_ss].exponent_saturation_ = h_list.get<RealType>("Saturation Exponent", 0.0);
     }
 
     if (verbosity_ > 2) {
       std::cout << "Slip system number " << num_ss << std::endl;
-      std::cout << "Hardening law " << slip_systems_[num_ss].hardeningLaw << std::endl;
+      std::cout << "Hardening law " << slip_systems_[num_ss].hardening_law << std::endl;
       std::cout << "H " << slip_systems_[num_ss].H_ << std::endl;
       std::cout << "Rd " << slip_systems_[num_ss].Rd_ << std::endl;
       std::cout << "Tau critical " << slip_systems_[num_ss].tau_critical_ << std::endl;
-      std::cout << "Initial slip resistance " << slip_systems_[num_ss].resistanceSlipInitial_ << std::endl;
-      std::cout << "Hardening rate " << slip_systems_[num_ss].rateHardening_ << std::endl;
-      std::cout << "Initial saturation stress " << slip_systems_[num_ss].stressSaturationInitial_ << std::endl;
-      std::cout << "Saturation exponent " << slip_systems_[num_ss].exponentSaturation_ << std::endl;
+      std::cout << "Initial slip resistance " << slip_systems_[num_ss].resistance_slip_initial_ << std::endl;
+      std::cout << "Hardening rate " << slip_systems_[num_ss].rate_hardening_ << std::endl;
+      std::cout << "Initial saturation stress " << slip_systems_[num_ss].stress_saturation_initial_ << std::endl;
+      std::cout << "Saturation exponent " << slip_systems_[num_ss].exponent_saturation_ << std::endl;
     }
 
   }
@@ -514,27 +514,13 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   // DJL todo:  Can we just use RealType for most of these?
 
   // Known quantities
-  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> F_np1;
-  F_np1.set_dimension(num_dims_);
-  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Fp_n;
-  Fp_n.set_dimension(num_dims_);
-  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_n;
-  slip_n.set_dimension(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_dot_n;
-  slip_dot_n.set_dimension(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_n;
-  hardness_n.set_dimension(num_slip_);
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> F_np1(num_dims_);
+  Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Fp_n(num_dims_);
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_n(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_dot_n(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_n(num_slip_);
 
   // Unknown quantities
-  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> 
-  rateSlip(Intrepid2::ZEROS);
-  rateSlip.set_dimension(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1;
-  slip_np1.set_dimension(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1_km1;
-  slip_np1_km1.set_dimension(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> delta_delta_slip;
-  delta_delta_slip.set_dimension(num_slip_);
   Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Lp_np1;
   Lp_np1.set_dimension(num_dims_);
   Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> Fp_np1;
@@ -543,12 +529,23 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   sigma_np1.set_dimension(num_dims_);
   Intrepid2::Tensor<ScalarT, CP::MAX_NUM_DIM> S_np1;
   S_np1.set_dimension(num_dims_);
+
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> 
+  rate_slip(Intrepid2::ZEROS);
+  rate_slip.set_dimension(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1;
+  slip_np1.set_dimension(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_np1_km1;
+  slip_np1_km1.set_dimension(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> delta_delta_slip;
+  delta_delta_slip.set_dimension(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> shear_np1;
   shear_np1.set_dimension(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> slip_residual;
   slip_residual.set_dimension(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_NUM_SLIP> hardness_np1;
   hardness_np1.set_dimension(num_slip_);
+
   ScalarT norm_slip_residual;
   ScalarT equivalent_plastic_strain;
 
@@ -630,14 +627,14 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           shear_np1);
 
         for (int iSlipSystem(0); iSlipSystem < num_slip_; ++iSlipSystem) {
-          rateSlip[iSlipSystem] = (*(previous_slips_dot[iSlipSystem]))(cell, pt);
+          rate_slip[iSlipSystem] = (*(previous_slips_dot[iSlipSystem]))(cell, pt);
         }
 
         // compute hardness_np1 using slip_n
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
           dt,
-          rateSlip, 
+          rate_slip, 
           hardness_n, 
           hardness_np1);
 
@@ -700,16 +697,16 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           Fp_np1);
 
         if(dt > 0.0){
-          rateSlip = (slip_np1 - slip_n) / dt;
+          rate_slip = (slip_np1 - slip_n) / dt;
         }
         else{
-          rateSlip.fill(Intrepid2::ZEROS);
+          rate_slip.fill(Intrepid2::ZEROS);
         }
 
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
           dt,
-          rateSlip, 
+          rate_slip, 
           hardness_n, 
           hardness_np1);
 
@@ -891,17 +888,17 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           Fp_np1);
 
         if(dt > 0.0){
-          rateSlip = (slip_np1 - slip_n) / dt;
+          rate_slip = (slip_np1 - slip_n) / dt;
         }
         else{
-          rateSlip.fill(Intrepid2::ZEROS);
+          rate_slip.fill(Intrepid2::ZEROS);
         }
 
         // Compute hardness_np1
         CP::updateHardness<CP::MAX_NUM_DIM, CP::MAX_NUM_SLIP>(
           slip_systems_, 
           dt,
-          rateSlip, 
+          rate_slip, 
           hardness_n, 
           hardness_np1);
 

@@ -30,13 +30,13 @@ struct SlipSystemStruct
   Intrepid2::Tensor<RealType, NumDimT> projector_;
 
   //! Flow rule parameters
-  int flowRule;
-  RealType rateSlipReference_, exponentRate_, energyActivation_;
+  int flow_rule;
+  RealType rate_slip_reference_, exponent_rate_, energy_activation_;
 
   // hardening law parameters
-  int hardeningLaw;
-  RealType tau_critical_, H_, Rd_, resistanceSlipInitial_,
-    rateHardening_, stressSaturationInitial_, exponentSaturation_;
+  int hardening_law;
+  RealType tau_critical_, H_, Rd_, resistance_slip_initial_,
+    rate_hardening_, stress_saturation_initial_, exponent_saturation_;
 
 };
 
@@ -66,7 +66,7 @@ void
 updateHardness(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rateSlip,
+    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
     Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
     Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
 
