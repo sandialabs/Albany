@@ -3,7 +3,7 @@ import exodus
 import numpy
 import matplotlib.pyplot as plt
 
-file_name = "MultiSlipPlaneHard_Implicit_Active_Sets.exo"
+file_name = "MultiSlipPlaneHard_Implicit.gold.exo"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "gamma_1_1"
 dep_var_name = "tau_hard_1_1"
