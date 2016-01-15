@@ -24,7 +24,7 @@ miniMinimize(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid2::Vector<RealType, N> & soln);
+    Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
 
 template<typename MIN, typename STEP, typename FN, typename T, Intrepid2::Index N>
 void
@@ -33,6 +33,60 @@ miniMinimize(
     STEP & step_method,
     FN & function,
     Intrepid2::Vector<T, N> & soln);
+
+//
+//
+//
+template<
+typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
+struct MiniMinimize
+{
+  MiniMinimize(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<typename EvalT::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
+{
+  MiniMinimize(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>
+{
+  MiniMinimize(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>
+{
+  MiniMinimize(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
+{
+  MiniMinimize(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+};
 
 ///
 /// Deal with derivative information for all the mini solvers.

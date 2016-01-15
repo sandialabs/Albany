@@ -8,6 +8,137 @@ namespace LCM
 {
 
 //
+// MiniMinimizer
+//
+template<
+typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
+MiniMinimize<MIN, STEP, FN, EvalT, N>::MiniMinimize(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<typename EvalT::ScalarT, N> & soln)
+{
+  std::cerr << __PRETTY_FUNCTION__ << '\n';
+  std::cerr << "ERROR: Instantiation of default MiniMinimize class.\n";
+  std::cerr << "This means a MiniMinimize specialization is missing.\n";
+  exit(1);
+  return;
+}
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>::MiniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
+{
+  minimizer.solve(step_method, function, soln);
+  return;
+}
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>::MiniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid2::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln)
+{
+  // Make sure that if Albany is compiled with a static FAD type
+  // there won't be confusion with MiniSolver's FAD.
+    using AD = Intrepid2::FAD<RealType, N>;
+
+    using T = PHAL::AlbanyTraits::Jacobian::ScalarT;
+
+    static_assert(
+        std::is_same<T, AD>::value == false,
+        "Albany and MiniSolver Fad types not allowed to be equal.");
+
+    using ValueT = typename Sacado::ValueType<T>::type;
+
+    Intrepid2::Vector<ValueT, N>
+    soln_val = Sacado::Value<Intrepid2::Vector<T, N>>::eval(soln);
+
+    minimizer.solve(step_method, function, soln_val);
+
+    auto const
+    dimension = soln.get_dimension();
+
+    // Put values back in solution vector
+    for (auto i = 0; i < dimension; ++i) {
+      soln(i).val() = soln_val(i);
+    }
+
+    // Get the Hessian evaluated at the solution.
+    Intrepid2::Tensor<ValueT, N>
+    DrDx = function.hessian(soln_val);
+
+    // Now compute gradient with solution that has Albany sensitivities.
+    Intrepid2::Vector<T, N>
+    resi = function.gradient(soln);
+
+    // Solve for solution sensitivities.
+    computeFADInfo(resi, DrDx, soln);
+
+    return;
+}
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>::MiniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid2::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln)
+{
+  // Make sure that if Albany is compiled with a static FAD type
+  // there won't be confusion with MiniSolver's FAD.
+    using AD = Intrepid2::FAD<RealType, N>;
+
+    using T = PHAL::AlbanyTraits::Jacobian::ScalarT;
+
+    static_assert(
+        std::is_same<T, AD>::value == false,
+        "Albany and MiniSolver Fad types not allowed to be equal.");
+
+    using ValueT = typename Sacado::ValueType<T>::type;
+
+    Intrepid2::Vector<ValueT, N>
+    soln_val = Sacado::Value<Intrepid2::Vector<T, N>>::eval(soln);
+
+    minimizer.solve(step_method, function, soln_val);
+
+    auto const
+    dimension = soln.get_dimension();
+
+    // Put values back in solution vector
+    for (auto i = 0; i < dimension; ++i) {
+      soln(i).val() = soln_val(i);
+    }
+
+    // Get the Hessian evaluated at the solution.
+    Intrepid2::Tensor<ValueT, N>
+    DrDx = function.hessian(soln_val);
+
+    // Now compute gradient with solution that has Albany sensitivities.
+    Intrepid2::Vector<T, N>
+    resi = function.gradient(soln);
+
+    // Solve for solution sensitivities.
+    computeFADInfo(resi, DrDx, soln);
+
+    return;
+}
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::MiniMinimize(
+    MIN & minimizer,
+    STEP & step_method,
+    FN & function,
+    Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln)
+{
+  return;
+}
+
+//
 // miniMinimizer
 //
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
@@ -90,7 +221,8 @@ computeFADInfo(
   auto const
   order = r[0].size();
 
-  assert(order > 0 && "FATAL ERROR: Expected Fad info but there is none!");
+  // No FAD info. Nothing to do.
+  if (order == 0) return;
 
   // Extract sensitivities of r wrt p
   Intrepid2::Matrix<S, N>

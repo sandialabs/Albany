@@ -315,29 +315,35 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
 //
 TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 {
-  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
   Intrepid2::Index
-  dimension{2};
+  dim{2};
 
-  LCM::BananaNLS<ValueT>
-  banana;
+  using MIN = Intrepid2::Minimizer<ValueT, dim>;
+  using STEP = Intrepid2::NewtonStep<ValueT, dim>;
+  using FN = LCM::BananaNLS<ValueT>;
+  using VEC = Intrepid2::Vector<ScalarT, dim>;
 
-  Intrepid2::NewtonStep<ValueT, dimension>
-  step;
-
-  Intrepid2::Minimizer<ValueT, dimension>
+  MIN
   minimizer;
 
-  Intrepid2::Vector<ScalarT, dimension>
+  STEP
+  step;
+
+  FN
+  banana;
+
+  VEC
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::miniMinimize(minimizer, step, banana, x);
+  LCM::MiniMinimize<MIN, STEP, FN, EvalT, dim>(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
@@ -349,40 +355,35 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 //
 TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
 {
-  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using EvalT = PHAL::AlbanyTraits::Jacobian;
+  using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
   Intrepid2::Index
-  dimension{2};
+  dim{2};
 
-  LCM::BananaNLS<ValueT>
-  banana;
+  using MIN = Intrepid2::Minimizer<ValueT, dim>;
+  using STEP = Intrepid2::NewtonStep<ValueT, dim>;
+  using FN = LCM::BananaNLS<ValueT>;
+  using VEC = Intrepid2::Vector<ScalarT, dim>;
 
-  Intrepid2::NewtonStep<ValueT, dimension>
-  step;
-
-  Intrepid2::Minimizer<ValueT, dimension>
+  MIN
   minimizer;
 
-  Intrepid2::Vector<ScalarT, dimension>
+  STEP
+  step;
+
+  FN
+  banana;
+
+  VEC
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  // Fill in some Fad info
-  constexpr
-  Intrepid2::Index
-  order{1};
-
-  x(0).resize(order);
-  x(1).resize(order);
-
-  x(0).fastAccessDx(0) = 1.0;
-  x(1).fastAccessDx(0) = 1.0;
-
-  LCM::miniMinimize(minimizer, step, banana, x);
+  LCM::MiniMinimize<MIN, STEP, FN, EvalT, dim>(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
