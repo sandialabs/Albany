@@ -32,7 +32,10 @@ CP::confirmTensorSanity(
   int dim = input.get_dimension();
   for (int i = 0; i < dim; i++) {
     for (int j = 0; j < dim; j++) {
-      if (!boost::math::isfinite(
+      assert(boost::math::isfinite(Sacado::ScalarValue<ArgT>::eval(input(i, j)))==true);
+      // Disabling this capability for release.
+      // We will revisit this option when we can cut the time step from the constitutive model.
+      /* if (!boost::math::isfinite(
           Sacado::ScalarValue<ArgT>::eval(input(i, j)))) {
         std::string msg =
             "**** Invalid data detected in CP::confirmTensorSanity(): "
@@ -42,7 +45,7 @@ CP::confirmTensorSanity(
                 Sacado::ScalarValue<ArgT>::eval(input(i, j))),
             std::logic_error,
             msg);
-      }
+      } */
     }
   }
 }
