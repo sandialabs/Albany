@@ -345,8 +345,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
         x(0) = 0.0;
 
-        LCM::ADMinimizerManager<MIN, STEP, NLS, EvalT, nls_dim>
-        ad_min_mgr(minimizer, step, j2nls, x);
+        LCM::MiniSolver<MIN, STEP, NLS, EvalT, nls_dim>
+        mini_solver(minimizer, step, j2nls, x);
 
         ScalarT const
         alpha = eqpsold(cell, pt) + sq23 * x(0);

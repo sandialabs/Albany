@@ -8,27 +8,27 @@ namespace LCM
 {
 
 //
-// ADMinimizerManagerr
+// MiniSolverr
 //
 template<
 typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
-ADMinimizerManager<MIN, STEP, FN, EvalT, N>::
-ADMinimizerManager(
+MiniSolver<MIN, STEP, FN, EvalT, N>::
+MiniSolver(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
       Intrepid2::Vector<typename EvalT::ScalarT, N> & soln)
 {
   std::cerr << __PRETTY_FUNCTION__ << '\n';
-  std::cerr << "ERROR: Instantiation of default ADMinimizerManager class.\n";
-  std::cerr << "This means a ADMinimizerManager specialization is missing.\n";
+  std::cerr << "ERROR: Instantiation of default MiniSolver class.\n";
+  std::cerr << "This means a MiniSolver specialization is missing.\n";
   exit(1);
   return;
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>::
-ADMinimizerManager(
+MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>::
+MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
@@ -39,8 +39,8 @@ ADMinimizerManager(
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>::
-ADMinimizerManager(
+MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>::
+MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
@@ -86,8 +86,8 @@ ADMinimizerManager(
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>::
-ADMinimizerManager(
+MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>::
+MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
@@ -133,8 +133,8 @@ ADMinimizerManager(
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::
-ADMinimizerManager(
+MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::
+MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,

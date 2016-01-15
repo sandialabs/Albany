@@ -825,8 +825,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             }
 
 
-            LCM::ADMinimizerManager<MIN, STEP, NLS, EvalT, NLS_DIM>
-            ad_min_mgr(minimizer, step, slip_nls, x);
+            LCM::MiniSolver<MIN, STEP, NLS, EvalT, NLS_DIM>
+            mini_solver(minimizer, step, slip_nls, x);
 
             for(int i=0; i<num_slip_; ++i) {
               slip_np1[i] = x[i];
@@ -860,8 +860,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             x(i + num_slip_) = Sacado::ScalarValue<ScalarT>::eval(hardness_np1(i));
           }
 
-          LCM::ADMinimizerManager<MIN, STEP, NLS, EvalT, NLS_DIM>
-          ad_min_mgr(minimizer, step, slip_hardness_nls, x);
+          LCM::MiniSolver<MIN, STEP, NLS, EvalT, NLS_DIM>
+          mini_solver(minimizer, step, slip_hardness_nls, x);
 
           for(int i=0; i<num_slip_; ++i) {
             slip_np1[i] = x[i];
