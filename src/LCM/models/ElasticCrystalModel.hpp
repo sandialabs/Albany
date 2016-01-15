@@ -25,7 +25,7 @@ namespace LCM
   namespace EC
   {
     // Do not change it!
-    static constexpr Intrepid2::Index MAX_NUM_DIM = 3;
+    static constexpr Intrepid2::Index MAX_DIM = 3;
   }
 
 
@@ -102,7 +102,7 @@ namespace LCM
       c35_, c46_;
 
     // Fourth-order tensor of elastic coefficients.
-    Intrepid2::Tensor4< RealType, EC::MAX_NUM_DIM > C_;
+    Intrepid2::Tensor4< RealType, EC::MAX_DIM > C_;
 
     // Bunge angles
     RealType phi1_, Phi_, phi2_;

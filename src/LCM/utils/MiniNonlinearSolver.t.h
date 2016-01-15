@@ -8,25 +8,27 @@ namespace LCM
 {
 
 //
-// MiniMinimizer
+// ADMinimizerManagerr
 //
 template<
 typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
-MiniMinimize<MIN, STEP, FN, EvalT, N>::MiniMinimize(
+ADMinimizerManager<MIN, STEP, FN, EvalT, N>::
+ADMinimizerManager(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
       Intrepid2::Vector<typename EvalT::ScalarT, N> & soln)
 {
   std::cerr << __PRETTY_FUNCTION__ << '\n';
-  std::cerr << "ERROR: Instantiation of default MiniMinimize class.\n";
-  std::cerr << "This means a MiniMinimize specialization is missing.\n";
+  std::cerr << "ERROR: Instantiation of default ADMinimizerManager class.\n";
+  std::cerr << "This means a ADMinimizerManager specialization is missing.\n";
   exit(1);
   return;
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>::MiniMinimize(
+ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>::
+ADMinimizerManager(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
@@ -37,7 +39,8 @@ MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>::MiniMinimize(
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>::MiniMinimize(
+ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>::
+ADMinimizerManager(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
@@ -83,7 +86,8 @@ MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>::MiniMinimize(
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>::MiniMinimize(
+ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>::
+ADMinimizerManager(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
@@ -129,7 +133,8 @@ MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>::MiniMinimize(
 }
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::MiniMinimize(
+ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::
+ADMinimizerManager(
     MIN & minimizer,
     STEP & step_method,
     FN & function,

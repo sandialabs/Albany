@@ -39,9 +39,9 @@ miniMinimize(
 //
 template<
 typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
-struct MiniMinimize
+struct ADMinimizerManager
 {
-  MiniMinimize(
+  ADMinimizerManager(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
@@ -49,9 +49,9 @@ struct MiniMinimize
 };
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
+struct ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
 {
-  MiniMinimize(
+  ADMinimizerManager(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
@@ -59,9 +59,9 @@ struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
 };
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>
+struct ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>
 {
-  MiniMinimize(
+  ADMinimizerManager(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
@@ -69,9 +69,9 @@ struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>
 };
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>
+struct ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>
 {
-  MiniMinimize(
+  ADMinimizerManager(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
@@ -79,9 +79,9 @@ struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>
 };
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-struct MiniMinimize<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
+struct ADMinimizerManager<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
 {
-  MiniMinimize(
+  ADMinimizerManager(
       MIN & minimizer,
       STEP & step_method,
       FN & function,

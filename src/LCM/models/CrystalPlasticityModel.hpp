@@ -43,8 +43,8 @@ public:
   // typedef for automatic differentiation type used in internal Newton loop
   // options are:  DFad (dynamically sized), SFad (static size), SLFad (bounded)
   // typedef typename Sacado::Fad::DFad<ScalarT> Fad;
-  // typedef typename Sacado::Fad::SFad<ScalarT, CP::MAX_NUM_SLIP> Fad;
-  typedef typename Sacado::Fad::SLFad<ScalarT, CP::MAX_NUM_SLIP> Fad;
+  // typedef typename Sacado::Fad::SFad<ScalarT, CP::MAX_SLIP> Fad;
+  typedef typename Sacado::Fad::SLFad<ScalarT, CP::MAX_SLIP> Fad;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
@@ -106,8 +106,8 @@ public:
       /// Crystal elasticity parameters
       ///
       RealType c11_, c12_, c44_, ctest_;
-      Intrepid2::Tensor4<RealType, CP::MAX_NUM_DIM> C_;
-      Intrepid2::Tensor<RealType, CP::MAX_NUM_DIM> orientation_;
+      Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
+      Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
 
       ///
       /// Number of slip systems
@@ -120,7 +120,7 @@ public:
       RealType rate_slip_reference_, exponent_rate_, energy_activation_, H_, Rd_, tau_critical_,
         resistance_slip_initial_, rate_hardening_, stress_saturation_initial_,
         exponent_saturation_;
-      std::vector< CP::SlipSystemStruct<CP::MAX_NUM_DIM,CP::MAX_NUM_SLIP> > 
+      std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
       slip_systems_;
 
       IntegrationScheme integration_scheme_;

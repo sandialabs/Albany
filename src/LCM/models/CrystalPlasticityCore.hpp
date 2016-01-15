@@ -13,8 +13,8 @@
 namespace CP
 {
 
-static constexpr Intrepid2::Index MAX_NUM_DIM = 3;
-static constexpr Intrepid2::Index MAX_NUM_SLIP = 12;
+static constexpr Intrepid2::Index MAX_DIM = 3;
+static constexpr Intrepid2::Index MAX_SLIP = 12;
 
 //! Struct containing slip system information.
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>

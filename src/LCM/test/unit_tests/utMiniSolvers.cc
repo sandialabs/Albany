@@ -343,7 +343,8 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniMinimize<MIN, STEP, FN, EvalT, dim>(minimizer, step, banana, x);
+  LCM::ADMinimizerManager<MIN, STEP, FN, EvalT, dim>
+  ad_mini_mgr(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
@@ -383,7 +384,8 @@ TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniMinimize<MIN, STEP, FN, EvalT, dim>(minimizer, step, banana, x);
+  LCM::ADMinimizerManager<MIN, STEP, FN, EvalT, dim>
+  ad_mini_mgr(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
