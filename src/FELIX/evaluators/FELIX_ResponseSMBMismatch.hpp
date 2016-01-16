@@ -22,6 +22,7 @@ namespace FELIX {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename EvalT::ParamScalarT ParamScalarT;
     
     ResponseSMBMismatch(Teuchos::ParameterList& p,
 			 const Teuchos::RCP<Albany::Layouts>& dl);
@@ -45,7 +46,7 @@ namespace FELIX {
     std::size_t numVecFODims;
     
 
-    PHX::MDField<ScalarT,Cell,Node> H;
+    PHX::MDField<ParamScalarT,Cell,Node> H;
     PHX::MDField<ScalarT,Cell,Node,VecDim> velocity_field;
     PHX::MDField<ScalarT,Cell,Node> SMB;
     PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;

@@ -37,7 +37,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
     meshPart = "upperside";
 
   if(p.isParameter("SMB Name")) {
-   SMB_ptr = Teuchos::rcp(new PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("SMB Name"), dl->node_scalar));
+   SMB = PHX::MDField<ParamScalarT,Cell,Node>(p.get<std::string> ("SMB Name"), dl->node_scalar);
    have_SMB = true;
   } else
     have_SMB = false;
@@ -49,7 +49,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
   this->addDependentField(V);
   this->addDependentField(coordVec);
   if(have_SMB)
-    this->addDependentField(*SMB_ptr);
+    this->addDependentField(SMB);
 
   this->addEvaluatedField(Residual);
 
@@ -96,7 +96,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(V,fm);
   this->utils.setFieldData(coordVec, fm);
   if(have_SMB)
-    this->utils.setFieldData(*SMB_ptr, fm);
+    this->utils.setFieldData(SMB, fm);
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -206,7 +206,7 @@ evaluateFields(typename Traits::EvalData workset)
       Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
+      Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dH_Cell(numNodes);
@@ -226,7 +226,7 @@ evaluateFields(typename Traits::EvalData workset)
         std::size_t node = side.node[i]; //it->second;
         dH_Cell(node) = dH(elem_LID, node);
         H0_Cell(node) = H0(elem_LID, node);
-        SMB_Cell(node) = have_SMB ? (*SMB_ptr)(elem_LID, node) : ScalarT(0.0);
+        SMB_Cell(node) = have_SMB ? SMB(elem_LID, node) : ScalarT(0.0);
         for (std::size_t dim = 0; dim < numVecFODims; ++dim)
           V_Cell(node, dim) = V(elem_LID, node, dim);
       }

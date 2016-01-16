@@ -39,14 +39,14 @@ public:
 
 private:
 
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell>            mu_i;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  h;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  phi_H;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  u_b;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  omega;
+  PHX::MDField<ParamScalarT,Cell>            mu_i;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  h;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  phi_H;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  u_b;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  omega;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint>  rhs;

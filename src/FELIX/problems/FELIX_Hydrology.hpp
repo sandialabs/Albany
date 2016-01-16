@@ -239,31 +239,31 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Drainage Sheet Depth
-  ev = evalUtils.constructDOFInterpolationEvaluator("h");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("h");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Ice Thickness
-  ev = evalUtils.constructDOFInterpolationEvaluator("H");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("H");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Surface Height
-  ev = evalUtils.constructDOFInterpolationEvaluator("z_s");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("z_s");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Sliding Velocity Norm
-  ev = evalUtils.constructDOFInterpolationEvaluator("u_b");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("u_b");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Basal Friction Coefficient
-  ev = evalUtils.constructDOFInterpolationEvaluator("beta");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("beta");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Surface Water Input
-  ev = evalUtils.constructDOFInterpolationEvaluator("omega");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("omega");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Geothermal Flux
-  ev = evalUtils.constructDOFInterpolationEvaluator("G");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("G");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // ----- Hydrology Hydrostatic Potential ---- //

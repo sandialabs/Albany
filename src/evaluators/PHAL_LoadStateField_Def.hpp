@@ -20,7 +20,7 @@ LoadStateField(const Teuchos::ParameterList& p)
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
 
-  PHX::MDField<ScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
+  PHX::MDField<ParamScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
   data = f;
 
   this->addEvaluatedField(data);
@@ -43,7 +43,7 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   //     << fieldName << " with size " << data.size() << endl;
 
   const Albany::MDArray& stateToLoad = (*workset.stateArrayPtr)[stateName];
-  PHAL::MDFieldIterator<ScalarT> d(data);
+  PHAL::MDFieldIterator<ParamScalarT> d(data);
   for (int i = 0; ! d.done() && i < stateToLoad.size(); ++d, ++i)
     *d = stateToLoad[i];
   for ( ; ! d.done(); ++d) *d = 0.;

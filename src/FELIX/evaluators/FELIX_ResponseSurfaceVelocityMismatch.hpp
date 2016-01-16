@@ -23,6 +23,7 @@ namespace FELIX {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename EvalT::ParamScalarT ParamScalarT;
     
     ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p,
 			 const Teuchos::RCP<Albany::Layouts>& dl);
@@ -46,9 +47,9 @@ namespace FELIX {
     std::size_t numVecDim;
     
     PHX::MDField<ScalarT,Cell,Node,VecDim> velocity_field;
-    PHX::MDField<ScalarT,Cell,Node,VecDim> surfaceVelocity_field;
-    PHX::MDField<ScalarT,Cell,Node,VecDim> velocityRMS_field;
-    PHX::MDField<ScalarT,Cell,Node> basal_friction_field;
+    PHX::MDField<ParamScalarT,Cell,Node,VecDim> surfaceVelocity_field;
+    PHX::MDField<ParamScalarT,Cell,Node,VecDim> velocityRMS_field;
+    PHX::MDField<ParamScalarT,Cell,Node> basal_friction_field;
     PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
     Teuchos::RCP<shards::CellTopology> cellType;

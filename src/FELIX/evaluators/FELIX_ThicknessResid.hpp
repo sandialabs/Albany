@@ -41,13 +41,14 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
 
   PHX::MDField<ScalarT,Cell,Node> dH;
-  PHX::MDField<ScalarT,Cell,Node> H0;
+  PHX::MDField<ParamScalarT,Cell,Node> H0;
   PHX::MDField<ScalarT,Cell,Node,Dim> V;
-  Teuchos::RCP<PHX::MDField<ScalarT,Cell,Node> > SMB_ptr;
+  PHX::MDField<ParamScalarT,Cell,Node> SMB;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

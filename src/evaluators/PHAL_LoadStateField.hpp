@@ -34,10 +34,9 @@ public:
   
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  PHX::MDField<ScalarT> data;
+  PHX::MDField<ParamScalarT> data;
   std::string fieldName;
   std::string stateName;
 };

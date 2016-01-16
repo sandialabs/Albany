@@ -127,6 +127,11 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFInterpolationEvaluator(
        const std::string& dof_names, int offsetToFirstDOF=0);
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+      constructDOFInterpolationEvaluator_noDeriv(
+         const std::string& dof_names);
+
     //! Same as above, for Interpolating the Gradient
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationEvaluator(

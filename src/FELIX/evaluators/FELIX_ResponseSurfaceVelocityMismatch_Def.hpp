@@ -200,7 +200,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
+      Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> surfaceVelocityOnCell(1, numNodes, numVecDim);
@@ -315,10 +315,10 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
       // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
+      Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> basalFrictionOnCell(1, numNodes);
+      Intrepid2::FieldContainer_Kokkos<ParamScalarT, PHX::Layout, PHX::Device> basalFrictionOnCell(1, numNodes);
 
       for (std::size_t node = 0; node < numNodes; ++node) {
         basalFrictionOnCell(0,node) = basal_friction_field(elem_LID, node);

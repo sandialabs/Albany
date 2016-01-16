@@ -351,7 +351,7 @@ FELIX::StokesFO::constructEvaluators(
 
   std::string sh = "surface_height";
   fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(sh));
+      (evalUtils.constructDOFInterpolationEvaluator_noDeriv(sh));
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFGradInterpolationEvaluator_noDeriv(sh));
 

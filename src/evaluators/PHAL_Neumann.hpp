@@ -44,6 +44,7 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   NeumannBase(const Teuchos::ParameterList& p);
 
@@ -160,11 +161,11 @@ protected:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,Node> dof;
   PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
-  PHX::MDField<ScalarT,Cell,Node> beta_field;
-  PHX::MDField<ScalarT,Cell,Node> roughness_field;
-  PHX::MDField<ScalarT,Cell,Node> thickness_field;
-  PHX::MDField<ScalarT,Cell,Node> elevation_field;
-  PHX::MDField<ScalarT,Cell,Node> bedTopo_field;
+  PHX::MDField<ParamScalarT,Cell,Node> beta_field;
+  PHX::MDField<ParamScalarT,Cell,Node> roughness_field;
+  PHX::MDField<ParamScalarT,Cell,Node> thickness_field;
+  PHX::MDField<ParamScalarT,Cell,Node> elevation_field;
+  PHX::MDField<ParamScalarT,Cell,Node> bedTopo_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
   Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureCell;

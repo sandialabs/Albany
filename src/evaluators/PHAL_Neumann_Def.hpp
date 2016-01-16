@@ -177,11 +177,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
 #ifdef ALBANY_FELIX
-      beta_field = PHX::MDField<ScalarT,Cell,Node>(
+      beta_field = PHX::MDField<ParamScalarT,Cell,Node>(
         p.get<std::string>("Beta Field Name"), dl->node_scalar);
-      thickness_field = PHX::MDField<ScalarT,Cell,Node>(
+      thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
         p.get<std::string>("thickness Field Name"), dl->node_scalar);
-      bedTopo_field = PHX::MDField<ScalarT,Cell,Node>(
+      bedTopo_field = PHX::MDField<ParamScalarT,Cell,Node>(
         p.get<std::string>("BedTopo Field Name"), dl->node_scalar);
 #endif
 
@@ -246,7 +246,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
 #ifdef ALBANY_FELIX
-      beta_field = PHX::MDField<ScalarT,Cell,Node>(
+      beta_field = PHX::MDField<ParamScalarT,Cell,Node>(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
       this->addDependentField(beta_field);
 #endif
@@ -285,9 +285,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
 #ifdef ALBANY_FELIX
-       thickness_field = PHX::MDField<ScalarT,Cell,Node>(
+       thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
                            p.get<std::string>("thickness Field Name"), dl->node_scalar);
-       elevation_field = PHX::MDField<ScalarT,Cell,Node>(
+       elevation_field = PHX::MDField<ParamScalarT,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
 
         this->addDependentField(thickness_field);
@@ -531,7 +531,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-    Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame
+    Intrepid2::CellTools<RealType>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
 

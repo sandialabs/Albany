@@ -53,6 +53,38 @@ private:
   std::size_t numQPs;
 };
 
+template<typename EvalT, typename Traits>
+class DOFInterpolation_noDeriv : public PHX::EvaluatorWithBaseImpl<Traits>,
+       public PHX::EvaluatorDerived<EvalT, Traits>  {
+
+public:
+
+  DOFInterpolation_noDeriv(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef typename EvalT::ParamScalarT ParamScalarT;
+
+  // Input:
+  //! Values at nodes
+  PHX::MDField<ParamScalarT,Cell,Node> val_node;
+  //! Basis Functions
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+
+  // Output:
+  //! Values at quadrature points
+  PHX::MDField<ParamScalarT,Cell,QuadPoint> val_qp;
+
+  std::size_t numNodes;
+  std::size_t numQPs;
+};
+
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
 class DOFInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
