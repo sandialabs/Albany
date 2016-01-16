@@ -55,29 +55,35 @@ namespace PHAL {
     //   * ScalarT is for quantities that depend on solution/params
     //   * MeshScalarT is for quantities that depend on mesh coords only
     // ******************************************************************
-    template<typename ScalarT_, typename MeshScalarT_>
+    template<typename ScalarT_, typename MeshScalarT_, typename ParamScalarT_>
     struct EvaluationType {
       typedef ScalarT_ ScalarT;
       typedef MeshScalarT_ MeshScalarT;
+      typedef ParamScalarT_ ParamScalarT;
     };
 
-    struct Residual : EvaluationType<RealType, RealType> {};
-#ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
-    struct Jacobian : EvaluationType<FadType,  FadType> {};
+    struct Residual : EvaluationType<RealType, RealType, RealType> {};
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION) && defined(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION)
+    struct Jacobian : EvaluationType<FadType,  FadType, FadType> {};
+#elif defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    struct Jacobian : EvaluationType<FadType,  FadType, FadType> {};
+#elif defined(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION)
+    struct Jacobian : EvaluationType<FadType,  RealType, FadType> {};
 #else
-    struct Jacobian : EvaluationType<FadType,  RealType> {};
+    struct Jacobian : EvaluationType<FadType,  RealType, RealType> {};
 #endif
 
-#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION) || defined(ALBANY_MESH_TANFAD)
-    struct Tangent  : EvaluationType<TanFadType,TanFadType> {};
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+    struct Tangent  : EvaluationType<TanFadType,TanFadType, TanFadType> {};
 #else
-    struct Tangent  : EvaluationType<TanFadType, RealType> {};
+    struct Tangent  : EvaluationType<TanFadType, RealType, TanFadType> {};
 #endif
 
 #if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
-    struct DistParamDeriv : EvaluationType<TanFadType,TanFadType> {};
+    struct DistParamDeriv : EvaluationType<TanFadType, TanFadType, TanFadType> {};
 #else
-    struct DistParamDeriv : EvaluationType<TanFadType, RealType> {};
+    struct DistParamDeriv : EvaluationType<TanFadType, RealType, TanFadType> {};
 #endif
 
 
