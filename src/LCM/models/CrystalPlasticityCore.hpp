@@ -7,7 +7,6 @@
 #if !defined(CrystalPlasticityCore_hpp)
 #define CrystalPlasticityCore_hpp
 
-#include <Intrepid2_MiniTensor.h>
 #include <MiniNonlinearSolver.h>
 
 namespace CP
