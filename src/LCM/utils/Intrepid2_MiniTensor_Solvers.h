@@ -205,6 +205,11 @@ struct Step_Base
   }
 };
 
+enum class StepType
+{
+  UNDEFINED = 0, NEWTON = 1, TRUST_REGION = 2, CG = 3, LINE_SEARCH_REG = 4
+};
+
 ///
 /// Plain Newton Step
 ///

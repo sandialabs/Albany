@@ -13,7 +13,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
-#include "LCM/models/ConstitutiveModel.hpp"
+#include "ConstitutiveModel.hpp"
 #include <Intrepid2_MiniTensor.h>
 #include "Intrepid2_MiniTensor_Solvers.h"
 #include <MiniNonlinearSolver.h>
@@ -127,11 +127,13 @@ public:
 
       IntegrationScheme integration_scheme_;
       ResidualType residual_type_;
+      Intrepid2::StepType step_type_;
       FlowRule flow_rule_;
       HardeningLaw hardening_law_;
       RealType implicit_nonlinear_solver_relative_tolerance_;
       RealType implicit_nonlinear_solver_absolute_tolerance_;
       int implicit_nonlinear_solver_max_iterations_;
+      int implicit_nonlinear_solver_min_iterations_;
       bool apply_slip_predictor_;
       int verbosity_;
       bool write_data_file_;

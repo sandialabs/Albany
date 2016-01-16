@@ -10,7 +10,6 @@
 #include "LocalNonlinearSolver.hpp"
 
 #include <MiniLinearSolver.h>
-#include "../../utils/MiniSolvers.h"
 
 #include <typeinfo>
 #include <iostream>
@@ -28,12 +27,12 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 {
   integration_scheme_ = IntegrationScheme::EXPLICIT;
   if (p->isParameter("Integration Scheme")) {
-    std::string integrationSchemeString = p->get<std::string>(
+    std::string integration_scheme_string = p->get<std::string>(
         "Integration Scheme");
-    if (integrationSchemeString == "Implicit") {
+    if (integration_scheme_string == "Implicit") {
       integration_scheme_ = IntegrationScheme::IMPLICIT;
     }
-    else if (integrationSchemeString == "Explicit") {
+    else if (integration_scheme_string == "Explicit") {
       integration_scheme_ = IntegrationScheme::EXPLICIT;
     }
     else {
@@ -47,12 +46,12 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
   residual_type_ = ResidualType::SLIP;
   if (p->isParameter("Residual Type")) {
-    std::string residualTypeString = p->get<std::string>(
+    std::string residual_type_string = p->get<std::string>(
         "Residual Type");
-    if (residualTypeString == "Slip") {
+    if (residual_type_string == "Slip") {
       residual_type_ = ResidualType::SLIP;
     }
-    else if (residualTypeString == "Slip Hardness") {
+    else if (residual_type_string == "Slip Hardness") {
       residual_type_ = ResidualType::SLIP_HARDNESS;
     }
     else {
@@ -64,16 +63,46 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     }
   }
 
+  step_type_ = Intrepid2::StepType::NEWTON;
+  if (p->isParameter("Nonlinear Solver Step Type")) {
+    std::string step_type_string = p->get<std::string>(
+        "Nonlinear Solver Step Type");
+    if (step_type_string == "Newton") {
+      step_type_ = Intrepid2::StepType::NEWTON;
+    }
+    else if (step_type_string == "Trust Region") {
+      step_type_ = Intrepid2::StepType::TRUST_REGION;
+    }
+    else if (step_type_string == "Conjugate Gradient") {
+      step_type_ = Intrepid2::StepType::CG;
+    }
+    else if (step_type_string == "Line Search Regularized") {
+      step_type_ = Intrepid2::StepType::LINE_SEARCH_REG;
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "\n**** Error in CrystalPlasticityModel, invalid value for \
+            \"Nonlinear Solver Step Type\", must be \"Newton\", \"Trust Region\", \"Conjugate Gradient\", or \"Line Search Regularized\".\n");
+    }
+  }
+
   implicit_nonlinear_solver_relative_tolerance_ = p->get<double>(
       "Implicit Integration Relative Tolerance",
       1.0e-6);
+
   implicit_nonlinear_solver_absolute_tolerance_ = p->get<double>(
       "Implicit Integration Absolute Tolerance",
       1.0e-10);
-  //TODO: either pass this to minisolver, or eliminate; not currently used
+
   implicit_nonlinear_solver_max_iterations_ = p->get<int>(
       "Implicit Integration Max Iterations",
       100);
+
+  implicit_nonlinear_solver_min_iterations_ = p->get<int>(
+      "Implicit Integration Min Iterations",
+      1);
 
   apply_slip_predictor_ = p->get<bool>(
       "Apply Slip Predictor",
@@ -86,6 +115,13 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   write_data_file_ = p->get<bool>(
       "Write Data File",
       false);
+
+          //Intrepid2::NewtonStep<ValueT, CP::MAX_SLIP> step;
+        //Intrepid2::TrustRegionStep<ValueT, CP::MAX_SLIP> step;
+        //Intrepid2::ConjugateGradientStep<ValueT, CP::MAX_SLIP> step;
+        //Intrepid2::LineSearchRegularizedStep<ValueT, CP::MAX_SLIP> step;
+        //Intrepid2::Minimizer<ValueT, CP::MAX_SLIP> minimizer;
+
 
   slip_systems_.resize(num_slip_);
 
@@ -104,9 +140,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   c12_ = e_list.get<RealType>("C12");
   c44_ = e_list.get<RealType>("C44");
 
-  Intrepid2::Tensor4<RealType, CP::MAX_DIM> C;
+  Intrepid2::Tensor4<RealType, CP::MAX_DIM> C(Intrepid2::ZEROS);
   C.set_dimension(num_dims_);
-  C.fill(Intrepid2::ZEROS);
+
   for (int i = 0; i < num_dims_; ++i) {
     C(i, i, i, i) = c11_;
     for (int j = i + 1; j < num_dims_; ++j) {
@@ -680,6 +716,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
         minimizer.rel_tol = implicit_nonlinear_solver_relative_tolerance_;
         minimizer.abs_tol = implicit_nonlinear_solver_absolute_tolerance_;
+        minimizer.max_num_iter = implicit_nonlinear_solver_max_iterations_;
+        minimizer.min_num_iter = implicit_nonlinear_solver_min_iterations_;
 
         //
         // Chose residual type
@@ -763,12 +801,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         break;
 
       }
-
-        //Intrepid2::NewtonStep<ValueT, CP::MAX_SLIP> step;
-        //Intrepid2::TrustRegionStep<ValueT, CP::MAX_SLIP> step;
-        //Intrepid2::ConjugateGradientStep<ValueT, CP::MAX_SLIP> step;
-        //Intrepid2::LineSearchRegularizedStep<ValueT, CP::MAX_SLIP> step;
-        //Intrepid2::Minimizer<ValueT, CP::MAX_SLIP> minimizer;
 
         if(!minimizer.converged){
           minimizer.printReport(std::cout);
