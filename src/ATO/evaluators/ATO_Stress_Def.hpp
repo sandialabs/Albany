@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Layouts.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace ATO {
 

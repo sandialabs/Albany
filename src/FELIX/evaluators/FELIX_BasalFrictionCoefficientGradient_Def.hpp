@@ -48,7 +48,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_FIELD;
 
-    beta_given = PHX::MDField<ScalarT,Cell,Side,Node>(p.get<std::string> ("Given Beta Variable Name"), dl->side_node_scalar);
+    beta_given = PHX::MDField<ParamScalarT,Cell,Side,Node>(p.get<std::string> ("Given Beta Variable Name"), dl->side_node_scalar);
     GradBF     = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->side_node_qp_gradient);
 
     this->addDependentField (beta_given);

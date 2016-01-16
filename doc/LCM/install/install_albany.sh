@@ -1,14 +1,15 @@
 #!/bin/bash
-### use yum list 
-echo ">>> checking yum packages <<<"
+### use dnf list 
+echo ">>> checking dnf packages <<<"
 error="NONE"
 for pkg in \
 blas blas-devel lapack lapack-devel openmpi openmpi-devel \
 netcdf netcdf-devel netcdf-static netcdf-openmpi netcdf-openmpi-devel \
 hdf5 hdf5-devel hdf5-static hdf5-openmpi hdf5-openmpi-devel \
 boost boost-devel boost-static boost-openmpi boost-openmpi-devel \
-matio matio-devel libX11 libX11-devel cmake gcc-c++ git; do
-  query=`yum list $pkg |& tail -n1`
+matio matio-devel cmake gcc-c++ git hwloc-libs hwloc-devel \
+environment-modules; do
+  query=`dnf list $pkg |& tail -n1`
   if [ ${query:0:5} == "Error" ]; then
     echo "MISSING $pkg"
     error="MISSING"
@@ -21,16 +22,13 @@ if [ ! $error == "NONE" ]; then
 fi
 
 if [ ! -d Trilinos ]; then
-  #git clone git@github.com:trilinos/trilinos.git Trilinos
-  git clone software.sandia.gov:/space/git/Trilinos Trilinos
-  #git clone https://github.com/trilinos/trilinos.git Trilinos
+  git clone https://github.com/trilinos/Trilinos.git Trilinos
 else
   echo ">>> Trilinos exists, freshening it <<<"
   (cd Trilinos; git pull)
 fi
 if [ ! -d Albany ]; then
   git clone git@github.com:gahansen/Albany.git Albany
-  #git clone https://github.com/gahansen/Albany.git Albany
 else
   echo ">>> Albany exists, freshening it <<<"
   (cd Albany; git pull)
@@ -48,14 +46,13 @@ ln -sf build.sh config-build-test.sh
 
 echo "NOTE for testing: change FROM & TO email addresses in env-single.sh"
 
-if [[ $PATH != *"/usr/lib64/openmpi/bin"* ]]; then
-  echo "!!! add /usr/lib64/openmpi/bin to PATH !!!"
-  echo "PATH: $PATH"
+if [[ -z $LCM_DIR ]]; then
+  echo "ERROR: Top level LCM directory not defined."
   exit
 fi
-if [[ $LD_LIBRARY_PATH != *"/usr/lib64/openmpi/lib"* ]]; then
-  echo "!!! add /usr/lib64/openmpi/lib to LD_LIBRARY_PATH !!!"
-  echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+if [[ $MODULEPATH != "$LCM_DIR/Albany/doc/LCM/modulefiles" ]]; then
+  echo "ERROR: Path to LCM modules set incorrectly."
+  echo "MODULEPATH: $MODULEPATH"
   exit
 fi
 
@@ -65,13 +62,15 @@ machinetype="serial"
 #buildtype="debug"
 buildtype="release"
 
+module load $machinetype-$toolchain-$buildtype
+
 for target in trilinos albany; do
  dir=${target}-build-${machinetype}-${toolchain}-${buildtype}
  if [ ! -d $dir ]; then
    echo "!!! $dir exists !!!"
  fi
  echo ">>> building ${target}-${machinetype}-${toolchain}-${buildtype} with ${NP} processes <<<"
- ./clean-config-build.sh ${target} ${machinetype} ${toolchain} ${buildtype} $NP >& ${target}_build.log
+ ./clean-config-build.sh ${target} $NP >& ${target}_build.log
 done
 
 dir="albany-build-${machinetype}-${toolchain}-${buildtype}"
@@ -96,4 +95,3 @@ echo " \
 [branch \"master\"]
         rebase = true
 "
-

@@ -12,9 +12,9 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFVecInterpolationSide<EvalT, Traits>::
-DOFVecInterpolationSide(const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename Type>
+DOFVecInterpolationSideBase<EvalT, Traits, Type>::
+DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_node    (p.get<std::string> ("Variable Name"), dl->side_node_vector),
@@ -36,9 +36,23 @@ DOFVecInterpolationSide(const Teuchos::ParameterList& p,
   vecDim = dims[3];
 }
 
-//**********************************************************************
 template<typename EvalT, typename Traits>
-void DOFVecInterpolationSide<EvalT, Traits>::
+DOFVecInterpolationSide<EvalT, Traits>::
+DOFVecInterpolationSide(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) : 
+  DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>(p, dl) {};
+
+template<typename EvalT, typename Traits>
+DOFVecInterpolationSideParam<EvalT, Traits>::
+DOFVecInterpolationSideParam(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) : 
+  DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>(p, dl) {};
+
+
+
+//**********************************************************************
+template<typename EvalT, typename Traits, typename Type>
+void DOFVecInterpolationSideBase<EvalT, Traits, Type>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -48,8 +62,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFVecInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void DOFVecInterpolationSideBase<EvalT, Traits, Type>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())

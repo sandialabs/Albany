@@ -33,6 +33,7 @@ struct DirichletTraits {
   enum { type = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet };
   enum { typeTd = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
   enum { typeKf = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_kfield_bc };
+  enum { typeEq = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_eq_concentration_bc };
   enum { typeTo = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_torsion_bc };
   enum { typeSw = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_schwarz_bc };
   enum { typePd = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_pd_neigh_fit_bc };
@@ -61,6 +62,9 @@ struct DirichletTraits {
 
   static std::string
   constructBCNameOffNodeSet(const std::string& ns, const std::string& dof);
+
+  static std::string
+  constructPressureDepBCName(const std::string& ns, const std::string& dof);
 };
 
 struct NeumannTraits {

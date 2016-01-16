@@ -106,7 +106,7 @@ ThyraAdaptiveModelEvaluator::ThyraAdaptiveModelEvaluator()
 
 ThyraAdaptiveModelEvaluator::ThyraAdaptiveModelEvaluator(
   const RCP<const EpetraExt::ModelEvaluator> &epetraModel,
-  const RCP<LinearOpWithSolveFactoryBase<double> > &W_factory
+  const RCP<LinearOpWithSolveFactoryBase<ST> > &W_factory
   )
   :nominalValuesAndBoundsAreUpdated_(false), stateFunctionScaling_(STATE_FUNC_SCALING_NONE),
    currentInArgsOutArgs_(false), finalPointWasSolved_(false)
@@ -117,7 +117,7 @@ ThyraAdaptiveModelEvaluator::ThyraAdaptiveModelEvaluator(
 
 void ThyraAdaptiveModelEvaluator::initialize(
   const RCP<const EpetraExt::ModelEvaluator> &epetraModel,
-  const RCP<LinearOpWithSolveFactoryBase<double> > &W_factory
+  const RCP<LinearOpWithSolveFactoryBase<ST> > &W_factory
   )
 {
   using Teuchos::implicit_cast;
@@ -179,7 +179,7 @@ ThyraAdaptiveModelEvaluator::getEpetraModel() const
 
 
 void ThyraAdaptiveModelEvaluator::setNominalValues(
-  const ModelEvaluatorBase::InArgs<double>& nominalValues
+  const ModelEvaluatorBase::InArgs<ST>& nominalValues
  )
 {
   nominalValues_.setArgs(nominalValues);
@@ -233,7 +233,7 @@ ThyraAdaptiveModelEvaluator::getStateFunctionScalingVec() const
 
 void ThyraAdaptiveModelEvaluator::uninitialize(
   RCP<const EpetraExt::ModelEvaluator> *epetraModel,
-  RCP<LinearOpWithSolveFactoryBase<double> > *W_factory
+  RCP<LinearOpWithSolveFactoryBase<ST> > *W_factory
   )
 {
   if(epetraModel) *epetraModel = epetraModel_;
@@ -247,7 +247,7 @@ void ThyraAdaptiveModelEvaluator::uninitialize(
 }
 
 
-const ModelEvaluatorBase::InArgs<double>&
+const ModelEvaluatorBase::InArgs<ST>&
 ThyraAdaptiveModelEvaluator::getFinalPoint() const
 {
   return finalPoint_;
@@ -259,14 +259,14 @@ bool ThyraAdaptiveModelEvaluator::finalPointWasSolved() const
   return finalPointWasSolved_;
 }
 
-const Teuchos::RCP<Thyra::VectorBase<double> >
+const Teuchos::RCP<Thyra::VectorBase<ST> >
 ThyraAdaptiveModelEvaluator::resize_g_space(int index, Teuchos::RCP<const Epetra_Map> map){
 
     RCP<const Epetra_Map>
       g_map_j = ( g_map_[index] = map );
     g_map_is_local_[index] = !g_map_j->DistributedGlobal();
     g_space_[index] = create_VectorSpace( g_map_j );
-    const Teuchos::RCP<Thyra::VectorBase<double> > g_j = Thyra::createMember(*g_space_[index]);
+    const Teuchos::RCP<Thyra::VectorBase<ST> > g_j = Thyra::createMember(*g_space_[index]);
 
     RCP<Epetra_Vector> davector = get_Epetra_Vector(*g_map_[index], g_j);
 
@@ -417,21 +417,21 @@ int ThyraAdaptiveModelEvaluator::Ng() const
 }
 
 
-RCP<const VectorSpaceBase<double> >
+RCP<const VectorSpaceBase<ST> >
 ThyraAdaptiveModelEvaluator::get_x_space() const
 {
   return x_space_;
 }
 
 
-RCP<const VectorSpaceBase<double> >
+RCP<const VectorSpaceBase<ST> >
 ThyraAdaptiveModelEvaluator::get_f_space() const
 {
   return f_space_;
 }
 
 
-RCP<const VectorSpaceBase<double> >
+RCP<const VectorSpaceBase<ST> >
 ThyraAdaptiveModelEvaluator::get_p_space(int l) const
 {
 #ifdef TEUCHOS_DEBUG
@@ -451,7 +451,7 @@ ThyraAdaptiveModelEvaluator::get_p_names(int l) const
 }
 
 
-RCP<const VectorSpaceBase<double> >
+RCP<const VectorSpaceBase<ST> >
 ThyraAdaptiveModelEvaluator::get_g_space(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPT( ! ( 0 <= j && j < this->Ng() ) );
@@ -459,7 +459,7 @@ ThyraAdaptiveModelEvaluator::get_g_space(int j) const
 }
 
 
-ModelEvaluatorBase::InArgs<double>
+ModelEvaluatorBase::InArgs<ST>
 ThyraAdaptiveModelEvaluator::getNominalValues() const
 {
   updateNominalValuesAndBounds();
@@ -467,7 +467,7 @@ ThyraAdaptiveModelEvaluator::getNominalValues() const
 }
 
 
-ModelEvaluatorBase::InArgs<double>
+ModelEvaluatorBase::InArgs<ST>
 ThyraAdaptiveModelEvaluator::getLowerBounds() const
 {
   updateNominalValuesAndBounds();
@@ -475,7 +475,7 @@ ThyraAdaptiveModelEvaluator::getLowerBounds() const
 }
 
 
-ModelEvaluatorBase::InArgs<double>
+ModelEvaluatorBase::InArgs<ST>
 ThyraAdaptiveModelEvaluator::getUpperBounds() const
 {
   updateNominalValuesAndBounds();
@@ -483,28 +483,28 @@ ThyraAdaptiveModelEvaluator::getUpperBounds() const
 }
 
 
-RCP<LinearOpBase<double> >
+RCP<LinearOpBase<ST> >
 ThyraAdaptiveModelEvaluator::create_W_op() const
 {
   return this->create_epetra_W_op();
 }
 
 
-RCP<PreconditionerBase<double> >
+RCP<PreconditionerBase<ST> >
 ThyraAdaptiveModelEvaluator::create_W_prec() const
 {
   return Teuchos::null;
 }
 
 
-RCP<const LinearOpWithSolveFactoryBase<double> >
+RCP<const LinearOpWithSolveFactoryBase<ST> >
 ThyraAdaptiveModelEvaluator::get_W_factory() const
 {
   return W_factory_;
 }
 
 
-ModelEvaluatorBase::InArgs<double> ThyraAdaptiveModelEvaluator::createInArgs() const
+ModelEvaluatorBase::InArgs<ST> ThyraAdaptiveModelEvaluator::createInArgs() const
 {
   if (!currentInArgsOutArgs_)
     updateInArgsOutArgs();
@@ -513,7 +513,7 @@ ModelEvaluatorBase::InArgs<double> ThyraAdaptiveModelEvaluator::createInArgs() c
 
 
 void ThyraAdaptiveModelEvaluator::reportFinalPoint(
-  const ModelEvaluatorBase::InArgs<double> &finalPoint,
+  const ModelEvaluatorBase::InArgs<ST> &finalPoint,
   const bool wasSolved
   )
 {
@@ -526,7 +526,7 @@ void ThyraAdaptiveModelEvaluator::reportFinalPoint(
 // Private functions overridden from ModelEvaulatorDefaultBase
 
 
-RCP<LinearOpBase<double> >
+RCP<LinearOpBase<ST> >
 ThyraAdaptiveModelEvaluator::create_DfDp_op_impl(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPT(true);
@@ -534,7 +534,7 @@ ThyraAdaptiveModelEvaluator::create_DfDp_op_impl(int l) const
 }
 
 
-RCP<LinearOpBase<double> >
+RCP<LinearOpBase<ST> >
 ThyraAdaptiveModelEvaluator::create_DgDx_dot_op_impl(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPT(true);
@@ -542,7 +542,7 @@ ThyraAdaptiveModelEvaluator::create_DgDx_dot_op_impl(int j) const
 }
 
 
-RCP<LinearOpBase<double> >
+RCP<LinearOpBase<ST> >
 ThyraAdaptiveModelEvaluator::create_DgDx_op_impl(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPT(true);
@@ -550,7 +550,7 @@ ThyraAdaptiveModelEvaluator::create_DgDx_op_impl(int j) const
 }
 
 
-RCP<LinearOpBase<double> >
+RCP<LinearOpBase<ST> >
 ThyraAdaptiveModelEvaluator::create_DgDp_op_impl( int j, int l ) const
 {
   TEUCHOS_TEST_FOR_EXCEPT(true);
@@ -558,7 +558,7 @@ ThyraAdaptiveModelEvaluator::create_DgDp_op_impl( int j, int l ) const
 }
 
 
-ModelEvaluatorBase::OutArgs<double>
+ModelEvaluatorBase::OutArgs<ST>
 ThyraAdaptiveModelEvaluator::createOutArgsImpl() const
 {
   if (!currentInArgsOutArgs_)
@@ -568,8 +568,8 @@ ThyraAdaptiveModelEvaluator::createOutArgsImpl() const
 
 
 void ThyraAdaptiveModelEvaluator::evalModelImpl(
-  const ModelEvaluatorBase::InArgs<double>& inArgs_in,
-  const ModelEvaluatorBase::OutArgs<double>& outArgs
+  const ModelEvaluatorBase::InArgs<ST>& inArgs_in,
+  const ModelEvaluatorBase::OutArgs<ST>& outArgs
   ) const
 {
 
@@ -588,7 +588,7 @@ void ThyraAdaptiveModelEvaluator::evalModelImpl(
   this->updateNominalValuesAndBounds();
 
   // Make sure we grab the initial guess first!
-  InArgs<double> inArgs = this->getNominalValues();
+  InArgs<ST> inArgs = this->getNominalValues();
   // Now, copy the parameters from the input inArgs_in object to the inArgs
   // object.  Any input objects that are set in inArgs_in will overwrite those
   // in inArgs that will already contain the nominal values.  This will insure
@@ -608,7 +608,7 @@ void ThyraAdaptiveModelEvaluator::evalModelImpl(
   }
 
   // Print the header and the values of the inArgs and outArgs objects!
-  typedef double Scalar; // Needed for below macro!
+  typedef ST Scalar; // Needed for below macro!
   THYRA_MODEL_EVALUATOR_DECORATOR_EVAL_MODEL_GEN_BEGIN(
     "Thyra::ThyraAdaptiveModelEvaluator",inArgs,outArgs,Teuchos::null
     );
@@ -620,7 +620,7 @@ void ThyraAdaptiveModelEvaluator::evalModelImpl(
       && is_null(stateFunctionScalingVec_)
       );
   
-  typedef Teuchos::VerboseObjectTempState<LinearOpWithSolveFactoryBase<double> > VOTSLOWSF;
+  typedef Teuchos::VerboseObjectTempState<LinearOpWithSolveFactoryBase<ST> > VOTSLOWSF;
   VOTSLOWSF W_factory_outputTempState(W_factory_,out,verbLevel);
 
   Teuchos::Time timer("");
@@ -669,7 +669,7 @@ void ThyraAdaptiveModelEvaluator::evalModelImpl(
 
   // Various objects that are needed later (see documentation in
   // the function convertOutArgsFromThyraToEpetra(...)
-  RCP<LinearOpBase<double> > W_op;
+  RCP<LinearOpBase<ST> > W_op;
   RCP<EpetraLinearOp> efwdW;
   RCP<Epetra_Operator> eW;
   
@@ -796,7 +796,7 @@ void ThyraAdaptiveModelEvaluator::evalModelImpl(
 
 void ThyraAdaptiveModelEvaluator::convertInArgsFromEpetraToThyra(
   const EpetraExt::ModelEvaluator::InArgs &epetraInArgs,
-  ModelEvaluatorBase::InArgs<double> *inArgs
+  ModelEvaluatorBase::InArgs<ST> *inArgs
   ) const
 {
   
@@ -826,7 +826,7 @@ void ThyraAdaptiveModelEvaluator::convertInArgsFromEpetraToThyra(
 
 
 void ThyraAdaptiveModelEvaluator::convertInArgsFromThyraToEpetra(
-  const ModelEvaluatorBase::InArgs<double> &inArgs,
+  const ModelEvaluatorBase::InArgs<ST> &inArgs,
   EpetraExt::ModelEvaluator::InArgs *epetraInArgs
   ) const
 {
@@ -840,19 +840,19 @@ void ThyraAdaptiveModelEvaluator::convertInArgsFromThyraToEpetra(
 
   TEUCHOS_TEST_FOR_EXCEPT(0==epetraInArgs);
 
-  RCP<const VectorBase<double> > x_dot;
+  RCP<const VectorBase<ST> > x_dot;
   if( inArgs.supports(IN_ARG_x_dot) && (x_dot = inArgs.get_x_dot()).get() ) {
     RCP<const Epetra_Vector> e_x_dot = get_Epetra_Vector(*x_map_,x_dot);
     epetraInArgs->set_x_dot(e_x_dot);
   }
 
-  RCP<const VectorBase<double> > x;
+  RCP<const VectorBase<ST> > x;
   if( inArgs.supports(IN_ARG_x) && (x = inArgs.get_x()).get() ) {
     RCP<const Epetra_Vector> e_x = get_Epetra_Vector(*x_map_,x);
     epetraInArgs->set_x(e_x);
   }
 
-  RCP<const VectorBase<double> > p_l;
+  RCP<const VectorBase<ST> > p_l;
   for(int l = 0;  l < inArgs.Np(); ++l ) {
     p_l = inArgs.get_p(l);
     if(p_l.get()) epetraInArgs->set_p(l,get_Epetra_Vector(*p_map_[l],p_l));
@@ -860,7 +860,7 @@ void ThyraAdaptiveModelEvaluator::convertInArgsFromThyraToEpetra(
 
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
 
-  RCP<const Polynomial< VectorBase<double> > > x_dot_poly;
+  RCP<const Polynomial< VectorBase<ST> > > x_dot_poly;
   RCP<Epetra_Vector> epetra_ptr;
   if(
     inArgs.supports(IN_ARG_x_dot_poly)
@@ -877,7 +877,7 @@ void ThyraAdaptiveModelEvaluator::convertInArgsFromThyraToEpetra(
     epetraInArgs->set_x_dot_poly(epetra_x_dot_poly);
   }
   
-  RCP<const Polynomial< VectorBase<double> > > x_poly;
+  RCP<const Polynomial< VectorBase<ST> > > x_poly;
   if(
     inArgs.supports(IN_ARG_x_poly)
     && (x_poly = inArgs.get_x_poly()).get()
@@ -908,9 +908,9 @@ void ThyraAdaptiveModelEvaluator::convertInArgsFromThyraToEpetra(
 
 
 void ThyraAdaptiveModelEvaluator::convertOutArgsFromThyraToEpetra(
-  const ModelEvaluatorBase::OutArgs<double> &outArgs,
+  const ModelEvaluatorBase::OutArgs<ST> &outArgs,
   EpetraExt::ModelEvaluator::OutArgs *epetraUnscaledOutArgs_inout,
-  RCP<LinearOpBase<double> > *W_op_out,
+  RCP<LinearOpBase<ST> > *W_op_out,
   RCP<EpetraLinearOp> *efwdW_out,
   RCP<Epetra_Operator> *eW_out
   ) const
@@ -934,20 +934,20 @@ void ThyraAdaptiveModelEvaluator::convertOutArgsFromThyraToEpetra(
 
   // Create easy to use references
   EpetraExt::ModelEvaluator::OutArgs &epetraUnscaledOutArgs = *epetraUnscaledOutArgs_inout;
-  RCP<LinearOpBase<double> > &W_op = *W_op_out;
+  RCP<LinearOpBase<ST> > &W_op = *W_op_out;
   RCP<EpetraLinearOp> &efwdW = *efwdW_out;
   RCP<Epetra_Operator> &eW = *eW_out;
 
   // f
   { 
-    RCP<VectorBase<double> > f;
+    RCP<VectorBase<ST> > f;
     if( outArgs.supports(OUT_ARG_f) && (f = outArgs.get_f()).get() )
       epetraUnscaledOutArgs.set_f(get_Epetra_Vector(*f_map_,f));
   }
     
   // g
   {
-    RCP<VectorBase<double> > g_j;
+    RCP<VectorBase<ST> > g_j;
     for(int j = 0;  j < outArgs.Ng(); ++j ) {
       g_j = outArgs.get_g(j);
       if(g_j.get()) epetraUnscaledOutArgs.set_g(j,get_Epetra_Vector(*g_map_[j],g_j));
@@ -979,7 +979,7 @@ void ThyraAdaptiveModelEvaluator::convertOutArgsFromThyraToEpetra(
 
   // DfDp
   {
-    Derivative<double> DfDp_l;
+    Derivative<ST> DfDp_l;
     for(int l = 0;  l < outArgs.Np(); ++l ) {
       if( !outArgs.supports(OUT_ARG_DfDp,l).none()
         && !(DfDp_l = outArgs.get_DfDp(l)).isEmpty() )
@@ -991,7 +991,7 @@ void ThyraAdaptiveModelEvaluator::convertOutArgsFromThyraToEpetra(
 
   // DgDx_dot
   {
-    Derivative<double> DgDx_dot_j;
+    Derivative<ST> DgDx_dot_j;
     for(int j = 0;  j < outArgs.Ng(); ++j ) {
       if( !outArgs.supports(OUT_ARG_DgDx_dot,j).none()
         && !(DgDx_dot_j = outArgs.get_DgDx_dot(j)).isEmpty() )
@@ -1003,7 +1003,7 @@ void ThyraAdaptiveModelEvaluator::convertOutArgsFromThyraToEpetra(
 
   // DgDx
   {
-    Derivative<double> DgDx_j;
+    Derivative<ST> DgDx_j;
     for(int j = 0;  j < outArgs.Ng(); ++j ) {
       if( !outArgs.supports(OUT_ARG_DgDx,j).none()
         && !(DgDx_j = outArgs.get_DgDx(j)).isEmpty() )
@@ -1016,7 +1016,7 @@ void ThyraAdaptiveModelEvaluator::convertOutArgsFromThyraToEpetra(
   // DgDp
   {
     DerivativeSupport DgDp_j_l_support;
-    Derivative<double> DgDp_j_l;
+    Derivative<ST> DgDp_j_l;
     for (int j = 0;  j < outArgs.Ng(); ++j ) {
       for (int l = 0;  l < outArgs.Np(); ++l ) {
         if (!(DgDp_j_l_support = outArgs.supports(OUT_ARG_DgDp,j,l)).none()
@@ -1031,7 +1031,7 @@ void ThyraAdaptiveModelEvaluator::convertOutArgsFromThyraToEpetra(
 #ifdef HAVE_THYRA_ME_POLYNOMIAL
 
   // f_poly
-  RCP<const Teuchos::Polynomial< VectorBase<double> > > f_poly;
+  RCP<const Teuchos::Polynomial< VectorBase<ST> > > f_poly;
   if( outArgs.supports(OUT_ARG_f_poly) && (f_poly = outArgs.get_f_poly()).get() )
   {
     RCP<Teuchos::Polynomial<Epetra_Vector> > epetra_f_poly = 
@@ -1146,7 +1146,7 @@ void ThyraAdaptiveModelEvaluator::postEvalScalingSetup(
         *out
           << "\nComputed inverse row sum scaling from W that"
           " will be used to scale f(...) and its derivatives:\n";
-        double minVal = 0, maxVal = 0, avgVal = 0;
+        ST minVal = 0, maxVal = 0, avgVal = 0;
         invRowSums->MinValue(&minVal);
         invRowSums->MaxValue(&maxVal);
         invRowSums->MeanValue(&avgVal);
@@ -1178,10 +1178,10 @@ void ThyraAdaptiveModelEvaluator::postEvalScalingSetup(
 
 void ThyraAdaptiveModelEvaluator::finishConvertingOutArgsFromEpetraToThyra(
   const EpetraExt::ModelEvaluator::OutArgs &epetraOutArgs,
-  RCP<LinearOpBase<double> > &W_op,
+  RCP<LinearOpBase<ST> > &W_op,
   RCP<EpetraLinearOp> &efwdW,
   RCP<Epetra_Operator> &eW,
-  const ModelEvaluatorBase::OutArgs<double> &outArgs
+  const ModelEvaluatorBase::OutArgs<ST> &outArgs
   ) const
 {
 
@@ -1293,7 +1293,7 @@ void ThyraAdaptiveModelEvaluator::updateInArgsOutArgs() const
   // InArgs
   //
 
-  InArgsSetup<double> inArgs;
+  InArgsSetup<ST> inArgs;
   inArgs.setModelEvalDescription(this->description());
   inArgs.set_Np(epetraInArgs.Np());
   inArgs.setSupports(IN_ARG_x_dot, epetraInArgs.supports(EME::IN_ARG_x_dot));
@@ -1312,7 +1312,7 @@ void ThyraAdaptiveModelEvaluator::updateInArgsOutArgs() const
   // OutArgs
   //
 
-  OutArgsSetup<double> outArgs;
+  OutArgsSetup<ST> outArgs;
   outArgs.setModelEvalDescription(this->description());
   outArgs.set_Np_Ng(l_Np, l_Ng);
   // f

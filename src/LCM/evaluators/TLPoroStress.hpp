@@ -50,11 +50,11 @@ private:
   unsigned int numDims;
 
   // Work space FCs
-  Intrepid::FieldContainer<ScalarT> F_inv;
-  Intrepid::FieldContainer<ScalarT> F_invT;
-  Intrepid::FieldContainer<ScalarT> JF_invT;
-  Intrepid::FieldContainer<ScalarT> JpF_invT;
-  Intrepid::FieldContainer<ScalarT> JBpF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JpF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JBpF_invT;
 
   // Material Name
     std::string matModel;

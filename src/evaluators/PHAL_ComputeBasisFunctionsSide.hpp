@@ -14,8 +14,8 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace PHAL {
 
@@ -51,11 +51,11 @@ private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<RealType>    val_at_cub_points;
-  Intrepid::FieldContainer<RealType>    grad_at_cub_points;
-  Intrepid::FieldContainer<RealType>    cub_weights;
-  Intrepid::FieldContainer<MeshScalarT> tangents;
-  Intrepid::FieldContainer<MeshScalarT> metric;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> val_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cub_weights;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> tangents;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>  metric;
 
   // Output:
   //! Basis Functions and other quantities at quadrature points

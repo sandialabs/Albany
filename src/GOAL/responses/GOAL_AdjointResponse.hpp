@@ -15,6 +15,11 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "Phalanx.hpp"
 
+namespace Albany {
+class GOALMechanicsProblem;
+class GOALDiscretization;
+}
+
 namespace GOAL {
 
 class AdjointResponse :
@@ -45,6 +50,37 @@ class AdjointResponse :
 
     AdjointResponse(const AdjointResponse&);
     AdjointResponse& operator=(const AdjointResponse&);
+
+    void buildFieldManagers();
+    void postRegistrationSetup();
+    void initializeLinearSystem();
+    void initializeWorkset(PHAL::Workset& workset);
+    void fillLinearSystem();
+
+    int evalCtr;
+    double time;
+    bool enrichAdjoint;
+
+    Teuchos::RCP<Albany::Application> application;
+    Teuchos::RCP<Albany::AbstractProblem> problem;
+    Teuchos::RCP<Albany::StateManager> stateManager;
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+    Teuchos::ParameterList params;
+
+    Teuchos::RCP<Albany::GOALDiscretization> discretization;
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
+
+    Teuchos::RCP<Tpetra_Vector> x;
+    Teuchos::RCP<Tpetra_Vector> overlapX;
+    Teuchos::RCP<Tpetra_Vector> z;
+    Teuchos::RCP<Tpetra_Vector> overlapZ;
+    Teuchos::RCP<Tpetra_Vector> qoi;
+    Teuchos::RCP<Tpetra_Vector> overlapQoI;
+    Teuchos::RCP<Tpetra_CrsMatrix> jac;
+    Teuchos::RCP<Tpetra_CrsMatrix> overlapJac;
+    Teuchos::RCP<Tpetra_Import> importer;
+    Teuchos::RCP<Tpetra_Export> exporter;
+    Teuchos::RCP<Tpetra_Vector> dummy;
 
   public:
 

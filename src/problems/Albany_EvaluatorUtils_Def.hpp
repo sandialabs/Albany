@@ -6,7 +6,7 @@
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_DataTypes.hpp"
 
-#include "Intrepid_HGRAD_LINE_Cn_FEM.hpp"
+#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
 
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherScalarNodalParameter.hpp"
@@ -313,7 +313,9 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature)
+    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature,
+    const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis)
+
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -323,9 +325,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     RCP<ParameterList> p = rcp(new ParameterList("Map To Physical Frame"));
 
     // Input: X, Y at vertices
-    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set<string>("Coordinate Vector Name", "Coord Vec");
+    p->set<RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     // Output: X, Y at Quad Points (same name as input)
 
@@ -336,7 +340,7 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature,
+    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature,
     const std::string& sideSetName)
 {
     using Teuchos::RCP;
@@ -348,7 +352,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameSideEvaluator(
     // Input: X, Y at vertices
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Coordinate Side QP Vector Name", "Coord Vec " + sideSetName);
-    p->set<RCP <Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name", sideSetName);
 
@@ -360,8 +364,8 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis,
-    const Teuchos::RCP<Intrepid::Cubature<RealType> > cubature)
+    const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis,
+    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature)
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -371,11 +375,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<std::string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set<string>("Coordinate Vector Name","Coord Vec");
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
 
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
@@ -396,8 +400,8 @@ template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
-    const Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasisSide,
-    const Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureSide,
+    const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasisSide,
+    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureSide,
     const std::string& sideSetName)
 {
     using Teuchos::RCP;
@@ -409,8 +413,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsSideEvaluato
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<std::string>("Coordinate Vector Name","Coord Vec");
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature Side", cubatureSide);
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis Side", intrepidBasisSide);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature Side", cubatureSide);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Intrepid Basis Side", intrepidBasisSide);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Side Set Name",sideSetName);
 
@@ -450,6 +454,26 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFCellToSideEvaluator(
       p->set<std::string>("Side Variable Name", cell_dof_name);
 
     return rcp(new PHAL::DOFCellToSide<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator_noDeriv(
+       const std::string& dof_name)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    using std::string;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
+    // Input
+    p->set<string>("Variable Name", dof_name);
+    p->set<string>("BF Name", "BF");
+
+    // Output (assumes same Name as input)
+
+    return rcp(new PHAL::DOFInterpolation_noDeriv<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -692,7 +716,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideEvaluator(
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFVecInterpolationSide<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFVecInterpolationSide<EvalT, Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>

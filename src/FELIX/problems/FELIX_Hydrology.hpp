@@ -7,8 +7,8 @@
 #ifndef FELIX_HYDROLOGY_PROBLEM_HPP
 #define FELIX_HYDROLOGY_PROBLEM_HPP 1
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
@@ -95,9 +95,9 @@ protected:
 
   Teuchos::RCP<Albany::Layouts> dl;
 
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
 };
 
 // ===================================== IMPLEMENTATION ======================================= //

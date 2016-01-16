@@ -7,7 +7,7 @@
 #if !defined(GursonModel_hpp)
 #define GursonModel_hpp
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -109,7 +109,7 @@ private:
   /// Compute Yield Function
   ///
   ScalarT
-  YieldFunction(Intrepid::Tensor<ScalarT> const & s, ScalarT const & p,
+  YieldFunction(Intrepid2::Tensor<ScalarT> const & s, ScalarT const & p,
       ScalarT const & fvoid, ScalarT const & eq, ScalarT const & K,
       ScalarT const & Y, ScalarT const & jacobian, ScalarT const & E);
 
@@ -119,7 +119,7 @@ private:
   void
   ResidualJacobian(std::vector<ScalarT> & X,
       std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
-      const ScalarT & fvoid, const ScalarT & eq, Intrepid::Tensor<ScalarT> & s,
+      const ScalarT & fvoid, const ScalarT & eq, Intrepid2::Tensor<ScalarT> & s,
       const ScalarT & mu, const ScalarT & kappa, const ScalarT & K,
       const ScalarT & Y, const ScalarT & jacobian);
 

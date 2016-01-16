@@ -7,8 +7,8 @@
 #ifndef FELIX_ELLIPTIC_2D_HPP
 #define FELIX_ELLIPTIC_2D_HPP 1
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
@@ -132,12 +132,12 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   using PHAL::AlbanyTraits;
 
   // Retrieving FE information (basis and cell type)
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
   // Building the right quadrature formula
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   // Some constants
   const int numNodes = intrepidBasis->getCardinality();
@@ -255,16 +255,16 @@ Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const CellTopologyData * const cell_top = &meshSpecs.ctd;
   const CellTopologyData * const side_top = cell_top->side[0].topology;
 
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >  cellBasis = Albany::getIntrepidBasis(*cell_top);
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >  sideBasis = Albany::getIntrepidBasis(*side_top);
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis = Albany::getIntrepid2Basis(*cell_top);
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > sideBasis = Albany::getIntrepid2Basis(*side_top);
 
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (cell_top));
   RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology (side_top));
 
   // Building the right quadrature formula
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-  RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, params->get<int>("Side Cubature Degree"));
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > sideCubature = cubFactory.create(*sideType, params->get<int>("Side Cubature Degree"));
 
   // Some constants
   const int numCellNodes = cellBasis->getCardinality();

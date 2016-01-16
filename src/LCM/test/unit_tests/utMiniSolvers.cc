@@ -16,11 +16,11 @@ namespace
 //
 
 // Test one function with one method.
-template <typename STEP, typename FN, typename T, Intrepid::Index N>
+template <typename STEP, typename FN, typename T, Intrepid2::Index N>
 bool
-solveFNwithSTEP(STEP & step_method, FN & function, Intrepid::Vector<T, N> & x)
+solveFNwithSTEP(STEP & step_method, FN & function, Intrepid2::Vector<T, N> & x)
 {
-  Intrepid::Minimizer<T, N>
+  Intrepid2::Minimizer<T, N>
   minimizer;
 
   minimizer.solve(step_method, function, x);
@@ -31,17 +31,17 @@ solveFNwithSTEP(STEP & step_method, FN & function, Intrepid::Vector<T, N> & x)
 }
 
 // Test one system with various methods.
-template <typename FN, typename T, Intrepid::Index N>
+template <typename FN, typename T, Intrepid2::Index N>
 bool
-solveFN(FN & function, Intrepid::Vector<T, N> const & x)
+solveFN(FN & function, Intrepid2::Vector<T, N> const & x)
 {
   bool
   all_ok = true;
 
-  Intrepid::Vector<T, N>
+  Intrepid2::Vector<T, N>
   y;
 
-  Intrepid::NewtonStep<T, N>
+  Intrepid2::NewtonStep<T, N>
   newton_step;
 
   y = x;
@@ -51,7 +51,7 @@ solveFN(FN & function, Intrepid::Vector<T, N> const & x)
 
   all_ok = all_ok && newton_ok;
 
-  Intrepid::TrustRegionStep<T, N>
+  Intrepid2::TrustRegionStep<T, N>
   trust_region_step;
 
   y = x;
@@ -61,7 +61,7 @@ solveFN(FN & function, Intrepid::Vector<T, N> const & x)
 
   all_ok = all_ok && trust_region_ok;
 
-  Intrepid::ConjugateGradientStep<T, N>
+  Intrepid2::ConjugateGradientStep<T, N>
   pcg_step;
 
   y = x;
@@ -71,7 +71,7 @@ solveFN(FN & function, Intrepid::Vector<T, N> const & x)
 
   all_ok = all_ok && pcg_ok;
 
-  Intrepid::LineSearchRegularizedStep<T, N>
+  Intrepid2::LineSearchRegularizedStep<T, N>
   line_search_step;
 
   y = x;
@@ -87,13 +87,13 @@ solveFN(FN & function, Intrepid::Vector<T, N> const & x)
 // Test various systems with various methods.
 bool testSystemsAndMethods()
 {
-  constexpr Intrepid::Index
+  constexpr Intrepid2::Index
   max_dimension{2};
 
   bool
   all_ok = true;
 
-  Intrepid::Vector<RealType, max_dimension>
+  Intrepid2::Vector<RealType, max_dimension>
   x;
 
   LCM::SquareRootNLS<RealType>
@@ -254,22 +254,22 @@ TEUCHOS_UNIT_TEST(NonlinearSystems, NonlinearMethods)
 //
 TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
 {
-  constexpr Intrepid::Index
+  constexpr Intrepid2::Index
   dimension{3};
 
   // Lehmer matrix
-  Intrepid::Tensor<RealType, dimension> const
+  Intrepid2::Tensor<RealType, dimension> const
   A(1.0, 0.5, 1.0/3.0, 0.5, 1.0, 2.0/3.0, 1.0/3.0, 2.0/3.0, 1.0);
 
   // RHS
-  Intrepid::Vector<RealType, dimension> const
+  Intrepid2::Vector<RealType, dimension> const
   b(2.0, 1.0, 1.0);
 
   // Known solution
-  Intrepid::Vector<RealType, dimension> const
+  Intrepid2::Vector<RealType, dimension> const
   v(2.0, -2.0/5.0, 3.0/5.0);
 
-  Intrepid::Vector<RealType, dimension>
+  Intrepid2::Vector<RealType, dimension>
   x(0.0, 0.0, 0.0);
 
   LCM::MiniLinearSolver<PHAL::AlbanyTraits::Residual, dimension>
@@ -280,24 +280,24 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
   RealType const
   error = norm(x - v) / norm(v);
 
-  TEST_COMPARE(error, <=, Intrepid::machine_epsilon<RealType>());
+  TEST_COMPARE(error, <=, Intrepid2::machine_epsilon<RealType>());
 }
 
 TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
 {
-  constexpr Intrepid::Index
+  constexpr Intrepid2::Index
   dimension{2};
 
   LCM::BananaNLS<RealType>
   banana;
 
-  Intrepid::NewtonStep<RealType, dimension>
+  Intrepid2::NewtonStep<RealType, dimension>
   step;
 
-  Intrepid::Minimizer<RealType, dimension>
+  Intrepid2::Minimizer<RealType, dimension>
   minimizer;
 
-  Intrepid::Vector<RealType, dimension>
+  Intrepid2::Vector<RealType, dimension>
   x;
 
   x(0) = 0.0;
@@ -315,29 +315,36 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
 //
 TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 {
-  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
-  Intrepid::Index
-  dimension{2};
+  Intrepid2::Index
+  dim{2};
 
-  LCM::BananaNLS<ValueT>
-  banana;
+  using MIN = Intrepid2::Minimizer<ValueT, dim>;
+  using STEP = Intrepid2::NewtonStep<ValueT, dim>;
+  using FN = LCM::BananaNLS<ValueT>;
+  using VEC = Intrepid2::Vector<ScalarT, dim>;
 
-  Intrepid::NewtonStep<ValueT, dimension>
-  step;
-
-  Intrepid::Minimizer<ValueT, dimension>
+  MIN
   minimizer;
 
-  Intrepid::Vector<ScalarT, dimension>
+  STEP
+  step;
+
+  FN
+  banana;
+
+  VEC
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::miniMinimize(minimizer, step, banana, x);
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  mini_solver(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
@@ -349,29 +356,36 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 //
 TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
 {
-  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using EvalT = PHAL::AlbanyTraits::Jacobian;
+  using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
-  Intrepid::Index
-  dimension{2};
+  Intrepid2::Index
+  dim{2};
 
-  LCM::BananaNLS<ValueT>
-  banana;
+  using MIN = Intrepid2::Minimizer<ValueT, dim>;
+  using STEP = Intrepid2::NewtonStep<ValueT, dim>;
+  using FN = LCM::BananaNLS<ValueT>;
+  using VEC = Intrepid2::Vector<ScalarT, dim>;
 
-  Intrepid::NewtonStep<ValueT, dimension>
-  step;
-
-  Intrepid::Minimizer<ValueT, dimension>
+  MIN
   minimizer;
 
-  Intrepid::Vector<ScalarT, dimension>
+  STEP
+  step;
+
+  FN
+  banana;
+
+  VEC
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::miniMinimize(minimizer, step, banana, x);
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  mini_solver(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
@@ -380,13 +394,13 @@ TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
 
 TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
 {
-  constexpr Intrepid::Index
+  constexpr Intrepid2::Index
   dimension{2};
 
   LCM::Paraboloid<RealType>
   p;
 
-  Intrepid::Vector<RealType, dimension>
+  Intrepid2::Vector<RealType, dimension>
   x(0.0, 0.0);
 
   std::cout << "Point   : " << x << '\n';
@@ -399,27 +413,27 @@ TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
 
 TEUCHOS_UNIT_TEST(Testing, MixedStorage)
 {
-  Intrepid::Index const
+  Intrepid2::Index const
   dimension{2};
 
   std::cout << '\n';
 
-  Intrepid::Vector<RealType, 3>
+  Intrepid2::Vector<RealType, 3>
   v(1.0, 2.0, 3.0);
 
   v.set_dimension(dimension);
 
   std::cout << "Vector   : " << v << '\n';
 
-  Intrepid::Tensor<RealType, 3>
+  Intrepid2::Tensor<RealType, 3>
   A(1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 7.0, 8.0, 9.0);
 
   A.set_dimension(dimension);
 
   std::cout << "Tensor   : " << A << '\n';
 
-  Intrepid::Matrix<RealType, 3, 4>
-  B(Intrepid::ONES);
+  Intrepid2::Matrix<RealType, 3, 4>
+  B(Intrepid2::ONES);
 
   B.set_dimensions(4, 2);
 

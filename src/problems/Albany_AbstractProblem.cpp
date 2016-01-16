@@ -17,7 +17,9 @@ Albany::AbstractProblem::AbstractProblem(
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
-  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_)))
+  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_))),
+  isAdjoint(false),
+  enrichAdjoint(false)
 {}
 
 unsigned int
@@ -74,6 +76,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<Teuchos::Array<std::string> >("Required Fields",Teuchos::Array<std::string>(),"List of field requirements");
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
+  validPL->sublist("Initial Condition DotDot", false, "");
   validPL->sublist("Source Functions", false, "");
   validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");
@@ -110,5 +113,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015)
   validPL->sublist("Schottky Barrier", false, "");
 
+  // Add "Interface Traps" for QCAD (Suzey Gao, 12/22/2015)
+  validPL->sublist("Interface Traps", false, ""); 
   return validPL;
 }

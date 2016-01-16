@@ -165,6 +165,15 @@ IF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
   MESSAGE("-- Building Albany with static executables")
 ENDIF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
 
+# Option to turn on and off deprecation warnings
+OPTION(Albany_DEPRECATED_DECLARATIONS "Flag to turn on warnings for deprecated code" ON)
+IF (Albany_DEPRECATED_DECLARATIONS)
+  ADD_DEFINITIONS(-DALBANY_ENABLE_DEPRECATED)
+  MESSAGE("-- Deprecated code warnings Enabled, compiling with -DALBANY_ENABLE_DEPRECATED")
+ELSE()
+  MESSAGE("-- Deprecated code warnings are NOT Enabled.")
+ENDIF()
+
 
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
@@ -437,6 +446,17 @@ ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
 ENDIF()
+  
+# Check if Trilinos has DTK
+LIST(FIND Trilinos_PACKAGE_LIST DataTransferKit DataTransferKit_List_ID)
+IF (DataTransferKit_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_DTK)
+  MESSAGE("-- Looking for DTK in Trilinos: Found, compiling with -DALBANY_DTK")
+    SET(ALBANY_DTK TRUE)
+  ELSE()
+    MESSAGE("-- Looking for DTK in Trilinos: NOT found.")
+    SET(ALBANY_DTK FALSE)
+ENDIF()
 
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
@@ -573,6 +593,17 @@ IF (ENABLE_MESH_DEPENDS_ON_SOLUTION)
 ELSE()
   MESSAGE("-- MESH_DEPENDS_ON_SOLUTION is NOT Enabled.")
   SET(ALBANY_MESH_DEPENDS_ON_SOLUTION FALSE)
+ENDIF()
+
+# set optional dependency of dist parameters on solution, defaults to Disabled
+OPTION(ENABLE_PARAMETERS_DEPEND_ON_SOLUTION "Flag to turn on dependency of mesh on solution" OFF)
+IF (ENABLE_PARAMETERS_DEPEND_ON_SOLUTION)
+  ADD_DEFINITIONS(-DALBANY_PARAMETERS_DEPEND_ON_SOLUTION)
+  MESSAGE("-- PARAMETERS_DEPEND_ON_SOLUTION is Enabled, compiling with -DALBANY_PARAMETERS_DEPEND_ON_SOLUTION")
+  SET(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION TRUE)
+ELSE()
+  MESSAGE("-- PARAMETERS_DEPEND_ON_SOLUTION is NOT Enabled.")
+  SET(ALBANY_PARAMETERS_DEPEND_ON_SOLUTION FALSE)
 ENDIF()
 
 # Set optional build of MPAS Interface for FELIX (Land Ice SciDAC project),
@@ -850,6 +881,19 @@ ELSE()
   ENDIF()
 ENDIF()
 
+# Set option to disable compiling some code for nightly tests
+# Some code sections take so long to compile with NVCC that nightly tests are
+# timing out. This option allows disabling those sections.
+OPTION(NIGHTLY_TESTING "Flag to turn off selected code during nightly testing" OFF)
+IF (NIGHTLY_TESTING)
+  ADD_DEFINITIONS(-DALBANY_NIGHTLY_TEST)
+  MESSAGE("-- NIGHTLY_TESTING is Enabled, compiling with -DALBANY_NIGHTLY_TEST")
+  SET(ALBANY_NIGHTLY_TESTING TRUE)
+ELSE()
+  MESSAGE("-- NIGHTLY_TESTING is NOT Enabled.")
+  SET(ALBANY_NIGHTLY_TESTING FALSE)
+ENDIF()
+
 ## Other Albany Template Options here:
 MESSAGE("\nAlbany Templated Data Type Options:")
 
@@ -1090,21 +1134,6 @@ IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
   MESSAGE("-- WARNING: ATO                is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 
-# Introduce a compiler flag that lets us deal with desynced internal and public
-# Trilinos repos when necessary.
-option (USE_PUBLICTRILINOS "Flag to deal with desynced internal and public Trilinos repos" OFF)
-# If the user explicitly provides it, use it. But if not, detect whether it's
-# needed.
-if (NOT USE_PUBLICTRILINOS)
-  if (${Trilinos_VERSION} LESS 12.4)
-    set (USE_PUBLICTRILINOS ON)
-  endif ()
-endif ()
-if (USE_PUBLICTRILINOS)
-  message ("-- INFO: Building with the assumption that we're linking against publicTrilinos rather than the internal Trilinos repo")
-  add_definitions (-DALBANY_USE_PUBLICTRILINOS)
-endif ()
-
 IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
   MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with
 ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
@@ -1151,15 +1180,19 @@ IF(ALBANY_MPI)
     SET(MPINPF ${ALBANY_MPI_EXEC_NUMPROCS_FLAG})
     SET(MPIMNP ${ALBANY_MPI_EXEC_MAX_NUMPROCS})
     SET(MPIPRE ${ALBANY_MPI_LEADING_OPTIONS})
+    SET(MPIPOST ${ALBANY_MPI_TRAILING_OPTIONS})
+    SEPARATE_ARGUMENTS(MPIPRE)
+    SEPARATE_ARGUMENTS(MPIPOST)
     # For now - assume ALBANY_MPI_OPTIONS means to ONLY attempt the parallel
     # tests
     SET(ALBANY_PARALLEL_ONLY true)
-    MESSAGE("-- CTest mpi_exec call:  ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP}")
+    MESSAGE("-- CTest mpi_exec call:  ${MPIEX} ${ALBANY_MPI_LEADING_OPTIONS} ${MPINPF} ${MPIMNP} ${ALBANY_MPI_TRAILING_OPTIONS}")
   ELSE()
     SET(MPIEX  ${Trilinos_MPI_EXEC})
     SET(MPINPF ${Trilinos_MPI_EXEC_NUMPROCS_FLAG})
     SET(MPIMNP ${Trilinos_MPI_EXEC_MAX_NUMPROCS})
     SET(MPIPRE "")
+    SET(MPIPOST "")
     SET(ALBANY_PARALLEL_ONLY false)
     MESSAGE("-- CTest mpi_exec call:  ${MPIEX} ${MPINPF} ${MPIMNP}")
   ENDIF()

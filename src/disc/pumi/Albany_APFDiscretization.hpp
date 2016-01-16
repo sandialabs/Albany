@@ -230,7 +230,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
       return Teuchos::RCP<const Epetra_Map>();
     }
 
-    virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
+    ALBANY_DEPRECATED virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
     virtual void setResidualField(const Epetra_Vector& residual);
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
     void setSolutionField(const Epetra_Vector&) {
@@ -364,12 +364,12 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void copyNodalDataToAPF(const bool copy_all);
     void removeNodalDataFromAPF();
 
-  private:
-
     // ! Split Solution fields
     std::vector<std::string> solNames;
     std::vector<std::string> resNames;
     std::vector<int> solIndex;
+
+  private:
 
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;

@@ -27,19 +27,19 @@ HydrologyMelting<EvalT, Traits>::HydrologyMelting (const Teuchos::ParameterList&
   {
     sideSetName = p.get<std::string>("Side Set Name");
 
-    u_b  = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
-    beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl->side_qp_scalar);
-    G    = PHX::MDField<ScalarT>(p.get<std::string> ("Geothermal Heat Source Side QP Variable Name"), dl->side_qp_scalar);
-    m    = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate Side QP Variable Name"),dl->side_qp_scalar);
+    u_b  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
+    beta = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl->side_qp_scalar);
+    G    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Geothermal Heat Source Side QP Variable Name"), dl->side_qp_scalar);
+    m    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Melting Rate Side QP Variable Name"),dl->side_qp_scalar);
 
     numQPs = dl->side_qp_scalar->dimension(2);
   }
   else
   {
-    u_b  = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
-    beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient QP Variable Name"), dl->qp_scalar);
-    G    = PHX::MDField<ScalarT>(p.get<std::string> ("Geothermal Heat Source QP Variable Name"), dl->qp_scalar);
-    m    = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"),dl->qp_scalar);
+    u_b  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+    beta = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient QP Variable Name"), dl->qp_scalar);
+    G    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Geothermal Heat Source QP Variable Name"), dl->qp_scalar);
+    m    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"),dl->qp_scalar);
 
     numQPs = dl->qp_scalar->dimension(1);
   }

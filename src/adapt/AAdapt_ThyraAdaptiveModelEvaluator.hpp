@@ -7,6 +7,7 @@
 #ifndef AADAPT_THYRA_EPETRA_MODEL_EVALUATOR_HPP
 #define AADAPT_THYRA_EPETRA_MODEL_EVALUATOR_HPP
 
+#include "Albany_DataTypes.hpp"
 #include "Thyra_EpetraModelEvaluator.hpp"
 
 namespace AAdapt {
@@ -35,13 +36,13 @@ public:
   /** \brief . */
   ThyraAdaptiveModelEvaluator(
     const Teuchos::RCP<const EpetraExt::ModelEvaluator> &epetraModel,
-    const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > &W_factory
+    const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > &W_factory
     );
 
   /** \brief . */
   void initialize(
     const Teuchos::RCP<const EpetraExt::ModelEvaluator> &epetraModel,
-    const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > &W_factory
+    const Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > &W_factory
     );
 
   /** \brief . */
@@ -52,7 +53,7 @@ public:
    * Warning, if scaling is being used, these must be according to the scaled
    * values, not the original unscaled values.
    */
-  void setNominalValues( const Thyra::ModelEvaluatorBase::InArgs<double>& nominalValues );
+  void setNominalValues( const Thyra::ModelEvaluatorBase::InArgs<ST>& nominalValues );
   
   /** \brief Set the state variable scaling vector <tt>s_x</tt> (see above).
    *
@@ -89,17 +90,17 @@ public:
   /** \brief . */
   void uninitialize(
     Teuchos::RCP<const EpetraExt::ModelEvaluator> *epetraModel = NULL,
-    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > *W_factory = NULL
+    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > *W_factory = NULL
     );
   
   /** \brief . */
-  const Thyra::ModelEvaluatorBase::InArgs<double>& getFinalPoint() const;
+  const Thyra::ModelEvaluatorBase::InArgs<ST>& getFinalPoint() const;
 
   /** \brief . */
   bool finalPointWasSolved() const;
 
   /** \brief . */
-  const Teuchos::RCP<Thyra::VectorBase<double> >
+  const Teuchos::RCP<Thyra::VectorBase<ST> >
     resize_g_space(int index, Teuchos::RCP<const Epetra_Map> map);
 
   //@}
@@ -136,32 +137,32 @@ public:
   /** \brief . */
   int Ng() const;
   /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > get_x_space() const;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_x_space() const;
   /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > get_f_space() const;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_f_space() const;
   /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > get_p_space(int l) const;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_p_space(int l) const;
   /** \brief . */
   Teuchos::RCP<const Teuchos::Array<std::string> > get_p_names(int l) const;
   /** \brief . */
-  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > get_g_space(int j) const;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_g_space(int j) const;
   /** \brief . */
-  Thyra::ModelEvaluatorBase::InArgs<double> getNominalValues() const;
+  Thyra::ModelEvaluatorBase::InArgs<ST> getNominalValues() const;
   /** \brief . */
-  Thyra::ModelEvaluatorBase::InArgs<double> getLowerBounds() const;
+  Thyra::ModelEvaluatorBase::InArgs<ST> getLowerBounds() const;
   /** \brief . */
-  Thyra::ModelEvaluatorBase::InArgs<double> getUpperBounds() const;
+  Thyra::ModelEvaluatorBase::InArgs<ST> getUpperBounds() const;
   /** \brief . */
-  Teuchos::RCP<Thyra::LinearOpBase<double> > create_W_op() const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_W_op() const;
   /** \brief Returns null currently. */
-  Teuchos::RCP<Thyra::PreconditionerBase<double> > create_W_prec() const;
+  Teuchos::RCP<Thyra::PreconditionerBase<ST> > create_W_prec() const;
   /** \breif . */
-  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<double> > get_W_factory() const;
+  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > get_W_factory() const;
   /** \brief . */
-  Thyra::ModelEvaluatorBase::InArgs<double> createInArgs() const;
+  Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;
   /** \brief . */
   void reportFinalPoint(
-    const Thyra::ModelEvaluatorBase::InArgs<double>      &finalPoint
+    const Thyra::ModelEvaluatorBase::InArgs<ST>      &finalPoint
     ,const bool                                   wasSolved
     );
 
@@ -177,19 +178,19 @@ private:
   //@{
 
   /** \brief . */
-  Teuchos::RCP<Thyra::LinearOpBase<double> > create_DfDp_op_impl(int l) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DfDp_op_impl(int l) const;
   /** \brief . */
-  Teuchos::RCP<Thyra::LinearOpBase<double> > create_DgDx_dot_op_impl(int j) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dot_op_impl(int j) const;
   /** \brief . */
-  Teuchos::RCP<Thyra::LinearOpBase<double> > create_DgDx_op_impl(int j) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_op_impl(int j) const;
   /** \brief . */
-  Teuchos::RCP<Thyra::LinearOpBase<double> > create_DgDp_op_impl(int j, int l) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDp_op_impl(int j, int l) const;
   /** \brief . */
-  Thyra::ModelEvaluatorBase::OutArgs<double> createOutArgsImpl() const;
+  Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;
   /** \brief . */
   void evalModelImpl(
-    const Thyra::ModelEvaluatorBase::InArgs<double> &inArgs,
-    const Thyra::ModelEvaluatorBase::OutArgs<double> &outArgs
+    const Thyra::ModelEvaluatorBase::InArgs<ST> &inArgs,
+    const Thyra::ModelEvaluatorBase::OutArgs<ST> &outArgs
     ) const;
 
   //@}
@@ -204,9 +205,9 @@ private:
   typedef std::vector<bool> p_map_is_local_t;
   typedef std::vector<bool> g_map_is_local_t;
 
-  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorSpaceBase<double> > >
+  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > >
   p_space_t;
-  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorSpaceBase<double> > >
+  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > >
   g_space_t;
 
   // /////////////////////
@@ -216,7 +217,7 @@ private:
 
   Teuchos::RCP<Teuchos::ParameterList> paramList_;
 
-  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<double> > W_factory_;
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > W_factory_;
 
   Teuchos::RCP<const Epetra_Map> x_map_;
   p_map_t p_map_;
@@ -225,17 +226,17 @@ private:
   p_map_is_local_t g_map_is_local_;
   Teuchos::RCP<const Epetra_Map> f_map_;
 
-  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > x_space_;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > x_space_;
   p_space_t p_space_;
-  Teuchos::RCP<const Thyra::VectorSpaceBase<double> > f_space_;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > f_space_;
   g_space_t g_space_;
 
-  mutable Thyra::ModelEvaluatorBase::InArgs<double> nominalValues_;
-  mutable Thyra::ModelEvaluatorBase::InArgs<double> lowerBounds_;
-  mutable Thyra::ModelEvaluatorBase::InArgs<double> upperBounds_;
+  mutable Thyra::ModelEvaluatorBase::InArgs<ST> nominalValues_;
+  mutable Thyra::ModelEvaluatorBase::InArgs<ST> lowerBounds_;
+  mutable Thyra::ModelEvaluatorBase::InArgs<ST> upperBounds_;
   mutable bool nominalValuesAndBoundsAreUpdated_;
 
-  Thyra::ModelEvaluatorBase::InArgs<double> finalPoint_;
+  Thyra::ModelEvaluatorBase::InArgs<ST> finalPoint_;
 
   EStateFunctionScaling stateFunctionScaling_;
   mutable Teuchos::RCP<const Epetra_Vector> stateFunctionScalingVec_;
@@ -248,8 +249,8 @@ private:
   mutable Teuchos::RCP<Epetra_Vector> x_unscaled_;
   mutable Teuchos::RCP<Epetra_Vector> x_dot_unscaled_;
 
-  mutable Thyra::ModelEvaluatorBase::InArgs<double> prototypeInArgs_;
-  mutable Thyra::ModelEvaluatorBase::OutArgs<double> prototypeOutArgs_;
+  mutable Thyra::ModelEvaluatorBase::InArgs<ST> prototypeInArgs_;
+  mutable Thyra::ModelEvaluatorBase::OutArgs<ST> prototypeOutArgs_;
   mutable bool currentInArgsOutArgs_;
 
   bool finalPointWasSolved_;
@@ -263,23 +264,23 @@ private:
   /** \brief . */
   void convertInArgsFromEpetraToThyra(
     const EpetraExt::ModelEvaluator::InArgs &epetraInArgs,
-    Thyra::ModelEvaluatorBase::InArgs<double> *inArgs
+    Thyra::ModelEvaluatorBase::InArgs<ST> *inArgs
     ) const;
 
   /** \brief . */
   void convertInArgsFromThyraToEpetra(
-    const Thyra::ModelEvaluatorBase::InArgs<double> &inArgs,
+    const Thyra::ModelEvaluatorBase::InArgs<ST> &inArgs,
     EpetraExt::ModelEvaluator::InArgs *epetraInArgs
     ) const;
 
   /** \brief . */
   void convertOutArgsFromThyraToEpetra(
     // Thyra form of the outArgs
-    const Thyra::ModelEvaluatorBase::OutArgs<double> &outArgs,
+    const Thyra::ModelEvaluatorBase::OutArgs<ST> &outArgs,
     // Epetra form of the unscaled output arguments 
     EpetraExt::ModelEvaluator::OutArgs *epetraUnscaledOutArgs,
     // The passed-in form of W
-    Teuchos::RCP<Thyra::LinearOpBase<double> > *W_op,
+    Teuchos::RCP<Thyra::LinearOpBase<ST> > *W_op,
     Teuchos::RCP<Thyra::EpetraLinearOp> *efwdW,
     // The actual Epetra object passed to the underylying EpetraExt::ModelEvaluator
     Teuchos::RCP<Epetra_Operator> *eW
@@ -303,10 +304,10 @@ private:
   /** \brief . */
   void finishConvertingOutArgsFromEpetraToThyra(
     const EpetraExt::ModelEvaluator::OutArgs &epetraOutArgs,
-    Teuchos::RCP<Thyra::LinearOpBase<double> > &W_op,
+    Teuchos::RCP<Thyra::LinearOpBase<ST> > &W_op,
     Teuchos::RCP<Thyra::EpetraLinearOp> &efwdW,
     Teuchos::RCP<Epetra_Operator> &eW,
-    const Thyra::ModelEvaluatorBase::OutArgs<double> &outArgs // Output!
+    const Thyra::ModelEvaluatorBase::OutArgs<ST> &outArgs // Output!
     ) const;
   // 2007/08/03: rabartl: Above, I pass many of the RCP objects by non-const
   // reference since I don't want the compiler to perform any implicit

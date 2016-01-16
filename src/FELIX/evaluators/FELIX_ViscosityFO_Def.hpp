@@ -9,7 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
 #include "FELIX_HomotopyParameter.hpp"
@@ -22,9 +22,9 @@ namespace FELIX {
 const double pi = 3.1415926535897932385;
 
 namespace {
-template<typename ScalarT>
+template<typename ParamScalarT>
 KOKKOS_INLINE_FUNCTION
-ScalarT flowRate (const ScalarT& T) {
+ParamScalarT flowRate (const ParamScalarT& T) {
   return (T < 263) ? 1.3e7 / exp (6.0e4 / 8.314 / T) : 6.26e22 / exp (1.39e5 / 8.314 / T);
 }
 }
@@ -183,10 +183,8 @@ template<typename EvalT,typename Traits>
 typename ViscosityFO<EvalT,Traits>::ScalarT&
 ViscosityFO<EvalT,Traits>::getValue(const std::string &n)
 {
-  if(n=="Glen's Law Homotopy Parameter")
-    return FELIX::HomotopyParameter<EvalT>::value;
-  else
-    return dummyParam;
+  return (n=="Glen's Law Homotopy Parameter") ?
+    FELIX::HomotopyParameter<EvalT>::value : dummyParam;
 }
 //**********************************************************************
 //Kokkos functors
@@ -274,7 +272,7 @@ void ViscosityFO<EvalT, Traits>::glenslaw (const ScalarT &flowFactorVec, const i
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_UNIFORM_Tag& tag, const int& cell) const{
-  ScalarT flowFactorVec;
+  ParamScalarT flowFactorVec;
   flowFactorVec = 1.0/2.0*pow(A, -1.0/n);
   glenslaw(flowFactorVec,cell);
 }
@@ -284,7 +282,7 @@ KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag& tag, const int& cell) const
 {
   ScalarT flowFactorVec;
-  flowFactorVec =1.0/2.0*pow(flowRate<ScalarT>(temperature(cell)), -1.0/n);
+  flowFactorVec =1.0/2.0*pow(flowRate<ParamScalarT>(temperature(cell)), -1.0/n);
   glenslaw(flowFactorVec,cell);
 }
 
@@ -292,7 +290,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_FROMFILE_Tag& tag, const int& cell) const
 {
-   ScalarT flowFactorVec;
+   ParamScalarT flowFactorVec;
    flowFactorVec =1.0/2.0*pow(flowFactorA(cell), -1.0/n);
    glenslaw(flowFactorVec,cell);
 }
@@ -300,7 +298,7 @@ void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_FROMFIL
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits>::glenslaw_xz (const ScalarT &flowFactorVec, const int& cell) const
+void ViscosityFO<EvalT, Traits>::glenslaw_xz (const ParamScalarT &flowFactorVec, const int& cell) const
 {
   double power = 0.5*(1.0/n - 1.0);
   double a = 1.0;
@@ -331,7 +329,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_XZ_UNIFORM_Tag& tag, const int& cell) const
 {
-  ScalarT flowFactorVec;
+  ParamScalarT flowFactorVec;
   flowFactorVec = 1.0/2.0*pow(A, -1.0/n);
   glenslaw_xz(flowFactorVec,cell);
 }
@@ -340,8 +338,8 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_XZ_TEMPERATUREBASED_Tag& tag, const int& cell) const
 {
-  ScalarT flowFactorVec;
-  flowFactorVec =1.0/2.0*pow(flowRate<ScalarT>(temperature(cell)), -1.0/n);
+  ParamScalarT flowFactorVec;
+  flowFactorVec =1.0/2.0*pow(flowRate<ParamScalarT>(temperature(cell)), -1.0/n);
   glenslaw_xz(flowFactorVec,cell);
 }
 
@@ -349,7 +347,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_XZ_FROMFILE_Tag& tag, const int& cell) const
 {
-   ScalarT flowFactorVec;
+   ParamScalarT flowFactorVec;
    flowFactorVec =1.0/2.0*pow(flowFactorA(cell), -1.0/n);
    glenslaw_xz(flowFactorVec,cell);
 }
@@ -396,7 +394,7 @@ evaluateFields(typename Traits::EvalData workset)
       break;
     case GLENSLAW:
     case GLENSLAW_XZ:
-      std::vector<ScalarT> flowFactorVec; //create vector of the flow factor A at each cell
+      std::vector<ParamScalarT> flowFactorVec; //create vector of the flow factor A at each cell
       flowFactorVec.resize(workset.numCells);
       switch (flowRate_type)
       {
@@ -406,7 +404,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
         case TEMPERATUREBASED:
           for (std::size_t cell=0; cell < workset.numCells; ++cell)
-            flowFactorVec[cell] = 1.0/2.0*pow(flowRate<ScalarT>(temperature(cell)), -1.0/n);
+            flowFactorVec[cell] = 1.0/2.0*pow(flowRate<ParamScalarT>(temperature(cell)), -1.0/n);
           break;
         case FROMFILE:
         case FROMCISM:

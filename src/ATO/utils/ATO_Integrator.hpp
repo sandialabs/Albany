@@ -8,11 +8,11 @@
 #define Integrator_HPP
 
 #include "Sacado.hpp"
-#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid2_FieldContainer.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Shards_CellTopology.hpp"
-#include "Intrepid_HGRAD_HEX_Cn_FEM.hpp"
-#include <Intrepid_MiniTensor.h>
+#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
+#include <Intrepid2_MiniTensor.h>
 #include <vector>
 #include <functional>
 
@@ -37,26 +37,26 @@ class Integrator
 
  public:
   Integrator(Teuchos::RCP<shards::CellTopology> celltype,
-             Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basis);
+             Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > basis);
   virtual ~Integrator(){};
 
   template<typename C>
   void getMeasure(RealType& measure, 
-                 const Intrepid::FieldContainer<RealType>& coordCon, 
-                 const Intrepid::FieldContainer<RealType>& topoVals,
+                 const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
+                 const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals,
                  RealType zeroVal,
                  C comparison);
 
   void getCubature(std::vector<std::vector<RealType> >& refPoints, std::vector<RealType>& weights, 
-                   const Intrepid::FieldContainer<RealType>& topoVals, 
-                   const Intrepid::FieldContainer<RealType>& coordCon, 
+                   const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
+                   const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
                    RealType zeroVal);
 
  private:
 
-  typedef Intrepid::Vector<RealType,3> Vector3D;
-  typedef Intrepid::Vector<int,3> Tri;
-  typedef Intrepid::Vector<int,4> Tet;
+  typedef Intrepid2::Vector<RealType,3> Vector3D;
+  typedef Intrepid2::Vector<int,3> Tri;
+  typedef Intrepid2::Vector<int,4> Tet;
 
   struct Intersection {
     Intersection(Vector3D p, std::pair<int,int> c):point(p),connect(c){}
@@ -66,7 +66,7 @@ class Integrator
 
   struct MiniPoly {
     MiniPoly(){}
-    MiniPoly(int n){points.resize(n,Vector3D(Intrepid::ZEROS));mapToBase.resize(n);}
+    MiniPoly(int n){points.resize(n,Vector3D(Intrepid2::ZEROS));mapToBase.resize(n);}
     std::vector<Vector3D> points;
     std::vector<int> mapToBase;
   };
@@ -79,13 +79,13 @@ class Integrator
   template<typename C>
   void getSurfaceTris(std::vector< Vector3D >& points,
                       std::vector< Tri >& tris,
-                      const Intrepid::FieldContainer<RealType>& topoVals, 
-                      const Intrepid::FieldContainer<RealType>& coordCon, 
+                      const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
+                      const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
                       RealType zeroVal, C comparison);
 
   template<typename C>
   bool included(Teuchos::RCP<MiniPoly> poly,
-                const Intrepid::FieldContainer<RealType>& topoVals,
+                const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals,
                 RealType zeroVal, C compare);
 
   void trisFromPoly(std::vector< Vector3D >& points,
@@ -105,7 +105,7 @@ class Integrator
                    const Vector3D& c2,
                    const Vector3D& c3);
 
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > basis;
 
 };
 
@@ -114,26 +114,26 @@ class SubIntegrator
 
  public:
   SubIntegrator(Teuchos::RCP<shards::CellTopology> celltype,
-                Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basis,
+                Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > basis,
                 uint maxRefs, RealType maxErr);
   virtual ~SubIntegrator(){};
 
   void getMeasure(RealType& measure, 
-                  const Intrepid::FieldContainer<RealType>& coordCon, 
-                  const Intrepid::FieldContainer<RealType>& topoVals,
+                  const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
+                  const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals,
                   RealType zeroVal,
                   Sense sense);
 
   void getMeasure(RealType& measure, 
-                  Intrepid::FieldContainer<RealType>& dMdtopo,
-                  const Intrepid::FieldContainer<RealType>& coordCon, 
-                  const Intrepid::FieldContainer<RealType>& topoVals,
+                  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& dMdtopo,
+                  const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
+                  const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals,
                   RealType zeroVal,
                   Sense sense);
 
   void getCubature(std::vector<std::vector<RealType> >& refPoints, std::vector<RealType>& weights, 
-                   const Intrepid::FieldContainer<RealType>& topoVals, 
-                   const Intrepid::FieldContainer<RealType>& coordCon, 
+                   const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
+                   const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
                    RealType zeroVal);
 
  private:
@@ -141,15 +141,15 @@ class SubIntegrator
   template <typename N> struct Positive { typedef std::greater_equal<N> Type; };
   template <typename N> struct Negative { typedef std::less_equal<N> Type; };
 
-  template <typename N> struct Vector3D { typedef Intrepid::Vector<N,3> Type; };
-  typedef Intrepid::Vector<int,3> Tri;
-  typedef Intrepid::Vector<int,4> Tet;
+  template <typename N> struct Vector3D { typedef Intrepid2::Vector<N,3> Type; };
+  typedef Intrepid2::Vector<int,3> Tri;
+  typedef Intrepid2::Vector<int,4> Tet;
 
   template <typename V, typename P>
   struct Simplex {
     Simplex(){}
-    Simplex(int n){points.resize(n,typename Vector3D<P>::Type(Intrepid::ZEROS));fieldvals.resize(n);}
-    std::vector<Intrepid::Vector<P,3> > points;
+    Simplex(int n){points.resize(n,typename Vector3D<P>::Type(Intrepid2::ZEROS));fieldvals.resize(n);}
+    std::vector<Intrepid2::Vector<P,3> > points;
     std::vector<V> fieldvals;
   };
 
@@ -159,10 +159,10 @@ class SubIntegrator
   V Volume(Simplex<V,P>& simplex);
 
   template <typename N, typename V, typename P>
-  V Volume(Simplex<V,P>& simplex, const Intrepid::FieldContainer<N>& coordCon);
+  V Volume(Simplex<V,P>& simplex, const Intrepid2::FieldContainer_Kokkos<N, PHX::Layout, PHX::Device>& coordCon);
 
   template <typename N, typename V, typename P>
-  void Project( const Intrepid::FieldContainer<N>& topoVals, 
+  void Project( const Intrepid2::FieldContainer_Kokkos<N, PHX::Layout, PHX::Device>& topoVals, 
                 std::vector<Simplex<V,P> >& implicitPolys);
 
   template<typename C, typename V, typename P>
@@ -173,16 +173,16 @@ class SubIntegrator
   void SortMap(const std::vector<typename Vector3D<P>::Type>& points, std::vector<int>& map);
 
   template<typename V, typename P>
-  void getValues( Intrepid::FieldContainer<V>& Nvals, const Intrepid::FieldContainer<P>& evalPoints);
+  void getValues( Intrepid2::FieldContainer_Kokkos<V, PHX::Layout, PHX::Device>& Nvals, const Intrepid2::FieldContainer_Kokkos<P, PHX::Layout, PHX::Device>& evalPoints);
 
   template<typename V, typename P>
   void Refine( std::vector<Simplex<V,P> >& inpolys,
                std::vector<Simplex<V,P> >& outpolys);
 
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basis;
-  Teuchos::RCP<Intrepid::Basis<DFadType, Intrepid::FieldContainer<DFadType> > > DFadBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > basis;
+  Teuchos::RCP<Intrepid2::Basis<DFadType, Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device> > > DFadBasis;
 
-  Intrepid::FieldContainer<RealType> parentCoords;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> parentCoords;
 
   std::vector< std::vector<Simplex<RealType,RealType> > > refinement;
   std::vector< std::vector<Simplex<DFadType,DFadType> > > DFadRefinement;

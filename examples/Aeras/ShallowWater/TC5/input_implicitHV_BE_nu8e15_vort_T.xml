@@ -19,12 +19,37 @@
        <Parameter name="Function Data" type="Array(double)"
                   value="{}"/>
     </ParameterList>
-    <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="3"/>
-      <Parameter name="Response 0" type="string" value="Solution Average"/>
+    
+        <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="7"/>
+      <Parameter name="Response 0" type="string" value="Solution Min Value"/>
+            <ParameterList name="ResponseParams 0">
+            <Parameter name="Equation" type="int" value="1" />
+            </ParameterList>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
-      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+            <ParameterList name="ResponseParams 1">
+            <Parameter name="Equation" type="int" value="1" />
+            </ParameterList>
+      <Parameter name="Response 2" type="string" value="Solution Min Value"/>
+            <ParameterList name="ResponseParams 2">
+            <Parameter name="Equation" type="int" value="2" />
+            </ParameterList>
+      <Parameter name="Response 3" type="string" value="Solution Max Value"/>
+            <ParameterList name="ResponseParams 3">
+            <Parameter name="Equation" type="int" value="2" />
+            </ParameterList>         
+      <Parameter name="Response 4" type="string" value="Solution Min Value"/>
+            <ParameterList name="ResponseParams 4">
+            <Parameter name="Equation" type="int" value="6" />
+            </ParameterList>
+      <Parameter name="Response 5" type="string" value="Solution Max Value"/>
+            <ParameterList name="ResponseParams 5">
+            <Parameter name="Equation" type="int" value="6" />
+            </ParameterList>     
+      <Parameter name="Response 6" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
+    
+
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
       <Parameter name="Parameter 0" type="string" value="Mountain Height"/>
@@ -41,9 +66,19 @@
     <Parameter name="Exodus Write Interval" type="int" value="20"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Number of Comparisons" type="int" value="7"/>
     <Parameter  name="Test Values" type="Array(double)" value="{
-   805.298239912,                    5965.84961741,                    441330.153955}"/> 
+                    -0.028957814904,
+                    22.8132980147,
+                    -11.4486037771,
+                    5.49365702963,
+                    -9.27810469992e-06,
+                    2.33138510714e-05,
+                    127141844720
+                    368548259.398
+                    20167998.429
+                    127142380477
+   }"/> 
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -52,7 +87,7 @@
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="8000"/>
+      <Parameter name="Final Time" type="double" value="48000"/>
       <!--Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/-->
       <ParameterList name="Rythmos Stepper">
@@ -62,7 +97,7 @@
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="20"/>
+        <Parameter name="Number of Time Steps" type="int" value="40"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">

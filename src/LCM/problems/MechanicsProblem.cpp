@@ -272,11 +272,13 @@ buildProblem(
         Teuchos::null);
     if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
   }
+  *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
   constructDirichletEvaluators(*meshSpecs[0]);
 
-  if (haveSidesets)
-
-  constructNeumannEvaluators(meshSpecs[0]);
+  if (haveSidesets) {
+    *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
+    constructNeumannEvaluators(meshSpecs[0]);
+  }
 
 }
 //------------------------------------------------------------------------------
@@ -440,14 +442,15 @@ getValidProblemParameters() const
   return validPL;
 }
 
+//------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
     new_state
     ) const
     {

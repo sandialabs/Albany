@@ -29,6 +29,7 @@ class HydrologyWaterDischarge : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   HydrologyWaterDischarge (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
@@ -42,7 +43,7 @@ private:
 
   // Input:
   PHX::MDField<ScalarT>  gradPhi;
-  PHX::MDField<ScalarT>  h;
+  PHX::MDField<ParamScalarT>  h;
 
   // Output:
   PHX::MDField<ScalarT>  q;

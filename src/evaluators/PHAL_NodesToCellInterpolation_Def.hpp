@@ -21,15 +21,15 @@ NodesToCellInterpolation (const Teuchos::ParameterList& p,
 
   if (isVectorField)
   {
-    field_node = PHX::MDField<ScalarT> (p.get<std::string> ("Field Node Name"), dl->node_vector);
-    field_cell = PHX::MDField<ScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_vector);
+    field_node = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Node Name"), dl->node_vector);
+    field_cell = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_vector);
 
     vecDim = dl->node_vector->dimension(2);
   }
   else
   {
-    field_node = PHX::MDField<ScalarT> (p.get<std::string> ("Field Node Name"), dl->node_scalar);
-    field_cell = PHX::MDField<ScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_scalar2);
+    field_node = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Node Name"), dl->node_scalar);
+    field_cell = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_scalar2);
   }
 
   numQPs   = dl->qp_scalar->dimension(1);
@@ -62,7 +62,7 @@ template<typename EvalT, typename Traits>
 void NodesToCellInterpolation<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
   MeshScalarT meas;
-  ScalarT field_qp;
+  ParamScalarT field_qp;
 
   for (int cell=0; cell<workset.numCells; ++cell)
   {

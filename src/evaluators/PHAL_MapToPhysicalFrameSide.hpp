@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -48,7 +48,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim>           coords_cell_vertices;
 
   // Accessory variables
-  std::vector<Intrepid::FieldContainer<RealType>>     phi_at_cub_points;
+  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >     phi_at_cub_points;
   std::vector<std::vector<int>>                       sideVertices;
   std::vector<int>                                    numSideVertices;
 

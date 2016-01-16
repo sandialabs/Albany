@@ -19,12 +19,28 @@
        <Parameter name="Function Data" type="Array(double)"
                   value="{}"/>
     </ParameterList>
+    
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="3"/>
-      <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Number" type="int" value="5"/>
+      <Parameter name="Response 0" type="string" value="Solution Min Value"/>
+            <ParameterList name="ResponseParams 0">
+            <Parameter name="Equation" type="int" value="1" />
+            </ParameterList>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
-      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+            <ParameterList name="ResponseParams 1">
+            <Parameter name="Equation" type="int" value="1" />
+            </ParameterList>
+      <Parameter name="Response 2" type="string" value="Solution Min Value"/>
+            <ParameterList name="ResponseParams 2">
+            <Parameter name="Equation" type="int" value="2" />
+            </ParameterList>
+      <Parameter name="Response 3" type="string" value="Solution Max Value"/>
+            <ParameterList name="ResponseParams 3">
+            <Parameter name="Equation" type="int" value="2" />
+            </ParameterList>            
+      <Parameter name="Response 4" type="string" value="Aeras Shallow Water L2 Norm"/>
     </ParameterList>
+
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
       <Parameter name="Parameter 0" type="string" value="Mountain Height"/>
@@ -41,11 +57,17 @@
     <Parameter name="Exodus Write Interval" type="int" value="20"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Number of Comparisons" type="int" value="5"/>
     <Parameter  name="Test Values" type="Array(double)" value="{
-    939.514613231,
-                    5965.84961741,
-                    441330.153955}"/> 
+                    -0.0159715948643,
+                    21.3987579334,
+                    -6.72804615728,
+                    2.32111330383,
+                    127141817995
+                    368838627.778
+                    11207645.552
+                    127142353489
+}"/> 
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -54,7 +76,7 @@
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="8000"/>
+      <Parameter name="Final Time" type="double" value="24000"/>
       <!--Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/-->
       <ParameterList name="Rythmos Stepper">

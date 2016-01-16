@@ -123,14 +123,6 @@
                     <Parameter name="repartition: max imbalance" type="double" value="1.3"/>
                     <Parameter name="repartition: min rows per proc" type="int" value="500"/>
                 </ParameterList>
-		<ParameterList name="Ifpack">
-		  <Parameter name="Overlap" type="int" value="2"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
-		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
-		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
-		  </ParameterList>
-		</ParameterList>
 	      </ParameterList>
 	    </ParameterList>
 	  </ParameterList>

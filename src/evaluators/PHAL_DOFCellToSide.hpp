@@ -37,18 +37,18 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node> val_cell;
+  PHX::MDField<ParamScalarT,Cell,Node> val_cell;
 
   // Output:
   //! Values on side
-  PHX::MDField<ScalarT,Cell,Side,Node> val_side;
+  PHX::MDField<ParamScalarT,Cell,Side,Node> val_side;
 
 
   int numSideNodes;

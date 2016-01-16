@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <typeinfo>
@@ -193,21 +193,21 @@ computeState(typename Traits::EvalData workset,
   ScalarT damage_deriv_m, damage_deriv_f1, damage_deriv_f2;
 
   // Define some tensors for use
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> F(num_dims_), C(num_dims_), invC(num_dims_);
-  Intrepid::Tensor<ScalarT> sigma_m(num_dims_), sigma_f1(num_dims_), sigma_f2(
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> F(num_dims_), C(num_dims_), invC(num_dims_);
+  Intrepid2::Tensor<ScalarT> sigma_m(num_dims_), sigma_f1(num_dims_), sigma_f2(
       num_dims_);
-  Intrepid::Tensor<ScalarT> M1dyadM1(num_dims_), M2dyadM2(num_dims_);
-  Intrepid::Tensor<ScalarT> S0_m(num_dims_), S0_f1(num_dims_), S0_f2(num_dims_);
+  Intrepid2::Tensor<ScalarT> M1dyadM1(num_dims_), M2dyadM2(num_dims_);
+  Intrepid2::Tensor<ScalarT> S0_m(num_dims_), S0_f1(num_dims_), S0_f2(num_dims_);
 
   // tangent is w.r.t. the right Cauchy-Green tensor
-  Intrepid::Tensor4<ScalarT> tangent_m(num_dims_);
-  Intrepid::Tensor4<ScalarT> tangent_f1(num_dims_), tangent_f2(num_dims_);
+  Intrepid2::Tensor4<ScalarT> tangent_m(num_dims_);
+  Intrepid2::Tensor4<ScalarT> tangent_f1(num_dims_), tangent_f2(num_dims_);
   // tangentA is w.r.t. the deformation gradient
-  Intrepid::Tensor4<ScalarT> tangentA_m(num_dims_);
-  Intrepid::Tensor4<ScalarT> tangentA_f1(num_dims_), tangentA_f2(num_dims_);
+  Intrepid2::Tensor4<ScalarT> tangentA_m(num_dims_);
+  Intrepid2::Tensor4<ScalarT> tangentA_f1(num_dims_), tangentA_f2(num_dims_);
 
-  Intrepid::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
+  Intrepid2::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
 
   //volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
 
@@ -227,10 +227,10 @@ computeState(typename Traits::EvalData workset,
       F.fill(def_grad,cell, pt,0,0);
       // Right Cauchy-Green Tensor C = F^{T} * F
 
-      C = Intrepid::transpose(F) * F;
-      invC = Intrepid::inverse(C);
-      I1_m = Intrepid::trace(C);
-      I3_m = Intrepid::det(C);
+      C = Intrepid2::transpose(F) * F;
+      invC = Intrepid2::inverse(C);
+      I1_m = Intrepid2::trace(C);
+      I3_m = Intrepid2::det(C);
       lnI3_m = std::log(I3_m);
 
       // energy for M
@@ -242,7 +242,7 @@ computeState(typename Traits::EvalData workset,
 
       // undamaged Cauchy stress for M
       sigma_m = (1.0 / J(cell, pt))
-          * Intrepid::dot(F, Intrepid::dot(S0_m, Intrepid::transpose(F)));
+          * Intrepid2::dot(F, Intrepid2::dot(S0_m, Intrepid2::transpose(F)));
 
       // elasticity tensor (undamaged) for M
       mu_tilde = mu - 0.5 * lame * lnI3_m;
@@ -251,9 +251,9 @@ computeState(typename Traits::EvalData workset,
 
       if(compute_tangent_) {
         tangent_m = volume_fraction_m_ * 
-          ( lame * Intrepid::tensor(invC, invC)
-            + mu_tilde * (Intrepid::tensor2(invC, invC)
-              + Intrepid::tensor3(invC, invC)) ); 
+          ( lame * Intrepid2::tensor(invC, invC)
+            + mu_tilde * (Intrepid2::tensor2(invC, invC)
+              + Intrepid2::tensor3(invC, invC)) ); 
       }// compute_tangent_
 
 
@@ -272,7 +272,7 @@ computeState(typename Traits::EvalData workset,
       // optional material tangent computation
       if(compute_tangent_) {
         tangent_m = (1.0 - damage_m(cell, pt)) * tangent_m
-          - damage_deriv_m * Intrepid::tensor(S0_m, S0_m);
+          - damage_deriv_m * Intrepid2::tensor(S0_m, S0_m);
 
         // convert tangent_m to tangentA 
         // tangentA is w.r.t. the deformation gradient
@@ -315,10 +315,10 @@ computeState(typename Traits::EvalData workset,
       M2 = M2 / norm(M2);
 
       // Anisotropic invariants I4 = M_{i} * C * M_{i}
-      I4_f1 = Intrepid::dot(M1, Intrepid::dot(C, M1));
-      I4_f2 = Intrepid::dot(M2, Intrepid::dot(C, M2));
-      M1dyadM1 = Intrepid::dyad(M1, M1);
-      M2dyadM2 = Intrepid::dyad(M2, M2);
+      I4_f1 = Intrepid2::dot(M1, Intrepid2::dot(C, M1));
+      I4_f2 = Intrepid2::dot(M2, Intrepid2::dot(C, M2));
+      M1dyadM1 = Intrepid2::dyad(M1, M1);
+      M2dyadM2 = Intrepid2::dyad(M2, M2);
 
       // compute energy for fibers
       energy_f1(cell, pt) = volume_fraction_f1_ * (k_f1_
@@ -334,9 +334,9 @@ computeState(typename Traits::EvalData workset,
 
       // Fiber undamaged Cauchy stress
       sigma_f1 = (1.0 / J(cell, pt))
-          * Intrepid::dot(F, Intrepid::dot(S0_f1, Intrepid::transpose(F)));
+          * Intrepid2::dot(F, Intrepid2::dot(S0_f1, Intrepid2::transpose(F)));
       sigma_f2 = (1.0 / J(cell, pt))
-          * Intrepid::dot(F, Intrepid::dot(S0_f2, Intrepid::transpose(F)));
+          * Intrepid2::dot(F, Intrepid2::dot(S0_f2, Intrepid2::transpose(F)));
 
       // undamaged tangent for fibers
       coefficient_f1 = volume_fraction_f1_ * 8.0 * k_f1_
@@ -349,8 +349,8 @@ computeState(typename Traits::EvalData workset,
 
       // optional material tangent computation
       if(compute_tangent_) {
-        tangent_f1 = coefficient_f1 * Intrepid::tensor(M1dyadM1, M1dyadM1);
-        tangent_f2 = coefficient_f2 * Intrepid::tensor(M2dyadM2, M2dyadM2);
+        tangent_f1 = coefficient_f1 * Intrepid2::tensor(M1dyadM1, M1dyadM1);
+        tangent_f2 = coefficient_f2 * Intrepid2::tensor(M2dyadM2, M2dyadM2);
       }
 
       // maximum thermodynamic forces
@@ -380,9 +380,9 @@ computeState(typename Traits::EvalData workset,
       // optional material tangent computation
       if(compute_tangent_) {
         tangent_f1 = (1.0 - damage_f1(cell, pt)) * tangent_f1
-          - damage_deriv_f1 * Intrepid::tensor(S0_f1, S0_f1);
+          - damage_deriv_f1 * Intrepid2::tensor(S0_f1, S0_f1);
         tangent_f2 = (1.0 - damage_f2(cell, pt)) * tangent_f2
-          - damage_deriv_f2 * Intrepid::tensor(S0_f2, S0_f2);
+          - damage_deriv_f2 * Intrepid2::tensor(S0_f2, S0_f2);
 
         // convert tangent_m to tangentA 
         // tangentA is w.r.t. the deformation gradient

@@ -20,7 +20,6 @@
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Equation" type="int" value="0" />
-        <Parameter name="Num Equations" type="int" value="3" />
       </ParameterList>
     </ParameterList>
   </ParameterList>
@@ -123,7 +122,7 @@
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
 		      <Parameter name="Output Frequency" type="int" value="20"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>

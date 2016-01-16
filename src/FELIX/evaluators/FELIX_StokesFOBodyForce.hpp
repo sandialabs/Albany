@@ -40,12 +40,13 @@ public:
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:  
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> surface;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint, Dim> surfaceGrad;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint> surface;
   Teuchos::Array<double> gravity;
 
   // Output:

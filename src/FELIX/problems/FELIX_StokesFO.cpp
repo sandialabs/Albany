@@ -6,8 +6,8 @@
 
 #include "FELIX_StokesFO.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -117,10 +117,10 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
 
   // Building cell basis and cubature
   const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
-  cellBasis = Albany::getIntrepidBasis(*cell_top);
+  cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
@@ -133,7 +133,7 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
 
     // Building also basal side structures
     const CellTopologyData * const side_top = &basalMeshSpecs.ctd;
-    basalSideBasis = Albany::getIntrepidBasis(*side_top);
+    basalSideBasis = Albany::getIntrepid2Basis(*side_top);
     basalSideType = rcp(new shards::CellTopology (side_top));
 
     basalEBName   = basalMeshSpecs.ebName;
@@ -149,7 +149,7 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
 
     // Building also surface side structures
     const CellTopologyData * const side_top = &surfaceMeshSpecs.ctd;
-    surfaceSideBasis = Albany::getIntrepidBasis(*side_top);
+    surfaceSideBasis = Albany::getIntrepid2Basis(*side_top);
     surfaceSideType = rcp(new shards::CellTopology (side_top));
 
     surfaceEBName   = surfaceMeshSpecs.ebName;

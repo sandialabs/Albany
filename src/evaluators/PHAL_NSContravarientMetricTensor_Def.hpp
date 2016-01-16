@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -17,7 +17,7 @@ NSContravarientMetricTensor<EvalT, Traits>::
 NSContravarientMetricTensor(const Teuchos::ParameterList& p) :
   coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
@@ -69,8 +69,8 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
   
-  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {      

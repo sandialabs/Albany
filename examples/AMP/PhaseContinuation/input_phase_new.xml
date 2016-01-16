@@ -98,30 +98,6 @@
 -->
   <!-- Solver information follows: This will remain the same from problem to problem if you are solving simple heat equation problems -->
   <ParameterList name="Piro">
-    <ParameterList name="Rythmos">
-      <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="0.0003"/>
-      <Parameter name="Max State Error" type="double" value="0.05"/>
-      <Parameter name="Alpha"           type="double" value="0.0"/>
-      <ParameterList name="Rythmos Stepper">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="low"/>
-	</ParameterList>
-      </ParameterList>
-      <ParameterList name="Rythmos Integration Control">
-        <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="30"/>
-      </ParameterList>
-      <ParameterList name="Rythmos Integrator">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="none"/>
-	</ParameterList>
-      </ParameterList>
-      <ParameterList name="Stratimikos">
-        <Parameter name="Linear Solver Type" type="string" value="Belos"/>
-        <Parameter name="Preconditioner Type" type="string" value="None"/>
-      </ParameterList>
-    </ParameterList>
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation">
       </ParameterList>
@@ -134,8 +110,8 @@
         <Parameter name="Continuation Method" type="string" value="Natural"/>
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="1000"/>
-        <Parameter name="Max Value" type="double" value="0.0003"/>
+        <Parameter name="Max Steps" type="int" value="6"/>
+        <Parameter name="Max Value" type="double" value="30e-5"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
         <ParameterList name="Eigensolver">
@@ -145,7 +121,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Initial Step Size" type="double" value="0.00001"/>
+        <Parameter name="Initial Step Size" type="double" value="1e-5"/>
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>

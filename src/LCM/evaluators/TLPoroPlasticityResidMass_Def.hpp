@@ -7,8 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 #include <typeinfo>
 namespace LCM {
@@ -43,7 +43,7 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
     coordVec  (p.get<std::string>                   ("Coordinate Vector Name"),
          p.get<Teuchos::RCP<PHX::DataLayout>>("Coordinate Data Layout") ),
-    cubature   (p.get<Teuchos::RCP <Intrepid::Cubature<RealType>>>("Cubature")),
+    cubature   (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
     cellType    (p.get<Teuchos::RCP <shards::CellTopology>> ("Cell Type")),
     weights     (p.get<std::string>                   ("Weights Name"),
          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
@@ -204,8 +204,8 @@ namespace LCM {
     bool print = false;
     //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
-    typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     // Use previous time step for Backward Euler Integration
     Albany::MDArray porePressureold
@@ -259,7 +259,7 @@ namespace LCM {
       }
     }
       FST::integrate<ScalarT>(TResidual, fluxdt,
-                            wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+                            wGradBF, Intrepid2::COMP_CPP, true); // "true" sums into
 
     //---------------------------------------------------------------------------//
     // Stabilization Term

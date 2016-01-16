@@ -46,13 +46,18 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
 
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
+    overlapped_xdot->Import(*initial_xdot, *importer, Insert);
+    overlapped_xdotdot->Import(*initial_xdotdot, *importer, Insert);
     AAdapt::InitialConditions(overlapped_x, wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"),
                               disc->hasRestartSolution());
     AAdapt::InitialConditions(overlapped_xdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition Dot"));
+    AAdapt::InitialConditions(overlapped_xdotdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
+                              problemParams->sublist("Initial Condition DotDot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);
     initial_xdot->Export(*overlapped_xdot, *exporter, Insert);
+    initial_xdotdot->Export(*overlapped_xdotdot, *exporter, Insert);
   }
 
 }

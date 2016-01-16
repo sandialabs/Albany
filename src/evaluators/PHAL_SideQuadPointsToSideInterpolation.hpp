@@ -39,7 +39,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   int numQPs;
   int vecDim;
@@ -50,11 +50,11 @@ private:
   std::string sideSetName;
 
   // Input:
-  PHX::MDField<ScalarT>                         field_qp;
+  PHX::MDField<ParamScalarT>                    field_qp;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> w_measure;
 
   // Output:
-  PHX::MDField<ScalarT>     field_side;
+  PHX::MDField<ParamScalarT>     field_side;
 };
 
 } // Namespace PHAL

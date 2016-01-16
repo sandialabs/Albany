@@ -126,6 +126,7 @@ void Albany::APFMeshStruct::init(
 
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
   useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
+  useDOFOffsetHack = params->get<bool>("Offset DOF Hack", false);
 
   compositeTet = false;
 
@@ -392,7 +393,7 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
+  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
@@ -423,6 +424,9 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<bool>("QP Temperature from Nodes", false,
                      "Hack to initialize QP Temperature from Solution");
+
+  validPL->set<bool>("Offset DOF Hack", false,
+      "Offset DOF numberings to start at 2^31 - 1 to test GO types");
 
   return validPL;
 }

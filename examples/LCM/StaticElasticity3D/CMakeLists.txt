@@ -14,21 +14,12 @@ add_test(${testName}_Traction ${Albany.exe} inputTraction.xml)
 endif()
 
 if (ALBANY_MUELU_EXAMPLES) 
-  if (ALBANY_64BIT_INT)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_64.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT_64.xml COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTractionT_64.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputTractionT_64.xml COPYONLY)
-    add_test(${testName}_Tpetra_64 ${AlbanyT.exe} inputT_64.xml)
-    add_test(${testName}_Traction_Tpetra_64 ${AlbanyT.exe} inputTractionT_64.xml)
-  else ()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTractionT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputTractionT.xml COPYONLY)
     add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
     add_test(${testName}_Traction_Tpetra ${AlbanyT.exe} inputTractionT.xml)
-  endif ()
 endif ()
 
 

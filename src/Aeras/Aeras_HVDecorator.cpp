@@ -9,14 +9,14 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
-#include "TpetraExt_MatrixMatrix.hpp"
 
 //uncomment the following to write stuff out to matrix market to debug
-//#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 
-#ifdef WRITE_TO_MATRIX_MARKET
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 static
 int mm_counter = 0;
+#include "TpetraExt_MMHelpers.hpp"
 #endif // WRITE_TO_MATRIX_MARKET
 
 //#define OUTPUT_TO_SCREEN 
@@ -92,10 +92,6 @@ Aeras::HVDecorator::HVDecorator(
   // Create and store mass and Laplacian operators (in CrsMatrix form). 
   const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
   const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 0.0, 1.0); 
-#ifdef WRITE_TO_MATRIX_MARKET
-  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass);
-  Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
-#endif
 
   // Do some preprocessing to speed up subsequent residual calculations.
   // 1. Store the lumped mass diag reciprocal.
@@ -107,6 +103,15 @@ Aeras::HVDecorator::HVDecorator(
   // 3. Remove the structural nonzeros, numerical zeros, from the Laplace
   // operator.
   laplace_ = getOnlyNonzeros(laplace);
+
+//OG In case of a parallel run by some reason laplace.mm file contains indices
+//out of range with non-trivial entries. I haven't debugged this yet. AB suggested to
+//compare the product L*x (L is the Laplace, x is an arbitrary vector)
+//in case of a parallel and serial run.
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
+  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass);
+  Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
+#endif
 }
  
 //IKT: the following function creates either the mass or Laplacian operator, to be 
@@ -352,7 +357,7 @@ Aeras::HVDecorator::evalModelImpl(
   //compute xtildeT 
   applyLinvML(xT, xtildeT); 
 
-#ifdef WRITE_TO_MATRIX_MARKET
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //writing to MatrixMarket for debug
   char name[100];  //create string for file name
   sprintf(name, "xT_%i.mm", mm_counter);

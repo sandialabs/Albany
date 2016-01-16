@@ -39,7 +39,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   int numNodes;
   int numQPs;
@@ -48,12 +48,12 @@ private:
   bool isVectorField;
 
   // Input:
-  PHX::MDField<ScalarT>                       field_node;
+  PHX::MDField<ParamScalarT>                       field_node;
   PHX::MDField<RealType,Cell,Node,QuadPoint>  BF;
   PHX::MDField<MeshScalarT,Cell,Node>         w_measure;
 
   // Output:
-  PHX::MDField<ScalarT>     field_cell;
+  PHX::MDField<ParamScalarT>     field_cell;
 };
 
 } // Namespace PHAL

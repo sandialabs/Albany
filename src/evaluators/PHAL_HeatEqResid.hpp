@@ -59,8 +59,8 @@ private:
   bool enableTransient;
   bool haverhoCp;
   unsigned int numQPs, numDims, numNodes, worksetSize;
-  Intrepid::FieldContainer<ScalarT> flux;
-  Intrepid::FieldContainer<ScalarT> aterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> aterm;
 };
 }
 

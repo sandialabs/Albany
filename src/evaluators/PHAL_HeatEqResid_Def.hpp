@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -122,9 +122,9 @@ evaluateFields(typename Traits::EvalData workset)
 //// workset.print(std::cout);
 
 
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
-  // Since Intrepid will later perform calculations on the entire workset size
+  // Since Intrepid2 will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable
   // values. Leaving this out leads to floating point exceptions !!!
   for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
@@ -138,7 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
 
-  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
 
@@ -149,7 +149,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int i =0; i< Source.dimension(0); i++)
      for (int j =0; j< Source.dimension(1); j++)
         Source(i,j) *= -1.0;
-    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
   }
 
   if (workset.transientTerms && enableTransient){
@@ -158,12 +158,12 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp)
         Tdot(cell,qp) = 0.0;
 
-    FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
 
   }
 
   if (haveConvection)  {
-    Intrepid::FieldContainer<ScalarT> convection(worksetSize, numQPs);
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> convection(worksetSize, numQPs);
 
     for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -181,13 +181,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
-    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
   }
 
 
   if (haveAbsorption) {
 
-    // Since Intrepid will later perform calculations on the entire workset size
+    // Since Intrepid2 will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to floating point exceptions !!!
     for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
@@ -198,7 +198,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
     FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, Temperature);
-    FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true); 
+    FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid2::COMP_CPP, true); 
   }
 
 //TResidual.print(std::cout, true);

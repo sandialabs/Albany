@@ -19,7 +19,7 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
-tolerance = 1.0e-9; 
+tolerance = 1.0e-6; 
 meanvalue = 0.000895993786998; 
 
 # run AlbanyT 

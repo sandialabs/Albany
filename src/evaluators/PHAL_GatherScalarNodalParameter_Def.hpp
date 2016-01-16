@@ -19,7 +19,7 @@ GatherScalarNodalParameterBase(const Teuchos::ParameterList& p,
 {
   param_name = p.get<std::string>("Parameter Name");
   std::string field_name = p.isParameter("Field Name") ? p.get<std::string>("Field Name") : param_name;
-  val = PHX::MDField<ScalarT,Cell,Node>(field_name,dl->node_scalar);
+  val = PHX::MDField<ParamScalarT,Cell,Node>(field_name,dl->node_scalar);
   numNodes = 0;
 
   this->addEvaluatedField(val);
@@ -130,7 +130,7 @@ evaluateFields(typename Traits::EvalData workset)
         // Initialize Fad type for parameter value
         const LO id = wsElDofs((int)cell,(int)node,0);
         double pvec_id = (id >= 0) ? pvecT_constView[id] : 0;
-        ScalarT v(num_deriv, node, pvec_id);
+        ParamScalarT v(num_deriv, node, pvec_id);
         v.setUpdateValue(!workset.ignore_residual);
         (this->val)(cell,node) = v;
       }

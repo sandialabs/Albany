@@ -48,9 +48,10 @@ private:
   void computeEffectivePressure (int cell, int side);
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Side,Node>                    beta_given;
+  PHX::MDField<ParamScalarT,Cell,Side,Node>               beta_given;
   PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
 

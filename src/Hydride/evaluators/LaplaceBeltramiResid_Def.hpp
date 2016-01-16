@@ -15,9 +15,9 @@ LaplaceBeltramiResid<EvalT, Traits>::
 LaplaceBeltramiResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   solnVec(p.get<std::string> ("Solution Vector Name"), dl->node_vector),
   Gc            (p.get<std::string> ("Contravariant Metric Tensor Name"), dl->qp_tensor),
-  cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
   cellType(p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
-  intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis")),
+  intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis")),
   solnResidual(p.get<std::string> ("Residual Name"), dl->node_vector) {
 
   this->addDependentField(Gc);
@@ -40,7 +40,7 @@ LaplaceBeltramiResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   this->setName("LaplaceBeltramiResid" + PHX::typeAsString<EvalT>());
 
@@ -64,17 +64,17 @@ void LaplaceBeltramiResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset) {
 
   // Need to be ScalarT!
-  Intrepid::CellTools<ScalarT>::setJacobian(jacobian, refPoints, solnVec, *cellType);
-  // Since Intrepid will perform calculations on the entire workset size and not
+  Intrepid2::CellTools<ScalarT>::setJacobian(jacobian, refPoints, solnVec, *cellType);
+  // Since Intrepid2 will perform calculations on the entire workset size and not
   // just the used portion, we must fill the excess with reasonable values.
   // Leaving this out leads to a floating point exception in
-  //   Intrepid::RealSpaceTools<Scalar>::det(ArrayDet & detArray,
+  //   Intrepid2::RealSpaceTools<Scalar>::det(ArrayDet & detArray,
   //                                         const ArrayIn & inMats).
   for (std::size_t cell = workset.numCells; cell < worksetSize; ++cell)
     for (std::size_t qp = 0; qp < numQPs; ++qp)
       for (std::size_t i = 0; i < numDims; ++i)
         jacobian(cell, qp, i, i) = 1.0;
-  Intrepid::CellTools<ScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<ScalarT>::setJacobianDet(jacobian_det, jacobian);
 
     for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for(std::size_t node_a = 0; node_a < numNodes; ++node_a) {

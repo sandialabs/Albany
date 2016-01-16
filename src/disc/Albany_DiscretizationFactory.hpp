@@ -99,6 +99,10 @@ class DiscretizationFactory {
 
     Teuchos::RCP<const Teuchos_Comm> commT;
 
+    //The following are for Aeras hydrostatic problems 
+    int numLevels; 
+    int numTracers; 
+
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif

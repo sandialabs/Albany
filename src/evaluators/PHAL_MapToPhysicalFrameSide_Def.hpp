@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -29,8 +29,9 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   int sideDim  = cellDim-1;
 
   // Compute cubature points in reference elements
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature");
-  Intrepid::FieldContainer<RealType> ref_cub_points, ref_weights;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = 
+    p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature");
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> ref_cub_points, ref_weights;
   ref_cub_points.resize(numSideQPs,sideDim);
   ref_weights.resize(numSideQPs); // Not needed per se, but need to be passed to the following function call
   cubature->getCubature(ref_cub_points, ref_weights);
@@ -53,9 +54,9 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
     }
 
     // Since sides may be different (and we don't know on which local side we are), we build one basis per side.
-    auto sideBasis = Albany::getIntrepidBasis (*baseCellType.getCellTopologyData(sideDim,side));
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > sideBasis = Albany::getIntrepid2Basis (*baseCellType.getCellTopologyData(sideDim,side));
     phi_at_cub_points[side].resize(numSideVertices[side],numSideQPs);
-    sideBasis->getValues(phi_at_cub_points[side], ref_cub_points, Intrepid::OPERATOR_VALUE);
+    sideBasis->getValues(phi_at_cub_points[side], ref_cub_points, Intrepid2::OPERATOR_VALUE);
   }
 
   sideSetName = p.get<std::string>("Side Set Name");

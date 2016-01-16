@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -128,7 +128,7 @@ template<typename EvalT, typename Traits>
 void LinComprNSResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
   if (eqn_type == EULER) { //Euler equations
    if (numDims == 1) { //1D case

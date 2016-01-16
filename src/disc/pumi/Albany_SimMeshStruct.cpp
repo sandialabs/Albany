@@ -12,6 +12,7 @@
 #include <gmi_sim.h>
 #include <SimUtil.h>
 #include <SimField.h>
+#include <SimDiscrete.h>
 #include <apfSIM.h>
 #include <PCU.h>
 
@@ -19,11 +20,13 @@ Albany::SimMeshStruct::SimMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
 		const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-  SimUtil_start();
-  Sim_readLicenseFile(0);
-  MS_init();
   SimPartitionedMesh_start(NULL, NULL);
+  MS_init();
+  SimDiscrete_start(0);
+  SimField_start();
   gmi_sim_start();
+  Sim_readLicenseFile(0);
+
   gmi_register_sim();
   PCU_Comm_Init();
 
@@ -77,11 +80,13 @@ Albany::SimMeshStruct::~SimMeshStruct()
   apf::destroyMesh(mesh);
   gmi_destroy(model);
   PCU_Comm_Free();
-  gmi_sim_stop();
-  SimPartitionedMesh_stop();
-  MS_exit();
+
   Sim_unregisterAllKeys();
-  SimUtil_stop();
+  gmi_sim_stop();
+  SimField_stop();
+  SimDiscrete_stop(0);
+  MS_exit();
+  SimPartitionedMesh_stop();
 }
 
 Albany::AbstractMeshStruct::msType

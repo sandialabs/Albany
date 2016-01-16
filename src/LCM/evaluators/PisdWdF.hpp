@@ -43,7 +43,7 @@ private:
   //typedef typename Sacado::Fad::SLFad<ScalarT, 9> EnergyFadType;
   typedef typename Sacado::Fad::SLFad<ScalarT, 9> EnergyFadType;
   EnergyFadType computeEnergy(ScalarT& kappa, ScalarT& mu,
-                          Intrepid::FieldContainer<EnergyFadType>& W);
+                          Intrepid2::FieldContainer_Kokkos<EnergyFadType, PHX::Layout, PHX::Device>& W);
 
 
   // Input:

@@ -47,18 +47,20 @@ private:
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  etadotdVelx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  pGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  uDot;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  uDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>        density;
+  PHX::MDField<ScalarT,Cell,Node,Level>      density;
+
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> Residual;
 
   const double viscosity;
   const double hyperviscosity;
+
   const int numNodes;
   const int numQPs;
   const int numDims;

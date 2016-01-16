@@ -35,9 +35,9 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  PHX::MDField<ScalarT>              field;
+  PHX::MDField<ParamScalarT>              field;
 
   std::string sideSetName;
   std::string fieldName;

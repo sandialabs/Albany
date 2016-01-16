@@ -2,11 +2,7 @@
 
 SCRIPT_NAME=`basename $0`
 PACKAGE=$1
-ARCH=$2
-TOOL_CHAIN=$3
-BUILD_TYPE=$4
-NUM_PROCS=$5
-LCM_DIR=`pwd`
+NUM_PROCS=$2
 TRILINOS="trilinos"
 INTEL_DIR=/opt/intel
 
@@ -186,6 +182,7 @@ esac
 
 # Setup flags with the info gathered above.
 CONFIG_FILE="$PACKAGE-config.sh"
+DTK_FRAG="dtk-frag.sh"
 BUILD=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
 PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
 # Install directory for trilinos only
@@ -197,9 +194,5 @@ ERROR_LOG="$LCM_DIR/$PREFIX-error.log"
 STATUS_LOG="$LCM_DIR/$PREFIX-status.log"
 TEST_LOG="$LCM_DIR/$PREFIX-test.log"
 HOST=`hostname`
-FROM="amota@sandia.gov"
+FROM=`whoami`"@sandia.gov"
 TO="albany-regression@software.sandia.gov"
-# Set directory flags so that the appropriate shared objects and executables
-# can be found.
-PATH="$INSTALL_DIR/bin:$PATH"
-LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"

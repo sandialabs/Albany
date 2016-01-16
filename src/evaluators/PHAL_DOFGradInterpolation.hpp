@@ -54,6 +54,31 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFGradInterpolation_Residual_Tag{};
+
+
+#ifdef KOKKOS_OPTIMIZED
+  typedef Kokkos::TeamPolicy<ExecutionSpace>              team_policy ;
+  typedef team_policy::member_type team_member ;
+  const int work_size=256;
+  int numCells;
+  int threads_per_team; //=worksize/numQP
+  int numTeams; //#of elements/threads_per_team
+
+  void operator()( const team_member & thread) const;
+
+#else
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolation_Residual_Tag> DOFGradInterpolation_Residual_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFGradInterpolation_Residual_Tag& tag, const int& cell) const;
+#endif
+#endif
+
 };
 
 template<typename Traits>
@@ -90,6 +115,22 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t offset;
+
+ #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct DOFGradInterpolation_Jacobian_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolation_Jacobian_Tag> DOFGradInterpolation_Jacobian_Policy;
+
+  int num_dof;
+  int neq;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFGradInterpolation_Jacobian_Tag& tag, const int& cell) const;
+
+#endif
+
 };
 
 #ifdef ALBANY_SG
@@ -189,18 +230,18 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node> val_node;
+  PHX::MDField<ParamScalarT,Cell,Node> val_node;
   //! Basis Functions
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
   std::size_t numNodes;
   std::size_t numQPs;

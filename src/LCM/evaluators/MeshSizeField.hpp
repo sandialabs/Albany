@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
-#include "Intrepid_Cubature.hpp"
-#include "Intrepid_Basis.hpp"
+#include "Intrepid2_Cubature.hpp"
+#include "Intrepid2_Basis.hpp"
 
 
 namespace LCM {
@@ -134,14 +134,14 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> isoMeshSizeField;
 
     // Temporary FieldContainers
-    Intrepid::FieldContainer<RealType> grad_at_cub_points;
-    Intrepid::FieldContainer<RealType> refPoints;
-    Intrepid::FieldContainer<RealType> refWeights;
-    Intrepid::FieldContainer<ScalarT> dxdxi;
-    Intrepid::FieldContainer<ScalarT> dEDdxi;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dxdxi;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dEDdxi;
 
-    Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
+    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
 
     ///
     /// Number of integration points
@@ -247,13 +247,13 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> anisoMeshSizeField;
 
     // Temporary FieldContainers
-    Intrepid::FieldContainer<RealType> grad_at_cub_points;
-    Intrepid::FieldContainer<RealType> refPoints;
-    Intrepid::FieldContainer<RealType> refWeights;
-    Intrepid::FieldContainer<ScalarT> dxdxi;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dxdxi;
 
-    Teuchos::RCP<Intrepid::Cubature<RealType>> cubature;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>> intrepidBasis;
+    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
 
     ///
     /// Number of integration points

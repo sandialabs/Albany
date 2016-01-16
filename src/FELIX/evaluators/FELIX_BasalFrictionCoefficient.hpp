@@ -42,6 +42,7 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Coefficients for computing beta (if not given)
   double mu;              // Coulomb friction coefficient
@@ -51,9 +52,9 @@ private:
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only
 
   // Input:
-  PHX::MDField<ScalarT>               beta_given_field;
+  PHX::MDField<ParamScalarT>          beta_given_field;
   PHX::MDField<ScalarT>               u_norm;
-  PHX::MDField<ScalarT>               N;
+  PHX::MDField<ParamScalarT>          N;
   PHX::MDField<MeshScalarT>           coordVec;
   PHX::MDField<RealType>              BF;
 

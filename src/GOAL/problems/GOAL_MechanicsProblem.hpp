@@ -60,9 +60,9 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     //! retrieve the state data
     void getAllocatedStates(
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-        <Intrepid::FieldContainer<RealType> > > > oldSt,
+        <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldSt,
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-        <Intrepid::FieldContainer<RealType> > > > newSt) const;
+        <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newSt) const;
 
   private:
     
@@ -95,6 +95,9 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     //! number of spatial dimensions
     int numDims;
 
+    //! qoi parameters
+    Teuchos::RCP<Teuchos::ParameterList> qoiParams;
+
     //! a map of the dof offsets
     std::map<std::string, int> offsets;
 
@@ -106,11 +109,11 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! old state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > oldState;
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState;
 
     //! new state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > newState;
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState;
 
 };
 
@@ -136,6 +139,8 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 
+#include "GOAL_LpStress.hpp"
+#include "GOAL_ScatterQoI.hpp"
 #include "GOAL_ComputeHierarchicBasis.hpp"
 
 #include <apf.h>
@@ -157,11 +162,6 @@ constructEvaluators(
   using Teuchos::ArrayRCP;
   using Teuchos::ParameterList;
 
-  typedef Intrepid::FieldContainer<RealType> FieldContainer;
-  typedef RCP<Intrepid::Basis<RealType, FieldContainer> > Basis;
-  typedef Intrepid::DefaultCubatureFactory<RealType> CubatureFactory;
-  typedef RCP<Intrepid::Cubature<RealType> > Cubature;
-
   // get the name of the current element block
   std::string ebName = meshSpecs.ebName;
 
@@ -181,8 +181,6 @@ constructEvaluators(
 
   // name variables
   ArrayRCP<std::string> dofNames(1);
-  ArrayRCP<std::string> dofDotNames(1);
-  ArrayRCP<std::string> dofDotDotNames(1);
   ArrayRCP<std::string> residNames(1);
   dofNames[0] = "Displacement";
   residNames[0] = dofNames[0] + " Residual";
@@ -397,6 +395,46 @@ constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (isAdjoint) {
+
+    assert(Teuchos::nonnull(qoiParams));
+    std::string qoiName = qoiParams->get<std::string>("Name","");
+
+    if (qoiName == "Lp Stress")
+    {{
+
+       // input
+       RCP<ParameterList> p = rcp(new ParameterList("Lp Stress"));
+       p->set<int>("Order", qoiParams->get<int>("p",1));
+       p->set<std::string>("Weights Name", "Weights");
+       p->set<std::string>("Stress Name", cauchy);
+
+       // output
+       p->set<std::string>("Lp Stress Name", qoiName);
+
+       // register evaluator
+       ev = rcp(new GOAL::LpStress<EvalT, PHAL::AlbanyTraits>(*p, dl));
+       fm0.template registerEvaluator<EvalT>(ev);
+
+     }}
+
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Invalid quantity of interest name: " + qoiName);
+
+    { // scatter qoi
+
+      // input
+      RCP<ParameterList> p = rcp(new ParameterList("Scatter QoI"));
+      p->set<std::string>("QoI Name", qoiName);
+
+      // register evaluator
+      ev = rcp(new GOAL::ScatterQoI<EvalT, PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+  }
+
   if (fmChoice == Albany::BUILD_RESID_FM)
   {
     RCP<const PHX::FieldTag> retTag;
@@ -407,6 +445,13 @@ constructEvaluators(
   }
   else if (fmChoice == Albany::BUILD_RESPONSE_FM)
   {
+    if (isAdjoint)
+    {
+      PHX::Tag<typename EvalT::ScalarT> resTag("Scatter", dl->dummy);
+      fm0.requireField<EvalT>(resTag);
+      PHX::Tag<typename EvalT::ScalarT> qoiTag("Scatter QoI", dl->dummy);
+      fm0.requireField<EvalT>(qoiTag);
+    }
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);

@@ -10,7 +10,7 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -62,12 +62,12 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "INTERP SURFACE GRAD Source!" << std::endl;
 #endif
-    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    surfaceGrad = PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
 
     if(useStereographicMap) {
-      surface = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string>("Surface Height Name"), dl->qp_scalar);
+      surface = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string>("Surface Height Name"), dl->qp_scalar);
       this->addDependentField(surface);
       coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
                   p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
@@ -80,7 +80,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "Surface Grad Provided Source!" << std::endl;
 #endif
-    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    surfaceGrad = PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("Surface Height Gradient QP Variable Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_SURF_GRAD_PROVIDED;
@@ -162,7 +162,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
   else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
   *out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << std::endl;
-    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    surfaceGrad = PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>(
         p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_INTERP_SURF_GRAD;

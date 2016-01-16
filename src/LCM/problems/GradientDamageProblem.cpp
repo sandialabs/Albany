@@ -116,15 +116,15 @@ Albany::GradientDamageProblem::getValidProblemParameters() const
   validPL->set<double>("gc", false, "");
   validPL->set<bool>("avgJ", false, "Flag to indicate the J should be averaged");
   validPL->set<bool>("volavgJ", false, "Flag to indicate the J should be volume averaged");
-  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the compostie tet 10 basis in Intrepid2");
 
   return validPL;
 }
 
 void
 Albany::GradientDamageProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> newState_
    ) const
 {
   oldState_ = oldState;

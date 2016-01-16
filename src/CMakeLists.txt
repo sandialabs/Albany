@@ -192,6 +192,7 @@ SET(SOURCES ${SOURCES}
   responses/Albany_SolutionAverageResponseFunction.cpp
   responses/Albany_SolutionFileResponseFunction.cpp
   responses/Albany_SolutionMaxValueResponseFunction.cpp
+  responses/Albany_SolutionMinValueResponseFunction.cpp
   responses/Albany_SolutionTwoNormResponseFunction.cpp
   responses/Albany_SolutionValuesResponseFunction.cpp
   )

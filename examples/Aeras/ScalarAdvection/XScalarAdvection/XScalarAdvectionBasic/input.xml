@@ -1,0 +1,160 @@
+<ParameterList>
+  <ParameterList name="Problem">
+    <Parameter name="Name" type="string" value="Aeras X Scalar Advection"/>
+    <Parameter name="Solution Method" type="string" value="Transient"/>
+    <ParameterList name="XScalarAdvection Problem">
+      <Parameter name="Reynolds Number" type="double" value="0.02"/>
+      <Parameter name="Number of Vertical Levels" type="int" value="8"/>
+      <Parameter name="Tracers" type="Array(string)" value="{T_0,T_1,T_2,T_3,T_4}"/>
+    </ParameterList>
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_0" type="double" value="1.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_1" type="double" value="1.1"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_2" type="double" value="1.2"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_3" type="double" value="1.3"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_4" type="double" value="1.4"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_5" type="double" value="1.5"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_6" type="double" value="1.6"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF rho_7" type="double" value="1.7"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_0" type="double" value="1.00"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_0" type="double" value="1.10"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_0" type="double" value="1.20"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_0" type="double" value="1.30"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_0" type="double" value="1.40"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_1" type="double" value="1.01"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_1" type="double" value="1.11"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_1" type="double" value="1.21"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_1" type="double" value="1.31"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_1" type="double" value="1.41"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_2" type="double" value="1.02"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_2" type="double" value="1.12"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_2" type="double" value="1.22"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_2" type="double" value="1.32"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_2" type="double" value="1.42"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_3" type="double" value="1.03"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_3" type="double" value="1.13"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_3" type="double" value="1.23"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_3" type="double" value="1.33"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_3" type="double" value="1.43"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_4" type="double" value="1.04"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_4" type="double" value="1.14"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_4" type="double" value="1.24"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_4" type="double" value="1.34"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_4" type="double" value="1.44"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_5" type="double" value="1.05"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_5" type="double" value="1.15"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_5" type="double" value="1.25"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_5" type="double" value="1.35"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_5" type="double" value="1.45"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_6" type="double" value="1.06"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_6" type="double" value="1.16"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_6" type="double" value="1.26"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_6" type="double" value="1.36"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_6" type="double" value="1.46"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_0_7" type="double" value="1.07"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_1_7" type="double" value="1.17"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_2_7" type="double" value="1.27"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_3_7" type="double" value="1.37"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF T_4_7" type="double" value="1.47"/>
+    </ParameterList>
+    <ParameterList name="Initial Condition">
+       <Parameter name="Function" type="string" value="Aeras X Scalar Advection"/>
+       <Parameter name="Function Data" type="Array(double)" value="{0.0}"/>
+    </ParameterList>
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
+    </ParameterList>
+<!--
+    <ParameterList name="Parameters">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Parameter 0" type="string" value="Reynolds Number"/>
+    </ParameterList>
+-->
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="STK1D"/>
+    <Parameter name="1D Elements" type="int" value="300"/>
+    <Parameter name="1D Scale" type="double" value="300.0"/>
+    <Parameter name="Workset Size" type="int" value="300"/>
+    <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
+    <Parameter name="Exodus Output File Name" type="string" value="schar1d.exo"/>
+  </ParameterList>
+  <!--
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.00908880569258}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.014918508627}"/>
+  </ParameterList>
+  -->
+  <ParameterList name="Piro">
+    <ParameterList name="Rythmos">
+      <!--Parameter name="Num Time Steps" type="int" value="2000"/-->
+      <Parameter name="Num Time Steps" type="int" value="500"/>
+      <Parameter name="Final Time" type="double" value="10000."/>
+      <Parameter name="Max State Error" type="double" value="0.05"/>
+      <Parameter name="Alpha"           type="double" value="0.0"/>
+      <ParameterList name="Rythmos Stepper">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="low"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Rythmos Integration Control">
+      </ParameterList>
+      <ParameterList name="Rythmos Integrator">
+	<ParameterList name="VerboseObject">
+	  <Parameter name="Verbosity Level" type="string" value="none"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
+	<ParameterList name="Linear Solver Types">
+	  <ParameterList name="Belos">
+	    <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+	    <ParameterList name="Solver Types">
+	      <ParameterList name="Block GMRES">
+		<Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
+		<Parameter name="Output Frequency" type="int" value="10"/>
+		<Parameter name="Output Style" type="int" value="1"/>
+		<Parameter name="Verbosity" type="int" value="33"/>
+		<Parameter name="Maximum Iterations" type="int" value="100"/>
+		<Parameter name="Block Size" type="int" value="1"/>
+		<Parameter name="Num Blocks" type="int" value="100"/>
+		<Parameter name="Flexible Gmres" type="bool" value="0"/>
+	      </ParameterList>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+	<Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	<ParameterList name="Preconditioner Types">
+	  <ParameterList name="Ifpack">
+	    <Parameter name="Prec Type" type="string" value="ILU"/>
+	    <Parameter name="Overlap" type="int" value="0"/>
+	    <ParameterList name="Ifpack Settings">
+	      <Parameter name="fact: level-of-fill" type="int" value="0"/>
+	    </ParameterList>
+	  </ParameterList>
+	  <ParameterList name="ML">
+	    <Parameter name="Base Method Defaults" type="string" value="SA"/>
+	    <ParameterList name="ML Settings">
+	      <Parameter name="aggregation: type" type="string" value="Uncoupled"/>
+	      <Parameter name="coarse: max size" type="int" value="20"/>
+	      <Parameter name="coarse: pre or post" type="string" value="post"/>
+	      <Parameter name="coarse: sweeps" type="int" value="1"/>
+	      <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+	      <Parameter name="prec type" type="string" value="MGV"/>
+	      <Parameter name="smoother: type" type="string" value="Gauss-Seidel"/>
+	      <Parameter name="smoother: damping factor" type="double" value="0.66"/>
+	      <Parameter name="smoother: pre or post" type="string" value="both"/>
+	      <Parameter name="smoother: sweeps" type="int" value="1"/>
+	      <Parameter name="ML output" type="int" value="1"/>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

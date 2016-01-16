@@ -1,7 +1,6 @@
 
-add_subdirectory(ShallowWater)
-add_subdirectory(XZScalarAdvection)
 add_subdirectory(grids)
-add_subdirectory(HydrostaticGaussianBallTracerInShear)
+add_subdirectory(ShallowWater)
+add_subdirectory(ScalarAdvection)
 add_subdirectory(XZHydrostatic)
-add_subdirectory(XZHydrostaticGaussianBallTracer)
+add_subdirectory(3DHydrostatic)

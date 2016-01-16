@@ -89,7 +89,7 @@ namespace Aeras
       bool orig_interleavedOrdering =
         orig_mesh_specs_struct->interleavedOrdering;
       bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
-      const Intrepid::EIntrepidPLPoly orig_cubatureRule =
+      const Intrepid2::EIntrepidPLPoly orig_cubatureRule =
         orig_mesh_specs_struct->cubatureRule;
       // Create enriched MeshSpecsStruct object, to be returned.  It
       // will have the same everything as the original mesh struct
@@ -118,11 +118,11 @@ namespace Aeras
       char* new_name_char = new char[new_name.size() + 1];
       std::copy(new_name.begin(), new_name.end(), new_name_char);
       new_name_char[new_name.size()] = '\0';
-      new_ctd.name = new_name_char;
-      //For 1D elements, create a new key for the ctd -- this is needed for Intrepid
-      //setJacobian function.
-      if (orig_numDim == 1)
-        new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, 2, np);
+      new_ctd.name = new_name_char;  
+      //For 1D elements, create a new key for the ctd -- this is needed for Intrepid2
+      //setJacobian function. 
+      if (orig_numDim == 1) 
+        new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, 2, np); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl;
       std::cout << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl;
@@ -194,6 +194,8 @@ namespace Aeras
     SpectralDiscretization(
        const Teuchos::RCP<Teuchos::ParameterList>& discParams,
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+       const int numTracers, 
+       const int numLevels, 
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
@@ -420,10 +422,10 @@ namespace Aeras
       return stkMeshStruct->hasRestartSolution();
     }
 
-    //! STK supports MOR
+    //! Spectral supports MOR
     virtual bool supportsMOR() const
     {
-      return true;
+      return false;
     }
 
     //! If restarting, convenience function to return restart data time
@@ -453,6 +455,12 @@ namespace Aeras
     {
       return neq;
     }
+
+    //! Get number of levels (for hydrostatic problems) 
+    int getNumLevels() const { return numLevels; }
+
+    //! Get number of tracers (for hydrostatic problems) 
+    int getNumTracers() const { return numTracers; }
 
     //! Locate nodal dofs in non-overlapping vectors using local indexing
     int getOwnedDOF(const int inode,
@@ -667,6 +675,12 @@ namespace Aeras
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
+
+    //! Number of levels (for hydrostatic equations) 
+    const int numLevels; 
+    
+    //! number of tracers (for hydristatic equations) 
+    const int numTracers; 
 
     //! Number of elements on this processor
     unsigned int numMyElements;

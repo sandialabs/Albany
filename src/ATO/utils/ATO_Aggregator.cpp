@@ -110,6 +110,11 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
   else
     shiftValueAggregated = 0.0;
 
+  if( aggregatorParams.isType<double>("Scale Output") )
+    scaleValueAggregated = aggregatorParams.get<double>("Scale Output");
+  else
+    scaleValueAggregated = 1.0;
+
   comm = Teuchos::null;
 }
 
@@ -344,6 +349,8 @@ Aggregator_Scaled::Evaluate()
     *valueAggregated += normalize[sv]*weights[sv]*valSrc(0);
     valSrc(0)=0.0;
   }
+  
+  *valueAggregated *= scaleValueAggregated;
 
   if( comm != Teuchos::null ){
     if( comm->MyPID()==0 ){
@@ -370,7 +377,8 @@ Aggregator_Scaled::Evaluate()
       int numNodes = derSrc.dimension(1);
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++)
-          derivAggregated->SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, normalize[sv]*weights[sv]*derSrc(cell,node));
+          derivAggregated->SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, 
+                                              scaleValueAggregated*normalize[sv]*weights[sv]*derSrc(cell,node));
     }
   }
 }
@@ -537,6 +545,9 @@ Aggregator_DistScaled::Evaluate()
       }
     }
   }
+
+  *valueAggregated *= scaleValueAggregated;
+
   if( comm != Teuchos::null ){
     if( comm->MyPID()==0 ){
       std::cout << "************************************************************************" << std::endl;
@@ -561,7 +572,7 @@ Aggregator_DistScaled::Evaluate()
     double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
 
     for(int lid=0; lid<nLocalVals; lid++)
-      derDest[lid] += srcView[lid]*normalize[i]*weights[i];
+      derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
   }
 }
 }

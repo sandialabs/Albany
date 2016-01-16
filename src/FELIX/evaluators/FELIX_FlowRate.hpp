@@ -39,12 +39,14 @@ public:
 
 private:
 
+  typedef typename EvalT::ParamScalarT ParamScalarT;
+
   // Input:
-  PHX::MDField<ScalarT,Cell> given_flow_rate;
-  PHX::MDField<ScalarT,Cell> temperature;
+  PHX::MDField<ParamScalarT,Cell> given_flow_rate;
+  PHX::MDField<ParamScalarT,Cell> temperature;
 
   // Output:
-  PHX::MDField<ScalarT,Cell> flowRate;
+  PHX::MDField<ParamScalarT,Cell> flowRate;
 
   double A;
   enum FlowRateType {UNIFORM, GIVEN_FIELD, TEMPERATURE_BASED};

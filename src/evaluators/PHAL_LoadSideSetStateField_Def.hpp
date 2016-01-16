@@ -25,7 +25,7 @@ LoadSideSetStateField (const Teuchos::ParameterList& p)
   fieldName = p.get<std::string>("Field Name");
   stateName = p.get<std::string>("State Name");
 
-  field  = PHX::MDField<ScalarT>(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
+  field  = PHX::MDField<ParamScalarT>(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
 
   this->addEvaluatedField (field);
 

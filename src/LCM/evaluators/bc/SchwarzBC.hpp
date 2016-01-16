@@ -21,6 +21,12 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
 
+#if defined(ALBANY_DTK)
+#include "DTK_STKMeshHelpers.hpp"
+#include "DTK_STKMeshManager.hpp"
+#include "DTK_MapOperatorFactory.hpp"
+#endif
+
 namespace LCM {
 
 //
@@ -41,11 +47,15 @@ public:
 
   void
   computeBCs(
-      typename Traits::EvalData dirichlet_workset,
       size_t const ns_node,
       ScalarT & x_val,
       ScalarT & y_val,
       ScalarT & z_val);
+
+#if defined(ALBANY_DTK)
+  Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> 
+  computeBCsDTK();
+#endif //ALBANY_DTK
 
   void
   setCoupledAppName(std::string const & can)
@@ -179,7 +189,7 @@ public:
 //
 // Stochastic Galerkin Residual
 //
-#ifdef ALBANY_SG
+#if defined(ALBANY_SG)
 template<typename Traits>
 class SchwarzBC<PHAL::AlbanyTraits::SGResidual,Traits>
    : public SchwarzBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
@@ -212,9 +222,9 @@ public:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif // ALBANY_SG
 
+#if defined(ALBANY_ENSEMBLE)
 //
 // Multi-point Residual
 //
@@ -251,8 +261,8 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
-#endif
+#endif // ALBANY_ENSEMBLE
 
-}
+} // namespace LCM
 
 #endif // LCM_SchwarzBC_hpp

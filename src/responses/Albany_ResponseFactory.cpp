@@ -11,6 +11,7 @@
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionValuesResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
+#include "Albany_SolutionMinValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
@@ -29,6 +30,10 @@
 #if defined(ALBANY_EPETRA)
 #include "QCAD_SaddleValueResponseFunction.hpp"
 #endif
+#endif
+
+#ifdef ALBANY_GOAL
+#include "GOAL_AdjointResponse.hpp"
 #endif
 
 #include "Teuchos_TestForException.hpp"
@@ -61,11 +66,20 @@ createResponseFunction(
 
   else if (name == "Solution Max Value") {
     int eq = responseParams.get("Equation", 0);
-    int neq = responseParams.get("Num Equations", 1);
+    int neq = app->getNumEquations(); 
     bool inor =  responseParams.get("Interleaved Ordering", true);
 
     responses.push_back(
       rcp(new Albany::SolutionMaxValueResponseFunction(comm, neq, eq, inor)));
+  }
+
+  else if (name == "Solution Min Value") {
+    int eq = responseParams.get("Equation", 0);
+    int neq = app->getNumEquations();
+    bool inor =  responseParams.get("Interleaved Ordering", true);
+
+    responses.push_back(
+      rcp(new Albany::SolutionMinValueResponseFunction(comm, neq, eq, inor)));
   }
 
   else if (name == "Solution Two Norm File") {
@@ -194,6 +208,15 @@ createResponseFunction(
     }
   }
 #endif
+#endif
+
+#ifdef ALBANY_GOAL
+  else if (name == "Adjoint") {
+    responseParams.set("Name", name);
+    responses.push_back( rcp(
+          new GOAL::AdjointResponse(
+            app, prob, stateMgr, meshSpecs, responseParams)));
+  }
 #endif
 
   else {

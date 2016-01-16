@@ -234,7 +234,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
-  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
+  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ, flowRateNormalizedZ;
 
   if(useGlimmerSpacing)
     for (int i = 0; i < numLayers+1; i++)
@@ -243,9 +243,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     for (int i = 0; i < numLayers+1; i++)
       levelsNormalizedThickness[i] = double(i) / numLayers;
 
-  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers);
-  for (int i = 0; i < numLayers; i++)
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers), layersNormalizedThickness(numLayers);
+  for (int i = 0; i < numLayers; i++) {
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+    layersNormalizedThickness[i] = 0.5*(levelsNormalizedThickness[i]+levelsNormalizedThickness[i+1]);
+  }
 
   /*std::cout<< "Levels: ";
   for (int i = 0; i < numLayers+1; i++)
@@ -306,6 +308,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   Teuchos::RCP<Tpetra_Vector> bTopographyVec;
   Teuchos::RCP<Tpetra_Vector> bFrictionVec;
   Teuchos::RCP<Tpetra_MultiVector> temperatureVecInterp;
+  Teuchos::RCP<Tpetra_MultiVector> flowRateVecInterp;
   Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
   Teuchos::RCP<Tpetra_MultiVector> velocityRMSVec;
 

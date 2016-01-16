@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Albany_Layouts.hpp"
+#include "Albany_DataTypes.hpp"
 
 namespace PHAL {
 /** \brief Finite Element InterpolationSide Evaluator
@@ -21,13 +22,13 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFVecInterpolationSide : public PHX::EvaluatorWithBaseImpl<Traits>,
+template<typename EvalT, typename Traits, typename Type>
+class DOFVecInterpolationSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  DOFVecInterpolationSide (const Teuchos::ParameterList& p,
+  DOFVecInterpolationSideBase (const Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -37,24 +38,41 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef Type ParamScalarT;
 
   std::string sideSetName;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Side,Node,Dim> val_node;
+  PHX::MDField<ParamScalarT,Cell,Side,Node,Dim> val_node;
   //! Basis Functions
   PHX::MDField<RealType,Cell,Side,Node,QuadPoint> BF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Side,Cell,QuadPoint,Dim> val_qp;
+  PHX::MDField<ParamScalarT,Side,Cell,QuadPoint,Dim> val_qp;
 
   int numSideNodes;
   int numSideQPs;
   int vecDim;
 };
+
+template<typename EvalT, typename Traits>
+class DOFVecInterpolationSide : public DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>
+{
+public:
+  DOFVecInterpolationSide (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits>
+class DOFVecInterpolationSideParam : public DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
+{
+public:
+  DOFVecInterpolationSideParam (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
 
 } // Namespace PHAL
 

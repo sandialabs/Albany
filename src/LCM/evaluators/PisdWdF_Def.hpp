@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace LCM {
 
@@ -61,8 +61,8 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT kappa;
   ScalarT mu;
 
-  // Leading dimension of 1 added so we can use Intrepid::det
-  Intrepid::FieldContainer<EnergyFadType> F(1,numDims,numDims);
+  // Leading dimension of 1 added so we can use Intrepid2::det
+  Intrepid2::FieldContainer_Kokkos<EnergyFadType, PHX::Layout, PHX::Device> F(1,numDims,numDims);
 
   // Allocate F ( = defgrad of derivative types) and seed with identity derivs
   for (int i=0; i < numDims; ++i) 
@@ -100,11 +100,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 typename PisdWdF<EvalT, Traits>::EnergyFadType
-PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid::FieldContainer<EnergyFadType>& F) 
+PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid2::FieldContainer_Kokkos<EnergyFadType, PHX::Layout, PHX::Device>& F) 
 {
-  // array of length 1 so Intrepid::det can be called.
-  Intrepid::FieldContainer<EnergyFadType> Jvec(1);
-  Intrepid::RealSpaceTools<EnergyFadType>::det(Jvec, F);
+  // array of length 1 so Intrepid2::det can be called.
+  Intrepid2::FieldContainer_Kokkos<EnergyFadType, PHX::Layout, PHX::Device> Jvec(1);
+  Intrepid2::RealSpaceTools<EnergyFadType>::det(Jvec, F);
   EnergyFadType& J =  Jvec(0);
   EnergyFadType Jm23  = std::pow(J, -2./3.);
   EnergyFadType trace = 0.0;

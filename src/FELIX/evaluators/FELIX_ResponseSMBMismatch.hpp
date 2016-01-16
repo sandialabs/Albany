@@ -8,8 +8,8 @@
 #define FELIX_RESPONSESMBMISMATCH_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace FELIX {
 /** 
@@ -22,6 +22,7 @@ namespace FELIX {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename EvalT::ParamScalarT ParamScalarT;
     
     ResponseSMBMismatch(Teuchos::ParameterList& p,
 			 const Teuchos::RCP<Albany::Layouts>& dl);
@@ -45,45 +46,45 @@ namespace FELIX {
     std::size_t numVecFODims;
     
 
-    PHX::MDField<ScalarT,Cell,Node> H;
+    PHX::MDField<ParamScalarT,Cell,Node> H;
     PHX::MDField<ScalarT,Cell,Node,VecDim> velocity_field;
     PHX::MDField<ScalarT,Cell,Node> SMB;
     PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
     Teuchos::RCP<shards::CellTopology> cellType;
     Teuchos::RCP<shards::CellTopology> sideType;
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureCell;
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubatureSide;
+    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureCell;
+    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureSide;
 
     // The basis
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
 
     // Temporary FieldContainers
-    Intrepid::FieldContainer<RealType> cubPointsSide;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubPointsSide;
     //const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
-    Intrepid::FieldContainer<RealType> refPointsSide;
-    Intrepid::FieldContainer<RealType> cubWeightsSide;
-    Intrepid::FieldContainer<MeshScalarT> physPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> jacobianSide;
-    Intrepid::FieldContainer<MeshScalarT> invJacobianSide;
-    Intrepid::FieldContainer<MeshScalarT> jacobianSide_det;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPointsSide;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubWeightsSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> invJacobianSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide_det;
 
-    Intrepid::FieldContainer<MeshScalarT> physPointsCell;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsCell;
 
-    Intrepid::FieldContainer<MeshScalarT> weighted_measure;
-    Intrepid::FieldContainer<RealType> basis_refPointsSide;
-    Intrepid::FieldContainer<RealType> basisGrad_refPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> trans_gradBasis_refPointsSide;
-    Intrepid::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_measure;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> basis_refPointsSide;
+    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> basisGrad_refPointsSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> trans_basis_refPointsSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> trans_gradBasis_refPointsSide;
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_trans_basis_refPointsSide;
 
-    Intrepid::FieldContainer<ScalarT> dofCell;
-    Intrepid::FieldContainer<ScalarT> dofSide;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCell;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSide;
 
-    Intrepid::FieldContainer<ScalarT> dofCellVec;
-    Intrepid::FieldContainer<ScalarT> dofSideVec;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCellVec;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSideVec;
 
-    Intrepid::FieldContainer<ScalarT> data;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> data;
 
     std::string sideSetID;
     Teuchos::Array<RealType> inputValues;

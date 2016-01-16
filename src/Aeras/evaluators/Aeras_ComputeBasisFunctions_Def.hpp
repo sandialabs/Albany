@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
 
 namespace Aeras {
@@ -21,8 +21,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               spatialDimension( p.get<std::size_t>("spatialDim") ),
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"),
       spatialDimension == 3 ? dl->node_3vector : dl->node_vector ),
-  cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
@@ -68,16 +68,16 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   // Allocate Temporary FieldContainers
   val_at_cub_points .resize     (numNodes, numQPs);
   grad_at_cub_points.resize     (numNodes, numQPs, basisDims);
-  D2_at_cub_points  .resize     (numNodes, numQPs, Intrepid::getDkCardinality(Intrepid::OPERATOR_D2, basisDims));
+  D2_at_cub_points  .resize     (numNodes, numQPs, Intrepid2::getDkCardinality(Intrepid2::OPERATOR_D2, basisDims));
   refPoints         .resize               (numQPs, basisDims);
   refWeights        .resize               (numQPs);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
   
-  intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
-  intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid::OPERATOR_D2);
+  intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid2::OPERATOR_VALUE);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
+  intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid2::OPERATOR_D2);
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 /*
@@ -433,21 +433,21 @@ evaluateFields(typename Traits::EvalData workset)
     //Only a quad or shellquad element can be enriched according to the logic in Aeras::SpectralDiscretization.
     TEUCHOS_TEST_FOR_EXCEPTION(cellType->getNodeCount() > 9, 
                                Teuchos::Exceptions::InvalidParameter,
-                               std::endl << "Error!  Intrepid::CellTools<RealType>::setJacobian " <<
+                               std::endl << "Error!  Intrepid2::CellTools<RealType>::setJacobian " <<
                                "is only implemented for bilinear and biquadratic elements!  Attempting " <<
                                "to call this function for a higher order element. \n"); 
-    Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+    Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   } else {
-    Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
-    Intrepid::FieldContainer<MeshScalarT> dphi(numQPs,spatialDim,basisDim);
-    Intrepid::FieldContainer<MeshScalarT> norm(numQPs);
-    Intrepid::FieldContainer<MeshScalarT> sinL(numQPs);
-    Intrepid::FieldContainer<MeshScalarT> cosL(numQPs);
-    Intrepid::FieldContainer<MeshScalarT> sinT(numQPs);
-    Intrepid::FieldContainer<MeshScalarT> cosT(numQPs);
-    Intrepid::FieldContainer<MeshScalarT>   D1(numQPs,basisDim,spatialDim);
-    Intrepid::FieldContainer<MeshScalarT>   D2(numQPs,spatialDim,spatialDim);
-    Intrepid::FieldContainer<MeshScalarT>   D3(numQPs,basisDim,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  phi(numQPs,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> dphi(numQPs,spatialDim,basisDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> norm(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> sinL(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> cosL(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> sinT(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> cosT(numQPs);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(numQPs,basisDim,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(numQPs,spatialDim,spatialDim);
+    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(numQPs,basisDim,spatialDim);
     
     for (int e = 0; e<numelements;      ++e) {
       for (int v = 0; v<numNodes;      ++v) {
@@ -585,16 +585,16 @@ evaluateFields(typename Traits::EvalData workset)
   /////////////no generality.
   if(0){
   
-  Intrepid::FieldContainer<MeshScalarT>   Q(4);
-  Intrepid::FieldContainer<MeshScalarT>   C(3,4);
-  Intrepid::FieldContainer<MeshScalarT>   xx(3);
-  Intrepid::FieldContainer<MeshScalarT>   CartC(3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   Q(4);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   C(3,4);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   xx(3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   CartC(3);
   
-  Intrepid::FieldContainer<MeshScalarT>   dd(4,2);
-  Intrepid::FieldContainer<MeshScalarT>   D1(2,3);
-  Intrepid::FieldContainer<MeshScalarT>   D2(3,3);
-  Intrepid::FieldContainer<MeshScalarT>   D3(3,2);
-  Intrepid::FieldContainer<MeshScalarT>   D4(3,2);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   dd(4,2);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(2,3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(3,3);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(3,2);
+  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D4(3,2);
   
   for (int e = 0; e<numelements; ++e) {
     
@@ -709,8 +709,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-  Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
@@ -719,16 +719,16 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
 
-  Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
+  Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<RealType>
     (BF, val_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wBF, weighted_measure, BF);
-  Intrepid::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
     (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 
   PHAL::set(GradGradBF, 0.0);
@@ -780,10 +780,10 @@ evaluateFields(typename Traits::EvalData workset)
  //Only a quad or shellquad element can be enriched according to the logic in Aeras::SpectralDiscretization
    TEUCHOS_TEST_FOR_EXCEPTION(cellType->getNodeCount() > 9,
                        Teuchos::Exceptions::InvalidParameter,
-                       std::endl << "Error!  Intrepid::CellTools<RealType>::setJacobian " <<
+                       std::endl << "Error!  Intrepid2::CellTools<RealType>::setJacobian " <<
                        "is only implemented for bilinear and biquadratic elements!  Attempting " <<
                   "to call this function for a higher order element. \n");
-  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
    if (spatialDim!=basisDim)
       Kokkos::parallel_for(ComputeBasisFunctions_no_Jacobian_Policy(0,workset.numCells),*this);
    else
@@ -814,10 +814,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
-initialize_grad(Intrepid::FieldContainer<RealType> &grad_at_quadrature_points) const
+initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device > &grad_at_quadrature_points) const
 {
   const unsigned N = static_cast<unsigned>(std::floor(std::sqrt(numQPs)+.1));
-  Intrepid::FieldContainer<RealType> dLdx(N,N); dLdx.initialize(); 
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> dLdx(N,N); dLdx.initialize(); 
 
   for (unsigned m=0; m<N; ++m) {
     for (unsigned n=0; n<N; ++n) {
@@ -843,12 +843,12 @@ initialize_grad(Intrepid::FieldContainer<RealType> &grad_at_quadrature_points) c
 
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
-spherical_divergence (Intrepid::FieldContainer<MeshScalarT> &div_v,
-                      const Intrepid::FieldContainer<MeshScalarT> &v_lambda_theta,
+spherical_divergence (Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &div_v,
+                      const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &v_lambda_theta,
                       const int e,
                       const double rrearth) const
 {
-  Intrepid::FieldContainer<RealType> grad_at_quadrature_points(numQPs,numQPs,2);
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_quadrature_points(numQPs,numQPs,2);
   static bool init_grad = true;
   if (init_grad) initialize_grad(grad_at_quadrature_points);
   init_grad = false;
@@ -892,7 +892,7 @@ div_check(const int spatialDim, const int numelements) const
     for (int e = 0; e<numelements;      ++e) {
       static const MeshScalarT DIST_THRESHOLD = 1.0e-6;
 
-      Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
+      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  phi(numQPs,spatialDim);
       phi.initialize(); 
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
@@ -900,7 +900,7 @@ div_check(const int spatialDim, const int numelements) const
             phi(q,d) += earthRadius*coordVec(e,v,d) * val_at_cub_points(v,q);
 
       std::vector<MeshScalarT> divergence_v(numQPs);
-      Intrepid::FieldContainer<MeshScalarT> v_lambda_theta(numQPs,2);
+      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> v_lambda_theta(numQPs,2);
       switch (c) {
         case 0: {
           //  Example copied from homme, the climate code, from function divergence_sphere()
@@ -1001,7 +1001,7 @@ div_check(const int spatialDim, const int numelements) const
       }
       
 
-      Intrepid::FieldContainer<MeshScalarT> div_v(numQPs);
+      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> div_v(numQPs);
       spherical_divergence(div_v, v_lambda_theta, e, rrearth);
       for (int q = 0; q<numQPs;          ++q) {
         if (DIST_THRESHOLD<std::abs(div_v(q)/rrearth - divergence_v[q])) 
@@ -1010,7 +1010,7 @@ div_check(const int spatialDim, const int numelements) const
                     <<") divergence_v, div_v:("<<divergence_v[q] <<","<<div_v(q)/rrearth
                     <<")" <<std::endl;
       }
-      if (!c) e==numelements;
+      if (!c) e = numelements;
     }
   }
 }

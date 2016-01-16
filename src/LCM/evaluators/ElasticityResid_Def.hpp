@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace LCM {
 
@@ -92,7 +92,7 @@ template<typename EvalT, typename Traits>
 void ElasticityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
@@ -127,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-//   FST::integrate<ScalarT>(ExResidual, Stress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   FST::integrate<ScalarT>(ExResidual, Stress, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
 }
 

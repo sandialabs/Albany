@@ -113,8 +113,8 @@ namespace Aeras {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_CubaturePolylib.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Aeras_Eta.hpp"
@@ -151,15 +151,20 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
 
 
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > cubatures(1, polylib); 
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(cubatures));
+
+  //Regular Gauss Quadrature.
+  //Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  //RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = meshSpecs.ctd.node_count;
@@ -295,7 +300,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     (evalUtils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature, intrepidBasis));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
@@ -715,7 +720,17 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
   for (int t=0; t<numTracers; ++t) {
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic Tracer Resid"));
-   
+
+    {
+      RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_names_tracers[t]));
+      // Input
+      p->set<string>("Variable Name", dof_names_tracers[t]);
+      p->set<string>("Gradient BF Name", "Grad BF");
+      p->set<string>("Gradient Variable Name", dof_names_tracers_gradient[t]);
+    
+      ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
 
     {//Level u*Tracer
       RCP<ParameterList> p = rcp(new ParameterList("UTracer"));
@@ -740,7 +755,9 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     }
 
     //Input
-    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted BF Name",                     "wBF");
+    p->set<std::string>("Weighted Gradient BF Name",            "wGrad BF");
+    p->set<std::string>("Gradient QP PiTracer",                 dof_names_tracers_gradient[t]);
     p->set<std::string>("QP Time Derivative Variable Name",     dof_names_tracers_dot  [t]);
     p->set<std::string>("Divergence QP UTracer",            "U"+dof_names_tracers      [t]+"_divergence");
     p->set<std::string>("Residual Name",                        dof_names_tracers_resid[t]);

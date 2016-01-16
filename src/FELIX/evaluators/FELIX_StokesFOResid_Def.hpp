@@ -8,7 +8,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -81,14 +81,14 @@ StokesFOResid(const Teuchos::ParameterList& p,
 
   this->setName("StokesFOResid"+PHX::typeAsString<EvalT>());
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::Device::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
 
   U.fieldTag().dataLayout().dimensions(dims);
-  vecDimFO = std::min(PHX::DataLayout::size_type(2), numDims);
+  vecDimFO = (numDims < 2) ? numDims : 2;
 
 #ifdef OUTPUT_TO_SCREEN
   *out << " in FELIX Stokes FO residual! " << std::endl;
@@ -445,7 +445,7 @@ template<typename EvalT, typename Traits>
 void StokesFOResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 

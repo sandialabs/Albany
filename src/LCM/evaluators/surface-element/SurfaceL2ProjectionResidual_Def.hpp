@@ -8,11 +8,11 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 // THESE NEED TO BE REMOVED!!!
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 namespace LCM {
 
@@ -22,8 +22,8 @@ namespace LCM {
   SurfaceL2ProjectionResidual(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")),
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
     surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -73,8 +73,8 @@ namespace LCM {
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
 
   }
 
@@ -102,8 +102,8 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     // THESE NEED TO BE REMOVED!!!
-    typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     ScalarT tau(0);
 

@@ -8,10 +8,10 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 namespace LCM {
 
@@ -21,8 +21,8 @@ namespace LCM {
   SurfaceTLPoroMassResidual(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")),
-    cubature       (p.get<Teuchos::RCP<Intrepid::Cubature<RealType>>>("Cubature")),
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>>("Intrepid Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
     scalarGrad        (p.get<std::string>("Scalar Gradient Name"),dl->qp_vector),
     surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
@@ -109,8 +109,8 @@ namespace LCM {
 
     // Pre-Calculate reference element quantitites
     cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
 
     porePressureName = p.get<std::string>("Pore Pressure Name")+"_old";
     //if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
@@ -147,8 +147,8 @@ namespace LCM {
   void SurfaceTLPoroMassResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
     Albany::MDArray Jold;

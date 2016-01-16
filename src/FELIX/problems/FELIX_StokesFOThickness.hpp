@@ -85,13 +85,13 @@ namespace FELIX {
     Teuchos::RCP<shards::CellTopology> basalSideType;
     Teuchos::RCP<shards::CellTopology> surfaceSideType;
 
-    Teuchos::RCP <Intrepid::Cubature<RealType> > cellCubature;
-    Teuchos::RCP <Intrepid::Cubature<RealType> > basalCubature;
-    Teuchos::RCP <Intrepid::Cubature<RealType> > surfaceCubature;
+    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  cellCubature;
+    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  basalCubature;
+    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  surfaceCubature;
 
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > cellBasis;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basalSideBasis;
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > surfaceSideBasis;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > basalSideBasis;
+    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > surfaceSideBasis;
 
     int numDim, vecDimFO;
     Teuchos::RCP<Albany::Layouts> dl,dl_full,dl_basal,dl_surface;
@@ -108,8 +108,8 @@ namespace FELIX {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"

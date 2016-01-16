@@ -44,7 +44,7 @@ cmake \
 \
  -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
  -D Kokkos_ENABLE_CXX11:BOOL=ON \
- -D Kokkos_ENABLE_Cuda_UVM=lcm_enable_uvm \
+ -D Kokkos_ENABLE_Cuda_UVM:BOOL=lcm_enable_uvm \
  -D Kokkos_ENABLE_EXAMPLES:BOOL=lcm_enable_kokkos_examples \
  -D Kokkos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Kokkos_ENABLE_Pthread:BOOL=lcm_enable_pthreads \
@@ -82,13 +82,13 @@ cmake \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
  -D Trilinos_ENABLE_ML:BOOL=ON \
- -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
  -D Trilinos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
@@ -97,17 +97,9 @@ cmake \
  -D Trilinos_ENABLE_Piro:BOOL=ON \
  -D Trilinos_ENABLE_Rythmos:BOOL=ON \
  -D Trilinos_ENABLE_SEACAS:BOOL=ON \
- -D Trilinos_ENABLE_STK:BOOL=ON \
  -D Trilinos_ENABLE_STKClassic:BOOL=OFF \
- -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
  -D Trilinos_ENABLE_STKIO:BOOL=ON \
  -D Trilinos_ENABLE_STKMesh:BOOL=ON \
- -D Trilinos_ENABLE_STKSearch:BOOL=OFF \
- -D Trilinos_ENABLE_STKSearchUtil:BOOL=OFF \
- -D Trilinos_ENABLE_STKTopology:BOOL=ON \
- -D Trilinos_ENABLE_STKTransfer:BOOL=ON \
- -D Trilinos_ENABLE_STKUnit_tests:BOOL=OFF \
- -D Trilinos_ENABLE_STKUtil:BOOL=ON \
  -D Trilinos_ENABLE_Sacado:BOOL=ON \
  -D Trilinos_ENABLE_Shards:BOOL=ON \
  -D Trilinos_ENABLE_Stokhos:BOOL=ON \

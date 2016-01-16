@@ -83,8 +83,8 @@ namespace Albany {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -119,14 +119,14 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
    using PHAL::AlbanyTraits;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();

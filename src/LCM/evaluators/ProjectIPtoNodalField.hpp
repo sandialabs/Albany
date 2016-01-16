@@ -122,8 +122,8 @@ private:
 #ifdef PROJ_INTERP_TEST
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
 #endif
-  typedef Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>
-          IntrepidBasis;
+  typedef Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>
+          Intrepid2Basis;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
   Teuchos::RCP<ProjectIPtoNodalFieldQuadrature> quad_mgr_;
 

@@ -3,12 +3,12 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 #include <typeinfo>
 
@@ -125,12 +125,12 @@ namespace LCM {
         "Fracture Limit Must Be > 0");
 
     // local variables to create the traction vector
-    Intrepid::Vector<ScalarT> p0(3);
-    Intrepid::Vector<ScalarT> p1(3);
-    Intrepid::Vector<ScalarT> p2(3);
-    Intrepid::Vector<ScalarT> normal(3); // face normal
-    Intrepid::Vector<ScalarT> traction(3);
-    Intrepid::Tensor<ScalarT> stress(3);
+    Intrepid2::Vector<ScalarT> p0(3);
+    Intrepid2::Vector<ScalarT> p1(3);
+    Intrepid2::Vector<ScalarT> p2(3);
+    Intrepid2::Vector<ScalarT> normal(3); // face normal
+    Intrepid2::Vector<ScalarT> traction(3);
+    Intrepid2::Tensor<ScalarT> stress(3);
 
     for (int cell = 0; cell < worksetSize; ++cell) {
       //hack to force evaluation
@@ -152,7 +152,7 @@ namespace LCM {
           p2(i) = coord(cell, n2, i);
         }
 
-        normal = Intrepid::normal(p0, p1, p2);
+        normal = Intrepid2::normal(p0, p1, p2);
 
         // fill the stress tensor
         for (int i = 0; i < numComp; ++i) {
@@ -160,8 +160,8 @@ namespace LCM {
         }
 
         // Get the traction
-        traction = Intrepid::dot(stress, normal);
-        ScalarT traction_norm = Intrepid::norm(traction);
+        traction = Intrepid2::dot(stress, normal);
+        ScalarT traction_norm = Intrepid2::norm(traction);
 
         if (traction_norm > fractureLimit) {
           criteriaMet(cell, face) = 1;

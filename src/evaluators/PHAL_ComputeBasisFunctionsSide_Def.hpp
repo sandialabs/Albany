@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -59,7 +59,7 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
 #endif
 
   // Allocate Temporary FieldContainers
-  Intrepid::FieldContainer<RealType>  cub_points;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>  cub_points;
   cub_points.resize(numSideQPs,sideDims);
   cub_weights.resize(numSideQPs);
   val_at_cub_points.resize(numSideNodes, numSideQPs);
@@ -69,14 +69,14 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   metric.resize(numSideQPs,sideDims,sideDims);
 
   // Pre-Calculate reference element quantitites
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-  cubature = p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature Side");
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
+  cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature Side");
   cubature->getCubature(cub_points, cub_weights);
 
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-  intrepidBasis = p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis Side");
-  intrepidBasis->getValues(val_at_cub_points, cub_points, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid::OPERATOR_GRAD);
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid Basis Side");
+  intrepidBasis->getValues(val_at_cub_points, cub_points, Intrepid2::OPERATOR_VALUE);
+  intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
 
   // Index of the nodes on the sides in the numeration of the cell
   sideNodes.resize(numSides);

@@ -105,6 +105,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     int outputInterval;
     bool useNullspaceTranslationOnly;
     bool useTemperatureHack;
+    bool useDOFOffsetHack;
 
     static const char* solution_name;
     static const char* residual_name;

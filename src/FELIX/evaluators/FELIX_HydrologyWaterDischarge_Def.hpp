@@ -30,7 +30,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
     sideSetName = p.get<std::string>("Side Set Name");
 
     gradPhi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->side_qp_gradient);
-    h       = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->side_qp_scalar);
+    h       = PHX::MDField<ParamScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->side_qp_scalar);
     q       = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->side_qp_gradient);
 
     numQPs  = dl->side_qp_gradient->dimension(2);
@@ -39,7 +39,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   else
   {
     gradPhi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->qp_gradient);
-    h       = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
+    h       = PHX::MDField<ParamScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
     q       = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->qp_gradient);
 
     numQPs  = dl->qp_gradient->dimension(1);

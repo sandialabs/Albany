@@ -6,7 +6,6 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
-#include "AAdapt_AdaptationFactory.hpp"
 #include "AAdapt_RC_Manager.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
@@ -74,7 +73,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0) 
+  stateGraphVisDetail(0), 
+  params_(params)  
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -232,6 +232,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
 #endif
+  
+  //get info from Scaling parameter list (for scaling Jacobian/residual)
+  RCP<Teuchos::ParameterList> scalingParams = Teuchos::sublist(params, "Scaling", true);
+  scale = scalingParams->get("Scale", 1.0); 
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -415,8 +419,9 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())){
     LCM::PeridigmManager::self()->setDirichletFields(disc);
+  }
 #endif
 #endif
 
@@ -539,6 +544,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 #if defined(ALBANY_EPETRA)
   if (Teuchos::nonnull(LCM::PeridigmManager::self())){
     LCM::PeridigmManager::self()->initialize(params, disc, commT);
+    LCM::PeridigmManager::self()->insertPeridigmNonzerosIntoAlbanyGraph();
   }
 #endif
 #endif
@@ -664,6 +670,15 @@ getInitialSolutionDot() const
   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
   return initial_x_dot;
 }
+
+RCP<const Epetra_Vector>
+Albany::Application::
+getInitialSolutionDotDot() const
+{
+  const Teuchos::RCP<Epetra_Vector>& initial_x_dotdot = solMgr->get_initial_xdotdot();
+  Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotDotT(), *initial_x_dotdot, comm);
+  return initial_x_dotdot;
+}
 #endif
 
 RCP<const Tpetra_Vector>
@@ -671,6 +686,13 @@ Albany::Application::
 getInitialSolutionDotT() const
 {
   return solMgrT->getInitialSolutionDotT();
+}
+
+RCP<const Tpetra_Vector>
+Albany::Application::
+getInitialSolutionDotDotT() const
+{
+  return solMgrT->getInitialSolutionDotDotT();
 }
 
 RCP<ParamLib>
@@ -1017,7 +1039,7 @@ computeGlobalResidualImplT(
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-
+  fT->scale(1.0/scale); 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
@@ -1053,7 +1075,7 @@ computeGlobalResidualImplT(
   double t = current_time;
   if (paramLib->isParameter("Time"))
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs((*this), t, xT, fT, Teuchos::null);
+  GOAL::computeHierarchicBCs(t, (*this), xT, fT, Teuchos::null);
 #endif
 }
 
@@ -1274,6 +1296,13 @@ computeGlobalJacobianImplT(const double alpha,
     workset.JacT      = overlapped_jacT;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
+   //fill Jacobian derivative dimensions:
+   for (int ps=0; ps < fm.size(); ps++){
+      (workset.Jacobian_deriv_dims).push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+   }
+
+
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
       // FillType template argument used to specialize Sacado
@@ -1287,12 +1316,22 @@ computeGlobalJacobianImplT(const double alpha,
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+    fT->scale(1.0/scale);
   }
 
   // Assemble global Jacobian
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
-  } // End timer
 
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
+    LCM::PeridigmManager::self()->copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(jacT);
+  }
+#endif
+#endif
+
+  jacT->scale(1.0/scale); 
+  } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
     PHAL::Workset workset;
@@ -1331,7 +1370,7 @@ computeGlobalJacobianImplT(const double alpha,
   double t = current_time;
   if (paramLib->isParameter("Time"))
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs((*this), t, xT, fT, jacT);
+  GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
 #endif
 
   jacT->fillComplete();
@@ -1479,12 +1518,12 @@ computeGlobalJacobianT(
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-      jacT.describe(*out, Teuchos::VERB_HIGH);
+      jacT.describe(*out, Teuchos::VERB_EXTREME);
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
         std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-        jacT.describe(*out, Teuchos::VERB_HIGH);
+        jacT.describe(*out, Teuchos::VERB_EXTREME);
       }
     }
   }
@@ -1783,6 +1822,12 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       if (nfm!=Teuchos::null)
         deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
     }
+
+   //fill Tangent derivative dimensions
+   for (int ps=0; ps < fm.size(); ps++){
+      (workset.Tangent_deriv_dims).push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
+   }
   }
 
   params = Teuchos::null;
@@ -1790,14 +1835,17 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+    fT->scale(1.0/scale); 
   }
 
   // Assemble derivatives
   if (Teuchos::nonnull(JVT)) {
     JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
+    JVT->scale(1.0/scale); 
   }
   if (Teuchos::nonnull(fpT)) {
     fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
+    fpT->scale(1.0/scale); 
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2067,10 +2115,8 @@ applyGlobalDistParamDerivImplT(const double current_time,
   {
     PHAL::Workset workset;
     if (!paramLib->isParameter("Time"))
-//      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
       loadBasicWorksetInfoT( workset, current_time );
     else
-//      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
       loadBasicWorksetInfoT( workset,
                             paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
 
@@ -2102,6 +2148,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
   }
+  fpVT->scale(1.0/scale); 
   } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2984,12 +3031,6 @@ computeGlobalMPResidual(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
   }
 
   if (mp_overlapped_f == Teuchos::null ||
@@ -3143,11 +3184,6 @@ computeGlobalMPJacobian(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
   }
 
@@ -3336,11 +3372,6 @@ computeGlobalMPTangent(
       mp_overlapped_xdotdot =
         rcp(new Stokhos::ProductEpetraVector(
               mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
-
-    if (mp_xdotdot != NULL)
-      mp_overlapped_xdotdot =
-  rcp(new Stokhos::ProductEpetraVector(
-        mp_xdotdot->map(), disc->getOverlapMap(), mp_x.productComm()));
 
   }
 

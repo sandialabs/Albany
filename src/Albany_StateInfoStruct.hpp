@@ -23,7 +23,7 @@
 #include <vector>
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
-#include "Intrepid_Polylib.hpp"
+#include "Intrepid2_Polylib.hpp"
 
 #include "Adapt_NodalDataBase.hpp"
 
@@ -49,7 +49,7 @@ typedef std::vector<StateArray> StateArrayVec;
                     int worksetSize_, const std::string ebName_,
                     std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
                     const bool sepEvalsByEB_ = false,
-                    const Intrepid::EIntrepidPLPoly cubatureRule_ = Intrepid::PL_GAUSS)
+                    const Intrepid2::EIntrepidPLPoly cubatureRule_ = Intrepid2::PL_GAUSS)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worksetSize_),
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
@@ -70,7 +70,7 @@ typedef std::vector<StateArray> StateArrayVec;
     // doesn't matter. It is intended that interface blocks (LCM) don't count,
     // but the user must enforce this intention.
     bool sepEvalsByEB;
-    const Intrepid::EIntrepidPLPoly cubatureRule;
+    const Intrepid2::EIntrepidPLPoly cubatureRule;
     // polynomial order for higher order fields in GOAL
     int polynomialOrder;
     std::map<std::string,Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > > sideSetMeshSpecs;

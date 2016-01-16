@@ -76,6 +76,27 @@ Albany::DiscretizationFactory::DiscretizationFactory(
 
       catalystParams = Teuchos::sublist(problemParams, "Catalyst", true);
 
+#ifdef ALBANY_AERAS
+    Teuchos::RCP<Teuchos::ParameterList> hsParams;
+    Teuchos::ArrayRCP<std::string> dof_names_tracers; 
+    if (problemParams->isSublist("Hydrostatic Problem")) {
+      hsParams = Teuchos::sublist(problemParams, "Hydrostatic Problem", true); 
+      numLevels = hsParams->get("Number of Vertical Levels", 0);
+      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
+            Teuchos::Array<std::string>()));
+      numTracers = dof_names_tracers.size();  
+ 
+    }
+
+    if (problemParams->isSublist("XZHydrostatic Problem")) {
+      hsParams = Teuchos::sublist(problemParams, "XZHydrostatic Problem", true); 
+      numLevels = hsParams->get("Number of Vertical Levels", 0); 
+      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
+            Teuchos::Array<std::string>())); 
+      numTracers = dof_names_tracers.size();  
+    }
+#endif
+
   }
 
 }
@@ -188,7 +209,7 @@ void createInterfaceParts(
   bool const
   is_interleaved = last_mesh_specs_struct.interleavedOrdering;
 
-  Intrepid::EIntrepidPLPoly const
+  Intrepid2::EIntrepidPLPoly const
   cubature_rule = last_mesh_specs_struct.cubatureRule;
 
   mesh_specs_struct.resize(number_blocks + 1);
@@ -345,6 +366,16 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   //overwrite the meshSpecs of the meshStruct with an enriched one.
 #if defined(ALBANY_AERAS) && defined(HAVE_STK)
   if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
+   //Get cubature rule from input file
+   std::string cub_rule = discParams->get("Cubature Rule", "GAUSS"); 
+   if (cub_rule != "GAUSS_LOBATTO") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
+  	  Teuchos::Exceptions::InvalidParameter,"Error in Albany::Discretization Factory." <<
+          "Aeras spectral elements (Exodus Aeras, Ioss Aeras, or STK1D Aeras Discretization Methods) " <<
+          "should be run with GAUSS_LOBATTO Cubature Rule.  Your choice of " << 
+          cub_rule << " Cubature Rule  with " << method << " Discretization Method is invalid." <<
+         " Please re-run with Cubature Rule = GAUSS_LOBATTO" << std::endl); 
+    }
     //get "Element Degree" from parameter list.  Default value is 1.
     int points_per_edge = discParams->get("Element Degree", 1) + 1;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > &mesh_specs_struct = meshStruct->getMeshSpecs();
@@ -479,7 +510,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     //the code is structured.  That should be OK since meshSpecsType() is not used anywhere except this function.
     //But one may want to change it to, e.g., AERAS_MS, to prevent confusion.
       Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, commT, rigidBodyModes));
+      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, numLevels, numTracers, commT, rigidBodyModes));
     }
 #endif
   return Teuchos::null;

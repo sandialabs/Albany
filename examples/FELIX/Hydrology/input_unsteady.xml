@@ -23,7 +23,6 @@
           <Parameter name="Response 0" type="string" value="Solution Max Value"/>
           <ParameterList name="ResponseParams 1">
             <Parameter name="Equation" type="int" value="1" />
-            <Parameter name="Num Equations" type="int" value="1" />
           </ParameterList>
         </ParameterList>
 

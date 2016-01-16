@@ -10,7 +10,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -220,7 +220,7 @@ void HydFractionResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
   // First, multiply the coefficient (JThermConductivity) by the temperature gradient to get the JGrad field
 
@@ -232,7 +232,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   */
 
-  FST::integrate<ScalarT>(FhResidual, JGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(FhResidual, JGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
 
   /*
      Now, build the coefficient for \partial f_H / \partial t
@@ -252,7 +252,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // integrate and sum into residual
 
-    FST::integrate<ScalarT>(FhResidual, fh_time_term, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    FST::integrate<ScalarT>(FhResidual, fh_time_term, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
 
   /*
      Finally, build the coefficient for \partial C_H,Zr / \partial t
@@ -274,7 +274,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // integrate and sum into residual
 
-    FST::integrate<ScalarT>(FhResidual, CH_time_term, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    FST::integrate<ScalarT>(FhResidual, CH_time_term, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
 
 }
 

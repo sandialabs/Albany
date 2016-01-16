@@ -9,7 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen

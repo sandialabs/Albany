@@ -28,6 +28,7 @@ class HydrologyMelting : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   HydrologyMelting (const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl);
@@ -40,12 +41,12 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT>      u_b;
-  PHX::MDField<ScalarT>      beta;
-  PHX::MDField<ScalarT>      G;
+  PHX::MDField<ParamScalarT>      u_b;
+  PHX::MDField<ParamScalarT>      beta;
+  PHX::MDField<ParamScalarT>      G;
 
   // Output:
-  PHX::MDField<ScalarT>      m;
+  PHX::MDField<ParamScalarT>      m;
 
   bool              stokes_coupling;
   std::string       sideSetName;

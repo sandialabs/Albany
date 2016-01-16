@@ -32,6 +32,16 @@ GOALMechanicsProblem::GOALMechanicsProblem(
   *out << "GOAL Mechanics Problem" << std::endl;
   *out << "Number of spatial dimensions: " << numDims << std::endl;
 
+  // if solving the adjoint problem, should we use an enriched basis?
+  if (params->isParameter("Enrich Adjoint"))
+    enrichAdjoint = params->get<bool>("Enrich Adjoint", false);
+
+  // if solving the adjoint problem, we need a quantity of interest
+  if (params->isSublist("Quantity of Interest")) {
+    Teuchos::ParameterList& p = params->sublist("Quantity of Interest", false);
+    qoiParams = Teuchos::rcpFromRef(p);
+  }
+
   // fill in the dof names
   offsets["X"] = 0;
   if (numDims > 1)
@@ -71,8 +81,6 @@ void GOALMechanicsProblem::buildProblem(
         *fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, Teuchos::null);
   }
 
-  // construct dirichlet bc evaluators
-  constructDirichletEvaluators(*meshSpecs[0], this->params);
 }
 
 /*****************************************************************************/
@@ -92,21 +100,6 @@ buildEvaluators(
 }
 
 /*****************************************************************************/
-void GOALMechanicsProblem::constructDirichletEvaluators(
-    const Albany::MeshSpecsStruct& meshSpecs,
-    Teuchos::RCP<Teuchos::ParameterList>& bcs)
-{
-  dfm = Teuchos::null;
-}
-
-/*****************************************************************************/
-void GOALMechanicsProblem::constructNeumannEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
-{
-  nfm = Teuchos::null;
-}
-
-/*****************************************************************************/
 Teuchos::RCP<const Teuchos::ParameterList> GOALMechanicsProblem::
 getValidProblemParameters() const
 {
@@ -114,15 +107,17 @@ getValidProblemParameters() const
       this->getGenericProblemParams("ValidGOALMechanicsProblemParams");
   pl->set<std::string>("MaterialDB Filename", "materials.xml", "");
   pl->sublist("Hierarchic Boundary Conditions", false, "");
+  pl->set<bool>("Enrich Adjoint", false, "should the adjoint solve be enriched");
+  pl->sublist("Quantity of Interest", false, "QoI used for adjoint solve");
   return pl;
 }
 
 /*****************************************************************************/
 void GOALMechanicsProblem::getAllocatedStates(
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > oldSt,
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldSt,
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > newSt) const
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newSt) const
 {
   oldSt = oldState;
   newSt = newState;

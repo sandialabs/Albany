@@ -9,8 +9,8 @@
 
 #include <type_traits>
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
@@ -31,6 +31,7 @@
 #include "PHAL_DOFVecCellToSide.hpp"
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
+#include "PHAL_DOFVecInterpolationSide.hpp"
 
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_SubglacialHydrostaticPotential.hpp"
@@ -112,13 +113,13 @@ protected:
   Teuchos::RCP<shards::CellTopology> basalSideType;
   Teuchos::RCP<shards::CellTopology> surfaceSideType;
 
-  Teuchos::RCP <Intrepid::Cubature<RealType> > cellCubature;
-  Teuchos::RCP <Intrepid::Cubature<RealType> > basalCubature;
-  Teuchos::RCP <Intrepid::Cubature<RealType> > surfaceCubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  cellCubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  basalCubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  surfaceCubature;
 
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > cellBasis;
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > basalSideBasis;
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > surfaceSideBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > basalSideBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > surfaceSideBasis;
 
   int numDim;
   Teuchos::RCP<Albany::Layouts> dl,dl_basal,dl_surface;
@@ -374,8 +375,26 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
 
     // We restrict it back to the 2D mesh. Clearly, this is not optimal. Just add 'basal_friction' to the Basal Requirements!
-    ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
-    fm0.template registerEvaluator<EvalT> (ev);
+    /*{//ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
+    /*    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    const std::string& cell_dof_name = "Beta";
+    const std::string& side_dof_name = "";
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Cell To Side"));
+
+    // Input
+         p->set<std::string>("Cell Variable Name", cell_dof_name);
+         p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+         p->set<std::string>("Side Set Name", basalSideName);
+    // Output
+         if (side_dof_name!="")
+           p->set<std::string>("Side Variable Name", side_dof_name);
+         else
+           p->set<std::string>("Side Variable Name", cell_dof_name);
+        ev = rcp(new PHAL::DOFCellToSide<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    }
+    fm0.template registerEvaluator<EvalT> (ev);*/
   }
 
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
@@ -468,7 +487,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Intepolate surface height
-  ev = evalUtils.constructDOFInterpolationEvaluator("Surface Height");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("Surface Height");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Intepolate surface height gradient
@@ -500,7 +519,22 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity on QP on side
-    ev = evalUtilsBasal.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
+    //ev = evalUtilsBasal.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
+   {
+     using Teuchos::RCP;
+     using Teuchos::rcp;
+     using Teuchos::ParameterList;
+     const std::string dof_name="Basal Velocity";
+     RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Interpolation Side "+dof_name));
+     // Input
+     p->set<std::string>("Variable Name", dof_name);
+     p->set<std::string>("BF Name", "BF "+basalSideName);
+     p->set<std::string>("Side Set Name",basalSideName);
+    
+     // Output (assumes same Name as input)
+     //ev = rcp(new PHAL::DOFVecInterpolationSide<EvalT, PHAL::AlbanyTraits, typename EvalT::ScalarT>(*p,dl_basal));
+     ev = rcp(new PHAL::DOFVecInterpolationSide<EvalT, PHAL::AlbanyTraits>(*p,dl_basal));
+   }
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness on QP on side
@@ -523,11 +557,41 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
-    fm0.template registerEvaluator<EvalT>(ev);
+   // ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
+   {
+     using Teuchos::RCP;
+     using Teuchos::rcp;
+     using Teuchos::ParameterList;
+     const std::string dof_name="Observed Surface Velocity";
+     RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Interpolation Side "+dof_name));
+     // Input
+     p->set<std::string>("Variable Name", dof_name);
+     p->set<std::string>("BF Name", "BF "+surfaceSideName);
+     p->set<std::string>("Side Set Name",surfaceSideName);
+    
+     // Output (assumes same Name as input)
+     //ev = rcp(new PHAL::DOFVecInterpolationSide<EvalT, PHAL::AlbanyTraits, typename EvalT::ParamScalarT>(*p,dl_surface));
+     ev = rcp(new PHAL::DOFVecInterpolationSideParam<EvalT, PHAL::AlbanyTraits>(*p,dl_surface));
+   }
+   fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    //ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+   {
+     using Teuchos::RCP;
+     using Teuchos::rcp;
+     using Teuchos::ParameterList;
+     const std::string dof_name="Observed Surface Velocity RMS";
+     RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Interpolation Side "+dof_name));
+     // Input
+     p->set<std::string>("Variable Name", dof_name);
+     p->set<std::string>("BF Name", "BF "+surfaceSideName);
+     p->set<std::string>("Side Set Name",surfaceSideName);
+    
+     // Output (assumes same Name as input)
+     //ev = rcp(new PHAL::DOFVecInterpolationSide<EvalT, PHAL::AlbanyTraits, typename EvalT::ParamScalarT>(*p,dl_surface));
+     ev = rcp(new PHAL::DOFVecInterpolationSideParam<EvalT, PHAL::AlbanyTraits>(*p,dl_surface));
+   }
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
@@ -535,7 +599,22 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity (the solution) on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
+    //ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
+   {
+     using Teuchos::RCP;
+     using Teuchos::rcp;
+     using Teuchos::ParameterList;
+     const std::string dof_name="Surface Velocity";
+     RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Interpolation Side "+dof_name));
+     // Input
+     p->set<std::string>("Variable Name", dof_name);
+     p->set<std::string>("BF Name", "BF "+surfaceSideName);
+     p->set<std::string>("Side Set Name",surfaceSideName);
+    
+     // Output (assumes same Name as input)
+     //ev = rcp(new PHAL::DOFVecInterpolationSide<EvalT, PHAL::AlbanyTraits, typename EvalT::ScalarT>(*p,dl_surface));
+     ev = rcp(new PHAL::DOFVecInterpolationSide<EvalT, PHAL::AlbanyTraits>(*p,dl_surface));
+   }
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

@@ -9,7 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
@@ -36,8 +36,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const std::map<std::s
   Teuchos::RCP<Albany::Layouts> dl_surface = dls.at(surfaceSideName);
 
   velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl_surface->side_qp_vector);
-  observedVelocity    = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl_surface->side_qp_vector);
-  observedVelocityRMS = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl_surface->side_qp_vector);
+  observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl_surface->side_qp_vector);
+  observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl_surface->side_qp_vector);
   BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl_surface->side_node_qp_scalar);
   w_measure_surface   = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->side_qp_scalar);
 
@@ -118,8 +118,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   const std::string& w_measure_surface_name  = paramList->get<std::string>("Weighted Measure Surface Name");
 
   velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl->side_qp_vector);
-  observedVelocity    = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl->side_qp_vector);
-  observedVelocityRMS = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl->side_qp_vector);
+  observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl->side_qp_vector);
+  observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl->side_qp_vector);
   BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl->side_node_qp_scalar);
   w_measure_surface   = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_surface_name, dl->side_qp_scalar);
 
@@ -234,12 +234,13 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       const int cell = it_side.elem_LID;
       const int side = it_side.side_local_id;
 
+
       ScalarT t = 0;
       ScalarT data = 0;
       for (int qp=0; qp<numSurfaceQPs; ++qp)
       {
-        ScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
-        ScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
+        ParamScalarT refVel0 = asinh(observedVelocity (cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
+        ParamScalarT refVel1 = asinh(observedVelocity (cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
         ScalarT vel0 = asinh(velocity(cell, side, qp, 0) / observedVelocityRMS(cell, side, qp, 0) / asinh_scaling);
         ScalarT vel1 = asinh(velocity(cell, side, qp, 1) / observedVelocityRMS(cell, side, qp, 1) / asinh_scaling);
         data = asinh_scaling * asinh_scaling * ((refVel0 - vel0) * (refVel0 - vel0) + (refVel1 - vel1) * (refVel1 - vel1));

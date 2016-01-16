@@ -21,8 +21,8 @@ SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
   sideSetName = p.get<std::string>("Side Set Name");
   if (isVectorField)
   {
-    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_vector);
-    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl->side_vector);
+    field_qp   = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_vector);
+    field_side = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Side Name"), dl->side_vector);
 
     numSides = dl->side_qp_vector->dimension(1);
     numQPs   = dl->side_qp_vector->dimension(2);
@@ -30,8 +30,8 @@ SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
   }
   else
   {
-    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_scalar);
-    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl->side_scalar);
+    field_qp   = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_scalar);
+    field_side = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Side Name"), dl->side_scalar);
 
     numSides = dl->side_qp_scalar->dimension(1);
     numQPs   = dl->side_qp_scalar->dimension(2);
@@ -62,7 +62,7 @@ void SideQuadPointsToSideInterpolation<EvalT, Traits>::evaluateFields (typename 
   //       if we don't zero out the values from the previous workset
   //       we may save this field using old values and make a mess!
 
-  ScalarT zero = 0.;
+  ParamScalarT zero = 0.;
   field_side.deep_copy (zero);
 
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
@@ -75,7 +75,7 @@ void SideQuadPointsToSideInterpolation<EvalT, Traits>::evaluateFields (typename 
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    ScalarT meas = 0.0;
+    ParamScalarT meas = 0.0;
     for (int qp(0); qp<numQPs; ++qp)
     {
       meas += w_measure(cell,side,qp);

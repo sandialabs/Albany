@@ -57,6 +57,20 @@ private:
 
   double rho, g;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  struct StokesFOImplicitThicknessUpdateResid_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, StokesFOImplicitThicknessUpdateResid_Tag> StokesFOImplicitThicknessUpdateResid_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const;
+
+  Kokkos::View<ScalarT**, PHX::Device> res;
+
+#endif
+
 };
 }
 

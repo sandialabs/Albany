@@ -3,7 +3,7 @@ import exodus
 import numpy
 import matplotlib.pyplot as plt
 
-file_name = "MultiSlipPlaneHard_Implicit_Active_Sets.exo"
+file_name = "MultiSlipPlaneHard_Implicit.gold.exo"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "gamma_1_1"
 dep_var_name = "tau_hard_1_1"
@@ -46,13 +46,13 @@ for i in range(n_steps):
     dep_var_4[i]=exo_file.get_element_variable_values(block_id,dep_var_name_4,i+1)
     dep_var_5[i]=exo_file.get_element_variable_values(block_id,dep_var_name_5,i+1)
     dep_var_6[i]=exo_file.get_element_variable_values(block_id,dep_var_name_6,i+1)
-    check[i] = hardening/recovery*(1.0 - numpy.exp(-recovery*inp_var[i])) 
+    check[i] = hardening/recovery*(1.0 - numpy.exp(-8.0*recovery*inp_var[i])) 
 
 
 ###############
 fig, ax = plt.subplots()
 ax.plot(inp_var[:],dep_var[:],color='blue',marker='o',label=file_name)
-ax.plot(inp_var[:],check[:],color='red',label='analytical power law')
+ax.plot(inp_var[:],check[:],color='red',label='analytical hardening/recovery')
 plt.xlabel(inp_var_name)
 plt.ylabel(dep_var_name)
 lg = plt.legend(loc = 4)

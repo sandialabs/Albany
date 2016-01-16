@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace LCM {
 
@@ -82,7 +82,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   switch (numDims) {
   case 1:
-    Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
+    Intrepid2::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
     for (int cell=0; cell < workset.numCells; ++cell) {
           for (int qp=0; qp < numQPs; ++qp) {
         	  stress(cell, qp) = stress(cell, qp) - porePressure(cell,qp);

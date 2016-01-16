@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
 #include "FELIX_HomotopyParameter.hpp"
@@ -67,12 +67,12 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     if (is_hydrology)
     {
       BF = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-      beta_given_field = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->node_scalar);
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->node_scalar);
     }
     else
     {
       BF = PHX::MDField<RealType>(p.get<std::string> ("BF Side Variable Name"), dl->side_node_qp_scalar);
-      beta_given_field = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->side_node_scalar);
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->side_node_scalar);
     }
 
     this->addDependentField (BF);
@@ -97,12 +97,12 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 
     if (is_hydrology)
     {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
     }
     else
     {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
+      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
     }
     this->addDependentField (u_norm);
@@ -135,12 +135,12 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 
     if (is_hydrology)
     {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
     }
     else
     {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
+      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
     }
 

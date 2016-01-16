@@ -382,7 +382,7 @@ ATO::Solver::evalModel(const InArgs& inArgs,
 
     if(numColumns > 0){
       // collect homogenized values
-      Intrepid::FieldContainer<RealType> Cvals(numColumns,numColumns);
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> Cvals(numColumns,numColumns);
       for(int i=0; i<numColumns; i++){
         Teuchos::RCP<const Epetra_Vector> g = hs.homogenizationProblems[i].responses_out->get_g(hs.responseIndex);
         for(int j=0; j<numColumns; j++){
@@ -634,6 +634,8 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
   double* ltopo; topoVec->ExtractView(&ltopo);
   int numMyNodes = topoVec->MyLength();
   for(int i=0; i<numMyNodes; i++) ltopo[i] = p[i];
+
+  if(!_filterIsRecursive) smoothTopology();
 
   int numWorksets = wsElDofs.size();
   double matVal = _topology->getMaterialValue();
@@ -958,7 +960,15 @@ ATO::Solver::Compute(double* p, double& g, double* dgdp, double& c, double* dcdp
 /******************************************************************************/
 {
   if(_iteration!=0) smoothTopology(p);
+  
+  Compute((const double*)p, g, dgdp, c, dcdp);
+}
 
+/******************************************************************************/
+void
+ATO::Solver::Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp)
+/******************************************************************************/
+{
   for(int i=0; i<_numPhysics; i++){
 
     // copy data from p into each stateManager

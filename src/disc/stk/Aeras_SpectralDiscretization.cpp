@@ -18,10 +18,10 @@
 // Trilinos includes
 #include <Teuchos_TwoDArray.hpp>
 #include <Shards_BasicTopologies.hpp>
-#include <Intrepid_CellTools.hpp>
-#include <Intrepid_Basis.hpp>
-#include <Intrepid_HGRAD_QUAD_Cn_FEM.hpp>
-#include <Intrepid_CubaturePolylib.hpp>
+#include <Intrepid2_CellTools.hpp>
+#include <Intrepid2_Basis.hpp>
+#include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
+#include <Intrepid2_CubaturePolylib.hpp>
 #include <stk_util/parallel/Parallel.hpp>
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/base/Entity.hpp>
@@ -69,12 +69,15 @@ const Tpetra::global_size_t INVALID =
 Aeras::SpectralDiscretization::
 SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                   Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+                  const int numLevels_, const int numTracers_, 
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
+  numLevels(numLevels_), 
+  numTracers(numTracers_), 
   commT(commT_),
   rigidBodyModes(rigidBodyModes_),
   discParams(discParams_), 
@@ -123,7 +126,10 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
   *out << "spatial_dim: " << spatial_dim << std::endl; 
-  *out << "nodes_per_element: " << nodes_per_element << std::endl;  
+  *out << "nodes_per_element: " << nodes_per_element << std::endl; 
+  *out << "neq: " << neq << std::endl;
+  *out << "numLevels: " << numLevels << std::endl; 
+  *out << "numTracers: " << numTracers << std::endl;  
 #endif
   Aeras::SpectralDiscretization::updateMesh();
 }
@@ -1869,16 +1875,16 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid::FieldContainer< double > Field_t;
+  typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-  Teuchos::RCP< Intrepid::Cubature< double, Field_t, Field_t > > gl1D =
+  Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > gl1D =
     Teuchos::rcp(
-      new Intrepid::CubaturePolylib< double, Field_t, Field_t >(
-        2*deg-1, Intrepid::PL_GAUSS_LOBATTO));
+      new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
+        2*deg-1, Intrepid2::PL_GAUSS_LOBATTO));
   Field_t refCoords(np, 1);
   Field_t refWeights(np);
   gl1D->getCubature(refCoords, refWeights);
@@ -1962,25 +1968,25 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid::FieldContainer< double > Field_t;
+  typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int np2 = np * np;
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-  Teuchos::RCP< Intrepid::Cubature< double, Field_t, Field_t > > gl1D =
+  Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > gl1D =
     Teuchos::rcp(
-      new Intrepid::CubaturePolylib< double, Field_t, Field_t >(
-        2*deg-1, Intrepid::PL_GAUSS_LOBATTO));
+      new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
+        2*deg-1, Intrepid2::PL_GAUSS_LOBATTO));
 
   // Compute the 2D Gauss-Lobatto cubature.  These will be the nodal
   // points of the reference spectral element
   std::vector<
-    Teuchos::RCP< Intrepid::Cubature< double, Field_t, Field_t > > > axes;
+    Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > > axes;
   axes.push_back(gl1D);
   axes.push_back(gl1D);
-  Intrepid::CubatureTensor< double, Field_t, Field_t > gl2D(axes);
+  Intrepid2::CubatureTensor< double, Field_t, Field_t > gl2D(axes);
   Field_t refCoords(np2, 2);
   Field_t refWeights(np2);
   gl2D.getCubature(refCoords, refWeights);
@@ -2059,6 +2065,8 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
 #endif
 
   overlap_graphT = Teuchos::null; // delete existing graph here on remesh
+  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
+  //to have a smaller stencil here. 
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
                                                     neq*points_per_edge));
 
@@ -2089,13 +2097,41 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
       {
         const GO rowNode = node_rels[j];
         // loop over eqs
-        for (std::size_t k=0; k < neq; k++)
+        for (std::size_t k=0; k < 1; k++) //Ps0 equation
         {
           row = getGlobalDOF(rowNode, k);
           for (std::size_t l=0; l < points_per_edge; l++)
           {
             const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++)
+            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
+            {
+              col = getGlobalDOF(colNode, m);
+              colAV = Teuchos::arrayView(&col, 1);
+              overlap_graphT->insertGlobalIndices(row, colAV);
+            }
+          }
+        }
+        for (std::size_t k=1; k < 2*numLevels+1; k++) //u and T equations
+        {
+          row = getGlobalDOF(rowNode, k);
+          for (std::size_t l=0; l < points_per_edge; l++)
+          {
+            const GO colNode = node_rels[l];
+            for (std::size_t m=0; m < neq; m++)  //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
+            {
+              col = getGlobalDOF(colNode, m);
+              colAV = Teuchos::arrayView(&col, 1);
+              overlap_graphT->insertGlobalIndices(row, colAV);
+            }
+          }
+        }
+        for (std::size_t k=2*numLevels+1; k < neq; k++) //scalar equations
+        {
+          row = getGlobalDOF(rowNode, k);
+          for (std::size_t l=0; l < points_per_edge; l++)
+          {
+            const GO colNode = node_rels[l];
+            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
             {
               col = getGlobalDOF(colNode, m);
               colAV = Teuchos::arrayView(&col, 1);
@@ -2110,6 +2146,8 @@ void Aeras::SpectralDiscretization::computeGraphsLines()
 
   // Create Owned graph by exporting overlap with known row map
   graphT = Teuchos::null; // delete existing graph happens here on remesh
+  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
+  //to have a smaller stencil here. 
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
 
   // Create non-overlapped matrix using two maps and export object
@@ -2372,32 +2410,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       wsElNodeEqID[b][i].resize(nodes_per_element);
       //wsElNodeID[b][i].resize(nodes_per_element);
       //coords[b][i].resize(nodes_per_element);
-
-#if defined(ALBANY_EPETRA)
-/*      for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
-      {
-        Albany::IDArray& wsElNodeEqID_array = it->second.wsElNodeEqID[b];
-        GIDArray& wsElNodeID_array = it->second.wsElNodeID[b];
-        int nComp = it->first.second;
-        for (int j = 0; j < nodes_per_element; ++j)
-        {
-          const int node = node_rels[j];
-          wsElNodeID_array((int)i,j) = gid(node);
-          for (int k=0; k < nComp; k++)
-          {
-            const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(node,k);
-            const int node_lid = it->second.overlap_map->LID(
-#ifdef ALBANY_64BIT_INT
-              static_cast<long long int>(node_gid)
-#else
-              node_gid
-#endif
-              );
-            wsElNodeEqID_array((int)i,j,k) = node_lid;
-          }
-        }
-      }*/
-#endif
 
       // loop over local nodes
       for (int j = 0; j < nodes_per_element; ++j)
@@ -2958,16 +2970,16 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   }
 
 
-  const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > >
+  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid::FieldContainer< double > Field_t;
-    typedef Intrepid::Basis< double, Field_t > Basis_t;
+    typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
+    typedef Intrepid2::Basis< double, Field_t > Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
 
     // Check for valid value of C
     int deg = (int) std::sqrt((double)C);
@@ -2983,8 +2995,8 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
 
     // Spectral bases
     return Teuchos::rcp(
-      new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
-        deg, Intrepid::POINTTYPE_SPECTRAL) );
+      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
+        deg, Intrepid2::POINTTYPE_SPECTRAL) );
   }
 
   double value(const std::vector<double> &soln,
@@ -2992,17 +3004,17 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid::Basis<double,
-                                       Intrepid::FieldContainer<double> > >
+    const Teuchos::RCP<Intrepid2::Basis<double,
+                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     double x = 0;
     for (unsigned j=0; j<C; ++j) x += soln[j] * basisVals(j,0);
@@ -3015,17 +3027,17 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   {
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double,
-                                       Intrepid::FieldContainer<double> > >
+    const Teuchos::RCP<Intrepid2::Basis<double,
+                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid::OPERATOR_VALUE);
+    HGRAD_Basis->getValues(basisVals, tempPoints, Intrepid2::OPERATOR_VALUE);
 
     for (unsigned i = 0; i < 3; ++i)
       x[i] = 0;
@@ -3039,17 +3051,17 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
             const std::pair<double, double> &ref)
   {
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid::Basis<double,
-                                       Intrepid::FieldContainer<double> > >
+    const Teuchos::RCP<Intrepid2::Basis<double,
+                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid::FieldContainer<double> basisGrad (C, numPoints, 2);
-    Intrepid::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisGrad (C, numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
-    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid::OPERATOR_GRAD);
+    HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid2::OPERATOR_GRAD);
 
     for (unsigned i = 0; i < 3; ++i)
       x[i][0] = x[i][1] = 0;

@@ -5,8 +5,8 @@
 //*****************************************************************//
 #include "UnSatPoroElasticityProblem.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -165,8 +165,8 @@ Albany::UnSatPoroElasticityProblem::getValidProblemParameters() const
 
 void
 Albany::UnSatPoroElasticityProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>> newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> newState_
    ) const
 {
   oldState_ = oldState;

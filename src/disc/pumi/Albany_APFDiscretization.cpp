@@ -453,7 +453,7 @@ void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
 static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
 {
-  if (!(meshStruct->useTemperatureHack && meshStruct->solutionInitialized))
+  if (!meshStruct->useTemperatureHack)
     return;
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* t = m->findField("temp");
@@ -473,14 +473,13 @@ void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
-  saveOldTemperature(meshStruct);
   (void) time_value;
   if (solNames.size() == 0)
     this->setField(APFMeshStruct::solution_name,soln,overlapped);
   else
     this->setSplitFields(solNames,solIndex,soln,overlapped);
-
   meshStruct->solutionInitialized = true;
+  saveOldTemperature(meshStruct);
 }
 
 void Albany::APFDiscretization::writeAnySolutionToFile(
@@ -693,6 +692,19 @@ void Albany::APFDiscretization::computeSideSets()
   computeSideSetsBase();
 }
 
+static void offsetNumbering(
+    apf::GlobalNumbering* n,
+    apf::DynamicArray<apf::Node> const& nodes)
+{
+  const GO startIdx = 2147483647L;
+  for (int i=0; i < nodes.getSize(); ++i)
+  {
+    GO oldIdx = apf::getNumber(n, nodes[i]);
+    GO newIdx = startIdx + oldIdx;
+    number(n, nodes[i], newIdx);
+  }
+}
+
 void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
     apf::FieldShape* shape)
 {
@@ -701,6 +713,8 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
   globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned",shape));
   apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
+  if (meshStruct->useDOFOffsetHack)
+    offsetNumbering(globalNumbering, ownedNodes);
   numOwnedNodes = ownedNodes.getSize();
   apf::synchronize(globalNumbering);
   Teuchos::Array<GO> indices(numOwnedNodes);
@@ -839,18 +853,27 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
  * STK bucket size is set to the workset size. We will "chunk" the elements into worksets here.
  */
 
-  // This function is called each adaptive cycle. Need to reset the 2D array "buckets" back to the initial size.
-  for(int i = 0; i < buckets.size(); i++)
-    buckets[i].clear();
+  int worksetSize = meshStruct->worksetSize;
 
   buckets.clear();
+
+  /* even with exponential growth, appending to a vector
+   * of vectors may be expensive is std::move-style optimizations
+   * aren't done.
+   * we know there will be at least (#elements / worksetSize) worksets,
+   * so reserve that much and avoid resizes until then. */
+  buckets.reserve(m->count(numDim) / worksetSize + 1);
+
+  /* likewise, wsEBNames is of a type which does not
+   * resize exponentially, so during this procedure
+   * we'll replace it with a std::vector */
+  std::vector<std::string> wsEBNames_vec;
+  wsEBNames_vec.reserve(m->count(numDim) / worksetSize + 1);
 
   std::map<apf::StkModel*, int> bucketMap;
   std::map<apf::StkModel*, int>::iterator buck_it;
   apf::StkModels& sets = meshStruct->getSets();
   int bucket_counter = 0;
-
-  int worksetSize = meshStruct->worksetSize;
 
   // iterate over all elements
   apf::MeshIterator* it = m->begin(numDim);
@@ -858,23 +881,19 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   while ((element = m->iterate(it)))
   {
     apf::ModelEntity* mr = m->toModel(element);
-    apf::StkModel* block = sets.invMaps[getNumDim()][mr];
+    apf::StkModel* block = sets.invMaps[numDim][mr];
     TEUCHOS_TEST_FOR_EXCEPTION(!block, std::logic_error,
 		   "Error: no element block for model region on line " << __LINE__ << " of file " << __FILE__ << std::endl);
     // find the latest bucket being filled with elements for this block
     buck_it = bucketMap.find(block);
     if((buck_it == bucketMap.end()) ||  // this block hasn't been encountered yet
        (buckets[buck_it->second].size() >= worksetSize)){ // the current bucket for this block is "full"
-      // Associate this elem_blk with a new bucket
+      // Associate this elem_blk with the new bucket
       bucketMap[block] = bucket_counter;
-      // resize the bucket array larger by one
-      buckets.resize(bucket_counter + 1);
-      wsEBNames.resize(bucket_counter + 1);
-      // save the element in the bucket
-      buckets[bucket_counter].push_back(element);
-      // save the name of the new element block
-      std::string EB_name = block->stkName;
-      wsEBNames[bucket_counter] = EB_name;
+      // start this new bucket off with the current element
+      buckets.push_back(std::vector<apf::MeshEntity*>(1,element));
+      // associate a bucket (workset) with an element block via a string
+      wsEBNames_vec.push_back(block->stkName);
       bucket_counter++;
     }
     else { // put the element in the proper bucket
@@ -882,6 +901,11 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
     }
   }
   m->end(it);
+
+  /* now copy the std::vector into the plain array */
+  wsEBNames.resize(wsEBNames_vec.size());
+  for (size_t i = 0; i < wsEBNames_vec.size(); ++i)
+    wsEBNames[i] = wsEBNames_vec[i];
 
   int numBuckets = bucket_counter;
 
@@ -960,7 +984,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   //
   // For each state, create storage for the data for on processor elements
   // elemGIDws.size() is the number of elements on this processor ...
-  // Note however that Intrepid will stride over numBuckets * worksetSize
+  // Note however that Intrepid2 will stride over numBuckets * worksetSize
   // so we must allocate enough storage for that
 
   std::size_t numElementsAccessed = numBuckets * worksetSize;
