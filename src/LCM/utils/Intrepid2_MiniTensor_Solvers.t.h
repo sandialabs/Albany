@@ -604,4 +604,42 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   return ls_step;
 }
 
+//
+//
+//
+template<typename T, Index N>
+std::unique_ptr<StepBase<T>>
+stepFactory(StepType step_type)
+{
+  std::unique_ptr<StepBase<T>>
+  step_ptr{nullptr};
+
+  switch (step_type) {
+
+  default:
+    std::cerr << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "ERROR: Unknown step method type\n";
+    exit(1);
+    break;
+
+  case StepType::NEWTON:
+    step_ptr.reset(new NewtonStep<T, N>());
+    break;
+
+  case StepType::TRUST_REGION:
+    step_ptr.reset(new TrustRegionStep<T, N>());
+    break;
+
+  case StepType::CG:
+    step_ptr.reset(new ConjugateGradientStep<T, N>());
+    break;
+
+  case StepType::LINE_SEARCH_REG:
+    step_ptr.reset(new LineSearchRegularizedStep<T, N>());
+    break;
+  }
+
+  return step_ptr;
+}
+
 } // namespace Intrepid2

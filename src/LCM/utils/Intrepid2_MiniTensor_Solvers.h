@@ -7,6 +7,7 @@
 #if !defined(Intrepid2_MiniTensor_Solvers_h)
 #define Intrepid2_MiniTensor_Solvers_h
 
+#include <memory>
 #include <utility>
 
 #include <Intrepid2_MiniTensor.h>
@@ -194,9 +195,9 @@ struct TrustRegionExact
 /// Step Base
 ///
 template<typename T>
-struct Step_Base
+struct StepBase
 {
-  Step_Base()
+  StepBase()
   {
     constexpr bool
     is_fad = Sacado::IsADType<T>::value == true;
@@ -205,16 +206,26 @@ struct Step_Base
   }
 };
 
+///
+/// The step types
+///
 enum class StepType
 {
   UNDEFINED = 0, NEWTON = 1, TRUST_REGION = 2, CG = 3, LINE_SEARCH_REG = 4
 };
 
 ///
+///
+///
+template<typename T, Index N>
+std::unique_ptr<StepBase<T>>
+stepFactory(StepType step_type);
+
+///
 /// Plain Newton Step
 ///
 template<typename T, Index N>
-struct NewtonStep : public Step_Base<T>
+struct NewtonStep : public StepBase<T>
 {
   static constexpr
   char const * const
@@ -233,7 +244,7 @@ struct NewtonStep : public Step_Base<T>
 /// Trust Region Step
 ///
 template<typename T, Index N>
-struct TrustRegionStep : public Step_Base<T>
+struct TrustRegionStep : public StepBase<T>
 {
   static constexpr
   char const * const
@@ -265,7 +276,7 @@ private:
 /// Conjugate Gradient Step
 ///
 template<typename T, Index N>
-struct ConjugateGradientStep : public Step_Base<T>
+struct ConjugateGradientStep : public StepBase<T>
 {
   static constexpr
   char const * const
@@ -300,7 +311,7 @@ private:
 /// Line Search Regularized Step
 ///
 template<typename T, Index N>
-struct LineSearchRegularizedStep : public Step_Base<T>
+struct LineSearchRegularizedStep : public StepBase<T>
 {
   static constexpr
   char const * const
