@@ -3,7 +3,7 @@ import exodus
 import numpy
 import matplotlib.pyplot as plt
 
-file_name = "MultiSlipPlaneHard_Implicit.gold.exo"
+file_name = "MultiSlipPlaneHard_Implicit.exo"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "gamma_1_1"
 dep_var_name = "tau_hard_1_1"
@@ -42,7 +42,7 @@ for i in range(n_steps):
     inp_var[i] = abs(inp_var[i])
     dep_var[i]=exo_file.get_element_variable_values(block_id,dep_var_name,i+1)
     dep_var_2[i]=exo_file.get_element_variable_values(block_id,dep_var_name_2,i+1)
-    dep_var_3[i]=exo_file.get_element_variable_values(block_id,dep_var_name_3,i+1)
+    dep_var_3[i]=numpy.log10(exo_file.get_element_variable_values(block_id,dep_var_name_3,i+1))
     dep_var_4[i]=exo_file.get_element_variable_values(block_id,dep_var_name_4,i+1)
     dep_var_5[i]=exo_file.get_element_variable_values(block_id,dep_var_name_5,i+1)
     dep_var_6[i]=exo_file.get_element_variable_values(block_id,dep_var_name_6,i+1)
@@ -74,7 +74,7 @@ fig.savefig(output_file_name_2)
 fig, ax = plt.subplots()
 ax.plot(inp_var[:],dep_var_3[:],color='blue',marker='o',label=file_name)
 plt.xlabel(inp_var_name)
-plt.ylabel(dep_var_name_3)
+plt.ylabel('log10(' + dep_var_name_3 + ')')
 ##plt.ylim([-1.0e-13,1.0e-13])
 lg = plt.legend(loc = 4)
 lg.draw_frame(False)

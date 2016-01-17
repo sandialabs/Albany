@@ -102,7 +102,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
   implicit_nonlinear_solver_min_iterations_ = p->get<int>(
       "Implicit Integration Min Iterations",
-      1);
+      2);
 
   apply_slip_predictor_ = p->get<bool>(
       "Apply Slip Predictor",
