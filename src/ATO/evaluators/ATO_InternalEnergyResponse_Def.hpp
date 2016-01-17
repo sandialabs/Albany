@@ -70,7 +70,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  InternalEnergyResponse requires 'Distributed Parameter' based topology" << std::endl);
 
-  topo = PHX::MDField<ScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
+  topo = PHX::MDField<ParamScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
 
   if(responseParams->isType<int>("Penalty Function")){
     functionIndex = responseParams->get<int>("Penalty Function");

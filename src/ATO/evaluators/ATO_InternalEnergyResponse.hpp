@@ -24,6 +24,7 @@ namespace ATO
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename EvalT::ParamScalarT ParamScalarT;
     
     InternalEnergyResponse(Teuchos::ParameterList& p,
 			const Teuchos::RCP<Albany::Layouts>& dl);
@@ -48,7 +49,7 @@ namespace ATO
     PHX::MDField<ScalarT> workConj;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
     PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-    PHX::MDField<ScalarT,Cell,Node> topo;
+    PHX::MDField<ParamScalarT,Cell,Node> topo;
 
 
     Teuchos::RCP< PHX::Tag<ScalarT> > stiffness_objective_tag;
