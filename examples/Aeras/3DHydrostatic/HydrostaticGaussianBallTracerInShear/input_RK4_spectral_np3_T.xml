@@ -48,7 +48,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{5380.35101725}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{5389.09148282}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -68,7 +68,7 @@
       <ParameterList name="Rythmos">
      
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="200000"/>
+           <Parameter name="Final Time" type="double" value="100"/>
            <!-- change to 1.037e6 to get full revolution -->
            <ParameterList name="Integrator Selection">
              <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
@@ -101,7 +101,7 @@
                  value="Simple Integration Control Strategy"/>
            <ParameterList name="Simple Integration Control Strategy">
              <Parameter name="Take Variable Steps" type="bool" value="false"/>
-             <Parameter name="Number of Time Steps" type="int" value="20000"/>
+             <Parameter name="Number of Time Steps" type="int" value="1"/>
              <ParameterList name="VerboseObject">
                <Parameter name="Verbosity Level" type="string" value="low"/>
              </ParameterList>
