@@ -656,6 +656,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           // compute Lp_np1, and Fp_np1
           CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP>(
             slip_systems_, 
+            dt,
             slip_n, 
             slip_np1, 
             Fp_n, 
@@ -815,6 +816,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           // Compute Lp_np1, and Fp_np1
           CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP>(
             slip_systems_, 
+            dt,
             slip_n, 
             slip_np1, 
             Fp_n, 
@@ -854,26 +856,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
       }
 
-
       // Compute the equivalent plastic strain from the velocity gradient:
-      //       eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
-      //
+      //  eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
       ScalarT delta_eqps = Intrepid2::dotdot(
         Intrepid2::sym(Lp_np1),
         Intrepid2::sym(Lp_np1));
-      if (delta_eqps > 0.0) {
-        delta_eqps = 2.0 * (std::sqrt(delta_eqps)) / 3.0;
-      } // Otherwise delta_eqps is - or BETTER be! - zero, so don't bother with the 2/3.
-      else { // On second thought, let's make SURE it's zero (and specifically not negative)...
-        delta_eqps = 0.0;// Ok, this is a little paranoid but what the hey? If the Al foil hat fits...
-      }
-      // ccbatta 2015/06/09: The quantity Lp_np1 is actually of the form Lp * dt,
-      //    i.e. it's a velocity gradient multiplied by the time step,
-      //    since it's computed using DELTA_gamma, instead of gamma_dot.
-      //    So until that convention is changed, leave out the dt prefactor
-      //    when converting eqps_dot to eqps since it's already included
-      //    in Lp_np1 = Lp * dt. (See applySlipIncrement().)
-      //      delta_eqps *= dt;
+      delta_eqps = 2.0/3.0 * dt * (std::sqrt(delta_eqps));
       equivalent_plastic_strain += delta_eqps;
       eqps(cell, pt) = equivalent_plastic_strain;
 

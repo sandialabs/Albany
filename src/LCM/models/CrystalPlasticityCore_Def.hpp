@@ -55,6 +55,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,
 void
 CP::applySlipIncrement(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    DataT dt,
     Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
     Intrepid2::Vector<ArgT, NumSlipT> const & slip_np1,
     Intrepid2::Tensor<DataT, NumDimT> const & Fp_n,
@@ -67,8 +68,8 @@ CP::applySlipIncrement(
   DataT temp;
   Intrepid2::Tensor<RealType, NumDimT> P;
   P.set_dimension(num_dim);
-  Intrepid2::Tensor<ArgT, NumDimT> expL;
-  expL.set_dimension(num_dim);
+  Intrepid2::Tensor<ArgT, NumDimT> exp_L_dt;
+  exp_L_dt.set_dimension(num_dim);
 
   Lp_np1.fill(Intrepid2::ZEROS);
   for (int s(0); s < num_slip; ++s) {
@@ -77,17 +78,17 @@ CP::applySlipIncrement(
     P = slip_systems[s].projector_;
 
     // calculate plastic velocity gradient
-    Lp_np1 += (slip_np1[s] - slip_n[s]) * P;
+    if(dt > 0){
+    Lp_np1 += (slip_np1[s] - slip_n[s])/dt * P;
+    }
   }
 
   CP::confirmTensorSanity<NumDimT>(Lp_np1, "Lp_np1 in applySlipIncrement().");
 
   // update plastic deformation gradient
-
-  //std::cout  << "Lp_np1 " << Lp_np1;
-
-  expL = Intrepid2::exp(Lp_np1);
-  Fp_np1 = expL * Fp_n;
+  // F^{p}_{n+1} = exp(L_{n+1} * delta t) F^{p}_{n}
+  exp_L_dt = Intrepid2::exp(Lp_np1 * dt);
+  Fp_np1 = exp_L_dt * Fp_n;
 
   CP::confirmTensorSanity<NumDimT>(Fp_np1, "Fp_np1 in applySlipIncrement()");
 }
@@ -246,31 +247,11 @@ CP::computeResidual(
     // Compute slip increment using Fe_np1
     temp = shear_np1[s] / (tauC + hardness_np1[s]);
 
-//     // establishing normalized filter for active slip systems
-//     const double active_filter = std::numeric_limits<RealType>::epsilon() * 10.0;
-//     if (temp < active_filter) {
-//       dgamma_value2 = dt * g0 * 0.0;
-//     }
-//     else {
-//       dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
-//     }
-
     dgamma_value2 = dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
 
     //The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value1 - dgamma_value2;
 
-    //residual can take two forms - see Steinmann and Stein, CMAME (2006)
-    //establishing filter for gamma, 1.0e-4 for now
-    //const double gamma_filter = 1.0e-4;
-    //if (dgamma_value2 <= gamma_filter) {
-    //  slip_residual[s] = dgamma_value2 - dgamma_value1;
-    //}
-    //else {
-    //  int sign = shear_np1[s] < 0 ? -1 : 1;
-    //  temp2 = dgamma_value1 / (dt * g0 * sign);
-    //  slip_residual[s] = -std::pow(temp2, one_over_m) + temp;
-    //}
   }
 
   // Take norm of residual - protect sqrt (Saccado)
@@ -429,6 +410,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT>(
       slip_systems_,
+      dt_,
       slip_n_,
       slip_np1,
       Fp_n_,
@@ -565,6 +547,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT>(
       slip_systems_,
+      dt_,
       slip_n_,
       slip_np1,
       Fp_n_,
