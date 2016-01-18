@@ -35,13 +35,13 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 #add_test(Aeras_${testName}_HV_Tpetra ${AlbanyT.exe} input_hv_T.xml)
 
-add_test(Aeras_${testName}_explicitHV_BE_nu8e15_vort_Tpetra ${AlbanyT.exe} input_explicitHV_BE_nu8e15_vort_T.xml)
-add_test(Aeras_${testName}_explicitHV_BE_nu8e15_novort_Tpetra ${AlbanyT.exe} input_explicitHV_BE_nu8e15_novort_T.xml)
+add_test(Aeras_${testName}_explicitHV_nu8e15_vort_BackwardEuler ${AlbanyT.exe} input_explicitHV_BE_nu8e15_vort_T.xml)
+add_test(Aeras_${testName}_explicitHV_nu8e15_novort_BackwardEuler ${AlbanyT.exe} input_explicitHV_BE_nu8e15_novort_T.xml)
 
-add_test(Aeras_${testName}_explicitHV_RK4_nu8e15_novort_Tpetra ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
+add_test(Aeras_${testName}_explicitHV_nu8e15_novort_RungeKutta4 ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
 
-add_test(Aeras_${testName}_implicitHV_BE_nu8e15_vort_Tpetra ${AlbanyT.exe} input_implicitHV_BE_nu8e15_vort_T.xml)
-add_test(Aeras_${testName}_implicitHV_BE_nu8e15_novort_Tpetra ${AlbanyT.exe} input_implicitHV_BE_nu8e15_novort_T.xml)
+add_test(Aeras_${testName}_implicitHV_nu8e15_vort_BackwardEuler ${AlbanyT.exe} input_implicitHV_BE_nu8e15_vort_T.xml)
+add_test(Aeras_${testName}_implicitHV_nu8e15_novort_BackwardEuler ${AlbanyT.exe} input_implicitHV_BE_nu8e15_novort_T.xml)
 
 
 # 7. Repeat process for Dakota + Ensemble problems if "dakota.in" exists
