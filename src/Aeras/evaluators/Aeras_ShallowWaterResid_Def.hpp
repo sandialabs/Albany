@@ -34,6 +34,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 		UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
 		UDotDotNodal   (p.get<std::string> ("Time Dependent Nodal Variable Name"), dl->node_vector),
 		UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector),
+		//OG UDotDot is not in use?
 		UDotDot     (p.get<std::string> ("Time Dependent Variable Name"), dl->node_vector),
 		cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
 		mountainHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
@@ -153,6 +154,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	this->addDependentField(U);
 	this->addDependentField(UNodal);
 	this->addDependentField(UDot);
+	//OG UDotDot is not in use?
 	this->addDependentField(UDotDot);
 	this->addDependentField(UDotDotNodal);
 	this->addDependentField(wBF);
@@ -320,6 +322,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 	this->utils.setFieldData(U,fm);
 	this->utils.setFieldData(UNodal,fm);
 	this->utils.setFieldData(UDot,fm);
+	//OG UDotDot is not in use?
 	this->utils.setFieldData(UDotDot,fm);
 	this->utils.setFieldData(UDotDotNodal,fm);
 	this->utils.setFieldData(wBF,fm);
