@@ -713,13 +713,9 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
           using ValueT = typename Sacado::ValueType<ScalarT>::type;
           using MIN = Intrepid2::Minimizer<ValueT, NLS_DIM>;
-          using STEP = Intrepid2::NewtonStep<ValueT, NLS_DIM>;
 
           MIN
           minimizer;
-
-          STEP
-          step;
 
           // unknowns array
           Intrepid2::Vector<ScalarT, 2 * CP::MAX_SLIP> x;
@@ -749,6 +745,11 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
                   slip_n,
                   F_np1,
                   dt);
+
+              using STEP = Intrepid2::NewtonStep<NLS, ValueT, NLS_DIM>;
+
+              STEP
+              step;
 
               // unknowns, which are slip_np1
               x.set_dimension(num_slip_);
@@ -783,6 +784,11 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
                 slip_n,
                 F_np1,
                 dt);
+
+            using STEP = Intrepid2::NewtonStep<NLS, ValueT, NLS_DIM>;
+
+            STEP
+            step;
 
             // unknowns, which are slip_np1 followed by hardness_np1
             x.set_dimension(2 * num_slip_);

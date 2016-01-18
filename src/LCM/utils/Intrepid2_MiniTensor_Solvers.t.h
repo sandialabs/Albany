@@ -331,10 +331,9 @@ step(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-NewtonStep<T, N>::
+NewtonStep<FN, T, N>::
 initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
   return;
@@ -343,10 +342,9 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 //
 // Plain Newton step.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-NewtonStep<T, N>::
+NewtonStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
   Tensor<T, N> const
@@ -361,10 +359,9 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-TrustRegionStep<T, N>::
+TrustRegionStep<FN, T, N>::
 initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
   region_size = initial_region_size;
@@ -375,10 +372,9 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 //
 // Trust Region method.  See Nocedal's algorithm 11.5.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-TrustRegionStep<T, N>::
+TrustRegionStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
   Tensor<T, N> const
@@ -446,10 +442,9 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-ConjugateGradientStep<T, N>::
+ConjugateGradientStep<FN, T, N>::
 initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 {
   Tensor<T, N> const
@@ -473,10 +468,9 @@ initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 // This is taken from J.R. Shewchuck "painless" conjugate gradient
 // manuscript that is all over the place on the net.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-ConjugateGradientStep<T, N>::
+ConjugateGradientStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 {
   Index const
@@ -539,10 +533,9 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-LineSearchRegularizedStep<T, N>::
+LineSearchRegularizedStep<FN, T, N>::
 initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
   return;
@@ -551,10 +544,9 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 //
 // Line Search Newton-like method.  See Nocedal's algorithm 11.4.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-LineSearchRegularizedStep<T, N>::
+LineSearchRegularizedStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 {
   Index const
@@ -607,11 +599,11 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 //
 //
 //
-template<typename T, Index N>
-std::unique_ptr<StepBase<T>>
+template<typename FN, typename T, Index N>
+std::unique_ptr<StepBase<FN, T, N>>
 stepFactory(StepType step_type)
 {
-  std::unique_ptr<StepBase<T>>
+  std::unique_ptr<StepBase<FN, T, N>>
   step_ptr{nullptr};
 
   switch (step_type) {
@@ -623,19 +615,19 @@ stepFactory(StepType step_type)
     break;
 
   case StepType::NEWTON:
-    step_ptr.reset(new NewtonStep<T, N>());
+    step_ptr.reset(new NewtonStep<FN, T, N>());
     break;
 
   case StepType::TRUST_REGION:
-    step_ptr.reset(new TrustRegionStep<T, N>());
+    step_ptr.reset(new TrustRegionStep<FN, T, N>());
     break;
 
   case StepType::CG:
-    step_ptr.reset(new ConjugateGradientStep<T, N>());
+    step_ptr.reset(new ConjugateGradientStep<FN, T, N>());
     break;
 
   case StepType::LINE_SEARCH_REG:
-    step_ptr.reset(new LineSearchRegularizedStep<T, N>());
+    step_ptr.reset(new LineSearchRegularizedStep<FN, T, N>());
     break;
   }
 
