@@ -52,6 +52,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,
 void
 applySlipIncrement(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    DataT dt,
     Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
     Intrepid2::Vector<ArgT, NumSlipT> const & slip_np1,
     Intrepid2::Tensor<DataT, NumDimT> const & Fp_n,
