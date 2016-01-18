@@ -2132,6 +2132,72 @@ void Aeras::SpectralDiscretization::computeGraphs()
   graphT->fillComplete();
 }
 
+void Aeras::SpectralDiscretization::computeGraphs_Explicit()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+
+#ifdef OUTPUT_TO_SCREEN
+  *out << "nodes_per_element: " << nodes_per_element << std::endl;
+#endif
+
+  overlap_graphT = Teuchos::null; // delete existing graph here on remesh
+  //Graph for diagonal matrix 
+  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, 1));
+
+  stk::mesh::Selector select_owned =
+    stk::mesh::Selector(metaData.locally_owned_part());
+  
+  const stk::mesh::BucketVector & buckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+
+  const int numBuckets = buckets.size();
+  
+  if (commT->getRank()==0)
+    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
+         << std::endl;
+
+  GO row;
+  Teuchos::ArrayView<GO> colAV;
+  
+  //Populate the graphs
+  for (int b = 0; b < numBuckets; ++b)
+  {
+    stk::mesh::Bucket & buck = *buckets[b];
+    // i is the element index within bucket b
+    for (std::size_t i = 0; i < buck.size(); ++i)
+    {
+      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+      for (int j = 0; j < nodes_per_element; ++j)
+      {
+        const GO rowNode = node_rels[j];
+        // loop over eqs
+        for (std::size_t k=0; k < neq; k++)
+        {
+          row = getGlobalDOF(rowNode, k);
+          //col = row
+          colAV = Teuchos::arrayView(&row, 1); 
+          overlap_graphT->insertGlobalIndices(row, colAV);
+        }
+      }
+    }
+  }
+  overlap_graphT->fillComplete();
+
+  // Create Owned graph by exporting overlap with known row map
+  graphT = Teuchos::null; // delete existing graph happens here on remesh
+
+  //Graph for diagonal matrix 
+  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, 1));
+
+  // Create non-overlapped matrix using two maps and export object
+  Teuchos::RCP<Tpetra_Export> exporterT =
+    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
+  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
+  graphT->fillComplete();
+}
+
 
 void Aeras::SpectralDiscretization::computeWorksetInfo()
 {

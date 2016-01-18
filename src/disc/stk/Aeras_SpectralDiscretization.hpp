@@ -555,6 +555,9 @@ namespace Aeras
 
     //! Process spectral Albany mesh for CRS Graphs
     void computeGraphs();
+    //  The following function allocates the graph of a diagonal Jacobian, 
+    //  relevant for explicit schemes.
+    void computeGraphs_Explicit();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
     void computeWorksetInfo();
