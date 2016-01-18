@@ -89,8 +89,8 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-  *out << "Explicit scheme in Aeras? " << explicit_scheme << std::endl; 
 #endif
+  *out << "Explicit scheme in Aeras? " << explicit_scheme << std::endl; 
 
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
@@ -3469,7 +3469,15 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   // IKT, 2/16/15: moving computeGraphs() to after
   // computeWorksetInfoQuads(), as computeGraphs() relies on wsElNodeEqID
   // array which is set in computeWorksetInfoQuads()
-  computeGraphs();
+  // IKT, 1/18/16: check if time-integration scheme is explicit or implicit 
+  // and call appropriate computeGraphs routine depending on what kind of scheme. 
+  // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
+  // only call this function for hydrostatic (numLevels > 0)  
+  if (explicit_scheme == true && numLevels > 0) 
+    computeGraphs_Explicit();  
+  else
+    computeGraphs();
+   
 
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new

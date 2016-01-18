@@ -97,6 +97,9 @@ Albany::DiscretizationFactory::DiscretizationFactory(
             Teuchos::Array<std::string>())); 
       numTracers = dof_names_tracers.size();  
     }
+    if (problemParams->isSublist("Shallow Water Problem")) {
+      numLevels = 0; 
+    }
 #endif
 
   }
