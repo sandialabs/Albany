@@ -79,7 +79,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "Surface Grad Provided Source!" << std::endl;
 #endif
-    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    surfaceGrad = PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("FELIX Surface Gradient QP Variable Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_SURF_GRAD_PROVIDED;
