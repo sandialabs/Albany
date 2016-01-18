@@ -150,7 +150,8 @@ public:
   T
   value(Intrepid2::Vector<T, N> const & x);
 
-  //! Gradient function; returns the residual vector as a function of the slip at step N+1.
+  //! Gradient function; returns the residual vector as a function of the slip 
+  // at step N+1.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
   Intrepid2::Vector<T, N>
   gradient(Intrepid2::Vector<T, N> const & x) const;
@@ -203,7 +204,8 @@ public:
   T
   value(Intrepid2::Vector<T, N> const & x);
 
-  //! Gradient function; returns the residual vector as a function of the slip at step N+1.
+  //! Gradient function; returns the residual vector as a function of the slip 
+  // and hardness at step N+1.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
   Intrepid2::Vector<T, N>
   gradient(Intrepid2::Vector<T, N> const & x) const;

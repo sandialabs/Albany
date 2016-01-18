@@ -111,7 +111,7 @@ CP::updateHardness(
         //
         effective_slip_n = -1.0/Rd * std::log(1.0 - Rd/H * hardness_n[s]);
         hardness_np1[s] = H / Rd * (1.0 - 
-                          std::exp(-Rd * (effective_slip_n + dt * effective_slip_rate)));  
+          std::exp(-Rd * (effective_slip_n + dt * effective_slip_rate)));  
       }
       else {
         hardness_np1[s] = hardness_n[s] + H * dt * effective_slip_rate;
@@ -165,9 +165,9 @@ CP::updateHardness(
 
         // TODO: make hardness_n* equal g rather than g-g0
         hardness_np1[slip_sys_i] = hardness_n[slip_sys_i] +
-            dt * rate_hardening *
-            (stress_saturation - hardness_n[slip_sys_i] - resistance_slip_initial) / 
-              (stress_saturation - resistance_slip_initial) * driver_hardening;
+          dt * rate_hardening *
+          (stress_saturation - hardness_n[slip_sys_i] - resistance_slip_initial) / 
+          (stress_saturation - resistance_slip_initial) * driver_hardening;
 
       }
 
@@ -212,7 +212,8 @@ CP::computeResidual(
 
     ArgT const dgamma_value2 = dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
 
-    //The difference between the slip increment calculations is the residual for this slip system
+    // The difference between the slip increment calculations is the residual 
+    // for this slip system
     slip_residual[s] = dgamma_value1 - dgamma_value2;
 
   }

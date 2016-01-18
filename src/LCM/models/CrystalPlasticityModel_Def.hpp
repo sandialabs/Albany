@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
-#include "LocalNonlinearSolver.hpp"
 
 #include <MiniLinearSolver.h>
 
@@ -40,7 +39,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
           true,
           std::logic_error,
           "\n**** Error in CrystalPlasticityModel, invalid value for \
-          \"Integration Scheme\", must be \"Implicit\" or \"Explicit\".\n");
+          \"Integration Scheme\", must be \
+          \"Implicit\" or \
+          \"Explicit\".\n");
     }
   }
 
@@ -59,7 +60,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
           true,
           std::logic_error,
           "\n**** Error in CrystalPlasticityModel, invalid value for \
-            \"Residual Type\", must be \"Slip\" or \"Slip Hardness\".\n");
+            \"Residual Type\", must be \
+            \"Slip\" or \
+            \"Slip Hardness\".\n");
     }
   }
 
@@ -84,7 +87,11 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
           true,
           std::logic_error,
           "\n**** Error in CrystalPlasticityModel, invalid value for \
-            \"Nonlinear Solver Step Type\", must be \"Newton\", \"Trust Region\", \"Conjugate Gradient\", or \"Line Search Regularized\".\n");
+            \"Nonlinear Solver Step Type\", must be \
+            \"Newton\", \
+            \"Trust Region\", \
+            \"Conjugate Gradient\", or \
+            \"Line Search Regularized\".\n");
     }
   }
 
@@ -145,7 +152,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   }
 
   // TODO check if basis is given else default
-  // NOTE default to coordinate axes and also construct 3rd direction if only 2 given
+  // NOTE default to coordinate axes; construct 3rd direction if only 2 given
   for (int i = 0; i < num_dims_; ++i) {
     std::vector<RealType> b_temp = e_list.get<Teuchos::Array<RealType>>(
         Albany::strint("Basis Vector", i + 1)).toVector();
@@ -176,7 +183,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
   // Get slip system information
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
-    Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss + 1));
+    Teuchos::ParameterList ss_list = 
+      p->sublist(Albany::strint("Slip System", num_ss + 1));
 
     //
     // Obtain and normalize slip directions. Miller indices need to be normalized.
@@ -277,14 +285,21 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
     if (verbosity_ > 2) {
       std::cout << "Slip system number " << num_ss << std::endl;
-      std::cout << "Hardening law " << static_cast<int>(slip_systems_[num_ss].hardening_law) << std::endl;
+      std::cout << "Hardening law ";
+      std::cout << static_cast<int>(slip_systems_[num_ss].hardening_law);
+      std::cout << std::endl;
       std::cout << "H " << slip_systems_[num_ss].H_ << std::endl;
       std::cout << "Rd " << slip_systems_[num_ss].Rd_ << std::endl;
-      std::cout << "Tau critical " << slip_systems_[num_ss].tau_critical_ << std::endl;
-      std::cout << "Initial slip resistance " << slip_systems_[num_ss].resistance_slip_initial_ << std::endl;
-      std::cout << "Hardening rate " << slip_systems_[num_ss].rate_hardening_ << std::endl;
-      std::cout << "Initial saturation stress " << slip_systems_[num_ss].stress_saturation_initial_ << std::endl;
-      std::cout << "Saturation exponent " << slip_systems_[num_ss].exponent_saturation_ << std::endl;
+      std::cout << "Tau critical ";
+      std::cout << slip_systems_[num_ss].tau_critical_ << std::endl;
+      std::cout << "Initial slip resistance ";
+      std::cout << slip_systems_[num_ss].resistance_slip_initial_ << std::endl;
+      std::cout << "Hardening rate ";
+      std::cout << slip_systems_[num_ss].rate_hardening_ << std::endl;
+      std::cout << "Initial saturation stress ";
+      std::cout << slip_systems_[num_ss].stress_saturation_initial_ << std::endl;
+      std::cout << "Saturation exponent ";
+      std::cout << slip_systems_[num_ss].exponent_saturation_ << std::endl;
     }
 
   }
@@ -571,7 +586,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
-      equivalent_plastic_strain = Sacado::ScalarValue<ScalarT>::eval(eqps(cell, pt));
+      equivalent_plastic_strain = 
+        Sacado::ScalarValue<ScalarT>::eval(eqps(cell, pt));
 
       // Copy data from Albany fields into local data structures
       for (int i(0); i < num_dims_; ++i) {
@@ -596,13 +612,16 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
       if(verbosity_ > 2) {
         for (int s(0); s < num_slip_; ++s) {
-          std::cout << "Slip on system " << s << " before predictor: " << slip_n[s] << std::endl;
+          std::cout << "Slip on system " << s << " before predictor: ";
+          std::cout << slip_n[s] << std::endl;
         }
         for (int s(0); s < num_slip_; ++s) {
-          std::cout << "Slip rate on system " << s << " is: " << slip_dot_n[s] << std::endl;
+          std::cout << "Slip rate on system " << s << " is: ";
+          std::cout << slip_dot_n[s] << std::endl;
         }
         for (int s(0); s < num_slip_; ++s) {
-          std::cout << "Slip on system " << s << " after predictor: " << slip_np1[s] << std::endl;
+          std::cout << "Slip on system " << s << " after predictor: ";
+          std::cout << slip_np1[s] << std::endl;
         }
       }
 
@@ -613,7 +632,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         
         case IntegrationScheme::EXPLICIT:
         {
-            // compute sigma_np1, S_np1, and shear_np1 using Fp_n
+          // compute sigma_np1, S_np1, and shear_np1 using Fp_n
           CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP>(
             slip_systems_, 
             C_, 
@@ -624,7 +643,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             shear_np1);
 
           for (int iSlipSystem(0); iSlipSystem < num_slip_; ++iSlipSystem) {
-            rate_slip[iSlipSystem] = (*(previous_slips_dot[iSlipSystem]))(cell, pt);
+            rate_slip[iSlipSystem] = 
+              (*(previous_slips_dot[iSlipSystem]))(cell, pt);
           }
 
           // compute hardness_np1 using slip_n
@@ -677,7 +697,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             norm_slip_residual);
 
           if(verbosity_ > 2) {
-            std::cout << "CP model explicit integration residual " << norm_slip_residual << std::endl;
+            std::cout << "CP model explicit integration residual ";
+            std::cout << norm_slip_residual << std::endl;
           }
         }
 
@@ -770,7 +791,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
               // initial guess for x(0:num_slip_-1) is slip_np1 (predictor, see above)
               x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
               // initial guess for x(num_slip_:2*num_slip_) is slip_np1 (predictor, see above)
-              x(i + num_slip_) = Sacado::ScalarValue<ScalarT>::eval(hardness_np1(i));
+              x(i + num_slip_) = 
+                Sacado::ScalarValue<ScalarT>::eval(hardness_np1(i));
             }
 
             LCM::MiniSolver<MIN, STEP, NLS, EvalT, NLS_DIM>
@@ -797,7 +819,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
           TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
           std::logic_error,
-          "Error: CrystalPlasticity implicit state update routine failed to converge!");
+          "Error: CrystalPlasticity implicit state update failed to converge!");
 
           // We now have the solution for slip_np1, including sensitivities (if any)
           // Re-evaluate all the other state variables based on slip_np1
@@ -892,9 +914,9 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           std::ofstream data_file("output.dat", std::fstream::app);
           Intrepid2::Tensor<RealType, CP::MAX_DIM> P(num_dims_);
           data_file << "\n" << "time: ";
-          data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
+          data_file << std::setprecision(12) << tcurrent << " ";
           data_file << "    dt: ";
-          data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(dt) << " ";
+          data_file << std::setprecision(12) << dt << " ";
           data_file << "\n";
           for (int s(0); s < num_slip_; ++s) {
             data_file << "\n" << "P" << s << ": ";
