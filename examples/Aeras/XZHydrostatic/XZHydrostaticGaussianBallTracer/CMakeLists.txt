@@ -1,10 +1,6 @@
  
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_np3_RK4_T.xml
@@ -21,8 +17,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_EPETRA) 
 add_test(Aeras_${testName} ${Albany.exe})
 endif()
-
-add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4 ${AlbanyT.exe} input_spectralT.xml) 
 add_test(Aeras_${testName}_Spectral_np4_BackwardEuler ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 

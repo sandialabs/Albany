@@ -1,10 +1,6 @@
  
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_topography.xml
@@ -22,7 +18,6 @@ if (ALBANY_EPETRA)
 add_test(Aeras_${testName} ${Albany.exe})
 endif()
 
-add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml) 
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4 ${AlbanyT.exe} input_spectralT.xml) 
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
