@@ -554,8 +554,7 @@ namespace Aeras
     void computeCoordsQuads();
 
     //! Process spectral Albany mesh for CRS Graphs
-    void computeGraphsLines();
-    void computeGraphsQuads();
+    void computeGraphs();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
     void computeWorksetInfo();

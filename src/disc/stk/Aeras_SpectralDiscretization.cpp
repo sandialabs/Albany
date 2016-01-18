@@ -2059,108 +2059,8 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   }
 }
 
-void Aeras::SpectralDiscretization::computeGraphsLines()
-{
-  // WFS: Note that I think computeGraphsLines() and
-  // computeGraphsQuads() are exactly the same.
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
 
-  overlap_graphT = Teuchos::null; // delete existing graph here on remesh
-  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
-  //to have a smaller stencil here. 
-  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
-                                                    neq*points_per_edge));
-
-  stk::mesh::Selector select_owned =
-    stk::mesh::Selector(metaData.locally_owned_part());
-  
-  const stk::mesh::BucketVector & buckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
-
-  const int numBuckets = buckets.size();
-  
-  if (commT->getRank()==0)
-    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
-         << std::endl;
-
-  GO row, col;
-  Teuchos::ArrayView<GO> colAV;
-  
-  //Populate the graphs
-  for (int b = 0; b < numBuckets; ++b)
-  {
-    stk::mesh::Bucket & buck = *buckets[b];
-    // i is the element index within bucket b
-    for (std::size_t i = 0; i < buck.size(); ++i)
-    {
-      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
-      for (int j = 0; j < points_per_edge; ++j)
-      {
-        const GO rowNode = node_rels[j];
-        // loop over eqs
-        for (std::size_t k=0; k < 1; k++) //Ps0 equation
-        {
-          row = getGlobalDOF(rowNode, k);
-          for (std::size_t l=0; l < points_per_edge; l++)
-          {
-            const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
-            {
-              col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              overlap_graphT->insertGlobalIndices(row, colAV);
-            }
-          }
-        }
-        for (std::size_t k=1; k < 2*numLevels+1; k++) //u and T equations
-        {
-          row = getGlobalDOF(rowNode, k);
-          for (std::size_t l=0; l < points_per_edge; l++)
-          {
-            const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++)  //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
-            {
-              col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              overlap_graphT->insertGlobalIndices(row, colAV);
-            }
-          }
-        }
-        for (std::size_t k=2*numLevels+1; k < neq; k++) //scalar equations
-        {
-          row = getGlobalDOF(rowNode, k);
-          for (std::size_t l=0; l < points_per_edge; l++)
-          {
-            const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
-            {
-              col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              overlap_graphT->insertGlobalIndices(row, colAV);
-            }
-          }
-        }
-      }
-    }
-  }
-  overlap_graphT->fillComplete();
-
-  // Create Owned graph by exporting overlap with known row map
-  graphT = Teuchos::null; // delete existing graph happens here on remesh
-  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
-  //to have a smaller stencil here. 
-  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT =
-    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
-  graphT->fillComplete();
-}
-
-void Aeras::SpectralDiscretization::computeGraphsQuads()
+void Aeras::SpectralDiscretization::computeGraphs()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -3500,10 +3400,10 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   computeWorksetInfo();
 
-  // IKT, 2/16/15: moving computeGraphsQuads() to after
-  // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
+  // IKT, 2/16/15: moving computeGraphs() to after
+  // computeWorksetInfoQuads(), as computeGraphs() relies on wsElNodeEqID
   // array which is set in computeWorksetInfoQuads()
-  computeGraphsQuads();
+  computeGraphs();
 
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
