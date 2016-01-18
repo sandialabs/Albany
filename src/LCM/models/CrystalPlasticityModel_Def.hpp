@@ -183,8 +183,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     //
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType>>(
         "Slip Direction").toVector();
-    Intrepid2::Vector<RealType, CP::MAX_DIM> s_temp_normalized;
-    s_temp_normalized.set_dimension(num_dims_);
+    Intrepid2::Vector<RealType, CP::MAX_DIM> s_temp_normalized(num_dims_);
     for (int i = 0; i < num_dims_; ++i) {
       s_temp_normalized[i] = s_temp[i];
     }
@@ -197,8 +196,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     //
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType>>(
         "Slip Normal").toVector();
-    Intrepid2::Vector<RealType, CP::MAX_DIM> n_temp_normalized;
-    n_temp_normalized.set_dimension(num_dims_);
+    Intrepid2::Vector<RealType, CP::MAX_DIM> n_temp_normalized(num_dims_);
     for (int i = 0; i < num_dims_; ++i) {
       n_temp_normalized[i] = n_temp[i];
     }
@@ -233,14 +231,14 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     std::string type_flow_rule = f_list.get<std::string>("Type");
 
     if (type_flow_rule == "Power Law") {
-      slip_systems_[num_ss].flow_rule = POWER_LAW;
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW;
       slip_systems_[num_ss].rate_slip_reference_ = 
         f_list.get<RealType>("Gamma Dot", 0.0);
       slip_systems_[num_ss].exponent_rate_ = 
         f_list.get<RealType>("Gamma Exponent", 0.0);
     }
     else if (type_flow_rule == "Thermal Activation") {
-      slip_systems_[num_ss].flow_rule = THERMAL_ACTIVATION;
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::THERMAL_ACTIVATION;
       slip_systems_[num_ss].rate_slip_reference_ = 
         f_list.get<RealType>("Gamma Dot", 0.0);
       slip_systems_[num_ss].energy_activation_ = 
@@ -255,7 +253,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     std::string type_hardening_law = h_list.get<std::string>("Type");
 
     if (type_hardening_law == "Exponential") {
-      slip_systems_[num_ss].hardening_law = EXPONENTIAL;
+      slip_systems_[num_ss].hardening_law = CP::HardeningLaw::EXPONENTIAL;
       slip_systems_[num_ss].H_ = h_list.get<RealType>("Hardening", 0.0);
       slip_systems_[num_ss].Rd_ = 
         h_list.get<RealType>("Hardening Exponent", 0.0);
@@ -263,7 +261,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
         h_list.get<RealType>("Tau Critical", 0.0);
     }
     else if (type_hardening_law == "Saturation") {
-      slip_systems_[num_ss].hardening_law = SATURATION;
+      slip_systems_[num_ss].hardening_law = CP::HardeningLaw::SATURATION;
       slip_systems_[num_ss].resistance_slip_initial_ = 
         h_list.get<RealType>("Initial Slip Resistance", 0.0);
       // temporary workaround
@@ -279,7 +277,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
     if (verbosity_ > 2) {
       std::cout << "Slip system number " << num_ss << std::endl;
-      std::cout << "Hardening law " << slip_systems_[num_ss].hardening_law << std::endl;
+      std::cout << "Hardening law " << static_cast<int>(slip_systems_[num_ss].hardening_law) << std::endl;
       std::cout << "H " << slip_systems_[num_ss].H_ << std::endl;
       std::cout << "Rd " << slip_systems_[num_ss].Rd_ << std::endl;
       std::cout << "Tau critical " << slip_systems_[num_ss].tau_critical_ << std::endl;
@@ -550,35 +548,30 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   // DJL todo:  Can we just use RealType for most of these?
 
   // Known quantities
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM> F_np1(num_dims_);
   Intrepid2::Tensor<RealType, CP::MAX_DIM> Fp_n(num_dims_);
   Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_n(num_slip_);
   Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_dot_n(num_slip_);
   Intrepid2::Vector<RealType, CP::MAX_SLIP> hardness_n(num_slip_);
+  Intrepid2::Tensor<ScalarT, CP::MAX_DIM> F_np1(num_dims_);
 
   // Unknown quantities
   Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Lp_np1(num_dims_);
   Intrepid2::Tensor<ScalarT, CP::MAX_DIM> Fp_np1(num_dims_);
   Intrepid2::Tensor<ScalarT, CP::MAX_DIM> sigma_np1(num_dims_);
   Intrepid2::Tensor<ScalarT, CP::MAX_DIM> S_np1(num_dims_);
-
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
-  rate_slip(Intrepid2::ZEROS);
-  rate_slip.set_dimension(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> rate_slip(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_np1(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_np1_km1(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> delta_delta_slip(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_SLIP> shear_np1(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_residual(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_SLIP> hardness_np1(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_residual(num_slip_);
 
-  ScalarT norm_slip_residual;
-  ScalarT equivalent_plastic_strain;
+  RealType norm_slip_residual;
+  RealType equivalent_plastic_strain;
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
-      equivalent_plastic_strain = eqps(cell, pt);
+      equivalent_plastic_strain = Sacado::ScalarValue<ScalarT>::eval(eqps(cell, pt));
 
       // Copy data from Albany fields into local data structures
       for (int i(0); i < num_dims_; ++i) {
@@ -598,7 +591,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           slip_np1[s] += dt * slip_dot_n[s];
         }
 
-        slip_np1_km1[s] = slip_np1[s];
         hardness_n[s] = (*(previous_hards[s]))(cell, pt);
       }
 
@@ -684,11 +676,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             slip_residual,
             norm_slip_residual);
 
-          RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(
-            norm_slip_residual);
-
           if(verbosity_ > 2) {
-            std::cout << "CP model explicit integration residual " << residual_val << std::endl;
+            std::cout << "CP model explicit integration residual " << norm_slip_residual << std::endl;
           }
         }
 
@@ -858,9 +847,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
       // Compute the equivalent plastic strain from the velocity gradient:
       //  eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
-      ScalarT delta_eqps = Intrepid2::dotdot(
-        Intrepid2::sym(Lp_np1),
-        Intrepid2::sym(Lp_np1));
+      RealType delta_eqps = Sacado::ScalarValue<ScalarT>::eval(
+        Intrepid2::dotdot(Intrepid2::sym(Lp_np1),Intrepid2::sym(Lp_np1)));
       delta_eqps = 2.0/3.0 * dt * (std::sqrt(delta_eqps));
       equivalent_plastic_strain += delta_eqps;
       eqps(cell, pt) = equivalent_plastic_strain;
@@ -902,8 +890,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       if(write_data_file_) {
         if (cell == 0 && pt == 0) {
           std::ofstream data_file("output.dat", std::fstream::app);
-          Intrepid2::Tensor<RealType, CP::MAX_DIM> P;
-          P.set_dimension(num_dims_);
+          Intrepid2::Tensor<RealType, CP::MAX_DIM> P(num_dims_);
           data_file << "\n" << "time: ";
           data_file << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
           data_file << "    dt: ";

@@ -15,6 +15,16 @@ namespace CP
 static constexpr Intrepid2::Index MAX_DIM = 3;
 static constexpr Intrepid2::Index MAX_SLIP = 12;
 
+enum class FlowRule
+{
+  UNDEFINED = 0, POWER_LAW = 1, THERMAL_ACTIVATION = 2
+};
+
+enum class HardeningLaw
+{
+  UNDEFINED = 0, EXPONENTIAL = 1, SATURATION = 2
+};
+
 //! Struct containing slip system information.
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 struct SlipSystemStruct
@@ -29,11 +39,11 @@ struct SlipSystemStruct
   Intrepid2::Tensor<RealType, NumDimT> projector_;
 
   //! Flow rule parameters
-  int flow_rule;
+  FlowRule flow_rule;
   RealType rate_slip_reference_, exponent_rate_, energy_activation_;
 
   // hardening law parameters
-  int hardening_law;
+  HardeningLaw hardening_law;
   RealType tau_critical_, H_, Rd_, resistance_slip_initial_,
     rate_hardening_, stress_saturation_initial_, exponent_saturation_;
 
@@ -82,7 +92,7 @@ computeResidual(
     Intrepid2::Vector<ArgT, NumSlipT> const & hardness_np1,
     Intrepid2::Vector<ArgT, NumSlipT> const & shear_np1,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_residual,
-    ArgT & norm_slip_residual);
+    DataT & norm_slip_residual);
 
 //! Compute stress.
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,

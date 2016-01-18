@@ -30,15 +30,10 @@ public:
   };
 
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // typedef for automatic differentiation type used in internal Newton loop
-  // options are:  DFad (dynamically sized), SFad (static size), SLFad (bounded)
-  // typedef typename Sacado::Fad::DFad<ScalarT> Fad;
-  // typedef typename Sacado::Fad::SFad<ScalarT, CP::MAX_SLIP> Fad;
-  typedef typename Sacado::Fad::SLFad<ScalarT, CP::MAX_SLIP> Fad;
-
+  // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
+
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
@@ -117,16 +112,29 @@ public:
       std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
       slip_systems_;
 
+
+      ///
+      /// Constitutive relations
+      ///
+      CP::FlowRule flow_rule_;
+      CP::HardeningLaw hardening_law_;
+
+      ///
+      /// Solution options
+      ///
       IntegrationScheme integration_scheme_;
       ResidualType residual_type_;
+      bool apply_slip_predictor_;
       Intrepid2::StepType step_type_;
-      FlowRule flow_rule_;
-      HardeningLaw hardening_law_;
+
       RealType implicit_nonlinear_solver_relative_tolerance_;
       RealType implicit_nonlinear_solver_absolute_tolerance_;
       int implicit_nonlinear_solver_max_iterations_;
       int implicit_nonlinear_solver_min_iterations_;
-      bool apply_slip_predictor_;
+
+      ///
+      /// Output options
+      ///
       int verbosity_;
       bool write_data_file_;
     };
