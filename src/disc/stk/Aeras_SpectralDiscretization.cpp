@@ -3469,9 +3469,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOwnedNodesAndUnknownsQuads();
 
+#ifdef OUTPUT_TO_SCREEN
   //write owned maps to matrix market file for debug
   Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
+#endif
 
   // IK, 1/23/15: I've commented out the guts of this function.  It is
   // only needed for ML/MueLu and is not critical right now to get
@@ -3483,9 +3485,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOverlapNodesAndUnknownsQuads();
 
+#ifdef OUTPUT_TO_SCREEN
   //write overlap maps to matrix market file for debug
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+#endif
     
     // Note that getCoordinates has not been converted to use the
     // enriched mesh, but I believe it's not used anywhere.
