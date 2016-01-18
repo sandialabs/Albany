@@ -3496,13 +3496,10 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   computeWorksetInfo();
 
-    // IKT, 2/16/15: moving computeGraphsQuads() to after
-    // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
-    // array which is set in computeWorksetInfoQuads()
-  if (spatial_dim == 1) 
-    computeGraphsLines();
-  else if (spatial_dim == 2) 
-    computeGraphsQuads();
+  // IKT, 2/16/15: moving computeGraphsQuads() to after
+  // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
+  // array which is set in computeWorksetInfoQuads()
+  computeGraphsQuads();
 
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
