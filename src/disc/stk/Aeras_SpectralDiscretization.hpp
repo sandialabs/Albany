@@ -197,6 +197,7 @@ namespace Aeras
        const int numTracers, 
        const int numLevels, 
        const Teuchos::RCP<const Teuchos_Comm>& commT,
+       const bool explicit_scheme, 
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
     //! Destructor
@@ -653,6 +654,9 @@ namespace Aeras
 
     //! Number of levels (for hydrostatic equations) 
     const int numLevels; 
+    
+    //! Flag for explicit scheme
+    const bool explicit_scheme; 
     
     //! number of tracers (for hydristatic equations) 
     const int numTracers; 

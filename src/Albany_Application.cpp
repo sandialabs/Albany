@@ -172,6 +172,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 #endif
 #endif
 
+  
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
   Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
@@ -206,6 +207,36 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
+
+  bool expl = false; 
+  std::string stepperType; 
+  if (solMethod == Transient) {
+    //Get Piro PL
+    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true); 
+    //Check if there is Rythmos Solver sublist, and get the stepper type
+    if (piroParams->isSublist("Rythmos Solver")) { 
+      Teuchos::RCP<Teuchos::ParameterList> rythmosSolverParams = Teuchos::sublist(piroParams, "Rythmos Solver", true);
+      if (rythmosSolverParams->isSublist("Rythmos")) {
+        Teuchos::RCP<Teuchos::ParameterList> rythmosParams = Teuchos::sublist(rythmosSolverParams, "Rythmos", true);
+        if (rythmosParams->isSublist("Stepper Settings")) {
+          Teuchos::RCP<Teuchos::ParameterList> stepperSettingsParams = Teuchos::sublist(rythmosParams, "Stepper Settings", true);
+          if (stepperSettingsParams->isSublist("Stepper Selection")) {
+            Teuchos::RCP<Teuchos::ParameterList> stepperSelectionParams = Teuchos::sublist(stepperSettingsParams, "Stepper Selection", true);
+            stepperType = stepperSelectionParams->get("Stepper Type", "Backward Euler"); 
+          } 
+        } 
+      } 
+    } 
+    //Check if there is Rythmos sublist, and get the stepper type
+    else if (piroParams->isSublist("Rythmos")) {
+      Teuchos::RCP<Teuchos::ParameterList> rythmosParams = Teuchos::sublist(piroParams, "Rythmos", true);
+      stepperType = rythmosParams->get("Stepper Type", "Backward Euler"); 
+    }
+    //Search for "Explicit" in the stepperType name.  If it's found, set expl to true.
+    if (stepperType.find("Explicit") != std::string::npos)
+      expl = true;
+  }
+  //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl; 
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
@@ -264,7 +295,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
   // Create discretization object
-  discFactory = rcp(new Albany::DiscretizationFactory(params, commT));
+  discFactory = rcp(new Albany::DiscretizationFactory(params, commT, expl));
 
 #ifdef ALBANY_CUTR
   discFactory->setMeshMover(meshMover);

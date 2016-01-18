@@ -71,6 +71,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                   Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
                   const int numLevels_, const int numTracers_, 
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
+                  const bool explicit_scheme_, 
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
@@ -79,6 +80,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   numLevels(numLevels_), 
   numTracers(numTracers_), 
   commT(commT_),
+  explicit_scheme(explicit_scheme_), 
   rigidBodyModes(rigidBodyModes_),
   discParams(discParams_), 
   neq(stkMeshStruct_->neq),
@@ -87,6 +89,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+  *out << "Explicit scheme in Aeras? " << explicit_scheme << std::endl; 
 #endif
 
 #if defined(ALBANY_EPETRA)
