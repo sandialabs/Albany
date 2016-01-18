@@ -21,7 +21,7 @@ using FAD = Sacado::Fad::SLFad<T, N>;
 ///
 /// Function base class that defines the interface to Mini Solvers.
 ///
-template<typename Function_Derived, typename S>
+template<typename FunctionDerived, typename S>
 class Function_Base
 {
 public:
@@ -35,21 +35,21 @@ public:
   ///
   template<typename T, Index N>
   T
-  value(Function_Derived & f, Vector<T, N> const & x);
+  value(FunctionDerived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute gradient with AD from value().
   ///
   template<typename T, Index N>
   Vector<T, N>
-  gradient(Function_Derived & f, Vector<T, N> const & x);
+  gradient(FunctionDerived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute Hessian with AD from gradient().
   ///
   template<typename T, Index N>
   Tensor<T, N>
-  hessian(Function_Derived & f, Vector<T, N> const & x);
+  hessian(FunctionDerived & f, Vector<T, N> const & x);
 
 };
 
