@@ -124,45 +124,56 @@ void Hydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
+  double j_coeff = workset.j_coeff;
   double n_coeff = workset.n_coeff;
-  obtainLaplaceOp = (n_coeff == 1) ? true : false;
+  obtainLaplaceOp = ((n_coeff == 22.0)&&(j_coeff == 1.0)) ? true : false;
 
   PHAL::set(Residual, 0.0);
+
+//  std::cout <<"In velocity resid: Laplace = " << obtainLaplaceOp << "\n";
+
+  //OG I had an segfault when moving this statement uder (if not Laplace op), where it belongs.
+  //To be looked at later.
   Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  coriolis(numQPs);
   //Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  vorticity(numQPs);
 
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
+  if( !obtainLaplaceOp ){
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int level=0; level < numLevels; ++level) {
 
-        //get_vorticity(VelxNode, cell, level, vorticity);
+          //get_vorticity(VelxNode, cell, level, vorticity);
 
-        for (int qp=0; qp < numQPs; ++qp) {
-          for (int dim=0; dim < numDims; ++dim) {
-            Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
-            if (hyperviscosity) 
-              Residual(cell,node,level,dim) -= hyperviscosity * LaplaceVelx(cell,qp,level) * wGradGradBF(cell,node,qp,dim,dim);
+          for (int qp=0; qp < numQPs; ++qp) {
+            for (int dim=0; dim < numDims; ++dim) {
+              Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
+              if (hyperviscosity)
+                Residual(cell,node,level,dim) -= hyperviscosity * LaplaceVelx(cell,qp,level) * wGradGradBF(cell,node,qp,dim,dim);
+            }
           }
         }
       }
     }
-  }
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int level=0; level < numLevels; ++level) {
-      get_coriolis(cell, coriolis);
-      //get_vorticity(VelxNode, cell, level, vorticity);
-      for (int qp=0; qp < numQPs; ++qp) {
-        int node = qp; 
-        for (int dim=0; dim < numDims; ++dim) {
-          Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp);
-          Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp);
-          Residual(cell,node,level,dim) +=   etadotdVelx(cell,qp,level,dim)                          *wBF(cell,node,qp);
-          Residual(cell,node,level,dim) +=   VelxDot(cell,qp,level,dim)                              *wBF(cell,node,qp);
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int level=0; level < numLevels; ++level) {
+        get_coriolis(cell, coriolis);
+        //get_vorticity(VelxNode, cell, level, vorticity);
+        for (int qp=0; qp < numQPs; ++qp) {
+          int node = qp;
+          for (int dim=0; dim < numDims; ++dim) {
+            Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp);
+            Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp);
+            Residual(cell,node,level,dim) +=   etadotdVelx(cell,qp,level,dim)                          *wBF(cell,node,qp);
+            Residual(cell,node,level,dim) +=   VelxDot(cell,qp,level,dim)                              *wBF(cell,node,qp);
+          }
+          Residual(cell,node,level,0) -= (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,1)*wBF(cell,node,qp);
+          Residual(cell,node,level,1) += (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,0)*wBF(cell,node,qp);
         }
-        Residual(cell,node,level,0) -= (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,1)*wBF(cell,node,qp);
-        Residual(cell,node,level,1) += (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,0)*wBF(cell,node,qp);
       }
     }
+  }//end of (if not Laplace operator)
+  else{
+	  //to be implemented
   }
 }
 
