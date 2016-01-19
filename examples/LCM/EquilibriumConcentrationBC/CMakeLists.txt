@@ -32,6 +32,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EqConcentrationBC.gold.e
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 
+# python verification file for plotting in test directory
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plotEqConcentration.py
+               ${CMAKE_CURRENT_BINARY_DIR}/plotEqConcentration.py COPYONLY)
+
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
