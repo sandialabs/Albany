@@ -104,7 +104,7 @@ void
 Minimizer<T, N>::
 solve(STEP & step_method, FN & fn, Vector<T, N> & soln)
 {
-  step_method_name = STEP::NAME;
+  step_method_name = step_method.name();
   function_name = FN::NAME;
   initial_guess = soln;
 
@@ -603,8 +603,7 @@ template<typename FN, typename T, Index N>
 std::unique_ptr<StepBase<FN, T, N>>
 stepFactory(StepType step_type)
 {
-  std::unique_ptr<StepBase<FN, T, N>>
-  step_ptr{nullptr};
+  using STUP = std::unique_ptr<StepBase<FN, T, N>>;
 
   switch (step_type) {
 
@@ -615,23 +614,23 @@ stepFactory(StepType step_type)
     break;
 
   case StepType::NEWTON:
-    step_ptr.reset(new NewtonStep<FN, T, N>());
+    return STUP(new NewtonStep<FN, T, N>());
     break;
 
   case StepType::TRUST_REGION:
-    step_ptr.reset(new TrustRegionStep<FN, T, N>());
+    return STUP(new TrustRegionStep<FN, T, N>());
     break;
 
   case StepType::CG:
-    step_ptr.reset(new ConjugateGradientStep<FN, T, N>());
+    return STUP(new ConjugateGradientStep<FN, T, N>());
     break;
 
   case StepType::LINE_SEARCH_REG:
-    step_ptr.reset(new LineSearchRegularizedStep<FN, T, N>());
+    return STUP(new LineSearchRegularizedStep<FN, T, N>());
     break;
   }
 
-  return step_ptr;
+  return STUP(nullptr);
 }
 
 } // namespace Intrepid2

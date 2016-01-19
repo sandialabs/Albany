@@ -329,13 +329,16 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 
   using MIN = Intrepid2::Minimizer<ValueT, dim>;
   using FN = LCM::BananaNLS<ValueT>;
-  using STEP = Intrepid2::NewtonStep<FN, ValueT, dim>;
+  using STEP = Intrepid2::StepBase<FN, ValueT, dim>;
 
   MIN
   minimizer;
 
-  STEP
-  step;
+  std::unique_ptr<STEP>
+  step =
+      Intrepid2::stepFactory<FN, ValueT, dim>(Intrepid2::StepType::NEWTON);
+
+  assert(step->name() != nullptr);
 
   FN
   banana;
@@ -347,7 +350,7 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
   x(1) = 3.0;
 
   LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
-  mini_solver(minimizer, step, banana, x);
+  mini_solver(minimizer, *step, banana, x);
 
   minimizer.printReport(std::cout);
 
