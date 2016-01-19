@@ -8,11 +8,13 @@ SET(CTEST_TEST_TYPE Nightly)
 
 # What to build and test
 SET(BUILD_ALB32 TRUE)
-SET(BUILD_ALB64 FALSE)
+SET(BUILD_ALB64 TRUE)
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALB64CLANG11 TRUE)
 SET(BUILD_TRILINOSCLANG11 TRUE)
 SET(BUILD_ALBFUNCTOR TRUE)
+
+set(extra_cxx_flags "")
 
 SET(DOWNLOAD TRUE)
 SET(CLEAN_BUILD TRUE)
@@ -64,11 +66,6 @@ ENDIF()
 find_program(CTEST_GIT_COMMAND NAMES git)
 find_program(CTEST_SVN_COMMAND NAMES svn)
 
-# Point at the public Repo
-# getting the error
-#     error: server certificate verification failed. CAfile: /etc/ssl/certs/ca-certificates.crt CRLfile: none while accessing https://software.sandia.gov/trilinos/repositories/publicTrilinos/info/refs
-# so switching to the github one for now
-#SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
 SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/trilinos.git)
 
 #SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
@@ -161,13 +158,13 @@ ctest_start(${CTEST_TEST_TYPE})
 
 # Send the project structure to CDash
 
-IF(CTEST_DO_SUBMIT)
+IF(FALSE AND CTEST_DO_SUBMIT)
   CTEST_SUBMIT(FILES "${CTEST_SCRIPT_DIRECTORY}/Project.xml"
     RETURN_VALUE  HAD_ERROR
     )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany Project.xml!")
+    message( "Cannot submit Albany Project.xml!")
   endif()
 ENDIF()
 
@@ -186,7 +183,7 @@ IF(DOWNLOAD)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit to cdash.")
+      message( "Cannot submit to cdash.")
     endif()
   ENDIF()
 
@@ -205,7 +202,7 @@ IF(DOWNLOAD)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit to cdash.")
+      message( "Cannot submit to cdash.")
     endif()
   ENDIF()
 
@@ -223,7 +220,7 @@ IF(DOWNLOAD)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit to cdash.")
+      message( "Cannot submit to cdash.")
     endif()
   ENDIF()
 
@@ -303,7 +300,6 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Serial:BOOL=ON"
   "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
-  "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
   #
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
   "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
@@ -328,11 +324,11 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_ML:BOOL=ON"
   "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
   "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
+  "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
   "-DTrilinos_ENABLE_NOX:BOOL=ON"
   "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
   "-DTrilinos_ENABLE_Thyra:BOOL=ON"
   "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-  "-DTrilinos_ENABLE_MOOCHO:BOOL=OFF"
   "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
   "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
   "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
@@ -341,7 +337,6 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Teko:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
   #
-  "-DTrilinos_ENABLE_Mesquite:BOOL=OFF"
   "-DTrilinos_ENABLE_FEI:BOOL=OFF"
   #
   "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
@@ -376,7 +371,7 @@ IF(BUILD_TRILINOS)
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/ompi-gcc"
     #
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
@@ -407,7 +402,7 @@ IF(BUILD_TRILINOS)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Trilinos/SCOREC configure results!")
+      message( "Cannot submit Trilinos/SCOREC configure results!")
     endif()
   ENDIF()
 
@@ -434,7 +429,7 @@ IF(BUILD_TRILINOS)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Trilinos/SCOREC build results!")
+      message( "Cannot submit Trilinos/SCOREC build results!")
     endif()
   ENDIF()
 
@@ -463,7 +458,7 @@ IF(BUILD_TRILINOS)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Trilinos/SCOREC build results!")
+      message( "Cannot submit Trilinos/SCOREC build results!")
     endif()
 
   ENDIF()
@@ -484,10 +479,11 @@ IF(BUILD_TRILINOSCLANG11)
     #  "-DCMAKE_CXX_FLAGS:STRING=-O3 -w -DADDC_ -DNDEBUG"
     #  "-DCMAKE_C_FLAGS:STRING=-O3 -w -DADDC_ -DNDEBUG"
     #  "-DCMAKE_Fortran_FLAGS:STRING=-Os -w -DADDC_ -DNDEBUG"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -DNDEBUG'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -DNDEBUG  ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+    "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm /users/ambrad/lib64/libgfortran.a'"
     #  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm -lcurl ${PREFIX_DIR}/ompi-clang/lib/libmpi.so'"
@@ -526,7 +522,7 @@ IF(BUILD_TRILINOSCLANG11)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit TrilinosClang++11 configure results!")
+      message( "Cannot submit TrilinosClang++11 configure results!")
     endif()
   ENDIF()
 
@@ -556,7 +552,7 @@ IF(BUILD_TRILINOSCLANG11)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit TrilinoClang++11 build results!")
+      message( "Cannot submit TrilinoClang++11 build results!")
     endif()
 
   ENDIF()
@@ -610,7 +606,7 @@ IF (BUILD_ALB32)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany configure results!")
+      message( "Cannot submit Albany configure results!")
     endif()
   ENDIF()
 
@@ -637,7 +633,7 @@ IF (BUILD_ALB32)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
+      message( "Cannot submit Albany build results!")
     endif()
   ENDIF()
 
@@ -656,7 +652,7 @@ IF (BUILD_ALB32)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany test results!")
+      message( "Cannot submit Albany test results!")
     endif()
   ENDIF()
 
@@ -670,7 +666,7 @@ IF (BUILD_ALB64)
   SET(CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
+    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_GOAL:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
@@ -702,7 +698,7 @@ IF (BUILD_ALB64)
   #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany 64 bit build!")
+    message("Cannot configure Albany 64 bit build!")
   endif()
 
   IF(CTEST_DO_SUBMIT)
@@ -711,7 +707,7 @@ IF (BUILD_ALB64)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit configure results!")
+      message("Cannot submit Albany 64 bit configure results!")
     endif()
   ENDIF()
 
@@ -729,7 +725,7 @@ IF (BUILD_ALB64)
     )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany 64 bit!")
+    message("Cannot build Albany 64 bit!")
   endif()
 
   IF(CTEST_DO_SUBMIT)
@@ -738,7 +734,7 @@ IF (BUILD_ALB64)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit build results!")
+      message("Cannot submit Albany 64 bit build results!")
     endif()
   ENDIF()
 
@@ -757,7 +753,7 @@ IF (BUILD_ALB64)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit test results!")
+      message("Cannot submit Albany 64 bit test results!")
     endif()
   ENDIF()
 ENDIF()
@@ -811,7 +807,7 @@ IF (BUILD_ALB64CLANG11)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit Clang configure results!")
+      message( "Cannot submit Albany 64 bit Clang configure results!")
     endif()
   ENDIF()
 
@@ -838,7 +834,7 @@ IF (BUILD_ALB64CLANG11)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit Clang build results!")
+      message( "Cannot submit Albany 64 bit Clang build results!")
     endif()
   ENDIF()
 
@@ -857,7 +853,7 @@ IF (BUILD_ALB64CLANG11)
       )
 
     if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit Clang test results!")
+      message( "Cannot submit Albany 64 bit Clang test results!")
     endif()
   ENDIF()
 ENDIF()
@@ -887,7 +883,7 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_LAME:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
-    "-DALBANY_CTEST_TIMEOUT=60"
+    "-DALBANY_CTEST_TIMEOUT=400"
     "-DENABLE_CHECK_FPE:BOOL=ON")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev")
@@ -948,7 +944,7 @@ if (BUILD_ALBFUNCTOR)
   endif ()
 
   if (BUILD_ALBFUNCTOR)
-    set (CTEST_TEST_TIMEOUT 60)
+    set (CTEST_TEST_TIMEOUT 400)
     CTEST_TEST (
       BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
       RETURN_VALUE HAD_ERROR)

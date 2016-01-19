@@ -38,7 +38,7 @@ for i in range(n_steps_exp):
     inp_var_exp[i]=exo_file_exp.get_element_variable_values(block_id,inp_var_name,i+1)
     dep_var_exp[i]=exo_file_exp.get_element_variable_values(block_id,dep_var_name,i+1)
     dep_var_2_exp[i]=exo_file_exp.get_element_variable_values(block_id,dep_var_name_2,i+1)
-    dep_var_3_exp[i]=exo_file_exp.get_element_variable_values(block_id,dep_var_name_3,i+1)
+    dep_var_3_exp[i]=numpy.log10(exo_file_exp.get_element_variable_values(block_id,dep_var_name_3,i+1))
 
 ##############  implicit
 n_steps_imp = exo_file_imp.num_times()
@@ -52,7 +52,7 @@ for i in range(n_steps_imp):
     inp_var_imp[i]=exo_file_imp.get_element_variable_values(block_id,inp_var_name,i+1)
     dep_var_imp[i]=exo_file_imp.get_element_variable_values(block_id,dep_var_name,i+1)
     dep_var_2_imp[i]=exo_file_imp.get_element_variable_values(block_id,dep_var_name_2,i+1)
-    dep_var_3_imp[i]=exo_file_imp.get_element_variable_values(block_id,dep_var_name_3,i+1)
+    dep_var_3_imp[i]=numpy.log10(exo_file_imp.get_element_variable_values(block_id,dep_var_name_3,i+1))
 
 fig, ax = plt.subplots()
 ax.plot(inp_var_exp[:-1],dep_var_exp[:-1],color='blue',marker='o',label='explicit')
@@ -82,7 +82,7 @@ fig, ax = plt.subplots()
 ax.plot(inp_var_exp[:-1],dep_var_3_exp[:-1],color='blue',marker='o',label='explicit')
 ax.plot(inp_var_imp[:-1],dep_var_3_imp[:-1],color='red',marker='o',label='implicit')
 plt.xlabel(inp_var_name)
-plt.ylabel(dep_var_name_3)
+plt.ylabel("log10(" + dep_var_name_3 + ")")
 lg = plt.legend(loc = 2)
 lg.draw_frame(False)
 plt.tight_layout()

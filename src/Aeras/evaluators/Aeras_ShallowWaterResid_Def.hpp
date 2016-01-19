@@ -44,8 +44,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 		jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
 		source    (p.get<std::string> ("Shallow Water Source QP Variable Name"), dl->qp_vector),
 		Residual (p.get<std::string> ("Residual Name"), dl->node_vector),
-		intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > > ("Intrepid2 Basis") ),
-		cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
+		intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
+		cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
 		spatialDim(p.get<std::size_t>("spatialDim")),
 		sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
 		lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
@@ -1108,39 +1108,39 @@ evaluateFields(typename Traits::EvalData workset)
 
 	//Note that vars huAtNodes, div_hU, ... below are redefined locally here.
 	//Global vars with such names exist too (see constructor).
-	Intrepid2::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
-	Intrepid2::FieldContainer<ScalarT>  div_hU(numQPs);
-	Intrepid2::FieldContainer<ScalarT>  kineticEnergyAtNodes(numNodes);
-	Intrepid2::FieldContainer<ScalarT>  gradKineticEnergy(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT>  potentialEnergyAtNodes(numNodes);
-	Intrepid2::FieldContainer<ScalarT>  gradPotentialEnergy(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT>  uAtNodes(numNodes, 2);
-	Intrepid2::FieldContainer<ScalarT>  curlU(numQPs);
-	Intrepid2::FieldContainer<ScalarT>  coriolis(numQPs);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  huAtNodes(numNodes,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  div_hU(numQPs);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  kineticEnergyAtNodes(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  gradKineticEnergy(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  potentialEnergyAtNodes(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  gradPotentialEnergy(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  uAtNodes(numNodes, 2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  curlU(numQPs);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  coriolis(numQPs);
 
 	//container for surface height for viscosty
-	Intrepid2::FieldContainer<ScalarT> surf(numNodes);
-	Intrepid2::FieldContainer<ScalarT> surftilde(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> surf(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> surftilde(numNodes);
 	//conteiner for surface height gradient for viscosity
-	Intrepid2::FieldContainer<ScalarT> hgradNodes(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT> htildegradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> hgradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> htildegradNodes(numQPs,2);
 
 	//auxiliary vars, (u,v) in lon-lat is transformed to (ux,uy,uz) in XYZ
-	Intrepid2::FieldContainer<ScalarT> uX(numNodes);
-	Intrepid2::FieldContainer<ScalarT> uY(numNodes);
-	Intrepid2::FieldContainer<ScalarT> uZ(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uX(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uY(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uZ(numNodes);
 
 	//auxiliary vars, (utilde,vtilde) in lon-lat is transformed to (utx,uty,utz) in XYZ
-	Intrepid2::FieldContainer<ScalarT> utX(numNodes);
-	Intrepid2::FieldContainer<ScalarT> utY(numNodes);
-	Intrepid2::FieldContainer<ScalarT> utZ(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utX(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utY(numNodes);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utZ(numNodes);
 
-	Intrepid2::FieldContainer<ScalarT> uXgradNodes(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT> uYgradNodes(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT> uZgradNodes(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT> utXgradNodes(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT> utYgradNodes(numQPs,2);
-	Intrepid2::FieldContainer<ScalarT> utZgradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uXgradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uYgradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uZgradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utXgradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utYgradNodes(numQPs,2);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utZgradNodes(numQPs,2);
 
 	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
@@ -1635,10 +1635,10 @@ ShallowWaterResid<EvalT,Traits>::getValue(const std::string &n)
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid2::FieldContainer<ScalarT>  & fieldAtNodes,
-		std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & div) {
+ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & fieldAtNodes,
+		std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & div) {
 
-	Intrepid2::FieldContainer<ScalarT>& vcontra = wrk_;
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& vcontra = wrk_;
 	vcontra.initialize();
 
 	fill_nodal_metrics(cell);
@@ -1689,8 +1689,8 @@ ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid2::FieldContainer<Scal
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::gradient(const Intrepid2::FieldContainer<ScalarT>  & fieldAtNodes,
-		std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & gradField) {
+ShallowWaterResid<EvalT,Traits>::gradient(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & fieldAtNodes,
+		std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & gradField) {
 
 	gradField.initialize();
 
@@ -1744,10 +1744,10 @@ ShallowWaterResid<EvalT,Traits>::fill_nodal_metrics(std::size_t cell) {
 //og: rename this to vorticity
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::curl(const Intrepid2::FieldContainer<ScalarT>  & nodalVector,
-		std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & curl) {
+ShallowWaterResid<EvalT,Traits>::curl(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & nodalVector,
+		std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & curl) {
 
-	Intrepid2::FieldContainer<ScalarT>& covariantVector = wrk_;
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& covariantVector = wrk_;
 	covariantVector.initialize();
 
 	fill_nodal_metrics(cell);
@@ -1783,7 +1783,7 @@ ShallowWaterResid<EvalT,Traits>::curl(const Intrepid2::FieldContainer<ScalarT>  
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer<ScalarT>  & coriolis) {
+ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis) {
 
 	coriolis.initialize();
 	double alpha = AlphaAngle; /*must match what is in initial condition for TC2 and TC5.

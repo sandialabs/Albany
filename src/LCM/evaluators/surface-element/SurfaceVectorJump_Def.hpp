@@ -15,9 +15,9 @@ template<typename EvalT, typename Traits>
 SurfaceVectorJump<EvalT, Traits>::
 SurfaceVectorJump(const Teuchos::ParameterList & p,
     const Teuchos::RCP<Albany::Layouts> & dl) :
-    cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Cubature")),
+    cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
     intrepid_basis_(p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
-        Intrepid2::FieldContainer<RealType>>>>(
+        Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>(
             "Intrepid2 Basis")),
     vector_(p.get<std::string>("Vector Name"), dl->node_vector),
     jump_(p.get<std::string>("Vector Jump Name"), dl->qp_vector)

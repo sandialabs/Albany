@@ -48,8 +48,8 @@ public:
 
 protected:
 
-  typedef typename EvalT::ScalarT ScalarT;
-  PHX::MDField<ScalarT,Cell,Node> val;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
+  PHX::MDField<ParamScalarT,Cell,Node> val;
   std::string param_name;
   std::size_t numNodes;
 };
@@ -66,7 +66,7 @@ public:
   GatherScalarNodalParameter(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 };
 
 // **************************************************************
@@ -91,7 +91,7 @@ public:
   GatherScalarNodalParameter(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 private:
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
 };
 
 }

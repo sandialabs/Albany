@@ -151,16 +151,26 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
 
 
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+  
+  //Get element name
+  const CellTopologyData *ctd = cellType->getCellTopologyData();
+  std::string name     = ctd->name;
+  size_t      len      = name.find("_");
+  if (len != std::string::npos) name = name.substr(0,len);
+  if (name == "Line") 
+		TEUCHOS_TEST_FOR_EXCEPTION(true,
+		Teuchos::Exceptions::InvalidParameter,"Aeras::XZHydrostatic no longer works with isoparameteric " <<
+		"Lines! Please re-run with spectral elements (IKT, 1/18/2016).");
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid2::CubaturePolylib<RealType> > polylib = rcp(new Intrepid2::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
-  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType> > > cubatures(1, polylib); 
-  RCP <Intrepid2::Cubature<RealType> > cubature = rcp( new Intrepid2::CubatureTensor<RealType>(cubatures));
+  RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > cubatures(1, polylib); 
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(cubatures));
 
   //Regular Gauss Quadrature.
   //Intrepid2::DefaultCubatureFactory<RealType> cubFactory;

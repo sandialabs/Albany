@@ -41,7 +41,7 @@ solveFN(FN & function, Intrepid2::Vector<T, N> const & x)
   Intrepid2::Vector<T, N>
   y;
 
-  Intrepid2::NewtonStep<T, N>
+  Intrepid2::NewtonStep<FN, T, N>
   newton_step;
 
   y = x;
@@ -51,7 +51,7 @@ solveFN(FN & function, Intrepid2::Vector<T, N> const & x)
 
   all_ok = all_ok && newton_ok;
 
-  Intrepid2::TrustRegionStep<T, N>
+  Intrepid2::TrustRegionStep<FN, T, N>
   trust_region_step;
 
   y = x;
@@ -61,7 +61,7 @@ solveFN(FN & function, Intrepid2::Vector<T, N> const & x)
 
   all_ok = all_ok && trust_region_ok;
 
-  Intrepid2::ConjugateGradientStep<T, N>
+  Intrepid2::ConjugateGradientStep<FN, T, N>
   pcg_step;
 
   y = x;
@@ -71,7 +71,7 @@ solveFN(FN & function, Intrepid2::Vector<T, N> const & x)
 
   all_ok = all_ok && pcg_ok;
 
-  Intrepid2::LineSearchRegularizedStep<T, N>
+  Intrepid2::LineSearchRegularizedStep<FN, T, N>
   line_search_step;
 
   y = x;
@@ -288,14 +288,18 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
   constexpr Intrepid2::Index
   dimension{2};
 
-  LCM::BananaNLS<RealType>
+  using MIN = Intrepid2::Minimizer<RealType, dimension>;
+  using FN = LCM::BananaNLS<RealType>;
+  using STEP = Intrepid2::NewtonStep<FN, RealType, dimension>;
+
+  MIN
+  minimizer;
+
+  FN
   banana;
 
-  Intrepid2::NewtonStep<RealType, dimension>
+  STEP
   step;
-
-  Intrepid2::Minimizer<RealType, dimension>
-  minimizer;
 
   Intrepid2::Vector<RealType, dimension>
   x;
@@ -315,29 +319,38 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
 //
 TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 {
-  using ScalarT = typename PHAL::AlbanyTraits::Residual::ScalarT;
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
   Intrepid2::Index
-  dimension{2};
+  dim{2};
 
-  LCM::BananaNLS<ValueT>
-  banana;
+  using MIN = Intrepid2::Minimizer<ValueT, dim>;
+  using FN = LCM::BananaNLS<ValueT>;
+  using STEP = Intrepid2::StepBase<FN, ValueT, dim>;
 
-  Intrepid2::NewtonStep<ValueT, dimension>
-  step;
-
-  Intrepid2::Minimizer<ValueT, dimension>
+  MIN
   minimizer;
 
-  Intrepid2::Vector<ScalarT, dimension>
+  std::unique_ptr<STEP>
+  step =
+      Intrepid2::stepFactory<FN, ValueT, dim>(Intrepid2::StepType::NEWTON);
+
+  assert(step->name() != nullptr);
+
+  FN
+  banana;
+
+  Intrepid2::Vector<ScalarT, dim>
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::miniMinimize(minimizer, step, banana, x);
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  mini_solver(minimizer, *step, banana, x);
 
   minimizer.printReport(std::cout);
 
@@ -349,40 +362,35 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 //
 TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
 {
-  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+  using EvalT = PHAL::AlbanyTraits::Jacobian;
+  using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
   Intrepid2::Index
-  dimension{2};
+  dim{2};
 
-  LCM::BananaNLS<ValueT>
-  banana;
+  using MIN = Intrepid2::Minimizer<ValueT, dim>;
+  using FN = LCM::BananaNLS<ValueT>;
+  using STEP = Intrepid2::NewtonStep<FN, ValueT, dim>;
 
-  Intrepid2::NewtonStep<ValueT, dimension>
-  step;
-
-  Intrepid2::Minimizer<ValueT, dimension>
+  MIN
   minimizer;
 
-  Intrepid2::Vector<ScalarT, dimension>
+  STEP
+  step;
+
+  FN
+  banana;
+
+  Intrepid2::Vector<ScalarT, dim>
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  // Fill in some Fad info
-  constexpr
-  Intrepid2::Index
-  order{1};
-
-  x(0).resize(order);
-  x(1).resize(order);
-
-  x(0).fastAccessDx(0) = 1.0;
-  x(1).fastAccessDx(0) = 1.0;
-
-  LCM::miniMinimize(minimizer, step, banana, x);
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  mini_solver(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 

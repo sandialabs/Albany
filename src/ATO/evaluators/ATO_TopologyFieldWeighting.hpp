@@ -39,9 +39,10 @@ private:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node> topo;
+  PHX::MDField<ParamScalarT,Cell,Node> topo;
   PHX::MDField<ScalarT> unWeightedVar;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
 

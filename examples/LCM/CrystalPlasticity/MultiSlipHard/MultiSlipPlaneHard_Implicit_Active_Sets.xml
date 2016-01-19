@@ -2,7 +2,6 @@
   <!-- Dumping Matrix Market to file
   <ParameterList name="Debug Output">
      <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
   </ParameterList>
   -->
   <ParameterList name="Problem">

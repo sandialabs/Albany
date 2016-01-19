@@ -88,18 +88,18 @@ private:
   unsigned int worksetSize;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer<ScalarT> Hflux;
-  Intrepid2::FieldContainer<ScalarT> C;
-  Intrepid2::FieldContainer<ScalarT> Cinv;
-  Intrepid2::FieldContainer<ScalarT> CinvTgrad;
-  Intrepid2::FieldContainer<ScalarT> CinvTgrad_old;
-  Intrepid2::FieldContainer<ScalarT> artificalDL;
-  Intrepid2::FieldContainer<ScalarT> stabilizedDL;
-  Intrepid2::FieldContainer<ScalarT> tauStress;
-  Intrepid2::FieldContainer<ScalarT> pterm;
-  Intrepid2::FieldContainer<ScalarT> tpterm;
-  Intrepid2::FieldContainer<ScalarT> tauH;
-  Intrepid2::FieldContainer<ScalarT> CinvTaugrad;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Hflux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTgrad;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTgrad_old;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> artificalDL;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> stabilizedDL;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tauStress;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tpterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tauH;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTaugrad;
 
 
   ScalarT CLbar, vol ;

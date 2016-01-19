@@ -78,12 +78,12 @@ private:
                     Intrepid2::Vector<T>& D, 
                     Intrepid2::Vector<T>& linear_D);
 
-  void findActiveTransitions(Intrepid2::FieldContainer<int>& transitionMap,
+  void findActiveTransitions(Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& transitionMap,
                              Teuchos::Array<ScalarT>& fractions,
                              Intrepid2::Tensor<ScalarT>& X, Intrepid2::Tensor<ScalarT>& linear_x,
                              Intrepid2::Vector<ScalarT>& E, Intrepid2::Vector<ScalarT>& linear_D);
 
-  void findEquilibriumState(Intrepid2::FieldContainer<int>& transitionMap,
+  void findEquilibriumState(Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& transitionMap,
                             Teuchos::Array<ScalarT>& oldfractions,
                             Teuchos::Array<ScalarT>& newfractions,
                             Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E);
@@ -91,7 +91,7 @@ private:
   bool converged(std::vector<ScalarT>& R, int iteration, ScalarT& initNorm);
 
 
-  void computeResidualandJacobian(Intrepid2::FieldContainer<int> transitionMap,
+  void computeResidualandJacobian(Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device> transitionMap,
                                   Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E,
                                   Teuchos::Array<ScalarT>& fractions,
                                   std::vector<ScalarT>& X, std::vector<ScalarT>& R,
@@ -177,7 +177,7 @@ private:
   Teuchos::Array<Teuchos::RCP<Transition>> transitions;
   Teuchos::Array<ScalarT> tBarrier;
   RealType alphaParam, gammaParam;
-  Intrepid2::FieldContainer<RealType> aMatrix;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> aMatrix;
 
 };
 

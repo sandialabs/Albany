@@ -218,7 +218,7 @@ computeState(typename Traits::EvalData workset,
   Teuchos::Array<ScalarT> oldfractions(nVariants);
   Teuchos::Array<ScalarT> newfractions(nVariants);
 
-  Intrepid2::FieldContainer<int> transitionMap;
+  Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device> transitionMap;
   transitionMap.resize(transitions.size());
 
   for (int cell=0; cell < numCells; ++cell) {
@@ -264,7 +264,7 @@ computeState(typename Traits::EvalData workset,
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::findEquilibriumState(
-Intrepid2::FieldContainer<int>& transitionMap,
+Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& transitionMap,
 Teuchos::Array<ScalarT>& oldfractions,
 Teuchos::Array<ScalarT>& newfractions,
 Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E)
@@ -369,7 +369,7 @@ bool FerroicModel<EvalT, Traits>::converged(std::vector<ScalarT>& R,
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::
 computeResidualandJacobian(
-  Intrepid2::FieldContainer<int> transitionMap,
+  Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device> transitionMap,
   Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E,
   Teuchos::Array<ScalarT>& fractions,
   std::vector<ScalarT>& S, std::vector<ScalarT>& R, std::vector<ScalarT>& dRdS)
@@ -536,7 +536,7 @@ computeState(Teuchos::Array<T>& fractions,
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::findActiveTransitions(
-Intrepid2::FieldContainer<int>& transitionMap,
+Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& transitionMap,
 Teuchos::Array<ScalarT>& fractions,
 Intrepid2::Tensor<ScalarT>& X, Intrepid2::Tensor<ScalarT>& linear_x,
 Intrepid2::Vector<ScalarT>& E, Intrepid2::Vector<ScalarT>& linear_D)

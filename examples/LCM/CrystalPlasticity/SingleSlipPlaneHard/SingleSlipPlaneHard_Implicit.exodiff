@@ -35,7 +35,7 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	force_y         absolute 1.0e-12
 	force_z         absolute 1.0e-12
 
-ELEMENT VARIABLES relative 1.e-6 floor 0.0
+ELEMENT VARIABLES relative 1.e-6 floor 1.0e-10
 	Cauchy_Stress_01      absolute 4.207019400000e-05    # min:               0 @ t1,b1,e1	max:       42.070194 @ t21,b1,e1
 	Cauchy_Stress_02      absolute 1.0e-12
 	Cauchy_Stress_03      absolute 1.0e-12

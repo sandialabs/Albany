@@ -55,7 +55,7 @@ TensorPNormResponse(Teuchos::ParameterList& p,
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  TensorPNormResponse requires 'Distributed Parameter' based topology" << std::endl);
 
-  topo = PHX::MDField<ScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
+  topo = PHX::MDField<ParamScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
 
   this->addDependentField(qp_weights);
   this->addDependentField(BF);

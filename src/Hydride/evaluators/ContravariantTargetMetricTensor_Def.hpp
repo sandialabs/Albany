@@ -17,7 +17,7 @@ ContravariantTargetMetricTensor<EvalT, Traits>::
 ContravariantTargetMetricTensor(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
 
   solnVec       (p.get<std::string> ("Solution Vector Name"), dl->node_vector),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType> > >("Cubature")),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   Gc            (p.get<std::string> ("Contravariant Metric Tensor Name"), dl->qp_tensor)
 

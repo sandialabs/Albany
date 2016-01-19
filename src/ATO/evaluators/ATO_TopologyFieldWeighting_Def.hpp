@@ -28,7 +28,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  TopologyFieldWeighting requires 'Distributed Parameter' based topology" << std::endl);
 
-  topo = PHX::MDField<ScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
+  topo = PHX::MDField<ParamScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
 
 
   std::string strLayout = p.get<std::string>("Variable Layout");

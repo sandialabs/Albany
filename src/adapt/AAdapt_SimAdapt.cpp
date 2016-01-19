@@ -66,14 +66,12 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
-//  Estimation meshFinal;
-
   apf::destroyField(grad_ip_fld);
+#ifdef SIMDEBUG
   /* write the mesh with size field to file */
   std::stringstream ss;
   ss << "size_" << callcount << '_';
   std::string s = ss.str();
-#ifdef SIMDEBUG
   apf::writeVtkFiles(s.c_str(), apf_m);
 #endif
   /* create the Simmetrix adapter */

@@ -160,16 +160,26 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
 
 
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > >
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+
+  //Get element name
+  const CellTopologyData *ctd = cellType->getCellTopologyData();
+  std::string name     = ctd->name;
+  size_t      len      = name.find("_");
+  if (len != std::string::npos) name = name.substr(0,len);
+  if (name == "Quadrilateral" || name == "ShellQuadrilateral") 
+		TEUCHOS_TEST_FOR_EXCEPTION(true,
+		Teuchos::Exceptions::InvalidParameter,"Aeras::Hydrostatic no longer works with isoparameteric " <<
+		"Quads/ShellQuads! Please re-run with spectral elements (IKT, 1/12/2016).");
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid2::CubaturePolylib<RealType> > polylib = rcp(new Intrepid2::CubaturePolylib<RealType>(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
-  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType> > > cubatures(2, polylib); 
-  RCP <Intrepid2::Cubature<RealType> > cubature = rcp( new Intrepid2::CubatureTensor<RealType>(cubatures));
+  RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > > cubatures(2, polylib); 
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType,Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >(cubatures));
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -325,9 +335,9 @@ Aeras::HydrostaticProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set< RCP<Intrepid2::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
  
-    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer<RealType> > > > 
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > 
         ("Intrepid2 Basis", intrepidBasis);
  
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);

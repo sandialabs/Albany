@@ -1,0 +1,5 @@
+
+add_subdirectory(Hydrostatic)
+add_subdirectory(HydrostaticGaussianBallTracerInShear)
+add_subdirectory(HydrostaticBaroclinicInstabilities)
+add_subdirectory(Hydrostatic_baroclinic_test_with_hv)

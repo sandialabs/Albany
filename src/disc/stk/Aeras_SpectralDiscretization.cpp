@@ -71,6 +71,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
                   Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
                   const int numLevels_, const int numTracers_, 
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
+                  const bool explicit_scheme_, 
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
@@ -79,6 +80,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
   numLevels(numLevels_), 
   numTracers(numTracers_), 
   commT(commT_),
+  explicit_scheme(explicit_scheme_), 
   rigidBodyModes(rigidBodyModes_),
   discParams(discParams_), 
   neq(stkMeshStruct_->neq),
@@ -88,6 +90,7 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
+  *out << "Explicit scheme in Aeras? " << explicit_scheme << std::endl; 
 
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
@@ -1875,7 +1878,7 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid2::FieldContainer< double > Field_t;
+  typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int deg = np - 1;
@@ -1968,7 +1971,7 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid2::FieldContainer< double > Field_t;
+  typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int np2 = np * np;
@@ -2056,108 +2059,8 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   }
 }
 
-void Aeras::SpectralDiscretization::computeGraphsLines()
-{
-  // WFS: Note that I think computeGraphsLines() and
-  // computeGraphsQuads() are exactly the same.
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
 
-  overlap_graphT = Teuchos::null; // delete existing graph here on remesh
-  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
-  //to have a smaller stencil here. 
-  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
-                                                    neq*points_per_edge));
-
-  stk::mesh::Selector select_owned =
-    stk::mesh::Selector(metaData.locally_owned_part());
-  
-  const stk::mesh::BucketVector & buckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
-
-  const int numBuckets = buckets.size();
-  
-  if (commT->getRank()==0)
-    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
-         << std::endl;
-
-  GO row, col;
-  Teuchos::ArrayView<GO> colAV;
-  
-  //Populate the graphs
-  for (int b = 0; b < numBuckets; ++b)
-  {
-    stk::mesh::Bucket & buck = *buckets[b];
-    // i is the element index within bucket b
-    for (std::size_t i = 0; i < buck.size(); ++i)
-    {
-      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
-      for (int j = 0; j < points_per_edge; ++j)
-      {
-        const GO rowNode = node_rels[j];
-        // loop over eqs
-        for (std::size_t k=0; k < 1; k++) //Ps0 equation
-        {
-          row = getGlobalDOF(rowNode, k);
-          for (std::size_t l=0; l < points_per_edge; l++)
-          {
-            const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
-            {
-              col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              overlap_graphT->insertGlobalIndices(row, colAV);
-            }
-          }
-        }
-        for (std::size_t k=1; k < 2*numLevels+1; k++) //u and T equations
-        {
-          row = getGlobalDOF(rowNode, k);
-          for (std::size_t l=0; l < points_per_edge; l++)
-          {
-            const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++)  //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
-            {
-              col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              overlap_graphT->insertGlobalIndices(row, colAV);
-            }
-          }
-        }
-        for (std::size_t k=2*numLevels+1; k < neq; k++) //scalar equations
-        {
-          row = getGlobalDOF(rowNode, k);
-          for (std::size_t l=0; l < points_per_edge; l++)
-          {
-            const GO colNode = node_rels[l];
-            for (std::size_t m=0; m < neq; m++) //FIXME, IKT, 12/22/15: change this loop to take into account sparsity pattern
-            {
-              col = getGlobalDOF(colNode, m);
-              colAV = Teuchos::arrayView(&col, 1);
-              overlap_graphT->insertGlobalIndices(row, colAV);
-            }
-          }
-        }
-      }
-    }
-  }
-  overlap_graphT->fillComplete();
-
-  // Create Owned graph by exporting overlap with known row map
-  graphT = Teuchos::null; // delete existing graph happens here on remesh
-  //FIXME?  IKT, 12/22/15: we may want to change the construction of overlap_graphT 
-  //to have a smaller stencil here. 
-  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> exporterT =
-    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
-  graphT->fillComplete();
-}
-
-void Aeras::SpectralDiscretization::computeGraphsQuads()
+void Aeras::SpectralDiscretization::computeGraphs()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
@@ -2221,6 +2124,72 @@ void Aeras::SpectralDiscretization::computeGraphsQuads()
   graphT = Teuchos::null; // delete existing graph happens here on remesh
 
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
+
+  // Create non-overlapped matrix using two maps and export object
+  Teuchos::RCP<Tpetra_Export> exporterT =
+    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
+  graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
+  graphT->fillComplete();
+}
+
+void Aeras::SpectralDiscretization::computeGraphs_Explicit()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+
+#ifdef OUTPUT_TO_SCREEN
+  *out << "nodes_per_element: " << nodes_per_element << std::endl;
+#endif
+
+  overlap_graphT = Teuchos::null; // delete existing graph here on remesh
+  //Graph for diagonal matrix 
+  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, 1));
+
+  stk::mesh::Selector select_owned =
+    stk::mesh::Selector(metaData.locally_owned_part());
+  
+  const stk::mesh::BucketVector & buckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+
+  const int numBuckets = buckets.size();
+  
+  if (commT->getRank()==0)
+    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
+         << std::endl;
+
+  GO row;
+  Teuchos::ArrayView<GO> colAV;
+  
+  //Populate the graphs
+  for (int b = 0; b < numBuckets; ++b)
+  {
+    stk::mesh::Bucket & buck = *buckets[b];
+    // i is the element index within bucket b
+    for (std::size_t i = 0; i < buck.size(); ++i)
+    {
+      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+      for (int j = 0; j < nodes_per_element; ++j)
+      {
+        const GO rowNode = node_rels[j];
+        // loop over eqs
+        for (std::size_t k=0; k < neq; k++)
+        {
+          row = getGlobalDOF(rowNode, k);
+          //col = row
+          colAV = Teuchos::arrayView(&row, 1); 
+          overlap_graphT->insertGlobalIndices(row, colAV);
+        }
+      }
+    }
+  }
+  overlap_graphT->fillComplete();
+
+  // Create Owned graph by exporting overlap with known row map
+  graphT = Teuchos::null; // delete existing graph happens here on remesh
+
+  //Graph for diagonal matrix 
+  graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, 1));
 
   // Create non-overlapped matrix using two maps and export object
   Teuchos::RCP<Tpetra_Export> exporterT =
@@ -2970,11 +2939,11 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   }
 
 
-  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer<double> > >
+  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid2::FieldContainer< double > Field_t;
+    typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
     typedef Intrepid2::Basis< double, Field_t > Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
       Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
@@ -3005,12 +2974,12 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
 
     const int C = soln.size();
     const Teuchos::RCP<Intrepid2::Basis<double,
-                                       Intrepid2::FieldContainer<double> > >
+                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -3028,12 +2997,12 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
 
     const int C = coords.size();
     const Teuchos::RCP<Intrepid2::Basis<double,
-                                       Intrepid2::FieldContainer<double> > >
+                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid2::FieldContainer<double> basisVals (C, numPoints);
-    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -3052,12 +3021,12 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   {
     const int C = coords.size();
     const Teuchos::RCP<Intrepid2::Basis<double,
-                                       Intrepid2::FieldContainer<double> > >
+                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid2::FieldContainer<double> basisGrad (C, numPoints, 2);
-    Intrepid2::FieldContainer<double> tempPoints(numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisGrad (C, numPoints, 2);
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -3466,9 +3435,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOwnedNodesAndUnknownsQuads();
 
+#ifdef OUTPUT_TO_SCREEN
   //write owned maps to matrix market file for debug
   Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
+#endif
 
   // IK, 1/23/15: I've commented out the guts of this function.  It is
   // only needed for ML/MueLu and is not critical right now to get
@@ -3480,9 +3451,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOverlapNodesAndUnknownsQuads();
 
+#ifdef OUTPUT_TO_SCREEN
   //write overlap maps to matrix market file for debug
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+#endif
     
     // Note that getCoordinates has not been converted to use the
     // enriched mesh, but I believe it's not used anywhere.
@@ -3493,13 +3466,18 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   computeWorksetInfo();
 
-    // IKT, 2/16/15: moving computeGraphsQuads() to after
-    // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
-    // array which is set in computeWorksetInfoQuads()
-  if (spatial_dim == 1) 
-    computeGraphsLines();
-  else if (spatial_dim == 2) 
-    computeGraphsQuads();
+  // IKT, 2/16/15: moving computeGraphs() to after
+  // computeWorksetInfoQuads(), as computeGraphs() relies on wsElNodeEqID
+  // array which is set in computeWorksetInfoQuads()
+  // IKT, 1/18/16: check if time-integration scheme is explicit or implicit 
+  // and call appropriate computeGraphs routine depending on what kind of scheme. 
+  // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
+  // only call this function for hydrostatic (numLevels > 0)  
+  if (explicit_scheme == true && numLevels > 0) 
+    computeGraphs_Explicit();  
+  else
+    computeGraphs();
+   
 
 
   // IK, 1/23/15, FIXME: to implement -- transform mesh based on new

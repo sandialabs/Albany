@@ -72,7 +72,7 @@
 
                <Parameter name="Implicit Integration Absolute Tolerance" 
                           type="double" 
-                          value="1.0e-10"/>
+                          value="1.0e-12"/>
 
                <Parameter name="Implicit Integration Max Iterations" 
                           type="int" 

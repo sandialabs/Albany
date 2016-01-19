@@ -7,6 +7,7 @@
 #if !defined(Intrepid2_MiniTensor_Solvers_h)
 #define Intrepid2_MiniTensor_Solvers_h
 
+#include <memory>
 #include <utility>
 
 #include <Intrepid2_MiniTensor.h>
@@ -20,7 +21,7 @@ using FAD = Sacado::Fad::SLFad<T, N>;
 ///
 /// Function base class that defines the interface to Mini Solvers.
 ///
-template<typename Function_Derived, typename S>
+template<typename FunctionDerived, typename S>
 class Function_Base
 {
 public:
@@ -34,21 +35,21 @@ public:
   ///
   template<typename T, Index N>
   T
-  value(Function_Derived & f, Vector<T, N> const & x);
+  value(FunctionDerived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute gradient with AD from value().
   ///
   template<typename T, Index N>
   Vector<T, N>
-  gradient(Function_Derived & f, Vector<T, N> const & x);
+  gradient(FunctionDerived & f, Vector<T, N> const & x);
 
   ///
   /// By default compute Hessian with AD from gradient().
   ///
   template<typename T, Index N>
   Tensor<T, N>
-  hessian(Function_Derived & f, Vector<T, N> const & x);
+  hessian(FunctionDerived & f, Vector<T, N> const & x);
 
 };
 
@@ -125,6 +126,15 @@ public:
   bool
   converged{false};
 
+  T
+  final_value{0.0};
+
+  Vector<T, N>
+  final_gradient;
+
+  Tensor<T, N>
+  final_hessian;
+
 private:
   T
   initial_norm{1.0};
@@ -137,15 +147,6 @@ private:
 
   Vector<T, N>
   final_soln;
-
-  T
-  final_value{0.0};
-
-  Vector<T, N>
-  final_gradient;
-
-  Tensor<T, N>
-  final_hessian;
 
   char const *
   step_method_name{nullptr};
@@ -193,54 +194,104 @@ struct TrustRegionExact
 ///
 /// Step Base
 ///
-template<typename T>
-struct Step_Base
+template<typename FN, typename T, Index N>
+struct StepBase
 {
-  Step_Base()
+  StepBase()
   {
     constexpr bool
     is_fad = Sacado::IsADType<T>::value == true;
 
     static_assert(is_fad == false, "AD types not allowed for type T");
   }
+
+  virtual
+  char const * const
+  name() = 0;
+
+  virtual
+  void
+  initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r) = 0;
+
+  virtual
+  Vector<T, N>
+  step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r) = 0;
+
+  virtual
+  ~StepBase() {}
 };
+
+///
+/// The step types
+///
+enum class StepType
+{
+  UNDEFINED = 0, NEWTON = 1, TRUST_REGION = 2, CG = 3, LINE_SEARCH_REG = 4
+};
+
+///
+///
+///
+template<typename FN, typename T, Index N>
+std::unique_ptr<StepBase<FN, T, N>>
+stepFactory(StepType step_type);
 
 ///
 /// Plain Newton Step
 ///
-template<typename T, Index N>
-struct NewtonStep : public Step_Base<T>
+template<typename FN, typename T, Index N>
+struct NewtonStep final : public StepBase<FN, T, N>
 {
   static constexpr
   char const * const
-  NAME = "Newton";
+  NAME{"Newton"};
 
-  template<typename FN>
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
   void
   initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
-  template<typename FN>
+  virtual
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  virtual
+  ~NewtonStep() {}
 };
 
 ///
 /// Trust Region Step
 ///
-template<typename T, Index N>
-struct TrustRegionStep : public Step_Base<T>
+template<typename FN, typename T, Index N>
+struct TrustRegionStep final : public StepBase<FN, T, N>
 {
   static constexpr
   char const * const
-  NAME = "Trust Region";
+  NAME{"Trust Region"};
 
-  template<typename FN>
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
   void
   initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
-  template<typename FN>
+  virtual
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  virtual
+  ~TrustRegionStep() {}
 
   T
   max_region_size{10.0};
@@ -259,20 +310,30 @@ private:
 ///
 /// Conjugate Gradient Step
 ///
-template<typename T, Index N>
-struct ConjugateGradientStep : public Step_Base<T>
+template<typename FN, typename T, Index N>
+struct ConjugateGradientStep final : public StepBase<FN, T, N>
 {
   static constexpr
   char const * const
-  NAME = "Preconditioned Conjugate Gradient";
+  NAME{"Preconditioned Conjugate Gradient"};
 
-  template<typename FN>
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
   void
   initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
-  template<typename FN>
+  virtual
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  virtual
+  ~ConjugateGradientStep() {}
 
   Index
   restart_directions_interval{32};
@@ -294,20 +355,30 @@ private:
 ///
 /// Line Search Regularized Step
 ///
-template<typename T, Index N>
-struct LineSearchRegularizedStep : public Step_Base<T>
+template<typename FN, typename T, Index N>
+struct LineSearchRegularizedStep final : public StepBase<FN, T, N>
 {
   static constexpr
   char const * const
-  NAME = "Line Search Regularized";
+  NAME{"Line Search Regularized"};
 
-  template<typename FN>
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
   void
   initialize(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
 
-  template<typename FN>
+  virtual
   Vector<T, N>
   step(FN & fn, Vector<T, N> const & x, Vector<T, N> const & r);
+
+  virtual
+  ~LineSearchRegularizedStep() {}
 
   T
   step_length{1.0};

@@ -29,6 +29,9 @@ class ViscosityFO : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
+  
 
   ViscosityFO(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -43,7 +46,6 @@ public:
 
 private:
  
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ScalarT homotopyParam;
   ScalarT dummyParam;
@@ -59,8 +61,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<ScalarT,Cell> temperature;
-  PHX::MDField<ScalarT,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...
+  PHX::MDField<ParamScalarT,Cell> temperature;
+  PHX::MDField<ParamScalarT,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
@@ -125,10 +127,10 @@ public:
   void operator() (const ViscosityFO_GLENSLAW_XZ_FROMCISM_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
-  void glenslaw (const ScalarT &flowFactorVec, const int& cell) const;
+  void glenslaw (const ParamScalarT &flowFactorVec, const int& cell) const;
   
   KOKKOS_INLINE_FUNCTION
-  void glenslaw_xz (const ScalarT &flowFactorVec, const int& cell) const;
+  void glenslaw_xz (const ParamScalarT &flowFactorVec, const int& cell) const;
 
   double R, x_0, y_0, R2;
 

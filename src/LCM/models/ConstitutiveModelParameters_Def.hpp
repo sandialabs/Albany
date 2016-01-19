@@ -82,6 +82,30 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     field_map_.insert(std::make_pair(s_mod, shear_mod_));
     parseParameters(s_mod, p, paramLib);
   }
+  // C11
+  std::string c11_mod("C11");
+  if (mat_params->isSublist(c11_mod)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(c11_mod, dl_->qp_scalar);
+    c11_ = tmp;
+    field_map_.insert(std::make_pair(c11_mod, c11_));
+    parseParameters(c11_mod, p, paramLib);
+  }
+  // C12
+  std::string c12_mod("C12");
+  if (mat_params->isSublist(c12_mod)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(c12_mod, dl_->qp_scalar);
+    c12_ = tmp;
+    field_map_.insert(std::make_pair(c12_mod, c12_));
+    parseParameters(c12_mod, p, paramLib);
+  }
+  // C44
+  std::string c44_mod("C44");
+  if (mat_params->isSublist(c44_mod)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(c44_mod, dl_->qp_scalar);
+    c44_ = tmp;
+    field_map_.insert(std::make_pair(c44_mod, c44_));
+    parseParameters(c44_mod, p, paramLib);
+  }
   // yield strength
   std::string yield("Yield Strength");
   if (mat_params->isSublist(yield)) {

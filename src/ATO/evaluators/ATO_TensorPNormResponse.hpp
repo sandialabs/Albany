@@ -113,6 +113,7 @@ namespace ATO
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename EvalT::ParamScalarT ParamScalarT;
     
     TensorPNormResponse(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
   
@@ -130,7 +131,7 @@ namespace ATO
     PHX::MDField<ScalarT> tensor;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
     PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-    PHX::MDField<ScalarT,Cell,Node> topo;
+    PHX::MDField<ParamScalarT,Cell,Node> topo;
     Teuchos::RCP< PHX::Tag<ScalarT> > objective_tag;
 
     Teuchos::RCP<Topology> topology;

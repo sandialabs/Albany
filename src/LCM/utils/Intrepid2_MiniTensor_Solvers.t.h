@@ -10,16 +10,14 @@ namespace Intrepid2
 //
 //
 //
-template<typename Function_Derived, typename S>
+template<typename FunctionDerived, typename S>
 template<typename T, Index N>
 T
-Function_Base<Function_Derived, S>::
-value(Function_Derived & f, Vector<T, N> const & x)
+Function_Base<FunctionDerived, S>::
+value(FunctionDerived & f, Vector<T, N> const & x)
 {
   Index const
   dimension = x.get_dimension();
-
-  assert(dimension == Function_Derived::DIMENSION);
 
   Vector<T, N> const
   r = f.gradient(x);
@@ -30,18 +28,16 @@ value(Function_Derived & f, Vector<T, N> const & x)
 //
 //
 //
-template<typename Function_Derived, typename S>
+template<typename FunctionDerived, typename S>
 template<typename T, Index N>
 Vector<T, N>
-Function_Base<Function_Derived, S>::
-gradient(Function_Derived & f, Vector<T, N> const & x)
+Function_Base<FunctionDerived, S>::
+gradient(FunctionDerived & f, Vector<T, N> const & x)
 {
   using AD = FAD<T, N>;
 
   Index const
   dimension = x.get_dimension();
-
-  assert(dimension == Function_Derived::DIMENSION);
 
   Vector<AD, N>
   x_ad(dimension);
@@ -66,18 +62,16 @@ gradient(Function_Derived & f, Vector<T, N> const & x)
 //
 //
 //
-template<typename Function_Derived, typename S>
+template<typename FunctionDerived, typename S>
 template<typename T, Index N>
 Tensor<T, N>
-Function_Base<Function_Derived, S>::
-hessian(Function_Derived & f, Vector<T, N> const & x)
+Function_Base<FunctionDerived, S>::
+hessian(FunctionDerived & f, Vector<T, N> const & x)
 {
   using AD = FAD<T, N>;
 
   Index const
   dimension = x.get_dimension();
-
-  assert(dimension == Function_Derived::DIMENSION);
 
   Vector<AD, N>
   x_ad(dimension);
@@ -110,7 +104,7 @@ void
 Minimizer<T, N>::
 solve(STEP & step_method, FN & fn, Vector<T, N> & soln)
 {
-  step_method_name = STEP::NAME;
+  step_method_name = step_method.name();
   function_name = FN::NAME;
   initial_guess = soln;
 
@@ -337,10 +331,9 @@ step(FN & fn, Vector<T, N> const & direction, Vector<T, N> const & soln)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-NewtonStep<T, N>::
+NewtonStep<FN, T, N>::
 initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
   return;
@@ -349,10 +342,9 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 //
 // Plain Newton step.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-NewtonStep<T, N>::
+NewtonStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
   Tensor<T, N> const
@@ -367,10 +359,9 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-TrustRegionStep<T, N>::
+TrustRegionStep<FN, T, N>::
 initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
   region_size = initial_region_size;
@@ -381,10 +372,9 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 //
 // Trust Region method.  See Nocedal's algorithm 11.5.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-TrustRegionStep<T, N>::
+TrustRegionStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 {
   Tensor<T, N> const
@@ -452,10 +442,9 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & resi)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-ConjugateGradientStep<T, N>::
+ConjugateGradientStep<FN, T, N>::
 initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 {
   Tensor<T, N> const
@@ -479,10 +468,9 @@ initialize(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 // This is taken from J.R. Shewchuck "painless" conjugate gradient
 // manuscript that is all over the place on the net.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-ConjugateGradientStep<T, N>::
+ConjugateGradientStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 {
   Index const
@@ -545,10 +533,9 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const &)
 //
 //
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 void
-LineSearchRegularizedStep<T, N>::
+LineSearchRegularizedStep<FN, T, N>::
 initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 {
   return;
@@ -557,10 +544,9 @@ initialize(FN &, Vector<T, N> const &, Vector<T, N> const &)
 //
 // Line Search Newton-like method.  See Nocedal's algorithm 11.4.
 //
-template<typename T, Index N>
-template<typename FN>
+template<typename FN, typename T, Index N>
 Vector<T, N>
-LineSearchRegularizedStep<T, N>::
+LineSearchRegularizedStep<FN, T, N>::
 step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
 {
   Index const
@@ -608,6 +594,43 @@ step(FN & fn, Vector<T, N> const & soln, Vector<T, N> const & gradient)
   ls_step = newton_ls.step(fn, step, soln);
 
   return ls_step;
+}
+
+//
+//
+//
+template<typename FN, typename T, Index N>
+std::unique_ptr<StepBase<FN, T, N>>
+stepFactory(StepType step_type)
+{
+  using STUP = std::unique_ptr<StepBase<FN, T, N>>;
+
+  switch (step_type) {
+
+  default:
+    std::cerr << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "ERROR: Unknown step method type\n";
+    exit(1);
+    break;
+
+  case StepType::NEWTON:
+    return STUP(new NewtonStep<FN, T, N>());
+    break;
+
+  case StepType::TRUST_REGION:
+    return STUP(new TrustRegionStep<FN, T, N>());
+    break;
+
+  case StepType::CG:
+    return STUP(new ConjugateGradientStep<FN, T, N>());
+    break;
+
+  case StepType::LINE_SEARCH_REG:
+    return STUP(new LineSearchRegularizedStep<FN, T, N>());
+    break;
+  }
+
+  return STUP(nullptr);
 }
 
 } // namespace Intrepid2

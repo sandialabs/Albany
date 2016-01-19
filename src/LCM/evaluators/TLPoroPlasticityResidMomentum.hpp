@@ -56,10 +56,10 @@ private:
   bool enableTransient;
 
   // Work space FCs
-  Intrepid2::FieldContainer<ScalarT> F_inv;
-  Intrepid2::FieldContainer<ScalarT> F_invT;
-  Intrepid2::FieldContainer<ScalarT> JF_invT;
-  Intrepid2::FieldContainer<ScalarT> P;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> P;
 
 };
 }

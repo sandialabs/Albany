@@ -197,6 +197,7 @@ namespace Aeras
        const int numTracers, 
        const int numLevels, 
        const Teuchos::RCP<const Teuchos_Comm>& commT,
+       const bool explicit_scheme, 
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
     //! Destructor
@@ -553,8 +554,10 @@ namespace Aeras
     void computeCoordsQuads();
 
     //! Process spectral Albany mesh for CRS Graphs
-    void computeGraphsLines();
-    void computeGraphsQuads();
+    void computeGraphs();
+    //  The following function allocates the graph of a diagonal Jacobian, 
+    //  relevant for explicit schemes.
+    void computeGraphs_Explicit();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
     void computeWorksetInfo();
@@ -653,6 +656,9 @@ namespace Aeras
 
     //! Number of levels (for hydrostatic equations) 
     const int numLevels; 
+    
+    //! Flag for explicit scheme
+    const bool explicit_scheme; 
     
     //! number of tracers (for hydristatic equations) 
     const int numTracers; 

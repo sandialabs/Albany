@@ -322,26 +322,31 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       if (f > 1E-12) {
         // Use minimization equivalent to return mapping
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
-
-        J2NLS<EvalT>
-        j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
+        using NLS = J2NLS<EvalT>;
 
         constexpr
         Intrepid2::Index
-        dimension{J2NLS<EvalT>::DIMENSION};
+        nls_dim{NLS::DIMENSION};
 
-        Intrepid2::NewtonStep<ValueT, dimension>
-        step;
+        using MIN = Intrepid2::Minimizer<ValueT, nls_dim>;
+        using STEP = Intrepid2::NewtonStep<NLS, ValueT, nls_dim>;
 
-        Intrepid2::Minimizer<ValueT, dimension>
+        MIN
         minimizer;
 
-        Intrepid2::Vector<ScalarT, dimension>
+        STEP
+        step;
+
+        NLS
+        j2nls(sat_mod_, sat_exp_, eqpsold(cell, pt), K, smag, mubar, Y);
+
+        Intrepid2::Vector<ScalarT, nls_dim>
         x;
 
         x(0) = 0.0;
 
-        miniMinimize(minimizer, step, j2nls, x);
+        LCM::MiniSolver<MIN, STEP, NLS, EvalT, nls_dim>
+        mini_solver(minimizer, step, j2nls, x);
 
         ScalarT const
         alpha = eqpsold(cell, pt) + sq23 * x(0);

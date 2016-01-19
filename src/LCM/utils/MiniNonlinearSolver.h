@@ -24,7 +24,7 @@ miniMinimize(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid2::Vector<RealType, N> & soln);
+    Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
 
 template<typename MIN, typename STEP, typename FN, typename T, Intrepid2::Index N>
 void
@@ -33,6 +33,60 @@ miniMinimize(
     STEP & step_method,
     FN & function,
     Intrepid2::Vector<T, N> & soln);
+
+//
+//
+//
+template<
+typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
+struct MiniSolver
+{
+  MiniSolver(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<typename EvalT::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
+{
+  MiniSolver(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>
+{
+  MiniSolver(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>
+{
+  MiniSolver(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
+{
+  MiniSolver(
+      MIN & minimizer,
+      STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+};
 
 ///
 /// Deal with derivative information for all the mini solvers.
@@ -285,7 +339,9 @@ struct peel<MPJE, AD<N>, N>
 };
 #endif // ALBANY_ENSEMBLE
 
-template<typename EvalT, typename T, int N>
+// M: number of derivatives
+// N: vector/tensor dimension
+template<typename EvalT, typename T, int M, int N>
 struct peel_vector
 {
   using S = typename EvalT::ScalarT;
@@ -303,14 +359,14 @@ struct peel_vector
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;
   }
 };
 
-template<typename EvalT, typename T, int N>
+template<typename EvalT, typename T, int M, int N>
 struct peel_tensor
 {
   using S = typename EvalT::ScalarT;
@@ -328,14 +384,14 @@ struct peel_tensor
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;
   }
 };
 
-template<typename EvalT, typename T, int N>
+template<typename EvalT, typename T, int M, int N>
 struct peel_tensor3
 {
   using S = typename EvalT::ScalarT;
@@ -353,14 +409,14 @@ struct peel_tensor3
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;
   }
 };
 
-template<typename EvalT, typename T, int N>
+template<typename EvalT, typename T, int M, int N>
 struct peel_tensor4
 {
   using S = typename EvalT::ScalarT;
@@ -378,7 +434,7 @@ struct peel_tensor4
     num_components = s.get_number_components();
 
     for (Intrepid2::Index i = 0; i < num_components; ++i) {
-      t[i] = peel<EvalT, T, N>()(s[i]);
+      t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
     return t;

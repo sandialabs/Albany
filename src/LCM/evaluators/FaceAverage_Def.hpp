@@ -20,9 +20,9 @@ FaceAverage(const Teuchos::ParameterList& p) :
     p.get<Teuchos::RCP<PHX::DataLayout>>("Vertex Vector Data Layout")),
   projected(p.get<std::string>("Projected Field Name"),
     p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout")),
-  cubature(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType>>>("Face Cubature")),
+  cubature(p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Face Cubature")),
   intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis
-    <RealType, Intrepid2::FieldContainer<RealType>>>>("Face Intrepid2 Basis")),
+    <RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Face Intrepid2 Basis")),
   cellType(p.get<Teuchos::RCP<shards::CellTopology>>("Cell Type")),
   faceAve(p.get<std::string>("Face Average Name"),
     p.get<Teuchos::RCP<PHX::DataLayout>>("Face Vector Data Layout")),

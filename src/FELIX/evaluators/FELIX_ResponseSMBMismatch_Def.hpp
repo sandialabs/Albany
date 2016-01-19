@@ -42,7 +42,7 @@ FELIX::ResponseSMBMismatch<EvalT, Traits>::ResponseSMBMismatch(Teuchos::Paramete
 
   cellType = Teuchos::rcp(new shards::CellTopology(elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   cubatureCell = cubFactory.create(*cellType, 1); //meshSpecs->cubatureDegree);
   cubatureDegree = plist->isParameter("Cubature Degree") ? plist->get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
 
@@ -123,9 +123,9 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    Intrepid2::FieldContainer<ScalarT> H_Side;
-    Intrepid2::FieldContainer<ScalarT> SMB_Side;
-    Intrepid2::FieldContainer<ScalarT> V_Side;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> H_Side;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> SMB_Side;
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> V_Side;
 
     // Loop over the sides that form the boundary condition
     for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
@@ -138,7 +138,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
       const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
       sideType = Teuchos::rcp(new shards::CellTopology(side.topology));
       int numSideNodes = sideType->getNodeCount();
-      Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+      Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
       cubatureSide = cubFactory.create(*sideType, cubatureDegree);
       sideDims = sideType->getDimension();
       numQPsSide = cubatureSide->getNumPoints();
@@ -212,11 +212,11 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
       Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, *cellType);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid2::FieldContainer<ScalarT> H_Cell(numNodes);
-      Intrepid2::FieldContainer<ScalarT> SMB_Cell(numNodes);
-      Intrepid2::FieldContainer<ScalarT> V_Cell(numNodes, numVecFODims);
-      Intrepid2::FieldContainer<ScalarT> gradH_Side(numQPsSide, numVecFODims);
-      Intrepid2::FieldContainer<ScalarT> divV_Side(numQPsSide);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> H_Cell(numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> SMB_Cell(numNodes);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> V_Cell(numNodes, numVecFODims);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> gradH_Side(numQPsSide, numVecFODims);
+      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> divV_Side(numQPsSide);
 
       for (int i = 0; i < gradH_Side.size(); i++)
         gradH_Side(i) = 0.0;
