@@ -61,6 +61,8 @@
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_10_out.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="864"/>
+    <!-- Problem needs xDotDot (see Aeras_HVDecorator.cpp line 141) -->
+    <Parameter name="Number Of Time Derivatives" type="int" value="2"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="4"/>

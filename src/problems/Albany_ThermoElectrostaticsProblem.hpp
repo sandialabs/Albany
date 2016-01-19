@@ -142,6 +142,12 @@ Albany::ThermoElectrostaticsProblem::constructEvaluators(
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=false;
 
+   // Problem is not transient
+   TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv != 0,
+      std::logic_error,
+      "Albany_ThermoElectroStaticsProblem cannot be defined as a transient calculation.");
+
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 

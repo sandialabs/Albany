@@ -42,20 +42,20 @@ public:
    //! Remap "old" solution into new data structures
    virtual void projectCurrentSolution();
 
-   Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const { return initial_xT; }
-   Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const { return initial_xdotT; }
-   Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotDotT() const { return initial_xdotdotT; }
-   Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT);
-   Teuchos::RCP<Tpetra_MultiVector> getOverlapSolutionMV(const Tpetra_MultiVector& solutionT);
+   Teuchos::RCP<const Tpetra_MultiVector> getInitialSolution() const { return current_soln; }
 
-   Teuchos::RCP<Tpetra_Vector>& get_overlapped_xT() {return overlapped_xT;}
-   Teuchos::RCP<Tpetra_Vector>& get_overlapped_xdotT() {return overlapped_xdotT;}
-   Teuchos::RCP<Tpetra_Vector>& get_overlapped_xdotdotT() {return overlapped_xdotdotT;}
-   Teuchos::RCP<Tpetra_Vector>& get_overlapped_fT() {return overlapped_fT;}
-   Teuchos::RCP<Tpetra_CrsMatrix>& get_overlapped_jacT() {return overlapped_jacT;}
+   Teuchos::RCP<Tpetra_MultiVector> getOverlappedSolution() { return overlapped_soln; }
 
-   Teuchos::RCP<Tpetra_Import>& get_importerT() {return importerT;}
-   Teuchos::RCP<Tpetra_Export>& get_exporterT() {return exporterT;}
+   Teuchos::RCP<const Tpetra_MultiVector> getOverlappedSolution() const { return overlapped_soln; }
+
+   Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionT(const Tpetra_Vector& solutionT /*not overlapped*/);
+   Teuchos::RCP<const Tpetra_MultiVector> updateAndReturnOverlapSolutionMV(const Tpetra_MultiVector& solutionT /*not overlapped*/);
+
+   Teuchos::RCP<Tpetra_Vector> get_overlapped_fT() {return overlapped_fT;}
+   Teuchos::RCP<Tpetra_CrsMatrix> get_overlapped_jacT() {return overlapped_jacT;}
+
+   Teuchos::RCP<Tpetra_Import> get_importerT() {return importerT;}
+   Teuchos::RCP<Tpetra_Export> get_exporterT() {return exporterT;}
 
    Teuchos::RCP<Thyra::MultiVectorBase<double> > getCurrentSolution();
 
@@ -64,29 +64,23 @@ public:
        const Tpetra_Vector* x_dotT,
        const Tpetra_Vector* x_dotdotT);
 
+   void scatterXT(
+       const Tpetra_MultiVector& soln);
+
 private:
 
     Teuchos::RCP<Tpetra_Import> importerT;
     Teuchos::RCP<Tpetra_Export> exporterT;
 
-    Teuchos::RCP<Tpetra_Vector> overlapped_xT;
-    Teuchos::RCP<Tpetra_Vector> overlapped_xdotT;
-    Teuchos::RCP<Tpetra_Vector> overlapped_xdotdotT;
     Teuchos::RCP<Tpetra_Vector> overlapped_fT;
     Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT;
 
-    Teuchos::RCP<Tpetra_Vector> tmp_ovlp_solT;
-    Teuchos::RCP<Tpetra_MultiVector> tmp_ovlp_solMV;
-
-    Teuchos::RCP<Tpetra_Vector> initial_xT;
-    Teuchos::RCP<Tpetra_Vector> initial_xdotT;
-    Teuchos::RCP<Tpetra_Vector> initial_xdotdotT;
-
     // The solution directly from the discretization class
     Teuchos::RCP<Tpetra_MultiVector> current_soln;
+    Teuchos::RCP<Tpetra_MultiVector> overlapped_soln;
 
     // Number of time derivative vectors that we need to support
-    int num_sol_vec;
+    const int num_time_deriv;
 
     const Teuchos::RCP<Teuchos::ParameterList> appParams_;
     const Teuchos::RCP<Albany::AbstractDiscretization> disc_;

@@ -49,7 +49,7 @@ Topology::Topology(
   disc_params->set<std::string>("Method", "Exodus");
   disc_params->set<std::string>("Exodus Input File Name", input_file);
   disc_params->set<std::string>("Exodus Output File Name", output_file);
-  disc_params->set<int>("Number Of Solution Vectors", 2);
+  disc_params->set<int>("Number Of Time Derivatives", 0);
 
   Teuchos::RCP<Teuchos::ParameterList>
   problem_params = Teuchos::sublist(params, "Problem");

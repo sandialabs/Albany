@@ -57,6 +57,8 @@ private:
 
   int numNodes, numQPs, numDims, numSpecies;
   std::vector<double> D,beta; // Placeholder for charges
+
+  bool enableTransient;
 };
 }
 

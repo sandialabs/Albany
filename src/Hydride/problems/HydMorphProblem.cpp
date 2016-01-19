@@ -32,10 +32,6 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   }
-
-  // Problem supports transient
-  params->set<int>("Number Of Solution Vectors", 2);
-
 }
 
 Albany::HydMorphProblem::

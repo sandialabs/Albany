@@ -172,7 +172,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 #endif
 #endif
 
-  
+
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
   Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
@@ -194,12 +194,20 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   // Pull the number of solution vectors out of the problem and send them to the discretization list, if the
   // user specifies this in the problem
   Teuchos::ParameterList& discParams = params->sublist("Discretization");
-  int num_sol_vecs_from_prob = problemParams->get<int>("Number Of Solution Vectors", -1);
-  int num_sol_vecs_from_input = discParams.get<int>("Number Of Solution Vectors", -1);
-  if(num_sol_vecs_from_input > 0) // Use the value the user specified if it is present
-      discParams.set<int>("Number Of Solution Vectors", num_sol_vecs_from_input);
-  else if(num_sol_vecs_from_prob > 0) // Else, use what is specified in the problem, if it is
-      discParams.set<int>("Number Of Solution Vectors", num_sol_vecs_from_prob);
+
+  // Set in Albany_AbstractProblem constructor or in siblings
+  num_time_deriv = problemParams->get<int>("Number Of Time Derivatives");
+
+  // Possibly set in the Discretization list in the input file - this overrides the above if set
+  int num_time_deriv_from_input = discParams.get<int>("Number Of Time Derivatives", -1);
+  if(num_time_deriv_from_input < 0) // Use the value from the problem by default
+      discParams.set<int>("Number Of Time Derivatives", num_time_deriv);
+  else
+      num_time_deriv = num_time_deriv_from_input;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(num_time_deriv > 2,
+            std::logic_error, "Input error: number of time derivatives must be <= 2 "
+            << "(solution, solution_dot, solution_dotdot)");
 
   // Save the solution method to be used
   std::string solutionMethod = problemParams->get("Solution Method", "Steady");
@@ -207,13 +215,8 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Steady;
   else if(solutionMethod == "Continuation")
     solMethod = Continuation;
-  else if(solutionMethod == "Transient"){
+  else if(solutionMethod == "Transient")
     solMethod = Transient;
-    // If the number of time derivatives to handle are not set in the problem or by the user, default to the max available
-    // (solution, solution_dot, and solution_dotdot)
-    if(discParams.get<int>("Number Of Solution Vectors", -1) == -1)
-      discParams.set<int>("Number Of Solution Vectors", 3);
-  }
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
   else if(solutionMethod == "Aeras Hyperviscosity")
@@ -223,13 +226,13 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
             std::logic_error, "Solution Method must be Steady, Transient, "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
-  bool expl = false; 
-  std::string stepperType; 
+  bool expl = false;
+  std::string stepperType;
   if (solMethod == Transient) {
     //Get Piro PL
-    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true); 
+    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true);
     //Check if there is Rythmos Solver sublist, and get the stepper type
-    if (piroParams->isSublist("Rythmos Solver")) { 
+    if (piroParams->isSublist("Rythmos Solver")) {
       Teuchos::RCP<Teuchos::ParameterList> rythmosSolverParams = Teuchos::sublist(piroParams, "Rythmos Solver", true);
       if (rythmosSolverParams->isSublist("Rythmos")) {
         Teuchos::RCP<Teuchos::ParameterList> rythmosParams = Teuchos::sublist(rythmosSolverParams, "Rythmos", true);
@@ -237,25 +240,21 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
           Teuchos::RCP<Teuchos::ParameterList> stepperSettingsParams = Teuchos::sublist(rythmosParams, "Stepper Settings", true);
           if (stepperSettingsParams->isSublist("Stepper Selection")) {
             Teuchos::RCP<Teuchos::ParameterList> stepperSelectionParams = Teuchos::sublist(stepperSettingsParams, "Stepper Selection", true);
-            stepperType = stepperSelectionParams->get("Stepper Type", "Backward Euler"); 
-          } 
-        } 
-      } 
-    } 
+            stepperType = stepperSelectionParams->get("Stepper Type", "Backward Euler");
+          }
+        }
+      }
+    }
     //Check if there is Rythmos sublist, and get the stepper type
     else if (piroParams->isSublist("Rythmos")) {
       Teuchos::RCP<Teuchos::ParameterList> rythmosParams = Teuchos::sublist(piroParams, "Rythmos", true);
-      stepperType = rythmosParams->get("Stepper Type", "Backward Euler"); 
+      stepperType = rythmosParams->get("Stepper Type", "Backward Euler");
     }
     //Search for "Explicit" in the stepperType name.  If it's found, set expl to true.
     if (stepperType.find("Explicit") != std::string::npos)
       expl = true;
   }
-  //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl; 
-
-  // If the number of time derivatives to handle are not set above, default to zero
-  if(discParams.get<int>("Number Of Solution Vectors", -1) == -1)
-    discParams.set<int>("Number Of Solution Vectors", 1);
+  //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl;
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
@@ -695,26 +694,24 @@ RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolution() const
 {
+  const Teuchos::RCP<const Tpetra_MultiVector> xMV = solMgrT->getInitialSolution();
+  Teuchos::RCP<const Tpetra_Vector> xT = xMV->getVector(0);
+
   const Teuchos::RCP<Epetra_Vector>& initial_x = solMgr->get_initial_x();
-  Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionT(), *initial_x, comm);
+  Petra::TpetraVector_To_EpetraVector(xT, *initial_x, comm);
   return initial_x;
 }
-#endif
 
-RCP<const Tpetra_Vector>
-Albany::Application::
-getInitialSolutionT() const
-{
-  return solMgrT->getInitialSolutionT();
-}
-
-#if defined(ALBANY_EPETRA)
 RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDot() const
 {
+  const Teuchos::RCP<const Tpetra_MultiVector> xMV = solMgrT->getInitialSolution();
+  if(xMV->getNumVectors() < 2) return Teuchos::null;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = xMV->getVector(1);
+
   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
-  Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
+  Petra::TpetraVector_To_EpetraVector(xdotT, *initial_x_dot, comm);
   return initial_x_dot;
 }
 
@@ -722,25 +719,15 @@ RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDotDot() const
 {
+  const Teuchos::RCP<const Tpetra_MultiVector> xMV = solMgrT->getInitialSolution();
+  if(xMV->getNumVectors() < 3) return Teuchos::null;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT = xMV->getVector(2);
+
   const Teuchos::RCP<Epetra_Vector>& initial_x_dotdot = solMgr->get_initial_xdotdot();
-  Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotDotT(), *initial_x_dotdot, comm);
+  Petra::TpetraVector_To_EpetraVector(xdotdotT, *initial_x_dotdot, comm);
   return initial_x_dotdot;
 }
 #endif
-
-RCP<const Tpetra_Vector>
-Albany::Application::
-getInitialSolutionDotT() const
-{
-  return solMgrT->getInitialSolutionDotT();
-}
-
-RCP<const Tpetra_Vector>
-Albany::Application::
-getInitialSolutionDotDotT() const
-{
-  return solMgrT->getInitialSolutionDotDotT();
-}
 
 RCP<ParamLib>
 Albany::Application::
@@ -1014,9 +1001,9 @@ computeGlobalResidualImplT(
 
   int numWorksets = wsElNodeEqID.size();
 
-  const Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
-  const Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
-  const Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
+  const Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  const Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
+  const Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
@@ -1145,12 +1132,12 @@ computeGlobalResidual(const double current_time,
     Petra::EpetraVector_To_TpetraVectorConst(x, commT);
 
   Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
+  if (xdot != NULL && num_time_deriv > 0) {
      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
   }
 
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL) {
+  if (xdotdot != NULL && num_time_deriv > 1) {
      xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
   }
 
@@ -1275,9 +1262,9 @@ computeGlobalJacobianImplT(const double alpha,
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_CrsMatrix>& overlapped_jacT = solMgrT->get_overlapped_jacT();
-  Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solMgrT->get_overlapped_jacT();
+  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
 
   // Scatter x and xdot to the overlapped distribution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
@@ -1458,12 +1445,12 @@ computeGlobalJacobian(const double alpha,
     Petra::EpetraVector_To_TpetraVectorConst(x, commT);
 
   Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
+  if (xdot != NULL && num_time_deriv > 0) {
     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
    }
 
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL) {
+  if (xdotdot != NULL && num_time_deriv > 1) {
     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
    }
 
@@ -1638,9 +1625,9 @@ computeGlobalTangentImplT(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
-  Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
-  Teuchos::RCP<Tpetra_Export>& exporterT = solMgrT->get_exporterT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
+  Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
@@ -1964,11 +1951,11 @@ computeGlobalTangent(const double alpha,
     Petra::EpetraVector_To_TpetraVectorConst(x, commT);
 
   Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
+  if (xdot != NULL && num_time_deriv > 0) {
     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
   }
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL) {
+  if (xdotdot != NULL && num_time_deriv > 1) {
     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
   }
 
@@ -2148,7 +2135,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
   // Import V (after BC's applied) to overlapped distribution
   RCP<Tpetra_MultiVector> overlapped_VT;
   if (trans) {
-    Teuchos::RCP<Tpetra_Import>& importer = solMgrT->get_importerT();
+    Teuchos::RCP<Tpetra_Import> importer = solMgrT->get_importerT();
     overlapped_VT = rcp(
       new Tpetra_MultiVector(disc->getOverlapMapT(), VT->getNumVectors()));
     overlapped_VT->doImport(*V_bcT, *importer, Tpetra::INSERT);
@@ -2522,9 +2509,9 @@ computeGlobalSGJacobian(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+  Teuchos::RCP<Epetra_CrsMatrix> overlapped_jac = solMgr->get_overlapped_jac();
+  Teuchos::RCP<Epetra_Import> importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export> exporter = solMgr->get_exporter();
 
   if (sg_overlapped_x == Teuchos::null ||
       sg_overlapped_x->size() != sg_x.size()) {
@@ -3213,9 +3200,9 @@ computeGlobalMPJacobian(
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Epetra_CrsMatrix>& overlapped_jac = solMgr->get_overlapped_jac();
-  Teuchos::RCP<Epetra_Import>& importer = solMgr->get_importer();
-  Teuchos::RCP<Epetra_Export>& exporter = solMgr->get_exporter();
+  Teuchos::RCP<Epetra_CrsMatrix> overlapped_jac = solMgr->get_overlapped_jac();
+  Teuchos::RCP<Epetra_Import> importer = solMgr->get_importer();
+  Teuchos::RCP<Epetra_Export> exporter = solMgr->get_exporter();
 
   // Create overlapped multi-point Epetra objects
   if (mp_overlapped_x == Teuchos::null ||
@@ -3736,12 +3723,12 @@ evaluateStateFieldManager(const double current_time,
   Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT);
   //Create Tpetra copy of xdot, called xdotT
   Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
+  if (xdot != NULL && num_time_deriv > 0) {
      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
   }
   //Create Tpetra copy of xdotdot, called xdotdotT
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL) {
+  if (xdotdot != NULL && num_time_deriv > 1) {
      xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
   }
 
@@ -3806,7 +3793,7 @@ evaluateStateFieldManagerT(
     }
   }
 
-  Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
 
   // Load connectivity map and coordinates
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
@@ -4228,15 +4215,23 @@ void Albany::Application::loadBasicWorksetInfoT(
        double current_time)
 {
     workset.numEqs = neq;
+/*
     workset.xT        = solMgrT->get_overlapped_xT();
     workset.xdotT     = solMgrT->get_overlapped_xdotT();
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
+*/
+    Teuchos::RCP<Tpetra_MultiVector> overlapped_MV = solMgrT->getOverlappedSolution();
+    workset.xT = overlapped_MV->getVectorNonConst(0);
+    workset.xdotT =
+        (overlapped_MV->getNumVectors() > 1) ? overlapped_MV->getVectorNonConst(1): Teuchos::null ;
+    workset.xdotdotT =
+        (overlapped_MV->getNumVectors() > 2) ? overlapped_MV->getVectorNonConst(2): Teuchos::null ;
     workset.current_time = current_time;
     workset.distParamLib = distParamLib;
     workset.disc = disc;
     //workset.delta_time = delta_time;
-    if (workset.xdotT != Teuchos::null) workset.transientTerms = true;
-    if (workset.xdotdotT != Teuchos::null) workset.accelerationTerms = true;
+    workset.transientTerms = Teuchos::nonnull(workset.xdotT);
+    workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);
 }
 
 void Albany::Application::loadWorksetJacobianInfo(PHAL::Workset& workset,
@@ -4301,8 +4296,8 @@ void Albany::Application::setupBasicWorksetInfo(
   else
     workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  if (overlapped_xdot != Teuchos::null) workset.transientTerms = true;
-  if (overlapped_xdotdot != Teuchos::null) workset.accelerationTerms = true;
+  workset.transientTerms = Teuchos::nonnull(workset.xdot);
+  workset.accelerationTerms = Teuchos::nonnull(workset.xdotdot);
 
   // Create Teuchos::Comm from Epetra_Comm
   const Epetra_Comm& comm = x->Map().Comm();
@@ -4322,10 +4317,27 @@ void Albany::Application::setupBasicWorksetInfoT(
   const Teuchos::Array<ParamVec>& p
   )
 {
-  Teuchos::RCP<Tpetra_Vector>& overlapped_xT = solMgrT->get_overlapped_xT();
-  Teuchos::RCP<Tpetra_Vector>& overlapped_xdotT = solMgrT->get_overlapped_xdotT();
-  Teuchos::RCP<Tpetra_Vector>& overlapped_xdotdotT = solMgrT->get_overlapped_xdotdotT();
-  Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
+/*
+  Teuchos::RCP<Tpetra_Vector> overlapped_xT = solMgrT->get_overlapped_xT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_xdotT = solMgrT->get_overlapped_xdotT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_xdotdotT = solMgrT->get_overlapped_xdotdotT();
+*/
+
+/*
+  Teuchos::RCP<const Tpetra_Vector> overlapped_xT;
+  Teuchos::RCP<const Tpetra_Vector> overlapped_xdotT;
+  Teuchos::RCP<const Tpetra_Vector> overlapped_xdotdotT;
+  solMgrT->getOverlappedSolution(overlapped_xT, overlapped_xdotT, overlapped_xdotdotT);
+*/
+
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_MV = solMgrT->getOverlappedSolution();
+  Teuchos::RCP<Tpetra_Vector> overlapped_xT = overlapped_MV->getVectorNonConst(0);
+  Teuchos::RCP<Tpetra_Vector> overlapped_xdotT =
+        (overlapped_MV->getNumVectors() > 1) ? overlapped_MV->getVectorNonConst(1): Teuchos::null ;
+  Teuchos::RCP<Tpetra_Vector> overlapped_xdotdotT =
+        (overlapped_MV->getNumVectors() > 2) ? overlapped_MV->getVectorNonConst(2): Teuchos::null ;
+
+  Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
@@ -4348,8 +4360,9 @@ void Albany::Application::setupBasicWorksetInfoT(
   else
     workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  if (overlapped_xdotT != Teuchos::null) workset.transientTerms = true;
-  if (overlapped_xdotdotT != Teuchos::null) workset.accelerationTerms = true;
+
+  workset.transientTerms = Teuchos::nonnull(workset.xdotT);
+  workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);
 
   workset.comm = commT;
 
@@ -4587,7 +4600,7 @@ void Albany::Application::setupTangentWorksetInfoT(
 {
   setupBasicWorksetInfoT(workset, current_time, xdotT, xdotdotT, xT, p);
 
-  Teuchos::RCP<Tpetra_Import>& importerT = solMgrT->get_importerT();
+  Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
 
   // Scatter Vx dot the overlapped distribution
   RCP<Tpetra_MultiVector> overlapped_VxT;

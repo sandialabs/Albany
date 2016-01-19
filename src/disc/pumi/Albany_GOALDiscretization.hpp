@@ -65,6 +65,13 @@ class GOALDiscretization : public PUMIDiscretization
     //! Update the mesh
     void updateMesh(bool shouldTransferIPData);
 
+#ifdef ALBANY_AERAS
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const 
+                 { Teuchos::RCP<const Tpetra_CrsGraph> graph; return graph; }
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const 
+                 { Teuchos::RCP<const Tpetra_CrsGraph> graph; return graph; }
+#endif
+
   private:
 
     //! Process APF mesh for Owned nodal quantitites
@@ -96,9 +103,9 @@ class GOALDiscretization : public PUMIDiscretization
 
     //! Solution field information
     void setFieldInformation();
-    std::vector<std::string> goalSolutionNames;
+    Teuchos::Array<std::string> goalSolutionNames;
     std::vector<std::string> goalAdjointSolutionNames;
-    std::vector<int> goalSolutionIndices;
+    Teuchos::Array<int> goalSolutionIndices;
     std::vector<apf::ValueType> goalSolutionTypes;
 
 };

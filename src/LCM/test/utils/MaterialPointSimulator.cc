@@ -518,7 +518,7 @@ int main(int ac, char* av[])
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<std::string>("Method", "STK3D");
-  discretizationParameterList->set<int>("Number Of Solution Vectors", 2);
+  discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name",
       output_file);

@@ -317,8 +317,10 @@ evaluateFields(typename Traits::EvalData workset)
 //  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
   
   xT_constView = xT->get1dView();
-  xdotT_constView = xdotT->get1dView();
-  xdotdotT_constView = xdotdotT->get1dView();
+  if(Teuchos::nonnull(xdotT))
+    xdotT_constView = xdotT->get1dView();
+  if(Teuchos::nonnull(xdotdotT))
+    xdotdotT_constView = xdotdotT->get1dView();
 
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (this->tensorRank == 1) {
@@ -654,8 +656,11 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
 
   xT_constView = xT->get1dView();
-  xdotT_constView = xdotT->get1dView();
-  xdotdotT_constView = xdotdotT->get1dView();
+  if(Teuchos::nonnull(xdotT))
+    xdotT_constView = xdotT->get1dView();
+  if(Teuchos::nonnull(xdotdotT))
+    xdotdotT_constView = xdotdotT->get1dView();
+
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
@@ -799,8 +804,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   //get const (read-only) view of xT and xdotT
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
 
   Teuchos::RCP<ParamVec> params = workset.params;
   //int num_cols_tot = workset.param_offset + workset.num_cols_p;
@@ -827,7 +830,13 @@ evaluateFields(typename Traits::EvalData workset)
         else
           valref = TanFadType(xT_constView[eqID[this->offset + eq]]);
       }
-      if (workset.transientTerms && this->enableTransient) {
+   }
+
+
+   if (workset.transientTerms && this->enableTransient) {
+    Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT>::type
           valref = ((this->tensorRank == 2) ? (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim) :
@@ -841,7 +850,12 @@ evaluateFields(typename Traits::EvalData workset)
           }
         }
       }
-      if (workset.accelerationTerms && this->enableAcceleration) {
+   }
+
+   if (workset.accelerationTerms && this->enableAcceleration) {
+    Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         for (std::size_t eq = 0; eq < numFields; eq++) {
         typename PHAL::Ref<ScalarT>::type
           valref = ((this->tensorRank == 2) ? (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim) :
@@ -894,8 +908,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   //get const (read-only) view of xT and xdotT
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
 
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -905,11 +917,21 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         for (std::size_t eq = 0; eq < numFields; eq++)
           (this->valVec)(cell,node,eq) = xT_constView[eqID[this->offset + eq]];
-        if (workset.transientTerms && this->enableTransient) {
+      }
+
+    if (workset.transientTerms && this->enableTransient) {
+    Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
           for (std::size_t eq = 0; eq < numFields; eq++)
             (this->valVec_dot)(cell,node,eq) = xdotT_constView[eqID[this->offset + eq]];
-        }
-        if (workset.accelerationTerms && this->enableAcceleration) {
+      }
+    }
+
+    if (workset.accelerationTerms && this->enableAcceleration) {
+    Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
           for (std::size_t eq = 0; eq < numFields; eq++)
             (this->valVec_dotdot)(cell,node,eq) = xdotdotT_constView[eqID[this->offset + eq]];
         }
@@ -925,11 +947,21 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         for (std::size_t eq = 0; eq < numFields; eq++)
           (this->valTensor)(cell,node,eq/numDim,eq%numDim) = xT_constView[eqID[this->offset + eq]];
-        if (workset.transientTerms && this->enableTransient) {
+      }
+
+    if (workset.transientTerms && this->enableTransient) {
+    Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim) = xdotdotT_constView[eqID[this->offset + eq]];
-        }
-        if (workset.accelerationTerms && this->enableAcceleration) {
+            (this->valTensor_dot)(cell,node,eq/numDim,eq%numDim) = xdotT_constView[eqID[this->offset + eq]];
+      }
+    }
+
+    if (workset.accelerationTerms && this->enableAcceleration) {
+    Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
           for (std::size_t eq = 0; eq < numFields; eq++)
             (this->valTensor_dotdot)(cell,node,eq/numDim,eq%numDim) = xdotdotT_constView[eqID[this->offset + eq]];
         }
@@ -943,11 +975,20 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         for (std::size_t eq = 0; eq < numFields; eq++)
           (this->val[eq])(cell,node) = xT_constView[eqID[this->offset + eq]];
-        if (workset.transientTerms && this->enableTransient) {
+      }
+    if (workset.transientTerms && this->enableTransient) {
+    Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
           for (std::size_t eq = 0; eq < numFields; eq++)
             (this->val_dot[eq])(cell,node) = xdotT_constView[eqID[this->offset + eq]];
-        }
-        if (workset.accelerationTerms && this->enableAcceleration) {
+      }
+    }
+
+    if (workset.accelerationTerms && this->enableAcceleration) {
+    Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
           for (std::size_t eq = 0; eq < numFields; eq++)
             (this->val_dotdot[eq])(cell,node) = xdotdotT_constView[eqID[this->offset + eq]];
         }

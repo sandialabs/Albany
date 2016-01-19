@@ -26,15 +26,6 @@ ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   computeError = params->get<bool>("Compute Error", false);
 
-  if(params->isParameter("Solution Method")){
-    std::string solutionMethod = params->get<std::string>("Solution Method");
-    if(solutionMethod == "Transient"){
-      // Problem supports transient
-      params->set<int>("Number Of Solution Vectors", 3);
-
-    }
-  }
-
   if (computeError)
     this->setNumEquations(2*neq);
 

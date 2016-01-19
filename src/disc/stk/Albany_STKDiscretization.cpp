@@ -922,8 +922,8 @@ Teuchos::RCP<Tpetra_MultiVector>
 Albany::STKDiscretization::getSolutionMV(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  int num_sol_vecs = stkMeshStruct->num_sol_vecs;
-  Teuchos::RCP<Tpetra_MultiVector> solnT = Teuchos::rcp(new Tpetra_MultiVector(mapT, num_sol_vecs, false));
+  int num_time_deriv = stkMeshStruct->num_time_deriv;
+  Teuchos::RCP<Tpetra_MultiVector> solnT = Teuchos::rcp(new Tpetra_MultiVector(mapT, num_time_deriv + 1, false));
   this->getSolutionMV(*solnT, overlapped);
   return solnT;
 }
@@ -1516,10 +1516,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   typedef AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
+  typedef AbstractSTKFieldContainer::SphereVolumeFieldType SphereVolumeFieldType;
 
   VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field;
+  SphereVolumeFieldType* sphereVolume_field;
   if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField()){
     sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
   }

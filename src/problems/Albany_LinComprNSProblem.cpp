@@ -24,10 +24,6 @@ LinComprNSProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
-
-  // Problem supports transient
-  params->set<int>("Number Of Solution Vectors", 2);
-
 }
 
 Albany::LinComprNSProblem::

@@ -31,6 +31,13 @@ class PUMIDiscretization : public APFDiscretization {
     //! Set restart data
     void setRestartData();
 
+#ifdef ALBANY_AERAS
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const 
+            { Teuchos::RCP<const Tpetra_CrsGraph> graph; return graph; }
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const 
+            { Teuchos::RCP<const Tpetra_CrsGraph> graph; return graph; }
+#endif
+
   private:
 
     Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct;

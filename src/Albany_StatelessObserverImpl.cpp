@@ -61,7 +61,7 @@ void StatelessObserverImpl::observeSolutionT (
 {
   Teuchos::TimeMonitor timer(*solOutTime_);
   const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
-    app_->getOverlapSolutionT(nonOverlappedSolutionT);
+    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionT(nonOverlappedSolutionT);
   app_->getDiscretization()->writeSolutionT(
     *overlappedSolutionT, stamp, /*overlapped =*/ true);
 }
@@ -71,7 +71,7 @@ void StatelessObserverImpl::observeSolutionT (
 {
   Teuchos::TimeMonitor timer(*solOutTime_);
   const Teuchos::RCP<const Tpetra_MultiVector> overlappedSolutionT =
-    app_->getOverlapSolutionMV(nonOverlappedSolutionT);
+    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionMV(nonOverlappedSolutionT);
   app_->getDiscretization()->writeSolutionMV(
     *overlappedSolutionT, stamp, /*overlapped =*/ true);
 }

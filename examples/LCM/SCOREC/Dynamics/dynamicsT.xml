@@ -35,7 +35,11 @@
     <Parameter name="PUMI Write Interval" type="int" value="1"/>
     <Parameter name="2nd Order Mesh" type="bool" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
+    <!-- Have both velocity and acceleration -->
+    <Parameter name="Number Of Time Derivatives" type="int" value="2"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{Disp, V, Pressure, S}"/>
+    <Parameter name="SolutionDot Vector Components" type="Array(string)" value="{Vel, V, PressureDot, S}"/>
+    <Parameter name="SolutionDotDot Vector Components" type="Array(string)" value="{Accel, V, PressureDotDot, S}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>

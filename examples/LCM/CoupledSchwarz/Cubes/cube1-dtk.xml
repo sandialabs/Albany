@@ -77,11 +77,11 @@
 	       type="string" value="cube1.exo"/>
     <Parameter name="Exodus Output File Name"
 	       type="string" value="cube1-dtk_out.exo"/>
-    <Parameter name="Number Of Solution Vectors" type="int" value="2"/>
     <Parameter name="Exodus Solution Name" type="string" value="disp"/>
     <Parameter name="Exodus Residual Name" type="string" value="resid"/>
     <Parameter name="Separate Evaluators by Element Block"
 	       type="bool" value="true"/>
+    <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
   </ParameterList>
   
 </ParameterList>

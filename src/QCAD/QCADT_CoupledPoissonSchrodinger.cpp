@@ -478,10 +478,17 @@ QCADT::CoupledPoissonSchrodinger::allocateVectors()
   xT_vecs.resize(num_models_);
   x_dotT_vecs.resize(num_models_);
 
-  Teuchos::RCP<Tpetra_Vector> xT_poisson = Teuchos::rcp(new Tpetra_Vector(*poissonApp->getInitialSolutionT()));
-  Teuchos::RCP<Tpetra_Vector> x_dotT_poisson = Teuchos::rcp(new Tpetra_Vector(*poissonApp->getInitialSolutionDotT())); 
-  Teuchos::RCP<Tpetra_Vector> xT_schro = Teuchos::rcp(new Tpetra_Vector(*schrodingerApp->getInitialSolutionT())); 
-  Teuchos::RCP<Tpetra_Vector> x_dotT_schro = Teuchos::rcp(new Tpetra_Vector(*schrodingerApp->getInitialSolutionDotT())); 
+  const Teuchos::RCP<const Tpetra_MultiVector> xMV_poisson = poissonApp->getAdaptSolMgrT()->getInitialSolution();
+  Teuchos::RCP<Tpetra_Vector> xT_poisson = Teuchos::rcp(new Tpetra_Vector(*xMV_poisson->getVector(0)));
+  TEUCHOS_TEST_FOR_EXCEPTION(xMV_poisson->getNumVectors() < 2, std::logic_error,
+     "QCADT_CoupledPoissonSchrodinger Poisson Error! Time derivative data is not present!");
+  Teuchos::RCP<Tpetra_Vector> x_dotT_poisson = Teuchos::rcp(new Tpetra_Vector(*xMV_poisson->getVector(1)));
+
+  const Teuchos::RCP<const Tpetra_MultiVector> xMV_schro = schrodingerApp->getAdaptSolMgrT()->getInitialSolution();
+  Teuchos::RCP<Tpetra_Vector> xT_schro = Teuchos::rcp(new Tpetra_Vector(*xMV_schro->getVector(0)));
+  TEUCHOS_TEST_FOR_EXCEPTION(xMV_schro->getNumVectors() < 2, std::logic_error,
+     "QCADT_CoupledPoissonSchrodinger Schrodinger Error! Time derivative data is not present!");
+  Teuchos::RCP<Tpetra_Vector> x_dotT_schro = Teuchos::rcp(new Tpetra_Vector(*xMV_schro->getVector(1)));
 
   //Poisson initial solution
   xT_vecs[0] = Thyra::createVector(xT_poisson, spaces[0]);

@@ -35,9 +35,6 @@ getVariableType(Teuchos::ParameterList& paramList,
   haveVariable = (variableType != NS_VAR_TYPE_NONE);
   haveEquation = (variableType == NS_VAR_TYPE_DOF);
 
-  // Problem supports transient
-  params->set<int>("Number Of Solution Vectors", 2);
-
 }
 
 std::string

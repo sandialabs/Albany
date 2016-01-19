@@ -168,7 +168,7 @@ void Albany::APFMeshStruct::init(
   cubatureDegree = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get("Workset Size", 50);
   interleavedOrdering = params->get("Interleaved Ordering",true);
-  num_sol_vecs = params->get<int>("Number Of Solution Vectors", 3);
+  num_time_deriv = params->get<int>("Number Of Time Derivatives", 2);
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
 
@@ -286,10 +286,14 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   solutionInitialized = false;
   residualInitialized = false;
 
-  for(int i = 0; i < num_sol_vecs; i++){
+  if (solVectorLayout[0].size() == 0) {
 
     // If the user has not specified a solution vector layout, provide a simple default
-    if (solVectorLayout[i].size() == 0) {
+    // Note that the logic here requires that the user enter something for the "Solution Vector Components",
+    // or they will get the default.
+
+    for(int i = 0; i <= num_time_deriv; i++){
+
       int valueType;
       if (neq==1)
         valueType = apf::SCALAR;
@@ -310,9 +314,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
           solutionInitialized = true;
       }
     }
-    else
-      splitFields(solVectorLayout);
   }
+  else
+    splitFields(solVectorLayout);
 
   // Code to parse the vector of StateStructs and save the information
 
@@ -364,7 +368,7 @@ void
 Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >& fieldLayout)
 { // user is breaking up or renaming solution & residual fields
 
-  for(int fcomp = 0; fcomp < num_sol_vecs; fcomp++){
+  for(int fcomp = 0; fcomp <= num_time_deriv; fcomp++){
 
     TEUCHOS_TEST_FOR_EXCEPTION((fieldLayout[fcomp].size() % 2), std::logic_error,
         "Error in input file: specification of solution vector layout is incorrect\n");
@@ -372,6 +376,10 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >&
     int valueType;
 
     for (std::size_t i=0; i < fieldLayout[fcomp].size(); i+=2) {
+
+      TEUCHOS_TEST_FOR_EXCEPTION(mesh->findField(fieldLayout[fcomp][i].c_str()), std::logic_error,
+            "Error in input file: specification of solution vector layout is incorrect\n"
+            << " Found duplicate field name.");
 
       if (fieldLayout[fcomp][i+1] == "S")
         valueType = apf::SCALAR;
@@ -383,8 +391,11 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >&
 
       this->createNodalField(fieldLayout[fcomp][i].c_str(),valueType);
       // Add the residual field - based on the text entered in the "Solution" PL only
-      if(fcomp == 0)
-        this->createNodalField(fieldLayout[fcomp][i].append("Res").c_str(),valueType);
+      if(fcomp == 0){
+        std::string res_name = fieldLayout[fcomp][i];
+        res_name.append("Res");
+        this->createNodalField(res_name.c_str(),valueType);
+      }
     }
 
     if (hasRestartSolution)

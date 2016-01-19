@@ -20,9 +20,6 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   *out << "Problem Name = " << method << std::endl;
   peridigmParams = Teuchos::rcpFromRef(params->sublist("Peridigm Parameters", true));
 
-  // Problem supports transient
-  params->set<int>("Number Of Solution Vectors", 3);
-
   // Only support 3D analyses
   TEUCHOS_TEST_FOR_EXCEPTION(neq != 3,
                              Teuchos::Exceptions::InvalidParameter,

@@ -58,6 +58,7 @@ private:
 
   // Constant convection
   bool convectionTerm;
+  bool enableTransient;
   std::vector<double> u;
 
 };

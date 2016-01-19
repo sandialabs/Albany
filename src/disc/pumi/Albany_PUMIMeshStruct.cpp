@@ -204,7 +204,7 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<int>("PUMI Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<bool>("2nd Order Mesh", false, "Flag to indicate 2nd order Lagrange shape functions");
-  validPL->set<int>("Number Of Solution Vectors", 1, "Number of time derivatives in use in the problem");
+  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
 
   validPL->set<std::string>("PUMI Input File Name", "", "File Name For PUMI Mesh Input");
   validPL->set<std::string>("PUMI Output File Name", "", "File Name For PUMI Mesh Output");

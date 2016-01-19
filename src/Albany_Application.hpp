@@ -128,19 +128,12 @@ namespace Albany {
 
     //! Get initial solution
     Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
-#endif
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
-
-    //! Get Tpetra initial solution
-//    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
 
     //! Get initial solution dot
-#if defined(ALBANY_EPETRA)
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
+
 #endif
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotDotT() const;
 
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
@@ -728,14 +721,6 @@ namespace Albany {
     }
 #endif
 
-    Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT) {
-      return solMgrT->getOverlapSolutionT(solutionT);
-    }
-
-    Teuchos::RCP<Tpetra_MultiVector> getOverlapSolutionMV(const Tpetra_MultiVector& solutionT) {
-      return solMgrT->getOverlapSolutionMV(solutionT);
-    }
-
     bool is_adjoint;
 
   private:
@@ -999,12 +984,6 @@ namespace Albany {
       return name;
     }
 
-    Teuchos::RCP<Tpetra_Vector>
-    getOverlappedSolutionT()
-    {
-      return solMgrT->get_overlapped_xT();
-    }
-
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
@@ -1187,6 +1166,8 @@ namespace Albany {
 #endif
 
     int derivatives_check_;
+
+    int num_time_deriv;
 
   };
 }

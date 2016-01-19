@@ -25,9 +25,6 @@ PhaseProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::string filename = params->get<std::string>("MaterialDB Filename");
   material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
 
-  // Problem supports transient
-//  params->set<int>("Number Of Solution Vectors", 2);
-
   this->setNumEquations(1);
 }
 

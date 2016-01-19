@@ -54,6 +54,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef typename AbstractSTKFieldContainer::SphereVolumeFieldType SVFT;
 
   sol_vector_name.resize(solution_vector.size());
   sol_index.resize(solution_vector.size());
@@ -235,11 +236,9 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
 #if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
-  // for whatever reason, its type is stk::mesh::Field<double, stk::mesh::Cartesian3d>
-  // the read won't work if you try to read it as a SFT
   bool hasSphereVolumeFieldContainerRequirement = (std::find(req.begin(), req.end(), "Sphere Volume") != req.end());
   if(hasSphereVolumeFieldContainerRequirement){
-    this->sphereVolume_field = metaData_->template get_field< stk::mesh::Field<double, stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+    this->sphereVolume_field = metaData_->template get_field< SVFT >(stk::topology::ELEMENT_RANK, "volume");
     if(this->sphereVolume_field != 0){
       buildSphereVolume = true;
       stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
@@ -355,14 +354,14 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillVector(Epetra_Vector& fiel
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
   if(nodalDofManager.numComponents() > 1) {
-    AbstractSTKFieldContainer::VectorFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->fillVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
     }
   }
   else {
-    AbstractSTKFieldContainer::ScalarFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->fillVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
@@ -511,14 +510,14 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveVector(const Epetra_Vector
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
   if(nodalDofManager.numComponents() > 1) {
-    AbstractSTKFieldContainer::VectorFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->saveVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
     }
   }
   else {
-    AbstractSTKFieldContainer::ScalarFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->saveVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);

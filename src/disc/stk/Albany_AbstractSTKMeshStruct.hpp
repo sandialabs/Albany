@@ -74,7 +74,7 @@ namespace Albany {
 
     bool transferSolutionToCoords;
 
-    int num_sol_vecs;
+    int num_time_deriv;
 
     // Solution history
     virtual int getSolutionFieldHistoryDepth() const { return 0; } // No history by default

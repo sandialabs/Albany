@@ -57,8 +57,9 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef typename AbstractSTKFieldContainer::SphereVolumeFieldType SVFT;
 
-  int num_sol_vecs = params_->get<int>("Number Of Solution Vectors");
+  int num_time_deriv = params_->get<int>("Number Of Time Derivatives");
 
   //Start STK stuff
   this->coordinates_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, "coordinates");
@@ -67,10 +68,10 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
 #endif
 
-  solution_field.resize(num_sol_vecs);
-  solution_field_dtk.resize(num_sol_vecs);
+  solution_field.resize(num_time_deriv + 1);
+  solution_field_dtk.resize(num_time_deriv + 1);
 
-  for(int num_vecs = 0; num_vecs < num_sol_vecs; num_vecs++){
+  for(int num_vecs = 0; num_vecs <= num_time_deriv; num_vecs++){
 
     solution_field[num_vecs] = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
                                     params_->get<std::string>(sol_tag_name[num_vecs], sol_id_name[num_vecs]));
@@ -103,11 +104,9 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
 #if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
-  // for whatever reason, its type is stk::mesh::Field<double, stk::mesh::Cartesian3d>
-  // the read won't work if you try to read it as a SFT
   bool hasSphereVolumeFieldContainerRequirement = (std::find(req.begin(), req.end(), "Sphere Volume") != req.end());
   if(hasSphereVolumeFieldContainerRequirement){
-    this->sphereVolume_field = metaData_->template get_field< stk::mesh::Field<double, stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+    this->sphereVolume_field = metaData_->template get_field< SVFT >(stk::topology::ELEMENT_RANK, "volume");
     if(this->sphereVolume_field != 0){
       buildSphereVolume = true;
       stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
@@ -256,14 +255,14 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::fillVector(Epetra_Vector& f
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
   if(nodalDofManager.numComponents() > 1) {
-    AbstractSTKFieldContainer::VectorFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->fillVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
     }
   }
   else {
-    AbstractSTKFieldContainer::ScalarFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->fillVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
@@ -279,14 +278,14 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveVector(const Epetra_Vec
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
   if(nodalDofManager.numComponents() > 1) {
-    AbstractSTKFieldContainer::VectorFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->saveVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
     }
   }
   else {
-    AbstractSTKFieldContainer::ScalarFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->saveVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);

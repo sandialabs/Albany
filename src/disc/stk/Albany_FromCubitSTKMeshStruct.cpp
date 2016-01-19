@@ -137,7 +137,7 @@ Albany::FromCubitSTKMeshStruct::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
      rcp(new Teuchos::ParameterList("ValidCubit_DiscParams"));;
   validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
-  validPL->set<int>("Number Of Solution Vectors", 1, "Number of time derivatives in use in the problem");
+  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
   validPL->set<int>("Morph Method", 0, "Integer flag so select CUTR MeshMover Morph Method");
   validPL->set<std::string>("Exodus Output File Name", "",
     "Request exodus output to given file name. Requires SEACAS build");

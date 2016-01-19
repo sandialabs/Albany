@@ -37,9 +37,6 @@ XScalarAdvectionProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   neq       = numLevels*(1+numTracers);
 
-  // Problem supports transient
-  params->set<int>("Number Of Solution Vectors", 2);
-
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
 }

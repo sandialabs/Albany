@@ -137,6 +137,10 @@ namespace Albany {
     //! Number of equations per node being solved
     unsigned int neq;
 
+    //! Number of time derivatives used in the problem
+    //! 0 = x, 1 = xdot, 2 = xdotdot
+    int number_of_time_deriv;
+
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;
 

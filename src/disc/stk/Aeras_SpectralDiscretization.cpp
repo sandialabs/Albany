@@ -929,8 +929,8 @@ Aeras::SpectralDiscretization::getSolutionFieldT(bool overlapped) const
 Teuchos::RCP<Tpetra_MultiVector>
 Aeras::SpectralDiscretization::getSolutionMV(bool overlapped) const
 {
-  int num_sol_vecs = stkMeshStruct->num_sol_vecs;
-  Teuchos::RCP<Tpetra_MultiVector> solnMV = Teuchos::rcp(new Tpetra_MultiVector(mapT, num_sol_vecs, false));
+  int num_time_deriv = stkMeshStruct->num_time_deriv;
+  Teuchos::RCP<Tpetra_MultiVector> solnMV = Teuchos::rcp(new Tpetra_MultiVector(mapT, num_time_deriv + 1, false));
   this->getSolutionMV(*solnMV, overlapped);
   return solnMV;
 }
@@ -2392,13 +2392,14 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   typedef Albany::AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
+  typedef Albany::AbstractSTKFieldContainer::SphereVolumeFieldType SphereVolumeFieldType;
 
   VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   // IK, 1/22/15: changing type of sphereVolume_field to propagate
   // David Littlewood's change yesterday, so code will compile.  Need
   // to look into whether sphereVolume_field is needed for Aeras.
   // ScalarFieldType* sphereVolume_field;
-  stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field;
+  SphereVolumeFieldType* sphereVolume_field;
 
   if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
     sphereVolume_field =

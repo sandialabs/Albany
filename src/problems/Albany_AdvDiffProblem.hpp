@@ -138,8 +138,16 @@ Albany::AdvDiffProblem::constructEvaluators(
 
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
+   bool supportsTransient = false;
+   if(number_of_time_deriv > 0) 
+      supportsTransient = true;
    int offset=0;
+
+   // This problem appears to be only defined as a transient problem, throw exception if it is not
+   TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv != 1,
+      std::logic_error,
+      "Albany_AdvDiffProblem must be defined as a transient calculation.");
 
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -150,15 +158,19 @@ Albany::AdvDiffProblem::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "U";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if (supportsTransient)
+       dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "AdvDiff Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+
+     if (supportsTransient) fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+     else fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
+     if (supportsTransient) fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
      //     fm0.template registerEvaluator<EvalT>

@@ -68,8 +68,8 @@ QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::Parame
     }
   }
 
-  // Problem supports transient
-  params->set<int>("Number Of Solution Vectors", 2);
+  // Problem is transient
+  params->set<int>("Number Of Time Derivatives", 1);
 
   TEUCHOS_TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
 		     "\nError! Schrodinger problem does not parse Source Functions sublist\n" 

@@ -233,7 +233,7 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
           const arg_type *source_field, \
           arg_type *target_field);
 
-#if defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA) // Both Epetra and Tpetra templates
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
@@ -245,12 +245,17 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHN(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHN(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHN(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+\
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHT(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHT(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SMVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SMVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, true, AbstractSTKFieldContainer::VectorFieldType) \
-  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType)
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType) 
 #else
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
@@ -264,6 +269,6 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, true, AbstractSTKFieldContainer::VectorFieldType) \
-  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType)
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType) 
 #endif // ALBANY_EPETRA
 #endif // ALBANY_GENERICSTKFIELDCONT_HPP

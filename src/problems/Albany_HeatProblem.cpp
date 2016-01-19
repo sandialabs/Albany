@@ -33,9 +33,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   haveAbsorption =  params->isSublist("Absorption");
 
-  // Problem supports transient
-  params->set<int>("Number Of Solution Vectors", 2);
-
   if(params->isType<std::string>("MaterialDB Filename")){
 
     std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
@@ -43,7 +40,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   }
-
 
 }
 

@@ -21,6 +21,8 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="TransientHMC_2DQuad.gen"/>
     <Parameter name="Exodus Output File Name" type="string" value="TransientHMC_2DQuad.exo"/>
+    <!-- solution, solution_dot, solution_dotdot -->
+    <Parameter name="Number Of Time Derivatives" type="int" value="2"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Newmark">

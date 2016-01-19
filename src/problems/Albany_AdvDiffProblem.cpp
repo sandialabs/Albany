@@ -28,7 +28,6 @@ AdvDiffProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (useAugForm) //if we're using the augmented form of the equations, there are 2 extra auxiliary dofs / node (in 2D).
     neq = neq + 2;
   std::cout << "useAugForm, neq: " << useAugForm << ", " << neq << std::endl; 
-  params->set<int>("Number Of Solution Vectors", 2);
 
 }
 

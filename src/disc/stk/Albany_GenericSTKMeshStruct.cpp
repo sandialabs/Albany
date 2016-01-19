@@ -92,7 +92,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   interleavedOrdering = params->get("Interleaved Ordering",true);
   allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
-  num_sol_vecs = params->get<int>("Number Of Solution Vectors");
+  num_time_deriv = params->get<int>("Number Of Time Derivatives");
 
   requiresAutomaticAura = params->get<bool>("Use Automatic Aura", false);
 
@@ -135,7 +135,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   // Build the container for the STK fields
   Teuchos::Array<std::string> default_solution_vector; // Empty
   Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
-  solution_vector.resize(num_sol_vecs);
+  solution_vector.resize(num_time_deriv + 1);
   bool user_specified_solution_components = false;
   solution_vector[0] =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
@@ -143,14 +143,14 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   if(solution_vector[0].length() > 0)
      user_specified_solution_components = true;
 
-  if(num_sol_vecs >= 2){
+  if(num_time_deriv >= 1){
     solution_vector[1] =
       params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
     if(solution_vector[1].length() > 0)
        user_specified_solution_components = true;
   }
 
-  if(num_sol_vecs >= 3){
+  if(num_time_deriv >= 2){
     solution_vector[2] =
       params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
     if(solution_vector[2].length() > 0)
@@ -732,7 +732,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
-  validPL->set<int>("Number Of Solution Vectors", 1, "Number of time derivatives in use in the problem");
+  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
   validPL->set<std::string>("Exodus Output File Name", "",
       "Request exodus output to given file name. Requires SEACAS build");
   validPL->set<std::string>("Exodus Solution Name", "",
@@ -780,7 +780,6 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<Teuchos::Array<std::string> >("Residual Vector Components", defaultFields,
       "Names and layout of residual output vector written to Exodus file. Requires SEACAS build");
 
-  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");

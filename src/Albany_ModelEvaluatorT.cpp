@@ -193,10 +193,14 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
   {
 
-    if(Teuchos::nonnull(app->getInitialSolutionDotT()))
+    // Determine the number of solution vectors (x, xdot, xdotdot)
+
+    int num_sol_vectors = app->getAdaptSolMgrT()->getInitialSolution()->getNumVectors();
+
+    if(num_sol_vectors > 1) // have x dot
       supports_xdot = true;
 
-    if(Teuchos::nonnull(app->getInitialSolutionDotDotT()))
+    if(num_sol_vectors > 2) // have both x dot and x dotdot
       supports_xdotdot = true;
 
     // Setup nominal values
@@ -222,31 +226,33 @@ Albany::ModelEvaluatorT::allocateVectors()
 {
 
      const Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
+     const Teuchos::RCP<const Tpetra_Map> map = app->getMapT();
+     const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > xT_space = Thyra::createVectorSpace<ST>(map);
+     const Teuchos::RCP<const Tpetra_MultiVector> xMV = app->getAdaptSolMgrT()->getInitialSolution();
 
       // Create Tpetra objects to be wrapped in Thyra
-      const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();
-      const Teuchos::RCP<const Tpetra_Vector> x_dotT_init = app->getInitialSolutionDotT();
-      const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = app->getInitialSolutionDotDotT();
-      const Teuchos::RCP<const Tpetra_Map> map = app->getMapT();
-      const Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > xT_space = Thyra::createVectorSpace<ST>(map);
 
+      const Teuchos::RCP<const Tpetra_Vector> xT_init = xMV->getVector(0);
       // Create non-const versions of xT_init and x_dotT_init
       const Teuchos::RCP<Tpetra_Vector> xT_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*xT_init));
       nominalValues.set_x(Thyra::createVector(xT_init_nonconst, xT_space));
 
-      if(Teuchos::nonnull(x_dotT_init)){
-        const Teuchos::RCP<Tpetra_Vector> x_dotT_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*x_dotT_init));
-        nominalValues.set_x_dot(Thyra::createVector(x_dotT_init_nonconst, xT_space));
+      // Have xdot
+      if(xMV->getNumVectors() > 1){
+         const Teuchos::RCP<const Tpetra_Vector> x_dotT_init = xMV->getVector(1);
+         const Teuchos::RCP<Tpetra_Vector> x_dotT_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*x_dotT_init));
+         nominalValues.set_x_dot(Thyra::createVector(x_dotT_init_nonconst, xT_space));
       }
 
-      // Set xdotdot in parent class to pass to time integrator as it is not supported in Thyra
+      // Have xdotdot
+      if(xMV->getNumVectors() > 2){
+        // Set xdotdot in parent class to pass to time integrator as it is not supported in Thyra
 
-      // GAH set x_dotdot for transient simulations. Note that xDotDot is a member of
-      // Piro::TransientDecorator<ST, LO, GO, KokkosNode>
-
-      if(Teuchos::nonnull(x_dotdotT_init)){
-        const Teuchos::RCP<Tpetra_Vector> x_dotdotT_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_init));
-        this->xDotDot = Thyra::createVector(x_dotdotT_init_nonconst, xT_space);
+        // GAH set x_dotdot for transient simulations. Note that xDotDot is a member of
+        // Piro::TransientDecorator<ST, LO, GO, KokkosNode>
+         const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = xMV->getVector(2);
+         const Teuchos::RCP<Tpetra_Vector> x_dotdotT_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_init));
+         this->xDotDot = Thyra::createVector(x_dotdotT_init_nonconst, xT_space);
       }
       else
         this->xDotDot = Teuchos::null;
@@ -765,6 +771,12 @@ Albany::ModelEvaluatorT::createInArgsImpl() const
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
+  }
+  else {
+    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, false);
+    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, false);
+    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, false);
+    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, false);
   }
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
   //result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_omega, true);

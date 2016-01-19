@@ -123,6 +123,12 @@ Albany::CahnHillProblem::constructEvaluators(
    using std::string;
    using PHAL::AlbanyTraits;
 
+  // Problem is transient
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv != 1,
+      std::logic_error,
+      "Albany_CahnHillProblem must be defined as a transient calculation.");
+
    const CellTopologyData * const elem_top = &meshSpecs.ctd;
 
    RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >

@@ -581,7 +581,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       */
       // Piro::SolverFactory
 //      return piroFactory.createSolver<ST>(piroParams, ps_model);
-      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, ps_model, Truchos::null);
+      RCP<Thyra::AdaptiveSolutionManager> solMgrT = Teuchos::null;
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, ps_model, solMgrT, Teuchos::null /* observer */);
 
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");

@@ -59,6 +59,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef stk::mesh::Field<double, QPTag, stk::mesh::Cartesian > QPVectorFieldType ;
     // One scalar per QP   - (Cell, QP)
     typedef stk::mesh::Field<double, QPTag>                      QPScalarFieldType ;
+    typedef stk::mesh::Field<double, stk::mesh::Cartesian3d>     SphereVolumeFieldType ;
 
     typedef std::vector<const std::string*> ScalarValueState;
     typedef std::vector<QPScalarFieldType*> QPScalarState;
@@ -81,7 +82,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 #if defined(ALBANY_LCM)
     IntScalarFieldType* getFractureState(stk::topology::rank_t rank){ return fracture_state[rank]; }
 #endif // ALBANY_LCM
-    stk::mesh::Field<double,stk::mesh::Cartesian3d>* getSphereVolumeField(){ return sphereVolume_field; }
+    SphereVolumeFieldType* getSphereVolumeField(){ return sphereVolume_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -125,7 +126,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     IntScalarFieldType* fracture_state[stk::topology::ELEMENT_RANK];
 #endif // ALBANY_LCM
 
-    stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field; // Required for Peridynamics in LCM
+    SphereVolumeFieldType* sphereVolume_field; // Required for Peridynamics in LCM
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;
