@@ -77,67 +77,67 @@ public:
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
       }
 
-    private:
+private:
 
-      ///
-      /// Private to prohibit copying
-      ///
-      CrystalPlasticityModel(const CrystalPlasticityModel&);
+  ///
+  /// Private to prohibit copying
+  ///
+  CrystalPlasticityModel(const CrystalPlasticityModel&);
 
-      ///
-      /// Private to prohibit copying
-      ///
-      CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
+  ///
+  /// Private to prohibit copying
+  ///
+  CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
-      ///
-      /// Crystal elasticity parameters
-      ///
-      RealType c11_, c12_, c44_;
-      Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
-      Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
+  ///
+  /// Crystal elasticity parameters
+  ///
+  RealType c11_, c12_, c44_;
+  Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
+  Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
 
-      ///
-      /// Number of slip systems
-      ///
-      int num_slip_;
+  ///
+  /// Number of slip systems
+  ///
+  int num_slip_;
 
-      ///
-      /// Crystal Plasticity parameters
-      ///
-      RealType rate_slip_reference_, exponent_rate_, energy_activation_, 
-        H_, Rd_, tau_critical_,
-        resistance_slip_initial_, rate_hardening_, stress_saturation_initial_,
-        exponent_saturation_;
+  ///
+  /// Crystal Plasticity parameters
+  ///
+  RealType rate_slip_reference_, exponent_rate_, energy_activation_, 
+    H_, Rd_, tau_critical_,
+    resistance_slip_initial_, rate_hardening_, stress_saturation_initial_,
+    exponent_saturation_;
 
-      std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
-      slip_systems_;
+  std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
+  slip_systems_;
 
+  ///
+  /// Constitutive relations
+  ///
+  CP::FlowRule flow_rule_;
+  CP::HardeningLaw hardening_law_;
 
-      ///
-      /// Constitutive relations
-      ///
-      CP::FlowRule flow_rule_;
-      CP::HardeningLaw hardening_law_;
+  ///
+  /// Solution options
+  ///
+  IntegrationScheme integration_scheme_;
+  ResidualType residual_type_;
+  bool apply_slip_predictor_;
+  Intrepid2::StepType step_type_;
 
-      ///
-      /// Solution options
-      ///
-      IntegrationScheme integration_scheme_;
-      ResidualType residual_type_;
-      bool apply_slip_predictor_;
-      Intrepid2::StepType step_type_;
+  RealType implicit_nonlinear_solver_relative_tolerance_;
+  RealType implicit_nonlinear_solver_absolute_tolerance_;
+  int implicit_nonlinear_solver_max_iterations_;
+  int implicit_nonlinear_solver_min_iterations_;
 
-      RealType implicit_nonlinear_solver_relative_tolerance_;
-      RealType implicit_nonlinear_solver_absolute_tolerance_;
-      int implicit_nonlinear_solver_max_iterations_;
-      int implicit_nonlinear_solver_min_iterations_;
+  ///
+  /// Output options
+  ///
+  int verbosity_;
+  bool write_data_file_;
+};
 
-      ///
-      /// Output options
-      ///
-      int verbosity_;
-      bool write_data_file_;
-    };
-  }
+}
 
 #endif
