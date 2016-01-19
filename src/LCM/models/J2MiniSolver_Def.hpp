@@ -13,20 +13,21 @@ namespace LCM
 //
 template<typename EvalT, typename Traits>
 J2MiniSolver<EvalT, Traits>::
-J2MiniSolver(Teuchos::ParameterList* p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
+J2MiniSolver(
+    Teuchos::ParameterList * p,
+    Teuchos::RCP<Albany::Layouts> const & dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
     sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
     sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
 {
   // retrive appropriate field name strings
-  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-  std::string Fp_string = (*field_name_map_)["Fp"];
-  std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string yieldSurface_string = (*field_name_map_)["Yield_Surface"];
-  std::string source_string = (*field_name_map_)["Mechanical_Source"];
-  std::string F_string = (*field_name_map_)["F"];
-  std::string J_string = (*field_name_map_)["J"];
+  std::string const cauchy_string = (*field_name_map_)["Cauchy_Stress"];
+  std::string const Fp_string = (*field_name_map_)["Fp"];
+  std::string const eqps_string = (*field_name_map_)["eqps"];
+  std::string const yieldSurface_string = (*field_name_map_)["Yield_Surface"];
+  std::string const source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string const F_string = (*field_name_map_)["F"];
+  std::string const J_string = (*field_name_map_)["J"];
 
   // define the dependent fields
   this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
