@@ -196,11 +196,13 @@ Albany::STKDiscretization::getJacobianGraphT() const
   return graphT;
 }
 
+#ifdef ALBANY_AERAS
 Teuchos::RCP<const Tpetra_CrsGraph>
 Albany::STKDiscretization::getImplicitJacobianGraphT() const
 {
   return graphT;
 }
+#endif
 
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
