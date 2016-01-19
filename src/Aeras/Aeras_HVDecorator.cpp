@@ -124,11 +124,15 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  double curr_time = 0.0; 
+  double curr_time = 0.0;
+  //Get implicit_graphT from discretization object
+  Teuchos::RCP<const Tpetra_CrsGraph> implicit_graphT = 
+    app->getDiscretization()->getImplicitJacobianGraphT();  
+  //Define operator Op from implicit_graphT
   const Teuchos::RCP<Tpetra_Operator> Op =
-    Teuchos::nonnull(this->create_W_op()) ?
-    ConverterT::getTpetraOperator(this->create_W_op()) :
-    Teuchos::null;
+    Teuchos::nonnull(implicit_graphT) ? 
+    Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT)) :
+    Teuchos::null; 
   const Teuchos::RCP<Tpetra_CrsMatrix> Op_crs =
     Teuchos::nonnull(Op) ?
     Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :

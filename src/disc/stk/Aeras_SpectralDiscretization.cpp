@@ -214,6 +214,12 @@ Aeras::SpectralDiscretization::getJacobianGraphT() const
   return graphT;
 }
 
+Teuchos::RCP<const Tpetra_CrsGraph>
+Aeras::SpectralDiscretization::getImplicitJacobianGraphT() const
+{
+  return implicit_graphT;
+}
+
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
 Aeras::SpectralDiscretization::getOverlapJacobianGraph() const
@@ -2059,6 +2065,88 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   }
 }
 
+Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+
+#ifdef OUTPUT_TO_SCREEN
+  *out << "nodes_per_element: " << nodes_per_element << std::endl;
+#endif
+
+  Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT_ = Teuchos::null; 
+  overlap_graphT_ = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
+                                                    neq*nodes_per_element));
+
+  stk::mesh::Selector select_owned =
+    stk::mesh::Selector(metaData.locally_owned_part());
+  
+  const stk::mesh::BucketVector & buckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+
+  const int numBuckets = buckets.size();
+  
+  if (commT->getRank()==0)
+    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 "
+         << std::endl;
+
+  GO row, col;
+  Teuchos::ArrayView<GO> colAV;
+  
+  //Populate the graphs
+  for (int b = 0; b < numBuckets; ++b)
+  {
+    stk::mesh::Bucket & buck = *buckets[b];
+    // i is the element index within bucket b
+    for (std::size_t i = 0; i < buck.size(); ++i)
+    {
+      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+      for (int j = 0; j < nodes_per_element; ++j)
+      {
+        const GO rowNode = node_rels[j];
+        // loop over eqs
+        for (std::size_t k=0; k < neq; k++)
+        {
+          row = getGlobalDOF(rowNode, k);
+          for (std::size_t l=0; l < nodes_per_element; l++)
+          {
+            const GO colNode = node_rels[l];
+            for (std::size_t m=0; m < neq; m++)
+            {
+              col = getGlobalDOF(colNode, m);
+              colAV = Teuchos::arrayView(&col, 1);
+              overlap_graphT_->insertGlobalIndices(row, colAV);
+            }
+          }
+        }
+      }
+    }
+  }
+  overlap_graphT_->fillComplete();
+
+  return overlap_graphT_; 
+}
+
+Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOwnedGraph()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+
+  // Create Owned graph by exporting overlap with known row map
+  Teuchos::RCP<Tpetra_CrsGraph> graphT_ = Teuchos::null; 
+
+  graphT_ = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
+
+  // Create non-overlapped matrix using two maps and export object
+  Teuchos::RCP<Tpetra_Export> exporterT =
+    Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
+  graphT_->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
+  graphT_->fillComplete();
+
+  return graphT_; 
+}
 
 void Aeras::SpectralDiscretization::computeGraphs()
 {
@@ -3472,11 +3560,18 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   // IKT, 1/18/16: check if time-integration scheme is explicit or implicit 
   // and call appropriate computeGraphs routine depending on what kind of scheme. 
   // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
-  // only call this function for hydrostatic (numLevels > 0)  
-  if (explicit_scheme == true && numLevels > 0) 
-    computeGraphs_Explicit();  
-  else
-    computeGraphs();
+  // only call this function for hydrostatic (numLevels > 0) 
+
+  if (explicit_scheme == true && numLevels > 0) { //explicit scheme 
+    computeGraphs_Explicit(); 
+    //populate implicit_graphT, needed to populate Laplace operator for hyperviscosity 
+    implicit_graphT = computeOwnedGraph();  
+  }
+  else { //implicit scheme
+    overlap_graphT = computeOverlapGraph(); 
+    graphT = computeOwnedGraph(); 
+    implicit_graphT = computeOwnedGraph(); 
+  }
    
 
 

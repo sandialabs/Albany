@@ -232,7 +232,10 @@ namespace Aeras
 #endif
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
-
+    
+    //! Get Tpetra Jacobian graph (non-diagonal) 
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const;
+    
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
@@ -555,6 +558,9 @@ namespace Aeras
 
     //! Process spectral Albany mesh for CRS Graphs
     void computeGraphs();
+    Teuchos::RCP<Tpetra_CrsGraph> computeOverlapGraph();
+    Teuchos::RCP<Tpetra_CrsGraph> computeOwnedGraph();
+
     //  The following function allocates the graph of a diagonal Jacobian, 
     //  relevant for explicit schemes.
     void computeGraphs_Explicit();
@@ -644,6 +650,9 @@ namespace Aeras
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT; 
+    
+    //! Jacobian matrix implicit graph
+    Teuchos::RCP<Tpetra_CrsGraph> implicit_graphT; 
 
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT; 

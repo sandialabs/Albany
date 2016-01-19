@@ -196,6 +196,12 @@ Albany::STKDiscretization::getJacobianGraphT() const
   return graphT;
 }
 
+Teuchos::RCP<const Tpetra_CrsGraph>
+Albany::STKDiscretization::getImplicitJacobianGraphT() const
+{
+  return graphT;
+}
+
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getOverlapJacobianGraph() const
