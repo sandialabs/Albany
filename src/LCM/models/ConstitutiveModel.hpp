@@ -91,7 +91,7 @@ public:
       std::string const & field_name,
       Teuchos::RCP<PHX::DataLayout> const & field)
   {
-    this->dep_field_map_.insert(std::make_pair(field_name, field));
+    dep_field_map_.insert(std::make_pair(field_name, field));
   }
 
   ///
@@ -102,7 +102,7 @@ public:
       std::string const & field_name,
       Teuchos::RCP<PHX::DataLayout> const & field)
   {
-    this->eval_field_map_.insert(std::make_pair(field_name, field));
+    eval_field_map_.insert(std::make_pair(field_name, field));
   }
 
   ///

@@ -30,23 +30,21 @@ J2MiniSolver(
   std::string const J_string = (*field_name_map_)["J"];
 
   // define the dependent fields
-  this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
-  this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Yield Strength", dl->qp_scalar));
-  this->dep_field_map_.insert(
-      std::make_pair("Hardening Modulus", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
+  this->setDependentField(F_string, dl->qp_tensor);
+  this->setDependentField(J_string, dl->qp_scalar);
+  this->setDependentField("Poissons Ratio", dl->qp_scalar);
+  this->setDependentField("Elastic Modulus", dl->qp_scalar);
+  this->setDependentField("Yield Strength", dl->qp_scalar);
+  this->setDependentField("Hardening Modulus", dl->qp_scalar);
+  this->setDependentField("Delta Time", dl->workset_scalar);
 
   // define the evaluated fields
-  this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
-  this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
-  this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
-  this->eval_field_map_.insert(
-      std::make_pair(yieldSurface_string, dl->qp_scalar));
+  this->setEvaluatedField(cauchy_string, dl->qp_tensor);
+  this->setEvaluatedField(Fp_string, dl->qp_tensor);
+  this->setEvaluatedField(eqps_string, dl->qp_scalar);
+  this->setEvaluatedField(yieldSurface_string, dl->qp_scalar);
   if (have_temperature_) {
-    this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+    this->setEvaluatedField(source_string, dl->qp_scalar);
   }
 
   // define the state variables
