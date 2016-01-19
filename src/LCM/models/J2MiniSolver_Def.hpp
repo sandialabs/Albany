@@ -445,7 +445,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::S
 {
   assert(0);
 }
-#endif
+#endif // ALBANY_ENSEMBLE
 // computeState parallel function, which calls Kokkos::parallel_for
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
