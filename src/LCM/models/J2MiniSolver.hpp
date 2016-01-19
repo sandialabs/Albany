@@ -7,12 +7,7 @@
 #if !defined(LCM_J2MiniSolver_hpp)
 #define LCM_J2MiniSolver_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
-#include "LCM/models/ConstitutiveModel.hpp"
+#include "ConstitutiveModel.hpp"
 
 namespace LCM
 {
