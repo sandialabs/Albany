@@ -3,11 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Intrepid2_MiniTensor_Solvers.h"
-#include "Intrepid2_MiniTensor.h"
 #include "MiniNonlinearSolver.h"
-#include "Phalanx_DataLayout.hpp"
-#include "Teuchos_TestForException.hpp"
 
 namespace LCM
 {
