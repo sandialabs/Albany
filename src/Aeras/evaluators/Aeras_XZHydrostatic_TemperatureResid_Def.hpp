@@ -95,31 +95,49 @@ void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
+  double j_coeff = workset.j_coeff;
   double n_coeff = workset.n_coeff;
-  obtainLaplaceOp = (n_coeff == 1) ? true : false;
+  obtainLaplaceOp = ((n_coeff == 22.0)&&(j_coeff == 1.0)) ? true : false;
+
+//  std::cout <<"In temperature resid: Laplace = " << obtainLaplaceOp << "\n";
 
   PHAL::set(Residual, 0.0);
 
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
-        for (int qp=0; qp < numQPs; ++qp) {
-          for (int dim=0; dim < numDims; ++dim) {
-            Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
-            Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+  if( !obtainLaplaceOp ){
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int level=0; level < numLevels; ++level) {
+          for (int qp=0; qp < numQPs; ++qp) {
+            for (int dim=0; dim < numDims; ++dim) {
+              Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
+              Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+            }
           }
         }
       }
     }
-  }
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int level=0; level < numLevels; ++level) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        int node = qp; 
-        Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp);
-        Residual(cell,node,level)   -= omega(cell,qp,level)                                      *wBF(cell,node,qp);
-        Residual(cell,node,level)   += etadotdT(cell,qp,level)                                   *wBF(cell,node,qp);
-        Residual(cell,node,level)   += temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int qp=0; qp < numQPs; ++qp) {
+          int node = qp;
+          Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp);
+          Residual(cell,node,level)   -= omega(cell,qp,level)                                      *wBF(cell,node,qp);
+          Residual(cell,node,level)   += etadotdT(cell,qp,level)                                   *wBF(cell,node,qp);
+          Residual(cell,node,level)   += temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
+        }
+      }
+    }
+  }//end of (if not Laplace op)
+  else{//building Laplace
+	for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int level=0; level < numLevels; ++level) {
+          for (int qp=0; qp < numQPs; ++qp) {
+            for (int dim=0; dim < numDims; ++dim) {
+              Residual(cell,node,level) += temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+            }
+          }
+        }
       }
     }
   }

@@ -329,12 +329,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         nls_dim{NLS::DIMENSION};
 
         using MIN = Intrepid2::Minimizer<ValueT, nls_dim>;
-        using STEP = Intrepid2::NewtonStep<ValueT, nls_dim>;
+        using STEP = Intrepid2::NewtonStep<NLS, ValueT, nls_dim>;
 
-        Intrepid2::Minimizer<ValueT, nls_dim>
+        MIN
         minimizer;
 
-        Intrepid2::NewtonStep<ValueT, nls_dim>
+        STEP
         step;
 
         NLS

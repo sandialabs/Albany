@@ -3,6 +3,7 @@
 SCRIPT_NAME=`basename $0`
 PACKAGE=$1
 NUM_PROCS=$2
+export LCM_DIR=`pwd`
 TRILINOS="trilinos"
 INTEL_DIR=/opt/intel
 

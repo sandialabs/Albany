@@ -1483,6 +1483,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int k=0; k<workset.num_cols_x; k++)
             valref.fastAccessDx(k) =
               workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
+        }
         valref.val().reset(nblock);
         valref.val().copyForWrite();
         for (int block=0; block<nblock; block++)

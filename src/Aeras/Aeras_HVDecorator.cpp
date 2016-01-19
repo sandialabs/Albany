@@ -91,7 +91,22 @@ Aeras::HVDecorator::HVDecorator(
 
   // Create and store mass and Laplacian operators (in CrsMatrix form). 
   const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
-  const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 0.0, 1.0); 
+
+  //OG We need a different fix to build Laplace operator in Aeras:Hydrostatic, because
+  //x_dotdot variable was not accommodated for in Aeras_Scatter/Gather. The easiest way to construct
+  //Laplace is to use n_coeff as a flag/marker. It seems that in Aeras:Hydrostatic
+  //some vars already have gradient evaluators (at least, temperature).
+  //If we pass alpha=0, beta=1, omega=22 (I will fix it to be some nice readable '#define BUILD_LAPLACE 22' value),
+  //and have logic like
+  //  if( n_coeff == BUILD_LAPLACE AND j_coeff == 1){
+  //       Residual = Laplace (xT) }
+  //  in evaluators, then we can capture a Laplace operator. Note that there is no particular reason
+  //to use beta coefficient instead of alpha, only to save one's time to write gradient evaluators
+  //for x_dot variables.
+  //If we do this for Aeras:Hyperviscosity, we'd better change Aeras:ShallowWater for consistency, too.
+  //I may add some check to keep both codes working till kernels in ShallowWater are rewritten.
+  //const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 1.0, 22.0);
+  const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 0.0, 1.0);
 
   // Do some preprocessing to speed up subsequent residual calculations.
   // 1. Store the lumped mass diag reciprocal.

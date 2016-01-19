@@ -21,6 +21,7 @@ IF(ALBANY_SEACAS)
   add_subdirectory(SurfaceElementOrtiz)
   add_subdirectory(StabilizedTet4)
   add_subdirectory(KfieldBC)
+  add_subdirectory(KfieldSurfaceElementNotchH2)
   add_subdirectory(HeliumODEs)
   add_subdirectory(EquilibriumConcentrationBC)
   # JTO 8/1/2015
