@@ -271,59 +271,83 @@ computeState(
   Albany::MDArray
   eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
-  ScalarT kappa, mu, mubar, K, Y;
-  ScalarT Jm23, trace, smag2, smag, f, p, dgam;
-  ScalarT sq23(std::sqrt(2. / 3.));
-  ScalarT H {0.0};
-
   constexpr
   Intrepid2::Index
   MAX_DIM{3};
 
   Intrepid2::Tensor<ScalarT, MAX_DIM>
-  F(num_dims_), be(num_dims_), s(num_dims_), sigma(num_dims_);
+  F(num_dims_);
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM>
-  N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
-
-  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  Intrepid2::Tensor<ScalarT, MAX_DIM> const
   I(Intrepid2::eye<ScalarT>(num_dims_));
 
   Intrepid2::Tensor<ScalarT, MAX_DIM>
-  Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
+  sigma(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
+
+      ScalarT const
       kappa = elastic_modulus(cell, pt)
-      / (3. * (1. - 2. * poissons_ratio(cell, pt)));
+          / (3.0 * (1.0 - 2.0 * poissons_ratio(cell, pt)));
+
+      ScalarT const
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
+
+      ScalarT const
       K = hardeningModulus(cell, pt);
+
+      ScalarT const
       Y = yieldStrength(cell, pt);
+
+      ScalarT const
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
+
       // fill local tensors
-      F.fill(def_grad,cell, pt,0,0);
+      F.fill(def_grad, cell, pt, 0, 0);
+
       //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM>
+      Fpn(num_dims_);
+
+      for (int i{0}; i < num_dims_; ++i) {
+        for (int j{0}; j < num_dims_; ++j) {
           Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
         }
       }
 
       // compute trial state
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
       Fpinv = Intrepid2::inverse(Fpn);
 
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
       Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
       be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM>
       s = mu * Intrepid2::dev(be);
 
+      ScalarT const
       mubar = Intrepid2::trace(be) * mu / (num_dims_);
 
       // check yield condition
+      ScalarT const
       smag = Intrepid2::norm(s);
-      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
-      + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
-      if (f > 1E-12) {
+      ScalarT const
+      sq23{std::sqrt(2.0 / 3.0)};
+
+      ScalarT const
+      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
+          + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqpsold(cell, pt))));
+
+      RealType const
+      yield_tolerance = 1.0e-12;
+
+      if (f > yield_tolerance) {
         // Use minimization equivalent to return mapping
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
         using NLS = J2NLS<EvalT>;
@@ -358,9 +382,11 @@ computeState(
         ScalarT const
         H = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
 
+        ScalarT const
         dgam = x(0);
 
         // plastic direction
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         N = (1 / smag) * s;
 
         // update s
@@ -372,23 +398,31 @@ computeState(
         // mechanical source
         if (have_temperature_ == true && delta_time(0) > 0) {
           source(cell, pt) = (sq23 * dgam / delta_time(0)
-          * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
+              * (Y + H + temperature_(cell, pt))) / (density_ * heat_capacity_);
         }
 
         // exponential map to get Fpnew
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         A = dgam * N;
+
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         expA = Intrepid2::exp(A);
+
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         Fpnew = expA * Fpn;
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
+
+        for (int i{0}; i < num_dims_; ++i) {
+          for (int j{0}; j < num_dims_; ++j) {
             Fp(cell, pt, i, j) = Fpnew(i, j);
           }
         }
       } else {
         eqps(cell, pt) = eqpsold(cell, pt);
-        if (have_temperature_) source(cell, pt) = 0.0;
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
+
+        if (have_temperature_ == true) source(cell, pt) = 0.0;
+
+        for (int i{0}; i < num_dims_; ++i) {
+          for (int j{0}; j < num_dims_; ++j) {
             Fp(cell, pt, i, j) = Fpn(i, j);
           }
         }
@@ -396,13 +430,15 @@ computeState(
 
       // update yield surface
       yieldSurf(cell, pt) = Y + K * eqps(cell, pt)
-      + sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
+          + sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
 
       // compute pressure
+      ScalarT const
       p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
 
       // compute stress
       sigma = p * I + s / J(cell, pt);
+
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) = sigma(i, j);
@@ -414,11 +450,14 @@ computeState(
   if (have_temperature_ == true) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-        F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid2::det(F);
-        sigma.fill(stress,cell,pt,0,0);
-        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
-        * (temperature_(cell,pt) - ref_temperature_) * I;
+        F.fill(def_grad, cell, pt, 0, 0);
+
+        ScalarT const
+        J = Intrepid2::det(F);
+
+        sigma.fill(stress, cell, pt, 0, 0);
+        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J * J))
+            * (temperature_(cell, pt) - ref_temperature_) * I;
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
             stress(cell, pt, i, j) = sigma(i, j);
@@ -468,7 +507,7 @@ computeStateParallel(
     typename Traits::EvalData workset,
     FieldMap<typename EvalT::ScalarT> dep_fields,
     FieldMap<typename EvalT::ScalarT> eval_fields)
-    {
-    }
+{
+}
 
 } // namespace LCM
