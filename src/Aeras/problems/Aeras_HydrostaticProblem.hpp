@@ -760,7 +760,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
     //Output
     p->set<string>("Divergence SEM Variable Name", "Divergence SEM QP PiVelx");
 
-    ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFDivInterpolationLevelsSEM<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
