@@ -12,7 +12,12 @@
 namespace LCM
 {
 
-//! \brief J2 Plasticity Constitutive Model
+template<typename S>
+using FieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<S>>>;
+
+///
+/// J2 Plasticity Constitutive Model
+///
 template<typename EvalT, typename Traits>
 class J2MiniSolver: public LCM::ConstitutiveModel<EvalT, Traits>
 {
@@ -64,8 +69,8 @@ public:
   void
   computeState(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
+      FieldMap<ScalarT> dep_fields,
+      FieldMap<ScalarT> eval_fields);
 
 private:
 
@@ -78,13 +83,13 @@ private:
   RealType
   sat_exp_;
 
- //Kokkos 
+  //Kokkos
   virtual
   void
   computeStateParallel(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
+      FieldMap<ScalarT> dep_fields,
+      FieldMap<ScalarT> eval_fields);
 };
 
 }

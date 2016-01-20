@@ -43,7 +43,7 @@ J2MiniSolver(
   this->setEvaluatedField(Fp_string, dl->qp_tensor);
   this->setEvaluatedField(eqps_string, dl->qp_scalar);
   this->setEvaluatedField(yieldSurface_string, dl->qp_scalar);
-  if (have_temperature_) {
+  if (have_temperature_ == true) {
     this->setEvaluatedField(source_string, dl->qp_scalar);
   }
 
@@ -88,7 +88,7 @@ J2MiniSolver(
       p->get<bool>("Output Yield Surface", false));
   //
   // mechanical source
-  if (have_temperature_) {
+  if (have_temperature_ == true) {
     this->num_state_variables_++;
     this->state_var_names_.push_back(source_string);
     this->state_var_layouts_.push_back(dl->qp_scalar);
@@ -231,9 +231,10 @@ public:
 //
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
-computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+computeState(
+    typename Traits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
@@ -448,9 +449,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::S
 // computeState parallel function, which calls Kokkos::parallel_for
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
-computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+computeStateParallel(
+    typename Traits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
     {
     }
 
