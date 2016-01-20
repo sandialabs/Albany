@@ -52,12 +52,15 @@ namespace Aeras
     Teuchos::RCP<Albany::MeshSpecsStruct>
     createAerasMeshSpecs(
       const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct, 
-      const int points_per_edge) 
+      const int points_per_edge,  
+      const Teuchos::RCP<Teuchos::ParameterList>& discParams)
     {
+      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  "
+      *out << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  "
                 << points_per_edge << std::endl;
-#endif 
+#endif
+       
       //get data from original STK Mesh struct
       CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 
       std::string orig_name = orig_ctd.name;
@@ -72,8 +75,8 @@ namespace Aeras
         << "implemented only for " << "Quadrilateral, ShellQuadrilateral and "
         << "Line elements." << std::endl); 
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
-      std::cout << "DEBUG: original ctd key = " << orig_ctd.key << std::endl; 
+      *out << "DEBUG: original ctd name = " << orig_name << std::endl; 
+      *out << "DEBUG: original ctd key = " << orig_ctd.key << std::endl; 
 #endif 
       int orig_numDim = orig_mesh_specs_struct->numDim;
       int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
@@ -89,8 +92,17 @@ namespace Aeras
       bool orig_interleavedOrdering =
         orig_mesh_specs_struct->interleavedOrdering;
       bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
-      const Intrepid2::EIntrepidPLPoly orig_cubatureRule =
-        orig_mesh_specs_struct->cubatureRule;
+      std::string cub = discParams->get("Cubature Rule", "GAUSS_LOBATTO"); 
+      //If cubature rule in input file is not GAUSS_LOBATTO, print warning and reset cubature 
+      //to Gauss-Lobatto.
+      if (cub != "GAUSS_LOBATTO") 
+         *out << "Setting Cubature Rule to GAUSS_LOBATTO. \n"; 
+      else 
+          *out << "Using Cubature Rule specified in input file: GAUSS_LOBATTO. \n";  
+      
+      const Intrepid2::EIntrepidPLPoly new_cubatureRule 
+          = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_LOBATTO);
+
       // Create enriched MeshSpecsStruct object, to be returned.  It
       // will have the same everything as the original mesh struct
       // except a CellTopologyData (ctd) with a different name and
@@ -124,8 +136,8 @@ namespace Aeras
       if (orig_numDim == 1) 
         new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, 2, np); 
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
-      std::cout << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl; 
+      *out << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
+      *out << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl; 
 #endif
       // Create and return Albany::MeshSpecsStruct object based on the
       // new (enriched) ctd.
@@ -139,7 +151,7 @@ namespace Aeras
                                                       orig_ebNameToIndex,
                                                       orig_interleavedOrdering,
                                                       orig_sepEvalsByEB,
-                                                      orig_cubatureRule));
+                                                      new_cubatureRule));
       delete [] new_name_char;
     }
   };

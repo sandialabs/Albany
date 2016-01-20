@@ -371,16 +371,6 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   //overwrite the meshSpecs of the meshStruct with an enriched one.
 #if defined(ALBANY_AERAS) && defined(HAVE_STK)
   if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
-   //Get cubature rule from input file
-   std::string cub_rule = discParams->get("Cubature Rule", "GAUSS"); 
-   if (cub_rule != "GAUSS_LOBATTO") {
-      TEUCHOS_TEST_FOR_EXCEPTION(true,
-  	  Teuchos::Exceptions::InvalidParameter,"Error in Albany::Discretization Factory." <<
-          "Aeras spectral elements (Exodus Aeras, Ioss Aeras, or STK1D Aeras Discretization Methods) " <<
-          "should be run with GAUSS_LOBATTO Cubature Rule.  Your choice of " << 
-          cub_rule << " Cubature Rule  with " << method << " Discretization Method is invalid." <<
-         " Please re-run with Cubature Rule = GAUSS_LOBATTO" << std::endl); 
-    }
     //get "Element Degree" from parameter list.  Default value is 1.
     int points_per_edge = discParams->get("Element Degree", 1) + 1;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > &mesh_specs_struct = meshStruct->getMeshSpecs();
@@ -390,7 +380,8 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     for (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type i=0; i< number_blocks; i++) {
       Teuchos::RCP<Albany::MeshSpecsStruct> orig_mesh_specs_struct = mesh_specs_struct[i];
       Aeras::AerasMeshSpectStruct aeras_mesh_specs_struct;
-      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, points_per_edge);
+      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, 
+                                                                                   points_per_edge, discParams);
     }
     return enriched_mesh_specs_struct;
   }
