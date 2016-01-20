@@ -31,7 +31,6 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_16_quad9.g"/>
-    <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
   </ParameterList>
   <ParameterList name="Regression Results">

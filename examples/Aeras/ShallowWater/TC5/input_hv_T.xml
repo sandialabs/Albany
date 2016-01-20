@@ -33,7 +33,6 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_16_quad4.g"/>
-    <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_16_out.exo"/>
