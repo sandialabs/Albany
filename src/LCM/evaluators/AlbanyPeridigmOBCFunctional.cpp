@@ -37,9 +37,8 @@ evaluateResponseT(const double current_time,
      const Teuchos::Array<ParamVec>& p,
      Tpetra_Vector& gT)
 {
-  LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
   Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
-  peridigmManager.obcOverlappingElementSearch();
+  LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
   gT_nonconstView[0] = peridigmManager.obcEvaluateFunctional();
 }
 
