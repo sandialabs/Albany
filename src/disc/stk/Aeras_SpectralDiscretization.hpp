@@ -79,7 +79,8 @@ namespace Aeras
       *out << "DEBUG: original ctd key = " << orig_ctd.key << std::endl; 
 #endif 
       int orig_numDim = orig_mesh_specs_struct->numDim;
-      int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
+      //int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
+      int new_cubatureDegree = setCubatureDegree(points_per_edge-1, discParams); 
       // Node Sets Names
       std::vector<std::string> orig_nsNames = orig_mesh_specs_struct->nsNames;
       // Side Sets Names
@@ -143,7 +144,7 @@ namespace Aeras
       // new (enriched) ctd.
       return Teuchos::rcp(new Albany::MeshSpecsStruct(new_ctd,
                                                       orig_numDim,
-                                                      orig_cubatureDegree,
+                                                      new_cubatureDegree,
                                                       orig_nsNames,
                                                       orig_ssNames,
                                                       orig_worksetSize,
@@ -153,6 +154,44 @@ namespace Aeras
                                                       orig_sepEvalsByEB,
                                                       new_cubatureRule));
       delete [] new_name_char;
+    }
+
+    //The following function sets the cubature degree based on the element degree for spectral elements, 
+    //so that the user does not need to worry about specifying this in the input file. 
+    //Cubature rules are only implemented for elements up to degree 12.  Cubature rules for 
+    //higher order elements may be added, if desired. 
+    int setCubatureDegree(
+      const int elementDegree,  
+      const Teuchos::RCP<Teuchos::ParameterList>& discParams) 
+    {
+      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+      int cubatureDegree; 
+      switch (elementDegree)
+      {
+        case 1: cubatureDegree = 1; break;
+        case 2: cubatureDegree = 3; break; 
+        case 3: cubatureDegree = 4; break;
+        case 4: cubatureDegree = 6; break; 
+        case 5: cubatureDegree = 8; break;
+        case 6: cubatureDegree = 10; break; 
+        case 7: cubatureDegree = 12; break; 
+        case 8: cubatureDegree = 14; break; 
+        case 9: cubatureDegree = 16; break; 
+        case 10: cubatureDegree = 18; break; 
+        case 11: cubatureDegree = 20; break; 
+        case 12: cubatureDegree = 22; break;  
+        default:
+           TEUCHOS_TEST_FOR_EXCEPTION(
+              true, std::logic_error,
+             "Cubature Degree is not implemented for element of degree "<< elementDegree << "!  " <<
+             "To use an element of this order, please implement the right cubatureDegree to the setCubature " << 
+             "function in Aeras_SpectralDiscretization.hpp.");
+      }
+      int orig_cubatureDegree = discParams->get("Cubature Degree", 3);
+      if (orig_cubatureDegree == cubatureDegree) 
+         *out << "Setting Cubature Degree to default value or value specified in input file: " << orig_cubatureDegree << std::endl;  
+      *out << "Setting Cubature Degree to " << cubatureDegree << " for element of degree " << elementDegree << std::endl; 
+      return cubatureDegree; 
     }
   };
 
