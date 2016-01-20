@@ -65,6 +65,7 @@ const Tpetra::global_size_t INVALID =
 
 //#define OUTPUT_TO_SCREEN
 //#define PRINT_COORDS
+//#define WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
@@ -700,7 +701,7 @@ Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
     const double time,
     const bool overlapped)
 {
-#ifdef OUTPUT_TO_SCREEN
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
    Tpetra_MatrixMarket_Writer::writeDenseFile("solnT.mm", solnT);
 #endif
@@ -2145,7 +2146,6 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOwnedGraph(T
   // Create Owned graph by exporting overlap with known row map
   Teuchos::RCP<Tpetra_CrsGraph> OwnedGraph = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
 
-  std::cout << "nonzerosperrow: " << nonzeroesPerRow(neq) << std::endl; 
   // Create non-overlapped matrix using two maps and export object
   Teuchos::RCP<Tpetra_Export> exporterT =
     Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
@@ -3460,7 +3460,7 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOwnedNodesAndUnknownsQuads();
 
-#ifdef OUTPUT_TO_SCREEN
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //write owned maps to matrix market file for debug
   Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
@@ -3476,7 +3476,7 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   else if (spatial_dim == 2) 
     computeOverlapNodesAndUnknownsQuads();
 
-#ifdef OUTPUT_TO_SCREEN
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //write overlap maps to matrix market file for debug
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
@@ -3512,7 +3512,7 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     implicit_graphT = computeOwnedGraph(overlap_graphT); 
   }
  
-#ifdef OUTPUT_TO_SCREEN
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT)); 
   Tpetra_MatrixMarket_Writer::writeSparseFile("ImplicitMatrix.mm", ImplicitMatrix);
   Teuchos::RCP<Tpetra_CrsMatrix> Matrix = Teuchos::rcp(new Tpetra_CrsMatrix(graphT)); 
