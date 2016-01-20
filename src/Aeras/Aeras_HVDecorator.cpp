@@ -90,7 +90,7 @@ Aeras::HVDecorator::HVDecorator(
 #endif
 
   // Create and store mass and Laplacian operators (in CrsMatrix form). 
-  const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
+  const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperatorDiag(1.0, 0.0, 0.0); 
 
   //OG We need a different fix to build Laplace operator in Aeras:Hydrostatic, because
   //x_dotdot variable was not accommodated for in Aeras_Scatter/Gather. The easiest way to construct
@@ -139,7 +139,40 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  double curr_time = 0.0; 
+  double curr_time = 0.0;
+  //Get implicit_graphT from discretization object
+  Teuchos::RCP<const Tpetra_CrsGraph> implicit_graphT = 
+    app->getDiscretization()->getImplicitJacobianGraphT();  
+  //Define operator Op from implicit_graphT
+  const Teuchos::RCP<Tpetra_Operator> Op =
+    Teuchos::nonnull(implicit_graphT) ? 
+    Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT)) :
+    Teuchos::null; 
+  const Teuchos::RCP<Tpetra_CrsMatrix> Op_crs =
+    Teuchos::nonnull(Op) ?
+    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :
+    Teuchos::null;
+  const Teuchos::RCP<const Tpetra_Vector> xT = ConverterT::getConstTpetraVector(this->getNominalValues().get_x());
+  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
+    Teuchos::nonnull(this->getNominalValues().get_x_dot()) ?
+    ConverterT::getConstTpetraVector(this->getNominalValues().get_x_dot()) :
+    Teuchos::null;
+  //IKT: it's important to make x_dotdotT non-null.  Otherwise 2nd derivative terms defining the laplace operator
+  //will not get set in PHAL_GatherSolution_Def.hpp. 
+  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+  const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
+  app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
+                               sacado_param_vec, fT.get(), *Op_crs);
+  return Op_crs; 
+}
+
+Teuchos::RCP<Tpetra_CrsMatrix> 
+Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
+{
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  double curr_time = 0.0;
   const Teuchos::RCP<Tpetra_Operator> Op =
     Teuchos::nonnull(this->create_W_op()) ?
     ConverterT::getTpetraOperator(this->create_W_op()) :

@@ -84,6 +84,28 @@ public:
   }
 
   ///
+  /// Convenience function to set dependent fields.
+  ///
+  void
+  setDependentField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    dep_field_map_.insert(std::make_pair(field_name, field));
+  }
+
+  ///
+  /// Convenience function to set evaluated fields.
+  ///
+  void
+  setEvaluatedField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    eval_field_map_.insert(std::make_pair(field_name, field));
+  }
+
+  ///
   /// state variable registration helpers
   ///
   std::string getStateVarName(int state_var);

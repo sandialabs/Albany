@@ -578,7 +578,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_np1(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_SLIP> shear_np1(num_slip_);
   Intrepid2::Vector<ScalarT, CP::MAX_SLIP> hardness_np1(num_slip_);
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_residual(num_slip_);
+  Intrepid2::Vector<ScalarT, CP::MAX_SLIP> slip_computed(num_slip_);
 
   RealType norm_slip_residual;
   RealType equivalent_plastic_strain;
@@ -656,13 +656,12 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             hardness_np1);
 
           // compute slip_np1
-          CP::updateSlipViaExplicitIntegration<CP::MAX_DIM, CP::MAX_SLIP>(
+          CP::updateSlip<CP::MAX_DIM, CP::MAX_SLIP>(
             slip_systems_,
             dt,
-            slip_n,
             hardness_np1,
-            S_np1,
             shear_np1,
+            slip_n,
             slip_np1);
 
           // compute Lp_np1, and Fp_np1
@@ -685,16 +684,17 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             S_np1, 
             shear_np1);
 
-          // compute slip_residual and norm_slip_residual
-          CP::computeResidual<CP::MAX_DIM, CP::MAX_SLIP>(
+          // compute slip_np1
+          CP::updateSlip<CP::MAX_DIM, CP::MAX_SLIP>(
             slip_systems_,
             dt,
-            slip_n,
-            slip_np1,
             hardness_np1,
             shear_np1,
-            slip_residual,
-            norm_slip_residual);
+            slip_n,
+            slip_computed);
+
+          norm_slip_residual = 
+            Sacado::ScalarValue<ScalarT>::eval(norm(slip_np1 - slip_computed));
 
           if(verbosity_ > 2) {
             std::cout << "CP model explicit integration residual ";
@@ -766,6 +766,21 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
               for(int i=0; i<num_slip_; ++i) {
                 slip_np1[i] = x[i];
               }
+
+              if(dt > 0.0){
+                rate_slip = (slip_np1 - slip_n) / dt;
+              }
+              else{
+                rate_slip.fill(Intrepid2::ZEROS);
+              }
+
+              // Compute hardness_np1
+              CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP>(
+                slip_systems_, 
+                dt,
+                rate_slip, 
+                hardness_n, 
+                hardness_np1);
 
             }
           break;
@@ -840,21 +855,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             Lp_np1, 
             Fp_np1);
 
-          if(dt > 0.0){
-            rate_slip = (slip_np1 - slip_n) / dt;
-          }
-          else{
-            rate_slip.fill(Intrepid2::ZEROS);
-          }
-
-          // Compute hardness_np1
-          CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP>(
-            slip_systems_, 
-            dt,
-            rate_slip, 
-            hardness_n, 
-            hardness_np1);
-
           // Compute sigma_np1, S_np1, and shear_np1
           CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP>(
             slip_systems_, 
@@ -865,7 +865,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             S_np1, 
             shear_np1);
 
-            // Compute slip_residual and norm_slip_residual 
+            // Compute the residual norm 
             norm_slip_residual = std::sqrt(2.0 * minimizer.final_value);
 
         }

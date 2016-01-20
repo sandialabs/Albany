@@ -3,11 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Intrepid2_MiniTensor_Solvers.h"
-#include "Intrepid2_MiniTensor.h"
 #include "MiniNonlinearSolver.h"
-#include "Phalanx_DataLayout.hpp"
-#include "Teuchos_TestForException.hpp"
 
 namespace LCM
 {
@@ -17,39 +13,38 @@ namespace LCM
 //
 template<typename EvalT, typename Traits>
 J2MiniSolver<EvalT, Traits>::
-J2MiniSolver(Teuchos::ParameterList* p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
+J2MiniSolver(
+    Teuchos::ParameterList * p,
+    Teuchos::RCP<Albany::Layouts> const & dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
     sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
     sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
 {
   // retrive appropriate field name strings
-  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
-  std::string Fp_string = (*field_name_map_)["Fp"];
-  std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string yieldSurface_string = (*field_name_map_)["Yield_Surface"];
-  std::string source_string = (*field_name_map_)["Mechanical_Source"];
-  std::string F_string = (*field_name_map_)["F"];
-  std::string J_string = (*field_name_map_)["J"];
+  std::string const cauchy_string = (*field_name_map_)["Cauchy_Stress"];
+  std::string const Fp_string = (*field_name_map_)["Fp"];
+  std::string const eqps_string = (*field_name_map_)["eqps"];
+  std::string const yieldSurface_string = (*field_name_map_)["Yield_Surface"];
+  std::string const source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string const F_string = (*field_name_map_)["F"];
+  std::string const J_string = (*field_name_map_)["J"];
 
   // define the dependent fields
-  this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
-  this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Yield Strength", dl->qp_scalar));
-  this->dep_field_map_.insert(
-      std::make_pair("Hardening Modulus", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
+  this->setDependentField(F_string, dl->qp_tensor);
+  this->setDependentField(J_string, dl->qp_scalar);
+  this->setDependentField("Poissons Ratio", dl->qp_scalar);
+  this->setDependentField("Elastic Modulus", dl->qp_scalar);
+  this->setDependentField("Yield Strength", dl->qp_scalar);
+  this->setDependentField("Hardening Modulus", dl->qp_scalar);
+  this->setDependentField("Delta Time", dl->workset_scalar);
 
   // define the evaluated fields
-  this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
-  this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
-  this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
-  this->eval_field_map_.insert(
-      std::make_pair(yieldSurface_string, dl->qp_scalar));
-  if (have_temperature_) {
-    this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+  this->setEvaluatedField(cauchy_string, dl->qp_tensor);
+  this->setEvaluatedField(Fp_string, dl->qp_tensor);
+  this->setEvaluatedField(eqps_string, dl->qp_scalar);
+  this->setEvaluatedField(yieldSurface_string, dl->qp_scalar);
+  if (have_temperature_ == true) {
+    this->setEvaluatedField(source_string, dl->qp_scalar);
   }
 
   // define the state variables
@@ -93,7 +88,7 @@ J2MiniSolver(Teuchos::ParameterList* p,
       p->get<bool>("Output Yield Surface", false));
   //
   // mechanical source
-  if (have_temperature_) {
+  if (have_temperature_ == true) {
     this->num_state_variables_++;
     this->state_var_names_.push_back(source_string);
     this->state_var_layouts_.push_back(dl->qp_scalar);
@@ -236,9 +231,10 @@ public:
 //
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
-computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+computeState(
+    typename Traits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
@@ -263,63 +259,95 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
   PHX::MDField<ScalarT> yieldSurf = *eval_fields[yieldSurface_string];
   PHX::MDField<ScalarT> source;
-  if (have_temperature_) {
+
+  if (have_temperature_ == true) {
     source = *eval_fields[source_string];
   }
 
   // get State Variables
-  Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
-  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Albany::MDArray
+  Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
 
-  ScalarT kappa, mu, mubar, K, Y;
-  ScalarT Jm23, trace, smag2, smag, f, p, dgam;
-  ScalarT sq23(std::sqrt(2. / 3.));
-  ScalarT H {0.0};
+  Albany::MDArray
+  eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
-  Intrepid2::Tensor<ScalarT>
-  F(num_dims_), be(num_dims_), s(num_dims_), sigma(num_dims_);
+  constexpr
+  Intrepid2::Index
+  MAX_DIM{3};
 
-  Intrepid2::Tensor<ScalarT>
-  N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  F(num_dims_);
 
-  Intrepid2::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT, MAX_DIM> const
   I(Intrepid2::eye<ScalarT>(num_dims_));
 
-  Intrepid2::Tensor<ScalarT>
-  Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  sigma(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
+
+      ScalarT const
       kappa = elastic_modulus(cell, pt)
-      / (3. * (1. - 2. * poissons_ratio(cell, pt)));
+          / (3.0 * (1.0 - 2.0 * poissons_ratio(cell, pt)));
+
+      ScalarT const
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
+
+      ScalarT const
       K = hardeningModulus(cell, pt);
+
+      ScalarT const
       Y = yieldStrength(cell, pt);
+
+      ScalarT const
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
+
       // fill local tensors
-      F.fill(def_grad,cell, pt,0,0);
+      F.fill(def_grad, cell, pt, 0, 0);
+
       //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM>
+      Fpn(num_dims_);
+
+      for (int i{0}; i < num_dims_; ++i) {
+        for (int j{0}; j < num_dims_; ++j) {
           Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
         }
       }
 
       // compute trial state
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
       Fpinv = Intrepid2::inverse(Fpn);
 
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
       Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
       be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM>
       s = mu * Intrepid2::dev(be);
 
+      ScalarT const
       mubar = Intrepid2::trace(be) * mu / (num_dims_);
 
       // check yield condition
+      ScalarT const
       smag = Intrepid2::norm(s);
-      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
-      + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
-      if (f > 1E-12) {
+      ScalarT const
+      sq23{std::sqrt(2.0 / 3.0)};
+
+      ScalarT const
+      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
+          + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqpsold(cell, pt))));
+
+      RealType const
+      yield_tolerance = 1.0e-12;
+
+      if (f > yield_tolerance) {
         // Use minimization equivalent to return mapping
         using ValueT = typename Sacado::ValueType<ScalarT>::type;
         using NLS = J2NLS<EvalT>;
@@ -354,9 +382,11 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         ScalarT const
         H = K * alpha + sat_mod_ * (1.0 - exp(-sat_exp_ * alpha));
 
+        ScalarT const
         dgam = x(0);
 
         // plastic direction
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         N = (1 / smag) * s;
 
         // update s
@@ -366,25 +396,33 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         eqps(cell, pt) = alpha;
 
         // mechanical source
-        if (have_temperature_ && delta_time(0) > 0) {
+        if (have_temperature_ == true && delta_time(0) > 0) {
           source(cell, pt) = (sq23 * dgam / delta_time(0)
-          * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
+              * (Y + H + temperature_(cell, pt))) / (density_ * heat_capacity_);
         }
 
         // exponential map to get Fpnew
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         A = dgam * N;
+
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         expA = Intrepid2::exp(A);
+
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
         Fpnew = expA * Fpn;
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
+
+        for (int i{0}; i < num_dims_; ++i) {
+          for (int j{0}; j < num_dims_; ++j) {
             Fp(cell, pt, i, j) = Fpnew(i, j);
           }
         }
       } else {
         eqps(cell, pt) = eqpsold(cell, pt);
-        if (have_temperature_) source(cell, pt) = 0.0;
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
+
+        if (have_temperature_ == true) source(cell, pt) = 0.0;
+
+        for (int i{0}; i < num_dims_; ++i) {
+          for (int j{0}; j < num_dims_; ++j) {
             Fp(cell, pt, i, j) = Fpn(i, j);
           }
         }
@@ -392,13 +430,15 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
       // update yield surface
       yieldSurf(cell, pt) = Y + K * eqps(cell, pt)
-      + sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
+          + sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
 
       // compute pressure
+      ScalarT const
       p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
 
       // compute stress
       sigma = p * I + s / J(cell, pt);
+
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) = sigma(i, j);
@@ -407,14 +447,17 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
     }
   }
 
-  if (have_temperature_) {
+  if (have_temperature_ == true) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-        F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid2::det(F);
-        sigma.fill(stress,cell,pt,0,0);
-        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
-        * (temperature_(cell,pt) - ref_temperature_) * I;
+        F.fill(def_grad, cell, pt, 0, 0);
+
+        ScalarT const
+        J = Intrepid2::det(F);
+
+        sigma.fill(stress, cell, pt, 0, 0);
+        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J * J))
+            * (temperature_(cell, pt) - ref_temperature_) * I;
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
             stress(cell, pt, i, j) = sigma(i, j);
@@ -424,40 +467,47 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
     }
   }
 }
+
 #ifdef ALBANY_ENSEMBLE
 template<>
 void J2MiniSolver<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>::
-computeState(typename PHAL::AlbanyTraits::EvalData workset,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> eval_fields)
+computeState(
+    typename PHAL::AlbanyTraits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
-  assert(0);
+  assert(false);
 }
+
 template<>
 void J2MiniSolver<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>::
-computeState(typename PHAL::AlbanyTraits::EvalData workset,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> eval_fields)
+computeState(
+    typename PHAL::AlbanyTraits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
-  assert(0);
+  assert(false);
 }
+
 template<>
 void J2MiniSolver<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>::
-computeState(typename PHAL::AlbanyTraits::EvalData workset,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> eval_fields)
+computeState(
+    typename PHAL::AlbanyTraits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
-  assert(0);
+  assert(false);
 }
-#endif
+#endif // ALBANY_ENSEMBLE
+
 // computeState parallel function, which calls Kokkos::parallel_for
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
-computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
-    {
-    }
-
+computeStateParallel(
+    typename Traits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
+{
 }
 
+} // namespace LCM

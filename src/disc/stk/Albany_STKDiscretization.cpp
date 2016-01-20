@@ -196,6 +196,14 @@ Albany::STKDiscretization::getJacobianGraphT() const
   return graphT;
 }
 
+#ifdef ALBANY_AERAS
+Teuchos::RCP<const Tpetra_CrsGraph>
+Albany::STKDiscretization::getImplicitJacobianGraphT() const
+{
+  return graphT;
+}
+#endif
+
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getOverlapJacobianGraph() const
@@ -211,6 +219,13 @@ Albany::STKDiscretization::getOverlapJacobianGraphT() const
   return overlap_graphT;
 }
 
+#ifdef ALBANY_AERAS
+Teuchos::RCP<const Tpetra_CrsGraph>
+Albany::STKDiscretization::getImplicitOverlapJacobianGraphT() const
+{
+  return overlap_graphT;
+}
+#endif
 
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>

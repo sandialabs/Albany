@@ -126,12 +126,21 @@ namespace Albany {
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
+#ifdef ALBANY_AERAS 
+    //! Get Tpetra implicit Jacobian graph (for Aeras) 
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const;
+#endif
+
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
 #endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
+#ifdef ALBANY_AERAS 
+    //! Get Tpetra implicit overlap Jacobian graph (for Aeras) 
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const;
+#endif
 
     //! Modify CRS Graphs for Peridigm-Albany coupling
     void insertPeridigmNonzerosIntoGraph();
