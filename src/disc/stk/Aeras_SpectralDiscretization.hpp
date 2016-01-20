@@ -560,7 +560,6 @@ namespace Aeras
     void computeCoordsQuads();
 
     //! Process spectral Albany mesh for CRS Graphs
-    void computeGraphs();
     Teuchos::RCP<Tpetra_CrsGraph> computeOverlapGraph();
     Teuchos::RCP<Tpetra_CrsGraph> computeOwnedGraph(Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT_);
 
