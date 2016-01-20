@@ -79,6 +79,9 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
   intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid2::OPERATOR_D2);
 
+  //OG make grad_at_cub_points an output value
+
+
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 /*
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
