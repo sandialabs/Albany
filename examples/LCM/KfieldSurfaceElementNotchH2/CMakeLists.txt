@@ -19,6 +19,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarder.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAllLocalHarder.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarderT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAllLocalHarderT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarderTera.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAllLocalHarderTera.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo
                ${CMAKE_CURRENT_BINARY_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo  COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo.4.0
@@ -33,6 +35,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_m
 # material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsScaledLocalHarder.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materialsScaledLocalHarder.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsScaledLocalHarderTera.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialsScaledLocalHarderTera.xml COPYONLY)
 endif()
 
 
