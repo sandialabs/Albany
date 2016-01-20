@@ -259,29 +259,37 @@ computeState(
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
   PHX::MDField<ScalarT> yieldSurf = *eval_fields[yieldSurface_string];
   PHX::MDField<ScalarT> source;
-  if (have_temperature_) {
+
+  if (have_temperature_ == true) {
     source = *eval_fields[source_string];
   }
 
   // get State Variables
-  Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
-  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Albany::MDArray
+  Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
+
+  Albany::MDArray
+  eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
   ScalarT sq23(std::sqrt(2. / 3.));
   ScalarT H {0.0};
 
-  Intrepid2::Tensor<ScalarT>
+  constexpr
+  Intrepid2::Index
+  MAX_DIM{3};
+
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
   F(num_dims_), be(num_dims_), s(num_dims_), sigma(num_dims_);
 
-  Intrepid2::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
   N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
 
-  Intrepid2::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
   I(Intrepid2::eye<ScalarT>(num_dims_));
 
-  Intrepid2::Tensor<ScalarT>
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
   Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
@@ -362,7 +370,7 @@ computeState(
         eqps(cell, pt) = alpha;
 
         // mechanical source
-        if (have_temperature_ && delta_time(0) > 0) {
+        if (have_temperature_ == true && delta_time(0) > 0) {
           source(cell, pt) = (sq23 * dgam / delta_time(0)
           * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
         }
@@ -403,7 +411,7 @@ computeState(
     }
   }
 
-  if (have_temperature_) {
+  if (have_temperature_ == true) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         F.fill(def_grad,cell,pt,0,0);
@@ -420,32 +428,39 @@ computeState(
     }
   }
 }
+
 #ifdef ALBANY_ENSEMBLE
 template<>
 void J2MiniSolver<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>::
-computeState(typename PHAL::AlbanyTraits::EvalData workset,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPResidual::ScalarT>>> eval_fields)
+computeState(
+    typename PHAL::AlbanyTraits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
-  assert(0);
+  assert(false);
 }
+
 template<>
 void J2MiniSolver<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits>::
-computeState(typename PHAL::AlbanyTraits::EvalData workset,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPJacobian::ScalarT>>> eval_fields)
+computeState(
+    typename PHAL::AlbanyTraits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
-  assert(0);
+  assert(false);
 }
+
 template<>
 void J2MiniSolver<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits>::
-computeState(typename PHAL::AlbanyTraits::EvalData workset,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<PHAL::AlbanyTraits::MPTangent::ScalarT>>> eval_fields)
+computeState(
+    typename PHAL::AlbanyTraits::EvalData workset,
+    FieldMap<typename EvalT::ScalarT> dep_fields,
+    FieldMap<typename EvalT::ScalarT> eval_fields)
 {
-  assert(0);
+  assert(false);
 }
 #endif // ALBANY_ENSEMBLE
+
 // computeState parallel function, which calls Kokkos::parallel_for
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
@@ -456,5 +471,4 @@ computeStateParallel(
     {
     }
 
-}
-
+} // namespace LCM
