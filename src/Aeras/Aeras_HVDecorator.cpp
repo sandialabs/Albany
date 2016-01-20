@@ -90,7 +90,12 @@ Aeras::HVDecorator::HVDecorator(
 #endif
 
   // Create and store mass and Laplacian operators (in CrsMatrix form). 
-  const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
+  const Teuchos::RCP<Tpetra_CrsMatrix> mass_ = createOperator(1.0, 0.0, 0.0); 
+  //IKT, 1/20/16: remove non-zeros from mass matrix.  Currently the mass matrix is created 
+  //according to the same graph as the laplace matrix, which is not diagonal for explicit schemes, 
+  //although the mass matrix _is_ diagonal for spectral elements.  We may want to change this in 
+  //the future.  
+  const Teuchos::RCP<Tpetra_CrsMatrix> mass = getOnlyNonzeros(mass_);
 
   //OG We need a different fix to build Laplace operator in Aeras:Hydrostatic, because
   //x_dotdot variable was not accommodated for in Aeras_Scatter/Gather. The easiest way to construct

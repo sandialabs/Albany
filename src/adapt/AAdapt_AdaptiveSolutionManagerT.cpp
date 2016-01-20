@@ -75,8 +75,16 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
 
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
   const Teuchos::RCP<const Tpetra_Map> overlapMapT = disc_->getOverlapMapT();
+#ifdef ALBANY_AERAS
+  //IKT, 1/20/15: the following is needed to ensure Laplace matrix is non-diagonal 
+  //for Aeras problems that have hyperviscosity and are integrated using an explicit time 
+  //integration scheme. 
+  const Teuchos::RCP<const Tpetra_CrsGraph> overlapJacGraphT = disc_
+      ->getImplicitOverlapJacobianGraphT();
+#else
   const Teuchos::RCP<const Tpetra_CrsGraph> overlapJacGraphT = disc_
       ->getOverlapJacobianGraphT();
+#endif
 
   resizeMeshDataArrays(mapT, overlapMapT, overlapJacGraphT);
 

@@ -220,6 +220,7 @@ Aeras::SpectralDiscretization::getImplicitJacobianGraphT() const
   return implicit_graphT;
 }
 
+
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
 Aeras::SpectralDiscretization::getOverlapJacobianGraph() const
@@ -234,6 +235,12 @@ Teuchos::RCP<const Tpetra_CrsGraph>
 Aeras::SpectralDiscretization::getOverlapJacobianGraphT() const
 {
   return overlap_graphT;
+}
+
+Teuchos::RCP<const Tpetra_CrsGraph>
+Aeras::SpectralDiscretization::getImplicitOverlapJacobianGraphT() const
+{
+  return implicit_overlap_graphT;
 }
 
 
@@ -2075,9 +2082,10 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
   *out << "nodes_per_element: " << nodes_per_element << std::endl;
 #endif
 
-  Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT_ = Teuchos::null; 
-  overlap_graphT_ = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
+  Teuchos::RCP<Tpetra_CrsGraph> Graph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
                                                     neq*nodes_per_element));
+
+  std::cout << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl; 
 
   stk::mesh::Selector select_owned =
     stk::mesh::Selector(metaData.locally_owned_part());
@@ -2116,36 +2124,36 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
             {
               col = getGlobalDOF(colNode, m);
               colAV = Teuchos::arrayView(&col, 1);
-              overlap_graphT_->insertGlobalIndices(row, colAV);
+              Graph->insertGlobalIndices(row, colAV);
             }
           }
         }
       }
     }
   }
-  overlap_graphT_->fillComplete();
+  Graph->fillComplete();
 
-  return overlap_graphT_; 
+  return Graph; 
 }
 
-Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOwnedGraph()
+Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOwnedGraph(Teuchos::RCP<Tpetra_CrsGraph> Graph)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
 
   // Create Owned graph by exporting overlap with known row map
-  Teuchos::RCP<Tpetra_CrsGraph> graphT_ = Teuchos::null; 
+  Teuchos::RCP<Tpetra_CrsGraph> OwnedGraph = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
 
-  graphT_ = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-
+  std::cout << "nonzerosperrow: " << nonzeroesPerRow(neq) << std::endl; 
   // Create non-overlapped matrix using two maps and export object
   Teuchos::RCP<Tpetra_Export> exporterT =
     Teuchos::rcp(new Tpetra_Export(overlap_mapT, mapT));
-  graphT_->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
-  graphT_->fillComplete();
+  OwnedGraph->doExport(*Graph, *exporterT, Tpetra::INSERT);
+  OwnedGraph->fillComplete();
 
-  return graphT_; 
+
+  return OwnedGraph; 
 }
 
 void Aeras::SpectralDiscretization::computeGraphs()
@@ -3562,16 +3570,27 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   // Right now, computeGraphs_Explicit() will not work with shallow water; therefore
   // only call this function for hydrostatic (numLevels > 0) 
 
-  if (explicit_scheme == true && numLevels > 0) { //explicit scheme 
-    computeGraphs_Explicit(); 
+  if (explicit_scheme == true) { //explicit scheme 
     //populate implicit_graphT, needed to populate Laplace operator for hyperviscosity 
-    implicit_graphT = computeOwnedGraph();  
+    implicit_overlap_graphT = computeOverlapGraph();
+    implicit_graphT = computeOwnedGraph(implicit_overlap_graphT);  
+    computeGraphs_Explicit(); 
   }
   else { //implicit scheme
     overlap_graphT = computeOverlapGraph(); 
-    graphT = computeOwnedGraph(); 
-    implicit_graphT = computeOwnedGraph(); 
+    graphT = computeOwnedGraph(overlap_graphT); 
+    implicit_overlap_graphT = computeOverlapGraph(); 
+    implicit_graphT = computeOwnedGraph(overlap_graphT); 
   }
+ 
+#ifdef OUTPUT_TO_SCREEN
+  Teuchos::RCP<Tpetra_CrsMatrix> ImplicitMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT)); 
+  Tpetra_MatrixMarket_Writer::writeSparseFile("ImplicitMatrix.mm", ImplicitMatrix);
+  Teuchos::RCP<Tpetra_CrsMatrix> Matrix = Teuchos::rcp(new Tpetra_CrsMatrix(graphT)); 
+  Tpetra_MatrixMarket_Writer::writeSparseFile("Matrix.mm", Matrix);
+  Teuchos::RCP<Tpetra_CrsMatrix> OverlapMatrix = Teuchos::rcp(new Tpetra_CrsMatrix(overlap_graphT)); 
+  Tpetra_MatrixMarket_Writer::writeSparseFile("OverlapMatrix.mm", OverlapMatrix);
+#endif
    
 
 

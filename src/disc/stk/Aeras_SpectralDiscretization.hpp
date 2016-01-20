@@ -233,7 +233,7 @@ namespace Aeras
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
     
-    //! Get Tpetra Jacobian graph (non-diagonal) 
+    //! Get Tpetra implicit Jacobian graph (non-diagonal) 
     Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const;
     
 #if defined(ALBANY_EPETRA)
@@ -242,6 +242,9 @@ namespace Aeras
 #endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
+    
+    //! Get Tpetra overlap implicit Jacobian graph (non-diagonal) 
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const;
 
 #if defined(ALBANY_EPETRA)
     //! Get field node map
@@ -559,7 +562,7 @@ namespace Aeras
     //! Process spectral Albany mesh for CRS Graphs
     void computeGraphs();
     Teuchos::RCP<Tpetra_CrsGraph> computeOverlapGraph();
-    Teuchos::RCP<Tpetra_CrsGraph> computeOwnedGraph();
+    Teuchos::RCP<Tpetra_CrsGraph> computeOwnedGraph(Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT_);
 
     //  The following function allocates the graph of a diagonal Jacobian, 
     //  relevant for explicit schemes.
@@ -656,6 +659,9 @@ namespace Aeras
 
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT; 
+    
+    //! Overlapped Jacobian matrix implicit graph
+    Teuchos::RCP<Tpetra_CrsGraph> implicit_overlap_graphT; 
 
     //! Processor ID
     unsigned int myPID;
