@@ -104,7 +104,7 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="1000"/>         
+	<Parameter  name="Max Steps" type="int" value="3"/>         
 	<Parameter  name="Max Value" type="double" value="10800.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->

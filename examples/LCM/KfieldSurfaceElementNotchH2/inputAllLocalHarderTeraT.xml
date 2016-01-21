@@ -1,6 +1,6 @@
 <ParameterList>
 
-  <!-- Dumping Matrix Market to file -->
+  <!--  Dumping Matrix Market to file -->
   <!--
   <ParameterList name="Debug Output">
      <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
@@ -36,7 +36,6 @@
       <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0, 3.87e-5, 0.0}"/>
     </ParameterList>
 
-
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- Kfield Boundary Conditions -->
@@ -46,9 +45,6 @@
         <!-- Pressure factor is V_{H}/R/T -->
         <Parameter name="Pressure Factor" type="double" value="801.860315932965"/>
       </ParameterList>
-      <!--
-      <Parameter name="DBC on NS nodelist_3 for DOF C" type="double" value="5.6e-4"/>
-      -->
       <Parameter name="DBC on NS nodelist_4 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_5 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="DBC on NS nodelist_1 for DOF K">
@@ -59,7 +55,7 @@
 	<Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0 ,10800.0}"/>
 	<Parameter name="KI Values" type="Array(double)" value="{  0.0, 0.0, 0.22}"/>
 	<Parameter name="KII Values" type="Array(double)" value="{  0.0, 0.0, 0.0}"/>
-	<Parameter name="Shear Modulus" type="double" value="0.07538461538461539"/>
+	<Parameter name="Shear Modulus" type="double" value="0.07538461538461539e1"/>
 	<Parameter name="Poissons Ratio" type="double" value="0.3"/>
       </ParameterList>
     </ParameterList>
@@ -79,7 +75,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="K_field_all_scaled_Harder_tera.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="K_field_all_scaled_HarderTeraT.e"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, CL, S, tauH, S}"/>
@@ -100,7 +96,7 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Tangent"/>
+	<Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
@@ -134,6 +130,9 @@
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton"/>
 	<ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-10"/>
+          </ParameterList>
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
 	  <ParameterList name="Stratimikos Linear Solver">
@@ -162,7 +161,6 @@
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
@@ -174,12 +172,12 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack">
+		<ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="2"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
+		  <Parameter name="Prec Type" type="string" value="RILUK"/>
+		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>

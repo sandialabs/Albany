@@ -21,6 +21,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarderT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAllLocalHarderT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarderTera.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAllLocalHarderTera.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAllLocalHarderTeraT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAllLocalHarderTeraT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo
                ${CMAKE_CURRENT_BINARY_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo  COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo.4.0
