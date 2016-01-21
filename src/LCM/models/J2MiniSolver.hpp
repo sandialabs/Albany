@@ -72,6 +72,29 @@ public:
       FieldMap<ScalarT> dep_fields,
       FieldMap<ScalarT> eval_fields);
 
+  //
+  // This is required by Kokkos.
+  //
+
+  // Where the threads will execute (serial, openmp, pthreads, CUDA, etc.)
+  using ExecutionSpace = Kokkos::View<int***, PHX::Device>::execution_space;
+
+  // This tag is just a label that is useful in selecting execution policies
+  // and functors by using it as a template parameter to instantiate
+  // the desired policy or functor.
+  struct J2ResidualTag {};
+
+  // Functors that use this policy will be executed over a range
+  // of an integral type. Adequate for parallel execution on an index,
+  // normally cell index.
+  using J2ResidualPolicy =
+      Kokkos::RangePolicy<ExecutionSpace, J2ResidualTag>;
+
+  // This functor computes the J2 residual in parallel.
+  KOKKOS_INLINE_FUNCTION
+  void
+  operator()(const J2ResidualTag & tag, int const & cell) const;
+
 private:
 
   ///

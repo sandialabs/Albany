@@ -230,6 +230,18 @@ public:
 //
 //
 template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void
+J2MiniSolver<EvalT, Traits>::
+operator()(const J2ResidualTag & tag, int const & cell) const
+{
+  return;
+}
+
+//
+//
+//
+template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
 computeState(
     typename Traits::EvalData workset,
