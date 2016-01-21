@@ -52,6 +52,14 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
+#ifdef ALBANY_AERAS
+    // GAH - Is this right for Aeras? Probably do not use PUMI with Aeras I am assuming.
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const
+                 { return this->getOverlapJacobianGraphT(); }
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const
+                 { return this->getJacobianGraphT(); }
+#endif
+
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
