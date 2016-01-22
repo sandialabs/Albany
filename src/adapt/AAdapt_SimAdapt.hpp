@@ -11,8 +11,9 @@ public:
            const Albany::StateManager& StateMgr_,
            const Teuchos::RCP<const Teuchos_Comm>& commT_);
   virtual bool queryAdaptationCriteria(int iteration);
-  virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
-                         const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
+  // virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
+  //                        const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
+  virtual bool adaptMesh();
   virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters();
 private:
   double errorBound;

@@ -40,8 +40,7 @@ bool SimAdapt::queryAdaptationCriteria(int iteration)
   return false;
 }
 
-bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
-                         const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution)
+bool SimAdapt::adaptMesh()
 {
   /* dig through all the abstrations to obtain pointers
      to the various structures needed */
@@ -61,7 +60,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   assert(!should_transfer_ip_data);
   /* compute the size field via SPR error estimation
      on the solution gradient */
-  apf::Field* sol_fld = apf_m->findField(Albany::APFMeshStruct::solution_name);
+  apf::Field* sol_fld = apf_m->findField(Albany::APFMeshStruct::solution_name[0]);
   assert(apf::countComponents(sol_fld) == 1);
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
       apf_ms->cubatureDegree);
@@ -137,6 +136,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   ++callcount;
   return true;
 }
+
 
 Teuchos::RCP<const Teuchos::ParameterList> SimAdapt::getValidAdapterParameters()
 {
