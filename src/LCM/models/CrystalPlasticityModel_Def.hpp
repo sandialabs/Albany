@@ -746,10 +746,14 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
                   F_np1,
                   dt);
 
-              using STEP = Intrepid2::NewtonStep<NLS, ValueT, NLS_DIM>;
+              using STEP = Intrepid2::StepBase<NLS, ValueT, NLS_DIM>;
 
-              STEP
-              step;
+              std::unique_ptr<STEP>
+              pstep =
+                  Intrepid2::stepFactory<NLS, ValueT, NLS_DIM>(step_type_);
+
+              STEP &
+              step = *pstep;
 
               // unknowns, which are slip_np1
               x.set_dimension(num_slip_);

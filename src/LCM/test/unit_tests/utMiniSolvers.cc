@@ -6,8 +6,7 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <MiniLinearSolver.h>
 #include <MiniNonlinearSolver.h>
-#include "../../utils/MiniSolvers.h"
-#include "PHAL_AlbanyTraits.hpp"
+#include <MiniSolvers.h>
 
 namespace
 {
@@ -335,10 +334,13 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
   minimizer;
 
   std::unique_ptr<STEP>
-  step =
+  pstep =
       Intrepid2::stepFactory<FN, ValueT, dim>(Intrepid2::StepType::NEWTON);
 
-  assert(step->name() != nullptr);
+  assert(pstep->name() != nullptr);
+
+  STEP &
+  step = *pstep;
 
   FN
   banana;
@@ -350,7 +352,7 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
   x(1) = 3.0;
 
   LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
-  mini_solver(minimizer, *step, banana, x);
+  mini_solver(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
 
