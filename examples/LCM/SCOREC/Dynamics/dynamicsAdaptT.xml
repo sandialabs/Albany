@@ -27,9 +27,9 @@
     <!-- Adapt mesh using meshAdapt -->
     <ParameterList name="Adaptation">
       <Parameter name="Method" type="string" value="RPI Unif Size"/>
-      <Parameter name="Remesh Step Number" type="Array(int)" value="{5}"/>
-      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
-      <Parameter name="Target Element Size" type="double" value="0.001"/>
+      <Parameter name="Remesh Step Number" type="Array(int)" value="{2, 4, 6, 8}"/>
+      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
+      <Parameter name="Target Element Size" type="double" value="0.008"/>
       <!-- Maximum number of nodes on any given rank -->
       <Parameter name="High Water Mark" type="int" value="10000"/>
     </ParameterList>
@@ -51,7 +51,7 @@
     <Parameter name="SolutionDotDot Vector Components" type="Array(string)" value="{Accel, V, PressureDotDot, S}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Number of Comparisons" type="int" value="0"/>
     <Parameter name="Test Values" type="Array(double)" value="{0.00215650473295}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -61,7 +61,7 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Trapezoid Rule">
-      <Parameter name="Num Time Steps" type="int" value="100"/>
+      <Parameter name="Num Time Steps" type="int" value="10"/>
       <Parameter name="Final Time" type="double" value="60.00"/>
       <Parameter name="Initial Time" type="double" value="0.0"/>
       <ParameterList name="NOX">
