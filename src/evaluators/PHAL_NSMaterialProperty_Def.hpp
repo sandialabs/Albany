@@ -92,6 +92,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 			 ".  Acceptable values are 2 (scalar), " <<
 			 "3 (vector), or 4 (tensor)");
   }
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion" ||
 	   type == "Log Normal RF" ||
 	   type == "Exponential Truncated KL Expansion") {
@@ -123,6 +124,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       rv[i] = mp_list->get(ss, 0.0);
     }
   }
+#endif
   else if (type == "SQRT Temperature Dependent") {
     matPropType = SQRT_TEMP;
     scalar_constant_value = mp_list->get("Reference Value", default_value);
@@ -190,8 +192,10 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(matprop,fm);
+#ifdef ALBANY_STOKHOS
   if (matPropType == KL_RAND_FIELD || matPropType == EXP_KL_RAND_FIELD)
     this->utils.setFieldData(coordVec,fm);
+#endif
   if (matPropType == SQRT_TEMP || matPropType == INV_SQRT_TEMP)
     this->utils.setFieldData(T,fm);
   if (matPropType == NEUTRON_DIFFUSION) {
@@ -282,6 +286,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#ifdef ALBANY_STOKHOS
   else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < dims[1]; ++qp) {
@@ -294,6 +299,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
  }
+#endif
 }
 
 // **********************************************************************
@@ -318,11 +324,13 @@ NSMaterialProperty<EvalT,Traits>::getValue(const std::string &n)
 	if (n == Albany::strint(Albany::strint(name_mp,dim1),dim2))
 	  return tensor_constant_value(dim1,dim2);
   }
+#ifdef ALBANY_STOKHOS
   else if (matPropType == KL_RAND_FIELD || matPropType == EXP_KL_RAND_FIELD) {
     for (int i=0; i<rv.size(); i++)
       if (n == Albany::strint(name_mp + " KL Random Variable",i))
 	return rv[i];
   }
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n

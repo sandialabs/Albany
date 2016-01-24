@@ -9,7 +9,9 @@
 #define ALBANY_SAMPLING_BASED_SCALAR_RESPONSE_FUNCTION_HPP
 
 #include "Albany_ScalarResponseFunction.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_Quadrature.hpp"
+#endif
 
 namespace Albany {
 

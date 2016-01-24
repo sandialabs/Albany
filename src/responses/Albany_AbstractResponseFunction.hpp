@@ -17,14 +17,18 @@
 #include "Epetra_MultiVector.h"
 #include "EpetraExt_ModelEvaluator.h"
 #include "EpetraExt_MultiComm.h"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_ProductEpetraVector.hpp"
 #include "Stokhos_ProductEpetraMultiVector.hpp"
 #endif
+#endif
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_Quadrature.hpp"
+#endif
 #include "PHAL_AlbanyTraits.hpp"
 #include "Thyra_ModelEvaluatorBase.hpp"
 #include "Albany_DataTypes.hpp"

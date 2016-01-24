@@ -14,7 +14,9 @@
 #include "Albany_Layouts.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
+#endif
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
@@ -153,10 +155,12 @@ namespace LCM {
   ///
   PHX::MDField<ScalarT,Cell,QuadPoint> refTemperature;
 
+#ifdef ALBANY_STOKHOS
     ///
     /// Exponential random field
     ///
     Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
+#endif
 
     ///
     /// Values of the random variables

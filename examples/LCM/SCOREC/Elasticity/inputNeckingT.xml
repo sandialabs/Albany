@@ -97,7 +97,7 @@
 	    </ParameterList>
             <!-- Set the linear solver -->
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 
               <!-- define the linear solvers -->
 	      <ParameterList name="Linear Solver Types">

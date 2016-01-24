@@ -142,6 +142,7 @@ template<> void myReduceAll<RealType> (
     comm, reduct_type, v.size(), &send[0], &v[0]);
 }
 
+#ifdef ALBANY_STOKHOS
 template<> void myReduceAll<MPType> (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   std::vector<MPType>& v)
@@ -150,6 +151,7 @@ template<> void myReduceAll<MPType> (
   Teuchos::reduceAll<int, MPType>(
     comm, reduct_type, v.size(), &send[0], &v[0]);
 }
+#endif
 } // namespace
 
 template<typename ScalarT>

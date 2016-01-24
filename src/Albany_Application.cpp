@@ -10,7 +10,9 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_OrthogPolyBasis.hpp"
+#endif
 #include "Teuchos_TimeMonitor.hpp"
 
 #if defined(ALBANY_EPETRA)
@@ -172,9 +174,13 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 #endif
 #endif
 
+#if !defined(ALBANY_EPETRA)
+  removeAztecPL(params);
+#endif
 
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
+
   Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
   rc_mgr = AAdapt::rc::Manager::create(
     Teuchos::rcp(&stateMgr, false), *problemParams);
@@ -764,12 +770,14 @@ suppliesPreconditioner() const
   return physicsBasedPreconditioner;
 }
 
+#ifdef ALBANY_STOKHOS
 RCP<Stokhos::OrthogPolyExpansion<int,double> >
 Albany::Application::
 getStochasticExpansion()
 {
   return sg_expansion;
 }
+#endif
 
 #ifdef ALBANY_SG
 void
@@ -4916,6 +4924,42 @@ Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 }
 #endif
 #endif
+
+void Albany::Application::removeAztecPL(const Teuchos::RCP<Teuchos::ParameterList>& params){
+
+	if(params->isSublist("Piro")){
+       Teuchos::ParameterList &piroPL = params->sublist("Piro", true);
+	   if(piroPL.isSublist("Rythmos")){
+         Teuchos::ParameterList &rytPL = piroPL.sublist("Rythmos", true);
+	     if(rytPL.isSublist("Stratimikos")){
+            Teuchos::ParameterList &strataPL = rytPL.sublist("Stratimikos", true);
+	        if(strataPL.isSublist("Linear Solver Types")){
+               Teuchos::ParameterList &lsPL = strataPL.sublist("Linear Solver Types", true);
+	           if(lsPL.isSublist("AztecOO")){
+                   lsPL.remove("AztecOO", true);
+               }
+           }
+         }
+       }
+	   if(piroPL.isSublist("NOX")){
+          Teuchos::ParameterList &noxPL = piroPL.sublist("NOX", true);
+	      if(noxPL.isSublist("Direction")){
+             Teuchos::ParameterList &dirPL = noxPL.sublist("Direction", true);
+	         if(dirPL.isSublist("Newton")){
+                Teuchos::ParameterList &newPL = dirPL.sublist("Newton", true);
+	            if(newPL.isSublist("Stratimikos Linear Solver")){
+                   Teuchos::ParameterList &stratPL = newPL.sublist("Stratimikos Linear Solver", true);
+	               if(stratPL.isSublist("Stratimikos")){
+                      Teuchos::ParameterList &strataPL = stratPL.sublist("Stratimikos", true);
+	                  if(strataPL.isSublist("AztecOO")){
+                         strataPL.remove("AztecOO", true);
+                      }
+	                  if(strataPL.isSublist("Linear Solver Types")){
+                         Teuchos::ParameterList &lsPL = strataPL.sublist("Linear Solver Types", true);
+	                     if(lsPL.isSublist("AztecOO")){
+                            lsPL.remove("AztecOO", true);
+    }}}}}}}}
+}
 
 #if defined(ALBANY_LCM)
 void

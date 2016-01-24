@@ -61,11 +61,13 @@ Permittivity(Teuchos::ParameterList& p) :
 
   }
 
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion" || type == "Log Normal RF") {
 
     init_KL_RF(type, *cond_list, p);
 
   }
+#endif
 
   else if (type == "Block Dependent")
   {
@@ -95,11 +97,13 @@ Permittivity(Teuchos::ParameterList& p) :
        init_constant(value, p);
 
     }
+#ifdef ALBANY_STOKHOS
     else if (typ == "Truncated KL Expansion" || typ == "Log Normal RF") {
 
        init_KL_RF(typ, subList, p);
 
     }
+#endif
   } // Block dependent
 
   else {
@@ -129,6 +133,7 @@ init_constant(ScalarT value, Teuchos::ParameterList& p){
 
 } // init_constant
 
+#ifdef ALBANY_STOKHOS
 template<typename EvalT, typename Traits>
 void
 Permittivity<EvalT, Traits>::
@@ -165,6 +170,7 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
     }
 
 } // (type == "Truncated KL Expansion" || type == "Log Normal RF")
+#endif
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
@@ -196,10 +202,12 @@ evaluateFields(typename Traits::EvalData workset)
           Teuchos::Array<MeshScalarT> point(numDims);
           for (std::size_t i=0; i<numDims; i++)
               point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
+#ifdef ALBANY_STOKHOS
           if (randField == UNIFORM)
               permittivity(cell,qp) = exp_rf_kl->evaluate(point, rv);
           else if (randField == LOGNORMAL)
               permittivity(cell,qp) = std::exp(exp_rf_kl->evaluate(point, rv));
+#endif
       }
     }
   }

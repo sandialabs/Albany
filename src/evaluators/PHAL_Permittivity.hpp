@@ -14,7 +14,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
+#endif
 #include "Teuchos_Array.hpp"
 
 #include "QCAD_MaterialDatabase.hpp"
@@ -86,8 +88,10 @@ private:
   //! Constant value
   ScalarT constant_value;
 
+#ifdef ALBANY_STOKHOS
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
+#endif
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
@@ -98,9 +102,11 @@ private:
   //! Convenience function to initialize constant permittivity
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
+#ifdef ALBANY_STOKHOS
   //! Convenience function to initialize permittivity based on 
   //  Truncated KL Expansion || Log Normal RF
   void init_KL_RF(std::string &type, Teuchos::ParameterList& subList, Teuchos::ParameterList& p);
+#endif
 
   SG_RF randField;
 

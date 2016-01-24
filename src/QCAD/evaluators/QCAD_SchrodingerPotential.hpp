@@ -16,7 +16,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
+#endif
 #include "Teuchos_Array.hpp"
 
 namespace QCAD {

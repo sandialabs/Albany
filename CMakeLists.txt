@@ -953,11 +953,14 @@ ELSE()
   SET(ALBANY_ENSEMBLE FALSE)
 ENDIF()
 
-# Albany currently requires stokhos to be enabled, although in the future
-# this could become an option
-set(ALBANY_STOKHOS TRUE)
-IF (ALBANY_STOKHOS)
+# optionally disable the use of the Trilinos stokhos package
+OPTION(ENABLE_STOKHOS "Flag to enable / disable the use of Stokhos in Albany" ON)
+IF (ENABLE_STOKHOS)
   ADD_DEFINITIONS(-DALBANY_STOKHOS)
+  MESSAGE("-- Stokhos   is Enabled, compiling with -DALBANY_STOKHOS")
+  set(ALBANY_STOKHOS TRUE)
+ELSE()
+  set(ALBANY_STOKHOS FALSE)
 ENDIF()
 
 ## Other Miscellaneous Albany Options here:

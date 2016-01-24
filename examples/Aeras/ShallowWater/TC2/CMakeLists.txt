@@ -17,5 +17,5 @@ inputSpectralT.xml)
 add_test(Aeras_${testName}_Spectral_24Eles_Quad25_BackwardEuler ${AlbanyT.exe}
 input_24elesSpectralT.xml) 
 
-add_test(Aeras_${testName}_Spectral_RythmosSolver_RungeKutta4 ${AlbanyT.exe}
-    inputSpectralRythmosSolverT.xml) 
+#add_test(Aeras_${testName}_Spectral_RythmosSolver_RungeKutta4 ${AlbanyT.exe}
+#    inputSpectralRythmosSolverT.xml) 
