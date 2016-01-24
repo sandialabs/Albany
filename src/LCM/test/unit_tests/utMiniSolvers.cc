@@ -3,10 +3,13 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <Teuchos_UnitTestHarness.hpp>
+#include <gtest/gtest.h>
 #include <MiniLinearSolver.h>
 #include <MiniNonlinearSolver.h>
 #include <MiniSolvers.h>
+
+// Why is this needed?
+bool TpetraBuild = false;
 
 namespace
 {
@@ -240,18 +243,18 @@ bool testSystemsAndMethods()
   return all_ok;
 }
 
-TEUCHOS_UNIT_TEST(NonlinearSystems, NonlinearMethods)
+TEST(NonlinearSystems, NonlinearMethods)
 {
   bool const
   passed = testSystemsAndMethods();
 
-  TEST_COMPARE(passed, ==, true);
+  ASSERT_EQ(passed, true);
 }
 
 //
 // Simple test of the linear mini solver.
 //
-TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
+TEST(MiniLinearSolver, LehmerMatrix)
 {
   constexpr Intrepid2::Index
   dimension{3};
@@ -279,10 +282,10 @@ TEUCHOS_UNIT_TEST(MiniLinearSolver, LehmerMatrix)
   RealType const
   error = norm(x - v) / norm(v);
 
-  TEST_COMPARE(error, <=, Intrepid2::machine_epsilon<RealType>());
+  ASSERT_LE(error, Intrepid2::machine_epsilon<RealType>());
 }
 
-TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
+TEST(Testing, OptimizationMethods)
 {
   constexpr Intrepid2::Index
   dimension{2};
@@ -310,13 +313,13 @@ TEUCHOS_UNIT_TEST(Testing, OptimizationMethods)
 
   minimizer.printReport(std::cout);
 
-  TEST_COMPARE(true, ==, true);
+  ASSERT_EQ(minimizer.converged, true);
 }
 
 //
 // Test the LCM mini minimizer.
 //
-TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
+TEST(AlbanyResidual, NewtonBanana)
 {
   using EvalT = PHAL::AlbanyTraits::Residual;
   using ScalarT = typename EvalT::ScalarT;
@@ -356,13 +359,13 @@ TEUCHOS_UNIT_TEST(AlbanyResidual, NewtonBanana)
 
   minimizer.printReport(std::cout);
 
-  TEST_COMPARE(minimizer.converged, ==, true);
+  ASSERT_EQ(minimizer.converged, true);
 }
 
 //
 // Test the LCM mini minimizer.
 //
-TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
+TEST(AlbanyJacobian, NewtonBanana)
 {
   using EvalT = PHAL::AlbanyTraits::Jacobian;
   using ScalarT = typename EvalT::ScalarT;
@@ -396,10 +399,10 @@ TEUCHOS_UNIT_TEST(AlbanyJacobian, NewtonBanana)
 
   minimizer.printReport(std::cout);
 
-  TEST_COMPARE(minimizer.converged, ==, true);
+  ASSERT_EQ(minimizer.converged, true);
 }
 
-TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
+TEST(Testing, ValueGradientHessian)
 {
   constexpr Intrepid2::Index
   dimension{2};
@@ -407,18 +410,33 @@ TEUCHOS_UNIT_TEST(Testing, ValueGradientHessian)
   LCM::Paraboloid<RealType>
   p;
 
-  Intrepid2::Vector<RealType, dimension>
+  Intrepid2::Vector<RealType, dimension> const
   x(0.0, 0.0);
 
-  std::cout << "Point   : " << x << '\n';
-  std::cout << "Value   : " << p.value(x) << '\n';
-  std::cout << "Gradient: " << p.gradient(x) << '\n';
-  std::cout << "Hessian : " << p.hessian(x) << '\n';
+  RealType const
+  f = p.value(x);
 
-  TEST_COMPARE(true, ==, true);
+  Intrepid2::Vector<RealType, dimension> const
+  df = p.gradient(x);
+
+  Intrepid2::Tensor<RealType, dimension> const
+  ddf = p.hessian(x);
+
+  std::cout << "Point   : " << x << '\n';
+  std::cout << "Value   : " << f << '\n';
+  std::cout << "Gradient: " << df << '\n';
+  std::cout << "Hessian : " << ddf << '\n';
+
+  Intrepid2::Tensor<RealType, dimension> const
+  I = Intrepid2::identity<RealType, dimension>(dimension);
+
+  RealType const
+  error = std::sqrt(f) + Intrepid2::norm(df) + Intrepid2::norm(ddf - 2.0 * I);
+
+  ASSERT_LE(error, Intrepid2::machine_epsilon<RealType>());
 }
 
-TEUCHOS_UNIT_TEST(Testing, MixedStorage)
+TEST(Testing, MixedStorage)
 {
   Intrepid2::Index const
   dimension{2};
@@ -446,7 +464,23 @@ TEUCHOS_UNIT_TEST(Testing, MixedStorage)
 
   std::cout << "Matrix   : " << B << '\n';
 
-  TEST_COMPARE(true, ==, true);
+  bool const
+  passed = v.get_dimension() == dimension && A.get_dimension() == dimension &&
+    B.get_num_rows() == 4 && B.get_num_cols() == 2;
+
+  ASSERT_EQ(passed, true);
 }
 
 } // anonymous namespace
+
+int
+main(int ac, char * av[])
+{
+  Kokkos::initialize();
+
+  ::testing::InitGoogleTest(&ac, av);
+
+  return RUN_ALL_TESTS();
+
+  Kokkos::finalize();
+}
