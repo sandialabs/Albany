@@ -1910,6 +1910,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
 
   bool success;
 
+#ifdef ALBANY_PAMGEN
   // set up RTCompiler
   rtcFunctionX.addVar("double", "x");
   rtcFunctionX.addVar("double", "y");
@@ -1943,6 +1944,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
     msg += "**** " + rtcFunctionZ.getErrors() + "\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
+#endif
 }
 
 void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
@@ -1950,6 +1952,7 @@ void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
   bool success;
   double value;
 
+#ifdef ALBANY_PAMGEN
   for(int i=0 ; i<spatialDim ; i++){
     success = rtcFunctionX.varValueFill(i, X[i]);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
@@ -1979,6 +1982,7 @@ void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
   success = rtcFunctionZ.execute();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
   solution[2] = rtcFunctionZ.getValueOfVar("value");
+#endif
 
 //   std::cout << "DEBUG CHECK ExpressionParser " << expressionX << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[0] << std::endl;
 //   std::cout << "DEBUG CHECK ExpressionParser " << expressionY << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[1] << std::endl;
