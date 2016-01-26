@@ -897,13 +897,19 @@ f_out->Print(std::cout);
                  inArgs.get_sg_quadrature(),
                  inArgs.get_sg_expansion(),
                  x_sg->productComm());
-    InArgs::sg_const_vector_t x_dot_sg  = inArgs.get_x_dot_sg();
-    InArgs::sg_const_vector_t x_dotdot_sg  = inArgs.get_x_dotdot_sg();
+    InArgs::sg_const_vector_t x_dot_sg  = Teuchos::null;
+    InArgs::sg_const_vector_t x_dot_sg  = Teuchos::null;
+    if(num_time_deriv > 0)
+      x_dotdot_sg  = inArgs.get_x_dotdot_sg();
+    if(num_time_deriv > 1)
+      x_dotdot_sg  = inArgs.get_x_dotdot_sg();
     if (x_dot_sg != Teuchos::null || x_dotdot_sg != Teuchos::null) {
       alpha = inArgs.get_alpha();
-      omega = inArgs.get_omega();
       beta = inArgs.get_beta();
       curr_time  = inArgs.get_t();
+    }
+    if (x_dotdot_sg != Teuchos::null) {
+      omega = inArgs.get_omega();
     }
 
     InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
@@ -1034,13 +1040,20 @@ f_out->Print(std::cout);
   //
   mp_const_vector_t x_mp = inArgs.get_x_mp();
   if (x_mp != Teuchos::null) {
-    mp_const_vector_t x_dot_mp  = inArgs.get_x_dot_mp();
-    mp_const_vector_t x_dotdot_mp  = inArgs.get_x_dotdot_mp();
+    mp_const_vector_t x_dot_mp  = Teuchos::null;
+    mp_const_vector_t x_dotdot_mp  = Teuchos::null;
+    if(num_time_deriv > 0)
+      x_dot_mp  = inArgs.get_x_dot_mp();
+    if(num_time_deriv > 1)
+      x_dotdot_mp  = inArgs.get_x_dotdot_mp();
     if (x_dot_mp != Teuchos::null || x_dotdot_mp != Teuchos::null) {
       alpha = inArgs.get_alpha();
-      omega = inArgs.get_omega();
+      //omega = inArgs.get_omega();
       beta = inArgs.get_beta();
       curr_time  = inArgs.get_t();
+    }
+    if (x_dotdot_mp != Teuchos::null) {
+      omega = inArgs.get_omega();
     }
 
     Teuchos::Array<int> p_mp_index;
