@@ -61,7 +61,7 @@ bool SimAdapt::adaptMesh()
   /* compute the size field via SPR error estimation
      on the solution gradient */
   apf::Field* sol_flds[3];
-  for (int i = 0; i < apf_ms->num_time_deriv; ++i)
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
     sol_flds[i] = apf_m->findField(Albany::APFMeshStruct::solution_name[i]);
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_flds[0], "grad_sol",
       apf_ms->cubatureDegree);
