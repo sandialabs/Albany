@@ -24,10 +24,12 @@
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include <Intrepid2_FieldContainer.hpp>
 
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #if defined(ALBANY_EPETRA)
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
+#endif
 #endif
 
 #include "PHAL_AlbanyTraits.hpp"
@@ -57,7 +59,9 @@ struct Workset {
   unsigned int wsIndex;
   unsigned int numEqs;
 
+#ifdef ALBANY_STOKHOS
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
+#endif
 
 #if defined(ALBANY_EPETRA)
   // These are solution related.

@@ -90,11 +90,11 @@ bool SimAdapt::adaptMesh()
   /* tell the adapter to transfer the solution and residual fields */
   apf::Field* res_fld = apf_m->findField(Albany::APFMeshStruct::residual_name);
   pField sim_sol_flds[3];
-  for (int i = 0; i < apf_ms->num_time_deriv; ++i)
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
     sim_sol_flds[i] = apf::getSIMField(sol_flds[i]);
   pField sim_res_fld = apf::getSIMField(res_fld);
   pPList sim_fld_lst = PList_new();
-  for (int i = 0; i < apf_ms->num_time_deriv; ++i)
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
     PList_append(sim_fld_lst, sim_sol_flds[i]);
   PList_append(sim_fld_lst, sim_res_fld);
   if (apf_ms->useTemperatureHack) {

@@ -39,6 +39,7 @@ ShearModulus(Teuchos::ParameterList& p) :
     // Add Shear Modulus as a Sacado-ized parameter
     this->registerSacadoParameter("Shear Modulus", paramLib);
   }
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
@@ -58,6 +59,7 @@ ShearModulus(Teuchos::ParameterList& p) :
       rv[i] = shmd_list->get(ss, 0.0);
     }
   }
+#endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			       "Invalid shear modulus type " << type);
@@ -109,6 +111,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#ifdef ALBANY_STOKHOS
   else {
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
@@ -119,6 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
   if (isThermoElastic) {
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
@@ -137,10 +141,12 @@ ShearModulus<EvalT,Traits>::getValue(const std::string &n)
     return constant_value;
   else if (n == "dmudT Value")
     return dmudT_value;
+#ifdef ALBANY_STOKHOS
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Shear Modulus KL Random Variable",i))
       return rv[i];
   }
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			     std::endl <<
 			     "Error! Logic error in getting paramter " << n

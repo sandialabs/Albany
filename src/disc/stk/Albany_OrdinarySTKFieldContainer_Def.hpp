@@ -34,11 +34,11 @@ static const char *sol_dtk_id_name[3] = {
       "solution_dotdot dtk"
       };
 
-static const char *res_tag_name = {
+static const char *res_tag_name[1] = {
       "Exodus Residual Name",
       };
 
-static const char *res_id_name = {
+static const char *res_id_name[1] = {
       "residual",
       };
 
@@ -95,7 +95,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
 #if defined(ALBANY_LCM)
   residual_field = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
-                                    params_->get<std::string>(res_tag_name, res_id_name));
+                                    params_->get<std::string>(res_tag_name[0], res_id_name[0]));
   stk::mesh::put_field(*residual_field, metaData_->universal_part() , neq_);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);

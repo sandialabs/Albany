@@ -39,6 +39,7 @@ Absorption(Teuchos::ParameterList& p) :
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
       this->registerSacadoParameter("Absorption", paramLib);
   }
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
@@ -62,6 +63,7 @@ Absorption(Teuchos::ParameterList& p) :
       rv[i] = cond_list->get(ss, 0.0);
     }
   }
+#endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid absorption type " << type);

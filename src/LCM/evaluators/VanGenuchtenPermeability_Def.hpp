@@ -39,6 +39,7 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
     // Add Van Genuchten Permeability as a Sacado-ized parameter
     this->registerSacadoParameter("Van Genuchten Permeability", paramLib);
   }
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
@@ -58,6 +59,7 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
+#endif
   else {
 	  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid Van Genuchten Permeability type " << type);
@@ -125,6 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#ifdef ALBANY_STOKHOS
   else {
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
@@ -135,6 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
   if (isPoroElastic) {
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
@@ -156,10 +160,12 @@ VanGenuchtenPermeability<EvalT,Traits>::getValue(const std::string &n)
     return constant_value;
   else if (n == "Water Unit Weight Value")
       return waterUnitWeight;
+#ifdef ALBANY_STOKHOS
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Van Genuchten Permeability KL Random Variable",i))
       return rv[i];
   }
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting parameter " << n
