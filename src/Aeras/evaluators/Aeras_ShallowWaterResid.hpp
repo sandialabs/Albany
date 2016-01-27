@@ -54,6 +54,7 @@ private:
 	// Input:
 	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1?
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
