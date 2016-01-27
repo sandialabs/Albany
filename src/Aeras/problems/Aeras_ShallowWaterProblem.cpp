@@ -49,13 +49,14 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //No need to plot vorticity when prescrVel == 1.
 //Also, plotVorticity is ignored under Kokkos.
-  if (plotVorticity)
+  if (plotVorticity){
      if(!usePrescribedVelocity){
        //one extra stationary equation for vorticity
        neq++;
      }else{
        std::cout << "Prescribed Velocity is ON, in this case option PlotVorticity=true is ignored." << std::endl; 
      }
+  }
 #endif 
 
 

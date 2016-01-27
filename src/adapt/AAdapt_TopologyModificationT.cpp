@@ -92,9 +92,7 @@ AAdapt::TopologyModT::queryAdaptationCriteria(int) {
 //
 //
 bool
-AAdapt::TopologyModT::adaptMesh(
-  Teuchos::RCP<Tpetra_Vector const> const & solution,
-  Teuchos::RCP<Tpetra_Vector const> const & ovlp_solution) {
+AAdapt::TopologyModT::adaptMesh() {
 
   *output_stream_
       << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"

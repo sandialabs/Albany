@@ -44,8 +44,7 @@ class AbstractAdapterT {
 
     //! Method called by LOCA Solver to actually adapt the mesh
     //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
-    virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
-                           const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution) = 0;
+    virtual bool adaptMesh() = 0;
 
 
     ///

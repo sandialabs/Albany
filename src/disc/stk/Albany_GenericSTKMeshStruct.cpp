@@ -95,6 +95,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   interleavedOrdering = params->get("Interleaved Ordering",true);
   allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
+  num_time_deriv = params->get<int>("Number Of Time Derivatives");
 
   requiresAutomaticAura = params->get<bool>("Use Automatic Aura", false);
 
@@ -139,33 +140,53 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   // Build the container for the STK fields
   Teuchos::Array<std::string> default_solution_vector; // Empty
-  Teuchos::Array<std::string> solution_vector =
+  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
+  solution_vector.resize(num_time_deriv + 1);
+  bool user_specified_solution_components = false;
+  solution_vector[0] =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
+
+  if(solution_vector[0].length() > 0)
+     user_specified_solution_components = true;
+
+  if(num_time_deriv >= 1){
+    solution_vector[1] =
+      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
+    if(solution_vector[1].length() > 0)
+       user_specified_solution_components = true;
+  }
+
+  if(num_time_deriv >= 2){
+    solution_vector[2] =
+      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
+    if(solution_vector[2].length() > 0)
+       user_specified_solution_components = true;
+  }
 
   Teuchos::Array<std::string> default_residual_vector; // Empty
   Teuchos::Array<std::string> residual_vector =
     params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
 
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
-  if(solution_vector.length() == 0 && residual_vector.length() == 0){
+  if(user_specified_solution_components && (residual_vector.length() > 0)){
 
       if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params,
-            metaData, neq_, req, numDim, sis));
+        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params,
+            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
       else
-        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<false>(params,
-            metaData, neq_, req, numDim, sis));
+        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<false>(params,
+            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
 
   }
 
   else {
 
       if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params,
-            metaData, neq_, req, numDim, sis, solution_vector, residual_vector));
+        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params,
+            metaData, bulkData, neq_, req, numDim, sis));
       else
-        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<false>(params,
-            metaData, neq_, req, numDim, sis, solution_vector, residual_vector));
+        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<false>(params,
+            metaData, bulkData, neq_, req, numDim, sis));
 
   }
 
@@ -699,6 +720,7 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
     {
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
+      params_ss->set<int>("Number Of Time Derivatives", params->get<int>("Number Of Time Derivatives"));
       std::string method = params_ss->get<std::string>("Method");
       if (method=="SideSetSTK")
       {
@@ -1471,9 +1493,14 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
+  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
   validPL->set<std::string>("Exodus Output File Name", "",
       "Request exodus output to given file name. Requires SEACAS build");
   validPL->set<std::string>("Exodus Solution Name", "",
+      "Name of solution output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<std::string>("Exodus SolutionDot Name", "",
+      "Name of solution output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<std::string>("Exodus SolutionDotDot Name", "",
       "Name of solution output vector written to Exodus file. Requires SEACAS build");
   validPL->set<std::string>("Exodus Residual Name", "",
       "Name of residual output vector written to Exodus file. Requires SEACAS build");
@@ -1507,10 +1534,13 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
                      "Fields to pick up from the restart file when restarting");
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layout of solution output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<Teuchos::Array<std::string> >("SolutionDot Vector Components", defaultFields,
+      "Names and layout of solution_dot output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", defaultFields,
+      "Names and layout of solution_dotdot output vector written to Exodus file. Requires SEACAS build");
   validPL->set<Teuchos::Array<std::string> >("Residual Vector Components", defaultFields,
       "Names and layout of residual output vector written to Exodus file. Requires SEACAS build");
 
-  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");

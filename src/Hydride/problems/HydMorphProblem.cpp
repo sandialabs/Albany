@@ -32,8 +32,6 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   }
-
-
 }
 
 Albany::HydMorphProblem::

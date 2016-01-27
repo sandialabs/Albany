@@ -18,100 +18,128 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+static const char *sol_tag_name[3] = {
+      "Exodus Solution Name",
+      "Exodus SolutionDot Name",
+      "Exodus SolutionDotDot Name"
+      };
+
+static const char *sol_id_name[3] = {
+      "solution",
+      "solution_dot",
+      "solution_dotdot"
+      };
+
+static const char *res_tag_name = {
+      "Exodus Residual Name",
+      };
+
+static const char *res_id_name = {
+      "residual",
+      };
+
 template<bool Interleaved>
 Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   const Teuchos::RCP<Teuchos::ParameterList>& params_,
   const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+  const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
   const int neq_,
   const AbstractFieldContainer::FieldContainerRequirements& req,
   const int numDim_,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-  const Teuchos::Array<std::string>& solution_vector,
+  const Teuchos::Array<Teuchos::Array<std::string> >& solution_vector,
   const Teuchos::Array<std::string>& residual_vector)
-  : GenericSTKFieldContainer<Interleaved>(params_, metaData_, neq_, numDim_),
+  : GenericSTKFieldContainer<Interleaved>(params_, metaData_, bulkData_, neq_, numDim_),
     haveResidual(false), buildSphereVolume(false) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef typename AbstractSTKFieldContainer::SphereVolumeFieldType SVFT;
+
+  sol_vector_name.resize(solution_vector.size());
+  sol_index.resize(solution_vector.size());
 
   // Check the input
 
-  if(solution_vector.size() == 0) { // Do the default solution vector
+  for(int vec_num = 0; vec_num < solution_vector.size(); vec_num++){
 
-    std::string name = params_->get<std::string>("Exodus Solution Name", "solution");
-    VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, name);
-    stk::mesh::put_field(*solution, metaData_->universal_part(), neq_);
+    if(solution_vector[vec_num].size() == 0) { // Do the default solution vector
+
+      std::string name = params_->get<std::string>(sol_tag_name[vec_num], sol_id_name[vec_num]);
+      VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, name);
+      stk::mesh::put_field(*solution, metaData_->universal_part(), neq_);
 #ifdef ALBANY_SEACAS
-    stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+      stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
 
-    sol_vector_name.push_back(name);
-    sol_index.push_back(this->neq);
-
-  }
-
-  else if(solution_vector.size() == 1) { // User is just renaming the entire solution vector
-
-    VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, solution_vector[0]);
-    stk::mesh::put_field(*solution, metaData_->universal_part(), neq_);
-#ifdef ALBANY_SEACAS
-    stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
-#endif
-
-    sol_vector_name.push_back(solution_vector[0]);
-    sol_index.push_back(neq_);
-
-  }
-
-  else { // user is breaking up the solution into multiple fields
-
-    // make sure the number of entries is even
-
-    TEUCHOS_TEST_FOR_EXCEPTION((solution_vector.size() % 2), std::logic_error,
-                               "Error in input file: specification of solution vector layout is incorrect." << std::endl);
-
-    int len, accum = 0;
-
-    for(int i = 0; i < solution_vector.size(); i += 2) {
-
-      if(solution_vector[i + 1] == "V") {
-
-        len = numDim_; // vector
-        accum += len;
-        VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, solution_vector[i]);
-        stk::mesh::put_field(*solution, metaData_->universal_part(), len);
-#ifdef ALBANY_SEACAS
-        stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
-#endif
-        sol_vector_name.push_back(solution_vector[i]);
-        sol_index.push_back(len);
-
-      }
-
-      else if(solution_vector[i + 1] == "S") {
-
-        len = 1; // scalar
-        accum += len;
-        SFT* solution = & metaData_->declare_field< SFT >(stk::topology::NODE_RANK, solution_vector[i]);
-        stk::mesh::put_field(*solution, metaData_->universal_part());
-#ifdef ALBANY_SEACAS
-        stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
-#endif
-        sol_vector_name.push_back(solution_vector[i]);
-        sol_index.push_back(len);
-
-      }
-
-      else
-
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                   "Error in input file: specification of solution vector layout is incorrect." << std::endl);
+      sol_vector_name[vec_num].push_back(name);
+      sol_index[vec_num].push_back(this->neq);
 
     }
 
-    TEUCHOS_TEST_FOR_EXCEPTION(accum != neq_, std::logic_error,
+    else if(solution_vector[vec_num].size() == 1) { // User is just renaming the entire solution vector
+
+      VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, solution_vector[vec_num][0]);
+      stk::mesh::put_field(*solution, metaData_->universal_part(), neq_);
+#ifdef ALBANY_SEACAS
+      stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+#endif
+
+      sol_vector_name[vec_num].push_back(solution_vector[vec_num][0]);
+      sol_index[vec_num].push_back(neq_);
+
+    }
+
+    else { // user is breaking up the solution into multiple fields
+
+      // make sure the number of entries is even
+
+      TEUCHOS_TEST_FOR_EXCEPTION((solution_vector[vec_num].size() % 2), std::logic_error,
                                "Error in input file: specification of solution vector layout is incorrect." << std::endl);
 
+      int len, accum = 0;
+
+      for(int i = 0; i < solution_vector[vec_num].size(); i += 2) {
+
+        if(solution_vector[vec_num][i + 1] == "V") {
+
+          len = numDim_; // vector
+          accum += len;
+          VFT* solution = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, solution_vector[vec_num][i]);
+          stk::mesh::put_field(*solution, metaData_->universal_part(), len);
+#ifdef ALBANY_SEACAS
+          stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+#endif
+          sol_vector_name[vec_num].push_back(solution_vector[vec_num][i]);
+          sol_index[vec_num].push_back(len);
+
+        }
+
+        else if(solution_vector[vec_num][i + 1] == "S") {
+
+          len = 1; // scalar
+          accum += len;
+          SFT* solution = & metaData_->declare_field< SFT >(stk::topology::NODE_RANK, solution_vector[vec_num][i]);
+          stk::mesh::put_field(*solution, metaData_->universal_part());
+#ifdef ALBANY_SEACAS
+          stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
+#endif
+          sol_vector_name[vec_num].push_back(solution_vector[vec_num][i]);
+          sol_index[vec_num].push_back(len);
+
+        }
+
+        else
+
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                                   "Error in input file: specification of solution vector layout is incorrect." << std::endl);
+
+      }
+
+      TEUCHOS_TEST_FOR_EXCEPTION(accum != neq_, std::logic_error,
+                               "Error in input file: specification of solution vector layout is incorrect." << std::endl);
+
+    }
   }
 
 #if defined(ALBANY_LCM)
@@ -119,7 +147,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
   if(residual_vector.size() == 0) { // Do the default residual vector
 
-    std::string name = params_->get<std::string>("Exodus Residual Name", "residual");
+    std::string name = params_->get<std::string>(res_tag_name, res_id_name);
     VFT* residual = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK, name);
     stk::mesh::put_field(*residual, metaData_->universal_part(), neq_);
 #ifdef ALBANY_SEACAS
@@ -208,11 +236,9 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
 #if defined(ALBANY_LCM) && defined(ALBANY_SEACAS)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
-  // for whatever reason, its type is stk::mesh::Field<double, stk::mesh::Cartesian3d>
-  // the read won't work if you try to read it as a SFT
   bool hasSphereVolumeFieldContainerRequirement = (std::find(req.begin(), req.end(), "Sphere Volume") != req.end());
   if(hasSphereVolumeFieldContainerRequirement){
-    this->sphereVolume_field = metaData_->template get_field< stk::mesh::Field<double, stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+    this->sphereVolume_field = metaData_->template get_field< SVFT >(stk::topology::ELEMENT_RANK, "volume");
     if(this->sphereVolume_field != 0){
       buildSphereVolume = true;
       stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
@@ -285,8 +311,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vector& 
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, sel);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
   this->numNodes = node_map->NumMyElements(); // Needed for the getDOF function to work correctly
   // This is either numOwnedNodes or numOverlapNodes, depending on
   // which map is passed in
@@ -297,23 +322,23 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vector& 
 
     int offset = 0;
 
-    for(int k = 0; k < sol_index.size(); k++) {
+    for(int k = 0; k < sol_index[0].size(); k++) {
 
-      if(sol_index[k] == 1) { // Scalar
+      if(sol_index[0][k] == 1) { // Scalar
 
-        SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+        SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->fillVectorHelper(soln, field, node_map, bucket, offset);
 
       }
 
       else {
 
-        VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+        VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->fillVectorHelper(soln, field, node_map, bucket, offset);
 
       }
 
-      offset += sol_index[k];
+      offset += sol_index[0][k];
 
     }
 
@@ -325,19 +350,18 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillVector(Epetra_Vector& fiel
     stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
 
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, field_selection);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
   if(nodalDofManager.numComponents() > 1) {
-    AbstractSTKFieldContainer::VectorFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->fillVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
     }
   }
   else {
-    AbstractSTKFieldContainer::ScalarFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->fillVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
@@ -355,8 +379,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vector 
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, sel);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
   this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
                                         // This is either numOwnedNodes or numOverlapNodes, depending on
                                         // which map is passed in
@@ -367,22 +390,69 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vector 
 
     int offset = 0;
 
-    for(int k = 0; k < sol_index.size(); k++){
+    for(int k = 0; k < sol_index[0].size(); k++){
 
-       if(sol_index[k] == 1){ // Scalar
+       if(sol_index[0][k] == 1){ // Scalar
 
-          SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+          SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
           this->fillVectorHelperT(solnT, field, node_mapT, bucket, offset);
 
        }
        else {
 
-          VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+          VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
           this->fillVectorHelperT(solnT, field, node_mapT, bucket, offset);
 
        }
 
-       offset += sol_index[k];
+       offset += sol_index[0][k];
+
+    }
+
+  }
+}
+
+template<bool Interleaved>
+void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnMultiVector(Tpetra_MultiVector &solnT,
+       stk::mesh::Selector &sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT){
+
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
+  this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
+                                        // This is either numOwnedNodes or numOverlapNodes, depending on
+                                        // which map is passed in
+
+  for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+    const stk::mesh::Bucket& bucket = **it;
+
+    for(int vector_component = 0; vector_component < solnT.getNumVectors(); vector_component++){
+
+      int offset = 0;
+
+      for(int k = 0; k < sol_index[vector_component].size(); k++){
+
+         if(sol_index[vector_component][k] == 1){ // Scalar
+
+            SFT* field = this->metaData->template get_field<SFT>(
+                              stk::topology::NODE_RANK, sol_vector_name[vector_component][k]);
+            this->fillMultiVectorHelper(solnT, field, node_mapT, bucket, vector_component, offset);
+
+         }
+         else {
+
+            VFT* field = this->metaData->template get_field<VFT>(
+                              stk::topology::NODE_RANK, sol_vector_name[vector_component][k]);
+            this->fillMultiVectorHelper(solnT, field, node_mapT, bucket, vector_component, offset);
+
+         }
+
+         offset += sol_index[vector_component][k];
+
+      }
 
     }
 
@@ -398,8 +468,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVector(const Epetra_Ve
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, sel);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
   this->numNodes = node_map->NumMyElements(); // Needed for the getDOF function to work correctly
   // This is either numOwnedNodes or numOverlapNodes, depending on
   // which map is passed in
@@ -410,23 +479,23 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVector(const Epetra_Ve
 
     int offset = 0;
 
-    for(int k = 0; k < sol_index.size(); k++) {
+    for(int k = 0; k < sol_index[0].size(); k++) {
 
-      if(sol_index[k] == 1) { // Scalar
+      if(sol_index[0][k] == 1) { // Scalar
 
-        SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+        SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->saveVectorHelper(soln, field, node_map, bucket, offset);
 
       }
 
       else {
 
-        VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+        VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->saveVectorHelper(soln, field, node_map, bucket, offset);
 
       }
 
-      offset += sol_index[k];
+      offset += sol_index[0][k];
 
     }
 
@@ -438,18 +507,17 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveVector(const Epetra_Vector
     stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, field_selection);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
 
   if(nodalDofManager.numComponents() > 1) {
-    AbstractSTKFieldContainer::VectorFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->saveVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
     }
   }
   else {
-    AbstractSTKFieldContainer::ScalarFieldType* field  = mesh.mesh_meta_data().get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
     for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
       const stk::mesh::Bucket& bucket = **it;
       this->saveVectorHelper(field_vector, field, field_node_map, bucket, nodalDofManager);
@@ -469,8 +537,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, sel);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
 
 
   this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
@@ -483,22 +550,73 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
 
     int offset = 0;
 
-    for(int k = 0; k < sol_index.size(); k++) {
+    for(int k = 0; k < sol_index[0].size(); k++) {
 
-      if(sol_index[k] == 1) { // Scalar
+      if(sol_index[0][k] == 1) { // Scalar
 
-        SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+        SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
 
       }
 
       else {
-        VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[k]);
+        VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
 
       }
 
-      offset += sol_index[k];
+      offset += sol_index[0][k];
+
+    }
+
+  }
+}
+
+template<bool Interleaved>
+void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnMultiVector(const Tpetra_MultiVector& solnT,
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) {
+
+
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
+
+
+  this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
+  // This is either numOwnedNodes or numOverlapNodes, depending on
+  // which map is passed in
+
+   for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+    const stk::mesh::Bucket& bucket = **it;
+
+    for(int vector_component = 0; vector_component < solnT.getNumVectors(); vector_component++){
+
+      int offset = 0;
+
+      for(int k = 0; k < sol_index[vector_component].size(); k++) {
+
+        if(sol_index[vector_component][k] == 1) { // Scalar
+
+          SFT* field = this->metaData->template get_field<SFT>(
+                            stk::topology::NODE_RANK, sol_vector_name[vector_component][k]);
+          this->saveMultiVectorHelper(solnT, field, node_mapT, bucket, vector_component, offset);
+
+        }
+
+        else {
+
+          VFT* field = this->metaData->template get_field<VFT>(
+                            stk::topology::NODE_RANK, sol_vector_name[vector_component][k]);
+          this->saveMultiVectorHelper(solnT, field, node_mapT, bucket, vector_component, offset);
+
+        }
+
+        offset += sol_index[vector_component][k];
+
+      }
 
     }
 
@@ -514,8 +632,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vec
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, sel);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
   this->numNodes = node_map->NumMyElements(); // Needed for the getDOF function to work correctly
   // This is either numOwnedNodes or numOverlapNodes, depending on
   // which map is passed in
@@ -550,6 +667,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vec
 }
 
 #endif
+
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveResVectorT(const Tpetra_Vector& res,
     stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) {
@@ -558,8 +676,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveResVectorT(const Tpetra_Ve
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
   // Iterate over the nodes by getting node buckets and iterating over each bucket.
-  stk::mesh::BulkData& mesh = this->metaData->get_fields().front()->get_mesh();
-  stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, sel);
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
   this->numNodes = node_map->getNodeNumElements(); // Needed for the getDOF function to work correctly
   // This is either numOwnedNodes or numOverlapNodes, depending on
   // which map is passed in

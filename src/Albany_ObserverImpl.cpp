@@ -99,5 +99,14 @@ void ObserverImpl::observeSolutionT(
                                           nonOverlappedSolutionDotT);
 }
 
+void ObserverImpl::observeSolutionT(
+  double stamp, const Tpetra_MultiVector &nonOverlappedSolutionT)
+{
+  app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionT);
+  app_->getStateMgr().updateStates();
+
+  StatelessObserverImpl::observeSolutionT(stamp, nonOverlappedSolutionT);
+}
+
 } // namespace Albany
 

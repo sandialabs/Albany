@@ -9,9 +9,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-add_test(Aeras_${testName} ${Albany.exe})
+add_test(Aeras_${testName}_BackwardEuler ${Albany.exe})
 endif()
-add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+add_test(Aeras_${testName}_T_BackwardEuler ${AlbanyT.exe} inputT.xml)
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_STOKHOS)

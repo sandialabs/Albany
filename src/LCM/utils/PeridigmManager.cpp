@@ -25,7 +25,9 @@ void LCM::PeridigmManager::initializeSingleton(
     return;
   Teuchos::RCP<LCM::PeridigmManager>* ston =
     const_cast<Teuchos::RCP<LCM::PeridigmManager>*>(&self());
-  *ston = Teuchos::rcp(new PeridigmManager());
+  if( ston->is_null() ){
+    *ston = Teuchos::rcp(new PeridigmManager());
+  }
 }
 
 LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), enableOptimizationBasedCoupling(false), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)
@@ -799,9 +801,6 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
   if(!enableOptimizationBasedCoupling){
     return 0.0;
   }
-
-
-
 
   // Set up access to the current displacements of the nodes in the solid elements
   Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();

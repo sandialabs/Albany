@@ -155,6 +155,16 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
+  //Get element name
+  const CellTopologyData *ctd = cellType->getCellTopologyData();
+  std::string name     = ctd->name;
+  size_t      len      = name.find("_");
+  if (len != std::string::npos) name = name.substr(0,len);
+  if (name == "Line") 
+		TEUCHOS_TEST_FOR_EXCEPTION(true,
+		Teuchos::Exceptions::InvalidParameter,"Aeras::XZHydrostatic no longer works with isoparameteric " <<
+		"Lines! Please re-run with spectral elements (IKT, 1/18/2016).");
+  
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   

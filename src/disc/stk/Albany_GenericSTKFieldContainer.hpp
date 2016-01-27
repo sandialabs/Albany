@@ -30,6 +30,7 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
 
     GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                              const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+                             const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
                              const int neq_,
                              const int numDim_);
 
@@ -69,6 +70,30 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
                           ScalarFieldType* solution_field,
                           const Teuchos::RCP<const Tpetra_Map>& node_mapT,
                           const stk::mesh::Bucket& bucket, int offset);
+
+    template<class T>
+    typename boost::disable_if< boost::is_same<T, ScalarFieldType>, void >::type
+    saveMultiVectorHelper(const Tpetra_MultiVector& solnT,
+                     T* solution_field,
+                     const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+                     const stk::mesh::Bucket& bucket, int vector_component, int offset);
+
+    void saveMultiVectorHelper(const Tpetra_MultiVector& solnT,
+                          ScalarFieldType* solution_field,
+                          const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+                          const stk::mesh::Bucket& bucket, int vector_component, int offset);
+
+    template<class T>
+    typename boost::disable_if< boost::is_same<T,ScalarFieldType>, void >::type
+    fillMultiVectorHelper(Tpetra_MultiVector& solnT,
+                      T* solution_field,
+                      const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+                      const stk::mesh::Bucket& bucket, int vector_component, int offset);
+
+    void fillMultiVectorHelper(Tpetra_MultiVector& solnT,
+                           ScalarFieldType* solution_field,
+                           const Teuchos::RCP<const Tpetra_Map>& node_mapT,
+                           const stk::mesh::Bucket& bucket, int vector_component, int offset);
 
 #if defined(ALBANY_EPETRA)
     // Use boost to provide explicit specialization
@@ -127,6 +152,7 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
     void copySTKField(const ScalarFieldType* source, ScalarFieldType* target);
 
     Teuchos::RCP<stk::mesh::MetaData> metaData;
+    Teuchos::RCP<stk::mesh::BulkData> bulkData;
     Teuchos::RCP<Teuchos::ParameterList> params;
 
     int numNodes; // used to implement getDOF function when ! interleaved
@@ -184,18 +210,30 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
              arg_type *solution_field, \
              const Teuchos::RCP<const Tpetra_Map>& node_mapT, \
              const stk::mesh::Bucket & bucket, int offset);
+#define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SMVH(class_name, value, arg_type) \
+  template void class_name<value>::saveMultiVectorHelper( \
+             const Tpetra_MultiVector &solnT, \
+             arg_type *solution_field, \
+             const Teuchos::RCP<const Tpetra_Map>& node_mapT, \
+             const stk::mesh::Bucket & bucket, int vector_component, int offset);
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(class_name, value, arg_type) \
   template void class_name<value>::fillVectorHelperT( \
           Tpetra_Vector &solnT,  \
           arg_type *solution_field, \
           const Teuchos::RCP<const Tpetra_Map>& node_mapT,  \
           const stk::mesh::Bucket & bucket, int offset);
+#define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(class_name, value, arg_type) \
+  template void class_name<value>::fillMultiVectorHelper( \
+          Tpetra_MultiVector &solnT,  \
+          arg_type *solution_field, \
+          const Teuchos::RCP<const Tpetra_Map>& node_mapT,  \
+          const stk::mesh::Bucket & bucket, int vector_component, int offset);
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(class_name, value, arg_type) \
   template void class_name<value>::copySTKField( \
           const arg_type *source_field, \
           arg_type *target_field);
 
-#if defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA) // Both Epetra and Tpetra templates
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
@@ -207,21 +245,30 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHN(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHN(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHN(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+\
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHT(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHT(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SMVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SMVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, true, AbstractSTKFieldContainer::VectorFieldType) \
-  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType)
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType) 
 #else
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_NONINTERLEAVED(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_CLASS_INTERLEAVED(name) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHT(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHT(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SMVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SMVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, true, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(name, false, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, true, AbstractSTKFieldContainer::VectorFieldType) \
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FMVH(name, false, AbstractSTKFieldContainer::VectorFieldType) \
   STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, true, AbstractSTKFieldContainer::VectorFieldType) \
-  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType)
+  STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(name, false, AbstractSTKFieldContainer::VectorFieldType) 
 #endif // ALBANY_EPETRA
 #endif // ALBANY_GENERICSTKFIELDCONT_HPP

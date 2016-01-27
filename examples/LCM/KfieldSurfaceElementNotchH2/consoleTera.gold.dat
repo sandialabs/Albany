@@ -1,0 +1,1045 @@
+Problem Name = Mechanics 3D
+Mechanics problem:
+	Spatial dimension             : 3
+	Mechanics variables           : DOF
+	Temperature variables         : Constant
+	Pore Pressure variables       : None
+	Transport variables           : DOF
+	HydroStress variables         : DOF
+	Damage variables              : None
+	Stabilized Pressure variables : None
+Initializing material database from materialsScaledLocalHarderTera.xml
+Albany_IOSS: Loading STKMesh from Exodus file  BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo
+MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? 
+Num MeshSpecs: 2
+Calling MechanicsProblem::buildEvaluators
+Calling MechanicsProblem::constructDirichletEvaluators
+IOSS-STK: number of node sets = 5
+IOSS-STK: number of side sets = 0
+Neither restart index or time are set. We still read defined fields in case they are needed (e.g., parameters).
+STKDisc: 3441 elements on Proc 0 
+STKDisc: nodeset nodelist_1 has size 52  on Proc 0.
+STKDisc: nodeset nodelist_2 has size 442  on Proc 0.
+STKDisc: nodeset nodelist_3 has size 24  on Proc 0.
+STKDisc: nodeset nodelist_4 has size 3613  on Proc 0.
+STKDisc: nodeset nodelist_5 has size 3613  on Proc 0.
+StateManager: initializing state:  Time
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Time_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Temperature
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Temperature_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Transport
+ with initialization type 'scalar' and value: 3.87e-05
+StateManager: initializing state:  Transport_old
+ with initialization type 'scalar' and value: 3.87e-05
+StateManager: initializing state:  HydroStress
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  HydroStress_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Cauchy_Stress
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Fp
+ with initialization type 'identity'
+StateManager: initializing state:  Fp_old
+ with initialization type 'identity'
+StateManager: initializing state:  eqps
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  eqps_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Yield_Surface
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Mechanical_Source
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Trapped_Concentration
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Total_Concentration
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Total_Concentration_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Time
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  Time_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_Temperature
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_Temperature_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_Transport
+ with initialization type 'scalar' and value: 3.87e-05
+StateManager: initializing state:  surf_Transport_old
+ with initialization type 'scalar' and value: 3.87e-05
+StateManager: initializing state:  surf_HydroStress
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_HydroStress_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_Cauchy_Stress
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_Fp
+ with initialization type 'identity'
+StateManager: initializing state:  surf_Fp_old
+ with initialization type 'identity'
+StateManager: initializing state:  surf_eqps
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_eqps_old
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_Yield_Surface
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_Mechanical_Source
+ with initialization type 'scalar' and value: 0
+StateManager: initializing state:  surf_F
+ with initialization type 'identity'
+StateManager: initializing state:  surf_Trapped_Concentration
+ with initialization type 'scalar' and value: 0
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ Sacado ParameterLibrary has been initialized:
+ Library of all registered parameters:
+	DBC on NS nodelist_1 for DOF K:  Supports AD = 1, Supports_Analytic = 0
+	DBC on NS nodelist_4 for DOF Z:  Supports AD = 1, Supports_Analytic = 0
+	DBC on NS nodelist_5 for DOF Z:  Supports AD = 1, Supports_Analytic = 0
+	Kfield KI:  Supports AD = 1, Supports_Analytic = 0
+	Kfield KII:  Supports AD = 1, Supports_Analytic = 0
+	Temperature:  Supports AD = 1, Supports_Analytic = 0
+	Time:  Supports AD = 1, Supports_Analytic = 0
+	surf_Temperature:  Supports AD = 1, Supports_Analytic = 0
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Number of parameters vectors  = 1
+Number of parameters in parameter vector 0 = 1
+Number of distributed parameters vectors  = 0
+eval pVector   LOCA::ParameterVector 
+(size = 1)
+    0    Time = 0
+
+ Phalanx writing graphviz file for graph of Residual fill (detail =1)
+ Process using 'dot -Tpng -O phalanx_graph' 
+ 
+************************************************************************
+-- Status Test Results --
+**...........OR Combination -> 
+  **...........F-Norm = 1.395e-02 < 1.395e-10 (1.000e-08 * 1.395e-02)
+  **...........Number of Iterations = 0 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 0 < 4
+    **...........F-Norm = 1.395e-02 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 1.395e-02  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+ Phalanx writing graphviz file for graph of Jacobian fill (detail =1)
+ Process using 'dot -Tpng -O phalanx_graph' 
+ 
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.727686167 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    1.000000e+00
+   Iter   8, [ 1] :    1.806511e-12
+   Belos::BlockGmresSolMgr::solve(): Warning! Solver has experienced a loss of accuracy!
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_UNCONVERGED" in 8 iterations with total CPU time of 0.13931 sec
+
+************************************************************************
+-- Backtrack Line Search -- 
+  1: step = 1.000e+00 old f = 9.729e-05 new f = 1.092e+04
+  2: step = 5.000e-01 old f = 9.729e-05 new f = 8.621e+02
+  3: step = 1.000e+00 old f = 9.729e-05 new f = 1.092e+04 (USING RECOVERY STEP!)
+************************************************************************
+
+NOX::Solver::LineSearchBased::iterate - using recovery step for line search
+************************************************************************
+-- Status Test Results --
+**...........OR Combination -> 
+  **...........F-Norm = 1.478e+02 < 1.395e-10 (1.000e-08 * 1.395e-02)
+  **...........Number of Iterations = 1 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 1 < 4
+    **...........F-Norm = 1.478e+02 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 1.478e+02  step = 1.000e+00  dx = 1.395e-02
+************************************************************************
+
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.727562904 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    1.000000e+00
+   Iter   4, [ 1] :    6.440828e-11
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 4 iterations with total CPU time of 0.081404 sec
+
+************************************************************************
+-- Backtrack Line Search -- 
+  1: step = 1.000e+00 old f = 1.092e+04 new f = 8.357e-10 (STEP ACCEPTED!)
+************************************************************************
+
+************************************************************************
+-- Status Test Results --
+**...........OR Combination -> 
+  **...........F-Norm = 4.088e-05 < 1.395e-10 (1.000e-08 * 1.395e-02)
+  **...........Number of Iterations = 2 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 2 < 4
+    **...........F-Norm = 4.088e-05 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 4.088e-05  step = 1.000e+00  dx = 2.052e-06
+************************************************************************
+
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.718129158 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    1.000000e+00
+   Iter   4, [ 1] :    6.147902e-11
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 4 iterations with total CPU time of 0.0851688 sec
+
+************************************************************************
+-- Backtrack Line Search -- 
+  1: step = 1.000e+00 old f = 8.357e-10 new f = 5.742e-21 (STEP ACCEPTED!)
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 1.072e-10  step = 1.000e+00  dx = 5.666e-13 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  Converged....F-Norm = 1.072e-10 < 1.395e-10 (1.000e-08 * 1.395e-02)
+  **...........Number of Iterations = 3 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 3 < 4
+    Converged....F-Norm = 1.072e-10 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+ Phalanx writing graphviz file for graph of Residual fill (detail =1)
+ Process using 'dot -Tpng -O state_phalanx_graph' 
+ 
+ Albany::STKDiscretization::writeSolution: writing time 0 to index 1 in file K_field_all_scaled_Harder_tera.e
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.712144136 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    0.000000e+00
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 0 iterations with total CPU time of 0.015748 sec
+************************************************************************
+-- Status Test Results --
+**...........OR Combination -> 
+  **...........F-Norm = 5.094e+00 < 5.094e-08 (1.000e-08 * 5.094e+00)
+  **...........Number of Iterations = 0 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 0 < 4
+    **...........F-Norm = 5.094e+00 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+************************************************************************
+-- Nonlinear Solver Step 0 -- 
+||F|| = 5.094e+00  step = 0.000e+00  dx = 0.000e+00
+************************************************************************
+
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.700013161 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    1.000000e+00
+   Iter  10, [ 1] :    8.708013e-01
+   Iter  20, [ 1] :    1.116614e-01
+   Iter  30, [ 1] :    3.743348e-02
+   Iter  40, [ 1] :    9.458565e-03
+   Iter  50, [ 1] :    1.814236e-03
+   Iter  60, [ 1] :    7.197794e-04
+   Iter  70, [ 1] :    6.038239e-04
+   Iter  80, [ 1] :    2.757292e-04
+   Iter  90, [ 1] :    1.603364e-04
+   Iter 100, [ 1] :    8.576119e-05
+   Iter 110, [ 1] :    3.824793e-05
+   Iter 120, [ 1] :    7.860506e-06
+   Iter 130, [ 1] :    2.048197e-06
+   Iter 140, [ 1] :    7.993778e-07
+   Iter 150, [ 1] :    3.385137e-07
+   Iter 160, [ 1] :    7.451466e-08
+   Iter 170, [ 1] :    3.081430e-08
+   Iter 180, [ 1] :    1.799705e-08
+   Iter 190, [ 1] :    5.810197e-09
+   Iter 200, [ 1] :    1.434937e-09
+   Iter 210, [ 1] :    2.660520e-10
+   Iter 214, [ 1] :    9.550027e-11
+   Belos::BlockGmresSolMgr::solve(): Warning! Solver has experienced a loss of accuracy!
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_UNCONVERGED" in 214 iterations with total CPU time of 6.99036 sec
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    0.000000e+00
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 0 iterations with total CPU time of 0.00999403 sec
+
+************************************************************************
+-- Backtrack Line Search -- 
+  1: step = 1.000e+00 old f = 1.298e+01 new f = 1.331e-05 (STEP ACCEPTED!)
+************************************************************************
+
+************************************************************************
+-- Status Test Results --
+**...........OR Combination -> 
+  **...........F-Norm = 5.159e-03 < 5.094e-08 (1.000e-08 * 5.094e+00)
+  **...........Number of Iterations = 1 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 1 < 4
+    **...........F-Norm = 5.159e-03 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+************************************************************************
+-- Nonlinear Solver Step 1 -- 
+||F|| = 5.159e-03  step = 1.000e+00  dx = 1.958e+01
+************************************************************************
+
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.70157218 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    1.000000e+00
+   Iter  10, [ 1] :    1.256962e-03
+   Iter  20, [ 1] :    1.277154e-04
+   Iter  30, [ 1] :    4.950614e-05
+   Iter  40, [ 1] :    2.573839e-05
+   Iter  50, [ 1] :    1.991384e-05
+   Iter  60, [ 1] :    1.572813e-05
+   Iter  70, [ 1] :    1.001180e-05
+   Iter  80, [ 1] :    2.552583e-06
+   Iter  90, [ 1] :    7.580635e-07
+   Iter 100, [ 1] :    1.387515e-07
+   Iter 110, [ 1] :    4.654860e-08
+   Iter 120, [ 1] :    1.194786e-08
+   Iter 130, [ 1] :    3.851492e-09
+   Iter 140, [ 1] :    1.276102e-09
+   Iter 150, [ 1] :    1.176457e-09
+   Iter 160, [ 1] :    1.047901e-09
+   Iter 170, [ 1] :    7.104164e-10
+   Iter 179, [ 1] :    8.437587e-11
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 179 iterations with total CPU time of 5.20123 sec
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    0.000000e+00
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 0 iterations with total CPU time of 0.00926495 sec
+
+************************************************************************
+-- Backtrack Line Search -- 
+  1: step = 1.000e+00 old f = 1.331e-05 new f = 1.811e-14 (STEP ACCEPTED!)
+************************************************************************
+
+************************************************************************
+-- Status Test Results --
+**...........OR Combination -> 
+  **...........F-Norm = 1.903e-07 < 5.094e-08 (1.000e-08 * 5.094e+00)
+  **...........Number of Iterations = 2 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 2 < 4
+    Converged....F-Norm = 1.903e-07 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+************************************************************************
+-- Nonlinear Solver Step 2 -- 
+||F|| = 1.903e-07  step = 1.000e+00  dx = 1.545e-04
+************************************************************************
+
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.720928907 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    1.000000e+00
+   Iter  10, [ 1] :    1.424508e-04
+   Iter  20, [ 1] :    4.014676e-05
+   Iter  30, [ 1] :    2.471489e-05
+   Iter  40, [ 1] :    1.883213e-05
+   Iter  50, [ 1] :    1.227006e-05
+   Iter  60, [ 1] :    3.657700e-06
+   Iter  70, [ 1] :    1.713828e-06
+   Iter  80, [ 1] :    6.673078e-07
+   Iter  90, [ 1] :    2.273055e-07
+   Iter 100, [ 1] :    1.307717e-07
+   Iter 110, [ 1] :    9.518248e-08
+   Iter 120, [ 1] :    7.409575e-08
+   Iter 130, [ 1] :    2.723033e-08
+   Iter 140, [ 1] :    6.222111e-09
+   Iter 150, [ 1] :    1.263183e-09
+   Iter 160, [ 1] :    6.700061e-10
+   Iter 170, [ 1] :    1.046391e-10
+   Iter 171, [ 1] :    8.524420e-11
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 171 iterations with total CPU time of 4.87045 sec
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    0.000000e+00
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 0 iterations with total CPU time of 0.00922489 sec
+
+************************************************************************
+-- Backtrack Line Search -- 
+  1: step = 1.000e+00 old f = 1.811e-14 new f = 1.243e-14 (STEP ACCEPTED!)
+************************************************************************
+
+************************************************************************
+-- Status Test Results --
+**...........OR Combination -> 
+  **...........F-Norm = 1.577e-07 < 5.094e-08 (1.000e-08 * 5.094e+00)
+  **...........Number of Iterations = 3 < 15
+  **...........AND Combination -> 
+    **...........N-Step: 3 < 4
+    Converged....F-Norm = 1.577e-07 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+************************************************************************
+-- Nonlinear Solver Step 3 -- 
+||F|| = 1.577e-07  step = 1.000e+00  dx = 1.777e-08
+************************************************************************
+
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.716485977 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    1.000000e+00
+   Iter  10, [ 1] :    1.616915e-04
+   Iter  20, [ 1] :    1.856797e-05
+   Iter  30, [ 1] :    1.645148e-05
+   Iter  40, [ 1] :    6.200550e-06
+   Iter  50, [ 1] :    1.988717e-06
+   Iter  60, [ 1] :    1.264205e-06
+   Iter  70, [ 1] :    3.725090e-07
+   Iter  80, [ 1] :    2.043396e-07
+   Iter  90, [ 1] :    1.011990e-07
+   Iter 100, [ 1] :    3.604943e-08
+   Iter 110, [ 1] :    2.077333e-08
+   Iter 120, [ 1] :    1.590401e-08
+   Iter 130, [ 1] :    7.346970e-09
+   Iter 140, [ 1] :    2.942307e-09
+   Iter 150, [ 1] :    9.636330e-10
+   Iter 160, [ 1] :    1.855966e-10
+   Iter 166, [ 1] :    9.583894e-11
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 166 iterations with total CPU time of 4.66321 sec
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    0.000000e+00
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 0 iterations with total CPU time of 0.00931692 sec
+
+************************************************************************
+-- Backtrack Line Search -- 
+  1: step = 1.000e+00 old f = 1.243e-14 new f = 1.381e-14
+  2: step = 5.000e-01 old f = 1.243e-14 new f = 7.541e-15 (STEP ACCEPTED!)
+************************************************************************
+
+
+************************************************************************
+-- Nonlinear Solver Step 4 -- 
+||F|| = 1.228e-07  step = 5.000e-01  dx = 1.106e-10 (Converged!)
+************************************************************************
+
+************************************************************************
+-- Final Status Test Results --
+Converged....OR Combination -> 
+  **...........F-Norm = 1.228e-07 < 5.094e-08 (1.000e-08 * 5.094e+00)
+  **...........Number of Iterations = 4 < 15
+  Converged....AND Combination -> 
+    Converged....N-Step: 4 = 4
+    Converged....F-Norm = 1.228e-07 < 1.000e-05
+                 (Unscaled Two-Norm, Absolute Tolerance)
+  **...........Finite Number Check (Two-Norm F) = Finite
+************************************************************************
+
+       Creating a new preconditioner
+
+       Time required to create preconditioner : 1.712417841 (sec.)
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    0.000000e+00
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 0 iterations with total CPU time of 0.0111492 sec
+ Albany::STKDiscretization::writeSolution: writing time 10 to index 2 in file K_field_all_scaled_Harder_tera.e
+Nonlinear solver failed to converge!
+Convergence Stats: for step  #1 : NumLinSolves, Krylov, Kr/Solve; LastKrylov, LastTol: 13  746  57.38461538  0 0
+  
+  Entering Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Leaving Thyra::BelosLinearOpWithSolveFactory<double>::initializeOpImpl(...) ...
+  
+  Starting iterations with Belos:
+   Using forward operator = Thyra::EpetraLinearOp{rangeDim=139920,domainDim=139920}
+   Using iterative solver = "Belos::BlockGmresSolMgr":
+     Template parameters:
+      ScalarType: double
+      MV: Thyra::MultiVectorBase<double>
+      OP: Thyra::LinearOpBase<double>
+     Flexible: false
+     Num Blocks: 1000
+     Maximum Iterations: 500
+     Maximum Restarts: 20
+     Convergence Tolerance: 1e-10
+   With #Eqns=139920, #RHSs=1 ...
+   
+   *******************************************************
+   ***** Belos Iterative Solver:  Block Gmres 
+   ***** Maximum Iterations: 500
+   ***** Block Size: 1
+   ***** Residual Test: 
+   *****   Test 1 : Belos::StatusTestImpResNorm<>: (2-Norm Res Vec) / (2-Norm Prec Res0), tol = 1e-10
+   *******************************************************
+   Iter   0, [ 1] :    0.000000e+00
+  
+  The Belos solver of type ""Belos::BlockGmresSolMgr": {Flexible: false, Num Blocks: 1000, Maximum Iterations: 500, Maximum Restarts: 20, Convergence Tolerance: 1e-10}" returned a solve status of "SOLVE_STATUS_CONVERGED" in 0 iterations with total CPU time of 0.0089891 sec
+Finished eval of first model: Params, Responses 
+
+Parameter vector 0:
+     MyPID           GID               Value  
+         0             0                       0
+
+Response vector 0:
+     MyPID           GID               Value  
+         0             0        0.00705208926371
+
+Sensitivities (0,0): 
+     MyPID           GID               Value  
+         0             0                       0
+
+CheckTestResults: Number of Comparisons Attempted = 1
+Main_Solve: MeanValue of final solution 0.00705208926371
+
+Number of Failed Comparisons: 1
+===================================================================================================================================================================================
+
+                                                                       TimeMonitor results over 4 processors
+
+Timer Name                                                                                         MinOverProcs       MeanOverProcs       MaxOverProcs       MeanOverCallCounts    
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+> Albany Fill: Jacobian                                                                            37.97 (9)          37.97 (9)           37.97 (9)          4.218 (9)             
+> Albany Fill: Jacobian Export                                                                     1.055 (9)          2.642 (9)           4.86 (9)           0.2936 (9)            
+> Albany Fill: Residual                                                                            3.466 (12)         3.467 (12)          3.469 (12)         0.2889 (12)           
+> Albany Fill: Response Gradient                                                                   0.000216 (1)       0.000265 (1)        0.0003369 (1)      0.000265 (1)          
+> Albany Fill: Tangent                                                                             11.56 (7)          11.56 (7)           11.56 (7)          1.651 (7)             
+Albany: ***Total Time***                                                                           99.38 (1)          99.39 (1)           99.4 (1)           99.39 (1)             
+Albany: **Total Fill Time**                                                                        59.36 (30)         59.76 (30)          60.09 (30)         1.992 (30)            
+Albany: Output to File                                                                             0.0563 (2)         0.1003 (2)          0.1486 (2)         0.05015 (2)           
+Albany: Setup Time                                                                                 1.657 (1)          1.657 (1)           1.657 (1)          1.657 (1)             
+Belos: BlockGmresSolMgr total solve time                                                           22.01 (14)         22.01 (14)          22.02 (14)         1.572 (14)            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Belos: Operation Op*x                                                                              3.404 (774)        3.845 (774)         4.192 (774)        0.004968 (774)        
+Belos: Operation Prec*x                                                                            6.25 (753)         6.706 (753)         7.283 (753)        0.008906 (753)        
+Belos: Orthogonalization                                                                           11.32 (760)        11.45 (760)         11.56 (760)        0.01506 (760)         
+Epetra_CrsMatrix::Multiply(TransA,X,Y)                                                             3.391 (774)        3.829 (774)         4.175 (774)        0.004947 (774)        
+Epetra_CrsMatrix::Solve(Upper,Trans,UnitDiag,X,Y)                                                  6.073 (1524)       6.527 (1524)        7.107 (1524)       0.004283 (1524)       
+Ifpack_ILU::ApplyInverse                                                                           6.115 (762)        6.571 (762)         7.151 (762)        0.008623 (762)        
+Ifpack_ILU::ApplyInverse - Solve                                                                   6.111 (762)        6.566 (762)         7.147 (762)        0.008617 (762)        
+Ifpack_ILU::Compute                                                                                4.991 (9)          5.424 (9)           5.986 (9)          0.6026 (9)            
+Ifpack_ILU::ComputeSetup                                                                           1.044 (9)          1.116 (9)           1.2 (9)            0.124 (9)             
+Ifpack_ILU::Initialize                                                                             6.243 (9)          6.756 (9)           7.504 (9)          0.7507 (9)            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+NOX: Total Linear Solve Time                                                                       22.16 (14)         22.16 (14)          22.16 (14)         1.583 (14)            
+NOX: Total Preconditioner Generation Time                                                          14.96 (9)          15.28 (9)           15.68 (9)          1.698 (9)             
+Phalanx: Evaluator 0: Gather Solution<Residual>                                                    0.009044 (816)     0.009434 (822)      0.009865 (816)     1.148e-05 (822)       
+Phalanx: Evaluator 100: DOFGradInterpolation                                                       0.0239 (483)       0.02499 (479.5)     0.02566 (483)      5.212e-05 (479.5)     
+Phalanx: Evaluator 103: Scatter Transport<Tangent>                                                 0.005998 (476)     0.006098 (479.5)    0.006294 (476)     1.272e-05 (479.5)     
+Phalanx: Evaluator 104: Gather Solution<Tangent>                                                   0.004167 (476)     0.00426 (479.5)     0.004343 (483)     8.884e-06 (479.5)     
+Phalanx: Evaluator 105: DOFInterpolation                                                           0.008647 (483)     0.009073 (479.5)    0.009316 (483)     1.892e-05 (479.5)     
+Phalanx: Evaluator 106: DOFGradInterpolation                                                       0.02353 (483)      0.02471 (479.5)     0.02538 (483)      5.152e-05 (479.5)     
+Phalanx: Evaluator 109: Scatter HydroStress<Tangent>                                               0.005281 (476)     0.005301 (479.5)    0.005345 (476)     1.106e-05 (479.5)     
+Phalanx: Evaluator 10: Gather Solution<Residual>                                                   0.004707 (816)     0.00492 (822)       0.005196 (816)     5.985e-06 (822)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 110: Time<Tangent>                                                              0.001138 (476)     0.001206 (479.5)    0.001256 (483)     2.515e-06 (479.5)     
+Phalanx: Evaluator 116: Constitutive Model Parameters<Tangent>                                     0.01824 (483)      0.01859 (479.5)     0.01883 (476)      3.878e-05 (479.5)     
+Phalanx: Evaluator 117: ConstitutiveModelInterface<Tangent>                                        1.989 (483)        2.115 (479.5)       2.176 (483)        0.004411 (479.5)      
+Phalanx: Evaluator 11: DOFInterpolation                                                            0.004082 (828)     0.004169 (822)      0.004225 (816)     5.072e-06 (822)       
+Phalanx: Evaluator 123: Kinematics<Tangent>                                                        0.246 (483)        0.2487 (479.5)      0.2521 (483)       0.0005186 (479.5)     
+Phalanx: Evaluator 124: MechanicsResidual<Tangent>                                                 0.2082 (483)       0.2192 (479.5)      0.2246 (483)       0.0004572 (479.5)     
+Phalanx: Evaluator 125: FirstPK<Tangent>                                                           0.1674 (483)       0.175 (479.5)       0.1809 (483)       0.000365 (479.5)      
+Phalanx: Evaluator 126: Element Length<Tangent>                                                    0.04985 (483)      0.0525 (479.5)      0.05419 (483)      0.0001095 (479.5)     
+Phalanx: Evaluator 127: Transport Coefficients<Tangent>                                            0.09207 (483)      0.09611 (479.5)     0.09866 (483)      0.0002004 (479.5)     
+Phalanx: Evaluator 12: DOFGradInterpolation                                                        0.0115 (816)       0.01171 (822)       0.01189 (828)      1.425e-05 (822)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 130: HDiffusionDeformationMatterResidual<Tangent>                               6.947 (483)        7.21 (479.5)        7.533 (483)        0.01504 (479.5)       
+Phalanx: Evaluator 131: ScalarL2ProjectionResidual<Tangent>                                        0.166 (483)        0.1731 (479.5)      0.1785 (483)       0.000361 (479.5)      
+Phalanx: Evaluator 15: Scatter Transport<Residual>                                                 0.004539 (816)     0.004825 (822)      0.005141 (828)     5.869e-06 (822)       
+Phalanx: Evaluator 16: Gather Solution<Residual>                                                   0.00416 (816)      0.004225 (822)      0.004333 (816)     5.14e-06 (822)        
+Phalanx: Evaluator 17: DOFInterpolation                                                            0.004025 (816)     0.004155 (822)      0.004286 (828)     5.055e-06 (822)       
+Phalanx: Evaluator 18: DOFGradInterpolation                                                        0.01113 (828)      0.01136 (822)       0.01166 (828)      1.381e-05 (822)       
+Phalanx: Evaluator 1: Gather Coordinate Vector                                                     0.004935 (828)     0.005042 (822)      0.005155 (816)     6.134e-06 (822)       
+Phalanx: Evaluator 21: Scatter HydroStress<Residual>                                               0.00349 (816)      0.003606 (822)      0.003697 (828)     4.387e-06 (822)       
+Phalanx: Evaluator 22: Time<Residual>                                                              0.002208 (816)     0.00247 (822)       0.002605 (816)     3.004e-06 (822)       
+Phalanx: Evaluator 28: Constitutive Model Parameters<Residual>                                     0.008555 (816)     0.00884 (822)       0.008986 (828)     1.075e-05 (822)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 29: ConstitutiveModelInterface<Residual>                                        0.5776 (828)       0.5839 (822)        0.5944 (828)       0.0007104 (822)       
+Phalanx: Evaluator 316: DBC on NS nodelist_1 for DOF K                                             0.000185 (12)      0.000206 (12)       0.0002215 (12)     1.717e-05 (12)        
+Phalanx: Evaluator 317: DBC on NS nodelist_1 for DOF K                                             0.0006819 (9)      0.0007774 (9)       0.0008466 (9)      8.638e-05 (9)         
+Phalanx: Evaluator 318: DBC on NS nodelist_1 for DOF K                                             0.0002117 (7)      0.0002381 (7)       0.0002565 (7)      3.402e-05 (7)         
+Phalanx: Evaluator 320: DBC on NS nodelist_4 for DOF Z                                             0.0005643 (12)     0.0006463 (12)      0.0007174 (12)     5.386e-05 (12)        
+Phalanx: Evaluator 321: DBC on NS nodelist_4 for DOF Z                                             0.02479 (9)        0.02577 (9)         0.02654 (9)        0.002863 (9)          
+Phalanx: Evaluator 322: DBC on NS nodelist_4 for DOF Z                                             0.006453 (7)       0.006757 (7)        0.007094 (7)       0.0009652 (7)         
+Phalanx: Evaluator 324: DBC on NS nodelist_5 for DOF Z                                             0.0004992 (12)     0.0005573 (12)      0.0006189 (12)     4.644e-05 (12)        
+Phalanx: Evaluator 325: DBC on NS nodelist_5 for DOF Z                                             0.02472 (9)        0.02586 (9)         0.02685 (9)        0.002873 (9)          
+Phalanx: Evaluator 326: DBC on NS nodelist_5 for DOF Z                                             0.00642 (7)        0.006725 (7)        0.007059 (7)       0.0009607 (7)         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 328: Pressure Dependent DBC on NS nodelist_3 for DOF C                          9.012e-05 (12)     0.0001593 (12)      0.0002384 (12)     1.327e-05 (12)        
+Phalanx: Evaluator 329: Pressure Dependent DBC on NS nodelist_3 for DOF C                          0.0003142 (9)      0.00132 (9)         0.002396 (9)       0.0001467 (9)         
+Phalanx: Evaluator 330: Pressure Dependent DBC on NS nodelist_3 for DOF C                          0.0001125 (7)      0.0004857 (7)       0.0008969 (7)      6.938e-05 (7)         
+Phalanx: Evaluator 332: Dirichlet Aggregator                                                       2.265e-05 (12)     2.575e-05 (12)      2.813e-05 (12)     2.146e-06 (12)        
+Phalanx: Evaluator 333: Dirichlet Aggregator                                                       1.74e-05 (9)       1.937e-05 (9)       2.313e-05 (9)      2.152e-06 (9)         
+Phalanx: Evaluator 334: Dirichlet Aggregator                                                       1.287e-05 (7)      1.46e-05 (7)        1.74e-05 (7)       2.086e-06 (7)         
+Phalanx: Evaluator 336: Gather Solution<Residual>                                                  0.00111 (136)      0.00114 (137)       0.001162 (138)     8.321e-06 (137)       
+Phalanx: Evaluator 337: Gather Coordinate Vector                                                   0.0008264 (136)    0.000891 (137)      0.000936 (138)     6.504e-06 (137)       
+Phalanx: Evaluator 341: DOFVecGradInterpolation                                                    0.006013 (136)     0.006182 (137)      0.006382 (138)     4.512e-05 (137)       
+Phalanx: Evaluator 343: ComputeBasisFunctions<Residual>                                            0.01958 (136)      0.01983 (137)       0.02005 (138)      0.0001447 (137)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 345: Temperature                                                                0.0003126 (136)    0.0003389 (137)     0.000356 (138)     2.474e-06 (137)       
+Phalanx: Evaluator 346: Gather Solution<Residual>                                                  0.001038 (138)     0.00107 (137)       0.001133 (138)     7.813e-06 (137)       
+Phalanx: Evaluator 347: DOFInterpolation                                                           0.0006905 (136)    0.0007105 (137)     0.0007281 (136)    5.186e-06 (137)       
+Phalanx: Evaluator 352: Gather Solution<Residual>                                                  0.0006211 (136)    0.0006551 (137)     0.0006814 (136)    4.782e-06 (137)       
+Phalanx: Evaluator 353: DOFInterpolation                                                           0.0006588 (136)    0.0006774 (137)     0.0006917 (136)    4.945e-06 (137)       
+Phalanx: Evaluator 358: Time<Residual>                                                             0.0003126 (136)    0.0003313 (137)     0.0003517 (138)    2.419e-06 (137)       
+Phalanx: Evaluator 359: Save Field Time to State TimeResidual                                      0.0003009 (136)    0.0003126 (137)     0.0003307 (138)    2.282e-06 (137)       
+Phalanx: Evaluator 35: Kinematics<Residual>                                                        0.06861 (816)      0.0696 (822)        0.07134 (828)      8.467e-05 (822)       
+Phalanx: Evaluator 361: Save Field Temperature to State TemperatureResidual                        0.0004857 (136)    0.0004993 (137)     0.0005145 (138)    3.645e-06 (137)       
+Phalanx: Evaluator 362: Save Field Transport to State TransportResidual                            0.0005045 (136)    0.0005312 (137)     0.0005584 (138)    3.877e-06 (137)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 363: Save Field HydroStress to State HydroStressResidual                        0.00037 (138)      0.0003908 (137)     0.0004122 (138)    2.852e-06 (137)       
+Phalanx: Evaluator 364: Constitutive Model Parameters<Residual>                                    0.001447 (136)     0.001462 (137)      0.001483 (138)     1.067e-05 (137)       
+Phalanx: Evaluator 365: ConstitutiveModelInterface<Residual>                                       0.09745 (136)      0.09896 (137)       0.1017 (138)       0.0007224 (137)       
+Phalanx: Evaluator 366: Save Field Cauchy_Stress to State Cauchy_StressResidual                    0.002796 (136)     0.002833 (137)      0.002853 (138)     2.068e-05 (137)       
+Phalanx: Evaluator 367: Save Field Fp to State FpResidual                                          0.002147 (136)     0.002178 (137)      0.002244 (138)     1.59e-05 (137)        
+Phalanx: Evaluator 368: Save Field eqps to State eqpsResidual                                      0.0003369 (136)    0.0003584 (137)     0.0003719 (136)    2.616e-06 (137)       
+Phalanx: Evaluator 369: Save Field Yield_Surface to State Yield_SurfaceResidual                    0.0004208 (136)    0.0004482 (137)     0.0004649 (136)    3.272e-06 (137)       
+Phalanx: Evaluator 36: MechanicsResidual<Residual>                                                 0.0807 (828)       0.0829 (822)        0.08503 (828)      0.0001009 (822)       
+Phalanx: Evaluator 370: Save Field Mechanical_Source to State Mechanical_SourceResidual            0.0003383 (136)    0.000352 (137)      0.0003591 (136)    2.57e-06 (137)        
+Phalanx: Evaluator 371: Kinematics<Residual>                                                       0.01177 (136)      0.01192 (137)       0.01226 (138)      8.698e-05 (137)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 375: Transport Coefficients<Residual>                                           0.01057 (138)      0.01064 (137)       0.01081 (138)      7.77e-05 (137)        
+Phalanx: Evaluator 376: Save Field Trapped_Concentration to State Trapped_ConcentrationResidual    0.0004292 (136)    0.0004428 (137)     0.0004542 (136)    3.232e-06 (137)       
+Phalanx: Evaluator 377: Save Field Total_Concentration to State Total_ConcentrationResidual        0.0004153 (136)    0.0004404 (137)     0.0004694 (138)    3.214e-06 (137)       
+Phalanx: Evaluator 37: FirstPK<Residual>                                                           0.01725 (816)      0.01756 (822)       0.01772 (828)      2.137e-05 (822)       
+Phalanx: Evaluator 38: Element Length<Residual>                                                    0.08676 (828)      0.08959 (822)       0.09196 (828)      0.000109 (822)        
+Phalanx: Evaluator 39: Transport Coefficients<Residual>                                            0.06282 (828)      0.06404 (822)       0.0649 (816)       7.79e-05 (822)        
+Phalanx: Evaluator 42: HDiffusionDeformationMatterResidual<Residual>                               1.592 (828)        1.626 (822)         1.697 (828)        0.001979 (822)        
+Phalanx: Evaluator 43: ScalarL2ProjectionResidual<Residual>                                        0.03716 (816)      0.03805 (822)       0.03968 (828)      4.629e-05 (822)       
+Phalanx: Evaluator 44: Gather Solution<Jacobian>                                                   0.1878 (621)       0.1927 (616.5)      0.2037 (621)       0.0003125 (616.5)     
+Phalanx: Evaluator 45: Gather Coordinate Vector                                                    0.004119 (612)     0.004562 (616.5)    0.00491 (612)      7.4e-06 (616.5)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 48: DOFVecInterpolation Jacobian                                                0.07511 (612)      0.07669 (616.5)     0.07871 (621)      0.0001244 (616.5)     
+Phalanx: Evaluator 49: DOFVecGradInterpolation Jacobian                                            0.2275 (612)       0.2293 (616.5)      0.2302 (621)       0.0003719 (616.5)     
+Phalanx: Evaluator 4: DOFVecInterpolation                                                          0.01004 (828)      0.01034 (822)       0.01074 (816)      1.258e-05 (822)       
+Phalanx: Evaluator 51: ComputeBasisFunctions<Jacobian>                                             0.0896 (621)       0.09108 (616.5)     0.09258 (621)      0.0001477 (616.5)     
+Phalanx: Evaluator 52: Scatter<Jacobian>                                                           0.31 (621)         0.3139 (616.5)      0.3198 (621)       0.0005091 (616.5)     
+Phalanx: Evaluator 53: Temperature                                                                 0.008845 (612)     0.008972 (616.5)    0.009175 (612)     1.455e-05 (616.5)     
+Phalanx: Evaluator 54: Gather Solution<Jacobian>                                                   0.02442 (612)      0.02522 (616.5)     0.02603 (621)      4.091e-05 (616.5)     
+Phalanx: Evaluator 55: DOFInterpolation Jacobian                                                   0.02509 (621)      0.02529 (616.5)     0.0255 (621)       4.102e-05 (616.5)     
+Phalanx: Evaluator 56: DOFGradInterpolation Jacobian                                               0.07626 (621)      0.07663 (616.5)     0.07697 (621)      0.0001243 (616.5)     
+Phalanx: Evaluator 59: Scatter Transport<Jacobian>                                                 0.101 (612)        0.103 (616.5)       0.1054 (621)       0.000167 (616.5)      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 5: DOFVecGradInterpolation                                                      0.03645 (816)      0.03687 (822)       0.03737 (816)      4.486e-05 (822)       
+Phalanx: Evaluator 60: Gather Solution<Jacobian>                                                   0.02503 (612)      0.02563 (616.5)     0.0262 (621)       4.157e-05 (616.5)     
+Phalanx: Evaluator 61: DOFInterpolation Jacobian                                                   0.02687 (612)      0.02707 (616.5)     0.02718 (621)      4.39e-05 (616.5)      
+Phalanx: Evaluator 62: DOFGradInterpolation Jacobian                                               0.07455 (612)      0.07514 (616.5)     0.07555 (612)      0.0001219 (616.5)     
+Phalanx: Evaluator 65: Scatter HydroStress<Jacobian>                                               0.09653 (612)      0.09833 (616.5)     0.1006 (621)       0.0001595 (616.5)     
+Phalanx: Evaluator 66: Time<Jacobian>                                                              0.001993 (612)     0.002065 (616.5)    0.00214 (612)      3.349e-06 (616.5)     
+Phalanx: Evaluator 72: Constitutive Model Parameters<Jacobian>                                     0.1166 (621)       0.1183 (616.5)      0.119 (621)        0.0001918 (616.5)     
+Phalanx: Evaluator 73: ConstitutiveModelInterface<Jacobian>                                        7.702 (612)        7.865 (616.5)       8.227 (621)        0.01276 (616.5)       
+Phalanx: Evaluator 79: Kinematics<Jacobian>                                                        1.203 (621)        1.234 (616.5)       1.272 (621)        0.002002 (616.5)      
+Phalanx: Evaluator 7: ComputeBasisFunctions<Residual>                                              0.116 (828)        0.1177 (822)        0.1196 (828)       0.0001432 (822)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 80: MechanicsResidual<Jacobian>                                                 0.7455 (621)       0.7604 (616.5)      0.7745 (621)       0.001233 (616.5)      
+Phalanx: Evaluator 81: FirstPK<Jacobian>                                                           1.256 (621)        1.271 (616.5)       1.297 (621)        0.002061 (616.5)      
+Phalanx: Evaluator 82: Element Length<Jacobian>                                                    0.06646 (621)      0.06846 (616.5)     0.07019 (621)      0.000111 (616.5)      
+Phalanx: Evaluator 83: Transport Coefficients<Jacobian>                                            1.111 (621)        1.137 (616.5)       1.154 (612)        0.001845 (616.5)      
+Phalanx: Evaluator 86: HDiffusionDeformationMatterResidual<Jacobian>                               18.71 (621)        19.43 (616.5)       20.28 (621)        0.03152 (616.5)       
+Phalanx: Evaluator 87: ScalarL2ProjectionResidual<Jacobian>                                        0.5046 (621)       0.5172 (616.5)      0.5285 (621)       0.0008389 (616.5)     
+Phalanx: Evaluator 88: Gather Solution<Tangent>                                                    0.0711 (483)       0.07322 (479.5)     0.07531 (483)      0.0001527 (479.5)     
+Phalanx: Evaluator 89: Gather Coordinate Vector                                                    0.002565 (476)     0.002634 (479.5)    0.002692 (476)     5.493e-06 (479.5)     
+Phalanx: Evaluator 8: Scatter<Residual>                                                            0.00572 (816)      0.005862 (822)      0.005988 (816)     7.131e-06 (822)       
+Phalanx: Evaluator 92: DOFVecInterpolation                                                         0.02381 (483)      0.02488 (479.5)     0.0256 (483)       5.19e-05 (479.5)      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Phalanx: Evaluator 93: DOFVecGradInterpolation                                                     0.08047 (483)      0.08409 (479.5)     0.08605 (483)      0.0001754 (479.5)     
+Phalanx: Evaluator 95: ComputeBasisFunctions<Tangent>                                              0.0659 (483)       0.06889 (479.5)     0.07113 (483)      0.0001437 (479.5)     
+Phalanx: Evaluator 96: Scatter<Tangent>                                                            0.01152 (483)      0.01171 (479.5)     0.0119 (476)       2.441e-05 (479.5)     
+Phalanx: Evaluator 97: Temperature                                                                 0.001616 (476)     0.00164 (479.5)     0.00167 (483)      3.421e-06 (479.5)     
+Phalanx: Evaluator 98: Gather Solution<Tangent>                                                    0.004208 (476)     0.004381 (479.5)    0.004512 (476)     9.137e-06 (479.5)     
+Phalanx: Evaluator 99: DOFInterpolation                                                            0.008787 (483)     0.009008 (479.5)    0.009252 (483)     1.879e-05 (479.5)     
+Phalanx: Evaluator 9: Temperature                                                                  0.001853 (816)     0.00197 (822)       0.002082 (828)     2.396e-06 (822)       
+Phalanx::SortAndOrderEvaluatorsNew                                                                 1.311e-05 (17)     1.74e-05 (17)       2.241e-05 (17)     1.024e-06 (17)        
+Stratimikos: BelosLOWS                                                                             22.1 (14)          22.1 (14)           22.11 (14)         1.579 (14)            
+Thyra::EpetraLinearOp::euclideanApply                                                              10.44 (1527)       10.55 (1527)        10.68 (1527)       0.006907 (1527)       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Thyra::EpetraLinearOp::euclideanApply: Apply                                                       10.41 (1527)       10.52 (1527)        10.66 (1527)       0.006892 (1527)       
+Thyra::EpetraLinearOp::euclideanApply: Apply(beta==0): Apply                                       3.392 (774)        3.83 (774)          4.177 (774)        0.004949 (774)        
+Thyra::EpetraLinearOp::euclideanApply: Apply(beta==0): ApplyInverse                                6.234 (753)        6.691 (753)         7.269 (753)        0.008886 (753)        
+Thyra::EpetraLinearOp::euclideanApply: Convert MultiVectors                                        0.01197 (1527)     0.0133 (1527)       0.0143 (1527)      8.711e-06 (1527)      
+Thyra::EpetraModelEvaluator<double>::evalModel(...)                                                97.67 (1)          97.67 (1)           97.67 (1)          97.67 (1)             
+===================================================================================================================================================================================
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[63759,1],1]
+  Exit code:    1
+--------------------------------------------------------------------------

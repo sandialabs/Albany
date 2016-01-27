@@ -167,9 +167,15 @@ namespace Albany {
        const std::string& dof_names,
        const std::string& sideSetName);
 
-    //! Interpolation functions for vector quantities defined on a side set
+    //! Interpolation functions for vector ScalarT defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecInterpolationSideEvaluator(
+       const std::string& dof_names,
+       const std::string& sideSetName);
+    
+    //! Interpolation functions for vector ParamScalarT quantities defined on a side set
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFVecInterpolationSideParamEvaluator(
        const std::string& dof_names,
        const std::string& sideSetName);
 

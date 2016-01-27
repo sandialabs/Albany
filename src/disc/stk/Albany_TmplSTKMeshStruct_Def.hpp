@@ -26,7 +26,8 @@
 
 #ifdef ALBANY_64BIT_INT
 // long int == 64bit
-#  define ST_LLU "%ld"
+//#  define ST_LLU "%ld"
+#  define ST_LLU "%lld" // long long int
 #else
 #  define ST_LLU "%d"
 #endif
@@ -1440,6 +1441,7 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
   validPL->sublist("Required Fields Info", false, "Info for the loading of the required fields");
+  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y-Z domain");

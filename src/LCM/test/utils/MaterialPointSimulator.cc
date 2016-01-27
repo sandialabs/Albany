@@ -58,7 +58,7 @@ bool TpetraBuild = false;
 int main(int ac, char* av[])
 {
   Kokkos::initialize( ac, av );
-  
+
   typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
   typedef PHAL::AlbanyTraits::Residual Residual;
   typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -77,16 +77,16 @@ int main(int ac, char* av[])
 
   std::string timing_file = "timing.csv";
   command_line_processor.setOption("timing", &timing_file, "Timing File Name");
-  
+
   int workset_size = 1;
   command_line_processor.setOption("wsize", &workset_size, "Workset Size");
-  
+
   int num_pts = 1;
   command_line_processor.setOption("npoints", &num_pts, "Number of Gaussian Points");
 
   size_t memlimit = 1024; // 1GB heap limit by default
   command_line_processor.setOption("memlimit", &memlimit, "Heap memory limit in MB for CUDA kernels");
-  
+
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
 
@@ -176,7 +176,7 @@ int main(int ac, char* av[])
       int base = i * num_pts * 9 + j * 9;
       for (int k = 0; k < 9; ++k)
         def_grad[base + k] = 0.0;
-    
+
       def_grad[base + 0] = 1.0;
       def_grad[base + 4] = 1.0;
       def_grad[base + 8] = 1.0;
@@ -379,17 +379,17 @@ int main(int ac, char* av[])
   if (check_stability) {
     std::string parametrization_type = mpsParams.get<std::string>(
       "Parametrization Type", "Spherical");
-      
+
     double parametrization_interval = mpsParams.get<double>(
       "Parametrization Interval", 0.05);
 
     std::cout << "Bifurcation Check in Material Point Simulator:"
-            << std::endl;      
-    std::cout << "Parametrization Type: " << parametrization_type 
+            << std::endl;
+    std::cout << "Parametrization Type: " << parametrization_type
             << std::endl;
 
     Teuchos::ParameterList bcPL;
-    bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);    
+    bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
     bcPL.set<std::string>("Parametrization Type Name", parametrization_type);
     bcPL.set<double>("Parametrization Interval Name", parametrization_interval);
     bcPL.set<std::string>("Material Tangent Name", "Material Tangent");
@@ -428,7 +428,7 @@ int main(int ac, char* av[])
     ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
-    
+
     // register min(det(A))
     p = stateMgr.registerStateVariable(
         "Min detA",
@@ -441,8 +441,8 @@ int main(int ac, char* av[])
         true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
-    stateFieldManager.registerEvaluator<Residual>(ev);    
-    
+    stateFieldManager.registerEvaluator<Residual>(ev);
+
   }
 
   //---------------------------------------------------------------------------
@@ -518,10 +518,11 @@ int main(int ac, char* av[])
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<std::string>("Method", "STK3D");
+  discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name",
       output_file);
-  Teuchos::RCP<Tpetra_Map> mapT = 
+  Teuchos::RCP<Tpetra_Map> mapT =
     Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes,
                                 0,
                                 commT,
@@ -604,7 +605,7 @@ int main(int ac, char* av[])
   //
   PHX::MDField<ScalarT, Cell, QuadPoint> minDetA("Min detA", dl->qp_scalar);
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim> direction("Direction", dl->qp_vector);
-  
+
   // Bifurcation check parameters
   double mu_0 = 0;
   double mu_k = 0;
@@ -616,7 +617,7 @@ int main(int ac, char* av[])
     //std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
     // alpha \in [0,1]
     double alpha = double(istep) / number_steps;
-    
+
     //std::cout << "alpha: " << alpha << std::endl;
     Intrepid2::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
     Intrepid2::Tensor<ScalarT> current_F = Intrepid2::exp(scaled_log_F_tensor);
@@ -635,7 +636,7 @@ int main(int ac, char* av[])
 
     // small strain tensor
     Intrepid2::Tensor<ScalarT> current_strain;
-    current_strain = 0.5 * (current_F + Intrepid2::transpose(current_F)) 
+    current_strain = 0.5 * (current_F + Intrepid2::transpose(current_F))
       - Intrepid2::eye<ScalarT>(3);
 
     for (int i = 0; i < 3; ++i) {
@@ -644,7 +645,7 @@ int main(int ac, char* av[])
       }
     }
     //std::cout << "current strain\n" << current_strain << std::endl;
-    
+
     // Call the evaluators, evaluateFields() is the function that
     // computes stress based on deformation gradient
     compute_time->start();
@@ -652,10 +653,10 @@ int main(int ac, char* av[])
     fieldManager.evaluateFields<Residual>(workset);
     fieldManager.postEvaluate<Residual>(workset);
     compute_time->stop();
-    
+
     stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
         stressField);
-    
+
     // Check the computed stresses
 #if 0
     for (size_type cell = 0; cell < workset_size; ++cell) {
@@ -696,29 +697,29 @@ int main(int ac, char* av[])
     // if check for bifurcation, adaptive step
     total_time->start();
     if (check_stability) {
-    
+
       // get current minDet(A)
       stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(minDetA);
-    	
+
       if (istep == 0) {
         mu_0 = minDetA(0,0);
       }
 
       if (minDetA(0,0) <= 0 && !bifurcation_flag) {
-        
-        mu_k = minDetA(0,0);      
+
+        mu_k = minDetA(0,0);
         bifurcationTime_rough = istep;
         bifurcation_flag = true;
 
   	    // adaptive step begin
-  	    std::cout << "\nAdaptive step begin - step " 
+        std::cout << "\nAdaptive step begin - step "
   	      << istep << std::endl;
-        
+
         // initialization for adaptive step
   	    double tol = 1E-8;
   	    double alpha_local = 1.0;
   	    double alpha_local_step = 0.5;
-        
+
   	    int k = 1;
   	    int maxIteration = 50;
 
@@ -726,15 +727,15 @@ int main(int ac, char* av[])
         Intrepid2::Tensor<ScalarT> current_strain;
 
         // iteration begin
-  	    while ( ((mu_k <= 0) || (abs(mu_k / mu_0) > tol)) ) {
+        while ( ((mu_k <= 0) || (std::abs(mu_k / mu_0) > tol)) ) {
 
-          alpha = double(bifurcationTime_rough - 1 + alpha_local) 
+          alpha = double(bifurcationTime_rough - 1 + alpha_local)
             / number_steps;
 
           Intrepid2::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-          Intrepid2::Tensor<ScalarT> current_F 
+          Intrepid2::Tensor<ScalarT> current_F
             = Intrepid2::exp(scaled_log_F_tensor);
-          
+
           for (int i = 0; i < 3; ++i) {
       	    for (int j = 0; j < 3; ++j) {
               def_grad[3 * i + j] = current_F(i, j);
@@ -744,7 +745,7 @@ int main(int ac, char* av[])
           // jacobian
           detdefgrad[0] = Intrepid2::det(current_F);
 
-          current_strain = 0.5 * (current_F + Intrepid2::transpose(current_F)) 
+          current_strain = 0.5 * (current_F + Intrepid2::transpose(current_F))
       	    - Intrepid2::eye<ScalarT>(3);
 
           for (int i = 0; i < 3; ++i) {
@@ -758,19 +759,19 @@ int main(int ac, char* av[])
           fieldManager.preEvaluate<Residual>(workset);
           fieldManager.evaluateFields<Residual>(workset);
           fieldManager.postEvaluate<Residual>(workset);
-          
+
           // Call the state field manager
           //std::cout << "+++ calling the stateFieldManager\n";
           stateFieldManager.preEvaluate<Residual>(workset);
           stateFieldManager.evaluateFields<Residual>(workset);
-          stateFieldManager.postEvaluate<Residual>(workset);      	         	      
-   
+          stateFieldManager.postEvaluate<Residual>(workset);
+
           stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(
             minDetA);
-            
+
           stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim>(
             direction);
-            
+
           mu_k = minDetA(0,0);
 
           if (mu_k > 0) {
@@ -778,39 +779,39 @@ int main(int ac, char* av[])
           } else {
             alpha_local -= alpha_local_step;
           }
-          
+
           alpha_local_step /= 2;
-                    
+
           k = k+1;
-          
+
           if (k >= maxIteration) {
             std::cout << "Adaptive step for bifurcation check not converging after "
               << k << " iterations" << std::endl;
             break;
           }
-        
+
         } // adaptive step iteration end
 
-                   
+
       } // end adaptive step
-        
+
     } // end check bifurcation
- 
-    
+
+
     stateMgr.updateStates();
-             
+
     //
     if (bifurcation_flag) {
-      // break the loading step after adaptive time step loop   
+      // break the loading step after adaptive time step loop
       break;
     }
-    
+
     //
 
   } // end loading steps
 
   Kokkos::finalize();
-  
+
   // Summarize with AlbanyUtil performance monitors
   if ( tout ) {
     util::PerformanceContext::instance().timeMonitor().summarize( tout );

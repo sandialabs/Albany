@@ -30,15 +30,10 @@ public:
   };
 
   typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // typedef for automatic differentiation type used in internal Newton loop
-  // options are:  DFad (dynamically sized), SFad (static size), SLFad (bounded)
-  // typedef typename Sacado::Fad::DFad<ScalarT> Fad;
-  // typedef typename Sacado::Fad::SFad<ScalarT, CP::MAX_SLIP> Fad;
-  typedef typename Sacado::Fad::SLFad<ScalarT, CP::MAX_SLIP> Fad;
-
+  // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
+
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
   using ConstitutiveModel<EvalT, Traits>::field_name_map_;
 
@@ -82,54 +77,67 @@ public:
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
       }
 
-    private:
+private:
 
-      ///
-      /// Private to prohibit copying
-      ///
-      CrystalPlasticityModel(const CrystalPlasticityModel&);
+  ///
+  /// Private to prohibit copying
+  ///
+  CrystalPlasticityModel(const CrystalPlasticityModel&);
 
-      ///
-      /// Private to prohibit copying
-      ///
-      CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
+  ///
+  /// Private to prohibit copying
+  ///
+  CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
-      ///
-      /// Crystal elasticity parameters
-      ///
-      RealType c11_, c12_, c44_;
-      Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
-      Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
+  ///
+  /// Crystal elasticity parameters
+  ///
+  RealType c11_, c12_, c44_;
+  Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
+  Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
 
-      ///
-      /// Number of slip systems
-      ///
-      int num_slip_;
+  ///
+  /// Number of slip systems
+  ///
+  int num_slip_;
 
-      ///
-      /// Crystal Plasticity parameters
-      ///
-      RealType rate_slip_reference_, exponent_rate_, energy_activation_, 
-        H_, Rd_, tau_critical_,
-        resistance_slip_initial_, rate_hardening_, stress_saturation_initial_,
-        exponent_saturation_;
+  ///
+  /// Crystal Plasticity parameters
+  ///
+  RealType rate_slip_reference_, exponent_rate_, energy_activation_, 
+    H_, Rd_, tau_critical_,
+    resistance_slip_initial_, rate_hardening_, stress_saturation_initial_,
+    exponent_saturation_;
 
-      std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
-      slip_systems_;
+  std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
+  slip_systems_;
 
-      IntegrationScheme integration_scheme_;
-      ResidualType residual_type_;
-      Intrepid2::StepType step_type_;
-      FlowRule flow_rule_;
-      HardeningLaw hardening_law_;
-      RealType implicit_nonlinear_solver_relative_tolerance_;
-      RealType implicit_nonlinear_solver_absolute_tolerance_;
-      int implicit_nonlinear_solver_max_iterations_;
-      int implicit_nonlinear_solver_min_iterations_;
-      bool apply_slip_predictor_;
-      int verbosity_;
-      bool write_data_file_;
-    };
-  }
+  ///
+  /// Constitutive relations
+  ///
+  CP::FlowRule flow_rule_;
+  CP::HardeningLaw hardening_law_;
+
+  ///
+  /// Solution options
+  ///
+  IntegrationScheme integration_scheme_;
+  ResidualType residual_type_;
+  bool apply_slip_predictor_;
+  Intrepid2::StepType step_type_;
+
+  RealType implicit_nonlinear_solver_relative_tolerance_;
+  RealType implicit_nonlinear_solver_absolute_tolerance_;
+  int implicit_nonlinear_solver_max_iterations_;
+  int implicit_nonlinear_solver_min_iterations_;
+
+  ///
+  /// Output options
+  ///
+  int verbosity_;
+  bool write_data_file_;
+};
+
+}
 
 #endif

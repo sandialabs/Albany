@@ -164,9 +164,10 @@ Teuchos::RCP<const Teuchos::ParameterList>
 FELIX::Hydrology::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidHydrologyProblemParams");
-
+  
   validPL->sublist("FELIX Hydrology", false, "");
   validPL->sublist("FELIX Physical Parameters", false, "");
+  validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
 
   return validPL;
 }

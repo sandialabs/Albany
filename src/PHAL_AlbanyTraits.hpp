@@ -93,9 +93,9 @@ namespace PHAL {
     struct SGTangent  : EvaluationType<SGFadType, RealType> {};
 #endif 
 #ifdef ALBANY_ENSEMBLE 
-    struct MPResidual : EvaluationType<MPType,    RealType> {};
-    struct MPJacobian : EvaluationType<MPFadType, RealType> {};
-    struct MPTangent  : EvaluationType<MPFadType, RealType> {};
+    struct MPResidual : EvaluationType<MPType,    RealType, RealType> {}; //setting ParamScalarT to RealType in order to get Albany to build, but may need to change it to MPType
+    struct MPJacobian : EvaluationType<MPFadType, RealType, RealType> {};
+    struct MPTangent  : EvaluationType<MPFadType, RealType, RealType> {};
 #endif
 
 #ifdef ALBANY_SG

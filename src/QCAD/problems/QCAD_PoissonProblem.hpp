@@ -344,7 +344,7 @@ QCAD::PoissonProblem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("QP Variable Name", "Potential");
 
-    p->set<string>("QP Time Derivative Variable Name", "Potential_dot");
+//    p->set<string>("QP Time Derivative Variable Name", "Potential_dot");
 
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Poisson Source");

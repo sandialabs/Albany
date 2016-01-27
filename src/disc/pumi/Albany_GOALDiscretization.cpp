@@ -42,15 +42,15 @@ static apf::ValueType getAPFType(int neq)
 
 void Albany::GOALDiscretization::setFieldInformation()
 {
-  if (solNames.size() > 0) {
-    goalSolutionNames = solNames;
-    goalSolutionIndices = solIndex;
-    goalSolutionTypes.resize(solNames.size());
-    goalAdjointSolutionNames.resize(solNames.size());
+  if (solNames.getTimeDeriv(0).size() > 0) {
+    goalSolutionNames = solNames.getTimeDeriv(0);
+    goalSolutionIndices = solNames.getTimeIdx(0);
+    goalSolutionTypes.resize(solNames.getTimeDeriv(0).size());
+    goalAdjointSolutionNames.resize(solNames.getTimeDeriv(0).size());
   }
   else {
     goalSolutionNames.resize(1);
-    goalSolutionNames[0] = APFMeshStruct::solution_name;
+    goalSolutionNames[0] = APFMeshStruct::solution_name[0];
     goalSolutionIndices.resize(1);
     goalSolutionIndices[0] = goalMeshStruct->neq;
     goalSolutionTypes.resize(1);
@@ -172,7 +172,7 @@ int Albany::GOALDiscretization::getNumNodesPerElem(int ebi)
 
 void Albany::GOALDiscretization::changeP(int add)
 {
-  assert(solNames.size() == 0);
+  assert(solNames.getTimeDeriv(0).size() == 0);
   int p = goalMeshStruct->getP();
   int pnew = p+add;
   if (!PCU_Comm_Self())

@@ -124,6 +124,12 @@ Albany::ComprNSProblem::constructEvaluators(
   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+
+  // Problem is transient
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv != 1,
+      std::logic_error,
+      "Albany_ComprNSProblem must be defined as a transient calculation.");
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;

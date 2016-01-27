@@ -24,6 +24,7 @@ GPAMProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of Species", numDim);
+
 }
 
 Albany::GPAMProblem::

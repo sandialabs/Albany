@@ -140,6 +140,10 @@ namespace Albany {
     //! Number of equations per node being solved
     unsigned int neq;
 
+    //! Number of time derivatives used in the problem
+    //! 0 = x, 1 = xdot, 2 = xdotdot
+    int number_of_time_deriv;
+
     //! Equations that are defined ONLY on some part of the mesh
     std::map<int,std::vector<std::string> > sideSetEquations;
 

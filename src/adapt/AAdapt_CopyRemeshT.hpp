@@ -52,8 +52,7 @@ class CopyRemeshT : public AbstractAdapterT {
     ///
     virtual
     bool
-    adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
-              const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
+    adaptMesh();
 
     ///
     /// Each adapter must generate it's list of valid parameters

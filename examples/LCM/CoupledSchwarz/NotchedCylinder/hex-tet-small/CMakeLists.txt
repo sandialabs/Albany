@@ -55,8 +55,11 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+# This uses Teko which needs Epetra
+if (ALBANY_STOKHOS AND ALBANY_EPETRA)
 if (ALBANY_DTK) 
   add_test(NAME CoupledSchwarz_NotchedCylinder_${testName}_DTK_4proc COMMAND "python" "runtestT_dtk_4proc.py")
 else()
   add_test(NAME CoupledSchwarz_NotchedCylinder_${testName} COMMAND "python" "runtestT.py")
+endif()
 endif()

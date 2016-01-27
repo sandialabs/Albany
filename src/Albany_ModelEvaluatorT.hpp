@@ -14,7 +14,7 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-//9/12/14: no Epetra! 
+//9/12/14: no Epetra!
 
 #ifndef ALBANY_MODELEVALUATORT_HPP
 #define ALBANY_MODELEVALUATORT_HPP
@@ -27,7 +27,7 @@
 
 namespace Albany {
 
-class ModelEvaluatorT : public Piro::TransientDecorator<ST> {
+class ModelEvaluatorT : public Piro::TransientDecorator<ST, LO, GO, KokkosNode> {
 public:
 
   // Constructor
@@ -84,7 +84,7 @@ public:
 protected:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
   //@{
-   
+
   //! Create operator form of df/dp for distributed parameters
    Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DfDp_op_impl(int j) const;
 
@@ -138,7 +138,7 @@ private:
   //! Tpetra response vector
   Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST> > > thyra_response_vec;
 
-  
+
   //! Number of distributed parameter vectors
   int num_dist_param_vecs;
 
@@ -148,8 +148,11 @@ private:
   //! Distributed parameter library
   Teuchos::RCP<DistParamLib> distParamLib;
 
-  //! Model uses time integration
-  bool isTransient;
+  //! Model uses time integration (velocities)
+  bool supports_xdot;
+
+  //! Model uses time integration (accelerations)
+  bool supports_xdotdot;
 
 };
 

@@ -28,7 +28,6 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="./uniform_10_quad9.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/>
-    <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
     <Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>

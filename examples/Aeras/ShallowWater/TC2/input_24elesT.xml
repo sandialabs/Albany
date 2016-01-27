@@ -43,7 +43,6 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/cube_quad9_24eles.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="cube_quad9_24eles_out.exo"/>
-    <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="string" value="GAUSS_LOBATTO"/>
     <Parameter name="Transform Type" type="string" value="Spherical"/>
     <!--Parameter name="Exodus Write Interval" type="int" value="5"/-->

@@ -48,11 +48,15 @@
 #include "PHAL_Workset.hpp"
 #include "Phalanx.hpp"
 
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_Quadrature.hpp"
+#endif
 #if defined(ALBANY_EPETRA)
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
+#endif
 #include "EpetraExt_MultiComm.h"
 
 #include "LOCA_Epetra_Group.H"
@@ -128,19 +132,12 @@ namespace Albany {
 
     //! Get initial solution
     Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
-#endif
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
-
-    //! Get Tpetra initial solution
-//    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
 
     //! Get initial solution dot
-#if defined(ALBANY_EPETRA)
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
+
 #endif
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotDotT() const;
 
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
@@ -170,9 +167,11 @@ namespace Albany {
     //! Return whether problem wants to use its own preconditioner
     bool suppliesPreconditioner() const;
 
+#ifdef ALBANY_STOKHOS
     //! Get stochastic expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >
     getStochasticExpansion();
+#endif
 
     //! Intialize stochastic Galerkin method
 #ifdef ALBANY_SG
@@ -692,6 +691,10 @@ namespace Albany {
         Teuchos::Ptr<const Tpetra_Vector> xdotdot,
         const Tpetra_Vector& x);
 
+    void evaluateStateFieldManagerT(
+        const double current_time,
+        const Tpetra_MultiVector& x);
+
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() {
         return disc->getWsElNodeEqID().size();
@@ -724,10 +727,6 @@ namespace Albany {
     }
 #endif
 
-    Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT) {
-      return solMgrT->getOverlapSolutionT(solutionT);
-    }
-
     bool is_adjoint;
 
   private:
@@ -750,6 +749,8 @@ namespace Albany {
     void registerShapeParameters();
 
     void defineTimers();
+
+    void removeAztecPL(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   public:
 
@@ -991,12 +992,6 @@ namespace Albany {
       return name;
     }
 
-    Teuchos::RCP<Tpetra_Vector>
-    getOverlappedSolutionT()
-    {
-      return solMgrT->get_overlapped_xT();
-    }
-
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
@@ -1074,6 +1069,7 @@ namespace Albany {
     //! Phalanx Field Manager for states
     Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > sfm;
 
+#ifdef ALBANY_STOKHOS
     //! Stochastic Galerkin basis
     Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis;
 
@@ -1082,6 +1078,7 @@ namespace Albany {
 
     //! Stochastic Galerkin expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
+#endif
 
 #if defined(ALBANY_EPETRA)
     //! Product multi-comm
@@ -1090,6 +1087,7 @@ namespace Albany {
     //! Overlap stochastic map
     Teuchos::RCP<const Epetra_BlockMap> sg_overlap_map;
 
+#ifdef ALBANY_STOKHOS
     //! SG overlapped solution vectors
     Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly >  sg_overlapped_x;
 
@@ -1115,6 +1113,7 @@ namespace Albany {
 
     //! Overlapped Jacobian matrixs
     Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_overlapped_jac;
+#endif
 #endif
 
     //! Data for Physics-Based Preconditioners
@@ -1179,6 +1178,8 @@ namespace Albany {
 #endif
 
     int derivatives_check_;
+
+    int num_time_deriv;
 
   };
 }

@@ -66,6 +66,7 @@ typename XZHydrostatic_KineticEnergy<EvalT,Traits>::ScalarT&
 XZHydrostatic_KineticEnergy<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n=="KineticEnergy") return ke0;
+  return ke0;
 }
 
 }

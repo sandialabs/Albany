@@ -40,6 +40,7 @@ BulkModulus(Teuchos::ParameterList& p) :
     // Add Bulk Modulus as a Sacado-ized parameter
     this->registerSacadoParameter("Bulk Modulus", paramLib);
   }
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
@@ -59,6 +60,7 @@ BulkModulus(Teuchos::ParameterList& p) :
       rv[i] = bmd_list->get(ss, 0.0);
     }
   }
+#endif
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			       "Invalid bulk modulus type " << type);
@@ -108,6 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#ifdef ALBANY_STOKHOS
   else {
     for (unsigned int cell=0; cell < workset.numCells; ++cell) {
       for (unsigned int qp=0; qp < numQPs; ++qp) {
@@ -118,6 +121,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
   if (isThermoElastic) {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
@@ -136,10 +140,12 @@ BulkModulus<EvalT,Traits>::getValue(const std::string &n)
     return constant_value;
   else if (n == "dKdT Value")
     return dKdT_value;
+#ifdef ALBANY_STOKHOS
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Bulk Modulus KL Random Variable",i))
       return rv[i];
   }
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 			     std::endl <<
 			     "Error! Logic error in getting paramter " << n

@@ -22,8 +22,7 @@ CahnHillProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_),
   haveNoise(false),
   commT(commT_)
-{
-}
+{}
 
 Albany::CahnHillProblem::
 ~CahnHillProblem()

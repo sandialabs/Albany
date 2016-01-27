@@ -36,7 +36,8 @@
       <ParameterList name="Pressure Dependent DBC on NS NodeSet0 for DOF C">
         <Parameter name="BC Function" type="string" value="Equilibrium Concentration"/>
 	<Parameter name="Applied Concentration" type="double" value="5.6e-4"/>
-	<Parameter name="Pressure Factor" type="double" value="1.0"/>
+        <!-- Pressure factor is V_{H}/R/T -->
+	<Parameter name="Pressure Factor" type="double" value="0.801860315932965"/>
       </ParameterList>
     </ParameterList>
     
@@ -54,7 +55,7 @@
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="1D Elements" type="int" value="10"/>
     <Parameter name="2D Elements" type="int" value="10"/>
-    <Parameter name="Exodus Output File Name" type="string" value="test.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="EqConcentrationBC.e"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, CL, S, tauH, S}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V, CLresid, S, tauHresid, S}"/>
   </ParameterList>

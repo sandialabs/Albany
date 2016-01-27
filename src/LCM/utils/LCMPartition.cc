@@ -875,6 +875,8 @@ ConnectivityArray::ConnectivityArray(
   disc_params->set<std::string>("Exodus Output File Name", output_file);
   // Max of 10000 workset size -- automatically resized down
   disc_params->set<int>("Workset Size", 10000);
+  disc_params->set<int>("Number Of Time Derivatives", 0);
+
 
   Teuchos::RCP<Teuchos_Comm> 
   communicatorT = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);

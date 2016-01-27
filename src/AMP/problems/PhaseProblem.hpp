@@ -126,6 +126,12 @@ Albany::PhaseProblem::constructEvaluators(
   using std::string;
   using PHAL::AlbanyTraits;
 
+  // // Problem is transient
+  // TEUCHOS_TEST_FOR_EXCEPTION(
+  //     number_of_time_deriv != 1,
+  //     std::logic_error,
+  //     "PhaseProblem must be defined as a transient calculation.");
+
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
   std::string eb_name = meshSpecs.ebName;

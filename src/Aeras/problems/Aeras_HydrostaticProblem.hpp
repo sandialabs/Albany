@@ -23,6 +23,7 @@
 #include "Aeras_DOFVecInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
 #include "Aeras_DOFDivInterpolationLevels.hpp"
+#include "Aeras_DOFDivInterpolationLevelsSEM.hpp"
 #include "Aeras_VorticityLevels.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
@@ -747,6 +748,22 @@ Aeras::HydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  {//Divergence of Pi weighted Velocity
+    RCP<ParameterList> p = rcp(new ParameterList("Divergence PiVelx SEM"));
+    // Input
+    p->set<string>("Variable Name",          "PiVelx");
+    p->set<string>("Gradient BF Name",       "Grad BF");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+    //add grad at _cub_points
+    //Output
+    p->set<string>("Divergence SEM Variable Name", "Divergence SEM QP PiVelx");
+
+    ev = rcp(new Aeras::DOFDivInterpolationLevelsSEM<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   {//Compontent Derivative of Velocity 
     RCP<ParameterList> p = rcp(new ParameterList("Component Derivative of Velx"));
     // Input

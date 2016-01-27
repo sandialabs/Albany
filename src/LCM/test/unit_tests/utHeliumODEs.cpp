@@ -43,7 +43,7 @@ using Intrepid2::eye;
   TEUCHOS_UNIT_TEST(HeliumODEs, test1)
 {
   // A mpi object must be instantiated
-  Teuchos::GlobalMPISession mpi_session();
+  Teuchos::GlobalMPISession mpi_session(void);
   Teuchos::RCP<const Teuchos_Comm> commT =
     Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
@@ -253,6 +253,7 @@ using Intrepid2::eye;
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<std::string>("Method", "STK3D");
+  discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name",
       output_file);

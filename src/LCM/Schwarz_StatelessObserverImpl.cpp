@@ -55,7 +55,7 @@ void StatelessObserverImpl::observeSolutionT(
   Teuchos::TimeMonitor timer(*sol_out_time_);
   for (int m = 0; m < n_models_; m++) {
     const Teuchos::RCP<const Tpetra_Vector> overlapped_solutionT =
-        apps_[m]->getOverlapSolutionT(*non_overlapped_solutionT[m]);
+        apps_[m]->getAdaptSolMgrT()->updateAndReturnOverlapSolutionT(*non_overlapped_solutionT[m]);
     apps_[m]->getDiscretization()->writeSolutionT(
         *overlapped_solutionT, stamp, /*overlapped =*/true);
   }

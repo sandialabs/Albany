@@ -1000,6 +1000,7 @@ double eval_f (const double x, const double y, const double z, int ivec) {
   case 8: return x*x;
   case 9: return x*x*x;
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: unhandled argument in evalf() in AAdapt_RC_Manager.cpp" << std::endl);
 }
 
 // Axis-aligned bounding box on the vertices.

@@ -41,7 +41,6 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   }
 
-
 }
 
 Albany::HeatProblem::

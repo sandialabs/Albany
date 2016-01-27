@@ -7,10 +7,16 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/dynamicsT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsAdaptT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/dynamicsAdaptT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serialDynamicsAdaptT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/serialDynamicsAdaptT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.xml
                ${CMAKE_CURRENT_BINARY_DIR}/elastic.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plane.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/plane.dmg COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plane0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/plane0.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tri_plane0.smb
                ${CMAKE_CURRENT_BINARY_DIR}/tri_plane0.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tri_plane1.smb
@@ -24,6 +30,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tri_plane3.smb
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
-if (ALBANY_IFPACK2) 
+if (ALBANY_IFPACK2)
   add_test(${testName}_SCOREC_Tpetra ${AlbanyT.exe} dynamicsT.xml)
 endif()
+IF(ENABLE_MESHMODEL)
+  IF(ALBANY_IFPACK2)
+#    add_test(${testName}_SCOREC_Adapt_Tpetra_SERIAL ${SerialAlbanyT.exe} serialDynamicsAdaptT.xml)
+    add_test(${testName}_SCOREC_Adapt_Tpetra ${AlbanyT.exe} dynamicsAdaptT.xml)
+  ENDIF()
+ENDIF()

@@ -31,6 +31,7 @@ getVariableType(Teuchos::ParameterList& param_list,
         "Unknown variable type " << type << '\n');
   have_variable = (variable_type != MECH_VAR_TYPE_NONE);
   have_equation = (variable_type == MECH_VAR_TYPE_DOF);
+
 }
 //------------------------------------------------------------------------------
 std::string
@@ -245,7 +246,6 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
     have_topmod_adaptation_ = adaptation_method_name == "Topmod";
   }
-
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
@@ -276,7 +276,7 @@ buildProblem(
   constructDirichletEvaluators(*meshSpecs[0]);
 
   if (haveSidesets) {
-    *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
+    *out << "Calling MechanicsProblem::constructNeumannEvaluators" << '\n';
     constructNeumannEvaluators(meshSpecs[0]);
   }
 

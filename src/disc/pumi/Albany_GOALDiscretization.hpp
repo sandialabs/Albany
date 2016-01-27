@@ -96,9 +96,9 @@ class GOALDiscretization : public PUMIDiscretization
 
     //! Solution field information
     void setFieldInformation();
-    std::vector<std::string> goalSolutionNames;
+    Teuchos::Array<std::string> goalSolutionNames;
     std::vector<std::string> goalAdjointSolutionNames;
-    std::vector<int> goalSolutionIndices;
+    Teuchos::Array<int> goalSolutionIndices;
     std::vector<apf::ValueType> goalSolutionTypes;
 
 };

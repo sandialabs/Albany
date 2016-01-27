@@ -14,7 +14,9 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
+#endif
 #include "Teuchos_Array.hpp"
 #include "Teuchos_TestForException.hpp"
 
@@ -494,6 +496,7 @@ evaluateFields(typename Traits::EvalData workset){
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifdef ALBANY_STOKHOS
 template<typename EvalT, typename Traits>
 class TruncatedKL : 
     public Source_Base<EvalT,Traits>, 
@@ -623,6 +626,7 @@ getValue(const std::string &n) {
 		     "Error! Logic error in getting parameter " << n
 		     << " in TruncatedKL::getValue()" << std::endl);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1131,12 +1135,14 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
     m_sources.push_back(sb);
     this->setName("TrigonometricSource" );
   }
+#ifdef ALBANY_STOKHOS
   if (TruncatedKL<EvalT,Traits>::check_for_existance(source_list)) {
     TruncatedKL<EvalT,Traits>    *q = new TruncatedKL<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
     this->setName("TruncatedKLSource" );
   }
+#endif
   if (Quadratic<EvalT,Traits>::check_for_existance(source_list)) {
     Quadratic<EvalT,Traits>    *q = new Quadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;

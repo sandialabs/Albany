@@ -29,6 +29,10 @@ public:
       const Teuchos::RCP<Teuchos::ParameterList>& appParams);
 
   Teuchos::RCP<Tpetra_CrsMatrix> createOperator(double alpha, double beta, double omega); 
+  
+  //IKT, 1/20/16: added the following function for the mass matrix.  createOperator returns a non-diagonal 
+  //matrix, namely the Laplace, whereas the mass matrix should be diagonal. 
+  Teuchos::RCP<Tpetra_CrsMatrix> createOperatorDiag(double alpha, double beta, double omega); 
 
   void applyLinvML(Teuchos::RCP<const Tpetra_Vector> x_in, Teuchos::RCP<Tpetra_Vector> x_out) const; 
 

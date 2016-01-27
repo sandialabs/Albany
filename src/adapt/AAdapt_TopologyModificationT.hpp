@@ -56,9 +56,7 @@ public:
   ///
   virtual
   bool
-  adaptMesh(
-      Teuchos::RCP<Tpetra_Vector const> const & solution,
-      Teuchos::RCP<Tpetra_Vector const> const & ovlp_solution);
+  adaptMesh();
 
   ///
   /// Transfer solution between meshes.

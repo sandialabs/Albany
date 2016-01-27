@@ -14,7 +14,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
+#endif
 #include "Teuchos_Array.hpp"
 
 namespace LCM {
@@ -69,9 +71,10 @@ private:
   std::string CTname;
   ScalarT zeta;
 
-
+#ifdef ALBANY_STOKHOS
   //! Exponential random field
   Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType>> exp_rf_kl;
+#endif
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;

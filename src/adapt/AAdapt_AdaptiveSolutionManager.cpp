@@ -21,12 +21,14 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
   const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   const Teuchos::RCP<Albany::AbstractDiscretization>& disc_,
   const Teuchos::RCP<const Epetra_Vector>& initial_guess) :
+
   disc(disc_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   thyra_model_factory(new AAdapt::AdaptiveModelFactory(appParams)),
   solutionObserver(new AAdapt::SolutionObserver()),
-  Piro::Epetra::AdaptiveSolutionManager(appParams,
-                                        disc_->getMap(), disc_->getOverlapMap(), disc_->getOverlapJacobianGraph()) {
+  Piro::Epetra::AdaptiveSolutionManager(appParams, disc_->getMap(),
+       disc_->getOverlapMap(), disc_->getOverlapJacobianGraph()) {
+
   setInitialSolution(disc->getSolutionField());
 
   // Load connectivity map and coordinates
@@ -46,18 +48,24 @@ AAdapt::AdaptiveSolutionManager::AdaptiveSolutionManager(
 
   else {
     overlapped_x->Import(*initial_x, *importer, Insert);
-    overlapped_xdot->Import(*initial_xdot, *importer, Insert);
-    overlapped_xdotdot->Import(*initial_xdotdot, *importer, Insert);
     AAdapt::InitialConditions(overlapped_x, wsElNodeEqID, wsEBNames, coords, neq, numDim,
                               problemParams->sublist("Initial Condition"),
                               disc->hasRestartSolution());
-    AAdapt::InitialConditions(overlapped_xdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition Dot"));
-    AAdapt::InitialConditions(overlapped_xdotdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
-                              problemParams->sublist("Initial Condition DotDot"));
     initial_x->Export(*overlapped_x, *exporter, Insert);
-    initial_xdot->Export(*overlapped_xdot, *exporter, Insert);
-    initial_xdotdot->Export(*overlapped_xdotdot, *exporter, Insert);
+
+    if(Teuchos::nonnull(overlapped_xdot)){
+      overlapped_xdot->Import(*initial_xdot, *importer, Insert);
+      AAdapt::InitialConditions(overlapped_xdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
+                              problemParams->sublist("Initial Condition Dot"));
+      initial_xdot->Export(*overlapped_xdot, *exporter, Insert);
+    }
+
+    if(Teuchos::nonnull(overlapped_xdotdot)){
+      overlapped_xdotdot->Import(*initial_xdotdot, *importer, Insert);
+      AAdapt::InitialConditions(overlapped_xdotdot,  wsElNodeEqID, wsEBNames, coords, neq, numDim,
+                              problemParams->sublist("Initial Condition DotDot"));
+      initial_xdotdot->Export(*overlapped_xdotdot, *exporter, Insert);
+    }
   }
 
 }
@@ -106,14 +114,14 @@ adaptProblem() {
     setInitialSolution(disc->getSolutionField());
 
     // Get the Thrya solver ME and resize the solution array
-    Teuchos::RCP<ThyraAdaptiveModelEvaluator> thyra_model 
+    Teuchos::RCP<ThyraAdaptiveModelEvaluator> thyra_model
         = Teuchos::rcp_dynamic_cast<ThyraAdaptiveModelEvaluator>(thyra_model_factory->getThyraModel());
 
     // Get the total number of responses. Note that we assume here that the last one is the final solution vector
     const int num_g = thyra_model->Ng();
 
     // Resize the solution vector. getMap() returns the new, larger map
-    const Teuchos::RCP<Thyra::VectorBase<double> > g_j 
+    const Teuchos::RCP<Thyra::VectorBase<double> > g_j
         = thyra_model->resize_g_space(num_g-1, disc->getMap());
     solutionObserver->set_g_vector(num_g-1, g_j);
 
@@ -164,8 +172,8 @@ scatterX(const Epetra_Vector& x, const Epetra_Vector* xdot, const Epetra_Vector*
   // Scatter x and xdot to the overlapped distribution
   overlapped_x->Import(x, *importer, Insert);
 
-  if(xdot != NULL) overlapped_xdot->Import(*xdot, *importer, Insert);
-  if(xdotdot != NULL) overlapped_xdotdot->Import(*xdotdot, *importer, Insert);
+  if(xdot) overlapped_xdot->Import(*xdot, *importer, Insert);
+  if(xdotdot) overlapped_xdotdot->Import(*xdotdot, *importer, Insert);
 
 }
 

@@ -30,15 +30,17 @@ else ()
   set (BUILD_ALB64CLANG11 FALSE)
   set (DOWNLOAD FALSE)
   set (BUILD_SCOREC FALSE)
-  set (BUILD_TRILINOS FALSE)
-  set (BUILD_PERIDIGM FALSE)
-  set (BUILD_ALB32 FALSE)
+  set (BUILD_TRILINOS TRUE)
+  set (BUILD_PERIDIGM TRUE)
+  set (BUILD_ALB32 TRUE)
   set (BUILD_TRILINOSCLANG11 FALSE)
   set (CLEAN_BUILD FALSE)
   set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS FALSE)
-  set (BUILD_INTEL_ALBANY TRUE)
+  set (BUILD_INTEL_ALBANY FALSE)
 endif ()
+
+set (extra_cxx_flags "")
 
 # Begin User inputs:
 set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
@@ -59,11 +61,13 @@ set (PREFIX_DIR /projects/albany)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-gcc-4.8.2-RHEL6)
 set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2015.1.133)
 
+set (BOOST_ROOT /projects/albany/nightly)
+
 set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6)
 #set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
 set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.0.109/compilers_and_libraries_2016.0.109/linux)
 
-set (USE_LAME ON)
+set (USE_LAME OFF)
 set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/include\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/include\;/projects/sierra/linux_rh6/install/master/utility/include\;/projects/sierra/linux_rh6/install/master/Sierra/include")
 set (LAME_LIB_DIR "/projects/sierra/linux_rh6/install/master/lame/lib\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/lib\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/lib\;/projects/sierra/linux_rh6/install/master/utility/lib\;/projects/sierra/linux_rh6/install/master/Sierra/lib")
 set (LAME_LIBRARIES "sierra_util_diag\;sierra_util_events\;sierra_util_user_input_function\;sierra_util_domain\;sierra_util_sctl\;stk_expreval\;utility\;sierra\;dataManager\;audit\;sierraparser")
@@ -103,10 +107,10 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Trilinos_REPOSITORY_LOCATION ambradl@software.sandia.gov:/git/Trilinos)
+set (Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
 set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
-set (Peridigm_REPOSITORY_LOCATION ssh://software.sandia.gov/git/peridigm)
+set (Peridigm_REPOSITORY_LOCATION https://github.com/peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -353,12 +357,12 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Boost:BOOL=ON"
   "-DTPL_ENABLE_BoostLib:BOOL=ON"
   "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DBoostLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DBoostLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
   #
   "-DTPL_ENABLE_Netcdf:BOOL=ON"
   "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
@@ -409,11 +413,11 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_ML:BOOL=ON"
   "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
   "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
+  "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
   "-DTrilinos_ENABLE_NOX:BOOL=ON"
   "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
   "-DTrilinos_ENABLE_Thyra:BOOL=ON"
   "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-  "-DTrilinos_ENABLE_MOOCHO:BOOL=OFF"
   "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
   "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
   "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
@@ -423,7 +427,6 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
   "-DTrilinos_ENABLE_Moertel:BOOL=ON"
   #
-  "-DTrilinos_ENABLE_Mesquite:BOOL=OFF"
   "-DTrilinos_ENABLE_FEI:BOOL=OFF"
   #
   "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
@@ -457,7 +460,6 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Serial:BOOL=ON"
   "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
-  "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
   )
 
 if (BUILD_TRILINOS)
@@ -473,7 +475,7 @@ if (BUILD_TRILINOS)
   set (CONFIGURE_OPTIONS
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${GCC_MPI_DIR}"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
@@ -611,7 +613,7 @@ if (BUILD_PERIDIGM)
     "-DTRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_C_COMPILER:STRING=mpicc"
     "-DCMAKE_CXX_COMPILER:STRING=mpicxx"
-    "-DBOOST_ROOT=/projects/albany/"
+    "-DBOOST_ROOT=${BOOST_ROOT}"
     "-DUSE_DAKOTA:BOOL=OFF"
     "-DUSE_PV:BOOL=OFF"
     "-DUSE_PALS:BOOL=OFF"
@@ -932,7 +934,7 @@ if (BUILD_TRILINOSCLANG11)
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
     #
     "-DTrilinos_ENABLE_CXX11:BOOL=ON"
-    "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG'"
+    "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-Os -w -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
@@ -1246,7 +1248,7 @@ if (BUILD_INTEL_TRILINOS)
     "-DTPL_ENABLE_SuperLU:STRING=ON"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,/projects/albany/lib'"

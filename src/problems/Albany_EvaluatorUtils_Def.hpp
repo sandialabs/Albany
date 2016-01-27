@@ -721,6 +721,27 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideEvaluator(
 
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideParamEvaluator(
+       const std::string& dof_name,
+       const std::string& sideSetName)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Interpolation Side "+dof_name));
+    // Input
+    p->set<std::string>("Variable Name", dof_name);
+    p->set<std::string>("BF Name", "BF "+sideSetName);
+    p->set<std::string>("Side Set Name",sideSetName);
+
+    // Output (assumes same Name as input)
+
+    return rcp(new PHAL::DOFVecInterpolationSideParam<EvalT, Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructNodesToCellInterpolationEvaluator(
   const std::string& dof_name,
   bool isVectorField)

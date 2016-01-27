@@ -253,7 +253,6 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
 
   add_executable(
     utMiniSolvers
-    test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utMiniSolvers.cc
     )
 

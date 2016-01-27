@@ -96,6 +96,8 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
     params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
   }
+  params2D->set<int>("Number Of Time Derivatives", params->get<int>("Number Of Time Derivatives"));
+
 
   if (params2D->isParameter("Method"))
   {

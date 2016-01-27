@@ -39,6 +39,7 @@ BiotCoefficient(Teuchos::ParameterList& p) :
     // Add Biot Coefficient as a Sacado-ized parameter
     this->registerSacadoParameter("Biot Coefficient", paramLib);
   }
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
@@ -58,6 +59,7 @@ BiotCoefficient(Teuchos::ParameterList& p) :
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
+#endif
   else {
 	  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		       "Invalid Biot coefficient type " << type);
@@ -115,6 +117,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#ifdef ALBANY_STOKHOS
   else {
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
@@ -125,6 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
   if (isPoroElastic) {
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
@@ -146,10 +150,12 @@ BiotCoefficient<EvalT,Traits>::getValue(const std::string &n)
     return Kskeleton_value;
   else if (n == "Grain Bulk Modulus Value")
       return Kgrain_value;
+#ifdef ALBANY_STOKHOS
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Biot Coefficient KL Random Variable",i))
       return rv[i];
   }
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 		     std::endl <<
 		     "Error! Logic error in getting paramter " << n

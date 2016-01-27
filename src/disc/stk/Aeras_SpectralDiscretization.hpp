@@ -51,13 +51,16 @@ namespace Aeras
   {
     Teuchos::RCP<Albany::MeshSpecsStruct>
     createAerasMeshSpecs(
-      const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct,
-      const int points_per_edge)
+      const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct, 
+      const int points_per_edge,  
+      const Teuchos::RCP<Teuchos::ParameterList>& discParams)
     {
+      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  "
+      *out << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  "
                 << points_per_edge << std::endl;
 #endif
+       
       //get data from original STK Mesh struct
       CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd;
       std::string orig_name = orig_ctd.name;
@@ -72,11 +75,12 @@ namespace Aeras
         << "implemented only for " << "Quadrilateral, ShellQuadrilateral and "
         << "Line elements." << std::endl);
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: original ctd name = " << orig_name << std::endl;
-      std::cout << "DEBUG: original ctd key = " << orig_ctd.key << std::endl;
-#endif
+      *out << "DEBUG: original ctd name = " << orig_name << std::endl; 
+      *out << "DEBUG: original ctd key = " << orig_ctd.key << std::endl; 
+#endif 
       int orig_numDim = orig_mesh_specs_struct->numDim;
-      int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
+      //int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
+      int new_cubatureDegree = setCubatureDegree(points_per_edge-1, discParams); 
       // Node Sets Names
       std::vector<std::string> orig_nsNames = orig_mesh_specs_struct->nsNames;
       // Side Sets Names
@@ -89,8 +93,17 @@ namespace Aeras
       bool orig_interleavedOrdering =
         orig_mesh_specs_struct->interleavedOrdering;
       bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
-      const Intrepid2::EIntrepidPLPoly orig_cubatureRule =
-        orig_mesh_specs_struct->cubatureRule;
+      std::string cub = discParams->get("Cubature Rule", "GAUSS_LOBATTO"); 
+      //If cubature rule in input file is not GAUSS_LOBATTO, print warning and reset cubature 
+      //to Gauss-Lobatto.
+      if (cub != "GAUSS_LOBATTO") 
+         *out << "Setting Cubature Rule to GAUSS_LOBATTO. \n"; 
+      else 
+          *out << "Using Cubature Rule specified in input file: GAUSS_LOBATTO. \n";  
+      
+      const Intrepid2::EIntrepidPLPoly new_cubatureRule 
+          = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_LOBATTO);
+
       // Create enriched MeshSpecsStruct object, to be returned.  It
       // will have the same everything as the original mesh struct
       // except a CellTopologyData (ctd) with a different name and
@@ -124,14 +137,14 @@ namespace Aeras
       if (orig_numDim == 1) 
         new_ctd.key = shards::cellTopologyKey(orig_numDim, 0, 0, 2, np); 
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl;
-      std::cout << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl;
+      *out << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
+      *out << "DEBUG: new_ctd.key = " << new_ctd.key << std::endl; 
 #endif
       // Create and return Albany::MeshSpecsStruct object based on the
       // new (enriched) ctd.
       return Teuchos::rcp(new Albany::MeshSpecsStruct(new_ctd,
                                                       orig_numDim,
-                                                      orig_cubatureDegree,
+                                                      new_cubatureDegree,
                                                       orig_nsNames,
                                                       orig_ssNames,
                                                       orig_worksetSize,
@@ -139,8 +152,46 @@ namespace Aeras
                                                       orig_ebNameToIndex,
                                                       orig_interleavedOrdering,
                                                       orig_sepEvalsByEB,
-                                                      orig_cubatureRule));
+                                                      new_cubatureRule));
       delete [] new_name_char;
+    }
+
+    //The following function sets the cubature degree based on the element degree for spectral elements, 
+    //so that the user does not need to worry about specifying this in the input file. 
+    //Cubature rules are only implemented for elements up to degree 12.  Cubature rules for 
+    //higher order elements may be added, if desired. 
+    int setCubatureDegree(
+      const int elementDegree,  
+      const Teuchos::RCP<Teuchos::ParameterList>& discParams) 
+    {
+      Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+      int cubatureDegree; 
+      switch (elementDegree)
+      {
+        case 1: cubatureDegree = 1; break;
+        case 2: cubatureDegree = 3; break; 
+        case 3: cubatureDegree = 4; break;
+        case 4: cubatureDegree = 6; break; 
+        case 5: cubatureDegree = 8; break;
+        case 6: cubatureDegree = 10; break; 
+        case 7: cubatureDegree = 12; break; 
+        case 8: cubatureDegree = 14; break; 
+        case 9: cubatureDegree = 16; break; 
+        case 10: cubatureDegree = 18; break; 
+        case 11: cubatureDegree = 20; break; 
+        case 12: cubatureDegree = 22; break;  
+        default:
+           TEUCHOS_TEST_FOR_EXCEPTION(
+              true, std::logic_error,
+             "Cubature Degree is not implemented for element of degree "<< elementDegree << "!  " <<
+             "To use an element of this order, please implement the right cubatureDegree to the setCubature " << 
+             "function in Aeras_SpectralDiscretization.hpp.");
+      }
+      int orig_cubatureDegree = discParams->get("Cubature Degree", 3);
+      if (orig_cubatureDegree == cubatureDegree) 
+         *out << "Setting Cubature Degree to default value or value specified in input file: " << orig_cubatureDegree << std::endl;  
+      *out << "Setting Cubature Degree to " << cubatureDegree << " for element of degree " << elementDegree << std::endl; 
+      return cubatureDegree; 
     }
   };
 
@@ -197,6 +248,7 @@ namespace Aeras
        const int numTracers, 
        const int numLevels, 
        const Teuchos::RCP<const Teuchos_Comm>& commT,
+       const bool explicit_scheme, 
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes=Teuchos::null);
 
     //! Destructor
@@ -231,13 +283,19 @@ namespace Aeras
 #endif
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
-
+    
+    //! Get Tpetra implicit Jacobian graph (non-diagonal) 
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const;
+    
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
 #endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
+    
+    //! Get Tpetra overlap implicit Jacobian graph (non-diagonal) 
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const;
 
 #if defined(ALBANY_EPETRA)
     //! Get field node map
@@ -380,12 +438,21 @@ namespace Aeras
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const double time,
                        const bool overlapped = false);
+   void writeSolutionMV(const Tpetra_MultiVector& solnT,
+                       const double time,
+                       const bool overlapped = false);
 
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const double time,
                                      const bool overlapped = false);
+   void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT,
+                                     const double time,
+                                     const bool overlapped = false);
 
    void writeSolutionToFileT(const Tpetra_Vector& solnT,
+                             const double time,
+                             const bool overlapped = false);
+   void writeSolutionMVToFile(const Tpetra_MultiVector& solnT,
                              const double time,
                              const bool overlapped = false);
 
@@ -396,6 +463,9 @@ namespace Aeras
     //Tpetra analog
     Teuchos::RCP<Tpetra_Vector>
     getSolutionFieldT(const bool overlapped=false) const;
+
+    Teuchos::RCP<Tpetra_MultiVector>
+    getSolutionMV(const bool overlapped=false) const;
 
     int getSolutionFieldHistoryDepth() const;
 #if defined(ALBANY_EPETRA)
@@ -519,6 +589,9 @@ namespace Aeras
     void getSolutionFieldT(Tpetra_Vector &resultT,
                            bool overlapped=false) const;
 
+    void getSolutionMV(Tpetra_MultiVector &resultT,
+                           bool overlapped=false) const;
+
 #if defined(ALBANY_EPETRA)
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getField(Epetra_Vector &field_vector,
@@ -539,6 +612,7 @@ namespace Aeras
 #endif
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
+    void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
@@ -547,6 +621,7 @@ namespace Aeras
 #endif
     //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
+    void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
@@ -578,8 +653,12 @@ namespace Aeras
     void computeCoordsQuads();
 
     //! Process spectral Albany mesh for CRS Graphs
-    void computeGraphsLines();
-    void computeGraphsQuads();
+    Teuchos::RCP<Tpetra_CrsGraph> computeOverlapGraph();
+    Teuchos::RCP<Tpetra_CrsGraph> computeOwnedGraph(Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT_);
+
+    //  The following function allocates the graph of a diagonal Jacobian, 
+    //  relevant for explicit schemes.
+    void computeGraphs_Explicit();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
     void computeWorksetInfo();
@@ -665,10 +744,16 @@ namespace Aeras
 
 
     //! Jacobian matrix graph
-    Teuchos::RCP<Tpetra_CrsGraph> graphT;
+    Teuchos::RCP<Tpetra_CrsGraph> graphT; 
+    
+    //! Jacobian matrix implicit graph
+    Teuchos::RCP<Tpetra_CrsGraph> implicit_graphT; 
 
     //! Overlapped Jacobian matrix graph
-    Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
+    Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT; 
+    
+    //! Overlapped Jacobian matrix implicit graph
+    Teuchos::RCP<Tpetra_CrsGraph> implicit_overlap_graphT; 
 
     //! Processor ID
     unsigned int myPID;
@@ -678,6 +763,9 @@ namespace Aeras
 
     //! Number of levels (for hydrostatic equations) 
     const int numLevels; 
+    
+    //! Flag for explicit scheme
+    const bool explicit_scheme; 
     
     //! number of tracers (for hydristatic equations) 
     const int numTracers; 

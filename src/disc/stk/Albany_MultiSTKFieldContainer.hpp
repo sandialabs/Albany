@@ -22,11 +22,12 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
     MultiSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                            const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+                           const Teuchos::RCP<stk::mesh::BulkData>& bulkData_,
                            const int neq_,
                            const AbstractFieldContainer::FieldContainerRequirements& req,
                            const int numDim_,
                            const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                           const Teuchos::Array<std::string>& solution_vector,
+                           const Teuchos::Array<Teuchos::Array<std::string> >& solution_vector,
                            const Teuchos::Array<std::string>& residual_vector);
 
     ~MultiSTKFieldContainer();
@@ -38,11 +39,17 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 #endif
     void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
+    void fillSolnMultiVector(Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
 #if defined(ALBANY_EPETRA)
     void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 #endif
     //Tpetra version of above
     void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
+    void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+
 #if defined(ALBANY_EPETRA)
     void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 #endif
@@ -68,11 +75,11 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
     // Containers for residual and solution
 
-    std::vector<std::string> sol_vector_name;
-    std::vector<int> sol_index;
+    Teuchos::Array<Teuchos::Array<std::string> > sol_vector_name;
+    Teuchos::Array<Teuchos::Array<int> > sol_index;
 
-    std::vector<std::string> res_vector_name;
-    std::vector<int> res_index;
+    Teuchos::Array<std::string> res_vector_name;
+    Teuchos::Array<int> res_index;
 
 };
 

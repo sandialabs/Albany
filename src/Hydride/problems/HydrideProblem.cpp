@@ -30,7 +30,6 @@ HydrideProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   num_eq += 1; // the equation for concentration c
   num_eq += 1; // the equation for chemical potential difference w
   this->setNumEquations(num_eq);
-
 }
 
 Albany::HydrideProblem::

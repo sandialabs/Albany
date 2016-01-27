@@ -148,6 +148,11 @@ Albany::HeatProblem::constructEvaluators(
    const int numQPtsCell = cellCubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
 
+  // Problem is steady or transient
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv < 0 || number_of_time_deriv > 1,
+      std::logic_error,
+      "Albany_HeatProblem must be defined as a steady or transient calculation.");
 
    *out << "Field Dimensions: Workset=" << worksetSize
         << ", Vertices= " << numVertices
@@ -164,12 +169,17 @@ Albany::HeatProblem::constructEvaluators(
    Teuchos::ArrayRCP<string> dof_names(neq);
      dof_names[0] = "Temperature";
    Teuchos::ArrayRCP<string> dof_names_dot(neq);
+   if(number_of_time_deriv > 0)
      dof_names_dot[0] = "Temperature_dot";
    Teuchos::ArrayRCP<string> resid_names(neq);
      resid_names[0] = "Temperature Residual";
 
-  fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+  if(number_of_time_deriv == 1)
+    fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+  else
+    fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names));
 
   fm0.template registerEvaluator<EvalT>
      (evalUtils.constructScatterResidualEvaluator(false, resid_names));
@@ -187,8 +197,9 @@ Albany::HeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
 
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+    if(number_of_time_deriv == 1)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
@@ -287,6 +298,8 @@ Albany::HeatProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Temperature");
 
+    if(number_of_time_deriv == 0)
+       p->set<bool>("Disable Transient", true);
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
 
     p->set<bool>("Have Source", haveSource);

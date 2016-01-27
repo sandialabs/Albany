@@ -34,10 +34,14 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
 {
 
 
+  if (p.isType<bool>("Disable Transient"))
+    enableTransient = !p.get<bool>("Disable Transient");
+  else enableTransient = true;
 
   this->addDependentField(qFluct);
   this->addDependentField(qFluctGrad);
-  this->addDependentField(qFluctDot);
+  if(enableTransient)
+    this->addDependentField(qFluctDot);
   this->addDependentField(force);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
@@ -115,7 +119,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(qFluct,fm);
   this->utils.setFieldData(qFluctGrad,fm);
-  this->utils.setFieldData(qFluctDot,fm);
+  if(enableTransient)
+    this->utils.setFieldData(qFluctDot,fm);
   this->utils.setFieldData(force,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
@@ -140,10 +145,11 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             for (std::size_t i=0; i < vecDim; i++) {
-                Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-             }
+          if(enableTransient)
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+               for (std::size_t i=0; i < vecDim; i++) {
+                  Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+               }
           }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell, node, 0) += ubar*qFluctGrad(cell,qp,0,0)*wBF(cell,node,qp)  
@@ -162,10 +168,11 @@ evaluateFields(typename Traits::EvalData workset)
          for (std::size_t node=0; node < numNodes; ++node) {
            for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-           for (std::size_t qp=0; qp < numQPs; ++qp) {
-              for (std::size_t i=0; i < vecDim; i++) {
-                 Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-              }
+           if(enableTransient)
+             for (std::size_t qp=0; qp < numQPs; ++qp) {
+                for (std::size_t i=0; i < vecDim; i++) {
+                   Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+                }
            }
            for (std::size_t qp=0; qp < numQPs; ++qp) {
               Residual(cell, node, 0) += -1.0*ubar*qFluct(cell,qp,0)*wGradBF(cell,node,qp,0)  
@@ -189,10 +196,11 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             for (std::size_t i=0; i < vecDim; i++) {
-                Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-             }
+          if(enableTransient)
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+               for (std::size_t i=0; i < vecDim; i++) {
+                  Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+               }
           }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell, node, 0) += ubar*qFluctGrad(cell,qp,0,0)*wBF(cell,node,qp) + vbar*qFluctGrad(cell,qp,0,1)*wBF(cell,node,qp) 
@@ -213,10 +221,11 @@ evaluateFields(typename Traits::EvalData workset)
          for (std::size_t node=0; node < numNodes; ++node) {
            for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-           for (std::size_t qp=0; qp < numQPs; ++qp) {
-              for (std::size_t i=0; i < vecDim; i++) {
-                 Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-              }
+           if(enableTransient)
+             for (std::size_t qp=0; qp < numQPs; ++qp) {
+                for (std::size_t i=0; i < vecDim; i++) {
+                   Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+                }
            }
            for (std::size_t qp=0; qp < numQPs; ++qp) {
               Residual(cell, node, 0) += -1.0*ubar*qFluct(cell,qp,0)*wGradBF(cell,node,qp,0) - vbar*qFluct(cell,qp,0)*wGradBF(cell,node,qp,1) 
@@ -244,10 +253,11 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             for (std::size_t i=0; i < vecDim; i++) {
-                Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-             }
+          if(enableTransient)
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+               for (std::size_t i=0; i < vecDim; i++) {
+                  Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+               }
           }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell, node, 0) += ubar*qFluctGrad(cell,qp,0,0)*wBF(cell,node,qp) + vbar*qFluctGrad(cell,qp,0,1)*wBF(cell,node,qp) 
@@ -271,10 +281,11 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             for (std::size_t i=0; i < vecDim; i++) {
-                Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-             }
+          if(enableTransient)
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+               for (std::size_t i=0; i < vecDim; i++) {
+                  Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+               }
           }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell, node, 0) += -1.0*ubar*qFluct(cell,qp,0)*wGradBF(cell,node,qp,0) - vbar*qFluct(cell,qp,0)*wGradBF(cell,node,qp,1) 
@@ -305,12 +316,13 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             for (std::size_t i=0; i < vecDim; i++) {
-                Residual(cell,node,i) = rhobar*qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-                if (i == vecDim-1)
-                  Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-             }
+          if(enableTransient)
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+               for (std::size_t i=0; i < vecDim; i++) {
+                  Residual(cell,node,i) = rhobar*qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+                  if (i == vecDim-1)
+                    Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+               }
           }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell, node, 0) += rhobar*ubar*qFluctGrad(cell,qp,0,0)*wBF(cell,node,qp) + rhobar*vbar*qFluctGrad(cell,qp,0,1)*wBF(cell,node,qp) 
@@ -351,12 +363,13 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t i=0; i<vecDim; i++) 
              Residual(cell,node,i) = 0.0; 
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             for (std::size_t i=0; i < vecDim; i++) {
-                Residual(cell,node,i) = rhobar*qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-                if (i == vecDim-1)
-                  Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
-             }
+          if(enableTransient)
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+               for (std::size_t i=0; i < vecDim; i++) {
+                  Residual(cell,node,i) = rhobar*qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+                  if (i == vecDim-1)
+                    Residual(cell,node,i) = qFluctDot(cell,qp,i)*wBF(cell,node,qp); 
+               }
           }
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              Residual(cell, node, 0) += rhobar*ubar*qFluctGrad(cell,qp,0,0)*wBF(cell,node,qp) + rhobar*vbar*qFluctGrad(cell,qp,0,1)*wBF(cell,node,qp)

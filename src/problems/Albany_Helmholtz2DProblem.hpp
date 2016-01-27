@@ -132,7 +132,12 @@ Albany::Helmholtz2DProblem::constructEvaluators(
 
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+
    bool supportsTransient=false;
+   TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv != 0,
+      std::logic_error,
+      "A transient calculation has been requested but the Helmholtz2DProblem does not support this.");
 
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;

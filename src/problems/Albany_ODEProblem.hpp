@@ -121,6 +121,12 @@ Albany::ODEProblem::constructEvaluators(
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
    bool supportsTransient=true;
 
+   // Problem is transient
+   TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv != 1,
+      std::logic_error,
+      "Albany_ODEProblem must be defined as a transient calculation.");
+
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 

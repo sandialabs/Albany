@@ -57,25 +57,35 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{  
-  double n_coeff = workset.n_coeff;
-  obtainLaplaceOp = (n_coeff == 1) ? true : false;
+{
 
-  const Eta<EvalT> &E = Eta<EvalT>::self();
+  double j_coeff = workset.j_coeff;
+  double n_coeff = workset.n_coeff;
+  obtainLaplaceOp = ((n_coeff == 22.0)&&(j_coeff == 1.0)) ? true : false;
+
   PHAL::set(Residual, 0.0);
 
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-      ScalarT sum = 0;
-      for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level); 
-        int node = qp; 
-        Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+//  std::cout <<"In surf pressure resid: Laplace = " << obtainLaplaceOp << "\n";
+
+  const Eta<EvalT> &E = Eta<EvalT>::self();
+
+  if( !obtainLaplaceOp ){
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        ScalarT sum = 0;
+        for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
+          int node = qp;
+          Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
     /*    if (cell == 0) 
           if (node == qp) 
             std::cout << "cell, node, wBF, res, spDot: " << cell 
                                  << ", " << node << ", " << wBF(cell,node,qp) << ", " 
                                  << Residual(cell,node) <<", " << spDot(cell,qp) << std::endl; */
+      }
     }
+  }//end of (if build laplace)
+  else{
+	  //no Laplace for surface pressure, zero block instead
   }
 }
 
@@ -85,6 +95,7 @@ typename XZHydrostatic_SPressureResid<EvalT,Traits>::ScalarT&
 XZHydrostatic_SPressureResid<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n=="SPressure") return sp0;
+  return sp0;
 }
 
 }
