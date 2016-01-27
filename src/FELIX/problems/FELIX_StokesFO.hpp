@@ -569,7 +569,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   if (sliding)
   {
     // --- Basal Residual --- //
-    p = rcp(new ParameterList("Stokes Basal Resid"));
+    p = rcp(new ParameterList("Stokes Basal Residual"));
 
     //Input
     p->set<std::string>("BF Side Name", "BF "+basalSideName);
@@ -578,6 +578,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("Velocity Side QP Variable Name", "Basal Velocity");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    bool regularize = params->isSublist("FELIX Basal Friction Coefficient")
+                   && params->sublist("FELIX Basal Friction Coefficient").isParameter("Regularize With Continuation") ?
+                      params->sublist("FELIX Basal Friction Coefficient").get<bool>("Regularize With Continuation") :
+                      false;
+    p->set<bool>("Regularize With Continuation", regularize);
 
     //Output
     p->set<std::string>("Basal Residual Variable Name", "Basal Residual");

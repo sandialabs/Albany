@@ -58,6 +58,8 @@ private:
   int numSideQPs;
   int sideDim;
   int vecDim;
+
+  bool regularized;
 };
 
 } // Namespace FELIX
