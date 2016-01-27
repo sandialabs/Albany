@@ -426,12 +426,11 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   int sideID = 0;
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-  ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
-  ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+  ScalarFieldType* flowFactor_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
+  ScalarFieldType* temperature_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
 
   if(!surfaceHeight_field)

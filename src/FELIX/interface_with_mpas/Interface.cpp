@@ -88,7 +88,6 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   VectorFieldType* solutionField;
 
@@ -143,7 +142,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
   }
 
-  ElemScalarFieldType* temperature_field = meshStruct->metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+  ScalarFieldType* temperature_field = meshStruct->metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
 
   for (UInt j = 0; j < numPrisms; ++j) {
     int ib = (ordering == 0) * (j % (lElemColumnShift / 3))
