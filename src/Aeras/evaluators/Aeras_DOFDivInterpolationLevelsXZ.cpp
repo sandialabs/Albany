@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "Aeras_DOFDivInterpolationLevelsSEM.hpp"
-#include "Aeras_DOFDivInterpolationLevelsSEM_Def.hpp"
+#include "Aeras_DOFDivInterpolationLevelsXZ.hpp"
+#include "Aeras_DOFDivInterpolationLevelsXZ_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::DOFDivInterpolationLevelsSEM)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(Aeras::DOFDivInterpolationLevelsXZ)
 

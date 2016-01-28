@@ -19,6 +19,10 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
                      const Teuchos::RCP<Aeras::Layouts>& dl) :
   val_node   (p.get<std::string>   ("Variable Name"),          dl->node_vector_level),
   GradBF     (p.get<std::string>   ("Gradient BF Name"),       dl->node_qp_gradient),
+  jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
+  jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
   div_val_qp (p.get<std::string>   ("Divergence Variable Name"), dl->qp_scalar_level),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
@@ -27,6 +31,8 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
+  this->addDependentField(jacobian_det);
+  this->addDependentField(jacobian_inv);
   this->addEvaluatedField(div_val_qp);
 
   this->setName("Aeras::DOFDivInterpolationLevels"+PHX::typeAsString<EvalT>());
@@ -42,6 +48,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(val_node,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(div_val_qp,fm);
+
+  refWeights        .resize(numQPs);
+  grad_at_cub_points.resize(numNodes, numQPs, 2);
+  refPoints         .resize(numQPs, 2);
+  cubature->getCubature(refPoints, refWeights);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 }
 
 //**********************************************************************
@@ -50,6 +62,8 @@ void DOFDivInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::set(div_val_qp, 0.0);
+//#define WEAK_DIV 0
+//#if WEAK_DIV
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int qp=0; qp < numQPs; ++qp) 
       for (int node= 0 ; node < numNodes; ++node) 

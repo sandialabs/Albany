@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_DOFDIV_INTERPOLATION_LEVELS_SEM_HPP
-#define AERAS_DOFDIV_INTERPOLATION_LEVELS_SEM_HPP
+#ifndef AERAS_DOFDIV_INTERPOLATION_LEVELS_XZ_HPP
+#define AERAS_DOFDIV_INTERPOLATION_LEVELS_XZ_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -24,12 +24,12 @@ namespace Aeras {
 */
 
 template<typename EvalT, typename Traits>
-class DOFDivInterpolationLevelsSEM : public PHX::EvaluatorWithBaseImpl<Traits>,
+class DOFDivInterpolationLevelsXZ : public PHX::EvaluatorWithBaseImpl<Traits>,
  			     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DOFDivInterpolationLevelsSEM(Teuchos::ParameterList& p,
+  DOFDivInterpolationLevelsXZ(Teuchos::ParameterList& p,
                        const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -47,14 +47,11 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> val_node;
   //! Basis Functions
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>      jacobian_inv;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint>              jacobian_det;
-//add grad_at_cub_points
-
 
   // Output:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> div_val_qp;
+
 
   const int numNodes;
   const int numDims;
