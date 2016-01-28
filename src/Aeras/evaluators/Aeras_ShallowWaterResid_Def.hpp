@@ -1224,7 +1224,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 #define WEAK_DIV 0
-#ifdef WEAK_DIV
+#if WEAK_DIV
 		std::cout << "Weak divergence is on\n";
 		fill_nodal_metrics(cell);
 		div_weak_hU.initialize();
