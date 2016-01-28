@@ -6,8 +6,6 @@
 #if !defined(LCM_MiniSolvers_h)
 #define LCM_MiniSolvers_h
 
-#include <boost/any.hpp>
-
 #include "Intrepid2_MiniTensor_Solvers.h"
 
 //
