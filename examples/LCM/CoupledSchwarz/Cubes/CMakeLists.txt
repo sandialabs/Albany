@@ -5,10 +5,10 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials0.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml

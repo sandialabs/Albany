@@ -16,4 +16,4 @@ block 1 name "coarse"
 nodeset 1 surface 2
 nodeset 2 surface 1
 set large exodus file off
-export mesh "cube1.exo" overwrite
+export mesh "cube1.e" overwrite
