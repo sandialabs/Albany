@@ -69,8 +69,8 @@ public:
   abs_error(1.0),
   converged(false),
   initial_norm(1.0),
-  num_iter(0),
   final_value(0.0),
+  num_iter(0),
   step_method_name(nullptr),
   function_name(nullptr)
   {
