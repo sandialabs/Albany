@@ -45,6 +45,11 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="fullsampledbasis.in.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="galerkin_trunc_colloc_sample_exo.out.exo"/>
+    <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{SOLUTION, S}"/>
+    <!--HACK: setting SolutionDot to Surface_Height since it was already a field in fullpodbasis.in.exo.  The podbasis file should really be regenerated./-->
+    <Parameter name="SolutionDot Vector Components" type="Array(string)" value="{SURFACE_HEIGHT, S}"/>
+    <Parameter name="Residual Vector Components" type="Array(string)" value="{RESIDUAL, S}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

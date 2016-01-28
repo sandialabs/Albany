@@ -60,9 +60,10 @@ bool SimAdapt::adaptMesh()
   assert(!should_transfer_ip_data);
   /* compute the size field via SPR error estimation
      on the solution gradient */
-  apf::Field* sol_fld = apf_m->findField(Albany::APFMeshStruct::solution_name[0]);
-  assert(apf::countComponents(sol_fld) == 1);
-  apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
+  apf::Field* sol_flds[3];
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
+    sol_flds[i] = apf_m->findField(Albany::APFMeshStruct::solution_name[i]);
+  apf::Field* grad_ip_fld = spr::getGradIPField(sol_flds[0], "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
@@ -88,10 +89,13 @@ bool SimAdapt::adaptMesh()
   apf::destroyField(size_fld);
   /* tell the adapter to transfer the solution and residual fields */
   apf::Field* res_fld = apf_m->findField(Albany::APFMeshStruct::residual_name);
-  pField sim_sol_fld = apf::getSIMField(sol_fld);
+  pField sim_sol_flds[3];
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
+    sim_sol_flds[i] = apf::getSIMField(sol_flds[i]);
   pField sim_res_fld = apf::getSIMField(res_fld);
   pPList sim_fld_lst = PList_new();
-  PList_append(sim_fld_lst, sim_sol_fld);
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
+    PList_append(sim_fld_lst, sim_sol_flds[i]);
   PList_append(sim_fld_lst, sim_res_fld);
   if (apf_ms->useTemperatureHack) {
     /* transfer Temperature_old at the nodes */

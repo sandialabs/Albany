@@ -350,8 +350,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void removeNodalDataFromAPF();
 
     // ! Split Solution fields
-    SolutionLayout solNames; // solNames[time_deriv_vector][DOF_component]
-    Teuchos::Array<std::string> resNames; // resNames[DOF_component]
+    SolutionLayout solNames; // solNames[time_deriv_vector][Field]
+    Teuchos::Array<std::string> resNames; // resNames[Field]
 
   private:
 

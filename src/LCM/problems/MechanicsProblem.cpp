@@ -276,7 +276,7 @@ buildProblem(
   constructDirichletEvaluators(*meshSpecs[0]);
 
   if (haveSidesets) {
-    *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
+    *out << "Calling MechanicsProblem::constructNeumannEvaluators" << '\n';
     constructNeumannEvaluators(meshSpecs[0]);
   }
 
