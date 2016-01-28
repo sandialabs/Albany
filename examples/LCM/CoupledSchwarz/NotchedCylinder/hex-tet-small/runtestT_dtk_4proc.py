@@ -11,8 +11,8 @@ result = 0
 ######################
 # Test 1 
 ######################
-print "test 1 - NotchedCylinder DTK 4 Proc"
-name = "NotchedCylinder_DTK_4"
+print "test 1 - NotchedCylinder Hex-Tet DTK 4 Proc"
+name = "NotchedCylinder_Hex_Tet_DTK_4"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)

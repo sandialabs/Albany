@@ -19,8 +19,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-S.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-S.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 
 if (ALBANY_DTK)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_dtk_4proc.py
@@ -48,6 +46,4 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_DTK) 
   add_test(NAME CoupledSchwarz_NotchedCylinder_${testName}_DTK_4proc COMMAND "python" "runtestT_dtk_4proc.py")
-else()
-  add_test(NAME CoupledSchwarz_NotchedCylinder_${testName} COMMAND "python" "runtestT.py")
 endif()

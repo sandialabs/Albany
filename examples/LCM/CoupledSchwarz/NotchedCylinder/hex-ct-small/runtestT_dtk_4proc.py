@@ -11,8 +11,8 @@ result = 0
 ######################
 # Test 1 
 ######################
-print "test 1 - NotchedCylinder Hex-Tet"
-name = "NotchedCylinder_Hex_Tet"
+print "test 1 - NotchedCylinder Hex-Composite Tet DTK 4 Proc"
+name = "NotchedCylinder_Hex_CT_DTK_4"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
@@ -20,10 +20,10 @@ logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-6; 
-meanvalue = 0.000895993786998; 
+meanvalue = 0.000720364330504; 
 
 # run AlbanyT 
-command = ["./AlbanyT", "notched-cylinder-S.xml"]
+command = ["mpirun", "-np", "4", "./AlbanyT", "notched-cylinder-S.xml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
