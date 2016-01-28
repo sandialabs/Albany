@@ -23,7 +23,6 @@
 #include "Aeras_DOFVecInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
 #include "Aeras_DOFDivInterpolationLevels.hpp"
-#include "Aeras_DOFDivInterpolationLevelsSEM.hpp"
 #include "Aeras_VorticityLevels.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
@@ -742,25 +741,21 @@ Aeras::HydrostaticProblem::constructEvaluators(
     // Input
     p->set<string>("Variable Name",          "PiVelx");
     p->set<string>("Gradient BF Name",       "Grad BF");
+
+    ///for strong divergence
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    ///for strong divergence
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
+    ///for strong divergence
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    ///for strong divergence
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+
     //Output
     p->set<string>("Divergence Variable Name", "Divergence QP PiVelx");
    
     ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  {//Divergence of Pi weighted Velocity
-    RCP<ParameterList> p = rcp(new ParameterList("Divergence PiVelx SEM"));
-    // Input
-    p->set<string>("Variable Name",          "PiVelx");
-    p->set<string>("Gradient BF Name",       "Grad BF");
-    p->set<string>("Jacobian Det Name",          "Jacobian Det");
-    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
-    //add grad at _cub_points
-    //Output
-    p->set<string>("Divergence SEM Variable Name", "Divergence SEM QP PiVelx");
-
-    ev = rcp(new Aeras::DOFDivInterpolationLevelsSEM<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -857,6 +852,17 @@ Aeras::HydrostaticProblem::constructEvaluators(
       // Input
       p->set<string>("Variable Name",          "U"+dof_names_tracers[t]);
       p->set<string>("Gradient BF Name",       "Grad BF");
+
+      ///for strong divergence
+      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      ///for strong divergence
+      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+              ("Intrepid2 Basis", intrepidBasis);
+      ///for strong divergence
+      p->set<string>("Jacobian Det Name",          "Jacobian Det");
+          ///for strong divergence
+      p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+
       //Output
       p->set<string>("Divergence Variable Name", "U"+dof_names_tracers[t]+"_divergence");
     

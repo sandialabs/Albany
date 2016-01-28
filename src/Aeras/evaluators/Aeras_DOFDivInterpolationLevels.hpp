@@ -47,10 +47,22 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> val_node;
   //! Basis Functions
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  //
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+  //
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
 
   // Output:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> div_val_qp;
+
+
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
+
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
 
   const int numNodes;
   const int numDims;
