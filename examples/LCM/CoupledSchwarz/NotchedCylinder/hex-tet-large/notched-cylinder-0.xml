@@ -5,6 +5,25 @@
     <Parameter name="Write Residual to Standard Output"
 	       type="int" value="-0"/>
   </ParameterList>
+  <ParameterList name="DataTransferKit">
+    <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>
+    <ParameterList name="L2 Projection">
+      <Parameter name="Integration Order" type="int" value="2"/>
+    </ParameterList>
+    <ParameterList name="Consistent Interpolation">
+    </ParameterList>
+    <ParameterList name="Point Cloud">
+      <Parameter name="Map Type" type="string" value="Moving Least Square Reconstruction"/>
+      <Parameter name="Basis Type" type="string" value="Wu"/>
+      <Parameter name="Basis Order" type="int" value="4"/>
+      <Parameter name="Spatial Dimension" type="int" value="3"/>
+      <Parameter name="RBF Radius" type="double" value="1.0"/>
+    </ParameterList>
+    <ParameterList name="Search">
+      <Parameter name="Track Missed Range Entities" type="bool" value="true"/>
+      <Parameter name="Point Inclusion Tolerance" value="1.0e-1" type="double"/>
+    </ParameterList>
+  </ParameterList>
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
     <!-- Declare your Physics (What you intend to model)! -->
@@ -56,6 +75,7 @@
        If the latter, the domain decomposition must
        already be performed for parallel jobs. -->
   <ParameterList name="Discretization">
+    <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name"
 	       type="string" value="notched-cylinder-0.g"/>
