@@ -63,6 +63,7 @@ private:
   Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
 
   Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>     vcontra;
 
   const int numNodes;
   const int numDims;
