@@ -236,7 +236,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
-  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ, flowRateNormalizedZ;
+  std::vector<double> levelsNormalizedThickness(numLayers + 1);
 
   if(useGlimmerSpacing)
     for (int i = 0; i < numLayers+1; i++)
@@ -250,11 +250,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
     layersNormalizedThickness[i] = 0.5*(levelsNormalizedThickness[i]+levelsNormalizedThickness[i+1]);
   }
-
-  /*std::cout<< "Levels: ";
-  for (int i = 0; i < numLayers+1; i++)
-    std::cout<< levelsNormalizedThickness[i] << " ";
-  std::cout<< "\n";*/
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData2D.universal_part()) & stk::mesh::Selector(metaData2D.locally_owned_part());
 
@@ -304,15 +299,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   int numMyElements = (comm->getRank() == 0) ? one_to_one_nodes_map->getGlobalNumElements() : 0;
   Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
   Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_nodes_map, nodes_map));
-
-  Teuchos::RCP<Tpetra_Vector> sHeightVec;
-  Teuchos::RCP<Tpetra_Vector> thickVec;
-  Teuchos::RCP<Tpetra_Vector> bTopographyVec;
-  Teuchos::RCP<Tpetra_Vector> bFrictionVec;
-  Teuchos::RCP<Tpetra_MultiVector> temperatureVecInterp;
-  Teuchos::RCP<Tpetra_MultiVector> flowRateVecInterp;
-  Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
-  Teuchos::RCP<Tpetra_MultiVector> velocityRMSVec;
 
   if (comm->getRank() == 0)
     std::cout << " done." << std::endl;
@@ -1252,13 +1238,6 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<Teuchos::Array<int> >("Basal Elem Layered Fields Ranks", Teuchos::Array<int>(), "List of basal node layered fields to be interpolated");
   validPL->set<std::string>("GMSH 2D Output File Name", "", "File Name for GMSH 2D Basal Mesh Export");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
-  validPL->set<std::string>("Surface Height File Name", "surface_height.ascii", "Name of the file containing the surface height data");
-  validPL->set<std::string>("Thickness File Name", "thickness.ascii", "Name of the file containing the thickness data");
-  validPL->set<std::string>("BedTopography File Name", "bed_topography.ascii", "Name of the file containing the bed topography data");
-  validPL->set<std::string>("Surface Velocity File Name", "surface_velocity.ascii", "Name of the file containing the surface velocity data");
-  validPL->set<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii", "Name of the file containing the surface velocity RMS data");
-  validPL->set<std::string>("Basal Friction File Name", "basal_friction.ascii", "Name of the file containing the basal friction data");
-  validPL->set<std::string>("Temperature File Name", "temperature.ascii", "Name of the file containing the temperature data");
   validPL->set<std::string>("Element Shape", "Hexahedron", "Shape of the Element: Tetrahedron, Wedge, Hexahedron");
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
