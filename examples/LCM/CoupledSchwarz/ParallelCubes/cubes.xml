@@ -1,7 +1,13 @@
 <ParameterList>
   <ParameterList name="Coupled System">
     <Parameter name="Model XML Files" type="Array(string)"
-	       value="{cube0-dtk.xml, cube1-dtk.xml}"/>
+	       value="{cube0.xml, cube1.xml}"/>
+  </ParameterList>
+  <ParameterList name="Debug Output">
+    <Parameter name="Write Solution to MatrixMarket"
+	       type="bool" value="true"/>
+    <Parameter name="Write Solution to Standard Output"
+	       type="bool" value="true"/>
   </ParameterList>
 
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
@@ -234,7 +240,7 @@
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
             <Parameter name="Number of Nonlinear Iterations"
-		       type="int" value="5"/>
+		       type="int" value="10"/>
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>

@@ -9,22 +9,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo
                ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo
                ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.xml.orig
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.xml.orig COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.xml.orig
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.xml.orig COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials0.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials1.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0-dtk.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0-dtk.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1-dtk.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1-dtk.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes-dtk.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cubes-dtk.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_dtk.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT_dtk.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/cubes.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -32,6 +28,4 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 # Teko needs Epetra
-IF (ALBANY_EPETRA)
-  add_test(NAME CoupledSchwarz_${testName} COMMAND "python" "runtestT_dtk.py")
-ENDIF ()
+add_test(NAME CoupledSchwarz_${testName} COMMAND "python" "runtestT.py")

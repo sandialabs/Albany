@@ -2,6 +2,7 @@
  <ParameterList name="Scaling">
     <Parameter name="Scale" type="double" value="1e9"/>
   </ParameterList>
+  <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="DataTransferKit">
     <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>
     <ParameterList name="L2 Projection">
@@ -21,33 +22,43 @@
       <Parameter name="Point Inclusion Tolerance" value="1.0e-12" type="double"/>
     </ParameterList>
   </ParameterList>
-  <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
     <!-- Declare your Physics (What you intend to model)! -->
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
-    <!-- Have Phalanx output a graph of the used evaluators -->
+    <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="materials0.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="materials1.xml"/>
     
     <!-- BOUNDARY CONDITIONS on node sets -->
     <ParameterList name="Dirichlet BCs">
 
-      <Parameter name="DBC on NS nodelist_1 for DOF X"
+      <Parameter name="DBC on NS nodelist_2 for DOF X"
 		 type="double" value="0.0"/>
       
-      <Parameter name="DBC on NS nodelist_1 for DOF Y"
+      <Parameter name="DBC on NS nodelist_2 for DOF Y"
 		 type="double" value="0.0"/>
       
-      <Parameter name="DBC on NS nodelist_1 for DOF Z"
+      <Parameter name="DBC on NS nodelist_2 for DOF Z"
 		 type="double" value="0.0"/>
 
-      <ParameterList name="DBC on NS nodelist_2 for DOF Schwarz">
+      <ParameterList name="DBC on NS nodelist_1 for DOF Schwarz">
 	 <Parameter name="BC Function" type="string" value="Schwarz"/>
-	 <Parameter name="Coupled Application" type="string" value="cube1-dtk.xml"/>
-	 <Parameter name="Coupled Block" type="string" value="coarse"/>
+	 <Parameter name="Coupled Application" type="string" value="cube0.xml"/>
+	 <Parameter name="Coupled Block" type="string" value="fine"/>
       </ParameterList>
 
+      <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF Z">
+        <Parameter name="Number of points" type="int" value="2"/>
+	
+        <Parameter name="Time Values"
+		   type="Array(double)" value="{0.0, 2.00}"/>
+	
+        <Parameter name="BC Values"
+		   type="Array(double)" value="{0.0, 0.02}"/>
+	
+      </ParameterList>
+      
     </ParameterList>
     
   </ParameterList>
@@ -59,9 +70,9 @@
     <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name"
-	       type="string" value="cube0.exo"/>
+	       type="string" value="cube1.exo"/>
     <Parameter name="Exodus Output File Name"
-	       type="string" value="cube0_out.exo"/>
+	       type="string" value="cube1_out.exo"/>
     <Parameter name="Exodus Solution Name" type="string" value="disp"/>
     <Parameter name="Exodus Residual Name" type="string" value="resid"/>
     <Parameter name="Separate Evaluators by Element Block"
