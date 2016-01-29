@@ -6,12 +6,15 @@
 
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
+#endif
 
 using Teuchos::RCP;
 using Teuchos::rcp;
 
 namespace {
+#ifdef ALBANY_EPETRA
 class SGConverter : public Petra::Converter {
 public:
   SGConverter (Albany::AbstractResponseFunction* arf,
@@ -68,6 +71,7 @@ public:
 private:
   Albany::AbstractResponseFunction* arf_;
 };
+#endif
 }
 
 #ifdef ALBANY_SG

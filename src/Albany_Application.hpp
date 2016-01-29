@@ -750,7 +750,7 @@ namespace Albany {
 
     void defineTimers();
 
-    void removeAztecPL(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    void removeEpetraRelatedPLs(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   public:
 

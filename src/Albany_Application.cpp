@@ -175,7 +175,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 #endif
 
 #if !defined(ALBANY_EPETRA)
-  removeAztecPL(params);
+  removeEpetraRelatedPLs(params);
 #endif
 
   // Create problem object
@@ -4925,7 +4925,7 @@ Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 #endif
 #endif
 
-void Albany::Application::removeAztecPL(const Teuchos::RCP<Teuchos::ParameterList>& params){
+void Albany::Application::removeEpetraRelatedPLs(const Teuchos::RCP<Teuchos::ParameterList>& params){
 
 	if(params->isSublist("Piro")){
        Teuchos::ParameterList &piroPL = params->sublist("Piro", true);
@@ -4938,6 +4938,12 @@ void Albany::Application::removeAztecPL(const Teuchos::RCP<Teuchos::ParameterLis
 	           if(lsPL.isSublist("AztecOO")){
                    lsPL.remove("AztecOO", true);
                }
+	        if(strataPL.isSublist("Preconditioner Types")){
+               Teuchos::ParameterList &precPL = strataPL.sublist("Preconditioner Types", true);
+	           if(precPL.isSublist("ML")){
+                   precPL.remove("ML", true);
+               }
+           }
            }
          }
        }

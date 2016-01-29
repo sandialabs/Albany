@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: does not get compiled if ALBANY_EPETRA_EXE is off.  Has epetra.
-
 #ifndef PHAL_GATHER_AUXDATA_HPP
 #define PHAL_GATHER_AUXDATA_HPP
 
@@ -17,7 +15,9 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Vector.h"
+#endif
 
 namespace PHAL {
 /** \brief Gathers auxilliary values from a workset \e auxData vector into 
