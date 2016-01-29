@@ -27,7 +27,7 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Constant"/>
+	<Parameter  name="Method" type="string" value="Tangent"/>
       </ParameterList>
        <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
@@ -225,7 +225,7 @@
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="MaxIters"/>
-          <Parameter name="Maximum Iterations" type="int" value="15"/>
+          <Parameter name="Maximum Iterations" type="int" value="100"/>
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="Combo"/>
@@ -234,11 +234,11 @@
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
             <Parameter name="Number of Nonlinear Iterations"
-		       type="int" value="5"/>
+		       type="int" value="10"/>
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-5"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
