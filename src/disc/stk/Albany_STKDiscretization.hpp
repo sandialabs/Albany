@@ -126,24 +126,12 @@ namespace Albany {
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
-#ifdef ALBANY_AERAS 
-    //! Get Tpetra implicit Jacobian graph (for Aeras) 
-    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const;
-#endif
-
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
 #endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
-#ifdef ALBANY_AERAS 
-    //! Get Tpetra implicit overlap Jacobian graph (for Aeras) 
-    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const;
-#endif
-
-    //! Modify CRS Graphs for Peridigm-Albany coupling
-    void insertPeridigmNonzerosIntoGraph();
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Node map
@@ -216,19 +204,14 @@ namespace Albany {
 #endif
 
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
-   void writeSolutionMV(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false);
-   void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false);
    void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
-   void writeSolutionMVToFile(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
 
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Vector> getSolutionField(const bool overlapped=false) const;
 #endif
     //Tpetra analog
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(const bool overlapped=false) const;
-
-    Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(const bool overlapped=false) const;
 
     int getSolutionFieldHistoryDepth() const;
 #if defined(ALBANY_EPETRA)
@@ -290,6 +273,11 @@ namespace Albany {
     //! Locate nodal dofs in overlapping vectors using local indexing
     int getOverlapDOF(const int inode, const int eq) const;
 
+    GO gid(const stk::mesh::Entity node) const;
+
+    //! Locate nodal dofs using global indexing
+    GO getGlobalDOF(const GO inode, const int eq) const;
+
     Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() {return stkMeshStruct->layered_mesh_numbering;}
 
     //! used when NetCDF output on a latitude-longitude grid is requested.
@@ -319,8 +307,6 @@ namespace Albany {
     // Copy values from STK Mesh field to given Tpetra_Vector
     void getSolutionFieldT(Tpetra_Vector &resultT, bool overlapped=false) const;
 
-    void getSolutionMV(Tpetra_MultiVector &resultT, bool overlapped=false) const;
-
 #if defined(ALBANY_EPETRA)
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getField(Epetra_Vector &field_vector, const std::string& field_name) const;
@@ -337,7 +323,6 @@ namespace Albany {
 #endif
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
-    void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
@@ -346,7 +331,6 @@ namespace Albany {
 #endif
     //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
-    void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     double monotonicTimeLabel(const double time);
 
@@ -379,8 +363,6 @@ namespace Albany {
 #endif
     int processNetCDFOutputRequestT(const Tpetra_Vector&);
 
-    int processNetCDFOutputRequestMV(const Tpetra_MultiVector&);
-
     //! Find the local side id number within parent element
     unsigned determine_local_side_id( const stk::mesh::Entity elem , stk::mesh::Entity side );
 
@@ -395,10 +377,6 @@ namespace Albany {
 
   protected:
 
-    GO gid(const stk::mesh::Entity node) const;
-
-    //! Locate nodal dofs using global indexing
-    GO getGlobalDOF(const GO inode, const int eq) const;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -565,9 +543,6 @@ namespace Albany {
     }
 
     void printVertexConnectivity();
-
-    void computeGraphsUpToFillComplete();
-    void fillCompleteGraphs();
 
   };
 
