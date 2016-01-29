@@ -14,26 +14,6 @@
 
 namespace LCM{
 
-///
-/// miniMinimize function that wraps the MiniTensor Nonlinear Solvers
-/// and deals with Albany traits and AD sensitivities.
-///
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-void
-miniMinimize(
-    MIN & minimizer,
-    STEP & step_method,
-    FN & function,
-    Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
-
-template<typename MIN, typename STEP, typename FN, typename T, Intrepid2::Index N>
-void
-miniMinimize(
-    MIN & minimizer,
-    STEP & step_method,
-    FN & function,
-    Intrepid2::Vector<T, N> & soln);
-
 //
 //
 //
