@@ -13,7 +13,11 @@ volume 1 size 1.00
 mesh volume 1
 block 1 volume 1
 block 1 name "coarse"
-nodeset 1 surface 2
-nodeset 2 surface 1
+nodeset 1 surface 4
+nodeset 2 surface 6
+nodeset 3 surface 3
+nodeset 4 surface 5
+nodeset 5 surface 2
+nodeset 6 surface 1
 set large exodus file off
 export mesh "cube1.e" overwrite

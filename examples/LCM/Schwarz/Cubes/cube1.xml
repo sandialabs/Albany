@@ -36,37 +36,63 @@
     <Parameter name="MaterialDB Filename" type="string" value="materials1.xml"/>
     
     <!-- BOUNDARY CONDITIONS on node sets -->
-    <ParameterList name="Dirichlet BCs">
+          <ParameterList name="Dirichlet BCs">
 
-      <Parameter name="DBC on NS nodelist_2 for DOF X"
-		 type="double" value="0.0"/>
-      
-      <Parameter name="DBC on NS nodelist_2 for DOF Y"
-		 type="double" value="0.0"/>
-      
-      <Parameter name="DBC on NS nodelist_2 for DOF Z"
-		 type="double" value="0.0"/>
+<!-- ~~~~~~~~~ Specify symmetry condition on negative x surface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  
+               <Parameter name="DBC on NS nodelist_1 for DOF X"
+                          type="double" 
+                          value="0.0"/>
 
-      <ParameterList name="DBC on NS nodelist_1 for DOF Schwarz">
-	 <Parameter name="BC Function" type="string" value="Schwarz"/>
-	 <Parameter name="Coupled Application" type="string" value="cube0.xml"/>
-	 <Parameter name="Coupled Block" type="string" value="fine"/>
-      </ParameterList>
-
-      <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF Z">
-        <Parameter name="Number of points" type="int" value="2"/>
-	
-        <Parameter name="Time Values"
-		   type="Array(double)" value="{0.0, 2.00}"/>
-	
-        <Parameter name="BC Values"
-		   type="Array(double)" value="{0.0, 0.02}"/>
-	
-      </ParameterList>
+<!-- ~~~~~~~~~ Specify symmetry condition on negative y surface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
       
-    </ParameterList>
-    
-  </ParameterList>
+               <Parameter name="DBC on NS nodelist_3 for DOF Y"
+                          type="double" 
+                          value="0.0"/>
+
+<!-- ~~~~~~~~~ Rollers on positive z surface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <ParameterList name="Time Dependent DBC on NS nodelist_6 for DOF Z">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="2"/>
+
+                    <Parameter name="Time Values"
+                               type="Array(double)" 
+                               value="{0.0, 2.00}"/>
+
+                    <Parameter name="BC Values"
+                               type="Array(double)" 
+                               value="{0.0, 0.02}"/>
+
+               </ParameterList>
+ 
+
+<!-- ~~~~~~~~~ Schwarz BC on negative z surface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <ParameterList name="DBC on NS nodelist_5 for DOF Schwarz">
+
+                    <Parameter name="BC Function" 
+                               type="string" 
+                               value="Schwarz"/>
+
+<!-- ~~~~~~~~~~~~~~ Define coupled domain for Schwarz BC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+                    <Parameter name="Coupled Application" 
+                               type="string" 
+                               value="cube0.xml"/>
+
+                    <Parameter name="Coupled Block" 
+                               type="string" 
+                               value="fine"/>
+
+               </ParameterList>
+ 
+          </ParameterList>
+
+     </ParameterList>
+
 
   <!-- MESH, done here, or input from file.
        If the latter, the domain decomposition must

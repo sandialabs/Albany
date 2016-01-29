@@ -20,7 +20,7 @@ logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-9; 
-meanvalue = 0.00118324368593;
+meanvalue = 0.000600364739979;
 
 # run AlbanyT 
 command = ["./AlbanyT", "cubes.xml"]
