@@ -175,71 +175,6 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
 
   // Loading the fields from file
   this->loadRequiredInputFields (req,commT);
-
-  // Export the mesh in GMSH format
-  if (params->isParameter("GMSH Output File Name"));
-  {
-    // Extracting the side part and updating the selector
-    std::vector<stk::mesh::Entity> sselems, ssnodes;
-    stk::mesh::Selector selector(*partVec[0]);
-
-    stk::mesh::get_selected_entities (selector, bulkData->buckets(stk::topology::ELEM_RANK), sselems);
-    stk::mesh::get_selected_entities (selector, bulkData->buckets(stk::topology::NODE_RANK), ssnodes);
-
-    // We export the basal mesh in GMSH format
-    std::ofstream ofile;
-    ofile.open (params->get("GMSH Output File Name","side_mesh.msh"));
-    TEUCHOS_TEST_FOR_EXCEPTION (!ofile.is_open(), std::logic_error, "Error! Cannot open side mesh file.\n");
-
-    // Preamble
-    ofile << "$MeshFormat\n"
-          << "2.2 0 8\n"
-          << "$EndMeshFormat\n";
-
-    // Nodes
-    ofile << "$Nodes\n" << ssnodes.size() << "\n";
-    stk::mesh::Entity node;
-    stk::mesh::EntityId nodeId;
-    double coord3d[3] = {0., 0., 0.};
-    for (int i(0); i<ssnodes.size(); ++i)
-    {
-      nodeId = bulkData->identifier(ssnodes[i]);
-
-      double const* coord = (double const*) stk::mesh::field_data(coordinates_field, ssnodes[i]);
-
-      ofile << nodeId;
-      for (int idim=0; idim<metaData->spatial_dimension(); ++idim)
-        coord3d[idim] = coord[idim];
-      for (int idim=0; idim<3; ++idim)
-        ofile << " " << coord3d[idim];
-      ofile << "\n";
-    }
-    ofile << "$EndNodes\n";
-
-    // Mesh Elements (including edges)
-    ofile << "$Elements\n";
-    ofile << sselems.size() << "\n";
-
-    int counter = 1;
-
-    // elements
-    for (int i(0); i<sselems.size(); ++i)
-    {
-      stk::mesh::Entity const* rel = bulkData->begin_nodes(sselems[i]);
-      int num_elem_nodes = bulkData->num_nodes(sselems[i]);
-      ofile << counter << " " << 2 << " " << 2 << " " << 100 << " " << 11;
-      for (int j(0); j<num_elem_nodes; ++j)
-      {
-        nodeId = bulkData->identifier(rel[j]);
-        ofile << " " << nodeId;
-      }
-      ofile << "\n";
-      ++counter;
-    }
-    ofile << "$EndElements\n";
-
-    ofile.close();
-  }
 }
 
 void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
@@ -252,7 +187,6 @@ void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& paren
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getValidGenericSTKParameters("Valid SideSetSTK DiscParams");
-  validPL->set<std::string>("GMSH Output File Name", "", "File Name for GMSH Side Mesh Export");
 
   return validPL;
 }

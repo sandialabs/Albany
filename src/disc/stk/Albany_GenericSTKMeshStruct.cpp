@@ -10,7 +10,6 @@
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_SideSetSTKMeshStruct.hpp"
-#include "Albany_IossSTKMeshStruct.hpp"
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Albany_MultiSTKFieldContainer.hpp"
@@ -95,7 +94,6 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
   interleavedOrdering = params->get("Interleaved Ordering",true);
   allElementBlocksHaveSamePhysics = true;
   compositeTet = params->get<bool>("Use Composite Tet 10", false);
-  num_time_deriv = params->get<int>("Number Of Time Derivatives");
 
   requiresAutomaticAura = params->get<bool>("Use Automatic Aura", false);
 
@@ -140,53 +138,33 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   // Build the container for the STK fields
   Teuchos::Array<std::string> default_solution_vector; // Empty
-  Teuchos::Array<Teuchos::Array<std::string> > solution_vector;
-  solution_vector.resize(num_time_deriv + 1);
-  bool user_specified_solution_components = false;
-  solution_vector[0] =
+  Teuchos::Array<std::string> solution_vector =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", default_solution_vector);
-
-  if(solution_vector[0].length() > 0)
-     user_specified_solution_components = true;
-
-  if(num_time_deriv >= 1){
-    solution_vector[1] =
-      params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", default_solution_vector);
-    if(solution_vector[1].length() > 0)
-       user_specified_solution_components = true;
-  }
-
-  if(num_time_deriv >= 2){
-    solution_vector[2] =
-      params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", default_solution_vector);
-    if(solution_vector[2].length() > 0)
-       user_specified_solution_components = true;
-  }
 
   Teuchos::Array<std::string> default_residual_vector; // Empty
   Teuchos::Array<std::string> residual_vector =
     params->get<Teuchos::Array<std::string> >("Residual Vector Components", default_residual_vector);
 
   // Build the usual Albany fields unless the user explicitly specifies the residual or solution vector layout
-  if(user_specified_solution_components && (residual_vector.length() > 0)){
+  if(solution_vector.length() == 0 && residual_vector.length() == 0){
 
       if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params,
-            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
+        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params,
+            metaData, neq_, req, numDim, sis));
       else
-        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<false>(params,
-            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
+        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<false>(params,
+            metaData, neq_, req, numDim, sis));
 
   }
 
   else {
 
       if(interleavedOrdering)
-        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params,
-            metaData, bulkData, neq_, req, numDim, sis));
+        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params,
+            metaData, neq_, req, numDim, sis, solution_vector, residual_vector));
       else
-        this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<false>(params,
-            metaData, bulkData, neq_, req, numDim, sis));
+        this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<false>(params,
+            metaData, neq_, req, numDim, sis, solution_vector, residual_vector));
 
   }
 
@@ -720,7 +698,6 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
     {
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
-      params_ss->set<int>("Number Of Time Derivatives", params->get<int>("Number Of Time Derivatives"));
       std::string method = params_ss->get<std::string>("Method");
       if (method=="SideSetSTK")
       {
@@ -730,15 +707,10 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
 
         this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::SideSetSTKMeshStruct(*this->meshSpecs[0], params_ss, adaptParams, commT));
       }
-      else if (method=="Ioss" || method=="Exodus")
-      {
-        // We check, cause the basal mesh for extruded stk mesh should be already created
-        if (sideSetMeshStructs.find(ss_name)==sideSetMeshStructs.end())
-          this->sideSetMeshStructs[ss_name] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params_ss, adaptParams, commT));
-      }
       else
       {
-        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid discretization method for the side discretization.\n");
+        if (sideSetMeshStructs.find(ss_name)==sideSetMeshStructs.end())
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Side discretization other than 'SideSetSTK' must be already present.\n");
       }
 
       // Update the side set mesh specs pointer in the mesh specs of this mesh
@@ -1072,22 +1044,6 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     // Ge the file type (if not specified, assume Scalar)
     temp_str = *it + " Field Type";
     std::string ftype = req_fields_info->get<std::string>(temp_str,"");
-    if (ftype=="")
-    {
-      *out << "Warning! No field type specified for field " << *it << ". We skip it and hope this does not cause problems. Note: you can list it as 'Output' if it's not meant to be an input field or 'From Mesh' if it is already stored in the mesh.\n";
-      continue;
-    }
-    else if (ftype=="From Mesh")
-    {
-      *out << "Skipping field " << *it << " since it's listed as already present in the mesh. Make sure this is true!\n";
-      continue;
-    }
-    else if (ftype=="Output")
-    {
-      *out << "Skipping field " << *it << " since it's listed as output (computed at run time). Make sure there's an evaluator set to save it.\n";
-      continue;
-    }
-
     // Depending on the input field type, we need to use different pointers/importers/vectors
     if (ftype == "Node Scalar")
     {
@@ -1120,6 +1076,21 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     else if (ftype == "Elem Layered Vector")
     {
       loadField (*it, *req_fields_info, importOperatorElem, elems, commT, false, false, true);
+    }
+    else if (ftype=="")
+    {
+      *out << "Warning! No field type specified for field " << *it << ". We skip it and hope this does not cause problems. Note: you can list it as 'Output' if it's not meant to be an input field or 'From Mesh' if it is already stored in the mesh.\n";
+      continue;
+    }
+    else if (ftype=="From Mesh")
+    {
+      *out << "Skipping field " << *it << " since it's listed as already present in the mesh. Make sure this is true!\n";
+      continue;
+    }
+    else if (ftype=="Output")
+    {
+      *out << "Skipping field " << *it << " since it's listed as output (computed at run time). Make sure there's an evaluator set to save it.\n";
+      continue;
     }
     else
     {
@@ -1493,14 +1464,9 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = rcp(new Teuchos::ParameterList(listname));;
   validPL->set<std::string>("Cell Topology", "Quad" , "Quad or Tri Cell Topology");
-  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
   validPL->set<std::string>("Exodus Output File Name", "",
       "Request exodus output to given file name. Requires SEACAS build");
   validPL->set<std::string>("Exodus Solution Name", "",
-      "Name of solution output vector written to Exodus file. Requires SEACAS build");
-  validPL->set<std::string>("Exodus SolutionDot Name", "",
-      "Name of solution output vector written to Exodus file. Requires SEACAS build");
-  validPL->set<std::string>("Exodus SolutionDotDot Name", "",
       "Name of solution output vector written to Exodus file. Requires SEACAS build");
   validPL->set<std::string>("Exodus Residual Name", "",
       "Name of residual output vector written to Exodus file. Requires SEACAS build");
@@ -1514,8 +1480,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
       "Number of samples in Longitude direction for NetCDF output. Default is 100.");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
-  validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid2: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
+  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
+  validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Use Automatic Aura", false, "Use automatic aura with BulkData");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
@@ -1534,17 +1500,14 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
                      "Fields to pick up from the restart file when restarting");
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layout of solution output vector written to Exodus file. Requires SEACAS build");
-  validPL->set<Teuchos::Array<std::string> >("SolutionDot Vector Components", defaultFields,
-      "Names and layout of solution_dot output vector written to Exodus file. Requires SEACAS build");
-  validPL->set<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", defaultFields,
-      "Names and layout of solution_dotdot output vector written to Exodus file. Requires SEACAS build");
   validPL->set<Teuchos::Array<std::string> >("Residual Vector Components", defaultFields,
       "Names and layout of residual output vector written to Exodus file. Requires SEACAS build");
 
+  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
-  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid2");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
 
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 

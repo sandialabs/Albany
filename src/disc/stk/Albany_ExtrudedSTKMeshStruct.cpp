@@ -7,9 +7,6 @@
 #include <iostream>
 
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
-#include "Albany_STKDiscretization.hpp"
-#include "Albany_IossSTKMeshStruct.hpp"
-#include "Albany_TmplSTKMeshStruct.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
 #include <Shards_BasicTopologies.hpp>
@@ -34,7 +31,8 @@
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                                     const Teuchos::RCP<const Teuchos_Comm>& comm) :
+                                                     const Teuchos::RCP<const Teuchos_Comm>& comm,
+                                                     Teuchos::RCP<Albany::AbstractMeshStruct> inputBasalMesh) :
     GenericSTKMeshStruct(params, Teuchos::null, 3), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false)
 {
   params->validateParameters(*getValidDiscretizationParameters(), 0);
@@ -84,43 +82,9 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   stk::io::put_io_part_attribute(*ssPartVec[ssnTop]);
 #endif
 
-  Teuchos::RCP<Teuchos::ParameterList> params2D;
-  if (params->isSublist("Side Set Discretizations"))
-  {
-    params2D = Teuchos::rcp(new Teuchos::ParameterList(params->sublist("Side Set Discretizations").sublist("basalside")));
-  }
-  else
-  {
-    // Old style: the 2D parameter are mixed with the 3D
-    params2D = Teuchos::rcp(new Teuchos::ParameterList());
-    params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
-    params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-  }
-  params2D->set<int>("Number Of Time Derivatives", params->get<int>("Number Of Time Derivatives"));
+  basalMeshStruct = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(inputBasalMesh,false);
+  TEUCHOS_TEST_FOR_EXCEPTION (basalMeshStruct==Teuchos::null, std::runtime_error, "Error! Could not cast basal mesh to AbstractSTKMeshStruct.\n");
 
-
-  if (params2D->isParameter("Method"))
-  {
-    std::string method = params2D->get<std::string>("Method");
-
-    if (method=="STK2D")
-    {
-      basalMeshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(params2D, adaptParams, comm));
-    }
-    else if (method=="Ioss")
-    {
-      basalMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
-    }
-    else
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue, "Error in ExtrudedSTKMeshStruct: only 'STK2D' and 'Ioss' accepted for Method in basal mesh\n");
-    }
-  }
-  else
-  {
-    // If no method is provided, we assume it is Ioss (backward compatibility)
-    basalMeshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
-  }
   sideSetMeshStructs["basalside"] = basalMeshStruct;
 
   std::string shape = params->get("Element Shape", "Hexahedron");
@@ -236,7 +200,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
   stk::mesh::MetaData& metaData2D = *basalMeshStruct->metaData; //bulkData2D.mesh_meta_data();
 
-  std::vector<double> levelsNormalizedThickness(numLayers + 1);
+  std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
 
   if(useGlimmerSpacing)
     for (int i = 0; i < numLayers+1; i++)
@@ -245,11 +209,14 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     for (int i = 0; i < numLayers+1; i++)
       levelsNormalizedThickness[i] = double(i) / numLayers;
 
-  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers), layersNormalizedThickness(numLayers);
-  for (int i = 0; i < numLayers; i++) {
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers);
+  for (int i = 0; i < numLayers; i++)
     layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
-    layersNormalizedThickness[i] = 0.5*(levelsNormalizedThickness[i]+levelsNormalizedThickness[i+1]);
-  }
+
+  /*std::cout<< "Levels: ";
+  for (int i = 0; i < numLayers+1; i++)
+    std::cout<< levelsNormalizedThickness[i] << " ";
+  std::cout<< "\n";*/
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData2D.universal_part()) & stk::mesh::Selector(metaData2D.locally_owned_part());
 
@@ -299,6 +266,14 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   int numMyElements = (comm->getRank() == 0) ? one_to_one_nodes_map->getGlobalNumElements() : 0;
   Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
   Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_nodes_map, nodes_map));
+
+  Teuchos::RCP<Tpetra_Vector> sHeightVec;
+  Teuchos::RCP<Tpetra_Vector> thickVec;
+  Teuchos::RCP<Tpetra_Vector> bTopographyVec;
+  Teuchos::RCP<Tpetra_Vector> bFrictionVec;
+  Teuchos::RCP<Tpetra_MultiVector> temperatureVecInterp;
+  Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
+  Teuchos::RCP<Tpetra_MultiVector> velocityRMSVec;
 
   if (comm->getRank() == 0)
     std::cout << " done." << std::endl;
@@ -1238,6 +1213,13 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<Teuchos::Array<int> >("Basal Elem Layered Fields Ranks", Teuchos::Array<int>(), "List of basal node layered fields to be interpolated");
   validPL->set<std::string>("GMSH 2D Output File Name", "", "File Name for GMSH 2D Basal Mesh Export");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
+  validPL->set<std::string>("Surface Height File Name", "surface_height.ascii", "Name of the file containing the surface height data");
+  validPL->set<std::string>("Thickness File Name", "thickness.ascii", "Name of the file containing the thickness data");
+  validPL->set<std::string>("BedTopography File Name", "bed_topography.ascii", "Name of the file containing the bed topography data");
+  validPL->set<std::string>("Surface Velocity File Name", "surface_velocity.ascii", "Name of the file containing the surface velocity data");
+  validPL->set<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii", "Name of the file containing the surface velocity RMS data");
+  validPL->set<std::string>("Basal Friction File Name", "basal_friction.ascii", "Name of the file containing the basal friction data");
+  validPL->set<std::string>("Temperature File Name", "temperature.ascii", "Name of the file containing the temperature data");
   validPL->set<std::string>("Element Shape", "Hexahedron", "Shape of the Element: Tetrahedron, Wedge, Hexahedron");
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");

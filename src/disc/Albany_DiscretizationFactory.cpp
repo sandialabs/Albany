@@ -22,6 +22,7 @@
 #if defined(ALBANY_EPETRA)
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
+#include "Albany_GmshSTKMeshStruct.hpp"
 #ifdef ALBANY_FELIX
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
@@ -55,10 +56,8 @@
 
 Albany::DiscretizationFactory::DiscretizationFactory(
   const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-  const Teuchos::RCP<const Teuchos_Comm>& commT_, 
-  const bool explicit_scheme_) :
-  commT(commT_),
-  explicit_scheme(explicit_scheme_) {
+  const Teuchos::RCP<const Teuchos_Comm>& commT_) :
+  commT(commT_) {
 
   discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
 
@@ -77,30 +76,6 @@ Albany::DiscretizationFactory::DiscretizationFactory(
     if(problemParams->isSublist("Catalyst"))
 
       catalystParams = Teuchos::sublist(problemParams, "Catalyst", true);
-
-#ifdef ALBANY_AERAS
-    Teuchos::RCP<Teuchos::ParameterList> hsParams;
-    Teuchos::ArrayRCP<std::string> dof_names_tracers; 
-    if (problemParams->isSublist("Hydrostatic Problem")) {
-      hsParams = Teuchos::sublist(problemParams, "Hydrostatic Problem", true); 
-      numLevels = hsParams->get("Number of Vertical Levels", 0);
-      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
-            Teuchos::Array<std::string>()));
-      numTracers = dof_names_tracers.size();  
- 
-    }
-
-    if (problemParams->isSublist("XZHydrostatic Problem")) {
-      hsParams = Teuchos::sublist(problemParams, "XZHydrostatic Problem", true); 
-      numLevels = hsParams->get("Number of Vertical Levels", 0); 
-      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
-            Teuchos::Array<std::string>())); 
-      numTracers = dof_names_tracers.size();  
-    }
-    if (problemParams->isSublist("Shallow Water Problem")) {
-      numLevels = 0; 
-    }
-#endif
 
   }
 
@@ -214,7 +189,7 @@ void createInterfaceParts(
   bool const
   is_interleaved = last_mesh_specs_struct.interleavedOrdering;
 
-  Intrepid2::EIntrepidPLPoly const
+  Intrepid::EIntrepidPLPoly const
   cubature_rule = last_mesh_specs_struct.cubatureRule;
 
   mesh_specs_struct.resize(number_blocks + 1);
@@ -243,123 +218,10 @@ void createInterfaceParts(
 
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
-Albany::DiscretizationFactory::createMeshSpecs() {
-
-  std::string& method = discParams->get("Method", "STK1D");
-
-#if defined(HAVE_STK)
-
-  if(method == "STK1D" || method == "STK1D Aeras") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, adaptParams, commT));
-  }
-
-  else if(method == "STK0D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, adaptParams, commT));
-  }
-
-  else if(method == "STK2D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, adaptParams, commT));
-  }
-
-  else if(method == "STK3D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptParams, commT));
-  }
-
-  else if(method == "STK3DPoint") {
-    meshStruct = Teuchos::rcp(new Albany::STK3DPointStruct(discParams, commT));
-  }
-
-  else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" || method == "Exodus Aeras") {
-
-#ifdef ALBANY_SEACAS
-    meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptParams, commT));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" ||
-                               method == "Exodus Aeras",
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Error: Discretization method " << method
-                               << " requested, but not compiled in" << std::endl);
-#endif
-  }
-#if defined(ALBANY_EPETRA)
-  else if(method == "Ascii") {
-    meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, commT));
-  }
-  else if(method == "Ascii2D") {
-    Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
-    meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(discParams, commT));
-    Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-    Albany::AbstractFieldContainer::FieldContainerRequirements req;
-    int neq=2;
-    meshStruct2D->setFieldAndBulkData(commT, discParams, neq, req,
-                                      sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
-#ifdef ALBANY_SEACAS
-    Ioss::Init::Initializer io;
-    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data =Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
-    mesh_data->set_bulk_data(*meshStruct2D->bulkData);
-    size_t idx = mesh_data->create_output_mesh("mesh.exo", stk::io::WRITE_RESULTS);
-    mesh_data->process_output_request(idx, 0.0);
-    meshStruct = meshStruct2D;
-#endif
-  }
-#ifdef ALBANY_FELIX
-  else if(method == "Extruded") {
-      meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, commT));
-  }
-#endif
-#endif
-  else if(method == "Cubit") {
-#ifdef ALBANY_CUTR
-    AGS"need to inherit from Generic"
-    meshStruct = Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, discParams, neq));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Error: Discretization method " << method
-                               << " requested, but not compiled in" << std::endl);
-#endif
-  }
-
-  else
-#endif
-  if(method == "PUMI") {
-#ifdef ALBANY_SCOREC
-    meshStruct = Teuchos::rcp(new Albany::PUMIMeshStruct(discParams, commT));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI",
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Error: Discretization method " << method
-                               << " requested, but not compiled in" << std::endl);
-#endif
-  }
-  else if(method == "PUMI Hierarchic") {
-#ifdef ALBANY_GOAL
-    meshStruct = Teuchos::rcp(new Albany::GOALMeshStruct(discParams, commT));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Error: Discretization method " << method
-                               << " requested, but not compiled in" << std::endl);
-#endif
-  }
-  else if (method == "Sim") {
-#ifdef ALBANY_AMP
-    meshStruct = Teuchos::rcp(new Albany::SimMeshStruct(discParams, commT));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "Sim",
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Error: Discretization method " << method
-                               << " requested, but not compiled in" << std::endl);
-#endif
-  }
-  else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
-                               "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
-                               "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams <<
-                               "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
-                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Mpas, Ascii," <<
-                               " Ascii2D, Extruded" << std::endl);
-  }
+Albany::DiscretizationFactory::createMeshSpecs()
+{
+  // First, create the mesh struct
+  meshStruct = createMeshStruct (discParams, adaptParams);
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
   // Add an interface block. For now relies on STK, so we force a cast that
@@ -367,9 +229,9 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   createInterfaceParts(adaptParams, meshStruct);
 #endif // ALBANY_LCM
 
+#if defined(ALBANY_AERAS) && defined(HAVE_STK)
   //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization,
   //overwrite the meshSpecs of the meshStruct with an enriched one.
-#if defined(ALBANY_AERAS) && defined(HAVE_STK)
   if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
     //get "Element Degree" from parameter list.  Default value is 1.
     int points_per_edge = discParams->get("Element Degree", 1) + 1;
@@ -380,15 +242,136 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     for (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type i=0; i< number_blocks; i++) {
       Teuchos::RCP<Albany::MeshSpecsStruct> orig_mesh_specs_struct = mesh_specs_struct[i];
       Aeras::AerasMeshSpectStruct aeras_mesh_specs_struct;
-      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, 
-                                                                                   points_per_edge, discParams);
+      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, points_per_edge);
     }
     return enriched_mesh_specs_struct;
   }
   else
 #endif
     return meshStruct->getMeshSpecs();
+}
 
+Teuchos::RCP<Albany::AbstractMeshStruct>
+Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
+                                                 Teuchos::RCP<Teuchos::ParameterList> adapt_params)
+{
+  std::string& method = disc_params->get("Method", "STK1D");
+#if defined(HAVE_STK)
+  if(method == "STK1D" || method == "STK1D Aeras") {
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, commT));
+  }
+
+  else if(method == "STK0D") {
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(disc_params, adapt_params, commT));
+  }
+
+  else if(method == "STK2D") {
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(disc_params, adapt_params, commT));
+  }
+
+  else if(method == "STK3D") {
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(disc_params, adapt_params, commT));
+  }
+
+  else if(method == "STK3DPoint") {
+    return Teuchos::rcp(new Albany::STK3DPointStruct(disc_params, commT));
+  }
+
+  else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" || method == "Exodus Aeras") {
+
+#ifdef ALBANY_SEACAS
+    return Teuchos::rcp(new Albany::IossSTKMeshStruct(disc_params, adapt_params, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" ||
+                               method == "Exodus Aeras",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif // ALBANY_SEACAS
+  }
+#if defined(ALBANY_EPETRA)
+  else if(method == "Ascii") {
+    return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, commT));
+  }
+  else if(method == "Ascii2D") {
+    return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, commT));
+  }
+  else if(method == "Gmsh") {
+    return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, commT));
+  }
+#ifdef ALBANY_FELIX
+  else if(method == "Extruded")
+  {
+    Teuchos::RCP<Albany::AbstractMeshStruct> basalMesh;
+    Teuchos::RCP<Teuchos::ParameterList> basal_params;
+    if (disc_params->isSublist("Side Set Discretizations") && disc_params->sublist("Side Set Discretizations").isSublist("basalside"))
+    {
+      basal_params = Teuchos::rcp(new Teuchos::ParameterList(disc_params->sublist("Side Set Discretizations").sublist("basalside")));
+    }
+    else
+    {
+      // Backward compatibility: Ioss, with parameters mixed with the extruded mesh ones
+      basal_params->set("Method","Ioss");
+      basal_params->set("Use Serial Mesh", disc_params->get("Use Serial Mesh", false));
+      basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
+    }
+
+    basalMesh = createMeshStruct(basal_params, Teuchos::null);
+    return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, commT, basalMesh));
+  }
+#endif // ALBANY_FELIX
+#endif // ALBANY_EPETRA
+  else if(method == "Cubit") {
+#ifdef ALBANY_CUTR
+    AGS"need to inherit from Generic"
+    return Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, disc_params, neq));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif // ALBANY_CUTR
+  }
+  else
+#endif // HAVE_STK
+  if(method == "PUMI") {
+#ifdef ALBANY_SCOREC
+    return Teuchos::rcp(new Albany::PUMIMeshStruct(disc_params, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif
+  }
+  else if(method == "PUMI Hierarchic") {
+#ifdef ALBANY_GOAL
+    return Teuchos::rcp(new Albany::GOALMeshStruct(disc_params, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif
+  }
+  else if (method == "Sim") {
+#ifdef ALBANY_AMP
+    return Teuchos::rcp(new Albany::SimMeshStruct(disc_params, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "Sim",
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Discretization method " << method
+                               << " requested, but not compiled in" << std::endl);
+#endif
+  }
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+                               "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
+                               "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
+                               "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
+                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Mpas, Ascii," <<
+                               " Ascii2D, Extruded" << std::endl);
+  }
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -506,7 +489,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     //the code is structured.  That should be OK since meshSpecsType() is not used anywhere except this function.
     //But one may want to change it to, e.g., AERAS_MS, to prevent confusion.
       Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, numLevels, numTracers, commT, explicit_scheme, rigidBodyModes));
+      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, commT, rigidBodyModes));
     }
 #endif
   return Teuchos::null;
