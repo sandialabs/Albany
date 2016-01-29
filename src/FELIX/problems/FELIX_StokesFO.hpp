@@ -301,9 +301,12 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     key << stateName <<  "Is Distributed Parameter";
     this->params->set<int>(key.str(), 1);
 
-    // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
-    ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
-    fm0.template registerEvaluator<EvalT> (ev);
+    if (basalSideName!="INVALID")
+    {
+      // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
+      ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
+      fm0.template registerEvaluator<EvalT> (ev);
+    }
   }
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
   {
