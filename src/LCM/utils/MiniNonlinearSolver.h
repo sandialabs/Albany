@@ -15,7 +15,7 @@
 namespace LCM{
 
 //
-//
+// Class for dealing with Albany traits.
 //
 template<
 typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
@@ -27,6 +27,10 @@ struct MiniSolver
       FN & function,
       Intrepid2::Vector<typename EvalT::ScalarT, N> & soln);
 };
+
+//
+// MiniSolver class specializations for Albany traits.
+//
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
 struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
