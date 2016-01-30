@@ -64,18 +64,6 @@
 
     </ParameterList>
     
-    <!-- RESPONSE FUNCTION -->
-    <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Response 0"
-		 type="string" value="Project IP to Nodal Field"/>
-      <ParameterList name="ResponseParams 0">
-        <Parameter name="Number of Fields" type="int" value="1"/>
-        <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
-        <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
-        <Parameter name="Output to File" type="bool" value="true"/>
-      </ParameterList>
-    </ParameterList>
     
   </ParameterList>
 
