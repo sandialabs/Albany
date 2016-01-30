@@ -181,10 +181,10 @@ Albany::LinearElasticityModalProblem::getValidProblemParameters() const
   validPL->set<double>("Elastic Modulus", 0.0);
   validPL->set<double>("Poissons Ratio", 0.0);
 
-  Teuchos::RCP<ATO::Topology> emptyTopo;
+  Teuchos::RCP<ATO::TopologyArray> emptyTopo;
   emptyTopo = Teuchos::null;
-  validPL->set<Teuchos::RCP<ATO::Topology> >("Topology", emptyTopo);
-  validPL->sublist("Topology Parameters", false, "");
+  validPL->set<Teuchos::RCP<ATO::TopologyArray> >("Topologies", emptyTopo);
+  validPL->sublist("Topologies Parameters", false, "");
   validPL->sublist("Objective Aggregator", false, "");
 
   return validPL;

@@ -31,7 +31,7 @@ class Aggregator
 public:
 
   Aggregator(){}
-  Aggregator(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   virtual ~Aggregator(){};
 
   virtual void Evaluate()=0;
@@ -44,7 +44,7 @@ public:
                                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap){};
   void SetCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm){comm = _comm;}
-  void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::RCP<Epetra_Vector> deriv)
+  void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Epetra_Vector> > deriv)
          {valueAggregated = g; derivAggregated = deriv;}
 
 protected:
@@ -57,7 +57,7 @@ protected:
   std::string outputDerivativeName;
 
   Teuchos::RCP<double> valueAggregated;
-  Teuchos::RCP<Epetra_Vector> derivAggregated;
+  Teuchos::Array<Teuchos::RCP<Epetra_Vector> > derivAggregated;
 
   Teuchos::RCP<Albany::Application> outApp;
   Teuchos::RCP<const Epetra_Comm> comm;
@@ -65,6 +65,9 @@ protected:
   Teuchos::Array<double> normalize;
   double shiftValueAggregated;
   double scaleValueAggregated;
+
+  int numTopologies;
+
 };
 
 /******************************************************************************/
@@ -73,13 +76,11 @@ class Aggregator_StateVarBased : public virtual Aggregator {
   Aggregator_StateVarBased(){}
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems);
  protected:
-  typedef struct {
-    std::string name;
-    Teuchos::RCP<Albany::Application> app;
-  } SubVariable;
+  typedef struct { std::string name; Teuchos::RCP<Albany::Application> app; } SubValue;
+  typedef struct { Teuchos::Array<std::string> name; Teuchos::RCP<Albany::Application> app; } SubDerivative;
 
-  std::vector<SubVariable> values;
-  std::vector<SubVariable> derivatives;
+  std::vector<SubValue> values;
+  std::vector<SubDerivative> derivatives;
 };
 /******************************************************************************/
 
@@ -106,7 +107,7 @@ class Aggregator_Scaled : public virtual Aggregator,
                           public virtual Aggregator_StateVarBased {
  public:
   Aggregator_Scaled(){}
-  Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   virtual void Evaluate();
  protected:
   Teuchos::Array<double> weights;
@@ -119,7 +120,7 @@ class Aggregator_Extremum : public virtual Aggregator,
                             public virtual Aggregator_StateVarBased {
  public:
   Aggregator_Extremum(){}
-  Aggregator_Extremum(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator_Extremum(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   virtual void Evaluate();
  protected:
   C compare;
@@ -129,7 +130,7 @@ class Aggregator_Extremum : public virtual Aggregator,
 /******************************************************************************/
 class Aggregator_Uniform : public Aggregator_Scaled {
  public:
-  Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams, int nTopos);
 };
 /******************************************************************************/
 
@@ -138,7 +139,7 @@ class Aggregator_DistScaled : public virtual Aggregator,
                               public virtual Aggregator_DistParamBased {
  public:
   Aggregator_DistScaled(){}
-  Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   void Evaluate();
  protected:
   Teuchos::Array<double> weights;
@@ -151,7 +152,7 @@ class Aggregator_DistExtremum : public virtual Aggregator,
                                 public virtual Aggregator_DistParamBased {
  public:
   Aggregator_DistExtremum(){}
-  Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   void Evaluate();
  protected:
   C compare;
@@ -161,7 +162,7 @@ class Aggregator_DistExtremum : public virtual Aggregator,
 /******************************************************************************/
 class Aggregator_DistUniform : public Aggregator_DistScaled {
  public:
-  Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams, int nTopos);
 };
 /******************************************************************************/
 
@@ -170,7 +171,7 @@ class Aggregator_DistUniform : public Aggregator_DistScaled {
 class AggregatorFactory {
 public:
   Teuchos::RCP<Aggregator> create(const Teuchos::ParameterList& aggregatorParams,
-                                  std::string entityType);
+                                  std::string entityType, int nTopos);
 };
 /******************************************************************************/
 

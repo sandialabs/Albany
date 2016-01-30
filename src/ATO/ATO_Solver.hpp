@@ -21,10 +21,12 @@
 #include "Albany_StateManager.hpp"
 #include "Albany_Utils.hpp"
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
+#include "ATO_Types.hpp"
 #include "ATO_Aggregator.hpp"
 #include "ATO_Optimizer.hpp"
 
 namespace ATO {
+
   class SolverSubSolver;
   class SolverSubSolverData;
   class OptimizationProblem;
@@ -44,7 +46,6 @@ namespace ATO {
       SpatialFilter(Teuchos::ParameterList& params);
       void buildOperator(
              Teuchos::RCP<Albany::Application> app,
-             Teuchos::RCP<Topology>            topology,
              Teuchos::RCP<Epetra_Map>          overlapNodeMap,
              Teuchos::RCP<Epetra_Map>          localNodeMap,
              Teuchos::RCP<Epetra_Import>       importer,
@@ -70,11 +71,12 @@ namespace ATO {
 
     virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
     virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
-    virtual void InitializeTopology(double* p)=0;
-    virtual void ComputeVolume(double* p, const double* dgdp,
-                               double& v, double threshhold, double minP=0.0)=0;
-    virtual void ComputeVolume(const double* p, double& v, double* dvdp=NULL)=0;
-    virtual void ComputeVolume(double& v)=0;
+    virtual void InitializeOptDofs(double* p)=0;
+    virtual void getOptDofsLowerBound( Teuchos::Array<double>& b )=0;
+    virtual void getOptDofsUpperBound( Teuchos::Array<double>& b )=0;
+    virtual void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP)=0;
+    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp=0)=0;
+    virtual void ComputeMeasure(std::string measureType, double& measure)=0;
     virtual int GetNumOptDofs()=0;
   };
 
@@ -106,12 +108,12 @@ namespace ATO {
     void ComputeObjective(double* p, double& g, double* dgdp=NULL);
     void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
     void writeCurrentDesign();
-    void InitializeTopology(double* p);
-
-    void ComputeVolume(double* p, const double* dgdp, 
-                       double& v, double threshhold, double minP=0.0);
-    void ComputeVolume(const double* p, double& v, double* dvdp=NULL);
-    void ComputeVolume(double& v);
+    void InitializeOptDofs(double* p);
+    void getOptDofsLowerBound( Teuchos::Array<double>& b );
+    void getOptDofsUpperBound( Teuchos::Array<double>& b );
+    void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP);
+    void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp=0);
+    void ComputeMeasure(std::string measureType, double& measure);
     int GetNumOptDofs();
 
   private:
@@ -136,13 +138,27 @@ namespace ATO {
     Teuchos::RCP<Aggregator> _objAggregator;
     Teuchos::RCP<Aggregator> _conAggregator;
     Teuchos::RCP<Optimizer> _optimizer;
-    Teuchos::RCP<Topology> _topology;
+
+    typedef struct TopologyInfoStruct {
+      Teuchos::RCP<Topology>      topology;
+      Teuchos::RCP<SpatialFilter> filter;
+      Teuchos::RCP<SpatialFilter> postFilter;
+      Teuchos::RCP<Epetra_Vector> filteredOverlapVector;
+      Teuchos::RCP<Epetra_Vector> filteredVector;
+      Teuchos::RCP<Epetra_Vector> overlapVector;
+      Teuchos::RCP<Epetra_Vector> localVector;
+      bool                        filterIsRecursive;
+    } TopologyInfoStruct;
+
+    std::vector<Teuchos::RCP<TopologyInfoStruct> > _topologyInfoStructs;
+    std::vector<Teuchos::RCP<TopologyStruct> > _topologyStructs;
+    Teuchos::RCP<TopologyArray> _topologyArray;
+
+    // currently all topologies must have the same entity type
+    std::string entityType;
 
     std::vector<Teuchos::RCP<SpatialFilter> > filters;
-    bool _filterIsRecursive;
     Teuchos::RCP<SpatialFilter> _derivativeFilter;
-    Teuchos::RCP<SpatialFilter> _topologyFilter;
-    Teuchos::RCP<SpatialFilter> _postTopologyFilter;
 
 
     typedef struct HomogenizationSet { 
@@ -167,17 +183,12 @@ namespace ATO {
     Teuchos::RCP<Epetra_Map> overlapNodeMap;
     Teuchos::RCP<Epetra_Map> localNodeMap;
 
-    Teuchos::RCP<Epetra_Vector> filteredOTopoVec;
-    Teuchos::RCP<Epetra_Vector> filteredTopoVec;
 
-    Teuchos::RCP<Epetra_Vector> overlapTopoVec;
-    Teuchos::RCP<Epetra_Vector> topoVec;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > overlapObjectiveGradientVec;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > ObjectiveGradientVec;
 
-    Teuchos::RCP<Epetra_Vector> overlapObjectiveGradientVec;
-    Teuchos::RCP<Epetra_Vector> ObjectiveGradientVec;
-
-    Teuchos::RCP<Epetra_Vector> overlapConstraintGradientVec;
-    Teuchos::RCP<Epetra_Vector> ConstraintGradientVec;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > overlapConstraintGradientVec;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > ConstraintGradientVec;
 
     Teuchos::RCP<double> objectiveValue;
     Teuchos::RCP<double> constraintValue;
@@ -192,7 +203,7 @@ namespace ATO {
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
     void smoothTopology(double* p);
-    void smoothTopology();
+    void smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct);
     void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
     void copyObjectiveFromStateMgr( double& g, double* dgdp );

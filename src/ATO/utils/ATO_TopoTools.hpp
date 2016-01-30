@@ -8,6 +8,7 @@
 #define TopoTools_HPP
 
 #include "Teuchos_ParameterList.hpp"
+#include <unordered_map>
 
 namespace ATO {
 
@@ -25,7 +26,7 @@ class Topology
   enum PenaltyType {SIMP, RAMP, HONE, HTWO};
 
 public:
-  Topology(const Teuchos::ParameterList& topoParams);
+  Topology(const Teuchos::ParameterList& topoParams, int global_index);
   virtual ~Topology(){};
 
   template<typename T> T Penalize(int fIndex, T rho);
@@ -38,19 +39,18 @@ public:
   double getVoidValue(){return voidValue;}
   double getInterfaceValue(){return interfaceValue;}
   double getMaterialValue(){return materialValue;}
+  int getGlobalIndex(){return globalIndex;}
   const Teuchos::Array<double> getBounds(){return bounds;}
   std::string getEntityType(){return entityType;}
   std::string getIntegrationMethod(){return integrationMethod;}
   int TopologyOutputFilter(){return topologyOutputFilter;}
   int SpatialFilterIndex(){return spatialFilterIndex;}
 private:
-  // this should be a vector of strings at some point since, in the
-  // general case, the topology may be defined by multiple fields.
   std::string name;
   std::string entityType;
   std::string integrationMethod;
+  int globalIndex;
 
-  // JR: There's probably a better way to do this.  
   typedef struct PenaltyFunction {
     PenaltyFunction(){}
     PenaltyFunction(const Teuchos::ParameterList& fParams);
@@ -73,6 +73,10 @@ private:
   int topologyOutputFilter;
   int spatialFilterIndex;
 };
+
+//typedef std::unordered_map<std::string, Teuchos::RCP<Topology> > TopologyMap;
+  typedef Teuchos::Array<Teuchos::RCP<Topology> > TopologyArray;
+
 
 class Simp {
  public:

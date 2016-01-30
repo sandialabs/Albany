@@ -10,6 +10,7 @@
 #include "Albany_StateManager.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_Types.hpp"
 
 #include <string>
 #include <vector>
@@ -52,6 +53,8 @@ class Optimizer
 
   int    _nIterations;
 
+  std::string _measureType;
+
 };
 
 class Optimizer_OC : public Optimizer {
@@ -65,7 +68,7 @@ class Optimizer_OC : public Optimizer {
 
   double* p;
   double* p_last;
-  double* dvdp;
+  double* dmdp;
 
   double f;
   double f_last;
@@ -78,18 +81,18 @@ class Optimizer_OC : public Optimizer {
 
   int numOptDofs;
 
-  std::string constraintGradient;
+  std::string secondaryConstraintGradient;
 
-  double _volConvTol;
-  double _volAccpTol;
-  double _volMaxIter;
+  double _measureConvTol;
+  double _measureAccpTol;
+  double _measureMaxIter;
   double _initLambda;
   double _moveLimit;
   double _stabExponent;
-  double _volConstraint;
-  double _minVolume;
-  double _maxVolume;
-  double _optVolume;
+  double _measureConstraint;
+  double _minMeasure;
+  double _maxMeasure;
+  double _optMeasure;
   bool   _useNewtonSearch;
 
 };
@@ -110,24 +113,24 @@ class Optimizer_NLopt : public Optimizer {
   void Initialize();
  private:
 
-  enum ResponseType {Volume, Aggregate};
+  enum ResponseType {Measure, Aggregate};
 
-  ResponseType objectiveType, constraintType;
+  ResponseType objectiveType, primaryConstraintType;
 
   double objectiveValue, objectiveValue_last;
   double constraintValue, constraintValue_last;
 
   double *p, *p_last;
-  double f, g, v;
+  double f, g, measure;
   double* dfdp;
   double* dgdp;
-  double* dvdp;
+  double* dmdp;
   int numOptDofs;
 
   double _minDensity;
-  double _volConstraint;
-  double _volConvTol;
-  double _optVolume;
+  double _measureConstraint;
+  double _measureConvTol;
+  double _optMeasure;
   double _optConvTol;
 
   std::string _optMethod;

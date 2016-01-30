@@ -14,7 +14,7 @@ namespace ATO {
 
 //**********************************************************************
 Teuchos::RCP<Aggregator> 
-AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::string entityType)
+AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::string entityType, int nTopos)
 {
   Teuchos::Array<std::string> values = 
     aggregatorParams.get<Teuchos::Array<std::string> >("Values");
@@ -22,28 +22,28 @@ AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::s
   if( entityType == "State Variable" ){
     std::string weightingType = aggregatorParams.get<std::string>("Weighting");
     if( weightingType == "Scaled"  )  
-      return Teuchos::rcp(new Aggregator_Scaled(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_Scaled(aggregatorParams, nTopos));
     else
     if( weightingType == "Maximum"  )  
-      return Teuchos::rcp(new Aggregator_Extremum<std::greater<double> >(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_Extremum<std::greater<double> >(aggregatorParams, nTopos));
     else
     if( weightingType == "Minimum"  )  
-      return Teuchos::rcp(new Aggregator_Extremum<std::less<double> >(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_Extremum<std::less<double> >(aggregatorParams, nTopos));
     else
-      return Teuchos::rcp(new Aggregator_Uniform(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_Uniform(aggregatorParams, nTopos));
   } else
   if( entityType == "Distributed Parameter" ){
     std::string weightingType = aggregatorParams.get<std::string>("Weighting");
     if( weightingType == "Scaled"  )  
-      return Teuchos::rcp(new Aggregator_DistScaled(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_DistScaled(aggregatorParams, nTopos));
     else
     if( weightingType == "Maximum"  )  
-      return Teuchos::rcp(new Aggregator_DistExtremum<std::greater<double> >(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_DistExtremum<std::greater<double> >(aggregatorParams, nTopos));
     else
     if( weightingType == "Minimum"  )  
-      return Teuchos::rcp(new Aggregator_DistExtremum<std::less<double> >(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_DistExtremum<std::less<double> >(aggregatorParams, nTopos));
     else
-      return Teuchos::rcp(new Aggregator_DistUniform(aggregatorParams));
+      return Teuchos::rcp(new Aggregator_DistUniform(aggregatorParams, nTopos));
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -52,7 +52,7 @@ AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::s
 }
 
 //**********************************************************************
-Aggregator::Aggregator(const Teuchos::ParameterList& aggregatorParams)
+Aggregator::Aggregator(const Teuchos::ParameterList& aggregatorParams, int nTopos) : numTopologies(nTopos)
 //**********************************************************************
 { 
   parse(aggregatorParams);
@@ -199,16 +199,18 @@ Aggregator_StateVarBased::SetInputVariables(const std::vector<SolverSubSolver>& 
   derivatives.resize(numVars);
   for(int iv=0; iv<numVars; iv++){
     bool derFound = false;
-    std::string& derName = aggregatedDerivativesNames[iv];
+    std::string derName = aggregatedDerivativesNames[iv];
     for(int is=0; is<numSubs; is++){
       const Teuchos::RCP<Albany::Application>& app = subProblems[is].app;
       Albany::StateArray& src = app->getStateMgr().getStateArrays().elemStateArrays[0];
-      if(src.count(derName) > 0){
+      if(src.count(Albany::strint(derName,0)) > 0){
         TEUCHOS_TEST_FOR_EXCEPTION(
           derFound, Teuchos::Exceptions::InvalidParameter, std::endl 
           << "Derivative '" << derName << "' found in two state managers." << std::endl
           << "Derivative names must be unique to avoid ambiguity." << std::endl);
-        derivatives[iv].name = derName;
+        derivatives[iv].name.resize(numTopologies);
+        for(int itopo=0; itopo<numTopologies; itopo++)
+          derivatives[iv].name[itopo] = Albany::strint(derName, itopo);
         derivatives[iv].app = app;
         derFound = true;
       }
@@ -220,8 +222,8 @@ Aggregator_StateVarBased::SetInputVariables(const std::vector<SolverSubSolver>& 
 }
 
 //**********************************************************************
-Aggregator_Uniform::Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams) :
-Aggregator(aggregatorParams),
+Aggregator_Uniform::Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator(aggregatorParams, nTopos),
 Aggregator_StateVarBased()
 //**********************************************************************
 { 
@@ -234,8 +236,8 @@ Aggregator_StateVarBased()
 
 
 //**********************************************************************
-Aggregator_DistUniform::Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams) :
-Aggregator(aggregatorParams)
+Aggregator_DistUniform::Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
   int nAgg = aggregatedValuesNames.size();
@@ -246,8 +248,8 @@ Aggregator(aggregatorParams)
 }
 
 //**********************************************************************
-Aggregator_Scaled::Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams) :
-Aggregator(aggregatorParams)
+Aggregator_Scaled::Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -266,8 +268,8 @@ Aggregator(aggregatorParams)
 
 //**********************************************************************
 template <typename C>
-Aggregator_Extremum<C>::Aggregator_Extremum(const Teuchos::ParameterList& aggregatorParams) :
-Aggregator(aggregatorParams)
+Aggregator_Extremum<C>::Aggregator_Extremum(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -278,8 +280,8 @@ Aggregator(aggregatorParams)
 }
 
 //**********************************************************************
-Aggregator_DistScaled::Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams) :
-Aggregator(aggregatorParams)
+Aggregator_DistScaled::Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -298,8 +300,8 @@ Aggregator(aggregatorParams)
 
 //**********************************************************************
 template <typename C>
-Aggregator_DistExtremum<C>::Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams) :
-Aggregator(aggregatorParams)
+Aggregator_DistExtremum<C>::Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -363,22 +365,28 @@ Aggregator_Scaled::Evaluate()
 
   int numDerivatives = derivatives.size();
 
-  derivAggregated->PutScalar(0.0);
  
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
 
-  for(int sv=0; sv<numDerivatives; sv++){
-    Albany::StateArrayVec& src = derivatives[sv].app->getStateMgr().getStateArrays().elemStateArrays;
-    int numWorksets = src.size();
-    for(int ws=0; ws<numWorksets; ws++){
-      Albany::MDArray& derSrc = src[ws][derivatives[sv].name];
-      int numCells = derSrc.dimension(0);
-      int numNodes = derSrc.dimension(1);
-      for(int cell=0; cell<numCells; cell++)
-        for(int node=0; node<numNodes; node++)
-          derivAggregated->SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, 
-                                              scaleValueAggregated*normalize[sv]*weights[sv]*derSrc(cell,node));
+  for(int itopo=0; itopo<numTopologies; itopo++){
+
+    Epetra_Vector& deriv = *(derivAggregated[itopo]);
+
+    deriv.PutScalar(0.0);
+
+    for(int sv=0; sv<numDerivatives; sv++){
+      Albany::StateArrayVec& src = derivatives[sv].app->getStateMgr().getStateArrays().elemStateArrays;
+      int numWorksets = src.size();
+      for(int ws=0; ws<numWorksets; ws++){
+        Albany::MDArray& derSrc = src[ws][derivatives[sv].name[itopo]];
+        int numCells = derSrc.dimension(0);
+        int numNodes = derSrc.dimension(1);
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++)
+            deriv.SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, 
+                                     scaleValueAggregated*normalize[sv]*weights[sv]*derSrc(cell,node));
+      }
     }
   }
 }
@@ -430,20 +438,26 @@ void Aggregator_Extremum<C>::Evaluate()
   int numDerivatives = derivatives.size();
 
   if(numDerivatives > 0){
-    derivAggregated->PutScalar(0.0);
+
+    for(int itopo=0; itopo<numTopologies; itopo++){
+
+      Epetra_Vector& deriv = *(derivAggregated[itopo]);
+
+      deriv.PutScalar(0.0);
  
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-     wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+      const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+       wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
   
-    Albany::StateArrayVec& src = derivatives[extremum_index].app->getStateMgr().getStateArrays().elemStateArrays;
-    int numWorksets = src.size();
-    for(int ws=0; ws<numWorksets; ws++){
-      Albany::MDArray& derSrc = src[ws][derivatives[extremum_index].name];
-      int numCells = derSrc.dimension(0);
-      int numNodes = derSrc.dimension(1);
-      for(int cell=0; cell<numCells; cell++)
-        for(int node=0; node<numNodes; node++)
-          derivAggregated->SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, derSrc(cell,node));
+      Albany::StateArrayVec& src = derivatives[extremum_index].app->getStateMgr().getStateArrays().elemStateArrays;
+      int numWorksets = src.size();
+      for(int ws=0; ws<numWorksets; ws++){
+        Albany::MDArray& derSrc = src[ws][derivatives[extremum_index].name[itopo]];
+        int numCells = derSrc.dimension(0);
+        int numNodes = derSrc.dimension(1);
+        for(int cell=0; cell<numCells; cell++)
+            for(int node=0; node<numNodes; node++)
+            deriv.SumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, derSrc(cell,node));
+      }
     }
   }
 }
@@ -495,21 +509,27 @@ void Aggregator_DistExtremum<C>::Evaluate()
   int numDerivatives = derivatives.size();
 
   if(numDerivatives > 0){
-    derivAggregated->PutScalar(0.0);
 
-    double *derDest; derivAggregated->ExtractView(&derDest);
+    for(int itopo=0; itopo<numTopologies; itopo++){
+
+      Epetra_Vector& deriv = *(derivAggregated[itopo]);
+
+      deriv.PutScalar(0.0);
+
+      double *derDest; deriv.ExtractView(&derDest);
   
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-      wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+      const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+        wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
 
-    SubDerivative& derivative = derivatives[extremum_index];
+      SubDerivative& derivative = derivatives[extremum_index];
 
-    const Epetra_BlockMap& srcMap = derivative.value->Map();
-    double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
+      const Epetra_BlockMap& srcMap = derivative.value->Map();
+      double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
 
-    int nLocalVals = derivAggregated->MyLength();
-    for(int lid=0; lid<nLocalVals; lid++)
-      derDest[lid] += srcView[lid];
+      int nLocalVals = deriv.MyLength();
+      for(int lid=0; lid<nLocalVals; lid++)
+        derDest[lid] += srcView[lid];
+    }
   }
 }
 //**********************************************************************
@@ -558,21 +578,26 @@ Aggregator_DistScaled::Evaluate()
   }
 
 
-  derivAggregated->PutScalar(0.0);
-  double *derDest; derivAggregated->ExtractView(&derDest);
-  int nLocalVals = derivAggregated->MyLength();
+  for(int itopo=0; itopo<numTopologies; itopo++){
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-    wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+    Epetra_Vector& deriv = *(derivAggregated[itopo]);
 
-  for(int i=0; i<derivatives.size(); i++){
-    SubDerivative& derivative = derivatives[i];
+    deriv.PutScalar(0.0);
+    double *derDest; deriv.ExtractView(&derDest);
+    int nLocalVals = deriv.MyLength();
 
-    const Epetra_BlockMap& srcMap = derivative.value->Map();
-    double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+      wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
 
-    for(int lid=0; lid<nLocalVals; lid++)
-      derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+    for(int i=0; i<derivatives.size(); i++){
+      SubDerivative& derivative = derivatives[i];
+
+      const Epetra_BlockMap& srcMap = derivative.value->Map();
+      double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
+  
+      for(int lid=0; lid<nLocalVals; lid++)
+        derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+    }
   }
 }
 }
