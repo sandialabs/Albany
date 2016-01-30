@@ -5,42 +5,42 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.0
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.1
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.2
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.3
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.4
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.4 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.5
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.5 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.6
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.6 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.exo.8.7
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.exo.8.7 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.0
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.1
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.2
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.3
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.4
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.4 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.5
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.5 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.6
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.6 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.exo.8.7
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.exo.8.7 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.0
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.1
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.2
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.3
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.4
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.4 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.5
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.5 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.6
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.6 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e.8.7
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.e.8.7 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.0
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.1
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.2
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.3
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.4
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.4 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.5
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.5 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.6
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.6 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.7
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.7 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials0.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml

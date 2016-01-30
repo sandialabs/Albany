@@ -1,0 +1,23 @@
+## /usr/local/cubit-14.1/bin/clarox
+## Cubit Version 14.1
+## Cubit Build 389326
+## Revised 2013-11-07 16:00:31 -0700 (Thu, 07 Nov 2013)
+## Running 03/13/2014 03:10:55 PM
+## Command Options:
+## -warning = On
+## -information = On
+undo on
+create brick x 1.0 y 1.0 z 1.0
+move volume 1 z 0.25 include_merged
+volume 1 size 0.1667
+mesh volume 1
+block 1 volume 1
+block 1 name "coarse"
+nodeset 1 surface 4
+nodeset 2 surface 6
+nodeset 3 surface 3
+nodeset 4 surface 5
+nodeset 5 surface 2
+nodeset 6 surface 1
+set large exodus file off
+export mesh "cube1.e" overwrite

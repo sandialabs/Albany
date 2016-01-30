@@ -1,0 +1,10 @@
+Input FEM file                   = cube0.e
+LB file                          = cube0.e.nem
+Parallel Results File Base Name  = cube0
+File Extension for Spread Files  = .e
+Number of Processors             = 8 
+------------------------------------------------------------
+                Parallel I/O section
+------------------------------------------------------------
+Parallel Disk Info= number=1, offset=1, zeros, nosubdirectory
+Parallel file location = root=/home/ikalash/Albany2/examples/LCM/Schwarz/ParallelCubes/, subdir=.
