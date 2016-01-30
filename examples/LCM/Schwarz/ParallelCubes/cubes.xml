@@ -3,12 +3,6 @@
     <Parameter name="Model XML Files" type="Array(string)"
 	       value="{cube0.xml, cube1.xml}"/>
   </ParameterList>
-  <ParameterList name="Debug Output">
-    <Parameter name="Write Solution to MatrixMarket"
-	       type="bool" value="true"/>
-    <Parameter name="Write Solution to Standard Output"
-	       type="bool" value="true"/>
-  </ParameterList>
 
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
@@ -23,6 +17,16 @@
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+     <Parameter name="Response 0" type="string" value="Project IP to Nodal Field"/>
+      <ParameterList name="ResponseParams 0">
+        <Parameter name="Number of Fields" type="int" value="1"/>
+        <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
+        <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
+        <Parameter name="Output to File" type="bool" value="true"/>
+      </ParameterList>
+      </ParameterList>
 
   </ParameterList>
   
@@ -33,7 +37,7 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Constant"/>
+	<Parameter  name="Method" type="string" value="Tangent"/>
       </ParameterList>
        <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
@@ -231,7 +235,7 @@
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="MaxIters"/>
-          <Parameter name="Maximum Iterations" type="int" value="15"/>
+          <Parameter name="Maximum Iterations" type="int" value="100"/>
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="Combo"/>
@@ -244,7 +248,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-5"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
