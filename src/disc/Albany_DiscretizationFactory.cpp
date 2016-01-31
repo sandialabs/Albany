@@ -15,6 +15,7 @@
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_STK3DPointStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
+#include "Albany_SideSetSTKMeshStruct.hpp"
 
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
@@ -56,8 +57,10 @@
 
 Albany::DiscretizationFactory::DiscretizationFactory(
   const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-  const Teuchos::RCP<const Teuchos_Comm>& commT_) :
-  commT(commT_) {
+  const Teuchos::RCP<const Teuchos_Comm>& commT_,
+  const bool explicit_scheme_) :
+  commT(commT_),
+  explicit_scheme(explicit_scheme_) {
 
   discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
 
@@ -76,6 +79,30 @@ Albany::DiscretizationFactory::DiscretizationFactory(
     if(problemParams->isSublist("Catalyst"))
 
       catalystParams = Teuchos::sublist(problemParams, "Catalyst", true);
+
+#ifdef ALBANY_AERAS
+    Teuchos::RCP<Teuchos::ParameterList> hsParams;
+    Teuchos::ArrayRCP<std::string> dof_names_tracers;
+    if (problemParams->isSublist("Hydrostatic Problem")) {
+      hsParams = Teuchos::sublist(problemParams, "Hydrostatic Problem", true);
+      numLevels = hsParams->get("Number of Vertical Levels", 0);
+      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
+            Teuchos::Array<std::string>()));
+      numTracers = dof_names_tracers.size();
+
+    }
+
+    if (problemParams->isSublist("XZHydrostatic Problem")) {
+      hsParams = Teuchos::sublist(problemParams, "XZHydrostatic Problem", true);
+      numLevels = hsParams->get("Number of Vertical Levels", 0);
+      dof_names_tracers = arcpFromArray(hsParams->get<Teuchos::Array<std::string> >("Tracers",
+            Teuchos::Array<std::string>()));
+      numTracers = dof_names_tracers.size();
+    }
+    if (problemParams->isSublist("Shallow Water Problem")) {
+      numLevels = 0;
+    }
+#endif
 
   }
 
@@ -189,7 +216,7 @@ void createInterfaceParts(
   bool const
   is_interleaved = last_mesh_specs_struct.interleavedOrdering;
 
-  Intrepid::EIntrepidPLPoly const
+  Intrepid2::EIntrepidPLPoly const
   cubature_rule = last_mesh_specs_struct.cubatureRule;
 
   mesh_specs_struct.resize(number_blocks + 1);
@@ -221,7 +248,14 @@ Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
 Albany::DiscretizationFactory::createMeshSpecs()
 {
   // First, create the mesh struct
-  meshStruct = createMeshStruct (discParams, adaptParams);
+#ifdef ALBANY_CUTR
+  // Luca: WARNING, this does not compile. Frankly, I don't even know how it worked before in master,
+  //       since neq was never available...
+  int neq = 1;  // Hard coded neq=1. I have no idea where this number was supposed to be fetched from otherwise...
+  meshStruct = createMeshStruct (discParams, adaptParams, commT, meshMover, neq);
+#else
+  meshStruct = createMeshStruct (discParams, adaptParams, commT);
+#endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
   // Add an interface block. For now relies on STK, so we force a cast that
@@ -242,7 +276,8 @@ Albany::DiscretizationFactory::createMeshSpecs()
     for (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type i=0; i< number_blocks; i++) {
       Teuchos::RCP<Albany::MeshSpecsStruct> orig_mesh_specs_struct = mesh_specs_struct[i];
       Aeras::AerasMeshSpectStruct aeras_mesh_specs_struct;
-      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, points_per_edge);
+      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct,
+                                                                                   points_per_edge, discParams);
     }
     return enriched_mesh_specs_struct;
   }
@@ -252,35 +287,44 @@ Albany::DiscretizationFactory::createMeshSpecs()
 }
 
 Teuchos::RCP<Albany::AbstractMeshStruct>
+#ifdef ALBANY_CUTR
 Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
-                                                 Teuchos::RCP<Teuchos::ParameterList> adapt_params)
+                                                 Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+                                                 Teuchos::RCP<const Teuchos_Comm> comm,
+                                                 Teuchos::RCP<CUTR::CubitMeshMover> mesh_mover,
+                                                 int num_eq)
+#else
+Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
+                                                 Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+                                                 Teuchos::RCP<const Teuchos_Comm> comm)
+#endif
 {
   std::string& method = disc_params->get("Method", "STK1D");
 #if defined(HAVE_STK)
   if(method == "STK1D" || method == "STK1D Aeras") {
-    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, commT));
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, comm));
   }
 
   else if(method == "STK0D") {
-    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(disc_params, adapt_params, commT));
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(disc_params, adapt_params, comm));
   }
 
   else if(method == "STK2D") {
-    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(disc_params, adapt_params, commT));
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(disc_params, adapt_params, comm));
   }
 
   else if(method == "STK3D") {
-    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(disc_params, adapt_params, commT));
+    return Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(disc_params, adapt_params, comm));
   }
 
   else if(method == "STK3DPoint") {
-    return Teuchos::rcp(new Albany::STK3DPointStruct(disc_params, commT));
+    return Teuchos::rcp(new Albany::STK3DPointStruct(disc_params, comm));
   }
 
   else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" || method == "Exodus Aeras") {
 
 #ifdef ALBANY_SEACAS
-    return Teuchos::rcp(new Albany::IossSTKMeshStruct(disc_params, adapt_params, commT));
+    return Teuchos::rcp(new Albany::IossSTKMeshStruct(disc_params, adapt_params, comm));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" ||
                                method == "Exodus Aeras",
@@ -291,13 +335,13 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
   }
 #if defined(ALBANY_EPETRA)
   else if(method == "Ascii") {
-    return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, commT));
+    return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
   }
   else if(method == "Ascii2D") {
-    return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, commT));
+    return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
   }
   else if(method == "Gmsh") {
-    return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, commT));
+    return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
   }
 #ifdef ALBANY_FELIX
   else if(method == "Extruded")
@@ -316,15 +360,15 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
       basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
     }
 
-    basalMesh = createMeshStruct(basal_params, Teuchos::null);
-    return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, commT, basalMesh));
+    basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
+    return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
   }
 #endif // ALBANY_FELIX
 #endif // ALBANY_EPETRA
   else if(method == "Cubit") {
 #ifdef ALBANY_CUTR
-    AGS"need to inherit from Generic"
-    return Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(meshMover, disc_params, neq));
+    // AGS"need to inherit from Generic"
+    return Teuchos::rcp(new Albany::FromCubitSTKMeshStruct(mesh_mover, disc_params, num_eq));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "Cubit",
                                Teuchos::Exceptions::InvalidParameter,
@@ -336,7 +380,7 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
 #endif // HAVE_STK
   if(method == "PUMI") {
 #ifdef ALBANY_SCOREC
-    return Teuchos::rcp(new Albany::PUMIMeshStruct(disc_params, commT));
+    return Teuchos::rcp(new Albany::PUMIMeshStruct(disc_params, comm));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI",
                                Teuchos::Exceptions::InvalidParameter,
@@ -346,7 +390,7 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
   }
   else if(method == "PUMI Hierarchic") {
 #ifdef ALBANY_GOAL
-    return Teuchos::rcp(new Albany::GOALMeshStruct(disc_params, commT));
+    return Teuchos::rcp(new Albany::GOALMeshStruct(disc_params, comm));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
                                Teuchos::Exceptions::InvalidParameter,
@@ -356,7 +400,7 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
   }
   else if (method == "Sim") {
 #ifdef ALBANY_AMP
-    return Teuchos::rcp(new Albany::SimMeshStruct(disc_params, commT));
+    return Teuchos::rcp(new Albany::SimMeshStruct(disc_params, comm));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "Sim",
                                Teuchos::Exceptions::InvalidParameter,
@@ -489,7 +533,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
     //the code is structured.  That should be OK since meshSpecsType() is not used anywhere except this function.
     //But one may want to change it to, e.g., AERAS_MS, to prevent confusion.
       Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, commT, rigidBodyModes));
+      return Teuchos::rcp(new Aeras::SpectralDiscretization(discParams, ms, numLevels, numTracers, commT, explicit_scheme, rigidBodyModes));
     }
 #endif
   return Teuchos::null;

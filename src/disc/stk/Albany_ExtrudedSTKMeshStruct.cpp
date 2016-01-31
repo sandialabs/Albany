@@ -88,27 +88,26 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   sideSetMeshStructs["basalside"] = basalMeshStruct;
 
   std::string shape = params->get("Element Shape", "Hexahedron");
-  std::string basalside_name;
+  std::string basalside_elem_name;
   if(shape == "Tetrahedron")  {
     ElemShape = Tetrahedron;
-    basalside_name = shards::getCellTopologyData<shards::Triangle<3> >()->name;
+    basalside_elem_name = shards::getCellTopologyData<shards::Triangle<3> >()->name;
   }
   else if (shape == "Wedge")  {
     ElemShape = Wedge;
-    basalside_name = shards::getCellTopologyData<shards::Triangle<3> >()->name;
+    basalside_elem_name = shards::getCellTopologyData<shards::Triangle<3> >()->name;
   }
   else if (shape == "Hexahedron") {
     ElemShape = Hexahedron;
-    basalside_name = shards::getCellTopologyData<shards::Quadrilateral<4> >()->name;
+    basalside_elem_name = shards::getCellTopologyData<shards::Quadrilateral<4> >()->name;
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
               std::endl << "Error in ExtrudedSTKMeshStruct: Element Shape " << shape << " not recognized. Possible values: Tetrahedron, Wedge, Hexahedron");
 
   std::string elem2d_name(basalMeshStruct->getMeshSpecs()[0]->ctd.base->name);
-  TEUCHOS_TEST_FOR_EXCEPTION(basalside_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
-                std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_name << " but it is " << elem2d_name);
-
+  TEUCHOS_TEST_FOR_EXCEPTION(basalside_elem_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
+                std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_elem_name << " but it is " << elem2d_name);
 
   switch (ElemShape) {
   case Tetrahedron:

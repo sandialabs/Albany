@@ -26,12 +26,11 @@ namespace Albany
 
 SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpecs,
                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                            const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
                                             const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params, adaptParams)
+  GenericSTKMeshStruct(params, Teuchos::null)
 {
   TEUCHOS_TEST_FOR_EXCEPTION (inputMeshSpecs.numDim!=3, std::logic_error,
-                              "Error! For now nput mesh has to be 3D.\n");
+                              "Error! For now input mesh has to be 3D.\n");
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -91,6 +90,12 @@ SideSetSTKMeshStruct::~SideSetSTKMeshStruct()
   // Nothing to be done here
 }
 
+void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
+                                              const std::string& sideSetName)
+{
+  parentMeshStruct      = Teuchos::rcpFromRef(parentMeshStruct_);
+  parentMeshSideSetName = sideSetName;
+}
 
 void SideSetSTKMeshStruct::setFieldAndBulkData (
       const Teuchos::RCP<const Teuchos_Comm>& commT,
@@ -175,13 +180,6 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
 
   // Loading the fields from file
   this->loadRequiredInputFields (req,commT);
-}
-
-void SideSetSTKMeshStruct::setParentMeshInfo (const AbstractSTKMeshStruct& parentMeshStruct_,
-                                              const std::string& sideSetName)
-{
-  parentMeshStruct      = Teuchos::rcpFromRef(parentMeshStruct_);
-  parentMeshSideSetName = sideSetName;
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const

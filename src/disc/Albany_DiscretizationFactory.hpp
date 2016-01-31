@@ -34,7 +34,8 @@ class DiscretizationFactory {
     //! Default constructor
     DiscretizationFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-      const Teuchos::RCP<const Teuchos_Comm>& commT
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const bool explicit_scheme_ = false
     );
 
     //! Destructor
@@ -43,6 +44,20 @@ class DiscretizationFactory {
     //! Method to inject cubit dependence.
 #ifdef ALBANY_CUTR
     void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
+#endif
+
+#ifdef ALBANY_CUTR
+    static Teuchos::RCP<Albany::AbstractMeshStruct>
+    createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
+                      Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+                      Teuchos::RCP<const Teuchos_Comm> comm,
+                      Teuchos::RCP<CUTR::CubitMeshMover> mesh_mover = Teuchos::null,
+                      int neq = 0);
+#else
+    static Teuchos::RCP<Albany::AbstractMeshStruct>
+    createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
+                      Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+                      Teuchos::RCP<const Teuchos_Comm> comm);
 #endif
 
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() {
@@ -85,9 +100,6 @@ class DiscretizationFactory {
 
   protected:
 
-    Teuchos::RCP<Albany::AbstractMeshStruct> createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
-                                                               Teuchos::RCP<Teuchos::ParameterList> adapt_params);
-
     //! Parameter list specifying what element to create
     Teuchos::RCP<Teuchos::ParameterList> discParams;
 
@@ -101,6 +113,13 @@ class DiscretizationFactory {
     Teuchos::RCP<Teuchos::ParameterList> catalystParams;
 
     Teuchos::RCP<const Teuchos_Comm> commT;
+
+    //The following are for Aeras hydrostatic problems
+    int numLevels;
+    int numTracers;
+
+    //Flag for explicit time-integration scheme, used in Aeras
+    bool explicit_scheme;
 
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
