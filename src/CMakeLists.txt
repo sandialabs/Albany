@@ -77,10 +77,6 @@ SET(HEADERS
   PHAL_Workset.hpp
   )
 
-if (USE_PUBLICTRILINOS)
-  set(HEADERS ${HEADERS} Albany_PublicTrilinosTrickery.hpp)
-endif ()
-
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
     Albany_DistributedParameterDerivativeOp.hpp
