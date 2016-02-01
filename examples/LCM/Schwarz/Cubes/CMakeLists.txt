@@ -28,4 +28,4 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 # Teko needs Epetra
-add_test(NAME CoupledSchwarz_${testName} COMMAND "python" "runtestT.py")
+add_test(NAME Schwarz_${testName} COMMAND "python" "runtestT.py")
