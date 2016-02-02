@@ -249,7 +249,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-14"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
