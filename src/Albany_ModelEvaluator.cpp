@@ -94,8 +94,10 @@ Albany::ModelEvaluator::ModelEvaluator(
   sacado_param_vec.resize(num_param_vecs);
   epetra_param_map.resize(num_param_vecs);
   epetra_param_vec.resize(num_param_vecs);
+#ifdef ALBANY_STOKHOS
   p_sg_vals.resize(num_param_vecs);
   p_mp_vals.resize(num_param_vecs);
+#endif
   //`const Epetra_Comm& comm = app->getMap()->Comm();
   //const Epetra_Comm& comm = *app->getComm();
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
@@ -116,8 +118,10 @@ Albany::ModelEvaluator::ModelEvaluator(
     for (unsigned int j=0; j<sacado_param_vec[i].size(); j++)
       (*(epetra_param_vec[i]))[j] = sacado_param_vec[i][j].baseValue;
 
+#ifdef ALBANY_STOKHOS
     p_sg_vals[i].resize(sacado_param_vec[i].size());
     p_mp_vals[i].resize(sacado_param_vec[i].size());
+#endif
   }
 
   // Setup distributed parameters
@@ -364,9 +368,9 @@ Albany::ModelEvaluator::create_DfDp_op(int l) const
 return Teuchos::rcp(new DistributedParameterDerivativeOp(
                       app, dist_param_names[l-num_param_vecs]));
   TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
-  	       		"Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  <<
+              "Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  <<
                         "Distributed parameters won't work yet in Tpetra branch."<<
-			std::endl);
+      std::endl);
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -853,11 +857,11 @@ f_out->Print(std::cout);
         //create Tpetra copy of dgdp_out, call it dgdp_outT
         if (dgdp_out != Teuchos::null)
            dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT);
-	app->evaluateResponseTangentT(i, alpha, beta, omega, curr_time, false,
-				     x_dotT.get(), x_dotdotT.get(), *xT,
-				     sacado_param_vec, p_vec.get(),
-				     NULL, NULL, NULL, NULL, g_outT.get(), NULL,
-				     dgdp_outT.get());
+  app->evaluateResponseTangentT(i, alpha, beta, omega, curr_time, false,
+             x_dotT.get(), x_dotdotT.get(), *xT,
+             sacado_param_vec, p_vec.get(),
+             NULL, NULL, NULL, NULL, g_outT.get(), NULL,
+             dgdp_outT.get());
         //convert g_outT to Epetra_Vector g_out
         if (g_out != Teuchos::null)
           Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
@@ -881,7 +885,7 @@ f_out->Print(std::cout);
       //create Tpetra copy of g_out, call it g_outT
       g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
       app->evaluateResponseT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec,
-			    *g_outT);
+          *g_outT);
       //convert g_outT to Epetra_Vector g_out
       Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
     }
