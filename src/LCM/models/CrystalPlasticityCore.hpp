@@ -118,16 +118,29 @@ updateSlip(
 //! Compute stress.
 //
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,
-    typename ArgT>
+    typename ArgT, typename DataS>
 void
 computeStress(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid2::Tensor4<RealType, NumDimT> const & C,
-    Intrepid2::Tensor<ArgT, NumDimT> const & F,
+    Intrepid2::Tensor4<DataS, NumDimT> const & C,
+    Intrepid2::Tensor<DataS, NumDimT> const & F,
     Intrepid2::Tensor<DataT, NumDimT> const & Fp,
     Intrepid2::Tensor<ArgT, NumDimT> & sigma,
     Intrepid2::Tensor<ArgT, NumDimT> & S,
     Intrepid2::Vector<ArgT, NumSlipT> & shear);
+
+
+
+//
+//! Construct elasticity tensor
+//
+template<Intrepid2::Index NumDimT, typename DataT, typename ArgT>
+void
+computeCubicElasticityTensor(
+    DataT c11, 
+    DataT c12, 
+    DataT c44,
+    Intrepid2::Tensor4<ArgT, NumDimT> & C);
 
 
 
@@ -146,7 +159,7 @@ public:
 
   //! Constructor.
   CrystalPlasticityNLS(
-      Intrepid2::Tensor4<RealType, NumDimT> const & C,
+      Intrepid2::Tensor4<ArgT, NumDimT> const & C,
       std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
@@ -178,7 +191,7 @@ private:
 
   RealType num_dim_;
   RealType num_slip_;
-  Intrepid2::Tensor4<RealType, NumDimT> const & C_;
+  Intrepid2::Tensor4<ArgT, NumDimT> const & C_;
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
   Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
   Intrepid2::Vector<RealType, NumSlipT> const & hardness_n_;
@@ -204,7 +217,7 @@ public:
 
   //! Constructor.
   ResidualSlipHardnessNLS(
-      Intrepid2::Tensor4<RealType, NumDimT> const & C,
+      Intrepid2::Tensor4<ArgT, NumDimT> const & C,
       std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
@@ -236,7 +249,7 @@ private:
 
   RealType num_dim_;
   RealType num_slip_;
-  Intrepid2::Tensor4<RealType, NumDimT> const & C_;
+  Intrepid2::Tensor4<ArgT, NumDimT> const & C_;
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
   Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
   Intrepid2::Vector<RealType, NumSlipT> const & hardness_n_;
