@@ -492,11 +492,11 @@ FELIX::StokesFOThickness::constructEvaluators(
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtilsSurface.constructDOFVecInterpolationSideParamEvaluator("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtilsSurface.constructDOFVecInterpolationSideParamEvaluator("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
@@ -688,11 +688,12 @@ FELIX::StokesFOThickness::constructEvaluators(
 
     //Input
     p->set<std::string>("Sliding Velocity Side QP Variable Name", "Sliding Velocity");
-    p->set<std::string>("BF Side Variable Name", "BF "+basalSideName);
+    p->set<std::string>("BF Side Variable Name", "BF " + basalSideName);
     p->set<std::string>("Effective Pressure Side QP Variable Name", "Effective Pressure");
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec " + basalSideName);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
-    p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
 
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "Beta");
@@ -773,7 +774,7 @@ FELIX::StokesFOThickness::constructEvaluators(
 
   //Input
   p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
-  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Reduced Gradient");
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Temperature Variable Name", "temperature");
   p->set<std::string>("Flow Factor Variable Name", "flow_factor");
@@ -855,6 +856,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+    p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
 
     // Output
     p->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
@@ -862,7 +864,6 @@ FELIX::StokesFOThickness::constructEvaluators(
     ev = rcp(new FELIX::BasalFrictionCoefficientGradient<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
   {
@@ -892,7 +893,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
 
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dls);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 
