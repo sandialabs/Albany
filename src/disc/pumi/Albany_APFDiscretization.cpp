@@ -12,7 +12,9 @@
 #endif
 
 #include "Albany_Utils.hpp"
+#ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
+#endif
 #include "Albany_PUMIOutput.hpp"
 #include <string>
 #include <iostream>

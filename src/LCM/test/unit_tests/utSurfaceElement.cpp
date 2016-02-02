@@ -5,7 +5,9 @@
 //*****************************************************************//
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
+#ifdef ALBANY_EPETRA
 #include <Epetra_MpiComm.h>
+#endif
 #include <Phalanx.hpp>
 #include <Intrepid2_MiniTensor.h>
 #include "Intrepid2_DefaultCubatureFactory.hpp"

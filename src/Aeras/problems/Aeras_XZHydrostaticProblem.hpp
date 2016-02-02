@@ -22,7 +22,7 @@
 #include "Aeras_DOFInterpolationLevels.hpp"
 #include "Aeras_DOFVecInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
-#include "Aeras_DOFDivInterpolationLevels.hpp"
+#include "Aeras_DOFDivInterpolationLevelsXZ.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
 #include "Aeras_Atmosphere_Moisture.hpp"
@@ -660,9 +660,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     // Input
     p->set<string>("Variable Name",          "PiVelx");
     p->set<string>("Gradient BF Name",       "Grad BF");
+
     p->set<string>("Divergence Variable Name", "Divergence QP PiVelx");
    
-    ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFDivInterpolationLevelsXZ<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
   {//Compontent Derivative of  Velocity 
@@ -758,9 +759,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
       // Input
       p->set<string>("Variable Name",          "U"+dof_names_tracers[t]);
       p->set<string>("Gradient BF Name",       "Grad BF");
+
       p->set<string>("Divergence Variable Name", "U"+dof_names_tracers[t]+"_divergence");
     
-      ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
+      ev = rcp(new Aeras::DOFDivInterpolationLevelsXZ<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 

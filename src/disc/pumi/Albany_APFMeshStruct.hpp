@@ -15,7 +15,9 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#ifdef ALBANY_EPETRA
 #include "EpetraExt_MultiComm.h"
+#endif
 #include <PHAL_Dimension.hpp>
 
 #include <apf.h>

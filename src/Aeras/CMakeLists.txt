@@ -49,7 +49,7 @@
        evaluators/Aeras_DOFGradInterpolationLevels.cpp
        evaluators/Aeras_DOFLaplaceInterpolationLevels.cpp
        evaluators/Aeras_DOFDivInterpolationLevels.cpp
-       evaluators/Aeras_DOFDivInterpolationLevelsSEM.cpp
+       evaluators/Aeras_DOFDivInterpolationLevelsXZ.cpp
        evaluators/Aeras_DOFDInterpolationLevels.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_ShallowWaterSource.cpp
@@ -143,8 +143,8 @@
        evaluators/Aeras_DOFLaplaceInterpolationLevels_Def.hpp
        evaluators/Aeras_DOFDivInterpolationLevels.hpp
        evaluators/Aeras_DOFDivInterpolationLevels_Def.hpp
-       evaluators/Aeras_DOFDivInterpolationLevelsSEM.hpp
-       evaluators/Aeras_DOFDivInterpolationLevelsSEM_Def.hpp
+       evaluators/Aeras_DOFDivInterpolationLevelsXZ.hpp
+       evaluators/Aeras_DOFDivInterpolationLevelsXZ_Def.hpp
        evaluators/Aeras_DOFDInterpolationLevels.hpp
        evaluators/Aeras_DOFDInterpolationLevels_Def.hpp
        evaluators/Aeras_Atmosphere_Moisture.hpp

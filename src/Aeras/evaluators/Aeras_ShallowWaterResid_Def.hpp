@@ -30,6 +30,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 		const Teuchos::RCP<Albany::Layouts>& dl) :
 		wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
 		wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
+		GradBF  (p.get<std::string> ("Gradient BF Name"),dl->node_qp_gradient),
 		U        (p.get<std::string> ("QP Variable Name"), dl->node_vector),
 		UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
 		UDotDotNodal   (p.get<std::string> ("Time Dependent Nodal Variable Name"), dl->node_vector),
@@ -159,6 +160,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 	this->addDependentField(UDotDotNodal);
 	this->addDependentField(wBF);
 	this->addDependentField(wGradBF);
+	this->addDependentField(GradBF);
 	this->addDependentField(mountainHeight);
 	this->addDependentField(sphere_coord);
 	this->addDependentField(hyperviscosity);
@@ -209,6 +211,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
 	std::vector<PHX::DataLayout::size_type> gradDims;
 	wGradBF.fieldTag().dataLayout().dimensions(gradDims);
+	GradBF.fieldTag().dataLayout().dimensions(gradDims);
 
 
 	//  std::cout << " vecDim = " << vecDim << std::endl;
@@ -327,6 +330,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 	this->utils.setFieldData(UDotDotNodal,fm);
 	this->utils.setFieldData(wBF,fm);
 	this->utils.setFieldData(wGradBF,fm);
+	this->utils.setFieldData(GradBF,fm);
 	this->utils.setFieldData(mountainHeight,fm);
 
 	this->utils.setFieldData(sphere_coord,fm);
@@ -1110,6 +1114,7 @@ evaluateFields(typename Traits::EvalData workset)
 	//Global vars with such names exist too (see constructor).
 	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  huAtNodes(numNodes,2);
 	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  div_hU(numQPs);
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  div_weak_hU(numQPs);
 	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  kineticEnergyAtNodes(numNodes);
 	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  gradKineticEnergy(numQPs,2);
 	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  potentialEnergyAtNodes(numNodes);
@@ -1218,13 +1223,37 @@ evaluateFields(typename Traits::EvalData workset)
 		}
 
 
+#define WEAK_DIV 0
+#if WEAK_DIV
+		std::cout << "Weak divergence is on\n";
+		fill_nodal_metrics(cell);
+		div_weak_hU.initialize();
+
+		// \int w_i * div(v) = - \sum_j \int grad(w_i)\cdot v_j w_j
+		for (int i=0; i < numNodes; ++i)
+		   for (int j=0 ; j < numNodes; ++j){
+		       div_weak_hU(i) -= huAtNodes(j,0) * GradBF(cell,i,j,0) * wBF(cell,j,j)
+		        		       +  huAtNodes(j,1) * GradBF(cell,i,j,1) * wBF(cell,j,j);
+		       //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
+		       //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
+		}
+		for (std::size_t qp=0; qp < numQPs; ++qp) {
+			std::size_t node = qp;
+			Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
+                            		+  div_weak_hU(qp);
+		}
+#else
 		divergence(huAtNodes, cell, div_hU);
 
 		for (std::size_t qp=0; qp < numQPs; ++qp) {
 			std::size_t node = qp;
 			Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
-                            		+  div_hU(qp)*wBF(cell, node, qp);
+                            	  +  div_hU(qp)*wBF(cell, node, qp);
 		}
+#endif
+
+
+
 
 		if (useImplHyperviscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
 			//for tensor HV, hyperViscosity is (cell, qp, 2,2)

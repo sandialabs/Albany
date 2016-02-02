@@ -12,7 +12,9 @@
 
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_Ptr.hpp"
+#if defined(ALBANY_EPETRA)
 #include "Petra_Converters.hpp"
+#endif
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)

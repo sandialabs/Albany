@@ -4,7 +4,7 @@
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-if (ALBANY_MUELU_EXAMPLES)
+if (ALBANY_STOKHOS AND ALBANY_MUELU_EXAMPLES)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
     add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
