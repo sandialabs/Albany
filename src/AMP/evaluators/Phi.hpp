@@ -4,31 +4,32 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef PHASERESIDUAL_HPP
-#define PHASERESIDUAL_HPP
+#ifndef PHI_HPP
+#define PHI_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Epetra_Vector.h"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Stokhos_KL_ExponentialRandomField.hpp"
+#include "Teuchos_Array.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace AMP {
-///
-/// \brief  Phase Residual
-///
-/// This evaluator computes the residual to a 
-/// phase-change/heat equation problem
-///
+/// \brief  Phi: This evaluator computes the Phi State Variables to a phase-change/heat equation problem
+
 template<typename EvalT, typename Traits>
-class PhaseResidual : 
+class Phi : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>
 {
 
 public:
 
-  PhaseResidual(const Teuchos::ParameterList& p,
+  Phi(Teuchos::ParameterList& p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   void 
@@ -43,21 +44,11 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> w_bf_;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> w_grad_bf_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> T_;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> T_grad_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> T_dot_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> k_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> source_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> psi_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
-  PHX::MDField<ScalarT,Dummy> time;
-  PHX::MDField<ScalarT,Dummy> deltaTime;
+  ScalarT MeltingTemperature_;
+  ScalarT deltaTemperature_; 
 
-  PHX::MDField<ScalarT,Cell,Node> residual_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> T_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;
@@ -65,10 +56,9 @@ private:
   unsigned int workset_size_;
 
   bool enable_transient_;
-  std::string Temperature_Name_;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term1_;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term2_;
 
+  Teuchos::RCP<const Teuchos::ParameterList>
+	getValidPhiParameters() const;
 };
 }
 

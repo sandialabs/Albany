@@ -102,6 +102,8 @@ protected:
 #include "PHAL_SaveStateField.hpp"
 
 #include "RhoCp.hpp"
+#include "Phi.hpp"
+#include "Psi.hpp"
 #include "ThermalCond.hpp"
 #include "PhaseSource.hpp"
 #include "LaserSource.hpp"
@@ -248,6 +250,60 @@ Albany::PhaseProblem::constructEvaluators(
      
   }
 
+  { //Phi
+    Teuchos::RCP<ParameterList> p = rcp(new ParameterList("Phi parameters"));
+
+    Teuchos::ParameterList& param_list =
+      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
+
+    // Input
+    p->set<string>("Temperature Name","Temperature");
+    p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+
+    //Output
+    p->set<string>("Phi Name","Phi");
+
+    ev = rcp(new AMP::Phi<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { //Psi
+    RCP<ParameterList> p = rcp(new ParameterList("Psi parameters"));
+    
+    double psi_initial(0.0);
+    if (material_db_->isElementBlockSublist(eb_name, "Initial Psi")) 
+      {
+	Teuchos::ParameterList& param = 
+	  material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
+        psi_initial = param.get<double>("Psi");
+      }
+
+    Teuchos::ParameterList& param_list = 
+      material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
+
+    // Input
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Temperature Name","Temperature");
+    p->set<Teuchos::ParameterList*>("Parameter List", &param_list); 
+
+    //Output
+    p->set<string>("Psi Name","Psi");
+
+    ev = rcp(new AMP::Psi<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+
+    //    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+    //							  new Teuchos::ParameterList("Save Psi"));
+
+    p = stateMgr.registerStateVariable("Psi", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", psi_initial, true);
+    
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev); 
+  }
+
+
   { // Thermal Conductivity
     RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity"));
 
@@ -333,6 +389,8 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Rho Cp Name","Rho Cp");
     p->set<string>("Source Name","Source");
     p->set<string>("Laser Source Name","Laser Source");
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
 
