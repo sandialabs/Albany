@@ -50,12 +50,14 @@
   <ParameterList name="Discretization">
     <Parameter name="Restart Index" type="int" value="1"/>
     <Parameter name="Method" type="string" value="Exodus"/>
+    <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis20km_in.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis20km_out.exo"/>
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basal}"/>
       <ParameterList name="basal">
         <Parameter name="Method" type="string" value="SideSetSTK"/>
+        <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Exodus Output File Name" type="string" value="gis20km_out_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
