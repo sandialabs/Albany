@@ -20,7 +20,7 @@
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0"
-		 type="string" value="IP to Nodal Field"/>
+		 type="string" value="Project IP to Nodal Field"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Number of Fields" type="int" value="1"/>
         <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
@@ -38,7 +38,7 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Constant"/>
+	<Parameter  name="Method" type="string" value="Tangent"/>
       </ParameterList>
        <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
@@ -245,7 +245,7 @@
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
             <Parameter name="Number of Nonlinear Iterations"
-		       type="int" value="1024"/>
+		       type="int" value="128"/>
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>

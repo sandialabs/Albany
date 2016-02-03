@@ -182,14 +182,6 @@ ELEMENT VARIABLES relative 1.e-6 floor 0.0
 	Fp_70			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
 	Fp_71			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
 	Fp_72	 absolute 1e-05	# min: 1 @ t24,b2,e2 max: 1 @ t1,b1,e1
-	Mechanical_Source_1			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Mechanical_Source_2			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Mechanical_Source_3			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Mechanical_Source_4			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Mechanical_Source_5			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Mechanical_Source_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Mechanical_Source_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
-	Mechanical_Source_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
 	CP_Residual_1	 absolute 1e-12
 	CP_Residual_2	 absolute 1e-12
 	CP_Residual_3	 absolute 1e-12
