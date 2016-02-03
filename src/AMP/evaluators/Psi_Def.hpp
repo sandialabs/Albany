@@ -68,7 +68,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-int iteration = 0; 
+//int iteration = 0; 
 template<typename EvalT, typename Traits>
 void Psi<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -99,12 +99,12 @@ evaluateFields(typename Traits::EvalData workset)
 	//for 11dec folder  
 	// if (iteration ==84 || iteration ==169 || iteration ==254 || iteration ==339 || iteration ==424 || iteration ==509 || iteration ==594){     
 	//for 12nov folder 
-	if (iteration ==0 || iteration ==59 || iteration ==89 || iteration ==119 || iteration ==149)      
- 	std::cout<<iteration<<": @Cell = "<<cell<<"; qp = "<<qp<<"; Psi_Value = "<<psi_(cell,qp)<<" Phi_Value = "<<phi_(cell,qp)<<"; Temp = "<<T_(cell,qp)<<"; Psi_Old = "<<psi_old(cell,qp)<<std::endl;
+	//if (iteration ==0 || iteration ==59 || iteration ==89 || iteration ==119 || iteration ==149)      
+	  //std::cout<<iteration<<": @Cell = "<<cell<<"; qp = "<<qp<<"; Psi_Value = "<<psi_(cell,qp)<<" Phi_Value = "<<phi_(cell,qp)<<"; Temp = "<<T_(cell,qp)<<"; Psi_Old = "<<psi_old(cell,qp)<<std::endl;
      }
   }
- std::cout<<"===iteration:==== "<<iteration<<" ==== "<<std::endl;
- iteration++;
+  //std::cout<<"===iteration:==== "<<iteration<<" ==== "<<std::endl;
+ //iteration++;
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
