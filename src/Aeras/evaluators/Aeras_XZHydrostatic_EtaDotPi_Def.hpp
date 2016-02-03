@@ -34,7 +34,6 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   etadotdT       (p.get<std::string> ("EtaDotdT"),              dl->qp_scalar_level),
   etadotdVelx    (p.get<std::string> ("EtaDotdVelx"),           dl->node_vector_level),
   Pidot          (p.get<std::string> ("PiDot"),                 dl->qp_scalar_level),
-
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
   numLevels  (dl->node_scalar_level       ->dimension(2))
@@ -69,6 +68,23 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   }
 
   this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::typeAsString<EvalT>());
+
+
+  std::string xzProblem_name    = "XZHydrostatic Problem",
+  		      hydroProblem_name = "Hydrostatic Problem";
+
+  bool xzProblem = p.isSublist(xzProblem_name);
+  bool hydroProblem = p.isSublist(hydroProblem_name);
+  if(xzProblem){
+	  Teuchos::ParameterList ps = p.sublist(xzProblem_name);
+	  pureAdvection = ps.get<bool>("Pure Advection", false);
+  }
+  if(hydroProblem){
+	  Teuchos::ParameterList ps = p.sublist(hydroProblem_name);
+	  pureAdvection = ps.get<bool>("Pure Advection", false);
+  }
+
+
 }
 
 //**********************************************************************
@@ -95,53 +111,71 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Eta<EvalT> &E = Eta<EvalT>::self();
+	const Eta<EvalT> &E = Eta<EvalT>::self();
 
-  //etadotpi(level) shifted by 1/2
-  std::vector<ScalarT> etadotpi(numLevels+1);
+	//etadotpi(level) shifted by 1/2
+	std::vector<ScalarT> etadotpi(numLevels+1);
 
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-      ScalarT pdotp0 = 0;
-      for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * E.delta(level);
-      for (int level=0; level < numLevels; ++level) {
-        ScalarT integral = 0;
-        for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * E.delta(j);
-        etadotpi[level] = -E.B(level+.5)*pdotp0 - integral;
-      }
-      etadotpi[0] = etadotpi[numLevels] = 0;
+	if(!pureAdvection){
+		for (int cell=0; cell < workset.numCells; ++cell) {
+			for (int qp=0; qp < numQPs; ++qp) {
+				ScalarT pdotp0 = 0;
+				for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * E.delta(level);
+				for (int level=0; level < numLevels; ++level) {
+					ScalarT integral = 0;
+					for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * E.delta(j);
+					etadotpi[level] = -E.B(level+.5)*pdotp0 - integral;
+				}
+				etadotpi[0] = etadotpi[numLevels] = 0;
 
-      //Vertical Finite Differencing
-      for (int level=0; level < numLevels; ++level) {
-        const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
-        const int level_m = level             ? level-1 : 0;
-        const int level_p = level+1<numLevels ? level+1 : level;
-        const ScalarT etadotpi_m = etadotpi[level  ];
-        const ScalarT etadotpi_p = etadotpi[level+1];
+				//Vertical Finite Differencing
+				for (int level=0; level < numLevels; ++level) {
+					const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+					const int level_m = level             ? level-1 : 0;
+					const int level_p = level+1<numLevels ? level+1 : level;
+					const ScalarT etadotpi_m = etadotpi[level  ];
+					const ScalarT etadotpi_p = etadotpi[level+1];
 
-        const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
-        const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
-        etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
+					const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
+					const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+					etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
 
-        for (int dim=0; dim<numDims; ++dim) {
-          const ScalarT dVx_m      = Velx(cell,qp,level,dim)   - Velx(cell,qp,level_m,dim);
-          const ScalarT dVx_p      = Velx(cell,qp,level_p,dim) - Velx(cell,qp,level,dim);
-          etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
-        }
+					for (int dim=0; dim<numDims; ++dim) {
+						const ScalarT dVx_m      = Velx(cell,qp,level,dim)   - Velx(cell,qp,level_m,dim);
+						const ScalarT dVx_p      = Velx(cell,qp,level_p,dim) - Velx(cell,qp,level,dim);
+						etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
+					}
 
-        for (int i = 0; i < tracerNames.size(); ++i) {
-          const ScalarT q_m = 0.5*( Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)   
-                                  + Tracer[tracerNames[i]](cell,qp,level_m) / Pi(cell,qp,level_m) );
-          const ScalarT q_p = 0.5*( Tracer[tracerNames[i]](cell,qp,level_p) / Pi(cell,qp,level_p) 
-                                  + Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)   );
-          //etadotdTracer[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
-          dedotpiTracerde[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
-        }
+					for (int i = 0; i < tracerNames.size(); ++i) {
+						const ScalarT q_m = 0.5*( Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)
+								+ Tracer[tracerNames[i]](cell,qp,level_m) / Pi(cell,qp,level_m) );
+						const ScalarT q_p = 0.5*( Tracer[tracerNames[i]](cell,qp,level_p) / Pi(cell,qp,level_p)
+								+ Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)   );
+						//etadotdTracer[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+						dedotpiTracerde[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+					}
 
-        Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
+					Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
 
-      }
-    }
-  }
+				}
+			}
+		}
+	}//end of (not pure Advection)
+	//pure advection: there are amny auxiliary variables.
+	else{
+		for (int cell=0; cell < workset.numCells; ++cell) {
+			for (int qp=0; qp < numQPs; ++qp) {
+				//Vertical Finite Differencing
+				for (int level=0; level < numLevels; ++level) {
+					etadotdT(cell,qp,level) = 0.0;
+					for (int dim=0; dim<numDims; ++dim)
+						etadotdVelx(cell,qp,level,dim) = 0.0;
+					for (int i = 0; i < tracerNames.size(); ++i)
+						dedotpiTracerde[tracerNames[i]](cell,qp,level) = 0.0;
+					Pidot(cell,qp,level) = - divpivelx(cell,qp,level);
+				}
+			}
+		}
+	}
 }
 }

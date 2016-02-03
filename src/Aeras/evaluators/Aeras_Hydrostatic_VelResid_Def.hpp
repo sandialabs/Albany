@@ -50,6 +50,7 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   viscosity   (p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Viscosity", 0.0)),
   hyperviscosity (p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("HyperViscosity", 0.0)),
   AlphaAngle (p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Rotation Angle", 0.0)),
+  pureAdvection (p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<bool>("Pure Advection", false)),
   //AlphaAngle (p.isParameter("XZHydrostatic Problem") ? 
   //              p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Rotation Angle", 0.0):
   //              p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Rotation Angle", 0.0)),
@@ -138,6 +139,7 @@ evaluateFields(typename Traits::EvalData workset)
   //Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  vorticity(numQPs);
 
   if( !obtainLaplaceOp ){
+	  if(!pureAdvection ){
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
         for (int level=0; level < numLevels; ++level) {
@@ -171,6 +173,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
+	  }//end of (if not pureAdvection)
   }//end of (if not Laplace operator)
   else{
 	  //to be implemented

@@ -68,6 +68,22 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   this->registerSacadoParameter("Reynolds Number", paramLib);
 
   Prandtl = 0.71;
+
+
+  std::string xzProblem_name    = "XZHydrostatic Problem",
+  		      hydroProblem_name = "Hydrostatic Problem";
+
+  bool xzProblem = p.isSublist(xzProblem_name);
+  bool hydroProblem = p.isSublist(hydroProblem_name);
+  if(xzProblem){
+	  Teuchos::ParameterList ps = p.sublist(xzProblem_name);
+	  pureAdvection = ps.get<bool>("Pure Advection", false);
+  }
+  if(hydroProblem){
+	  Teuchos::ParameterList ps = p.sublist(hydroProblem_name);
+	  pureAdvection = ps.get<bool>("Pure Advection", false);
+  }
+
 }
 
 //**********************************************************************
@@ -104,29 +120,31 @@ evaluateFields(typename Traits::EvalData workset)
   PHAL::set(Residual, 0.0);
 
   if( !obtainLaplaceOp ){
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int node=0; node < numNodes; ++node) {
-        for (int level=0; level < numLevels; ++level) {
-          for (int qp=0; qp < numQPs; ++qp) {
-            for (int dim=0; dim < numDims; ++dim) {
-              Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
-              Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
-            }
-          }
-        }
-      }
-    }
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int level=0; level < numLevels; ++level) {
-        for (int qp=0; qp < numQPs; ++qp) {
-          int node = qp;
-          Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp);
-          Residual(cell,node,level)   -= omega(cell,qp,level)                                      *wBF(cell,node,qp);
-          Residual(cell,node,level)   += etadotdT(cell,qp,level)                                   *wBF(cell,node,qp);
-          Residual(cell,node,level)   += temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
-        }
-      }
-    }
+	  if( !pureAdvection ){
+		  for (int cell=0; cell < workset.numCells; ++cell) {
+			  for (int node=0; node < numNodes; ++node) {
+				  for (int level=0; level < numLevels; ++level) {
+					  for (int qp=0; qp < numQPs; ++qp) {
+						  for (int dim=0; dim < numDims; ++dim) {
+							  Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
+							  Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+						  }
+					  }
+				  }
+			  }
+		  }
+		  for (int cell=0; cell < workset.numCells; ++cell) {
+			  for (int level=0; level < numLevels; ++level) {
+				  for (int qp=0; qp < numQPs; ++qp) {
+					  int node = qp;
+					  Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp);
+					  Residual(cell,node,level)   -= omega(cell,qp,level)                                      *wBF(cell,node,qp);
+					  Residual(cell,node,level)   += etadotdT(cell,qp,level)                                   *wBF(cell,node,qp);
+					  Residual(cell,node,level)   += temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
+				  }
+			  }
+		  }
+	  }//end of (if not pureAdvection)
   }//end of (if not Laplace op)
   else{//building Laplace
 	for (int cell=0; cell < workset.numCells; ++cell) {

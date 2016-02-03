@@ -38,6 +38,21 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   this->setName("Aeras::XZHydrostatic_SPressureResid" +PHX::typeAsString<EvalT>());
 
   sp0 = 0.0;
+
+  std::string xzProblem_name    = "XZHydrostatic Problem",
+  		      hydroProblem_name = "Hydrostatic Problem";
+
+  bool xzProblem = p.isSublist(xzProblem_name);
+  bool hydroProblem = p.isSublist(hydroProblem_name);
+  if(xzProblem){
+	  Teuchos::ParameterList ps = p.sublist(xzProblem_name);
+	  pureAdvection = ps.get<bool>("Pure Advection", false);
+  }
+  if(hydroProblem){
+	  Teuchos::ParameterList ps = p.sublist(hydroProblem_name);
+	  pureAdvection = ps.get<bool>("Pure Advection", false);
+  }
+
 }
 
 //**********************************************************************
@@ -70,19 +85,21 @@ evaluateFields(typename Traits::EvalData workset)
   const Eta<EvalT> &E = Eta<EvalT>::self();
 
   if( !obtainLaplaceOp ){
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        ScalarT sum = 0;
-        for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
-          int node = qp;
-          Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
-    /*    if (cell == 0) 
+	  if( !pureAdvection ){
+		  for (int cell=0; cell < workset.numCells; ++cell) {
+			  for (int qp=0; qp < numQPs; ++qp) {
+				  ScalarT sum = 0;
+				  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
+				  int node = qp;
+				  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+				  /*    if (cell == 0)
           if (node == qp) 
             std::cout << "cell, node, wBF, res, spDot: " << cell 
                                  << ", " << node << ", " << wBF(cell,node,qp) << ", " 
                                  << Residual(cell,node) <<", " << spDot(cell,qp) << std::endl; */
-      }
-    }
+			  }
+		  }
+	  }//end of (if not  pureAdvection)
   }//end of (if build laplace)
   else{
 	  //no Laplace for surface pressure, zero block instead

@@ -60,6 +60,7 @@ private:
   ScalarT sp0;
 
   bool obtainLaplaceOp;
+  bool pureAdvection;
 
 };
 }

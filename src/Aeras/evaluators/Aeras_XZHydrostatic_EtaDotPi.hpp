@@ -62,6 +62,8 @@ private:
   const int numDims;
   const int numLevels;
 
+  bool pureAdvection;
+
 };
 }
 
