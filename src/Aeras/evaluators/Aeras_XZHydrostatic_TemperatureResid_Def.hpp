@@ -69,21 +69,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
 
   Prandtl = 0.71;
 
-
-  std::string xzProblem_name    = "XZHydrostatic Problem",
-  		      hydroProblem_name = "Hydrostatic Problem";
-
-  bool xzProblem = p.isSublist(xzProblem_name);
-  bool hydroProblem = p.isSublist(hydroProblem_name);
-  if(xzProblem){
-	  Teuchos::ParameterList ps = p.sublist(xzProblem_name);
-	  pureAdvection = ps.get<bool>("Pure Advection", false);
-  }
-  if(hydroProblem){
-	  Teuchos::ParameterList ps = p.sublist(hydroProblem_name);
-	  pureAdvection = ps.get<bool>("Pure Advection", false);
-  }
-
+  pureAdvection = xsa_params->get<bool>("Pure Advection", false);
 }
 
 //**********************************************************************

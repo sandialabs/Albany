@@ -29,6 +29,12 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
+
+  Teuchos::ParameterList* xsa_params =
+	  p.isParameter("XZHydrostatic Problem") ?
+	  p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
+	  p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
+
   this->addDependentField(wBF);
   this->addDependentField(spDot);
   this->addDependentField(divpivelx);
@@ -39,20 +45,7 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
 
   sp0 = 0.0;
 
-  std::string xzProblem_name    = "XZHydrostatic Problem",
-  		      hydroProblem_name = "Hydrostatic Problem";
-
-  bool xzProblem = p.isSublist(xzProblem_name);
-  bool hydroProblem = p.isSublist(hydroProblem_name);
-  if(xzProblem){
-	  Teuchos::ParameterList ps = p.sublist(xzProblem_name);
-	  pureAdvection = ps.get<bool>("Pure Advection", false);
-  }
-  if(hydroProblem){
-	  Teuchos::ParameterList ps = p.sublist(hydroProblem_name);
-	  pureAdvection = ps.get<bool>("Pure Advection", false);
-  }
-
+  pureAdvection = xsa_params->get<bool>("Pure Advection", false);
 }
 
 //**********************************************************************

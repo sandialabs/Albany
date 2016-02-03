@@ -69,22 +69,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
 
   this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::typeAsString<EvalT>());
 
-
-  std::string xzProblem_name    = "XZHydrostatic Problem",
-  		      hydroProblem_name = "Hydrostatic Problem";
-
-  bool xzProblem = p.isSublist(xzProblem_name);
-  bool hydroProblem = p.isSublist(hydroProblem_name);
-  if(xzProblem){
-	  Teuchos::ParameterList ps = p.sublist(xzProblem_name);
-	  pureAdvection = ps.get<bool>("Pure Advection", false);
-  }
-  if(hydroProblem){
-	  Teuchos::ParameterList ps = p.sublist(hydroProblem_name);
-	  pureAdvection = ps.get<bool>("Pure Advection", false);
-  }
-
-
+  pureAdvection = xzhydrostatic_params->get<bool>("Pure Advection", false);
 }
 
 //**********************************************************************
