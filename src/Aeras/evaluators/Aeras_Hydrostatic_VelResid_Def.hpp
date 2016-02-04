@@ -174,6 +174,13 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 		  }
 	  }//end of (if not pureAdvection)
+	  else{
+		  for (int cell=0; cell < workset.numCells; ++cell)
+			  for (int level=0; level < numLevels; ++level)
+				  for (int node=0; node < numNodes; ++node)
+					  for (int dim=0; dim < numDims; ++dim)
+						  Residual(cell,node,level,dim) +=   VelxDot(cell,node,level,dim) *wBF(cell,node,node);
+	  }
   }//end of (if not Laplace operator)
   else{
 	  //to be implemented

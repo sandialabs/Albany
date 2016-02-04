@@ -120,7 +120,7 @@ if(cell == 23){
 }*/
 	for (std::size_t node=0; node < numNodes; ++node) {
 
-		//std::cout <<"Here 1\n";
+		//std::cout <<"Here in Divergence 1\n";
 		//std::cout << "node = "<<node <<"\n";
 		const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
 		const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
@@ -130,8 +130,9 @@ if(cell == 23){
 
 		for (int level=0; level < numLevels; ++level) {
 			// constructing contravariant velocity
-			//std::cout <<"Here 2\n";
+			//std::cout <<"Here in DIV 2\n";
 			//std::cout <<"Level = "<<level << "\n";
+			//std::cout << "Field for div: " << val_node(cell, node, level, 0) <<" "<< val_node(cell, node, level, 1) <<"\n";
 			vcontra(node, 0 ) = det_j*(
 					jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
 			vcontra(node, 1 ) = det_j*(

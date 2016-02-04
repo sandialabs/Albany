@@ -131,6 +131,12 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 		  }
 	  }//end of (if not pureAdvection)
+	  else{
+		  for (int cell=0; cell < workset.numCells; ++cell)
+			  for (int level=0; level < numLevels; ++level)
+				  for (int node=0; node < numNodes; ++node)
+					  Residual(cell,node,level)   += temperatureDot(cell,node,level)*wBF(cell,node,node);
+	  }
   }//end of (if not Laplace op)
   else{//building Laplace
 	for (int cell=0; cell < workset.numCells; ++cell) {

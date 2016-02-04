@@ -93,6 +93,11 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 		  }
 	  }//end of (if not  pureAdvection)
+	  else{
+		  for (int cell=0; cell < workset.numCells; ++cell)
+		   	 for (int node=0; node < numNodes; ++node)
+		  		 Residual(cell,node) += spDot(cell,node)*wBF(cell,node,node);
+	  }
   }//end of (if build laplace)
   else{
 	  //no Laplace for surface pressure, zero block instead
