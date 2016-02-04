@@ -1,0 +1,16 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.83) Modified: 2015-08-20
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2016/02/03   13:38:03 PST
+#  *****************************************************************
+
+EXODIFF ERROR: Init data appears corrupt:
+         dimension = 0
+         num_nodes = 0
+         num_elmts = 0
+         num_elmt_blocks = 0
+         num_node_sets = 0
+         num_side_sets = 0
+ ... Aborting...
