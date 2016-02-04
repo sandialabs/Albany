@@ -55,8 +55,8 @@ cmake \
 \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
- -D Intrepid_ENABLE_TESTS:BOOL=OFF \
- -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
+ -D Intrepid_ENABLE_TESTS:BOOL=ON \
+ -D Intrepid2_ENABLE_TESTS:BOOL=ON \
  -D Phalanx_INDEX_SIZE_TYPE:STRING="lcm_phalanx_index_type" \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="lcm_kokkos_device" \
  -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
