@@ -80,6 +80,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras Hydrostatic")
     F = Teuchos::rcp(new AAdapt::AerasHydrostatic(neq, numDim, data));
 
+  else if(name == "Aeras Resting Hydrostatic")
+  	F = Teuchos::rcp(new AAdapt::AerasRestingHydrostatic(neq, numDim, data));
+
   else if(name == "Aeras Heaviside")
     F = Teuchos::rcp(new AAdapt::AerasHeaviside(neq, numDim, data));
 
@@ -965,6 +968,90 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
   }
 }
 //*****************************************************************************
+
+AAdapt::AerasRestingHydrostatic::AerasRestingHydrostatic( int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Model " << neq
+                             << " " << numDim << std::endl);
+}  
+
+void AAdapt::AerasRestingHydrostatic::compute( double* solution, const double* X ){
+	const int numLevels  = (int) data[0];
+	const int numTracers = (int) data[1];
+ 	const double P0      =       data[2];
+ 	const double Ptop    =       data[3];
+ 	const double T0      =       data[4];
+ 	const double lapseRate =     data[5];
+ 	const double mtnHeight =     data[6];
+
+	const double PI = 3.14159265;
+	
+//	const double ztop = 12000.0; // meters
+//	const double ptop = 20544.8; // Pa
+//	const double p0 = 100000.0; // pressure at z = 0
+//	const double T0 = 300.0; // degrees K
+//	const double lapseRate = 0.0065; // degress K per meter
+	const double omg = 0.0; // sphere does not rotate for this test
+//	const double mtnHeight = 2000.0; // meters
+	const double mtnLat = 0.0; // latitude of mountain center
+	const double mtnLon = 3.0 * PI / 2.0; // longitude of mountain center
+	const double mtnRadius = 3.0 * PI / 4.0; // arc length of mountain radius
+	const double mtnHalfWidth = PI / 16.0; // arc length of mountain oscillation's half-width
+	
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[7 + nt];
+  }
+  
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+  
+  static const double RdGammaOverG= 287.0 * lapseRate / Aeras::ShallowWaterConstants::self().gravity;
+  
+  const double theta = std::asin(z);
+  const double lambda = std::atan2(y,x);
+  
+  const double radialDist = std::acos( std::sin(mtnLat) * std::sin(theta) + 
+  				std::cos(mtnLat) * std::cos(theta) * std::cos( mtnLon - lambda) );
+  
+   const double zSurf = radialDist < mtnRadius ? 0.5 * mtnHeight * ( 1.0 + std::cos( PI * radialDist / mtnRadius ) )* 
+   		std::cos(PI * radialDist / mtnHalfWidth ) * std::cos(PI * radialDist / mtnHalfWidth ) : 0.0;
+  
+//  const double zSurf = 0.0;
+  
+  const double Ps = P0 / std::pow( 1.0 - lapseRate * zSurf / T0, RdGammaOverG );
+  
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+  
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+  
+  for (int i=0; i<numLevels; ++i) 
+    Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
+  }  
+
+  const double u = 0.0;
+  const double v = 0.0; 
+  
+  int offset = 0;
+  solution[offset++] = Ps;
+
+  for (int i = 0; i < numLevels; ++i){
+  	solution[offset++] = u;
+  	solution[offset++] = v;
+  	solution[offset++] = T0 * std::pow( Pressure[i] / P0, RdGammaOverG);
+  }
+  
+}
+
 AAdapt::AerasHydrostatic::AerasHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),

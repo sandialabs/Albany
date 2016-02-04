@@ -54,7 +54,9 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   //AlphaAngle (p.isParameter("XZHydrostatic Problem") ? 
   //              p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Rotation Angle", 0.0):
   //              p.get<Teuchos::ParameterList*>("Hydrostatic Problem")  ->get<double>("Rotation Angle", 0.0)),
-  Omega(2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.)),
+  Omega( p.isParameter("Hydrostatic Problem") && 
+  		 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("NonRotating") ? 0.0 :
+	     2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.)),
 
   numNodes    ( dl->node_scalar             ->dimension(1)),
   numQPs      ( dl->node_qp_scalar          ->dimension(2)),
