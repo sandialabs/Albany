@@ -53,6 +53,7 @@ Psi(Teuchos::ParameterList& p,
   
 
   psi_Name_ = p.get<std::string>("Psi Name")+"_old";
+  phi_Name_ = p.get<std::string>("Phi Name")+"_old";
   this->setName("Psi"+PHX::typeAsString<EvalT>());
 }
 
@@ -68,43 +69,40 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-//int iteration = 0; 
 template<typename EvalT, typename Traits>
 void Psi<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //grab old psi value
-  Albany::MDArray psi_old = (*workset.stateArrayPtr)[psi_Name_];
+  Albany::MDArray phi_old = (*workset.stateArrayPtr)[phi_Name_];
 
   // current time
   const RealType t = workset.current_time;
 
-  // do this only at the begining
-  //if ( t == 0.0 )
-  //  {
-      // initializing psi_old values:
+  // // do this only at the begining
+  if ( t == 0.0 )
+    {
+  //     // initializing psi_old values:
       for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
-	{
-	  for (std::size_t qp = 0; qp < num_qps_; ++qp) 
-	    {
-	      psi_(cell,qp) = constant_value_;
-	    }
-	}
-      //  }
+  	{
+  	  for (std::size_t qp = 0; qp < num_qps_; ++qp) 
+  	    {
+  	      psi_(cell,qp) = constant_value_;
+	      phi_(cell,qp) = 0.0;
+	      phi_old(cell,qp) = 0.0;
+  	    }
+  	}
+    }
 
   // defining psi_
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      psi_(cell,qp) = std::max(phi_(cell,qp), psi_old(cell,qp));
-	//for 11dec folder  
-	// if (iteration ==84 || iteration ==169 || iteration ==254 || iteration ==339 || iteration ==424 || iteration ==509 || iteration ==594){     
-	//for 12nov folder 
-	//if (iteration ==0 || iteration ==59 || iteration ==89 || iteration ==119 || iteration ==149)      
-	  //std::cout<<iteration<<": @Cell = "<<cell<<"; qp = "<<qp<<"; Psi_Value = "<<psi_(cell,qp)<<" Phi_Value = "<<phi_(cell,qp)<<"; Temp = "<<T_(cell,qp)<<"; Psi_Old = "<<psi_old(cell,qp)<<std::endl;
-     }
-  }
-  //std::cout<<"===iteration:==== "<<iteration<<" ==== "<<std::endl;
- //iteration++;
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
+    {
+      for (std::size_t qp = 0; qp < num_qps_; ++qp) 
+	{
+	  ScalarT phi_bar = std::max( phi_old(cell,qp), phi_(cell,qp) );
+	  psi_(cell,qp) = std::max( psi_(cell,qp), phi_bar );
+	}
+    }
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
