@@ -846,11 +846,13 @@ void dfm_set (
   const Teuchos::RCP<const Tpetra_Vector>& x,
   const Teuchos::RCP<const Tpetra_Vector>& xd,
   const Teuchos::RCP<const Tpetra_Vector>& xdd,
-  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
+  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr, 
+  double scale_ = 1.0)
 {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
   workset.transientTerms = Teuchos::nonnull(xd);
   workset.accelerationTerms = Teuchos::nonnull(xdd);
+  workset.scale = scale_; 
 }
 
 // For the perturbation xd,
