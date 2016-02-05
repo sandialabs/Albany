@@ -846,11 +846,13 @@ void dfm_set (
   const Teuchos::RCP<const Tpetra_Vector>& x,
   const Teuchos::RCP<const Tpetra_Vector>& xd,
   const Teuchos::RCP<const Tpetra_Vector>& xdd,
-  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
+  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr, 
+  double scale_ = 1.0)
 {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
   workset.transientTerms = Teuchos::nonnull(xd);
   workset.accelerationTerms = Teuchos::nonnull(xdd);
+  workset.scale = scale_; 
 }
 
 // For the perturbation xd,
@@ -1081,7 +1083,6 @@ computeGlobalResidualImplT(
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-  fT->scale(1.0/scale);
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
@@ -1095,7 +1096,7 @@ computeGlobalResidualImplT(
 
     workset.fT = fT;
     loadWorksetNodesetInfo(workset);
-    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr, scale);
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     else
@@ -1359,7 +1360,6 @@ computeGlobalJacobianImplT(const double alpha,
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    fT->scale(1.0/scale);
   }
 
   // Assemble global Jacobian
@@ -1373,13 +1373,6 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 #endif
 
-  if (scale != 1.0) { 
-    Teuchos::RCP<Tpetra_Vector> scaleVec = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
-    scaleVec->putScalar(1.0/scale); 
-    jacT->fillComplete(); 
-    jacT->leftScale(*scaleVec);
-    jacT->resumeFill();
-  }  
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
@@ -1398,7 +1391,7 @@ computeGlobalJacobianImplT(const double alpha,
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr, scale);
 
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
@@ -1885,17 +1878,14 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    fT->scale(1.0/scale);
   }
 
   // Assemble derivatives
   if (Teuchos::nonnull(JVT)) {
     JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
-    JVT->scale(1.0/scale);
   }
   if (Teuchos::nonnull(fpT)) {
     fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
-    fpT->scale(1.0/scale);
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -1912,7 +1902,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.j_coeff = beta;
     workset.n_coeff = omega;
     workset.VxT = VxT;
-    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr, scale);
 
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
@@ -2138,7 +2128,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr, scale);
 
     loadWorksetNodesetInfo(workset);
 
@@ -2214,7 +2204,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr, scale);
 
     loadWorksetNodesetInfo(workset);
 
