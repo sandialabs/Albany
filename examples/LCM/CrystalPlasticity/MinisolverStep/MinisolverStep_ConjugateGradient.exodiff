@@ -1,0 +1,619 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.83) Modified: 2015-08-20
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2016/02/03   13:37:47 PST
+#  *****************************************************************
+
+#  FILE 1: /home/callema/LCM/Albany/examples/LCM/CrystalPlasticity/MinisolverStep/MinisolverStep_ConjugateGradient_Output.exo
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 4, Sidesets = 0
+#          Vars: Global = 0, Nodal = 6, Element = 472, Nodeset = 0, Sideset = 0, Times = 1
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+	ERROR: NaN found for variable CP_Residual_1 in block 2, file 1
+	ERROR: NaN found for variable CP_Residual_2 in block 2, file 1
+	ERROR: NaN found for variable CP_Residual_3 in block 2, file 1
+	ERROR: NaN found for variable CP_Residual_4 in block 2, file 1
+	ERROR: NaN found for variable CP_Residual_5 in block 2, file 1
+	ERROR: NaN found for variable CP_Residual_6 in block 2, file 1
+	ERROR: NaN found for variable CP_Residual_7 in block 2, file 1
+	ERROR: NaN found for variable CP_Residual_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_1_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_10_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_11_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_12_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_2_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_3_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_4_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_5_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_6_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_7_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_8_8 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_1 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_2 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_3 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_4 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_5 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_6 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_7 in block 2, file 1
+	ERROR: NaN found for variable gamma_9_8 in block 2, file 1
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:               0 @ t1
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	displacement_x  # min:               0 @ t1,n9	max:               0 @ t1,n9
+	displacement_y  # min:               0 @ t1,n9	max:               0 @ t1,n9
+	displacement_z  # min:               0 @ t1,n9	max:               0 @ t1,n9
+	force_x         # min:               0 @ t1,n9	max:               0 @ t1,n9
+	force_y         # min:               0 @ t1,n9	max:               0 @ t1,n9
+	force_z         # min:               0 @ t1,n9	max:               0 @ t1,n9
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Cauchy_Stress_01  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_02  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_03  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_04  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_05  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_06  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_07  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_08  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_09  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_10  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_11  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_12  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_13  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_14  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_15  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_16  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_17  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_18  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_19  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_20  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_21  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_22  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_23  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_24  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_25  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_26  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_27  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_28  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_29  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_30  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_31  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_32  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_33  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_34  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_35  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_36  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_37  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_38  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_39  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_40  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_41  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_42  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_43  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_44  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_45  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_46  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_47  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_48  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_49  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_50  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_51  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_52  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_53  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_54  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_55  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_56  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_57  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_58  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_59  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_60  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_61  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_62  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_63  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_64  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_65  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_66  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_67  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_68  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_69  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_70  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_71  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	Cauchy_Stress_72  # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	CP_Residual_1     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	CP_Residual_2     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	CP_Residual_3     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	CP_Residual_4     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	CP_Residual_5     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	CP_Residual_6     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	CP_Residual_7     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	CP_Residual_8     # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	eqps_1            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	eqps_2            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	eqps_3            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	eqps_4            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	eqps_5            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	eqps_6            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	eqps_7            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	eqps_8            # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_1_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_1_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_1_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_1_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_1_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_1_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_1_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_1_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_1        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_2        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_3        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_4        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_5        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_6        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_7        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_10_8        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_1        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_2        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_3        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_4        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_5        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_6        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_7        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_11_8        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_1        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_2        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_3        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_4        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_5        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_6        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_7        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_12_8        # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_2_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_3_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_4_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_5_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_6_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_7_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_8_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_1         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_2         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_3         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_4         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_5         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_6         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_7         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_9_8         # min:  1.7976931e+308 @ t0,b0,e2	max:              -1 @ t0,b0,e2
+	gamma_dot_1_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_1_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_1_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_1_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_1_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_1_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_1_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_1_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_1    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_2    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_3    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_4    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_5    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_6    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_7    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_10_8    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_1    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_2    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_3    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_4    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_5    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_6    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_7    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_11_8    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_1    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_2    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_3    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_4    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_5    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_6    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_7    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_12_8    # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_2_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_3_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_4_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_5_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_6_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_7_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_8_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	gamma_dot_9_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_1_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_1          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_2          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_3          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_4          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_5          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_6          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_7          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_10_8          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_1          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_2          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_3          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_4          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_5          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_6          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_7          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_11_8          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_1          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_2          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_3          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_4          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_5          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_6          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_7          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_12_8          # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_2_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_3_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_4_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_5_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_6_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_7_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_8_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_1           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_2           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_3           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_4           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_5           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_6           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_7           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_9_8           # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_1_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_10_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_11_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_1     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_2     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_3     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_4     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_5     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_6     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_7     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_12_8     # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_2_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_3_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_4_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_5_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_6_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_7_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_8_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_1      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_2      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_3      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_4      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_5      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_6      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_7      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+	tau_hard_9_8      # min:               0 @ t1,b2,e2	max:               0 @ t1,b2,e2
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
