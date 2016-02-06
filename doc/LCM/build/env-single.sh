@@ -24,7 +24,7 @@ if [ -z "$TOOL_CHAIN" ]; then
 fi
 
 if [ -z "$BUILD_TYPE" ]; then
-    echo "Specify build type [debug|release|profile|small]"
+    echo "Specify build type [debug|release|profile|small|mixed]"
     exit 1
 fi
 
@@ -164,6 +164,19 @@ case "$BUILD_TYPE" in
 	;;
     small)
 	BUILD_STRING="MINSIZEREL"
+	case "$TOOL_CHAIN" in
+	    gcc)
+		;;
+	    clang)
+		;;
+	    intel)
+		;;
+	    *)
+		;;
+	esac
+	;;
+    mixed)
+	BUILD_STRING="RELEASE"
 	case "$TOOL_CHAIN" in
 	    gcc)
 		;;

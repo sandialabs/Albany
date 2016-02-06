@@ -15,8 +15,6 @@ int Albany_DakotaT(int argc, char *argv[]);
 #else // ALBANY_DAKOTA
 int Albany_DakotaT(int argc, char *argv[])
 {
-printf("JFDEBUG:  : %s %d\n",__FILE__,__LINE__);
-
   std::cout << "\nDakota requested but not compiled in!\n" << std::endl;
   return 999;
 }

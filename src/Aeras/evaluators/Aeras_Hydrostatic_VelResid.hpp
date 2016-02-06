@@ -88,6 +88,7 @@ private:
   const int numLevels;
 
   bool obtainLaplaceOp;
+  bool pureAdvection;
 
 };
 }

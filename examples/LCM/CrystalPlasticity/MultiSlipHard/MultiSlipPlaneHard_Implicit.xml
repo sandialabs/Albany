@@ -1,4 +1,12 @@
 <ParameterList>
+  <!-- Dumping Matrix Market to file
+         <ParameterList name="Debug Output">
+     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+  </ParameterList>
+  -->
+  <ParameterList name="Scaling">
+    <Parameter name="Scale" type="double" value="1.0e4"/>
+  </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
@@ -25,7 +33,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="MultiSlipPlaneHard.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="MultiSlipPlaneHardRev.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="MultiSlipPlaneHard_Implicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
@@ -177,7 +185,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-12"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">

@@ -1373,7 +1373,13 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 #endif
 
-  jacT->scale(1.0/scale);
+  if (scale != 1.0) { 
+    Teuchos::RCP<Tpetra_Vector> scaleVec = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
+    scaleVec->putScalar(1.0/scale); 
+    jacT->fillComplete(); 
+    jacT->leftScale(*scaleVec);
+    jacT->resumeFill();
+  }  
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
   if (Teuchos::nonnull(dfm)) {
