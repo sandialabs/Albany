@@ -79,7 +79,7 @@ evaluateFields(typename Traits::EvalData workset)
   // current time
   const RealType t = workset.current_time;
 
-  // // do this only at the begining
+  // // do this only at the beginning
   if ( t == 0.0 )
     {
   //     // initializing psi_old values:
