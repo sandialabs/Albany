@@ -151,9 +151,6 @@ struct Workset {
   //amb Nowhere set. We should either set it or remove it.
   double previous_time;
 
-  //Scale for Jacobian/residual which can be used to improve condition number of the system
-  int scale; 
-
   // flag indicating whether to sum tangent derivatives, i.e.,
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxddotot*Vxdotdot + df/dp*Vp or
   // compute alpha*df/dxdot*Vxdot + beta*df/dx*Vx + omega*df/dxdotdot*Vxdotdot and df/dp*Vp separately
