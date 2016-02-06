@@ -16,7 +16,9 @@ SET(CONFIGURE_OPTIONS
   "-DAlexa_RUN_CUDA_TESTS:BOOL=ON"
   "-DAlexa_DEVICE_LAMBDAS:BOOL=ON"
 #  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpiexec.hydra -ppn 1 -n 1 -env LD_LIBRARY_PATH /opt/intel/mkl/lib/intel64:/home/projects/x86-64-sandybridge-nvidia/cuda/7.5.7/lib64:/home/projects/gcc/4.9.0/lib64:/home/projects/gcc/4.9.0/lib'"
-  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpirun -np 1 '"
+  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpirun'"
+  "-DAlexa_PPN:STRING=-N"
+  "-DAlexa_NP:STRING=-np"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/ReconDriver")
