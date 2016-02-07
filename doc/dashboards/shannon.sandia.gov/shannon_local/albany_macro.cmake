@@ -158,6 +158,6 @@ IF(CTEST_DO_SUBMIT)
   if(HAD_ERROR)
     message(SEND_ERROR "Cannot submit Albany test results!")
   endif()
-ENDIF()
+ENDIF(CTEST_DO_SUBMIT)
 
 endmacro(do_albany)
