@@ -300,7 +300,8 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application constructor: " <<
-                                 "Scale BC dofs is set to true but this only works for Mechanics problems right now. " << std::endl);
+                                 "Scale BC dofs is set to true but this only works for Mechanics problems right now, " << 
+                                 "not Problem = " << problemParams->get("Name", "Heat 1D") << std::endl);
     }
   }
   
