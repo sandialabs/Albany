@@ -300,7 +300,8 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application constructor: " <<
-                                 "Scale BC dofs is set to true but this only works for Mechanics problems right now. " << std::endl);
+                                 "Scale BC dofs is set to true but this only works for Mechanics problems right now, " << 
+                                 "not Problem = " << problemParams->get("Name", "Heat 1D") << std::endl);
     }
   }
   
@@ -1110,7 +1111,7 @@ computeGlobalResidualImplT(
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
   //Allocate scaleVec_ and set to 1s only if scaleBCdofs is on and it's the first time 
-  if (scaleBCdofs == true && countScale == 0) 
+  if (scaleBCdofs == true && scaleVec_ == Teuchos::null) 
     scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
   
   if (dfm!=Teuchos::null) {
@@ -1407,7 +1408,7 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 
   //allocate scaleVec_ only 1st time
-  if (countScale == 0) 
+  if (scaleVec_ == Teuchos::null) 
       scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
 
   //scale Jacobian by 1/scale in the case scaleBCdofs is off 
