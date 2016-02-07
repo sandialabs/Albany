@@ -1110,7 +1110,7 @@ computeGlobalResidualImplT(
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
   //Allocate scaleVec_ and set to 1s only if scaleBCdofs is on and it's the first time 
-  if (scaleBCdofs == true && countScale == 0) 
+  if (scaleBCdofs == true && scaleVec_ == Teuchos::null) 
     scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
   
   if (dfm!=Teuchos::null) {
@@ -1407,7 +1407,7 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 
   //allocate scaleVec_ only 1st time
-  if (countScale == 0) 
+  if (scaleVec_ == Teuchos::null) 
       scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
 
   //scale Jacobian by 1/scale in the case scaleBCdofs is off 
