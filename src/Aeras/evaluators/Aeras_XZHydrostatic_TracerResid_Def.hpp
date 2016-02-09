@@ -88,6 +88,9 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,level) +=    UTracerDiv(cell,qp,level) * wBF(cell,node,qp);
           //Residual(cell,node,level) += etadotdTracer(cell,qp,level) * wBF(cell,node,qp);
           Residual(cell,node,level) += dedotpiTracerde(cell,qp,level) * wBF(cell,node,qp);
+
+          //std::cout <<"IN TRACERS: TracerSrc" << TracerSrc(cell,qp,level) <<" UTracerDiv "<< UTracerDiv(cell,qp,level) << "\n";
+
         //}
       }
     }

@@ -63,6 +63,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
         Pressure(cell,node,level) = E.A(level)*E.p0() + E.B(level)*Ps(cell,node);
+        //std::cout <<"In Pressure "<< " Ps" << Ps(cell,node) <<" workset time" << workset.current_time << "\n";
+
       }
       for (int level=0; level < numLevels; ++level) {
         const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : E.ptop();

@@ -29,7 +29,7 @@ public:
     UNDEFINED = 0, SLIP = 1, SLIP_HARDNESS = 2
   };
 
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -93,7 +93,9 @@ private:
   /// Crystal elasticity parameters
   ///
   RealType c11_, c12_, c44_;
-  Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
+  RealType c11_temperature_coeff_, c12_temperature_coeff_, 
+    c44_temperature_coeff_, reference_temperature_;
+  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM> C_;
   Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
 
   ///
@@ -132,7 +134,7 @@ private:
   int implicit_nonlinear_solver_min_iterations_;
 
   ///
-  /// Output options
+  /// Output options 
   ///
   int verbosity_;
   bool write_data_file_;

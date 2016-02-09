@@ -36,6 +36,10 @@ PhaseResidual(const Teuchos::ParameterList& p,
                dl->qp_scalar),
   time        (p.get<std::string>("Time Name"),
                dl->workset_scalar),
+  psi_       (p.get<std::string>("Psi Name"),
+               dl->qp_scalar),
+  phi_       (p.get<std::string>("Phi Name"),
+	      dl->qp_scalar),
   deltaTime   (p.get<std::string>("Delta Time Name"),
                dl->workset_scalar),
   residual_   (p.get<std::string>("Residual Name"),
@@ -51,6 +55,8 @@ PhaseResidual(const Teuchos::ParameterList& p,
   this->addDependentField(rho_cp_);
   this->addDependentField(source_);
   this->addDependentField(laser_source_);
+  this->addDependentField(phi_);
+  this->addDependentField(psi_);
   this->addDependentField(time);
   this->addDependentField(deltaTime);
 
@@ -88,6 +94,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(laser_source_,fm);
   this->utils.setFieldData(time,fm);
   this->utils.setFieldData(deltaTime,fm);
+  this->utils.setFieldData(phi_,fm);
+  this->utils.setFieldData(psi_,fm);
   this->utils.setFieldData(residual_,fm);
 }
 

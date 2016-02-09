@@ -6,10 +6,11 @@ SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
 # What to build and test
 SET(DOWNLOAD_TRILINOS TRUE)
 SET(DOWNLOAD_ALBANY TRUE)
-SET(DOWNLOAD_RECONDRIVER TRUE)
+SET(DOWNLOAD_RECONDRIVER FALSE)
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
-SET(BUILD_RECONDRIVER TRUE)
+SET(BUILD_OMEGA FALSE)
+SET(BUILD_RECONDRIVER FALSE)
 SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
@@ -117,6 +118,10 @@ if(NOT EXISTS "${TRILINOS_HOME}/SCOREC")
    endif()
 endif()
 
+ENDIF(DOWNLOAD_TRILINOS)
+
+IF (BUILD_OMEGA)
+
 # Download and build Omega_h as a TPL
 
 IF(EXISTS "${CTEST_BINARY_DIRECTORY}/omega_h" )
@@ -165,7 +170,7 @@ EXECUTE_PROCESS(COMMAND "/usr/bin/make"
    message(FATAL_ERROR "Cannot build OMEGA repository!")
  endif()
 
-ENDIF()
+ENDIF(BUILD_OMEGA)
 
 IF (DOWNLOAD_ALBANY)
 
@@ -259,7 +264,7 @@ IF(count LESS 0)
         message(FATAL_ERROR "Cannot update SCOREC tools!")
 endif()
 
-ENDIF()
+ENDIF(DOWNLOAD_TRILINOS)
 
 IF(DOWNLOAD_ALBANY)
 
@@ -336,7 +341,7 @@ SET(CONFIGURE_OPTIONS
   "-DCMAKE_C_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpicc"
   "-DCMAKE_Fortran_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpifort"
   "-DCMAKE_CXX_FLAGS:STRING='-DNDEBUG'"
-  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda --expt-relaxed-constexpr -Wno-unused-local-typedefs -Wno-sign-compare -DNDEBUG -DBUILD_PHALANX_FOR_ALBANY'"
+  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11 --expt-extended-lambda --expt-relaxed-constexpr -Wno-unused-local-typedefs -Wno-sign-compare -DNDEBUG'"
   "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
@@ -522,7 +527,7 @@ if(BUILD_LIBS_NUM_ERRORS GREATER 0)
         message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
 endif()
 
-ENDIF()
+ENDIF(BUILD_TRILINOS)
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/alexa_macro.cmake)
 

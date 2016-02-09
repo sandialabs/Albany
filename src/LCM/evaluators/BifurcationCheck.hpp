@@ -83,7 +83,7 @@ namespace LCM {
     ScalarT
     spherical_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
       Intrepid2::Vector<ScalarT, 2> & arg_minimum, 
-      Intrepid2::Vector<ScalarT> & direction, double const & interval);
+      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
 
     ///
     /// Stereographic parametrization sweep
@@ -91,7 +91,7 @@ namespace LCM {
     ScalarT
     stereographic_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
       Intrepid2::Vector<ScalarT, 2> & arg_minimum,  
-      Intrepid2::Vector<ScalarT> & direction, double const & interval);
+      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
     
     ///
     /// Projective parametrization sweep
@@ -99,7 +99,7 @@ namespace LCM {
     ScalarT
     projective_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
       Intrepid2::Vector<ScalarT, 3> & arg_minimum,  
-      Intrepid2::Vector<ScalarT> & direction, double const & interval);
+      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
     
     ///
     /// Tangent parametrization sweep
@@ -107,7 +107,7 @@ namespace LCM {
     ScalarT
     tangent_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
       Intrepid2::Vector<ScalarT, 2> & arg_minimum,  
-      Intrepid2::Vector<ScalarT> & direction, double const & interval);     
+      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);     
     
     ///
     /// Cartesian parametrization sweep
@@ -115,7 +115,7 @@ namespace LCM {
     ScalarT
     cartesian_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
       Intrepid2::Vector<ScalarT, 2> & arg_minimum, int surface_index,   
-      Intrepid2::Vector<ScalarT> & direction, double const & interval);
+      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
     
     ///
     /// Newton-Raphson method to find exact min DetA and direction
@@ -123,27 +123,35 @@ namespace LCM {
     void
     spherical_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
       Intrepid2::Vector<ScalarT, 2> & parameters,
-      Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA);
+      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA); 
       
     void
     stereographic_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
       Intrepid2::Vector<ScalarT, 2> & parameters,
-      Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA);
+      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
       
     void
     projective_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
       Intrepid2::Vector<ScalarT, 3> & parameters,
-      Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA);
+      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
       
     void
     tangent_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
       Intrepid2::Vector<ScalarT, 2> & parameters,
-      Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA);
+      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
       
     void
     cartesian_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
       Intrepid2::Vector<ScalarT, 2> & parameters, int surface_index,
-      Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA);  
+      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);  
+
+    ///
+    /// PSO method
+    ///
+    ScalarT
+    stereographic_pso(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
+      Intrepid2::Vector<ScalarT, 2> & arg_minimum,
+      Intrepid2::Vector<ScalarT, 3> & direction);
     
     ///
     /// Get normal

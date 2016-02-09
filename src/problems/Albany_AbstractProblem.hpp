@@ -98,6 +98,8 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getNeumannFieldManager();
+    
+    Teuchos::Array<Teuchos::Array<int>> getOffsets() {return offsets_;}  
 
     //! Return the Null space object used to communicate with MP
     const Teuchos::RCP<Albany::RigidBodyModes>& getNullSpace(){ return rigidBodyModes; }
@@ -129,6 +131,7 @@ namespace Albany {
 
   protected:
 
+    Teuchos::Array<Teuchos::Array<int> > offsets_; 
     //! List of valid problem params common to all problems, as
     //! a starting point for the specific  getValidProblemParameters
     Teuchos::RCP<Teuchos::ParameterList>

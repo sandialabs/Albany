@@ -9,6 +9,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_TestForException.hpp"
 
 #include "Albany_AbstractProblem.hpp"
 
@@ -102,6 +103,8 @@ protected:
 #include "PHAL_SaveStateField.hpp"
 
 #include "RhoCp.hpp"
+#include "Phi.hpp"
+#include "Psi.hpp"
 #include "ThermalCond.hpp"
 #include "PhaseSource.hpp"
 #include "LaserSource.hpp"
@@ -135,6 +138,17 @@ Albany::PhaseProblem::constructEvaluators(
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
   std::string eb_name = meshSpecs.ebName;
+  
+  // check name of element blocks. Must be Powder and Solid
+  // M. Juha: I am forcing this here because I need to pass the
+  // properties of both materials to ThermalCond evaluator. Anyway,
+  // for this analysis we will always have powder and solid (substrate) as
+  // materials. Please, if you find a better way to do it, then change it!
+  std::string material_name;
+  material_name = material_db_->getElementBlockParam<std::string>(eb_name,"material");
+  if ( (material_name != "Solid") && (material_name != "Powder") ){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Material must be Powder or Solid ***\n")
+  }
  
   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
     intrepid_basis = Albany::getIntrepid2Basis(*elem_top);
@@ -248,9 +262,69 @@ Albany::PhaseProblem::constructEvaluators(
      
   }
 
+  { //Phi
+    Teuchos::RCP<ParameterList> p = rcp(new ParameterList("Phi parameters"));
+
+    Teuchos::ParameterList& param_list =
+      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
+
+    // Input
+    p->set<string>("Temperature Name","Temperature");
+    p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+
+    //Output
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
+
+    ev = rcp(new AMP::Phi<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+    p = stateMgr.registerStateVariable("Phi", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", 0.0, true);
+    
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev); 
+
+  }
+
+  { //Psi
+    RCP<ParameterList> p = rcp(new ParameterList("Psi parameters"));
+    
+    double psi_initial(0.0);
+    if (material_db_->isElementBlockSublist(eb_name, "Initial Psi")) 
+      {
+	Teuchos::ParameterList& param = 
+	  material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
+        psi_initial = param.get<double>("Psi");
+      }
+
+    Teuchos::ParameterList& param_list = 
+      material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
+
+    // Input
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Temperature Name","Temperature");
+    p->set<Teuchos::ParameterList*>("Parameter List", &param_list); 
+
+    //Output
+    p->set<string>("Psi Name","Psi");
+
+    ev = rcp(new AMP::Psi<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+
+    p = stateMgr.registerStateVariable("Psi", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", psi_initial, true);
+    
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev); 
+  }
+
+
   { // Thermal Conductivity
     RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity"));
 
+    
     Teuchos::ParameterList& param_list =
       material_db_->getElementBlockSublist(eb_name, "Thermal Conductivity");    
 
@@ -260,6 +334,7 @@ Albany::PhaseProblem::constructEvaluators(
 
     //Output
     p->set<string>("Thermal Conductivity Name", "k");
+    p->set<string>("Psi Name", "Psi");
 
     ev = rcp(new AMP::ThermalCond<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -333,6 +408,8 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Rho Cp Name","Rho Cp");
     p->set<string>("Source Name","Source");
     p->set<string>("Laser Source Name","Laser Source");
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
 

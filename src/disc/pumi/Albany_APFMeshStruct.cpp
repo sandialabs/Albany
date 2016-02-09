@@ -168,7 +168,7 @@ void Albany::APFMeshStruct::init(
   cubatureDegree = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get("Workset Size", 50);
   interleavedOrdering = params->get("Interleaved Ordering",true);
-  num_time_deriv = params->get<int>("Number Of Time Derivatives", 2);
+  num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
 

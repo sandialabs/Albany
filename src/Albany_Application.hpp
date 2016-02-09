@@ -750,7 +750,7 @@ namespace Albany {
 
     void defineTimers();
 
-    void removeAztecPL(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    void removeEpetraRelatedPLs(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   public:
 
@@ -781,6 +781,10 @@ namespace Albany {
 
     //! Routine to load common sideset info into workset
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
+
+    //! Routine for setting a scaling to be applied to the Jacobian/resdiual 
+    //  in the case Scale BC Dofs is true. 
+    void setScale(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
     void setupBasicWorksetInfo(
@@ -1007,6 +1011,10 @@ namespace Albany {
 #endif //ALBANY_LCM
 
   protected:
+   
+    //The following are for Jacobian/residual scaling 
+    Teuchos::Array<Teuchos::Array<int> > offsets_;
+    Teuchos::RCP<Tpetra_Vector> scaleVec_;  
 
 #if defined(ALBANY_EPETRA)
     //! Communicator
@@ -1137,6 +1145,7 @@ namespace Albany {
 
     //Value to scale Jacobian/Residual by to possibly improve conditioning
     double scale; 
+    double scaleBCdofs; 
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;
