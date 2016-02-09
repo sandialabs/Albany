@@ -90,8 +90,8 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
   *out << "Explicit scheme in Aeras? " << explicit_scheme << std::endl;
+#endif
 
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
@@ -2237,7 +2237,9 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
   Teuchos::RCP<Tpetra_CrsGraph> Graph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
                                                     neq*nodes_per_element));
 
-  std::cout << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl;
+#ifdef OUTPUT_TO_SCREEN
+  *out << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl;
+#endif
 
   stk::mesh::Selector select_owned =
     stk::mesh::Selector(metaData.locally_owned_part());
