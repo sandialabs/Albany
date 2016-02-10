@@ -136,6 +136,7 @@ Aeras::HydrostaticProblem::constructDirichletEvaluators(
                                         dirichletNames,
                                         this->params,
                                         this->paramLib);
+   offsets_ = dirUtils.getOffsets(); 
 }
 
 // Neumann BCs

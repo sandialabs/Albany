@@ -295,13 +295,16 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   scaleBCdofs = scalingParams->get("Scale BC Dofs", false);
   if (scale == 1.0)  scaleBCdofs = false;
   RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(params, "Problem", true);
-  if ((problemParams->get("Name", "Heat 1D") != "Mechanics 3D") || 
-      (problemParams->get("Name", "Heat 1D") != "Mechanics 2D")) { 
+  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") || 
+      (problemParams->get("Name", "Heat 1D") == "Poisson 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Poisson 3D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 1D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D")) { 
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application constructor: " <<
-                                 "Scale BC dofs is set to true but this only works for Mechanics problems right now, " << 
-                                 "not Problem = " << problemParams->get("Name", "Heat 1D") << std::endl);
+                                 "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);  
     }
   }
   

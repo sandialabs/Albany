@@ -99,6 +99,7 @@ Albany::HydMorphProblem::constructDirichletEvaluators(const std::vector<std::str
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
+   offsets_ = bcUtils.getOffsets(); 
 }
 
 // Neumann BCs
