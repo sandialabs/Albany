@@ -39,30 +39,34 @@ ThermalCond(Teuchos::ParameterList& p,
   num_qps_      = dims[1];
 
   Teuchos::ParameterList* cond_list =
-    p.get<Teuchos::ParameterList*>("Parameter List");
+    p.get<Teuchos::ParameterList*>("Powder Parameter List");
 
   Teuchos::RCP<const Teuchos::ParameterList> reflist =
     this->getValidThermalCondParameters();
 
-  cond_list->validateParameters(*reflist, 0,
-      Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
+//  cond_list->validateParameters(*reflist, 0,
+//      Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
 
   std::string type = cond_list->get("Thermal Conductivity Type", "Constant");
 
-  ScalarT value = cond_list->get("Value", 1.0);
+  powder_value_ = cond_list->get("Value", 1.0);
 
-  init_constant(value,p);
+  // get substrate
+  cond_list =
+    p.get<Teuchos::ParameterList*>("Solid Parameter List");
+
+//  cond_list->validateParameters(*reflist, 0,
+//      Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
+
+  type = cond_list->get("Thermal Conductivity Type", "Constant");
+
+  solid_value_ = cond_list->get("Value", 1.0);
+  
 
   this->setName("ThermalCond"+PHX::typeAsString<EvalT>());
 
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void ThermalCond<EvalT, Traits>::
-init_constant(ScalarT value, Teuchos::ParameterList& p){
-  constant_value_ = value;
-}
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -80,26 +84,14 @@ template<typename EvalT, typename Traits>
 void ThermalCond<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  // current time
-  const RealType t = workset.current_time;
-
-    // // do this only at the beginning
-        if (t == 0.0) {
-            //     // initializing psi_old values:
-            for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-                for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-                    k_(cell, qp) = constant_value_;
-                }
-            }
-    }
     
-  // specific heat function
+  // thermal conductivity
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      //k_(cell,qp) = ( 1.0 - psi_(cell,qp) )*;
+        k_(cell, qp) = ( 1.0 - psi_(cell,qp) ) * powder_value_
+                            + psi_(cell,qp) * solid_value_;
     }
   }
-
 }
 
 //**********************************************************************

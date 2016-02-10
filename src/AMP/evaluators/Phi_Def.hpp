@@ -74,18 +74,20 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void Phi<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  // defining phi. Note that phi = 0 if T < Tm and phi = 1 if T > Tm
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
-    {
-      for (std::size_t qp = 0; qp < num_qps_; ++qp) 
-	{
-	  phi_(cell,qp) = 0.5*(tanh((T_(cell,qp)-MeltingTemperature_)/deltaTemperature_)+1); 
-	}
+    void Phi<EvalT, Traits>::
+    evaluateFields(typename Traits::EvalData workset) {
+        // current time
+        const RealType t = workset.current_time;
+
+        if (t > 0.0) {
+            // defining phi. Note that phi = 0 if T < Tm and phi = 1 if T > Tm
+            for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+                for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+                    phi_(cell, qp) = 0.5 * (tanh((T_(cell, qp) - MeltingTemperature_) / deltaTemperature_) + 1);
+                }
+            }
+        }
     }
-}
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
