@@ -162,6 +162,7 @@ Albany::PiroObserverT::observeResponse(
     if (inArgs.supports(Thyra::ModelEvaluatorBase::IN_ARG_t)) { 
       const ST time = impl_.getTimeParamValueOrDefault(defaultStamp);
       inArgs.set_t(time);
+      *out << "Time = " << time << "\n";  
     }
   
     // set up the output arguments, in this case only the responses

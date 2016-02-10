@@ -477,7 +477,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
       thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
       if(TpetraBuild){
-        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app, thyraModel));
         return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
       }
       else {
@@ -681,7 +681,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     modelWithSolveT =
       rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
 
-    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp, modelWithSolveT));
 
     // Piro::SolverFactory
     return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, Teuchos::null, observer);
@@ -783,7 +783,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
   if(solMgrT->isAdaptive()){
     if(TpetraBuild){
-      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app, modelWithSolveT));
       return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, solMgrT, observer);
     }
 #if defined(ALBANY_EPETRA)
