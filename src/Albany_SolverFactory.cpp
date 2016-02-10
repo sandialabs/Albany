@@ -795,7 +795,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }
   else {
     if(TpetraBuild){
-      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app, modelWithSolveT));
       return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, Teuchos::null, observer);
     }
 #if defined(ALBANY_EPETRA)
