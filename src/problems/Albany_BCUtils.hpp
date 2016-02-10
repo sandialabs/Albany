@@ -115,6 +115,10 @@ class BCUtils {
 
     }
 
+    Teuchos::Array<Teuchos::Array<int>> getOffsets() const {
+      return offsets_; 
+    }
+
     //! Specific implementation for Dirichlet BC Evaluator below
 
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
@@ -188,6 +192,9 @@ class BCUtils {
         const Teuchos::RCP< std::vector< Teuchos::RCP<PHX::Evaluator_TemplateManager<PHAL::AlbanyTraits> > > > evaluators,
         std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy);
 
+    protected: 
+  
+    Teuchos::Array<Teuchos::Array<int> > offsets_; 
 };
 
 //! Specific implementation for Dirichlet BC Evaluator

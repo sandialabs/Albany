@@ -6,6 +6,7 @@
   -->
   <ParameterList name="Scaling">
     <Parameter name="Scale" type="double" value="1.0e4"/>
+    <Parameter name="Scale BC Dofs" type="bool" value="false"/>
   </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Mechanics 3D"/>

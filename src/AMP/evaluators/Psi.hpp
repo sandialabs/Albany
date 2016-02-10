@@ -65,6 +65,7 @@ private:
 
   bool enable_transient_;
   std::string psi_Name_;
+  std::string phi_Name_;
   
   Teuchos::RCP<const Teuchos::ParameterList>
     getValidPsiParameters() const; 

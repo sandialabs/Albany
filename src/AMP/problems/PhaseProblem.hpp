@@ -9,6 +9,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_TestForException.hpp"
 
 #include "Albany_AbstractProblem.hpp"
 
@@ -137,6 +138,17 @@ Albany::PhaseProblem::constructEvaluators(
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
   std::string eb_name = meshSpecs.ebName;
+  
+  // check name of element blocks. Must be Powder and Solid
+  // M. Juha: I am forcing this here because I need to pass the
+  // properties of both materials to ThermalCond evaluator. Anyway,
+  // for this analysis we will always have powder and solid (substrate) as
+  // materials. Please, if you find a better way to do it, then change it!
+  std::string material_name;
+  material_name = material_db_->getElementBlockParam<std::string>(eb_name,"material");
+  if ( (material_name != "Solid") && (material_name != "Powder") ){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Material must be Powder or Solid ***\n")
+  }
  
   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
     intrepid_basis = Albany::getIntrepid2Basis(*elem_top);
@@ -262,9 +274,17 @@ Albany::PhaseProblem::constructEvaluators(
 
     //Output
     p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
 
     ev = rcp(new AMP::Phi<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
+    
+    p = stateMgr.registerStateVariable("Phi", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", 0.0, true);
+    
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev); 
+
   }
 
   { //Psi
@@ -293,9 +313,6 @@ Albany::PhaseProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
     
 
-    //    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-    //							  new Teuchos::ParameterList("Save Psi"));
-
     p = stateMgr.registerStateVariable("Psi", dl_->qp_scalar,
 				       dl_->dummy, eb_name, "scalar", psi_initial, true);
     
@@ -307,6 +324,7 @@ Albany::PhaseProblem::constructEvaluators(
   { // Thermal Conductivity
     RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity"));
 
+    
     Teuchos::ParameterList& param_list =
       material_db_->getElementBlockSublist(eb_name, "Thermal Conductivity");    
 
@@ -316,6 +334,7 @@ Albany::PhaseProblem::constructEvaluators(
 
     //Output
     p->set<string>("Thermal Conductivity Name", "k");
+    p->set<string>("Psi Name", "Psi");
 
     ev = rcp(new AMP::ThermalCond<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);

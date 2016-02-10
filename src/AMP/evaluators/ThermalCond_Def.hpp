@@ -22,10 +22,14 @@ ThermalCond(Teuchos::ParameterList& p,
   coord_      (p.get<std::string>("Coordinate Name"),
                dl->qp_vector),
   k_          (p.get<std::string>("Thermal Conductivity Name"),
-               dl->qp_scalar)
+               dl->qp_scalar),
+  psi_         (p.get<std::string>("Psi Name"),
+               dl->qp_scalar)      
+
 {
 
   this->addDependentField(coord_);
+  this->addDependentField(psi_);
   this->addEvaluatedField(k_);
  
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -67,6 +71,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coord_,fm);
+  this->utils.setFieldData(psi_,fm);
   this->utils.setFieldData(k_,fm);
 }
 
@@ -76,12 +81,22 @@ void ThermalCond<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // current time
-  const RealType time = workset.current_time;
+  const RealType t = workset.current_time;
 
+    // // do this only at the beginning
+        if (t == 0.0) {
+            //     // initializing psi_old values:
+            for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+                for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+                    k_(cell, qp) = constant_value_;
+                }
+            }
+    }
+    
   // specific heat function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      k_(cell,qp) = constant_value_;
+      //k_(cell,qp) = ( 1.0 - psi_(cell,qp) )*;
     }
   }
 

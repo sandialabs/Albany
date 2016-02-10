@@ -164,7 +164,11 @@ computeState(typename Traits::EvalData workset,
       Fpinv = Intrepid2::inverse(Fpn);
       Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
       be = F * Cpinv * Intrepid2::transpose(F);
+#if defined(KOKKOS_HAVE_CUDA)
+      logbe = Intrepid2::log<ScalarT>(be);
+#else
       logbe = Intrepid2::log_sym<ScalarT>(be);
+#endif
       trlogbeby3 = Intrepid2::trace(logbe) / 3.0;
       detbe = Intrepid2::det<ScalarT>(be);
       s = mu * (logbe - trlogbeby3 * I);
