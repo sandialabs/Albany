@@ -4,36 +4,30 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef THERMALCOND_HPP
-#define THERMALCOND_HPP
+#ifndef ENERGY_DOT_HPP
+#define ENERGY_DOT_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
-#include "Sacado_ParameterAccessor.hpp"
-#include "Stokhos_KL_ExponentialRandomField.hpp"
-#include "Teuchos_Array.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace AMP {
 ///
-/// \brief Thermal Conductivity
+/// \brief  Rate of energy evaluator
 ///
-/// This evaluator computes the thermal conductivity
-/// for a phase-change/heat equation problem
+/// This evaluator computes the rate of energy
 ///
 template<typename EvalT, typename Traits>
-class ThermalCond : 
+class EnergyDot : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>
 {
 
 public:
 
-  ThermalCond(Teuchos::ParameterList& p,
+  EnergyDot(const Teuchos::ParameterList& p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   void 
@@ -48,31 +42,35 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // we need to store the value of powder and substrate
-  // powder thermal conductivity
-  ScalarT powder_value_;
-  // Substrate (solid) thermal conductivity
-  ScalarT solid_value_;
-
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> k_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> T_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> T_dot_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
   PHX::MDField<ScalarT,Cell,QuadPoint> psi_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho_Cp_;
+  PHX::MDField<ScalarT,Dummy> time_;
+  PHX::MDField<ScalarT,Dummy> deltaTime_;
+
+  PHX::MDField<ScalarT,Cell,QuadPoint> energyDot_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;
   unsigned int num_nodes_;
   unsigned int workset_size_;
+  
+  // Volumetric heat capacity in liquid
+  ScalarT Cl_;
+  // Latent heat of fusion/melting
+  ScalarT L_;
+  // Melting temperature
+  ScalarT Tm_;
+  // Delta temperature to compute phi
+  ScalarT Tc_;
+  
+// old temperature name
+  std::string Temperature_Name_;
 
-//  // Return initial powder thermal conductivity
-//  ScalarT getPowderThermalCondutivity() const;
-//  
-//  // Return initial substrate thermal conductivity
-//  ScalarT getSubstrateThermalCondutivity() const;
-  
-  
   Teuchos::RCP<const Teuchos::ParameterList>
-    getValidThermalCondParameters() const;
-
+    getValidEnergyDotParameters() const;
 };
 }
 

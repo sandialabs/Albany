@@ -105,7 +105,6 @@ void PhaseResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
  //current time
-//  const RealType time = workset.current_time;
  // time step
   ScalarT dt = deltaTime(0);
 //  std::cout<<"dt value ="<<dt<<std::endl;
@@ -120,9 +119,7 @@ evaluateFields(typename Traits::EvalData workset)
   for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for(std::size_t qp = 0; qp < num_qps_; ++qp) {
         T_dot_(cell,qp) = (T_(cell,qp)-T_old(cell,qp))/dt;
-	//std::cout<<"T = "<<T_(cell,qp)<<" "<<"T_old = "<<T_old(cell,qp)<<"----";
     }
-	//std::cout<<std::endl;
   }
       // diffusive term
   FST::scalarMultiplyDataData<ScalarT> (term1_,k_,T_grad_);
@@ -140,21 +137,6 @@ evaluateFields(typename Traits::EvalData workset)
   PHAL::scale(source_, -1.0);
   FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid2::COMP_CPP,true);
 
-/*
-//print terms:
-   for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
-     for(std::size_t node = 0; node < num_nodes_; ++node) {
-       std::cout<<"residual = "<< residual_(cell,node)<<std::endl;
-     }
-   }
-
-  for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for(std::size_t qp = 0; qp < num_qps_; ++qp) {
-        std::cout<<"T = "<<T_(cell,qp)<<"----";
-    }
-	std::cout<<std::endl;
-  }
-*/
 }
 
 //**********************************************************************

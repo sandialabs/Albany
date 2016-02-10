@@ -109,6 +109,7 @@ protected:
 #include "PhaseSource.hpp"
 #include "LaserSource.hpp"
 #include "PhaseResidual.hpp"
+#include "EnergyDot.hpp"
 #include "AMP_Time.hpp"
 
 template <typename EvalT>
@@ -138,16 +139,21 @@ Albany::PhaseProblem::constructEvaluators(
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
   std::string eb_name = meshSpecs.ebName;
-  
-  // check name of element blocks. Must be Powder and Solid
+ // check name of element blocks. Must be Powder and Solid
   // M. Juha: I am forcing this here because I need to pass the
   // properties of both materials to ThermalCond evaluator. Anyway,
   // for this analysis we will always have powder and solid (substrate) as
   // materials. Please, if you find a better way to do it, then change it!
+  // check element block names
+  if ((eb_name != "Powder_Region") && (eb_name != "Solid_Region")){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Element block names must be Powder_Region or Solid_Region ***\n")
+  }
+  
+ // check names of material names
   std::string material_name;
   material_name = material_db_->getElementBlockParam<std::string>(eb_name,"material");
   if ( (material_name != "Solid") && (material_name != "Powder") ){
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Material must be Powder or Solid ***\n")
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Material name must be Powder or Solid ***\n")
   }
  
   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
@@ -323,14 +329,20 @@ Albany::PhaseProblem::constructEvaluators(
 
   { // Thermal Conductivity
     RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity"));
-
     
-    Teuchos::ParameterList& param_list =
-      material_db_->getElementBlockSublist(eb_name, "Thermal Conductivity");    
+   
+    // get data for powder
+    Teuchos::ParameterList& param_list_powder =
+      material_db_->getElementBlockSublist("Powder_Region", "Thermal Conductivity");  
+    
+    // get data for substrate (solid))
+    Teuchos::ParameterList& param_list_solid =
+      material_db_->getElementBlockSublist("Solid_Region", "Thermal Conductivity");  
 
     //Input
     p->set<string>("Coordinate Name","Coord Vec");
-    p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+    p->set<Teuchos::ParameterList*>("Powder Parameter List", &param_list_powder);
+    p->set<Teuchos::ParameterList*>("Solid Parameter List", &param_list_solid);
 
     //Output
     p->set<string>("Thermal Conductivity Name", "k");
@@ -394,6 +406,37 @@ Albany::PhaseProblem::constructEvaluators(
     ev = rcp(new AMP::LaserSource<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }  
+  
+  
+  { // Energy dot
+    RCP<ParameterList> p = rcp(new ParameterList("Energy Rate Params"));
+
+    // take phase change parameter list
+    Teuchos::ParameterList& param_list_phase =
+      material_db_->getElementBlockSublist(eb_name, "Phase Change Properties"); 
+    
+    //Input
+    p->set<string>("Temperature Name","Temperature");
+    p->set<string>("Temperature Time Derivative Name","Temperature_dot");
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
+    p->set<string>("Time Name","Time");
+    p->set<string>("Delta Time Name","Delta Time");
+    p->set<string>("Rho Cp Name", "Rho Cp");
+    p->set<Teuchos::ParameterList*>("Phase Change Parameter List", &param_list_phase);
+    
+    // take initial Psi parameter list
+    Teuchos::ParameterList& param_list_psi =
+      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
+    p->set<Teuchos::ParameterList*>("Initial Phi Parameter List", &param_list_psi);
+    
+    //Output
+    p->set<string>("Energy Rate Name", "Energy Rate");
+
+    ev = rcp(new AMP::EnergyDot<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
 
   { // Phase Residual
     RCP<ParameterList> p = rcp(new ParameterList("u Resid"));
