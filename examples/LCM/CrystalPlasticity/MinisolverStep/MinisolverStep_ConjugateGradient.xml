@@ -37,15 +37,15 @@
 
                     <Parameter name="Number of points" 
                                type="int" 
-                               value="4"/>
+                               value="2"/>
 
                     <Parameter name="Time Values" 
                                type="Array(double)" 
-                               value="{0.0, 1.0}"/>
+                               value="{0.0, 0.04}"/>
 
                     <Parameter name="BC Values"   
                                type="Array(double)" 
-                               value="{0.0, 0.5}"/>
+                               value="{0.0, 0.02}"/>
 
                </ParameterList>
 
@@ -129,7 +129,7 @@
 
                     <Parameter name="Method" 
                                type="string" 
-                               value="Tangent"/>
+                               value="Constant"/>
 
                </ParameterList>
 
