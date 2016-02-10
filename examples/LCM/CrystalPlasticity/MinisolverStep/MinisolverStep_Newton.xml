@@ -37,15 +37,15 @@
 
                     <Parameter name="Number of points" 
                                type="int" 
-                               value="4"/>
+                               value="2"/>
 
                     <Parameter name="Time Values" 
                                type="Array(double)" 
-                               value="{0.0, 1.0}"/>
+                               value="{0.0, 0.04}"/>
 
                     <Parameter name="BC Values"   
                                type="Array(double)" 
-                               value="{0.0, 0.5}"/>
+                               value="{0.0, 0.02}"/>
 
                </ParameterList>
 
@@ -129,7 +129,7 @@
 
                     <Parameter name="Method" 
                                type="string" 
-                               value="Tangent"/>
+                               value="Constant"/>
 
                </ParameterList>
 
@@ -364,7 +364,7 @@
 
                     <Parameter name="Output Precision" 
                                type="int" 
-                               value="3"/>
+                               value="16"/>
 
                     <Parameter name="Output Processor" 
                                type="int" 
@@ -376,39 +376,39 @@
 
                          <Parameter name="Error" 
                                     type="bool" 
-                                    value="1"/>
+                                    value="true"/>
 
                          <Parameter name="Warning" 
                                     type="bool" 
-                                    value="false"/>
+                                    value="true"/>
 
                          <Parameter name="Outer Iteration" 
                                     type="bool" 
-                                    value="1"/>
+                                    value="true"/>
 
                          <Parameter name="Parameters" 
                                     type="bool" 
-                                    value="0"/>
+                                    value="true"/>
 
                          <Parameter name="Details" 
                                     type="bool" 
-                                    value="false"/>
+                                    value="true"/>
 
                          <Parameter name="Linear Solver Details" 
                                     type="bool" 
-                                    value="false"/>
+                                    value="true"/>
 
                          <Parameter name="Stepper Iteration" 
                                     type="bool" 
-                                    value="false"/>
+                                    value="true"/>
 
                          <Parameter name="Stepper Details" 
                                     type="bool" 
-                                    value="false"/>
+                                    value="true"/>
 
                          <Parameter name="Stepper Parameters" 
                                     type="bool" 
-                                    value="false"/>
+                                    value="true"/>
 
                     </ParameterList>
 

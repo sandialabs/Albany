@@ -80,6 +80,7 @@ void Albany::PhaseProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
       this->params, this->paramLib);
+  offsets_ = bcUtils.getOffsets(); 
 }
 
 // Neumann BCs

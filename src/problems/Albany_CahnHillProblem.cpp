@@ -76,6 +76,7 @@ Albany::CahnHillProblem::constructDirichletEvaluators(const std::vector<std::str
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
+  offsets_ = bcUtils.getOffsets(); 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

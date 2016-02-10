@@ -291,6 +291,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       slip_systems_[num_ss].exponent_saturation_ = 
         h_list.get<RealType>("Saturation Exponent", 0.0);
     }
+    else {
+      slip_systems_[num_ss].hardening_law = CP::HardeningLaw::UNDEFINED;
+    }
 
     if (verbosity_ > 2) {
       std::cout << "Slip system number " << num_ss << std::endl;

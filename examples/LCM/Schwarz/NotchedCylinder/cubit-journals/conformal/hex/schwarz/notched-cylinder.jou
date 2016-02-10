@@ -1,0 +1,108 @@
+reset
+logging off
+${set_warning_count(0)}
+
+${radius = 0.032}
+${height = 0.064}
+${neck_radius = 0.016}
+${core_radius = 0.012}
+${notch_radius = 0.008}
+${overlap = 0.016}
+${coarse_height = 0.048}
+${fine_height = height - coarse_height + overlap}
+${offset = fine_height + (coarse_height - overlap)/ 2.0}
+${h_fine = 0.002}
+${h_coarse = h_fine}
+${intervals = 16}
+${rel_tol = 0.0001}
+${lo = 1.0 - rel_tol}
+${hi = 1.0 + rel_tol}
+${refinement_level = 1}
+
+# volume 1
+create cylinder radius {radius} z {2.0 * (fine_height - overlap)}
+create brick x {2.0 * radius} y {2.0 * radius} z {2.0 * notch_radius}
+webcut volume 2 cylinder radius {neck_radius + notch_radius} axis z
+delete volume 3
+create torus major {neck_radius + notch_radius} minor {notch_radius}
+unite volume 2 4
+subtract volume 2 from volume 1
+webcut volume 1 with plane zplane
+delete volume 5
+create cylinder radius {radius} z {overlap}
+move volume 6 z {fine_height - overlap / 2.0} include_merged
+create cylinder radius {radius} z {coarse_height - overlap}
+move volume 7 z {offset} include_merged
+webcut volume 1 with plane xplane
+delete volume 8
+webcut volume 1 with plane yplane
+delete volume 1
+webcut volume 7 with plane xplane
+delete volume 10
+webcut volume 7 with plane yplane
+delete volume 7
+webcut volume 9 with cylinder radius {core_radius} axis z center 0 0 0
+webcut volume 6 with plane xplane
+delete volume 13
+webcut volume 6 with plane yplane
+delete volume 6
+webcut volume 11 with cylinder radius {core_radius} axis z center 0 0 0
+webcut volume 14 with cylinder radius {core_radius} axis z center 0 0 0
+imprint volume 9 12 14 16
+merge volume 9 12 14 16
+surface 80 size {h_fine}
+surface 80 scheme pave
+surface 80 smooth scheme laplacian
+mesh surface 80
+curve 108 71 72 76 75 106 interval {intervals}
+mesh volume 9
+surface 83 size {h_fine}
+surface 83 scheme pave
+mesh surface 83
+volume 12 scheme sweep source surface 83 target surface 86 sweep_smooth linear sweep_transform translate propagate_bias autosmooth_target off
+mesh volume 12
+block 1 volume 9 12 14 16
+surface 118 size {h_fine}
+surface 118 scheme pave
+surface 118 smooth scheme laplacian
+mesh surface 118
+curve 106 75 166 148 interval {intervals}
+mesh volume 14
+volume 16 scheme sweep source surface 86 target surface 124 sweep_smooth linear sweep_transform translate propagate_bias autosmooth_target off
+mesh volume 16
+volume 14 copy 0 0 0
+volume 16 copy 0 0 0
+imprint volume 11 15 17 18
+merge volume 11 15 17 18
+surface 108 size {h_coarse}
+surface 108 scheme pave
+surface 108 smooth scheme laplacian
+mesh surface 108
+curve 150 104 interval {intervals}
+mesh volume 11
+volume 15 scheme sweep source surface 111 target surface 114 sweep_smooth linear sweep_transform translate propagate_bias autosmooth_target off
+mesh volume 15
+refine volume 9 12 14 16 numsplit {refinement_level}
+block 2 volume 11 15 17 18
+block 1 name "fine"
+block 2 name "coarse"
+${bot_1 = -rel_tol}
+${top_1 = rel_tol}
+nodeset 1 surface with z_coord > {bot_1} && z_coord < {top_1}
+${z2 = fine_height}
+${bot_2 = lo * z2}
+${top_2 = hi * z2}
+nodeset 2 surface with z_coord > {bot_2} && z_coord < {top_2}
+${z3 = fine_height - overlap}
+${bot_3 = lo * z3}
+${top_3 = hi * z3}
+nodeset 3 surface with z_coord > {bot_3} && z_coord < {top_3}
+${z4 = height}
+${bot_4 = lo * z4}
+${top_4 = hi * z4}
+nodeset 4 surface with z_coord > {bot_4} && z_coord < {top_4}
+nodeset 5 node with x_coord > {bot_1} && x_coord < {top_1}
+nodeset 6 node with y_coord > {bot_1} && y_coord < {top_1}
+set large exodus file off
+export mesh "notched-cylinder-0.g" block 1 overwrite
+export mesh "notched-cylinder-1.g" block 2 overwrite

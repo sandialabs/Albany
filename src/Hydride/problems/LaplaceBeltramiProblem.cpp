@@ -98,6 +98,7 @@ Albany::LaplaceBeltramiProblem::constructDirichletEvaluators(const std::vector<s
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                       this->params, this->paramLib, numDim);
+  offsets_ = bcUtils.getOffsets(); 
 }
 
 

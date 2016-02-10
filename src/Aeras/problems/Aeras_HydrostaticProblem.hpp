@@ -738,6 +738,10 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
   {//Gradient Pi weighted Velocity 
     RCP<ParameterList> p = rcp(new ParameterList("Divergence PiVelx"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
     // Input
     p->set<string>("Variable Name",          "PiVelx");
     p->set<string>("Gradient BF Name",       "Grad BF");
@@ -849,6 +853,10 @@ Aeras::HydrostaticProblem::constructEvaluators(
 
     {//Divergence QP UTracer
       RCP<ParameterList> p = rcp(new ParameterList("Divergence UTracer"));
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+      p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
       // Input
       p->set<string>("Variable Name",          "U"+dof_names_tracers[t]);
       p->set<string>("Gradient BF Name",       "Grad BF");

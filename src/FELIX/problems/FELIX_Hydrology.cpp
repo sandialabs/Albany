@@ -89,6 +89,7 @@ void FELIX::Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStru
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+  offsets_ = dirUtils.getOffsets(); 
 }
 
 void FELIX::Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)

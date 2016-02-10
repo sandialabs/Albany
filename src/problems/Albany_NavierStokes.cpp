@@ -178,6 +178,7 @@ Albany::NavierStokes::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(nodeSetIDs, dirichletNames,
                                           this->params, this->paramLib);
+   offsets_ = dirUtils.getOffsets(); 
 }
 
 // Neumann BCs

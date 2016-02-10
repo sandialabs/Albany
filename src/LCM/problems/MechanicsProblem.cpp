@@ -334,6 +334,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
       this->params, this->paramLib);
+  offsets_ = dirUtils.getOffsets(); 
 
 }
 //------------------------------------------------------------------------------
