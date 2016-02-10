@@ -201,6 +201,7 @@ Albany::ProjectionProblem::constructDirichletEvaluators(
       dirichlet_names,
       this->params,
       this->paramLib);
+  offsets_ = dirichlet_utils.getOffsets(); 
 }
 
 RCP<const ParameterList>
