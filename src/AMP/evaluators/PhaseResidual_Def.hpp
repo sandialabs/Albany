@@ -40,6 +40,8 @@ PhaseResidual(const Teuchos::ParameterList& p,
                dl->qp_scalar),
   phi_       (p.get<std::string>("Phi Name"),
 	      dl->qp_scalar),
+  energyDot_       (p.get<std::string>("Energy Rate Name"),
+	      dl->qp_scalar),
   deltaTime   (p.get<std::string>("Delta Time Name"),
                dl->workset_scalar),
   residual_   (p.get<std::string>("Residual Name"),
@@ -57,6 +59,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   this->addDependentField(laser_source_);
   this->addDependentField(phi_);
   this->addDependentField(psi_);
+  this->addDependentField(energyDot_);
   this->addDependentField(time);
   this->addDependentField(deltaTime);
 
@@ -72,7 +75,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   Temperature_Name_ = p.get<std::string>("Temperature Name")+"_old";
 
   term1_.resize(dims[0],num_qps_,num_dims_);
-  term2_.resize(dims[0],num_qps_);
+  //term2_.resize(dims[0],num_qps_);
 
   this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
 }
@@ -96,6 +99,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(deltaTime,fm);
   this->utils.setFieldData(phi_,fm);
   this->utils.setFieldData(psi_,fm);
+  this->utils.setFieldData(energyDot_,fm);
   this->utils.setFieldData(residual_,fm);
 }
 
@@ -125,10 +129,6 @@ evaluateFields(typename Traits::EvalData workset)
   FST::scalarMultiplyDataData<ScalarT> (term1_,k_,T_grad_);
   FST::integrate<ScalarT>(residual_,term1_,w_grad_bf_,Intrepid2::COMP_CPP,false);
 
-  // transient term
-  FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
-  FST::integrate<ScalarT>(residual_,term2_,w_bf_,Intrepid2::COMP_CPP,true);
-
   // heat source from laser 
   PHAL::scale(laser_source_, -1.0);
   FST::integrate<ScalarT>(residual_,laser_source_,w_bf_,Intrepid2::COMP_CPP,true);  
@@ -137,6 +137,10 @@ evaluateFields(typename Traits::EvalData workset)
   PHAL::scale(source_, -1.0);
   FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid2::COMP_CPP,true);
 
+  // transient term
+  //FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
+  FST::integrate<ScalarT>(residual_,energyDot_,w_bf_,Intrepid2::COMP_CPP,true);
+  
 }
 
 //**********************************************************************

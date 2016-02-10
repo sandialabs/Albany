@@ -88,8 +88,6 @@ evaluateFields(typename Traits::EvalData workset)
   	  for (std::size_t qp = 0; qp < num_qps_; ++qp) 
   	    {
   	      psi_(cell,qp) = constant_value_;
-//	      phi_(cell,qp) = 0.0;
-//	      phi_old(cell,qp) = 0.0;
   	    }
   	}
     }

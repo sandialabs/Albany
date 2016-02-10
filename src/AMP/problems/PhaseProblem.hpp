@@ -453,6 +453,7 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Laser Source Name","Laser Source");
     p->set<string>("Phi Name","Phi");
     p->set<string>("Psi Name","Psi");
+    p->set<string>("Energy Rate Name", "Energy Rate");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
 
