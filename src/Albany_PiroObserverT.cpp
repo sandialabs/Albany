@@ -17,7 +17,11 @@ Albany::PiroObserverT::PiroObserverT(
     Teuchos::RCP<const Thyra::ModelEvaluator<double>> model) :
   impl_(app), 
   model_(model) 
-  {}
+  {
+    observe_responses_ = false; 
+    if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
+      observe_responses_ = true; 
+  }
 
 void
 Albany::PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
@@ -90,7 +94,7 @@ Albany::PiroObserverT::observeSolutionImpl(
       defaultStamp);
   
   // observe responses 
-  if (model_ != Teuchos::null) {
+  if (observe_responses_ == true) {
     this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution));
    }
 }
@@ -112,7 +116,7 @@ Albany::PiroObserverT::observeSolutionImpl(
       defaultStamp);
 
   // observe responses 
-  if (model_ != Teuchos::null) {
+  if (observe_responses_ == true) {
     this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot));
    }
 }

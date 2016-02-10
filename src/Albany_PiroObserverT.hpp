@@ -69,7 +69,11 @@ private:
 
   ObserverImpl impl_;
 
-  Teuchos::RCP<const Thyra::ModelEvaluator<double> > model_;  
+  Teuchos::RCP<const Thyra::ModelEvaluator<double> > model_; 
+
+protected: 
+
+  bool observe_responses_;  
 
 };
 
