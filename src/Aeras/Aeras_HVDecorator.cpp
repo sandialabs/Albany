@@ -415,7 +415,7 @@ Aeras::HVDecorator::evalModelImpl(
   mm_counter++; 
 #endif  
 
-  if(Teuchos::nonnull(inArgsT.get_x_dot())){
+  if(Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
 #ifdef OUTPUT_TO_SCREEN
 	  std::cout <<"in the if-statement for the update" <<std::endl;
 #endif
