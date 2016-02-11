@@ -268,7 +268,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT,
   typename DataT, typename ArgT>
 struct HardeningBase
 {
-//  HardeningBase() {}
+  HardeningBase() {}
 
   virtual
   char const * const
