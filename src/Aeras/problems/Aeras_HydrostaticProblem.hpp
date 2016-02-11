@@ -105,6 +105,8 @@ namespace Aeras {
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
+    //TODO: add constructEvaluators function specialization for Jacobian 
+
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
     void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
@@ -132,6 +134,18 @@ namespace Aeras {
 #include "PHAL_Neumann.hpp"
 
 #include "Aeras_XZHydrostaticResid.hpp"
+    
+
+//TODO: add constructEvaluators function specialization for Jacobian 
+//This function will require the following evaluators: 
+// - Aeras_GatherCoordinateVector_Def.hpp 
+// - Aeras_ComputeBasisFunctions_Def.hpp 
+// - Aeras_ComputeAndScatterJac_Def.hpp 
+// The last evaluator does not exist yet.  It needs to be created. 
+// It will compute the local mass and local laplacian, and then scatter 
+// them into the global matrix.  The evaluator will have the same 
+// dependencies as Aeras_ScatterResidual_Def.hpp, in addition to dependencies on BF, 
+// wBF, gradBF and wGradBF.  
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
