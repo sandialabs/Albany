@@ -5,8 +5,6 @@
 //*****************************************************************//
 
 #include <boost/math/special_functions/fpclassify.hpp>
-  
-
 
 
 ///
@@ -496,20 +494,6 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::hessian(
       x);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // Linear hardening with recovery
 //
@@ -556,11 +540,6 @@ harden(
     RealType const H = slip_systems[slip_sys].H_;
     RealType const Rd = slip_systems[slip_sys].Rd_;  
 
-
-
-
-
-
     if (Rd > 0.0) {
       RealType const 
         effective_slip_n = -1.0/Rd * std::log(1.0 - Rd/H * hardness_n[slip_sys]);
@@ -571,14 +550,6 @@ harden(
       hardness_np1[slip_sys] = 
         hardness_n[slip_sys] + H * dt * driver_hardening[slip_sys];
     }
-
-
-
-
-
-
-
-
 
 //    hardness_np1[slip_sys] = hardness_n[slip_sys] +
 //      dt * (H - Rd * (hardness_n[slip_sys])) * driver_hardening[slip_sys];

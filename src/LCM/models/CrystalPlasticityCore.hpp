@@ -261,16 +261,6 @@ private:
   RealType dt_;
 };
 
-
-
-
-
-
-
-
-
-
-
 ///
 /// Hardening Base
 ///
@@ -278,7 +268,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT,
   typename DataT, typename ArgT>
 struct HardeningBase
 {
-  HardeningBase() {}
+//  HardeningBase() {}
 
   virtual
   char const * const
@@ -345,12 +335,10 @@ struct LinearMinusRecoveryHardening final : public HardeningBase<NumDimT, NumSli
   virtual
   ~LinearMinusRecoveryHardening() {}
 
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(num_dim)};
-
 private:
   Intrepid2::Tensor<DataT, NumSlipT>
-  driver_hardening{Intrepid2::ZEROS};
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
+
 
 };
 
@@ -389,12 +377,9 @@ struct SaturationHardening final : public HardeningBase<NumDimT, NumSlipT, DataT
   virtual
   ~SaturationHardening() {}
 
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(num_dim)};
-
 private:
   Intrepid2::Tensor<DataT, NumSlipT>
-  driver_hardening{Intrepid2::ZEROS};
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
 
 };
 
@@ -433,12 +418,9 @@ struct DislocationDensityHardening final : public HardeningBase<NumDimT, NumSlip
   virtual
   ~DislocationDensityHardening() {}
 
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(num_dim)};
-
 private:
   Intrepid2::Tensor<DataT, NumSlipT>
-  driver_hardening{Intrepid2::ZEROS};
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
 
 };
 
@@ -477,12 +459,9 @@ struct NoHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
   virtual
   ~NoHardening() {}
 
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(num_dim)};
-
 private:
   Intrepid2::Tensor<DataT, NumSlipT>
-  driver_hardening{Intrepid2::ZEROS};
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
 
 };
 
@@ -524,17 +503,6 @@ hardeningFactory(HardeningLaw hardening_law)
 
   return HTUP(nullptr);
 }
-
-
-
-
-
-
-
-
-
-
-
 
 } // namespace CP
 
