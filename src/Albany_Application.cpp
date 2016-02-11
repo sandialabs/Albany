@@ -418,7 +418,8 @@ void Albany::Application::buildProblem()   {
   ResponseFactory responseFactory(Teuchos::rcp(this,false), problem, meshSpecs,
                                   Teuchos::rcp(&stateMgr,false));
   responses = responseFactory.createResponseFunctions(responseList);
-  observe_responses = responseList.get("Compute Responses Every Step", true); 
+  observe_responses = responseList.get("Observe Responses", true); 
+  response_observ_freq = responseList.get("Responses Observation Frequency", 1); 
 
   // Build state field manager
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginBuildingSfm();

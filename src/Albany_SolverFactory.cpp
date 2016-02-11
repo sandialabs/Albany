@@ -1375,7 +1375,8 @@ Albany::SolverFactory::getValidResponseParameters() const
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidResponseParams"));;
 
   validPL->set<int>("Number of Response Vectors", 0);
-  validPL->set<bool>("Compute Responses Every Step", true);
+  validPL->set<bool>("Observe Responses", true);
+  validPL->set<int>("Responses Observation Frequency", 1);
   validPL->set<int>("Number", 0);
   validPL->set<int>("Equation", 0);
   const int maxParameters = 500;

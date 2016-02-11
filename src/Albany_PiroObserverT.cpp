@@ -16,16 +16,20 @@ Albany::PiroObserverT::PiroObserverT(
     const Teuchos::RCP<Albany::Application> &app, 
     Teuchos::RCP<const Thyra::ModelEvaluator<double>> model) :
   impl_(app), 
-  model_(model) 
+  model_(model), 
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
   {
     observe_responses_ = false; 
     if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
-      observe_responses_ = true; 
+      observe_responses_ = true;
+    stepper_counter_ = 0;  
+    observe_responses_every_n_steps_ = app->observeResponsesFreq();  
   }
 
 void
 Albany::PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, Teuchos::ScalarTraits<ST>::zero());
 }
 
@@ -34,6 +38,7 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution,
     const ST stamp)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, stamp);
 }
 
@@ -43,6 +48,7 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution_dot,
     const ST stamp)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, solution_dot, stamp);
 }
 
@@ -51,6 +57,7 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::MultiVectorBase<ST> &solution,
     const ST stamp)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, stamp);
 }
 
@@ -95,7 +102,8 @@ Albany::PiroObserverT::observeSolutionImpl(
   
   // observe responses 
   if (observe_responses_ == true) {
-    this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution));
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution));
    }
 }
 
@@ -117,7 +125,8 @@ Albany::PiroObserverT::observeSolutionImpl(
 
   // observe responses 
   if (observe_responses_ == true) {
-    this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot));
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot));
    }
 }
 
@@ -150,9 +159,8 @@ Albany::PiroObserverT::observeResponse(
     Teuchos::RCP<const Thyra::VectorBase<ST>> solution,
     Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   std::map<int,std::string> m_response_index_to_name;
-
+  
   // build out args and evaluate responses if they exist
   Thyra::ModelEvaluatorBase::OutArgs<double> outArgs = model_->createOutArgs();
   if(outArgs.Ng()>0) {

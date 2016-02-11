@@ -20,6 +20,8 @@
     
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="3"/>
+      <Parameter name="Observe Responses" type="bool" value="true"/>
+      <Parameter name="Responses Observation Frequency" type="int" value="5"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
       <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
@@ -47,7 +49,7 @@
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_10_out.exo"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="5"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>

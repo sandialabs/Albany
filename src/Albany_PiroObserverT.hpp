@@ -74,7 +74,13 @@ private:
 protected: 
 
   bool observe_responses_;  
+  
+  int stepper_counter_;  
+  
+  Teuchos::RCP<Teuchos::FancyOStream> out; 
 
+  int observe_responses_every_n_steps_; 
+ 
 };
 
 } // namespace Albany

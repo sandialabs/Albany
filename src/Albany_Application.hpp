@@ -140,6 +140,8 @@ namespace Albany {
 #endif
 
     bool observeResponses() const {return observe_responses;} 
+    
+    int observeResponsesFreq() const {return response_observ_freq;} 
  
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
@@ -1194,6 +1196,9 @@ namespace Albany {
 
     //boolean read from input file telling code whether to compute/print responses every step 
     bool observe_responses; 
+    
+    //how often one wants the responses to be computed/printed
+    int response_observ_freq; 
 
   };
 }
