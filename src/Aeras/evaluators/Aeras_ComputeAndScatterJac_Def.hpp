@@ -257,6 +257,29 @@ template<typename Traits>
 void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+//FIXME: this function needs to be rewritten to not use AD.  
+//First, we need to compute the local mass and laplacian matrices 
+//(checking the n_coeff flag for whether the laplacian is needed) as follows: 
+//Mass:
+//loop over cells, c
+//  loop over levels, l
+//    loop over nodes,n
+//      q=n; m=n
+//      diag(c,l,n) = BF(n,q)*wBF(m,q)
+//
+//Laplacian:
+//loop over cells, c
+//  loop over levels, l
+//    loop over nodes,n
+//      loop over nodes,m
+//        loop over qp, q
+//          loop over dim, d
+//            laplace(c,l,n,m) += gradBF(n,q,d)*wGradBF(m,q,d)
+//
+//(There’s also a loop over unknowns per node.)
+//
+//Then the values of these matrices need to be scattered into the global Jacobian.
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;

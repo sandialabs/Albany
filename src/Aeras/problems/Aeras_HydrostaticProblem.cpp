@@ -227,12 +227,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   Albany::FieldManagerChoice fieldManagerChoice,
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
-  //IKT, FIXME, 2/11/16: right now this function is a copy of the templated 
-  //version of constructEvaluators so code runs.  It needs to be specialized
-  //for PHAL::AlbanyTraits::Jacobian.  In this version, there will be dependencies 
-  //on Aeras::ComputeBasisFunctions, Aeras::GatherCoordinateVector, and
-  //a new function Aeras::ComputeAndScatterJac.  The last one is a new class 
-  //to be written.  It will have dependences on wBF, BF, wGradBF, and GradBF. 
+  //IKT, FIXME, 2/12/16: once Aeras::ComputeAndScatterJac is ready, 
+  //need to delete everything between ---- in this function.
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "Aeras::HydrostaticProblem Jacobian specialization of constructEvaluators" << std::endl; 
   using Teuchos::RCP;
@@ -459,8 +455,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
   }
 
-  //FIXME: delete everything in between the ---
-  //------------------------------------------
+  //FIXME: delete everything in between the --- after Aeras::ComputeAndScatterJac is ready.
+  //Start of stuff to be deleted------------------------------------------
   { // Hydrostatic SPressure Resid
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic SPressure Resid"));
    
@@ -1041,7 +1037,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  //----------------------------------------------------------------------------
+  //End of stuff to be deleted--------------------------------------------------------
 
   {
     RCP<ParameterList> p = rcp(new ParameterList("Compute And Scatter Jacobian"));
@@ -1069,7 +1065,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
 
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Hydrostatic", dl->dummy);
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Compute And Scatter Jacobian", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
