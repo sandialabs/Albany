@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_GATHER_RESIDUAL_HPP
-#define AERAS_GATHER_RESIDUAL_HPP
+#ifndef AERAS_SCATTER_RESIDUAL_HPP
+#define AERAS_SCATTER_RESIDUAL_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
