@@ -182,9 +182,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -307,9 +305,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -432,9 +428,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -557,9 +551,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -682,9 +674,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -807,9 +797,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -932,9 +920,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1057,9 +1043,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1182,9 +1166,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1307,9 +1289,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1432,9 +1412,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1557,9 +1535,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1682,9 +1658,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1807,9 +1781,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1932,9 +1904,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2057,9 +2027,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2182,9 +2150,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2307,9 +2273,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2432,9 +2396,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2557,9 +2519,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2682,9 +2642,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2807,9 +2765,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2932,9 +2888,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3057,9 +3011,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3182,9 +3134,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3307,9 +3257,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3432,9 +3380,7 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
