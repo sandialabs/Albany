@@ -105,59 +105,61 @@ namespace AMP {
     }
 
     //**********************************************************************
+template<typename EvalT, typename Traits>
+void EnergyDot<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+    //current time
+    // time step
+    ScalarT dt = deltaTime_(0);
 
-    template<typename EvalT, typename Traits>
-    void EnergyDot<EvalT, Traits>::
-    evaluateFields(typename Traits::EvalData workset) {
-        //current time
-        // time step
-        ScalarT dt = deltaTime_(0);
+    typedef Intrepid2::FunctionSpaceTools FST;
 
-        typedef Intrepid2::FunctionSpaceTools FST;
+    if (dt == 0.0) dt = 1.0e-15;
+    //grab old temperature
+    Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
 
-        if (dt == 0.0) dt = 1.0e-15;
-        //grab old temperature
-        Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
+    // Compute Temp rate
 
-        // Compute Temp rate
+    // temporal variables
+    // store value of phi at Gauss point, i.e., phi = phi_(cell,qp)
+    ScalarT phi;
+    // Store value of volumetric heat capacity at Gauss point, i.e., Cs = Rhp_Cp_(cell,qp)
+    ScalarT Cs;
+    // Volumetric heat capacity of solid. For now same as powder.
+    ScalarT Cd;
+    // Variable used to store dp/dphi = 30*phi^2*(1-2*phi+phi^2)
+    ScalarT dpdphi;
+    // Variable used to store time derivative of phi
+    ScalarT phi_dot;
+    // Variable used to compute p = phi^3 * (10-15*phi+6*phi^2)
+    ScalarT p;
 
-        // temporal variables
-        // store value of phi at Gauss point, i.e., phi = phi_(cell,qp)
-        ScalarT phi;
-        // Store value of volumetric heat capacity at Gauss point, i.e., Cs = Rhp_Cp_(cell,qp)
-        ScalarT Cs;
-        // Volumetric heat capacity of solid. For now same as powder.
-        ScalarT Cd;
-        // Variable used to store dp/dphi = 30*phi^2*(1-2*phi+phi^2)
-        ScalarT dpdphi;
-        // Variable used to store time derivative of phi
-        ScalarT phi_dot;
-        // Variable used to compute p = phi^3 * (10-15*phi+6*phi^2)
-        ScalarT p;
-        
-        for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-            for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-                
-                // compute dT/dt using finite difference
-                T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
-                
-                // compute dp/dphi
-                phi = phi_(cell,qp);
-                dpdphi = 30.0 * phi*phi * (1.0 - 2.0 * phi + phi*phi);
-                
-                // compute phi_dot
-                phi_dot = ( 1.0 / (2.0*Tc_) ) * std::pow( std::cosh( (T_(cell,qp) - Tm_ ) / Tc_ ) , -2.0 ) * T_dot_(cell,qp);
-                
-                // compute energy dot
-                Cs = rho_Cp_(cell,qp);
-                Cd = Cs;
-                // p
-                p = phi*phi*phi * ( 10.0 - 15.0*phi + 6.0*phi*phi );
-                energyDot_(cell, qp) = (Cs + p * ( Cl_ - Cs ) )*T_dot_(cell,qp) +
-                        dpdphi * ( L_ + ( Cl_ - Cs ) * ( T_(cell,qp) - Tm_ ) ) * phi_dot;
-            }
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    {
+        for (std::size_t qp = 0; qp < num_qps_; ++qp)
+        {
+
+            // compute dT/dt using finite difference
+            T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
+
+            // compute dp/dphi
+            phi = phi_(cell, qp);
+            dpdphi = 30.0 * phi * phi * (1.0 - 2.0 * phi + phi * phi);
+
+            // compute phi_dot
+            phi_dot = (1.0 / (2.0 * Tc_)) * std::pow(std::cosh((T_(cell, qp) - Tm_) / Tc_), -2.0) * T_dot_(cell, qp);
+
+            // compute energy dot
+            Cs = rho_Cp_(cell, qp);
+            Cd = Cs;
+            // p
+            p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
+            energyDot_(cell, qp) = (Cs + p * (Cl_ - Cs)) * T_dot_(cell, qp) +
+                    dpdphi * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi_dot;
         }
     }
+}
 
     //**********************************************************************
 

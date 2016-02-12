@@ -159,7 +159,7 @@ IF(NOT ALBANY_HAVE_STK)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp)
 ENDIF()
 
-IF(NOT Kokkos_ENABLE_Cuda)
+IF(Kokkos_ENABLE_Cuda)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonModel.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel_Def.hpp)

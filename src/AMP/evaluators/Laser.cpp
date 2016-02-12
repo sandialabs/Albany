@@ -14,7 +14,7 @@ namespace AMP
   {
     std::ifstream is("LaserCenter.txt", std::ifstream::in);
     TEUCHOS_TEST_FOR_EXCEPTION(!is, Teuchos::Exceptions::InvalidParameter,
-			     std::endl << "Laser Database Error: Laser sublist required" << std::endl);
+			     std::endl << "Laser Database Error: Laser filename required: LaserCenter.txt" << std::endl);
 
     std::cout << "Reading file ..." << std::endl;
 

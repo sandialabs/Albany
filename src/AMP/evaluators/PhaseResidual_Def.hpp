@@ -1,4 +1,4 @@
-//*****************************************************************//
+////*****************************************************************//
 //    Albany 2.0:  Copyright 2012 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -75,7 +75,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   Temperature_Name_ = p.get<std::string>("Temperature Name")+"_old";
 
   term1_.resize(dims[0],num_qps_,num_dims_);
-  //term2_.resize(dims[0],num_qps_);
+//  term2_.resize(dims[0],num_qps_);
 
   this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
 }
@@ -108,39 +108,45 @@ template<typename EvalT, typename Traits>
 void PhaseResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- //current time
- // time step
-  ScalarT dt = deltaTime(0);
-//  std::cout<<"dt value ="<<dt<<std::endl;
-  typedef Intrepid2::FunctionSpaceTools FST;
- 
-  if (dt == 0.0) dt = 1.0e-15;
-  //grab old temperature
-  Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
-  // Compute Temp rate
-// ScalarT T_dot_;
+    //current time
+    // time step
+    ScalarT dt = deltaTime(0);
+    //  std::cout<<"dt value ="<<dt<<std::endl;
+    typedef Intrepid2::FunctionSpaceTools FST;
 
-  for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for(std::size_t qp = 0; qp < num_qps_; ++qp) {
-        T_dot_(cell,qp) = (T_(cell,qp)-T_old(cell,qp))/dt;
+    if (dt == 0.0) dt = 1.0e-15;
+    //grab old temperature
+    Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
+    // Compute Temp rate
+    // ScalarT T_dot_;
+
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    {
+        for (std::size_t qp = 0; qp < num_qps_; ++qp)
+        {
+            T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
+        }
     }
-  }
-      // diffusive term
-  FST::scalarMultiplyDataData<ScalarT> (term1_,k_,T_grad_);
-  FST::integrate<ScalarT>(residual_,term1_,w_grad_bf_,Intrepid2::COMP_CPP,false);
+    // diffusive term
+    FST::scalarMultiplyDataData<ScalarT> (term1_, k_, T_grad_);
+    FST::integrate<ScalarT>(residual_, term1_, w_grad_bf_, Intrepid2::COMP_CPP, false);
 
-  // heat source from laser 
-  PHAL::scale(laser_source_, -1.0);
-  FST::integrate<ScalarT>(residual_,laser_source_,w_bf_,Intrepid2::COMP_CPP,true);  
+    // heat source from laser 
+    PHAL::scale(laser_source_, -1.0);
+    FST::integrate<ScalarT>(residual_, laser_source_, w_bf_, Intrepid2::COMP_CPP, true);
 
-  // all other problem sources
-  PHAL::scale(source_, -1.0);
-  FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid2::COMP_CPP,true);
+    // all other problem sources
+    PHAL::scale(source_, -1.0);
+    FST::integrate<ScalarT>(residual_, source_, w_bf_, Intrepid2::COMP_CPP, true);
 
-  // transient term
-  //FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
-  FST::integrate<ScalarT>(residual_,energyDot_,w_bf_,Intrepid2::COMP_CPP,true);
-  
+    //  // transient term
+    //  FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
+    //  FST::integrate<ScalarT>(residual_,term2_,w_bf_,Intrepid2::COMP_CPP,true);
+
+    // transient term
+    //FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
+    FST::integrate<ScalarT>(residual_, energyDot_, w_bf_, Intrepid2::COMP_CPP, true);
+
 }
 
 //**********************************************************************
