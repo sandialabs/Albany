@@ -1056,6 +1056,10 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set< Teuchos::ArrayRCP<std::string> >("Scalar Level Residual Names",        scalar_level_names);
 
     p->set< Teuchos::ArrayRCP<string> >("Tracer Residual Names", dof_names_tracers_resid);
+    p->set<std::string>("Weighted BF Name",                     "wBF");
+    p->set<std::string>("Weighted Gradient BF Name",            "wGrad BF");
+    p->set<string>("BF Name",                    "BF");
+    p->set<string>("Gradient BF Name",           "Grad BF");
 
     p->set<string>("Scatter Field Name", "Compute And Scatter Jacobian");
 

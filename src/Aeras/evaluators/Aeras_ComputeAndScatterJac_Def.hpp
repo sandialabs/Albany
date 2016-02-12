@@ -17,6 +17,10 @@ template<typename EvalT, typename Traits>
 ComputeAndScatterJacBase<EvalT, Traits>::
 ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Aeras::Layouts>& dl) :
+  BF            (p.get<std::string>  ("BF Name"),           dl->node_qp_scalar),
+  wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
+  GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
+  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
   worksetSize(dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
@@ -60,6 +64,11 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
 
   const std::string fieldName = p.get<std::string>("Scatter Field Name");
   scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
+  
+  this->addDependentField(BF);
+  this->addDependentField(wBF);
+  this->addDependentField(GradBF);
+  this->addDependentField(wGradBF);
 
   this->addEvaluatedField(*scatter_operation);
 
@@ -72,6 +81,10 @@ void ComputeAndScatterJacBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm) 
 {
+  this->utils.setFieldData(BF,fm);
+  this->utils.setFieldData(wBF,fm);
+  this->utils.setFieldData(GradBF,fm);
+  this->utils.setFieldData(wGradBF,fm);
   for (int eq = 0; eq < numFields; ++eq) this->utils.setFieldData(val[eq],fm);
 }
 

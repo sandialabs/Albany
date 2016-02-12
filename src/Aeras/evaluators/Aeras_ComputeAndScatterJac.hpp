@@ -33,6 +33,7 @@ class ComputeAndScatterJacBase
   
 public:
   typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
   
   ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl);
@@ -54,6 +55,13 @@ protected:
   int numVectorLevelVar;
   int numScalarLevelVar;
   int numTracerVar;
+
+private:
+
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
 };
 
