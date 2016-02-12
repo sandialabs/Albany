@@ -55,8 +55,8 @@ ThermalCond(Teuchos::ParameterList& p,
   cond_list =
     p.get<Teuchos::ParameterList*>("Solid Parameter List");
 
-//  cond_list->validateParameters(*reflist, 0,
-//      Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
+  cond_list->validateParameters(*reflist, 0,
+      Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
 
   type = cond_list->get("Thermal Conductivity Type", "Constant");
 
@@ -80,18 +80,21 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+
 template<typename EvalT, typename Traits>
 void ThermalCond<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-    
-  // thermal conductivity
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-        k_(cell, qp) = ( 1.0 - psi_(cell,qp) ) * powder_value_
-                            + psi_(cell,qp) * solid_value_;
+
+    // thermal conductivity
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    {
+        for (std::size_t qp = 0; qp < num_qps_; ++qp)
+        {
+            k_(cell, qp) = (1.0 - psi_(cell, qp)) * powder_value_
+                    + psi_(cell, qp) * solid_value_;
+        }
     }
-  }
 }
 
 //**********************************************************************
