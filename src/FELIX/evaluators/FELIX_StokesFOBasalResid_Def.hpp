@@ -40,6 +40,7 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   numCellNodes = basalResid.fieldTag().dataLayout().dimension(1);
 
   dl->node_vector->dimensions(dims);
+  vecDimFO     = std::min((int)dims[2],2);
   vecDim       = dims[2];
 
   basalSideName = p.get<std::string>("Side Set Name");
@@ -111,7 +112,7 @@ void StokesFOBasalResid<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
 
     for (int node=0; node<numSideNodes; ++node)
     {
-      for (int dim=0; dim<vecDim; ++dim)
+      for (int dim=0; dim<vecDimFO; ++dim)
       {
         basalResid(cell,sideNodes[side][node],dim) = 0.;
         for (int qp=0; qp<numSideQPs; ++qp)

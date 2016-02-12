@@ -178,7 +178,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     {
       entity = Albany::StateStruct::NodalDataToElemNode;
       // Note: temperature on side registered as node vector, since we store all layers values in the nodes on the basal mesh.
-      //       However, we need to create the layout, since the vector length is the value of the number of layers.
+      //       However, we need to create the layout, since the vector length is the number of layers.
       //       I don't have a clean solution now, so I just ask the user to pass me the number of layers in the temperature file.
       int numLayers = params->get<int>("Layered Data Length",11); // Default 11 layers: 0, 0.1, ...,1.0
       Teuchos::RCP<PHX::DataLayout> dl_temp;
@@ -288,8 +288,13 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   if(isStateAParameter)
   {
-    stateName = "basal_friction";
-    fieldName = "Beta";
+    //basal friction is a distributed parameter
+    TEUCHOS_TEST_FOR_EXCEPTION (ss_requirements.find(basalSideName)==ss_requirements.end(), std::logic_error,
+                                "Error! 'basal_friction' is a parameter, but there are no basal requirements.\n");
+    const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (std::find(req.begin(), req.end(), stateName)==req.end(), std::logic_error,
+                                "Error! 'basal_friction' is a parameter, but is not listed as basal requirements.\n");
 
     //basal friction is a distributed 3D parameter
     entity= Albany::StateStruct::NodalDistParameter;
@@ -304,19 +309,16 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (basalSideName!="INVALID")
     {
       // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
-      ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
+      ev = evalUtilsBasal.constructDOFCellToSideEvaluator(fieldName,basalSideName,cellType);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
   {
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
-
-    stateName = "basal_friction";
-    fieldName = "Beta";
-
     if (std::find(req.begin(), req.end(), stateName)!=req.end())
     {
+      // ...and basal_friction is one of them.
       entity = Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
       if (isStateAParameter)
@@ -427,14 +429,12 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   entity = Albany::StateStruct::NodalDistParameter;
   // Here is how to register the field for dirichlet condition.
   stateName = "dirichlet_field";
-  // IK, 12/9/14: Changed "false" to "true" from Mauro's initial implementation for outputting to Exodus
   p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, "");
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 #endif
 
   // Define Field Names
-
   Teuchos::ArrayRCP<std::string> dof_names(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
   dof_names[0] = "Velocity";
@@ -678,7 +678,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
-
 
 #ifdef CISM_HAS_FELIX
   //--- FELIX surface gradient from CISM ---//

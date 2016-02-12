@@ -145,9 +145,6 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
   //FIXME?: assuming for now 1 element block
   unsigned int ebNo = 0;
 
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
-
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   if (ElemType == QUAD) { //Quads

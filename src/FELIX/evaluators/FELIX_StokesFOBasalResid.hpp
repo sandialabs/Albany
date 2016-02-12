@@ -58,6 +58,7 @@ private:
   int numSideQPs;
   int sideDim;
   int vecDim;
+  int vecDimFO;
 
   bool regularized;
 };

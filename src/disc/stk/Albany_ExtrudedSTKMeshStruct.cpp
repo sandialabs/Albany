@@ -306,7 +306,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  typedef AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   // Fields required for extrusion
   ScalarFieldType* surface_height_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
