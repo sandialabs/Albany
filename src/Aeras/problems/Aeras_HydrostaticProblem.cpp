@@ -459,8 +459,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
   }
 
-  //FIXME: delete everything after this and replace with new evaluator ComputeAndScatterJac.
-
+  //FIXME: delete everything in between the ---
+  //------------------------------------------
   { // Hydrostatic SPressure Resid
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic SPressure Resid"));
    
@@ -1041,7 +1041,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  
+  //----------------------------------------------------------------------------
+
   {
     RCP<ParameterList> p = rcp(new ParameterList("Compute And Scatter Jacobian"));
 

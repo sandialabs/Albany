@@ -67,38 +67,6 @@ template<typename EvalT, typename Traits> class ComputeAndScatterJac;
 
 
 // **************************************************************
-// Residual 
-// **************************************************************
-template<typename Traits>
-class ComputeAndScatterJac<PHAL::AlbanyTraits::Residual,Traits>
-  : public ComputeAndScatterJacBase<PHAL::AlbanyTraits::Residual, Traits>  {
-public:
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  ComputeAndScatterJac(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d); 
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-public:
-
-Teuchos::RCP<Tpetra_Vector> fT;
-Teuchos::ArrayRCP<ST> fT_nonconstView;
-
-Kokkos::View<int***, PHX::Device> Index;
-
-struct ScatterResid_Tag{};
-
-typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_Tag> ScatterResid_Policy;
-
-KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_Tag& tag, const int& i) const;
-
-#endif
-
-};
-// **************************************************************
 // Jacobian
 // **************************************************************
 template<typename Traits>
@@ -142,19 +110,6 @@ KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& i) const;
 #endif
 
-};
-
-// **************************************************************
-// Tangent
-// **************************************************************
-template<typename Traits>
-class ComputeAndScatterJac<PHAL::AlbanyTraits::Tangent,Traits>
-  : public ComputeAndScatterJacBase<PHAL::AlbanyTraits::Tangent, Traits>  {
-public:
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-  ComputeAndScatterJac(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Aeras::Layouts>& dl);
-  void evaluateFields(typename Traits::EvalData d); 
 };
 
 
