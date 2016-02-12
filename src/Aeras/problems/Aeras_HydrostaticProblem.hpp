@@ -18,6 +18,7 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_GatherSolution.hpp"
 #include "Aeras_ScatterResidual.hpp"
+#include "Aeras_ComputeAndScatterJac.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFInterpolationLevels.hpp"
 #include "Aeras_DOFVecInterpolationLevels.hpp"

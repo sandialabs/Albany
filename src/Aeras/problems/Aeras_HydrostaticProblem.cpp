@@ -1041,6 +1041,27 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Compute And Scatter Jacobian"));
+
+    p->set< Teuchos::ArrayRCP<string> >("Node Residual Names",   dof_names_nodes_resid);
+
+    Teuchos::ArrayRCP<std::string> vector_level_names(1);
+    Teuchos::ArrayRCP<std::string> scalar_level_names(1);
+    vector_level_names[0]     = dof_names_levels_resid[0];
+    scalar_level_names[0]     = dof_names_levels_resid[1];
+    p->set< Teuchos::ArrayRCP<std::string> >("Vector Level Residual Names",        vector_level_names);
+    p->set< Teuchos::ArrayRCP<std::string> >("Scalar Level Residual Names",        scalar_level_names);
+
+    p->set< Teuchos::ArrayRCP<string> >("Tracer Residual Names", dof_names_tracers_resid);
+
+    p->set<string>("Scatter Field Name", "Compute And Scatter Jacobian");
+
+    ev = rcp(new Aeras::ComputeAndScatterJac<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Hydrostatic", dl->dummy);
