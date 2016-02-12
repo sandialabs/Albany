@@ -39,7 +39,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const std::map<std::s
   observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl_surface->side_qp_vector);
   observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl_surface->side_qp_vector);
   BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl_surface->side_node_qp_scalar);
-  w_measure_surface   = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->side_qp_scalar);
+  w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->side_qp_scalar);
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
@@ -71,8 +71,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const std::map<std::s
     const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
     const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
 
-    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl_basal->side_qp_gradient);
-    w_measure_basal     = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->side_qp_scalar);
+    grad_beta           = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl_basal->side_qp_gradient);
+    w_measure_basal     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->side_qp_scalar);
 
     numBasalQPs = dl_basal->side_qp_scalar->dimension(2);
 
@@ -121,7 +121,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl->side_qp_vector);
   observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl->side_qp_vector);
   BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl->side_node_qp_scalar);
-  w_measure_surface   = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_surface_name, dl->side_qp_scalar);
+  w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl->side_qp_scalar);
 
   Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
@@ -152,8 +152,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
     const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
 
-    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl->side_qp_gradient);
-    w_measure_basal     = PHX::MDField<RealType,Cell,Side,QuadPoint>(w_measure_basal_name, dl->side_qp_scalar);
+    grad_beta           = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl->side_qp_gradient);
+    w_measure_basal     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl->side_qp_scalar);
 
     numBasalQPs = dl->side_qp_scalar->dimension(2);
 

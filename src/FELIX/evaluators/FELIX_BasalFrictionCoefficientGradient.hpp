@@ -56,7 +56,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           grad_beta;
+  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>      grad_beta;
 
   std::string                     basalSideName;
 

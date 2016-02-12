@@ -789,30 +789,34 @@ FELIX::StokesFOThickness::constructEvaluators(
   }
 
 #ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
-  //--- Gather Coordinates ---//
-  p = rcp(new ParameterList("Gather Coordinate Vector"));
+  {
+    //--- Gather Coordinates ---//
+    p = rcp(new ParameterList("Gather Coordinate Vector"));
 
-  // Input: Periodic BC flag
-  p->set<bool>("Periodic BC", false);
+    // Input: Periodic BC flag
+    p->set<bool>("Periodic BC", false);
 
-  // Output:: Coordindate Vector at vertices
-  p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
+    // Output:: Coordindate Vector at vertices
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
 
-  ev =  rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
+    ev =  rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
-  //--- Update Z Coordinate ---//
-  RCP<ParameterList> p = rcp(new ParameterList("Update Z Coordinate"));
+  {
+    //--- Update Z Coordinate ---//
+    p = rcp(new ParameterList("Update Z Coordinate"));
 
-  // Input
-  p->set<std::string>("Old Coords Name", "Coord Vec Old");
-  p->set<std::string>("New Coords Name", "Coord Vec");
-  p->set<std::string>("Thickness Increment Name", "ExtrudedThickness");
-  p->set<std::string>("Past Thickness Name", "Ice Thickness");
-  p->set<std::string>("Elevation Name", "Surface Height");
+    // Input
+    p->set<std::string>("Old Coords Name", "Coord Vec Old");
+    p->set<std::string>("New Coords Name", "Coord Vec");
+    p->set<std::string>("Thickness Increment Name", "ExtrudedThickness");
+    p->set<std::string>("Past Thickness Name", "Ice Thickness");
+    p->set<std::string>("Elevation Name", "Surface Height");
 
-  ev = rcp(new FELIX::UpdateZCoordinate<EvalT,PHAL::AlbanyTraits>(*p, dl_full));
-  fm0.template registerEvaluator<EvalT>(ev);
+    ev = rcp(new FELIX::UpdateZCoordinate<EvalT,PHAL::AlbanyTraits>(*p, dl_full));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 #endif
 
   // --- FO Stokes Resid --- //
