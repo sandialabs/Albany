@@ -232,19 +232,19 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         WriteParameter("Output Fp", "bool", "true", mat_file, indent)
         #WriteParameter("Output L", "bool", "true", mat_file, indent)
         WriteParameter("Output CP_Residual", "bool", "true", mat_file, indent)
+        WriteParameter("Output eqps", "bool", "true", mat_file, indent)
         #for i in range(num_slip_systems):
         #    WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
         #for i in range(num_slip_systems):
         #    WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
         #for i in range(num_slip_systems):
         #    WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
-
-        for i in range(1):
-            WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
-        for i in range(1):
-            WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
-        for i in range(1):
-            WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(1):
+        #    WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(1):
+        #    WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(1):
+        #    WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
 
         # Elastic modulii and lattice orientation
         indent = StartParamList("Crystal Elasticity", mat_file, indent)

@@ -922,10 +922,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       }
 
       // Compute the equivalent plastic strain from the velocity gradient:
-      //  eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
+      //  eqps_dot = sqrt[2/3* sym(Lp) : sym(Lp)]
       Intrepid2::Tensor<ScalarT, CP::MAX_DIM> const Dp = Intrepid2::sym(Lp_np1);
-      RealType const delta_eqps = 2.0 / 3.0 * dt * 
-        std::sqrt(Sacado::ScalarValue<ScalarT>::eval(Intrepid2::dotdot(Dp,Dp)));
+      RealType const delta_eqps = dt * std::sqrt(2.0 / 3.0 *
+        Sacado::ScalarValue<ScalarT>::eval(Intrepid2::dotdot(Dp,Dp)));
       equivalent_plastic_strain += delta_eqps;
       eqps(cell, pt) = equivalent_plastic_strain;
 
