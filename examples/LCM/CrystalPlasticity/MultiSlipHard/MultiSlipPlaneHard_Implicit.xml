@@ -57,6 +57,7 @@
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
       <ParameterList name="Stepper">
+        <Parameter  name="Continuation Method" type="string" value="Natural"/>
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
         <Parameter name="Max Steps" type="int" value="5000"/>
