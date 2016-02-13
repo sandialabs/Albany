@@ -41,11 +41,11 @@
 
                     <Parameter name="Time Values" 
                                type="Array(double)" 
-                               value="{0.0, 0.04}"/>
+                               value="{0.0, 0.03}"/>
 
                     <Parameter name="BC Values"   
                                type="Array(double)" 
-                               value="{0.0, 0.02}"/>
+                               value="{0.0, 0.015}"/>
 
                </ParameterList>
 
@@ -136,6 +136,10 @@
 <!-- ~~~~~~~~~ Set parameter stepping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
                <ParameterList name="Stepper">
+
+                    <Parameter name="Continuation Method" 
+                               type="string" 
+                               value="Natural"/>
 
                     <Parameter name="Initial Value" 
                                type="double" 
