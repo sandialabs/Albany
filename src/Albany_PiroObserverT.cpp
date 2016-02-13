@@ -9,6 +9,7 @@
 #include "Albany_PiroObserverT.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Teuchos_ScalarTraits.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 #include <cstddef>
 
