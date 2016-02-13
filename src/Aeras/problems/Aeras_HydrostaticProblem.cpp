@@ -349,7 +349,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {
@@ -360,7 +360,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   for (int t=0; t<numTracers; ++t) {
@@ -369,7 +369,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   for (int t=0; t<numTracers; ++t) {
@@ -378,7 +378,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
 
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {
@@ -389,7 +389,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Gradient Variable Name", dof_names_nodes_gradient[0]);
 
     ev = rcp(new Aeras::DOFGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   for (int t=0; t<numTracers; ++t) {
@@ -400,7 +400,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Gradient Variable Name", dof_names_tracers_gradient[t]);
 
     ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   if (numDim == 2) {
@@ -411,11 +411,11 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     
     ev = rcp(new Aeras::GatherCoordinateVector<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   //Planar case: 
   else {
-    fm0.template registerEvaluator<EvalT>
+    fm0.registerEvaluator<EvalT>
       (evalUtils.constructGatherCoordinateVectorEvaluator());
   }
 
@@ -448,10 +448,10 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::size_t>("spatialDim",            3);
 
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   else {
-    fm0.template registerEvaluator<EvalT>
+    fm0.registerEvaluator<EvalT>
       (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
   }
 
@@ -474,7 +474,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Residual Name", dof_names_nodes_resid[0]);
 
     ev = rcp(new Aeras::XZHydrostatic_SPressureResid<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {
@@ -483,7 +483,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFVecInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
     
   {
@@ -492,7 +492,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFVecInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
     
   {
@@ -501,7 +501,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
     
   {
@@ -510,7 +510,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
     
   {
@@ -521,7 +521,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Gradient Variable Name", dof_names_levels_gradient[1]);
     
     ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {//Vorticity at QP
@@ -533,7 +533,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Vorticity Variable Name", "Vorticity_QP");
    
     ev = rcp(new Aeras::VorticityLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {//Level Kinetic Energy 
@@ -542,7 +542,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Kinetic Energy", "KineticEnergy");
   
     ev = rcp(new Aeras::XZHydrostatic_KineticEnergy<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {//Gradient Level Kinetic Energy
@@ -553,7 +553,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Gradient Variable Name", "KineticEnergy_gradient");
   
     ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   { // Hydrostatic Velx Resid
@@ -588,7 +588,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Residual Name", dof_names_levels_resid[0]);
 
     ev = rcp(new Aeras::Hydrostatic_VelResid<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   { // Hydrostatic Temperature Resid
@@ -613,7 +613,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Residual Name", dof_names_levels_resid[1]);
 
     ev = rcp(new Aeras::XZHydrostatic_TemperatureResid<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   { // Hydrostatic Pressure 
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_Pressure"));
@@ -631,7 +631,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Pi",                      "Pi");
 
     ev = rcp(new Aeras::XZHydrostatic_Pressure<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   {//QP Pressure
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Pressure"));
@@ -639,7 +639,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   {//Gradient QP Pressure
       RCP<ParameterList> p = rcp(new ParameterList("Gradient Pressure"));
@@ -649,7 +649,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       p->set<string>("Gradient Variable Name",   "Gradient QP Pressure");
     
       ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+      fm0.registerEvaluator<EvalT>(ev);
   }
   {//Laplace QP Velocity
       RCP<ParameterList> p = rcp(new ParameterList("Gradient Pressure"));
@@ -659,7 +659,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       p->set<string>("Laplace Variable Name",         "Laplace Velx");
     
       ev = rcp(new Aeras::DOFLaplaceInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+      fm0.registerEvaluator<EvalT>(ev);
   }
   {//QP Pi
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Pi"));
@@ -667,7 +667,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   { // Hydrostatic Omega = (R*Tv/Cp*P)*DP/Dt) 
@@ -688,7 +688,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Omega"            , "Omega");
 
     ev = rcp(new Aeras::XZHydrostatic_Omega<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   //{//QP Omega 
   //  RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Omega"));
@@ -696,7 +696,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   //  p->set<string>("BF Name", "BF");
   //  
   //  ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-  //  fm0.template registerEvaluator<EvalT>(ev);
+  //  fm0.registerEvaluator<EvalT>(ev);
   //}
 
 
@@ -714,7 +714,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Density",                     "Density");
 
     ev = rcp(new Aeras::XZHydrostatic_Density<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   {
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Density"));
@@ -722,7 +722,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   { // Hydrostatic Virtual Temperature
@@ -742,7 +742,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Cpstar",              "Cpstar");
 
     ev = rcp(new Aeras::XZHydrostatic_VirtualT<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {//QP Cpstar
@@ -751,7 +751,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
 
     ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   { // Hydrostatic GeoPotential
@@ -772,7 +772,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("GeoPotential",           "GeoPotential");
 
     ev = rcp(new Aeras::XZHydrostatic_GeoPotential<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {// XZHydrostatic Surface GeoPotential
@@ -788,7 +788,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("SurfaceGeopotential", "SurfaceGeopotential");
     
     ev = rcp(new Aeras::XZHydrostatic_SurfaceGeopotential<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   { //QP GeoPotential
@@ -797,7 +797,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("BF Name", "BF");
     
     ev = rcp(new Aeras::DOFInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {//Gradient QP GeoPotential 
@@ -808,7 +808,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       p->set<string>("Gradient Variable Name", "Gradient QP GeoPotential");
     
       ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+      fm0.registerEvaluator<EvalT>(ev);
   }
 
   { // Hydrostatic Pi weighted velocity
@@ -825,7 +825,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("PiVelx",        "PiVelx");
 
     ev = rcp(new Aeras::XZHydrostatic_PiVel<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   {//Gradient Pi weighted Velocity 
     RCP<ParameterList> p = rcp(new ParameterList("Divergence PiVelx"));
@@ -851,7 +851,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Divergence Variable Name", "Divergence QP PiVelx");
    
     ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {//Compontent Derivative of Velocity 
@@ -862,7 +862,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Derivative Variable Name", "Component Derivative of Velocity");
    
     ev = rcp(new Aeras::DOFDInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   { // Hydrostatic vertical velocity * Pi
@@ -888,7 +888,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names", dof_names_tracers_deta);
     
     ev = rcp(new Aeras::XZHydrostatic_EtaDotPi<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
  
 
@@ -914,7 +914,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer Source Names", dof_names_tracers_src);
 
     ev = rcp(new Aeras::Atmosphere_Moisture<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   for (int t=0; t<numTracers; ++t) {
@@ -928,7 +928,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       p->set<string>("Gradient Variable Name", dof_names_tracers_gradient[t]);
     
       ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+      fm0.registerEvaluator<EvalT>(ev);
     }
 
     {//Level u*Tracer
@@ -939,7 +939,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       p->set<string>("UTracer",  "U"+dof_names_tracers[t]);
     
       ev = rcp(new Aeras::XZHydrostatic_UTracer<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
+      fm0.registerEvaluator<EvalT>(ev);
     }
 
     {//Divergence QP UTracer
@@ -966,7 +966,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
       p->set<string>("Divergence Variable Name", "U"+dof_names_tracers[t]+"_divergence");
     
       ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl)); 
-      fm0.template registerEvaluator<EvalT>(ev);
+      fm0.registerEvaluator<EvalT>(ev);
     }
 
     //Input
@@ -987,7 +987,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     //Output
 
     ev = rcp(new Aeras::XZHydrostatic_TracerResid<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   // Construct Aeras Specific FEM evaluators for Vector equation
@@ -1015,7 +1015,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set< Teuchos::ArrayRCP<std::string> >("Time Dependent Tracer Names", dof_names_tracers_dot);
 
     ev = rcp(new Aeras::GatherSolution<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
   {
@@ -1035,7 +1035,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Scatter Field Name", "Scatter Hydrostatic");
 
     ev = rcp(new Aeras::ScatterResidual<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
   //End of stuff to be deleted--------------------------------------------------------
 
@@ -1060,7 +1060,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<string>("Scatter Field Name", "Compute And Scatter Jacobian");
 
     ev = rcp(new Aeras::ComputeAndScatterJac<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
+    fm0.registerEvaluator<EvalT>(ev);
   }
 
 
