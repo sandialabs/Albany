@@ -19,6 +19,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-S.xml
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-S.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder-S-ctest.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder-S-ctest.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 

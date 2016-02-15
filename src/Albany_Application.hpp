@@ -139,6 +139,10 @@ namespace Albany {
 
 #endif
 
+    bool observeResponses() const {return observe_responses;} 
+    
+    int observeResponsesFreq() const {return response_observ_freq;} 
+ 
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
@@ -1012,10 +1016,6 @@ namespace Albany {
 
   protected:
    
-    //The following are for Jacobian/residual scaling 
-    Teuchos::Array<Teuchos::Array<int> > offsets_;
-    Teuchos::RCP<Tpetra_Vector> scaleVec_;  
-
 #if defined(ALBANY_EPETRA)
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
@@ -1189,6 +1189,16 @@ namespace Albany {
     int derivatives_check_;
 
     int num_time_deriv;
+    
+    //The following are for Jacobian/residual scaling 
+    Teuchos::Array<Teuchos::Array<int> > offsets_;
+    Teuchos::RCP<Tpetra_Vector> scaleVec_;  
+
+    //boolean read from input file telling code whether to compute/print responses every step 
+    bool observe_responses; 
+    
+    //how often one wants the responses to be computed/printed
+    int response_observ_freq; 
 
   };
 }

@@ -42,6 +42,7 @@
        problems/Aeras_Dimension.cpp
        evaluators/Aeras_GatherSolution.cpp
        evaluators/Aeras_ScatterResidual.cpp
+       evaluators/Aeras_ComputeAndScatterJac.cpp
        evaluators/Aeras_DOFInterpolation.cpp
        evaluators/Aeras_DOFInterpolationLevels.cpp
        evaluators/Aeras_DOFVecInterpolationLevels.cpp
@@ -129,6 +130,8 @@
        evaluators/Aeras_GatherSolution_Def.hpp
        evaluators/Aeras_ScatterResidual.hpp
        evaluators/Aeras_ScatterResidual_Def.hpp
+       evaluators/Aeras_ComputeAndScatterJac.hpp
+       evaluators/Aeras_ComputeAndScatterJac_Def.hpp
        evaluators/Aeras_DOFInterpolation.hpp
        evaluators/Aeras_DOFInterpolation_Def.hpp
        evaluators/Aeras_DOFInterpolationLevels.hpp

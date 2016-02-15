@@ -38,7 +38,17 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
   this->addEvaluatedField(div_val_qp);
 
   this->setName("Aeras::DOFDivInterpolationLevels"+PHX::typeAsString<EvalT>());
-  //std::cout<< "Aeras::DOFDivInterpolationLevels: " << numNodes << " " << numDims << " " << numQPs << " " << numLevels << std::endl;
+
+  Teuchos::ParameterList* xsa_params =
+      p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
+  originalDiv = xsa_params->get<bool>("Original Divergence", true);
+
+  std::cout << "ORIGINAL DIV ? " << originalDiv <<"\n";
+
+  //OG Since there are a few evaluators that use div, it is possible to control
+  //print statements with it:
+  //myName = p.get<std::string>   ("Divergence Variable Name");
+  //if(myName == "Utr1_divergence" )...
 }
 
 //**********************************************************************
@@ -68,102 +78,49 @@ void DOFDivInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::set(div_val_qp, 0.0);
-#define ORIGINAL_DIV 1
-#if ORIGINAL_DIV
-  for (int cell=0; cell < workset.numCells; ++cell){
 
-	  ///For debugging only
-	  /*std::cout << "Here cell is " <<cell <<"\n";
-		for (int level=0; level < numLevels; ++level) {
-			///assign field to ones and zeros
-			for(int node = 0; node < numNodes; node++){
-			   val_node(cell,node,level,0) = 10000.;
-			   val_node(cell,node,level,1) = 20000.;
-			}
-		}*/
+  if( originalDiv ){
+	  for (int cell=0; cell < workset.numCells; ++cell){
+		  for (int qp=0; qp < numQPs; ++qp)
+			  for (int node= 0 ; node < numNodes; ++node)
+				  for (int level=0; level < numLevels; ++level)
+					  for (int dim=0; dim<numDims; dim++) {
+						  div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
+						  //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
+						  //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
+					  }
+	  }
 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int node= 0 ; node < numNodes; ++node) 
-        for (int level=0; level < numLevels; ++level) 
-          for (int dim=0; dim<numDims; dim++) {
-            div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
-            //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
-            //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
+  }//end of original div
+  else{
+	  //rather slow, needs revision
+	  for (int cell=0; cell < workset.numCells; ++cell){
+		  for (int level=0; level < numLevels; ++level) {
+			  for (std::size_t node=0; node < numNodes; ++node) {
 
-         }
-    ///For debugging
-    /*
-	for (int qp=0; qp < numQPs; ++qp) {
-		std::cout << "qp = "<< qp <<", div = " <<div_val_qp(cell,qp,0)<<"\n";
+				  const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
+				  const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
+				  const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
+				  const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
+				  const MeshScalarT det_j  = jacobian_det(cell,node);
 
-	}*/
-  }
-#else
+				  vcontra(node, 0 ) = det_j*(
+						  jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
+				  vcontra(node, 1 ) = det_j*(
+						  jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
+				  for (int qp=0; qp < numQPs; ++qp) {
+					  for (int node=0; node < numNodes; ++node) {
+						  div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
+            	    						   +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
+					  }
+				  }
+				  for (int qp=0; qp < numQPs; ++qp)
+					  div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
 
-//taking code from Shallow Water, Kokkos version
-
-for (int cell=0; cell < workset.numCells; ++cell){
-
-	///OG Debugging
-	/*for (int level=0; level < numLevels; ++level) {
-		///assign field to ones and zeros
-		for(int node = 0; node < numNodes; node++){
-		   val_node(cell,node,level,0) = -100.;
-		   val_node(cell,node,level,1) = 20000.;
-		}
-	}*/
-
-/*
-if(cell == 23){
-	std::cout <<"Metric term, jac_inv:"<< jacobian_inv(cell, 0, 0, 0) <<" "<<jacobian_inv(cell, 0, 0, 1) <<" "
-			<<jacobian_inv(cell, 0, 1, 0) <<" "<<jacobian_inv(cell, 0, 1, 1) <<" \n";
-}*/
-	for (std::size_t node=0; node < numNodes; ++node) {
-
-		//std::cout <<"Here in Divergence 1\n";
-		//std::cout << "node = "<<node <<"\n";
-		const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
-		const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
-		const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
-		const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
-		const MeshScalarT det_j  = jacobian_det(cell,node);
-
-		for (int level=0; level < numLevels; ++level) {
-			// constructing contravariant velocity
-			//std::cout <<"Here in DIV 2\n";
-			//std::cout <<"Level = "<<level << "\n";
-			//std::cout << "Field for div: " << val_node(cell, node, level, 0) <<" "<< val_node(cell, node, level, 1) <<"\n";
-			vcontra(node, 0 ) = det_j*(
-					jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
-			vcontra(node, 1 ) = det_j*(
-					jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
-
-			for (int qp=0; qp < numQPs; ++qp) {
-				//std::cout <<"Here 3\n";
-				div_val_qp(cell, qp, level) = 0.0;
-				for (int node=0; node < numNodes; ++node) {
-					div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
-            	    				   +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
-				}
-			}
-
-			for (int qp=0; qp < numQPs; ++qp) {
-				//std::cout <<"Here 4\n";
-				div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
-			}
-		}//end level loop
-	}//end of nodal loop
-
-	///OG this is for debugging
-	/*std::cout << "Here cell is " <<cell <<"\n";
-	for (int qp=0; qp < numQPs; ++qp) {
-		std::cout << "qp = "<< qp <<", div = " <<div_val_qp(cell,qp,0)<<"\n";
-
-	}*/
-	//std::cout <<"Here 5\n";
-}//end of cell loop
-#endif
-
+			  }//end of nodal loop
+		  }//end level loop
+	  }//end of cell loop
+  }//end of new div
 
 }
 

@@ -9,17 +9,28 @@
 #include "Albany_PiroObserverT.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Teuchos_ScalarTraits.hpp"
+#include "Thyra_VectorStdOps.hpp"
 
 #include <cstddef>
 
 Albany::PiroObserverT::PiroObserverT(
-    const Teuchos::RCP<Albany::Application> &app) :
-  impl_(app)
-{}
+    const Teuchos::RCP<Albany::Application> &app, 
+    Teuchos::RCP<const Thyra::ModelEvaluator<double>> model) :
+  impl_(app), 
+  model_(model), 
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
+  {
+    observe_responses_ = false; 
+    if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
+      observe_responses_ = true;
+    stepper_counter_ = 0;  
+    observe_responses_every_n_steps_ = app->observeResponsesFreq();  
+  }
 
 void
 Albany::PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, Teuchos::ScalarTraits<ST>::zero());
 }
 
@@ -28,6 +39,7 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution,
     const ST stamp)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, stamp);
 }
 
@@ -37,6 +49,7 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution_dot,
     const ST stamp)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, solution_dot, stamp);
 }
 
@@ -45,6 +58,7 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::MultiVectorBase<ST> &solution,
     const ST stamp)
 {
+  stepper_counter_++; 
   this->observeSolutionImpl(solution, stamp);
 }
 
@@ -86,6 +100,12 @@ Albany::PiroObserverT::observeSolutionImpl(
       *solution_tpetra,
       Teuchos::null,
       defaultStamp);
+  
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution));
+   }
 }
 
 void
@@ -103,6 +123,12 @@ Albany::PiroObserverT::observeSolutionImpl(
       *solution_tpetra,
       solution_dot_tpetra.ptr(),
       defaultStamp);
+
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot));
+   }
 }
 
 void
@@ -125,7 +151,62 @@ Albany::PiroObserverT::observeTpetraSolutionImpl(
 {
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
-
   impl_.observeSolutionT(stamp, solution, solution_dot);
+}
+
+void 
+Albany::PiroObserverT::observeResponse(
+    const ST defaultStamp, 
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solution,
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot)
+{
+  std::map<int,std::string> m_response_index_to_name;
+  
+  // build out args and evaluate responses if they exist
+  Thyra::ModelEvaluatorBase::OutArgs<double> outArgs = model_->createOutArgs();
+  if(outArgs.Ng()>0) {
+    // build the in arguments
+    Thyra::ModelEvaluatorBase::InArgs<double> nominal_values = model_->getNominalValues();
+    Thyra::ModelEvaluatorBase::InArgs<double> inArgs = model_->createInArgs();
+    inArgs.setArgs(nominal_values); 
+    inArgs.set_x(solution);
+    if(inArgs.supports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot))
+      inArgs.set_x_dot(solution_dot);
+    if (inArgs.supports(Thyra::ModelEvaluatorBase::IN_ARG_t)) { 
+      const ST time = impl_.getTimeParamValueOrDefault(defaultStamp);
+      inArgs.set_t(time);
+      *out << "Time = " << time << "\n";  
+    }
+  
+    // set up the output arguments, in this case only the responses
+    for(int i=0;i<outArgs.Ng();i++)
+      outArgs.set_g(i,Thyra::createMember(*model_->get_g_space(i)));
+
+    // Solve the model
+    model_->evalModel(inArgs, outArgs);
+  
+    std::size_t precision = 8;
+    std::size_t value_width = precision + 7;
+    *out << std::scientific << std::showpoint << std::setprecision(precision) << std::left;
+
+
+    // Note that we don't have g_names support in thyra yet.  Once
+    // this is added, we can print response names as well.
+  
+    for(int i=0;i<outArgs.Ng();i++) {
+      std::stringstream ss;
+      std::map<int,std::string>::const_iterator itr = m_response_index_to_name.find(i);
+      if(itr!=m_response_index_to_name.end())
+        ss << "   Response \"" << itr->second << "\" = ";
+      else
+        ss << "   Response[" << i << "] = ";
+
+      Teuchos::RCP<Thyra::VectorBase<double> > g = outArgs.get_g(i);
+      *out << ss.str(); // "   Response[" << i << "] = ";
+      for(Thyra::Ordinal k=0;k<g->space()->dim();k++)
+        *out << std::setw(value_width) << Thyra::get_ele(*g,k) << " ";
+        *out << std::endl;
+    }
+  }
 }
 

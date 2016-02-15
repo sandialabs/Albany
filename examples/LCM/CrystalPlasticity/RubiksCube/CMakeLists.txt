@@ -31,6 +31,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlotHardImplicit.py
                ${CMAKE_CURRENT_BINARY_DIR}/PlotHardImplicit.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.gnuplot
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.gnuplot COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CreateMaterialsFile.py
+               ${CMAKE_CURRENT_BINARY_DIR}/CreateMaterialsFile.py COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)

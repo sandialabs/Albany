@@ -94,6 +94,7 @@ Albany::HydrideProblem::constructDirichletEvaluators(const std::vector<std::stri
    Albany::BCUtils<Albany::DirichletTraits> bcUtils;
    dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
                                           this->params, this->paramLib);
+   offsets_ = bcUtils.getOffsets(); 
 }
 
 // Neumann BCs

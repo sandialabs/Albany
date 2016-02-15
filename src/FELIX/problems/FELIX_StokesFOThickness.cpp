@@ -109,6 +109,7 @@ FELIX::StokesFOThickness::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   offsets_ = dirUtils.getOffsets(); 
 }
 
 // Neumann BCs

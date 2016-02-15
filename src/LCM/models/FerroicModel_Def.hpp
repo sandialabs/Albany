@@ -522,7 +522,11 @@ computeState(Teuchos::Array<T>& fractions,
     h += fractions[i]*variant.h;
     beta += fractions[i]*variant.beta;
   }
+#if defined(KOKKOS_HAVE_CUDA)
+  Intrepid2::Tensor<T> eps = Intrepid2::inverse_fast23(beta);
+#else
   Intrepid2::Tensor<T> eps = Intrepid2::inverse(beta);
+#endif
 
   linear_x = x - remanent_x;
 
@@ -826,7 +830,11 @@ CrystalPhase::CrystalPhase(Intrepid2::Tensor<RealType>& R,
   eps(1,1) = E11;
   eps(2,2) = E33;
 
+#if defined(KOKKOS_HAVE_CUDA)
+  betatmp = Intrepid2::inverse_fast23(eps);
+#else
   betatmp = Intrepid2::inverse(eps);
+#endif
 
   // rotate into material basis
   LCM::changeBasis(C, Ctmp, R);

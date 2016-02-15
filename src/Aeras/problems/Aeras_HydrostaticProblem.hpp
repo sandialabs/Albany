@@ -18,6 +18,7 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_GatherSolution.hpp"
 #include "Aeras_ScatterResidual.hpp"
+#include "Aeras_ComputeAndScatterJac.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFInterpolationLevels.hpp"
 #include "Aeras_DOFVecInterpolationLevels.hpp"
@@ -46,6 +47,19 @@
 
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
+
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_CubaturePolylib.hpp"
+#include "Intrepid2_CubatureTensor.hpp"
+
+#include "Shards_CellTopology.hpp"
+
+#include "Aeras_Eta.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "Aeras/responses/Aeras_LayeredResponseUtilities.hpp"
+#include "PHAL_Neumann.hpp"
 
 namespace Aeras {
 
@@ -116,23 +130,6 @@ namespace Aeras {
     const int numTracers;
   };
 
-}
-
-#include "Intrepid2_FieldContainer.hpp"
-#include "Intrepid2_CubaturePolylib.hpp"
-#include "Intrepid2_CubatureTensor.hpp"
-
-#include "Shards_CellTopology.hpp"
-
-#include "Aeras_Eta.hpp"
-#include "Albany_Utils.hpp"
-#include "Albany_ProblemUtils.hpp"
-#include "Albany_EvaluatorUtils.hpp"
-#include "Aeras/responses/Aeras_LayeredResponseUtilities.hpp"
-#include "PHAL_Neumann.hpp"
-
-#include "Aeras_XZHydrostaticResid.hpp"
-
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Aeras::HydrostaticProblem::constructEvaluators(
@@ -151,7 +148,8 @@ Aeras::HydrostaticProblem::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   {
     Teuchos::ParameterList& xzhydrostatic_params = params->sublist("Hydrostatic Problem");
     const typename EvalT::ScalarT Ptop = xzhydrostatic_params.get<double>("Ptop", 101.325); 
@@ -738,6 +736,10 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
   {//Gradient Pi weighted Velocity 
     RCP<ParameterList> p = rcp(new ParameterList("Divergence PiVelx"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
     // Input
     p->set<string>("Variable Name",          "PiVelx");
     p->set<string>("Gradient BF Name",       "Grad BF");
@@ -849,6 +851,10 @@ Aeras::HydrostaticProblem::constructEvaluators(
 
     {//Divergence QP UTracer
       RCP<ParameterList> p = rcp(new ParameterList("Divergence UTracer"));
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+      p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
       // Input
       p->set<string>("Variable Name",          "U"+dof_names_tracers[t]);
       p->set<string>("Gradient BF Name",       "Grad BF");
@@ -951,4 +957,8 @@ Aeras::HydrostaticProblem::constructEvaluators(
 
   return Teuchos::null;
 }
+
+
+}
+
 #endif // AERAS_HYDROSTATICPROBLEM_HPP

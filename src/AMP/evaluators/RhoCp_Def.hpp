@@ -43,8 +43,6 @@ RhoCp(Teuchos::ParameterList& p,
   cond_list->validateParameters(*reflist, 0,
   Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
 
-  std::string typ = cond_list->get("Thermal Conductivity Type", "Constant");
-
   ScalarT value = cond_list->get("Value", 1.0);
   init_constant(value,p);
 

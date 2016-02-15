@@ -22,7 +22,10 @@ enum class FlowRule
 
 enum class HardeningLaw
 {
-  UNDEFINED = 0, EXPONENTIAL = 1, SATURATION = 2
+  UNDEFINED = 0, 
+  EXPONENTIAL = 1, 
+  SATURATION = 2, 
+  DISLOCATION_DENSITY = 3
 };
 
 
@@ -257,6 +260,249 @@ private:
   Intrepid2::Tensor<ArgT, NumDimT> const & F_np1_;
   RealType dt_;
 };
+
+///
+/// Hardening Base
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct HardeningBase
+{
+  HardeningBase() {}
+
+  virtual
+  char const * const
+  name() = 0;
+
+  virtual
+  void
+  createLatentMatrix(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems) = 0;
+
+  virtual
+  void
+  harden(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    DataT dt,
+    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1) = 0;
+
+  virtual
+  ~HardeningBase() {}
+};
+
+///
+///
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>
+HardeningFactory(HardeningLaw hardening_law);
+
+///
+/// Linear hardening with recovery
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct LinearMinusRecoveryHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"Exponential"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
+
+  virtual
+  void
+  harden(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    DataT dt,
+    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+
+  virtual
+  ~LinearMinusRecoveryHardening() {}
+
+private:
+  Intrepid2::Tensor<DataT, NumSlipT>
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
+
+
+};
+
+///
+/// Saturation hardening
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct SaturationHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"Saturation"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
+
+  virtual
+  void
+  harden(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    DataT dt,
+    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+
+  virtual
+  ~SaturationHardening() {}
+
+private:
+  Intrepid2::Tensor<DataT, NumSlipT>
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
+
+};
+
+///
+/// Dislocation-density based hardening
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct DislocationDensityHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"Dislocation-Density Based"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
+
+  virtual
+  void
+  harden(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    DataT dt,
+    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+
+  virtual
+  ~DislocationDensityHardening() {}
+
+private:
+  Intrepid2::Tensor<DataT, NumSlipT>
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
+
+};
+
+///
+/// No hardening
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct NoHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"No hardening"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
+
+  virtual
+  void
+  harden(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    DataT dt,
+    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+
+  virtual
+  ~NoHardening() {}
+
+private:
+  Intrepid2::Tensor<DataT, NumSlipT>
+  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
+
+};
+
+//
+//
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>
+hardeningFactory(HardeningLaw hardening_law)
+{
+  using HTUP = std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>;
+
+  switch (hardening_law) {
+
+  default:
+    std::cerr << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "ERROR: Unknown hardening law\n";
+    exit(1);
+    break;
+
+  case HardeningLaw::EXPONENTIAL:
+    return HTUP(new LinearMinusRecoveryHardening<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  case HardeningLaw::SATURATION:
+    return HTUP(new SaturationHardening<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  case HardeningLaw::DISLOCATION_DENSITY:
+    return HTUP(new DislocationDensityHardening<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  case HardeningLaw::UNDEFINED:
+    return HTUP(new NoHardening<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  }
+
+  return HTUP(nullptr);
+}
 
 } // namespace CP
 

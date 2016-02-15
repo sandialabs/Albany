@@ -48,8 +48,11 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT constant_value_;
-  void init_constant(ScalarT value, Teuchos::ParameterList& p);
+  // we need to store the value of powder and substrate
+  // powder thermal conductivity
+  ScalarT powder_value_;
+  // Substrate (solid) thermal conductivity
+  ScalarT solid_value_;
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
   PHX::MDField<ScalarT,Cell,QuadPoint> k_;
@@ -60,6 +63,13 @@ private:
   unsigned int num_nodes_;
   unsigned int workset_size_;
 
+//  // Return initial powder thermal conductivity
+//  ScalarT getPowderThermalCondutivity() const;
+//  
+//  // Return initial substrate thermal conductivity
+//  ScalarT getSubstrateThermalCondutivity() const;
+  
+  
   Teuchos::RCP<const Teuchos::ParameterList>
     getValidThermalCondParameters() const;
 

@@ -71,6 +71,7 @@ Albany::Helmholtz2DProblem::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   offsets_ = dirUtils.getOffsets(); 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

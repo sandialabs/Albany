@@ -994,7 +994,6 @@ void AAdapt::AerasHydrostaticPureAdvection1::compute(double* solution, const dou
 	//  q0[nt] = data[6 + nt];
 	//}
 
-	//printf(".....inside Baroclinic Instabilities\n");
 
 	std::vector<double> Pressure(numLevels);
 	std::vector<double> Pi(numLevels);
@@ -1020,7 +1019,7 @@ void AAdapt::AerasHydrostaticPureAdvection1::compute(double* solution, const dou
 
 
 	const double myPi  = pi;
-	const double alpha = myPi/4;
+	const double alpha = myPi/2;
 	const double cosAlpha = std::cos(alpha);
 	const double sinAlpha = std::sin(alpha);
 
@@ -1038,8 +1037,11 @@ void AAdapt::AerasHydrostaticPureAdvection1::compute(double* solution, const dou
 	const double sinLambda = std::sin(lambda);
 	const double cosLambda = std::cos(lambda);
 
-	const double u =  U0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
-	const double v = -U0*(sinLambda*sinAlpha);
+	const double a = Aeras::ShallowWaterConstants::self().earthRadius;
+
+	  const double u0 = 2*myPi*a/(12.*24.*3600.);
+	const double u =  u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+	const double v = -u0*(sinLambda*sinAlpha);
 
 	int offset = 0;
 	//Surface Pressure
@@ -1056,7 +1058,6 @@ void AAdapt::AerasHydrostaticPureAdvection1::compute(double* solution, const dou
 	}
 
 	//for Tracers
-	const double a = Aeras::ShallowWaterConstants::self().earthRadius;
 	const double lambda_c = 1.5*myPi;
 	const double theta_c = 0;
 	const double sinTheta_c = std::sin(theta_c);
@@ -1081,11 +1082,11 @@ void AAdapt::AerasHydrostaticPureAdvection1::compute(double* solution, const dou
 			else{
 				tr = 0;
 			}
-			solution[offset++] = tr;
+			solution[offset++] = tr*Pi[level];
 		}
 	}
 
-	//std::cout << "Last offset " << offset <<"\n";
+	//std::cout << "Pi[1] " << Pi[1] <<"\n";
 
 }
 //*****************************************************************************

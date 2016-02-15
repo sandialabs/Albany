@@ -104,6 +104,7 @@ Albany::PeridigmProblem::constructDirichletEvaluators(
    if (neq>2) dirichletNames[2] = "Z";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+   offsets_ = dirUtils.getOffsets(); 
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

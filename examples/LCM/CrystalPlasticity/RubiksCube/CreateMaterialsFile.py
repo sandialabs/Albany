@@ -14,17 +14,24 @@ def ParseMaterialParametersFile(file_name, mat_params):
     mat_params_file.close()
     for param in raw_data:
         vals = string.splitfields(param)
+
+        print vals
         if len(vals) == 2:
             name = vals[0]
             value = vals[1]
-            print " ", name, value
-            if name in mat_params.keys():
-                mat_params[name] = value
-            else:
-                print "\n**** Error, unexpected material parameter:", name
-                print "\n     Allowable material parameters:"
-                for key in mat_params.keys():
-                    print "      ", key
+        if len(vals) == 3:
+            name = vals[0]
+            value = vals[1] + " " + vals[2]    
+
+        
+        print " ", name, value
+        if name in mat_params.keys():
+            mat_params[name] = value
+        else:
+            print "\n**** Error, unexpected material parameter:", name
+            print "\n     Allowable material parameters:"
+            for key in mat_params.keys():
+                print "      ", key
                 print
                 sys.exit(1)
     for key in mat_params.keys():
@@ -223,6 +230,7 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         # Integration scheme
         WriteParameter("Integration Scheme", "string", mat_params["integration_scheme"], mat_file, indent)
         if mat_params["integration_scheme"] == "Implicit":
+            WriteParameter("Nonlinear Solver Step Type", "double", mat_params["nonlinear_solver_step_type"], mat_file, indent) 
             WriteParameter("Implicit Integration Relative Tolerance", "double", mat_params["implicit_integration_relative_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Absolute Tolerance", "double", mat_params["implicit_integration_absolute_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)
@@ -232,19 +240,19 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         WriteParameter("Output Fp", "bool", "true", mat_file, indent)
         #WriteParameter("Output L", "bool", "true", mat_file, indent)
         WriteParameter("Output CP_Residual", "bool", "true", mat_file, indent)
+        WriteParameter("Output eqps", "bool", "true", mat_file, indent)
         #for i in range(num_slip_systems):
         #    WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
         #for i in range(num_slip_systems):
         #    WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
         #for i in range(num_slip_systems):
         #    WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
-
-        for i in range(1):
-            WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
-        for i in range(1):
-            WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
-        for i in range(1):
-            WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(1):
+        #    WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(1):
+        #    WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
+        #for i in range(1):
+        #    WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
 
         # Elastic modulii and lattice orientation
         indent = StartParamList("Crystal Elasticity", mat_file, indent)
@@ -314,6 +322,7 @@ if __name__ == "__main__":
     mat_params["hardening"] = None
     mat_params["hardening_exponent"] = None
     mat_params["integration_scheme"] = None
+    mat_params["nonlinear_solver_step_type"] = "unspecified"
     mat_params["implicit_integration_relative_tolerance"] = "unspecified"
     mat_params["implicit_integration_absolute_tolerance"] = "unspecified"
     mat_params["implicit_integration_max_iterations"] = "unspecified"

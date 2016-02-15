@@ -69,6 +69,10 @@ private:
   const int numDims;
   const int numQPs;
   const int numLevels;
+
+  std::string myName;
+
+  bool originalDiv;
 };
 
 }

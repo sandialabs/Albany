@@ -295,13 +295,16 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   scaleBCdofs = scalingParams->get("Scale BC Dofs", false);
   if (scale == 1.0)  scaleBCdofs = false;
   RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(params, "Problem", true);
-  if ((problemParams->get("Name", "Heat 1D") != "Mechanics 3D") || 
-      (problemParams->get("Name", "Heat 1D") != "Mechanics 2D")) { 
+  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") || 
+      (problemParams->get("Name", "Heat 1D") == "Poisson 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Poisson 3D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 1D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D")) { 
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application constructor: " <<
-                                 "Scale BC dofs is set to true but this only works for Mechanics problems right now, " << 
-                                 "not Problem = " << problemParams->get("Name", "Heat 1D") << std::endl);
+                                 "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);  
     }
   }
   
@@ -331,6 +334,8 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
+  //FIXME: call setScale only on first step rather than at every Newton step. 
+  //It's called every step now b/c calling it once did not work for Schwarz problems. 
   countScale = 0; 
   // Create discretization object
   discFactory = rcp(new Albany::DiscretizationFactory(params, commT, expl));
@@ -415,6 +420,8 @@ void Albany::Application::buildProblem()   {
   ResponseFactory responseFactory(Teuchos::rcp(this,false), problem, meshSpecs,
                                   Teuchos::rcp(&stateMgr,false));
   responses = responseFactory.createResponseFunctions(responseList);
+  observe_responses = responseList.get("Observe Responses", true); 
+  response_observ_freq = responseList.get("Responses Observation Frequency", 1); 
 
   // Build state field manager
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginBuildingSfm();
@@ -1119,10 +1126,10 @@ computeGlobalResidualImplT(
 
     workset.fT = fT;
     loadWorksetNodesetInfo(workset);
-    //set the scale only if scaleBCdofs is on and it's the first time 
-    if (scaleBCdofs == true && countScale == 0) {
-      setScale(workset); 
-      Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+    if (scaleBCdofs == true) {
+      setScale(workset);
+      if (countScale == 0)  
+        Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
       countScale++; 
     }
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
@@ -1443,10 +1450,10 @@ computeGlobalJacobianImplT(const double alpha,
 
     loadWorksetNodesetInfo(workset);
     
-    //setScale only if scaleBCdofs is on and it's the 1st time 
-    if (scaleBCdofs == true && countScale == 0) {
+    if (scaleBCdofs == true) {
       setScale(workset); 
-      Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+      if (countScale == 0)  
+        Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
       countScale++; 
     }
 
@@ -4329,14 +4336,18 @@ void Albany::Application::setScale(PHAL::Workset& workset)
     //std::cout << "key: " << iterator->first <<  std::endl;
     const std::vector<std::vector<int> >& nsNodes = iterator->second;
     for (unsigned int i = 0; i < nsNodes.size(); i++) {
+      //std::cout << "l, offsets size: " << l << ", " << offsets_[l].size() << std::endl; 
       for (unsigned j = 0; j < offsets_[l].size(); j++) {
-          int lunk = nsNodes[i][offsets_[l][0]]; 
-          //std::cout << "j, i, lunk, offsets_: " << j << ", " << i << ", " << lunk << ", " << offsets_[l][0] << std::endl;
-          scaleVec_->replaceLocalValue(lunk, scale);  
+        int lunk = nsNodes[i][offsets_[l][j]];
+        //std::cout << "l, j, i, offsets_: " << l << ", " << j << ", " << i << ", " << offsets_[l][j] << std::endl;
+        //std::cout << "lunk = " << lunk << std::endl; 
+        scaleVec_->replaceLocalValue(lunk, scale);  
       }
     }
     l++; 
   }
+  //std::cout << "scaleVec_: " <<std::endl;  
+  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
 }
 
 void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws)
