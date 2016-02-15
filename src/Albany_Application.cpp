@@ -4336,14 +4336,18 @@ void Albany::Application::setScale(PHAL::Workset& workset)
     //std::cout << "key: " << iterator->first <<  std::endl;
     const std::vector<std::vector<int> >& nsNodes = iterator->second;
     for (unsigned int i = 0; i < nsNodes.size(); i++) {
+      //std::cout << "l, offsets size: " << l << ", " << offsets_[l].size() << std::endl; 
       for (unsigned j = 0; j < offsets_[l].size(); j++) {
-          int lunk = nsNodes[i][offsets_[l][0]]; 
-          //std::cout << "j, i, lunk, offsets_: " << j << ", " << i << ", " << lunk << ", " << offsets_[l][0] << std::endl;
-          scaleVec_->replaceLocalValue(lunk, scale);  
+        int lunk = nsNodes[i][offsets_[l][j]];
+        //std::cout << "l, j, i, offsets_: " << l << ", " << j << ", " << i << ", " << offsets_[l][j] << std::endl;
+        //std::cout << "lunk = " << lunk << std::endl; 
+        scaleVec_->replaceLocalValue(lunk, scale);  
       }
     }
     l++; 
   }
+  //std::cout << "scaleVec_: " <<std::endl;  
+  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
 }
 
 void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws)
