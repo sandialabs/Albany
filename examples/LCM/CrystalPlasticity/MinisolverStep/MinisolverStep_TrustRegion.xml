@@ -450,7 +450,7 @@
 
                          <Parameter name="Tolerance" 
                                     type="double" 
-                                    value="1.0e-9"/>
+                                    value="1.0e-10"/>
 
                     </ParameterList>
 
@@ -500,7 +500,7 @@
 
                               <Parameter name="Tolerance" 
                                          type="double" 
-                                         value="1.0e-8"/>
+                                         value="1.0e-10"/>
 
                          </ParameterList>
 
