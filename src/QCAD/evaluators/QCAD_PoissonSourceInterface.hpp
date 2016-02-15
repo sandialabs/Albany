@@ -74,7 +74,7 @@ protected:
 
   std::vector<double> elecAffinity, bandGap, fermiEnergy;
   std::vector<double> trapDensity, acceptorDegFac, donorDegFac; 
-  std::vector<std::string> trapSpectrum; 
+  std::vector<std::string> trapSpectrum, trapType; 
 
   Teuchos::Array<int> offset;
   Teuchos::RCP<MaterialDatabase> materialDB;
