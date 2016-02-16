@@ -788,7 +788,7 @@ namespace Albany {
 
     //! Routine for setting a scaling to be applied to the Jacobian/resdiual 
     //  in the case Scale BC Dofs is true. 
-    void setScale(PHAL::Workset& workset);  
+    void setScaleBCDofs(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
     void setupBasicWorksetInfo(

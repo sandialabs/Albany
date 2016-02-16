@@ -334,7 +334,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
-  //FIXME: call setScale only on first step rather than at every Newton step. 
+  //FIXME: call setScaleBCDofs only on first step rather than at every Newton step. 
   //It's called every step now b/c calling it once did not work for Schwarz problems. 
   countScale = 0; 
   // Create discretization object
@@ -1127,7 +1127,7 @@ computeGlobalResidualImplT(
     workset.fT = fT;
     loadWorksetNodesetInfo(workset);
     if (scaleBCdofs == true) {
-      setScale(workset);
+      setScaleBCDofs(workset);
       if (countScale == 0)  
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
       countScale++; 
@@ -1451,7 +1451,7 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     
     if (scaleBCdofs == true) {
-      setScale(workset); 
+      setScaleBCDofs(workset); 
       if (countScale == 0)  
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
       countScale++; 
@@ -4327,7 +4327,7 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
 
 }
    
-void Albany::Application::setScale(PHAL::Workset& workset) 
+void Albany::Application::setScaleBCDofs(PHAL::Workset& workset) 
 {
   scaleVec_->putScalar(1.0);
   int l = 0;  
