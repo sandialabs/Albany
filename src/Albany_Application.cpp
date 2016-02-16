@@ -297,6 +297,15 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (scaleType == "Constant") { 
     scale_type = CONSTANT;
   }
+  else if (scaleType == "Diagonal") {
+    scale_type = DIAG;
+    if (scaleBCdofs == true) { 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                 std::endl << "Error in Albany::Application: " <<
+                                 "Scale BC dofs does not work for "  << scaleType 
+                                 << "Type scaling, only Type = Constant Scaling."<< std::endl);  
+    }
+  }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "The scaling Type you selected " << scaleType << " is not supported!" << 
@@ -312,7 +321,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
       (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D")) { 
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                 std::endl << "Error in Albany::Application constructor: " <<
+                                 std::endl << "Error in Albany::Application: " <<
                                  "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);  
     }
   }
@@ -1428,14 +1437,11 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 #endif
 
-  //allocate scaleVec_ 
-  if (scaleVec_ == Teuchos::null) 
-      scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
-
-  //scale Jacobian by 1/scale in the case scaleBCdofs is off 
+  //scale Jacobian 
   if (scaleBCdofs == false) { 
     if (scale != 1.0) {
       jacT->fillComplete();
+      setScale(jacT); 
       jacT->leftScale(*scaleVec_);
       jacT->resumeFill();
       countScale++; 
