@@ -787,7 +787,7 @@ namespace Albany {
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
     //! Routines for setting a scaling to be applied to the Jacobian/resdiual 
-    void setScale();  
+    void setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT = Teuchos::null); 
     void setScaleBCDofs(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
@@ -1147,7 +1147,7 @@ namespace Albany {
     double scale; 
     double scaleBCdofs; 
     //Scaling types
-    enum SCALETYPE {CONSTANT};
+    enum SCALETYPE {CONSTANT, DIAG};
     SCALETYPE scale_type;
 
     //! Shape Optimization data
