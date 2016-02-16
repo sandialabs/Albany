@@ -52,6 +52,8 @@
 #include "GOAL_BCUtils.hpp"
 #endif
 
+//#define WRITE_TO_MATRIX_MARKET
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -299,6 +301,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   }
   else if (scaleType == "Diagonal") {
     scale_type = DIAG;
+    scale = 1.0e1; 
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application: " <<
@@ -1142,7 +1145,6 @@ computeGlobalResidualImplT(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
-  
   if (dfm!=Teuchos::null) {
     PHAL::Workset workset;
 
@@ -1445,10 +1447,15 @@ computeGlobalJacobianImplT(const double alpha,
   //scale Jacobian 
   if (scaleBCdofs == false && scale != 1.0) { 
     jacT->fillComplete();
-    setScale(jacT); 
     jacT->leftScale(*scaleVec_);
     jacT->resumeFill();
     countScale++; 
+#ifdef WRITE_TO_MATRIX_MARKET
+    char name[100];  //create string for file name
+    sprintf(name, "scale%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(name, scaleVec_);
+#endif
+    setScale(jacT); 
   }
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2277,7 +2284,6 @@ applyGlobalDistParamDerivImplT(const double current_time,
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
   }
-  fpVT->scale(1.0/scale);
   } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -4351,9 +4357,15 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
   else if (scale_type == DIAG) { //diagonal scaling 
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
-      jacT->getLocalDiagCopy(*scaleVec_); 
+      jacT->getLocalDiagCopy(*scaleVec_);
+      //std::cout << "scaleVec_ noninv: " <<std::endl;  
+      //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
+      scaleVec_->reciprocal(*scaleVec_);  
     }
   }
+  //std::cout << "countScale: " << countScale << std::endl; 
+  //std::cout << "scaleVec_: " <<std::endl;  
+  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
 }
    
 void Albany::Application::setScaleBCDofs(PHAL::Workset& workset) 
