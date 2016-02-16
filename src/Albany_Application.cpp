@@ -1418,6 +1418,11 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
+  //Allocate and populate scaleVec_ if it hasn't been allocated yet  
+  if (scaleVec_ == Teuchos::null) { 
+    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
+    setScale(); 
+  }
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
