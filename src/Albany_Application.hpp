@@ -786,8 +786,8 @@ namespace Albany {
     //! Routine to load common sideset info into workset
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
-    //! Routine for setting a scaling to be applied to the Jacobian/resdiual 
-    //  in the case Scale BC Dofs is true. 
+    //! Routines for setting a scaling to be applied to the Jacobian/resdiual 
+    void setScale();  
     void setScaleBCDofs(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
@@ -1146,6 +1146,9 @@ namespace Albany {
     //Value to scale Jacobian/Residual by to possibly improve conditioning
     double scale; 
     double scaleBCdofs; 
+    //Scaling types
+    enum SCALETYPE {CONSTANT};
+    SCALETYPE scale_type;
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;

@@ -293,6 +293,16 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   RCP<Teuchos::ParameterList> scalingParams = Teuchos::sublist(params, "Scaling", true);
   scale = scalingParams->get("Scale", 1.0);
   scaleBCdofs = scalingParams->get("Scale BC Dofs", false);
+  std::string scaleType = scalingParams->get("Type", "Constant");
+  if (scaleType == "Constant"){ 
+    scale_type = CONSTANT;
+  }
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "The scaling Type you selected " << scaleType << " is not supported!" << 
+          "Supported scaling Types are currently: Constant" << std::endl); 
+  }
+
   if (scale == 1.0)  scaleBCdofs = false;
   RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(params, "Problem", true);
   if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") || 
@@ -1105,8 +1115,15 @@ computeGlobalResidualImplT(
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  
+  //Allocate scaleVec_ 
+  if (scaleVec_ == Teuchos::null) 
+    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
 
-  if (scaleBCdofs == false) fT->scale(1.0/scale);
+  if (scaleBCdofs == false) {
+    setScale(); 
+    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
+  }
 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
@@ -1117,9 +1134,6 @@ computeGlobalResidualImplT(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
-  //Allocate scaleVec_ and set to 1s only if scaleBCdofs is on and it's the first time 
-  if (scaleBCdofs == true && scaleVec_ == Teuchos::null) 
-    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
   
   if (dfm!=Teuchos::null) {
     PHAL::Workset workset;
@@ -1414,14 +1428,14 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 #endif
 
-  //allocate scaleVec_ only 1st time
+  //allocate scaleVec_ 
   if (scaleVec_ == Teuchos::null) 
       scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
 
   //scale Jacobian by 1/scale in the case scaleBCdofs is off 
   if (scaleBCdofs == false) { 
     if (scale != 1.0) {
-      scaleVec_->putScalar(1.0/scale);
+      setScale(); 
       jacT->fillComplete();
       jacT->leftScale(*scaleVec_);
       jacT->resumeFill();
@@ -1476,17 +1490,15 @@ computeGlobalJacobianImplT(const double alpha,
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
 #endif
-  //Apply scaling to residual
-  if (Teuchos::nonnull(fT))
-    if (scaleBCdofs == true)  
-      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
- 
   jacT->fillComplete();
 
-  //Apply scaling to Jacobian 
-  if (scaleBCdofs == true) 
+  //Apply scaling to residual and Jacobian 
+  if (scaleBCdofs == true) {
+    if (Teuchos::nonnull(fT))
+      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
     jacT->leftScale(*scaleVec_);
-
+  }
+    
  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (overlapped_jacT->isFillActive()) {
     // Makes getLocalMatrix() valid.
@@ -4325,6 +4337,10 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
     workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 
+}
+void Albany::Application::setScale() 
+{
+  scaleVec_->putScalar(1.0/scale);
 }
    
 void Albany::Application::setScaleBCDofs(PHAL::Workset& workset) 
