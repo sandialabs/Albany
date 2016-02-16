@@ -302,7 +302,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application: " <<
-                                 "Scale BC dofs does not work for "  << scaleType 
+                                 "Scale BC dofs does not work with "  << scaleType 
                                  << "Type scaling, only Type = Constant Scaling."<< std::endl);  
     }
   }
@@ -1125,12 +1125,12 @@ computeGlobalResidualImplT(
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
   
   //Allocate scaleVec_ 
-  if (scaleVec_ == Teuchos::null) { 
+  if (scaleVec_ == Teuchos::null && scale != 1.0) { 
     scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
     setScale(); 
   }
 
-  if (scaleBCdofs == false)  
+  if (scaleBCdofs == false && scale != 1.0)  
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
 
 #ifdef ALBANY_LCM
@@ -1418,15 +1418,15 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
-  //Allocate and populate scaleVec_ if it hasn't been allocated yet  
-  if (scaleVec_ == Teuchos::null) { 
+  //Allocate and populate scaleVec_  
+  if (scaleVec_ == Teuchos::null && scale != 1.0) { 
     scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
     setScale(); 
   }
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    if (scaleBCdofs == false) {
+    if (scaleBCdofs == false && scale != 1.0) {
       fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
     }
   }
@@ -1443,14 +1443,12 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 
   //scale Jacobian 
-  if (scaleBCdofs == false) { 
-    if (scale != 1.0) {
-      jacT->fillComplete();
-      setScale(jacT); 
-      jacT->leftScale(*scaleVec_);
-      jacT->resumeFill();
-      countScale++; 
-    }
+  if (scaleBCdofs == false && scale != 1.0) { 
+    jacT->fillComplete();
+    setScale(jacT); 
+    jacT->leftScale(*scaleVec_);
+    jacT->resumeFill();
+    countScale++; 
   }
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -1965,21 +1963,18 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
 
   params = Teuchos::null;
-
+  
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    fT->scale(1.0/scale);
   }
 
   // Assemble derivatives
   if (Teuchos::nonnull(JVT)) {
     JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
-    JVT->scale(1.0/scale);
   }
   if (Teuchos::nonnull(fpT)) {
     fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
-    fpT->scale(1.0/scale);
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -4354,7 +4349,6 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
     scaleVec_->putScalar(1.0/scale);
   }
   else if (scale_type == DIAG) { //diagonal scaling 
-    //IKT, 2/15/16: this code is not yet called anywhere and needs to be tested.
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
       jacT->getLocalDiagCopy(*scaleVec_); 
