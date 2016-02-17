@@ -67,14 +67,23 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   // if this is a restart solution
   if (disc_->hasRestartSolution()) {
     if (paramLib_->isParameter("Time")) {
+
       double initialValue = 0.0;
-        if(appParams->get<std::string>("Solution Method", "Steady") == "Continuation")
-          initialValue =
-            appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
-            get<double>("Initial Value", 0.0);
-        else if(appParams->get<std::string>("Solution Method", "Steady") == "Transient")
-          initialValue =
-            appParams->sublist("Piro").sublist("Trapezoid Rule").get<double>("Initial Time", 0.0);
+
+      if(appParams->sublist("Problem").
+         get<std::string>("Solution Method", "Steady") == "Continuation")
+      {
+        initialValue =
+          appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
+          get<double>("Initial Value", 0.0);
+      }
+      else if(appParams->sublist("Problem").
+              get<std::string>("Solution Method", "Steady") == "Transient")
+      {
+        initialValue =
+          appParams->sublist("Piro").sublist("Trapezoid Rule").
+          get<double>("Initial Time", 0.0);
+      }
       paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
     }
   }
