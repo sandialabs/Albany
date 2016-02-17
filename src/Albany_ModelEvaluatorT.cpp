@@ -496,8 +496,11 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
 
     result.setSupports(
         Thyra::ModelEvaluatorBase::OUT_ARG_DgDx, i, dgdx_support);
-    result.setSupports(
+    if(supports_xdot){
+      result.setSupports(
         Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dot, i, dgdx_support);
+    }
+
     // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
     //result.setSupports(
     //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
@@ -559,14 +562,12 @@ Albany::ModelEvaluatorT::evalModelImpl(
     ConverterT::getConstTpetraVector(inArgsT.get_x());
 
   const Teuchos::RCP<const Tpetra_Vector> x_dotT =
-//    Teuchos::nonnull(inArgsT.get_x_dot()) ?
     (supports_xdot && Teuchos::nonnull(inArgsT.get_x_dot())) ?
     ConverterT::getConstTpetraVector(inArgsT.get_x_dot()) :
     Teuchos::null;
 
 
   const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
-//    (Teuchos::nonnull(this->get_x_dotdot())) ?
     (supports_xdotdot && Teuchos::nonnull(this->get_x_dotdot())) ?
     ConverterT::getConstTpetraVector(this->get_x_dotdot()) :
     Teuchos::null;
@@ -706,9 +707,14 @@ Albany::ModelEvaluatorT::evalModelImpl(
       Teuchos::null;
 
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out = outArgsT.get_DgDx(j);
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out = outArgsT.get_DgDx_dot(j);
+    Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out;
+
+    if(supports_xdot)
+      dgdxdotT_out = outArgsT.get_DgDx_dot(j);
+
 //    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out = this->get_DgDx_dotdot(j);
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
+
     sanitize_nans(dgdxT_out);
     sanitize_nans(dgdxdotT_out);
     sanitize_nans(dgdxdotdotT_out);

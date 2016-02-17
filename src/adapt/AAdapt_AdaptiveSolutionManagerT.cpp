@@ -130,9 +130,6 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
              problemParams->sublist("Initial Condition Dot"));
           current_soln->getVectorNonConst(1)->doExport(*overlapped_soln->getVector(1), *exporterT, Tpetra::INSERT);
        }
-       else {
-          current_soln->getVectorNonConst(1)->putScalar(0.0);
-       }
 
        if(num_time_deriv > 1){
           overlapped_soln->getVectorNonConst(2)->doImport(*current_soln->getVector(2), *importerT, Tpetra::INSERT);
@@ -140,9 +137,6 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
              overlapped_soln->getVectorNonConst(2), wsElNodeEqID, wsEBNames, coords, neq, numDim,
              problemParams->sublist("Initial Condition DotDot"));
           current_soln->getVectorNonConst(2)->doExport(*overlapped_soln->getVector(2), *exporterT, Tpetra::INSERT);
-        }
-        else {
-          current_soln->getVectorNonConst(2)->putScalar(0.0);
         }
 
     }
