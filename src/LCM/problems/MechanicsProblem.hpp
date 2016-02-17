@@ -503,9 +503,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     small_strain = true;
   }
 
-  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
-    small_strain = true;
-  }
+//  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
+//    small_strain = true;
+//  }
 
   // Surface element checking
   bool surface_element = false;
@@ -1933,6 +1933,17 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
           AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
       }
+      
+      // Mechanics residual need value of density for transient analysis.
+      // Get it from material. Assumed constant in element block.
+            if (material_db_->isElementBlockParam(eb_name,"Density"))
+            {
+                RealType density =
+                    material_db_->getElementBlockParam<RealType>(eb_name, 
+                        "Density");
+                p->set<RealType>("Density", density);
+            }
+      
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
       //Output
       p->set<std::string>("Residual Name", "Displacement Residual");
