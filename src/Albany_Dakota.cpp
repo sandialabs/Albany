@@ -139,7 +139,7 @@ int Albany_Dakota(int argc, char *argv[])
 
   if (dakota.rankZero()) {
     Dakota::RealVector finalValues =
-      dakota.getFinalSolution().continuous_variables();
+      dakota.getFinalSolution().all_continuous_variables();
     *out << "\nAlbany_Dakota: Final Values from Dakota = "
          << std::setprecision(8) << finalValues << endl;
 
