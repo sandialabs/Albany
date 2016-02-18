@@ -42,7 +42,13 @@
         <h1>
 <a name="albany" class="anchor" href="#albany"><span class="octicon octicon-link"></span></a>Albany</h1>
 
-<p>Albany is an implicit, unstructured grid, finite element code for the solution and analysis of partial differential equations.</p>
+<p>Albany is an implicit, unstructured grid, finite element code for the
+solution and analysis of multiphysics problems. The Albany repository on the
+GitHub site contains hundreds of regression tests and examples that demonstrate
+the code's capabilities on a wide variety of problems including fluid
+mechanics, solid mechanics (elasticity and plasticity), ice-sheet flow, 
+<a href="http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6242832">quantum device modeling</a>, and many other applications.
+</p>
 
 <h2>
 <a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
@@ -57,20 +63,6 @@
 <p><a href="https://github.com/gahansen/Albany/wiki/Albany-capabilities">Albany Capabilities</a></p>
 
 <h3>
-<a name="repo-branches" class="anchor" href="#repo-branches"><span class="octicon octicon-link"></span></a>Repo branches</h3>
-
-<p>The Git repository contains two branches, <em>master</em> and <em>tpetra</em>. The master branch contains the stable version of Albany that is 
-based on Epetra distributed solver data structures.</p>
-
-<p>The <em>tpetra</em> branch is under development to replace the Epetra architecture with
-the Tpetra and Thyra Trilinos packages. With Tpetra, the ordinal size of the
-distributed data structures is a template parameter which is chosen to match the
-fundamental word size of the target computing platform. This enables the calculation of
-very large problems (those over 2.1 billion degrees of freedom). Additionally, Tpetra internally
-uses the Kokkos multicore package to support generic multithreaded multicore computing across
-a wide variety of platforms.</p>
-
-<h3>
 <a name="software-architecture" class="anchor" href="#software-architecture"><span class="octicon octicon-link"></span></a>Software architecture</h3>
 
 <p>Albany heavily leverages the Trilinos Framework, available at:</p>
@@ -80,6 +72,18 @@ a wide variety of platforms.</p>
 
 <p>and optionally depends on the SCOREC Parallel Unstructured Mesh Infrastructure 
 <a href="http://www.scorec.rpi.edu/pumi">http://www.scorec.rpi.edu/pumi</a></p>
+
+<p>Albany supports the solution of very large problems (those over 2.1 billion
+degrees of freedom) using MPI, and also demonstrates the use of the 
+<a href="https://github.com/kokkos">Kokkos</a>
+hardware abstraction package to support generic manycore computing across a
+variety of platforms - MPI + [threads, OpenMP, Cuda, Intel MIC].</p>
+
+<p>In addition to supporting embedded sensitivity analysis and uncertainty
+quantification, Albany can be tightly-coupled to 
+<a href="https://dakota.sandia.gov">Dakota</a>
+using the Trilinos
+TriKota package.</p>
 
 <p>The SCOREC tools are on GitHub at:</p>
 <a href="http://github.com/SCOREC/core">http://github.com/SCOREC/core</a></p>
@@ -102,9 +106,9 @@ which includes instructions for building on the IBM BG/Q</p>
 <h2>
 <a name="nightly-build-and-test-results" class="anchor" href="#nightly-build-and-test-results"><span class="octicon octicon-link"></span></a>Nightly Build and Test Results</h2>
 
-<p>Ths nightly build results for the Trilinos and SCOREC libraries and the <em>master</em> and <em>tpetra</em> branches
-of Albany are posted on the Albany CDash site. Further, the results of the regression test suite of both
-branches (gathered on a SMP server) are presented on the CDash site at 
+<p>Ths nightly build results for the Trilinos and SCOREC libraries along with Albany
+and the status of the Albany regression tests 
+are posted on the Albany CDash site at 
 <a href="http://my.cdash.org/index.php?project=Albany">http://my.cdash.org/index.php?project=Albany</a></p>
 
 <p>The regression test suite is contained within the Albany repository in the directory:</p>
