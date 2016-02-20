@@ -18,9 +18,7 @@ Albany::AbstractProblem::AbstractProblem(
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
-  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_))),
-  isAdjoint(false),
-  enrichAdjoint(false)
+  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_)))
 {
 
  /* 

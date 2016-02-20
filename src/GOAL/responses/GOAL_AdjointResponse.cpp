@@ -38,12 +38,13 @@ AdjointResponse::AdjointResponse(
   time(0),
   enrichAdjoint(false),
   application(app),
-  problem(prob),
+  problem(Teuchos::null),
   stateManager(sm),
   meshSpecs(ms),
   params(rp)
 {
   print("Building adjoint pde instantiations");
+  problem = Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(prob);
   enrichAdjoint = problem->enrichAdjoint;
   buildFieldManagers();
 }
