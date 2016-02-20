@@ -13,11 +13,9 @@ SET(SOURCES
   utils/GOAL_BCUtils.cpp
   utils/GOAL_LinearSolve.cpp
   evaluators/GOAL_ComputeHierarchicBasis.cpp
-  evaluators/GOAL_AdvDiffResidual.cpp
   evaluators/GOAL_LpStress.cpp
   evaluators/GOAL_ScatterQoI.cpp
   problems/GOAL_MechanicsProblem.cpp
-  problems/GOAL_AdvDiffProblem.cpp
   responses/GOAL_AdjointResponse.cpp)
 
 SET(HEADERS
@@ -25,14 +23,11 @@ SET(HEADERS
   utils/GOAL_LinearSolve.hpp
   evaluators/GOAL_ComputeHierarchicBasis.hpp
   evaluators/GOAL_ComputeHierarchicBasis_Def.hpp
-  evaluators/GOAL_AdvDiffResidual.hpp
-  evaluators/GOAL_AdvDiffResidual_Def.hpp
   evaluators/GOAL_LpStress.hpp
   evaluators/GOAL_LpStress_Def.hpp
   evaluators/GOAL_ScatterQoI.hpp
   evaluators/GOAL_ScatterQoI_Def.hpp
   problems/GOAL_MechanicsProblem.hpp
-  problems/GOAL_AdvDiffProblem.hpp
   responses/GOAL_AdjointResponse.hpp)
 
 include_directories(

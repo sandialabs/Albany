@@ -117,15 +117,6 @@ namespace Albany {
     //! Get a list of the Special fields needed to implement the problem
     const AbstractFieldContainer::FieldContainerRequirements getFieldRequirements(){ return requirements; }
 
-    //! Is this the adjoint problem
-    bool isAdjoint;
-
-    //! Should the adjoint problem be solved with an enriched basis
-    bool enrichAdjoint;
-
-    //! get the offset corresponding to a variable name
-    virtual int getOffset(std::string const& var) {return 1;}
-
   protected:
 
     Teuchos::Array<Teuchos::Array<int> > offsets_; 

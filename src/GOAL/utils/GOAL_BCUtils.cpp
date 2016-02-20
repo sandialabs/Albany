@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "GOAL_BCUtils.hpp"
+#include "GOAL_MechanicsProblem.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_GOALDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
@@ -35,7 +36,7 @@ class BCManager
     bool isAdjoint;
     RCP<Albany::GOALDiscretization> disc;
     RCP<Albany::GOALMeshStruct> meshStruct;
-    RCP<Albany::AbstractProblem> problem;
+    RCP<Albany::GOALMechanicsProblem> problem;
     Albany::GOALNodeSets ns;
     ParameterList bcParams;
     void applyBC(ParameterList const& p);
@@ -62,7 +63,8 @@ BCManager::BCManager(
   RCP<Albany::AbstractDiscretization> ad = app.getDiscretization();
   this->disc = Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
   this->meshStruct = disc->getGOALMeshStruct();
-  this->problem = app.getProblem();
+  this->problem = Teuchos::rcp_dynamic_cast<
+    Albany::GOALMechanicsProblem>(app.getProblem());
   this->ns = disc->getGOALNodeSets();
 }
 
