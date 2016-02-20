@@ -71,7 +71,6 @@
 
 #ifdef ALBANY_GOAL
 #include "GOAL/problems/GOAL_MechanicsProblem.hpp"
-#include "GOAL/problems/GOAL_AdvDiffProblem.hpp"
 #endif
 
 #ifdef ALBANY_FELIX
@@ -363,12 +362,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "GOAL Mechanics 3D") {
     strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 3, commT));
-  }
-  else if (method == "GOAL AdvDiff 2D") {
-    strategy = rcp(new Albany::GOALAdvDiffProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "GOAL AdvDiff 3D") {
-    strategy = rcp(new Albany::GOALAdvDiffProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_HYDRIDE
