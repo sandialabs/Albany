@@ -873,9 +873,23 @@ evalModelImpl(
 
   Teuchos::Array<bool> fs_already_computed(num_models_, false);
 
+  // So that the Schwarz BC has the latest solution, we force here a
+  // write of the solution to the mesh database. For STK, which we use,
+  // the time parameter is ignored.
+  for (auto m = 0; m < num_models_; ++m) {
+    double const
+    time = 0.0;
+
+    Teuchos::RCP<Albany::AbstractDiscretization> const
+    app_disc = apps_[m]->getDiscretization();
+
+    app_disc->writeSolutionToMeshDatabaseT(*xTs[m], time);
+  }
+
   // W matrix for each individual model
   for (auto m = 0; m < num_models_; ++m) {
     if (Teuchos::nonnull(W_op_outT)) {
+
       //computeGlobalJacobianT sets fTs_out[m] and jacs_[m]
       apps_[m]->computeGlobalJacobianT(
           alpha, beta, omega, curr_time,
@@ -910,25 +924,14 @@ evalModelImpl(
           NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
     }
     else {
-      if (Teuchos::nonnull(fTs_out[m]) && !fs_already_computed[m]) {
+      if (Teuchos::nonnull(fTs_out[m]) && fs_already_computed[m] == false) {
+
         apps_[m]->computeGlobalResidualT(
             curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
             sacado_param_vecs_[m], *fTs_out[m]);
+
       }
     }
-  }
-
-  // So that the Schwarz BC has the latest solution, we force here a
-  // write of the solution to the mesh database. For STK, which we use,
-  // the time parameter is ignored.
-  for (auto m = 0; m < num_models_; ++m) {
-    double const
-    time = 0.0;
-
-    Teuchos::RCP<Albany::AbstractDiscretization> const
-    app_disc = apps_[m]->getDiscretization();
-
-    app_disc->writeSolutionToMeshDatabaseT(*xTs[m], time);
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
