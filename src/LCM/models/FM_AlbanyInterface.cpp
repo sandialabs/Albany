@@ -6,8 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FerroicModel.hpp"
-#include "FerroicModel_Def.hpp"
+#include "FM_AlbanyInterface.hpp"
+#include "FM_AlbanyInterface_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::FerroicModel)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::FerroicDriver)
 
