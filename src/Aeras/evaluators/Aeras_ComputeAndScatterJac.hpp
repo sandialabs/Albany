@@ -56,7 +56,7 @@ protected:
   int numScalarLevelVar;
   int numTracerVar;
 
-private:
+protected:
 
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
