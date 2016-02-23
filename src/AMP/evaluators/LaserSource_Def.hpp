@@ -184,11 +184,11 @@ evaluateFields(typename Traits::EvalData workset)
     // ScalarT Laser_center_x = x;
     // ScalarT Laser_center_z = z;
 
-//  Note:(0.0003 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.
-    ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*(0.0003-Y))-b1*exp(-2.0*a*beta*(0.0003-Y))) - B*(c2*exp(-2.0*a*(lambda - beta*(0.0003-Y)))-c1*exp(2.0*a*(lambda-beta*(0.0003-Y))))) + f3*(exp(-beta*(0.0003-Y))+powder_hemispherical_reflectivity*exp(beta*(0.0003-Y) - 2.0*lambda)));
+//  Note:(0.0002 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.
+    ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*(0.0002-Y))-b1*exp(-2.0*a*beta*(0.0002-Y))) - B*(c2*exp(-2.0*a*(lambda - beta*(0.0002-Y)))-c1*exp(2.0*a*(lambda-beta*(0.0002-Y))))) + f3*(exp(-beta*(0.0002-Y))+powder_hemispherical_reflectivity*exp(beta*(0.0002-Y) - 2.0*lambda)));
     MeshScalarT* XX = &coord_(cell,qp,0);
     ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Z - Laser_center_z)*(Z - Laser_center_z));
-     if (radius < laser_beam_radius && beta*(0.0003-Y) <= lambda)
+     if (radius < laser_beam_radius && beta*(0.0002-Y) <= lambda)
             laser_source_(cell,qp) =beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*depth_profile;
      else   laser_source_(cell,qp) =0.0;
     }
