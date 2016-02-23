@@ -1,0 +1,66 @@
+#     {wsub = 1}
+#     {tsub = 2}
+#     {tox = 20e-3}
+
+# Silicon substrate
+brick x {wsub} y {wsub} z {tsub}
+move volume 1 z {0.5*tsub}
+
+# SiO2
+brick x {wsub} y {wsub} z {tox}
+move volume 2 z {tsub+0.5*tox}
+
+# merge all overlapped curves/surfaces
+merge all
+
+# define nodesets for Dirichlet BCs
+nodeset 1 surface 2
+nodeset 1 name "psub"
+color nodeset 1 red
+
+nodeset 2 surface 7
+nodeset 2 name "gate"
+color nodeset 2 blue
+
+# define sidesets for defining interface traps
+sideset 1 surface 1
+sideset 1 name "sioxideinterface"
+
+# define blocks (each block represents one material)
+block 1 volume 1
+block 1 name "silicon.psub"
+
+block 2 volume 2
+block 2 name "sio2.noq"
+
+# define mesh
+surface 7 size {wsub/10}
+surface 7 scheme pave
+mesh surface 7
+
+# z-mesh in sio2
+curve 21 22 23 24 interval 5
+
+volume 2 scheme auto
+mesh volume 2
+quality volume 2
+
+# z-mesh in psubstrate
+curve 11 scheme bias fine size {0.5e-3} coarse size {tsub/20} start vertex 3
+curve 9 scheme bias fine size {0.5e-3} coarse size {tsub/20} start vertex 4
+curve 10 scheme bias fine size {0.5e-3} coarse size {tsub/20} start vertex 1
+curve 12 scheme bias fine size {0.5e-3} coarse size {tsub/20} start vertex 2
+
+volume 1 scheme auto
+mesh volume 1
+quality volume 1
+
+# merge all overlapped elements
+merge all
+
+# dimension size is assumed in [um]
+# output the Exodus II mesh
+export mesh "pmoscap_3D_itrap.exo" dimension 3 block all overwrite
+
+
+

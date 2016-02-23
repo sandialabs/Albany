@@ -176,6 +176,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -299,6 +300,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -422,6 +424,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -545,6 +548,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -668,6 +672,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -791,6 +796,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -914,6 +920,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1037,6 +1044,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1160,6 +1168,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1283,6 +1292,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1406,6 +1416,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1529,6 +1540,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1652,6 +1664,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1775,6 +1788,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -1898,6 +1912,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2021,6 +2036,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2144,6 +2160,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2267,6 +2284,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2390,6 +2408,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2513,6 +2532,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2636,6 +2656,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2759,6 +2780,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -2882,6 +2904,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -3005,6 +3028,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -3128,6 +3152,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -3251,6 +3276,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
@@ -3374,6 +3400,7 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>

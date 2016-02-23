@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -18,6 +18,7 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_GatherSolution.hpp"
 #include "Aeras_ScatterResidual.hpp"
+#include "Aeras_ComputeAndScatterJac.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFInterpolationLevels.hpp"
 #include "Aeras_DOFVecInterpolationLevels.hpp"

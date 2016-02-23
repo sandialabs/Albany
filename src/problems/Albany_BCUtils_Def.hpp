@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -264,7 +264,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
   RCP<DataLayout> dummy = rcp(new PHX::MDALayout<Dummy>(0));
   RCP<std::vector<string> > bcs = rcp(new std::vector<string>);
 
-  offsets_.resize(nodeSetIDs.size()); 
+  offsets_.resize(nodeSetIDs.size());
   // Check for all possible standard BCs (every dof on every nodeset) to see which is set
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     for(std::size_t j = 0; j < bcNames.size(); j++) {
@@ -313,7 +313,9 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         p->set< int > ("Number of Equations", numEqn);
         p->set< int > ("Equation Offset", 0);
-        offsets_[i].push_back(0); 
+        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+          offsets_[i].push_back(j);
+        }
         p->set<RCP<ParamLib> > ("Parameter Library", paramLib);
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
@@ -415,7 +417,9 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         //p->set< int >     ("Number of Equations", dirichletNames.size());
         p->set< int > ("Equation Offset", 0);
-        offsets_[i].push_back(0); 
+        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+          offsets_[i].push_back(j);
+        }
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
 
@@ -490,7 +494,9 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
       p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
       //p->set< int >     ("Number of Equations", dirichletNames.size());
       p->set< int > ("Equation Offset", 0);
-      offsets_[i].push_back(0); 
+      for(std::size_t j = 0; j < bcNames.size(); j++) { 
+        offsets_[i].push_back(j);
+      }
       p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
       // Parameters specific to the lsfit BC
@@ -547,7 +553,9 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set<RealType>("Dirichlet Value", 0.0);
         p->set<string> ("Node Set ID", nodeSetIDs[i]);
         p->set<int> ("Equation Offset", 0);
-        offsets_[i].push_back(0); 
+        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+          offsets_[i].push_back(j);
+        }
         // if set to zero, the cubature degree of the side
         // will be set to that of the element
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
@@ -595,7 +603,9 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         //p->set< int >     ("Number of Equations", dirichletNames.size());
         p->set< int > ("Equation Offset", 0);
-        offsets_[i].push_back(0); 
+        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+          offsets_[i].push_back(j);
+        }
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 

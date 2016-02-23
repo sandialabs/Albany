@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -116,15 +116,6 @@ namespace Albany {
 
     //! Get a list of the Special fields needed to implement the problem
     const AbstractFieldContainer::FieldContainerRequirements getFieldRequirements(){ return requirements; }
-
-    //! Is this the adjoint problem
-    bool isAdjoint;
-
-    //! Should the adjoint problem be solved with an enriched basis
-    bool enrichAdjoint;
-
-    //! get the offset corresponding to a variable name
-    virtual int getOffset(std::string const& var) {return 1;}
 
   protected:
 

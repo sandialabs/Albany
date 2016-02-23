@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -38,12 +38,13 @@ AdjointResponse::AdjointResponse(
   time(0),
   enrichAdjoint(false),
   application(app),
-  problem(prob),
+  problem(Teuchos::null),
   stateManager(sm),
   meshSpecs(ms),
   params(rp)
 {
   print("Building adjoint pde instantiations");
+  problem = Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(prob);
   enrichAdjoint = problem->enrichAdjoint;
   buildFieldManagers();
 }

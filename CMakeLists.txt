@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -1005,7 +1005,7 @@ IF(NOT DEFINED Kokkos_ENABLE_Cuda)
     STRING(REGEX MATCH "\#define KOKKOS_HAVE_CUDA" KOKKOS_CUDA_IS_SET ${CURRENT_CONFIG})
     IF("#define KOKKOS_HAVE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
      MESSAGE("-- Kokkos is configured to use CUDA, Albany will also.")
-     SET(Kokkos_ENABLE_CUDA ON)
+     SET(Kokkos_ENABLE_Cuda ON)
     ELSE("#define KOKKOS_HAVE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
      MESSAGE("-- Kokkos is not configured to use CUDA, Albany will NOT be compiled for CUDA.")
     ENDIF("#define KOKKOS_HAVE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")

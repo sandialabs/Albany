@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -166,7 +166,12 @@ IF(Kokkos_ENABLE_Cuda)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonHMRModel.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel_Def.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/FerroicModel.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore_Def.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel_Def.hpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/CrystalPlasticityCore.cpp)

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -139,7 +139,7 @@ int Albany_Dakota(int argc, char *argv[])
 
   if (dakota.rankZero()) {
     Dakota::RealVector finalValues =
-      dakota.getFinalSolution().continuous_variables();
+      dakota.getFinalSolution().all_continuous_variables();
     *out << "\nAlbany_Dakota: Final Values from Dakota = "
          << std::setprecision(8) << finalValues << endl;
 

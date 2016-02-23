@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -786,9 +786,9 @@ namespace Albany {
     //! Routine to load common sideset info into workset
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
-    //! Routine for setting a scaling to be applied to the Jacobian/resdiual 
-    //  in the case Scale BC Dofs is true. 
-    void setScale(PHAL::Workset& workset);  
+    //! Routines for setting a scaling to be applied to the Jacobian/resdiual 
+    void setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT = Teuchos::null); 
+    void setScaleBCDofs(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
     void setupBasicWorksetInfo(
@@ -1146,6 +1146,9 @@ namespace Albany {
     //Value to scale Jacobian/Residual by to possibly improve conditioning
     double scale; 
     double scaleBCdofs; 
+    //Scaling types
+    enum SCALETYPE {CONSTANT, DIAG};
+    SCALETYPE scale_type;
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;

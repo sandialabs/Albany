@@ -1,18 +1,8 @@
-/********************************************************************\
-*            Albany, Copyright (2010) Sandia Corporation             *
-*                                                                    *
-* Notice: This computer software was prepared by Sandia Corporation, *
-* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
-* the Department of Energy (DOE). All rights in the computer software*
-* are reserved by DOE on behalf of the United States Government and  *
-* the Contractor as provided in the Contract. You are authorized to  *
-* use this computer software for Governmental purposes but it is not *
-* to be released or distributed to the public. NEITHER THE GOVERNMENT*
-* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
-* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
-* including this sentence must appear on any copies of this software.*
-*    Questions to Andy Salinger, agsalin@sandia.gov                  *
-\********************************************************************/
+//*****************************************************************//
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
 
 //IK, 9/12/14: has Epetra_Comm! No other Epetra.
 
@@ -496,8 +486,11 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
 
     result.setSupports(
         Thyra::ModelEvaluatorBase::OUT_ARG_DgDx, i, dgdx_support);
-    result.setSupports(
+    if(supports_xdot){
+      result.setSupports(
         Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dot, i, dgdx_support);
+    }
+
     // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
     //result.setSupports(
     //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
@@ -559,14 +552,12 @@ Albany::ModelEvaluatorT::evalModelImpl(
     ConverterT::getConstTpetraVector(inArgsT.get_x());
 
   const Teuchos::RCP<const Tpetra_Vector> x_dotT =
-//    Teuchos::nonnull(inArgsT.get_x_dot()) ?
     (supports_xdot && Teuchos::nonnull(inArgsT.get_x_dot())) ?
     ConverterT::getConstTpetraVector(inArgsT.get_x_dot()) :
     Teuchos::null;
 
 
   const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
-//    (Teuchos::nonnull(this->get_x_dotdot())) ?
     (supports_xdotdot && Teuchos::nonnull(this->get_x_dotdot())) ?
     ConverterT::getConstTpetraVector(this->get_x_dotdot()) :
     Teuchos::null;
@@ -706,9 +697,14 @@ Albany::ModelEvaluatorT::evalModelImpl(
       Teuchos::null;
 
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out = outArgsT.get_DgDx(j);
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out = outArgsT.get_DgDx_dot(j);
+    Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out;
+
+    if(supports_xdot)
+      dgdxdotT_out = outArgsT.get_DgDx_dot(j);
+
 //    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out = this->get_DgDx_dotdot(j);
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
+
     sanitize_nans(dgdxT_out);
     sanitize_nans(dgdxdotT_out);
     sanitize_nans(dgdxdotdotT_out);
