@@ -12,6 +12,7 @@ __date__    = "23 Jun 2016"
 # System imports
 import argparse
 import os
+import shutil
 import sys
 
 files = ["CTestConfig.cmake",
@@ -44,6 +45,7 @@ current_dir = os.getcwd()
 ########################################################################
 
 def main(repo_dir, project_dir):
+    count = 0
     for file in files:
         repo_file    = os.path.join(repo_dir   , file)
         project_file = os.path.join(project_dir, file)
@@ -69,8 +71,13 @@ def main(repo_dir, project_dir):
             else:
                 print("Warning: source for '%s' cannot be found" % file)
         if source and target:
-            os.open(target,"w").write(os.open(source,"r").read())
+            # The copy function copies both content and metadata, so the
+            # executable flags will be the same, as will the modification times
+            shutil.copy2(source, target)
             print("Copied '%s' to '%s'" % (source, target))
+            count += 1
+    if count == 0:
+        print("No files need to be synced.")
 
 ########################################################################
 
