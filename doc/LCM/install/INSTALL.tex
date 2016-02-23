@@ -229,19 +229,15 @@ Otherwise it can be safely ignored.
 
 The current parallel implementation of the Schwarz method requires
 \verb+DTK+, which is tightly integrated to \trilinos{}, specifically
-\verb+STK+.
-
-Go to the the top-level \verb+LCM+ directory and create a symbolic
-link to the \verb+DTK+ CMake fragment that resides in
+\verb+STK+. Go to the the top-level \verb+LCM+ directory and create a
+symbolic link to the \verb+DTK+ CMake fragment that resides in
 \verb+LCM/Albany/doc/LCM/build+, then clone the \verb+DTK+ repository
-and create a symbolic link to this repository inside the
-\trilinos{} directory:
+inside the \trilinos{} directory:
 \begin{verbatim}
 cd ~/LCM
 ln -s Albany/doc/LCM/build/dtk-frag.sh .
-git clone git@github.com:ORNL-CEES/DataTransferKit.git
 cd Trilinos
-ln -s ../DataTransferKit .
+git clone git@github.com:ORNL-CEES/DataTransferKit.git
 \end{verbatim}
 The configuration scripts will detect the presence of \verb+DTK+ and
 configure it appropriately. Also, parallel Schwarz will be enabled when
