@@ -256,12 +256,15 @@ module avail
 This results in something like:
 \begin{verbatim}
 ------------------ /home/amota/LCM/Albany/doc/LCM/modulefiles ------------------
-openmp-gcc-debug     pthreads-gcc-release serial-gcc-debug
-openmp-gcc-profile   pthreads-gcc-small   serial-gcc-profile
-openmp-gcc-release   serial-clang-debug   serial-gcc-release
-openmp-gcc-small     serial-clang-profile serial-gcc-small
+debug                pthreads-gcc-mixed   serial-clang-small
+mixed                pthreads-gcc-profile serial-gcc-debug
+openmp-gcc-debug     pthreads-gcc-release serial-gcc-mixed
+openmp-gcc-mixed     pthreads-gcc-small   serial-gcc-profile
+openmp-gcc-profile   release              serial-gcc-release
+openmp-gcc-release   serial-clang-debug   serial-gcc-small
+openmp-gcc-small     serial-clang-mixed   small
+profile              serial-clang-profile
 pthreads-gcc-debug   serial-clang-release
-pthreads-gcc-profile serial-clang-small
 \end{verbatim}
 The naming convention for the modules follows the pattern
 \begin{verbatim}
@@ -281,10 +284,16 @@ Currently the options for \verb+[toolchain]+ are \verb+gcc+,
 \verb+clang+ and \verb+intel+ if the Intel compilers are installed,
 and for \verb+[build type]+ are \verb+debug+ (includes symbolic
 information), \verb+release+ (optimization enabled), \verb+profile+
-(symbolic information and optimization enabled for profiling) and
-\verb+small+ (minimizes size of executables). The \verb+clang+
-toolchain requires installation of the \verb+clang+ and
-\verb+clang-devel+ packages.
+(symbolic information and optimization enabled for profiling),
+\verb+small+ (minimizes size of executables) and \verb+mixed+
+(\trilinos{} compiled in release mode and \albany{} compiled in debug
+mode). The \verb+clang+ toolchain requires installation of the
+\verb+clang+ and \verb+clang-devel+ packages. The \verb+debug+,
+\verb+release+, \verb+profile+, \verb+small+ and \verb+mixed+ modules
+are convenience aliases for \verb+serial-gcc-debug+,
+\verb+ serial-gcc-release+, \verb+ serial-gcc-profile+,
+\verb+ serial-gcc-small+ and \verb+ serial-gcc-mixed+ modules,
+respectively.
 
 Build directories are created within the \lcm{} top-level directory
 and named according to the loaded module and package specified to the
