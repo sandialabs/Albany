@@ -40,28 +40,6 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   numTracerVar = tracer_names.size();
   numFields = numNodeVar +  numVectorLevelVar + numScalarLevelVar +  numTracerVar;
 
-  val.resize(numFields);
-
-  int eq = 0;
-  for (int i = 0; i < numNodeVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(node_names[i],dl->node_scalar);
-    val[eq] = mdf;
-    this->addDependentField(val[eq]);
-  }   
-  for (int i = 0; i < numVectorLevelVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(vector_level_names[i],dl->node_vector_level); val[eq] = mdf;
-    this->addDependentField(val[eq]);
-  }
-  for (int i = 0; i < numScalarLevelVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(scalar_level_names[i],dl->node_scalar_level); val[eq] = mdf;
-    this->addDependentField(val[eq]);
-  }
-  for (int i = 0; i < numTracerVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(tracer_names[i],dl->node_scalar_level);
-    val[eq] = mdf;
-    this->addDependentField(val[eq]);
-  }
-
   const std::string fieldName = p.get<std::string>("Scatter Field Name");
   scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
   
@@ -85,10 +63,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
-  for (int eq = 0; eq < numFields; ++eq) this->utils.setFieldData(val[eq],fm);
-
-  //std::cout << "HEREEEEEE " <<wBF(0,0,0)<<"\n";
-
 }
 
 
@@ -261,8 +235,6 @@ void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-	  //std::cout << "HEREEEEEE " <<this->wBF(0,0,0)<<"\n";
-
 //FIXME: this function needs to be rewritten to not use AD.  
 //First, we need to compute the local mass and laplacian matrices 
 //(checking the n_coeff flag for whether the laplacian is needed) as follows: 
@@ -287,6 +259,7 @@ evaluateFields(typename Traits::EvalData workset)
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -294,10 +267,8 @@ evaluateFields(typename Traits::EvalData workset)
   LO rowT; 
   Teuchos::Array<LO> colT; 
 
-
   std::cout << "DEBUG in ComputeAndScatterJac::EvaluateFields: " << __PRETTY_FUNCTION__ << "\n";
   std::cout << "LOAD RESIDUAL? " << loadResid << "\n";
-
 
 #define OLDSCATTER 0
 #if OLDSCATTER
@@ -459,119 +430,47 @@ evaluateFields(typename Traits::EvalData workset)
 	     localMassMatr(cell, node, node) = this -> wBF(cell, node, node);
   }*/
 
-
-  //New scatter, with local matrices
-  //LO rowT;
-  //Teuchos::Array<LO> colT;
-
-  //ST val = this -> wBF(cell, node, node);
-  //JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-
   for (int cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     const int neq = nodeID[0].size();
-    /*colT.resize(neq * this->numNodes);
 
-    for (int node=0; node<this->numNodes; node++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node + eq_col] =  nodeID[node][eq_col];
-      }
-    }*/
     for (int node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
         rowT = eqID[n];
-        if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-        ST val = - this -> wBF(cell, node, node);
-        JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-        /*
-        if (valptr.hasFastAccess()) {
-            //Sum Jacobian entries
-            for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-              ST val = valptr.fastAccessDx(i);
-              if (val != 0.0) {
-                JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-              }
-            }
-
-        } // has fast access*/
+        ST val2 = - this -> wBF(cell, node, node);
+        JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) {
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
             rowT = eqID[n];
-            if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-            ST val = - this -> wBF(cell, node, node);
-            JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-            /*
-            if (valptr.hasFastAccess()) {
-
-                //Sum Jacobian entries
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-            }*/
+            ST val2 = - this -> wBF(cell, node, node);
+            JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
           }
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           rowT = eqID[n];
-          if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
-          ST val = - this -> wBF(cell, node, node);
-          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-          /*
-          if (valptr.hasFastAccess()) {
-                //Sum Jacobian entries
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-          } // has fast access */
+          ST val2 = - this -> wBF(cell, node, node);
+          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
         }
       }
       eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           rowT = eqID[n];
-          //OG Why is it here, if Traits == Jacobian?
-          if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
-
           //Minus!
-          ST val = - this -> wBF(cell, node, node);
-          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-/*
-          if (valptr.hasFastAccess()) {
-              //Sum Jacobian entries
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                	  if(rowT != colT[i])
-                		  std::cout <<"Hey mass matrix is not diag! rowT, colT " << rowT << ", " << colT[i] <<"\n";
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                    std::cout << "Value is "<< val << ", and wBF is "<< this->wBF(cell,node,node)<<"\n";
-                  }
-                }
-          } // has fast access  */
+          ST val2 = - this -> wBF(cell, node, node);
+          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
         }
       }
       eq += this->numTracerVar;
     }
   }
-
-
-
 
 #endif
 
