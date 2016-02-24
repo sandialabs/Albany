@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -135,7 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT S5 = 3.0*(1.0 - powder_hemispherical_reflectivity)*(1.0 - exp(-lambda))*(1.0 + powder_hemispherical_reflectivity*exp(-lambda)); 
   ScalarT I_value = S1*(S2*(S3 + S4) + S5);
   ScalarT Substrate_Top = 0.00005;
-  ScalarT Substrate_Bot = 0.00012;
+  ScalarT Substrate_Bot = 0.0000575;
 
 
 
@@ -160,9 +160,9 @@ evaluateFields(typename Traits::EvalData workset)
   //       ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*(time(0)-deltaTime(0));
 
 
-  //  Note:(0.0003 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.                                  
+  //  Note:(0.0002 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.                                  
         ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Z - Laser_center_z)*(Z - Laser_center_z));
-        if (radius < laser_beam_radius && (0.0003 - Y) >= Substrate_Top && (0.0003 - Y) <= Substrate_Bot)
+        if (radius < laser_beam_radius && (0.0002 - Y) >= Substrate_Top && (0.0002 - Y) <= Substrate_Bot)
               source_(cell,qp) = beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*(Absorptivity_substrate - I_value);
         else  source_(cell,qp) =0.0;
          

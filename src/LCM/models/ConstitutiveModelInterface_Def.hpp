@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -30,7 +30,7 @@
 #include "J2HMCModel.hpp"
 #include "LinearPiezoModel.hpp"
 #ifndef KOKKOS_HAVE_CUDA
-#  include "FerroicModel.hpp"
+#  include "FM_AlbanyInterface.hpp"
 #endif
 #include "HyperelasticDamageModel.hpp"
 #include "CapExplicitModel.hpp"
@@ -356,7 +356,7 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new LinearPiezoModel<EvalT, Traits>(p, dl));
 #ifndef KOKKOS_HAVE_CUDA
   } else if (model_name == "Ferroic") {
-    model = rcp(new FerroicModel<EvalT, Traits>(p, dl));
+    model = rcp(new FerroicDriver<EvalT, Traits>(p, dl));
 #endif
   } else if (model_name == "Ortiz Pandolfi") {
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
