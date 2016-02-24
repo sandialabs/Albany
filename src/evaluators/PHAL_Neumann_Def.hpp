@@ -1489,7 +1489,15 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
-  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+
+  //Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> fT_nonconstView;
+  if (fT != Teuchos::null) {
+	  fT_nonconstView = fT->get1dViewNonConst();
+  }else{
+	  fT_nonconstView = Teuchos::null;
+  }
+
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
 
@@ -1543,7 +1551,12 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   
   fT = workset.fT;
-  fT_nonconstView = fT->get1dViewNonConst();
+  //fT_nonconstView = fT->get1dViewNonConst();
+  if (this->fT != Teuchos::null) {
+	  fT_nonconstView = fT->get1dViewNonConst();
+  }else{
+	  fT_nonconstView = Teuchos::null;
+  }
   JacT = workset.JacT;
 
 

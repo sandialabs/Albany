@@ -1334,7 +1334,13 @@ computeGlobalJacobianImplT(const double alpha,
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  //Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_fT;
+  if(Teuchos::nonnull(fT)){
+	  overlapped_fT = solMgrT->get_overlapped_fT();
+  }else{
+	  overlapped_fT = Teuchos::null;
+  }
   Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solMgrT->get_overlapped_jacT();
   Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
 
