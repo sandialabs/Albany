@@ -88,18 +88,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__,
                                      version="%(prog)s " + __version__ +
                                      " " + __date__)
-    parser.add_argument("-r", "--repo", action="store", dest="repo",
-                        default="none", type=str, help="set the repository "
-                        "directory")
-    parser.add_argument("-p", "--project", action="store", dest="project",
-                        default="none", type=str, help="set the project "
+    parser.add_argument("-d", "--defaults", action="store_true",
+                        dest="defaults", default=False, help="list the default "
+                        "directories that will be used and exit")
+    parser.add_argument("-f", "--force", action="store_true", dest="force",
+                        defualt=False, help="force creation of the project "
                         "directory")
     parser.add_argument("-l", "--list", action="store_true", dest="list",
                         default=False, help="list the files to be synced and "
                         "exit")
-    parser.add_argument("-d", "--defaults", action="store_true",
-                        dest="defaults", default=False, help="list the default "
-                        "directories that will be used and exit")
+    parser.add_argument("-p", "--project", action="store", dest="project",
+                        default="none", type=str, help="set the project "
+                        "directory")
+    parser.add_argument("-r", "--repo", action="store", dest="repo",
+                        default="none", type=str, help="set the repository "
+                        "directory")
     args = parser.parse_args()
 
     # Determine the repository directory
@@ -130,6 +133,9 @@ if __name__ == "__main__":
             sys.exit("%s: Error: repository directory '%s' not found" %
                      (progName, repo_dir))
         if not os.path.isdir(project_dir):
-            sys.exit("%s: Error: project directory '%s' not found" %
-                     (progName, project_dir))
+            if args.force:
+                os.makedirs(project_dir)
+            else:
+                sys.exit("%s: Error: project directory '%s' not found" %
+                         (progName, project_dir))
         main(repo_dir, project_dir)
