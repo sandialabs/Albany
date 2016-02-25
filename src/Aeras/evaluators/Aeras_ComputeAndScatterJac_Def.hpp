@@ -41,7 +41,10 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   numFields = numNodeVar +  numVectorLevelVar + numScalarLevelVar +  numTracerVar;
 
   const std::string fieldName = p.get<std::string>("Scatter Field Name");
-  scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
+  // OG: why is this tag templated with ScalarT?
+  //scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
+  scatter_operation = Teuchos::rcp(new PHX::Tag<MeshScalarT>(fieldName, dl->dummy));
+
   
   this->addDependentField(BF);
   this->addDependentField(wBF);

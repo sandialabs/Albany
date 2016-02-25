@@ -243,8 +243,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   typedef PHAL::AlbanyTraits::Jacobian EvalT; 
   {
     Teuchos::ParameterList& xzhydrostatic_params = params->sublist("Hydrostatic Problem");
-    const typename EvalT::ScalarT Ptop = xzhydrostatic_params.get<double>("Ptop", 101.325); 
-    const typename EvalT::ScalarT P0   = xzhydrostatic_params.get<double>("P0",   101325.0); 
+    const double Ptop = xzhydrostatic_params.get<double>("Ptop", 101.325);
+    const double P0   = xzhydrostatic_params.get<double>("P0",   101325.0);
     Eta<EvalT>::self(Ptop, P0, numLevels);
   }
 
@@ -341,6 +341,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     dof_names_tracers_deta    [t] = dof_names_tracers[t]+"_deta";
   }
  
+  /*
   {
     RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_names_nodes[0]));
     p->set<string>("Variable Name",                                   dof_names_nodes[0]);
@@ -402,6 +403,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.registerEvaluator<EvalT>(ev);
   }
+*/
+
 
   if (numDim == 2) {
     RCP<ParameterList> p = rcp(new ParameterList("Gather Coordinate Vector"));
@@ -482,7 +485,10 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
 
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
-    PHX::Tag<typename EvalT::ScalarT> res_tag("Compute And Scatter Jacobian", dl->dummy);
+
+	//PHX::Tag<typename EvalT::ScalarT> res_tag("Compute And Scatter Jacobian", dl->dummy);
+	  PHX::Tag<typename EvalT::MeshScalarT> res_tag("Compute And Scatter Jacobian", dl->dummy);
+
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
