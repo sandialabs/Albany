@@ -526,6 +526,7 @@ static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
 void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const int index, const bool overlapped)
 {
+  TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to APF Mesh");
   // index is time deriv vector (solution, solution_dot, or solution_dotdot
   if (solNames.getTimeDeriv(index).size() == 0)
     this->setField(APFMeshStruct::solution_name[index],soln,overlapped);
@@ -544,6 +545,8 @@ void Albany::APFDiscretization::writeAnySolutionToFile(
 
   if (!meshOutput)
     return;
+
+  TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Write To File");
 
   double time_label = monotonicTimeLabel(time_value);
   int out_step = 0;
@@ -574,6 +577,7 @@ void Albany::APFDiscretization::writeAnySolutionToFile(
 void
 Albany::APFDiscretization::writeRestartFile(const double time)
 {
+  TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Write Restart");
   *out << "Albany::APFDiscretization::writeRestartFile: writing time "
     << time << std::endl;
   apf::Field* f;
@@ -1500,6 +1504,7 @@ Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
 
+  TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to Albany");
   computeOwnedNodesAndUnknowns();
   computeOverlapNodesAndUnknowns();
   setupMLCoords();

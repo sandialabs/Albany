@@ -193,6 +193,7 @@ void AAdapt::MeshAdapt::initAdapt()
 
 void AAdapt::MeshAdapt::beforeAdapt()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to APF Mesh");
   if (should_transfer_ip_data)
     pumi_discretization->attachQPData();
   szField->copyInputFields();
