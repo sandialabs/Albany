@@ -9,5 +9,6 @@
 #include "FELIX_UpdateZCoordinate.hpp"
 #include "FELIX_UpdateZCoordinate_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::UpdateZCoordinate)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::UpdateZCoordinateMovingTop)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::UpdateZCoordinateMovingBed)
 

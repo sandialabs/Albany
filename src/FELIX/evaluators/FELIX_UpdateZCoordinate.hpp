@@ -22,7 +22,7 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class UpdateZCoordinate : public PHX::EvaluatorWithBaseImpl<Traits>,
+class UpdateZCoordinateMovingTop : public PHX::EvaluatorWithBaseImpl<Traits>,
 		    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
@@ -30,7 +30,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  UpdateZCoordinate(const Teuchos::ParameterList& p,
+  UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -43,7 +43,39 @@ private:
   // Input:
   PHX::MDField<MeshScalarT, Cell, Node,Dim> coordVecIn;
   PHX::MDField<MeshScalarT, Cell, Node> dH;
-  PHX::MDField<MeshScalarT, Cell, Node> elevation;
+  PHX::MDField<MeshScalarT, Cell, Node> topSurface;
+  PHX::MDField<MeshScalarT, Cell, Node> H0;
+
+  // Output:
+  PHX::MDField<MeshScalarT, Cell, Node, Dim> coordVecOut;
+
+  unsigned int numDims, numNodes;
+};
+
+
+template<typename EvalT, typename Traits>
+class UpdateZCoordinateMovingBed : public PHX::EvaluatorWithBaseImpl<Traits>,
+        public PHX::EvaluatorDerived<EvalT, Traits> {
+
+public:
+
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
+            const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  // Input:
+  PHX::MDField<MeshScalarT, Cell, Node,Dim> coordVecIn;
+  PHX::MDField<MeshScalarT, Cell, Node> dH;
+  PHX::MDField<MeshScalarT, Cell, Node> topSurface;
   PHX::MDField<MeshScalarT, Cell, Node> H0;
 
   // Output:
