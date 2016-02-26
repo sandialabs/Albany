@@ -103,12 +103,27 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter");
 
+    //! Function to create parameter list for construction of ScatterResidual
+    //! evaluator with standard Field names
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructScatterResidualEvaluatorWithExtrudedParams(
+       bool isVectorField,
+       Teuchos::ArrayRCP<std::string> resid_names,
+       Teuchos::RCP<std::map<std::string, int> > extruded_params_levels,
+       int offsetToFirstDOF=0, std::string scatterName="Scatter");
+
     //! Function to create parameter list for construction of GatherScalarNodalParameter
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructGatherScalarNodalParameter(
         const std::string& param_name,
         const std::string& field_name="");
 
+    //! Function to create parameter list for construction of GatherScalarExtruded2DNodalParameter
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherScalarExtruded2DNodalParameter(
+        const std::string& param_name,
+        const std::string& field_name="");
+    
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
     //! Tensor rank of solution variable is 0, 1, or 2
@@ -167,6 +182,12 @@ namespace Albany {
        const std::string& dof_names,
        const std::string& sideSetName);
 
+    //! Interpolation functions for scalar quantities defined on a side set 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFInterpolationSideParamEvaluator(
+       const std::string& dof_names,
+       const std::string& sideSetName);
+
     //! Interpolation functions for vector ScalarT defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecInterpolationSideEvaluator(
@@ -182,6 +203,12 @@ namespace Albany {
     //! Interpolation functions for gradient of quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationSideEvaluator(
+      const std::string& dof_names,
+      const std::string& sideSetName);
+
+    //! Interpolation functions for divergence of quantities defined on a side set
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFDivInterpolationSideEvaluator(
       const std::string& dof_names,
       const std::string& sideSetName);
 

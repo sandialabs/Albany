@@ -264,6 +264,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFInterpolationSide.cpp
   evaluators/PHAL_DOFGradInterpolation.cpp
   evaluators/PHAL_DOFGradInterpolationSide.cpp
+  evaluators/PHAL_DOFDivInterpolationSide.cpp
   evaluators/PHAL_DOFSideToCell.cpp
   evaluators/PHAL_DOFVecCellToSide.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
@@ -371,6 +372,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFGradInterpolation_Def.hpp
   evaluators/PHAL_DOFGradInterpolationSide.hpp
   evaluators/PHAL_DOFGradInterpolationSide_Def.hpp
+  evaluators/PHAL_DOFDivInterpolationSide.hpp
+  evaluators/PHAL_DOFDivInterpolationSide_Def.hpp
   evaluators/PHAL_DOFInterpolation.hpp
   evaluators/PHAL_DOFInterpolation_Def.hpp
   evaluators/PHAL_DOFInterpolationSide.hpp
