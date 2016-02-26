@@ -13,72 +13,135 @@
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
-FELIX::ResponseSMBMismatch<EvalT, Traits>::ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  H("Thickness", dl->node_scalar),
-  velocity_field("Averaged Velocity", dl->node_vector),
-  //SMB("SMB", dl->node_scalar),
-  coordVec("Coord Vec", dl->vertices_vector),  numVecFODims(2) {
-
+FELIX::ResponseSMBMismatch<EvalT, Traits>::
+ResponseSMBMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls)
+{
   // get and validate Response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
-  std::string fieldName ="";
   Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
   scaling = plist->get<double>("Scaling Coefficient", 1.0);
   alpha = plist->get<double>("Regularization Coefficient", 0.0);
   asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
 
-  Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
+  const std::string& averaged_velocity_name     = paramList->get<std::string>("Averaged Velocity Side QP Variable Name");
+  const std::string& div_averaged_velocity_name = paramList->get<std::string>("Averaged Velocity Side QP Divergence Name");
+  const std::string& smb_name                   = paramList->get<std::string>("SMB Side QP Variable Name");
+  const std::string& thickness_name             = paramList->get<std::string>("Thickness Side QP Variable Name");
+  const std::string& grad_thickness_name        = paramList->get<std::string>("Thickness Gradient Name");
+  const std::string& BF_surface_name            = paramList->get<std::string>("BF Surface Name");
+  const std::string& w_measure_2d_name          = paramList->get<std::string>("Weighted Measure 2D Name");
+
+  basalSideName = paramList->get<std::string> ("Basal Side Name");
+  TEUCHOS_TEST_FOR_EXCEPTION (dls.find(basalSideName)==dls.end(), std::logic_error, "Error! Surface side data layout not found.\n");
+
+  Teuchos::RCP<Albany::Layouts> dl_basal = dls.at(basalSideName);
+
+  averaged_velocity     = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(averaged_velocity_name, dl_basal->side_qp_vector);
+  div_averaged_velocity = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(div_averaged_velocity_name, dl_basal->side_qp_scalar);
+  SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl_basal->side_qp_scalar);
+  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->side_qp_scalar);
+  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->side_qp_gradient);
+  BF_surface            = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl_basal->side_node_qp_scalar);
+  w_measure_2d          = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_2d_name, dl_basal->side_qp_scalar);
+
+  cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
-
-  int position;
-
-  // Build element and side integration support
-
-  const CellTopologyData * const elem_top = &meshSpecs->ctd;
-
-  intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
-
-  cellType = Teuchos::rcp(new shards::CellTopology(elem_top));
-
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  cubatureCell = cubFactory.create(*cellType, 1); //meshSpecs->cubatureDegree);
-  cubatureDegree = plist->isParameter("Cubature Degree") ? plist->get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
-
-  numNodes = intrepidBasis->getCardinality();
-
-  // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dim;
-  dl->qp_tensor->dimensions(dim);
-  int containerSize = dim[0];
-  numQPs = dim[1];
-  cellDims = dim[2];
-
-  physPointsCell.resize(1, numNodes, cellDims);
-  dofCell.resize(1, numNodes);
-  dofCellVec.resize(1, numNodes, numVecFODims);
-
+  
+    // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dims;
-  dl->qp_gradient->dimensions(dims);
-  numQPs = dims[1];
-  numDims = dims[2];
+  dl_basal->side_node_qp_gradient->dimensions(dims);
+  numSideNodes  = dims[2];
+  numSideDims   = dims[4];
+  numBasalQPs = numSurfaceQPs = dl_basal->side_qp_scalar->dimension(2);
+
 
   // add dependent fields
-  this->addDependentField(H);
-  this->addDependentField(velocity_field);
-  //this->addDependentField(SMB);
-  this->addDependentField(coordVec);
+  this->addDependentField(averaged_velocity);
+  this->addDependentField(div_averaged_velocity);
+  this->addDependentField(SMB);
+  this->addDependentField(thickness);
+  this->addDependentField(grad_thickness);
+  this->addDependentField(BF_surface);
+  this->addDependentField(w_measure_2d);
 
-
-  this->setName(fieldName + " Response surface_mass_balace Mismatch" + PHX::typeAsString<EvalT>());
+  this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
 
   using PHX::MDALayout;
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = fieldName + " Local Response surface_mass_balance Mismatch";
-  std::string global_response_name = fieldName + " Global Response surface_mass_balance Mismatch";
+  std::string local_response_name = "Local Response SMB Mismatch";
+  std::string global_response_name = "Global SMB Mismatch";
+  int worksetSize = dl_basal->qp_scalar->dimension(0);
+  int responseSize = 1;
+  Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
+  Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
+  PHX::Tag<ScalarT> local_response_tag(local_response_name, local_response_layout);
+  PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
+  p.set("Local Response Field Tag", local_response_tag);
+  p.set("Global Response Field Tag", global_response_tag);
+  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl_basal);
+}
+
+template<typename EvalT, typename Traits>
+FELIX::ResponseSMBMismatch<EvalT, Traits>::
+ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+{
+  // get and validate Response parameter list
+  Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
+  Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
+  scaling = plist->get<double>("Scaling Coefficient", 1.0);
+  alpha = plist->get<double>("Regularization Coefficient", 0.0);
+  asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
+
+  const std::string& averaged_velocity_name     = paramList->get<std::string>("Averaged Velocity Side QP Variable Name");
+  const std::string& div_averaged_velocity_name = paramList->get<std::string>("Averaged Velocity Side QP Divergence Name");
+  const std::string& smb_name                   = paramList->get<std::string>("SMB Side QP Variable Name");
+  const std::string& thickness_name             = paramList->get<std::string>("Thickness Side QP Variable Name");
+  const std::string& grad_thickness_name        = paramList->get<std::string>("Thickness Gradient Name");
+  const std::string& BF_surface_name            = paramList->get<std::string>("BF Surface Name");
+  const std::string& w_measure_2d_name          = paramList->get<std::string>("Weighted Measure 2D Name");
+
+  averaged_velocity     = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(averaged_velocity_name, dl->side_qp_vector);
+  div_averaged_velocity = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(div_averaged_velocity_name, dl->side_qp_scalar);
+  SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl->side_qp_scalar);
+  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl->side_qp_scalar);
+  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl->side_qp_gradient);
+  BF_surface            = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl->side_node_qp_scalar);
+  w_measure_2d          = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_2d_name, dl->side_qp_scalar);
+
+  Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
+  plist->validateParameters(*reflist, 0);
+
+  // Get Dimensions
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl->side_node_qp_gradient->dimensions(dims);
+  numSideNodes = dims[2];
+  numBasalQPs = numSurfaceQPs = dims[3];
+  numSideDims  = dims[4];
+
+  basalSideName = paramList->get<std::string> ("Basal Side Name");
+
+  // add dependent fields
+  this->addDependentField(averaged_velocity);
+  this->addDependentField(div_averaged_velocity);
+  this->addDependentField(SMB);
+  this->addDependentField(thickness);
+  this->addDependentField(grad_thickness);
+  this->addDependentField(BF_surface);
+  this->addDependentField(w_measure_2d);
+
+  this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
+
+  using PHX::MDALayout;
+
+  // Setup scatter evaluator
+  p.set("Stand-alone Evaluator", false);
+  std::string local_response_name = "Local Response SMB Mismatch";
+  std::string global_response_name = "Global Response SMB Mismatch";
   int worksetSize = dl->qp_scalar->dimension(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
@@ -92,11 +155,16 @@ FELIX::ResponseSMBMismatch<EvalT, Traits>::ResponseSMBMismatch(Teuchos::Paramete
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) {
-  this->utils.setFieldData(H, fm);
-  this->utils.setFieldData(velocity_field, fm);
-  //this->utils.setFieldData(SMB, fm);
-  this->utils.setFieldData(coordVec, fm);
+void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) 
+{
+  this->utils.setFieldData(averaged_velocity, fm);
+  this->utils.setFieldData(div_averaged_velocity, fm);
+  this->utils.setFieldData(SMB, fm);
+  this->utils.setFieldData(thickness, fm);
+  this->utils.setFieldData(grad_thickness, fm);
+  this->utils.setFieldData(BF_surface, fm);
+  this->utils.setFieldData(w_measure_2d, fm);
+
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
 
@@ -113,188 +181,73 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::preEvaluate(typename Traits::Pre
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset) {
+void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset) 
+{
   if (workset.sideSets == Teuchos::null)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find("upperside");
+  // Zero out local response
+  PHAL::set(this->local_response, 0.0);
 
-  if (it != ssList.end()) {
-    const std::vector<Albany::SideStruct>& sideSet = it->second;
-
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> H_Side;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> SMB_Side;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> V_Side;
-
-    // Loop over the sides that form the boundary condition
-    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
-
-      // Get the data that corresponds to the side
-      const int elem_GID = sideSet[iSide].elem_GID;
-      const int elem_LID = sideSet[iSide].elem_LID;
-      const int elem_side = sideSet[iSide].side_local_id;
-
-      const CellTopologyData_Subcell& side =  cellType->getCellTopologyData()->side[elem_side];
-      sideType = Teuchos::rcp(new shards::CellTopology(side.topology));
-      int numSideNodes = sideType->getNodeCount();
-      Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-      cubatureSide = cubFactory.create(*sideType, cubatureDegree);
-      sideDims = sideType->getDimension();
-      numQPsSide = cubatureSide->getNumPoints();
-
-      // Allocate Temporary FieldContainers
-      cubPointsSide.resize(numQPsSide, sideDims);
-      refPointsSide.resize(numQPsSide, cellDims);
-      cubWeightsSide.resize(numQPsSide);
-      physPointsSide.resize(1, numQPsSide, cellDims);
-      dofSide.resize(1, numQPsSide);
-      dofSideVec.resize(1, numQPsSide, numVecFODims);
-
-      // Do the BC one side at a time for now
-      jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-      invJacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-      jacobianSide_det.resize(1, numQPsSide);
-
-      weighted_measure.resize(1, numQPsSide);
-      basis_refPointsSide.resize(numNodes, numQPsSide);
-      basisGrad_refPointsSide.resize(numNodes, numQPsSide, cellDims);
-      trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-      trans_gradBasis_refPointsSide.resize(1, numNodes, numQPsSide, cellDims);
-      weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-
-      // Pre-Calculate reference element quantitites
-      cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
-
-      H_Side.resize(numQPsSide);
-      SMB_Side.resize(numQPsSide);
-      V_Side.resize(numQPsSide, numVecFODims);
-
-      // Copy the coordinate data over to a temp container
-     for (std::size_t node = 0; node < numNodes; ++node) {
-       for (std::size_t dim = 0; dim < cellDims; ++dim)
-         physPointsCell(0, node, dim) = coordVec(elem_LID, node, dim);
-       physPointsCell(0, node, cellDims-1) = -1.0; //set z=-1 on internal cell nodes and z=0 side (see next lines).
-     }
-     for (int i = 0; i < numSideNodes; ++i)
-       physPointsCell(0, side.node[i], cellDims-1) = 0.0;  //set z=0 on side
-
-      // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-      Intrepid2::CellTools<RealType>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
-
-      // Calculate side geometry
-      Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
-
-      Intrepid2::CellTools<MeshScalarT>::setJacobianInv(invJacobianSide, jacobianSide);
-
-      Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
-
-      if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
-        Intrepid2::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
-      } else { //for 3D, get weighted face measure
-        Intrepid2::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>(weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
-      }
-
-      // Values of the basis functions at side cubature points, in the reference parent cell domain
-      intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
-
-      intrepidBasis->getValues(basisGrad_refPointsSide, refPointsSide, Intrepid2::OPERATOR_GRAD);
-
-      // Transform values of the basis functions
-      Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>(trans_basis_refPointsSide, basis_refPointsSide);
-
-      Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>(trans_gradBasis_refPointsSide, invJacobianSide, basisGrad_refPointsSide);
-
-      // Multiply with weighted measure
-      Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
-
-      // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, *cellType);
-
-      // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> H_Cell(numNodes);
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> SMB_Cell(numNodes);
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> V_Cell(numNodes, numVecFODims);
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> gradH_Side(numQPsSide, numVecFODims);
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> divV_Side(numQPsSide);
-
-      for (int i = 0; i < gradH_Side.size(); i++)
-        gradH_Side(i) = 0.0;
-
-      for (int i = 0; i < divV_Side.size(); i++)
-        divV_Side(i) = 0.0;
-
-      std::map<LO, std::size_t>::const_iterator it;
+  if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
+  {
+    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
+    for (auto const& it_side : sideSet)
+    {
+      // Get the local data of side and cell
+      const int cell = it_side.elem_LID;
+      const int side = it_side.side_local_id;
 
 
-      for (int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i]; //it->second;
-        H_Cell(node) = H(elem_LID, node);
-        SMB_Cell(node) = 0;//SMB(elem_LID, node);
-        for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-          V_Cell(node, dim) = velocity_field(elem_LID, node, dim);
-      }
-
-      // This is needed, since evaluate currently sums into
-      for (int qp = 0; qp < numQPsSide; qp++) {
-        H_Side(qp) = 0.0;
-        SMB_Side(qp) = 0.0;
-        for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-          V_Side(qp, dim) = 0.0;
-      }
-
-      // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      for (int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i]; //it->second;
-        for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-          const MeshScalarT& tmp = trans_basis_refPointsSide(0, node, qp);
-          H_Side(qp) += H_Cell(node) * tmp;
-          SMB_Side(qp) += SMB_Cell(node) * tmp;
-          for (std::size_t dim = 0; dim < numVecFODims; ++dim)
-            V_Side(qp, dim) += V_Cell(node, dim) * tmp;
+      ScalarT t = 0;
+      for (int qp=0; qp<numSurfaceQPs; ++qp)
+      {
+        ScalarT divHV = div_averaged_velocity(cell, side, qp)* thickness(cell, side, qp);
+        for (std::size_t dim = 0; dim < 2; ++dim) {
+        //  std::cout << averaged_velocity(cell, side, qp, dim) << " ";
+        //  divHV += averaged_velocity(cell, side, qp, dim);
+            divHV += grad_thickness(cell, side, qp, dim)*averaged_velocity(cell, side, qp, dim);
+        }
+        for (int node=0; node<numSideNodes; ++node)
+        {
+          t += divHV  * BF_surface (cell,side,node,qp) * w_measure_2d(cell,side,qp);
         }
       }
-
-      for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-        for (int i = 0; i < numSideNodes; ++i){
-          std::size_t node = side.node[i]; //it->second;
-          for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
-            const MeshScalarT& tmp = trans_gradBasis_refPointsSide(0, node, qp, dim);
-            gradH_Side(qp, dim) += H_Cell(node) * tmp;
-            divV_Side(qp) += V_Cell(node, dim) * tmp;
-          }
-        }
-      }
-
-      ScalarT reg = 0;
-      ScalarT res = 0;
-      for (int i = 0; i < numSideNodes; ++i){
-        std::size_t node = side.node[i]; //it->second;
-
-        for (std::size_t qp = 0; qp < numQPsSide; ++qp) {
-          ScalarT divHV = divV_Side(qp)* H_Side(qp);
-          ScalarT tmp=0;
-          for (std::size_t dim = 0; dim < numVecFODims; ++dim) {
-            divHV += gradH_Side(qp, dim)*V_Side(qp,dim);
-            tmp += gradH_Side(qp, dim)*gradH_Side(qp, dim);
-          }
-          reg += alpha*tmp*weighted_trans_basis_refPointsSide(0, node, qp);
-
-          ScalarT diff = divHV/1000.0 - SMB_Side(qp);
-          res += diff*diff * weighted_trans_basis_refPointsSide(0, node, qp);
-        }
-      }
-      res *= scaling;
-      reg *= scaling;
-      p_resp += res;
-      p_reg += reg;
-      this->local_response(elem_LID, 0) += res+reg;//*50.0;
-      this->global_response(0) += res+reg;//*50.0;
+        
+      this->local_response(cell, 0) += t*scaling;
+      //std::cout << this->local_response(cell, 0) << std::endl;
+      this->global_response(0) += t*scaling;
+      p_resp += t*scaling;
     }
   }
 
+  // --------------- Regularization term on the basal side ----------------- //
+
+  if ((workset.sideSets->find(basalSideName) != workset.sideSets->end()) && (alpha!=0))
+  {
+    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
+    for (auto const& it_side : sideSet)
+    {
+      // Get the local data of side and cell
+      const int cell = it_side.elem_LID;
+      const int side = it_side.side_local_id;
+      ScalarT t = 0;
+      for (int qp=0; qp<numBasalQPs; ++qp)
+      {
+      	ScalarT sum=0;
+      	for (int idim=0; idim<2; ++idim)
+       		sum += grad_thickness(cell,side,qp,idim)*grad_thickness(cell,side,qp,idim);
+        t += sum * w_measure_2d(cell,side,qp);
+      	}
+      	this->local_response(cell, 0) += t*scaling*alpha;//*50.0;
+      	this->global_response(0) += t*scaling*alpha;//*50.0;
+      	p_reg += t*scaling*alpha;
+    	}
+  	}
+
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
+  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluate2DFieldsDerivativesDueToExtrudedSolution(workset,basalSideName, cell_topo);
 }
 
 // **********************************************************************
@@ -324,7 +277,8 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postEvaluate(typename Traits::Po
 #endif
 
   if(workset.comm->getRank()   ==0)
-    std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
+//    std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
+  std::cout << "resp: " << resp << ", reg: " <<reg <<std::endl;
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;
@@ -352,10 +306,14 @@ Teuchos::RCP<const Teuchos::ParameterList> FELIX::ResponseSMBMismatch<EvalT, Tra
   validPL->set<std::string>("Field Name", "Solution", "Not used");
   validPL->set<double>("Regularization Coefficient", 1.0, "Regularization Coefficient");
   validPL->set<double>("Scaling Coefficient", 1.0, "Coefficient that scales the response");
+  validPL->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::RCP<const CellTopologyData>(),"Cell Topology Data");
   validPL->set<double>("Asinh Scaling", 1.0, "Scaling s in asinh(s*x)/s. Used to penalize high values of velocity");
   validPL->set<int>("Cubature Degree", 3, "degree of cubature used to compute the velocity mismatch");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
+
+  validPL->set<std::string> ("Basal Side Name", "", "Name of the side set correspongint to the ice-bedrock interface");
+  validPL->set<std::string> ("Surface Side Name", "", "Name of the side set corresponding to the ice surface");
 
   return validPL;
 }
