@@ -37,19 +37,20 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   std::string sideSetName;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Side,Node> val_node;
+  PHX::MDField<ParamScalarT,Cell,Side,Node> val_node;
   //! Basis Functions
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim> gradBF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim> val_qp;
+  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim> val_qp;
 
   int numSideNodes;
   int numSideQPs;
