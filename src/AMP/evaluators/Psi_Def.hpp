@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -69,39 +69,43 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+
 template<typename EvalT, typename Traits>
 void Psi<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //grab old psi value
-  Albany::MDArray phi_old = (*workset.stateArrayPtr)[phi_Name_];
+    //grab old phi value
+    Albany::MDArray phi_old = (*workset.stateArrayPtr)[phi_Name_];
 
-  // current time
-  const RealType t = workset.current_time;
+    //grab old psi value
+    Albany::MDArray psi_old = (*workset.stateArrayPtr)[psi_Name_];
 
-  // // do this only at the beginning
-  if ( t == 0.0 )
+    // current time
+    const RealType t = workset.current_time;
+
+    // // do this only at the beginning
+    if (t == 0.0)
     {
-  //     // initializing psi_old values:
-      for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
-  	{
-  	  for (std::size_t qp = 0; qp < num_qps_; ++qp) 
-  	    {
-  	      psi_(cell,qp) = constant_value_;
-	      phi_(cell,qp) = 0.0;
-	      phi_old(cell,qp) = 0.0;
-  	    }
-  	}
+        //     // initializing psi_ values:
+        for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+        {
+            for (std::size_t qp = 0; qp < num_qps_; ++qp)
+            {
+                psi_(cell, qp) = constant_value_;
+            }
+        }
     }
-
-  // defining psi_
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
+    else
     {
-      for (std::size_t qp = 0; qp < num_qps_; ++qp) 
-	{
-	  ScalarT phi_bar = std::max( phi_old(cell,qp), phi_(cell,qp) );
-	  psi_(cell,qp) = std::max( psi_(cell,qp), phi_bar );
-	}
+        // defining psi_
+        for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+        {
+            for (std::size_t qp = 0; qp < num_qps_; ++qp)
+            {
+                ScalarT phi_bar = std::max(phi_old(cell, qp), phi_(cell, qp));
+                psi_(cell, qp) = std::max(psi_old(cell, qp), phi_bar);
+            }
+        }
     }
 }
 //**********************************************************************

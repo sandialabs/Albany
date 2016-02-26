@@ -176,15 +176,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -301,15 +300,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -426,15 +424,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -551,15 +548,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -676,15 +672,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -801,15 +796,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -926,15 +920,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1051,15 +1044,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1176,15 +1168,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1301,15 +1292,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1426,15 +1416,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1551,15 +1540,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1676,15 +1664,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1801,15 +1788,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -1926,15 +1912,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2051,15 +2036,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2176,15 +2160,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2301,15 +2284,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2426,15 +2408,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2551,15 +2532,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2676,15 +2656,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2801,15 +2780,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -2926,15 +2904,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3051,15 +3028,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3176,15 +3152,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3301,15 +3276,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>
@@ -3426,15 +3400,14 @@
       </ParameterList>
       <Parameter name="Number of Slip Systems" type="int" value="12"/>
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+      <Parameter name="Nonlinear Solver Step Type" type="double" value="Newton"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
       <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-10"/>
       <Parameter name="Implicit Integration Max Iterations" type="int" value="100"/>
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
 
       <ParameterList name="Crystal Elasticity">
         <Parameter name="C11" type="double" value="204.6e3"/>

@@ -18,6 +18,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_polygate.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap_polygate.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pmoscap_3D_itrap.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_pmoscap_3D_itrap.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_gaascap_onesc.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_gaascap_onesc.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pndiode.xml
@@ -64,6 +66,7 @@ ENDIF()
 # Create tests with this name and standard executable
 add_test(${testRoot}_pmoscap ${Albany.exe} input_pmoscap.xml)
 add_test(${testRoot}_pmoscap_polygate ${Albany.exe} input_pmoscap_polygate.xml)
+add_test(${testRoot}_pmoscap_3D ${Albany.exe} input_pmoscap_3D_itrap.xml)
 add_test(${testRoot}_gaascap_onesc ${Albany.exe} input_gaascap_onesc.xml)
 add_test(${testRoot}_pndiode ${Albany.exe} input_pndiode.xml)
 add_test(${testRoot}_mosdot_2D ${Albany.exe} input_mosdot_2D.xml)

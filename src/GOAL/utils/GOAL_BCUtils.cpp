@@ -1,10 +1,11 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
 #include "GOAL_BCUtils.hpp"
+#include "GOAL_MechanicsProblem.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_GOALDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
@@ -35,7 +36,7 @@ class BCManager
     bool isAdjoint;
     RCP<Albany::GOALDiscretization> disc;
     RCP<Albany::GOALMeshStruct> meshStruct;
-    RCP<Albany::AbstractProblem> problem;
+    RCP<Albany::GOALMechanicsProblem> problem;
     Albany::GOALNodeSets ns;
     ParameterList bcParams;
     void applyBC(ParameterList const& p);
@@ -62,7 +63,8 @@ BCManager::BCManager(
   RCP<Albany::AbstractDiscretization> ad = app.getDiscretization();
   this->disc = Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
   this->meshStruct = disc->getGOALMeshStruct();
-  this->problem = app.getProblem();
+  this->problem = Teuchos::rcp_dynamic_cast<
+    Albany::GOALMechanicsProblem>(app.getProblem());
   this->ns = disc->getGOALNodeSets();
 }
 

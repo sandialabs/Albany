@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -51,6 +51,8 @@
 #ifdef ALBANY_GOAL
 #include "GOAL_BCUtils.hpp"
 #endif
+
+//#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -293,15 +295,37 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   RCP<Teuchos::ParameterList> scalingParams = Teuchos::sublist(params, "Scaling", true);
   scale = scalingParams->get("Scale", 1.0);
   scaleBCdofs = scalingParams->get("Scale BC Dofs", false);
-  if (scale == 1.0)  scaleBCdofs = false;
-  RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(params, "Problem", true);
-  if ((problemParams->get("Name", "Heat 1D") != "Mechanics 3D") || 
-      (problemParams->get("Name", "Heat 1D") != "Mechanics 2D")) { 
+  std::string scaleType = scalingParams->get("Type", "Constant");
+  if (scaleType == "Constant") { 
+    scale_type = CONSTANT;
+  }
+  else if (scaleType == "Diagonal") {
+    scale_type = DIAG;
+    scale = 1.0e1; 
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                 std::endl << "Error in Albany::Application constructor: " <<
-                                 "Scale BC dofs is set to true but this only works for Mechanics problems right now, " << 
-                                 "not Problem = " << problemParams->get("Name", "Heat 1D") << std::endl);
+                                 std::endl << "Error in Albany::Application: " <<
+                                 "Scale BC dofs does not work with "  << scaleType 
+                                 << "Type scaling, only Type = Constant Scaling."<< std::endl);  
+    }
+  }
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "The scaling Type you selected " << scaleType << " is not supported!" << 
+          "Supported scaling Types are currently: Constant" << std::endl); 
+  }
+  if (scale == 1.0)  scaleBCdofs = false;
+  RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(params, "Problem", true);
+  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") || 
+      (problemParams->get("Name", "Heat 1D") == "Poisson 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Poisson 3D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 1D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 2D") ||
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D")) { 
+    if (scaleBCdofs == true) { 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                 std::endl << "Error in Albany::Application: " <<
+                                 "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);  
     }
   }
   
@@ -331,6 +355,8 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
+  //FIXME: call setScaleBCDofs only on first step rather than at every Newton step. 
+  //It's called every step now b/c calling it once did not work for Schwarz problems. 
   countScale = 0; 
   // Create discretization object
   discFactory = rcp(new Albany::DiscretizationFactory(params, commT, expl));
@@ -415,6 +441,8 @@ void Albany::Application::buildProblem()   {
   ResponseFactory responseFactory(Teuchos::rcp(this,false), problem, meshSpecs,
                                   Teuchos::rcp(&stateMgr,false));
   responses = responseFactory.createResponseFunctions(responseList);
+  observe_responses = responseList.get("Observe Responses", true); 
+  response_observ_freq = responseList.get("Responses Observation Frequency", 1); 
 
   // Build state field manager
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginBuildingSfm();
@@ -1101,8 +1129,15 @@ computeGlobalResidualImplT(
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  
+  //Allocate scaleVec_ 
+  if (scaleVec_ == Teuchos::null && scale != 1.0) { 
+    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
+    setScale(); 
+  }
 
-  if (scaleBCdofs == false) fT->scale(1.0/scale);
+  if (scaleBCdofs == false && scale != 1.0)  
+    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
@@ -1113,19 +1148,15 @@ computeGlobalResidualImplT(
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
-  //Allocate scaleVec_ and set to 1s only if scaleBCdofs is on and it's the first time 
-  if (scaleBCdofs == true && scaleVec_ == Teuchos::null) 
-    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
-  
   if (dfm!=Teuchos::null) {
     PHAL::Workset workset;
 
     workset.fT = fT;
     loadWorksetNodesetInfo(workset);
-    //set the scale only if scaleBCdofs is on and it's the first time 
-    if (scaleBCdofs == true && countScale == 0) {
-      setScale(workset); 
-      Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+    if (scaleBCdofs == true) {
+      setScaleBCDofs(workset);
+      if (countScale == 0)  
+        Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
       countScale++; 
     }
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
@@ -1306,7 +1337,13 @@ computeGlobalJacobianImplT(const double alpha,
 
   int numWorksets = wsElNodeEqID.size();
 
-  Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  //Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+  Teuchos::RCP<Tpetra_Vector> overlapped_fT;
+  if(Teuchos::nonnull(fT)){
+	  overlapped_fT = solMgrT->get_overlapped_fT();
+  }else{
+	  overlapped_fT = Teuchos::null;
+  }
   Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solMgrT->get_overlapped_jacT();
   Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
 
@@ -1391,11 +1428,17 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
+  //Allocate and populate scaleVec_  
+  if (scaleVec_ == Teuchos::null && scale != 1.0) { 
+    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
+    setScale(); 
+  }
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    if (scaleBCdofs == false) 
-      fT->scale(1.0/scale);
+    if (scaleBCdofs == false && scale != 1.0) {
+      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+    }
   }
 
   // Assemble global Jacobian
@@ -1409,19 +1452,18 @@ computeGlobalJacobianImplT(const double alpha,
 #endif
 #endif
 
-  //allocate scaleVec_ only 1st time
-  if (scaleVec_ == Teuchos::null) 
-      scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
-
-  //scale Jacobian by 1/scale in the case scaleBCdofs is off 
-  if (scaleBCdofs == false) { 
-    if (scale != 1.0) {
-      scaleVec_->putScalar(1.0/scale);
-      jacT->fillComplete();
-      jacT->leftScale(*scaleVec_);
-      jacT->resumeFill();
-      countScale++; 
-    }
+  //scale Jacobian 
+  if (scaleBCdofs == false && scale != 1.0) { 
+    jacT->fillComplete();
+    jacT->leftScale(*scaleVec_);
+    jacT->resumeFill();
+    countScale++; 
+#ifdef WRITE_TO_MATRIX_MARKET
+    char name[100];  //create string for file name
+    sprintf(name, "scale%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(name, scaleVec_);
+#endif
+    setScale(jacT); 
   }
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -1445,10 +1487,10 @@ computeGlobalJacobianImplT(const double alpha,
 
     loadWorksetNodesetInfo(workset);
     
-    //setScale only if scaleBCdofs is on and it's the 1st time 
-    if (scaleBCdofs == true && countScale == 0) {
-      setScale(workset); 
-      Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+    if (scaleBCdofs == true) {
+      setScaleBCDofs(workset); 
+      if (countScale == 0)  
+        Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
       countScale++; 
     }
 
@@ -1471,17 +1513,15 @@ computeGlobalJacobianImplT(const double alpha,
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
 #endif
-  //Apply scaling to residual
-  if (Teuchos::nonnull(fT))
-    if (scaleBCdofs == true)  
-      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
- 
   jacT->fillComplete();
 
-  //Apply scaling to Jacobian 
-  if (scaleBCdofs == true) 
+  //Apply scaling to residual and Jacobian 
+  if (scaleBCdofs == true) {
+    if (Teuchos::nonnull(fT))
+      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
     jacT->leftScale(*scaleVec_);
-
+  }
+    
  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (overlapped_jacT->isFillActive()) {
     // Makes getLocalMatrix() valid.
@@ -1938,21 +1978,18 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
 
   params = Teuchos::null;
-
+  
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    fT->scale(1.0/scale);
   }
 
   // Assemble derivatives
   if (Teuchos::nonnull(JVT)) {
     JVT->doExport(*overlapped_JVT, *exporterT, Tpetra::ADD);
-    JVT->scale(1.0/scale);
   }
   if (Teuchos::nonnull(fpT)) {
     fpT->doExport(*overlapped_fpT, *exporterT, Tpetra::ADD);
-    fpT->scale(1.0/scale);
   }
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -2255,7 +2292,6 @@ applyGlobalDistParamDerivImplT(const double current_time,
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
   }
-  fpVT->scale(1.0/scale);
   } // End timer
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -4320,8 +4356,26 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
     workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 }
+void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT) 
+{
+  if (scale_type == CONSTANT) { //constant scaling
+    scaleVec_->putScalar(1.0/scale);
+  }
+  else if (scale_type == DIAG) { //diagonal scaling 
+    if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
+    else {
+      jacT->getLocalDiagCopy(*scaleVec_);
+      //std::cout << "scaleVec_ noninv: " <<std::endl;  
+      //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
+      scaleVec_->reciprocal(*scaleVec_);  
+    }
+  }
+  //std::cout << "countScale: " << countScale << std::endl; 
+  //std::cout << "scaleVec_: " <<std::endl;  
+  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
+}
    
-void Albany::Application::setScale(PHAL::Workset& workset) 
+void Albany::Application::setScaleBCDofs(PHAL::Workset& workset) 
 {
   scaleVec_->putScalar(1.0);
   int l = 0;  
@@ -4330,14 +4384,18 @@ void Albany::Application::setScale(PHAL::Workset& workset)
     //std::cout << "key: " << iterator->first <<  std::endl;
     const std::vector<std::vector<int> >& nsNodes = iterator->second;
     for (unsigned int i = 0; i < nsNodes.size(); i++) {
+      //std::cout << "l, offsets size: " << l << ", " << offsets_[l].size() << std::endl; 
       for (unsigned j = 0; j < offsets_[l].size(); j++) {
-          int lunk = nsNodes[i][offsets_[l][0]]; 
-          //std::cout << "j, i, lunk, offsets_: " << j << ", " << i << ", " << lunk << ", " << offsets_[l][0] << std::endl;
-          scaleVec_->replaceLocalValue(lunk, scale);  
+        int lunk = nsNodes[i][offsets_[l][j]];
+        //std::cout << "l, j, i, offsets_: " << l << ", " << j << ", " << i << ", " << offsets_[l][j] << std::endl;
+        //std::cout << "lunk = " << lunk << std::endl; 
+        scaleVec_->replaceLocalValue(lunk, scale);  
       }
     }
     l++; 
   }
+  //std::cout << "scaleVec_: " <<std::endl;  
+  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
 }
 
 void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws)

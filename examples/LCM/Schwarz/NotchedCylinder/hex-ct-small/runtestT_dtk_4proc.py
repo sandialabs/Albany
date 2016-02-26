@@ -20,7 +20,7 @@ logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-6; 
-meanvalue = 0.00034045340457; 
+meanvalue = 0.000341851470936; 
 
 # run AlbanyT 
 command = ["mpirun", "-np", "4", "./AlbanyT", "notched-cylinder-S-ctest.xml"]

@@ -1,4 +1,4 @@
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -62,6 +62,7 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
   fermiEnergy.resize(nSidesets); 
 
   trapSpectrum.resize(nSidesets);
+  trapType.resize(nSidesets); 
   trapDensity.resize(nSidesets);
   acceptorDegFac.resize(nSidesets);
   donorDegFac.resize(nSidesets); 
@@ -91,7 +92,8 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
         << intrapstr << " parameterlist is NOT found !" << std::endl);
     
     Teuchos::ParameterList& trapSublist = trapsPList.sublist(intrapstr); 
-    trapSpectrum[i] = trapSublist.get<std::string>("Energy Spectrum");     
+    trapSpectrum[i] = trapSublist.get<std::string>("Energy Spectrum");
+    trapType[i] = trapSublist.get<std::string>("Trap Type");      
     trapDensity[i] = trapSublist.get<double>("Trap Density"); 
     
     acceptorDegFac[i] = 1; // by default; 
@@ -351,6 +353,8 @@ calcInterfaceTrapChargDensity(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Lay
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2);   // How many DOFs per node to calculate?
 
+ if(trapSpectrum[iSideset] == "Uniform")  // for Uniform energy spectrum
+ { 
   for(int pt = 0; pt < numPoints; pt++) 
   {
     for(int dim = 0; dim < numDOFsSet; dim++) 
@@ -369,33 +373,46 @@ calcInterfaceTrapChargDensity(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Lay
       double Dit = trapDensity[iSideset];  // in unit of [#/(eV.cm^2)]
       double aDegFac = acceptorDegFac[iSideset]; // degeneracy factor for acceptor traps
       double dDegFac = donorDegFac[iSideset];    // degeneracy factor for donor traps
+      std::string type = trapType[iSideset];     // Trap Type = Acceptor, Donor, or Both
       
-      ScalarT aUpperLimit = (Ef - Ec) / kbT; 
+      ScalarT aUpperLimit = (Ef - Ec) / kbT;  // for Trap Type = Both
       ScalarT aLowerLimit = (Ef - Ei) / kbT; 
       ScalarT dUpperLimit = (Ei - Ef) / kbT; 
       ScalarT dLowerLimit = (Ev - Ef) / kbT; 
-      ScalarT kbT_eV = kbT * energy_unit_in_eV;   // make sure kbT in unit of [eV]
       
-      ScalarT atmp1, atmp2, dtmp1, dtmp2; 
-      if (aUpperLimit > MAX_EXPONENT)  
-        atmp1 = aUpperLimit;  // log(degfac+exp(x)) = x when x > MAX_EXPONENT
-      else
-        atmp1 = std::log(aDegFac + std::exp(aUpperLimit)); 
-        
-      if (aLowerLimit > MAX_EXPONENT)
-        atmp2 = aLowerLimit; 
-      else
-        atmp2 = std::log(aDegFac + std::exp(aLowerLimit));   
-        
-      if (dUpperLimit > MAX_EXPONENT)
-        dtmp1 = dUpperLimit; 
-      else
-        dtmp1 = std::log(dDegFac + std::exp(dUpperLimit));   
+      if (type == "Acceptor")
+        aLowerLimit = (Ef - Ev) / kbT; 
+      else if (type == "Donor")
+        dUpperLimit = (Ec - Ef) / kbT; 
+      
+      ScalarT kbT_eV = kbT * energy_unit_in_eV;   // make sure kbT in unit of [eV]
+      ScalarT atmp1 = 0.0, atmp2 = 0.0, dtmp1 = 0.0, dtmp2 = 0.0;
 
-      if (dLowerLimit > MAX_EXPONENT)
-        dtmp2 = dLowerLimit; 
-      else
-        dtmp2 = std::log(dDegFac + std::exp(dLowerLimit));   
+      if ((type == "Acceptor") || (type == "Both"))
+      { 
+        if (aUpperLimit > MAX_EXPONENT)  
+          atmp1 = aUpperLimit;  // log(degfac+exp(x)) = x when x > MAX_EXPONENT
+        else
+          atmp1 = std::log(aDegFac + std::exp(aUpperLimit)); 
+        
+        if (aLowerLimit > MAX_EXPONENT)
+          atmp2 = aLowerLimit; 
+        else
+          atmp2 = std::log(aDegFac + std::exp(aLowerLimit));   
+      }
+      
+      if ((type == "Donor") || (type == "Both"))
+      {
+        if (dUpperLimit > MAX_EXPONENT)
+          dtmp1 = dUpperLimit; 
+        else
+          dtmp1 = std::log(dDegFac + std::exp(dUpperLimit));   
+
+        if (dLowerLimit > MAX_EXPONENT)
+          dtmp2 = dLowerLimit; 
+        else
+          dtmp2 = std::log(dDegFac + std::exp(dLowerLimit));   
+      }
       
       // compute interface trap charge density in [#/cm^2]
       // when Dit = constant, the integration over energy for Nit can be carried out analytically
@@ -407,6 +424,9 @@ calcInterfaceTrapChargDensity(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Lay
       // std::cout << "pt=" << pt << ", dofset=" << dim << ", Nit=" << Nit << ", data=" << qp_data_returned(0,pt,dim) << std::endl; 
     }
   }
+ }  // end of  if(trapSpectrum == "Uniform")
+ 
+ 
 }
 
 template<typename EvalT, typename Traits>

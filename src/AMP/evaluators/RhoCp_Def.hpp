@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -42,8 +42,6 @@ RhoCp(Teuchos::ParameterList& p,
 
   cond_list->validateParameters(*reflist, 0,
   Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
-
-  std::string typ = cond_list->get("Thermal Conductivity Type", "Constant");
 
   ScalarT value = cond_list->get("Value", 1.0);
   init_constant(value,p);

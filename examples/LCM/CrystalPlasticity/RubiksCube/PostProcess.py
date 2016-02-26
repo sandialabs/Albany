@@ -10,7 +10,7 @@
 #    The path above is valid on the CEE LAN.  On other systems, you need to provide a path to a SEACAS build
 #    that includes shared libraries.
 import sys
-sys.path.append('/ascldap/users/djlittl/Albany_TPL/trilinos/trilinos-votd/GCC_4.7.2_OPT/bin')
+#sys.path.append('/ascldap/users/djlittl/Albany_TPL/trilinos/trilinos-votd/GCC_4.7.2_OPT/bin')
 import exodus
 import string
 import numpy
@@ -86,8 +86,7 @@ if __name__ == "__main__":
     outFileName = outFileLabel + 'force_displacement.txt'
     dataFile = open(outFileName, 'w')
     for timeStep in range(numTimeSteps):
-        # NOTE:  The displacement is doubled here because the BC on the model actually displace both ends in opposite directions
-        dataFile.write(str(2.0*nodeset_displacement[timeStep]) + "  " + str(nodeset_force[timeStep]) + "\n")
+        dataFile.write(str(nodeset_displacement[timeStep]) + "  " + str(nodeset_force[timeStep]) + "\n")
     dataFile.close()
     print "Force-displacement data for written to", outFileName
 

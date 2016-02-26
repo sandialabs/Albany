@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -21,7 +21,8 @@ namespace Albany {
 
 class PiroObserverT : public Piro::ObserverBase<ST> {
 public:
-  explicit PiroObserverT(const Teuchos::RCP<Albany::Application> &app);
+  explicit PiroObserverT(const Teuchos::RCP<Albany::Application> &app, 
+                         Teuchos::RCP<const Thyra::ModelEvaluator<double>> model=Teuchos::null);
 
   virtual void observeSolution(
       const Thyra::VectorBase<ST> &solution);
@@ -58,8 +59,28 @@ private:
       Teuchos::Ptr<const Tpetra_Vector> solution_dot,
       const ST defaultStamp);
 
+  // The following function is for calculating / printing responses every step.
+  // It is currently not implemented for the case of an Teuchos::RCP<const Thyra::MultiVectorBase<ST>>
+  // argument; this may be desired at some point in the future. 
+  void observeResponse(
+      const ST defaultStamp,  
+      Teuchos::RCP<const Thyra::VectorBase<ST>> solution,
+      Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot = Teuchos::null); 
+
   ObserverImpl impl_;
 
+  Teuchos::RCP<const Thyra::ModelEvaluator<double> > model_; 
+
+protected: 
+
+  bool observe_responses_;  
+  
+  int stepper_counter_;  
+  
+  Teuchos::RCP<Teuchos::FancyOStream> out; 
+
+  int observe_responses_every_n_steps_; 
+ 
 };
 
 } // namespace Albany

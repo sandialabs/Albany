@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -157,6 +157,29 @@ IF(NOT ALBANY_HAVE_STK)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp)
+ENDIF()
+
+IF(Kokkos_ENABLE_Cuda)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonModel.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonHMRModel.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/FM_AlbanyInterface.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/CrystalPlasticityCore.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityCore.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityCore_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/CrystalPlasticityModel.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp)
 ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)

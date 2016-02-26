@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -63,6 +63,12 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
         <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldSt,
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
         <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newSt) const;
+
+    //! is this the adjoint problem?
+    bool isAdjoint;
+
+    //! should the adjoint problem be solved with an enriched basis?
+    bool enrichAdjoint;
 
   private:
     
