@@ -64,6 +64,12 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
+  nsn = "top";
+  nsNames.push_back(nsn);
+  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
 
   std::vector<std::string> ssNames;
   std::string ssnLat = "lateralside";
@@ -299,10 +305,13 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
+  stk::mesh::PartVector singlePartVecBottom(1);
+  stk::mesh::PartVector singlePartVecTop(1);
   stk::mesh::PartVector emptyPartVec;
   unsigned int ebNo = 0; //element block #???
 
-  singlePartVec[0] = nsPartVec["bottom"];
+  singlePartVecBottom[0] = nsPartVec["bottom"];
+  singlePartVecTop[0] = nsPartVec["top"];
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
@@ -325,7 +334,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     stk::mesh::EntityId node2dId = bulkData2D.identifier(node2d) - 1;
     GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
     if (il == 0)
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVec);
+      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVecBottom);
+    else if (il == numLayers)
+      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVecTop);
     else
       node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, nodePartVec);
 
