@@ -10,4 +10,4 @@
 #include "PHAL_ScatterResidual_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterResidual)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ScatterResidualWithExtrudedParams)

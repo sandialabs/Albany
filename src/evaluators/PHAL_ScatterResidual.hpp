@@ -64,6 +64,37 @@ protected:
 
 template<typename EvalT, typename Traits> class ScatterResidual;
 
+template<typename EvalT, typename Traits>
+class ScatterResidualWithExtrudedParams
+  : public ScatterResidual<EvalT, Traits> {
+
+public:
+
+  ScatterResidualWithExtrudedParams(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+                                ScatterResidual<EvalT, Traits>(p,dl) {
+    extruded_params_levels = p.get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
+  };
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm) {
+    ScatterResidual<EvalT, Traits>::postRegistrationSetup(d,vm);
+  }
+
+  void evaluateFields(typename Traits::EvalData d) {
+    ScatterResidual<EvalT, Traits>::evaluateFields(d);
+  }
+
+  //Kokkos::View<int***, PHX::Device> Index;
+
+protected:
+
+  typedef typename EvalT::ScalarT ScalarT;
+  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
+};
+
+
+
 // **************************************************************
 // **************************************************************
 // * Specializations
@@ -81,9 +112,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  const std::size_t numFields;
 
 //Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -126,10 +158,11 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   //typedef Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > temp_view_type;
-  const std::size_t numFields;
 
 //Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -193,9 +226,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-  const std::size_t numFields;
 };
 
 // **************************************************************
@@ -208,9 +242,30 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-  const std::size_t numFields;
+};
+
+template<typename Traits>
+class ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+public:
+  ScatterResidualWithExtrudedParams(const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl)  :
+                    ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl) {
+    extruded_params_levels = p.get< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels");
+  };
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm) {
+    ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::postRegistrationSetup(d,vm);
+  }
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels;
 };
 
 // **************************************************************
@@ -224,9 +279,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
-  const std::size_t numFields;
 };
 
 // **************************************************************
@@ -239,9 +295,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
-  const std::size_t numFields;
 };
 
 // **************************************************************
@@ -254,9 +311,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
-  const std::size_t numFields;
 };
 #endif 
 #ifdef ALBANY_ENSEMBLE 
@@ -271,9 +329,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
-  const std::size_t numFields;
 };
 
 // **************************************************************
@@ -286,9 +345,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
-  const std::size_t numFields;
 };
 
 // **************************************************************
@@ -301,9 +361,10 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d);
+protected:
+  const std::size_t numFields;
 private:
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
-  const std::size_t numFields;
 };
 #endif
 
