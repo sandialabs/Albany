@@ -179,5 +179,139 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
+template<typename EvalT, typename Traits>
+void GatherScalarExtruded2DNodalParameter<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP<const Tpetra_Vector> pvecT;
+  try {
+    pvecT = workset.distParamLib->get(this->param_name)->overlapped_vector();
+  } catch (const std::logic_error& e) {
+    const std::string evalt = PHX::typeAsString<EvalT>();
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "PHAL::GatherScalarExtruded2DNodalParameter<"
+      << evalt.substr(1, evalt.size() - 2)
+      << ", Traits>::evaluateFields: parameter " << this->param_name
+      << " is not in workset.distParamLib. If this is a Tpetra-only build"
+      << " we currently expect this result; sorry.");
+  }
+  Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
+
+  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+
+  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+  int numLayers = layeredMeshNumbering.numLayers;
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+    //  LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(wsElDofs((int)cell,(int)node,0));
+      LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+      LO base_id, ilayer;
+      layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+      LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+      GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
+      (this->val)(cell,node) = pvecT_constView[pvecT->getMap()->getLocalElement(ginode)  ];
+    }
+  }
+}
+
+// **********************************************************************
+// Specialization: DistParamDeriv
+// **********************************************************************
+
+
+// **********************************************************************
+template<typename Traits>
+void GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  // Distributed parameter vector
+  Teuchos::RCP<const Tpetra_Vector> pvecT =
+    workset.distParamLib->get(this->param_name)->overlapped_vector();
+  Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
+
+  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+
+  // Are we differentiating w.r.t. this parameter?
+  bool is_active = (workset.dist_param_deriv_name == this->param_name);
+
+  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+  int numLayers = layeredMeshNumbering.numLayers;
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+
+  // If active, intialize data needed for differentiation
+  if (is_active) {
+    const int num_deriv = this->numNodes;
+    const int num_nodes_res = this->numNodes;
+    bool trans = workset.transpose_dist_param_deriv;
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> >& resID  = workset.wsElNodeEqID[cell];
+
+      for (std::size_t node = 0; node < num_deriv; ++node) {
+
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+        LO base_id, ilayer;
+        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+        LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+        GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
+        double pvec_id = pvecT_constView[pvecT->getMap()->getLocalElement(ginode)];
+
+        ParamScalarT v(num_deriv, node, pvec_id);
+        v.setUpdateValue(!workset.ignore_residual);
+        (this->val)(cell,node) = v;
+      }
+
+      if (workset.VpT != Teuchos::null) {
+        const Tpetra_MultiVector& VpT = *(workset.VpT);
+        const std::size_t num_cols = VpT.getNumVectors();
+
+        Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp = workset.local_Vp[cell];
+
+        if (trans) {
+          local_Vp.resize(num_nodes_res*workset.numEqs);
+          for (std::size_t node = 0; node < num_nodes_res; ++node) {
+            // Store Vp entries
+            const Teuchos::ArrayRCP<LO>& eqID = resID[node];
+            for (std::size_t eq = 0; eq < workset.numEqs; eq++) {
+              local_Vp[node*workset.numEqs+eq].resize(num_cols);
+              const LO id = eqID[eq];
+              for (std::size_t col=0; col<num_cols; ++col)
+                local_Vp[node*workset.numEqs+eq][col] = VpT.getData(col)[id];
+            }
+          }
+        }
+        else {
+          local_Vp.resize(num_deriv);
+          for (std::size_t node = 0; node < num_deriv; ++node) {
+            const LO id = wsElDofs((int)cell,(int)node,0);
+            local_Vp[node].resize(num_cols);
+            for (std::size_t col=0; col<num_cols; ++col)
+              local_Vp[node][col] = (id >= 0) ? VpT.getData(col)[id] : 0;
+          }
+        }
+      }
+    }
+  }
+
+  // If not active, just set the parameter value in the phalanx field
+  else {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+        const LO lid = wsElDofs((int)cell,(int)node,0);
+        (this->val)(cell,node) = (lid >= 0) ? pvecT_constView[lid] : 0;
+      }
+    }
+  }
+}
+
+
+// **********************************************************************
 
 }
