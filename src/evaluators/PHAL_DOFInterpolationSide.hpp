@@ -21,13 +21,13 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFInterpolationSide : public PHX::EvaluatorWithBaseImpl<Traits>,
+template<typename EvalT, typename Traits, typename Type>
+class DOFInterpolationSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
                              public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  DOFInterpolationSide (const Teuchos::ParameterList& p,
+  DOFInterpolationSideBase (const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
@@ -37,23 +37,40 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef Type ParamScalarT;
 
   std::string sideSetName;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Side,Node> val_node;
+  PHX::MDField<ParamScalarT,Cell,Side,Node> val_node;
   //! Basis Functions
   PHX::MDField<RealType,Cell,Side,Node,QuadPoint> BF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Side,Cell,QuadPoint> val_qp;
+  PHX::MDField<ParamScalarT,Side,Cell,QuadPoint> val_qp;
 
   int numSideNodes;
   int numSideQPs;
 };
+
+template<typename EvalT, typename Traits>
+class DOFInterpolationSide : public DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>
+{
+public:
+  DOFInterpolationSide (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits>
+class DOFInterpolationSideParam : public DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
+{
+public:
+  DOFInterpolationSideParam (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
 
 } // Namespace PHAL
 

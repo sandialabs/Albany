@@ -12,9 +12,9 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFInterpolationSide<EvalT, Traits>::
-DOFInterpolationSide(const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename Type>
+DOFInterpolationSideBase<EvalT, Traits, Type>::
+DOFInterpolationSideBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_node    (p.get<std::string> ("Variable Name"), dl->side_node_scalar),
@@ -35,7 +35,22 @@ DOFInterpolationSide(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void DOFInterpolationSide<EvalT, Traits>::
+DOFInterpolationSide<EvalT, Traits>::
+DOFInterpolationSide(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) : 
+  DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>(p, dl) {};
+
+template<typename EvalT, typename Traits>
+DOFInterpolationSideParam<EvalT, Traits>::
+DOFInterpolationSideParam(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) : 
+  DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>(p, dl) {};
+
+
+
+//**********************************************************************
+template<typename EvalT, typename Traits, typename Type>
+void DOFInterpolationSideBase<EvalT, Traits, Type>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -45,8 +60,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void DOFInterpolationSideBase<EvalT, Traits, Type>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
