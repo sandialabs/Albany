@@ -41,7 +41,6 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const std::map<std::s
   BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl_surface->side_node_qp_scalar);
   w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->side_qp_scalar);
 
-  Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
 
@@ -123,7 +122,6 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   BF_surface          = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(BF_surface_name, dl->side_node_qp_scalar);
   w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl->side_qp_scalar);
 
-  Teuchos::RCP<const Albany::MeshSpecsStruct> meshSpecs = paramList->get<Teuchos::RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
 
