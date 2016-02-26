@@ -968,8 +968,6 @@ FELIX::StokesFOThickness::constructEvaluators(
   {
     // ----------------------- Responses --------------------- //
     RCP<ParameterList> paramList = rcp(new ParameterList("Param List"));
-    RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
-    paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
     paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
     paramList->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
@@ -981,6 +979,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     paramList->set<std::string>("Inverse Metric Basal Name","Inv Metric " + basalSideName);
     paramList->set<std::string>("Basal Side Name", basalSideName);
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
+    paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",rcp(new CellTopologyData(meshSpecs.ctd)));
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dls);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
