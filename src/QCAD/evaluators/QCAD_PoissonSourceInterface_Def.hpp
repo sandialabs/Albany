@@ -536,7 +536,9 @@ evaluateFields(typename Traits::EvalData workset)
   this->evaluateInterfaceContribution(workset);
 
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
-  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> fT_nonconstView; 
+  if (Teuchos::nonnull(fT)) 
+    fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
   ScalarT *valptr;
