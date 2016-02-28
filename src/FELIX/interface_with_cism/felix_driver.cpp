@@ -416,14 +416,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     if (keep_proc) { //in the case we're using the reduced Comm, only call routines if there is a nonzero # of elts on a proc. 
 #ifdef REDUCED_COMM 
       reducedMpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
-   #ifdef CISM_USE_EPETRA
-      reducedMpiComm = Albany::createEpetraCommFromMpiComm(reducedComm); 
-   #endif
 #else
       reducedMpiCommT = mpiCommT; 
-   #ifdef CISM_USE_EPETRA
-      reducedMpiComm = mpiComm; 
-   #endif
 #endif
     
 
@@ -687,7 +681,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //if (!first_time_step) 
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
 #ifdef CISM_USE_EPETRA 
-    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, reducedMpiComm, reducedMpiComm, Teuchos::null, false);
+    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
 #else
    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
 #endif

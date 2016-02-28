@@ -51,8 +51,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Albany::SolverFactory> slvrfctry =
       Teuchos::rcp(new Albany::SolverFactory(cmd.xml_filename, comm));
 
-    Teuchos::RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(comm);
-    Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appComm, appComm);
+    Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(comm, comm);
 
 
     Thyra::EpetraModelEvaluator appThyra;
