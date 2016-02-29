@@ -1377,6 +1377,10 @@ Albany::SolverFactory::getValidResponseParameters() const
   validPL->set<int>("Number of Response Vectors", 0);
   validPL->set<bool>("Observe Responses", true);
   validPL->set<int>("Responses Observation Frequency", 1);
+  Teuchos::Array<unsigned int>  defaultDataUnsignedInt;
+  validPL->set<Teuchos::Array<unsigned int> >("Relative Responses Markers", defaultDataUnsignedInt,
+		  "Array of responses for which relative change will be obtained");
+
   validPL->set<int>("Number", 0);
   validPL->set<int>("Equation", 0);
   const int maxParameters = 500;
