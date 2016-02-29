@@ -475,6 +475,8 @@ void Albany::Application::createDiscretization() {
   disc = discFactory->createDiscretization(neq, stateMgr.getStateInfoStruct(),
                                            problem->getFieldRequirements(),
                                            problem->getNullSpace());
+  //The following is for Aeras problems.
+  explicit_scheme = disc->isExplicitScheme();
 }
 
 void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -1413,7 +1415,7 @@ computeGlobalJacobianImplT(const double alpha,
    //fill Jacobian derivative dimensions:
    for (int ps=0; ps < fm.size(); ps++){
       (workset.Jacobian_deriv_dims).push_back(
-        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps, explicit_scheme));
    }
 
 
@@ -4021,7 +4023,7 @@ postRegSetup(std::string eval)
     for (int ps=0; ps < fm.size(); ps++){
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
-        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps, explicit_scheme));
       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
       if (nfm!=Teuchos::null && ps < nfm.size()) {
@@ -4034,7 +4036,7 @@ postRegSetup(std::string eval)
       // different element types?
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
-        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0));
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0, explicit_scheme));
       dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
     }

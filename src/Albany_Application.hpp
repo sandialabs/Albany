@@ -1124,6 +1124,8 @@ namespace Albany {
 #endif
 #endif
 
+    bool explicit_scheme; 
+
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;

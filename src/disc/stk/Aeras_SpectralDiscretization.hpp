@@ -500,6 +500,11 @@ namespace Aeras
     {
       return neq;
     }
+   
+    bool isExplicitScheme() const 
+    {
+      return explicit_scheme; 
+    }
 
     //! Get number of levels (for hydrostatic problems) 
     int getNumLevels() const { return numLevels; }

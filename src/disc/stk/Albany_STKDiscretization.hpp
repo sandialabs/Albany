@@ -155,6 +155,8 @@ namespace Albany {
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
     //! Get overlapped Node map
     Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
+    
+    bool isExplicitScheme() const { return false; }
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
