@@ -1152,8 +1152,10 @@ computeGlobalResidualImplT(
     loadWorksetNodesetInfo(workset);
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset);
+#ifdef WRITE_TO_MATRIX_MARKET
       if (countScale == 0)  
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+#endif
       countScale++; 
     }
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
@@ -1487,8 +1489,10 @@ computeGlobalJacobianImplT(const double alpha,
     
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset); 
+#ifdef WRITE_TO_MATRIX_MARKET
       if (countScale == 0)  
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+#endif
       countScale++; 
     }
 
