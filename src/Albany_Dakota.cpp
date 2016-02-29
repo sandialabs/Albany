@@ -116,7 +116,7 @@ int Albany_Dakota(int argc, char *argv[])
     // Create application & model evaluator
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model =
-      slvrfctry->createAlbanyAppAndModel(app, appComm);
+      slvrfctry->createAlbanyAppAndModel(app, appCommT);
 
     // Setup rest of solver
     mp_solver->setup(model);
@@ -127,7 +127,7 @@ int Albany_Dakota(int argc, char *argv[])
 	  false);
   }
   else {
-    RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appComm, appComm);
+    RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appCommT, appCommT);
     trikota_interface =
       rcp(new TriKota::DirectApplicInterface(dakota.getProblemDescDB(), App,
 					     p_index, g_index),

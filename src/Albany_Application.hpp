@@ -111,6 +111,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos_Comm> getComm() const;
 
 #if defined(ALBANY_EPETRA)
+    //! Get Epetra communicator
+    Teuchos::RCP<const Epetra_Comm> getEpetraComm() const;
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
 #endif

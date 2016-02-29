@@ -82,9 +82,7 @@ int main(int argc, char *argv[]) {
     for (int m=0; m<num_models; m++) {
       Albany::SolverFactory slvrfctry(model_filenames[m], 
 				      comm);
-      RCP<Epetra_Comm> appComm = 
-	Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-      models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], appComm);
+      models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], comm);
       Teuchos::ParameterList& appParams = slvrfctry.getParameters();
       piroParams[m] = Teuchos::rcp(&(appParams.sublist("Piro")),false);
     }

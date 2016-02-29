@@ -55,8 +55,8 @@ namespace Albany {
 #if defined(ALBANY_EPETRA)
     //! Create solver as response-only model evaluator
     virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create(
-      const Teuchos::RCP<const Epetra_Comm>& appComm,
-      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Teuchos_Comm>& appCommT,
+      const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
 #endif
 
@@ -69,8 +69,8 @@ namespace Albany {
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
-      const Teuchos::RCP<const Epetra_Comm>& appComm,
-      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Teuchos_Comm>& appCommT,
+      const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
       bool createAlbanyApp = true);
 #endif
@@ -87,14 +87,14 @@ namespace Albany {
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
-      const Teuchos::RCP<const Epetra_Comm>& appComm,
-      const Teuchos::RCP<const Epetra_Comm>& solverComm,
+      const Teuchos::RCP<const Teuchos_Comm>& appCommT,
+      const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
       bool createAlbanyApp = true);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
       Teuchos::RCP<Application>& albanyApp,
-      const Teuchos::RCP<const Epetra_Comm>& appComm,
+      const Teuchos::RCP<const Teuchos_Comm>& appCommT,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 #endif
 
@@ -109,7 +109,7 @@ namespace Albany {
 #if defined(ALBANY_EPETRA)
     Teuchos::RCP<EpetraExt::ModelEvaluator> createModel(
       const Teuchos::RCP<Application>& albanyApp,
-      const Teuchos::RCP<const Epetra_Comm>& appComm);
+      const Teuchos::RCP<const Teuchos_Comm>& appCommT);
 #endif
 
     Teuchos::ParameterList& getAnalysisParameters() const

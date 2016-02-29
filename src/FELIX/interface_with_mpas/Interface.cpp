@@ -38,7 +38,6 @@ double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_s
        MPAS_flowParamA(1e-4), MPAS_enhancementFactor(1.0), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2);
 
 #ifdef MPAS_USE_EPETRA
-  Teuchos::RCP<const Epetra_Comm> mpiComm;
   Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
   bool TpetraBuild = false;
 #else
@@ -189,7 +188,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     albanyApp->getDiscretization()->updateMesh();
 
 #ifdef MPAS_USE_EPETRA
-  solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
+  solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 #else
    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 #endif
@@ -259,9 +258,6 @@ void velocity_solver_finalize() {
 
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   keptMesh = false;
-#ifdef MPAS_USE_EPETRA
-  mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
-#endif
   mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
