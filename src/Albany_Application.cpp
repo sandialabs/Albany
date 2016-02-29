@@ -1457,6 +1457,7 @@ computeGlobalJacobianImplT(const double alpha,
   //scale Jacobian 
   if (scaleBCdofs == false && scale != 1.0) { 
     jacT->fillComplete();
+    setScale(jacT); 
     jacT->leftScale(*scaleVec_);
     jacT->resumeFill();
     countScale++; 
@@ -1465,7 +1466,6 @@ computeGlobalJacobianImplT(const double alpha,
     sprintf(name, "scale%i.mm", countScale);
     Tpetra_MatrixMarket_Writer::writeDenseFile(name, scaleVec_);
 #endif
-    setScale(jacT); 
   }
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
