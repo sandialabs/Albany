@@ -24,7 +24,7 @@ int getDerivativeDimensions (const Albany::Application* app,
 //! this once app has the discretization.
 template<typename EvalT>
 int getDerivativeDimensions (const Albany::Application* app,
-                             const int element_block_idx);
+                             const int element_block_idx, const bool explicit_scheme = false);
 
 template<class ViewType>
 int getDerivativeDimensionsFromView (const ViewType &a) { return 0; }

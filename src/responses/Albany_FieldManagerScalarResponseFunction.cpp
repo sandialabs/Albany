@@ -292,7 +292,7 @@ evaluateGradient(const double current_time,
   
   // Perform fill via field manager (dg/dx)
   if (dg_dx != NULL) {
-    Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+    Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
     workset.m_coeff = 0.0;
     workset.j_coeff = 1.0;
     workset.n_coeff = 0.0;
@@ -456,7 +456,7 @@ evaluateDistParamDeriv(
       const Teuchos::RCP<const Epetra_Comm>
         comm = createEpetraCommFromTeuchosComm(application->getComm());   
 
-      Teuchos::RCP<Epetra_Map> emap = Petra::TpetraMap_To_EpetraMap(overlapped_dgdpT->getMap(), comm);
+      Teuchos::RCP<const Epetra_Map> emap = Petra::TpetraMap_To_EpetraMap(overlapped_dgdpT->getMap(), comm);
       workset.overlapped_dgdp = Teuchos::rcp(new Epetra_MultiVector(*emap, overlapped_dgdpT->getNumVectors()));
       Petra::TpetraMultiVector_To_EpetraMultiVector(
         overlapped_dgdpT, *workset.overlapped_dgdp, comm);

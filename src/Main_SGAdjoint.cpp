@@ -100,15 +100,17 @@ int main(int argc, char *argv[]) {
     // Get comm for spatial problem
     Teuchos::RCP<const Epetra_Comm> app_comm = sg_solver->getSpatialComm();
 
+    //MP, can we use comm instead of tappComm?
+    Teuchos::RCP<const Teuchos_Comm> tapp_comm = Albany::createTeuchosCommFromEpetraComm(app_comm);
+
     // Compute initial guess if requested
     Teuchos::RCP<Epetra_Vector> ig;
     if (do_initial_guess) {
 
       // Create solver
-      Albany::SolverFactory slvrfctry(xmlfilename, 
-         Albany::createTeuchosCommFromEpetraComm(app_comm));
+      Albany::SolverFactory slvrfctry(xmlfilename, tapp_comm);
       Teuchos::RCP<EpetraExt::ModelEvaluator> solver = 
-         slvrfctry.create(app_comm, app_comm);
+         slvrfctry.create(tapp_comm, tapp_comm);
 
       // Setup in/out args
       EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
@@ -143,11 +145,9 @@ int main(int argc, char *argv[]) {
     // Create SG solver
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model; {
-      Teuchos::RCP<const Teuchos_Comm>
-        commT = Albany::createTeuchosCommFromEpetraComm(app_comm);
       model = sg_slvrfctry.createAlbanyAppAndModel(
-        app, app_comm, Petra::EpetraVector_To_TpetraVectorConst(
-          *ig, commT));
+        app, tapp_comm, Petra::EpetraVector_To_TpetraVectorConst(
+          *ig, tapp_comm));
     }
     sg_solver->setup(model);
 
@@ -233,11 +233,12 @@ int main(int argc, char *argv[]) {
 
     // Get comm for spatial problem
     Teuchos::RCP<const Epetra_Comm> app_comm = sg_solver->getSpatialComm();
+    Teuchos::RCP<const Teuchos_Comm> tapp_comm = Albany::createTeuchosCommFromEpetraComm(app_comm);
 
     // Create SG solver
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      sg_slvrfctry.createAlbanyAppAndModel(app, app_comm);
+      sg_slvrfctry.createAlbanyAppAndModel(app, tapp_comm);
     sg_solver->setup(model);
 
     // Set projected forward solution as the initial guess

@@ -478,6 +478,8 @@ void Albany::Application::createDiscretization() {
                                            problem->getFieldRequirements(),
                                            problem->getSideSetFieldRequirements(),
                                            problem->getNullSpace());
+  //The following is for Aeras problems.
+  explicit_scheme = disc->isExplicitScheme();
 }
 
 void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -523,7 +525,6 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 #endif
 
 
-#if defined(ALBANY_EPETRA)
   try {
     //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
@@ -536,28 +537,24 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
       // Get parameter maps and build parameter vector
       Teuchos::RCP<Tpetra_Vector> dist_paramT;
       Teuchos::RCP<const Tpetra_Map> node_mapT, overlap_node_mapT;
-      { //dp-convert
-        const Teuchos::RCP<const Epetra_Map> node_map = disc->getMap(param_name);
-        const Teuchos::RCP<const Epetra_Map> overlap_node_map = disc->getOverlapMap(param_name);
-        Epetra_Vector dist_param(*node_map);
-        // Initialize parameter with data stored in the mesh
-        disc->getField(dist_param, param_name);
-
-        // JR: for now, initialize to constant value from user input if requested.  This needs to be generalized.
-        if(params->sublist("Problem").isType<Teuchos::ParameterList>("Topology Parameters")){
-          Teuchos::ParameterList& topoParams = params->sublist("Problem").sublist("Topology Parameters");
-          if(topoParams.isType<std::string>("Entity Type") && topoParams.isType<double>("Initial Value")){
-            if(topoParams.get<std::string>("Entity Type") == "Distributed Parameter" &&
-               topoParams.get<std::string>("Topology Name") == param_name ){
-              double initVal = topoParams.get<double>("Initial Value");
-              dist_param.PutScalar(initVal);
-            }
+      node_mapT = disc->getMapT(param_name); //Petra::EpetraMap_To_TpetraMap(node_map, commT);
+      overlap_node_mapT =  disc->getOverlapMapT(param_name); //Petra::EpetraMap_To_TpetraMap(overlap_node_map, commT);
+      dist_paramT = Teuchos::rcp(new Tpetra_Vector(node_mapT)); 
+        
+      // Initialize parameter with data stored in the mesh
+      disc->getFieldT(*dist_paramT, param_name); //Petra::EpetraVector_To_TpetraVectorNonConst(dist_param, commT);
+        
+        
+      // JR: for now, initialize to constant value from user input if requested.  This needs to be generalized.
+      if(params->sublist("Problem").isType<Teuchos::ParameterList>("Topology Parameters")){
+        Teuchos::ParameterList& topoParams = params->sublist("Problem").sublist("Topology Parameters");
+        if(topoParams.isType<std::string>("Entity Type") && topoParams.isType<double>("Initial Value")){
+          if(topoParams.get<std::string>("Entity Type") == "Distributed Parameter" &&
+             topoParams.get<std::string>("Topology Name") == param_name ){
+            double initVal = topoParams.get<double>("Initial Value");
+            dist_paramT->putScalar(initVal);
           }
         }
-
-        dist_paramT = Petra::EpetraVector_To_TpetraVectorNonConst(dist_param, commT);
-        node_mapT = Petra::EpetraMap_To_TpetraMap(node_map, commT);
-        overlap_node_mapT = Petra::EpetraMap_To_TpetraMap(overlap_node_map, commT);
       }
 
       // Create distributed parameter and set workset_elem_dofs
@@ -569,7 +566,6 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
       distParamLib->add(parameter->name(), parameter);
     }
   } catch (const std::logic_error&) {}
-#endif
 
   // Now setup response functions (see note above)
   if(!TpetraBuild){
@@ -673,13 +669,18 @@ getProblem() const
 }
 
 RCP<const Teuchos_Comm>
-Albany::Application::
-getComm() const
+Albany::Application::getComm() const
 {
   return commT;
 }
 
 #if defined(ALBANY_EPETRA)
+RCP<const Epetra_Comm>
+Albany::Application::getEpetraComm() const
+{
+  return comm;
+}
+
 RCP<const Epetra_Map>
 Albany::Application::
 getMap() const
@@ -1155,8 +1156,10 @@ computeGlobalResidualImplT(
     loadWorksetNodesetInfo(workset);
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset);
+#ifdef WRITE_TO_MATRIX_MARKET
       if (countScale == 0)  
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+#endif
       countScale++; 
     }
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
@@ -1414,7 +1417,7 @@ computeGlobalJacobianImplT(const double alpha,
    //fill Jacobian derivative dimensions:
    for (int ps=0; ps < fm.size(); ps++){
       (workset.Jacobian_deriv_dims).push_back(
-        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps, explicit_scheme));
    }
 
 
@@ -1489,8 +1492,10 @@ computeGlobalJacobianImplT(const double alpha,
     
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset); 
+#ifdef WRITE_TO_MATRIX_MARKET
       if (countScale == 0)  
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+#endif
       countScale++; 
     }
 
@@ -4019,7 +4024,7 @@ postRegSetup(std::string eval)
     for (int ps=0; ps < fm.size(); ps++){
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
-        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps, explicit_scheme));
       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
       if (nfm!=Teuchos::null && ps < nfm.size()) {
@@ -4032,7 +4037,7 @@ postRegSetup(std::string eval)
       // different element types?
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
-        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0));
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0, explicit_scheme));
       dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
     }
@@ -4446,10 +4451,7 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.transientTerms = Teuchos::nonnull(workset.xdot);
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdot);
 
-  // Create Teuchos::Comm from Epetra_Comm
-  const Epetra_Comm& comm = x->Map().Comm();
-  workset.comm = Albany::createTeuchosCommFromMpiComm(
-                  Albany::getMpiCommFromEpetraComm(comm));
+  workset.comm = commT;
 
   workset.x_importer = importer;
 }
@@ -4565,10 +4567,7 @@ void Albany::Application::setupBasicWorksetInfo(
   if (sg_xdot != NULL) workset.transientTerms = true;
   if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
-  // Create Teuchos::Comm from Epetra_Comm
-  const Epetra_Comm& comm = sg_x->coefficientMap()->Comm();
-  workset.comm = Albany::createTeuchosCommFromMpiComm(
-                  Albany::getMpiCommFromEpetraComm(comm));
+  workset.comm = commT; 
 
   workset.x_importer = importer;
 }
@@ -4620,10 +4619,7 @@ void Albany::Application::setupBasicWorksetInfo(
   if (mp_xdot != NULL) workset.transientTerms = true;
   if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
-  // Create Teuchos::Comm from Epetra_Comm
-  const Epetra_Comm& comm = mp_x->coefficientMap()->Comm();
-  workset.comm = Albany::createTeuchosCommFromMpiComm(
-                  Albany::getMpiCommFromEpetraComm(comm));
+  workset.comm = commT; 
 
   workset.x_importer = importer;
 }

@@ -44,7 +44,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
- const Albany::Application* app, const int ebi)
+ const Albany::Application* app, const int ebi, const bool explicit_scheme)
 {
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
@@ -67,20 +67,26 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       return d->getNumNodesPerElem(ebi) * app->getNumEquations();
     }
 #endif
+#ifdef ALBANY_AERAS
+    if ((problemName == "Aeras Hydrostatic")  && (explicit_scheme == true))
+    {
+      return 1;
+    }
+#endif
    }
    return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
      app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
- const Albany::Application* app, const int ebi)
+ const Albany::Application* app, const int ebi, const bool explicit_scheme)
 {
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
- const Albany::Application* app, const int ebi)
+ const Albany::Application* app, const int ebi, const bool explicit_scheme)
 {
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
     app, app->getEnrichedMeshSpecs()[ebi].get());

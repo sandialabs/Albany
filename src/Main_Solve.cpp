@@ -176,10 +176,10 @@ int main(int argc, char *argv[]) {
     }
 
     Albany::SolverFactory slvrfctry(cmd.xml_filename, comm);
-    RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(comm);
+    RCP<const Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(comm);
     RCP<Albany::Application> app;
     const RCP<Thyra::ModelEvaluator<double> > solver =
-      slvrfctry.createThyraSolverAndGetAlbanyApp(app, appComm, appComm);
+      slvrfctry.createThyraSolverAndGetAlbanyApp(app, comm, comm);
 
     setupTimer.~TimeMonitor();
 

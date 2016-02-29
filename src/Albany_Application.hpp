@@ -111,6 +111,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos_Comm> getComm() const;
 
 #if defined(ALBANY_EPETRA)
+    //! Get Epetra communicator
+    Teuchos::RCP<const Epetra_Comm> getEpetraComm() const;
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
 #endif
@@ -1123,6 +1125,8 @@ namespace Albany {
     Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_overlapped_jac;
 #endif
 #endif
+
+    bool explicit_scheme; 
 
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
