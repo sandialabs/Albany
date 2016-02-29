@@ -8,6 +8,12 @@
     <Parameter name="Scale" type="double" value="1.0e4"/>
     <Parameter name="Scale BC Dofs" type="bool" value="true"/>
   </ParameterList>
+  <!-- Replace the above scaling sublist with the following to use diagonal scaling
+  <ParameterList name="Scaling">
+    <Parameter name="Scale BC Dofs" type="bool" value="false"/>
+    <Parameter name="Type" type="string" value="Diagonal"/>
+  </ParameterList>
+  -->
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>

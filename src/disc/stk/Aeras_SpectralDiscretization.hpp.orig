@@ -195,6 +195,48 @@ namespace Aeras
     }
   };
 
+#if defined(ALBANY_EPETRA)
+  typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
+
+  struct DOFsStruct
+  {
+    Teuchos::RCP<Epetra_Map> node_map;
+    Teuchos::RCP<Epetra_Map> overlap_node_map;
+    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<Epetra_Map> overlap_map;
+    Albany::NodalDOFManager dofManager;
+    Albany::NodalDOFManager overlap_dofManager;
+    std::vector< std::vector<LO> > wsElNodeEqID_rawVec;
+    std::vector<Albany::IDArray> wsElNodeEqID;
+    std::vector< std::vector<GO> > wsElNodeID_rawVec;
+    std::vector<GIDArray> wsElNodeID;
+  };
+
+  struct NodalDOFsStructContainer
+  {
+    typedef std::map<std::pair<std::string,int>, DOFsStruct >  MapOfDOFsStructs;
+
+    MapOfDOFsStructs mapOfDOFsStructs;
+    std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
+    const DOFsStruct& getDOFsStruct(const std::string& field_name) const
+    {
+      // TODO: handole errors
+      return fieldToMap.find(field_name)->second->second;
+    }
+
+    void addEmptyDOFsStruct(const std::string& field_name,
+                            const std::string& meshPart,
+                            int numComps)
+    {
+      if(numComps != 1)
+        mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,1),DOFsStruct()));
+      fieldToMap[field_name] =
+        mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,numComps),
+                                          DOFsStruct())).first;
+    }
+  };
+#endif // ALBANY_EPETRA
+
   class SpectralDiscretization : public Albany::AbstractDiscretization
   {
   public:
@@ -271,13 +313,18 @@ namespace Aeras
     Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
 #endif
     //! Get Tpetra Node map
+<<<<<<< HEAD
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
+=======
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
-    //! Get field Tpetra node map
+    //! Get field node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const;
     //! Get field overlapped DOF map
+>>>>>>> a0e7045... Epetra -> Tpetra conversion: converting to Tpetra the constructions of maps for the solution and fields using NodalDOFsStructContainer. Implement functions needed to get and save Tpetra vector fields associated with distributed fields.
     Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
     //! Get field overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const;
+
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::NodeSetList& getNodeSets() const
@@ -314,30 +361,29 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     getWsElNodeID() const;
 
-
+#if defined(ALBANY_EPETRA)
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID,
     //! works for both scalar and vector fields
     const std::vector<Albany::IDArray>&
     getElNodeEqID(const std::string& field_name) const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::SpectralDiscretization: getElNodeEqID(const std::string& field_name) const not implemented");
+      return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
     }
 
     const Albany::NodalDOFManager&
     getDOFManager(const std::string& field_name) const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::SpectralDiscretization: getDOFManager(const std::string& field_name) const not implemented");
+      return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
     }
     
     const Albany::NodalDOFManager& 
     getOverlapDOFManager(const std::string& field_name) const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::SpectralDiscretization: getOverlapDOFManager(const std::string& field_name) const not implemented");
-
+      return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_dofManager;
     }
+#endif
+
+
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -468,11 +514,6 @@ namespace Aeras
     int getNumEq() const
     {
       return neq;
-    }
-   
-    bool isExplicitScheme() const 
-    {
-      return explicit_scheme; 
     }
 
     //! Get number of levels (for hydrostatic problems) 
@@ -691,6 +732,16 @@ namespace Aeras
     //! Overlapped unknown map and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT; 
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT; 
+
+#if defined(ALBANY_EPETRA)
+    Teuchos::RCP<Epetra_Map> node_map;
+    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<Epetra_Map> overlap_node_map;
+    Teuchos::RCP<Epetra_Map> overlap_map;
+
+    NodalDOFsStructContainer nodalDOFsStructContainer;
+#endif
+
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT; 

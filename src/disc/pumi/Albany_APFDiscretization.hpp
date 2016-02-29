@@ -268,6 +268,53 @@ class APFDiscretization : public Albany::AbstractDiscretization {
           "Albany::APFDiscretization: getOverlapNodeMap(field_name) not implemented yet");
     }
 
+    //! Get field vector from mesh database
+    virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getField(field_vector, field_name) not implemented yet");
+    }
+    //! Set the field vector into mesh database
+    virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
+    }
+#endif
+
+    //! Get field DOF map
+    Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getMapT(field_name) not implemented yet");
+    }
+
+    //! Get field node map
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getNodeMapT(field_name) not implemented yet");
+    }
+
+    //! Get field overlapped DOF map
+    Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getOverlapMapT(field_name) not implemented yet");
+    }
+
+    //! Get field overlapped node map
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getOverlapNodeMapT(field_name) not implemented yet");
+    }
+
+    //! Get field vector from mesh database
+    virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: getFieldT(field_vector, field_name) not implemented yet");
+    }
+    //! Set the field vector into mesh database
+    virtual void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::APFDiscretization: setFieldT(field_vector, field_name, overlapped) not implemented yet");
+    }
+
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
     const std::vector<Albany::IDArray>& getElNodeEqID(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -285,17 +332,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
           "Albany::APFDiscretization: getOverlapDOFManager(field_name) not implemented yet");
     }
 
-    //! Get field vector from mesh database
-    virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getField(field_vector, field_name) not implemented yet");
-    }
-    //! Set the field vector into mesh database
-    virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
-    }
-#endif
     //! Get nodal parameters state info struct
     virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,

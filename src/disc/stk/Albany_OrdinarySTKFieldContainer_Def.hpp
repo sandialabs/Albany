@@ -179,7 +179,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 #if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vector& soln,
-    stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
@@ -248,7 +248,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnMultiVector(Tpetra_
 #if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::fillVector(Epetra_Vector& field_vector, const std::string&  field_name,
-    stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
+    stk::mesh::Selector& field_selection, const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
 
@@ -272,7 +272,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::fillVector(Epetra_Vector& f
 
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveVector(const Epetra_Vector& field_vector, const std::string&  field_name,
-    stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
+    stk::mesh::Selector& field_selection, const Teuchos::RCP<const Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
@@ -295,7 +295,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveVector(const Epetra_Vec
 
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(const Epetra_Vector& soln,
-    stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
@@ -317,6 +317,54 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(const Epetra
 #endif
 
 //Tpetra version of above
+
+template<bool Interleaved>
+void Albany::OrdinarySTKFieldContainer<Interleaved>::fillVectorT(Tpetra_Vector& field_vector, const std::string&  field_name,
+    stk::mesh::Selector& field_selection, const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
+
+  if(nodalDofManager.numComponents() > 1) {
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      this->fillVectorHelperT(field_vector, field, field_node_map, bucket, nodalDofManager);
+    }
+  }
+  else {
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      this->fillVectorHelperT(field_vector, field, field_node_map, bucket, nodalDofManager);
+    }
+  }
+}
+
+template<bool Interleaved>
+void Albany::OrdinarySTKFieldContainer<Interleaved>::saveVectorT(const Tpetra_Vector& field_vector, const std::string&  field_name,
+    stk::mesh::Selector& field_selection, const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, field_selection);
+
+  if(nodalDofManager.numComponents() > 1) {
+    AbstractSTKFieldContainer::VectorFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::VectorFieldType>(stk::topology::NODE_RANK, field_name);
+    for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      this->saveVectorHelperT(field_vector, field, field_node_map, bucket, nodalDofManager);
+    }
+  }
+  else {
+    AbstractSTKFieldContainer::ScalarFieldType* field  = this->metaData->template get_field<AbstractSTKFieldContainer::ScalarFieldType>(stk::topology::NODE_RANK, field_name);
+    for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+      const stk::mesh::Bucket& bucket = **it;
+      this->saveVectorHelperT(field_vector, field, field_node_map, bucket, nodalDofManager);
+    }
+  }
+}
+
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
     stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) {
@@ -368,7 +416,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnMultiVector(const T
 #if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vector& res,
-    stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 

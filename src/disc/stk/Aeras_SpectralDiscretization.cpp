@@ -209,6 +209,20 @@ Aeras::SpectralDiscretization::getJacobianGraph() const
 }
 #endif
 
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getMapT(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getOverlapMapT(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
+}
+
 Teuchos::RCP<const Tpetra_CrsGraph>
 Aeras::SpectralDiscretization::getJacobianGraphT() const
 {
@@ -288,6 +302,21 @@ Teuchos::RCP<const Tpetra_Map>
 Aeras::SpectralDiscretization::getOverlapNodeMapT() const
 {
   return overlap_node_mapT;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getNodeMapT(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
+  return Teuchos::null;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getOverlapNodeMapT(const std::string& field_name)
+  const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
+  return Teuchos::null;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
@@ -1082,6 +1111,14 @@ Aeras::SpectralDiscretization::getSolutionFieldT(Tpetra_Vector &resultT,
 }
 
 void
+Aeras::SpectralDiscretization::getFieldT(Tpetra_Vector &result,
+                                        const std::string& name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "Aeras::SpectralDiscretization::getField() not implemented!");
+}
+
+void
 Aeras::SpectralDiscretization::getSolutionMV(Tpetra_MultiVector &resultT,
                                                  const bool overlapped) const
 {
@@ -1186,6 +1223,14 @@ Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 
   container->saveSolnVectorT(solnT, locally_owned, node_mapT);
 
+}
+
+void
+Aeras::SpectralDiscretization::setFieldT(const Tpetra_Vector &result,
+                                        const std::string& name,
+                                        bool overlapped)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::setField() not implemented!");
 }
 
 void
