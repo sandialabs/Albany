@@ -791,7 +791,7 @@ namespace Albany {
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
     //! Routines for setting a scaling to be applied to the Jacobian/resdiual 
-    void setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT = Teuchos::null); 
+    void setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT = Teuchos::null); 
     void setScaleBCDofs(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
