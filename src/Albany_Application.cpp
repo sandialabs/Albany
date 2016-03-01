@@ -52,7 +52,7 @@
 #include "GOAL_BCUtils.hpp"
 #endif
 
-#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -4395,10 +4395,7 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
       scaleVec_->putScalar(0.0); 
-      //get overlap_mapT.  should this be owned map? 
-      Teuchos::RCP<const Tpetra_Map> overlap_mapT = disc->getOverlapMapT(); 
-      int nOverlapDofs = overlap_mapT->getNodeNumElements(); 
-      for (std::size_t i = 0; i < nOverlapDofs; i++) { 
+      for (std::size_t i = 0; i < jacT->getNodeNumRows(); i++) { 
          Teuchos::ArrayView<const GO> indices; 
          Teuchos::ArrayView<const ST> values; 
          //get ith row of jacT 
@@ -4410,8 +4407,9 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
          }
          //take reciprocal of rowsum 
          ST rowsuminv = 1.0/rowsum; 
-         //put 1/rowsum into ith entry of scaleVec_ 
-         scaleVec_->replaceLocalValue(i, rowsuminv); 
+         GO globalRow = jacT->getRowMap()->getGlobalElement(i);
+         //put 1/rowsum into globalRow entry of scaleVec_ 
+         scaleVec_->replaceGlobalValue(globalRow, rowsuminv); 
       }
     }
   }
