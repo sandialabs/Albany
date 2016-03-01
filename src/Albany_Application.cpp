@@ -1,4 +1,22 @@
-defined(ALBANY_EPETRA)
+//*****************************************************************//
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
+
+#include "Albany_Application.hpp"
+#include "Albany_Utils.hpp"
+#include "AAdapt_RC_Manager.hpp"
+#include "Albany_ProblemFactory.hpp"
+#include "Albany_DiscretizationFactory.hpp"
+#include "Albany_ResponseFactory.hpp"
+#ifdef ALBANY_STOKHOS
+#include "Stokhos_OrthogPolyBasis.hpp"
+#endif
+#include "Teuchos_TimeMonitor.hpp"
+
+#if defined(ALBANY_EPETRA)
 #include "Epetra_LocalMap.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
