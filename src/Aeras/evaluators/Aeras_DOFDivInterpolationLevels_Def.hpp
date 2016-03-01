@@ -108,16 +108,16 @@ evaluateFields(typename Traits::EvalData workset)
 						  jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
 				  vcontra(node, 1 ) = det_j*(
 						  jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
-				  for (int qp=0; qp < numQPs; ++qp) {
-					  for (int node=0; node < numNodes; ++node) {
-						  div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
-            	    						   +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
-					  }
-				  }
-				  for (int qp=0; qp < numQPs; ++qp)
-					  div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
-
 			  }//end of nodal loop
+		      for (int qp=0; qp < numQPs; ++qp) {
+				  for (int node=0; node < numNodes; ++node) {
+					  div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
+            	       						   +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
+					  }
+			  }
+			  for (int qp=0; qp < numQPs; ++qp)
+				  div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
+
 		  }//end level loop
 	  }//end of cell loop
   }//end of new div
