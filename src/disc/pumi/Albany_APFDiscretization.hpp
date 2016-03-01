@@ -72,6 +72,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Get Tpetra overlap Node map
     Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
 
+    virtual bool isExplicitScheme() const { return false; }
+
     //! Process coords for ML
     void setupMLCoords();
 
