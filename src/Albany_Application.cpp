@@ -4407,7 +4407,7 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
       scaleVec_ = Petra::EpetraVector_To_TpetraVectorNonConst(*scaleVecE, commT);
       /*
       for (std::size_t i = 0; i < jacT->getNodeNumRows(); i++) { 
-         Teuchos::ArrayView<const GO> indices; 
+         Teuchos::ArrayView<const LO> indices; 
          Teuchos::ArrayView<const ST> values; 
          //get ith row of jacT 
          jacT->getLocalRowView(i, indices, values);  
