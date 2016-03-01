@@ -1,21 +1,4 @@
-//*****************************************************************//
-//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
-//    This Software is released under the BSD license detailed     //
-//    in the file "license.txt" in the top-level Albany directory  //
-//*****************************************************************//
-
-#include "Albany_Application.hpp"
-#include "Albany_Utils.hpp"
-#include "AAdapt_RC_Manager.hpp"
-#include "Albany_ProblemFactory.hpp"
-#include "Albany_DiscretizationFactory.hpp"
-#include "Albany_ResponseFactory.hpp"
-#ifdef ALBANY_STOKHOS
-#include "Stokhos_OrthogPolyBasis.hpp"
-#endif
-#include "Teuchos_TimeMonitor.hpp"
-
-#if defined(ALBANY_EPETRA)
+defined(ALBANY_EPETRA)
 #include "Epetra_LocalMap.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
@@ -1055,6 +1038,8 @@ computeGlobalResidualImplT(
     const Teuchos::Array<ParamVec>& p,
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
+  std::cout << "IKT: in computeGlobalResidualImpT!" << std::endl; 
+
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
@@ -1448,13 +1433,9 @@ computeGlobalJacobianImplT(const double alpha,
     setScale(); 
   }
   // Assemble global residual
-  if (Teuchos::nonnull(fT)) {
+  if (Teuchos::nonnull(fT)) 
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    if (scaleBCdofs == false && scale != 1.0) {
-      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
-    }
-  }
-
+  
   // Assemble global Jacobian
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
 
@@ -1469,15 +1450,20 @@ computeGlobalJacobianImplT(const double alpha,
   //scale Jacobian 
   if (scaleBCdofs == false && scale != 1.0) { 
     jacT->fillComplete();
-    setScale(jacT); 
+    //set the scaling 
+    setScale(jacT);
+    //scale Jacobian  
     jacT->leftScale(*scaleVec_);
     jacT->resumeFill();
-    countScale++; 
+    //scale residual 
+    if (Teuchos::nonnull(fT)) 
+      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
 #ifdef WRITE_TO_MATRIX_MARKET
     char name[100];  //create string for file name
     sprintf(name, "scale%i.mm", countScale);
     Tpetra_MatrixMarket_Writer::writeDenseFile(name, scaleVec_);
 #endif
+    countScale++; 
   }
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
