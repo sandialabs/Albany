@@ -436,6 +436,13 @@ Aeras::HydrostaticProblem::constructEvaluators(
     // Input
     p->set<string>("Velx",                   dof_names_levels[0]);
     p->set<string>("Gradient BF Name",       "Grad BF");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    p->set<string>("Jacobian Name",              "Jacobian");
+    ///for sem vorticity
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    ///for sem vorticity
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
     //Output
     p->set<string>("Vorticity Variable Name", "Vorticity_QP");
    
