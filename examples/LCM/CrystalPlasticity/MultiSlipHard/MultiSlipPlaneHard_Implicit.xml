@@ -14,6 +14,12 @@
     <Parameter name="Type" type="string" value="Diagonal"/>
   </ParameterList>
   -->
+  <!-- Replace the above scaling sublist with the following to use absolute value row sum scaling
+  <ParameterList name="Scaling">
+    <Parameter name="Scale BC Dofs" type="bool" value="false"/>
+    <Parameter name="Type" type="string" value="Abs Row Sum"/>
+  </ParameterList>
+  -->
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>

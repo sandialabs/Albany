@@ -1153,7 +1153,7 @@ namespace Albany {
     double scale; 
     double scaleBCdofs; 
     //Scaling types
-    enum SCALETYPE {CONSTANT, DIAG};
+    enum SCALETYPE {CONSTANT, DIAG, ABSROWSUM};
     SCALETYPE scale_type;
 
     //! Shape Optimization data

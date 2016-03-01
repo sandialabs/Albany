@@ -52,7 +52,7 @@
 #include "GOAL_BCUtils.hpp"
 #endif
 
-//#define WRITE_TO_MATRIX_MARKET
+#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -301,6 +301,16 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   }
   else if (scaleType == "Diagonal") {
     scale_type = DIAG;
+    scale = 1.0e1; 
+    if (scaleBCdofs == true) { 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                 std::endl << "Error in Albany::Application: " <<
+                                 "Scale BC dofs does not work with "  << scaleType 
+                                 << "Type scaling, only Type = Constant Scaling."<< std::endl);  
+    }
+  }
+  else if (scaleType == "Abs Row Sum") {
+    scale_type = ABSROWSUM;
     scale = 1.0e1; 
     if (scaleBCdofs == true) { 
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -4379,7 +4389,32 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
   }
   //std::cout << "countScale: " << countScale << std::endl; 
   //std::cout << "scaleVec_: " <<std::endl;  
-  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
+  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
+
+  else if (scale_type == ABSROWSUM) {//absolute value of row sum scaling 
+    if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
+    else {
+      scaleVec_->putScalar(0.0); 
+      //get overlap_mapT.  should this be owned map? 
+      Teuchos::RCP<const Tpetra_Map> overlap_mapT = disc->getOverlapMapT(); 
+      int nOverlapDofs = overlap_mapT->getNodeNumElements(); 
+      for (std::size_t i = 0; i < nOverlapDofs; i++) { 
+         Teuchos::ArrayView<const GO> indices; 
+         Teuchos::ArrayView<const ST> values; 
+         //get ith row of jacT 
+         jacT->getLocalRowView(i, indices, values);  
+         //calculate absolute value of row sum for ith row 
+         ST rowsum = 0.0; 
+         for (int j=0; j<indices.size(); j++) {
+           rowsum += abs(values[j]); 
+         }
+         //take reciprocal of rowsum 
+         ST rowsuminv = 1.0/rowsum; 
+         //put 1/rowsum into ith entry of scaleVec_ 
+         scaleVec_->replaceLocalValue(i, rowsuminv); 
+      }
+    }
+  }
 }
    
 void Albany::Application::setScaleBCDofs(PHAL::Workset& workset) 
