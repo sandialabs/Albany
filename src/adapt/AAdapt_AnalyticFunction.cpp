@@ -1143,7 +1143,7 @@ void AAdapt::AerasRestingHydrostatic::compute( double* solution, const double* X
   
 //  const double zSurf = 0.0;
   
-  const double Ps = P0 / std::pow( 1.0 - lapseRate * zSurf / T0, RdGammaOverG );
+  const double Ps = P0 * std::pow( 1.0 - lapseRate * zSurf / T0, 1.0 / RdGammaOverG );
   
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
