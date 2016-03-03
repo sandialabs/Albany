@@ -15,5 +15,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_disp.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_disp.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cauchy_stress.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_cauchy_stress.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/source.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/target.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
+
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+add_test(NAME ${testName} COMMAND "python" "runtest.py")
 
 ENDIF()

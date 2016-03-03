@@ -121,8 +121,7 @@ int main(int argc, char* argv[])
     std::string rel_err_field_name = field_name+"RelErr";
     std::string abs_err_field_name = field_name+"AbsErr";
     
- 
-
+    *out << "\n Beginning interpolation and error calculation..." << std::endl; 
     // Get the raw mpi communicator (basic typedef in STK).
     Teuchos::RCP<const Teuchos::MpiComm<int> > mpi_comm = 
 	Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int> >( comm );
@@ -155,7 +154,7 @@ int main(int argc, char* argv[])
     //Get number of time steps in source mesh 
     int timestep_count = io_region->get_property("state_count").get_int();
 #ifdef DEBUG_OUTPUT
-    *out << "timestep_count in source mesh: " << timestep_count << std::endl;
+    *out << "   timestep_count in source mesh: " << timestep_count << std::endl;
 #endif
     int step =  src_snap_no; 
     if (step > timestep_count) 
@@ -188,7 +187,7 @@ int main(int argc, char* argv[])
     Ioss::NameList exo_fld_names;
     elem_blocks[0]->field_describe(&exo_fld_names);
     for (std::size_t i = 0; i < exo_fld_names.size(); i++){
-      *out << "Found field \"" << exo_fld_names[i] << "\" in source exodus file" << std::endl; }
+      *out << "   Found field \"" << exo_fld_names[i] << "\" in source exodus file" << std::endl; }
 #endif
 
     // DEFINE PARTS/SELECTOR
@@ -223,14 +222,14 @@ int main(int argc, char* argv[])
         //Get source_field from source mesh  
         VectorFieldType* source_field = src_broker.meta_data().get_field<VectorFieldType>(stk::topology::NODE_RANK, field_name); 
         if (source_field != 0) 
-          *out << "Vector Field with name " << field_name << " found in source mesh file!" << std::endl; 
+          *out << "   Vector Field with name " << field_name << " found in source mesh file!" << std::endl; 
         else   
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Vector Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
+            std::endl << "   Vector Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
 
         int neq = source_field->max_size(stk::topology::NODE_RANK); 
 #ifdef DEBUG_OUTPUT
-        *out << "Source field has " << neq << " dofs/node." << std::endl; 
+        *out << "   Source field has " << neq << " dofs/node." << std::endl; 
 #endif  
 
         //Put fields on target mesh 
@@ -257,10 +256,10 @@ int main(int argc, char* argv[])
         //Populate target_field 
         VectorFieldType* target_field = tgt_broker.meta_data().get_field<VectorFieldType>(stk::topology::NODE_RANK, field_name); 
         if (target_field != 0) 
-          *out << "Vector Field with name " << field_name << " found in target mesh file!" << std::endl; 
+          *out << "   Vector Field with name " << field_name << " found in target mesh file!" << std::endl; 
         else   
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Vector Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
+            std::endl << "   Vector Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
     
         io_region = tgt_broker.get_input_io_region();
         STKIORequire(!Teuchos::is_null(io_region));
@@ -268,13 +267,13 @@ int main(int argc, char* argv[])
         //Get number of time steps in source mesh 
         timestep_count = io_region->get_property("state_count").get_int();
 #ifdef DEBUG_OUTPUT
-        *out << "timestep_count in target mesh: " << timestep_count << std::endl;
+        *out << "   timestep_count in target mesh: " << timestep_count << std::endl;
 #endif
         step =  tgt_snap_no; 
         if (step > timestep_count) 
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             std::endl << "Invalid value of Target Mesh Snapshot Number = " << tgt_snap_no <<
-                         " > total number of snapshots in "  << source_mesh_input_file 
+                         " > total number of snapshots in "  << target_mesh_input_file 
                       << " = " << timestep_count << "." << std::endl;);
         if (step <= 0) 
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -319,13 +318,13 @@ int main(int argc, char* argv[])
 #ifdef DEBUG_OUTPUT
         // Print out source mesh info.
         Teuchos::RCP<Teuchos::Describable> src_describe = src_manager.functionSpace()->entitySet();
-        *out << "Source Mesh: " << std::endl;
+        *out << "   Source Mesh: " << std::endl;
         src_describe->describe(*out, Teuchos::VERB_HIGH );
         *out << std::endl;
 
         // Print out target mesh info.
         Teuchos::RCP<Teuchos::Describable> tgt_describe = tgt_manager.functionSpace()->entitySet();
-        *out << "Target Mesh: " << std::endl;
+        *out << "   Target Mesh: " << std::endl;
         tgt_describe->describe(*out, Teuchos::VERB_HIGH );
         *out << std::endl;
 #endif
@@ -349,9 +348,9 @@ int main(int argc, char* argv[])
         map_op->apply( *src_vector, *tgt_vector );
      
 #ifdef DEBUG_OUTPUT
-        *out << "src_vector: \n ";
+        *out << "   src_vector: \n ";
         src_vector->describe(*out, Teuchos::VERB_EXTREME);
-        *out << "tgt_vector: \n ";
+        *out << "   tgt_vector: \n ";
         tgt_vector->describe(*out, Teuchos::VERB_EXTREME);
 #endif
       
@@ -376,7 +375,7 @@ int main(int argc, char* argv[])
               Teuchos::Array<stk::mesh::Entity>(tgt_part_nodes), *tgt_bulk_data );
         int num_tgt_part_nodes = tgt_part_nodes.size(); //number nodes (owned + overlap) 
 #ifdef DEBUG_OUTPUT
-        std::cout << "proc #: " << comm->getRank() << ", tgt_num_owned_nodes = " << tgt_num_owned_nodes << std::endl; 
+        std::cout << "   proc #: " << comm->getRank() << ", tgt_num_owned_nodes = " << tgt_num_owned_nodes << std::endl; 
 #endif
 
         double error_l2_norm_sq;
@@ -394,15 +393,15 @@ int main(int argc, char* argv[])
             error_l2_norm_sq += rel_err_field_data[component] * rel_err_field_data[component];
             field_l2_norm_sq += tgt_field_data[component] * tgt_field_data[component];
           }
-          *out << "Dof = " << component << std::endl;
           double error_l2_norm_global, field_l2_norm_global; 
           Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &error_l2_norm_sq, &error_l2_norm_global); 
           Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &field_l2_norm_sq, &field_l2_norm_global); 
           error_l2_norm_global = std::sqrt(error_l2_norm_global); 
           field_l2_norm_global = std::sqrt(field_l2_norm_global); 
-          *out << "|e|_2 (abs error): " << error_l2_norm_global << std::endl; 
-          *out << "|f|_2 (norm ref soln): " << field_l2_norm_global << std::endl; 
-          *out << "|e|_2 / |f|_2 (rel error): " << error_l2_norm_global / field_l2_norm_global << std::endl;
+          *out << "      Dof = " << component << ", |e|_2 (abs error): " << error_l2_norm_global << std::endl; 
+          *out << "      Dof = " << component << ", |f|_2 (norm ref soln): " << field_l2_norm_global << std::endl; 
+          *out << "      Dof = " << component << ", |e|_2 / |f|_2 (rel error): " << error_l2_norm_global / field_l2_norm_global << std::endl;
+          * out << "     ---------------------------------------------------------------------------------------" << std::endl; 
 
           for ( int n = 0; n < num_tgt_part_nodes; ++n )
           {
@@ -415,7 +414,7 @@ int main(int argc, char* argv[])
             if (gold_value[component] != 0)
               rel_err_field_data[component] /= std::abs(gold_value[component]);
 #ifdef DEBUG_OUTPUT
-              *out << "tgt_field_data, gold_value, abs_err, rel_err: "
+              *out << "      tgt_field_data, gold_value, abs_err, rel_err: "
                    << tgt_field_data[component] << ", " << gold_value[component] << ", " << abs_err_field_data[component]
                    << ", " << rel_err_field_data[component] << std::endl;
 #endif
@@ -442,14 +441,14 @@ int main(int argc, char* argv[])
         //Get source_field from source mesh  
         ScalarFieldType* source_field = src_broker.meta_data().get_field<ScalarFieldType>(stk::topology::NODE_RANK, field_name); 
         if (source_field != 0) 
-          *out << "Scalar Field with name " << field_name << " found in source mesh file!" << std::endl; 
+          *out << "   Scalar Field with name " << field_name << " found in source mesh file!" << std::endl; 
         else   
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Scalar Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
+            std::endl << "   Scalar Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
 
         int neq = source_field->max_size(stk::topology::NODE_RANK); 
 #ifdef DEBUG_OUTPUT
-        *out << "Source field has " << neq << " dofs/node." << std::endl; 
+        *out << "   Source field has " << neq << " dofs/node." << std::endl; 
 #endif  
 
         //Put fields on target mesh 
@@ -476,10 +475,10 @@ int main(int argc, char* argv[])
         //Populate target_field 
         ScalarFieldType* target_field = tgt_broker.meta_data().get_field<ScalarFieldType>(stk::topology::NODE_RANK, field_name); 
         if (target_field != 0) 
-          *out << "Scalar Field with name " << field_name << " found in target mesh file!" << std::endl; 
+          *out << "   Scalar Field with name " << field_name << " found in target mesh file!" << std::endl; 
         else   
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Scalar Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
+            std::endl << "   Scalar Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
     
         io_region = tgt_broker.get_input_io_region();
         STKIORequire(!Teuchos::is_null(io_region));
@@ -487,13 +486,13 @@ int main(int argc, char* argv[])
         //Get number of time steps in source mesh 
         timestep_count = io_region->get_property("state_count").get_int();
 #ifdef DEBUG_OUTPUT
-        *out << "timestep_count in target mesh: " << timestep_count << std::endl;
+        *out << "   timestep_count in target mesh: " << timestep_count << std::endl;
 #endif
         step =  tgt_snap_no; 
         if (step > timestep_count) 
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             std::endl << "Invalid value of Target Mesh Snapshot Number = " << tgt_snap_no <<
-                         " > total number of snapshots in "  << source_mesh_input_file 
+                         " > total number of snapshots in "  << target_mesh_input_file 
                       << " = " << timestep_count << "." << std::endl;);
         if (step <= 0) 
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -538,13 +537,13 @@ int main(int argc, char* argv[])
 #ifdef DEBUG_OUTPUT
         // Print out source mesh info.
         Teuchos::RCP<Teuchos::Describable> src_describe = src_manager.functionSpace()->entitySet();
-        *out << "Source Mesh: " << std::endl;
+        *out << "   Source Mesh: " << std::endl;
         src_describe->describe(*out, Teuchos::VERB_HIGH );
         *out << std::endl;
 
         // Print out target mesh info.
         Teuchos::RCP<Teuchos::Describable> tgt_describe = tgt_manager.functionSpace()->entitySet();
-        *out << "Target Mesh: " << std::endl;
+        *out << "   Target Mesh: " << std::endl;
         tgt_describe->describe(*out, Teuchos::VERB_HIGH );
         *out << std::endl;
 #endif
@@ -568,9 +567,9 @@ int main(int argc, char* argv[])
         map_op->apply( *src_vector, *tgt_vector );
      
 #ifdef DEBUG_OUTPUT
-        *out << "src_vector: \n ";
+        *out << "   src_vector: \n ";
         src_vector->describe(*out, Teuchos::VERB_EXTREME);
-        *out << "tgt_vector: \n ";
+        *out << "   tgt_vector: \n ";
         tgt_vector->describe(*out, Teuchos::VERB_EXTREME);
 #endif
       
@@ -595,7 +594,7 @@ int main(int argc, char* argv[])
               Teuchos::Array<stk::mesh::Entity>(tgt_part_nodes), *tgt_bulk_data );
         int num_tgt_part_nodes = tgt_part_nodes.size(); //number nodes (owned + overlap) 
 #ifdef DEBUG_OUTPUT
-        std::cout << "proc #: " << comm->getRank() << ", tgt_num_owned_nodes = " << tgt_num_owned_nodes << std::endl; 
+        std::cout << "   proc #: " << comm->getRank() << ", tgt_num_owned_nodes = " << tgt_num_owned_nodes << std::endl; 
 #endif
 
         double error_l2_norm_sq;
@@ -613,15 +612,15 @@ int main(int argc, char* argv[])
             error_l2_norm_sq += rel_err_field_data[component] * rel_err_field_data[component];
             field_l2_norm_sq += tgt_field_data[component] * tgt_field_data[component];
           }
-          *out << "Dof = " << component << std::endl;
           double error_l2_norm_global, field_l2_norm_global; 
           Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &error_l2_norm_sq, &error_l2_norm_global); 
           Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &field_l2_norm_sq, &field_l2_norm_global); 
           error_l2_norm_global = std::sqrt(error_l2_norm_global); 
           field_l2_norm_global = std::sqrt(field_l2_norm_global); 
-          *out << "|e|_2 (abs error): " << error_l2_norm_global << std::endl; 
-          *out << "|f|_2 (norm ref soln): " << field_l2_norm_global << std::endl; 
-          *out << "|e|_2 / |f|_2 (rel error): " << error_l2_norm_global / field_l2_norm_global << std::endl;
+          *out << "      Dof = " << component << ", |e|_2 (abs error): " << error_l2_norm_global << std::endl; 
+          *out << "      Dof = " << component << ", |f|_2 (norm ref soln): " << field_l2_norm_global << std::endl; 
+          *out << "      Dof = " << component << ", |e|_2 / |f|_2 (rel error): " << error_l2_norm_global / field_l2_norm_global << std::endl;
+          * out << "     ---------------------------------------------------------------------------------------" << std::endl; 
 
           for ( int n = 0; n < num_tgt_part_nodes; ++n )
           {
@@ -634,7 +633,7 @@ int main(int argc, char* argv[])
             if (gold_value[component] != 0)
               rel_err_field_data[component] /= std::abs(gold_value[component]);
 #ifdef DEBUG_OUTPUT
-              *out << "tgt_field_data, gold_value, abs_err, rel_err: "
+              *out << "      tgt_field_data, gold_value, abs_err, rel_err: "
                    << tgt_field_data[component] << ", " << gold_value[component] << ", " << abs_err_field_data[component]
                    << ", " << rel_err_field_data[component] << std::endl;
 #endif
@@ -661,14 +660,14 @@ int main(int argc, char* argv[])
         //Get source_field from source mesh  
         TensorFieldType* source_field = src_broker.meta_data().get_field<TensorFieldType>(stk::topology::NODE_RANK, field_name); 
         if (source_field != 0) 
-          *out << "Tensor Field with name " << field_name << " found in source mesh file!" << std::endl; 
+          *out << "   Tensor Field with name " << field_name << " found in source mesh file!" << std::endl; 
         else   
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Tensor Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
+            std::endl << "   Tensor Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
 
         int neq = source_field->max_size(stk::topology::NODE_RANK);
 #ifdef DEBUG_OUTPUT
-        *out << "Source field has " << neq << " dofs/node." << std::endl; 
+        *out << "   Source field has " << neq << " dofs/node." << std::endl; 
 #endif  
 
         //Put fields on target mesh 
@@ -695,10 +694,10 @@ int main(int argc, char* argv[])
         //Populate target_field 
         TensorFieldType* target_field = tgt_broker.meta_data().get_field<TensorFieldType>(stk::topology::NODE_RANK, field_name); 
         if (target_field != 0) 
-          *out << "Tensor Field with name " << field_name << " found in target mesh file!" << std::endl; 
+          *out << "   Tensor Field with name " << field_name << " found in target mesh file!" << std::endl; 
         else   
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Tensor Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
+            std::endl << "   Tensor Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
     
         io_region = tgt_broker.get_input_io_region();
         STKIORequire(!Teuchos::is_null(io_region));
@@ -706,13 +705,13 @@ int main(int argc, char* argv[])
         //Get number of time steps in source mesh 
         timestep_count = io_region->get_property("state_count").get_int();
 #ifdef DEBUG_OUTPUT
-        *out << "timestep_count in target mesh: " << timestep_count << std::endl;
+        *out << "   timestep_count in target mesh: " << timestep_count << std::endl;
 #endif
         step =  tgt_snap_no; 
         if (step > timestep_count) 
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             std::endl << "Invalid value of Target Mesh Snapshot Number = " << tgt_snap_no <<
-                         " > total number of snapshots in "  << source_mesh_input_file 
+                         " > total number of snapshots in "  << target_mesh_input_file 
                       << " = " << timestep_count << "." << std::endl;);
         if (step <= 0) 
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -757,13 +756,13 @@ int main(int argc, char* argv[])
 #ifdef DEBUG_OUTPUT
         // Print out source mesh info.
         Teuchos::RCP<Teuchos::Describable> src_describe = src_manager.functionSpace()->entitySet();
-        *out << "Source Mesh: " << std::endl;
+        *out << "   Source Mesh: " << std::endl;
         src_describe->describe(*out, Teuchos::VERB_HIGH );
         *out << std::endl;
 
         // Print out target mesh info.
         Teuchos::RCP<Teuchos::Describable> tgt_describe = tgt_manager.functionSpace()->entitySet();
-        *out << "Target Mesh: " << std::endl;
+        *out << "   Target Mesh: " << std::endl;
         tgt_describe->describe(*out, Teuchos::VERB_HIGH );
         *out << std::endl;
 #endif
@@ -787,9 +786,9 @@ int main(int argc, char* argv[])
         map_op->apply( *src_vector, *tgt_vector );
      
 #ifdef DEBUG_OUTPUT
-        *out << "src_vector: \n ";
+        *out << "   src_vector: \n ";
         src_vector->describe(*out, Teuchos::VERB_EXTREME);
-        *out << "tgt_vector: \n ";
+        *out << "   tgt_vector: \n ";
         tgt_vector->describe(*out, Teuchos::VERB_EXTREME);
 #endif
       
@@ -814,7 +813,7 @@ int main(int argc, char* argv[])
               Teuchos::Array<stk::mesh::Entity>(tgt_part_nodes), *tgt_bulk_data );
         int num_tgt_part_nodes = tgt_part_nodes.size(); //number nodes (owned + overlap) 
 #ifdef DEBUG_OUTPUT
-        std::cout << "proc #: " << comm->getRank() << ", tgt_num_owned_nodes = " << tgt_num_owned_nodes << std::endl; 
+        std::cout << "   proc #: " << comm->getRank() << ", tgt_num_owned_nodes = " << tgt_num_owned_nodes << std::endl; 
 #endif
 
         double error_l2_norm_sq;
@@ -832,15 +831,15 @@ int main(int argc, char* argv[])
             error_l2_norm_sq += rel_err_field_data[component] * rel_err_field_data[component];
             field_l2_norm_sq += tgt_field_data[component] * tgt_field_data[component];
           }
-          *out << "Dof = " << component << std::endl;
           double error_l2_norm_global, field_l2_norm_global; 
           Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &error_l2_norm_sq, &error_l2_norm_global); 
           Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &field_l2_norm_sq, &field_l2_norm_global); 
           error_l2_norm_global = std::sqrt(error_l2_norm_global); 
           field_l2_norm_global = std::sqrt(field_l2_norm_global); 
-          *out << "|e|_2 (abs error): " << error_l2_norm_global << std::endl; 
-          *out << "|f|_2 (norm ref soln): " << field_l2_norm_global << std::endl; 
-          *out << "|e|_2 / |f|_2 (rel error): " << error_l2_norm_global / field_l2_norm_global << std::endl;
+          *out << "      Dof = " << component << ", |e|_2 (abs error): " << error_l2_norm_global << std::endl; 
+          *out << "      Dof = " << component << ", |f|_2 (norm ref soln): " << field_l2_norm_global << std::endl; 
+          *out << "      Dof = " << component << ", |e|_2 / |f|_2 (rel error): " << error_l2_norm_global / field_l2_norm_global << std::endl;
+          *out << "      ---------------------------------------------------------------------------------------" << std::endl; 
 
           for ( int n = 0; n < num_tgt_part_nodes; ++n )
           {
@@ -853,7 +852,7 @@ int main(int argc, char* argv[])
             if (gold_value[component] != 0)
               rel_err_field_data[component] /= std::abs(gold_value[component]);
 #ifdef DEBUG_OUTPUT
-              *out << "tgt_field_data, gold_value, abs_err, rel_err: "
+              *out << "      tgt_field_data, gold_value, abs_err, rel_err: "
                    << tgt_field_data[component] << ", " << gold_value[component] << ", " << abs_err_field_data[component]
                    << ", " << rel_err_field_data[component] << std::endl;
 #endif
@@ -875,7 +874,7 @@ int main(int argc, char* argv[])
       }
 
     }
-
+   *out << " ...done!" << std::endl; 
 }
 
 //---------------------------------------------------------------------------//
