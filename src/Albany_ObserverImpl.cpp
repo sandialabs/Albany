@@ -72,9 +72,7 @@ void ObserverImpl::observeSolution (
   Teuchos::RCP<DistParamLib> distParamLib = app_->getDistParamLib();
   distParamLib->scatter();
   DistParamLib::const_iterator it;
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app_->getComm();
-  Teuchos::RCP<Epetra_Comm>
-    comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<const Epetra_Comm> comm = app_->getEpetraComm();
   for(it = distParamLib->begin(); it != distParamLib->end(); ++it) {
     Teuchos::RCP<Epetra_Vector> epetra_vec;
     Petra::TpetraVector_To_EpetraVector(it->second->overlapped_vector(),

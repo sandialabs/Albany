@@ -112,9 +112,9 @@ int main(int argc, char *argv[]) {
 
       // Create solver
       Albany::SolverFactory slvrfctry(
-	xmlfilename, tapp_comm);
+	xmlfilename, tcomm);
       Teuchos::RCP<EpetraExt::ModelEvaluator> solver =
-	slvrfctry.create(app_comm, app_comm);
+	slvrfctry.create(tapp_comm, tapp_comm);
 
       // Setup in/out args
       EpetraExt::ModelEvaluator::InArgs params_in = solver->createInArgs();
@@ -154,10 +154,10 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Albany::Application> app;
     Teuchos::RCP<const Tpetra_Vector> initial_guessT;
     if (Teuchos::nonnull(ig)) {
-      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*ig, tapp_comm);
+      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*ig, tcomm);
     }
     Teuchos::RCP<EpetraExt::ModelEvaluator> model =
-      sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, initial_guessT);
+      sg_slvrfctry.createAlbanyAppAndModel(app, tcomm, initial_guessT);
 
     // Hack in rigid body modes for ML
     {

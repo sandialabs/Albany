@@ -34,7 +34,7 @@ namespace Albany {
       app(app_),
       param_name(param_name_),
       use_transpose(false) {
-      comm = Teuchos::rcpFromRef(app->getMap()->Comm());
+      comm =  app->getEpetraComm();
       map = Petra::TpetraMap_To_EpetraMap(app->getDistParamLib()->get(param_name)->map(), comm);
     }
 
@@ -164,7 +164,7 @@ namespace Albany {
 
     //! Albany applications
     Teuchos::RCP<Application> app;
-    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<const Epetra_Map> map;
     Teuchos::RCP<const Epetra_Comm> comm;
 
     //! Name of distributed parameter we are differentiating w.r.t.

@@ -247,12 +247,12 @@ Albany::SolverFactory::~SolverFactory(){
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
-  const Teuchos::RCP<const Epetra_Comm>& appComm,
-  const Teuchos::RCP<const Epetra_Comm>& solverComm,
+  const Teuchos::RCP<const Teuchos_Comm>& appCommT,
+  const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
   const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
-  return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
+  return createAndGetAlbanyApp(dummyAlbanyApp, appCommT, solverCommT, initial_guess);
 }
 #endif
 
@@ -271,13 +271,15 @@ Albany::SolverFactory::createT(
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
-  const Teuchos::RCP<const Epetra_Comm>& appComm,
-  const Teuchos::RCP<const Epetra_Comm>& solverComm,
+  const Teuchos::RCP<const Teuchos_Comm>& appCommT,
+  const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
   const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
   bool createAlbanyApp)
 {
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+    const Teuchos::RCP<const Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(appCommT);
+    const Teuchos::RCP<const Epetra_Comm> solverComm = Albany::createEpetraCommFromTeuchosComm(solverCommT);
 
     if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
@@ -321,14 +323,13 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #ifdef ALBANY_QCAD
 
       RCP<Albany::Application> app;
-      Teuchos::RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
       if(createAlbanyApp) {
         app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
         albanyApp = app;
       }
       else app = albanyApp;
 
-      const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appComm);
+      const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appCommT);
 
 
       //QCAD::GenEigensolver uses a state manager as an observer (for now)
@@ -363,7 +364,6 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     // Solver uses a single app, create it here along with observer
     RCP<Albany::Application> app;
-    Teuchos::RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
 
     if(createAlbanyApp) {
       app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
@@ -375,7 +375,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     }
     else app = albanyApp;
 
-    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appComm);
+    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appCommT);
 
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
@@ -421,11 +421,13 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 Teuchos::RCP<Thyra::ModelEvaluator<double> >
 Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     Teuchos::RCP<Application>& albanyApp,
-    const Teuchos::RCP<const Epetra_Comm>& appComm,
-    const Teuchos::RCP<const Epetra_Comm>& solverComm,
+    const Teuchos::RCP<const Teuchos_Comm>& appCommT,
+    const Teuchos::RCP<const Teuchos_Comm>& solverCommT,
     const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
     bool createAlbanyApp)
 {
+  const Teuchos::RCP<const Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(appCommT);
+
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
 
@@ -441,7 +443,6 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 
     //WARINING: if createAlbanyApp==true, then albanyApp will be constructed twice, here and below, when calling
     //    createAndGetAlbanyApp. Why? (Mauro)
-    Teuchos::RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
     if(createAlbanyApp) {
       app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
 
@@ -453,7 +454,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     else app = albanyApp;
 
     // Creates the Albany::ModelEvaluator
-    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appComm);
+    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appCommT);
 
 
 
@@ -488,7 +489,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   }
 
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
-    this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess, createAlbanyApp);
+    this->createAndGetAlbanyApp(albanyApp, appCommT, solverCommT, initial_guess, createAlbanyApp);
 
   if ( solutionMethod == "QCAD Multi-Problem" ||
        solutionMethod == "QCAD Poisson-Schrodinger" ||
@@ -814,20 +815,20 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
   Teuchos::RCP<Albany::Application>& albanyApp,
-  const Teuchos::RCP<const Epetra_Comm>& appComm,
+  const Teuchos::RCP<const Teuchos_Comm>& appCommT,
   const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   // Create application
-  albanyApp = rcp(new Albany::Application(Albany::createTeuchosCommFromEpetraComm(appComm), appParams, initial_guess));
+  albanyApp = rcp(new Albany::Application(appCommT, appParams, initial_guess));
 
-  return createModel(albanyApp,appComm);
+  return createModel(albanyApp,appCommT);
 }
 
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createModel(
   const Teuchos::RCP<Albany::Application>& albanyApp,
-  const Teuchos::RCP<const Epetra_Comm>& appComm)
+  const Teuchos::RCP<const Teuchos_Comm>& appCommT)
 {
   // Validate Response list: may move inside individual Problem class
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
@@ -1377,6 +1378,10 @@ Albany::SolverFactory::getValidResponseParameters() const
   validPL->set<int>("Number of Response Vectors", 0);
   validPL->set<bool>("Observe Responses", true);
   validPL->set<int>("Responses Observation Frequency", 1);
+  Teuchos::Array<unsigned int>  defaultDataUnsignedInt;
+  validPL->set<Teuchos::Array<unsigned int> >("Relative Responses Markers", defaultDataUnsignedInt,
+		  "Array of responses for which relative change will be obtained");
+
   validPL->set<int>("Number", 0);
   validPL->set<int>("Equation", 0);
   const int maxParameters = 500;

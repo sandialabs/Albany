@@ -11,6 +11,7 @@ set(Subdivision.exe   ${Albany_BINARY_DIR}/src/LCM/Subdivision)
 set(SubdivisionT.exe   ${Albany_BINARY_DIR}/src/LCM/SubdivisionT)
 set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
 set(MPST.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulatorT)
+set(DTK_Interp_and_Error.exe ${Albany_BINARY_DIR}/src/LCM/DTK_Interp_and_Error)
 
 IF(ALBANY_HAVE_STK)
 IF(ALBANY_SEACAS)
@@ -53,6 +54,10 @@ IF(ALBANY_SEACAS)
     add_subdirectory(PeridigmCoupling)
   ENDIF()
 ENDIF(ALBANY_SEACAS)
+
+IF(ALBANY_DTK)
+  add_subdirectory(DTKInterp)
+ENDIF()
 
 add_subdirectory(Catalyst)
 add_subdirectory(DomainTear2D)
