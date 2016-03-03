@@ -1149,8 +1149,18 @@ computeGlobalResidualImplT(
     setScale(); 
   }
 
+#ifdef WRITE_TO_MATRIX_MARKET 
+  char nameResUnscaled[100];  //create string for file name
+  sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
+#endif
   if (scaleBCdofs == false && scale != 1.0)  
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
+#ifdef WRITE_TO_MATRIX_MARKET 
+  char nameResScaled[100];  //create string for file name
+  sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
+#endif
 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
@@ -1467,6 +1477,16 @@ computeGlobalJacobianImplT(const double alpha,
   //scale Jacobian 
   if (scaleBCdofs == false && scale != 1.0) { 
     jacT->fillComplete();
+#ifdef WRITE_TO_MATRIX_MARKET
+    char nameJacUnscaled[100];  //create string for file name
+    sprintf(nameJacUnscaled, "jacUnscaled%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(nameJacUnscaled, jacT);
+    if (fT != Teuchos::null) {
+      char nameResUnscaled[100];  //create string for file name
+      sprintf(nameResUnscaled, "resUnscaled%i.mm", countScale);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
+    }
+#endif
     //set the scaling 
     setScale(jacT);
     //scale Jacobian  
@@ -1476,9 +1496,17 @@ computeGlobalJacobianImplT(const double alpha,
     if (Teuchos::nonnull(fT)) 
       fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
 #ifdef WRITE_TO_MATRIX_MARKET
-    char name[100];  //create string for file name
-    sprintf(name, "scale%i.mm", countScale);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(name, scaleVec_);
+    char nameJacScaled[100];  //create string for file name
+    sprintf(nameJacScaled, "jacScaled%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(nameJacScaled, jacT);
+    if (fT != Teuchos::null) {
+      char nameResScaled[100];  //create string for file name
+      sprintf(nameResScaled, "resScaled%i.mm", countScale);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
+    }
+    char nameScale[100];  //create string for file name
+    sprintf(nameScale, "scale%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
 #endif
     countScale++; 
   }
