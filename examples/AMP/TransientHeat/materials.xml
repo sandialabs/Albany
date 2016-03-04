@@ -4,19 +4,19 @@
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="cube">
-      <Parameter name="material" type="string" value="Plastic" />
+      <Parameter name="material" type="string" value="Iron" />
     </ParameterList>
   </ParameterList>
 
   <ParameterList name="Materials">
 
-    <ParameterList name="Plastic">
+    <ParameterList name="Iron">
       <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="Neohookean"/>
+        <Parameter name="Model Name" type="string" value="Elastic"/>
       </ParameterList>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="1.0"/>
+        <Parameter name="Value" type="double" value="210.0e9"/>
       </ParameterList>
       <ParameterList name="Poissons Ratio">
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
@@ -24,14 +24,14 @@
       </ParameterList>
       <ParameterList name="Thermal Conductivity">
 	<Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
-	<Parameter name="Value" type="double" value="1.0"/>
+	<Parameter name="Value" type="double" value="50.0"/>
       </ParameterList>
-      <Parameter name="Reference Temperature" type="double" value="1.0"/>
-      <Parameter name="Initial Temperature" type="double" value="1.0"/>
-      <Parameter name="Thermal Transient Coefficient" type="double" value="1.e-0"/>
-      <Parameter name="Thermal Expansion Coefficient" type="double" value="1.e-7"/>
-      <Parameter name="Density" type="double" value="1.0"/>
-      <Parameter name="Heat Capacity" type="double" value="1.0"/>
+      <Parameter name="Reference Temperature" type="double" value="25.0"/>
+      <Parameter name="Initial Temperature" type="double" value="25.0"/>
+      <Parameter name="Thermal Transient Coefficient" type="double" value="1.0"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="0.0"/>
+      <Parameter name="Density" type="double" value="7874.0"/>
+      <Parameter name="Heat Capacity" type="double" value="450.0"/>
     </ParameterList>
 
   </ParameterList>
