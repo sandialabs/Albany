@@ -15,10 +15,22 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_disp.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_disp.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cauchy_stress.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_cauchy_stress.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/source.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/target.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.3 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
 
