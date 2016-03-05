@@ -12,6 +12,7 @@ set(SubdivisionT.exe   ${Albany_BINARY_DIR}/src/LCM/SubdivisionT)
 set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
 set(MPST.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulatorT)
 set(DTK_Interp_and_Error.exe ${Albany_BINARY_DIR}/src/LCM/DTK_Interp_and_Error)
+set(DTK_Interp_Volume_to_NS.exe ${Albany_BINARY_DIR}/src/LCM/DTK_Interp_Volume_to_NS)
 
 IF(ALBANY_HAVE_STK)
 IF(ALBANY_SEACAS)

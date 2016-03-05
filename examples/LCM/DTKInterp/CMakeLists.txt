@@ -7,34 +7,8 @@
 # This test is not currently set up to run on the BGQ...
 IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_LCM AND LCM_TEST_EXES AND ALBANY_DTK)
 
-# Create a symlink to the Partition executable
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${DTK_Interp_and_Error.exe} ${CMAKE_CURRENT_BINARY_DIR}/DTK_Interp_and_Error)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_disp.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_disp.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cauchy_stress.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_cauchy_stress.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.0
-               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.1
-               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.2
-               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/source.exo.4.3
-               ${CMAKE_CURRENT_BINARY_DIR}/source.exo.4.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.0
-               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.0 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.1
-               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.1 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.2
-               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.2 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/target.exo.4.3
-               ${CMAKE_CURRENT_BINARY_DIR}/target.exo.4.3 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
-
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-add_test(NAME ${testName} COMMAND "python" "runtest.py")
+add_subdirectory(Meshes)
+add_subdirectory(Error)
+add_subdirectory(InterpVolToNs)
 
 ENDIF()
