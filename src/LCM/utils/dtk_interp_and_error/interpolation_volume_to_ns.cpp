@@ -7,10 +7,11 @@
 
 //---------------------------------------------------------------------------//
 /*!
- * \file   dtk_interp_and_error.cpp 
+ * \file   interpolation_volume_to_ns.cpp 
  * \author Irina Tezaur (ikalash@sandia.gov) 
- * \brief  Projection of solution from source to target mesh, followed by 
- *         discrete l2 error calculation using DTK.
+ * \brief  Projection of solution from source (volume) to target (nodeset).
+ *         Currently this can be used in the implementation of the alternating 
+ *         Schwarz method.
  */
 //---------------------------------------------------------------------------//
 
@@ -80,8 +81,6 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
         plist->get<std::string>("Source Mesh Input File");
   int src_snap_no = 
 	plist->get<int>("Source Mesh Snapshot Number", 1); //this value is 1-based 
-  std::string source_mesh_part_name = 
-	plist->get<std::string>("Source Mesh Part");
   std::string target_mesh_input_file = 
 	plist->get<std::string>("Target Mesh Input File");
   std::string target_mesh_output_file = 
@@ -169,8 +168,7 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
   // DEFINE PARTS/SELECTOR
   // ----------------
 
-  stk::mesh::Part* src_part = src_broker.meta_data().get_part( source_mesh_part_name );
-  stk::mesh::Selector src_stk_selector( *src_part );
+  stk::mesh::Selector src_stk_selector = stk::mesh::Selector(src_broker.meta_data().universal_part()); 
   stk::mesh::BucketVector src_part_buckets = src_stk_selector.get_buckets( stk::topology::NODE_RANK );
   std::vector<stk::mesh::Entity> src_part_nodes;
   stk::mesh::get_selected_entities(src_stk_selector, src_part_buckets, src_part_nodes );
@@ -392,7 +390,7 @@ int main(int argc, char* argv[])
       field_type_num = 2;
     else 
        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Error: invalid field_type = " << field_type  
+            std::endl << "Error in interpolation_volume_to_ns.cpp: invalid field_type = " << field_type  
             <<  "!  Valid field_types are 'Node Vector', 'Node Scalar' and 'Node Tensor'." << std::endl);
 
     switch(field_type_num) {
@@ -419,4 +417,4 @@ int main(int argc, char* argv[])
 
    *out << " ...done!" << std::endl; 
 
-} //end file dtk_interp_and_error.cpp
+} //end file interpolation_volume_to_ns.cpp

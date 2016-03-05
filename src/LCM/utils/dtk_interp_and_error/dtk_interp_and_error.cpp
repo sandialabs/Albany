@@ -434,7 +434,7 @@ int main(int argc, char* argv[])
       field_type_num = 2;
     else 
        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Error in interpolation_error.cpp: invalid field_type = " << field_type  
+            std::endl << "Error in dtk_interp_and_error.cpp: invalid field_type = " << field_type  
             <<  "!  Valid field_types are 'Node Vector', 'Node Scalar' and 'Node Tensor'." << std::endl);
 
     switch(field_type_num) {
