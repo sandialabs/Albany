@@ -8,5 +8,5 @@ export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles
 # trilinos required before albany
 PACKAGES="trilinos albany"
 ARCHES="serial"
-BUILD_TYPES="release"
 TOOL_CHAINS="gcc"
+BUILD_TYPES="release"

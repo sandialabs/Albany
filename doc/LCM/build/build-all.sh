@@ -68,8 +68,8 @@ WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
 module purge
 for PACKAGE in $PACKAGES; do
     for ARCH in $ARCHES; do
-        for BUILD_TYPE in $BUILD_TYPES; do
-            for TOOL_CHAIN in $TOOL_CHAINS; do
+        for TOOL_CHAIN in $TOOL_CHAINS; do
+            for BUILD_TYPE in $BUILD_TYPES; do
                 MODULE="$ARCH"-"$TOOL_CHAIN"-"$BUILD_TYPE"
                 echo "MODULE: $MODULE"
                 module load "$MODULE"
