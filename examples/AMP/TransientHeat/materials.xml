@@ -12,7 +12,7 @@
 
     <ParameterList name="Iron">
       <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="Elastic"/>
+        <Parameter name="Model Name" type="string" value="Linear Elastic"/>
       </ParameterList>
       <ParameterList name="Elastic Modulus">
         <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
