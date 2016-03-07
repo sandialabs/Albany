@@ -65,12 +65,20 @@ case "$SCRIPT_NAME" in
 esac
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
 
+module purge
 for PACKAGE in $PACKAGES; do
-    MODULE="$ARCH"-"$TOOL_CHAIN"-"$BUILD_TYPE"
-    echo "MODULE: $MODULE"
-    module load "$MODULE"
-    "$COMMAND" "$PACKAGE" "$NUM_PROCS"
+    for ARCH in $ARCHES; do
+        for BUILD_TYPE in $BUILD_TYPES; do
+            for TOOL_CHAIN in $TOOL_CHAINS; do
+                MODULE="$ARCH"-"$TOOL_CHAIN"-"$BUILD_TYPE"
+                echo "MODULE: $MODULE"
+                module load "$MODULE"
+                "$COMMAND" "$PACKAGE" "$NUM_PROCS"
+            done
+        done
+    done
 done
+
 # Update wiki after compiling Albany with gcc release only.
 case "$PACKAGE" in
     albany)
