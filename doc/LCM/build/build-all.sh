@@ -71,13 +71,13 @@ for PACKAGE in $PACKAGES; do
     module load "$MODULE"
     "$COMMAND" "$PACKAGE" "$NUM_PROCS"
 done
-# Update wiki after compiling Albany with gcc debug only.
+# Update wiki after compiling Albany with gcc release only.
 case "$PACKAGE" in
     albany)
 	case "$ARCH" in
 	    serial)
 		case "$BUILD_TYPE" in
-		    debug)
+		    release)
 			case "$TOOL_CHAIN" in
 			    gcc)
 				update_wiki
