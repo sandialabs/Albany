@@ -55,7 +55,15 @@
 #endif
 #endif
 
-
+//FIXME: move static global variables to struct 
+//
+//struct Global {...
+//}
+//
+//static Global * g = nullptr; -- call in main 
+//
+//delete g BEFORE calling Kokkos::finalize();  
+//
 
 Teuchos::RCP<Albany::CismSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
@@ -991,8 +999,10 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     mpiComm = Teuchos::null; 
     reducedMpiComm = Teuchos::null;
 #endif
-    if (cur_time_yr == final_time) 
+    if (cur_time_yr == final_time) {
+      felix_driver_finalize(42); 
       Kokkos::finalize(); 
+    }
 }
   
 
@@ -1000,17 +1010,19 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 //IK, 12/3/13: this is not called anywhere in the interface code...  used to be called (based on old bisicles interface code)?  
 void felix_driver_finalize(int ftg_obj_index)
 {
-  if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
+  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
     std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
-    mpiCommT = Teuchos::null; 
-    reducedMpiCommT = Teuchos::null;
-    parameterList = Teuchos::null;
-    discParams = Teuchos::null;
-    slvrfctry = Teuchos::null;
-    node_map = Teuchos::null; 
     
-    //Should something happen here?? 
+  mpiCommT = Teuchos::null; 
+  reducedMpiCommT = Teuchos::null;
+  parameterList = Teuchos::null;
+  discParams = Teuchos::null;
+  slvrfctry = Teuchos::null;
+  node_map = Teuchos::null; 
+
+  if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
     std::cout << "done cleaning up!" << std::endl << std::endl; 
-  }
+
+    
 }
 
