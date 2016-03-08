@@ -1000,8 +1000,17 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     reducedMpiComm = Teuchos::null;
 #endif
     if (cur_time_yr == final_time) {
-      felix_driver_finalize(42); 
+      if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
+        std::cout << "In felix_driver: calling Kokkos::finalize()..." << std::endl;
+      mpiCommT = Teuchos::null; 
+      reducedMpiCommT = Teuchos::null;
+      parameterList = Teuchos::null;
+      discParams = Teuchos::null;
+      slvrfctry = Teuchos::null;
+      node_map = Teuchos::null; 
       Kokkos::finalize(); 
+      if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
+        std::cout << "...done." << std::endl;
     }
 }
   
@@ -1012,16 +1021,11 @@ void felix_driver_finalize(int ftg_obj_index)
 {
   if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
     std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
-    
-  mpiCommT = Teuchos::null; 
-  reducedMpiCommT = Teuchos::null;
-  parameterList = Teuchos::null;
-  discParams = Teuchos::null;
-  slvrfctry = Teuchos::null;
-  node_map = Teuchos::null; 
+
+   //Nothing to do.    
 
   if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
-    std::cout << "done cleaning up!" << std::endl << std::endl; 
+    std::cout << "...done cleaning up!" << std::endl << std::endl; 
 
     
 }
