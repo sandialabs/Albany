@@ -1000,8 +1000,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     reducedMpiComm = Teuchos::null;
 #endif
     if (cur_time_yr == final_time) {
-      if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
-        std::cout << "In felix_driver: calling Kokkos::finalize()..." << std::endl;
       mpiCommT = Teuchos::null; 
       reducedMpiCommT = Teuchos::null;
       parameterList = Teuchos::null;
@@ -1009,8 +1007,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
       slvrfctry = Teuchos::null;
       node_map = Teuchos::null; 
       Kokkos::finalize(); 
-      if (debug_output_verbosity != 0 && mpiCommT->getRank() == 0) 
-        std::cout << "...done." << std::endl;
     }
 }
   
