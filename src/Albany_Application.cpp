@@ -3925,7 +3925,7 @@ evaluateStateFieldManagerT(
         std::vector<PHX::index_size_type> derivative_dimensions;
         derivative_dimensions.push_back(
           PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-            this, ps));
+            this, ps, explicit_scheme));
         sfm[ps]->setKokkosExtendedDataTypeDimensions
           <PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
         sfm[ps]->postRegistrationSetup("");

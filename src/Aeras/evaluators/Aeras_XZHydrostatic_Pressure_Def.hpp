@@ -61,11 +61,24 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
+/*
+    	  if(cell == 0 && node == 0){
+    		  std::cout << "Etatop = " << E.etatop() <<"\n";
+    	  for (int level=0; level < numLevels; ++level) {
+    		std::cout << "Here we are level, eta " << level << " " << E.eta(level) << "\n";
+    	  }
+    	  for (int level=0; level < numLevels; ++level) {
+    		std::cout << "Here we are A, B " << level << " " << E.A(level) << "  " << E.B(level) << "\n";
+    	  }
+    	  }
+*/
       for (int level=0; level < numLevels; ++level) {
         Pressure(cell,node,level) = E.A(level)*E.p0() + E.B(level)*Ps(cell,node);
         //std::cout <<"In Pressure "<< " Ps" << Ps(cell,node) <<" workset time" << workset.current_time << "\n";
 
       }
+      //here instead of computing eta, A, B, and pressure at level interfaces directly,
+      //averages are used to approx. pressure at level interfaces.
       for (int level=0; level < numLevels; ++level) {
         const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : E.ptop();
         const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
