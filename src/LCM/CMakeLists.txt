@@ -228,6 +228,7 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
+  ${LCM_DIR}/utils/dtk_interp_and_error
   ${ALBANY_PUMI_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
@@ -252,6 +253,11 @@ IF ( INSTALL_ALBANY )
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+ENDIF()
+
+IF (LCM_TEST_EXES AND ALBANY_DTK) 
+  add_executable(DTK_Interp_and_Error utils/dtk_interp_and_error/dtk_interp_and_error.cpp)
+  add_executable(DTK_Interp_Volume_to_NS utils/dtk_interp_and_error/interpolation_volume_to_ns.cpp)
 ENDIF()
 
 IF (LCM_TEST_EXES AND ALBANY_BGL) 
@@ -409,9 +415,14 @@ ENDIF(BUILD_SHARED_LIBS)
 
 IF(ALBANY_STK_REBALANCE)
   SET(LCM_UT_LIBS ${LCM_UT_LIBS} albanySTKRebalance)
-endif()
+ENDIF()
    
 #Linking tests
+IF (LCM_TEST_EXES AND ALBANY_DTK)
+  set (repeat_libs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${LCM_UT_LIBS} ${ALBANY_LIBRARIES})
+  target_link_libraries(DTK_Interp_and_Error ${repeat_libs} ${ALL_LIBRARIES})
+  target_link_libraries(DTK_Interp_Volume_to_NS ${repeat_libs} ${ALL_LIBRARIES})
+ENDIF()
 IF (LCM_TEST_EXES AND ALBANY_BGL)
   set (repeat_libs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${LCM_UT_LIBS} ${ALBANY_LIBRARIES})
   target_link_libraries(MaterialPointSimulator ${repeat_libs} ${ALL_LIBRARIES})

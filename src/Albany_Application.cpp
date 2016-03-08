@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "AAdapt_RC_Manager.hpp"
@@ -1055,6 +1056,7 @@ computeGlobalResidualImplT(
     const Teuchos::Array<ParamVec>& p,
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
+
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
@@ -1147,8 +1149,18 @@ computeGlobalResidualImplT(
     setScale(); 
   }
 
+#ifdef WRITE_TO_MATRIX_MARKET 
+  char nameResUnscaled[100];  //create string for file name
+  sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
+#endif
   if (scaleBCdofs == false && scale != 1.0)  
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
+#ifdef WRITE_TO_MATRIX_MARKET 
+  char nameResScaled[100];  //create string for file name
+  sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
+#endif
 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
@@ -1448,13 +1460,9 @@ computeGlobalJacobianImplT(const double alpha,
     setScale(); 
   }
   // Assemble global residual
-  if (Teuchos::nonnull(fT)) {
+  if (Teuchos::nonnull(fT)) 
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-    if (scaleBCdofs == false && scale != 1.0) {
-      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
-    }
-  }
-
+  
   // Assemble global Jacobian
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
 
@@ -1469,15 +1477,38 @@ computeGlobalJacobianImplT(const double alpha,
   //scale Jacobian 
   if (scaleBCdofs == false && scale != 1.0) { 
     jacT->fillComplete();
-    setScale(jacT); 
+#ifdef WRITE_TO_MATRIX_MARKET
+    char nameJacUnscaled[100];  //create string for file name
+    sprintf(nameJacUnscaled, "jacUnscaled%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(nameJacUnscaled, jacT);
+    if (fT != Teuchos::null) {
+      char nameResUnscaled[100];  //create string for file name
+      sprintf(nameResUnscaled, "resUnscaled%i.mm", countScale);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
+    }
+#endif
+    //set the scaling 
+    setScale(jacT);
+    //scale Jacobian  
     jacT->leftScale(*scaleVec_);
     jacT->resumeFill();
-    countScale++; 
+    //scale residual 
+    if (Teuchos::nonnull(fT)) 
+      fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
 #ifdef WRITE_TO_MATRIX_MARKET
-    char name[100];  //create string for file name
-    sprintf(name, "scale%i.mm", countScale);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(name, scaleVec_);
+    char nameJacScaled[100];  //create string for file name
+    sprintf(nameJacScaled, "jacScaled%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(nameJacScaled, jacT);
+    if (fT != Teuchos::null) {
+      char nameResScaled[100];  //create string for file name
+      sprintf(nameResScaled, "resScaled%i.mm", countScale);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
+    }
+    char nameScale[100];  //create string for file name
+    sprintf(nameScale, "scale%i.mm", countScale);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
 #endif
+    countScale++; 
   }
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -4373,7 +4404,7 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
     workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 
 }
-void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT) 
+void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
 {
   if (scale_type == CONSTANT) { //constant scaling
     scaleVec_->putScalar(1.0/scale);
@@ -4394,9 +4425,23 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
   else if (scale_type == ABSROWSUM) {//absolute value of row sum scaling 
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
-      scaleVec_->putScalar(0.0); 
+      //FIXME: create a tpetra implementation .
+#ifdef ALBANY_EPETRA
+      scaleVec_->putScalar(0.0);
+      Teuchos::RCP<Epetra_Map> rowMap = Petra::TpetraMap_To_EpetraMap(jacT->getRowMap(), comm);
+      Teuchos::RCP<const Epetra_CrsGraph> graph = disc->getJacobianGraph();
+      Teuchos::RCP<Epetra_CrsMatrix> jacE = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *graph));
+      jacE->FillComplete();
+      Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, *jacE, comm);
+      Teuchos::RCP<Epetra_Vector> scaleVecE = Teuchos::rcp(new Epetra_Vector(*rowMap));
+      scaleVecE->PutScalar(0.0);
+      //TODO: ask Mark Hoemenn re: adding InvRowSums to Tpetra 
+      jacE->InvRowSums(*scaleVecE);
+      scaleVec_ = Petra::EpetraVector_To_TpetraVectorNonConst(*scaleVecE, commT);
+#endif
+      /*
       for (std::size_t i = 0; i < jacT->getNodeNumRows(); i++) { 
-         Teuchos::ArrayView<const LO> indices; 
+         Teuchos::ArrayView<const GO> indices; 
          Teuchos::ArrayView<const ST> values; 
          //get ith row of jacT 
          jacT->getLocalRowView(i, indices, values);  
@@ -4410,7 +4455,7 @@ void Albany::Application::setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT)
          GO globalRow = jacT->getRowMap()->getGlobalElement(i);
          //put 1/rowsum into globalRow entry of scaleVec_ 
          scaleVec_->replaceGlobalValue(globalRow, rowsuminv); 
-      }
+      }*/
     }
   }
 }

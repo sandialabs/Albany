@@ -1305,7 +1305,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // There may not be a source in every element block
 
       if (material_db_->isElementBlockSublist(eb_name, "Source Functions")) { // Thermal source in matDB
-
+          
         Teuchos::ParameterList& srcParamList = material_db_->
             getElementBlockSublist(eb_name, "Source Functions");
 
@@ -1320,6 +1320,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
           thermal_source_evaluated_ = true;
         }
+      }
+      else // Do not evaluate heat source in TransportResidual
+      {
+          thermal_source_evaluated_ = false;
       }
     }
     else

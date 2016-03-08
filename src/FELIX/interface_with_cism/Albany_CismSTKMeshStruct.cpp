@@ -30,6 +30,8 @@
 #include "Albany_Utils.hpp"
 
 
+//FIXME: replace double * with Teuchos::Arrays. 
+
 //Constructor for arrays passed from CISM through Albany-CISM interface
 Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
