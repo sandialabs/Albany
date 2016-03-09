@@ -73,14 +73,14 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
                                <<  std::endl) ;
   }
   else if ( topoTypeString == "SphereMountain1") {
-  	topoType = SPHERE_MOUNTAIN1
+  	topoType = SPHERE_MOUNTAIN1;
   	
   	numParam = 3;
   	Teuchos::Array<double> defaultData(numParam);
   	
   	defaultData[0] = 2000.0; // height
-  	defaultData[1] = 2.356194490192345 // width = 3 * pi / 4 (radians)
-  	defaultData[2] = 0.196349540849362 // halfWidth = pi / 16.0 (radians)
+  	defaultData[1] = 2.356194490192345; // width = 3 * pi / 4 (radians)
+  	defaultData[2] = 0.196349540849362; // halfWidth = pi / 16.0 (radians)
   	
   	topoData = xzhydrostatic_list->get("Topography Data", defaultData);
     
