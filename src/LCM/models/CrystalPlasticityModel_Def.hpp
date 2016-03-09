@@ -24,6 +24,11 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
     num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
+  // Store an RCP to the NOX status test, if available
+  if (p->isParameter("NOX Status Test")) {
+    nox_status_test_ = p->get< Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> >("NOX Status Test");
+  }
+
   integration_scheme_ = IntegrationScheme::EXPLICIT;
   if (p->isParameter("Integration Scheme")) {
     std::string integration_scheme_string = p->get<std::string>(

@@ -611,6 +611,9 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
        << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
        << std::endl;
 
+  // Allow Problem to add custom NOX status test
+  problem->applyProblemSpecificSolverSettings(params);
+
   ignore_residual_in_jacobian =
     problemParams->get("Ignore Residual In Jacobian", false);
 
