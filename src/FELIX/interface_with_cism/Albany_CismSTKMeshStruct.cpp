@@ -99,14 +99,14 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   sh = new double[NumNodes];
   thck = new double[NumNodes];
   shGrad = new double[NumNodes][2];
-  globalNodesID = new GO[NumNodes];
-  globalElesID = new GO[NumEles];
-  basalFacesID = new GO[NumBasalFaces];
-  topFacesID = new GO[NumBasalFaces];
-  westFacesID = new GO[NumWestFaces]; 
-  eastFacesID = new GO[NumEastFaces]; 
-  southFacesID = new GO[NumSouthFaces]; 
-  northFacesID = new GO[NumNorthFaces]; 
+  Teuchos::Array<GO> globalNodesID(NumNodes); // local; doesn't have to be class data unless desired
+  Teuchos::Array<GO> globalElesID(NumEles);
+  Teuchos::Array<GO> basalFacesID(NumBasalFaces); 
+  Teuchos::Array<GO> topFacesID(NumBasalFaces);
+  Teuchos::Array<GO> westFacesID(NumWestFaces); 
+  Teuchos::Array<GO> eastFacesID(NumEastFaces); 
+  Teuchos::Array<GO> southFacesID(NumSouthFaces); 
+  Teuchos::Array<GO> northFacesID(NumNorthFaces); 
   flwa = new double[NumEles];
   beta = new double[NumNodes];
   uvel = new double[NumNodes];
@@ -246,28 +246,19 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   }
 
 
-  Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles);
-  Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes);
-  Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces);
-  Teuchos::ArrayView<const GO> topFacesIDAV = Teuchos::arrayView(topFacesID, NumBasalFaces);
-  Teuchos::ArrayView<const GO> westFacesIDAV = Teuchos::arrayView(westFacesID, NumWestFaces);
-  Teuchos::ArrayView<const GO> eastFacesIDAV = Teuchos::arrayView(eastFacesID, NumEastFaces);
-  Teuchos::ArrayView<const GO> southFacesIDAV = Teuchos::arrayView(southFacesID, NumSouthFaces);
-  Teuchos::ArrayView<const GO> northFacesIDAV = Teuchos::arrayView(northFacesID, NumNorthFaces);
   //Distribute the elements according to the global element IDs
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); 
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesID, 0, commT)); 
   //Distribute the nodes according to the global node IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT));
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesID, 0, commT));
   //Distribute the elements according to the basal face IDs
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT));
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesID, 0, commT));
   //Distribute the elements according to the top face IDs
-  top_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, topFacesIDAV, 0, commT));
+  top_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, topFacesID, 0, commT));
   //Distribute the elements according to the lateral face IDs
-  west_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT));
-  east_face_mapT = Teuchos::rcp(new Tpetra_Map(NumEastFaces, eastFacesIDAV, 0, commT));
-  south_face_mapT = Teuchos::rcp(new Tpetra_Map(NumSouthFaces, southFacesIDAV, 0, commT));
-  north_face_mapT = Teuchos::rcp(new Tpetra_Map(NumNorthFaces, northFacesIDAV, 0, commT));
-
+  west_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesID, 0, commT));
+  east_face_mapT = Teuchos::rcp(new Tpetra_Map(NumEastFaces, eastFacesID, 0, commT));
+  south_face_mapT = Teuchos::rcp(new Tpetra_Map(NumSouthFaces, southFacesID, 0, commT));
+  north_face_mapT = Teuchos::rcp(new Tpetra_Map(NumNorthFaces, northFacesID, 0, commT));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -340,14 +331,6 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
   delete [] sf;
   delete [] nf;
   delete [] eles;
-  delete [] globalElesID;
-  delete [] globalNodesID;
-  delete [] basalFacesID;
-  delete [] topFacesID;
-  delete [] westFacesID;
-  delete [] eastFacesID;
-  delete [] southFacesID;
-  delete [] northFacesID;
   delete [] uvel; 
   delete [] vvel; 
 }

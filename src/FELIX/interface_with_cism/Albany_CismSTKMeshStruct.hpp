@@ -108,14 +108,6 @@ namespace Albany {
     double* thck; //thickness
     double (*shGrad)[2]; //surface height gradient (ds/dx, ds/dy)
     double* beta;
-    GO* globalElesID; //int array to define element map 
-    GO* globalNodesID; //int array to define node map 
-    GO* basalFacesID; //int array to define basal face map 
-    GO* topFacesID; //int array to define top face map 
-    GO* westFacesID; 
-    GO* eastFacesID; 
-    GO* southFacesID; 
-    GO* northFacesID;
     GO* dirichletNodeMask;  
     int (*eles)[8]; //hard-coded for 3D hexes for now 
     double *flwa; //double array that gives value of flow factor  
