@@ -126,7 +126,7 @@ case "$SCRIPT_NAME" in
 		;;
 	    release)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags||g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
 		;;
 	    profile)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"

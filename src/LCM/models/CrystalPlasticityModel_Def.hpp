@@ -886,9 +886,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             minimizer.printReport(std::cout);
           }
 
-          TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
-          std::logic_error,
-          "Error: CrystalPlasticity implicit state update failed to converge!");
+          assert (minimizer.converged==true);
+          // TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
+          //std::logic_error,
+          //"Error: CrystalPlasticity implicit state update failed to converge!");
 
           // We now have the solution for slip_np1, including sensitivities (if any)
           // Re-evaluate all the other state variables based on slip_np1
