@@ -116,8 +116,10 @@ bool SimAdapt::adaptMesh()
   char simname[80];
   sprintf(simname, "preadapt_%d.sms", callcount);
   PM_write(sim_pm, simname, sthreadDefault, 0);
-  sprintf(simname, "preadapt_sol_%d.fld", callcount);
-  Field_write(sim_sol_fld, simname, 0, 0, 0);
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i) {
+    sprintf(simname, "preadapt_sol%d_%d.fld", i, callcount);
+    Field_write(sim_sol_flds[i], simname, 0, 0, 0);
+  }
   sprintf(simname, "preadapt_res_%d.fld", callcount);
   Field_write(sim_res_fld, simname, 0, 0, 0);
   Albany::debugAMPMesh(apf_m, "before");
@@ -130,8 +132,10 @@ bool SimAdapt::adaptMesh()
 #ifdef SIMDEBUG
   sprintf(simname, "adapted_%d.sms", callcount);
   PM_write(sim_pm, simname, sthreadDefault, 0);
-  sprintf(simname, "adapted_sol_%d.fld", callcount);
-  Field_write(sim_sol_fld, simname, 0, 0, 0);
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i) {
+    sprintf(simname, "adapted_sol%d_%d.fld", i, callcount);
+    Field_write(sim_sol_flds[i], simname, 0, 0, 0);
+  }
   sprintf(simname, "adapted_res_%d.fld", callcount);
   Field_write(sim_res_fld, simname, 0, 0, 0);
   Albany::debugAMPMesh(apf_m, "after");
