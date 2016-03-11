@@ -9,7 +9,7 @@
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
-    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness,temperature,surface_height}"/>
+    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness, thickness_RMS, temperature,surface_height, surface_mass_balance}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
@@ -20,9 +20,9 @@
       <Parameter name="Response 0" type="string" value="Surface Mass Balance Mismatch"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Regularization Coefficient" type="double" value="1.0"/>
-        <Parameter name="Scaling Coefficient" type="double" value="5.8824e-03"/> 
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-        <Parameter name="Field Name" type="string" value="Velocity"/>
+        <Parameter name="SMB Coefficient" type="double" value="1.0"/>
+        <Parameter name="H Coefficient" type="double" value="1.0"/>
+        <Parameter name="Scaling Coefficient" type="double" value="5.8824e-07"/>
       </ParameterList>
     </ParameterList>
 
@@ -73,7 +73,7 @@
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_adjoint_sensitivity.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_adjoint_sensitivity_thickness.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
     <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{thickness,surface_height}"/>
@@ -95,10 +95,14 @@
           <Parameter name="basal_friction Field Type" type="string" value="Node Scalar"/>
           <Parameter name="thickness File Name"       type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
           <Parameter name="thickness Field Type"      type="string" value="Node Scalar"/>
+          <Parameter name="thickness_RMS File Name"   type="string" value="../AsciiMeshes/GisUnstructFiles/thickness_RMS.ascii"/>
+          <Parameter name="thickness_RMS Field Type"  type="string" value="Node Scalar"/>
           <Parameter name="surface_height File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
           <Parameter name="surface_height Field Type" type="string" value="Node Scalar"/>
           <Parameter name="temperature File Name"     type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
           <Parameter name="temperature Field Type"    type="string" value="Node Layered Scalar"/>
+          <Parameter name="surface_mass_balance File Name"     type="string" value="../AsciiMeshes/GisUnstructFiles/surface_mass_balance.ascii"/>
+          <Parameter name="surface_mass_balance Field Type"    type="string" value="Node Scalar"/>
         </ParameterList>
       </ParameterList>
       <ParameterList name="upperside">
@@ -117,10 +121,10 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{4591.82029667}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{677.382063767}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17427.6771863}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{439.905138959}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
