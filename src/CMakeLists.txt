@@ -177,6 +177,7 @@ SET(HEADERS ${HEADERS}
 ENDIF()
 SET(SOURCES ${SOURCES}
   responses/Albany_AggregateScalarResponseFunction.cpp
+  responses/Albany_CumulativeScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
   responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
@@ -195,6 +196,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
+  responses/Albany_CumulativeScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp

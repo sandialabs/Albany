@@ -1374,7 +1374,7 @@ RCP<const ParameterList>
 Albany::SolverFactory::getValidResponseParameters() const
 {
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidResponseParams"));;
-
+  validPL->set<std::string>("Collection Method", "Sum Responses");
   validPL->set<int>("Number of Response Vectors", 0);
   validPL->set<bool>("Observe Responses", true);
   validPL->set<int>("Responses Observation Frequency", 1);
