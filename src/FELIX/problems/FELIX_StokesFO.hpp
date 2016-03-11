@@ -43,6 +43,7 @@
 #include "FELIX_StokesFOBodyForce.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_FieldNorm.hpp"
+#include "FELIX_FluxDiv.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
 #include "FELIX_UpdateZCoordinate.hpp"
@@ -240,7 +241,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   // Ice thickness
   {
   stateName = "thickness";
-  fieldName = "Ice Thickness";
+  fieldName = "Ice Thickness Param";
 
 
 
@@ -307,6 +308,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     }
   }
   else {
+    fieldName = "Ice Thickness";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
     p->set<std::string>("Field Name", fieldName);
     ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
@@ -318,18 +320,20 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (std::find(req.begin(), req.end(), stateName)!=req.end())
     {
       // ...and basal_friction is one of them.
-
+      fieldName = "Ice Thickness";
       entity = Albany::StateStruct::NodalDataToElemNode;
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
-      if (isStateAParameter)
-      {
-        //basal friction is a distributed 3D parameter. We already took care of this case
-      }
-      else if (std::find(requirements.begin(),requirements.end(),stateName)==requirements.end()) //otherwise see below
-      {
-        ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-      }
+      ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+              fm0.template registerEvaluator<EvalT>(ev);
+//      if (0)//isStateAParameter)
+//      {
+//       //basal friction is a distributed 3D parameter. We already took care of this case
+//      }
+//      else if (std::find(requirements.begin(),requirements.end(),stateName)==requirements.end()) //otherwise see below
+//      {
+//        ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+//        fm0.template registerEvaluator<EvalT>(ev);
+//      }
     }
     else if (isStateAParameter)
     {
@@ -592,7 +596,7 @@ else {
     RCP<ParameterList> p = rcp(new ParameterList("Update Z Coordinate"));
     p->set<std::string>("Old Coords Name", "Coord Vec Old");
     p->set<std::string>("New Coords Name", "Coord Vec");
-    p->set<std::string>("Past Thickness Name", "Ice Thickness");
+    p->set<std::string>("Past Thickness Name", "Ice Thickness Param");
     p->set<std::string>("Top Surface Name", "Surface Height");
     ev = rcp(new FELIX::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -633,6 +637,10 @@ else {
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Restrict ice thickness from cell-based to cell-side-based
+    ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Ice Thickness Param",basalSideName,cellType);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    //---- Restrict ice thickness from cell-based to cell-side-based
     ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
@@ -645,7 +653,15 @@ else {
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness on QP on side
+    ev = evalUtilsBasal.constructDOFInterpolationSideParamEvaluator("Ice Thickness Param", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate thickness on QP on side
     ev = evalUtilsBasal.constructDOFInterpolationSideParamEvaluator("Ice Thickness", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate thickness on QP on side
+    ev = evalUtilsBasal.constructDOFInterpolationSideParamEvaluator("Ice Thickness RMS", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate effective pressure on QP on side
@@ -672,8 +688,12 @@ else {
     ev = evalUtilsBasal.constructDOFInterpolationSideParamEvaluator("Surface Mass Balance", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
+    ev = evalUtilsBasal.constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
     ev = evalUtilsBasal.constructDOFGradInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
+
   }
 
   if (surfaceSideName!="INVALID")
@@ -813,6 +833,55 @@ else {
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if (basalSideName!="INVALID")
+  {
+
+    fieldName = "Flux Divergence";
+    stateName = "flux_divergence";
+    p = rcp(new ParameterList("Flux Divergence"));
+
+    //Input
+    p->set<std::string>("Averaged Velocity Side QP Variable Name", "Averaged Velocity");
+    p->set<std::string>("Averaged Velocity Side QP Divergence Name", "Averaged Velocity Divergence");
+    if(isThkParam) {
+      p->set<std::string>("Thickness Side QP Variable Name", "Ice Thickness Param");
+      p->set<std::string>("Thickness Gradient Name", "Ice Thickness Param Gradient");
+    } else {
+      p->set<std::string>("Thickness Side QP Variable Name", "Ice Thickness");
+      p->set<std::string>("Thickness Gradient Name", "Ice Thickness Gradient");
+    }
+
+    p->set<std::string>("Field Name",  "Flux Divergence");
+    p->set<std::string> ("Side Set Name", basalSideName);
+
+    ev = Teuchos::rcp(new FELIX::FluxDiv<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+
+    if(isThkParam)
+    {
+          // We interpolate beta from quad point to cell
+          ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+          fm0.template registerEvaluator<EvalT>(ev);
+
+          // We save it on the basal mesh
+          p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_scalar, basalEBName, true);
+          p->set<bool>("Is Vector Field", false);
+          ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+          fm0.template registerEvaluator<EvalT>(ev);
+          if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+          {
+            // Only PHAL::AlbanyTraits::Residual evaluates something
+            if (ev->evaluatedFields().size()>0)
+            {
+              // Require save beta
+              fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+            }
+          }
+        }
+  }
+
+
 #ifdef ALBANY_EPETRA
     {
        RCP<ParameterList> p = rcp(new ParameterList("Gather Averaged Velocity"));
@@ -921,6 +990,18 @@ else {
     p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
     ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+
+    // Load surface velocity
+    entity= Albany::StateStruct::NodalDataToElemNode;
+    stateName = "thickness_RMS";
+    fieldName = "Ice Thickness RMS";
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+
+
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
@@ -935,12 +1016,13 @@ else {
     RCP<ParameterList> paramList = rcp(new ParameterList("Param List"));
     paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
     paramList->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
-    paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Gradient");
+    paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
     paramList->set<std::string>("SMB Side QP Variable Name","Surface Mass Balance");
-    paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness");
-    paramList->set<std::string>("Averaged Velocity Side QP Variable Name","Averaged Velocity");
-    paramList->set<std::string>("Averaged Velocity Side QP Divergence Name","Averaged Velocity Divergence");
+    paramList->set<std::string>("Flux Divergence Side QP Variable Name","Flux Divergence");
+    paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
+    paramList->set<std::string>("Thickness RMS Side QP Variable Name","Ice Thickness RMS");
+    paramList->set<std::string>("Observed Thickness Side QP Variable Name","Ice Thickness");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","Observed Surface Velocity");
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","Observed Surface Velocity RMS");
     paramList->set<std::string>("BF Surface Name","BF " + surfaceSideName);
