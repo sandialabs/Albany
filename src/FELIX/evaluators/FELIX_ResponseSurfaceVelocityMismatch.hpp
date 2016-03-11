@@ -53,7 +53,6 @@ namespace FELIX {
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocity;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocityRMS;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_beta;
-    PHX::MDField<RealType,Cell,Side,Node,QuadPoint>        BF_surface;
     PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_basal;
     PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_surface;
 
