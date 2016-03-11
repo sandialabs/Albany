@@ -71,7 +71,7 @@
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analisys_beta.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_beta.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
@@ -87,7 +87,7 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analisys_beta_basal.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_beta_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="basal_friction File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
@@ -103,7 +103,7 @@
       <ParameterList name="upperside">
         <Parameter name="Method" type="string" value="SideSetSTK"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analisys_beta_surface.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_beta_surface.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="surface_velocity File Name"      type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
@@ -116,10 +116,10 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{199.045240586}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{62.6031906852}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.54960357028}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.15732737637}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>

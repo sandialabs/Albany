@@ -90,7 +90,7 @@
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_adjoint_sensitivity.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
@@ -106,7 +106,7 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_adjoint_sensitivity_basal.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="basal_friction File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction_log.ascii"/>
@@ -126,7 +126,7 @@
       <ParameterList name="upperside">
         <Parameter name="Method" type="string" value="SideSetSTK"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_adjoint_sensitivity_surface.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="surface_velocity File Name"      type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
@@ -139,10 +139,14 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{199.045240586}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{369.945295405}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.54960357028}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{97.3888668988}"/>
+    </ParameterList>
+    <ParameterList name="Sensitivity Comparisons 1">
+      <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{331.668013082}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
@@ -153,7 +157,7 @@
       <Parameter name="Analysis Package" type="string" value="ROL"/>
       <ParameterList name="ROL">
         <Parameter name="Number of Parameters" type="int" value="2"/>
-        <Parameter name="Check Gradient" type="bool" value="false"/>
+        <Parameter name="Check Gradient" type="bool" value="true"/>
         <Parameter name="Gradient Tolerance" type="double" value="1e-4"/>
         <Parameter name="Step Tolerance" type="double" value="1e-4"/>
         <Parameter name="Max Iterations" type="int" value="100"/>
@@ -304,7 +308,7 @@
   <Parameter name="Combo Type" type="string" value="OR"/>
   <Parameter name="Number of Tests" type="int" value="2"/>
   <ParameterList name="Test 0">
-    <Parameter name="Test Type" type="string" value="Combo"/>n
+    <Parameter name="Test Type" type="string" value="Combo"/>
     <Parameter name="Combo Type" type="string" value="OR"/>
     <Parameter name="Number of Tests" type="int" value="1"/>
     <ParameterList name="Test 0">
