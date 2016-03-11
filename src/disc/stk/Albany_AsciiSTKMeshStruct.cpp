@@ -26,7 +26,8 @@
 
 #ifdef ALBANY_64BIT_INT
 // long int == 64bit
-#  define ST_LLI "%li"
+//#  define ST_LLI "%li"
+#  define ST_LLI "%lli"  // long long int
 #else
 #  define ST_LLI "%i"
 #endif

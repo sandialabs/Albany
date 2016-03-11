@@ -31,6 +31,7 @@ getVariableType(Teuchos::ParameterList& param_list,
         "Unknown variable type " << type << '\n');
   have_variable = (variable_type != MECH_VAR_TYPE_NONE);
   have_equation = (variable_type == MECH_VAR_TYPE_DOF);
+
 }
 //------------------------------------------------------------------------------
 std::string
@@ -245,7 +246,6 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
     have_topmod_adaptation_ = adaptation_method_name == "Topmod";
   }
-
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
@@ -272,11 +272,13 @@ buildProblem(
         Teuchos::null);
     if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
   }
+  *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
   constructDirichletEvaluators(*meshSpecs[0]);
 
-  if (haveSidesets)
-
-  constructNeumannEvaluators(meshSpecs[0]);
+  if (haveSidesets) {
+    *out << "Calling MechanicsProblem::constructNeumannEvaluators" << '\n';
+    constructNeumannEvaluators(meshSpecs[0]);
+  }
 
 }
 //------------------------------------------------------------------------------
@@ -440,14 +442,15 @@ getValidProblemParameters() const
   return validPL;
 }
 
+//------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
     new_state
     ) const
     {

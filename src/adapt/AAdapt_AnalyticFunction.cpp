@@ -74,6 +74,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
  else if(name == "Aeras XZ Hydrostatic Mountain")
     F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticMountain(neq, numDim, data));
 
+ else if(name == "Aeras Hydrostatic Baroclinic Instabilities")
+    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilities(neq, numDim, data));
+
   else if(name == "Aeras Hydrostatic")
     F = Teuchos::rcp(new AAdapt::AerasHydrostatic(neq, numDim, data));
 
@@ -843,6 +846,124 @@ void AAdapt::AerasXZHydrostaticMountain::compute(double* x, const double* X) {
 
 }
 
+//*****************************************************************************
+AAdapt::AerasHydrostaticBaroclinicInstabilities::AerasHydrostaticBaroclinicInstabilities(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, const double* X) { //Note (V.Kumar) : still working on ...........
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  const double SP0     =       data[2];
+  const double U0      =       data[3];
+  const double U1      =       data[4];
+  const double T0      =       data[5];
+
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[6 + nt];
+  }
+
+  //printf(".....inside Baroclinic Instabilities\n"); 
+
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+
+  const double Ptop = 101.325;
+  const double P0   = SP0;
+  const double Ps   = P0;
+
+  const double PI = 3.14159265;
+
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
+  }
+
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+
+
+  const double myPi  = pi;
+  const double alpha = myPi/4;
+  const double cosAlpha = std::cos(alpha);
+  const double sinAlpha = std::sin(alpha);
+
+  const double theta  = std::asin(z);
+  double lambda = std::atan2(y,x);
+
+  static const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+  if (std::abs(std::abs(theta)-myPi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*myPi;
+
+  const double sin2Theta = std::sin(2.0*theta);
+  const double sinTheta = std::sin(theta);
+  const double cosTheta = std::cos(theta);
+
+  const double sinLambda = std::sin(lambda);
+  const double cosLambda = std::cos(lambda);
+
+  const double u =  U0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+  const double v = -U1*(sinLambda*sinAlpha);
+
+
+ // u0=35, eta0 = 0.252, a = 6.371229E+6 m, etas = 1, etat = 0.2, T0=288K, Gamma = 0.005 K/m, deltaT = 4.8E+5 K, Rd = 287.0 J/kg.K, g=9.80616 m/s^2
+ // u = u0 * cos(etav)^3/2 * sin(2 si )^2 , etav = (eta-eta0), eta0=0.252
+
+// Tvg = T0 eta^(Rd Gamma /g) (if eta>etat)  = T0 eta^(Rd Gamma/g) + deltaT (etat-eta)^5 (if eta<etat) 
+ // T = Tavg + (3/4) * eta * pi u0 /Rd * sin(etav) cos(etav)^1/2 * ( 
+ //  (-2 sin(si)^6 *(cos(si)^2 + 1/3) + 10/63) * 2u0 cos(etav)^3/2  + ((8/5)*cos(si)^3 *(sin(si)^2 + 2/3) - pi/4) a * Omega ) 
+
+//-----------------Not Used for This case ----
+// phi = phiavg + u0 cos(etav)^1.5 (
+//   (-2 sin(si)^6  (cos(si)^2 + 1/3) + 10/63) u0 cos(etav)^1.5 +  (1.6 cos(si)^3 (sin(si)^2 + 2/3) - pi/4) a Omega) 
+// phiavg = (T0 g/Gamma) (1-eta^(Rd Gamma/g))  if eta > etat
+// phiavg = (T0 g/Gamma) (1-eta^(Rd Gamma/g))  - Rd deltaT * (
+//  (ln(eta/etat) + 137/60) etat^5 - 5etat^4 eta + 5 etat^3 eta^2 - 10/3 etat^2 eta^3 + 5/4 etatt eta^4 - 1/5 eta^5) if (eta<etat)
+//---------------------------
+  const double uu0=35, Eta0 = 0.252, a = 6.371229E+6, Etas=1.0, Etat=0.2, TT0=288.0, Gamma = 0.005, deltaT = 4.8E+5, Rd = 287.0, g=9.80616, Omega = 7.29212E-5;
+
+  int offset = 0;
+  //Surface Pressure
+  solution[offset++] = SP0;
+  
+  for (int i=0; i<numLevels; ++i) {
+    const double Eta =  EP.eta(i);
+    const double sinEtav = std::sin((Eta-Eta0)*PI/2.0);  
+    const double cosEtav = std::cos((Eta-Eta0)*PI/2.0);  
+
+    //Velx
+    solution[offset++] = uu0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ; // u; // U0*(1-z*z);
+    solution[offset++] = v; // U1*(1-x*x);
+
+    //Temperature
+    const double Tavg =  Eta<Etat ? TT0 * std::pow(Eta, Rd*Gamma/g) + deltaT * std::pow(Etat - Eta, 5) : TT0 * std::pow(Eta, Rd*Gamma/g);
+    const double TT0 = (3.0/4.0) * ((Eta*PI*uu0)/Rd) * sinEtav * std::pow(cosEtav, 0.5); 
+    const double TT1 = (-2 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1/3.0) + 10.0/63.0) * 2.0 * uu0* std::pow(cosEtav,1.5); 
+    const double TT2 = ((8.0/5.0) * std::pow(cosTheta,3) * (std::pow(sinTheta, 2) + 2.0/3.0) - PI/4.0) * a * Omega; 
+
+    solution[offset++] = Tavg + TT0 * (TT1 + TT2); //T0;
+  }
+
+
+  //Tracers
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
+      const double w = nt%3 ? ((nt%3 == 1) ? y : z) : x;
+      solution[offset++] = w*Pi[i]*q0[nt];
+    }
+  }
+}
 //*****************************************************************************
 AAdapt::AerasHydrostatic::AerasHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
@@ -1789,6 +1910,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
 
   bool success;
 
+#ifdef ALBANY_PAMGEN
   // set up RTCompiler
   rtcFunctionX.addVar("double", "x");
   rtcFunctionX.addVar("double", "y");
@@ -1822,6 +1944,7 @@ AAdapt::ExpressionParser::ExpressionParser(int neq_, int spatialDim_, std::strin
     msg += "**** " + rtcFunctionZ.getErrors() + "\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
+#endif
 }
 
 void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
@@ -1829,6 +1952,7 @@ void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
   bool success;
   double value;
 
+#ifdef ALBANY_PAMGEN
   for(int i=0 ; i<spatialDim ; i++){
     success = rtcFunctionX.varValueFill(i, X[i]);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionX.varValueFill(), " + rtcFunctionX.getErrors());
@@ -1858,6 +1982,7 @@ void AAdapt::ExpressionParser::compute(double* solution, const double* X) {
   success = rtcFunctionZ.execute();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, "Error inAAdapt::ExpressionParser::compute(), rtcFunctionZ.execute(), " + rtcFunctionZ.getErrors());
   solution[2] = rtcFunctionZ.getValueOfVar("value");
+#endif
 
 //   std::cout << "DEBUG CHECK ExpressionParser " << expressionX << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[0] << std::endl;
 //   std::cout << "DEBUG CHECK ExpressionParser " << expressionY << " evaluated at " << X[0] << ", " << X[1] << ", " << X[2] << " yields " << solution[1] << std::endl;

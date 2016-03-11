@@ -1,11 +1,12 @@
 #ifndef AADAPT_SOLUTIONOBSERVER_HPP
 #define AADAPT_SOLUTIONOBSERVER_HPP
 
+#include "Albany_DataTypes.hpp"
 #include "Piro_SolutionObserverBase.hpp"
 
 namespace AAdapt {
 
-class SolutionObserver : public Piro::SolutionObserverBase<double, const Thyra::VectorBase<double> > {
+class SolutionObserver : public Piro::SolutionObserverBase<ST, const Thyra::VectorBase<ST> > {
 
 public:
 
@@ -13,18 +14,18 @@ public:
 
   void observeResponse(
       int j,
-      const Teuchos::RCP<Thyra::ModelEvaluatorBase::OutArgs<double> >& outArgs,
-      const Teuchos::RCP<Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > > &responses,
-      const Teuchos::RCP<const Thyra::VectorBase<double> > &g);
+      const Teuchos::RCP<Thyra::ModelEvaluatorBase::OutArgs<ST> >& outArgs,
+      const Teuchos::RCP<Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > > &responses,
+      const Teuchos::RCP<const Thyra::VectorBase<ST> > &g);
 
-  void set_g_vector(int j, const Teuchos::RCP<Thyra::VectorBase<double> >& g_j);
+  void set_g_vector(int j, const Teuchos::RCP<Thyra::VectorBase<ST> >& g_j);
 
   virtual ~SolutionObserver() {}
 
 private:
 
-    Teuchos::RCP<Thyra::ModelEvaluatorBase::OutArgs<double> > outArgs;
-    Teuchos::RCP<Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > > responses;
+    Teuchos::RCP<Thyra::ModelEvaluatorBase::OutArgs<ST> > outArgs;
+    Teuchos::RCP<Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > > responses;
 
 };
 

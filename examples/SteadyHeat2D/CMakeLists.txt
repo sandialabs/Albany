@@ -24,20 +24,11 @@ endif ()
 if (ALBANY_MUELU_EXAMPLES)
 # 1'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra_MueLu NAME)
-  if (ALBANY_64BIT_INT)
-    # 2'. Copy Input file from source to binary dir
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_MueLu_64.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT_MueLu_64.xml COPYONLY)
-    # 3'. Create the test with this name and standard executable
-    add_test(${testName}_SERIAL ${SerialAlbanyT.exe} inputT_MueLu_64.xml)
-    add_test(${testName} ${AlbanyT.exe} inputT_MueLu_64.xml)
-  else ()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_MueLu.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT_MueLu.xml COPYONLY)
     # 3'. Create the test with this name and standard executable
     add_test(${testName}_SERIAL ${SerialAlbanyT.exe} inputT_MueLu.xml)
     add_test(${testName} ${AlbanyT.exe} inputT_MueLu.xml)
-  endif ()
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists

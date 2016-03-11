@@ -44,7 +44,7 @@ cmake \
 \
  -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
  -D Kokkos_ENABLE_CXX11:BOOL=ON \
- -D Kokkos_ENABLE_Cuda_UVM=lcm_enable_uvm \
+ -D Kokkos_ENABLE_Cuda_UVM:BOOL=lcm_enable_uvm \
  -D Kokkos_ENABLE_EXAMPLES:BOOL=lcm_enable_kokkos_examples \
  -D Kokkos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Kokkos_ENABLE_Pthread:BOOL=lcm_enable_pthreads \
@@ -56,6 +56,7 @@ cmake \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
  -D Intrepid_ENABLE_TESTS:BOOL=OFF \
+ -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
  -D Phalanx_INDEX_SIZE_TYPE:STRING="lcm_phalanx_index_type" \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="lcm_kokkos_device" \
  -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
@@ -82,13 +83,13 @@ cmake \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
  -D Trilinos_ENABLE_ML:BOOL=ON \
- -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
  -D Trilinos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \

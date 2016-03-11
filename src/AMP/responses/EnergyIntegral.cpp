@@ -71,7 +71,7 @@ class EnergyIntegrator : public apf::Integrator
 
 double computeAMPEnergyIntegral(apf::Mesh* m)
 {
-  apf::Field* T = m->findField(Albany::APFMeshStruct::solution_name);
+  apf::Field* T = m->findField(Albany::APFMeshStruct::solution_name[0]);
   // create the energy integrator
   EnergyIntegrator integrator;
 

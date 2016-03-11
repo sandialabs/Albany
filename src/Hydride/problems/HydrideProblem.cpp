@@ -6,8 +6,8 @@
 
 #include "HydrideProblem.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -30,7 +30,6 @@ HydrideProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   num_eq += 1; // the equation for concentration c
   num_eq += 1; // the equation for chemical potential difference w
   this->setNumEquations(num_eq);
-
 }
 
 Albany::HydrideProblem::

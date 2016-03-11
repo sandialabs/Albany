@@ -28,6 +28,7 @@ class HydrologyMelting : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   HydrologyMelting (const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl);
@@ -42,9 +43,9 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  gradPhi;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  q;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      u_b;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      beta;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      G;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  u_b;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  beta;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  G;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint>      m;

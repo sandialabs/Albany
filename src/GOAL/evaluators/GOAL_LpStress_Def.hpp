@@ -7,11 +7,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Albany_Application.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #include "Albany_PUMIDiscretization.hpp"
 #include "PHAL_Workset.hpp"
-
 
 namespace GOAL {
 

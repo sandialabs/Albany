@@ -18,7 +18,7 @@ GatherSphereVolume(const Teuchos::ParameterList& p,
 		   const Teuchos::RCP<Albany::Layouts>& dl) :
   sphereVolume  (p.get<std::string> ("Sphere Volume Name"), dl->node_scalar ),
   numVertices(0), worksetSize(0)
-{  
+{
   this->addEvaluatedField(sphereVolume);
   this->setName("Gather Sphere Volume"+PHX::typeAsString<EvalT>());
 }
@@ -34,7 +34,7 @@ GatherSphereVolume(const Teuchos::ParameterList& p) :
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits> 
+template<typename EvalT, typename Traits>
 void GatherSphereVolume<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -47,10 +47,12 @@ void GatherSphereVolume<EvalT, Traits>::postRegistrationSetup(typename Traits::S
   numVertices = dims[1];
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-value"
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void GatherSphereVolume<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
-{ 
+{
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<double> wsSphereVolume = workset.wsSphereVolume;
 
@@ -61,12 +63,13 @@ void GatherSphereVolume<EvalT, Traits>::evaluateFields(typename Traits::EvalData
     sphereVolume(cell,v) = wsSphereVolume[cell,v];
   }
 
-  // Since Intrepid will later perform calculations on the entire workset size
-  // and not just the used portion, we must fill the excess with reasonable 
+  // Since Intrepid2 will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable
   // values. Leaving this out leads to calculations on singular elements.
   for (int cell=numCells; cell < worksetSize; ++cell) {
    for (int v=0; v<sphereVolume.dimension(1);v++)
     sphereVolume(cell,v) = sphereVolume(0,v);
   }
 }
+#pragma clang diagnostic pop
 }

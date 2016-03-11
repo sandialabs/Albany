@@ -99,8 +99,8 @@ namespace Albany {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -134,20 +134,25 @@ Albany::HeatProblem::constructEvaluators(
 
    const CellTopologyData * const elem_top = &meshSpecs.ctd;
 
-   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-     intrepidBasis = Albany::getIntrepidBasis(*elem_top);
+   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+     intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (elem_top));
 
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-   RCP <Intrepid::Cubature<RealType> > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPtsCell = cellCubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
 
+  // Problem is steady or transient
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv < 0 || number_of_time_deriv > 1,
+      std::logic_error,
+      "Albany_HeatProblem must be defined as a steady or transient calculation.");
 
    *out << "Field Dimensions: Workset=" << worksetSize
         << ", Vertices= " << numVertices
@@ -164,12 +169,17 @@ Albany::HeatProblem::constructEvaluators(
    Teuchos::ArrayRCP<string> dof_names(neq);
      dof_names[0] = "Temperature";
    Teuchos::ArrayRCP<string> dof_names_dot(neq);
+   if(number_of_time_deriv > 0)
      dof_names_dot[0] = "Temperature_dot";
    Teuchos::ArrayRCP<string> resid_names(neq);
      resid_names[0] = "Temperature Residual";
 
-  fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+  if(number_of_time_deriv == 1)
+    fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot));
+  else
+    fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names));
 
   fm0.template registerEvaluator<EvalT>
      (evalUtils.constructScatterResidualEvaluator(false, resid_names));
@@ -187,8 +197,9 @@ Albany::HeatProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
 
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+    if(number_of_time_deriv == 1)
+      fm0.template registerEvaluator<EvalT>
+        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
@@ -287,6 +298,8 @@ Albany::HeatProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
     p->set<string>("QP Variable Name", "Temperature");
 
+    if(number_of_time_deriv == 0)
+       p->set<bool>("Disable Transient", true);
     p->set<string>("QP Time Derivative Variable Name", "Temperature_dot");
 
     p->set<bool>("Have Source", haveSource);

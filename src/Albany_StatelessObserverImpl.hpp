@@ -73,6 +73,9 @@ public:
     double stamp, const Tpetra_Vector& nonOverlappedSolutionT,
     const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT);
 
+  virtual void observeSolutionT(
+    double stamp, const Tpetra_MultiVector& nonOverlappedSolutionT);
+
 protected:
   Teuchos::RCP<Application> app_;
   Teuchos::RCP<Teuchos::Time> solOutTime_;

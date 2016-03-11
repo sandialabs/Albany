@@ -204,7 +204,7 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
                               ptype), "ML Settings");
       mlUsed = true;
     }
-    else if (ptype == "MueLu" || ptype == "MueLu-Tpetra") {
+    else if (ptype == "MueLu") {
       plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
       mueLuUsed = true;
     }

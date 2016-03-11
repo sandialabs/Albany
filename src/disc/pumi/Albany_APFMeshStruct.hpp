@@ -15,7 +15,9 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#ifdef ALBANY_EPETRA
 #include "EpetraExt_MultiComm.h"
+#endif
 #include <PHAL_Dimension.hpp>
 
 #include <apf.h>
@@ -28,6 +30,30 @@
 #include <gmi.h>
 
 namespace Albany {
+
+class SolutionLayout {
+  public:
+
+ Teuchos::Array<std::string>& getTimeDeriv(int i){ return solNames[i]; }
+ const Teuchos::Array<std::string>& getTimeDeriv(int i) const { return solNames[i]; }
+
+ Teuchos::Array<int>& getTimeIdx(int i){ return solIndex[i]; }
+ const Teuchos::Array<int>& getTimeIdx(int i) const { return solIndex[i]; }
+
+ SolutionLayout* timeDeriv(int i){ td_val = i; return this; }
+
+ std::string& getDOFIndex(int i){ return solNames[td_val][i]; }
+
+ int& getDOFIndexSize(int i){ return solIndex[td_val][i]; }
+
+ void resizeTimeDeriv(size_t size){ solNames.resize(size); solIndex.resize(size); }
+
+ Teuchos::Array<Teuchos::Array<std::string> > solNames;
+ Teuchos::Array<Teuchos::Array<int> > solIndex; // solIndex[time_deriv_vector][DOF_component]
+
+ int td_val;
+
+};
 
 class APFMeshStruct : public Albany::AbstractMeshStruct {
 
@@ -46,7 +72,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize);
 
-    void splitFields(Teuchos::Array<std::string> fieldLayout);
+    void splitFields(Teuchos::Array<Teuchos::Array<std::string> >& fieldLayout);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
@@ -87,8 +113,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     bool solutionInitialized;
     bool residualInitialized;
 
-    Teuchos::Array<std::string> solVectorLayout;
-    Teuchos::Array<std::string> resVectorLayout;
+    Teuchos::Array<Teuchos::Array<std::string> > solVectorLayout;
 
     double time;
 
@@ -102,8 +127,12 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     int outputInterval;
     bool useNullspaceTranslationOnly;
     bool useTemperatureHack;
+    bool useDOFOffsetHack;
 
-    static const char* solution_name;
+    // Number of distinct solution vectors handled (<=3)
+    int num_time_deriv;
+
+    static const char* solution_name[3];
     static const char* residual_name;
 
 protected:

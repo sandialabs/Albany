@@ -5,10 +5,12 @@
 //*****************************************************************//
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
+#ifdef ALBANY_EPETRA
 #include <Epetra_MpiComm.h>
+#endif
 #include <Phalanx.hpp>
-#include <Intrepid_MiniTensor.h>
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include <Intrepid2_MiniTensor.h>
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "Albany_StateManager.hpp"
@@ -29,21 +31,21 @@ typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type
 typedef PHAL::AlbanyTraits::Residual Residual;
 typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 typedef PHAL::AlbanyTraits Traits;
-typedef Intrepid::FieldContainer<RealType> FC;
+typedef Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> FC;
 typedef shards::CellTopology CT;
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::ArrayRCP;
-using Intrepid::Vector;
-using Intrepid::Tensor;
-using Intrepid::bun;
-using Intrepid::norm;
-using Intrepid::eye;
+using Intrepid2::Vector;
+using Intrepid2::Tensor;
+using Intrepid2::bun;
+using Intrepid2::norm;
+using Intrepid2::eye;
 
   TEUCHOS_UNIT_TEST(HeliumODEs, test1)
 {
   // A mpi object must be instantiated
-  Teuchos::GlobalMPISession mpi_session();
+  Teuchos::GlobalMPISession mpi_session(void);
   Teuchos::RCP<const Teuchos_Comm> commT =
     Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
@@ -253,6 +255,7 @@ using Intrepid::eye;
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<std::string>("Method", "STK3D");
+  discretizationParameterList->set<int>("Number Of Time Derivatives", 0);
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name",
       output_file);

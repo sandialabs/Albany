@@ -6,7 +6,7 @@
 
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 
 namespace LCM
 {
@@ -87,10 +87,10 @@ template<typename EvalT, typename Traits>
 void ThermoMechanicalCoefficients<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::Tensor<ScalarT> diffusivity(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> tensor;
-  Intrepid::Tensor<ScalarT> F(num_dims_);
+  Intrepid2::Tensor<ScalarT> diffusivity(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> tensor;
+  Intrepid2::Tensor<ScalarT> F(num_dims_);
 
   ScalarT dt = delta_time_(0);
   if (dt == 0.0) dt = 1.e-15;
@@ -106,7 +106,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill(def_grad_,cell, pt,0,0);
-        tensor = Intrepid::inverse(Intrepid::transpose(F) * F);
+        tensor = Intrepid2::inverse(Intrepid2::transpose(F) * F);
         thermal_transient_coeff_(cell, pt) = transient_coeff_;
         diffusivity = thermal_cond_(cell, pt) / (density_ * heat_capacity_)
             * tensor;

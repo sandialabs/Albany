@@ -19,6 +19,10 @@ LinearElasticityModalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
   std::string& method = params->get("Name", "Linear Elasticity ");
   *out << "Problem Name = " << method << std::endl;
 
+   // Problem supports transient (_dot and _dotdot)
+   number_of_time_deriv = 3;
+   params->set<int>("Number Of Time Derivatives", number_of_time_deriv);
+
 //  material_db_ = LCM::createMaterialDatabase(params, comm);
 
 // the following function returns the problem information required 
@@ -192,8 +196,8 @@ Albany::LinearElasticityModalProblem::getValidProblemParameters() const
 
 void
 Albany::LinearElasticityModalProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState_
    ) const
 {
   oldState_ = oldState;

@@ -9,8 +9,8 @@
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Epetra_Export.h"
 #if defined(ALBANY_EPETRA)
+#include "Epetra_Export.h"
 #include "Petra_Converters.hpp"
 #endif
 #include "PHAL_Utilities.hpp"

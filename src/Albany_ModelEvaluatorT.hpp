@@ -14,12 +14,12 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
-//9/12/14: no Epetra! 
+//9/12/14: no Epetra!
 
 #ifndef ALBANY_MODELEVALUATORT_HPP
 #define ALBANY_MODELEVALUATORT_HPP
 
-#include "Thyra_ModelEvaluatorDefaultBase.hpp"
+#include "Piro_TransientDecorator.hpp"
 
 #include "Albany_Application.hpp"
 
@@ -27,7 +27,7 @@
 
 namespace Albany {
 
-class ModelEvaluatorT : public Thyra::ModelEvaluatorDefaultBase<ST> {
+class ModelEvaluatorT : public Piro::TransientDecorator<ST, LO, GO, KokkosNode> {
 public:
 
   // Constructor
@@ -84,7 +84,7 @@ public:
 protected:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
   //@{
-   
+
   //! Create operator form of df/dp for distributed parameters
    Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DfDp_op_impl(int j) const;
 
@@ -93,6 +93,9 @@ protected:
 
   //! Create operator form of dg/dx_dot for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dot_op_impl(int j) const;
+
+  //! Create operator form of dg/dx_dotdot for distributed responses
+  Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dotdot_op_impl(int j) const;
 
   //! Create OutArgs
   Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;
@@ -135,7 +138,7 @@ private:
   //! Tpetra response vector
   Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST> > > thyra_response_vec;
 
-  
+
   //! Number of distributed parameter vectors
   int num_dist_param_vecs;
 
@@ -144,6 +147,13 @@ private:
 
   //! Distributed parameter library
   Teuchos::RCP<DistParamLib> distParamLib;
+
+  //! Model uses time integration (velocities)
+  bool supports_xdot;
+
+  //! Model uses time integration (accelerations)
+  bool supports_xdotdot;
+
 };
 
 }

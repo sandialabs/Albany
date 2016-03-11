@@ -26,6 +26,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHard_Implicit_Active_Se
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHard_Implicit_Active_Sets.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/MultiSlipPlaneHard_Implicit_Active_Sets.gold.exo COPYONLY)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_hard_implicit.py
+               ${CMAKE_CURRENT_BINARY_DIR}/plot_hard_implicit.py COPYONLY)
+
 # Add the tests
 if(ALBANY_IFPACK2)
 add_test(CrystalPlasticity_MultiSlipPlaneHard_Active_Sets_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MultiSlipPlaneHard_Implicit_Active_Sets.xml)

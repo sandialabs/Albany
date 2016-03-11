@@ -26,7 +26,8 @@
 
 #ifdef ALBANY_64BIT_INT
 // long int == 64bit
-#  define ST_LLU "%ld"
+//#  define ST_LLU "%ld"
+#  define ST_LLU "%lld" // long long int
 #else
 #  define ST_LLU "%d"
 #endif
@@ -282,6 +283,21 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
+  
+  //Get Cubature Rule
+  const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");
+  Intrepid2::EIntrepidPLPoly cub_rule;  
+  if (cub_rule_string == "GAUSS")
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS); 
+  else if (cub_rule_string == "GAUSS_RADAU_LEFT") 
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_LEFT); 
+  else if (cub_rule_string == "GAUSS_RADAU_RIGHT") 
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_RIGHT); 
+  else if (cub_rule_string == "GAUSS_LOBATTO")
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_LOBATTO); 
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
+                                "Invalid Cubature Rule: " << cub_rule_string << "; valid options are GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, and GAUSS_LOBATTO");
 
   // Create just enough of the mesh to figure out number of owned elements
   // so that the problem setup can know the worksetSize
@@ -304,7 +320,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                nsNames, ssNames, worksetSize, partVec[0]->name(),
-                               ebNameToIndex, this->interleavedOrdering));
+                               ebNameToIndex, this->interleavedOrdering, false, cub_rule));
   }
   else {
 
@@ -320,7 +336,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                 nsNames, ssNames, worksetSize, partVec[eb]->name(),
-                                ebNameToIndex, this->interleavedOrdering, true));
+                                ebNameToIndex, this->interleavedOrdering, true, cub_rule));
     }
  }
 }
@@ -1729,6 +1745,7 @@ Albany::TmplSTKMeshStruct<3>::getValidDiscretizationParameters() const
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
   validPL->sublist("Required Fields Info", false, "Info for the loading of the required fields");
+  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
 
   // Multiple element blocks parameters
   validPL->set<int>("Element Blocks", 1, "Number of elements blocks that span the X-Y-Z domain");

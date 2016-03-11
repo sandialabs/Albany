@@ -7,6 +7,8 @@
 #ifndef TIME_HPP
 #define TIME_HPP
 
+#include "Teuchos_Array.hpp"
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -14,8 +16,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_KL_ExponentialRandomField.hpp"
-#include "Teuchos_Array.hpp"
+#endif
 
 namespace LCM {
   /** 

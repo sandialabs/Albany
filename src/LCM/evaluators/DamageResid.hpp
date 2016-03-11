@@ -52,7 +52,7 @@ private:
 
   bool enableTransient;
   unsigned int numQPs, numDims;
-  Intrepid::FieldContainer<ScalarT> flux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
 };
 }
 

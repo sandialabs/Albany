@@ -12,6 +12,7 @@
 #include <gmi_sim.h>
 #include <SimUtil.h>
 #include <SimField.h>
+#include <SimDiscrete.h>
 #include <apfSIM.h>
 #include <PCU.h>
 
@@ -19,11 +20,13 @@ Albany::SimMeshStruct::SimMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
 		const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-  SimUtil_start();
-  Sim_readLicenseFile(0);
-  MS_init();
   SimPartitionedMesh_start(NULL, NULL);
+  MS_init();
+  SimDiscrete_start(0);
+  SimField_start();
   gmi_sim_start();
+  Sim_readLicenseFile(0);
+
   gmi_register_sim();
   PCU_Comm_Init();
 
@@ -60,10 +63,10 @@ Albany::SimMeshStruct::SimMeshStruct(
     pField sim_field = Field_load(field_file.c_str(), sim_mesh, 0, 0);
     apf::Field* field = apf::wrapSIMField(mesh, sim_field);
     std::string name = apf::getName(field);
-    if (name != Albany::APFMeshStruct::solution_name) {
+    if (name != Albany::APFMeshStruct::solution_name[0]) {
       std::cerr << "renaming restart field \"" << name << "\" to \""
         << Albany::APFMeshStruct::solution_name << "\"\n";
-      apf::renameField(field, Albany::APFMeshStruct::solution_name);
+      apf::renameField(field, Albany::APFMeshStruct::solution_name[0]);
     }
     restartDataTime = params->get<double>("Sim Restart Time", 0);
     solutionInitialized = true;
@@ -77,11 +80,13 @@ Albany::SimMeshStruct::~SimMeshStruct()
   apf::destroyMesh(mesh);
   gmi_destroy(model);
   PCU_Comm_Free();
-  gmi_sim_stop();
-  SimPartitionedMesh_stop();
-  MS_exit();
+
   Sim_unregisterAllKeys();
-  SimUtil_stop();
+  gmi_sim_stop();
+  SimField_stop();
+  SimDiscrete_stop(0);
+  MS_exit();
+  SimPartitionedMesh_stop();
 }
 
 Albany::AbstractMeshStruct::msType
@@ -110,6 +115,7 @@ Albany::SimMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Sim Model Input File Name", "", "File Name For Sim Mesh Output");
   validPL->set<std::string>("Sim Restart File Name", "", "read initial solution field from this file");
   validPL->set<double>("Sim Restart Time", 0, "simulation time to restart from");
+  validPL->set<int>("Number Of Time Derivatives", -1, "Number of time derivatives");
 
   return validPL;
 }

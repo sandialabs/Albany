@@ -10,11 +10,13 @@ SET_PROPERTY (GLOBAL PROPERTY Label ReconDriver_CUDA)
 
 SET(CONFIGURE_OPTIONS
   "-DTrilinos_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DOMEGA_H_PREFIX=${CTEST_BINARY_DIRECTORY}/omega_h"
   "-DSEACAS_BINARY_DIR:PATH=/home/gahanse/trilinos/host_seacas/bin"
   "-DCUSTOM_CXX_FLAGS:STRING=-Wfatal-errors"
-  "-DAlexa_ENABLE_LAMBDAS:BOOL=OFF"
   "-DAlexa_RUN_CUDA_TESTS:BOOL=ON"
-  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpirun -np 1'"
+  "-DAlexa_DEVICE_LAMBDAS:BOOL=ON"
+#  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpiexec.hydra -ppn 1 -n 1 -env LD_LIBRARY_PATH /opt/intel/mkl/lib/intel64:/home/projects/x86-64-sandybridge-nvidia/cuda/7.5.7/lib64:/home/projects/gcc/4.9.0/lib64:/home/projects/gcc/4.9.0/lib'"
+  "-DAlexa_MPIEXEC:STRING='${MPI_BASE_DIR}/bin/mpirun -np 1 '"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/ReconDriver")
@@ -47,13 +49,15 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit ReconDriver configure results!")
+    message(SEND_ERROR "Cannot submit ReconDriver configure results!")
   endif()
 ENDIF()
 
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure ReconDriver build!")
+	message(SEND_ERROR "Cannot configure ReconDriver build!")
 endif()
+
+move_xml_file ("*Configure.xml" "Configure_ReconDriver.xml")
 
 #
 # Build ReconDriver
@@ -77,13 +81,15 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-        message(FATAL_ERROR "Cannot submit ReconDriver build results!")
+        message(SEND_ERROR "Cannot submit ReconDriver build results!")
   endif()
 ENDIF(CTEST_DO_SUBMIT)
 
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build ReconDriver!")
+	message(SEND_ERROR "Cannot build ReconDriver!")
 endif()
+
+move_xml_file ("*Build.xml" "Build_ReconDriver.xml")
 
 #
 # Run ReconDriver tests
@@ -103,8 +109,11 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit ReconDriver test results!")
+    message(SEND_ERROR "Cannot submit ReconDriver test results!")
   endif()
+
+move_xml_file ("*Test.xml" "Test_ReconDriver.xml")
+
 ENDIF(CTEST_DO_SUBMIT)
 
 endmacro(do_alexa)

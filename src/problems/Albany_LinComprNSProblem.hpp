@@ -81,8 +81,8 @@ namespace Albany {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -116,15 +116,15 @@ Albany::LinComprNSProblem::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
   
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -142,6 +142,12 @@ Albany::LinComprNSProblem::constructEvaluators(
    bool supportsTransient=true;
    int offset=0;
 
+   // Make sure we are transient
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv < 0 || number_of_time_deriv > 1,
+      std::logic_error,
+      "Albany_LinComprNSProblem must be defined as a steady or transient calculation.");
+
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
@@ -151,16 +157,23 @@ Albany::LinComprNSProblem::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "qFluct";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if(number_of_time_deriv == 1)
+        dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "LinComprNS Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+     if(number_of_time_deriv == 1)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+     else
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
+
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
+     if(number_of_time_deriv == 1)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
      //     fm0.template registerEvaluator<EvalT>
      //  (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
@@ -202,6 +215,8 @@ Albany::LinComprNSProblem::constructEvaluators(
     p->set<string>("QP Time Derivative Variable Name", "qFluct_dot");
     p->set<string>("Gradient QP Variable Name", "qFluct Gradient");
     p->set<string>("Body Force Name", "Body Force");   
+    if(number_of_time_deriv == 0)
+      p->set<bool>("Disable Transient", true);
  
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
     p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_vecgradient);

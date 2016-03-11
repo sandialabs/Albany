@@ -74,6 +74,8 @@ namespace Albany {
 
     bool transferSolutionToCoords;
 
+    int num_time_deriv;
+
     // Solution history
     virtual int getSolutionFieldHistoryDepth() const { return 0; } // No history by default
     virtual double getSolutionFieldHistoryStamp(int step) const { return Teuchos::ScalarTraits<double>::nan(); } // Dummy value

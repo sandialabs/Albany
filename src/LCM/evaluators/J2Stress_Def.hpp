@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "LocalNonlinearSolver.hpp"
 
 namespace LCM {
@@ -105,8 +105,8 @@ template<typename EvalT, typename Traits>
 void J2Stress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
-  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
   bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
@@ -378,7 +378,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
-  // Since Intrepid will later perform calculations on the entire workset size
+  // Since Intrepid2 will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable
   // values. Leaving this out leads to inversion of 0 tensors.
   for (int cell=workset.numCells; cell < worksetSize; ++cell)
@@ -393,8 +393,8 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void
-J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & expA,
-		const Intrepid::FieldContainer<ScalarT> A)
+J2Stress<EvalT, Traits>::exponential_map(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & expA,
+		const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> A)
 {
   tmp.initialize(0.0);
   expA.initialize(0.0);
@@ -433,14 +433,14 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & exp
                           std::endl << "Error in exponential map, k = " << k <<
                           "\nnorm0 = " << norm0 <<
                           "\nnorm = " << norm(tmp)/norm0 <<
-                          "\nA = \n" << A << std::endl);
+                           std::endl);
 
   }
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>
 typename EvalT::ScalarT
-J2Stress<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
+J2Stress<EvalT, Traits>::norm(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> A)
 {
   ScalarT max(0.0), colsum;
 

@@ -84,8 +84,8 @@ evaluateFields(typename Traits::EvalData workset)
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
 //  Albany::StateVariables  oldState = *workset.oldState;
-//  Intrepid::FieldContainer<RealType>& source_old_FC = *oldState[sourceName];
-//  Intrepid::FieldContainer<RealType>& damage_old_FC = *oldState[damageName];
+//  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& source_old_FC = *oldState[sourceName];
+//  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& damage_old_FC = *oldState[damageName];
   Albany::MDArray source_old_FC = (*workset.stateArrayPtr)[sourceName];
   Albany::MDArray damage_old_FC = (*workset.stateArrayPtr)[damageName];
 

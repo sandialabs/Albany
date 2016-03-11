@@ -1,5 +1,12 @@
 <ParameterList>
 
+  <!-- 
+  <ParameterList name="Debug Output">
+     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+  </ParameterList>
+  -->
+
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
 
@@ -29,11 +36,15 @@
       <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0, 3.87e-5, 0.0}"/>
     </ParameterList>
 
-
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- Kfield Boundary Conditions -->
-      <Parameter name="DBC on NS nodelist_3 for DOF C" type="double" value="5.6e-4"/>
+      <ParameterList name="Pressure Dependent DBC on NS nodelist_3 for DOF C">
+        <Parameter name="BC Function" type="string" value="Equilibrium Concentration"/>
+        <Parameter name="Applied Concentration" type="double" value="5.6e-4"/>
+        <!-- Pressure factor is V_{H}/R/T -->
+        <Parameter name="Pressure Factor" type="double" value="0.801860315932965"/>
+      </ParameterList>
       <Parameter name="DBC on NS nodelist_4 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_5 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="DBC on NS nodelist_1 for DOF K">
@@ -85,7 +96,7 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Tangent"/>
+	<Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
@@ -93,7 +104,7 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="1000"/>         
+	<Parameter  name="Max Steps" type="int" value="3"/>         
 	<Parameter  name="Max Value" type="double" value="10800.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
@@ -119,6 +130,9 @@
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton"/>
 	<ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-10"/>
+          </ParameterList>
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
 	  <ParameterList name="Stratimikos Linear Solver">
@@ -147,7 +161,6 @@
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
@@ -209,7 +222,7 @@
           <Parameter name="Number of Tests" type="int" value="2"/>
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
-            <Parameter name="Number of Nonlinear Iterations" type="int" value="3"/>
+            <Parameter name="Number of Nonlinear Iterations" type="int" value="4"/>
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>

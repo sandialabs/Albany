@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -23,9 +23,14 @@ GPAMResid(const Teuchos::ParameterList& p,
   CDot       (p.get<std::string>  ("QP Time Derivative Variable Name"), dl->qp_vector),
   Residual   (p.get<std::string>  ("Residual Name"), dl->node_vector )
 {
+
+  if (p.isType<bool>("Disable Transient"))
+    enableTransient = !p.get<bool>("Disable Transient");
+  else enableTransient = true;
+
   this->addDependentField(C);
   this->addDependentField(Cgrad);
-  this->addDependentField(CDot);
+  if (enableTransient) this->addDependentField(CDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
 
@@ -60,7 +65,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(C,fm);
   this->utils.setFieldData(Cgrad,fm);
-  this->utils.setFieldData(CDot,fm);
+  if (enableTransient) this->utils.setFieldData(CDot,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
 
@@ -72,7 +77,7 @@ template<typename EvalT, typename Traits>
 void GPAMResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
     //Set Redidual to 0, add Diffusion Term
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -84,7 +89,8 @@ evaluateFields(typename Traits::EvalData workset)
                 Residual(cell,node,i) += Cgrad(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
     } } } } }
 
-  if (workset.transientTerms) {
+  // These both should always be true if transient is enabled
+  if (workset.transientTerms && enableTransient) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {

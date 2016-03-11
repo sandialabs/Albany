@@ -15,9 +15,9 @@ LaplaceResid<EvalT, Traits>::
 LaplaceResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
   solnVec(p.get<std::string> ("Solution Vector Name"), dl->node_vector),
-  cubature(p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  cubature(p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
   cellType(p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
-  intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis")),
+  intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis")),
   solnResidual(p.get<std::string> ("Residual Name"), dl->node_vector) {
 
 
@@ -41,7 +41,7 @@ LaplaceResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   this->setName("LaplaceResid" + PHX::typeAsString<EvalT>());
 
@@ -66,17 +66,17 @@ evaluateFields(typename Traits::EvalData workset) {
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
 
-  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  // Since Intrepid will perform calculations on the entire workset size and not
+  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  // Since Intrepid2 will perform calculations on the entire workset size and not
   // just the used portion, we must fill the excess with reasonable values.
   // Leaving this out leads to a floating point exception in
-  //   Intrepid::RealSpaceTools<Scalar>::det(ArrayDet & detArray,
+  //   Intrepid2::RealSpaceTools<Scalar>::det(ArrayDet & detArray,
   //                                         const ArrayIn & inMats).
   for (std::size_t cell = workset.numCells; cell < worksetSize; ++cell)
     for (std::size_t qp = 0; qp < numQPs; ++qp)
       for (std::size_t i = 0; i < numDims; ++i)
         jacobian(cell, qp, i, i) = 1.0;
-  Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
    // Straight Laplace's equation evaluation for the nodal coord solution
 

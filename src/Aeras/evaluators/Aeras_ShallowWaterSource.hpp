@@ -46,7 +46,7 @@ public:
 private:
 
           
-  void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
+  void get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis);
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
@@ -92,7 +92,9 @@ public:
  RealType time; 
 
  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
+ 
+ Kokkos::View<ScalarT*, PHX::Device> ts ; //array of temorary ScalarT data
+ 
  struct ShallowWaterSource_Tag{};
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterSource_Tag> ShallowWaterSource_Policy;
 

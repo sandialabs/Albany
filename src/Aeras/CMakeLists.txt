@@ -12,7 +12,9 @@
        evaluators/Aeras_Atmosphere.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_GatherCoordinateVector.cpp
+       evaluators/Aeras_Hydrostatic_VelResid.cpp
        evaluators/Aeras_SurfaceHeight.cpp
+       evaluators/Aeras_VorticityLevels.cpp
        problems/Aeras_ShallowWaterProblem.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
@@ -47,6 +49,7 @@
        evaluators/Aeras_DOFGradInterpolationLevels.cpp
        evaluators/Aeras_DOFLaplaceInterpolationLevels.cpp
        evaluators/Aeras_DOFDivInterpolationLevels.cpp
+       evaluators/Aeras_DOFDivInterpolationLevelsXZ.cpp
        evaluators/Aeras_DOFDInterpolationLevels.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_ShallowWaterSource.cpp
@@ -73,6 +76,8 @@
        evaluators/Aeras_SurfaceHeight_Def.hpp
        evaluators/Aeras_GatherCoordinateVector_Def.hpp
        evaluators/Aeras_GatherCoordinateVector.hpp
+       evaluators/Aeras_Hydrostatic_VelResid_Def.hpp
+       evaluators/Aeras_Hydrostatic_VelResid.hpp
        problems/Aeras_ShallowWaterProblem.hpp
        evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XZScalarAdvectionResid.hpp
@@ -84,6 +89,8 @@
        problems/Aeras_XScalarAdvectionProblem.hpp
        problems/Aeras_XZHydrostaticProblem.hpp
        problems/Aeras_HydrostaticProblem.hpp
+       evaluators/Aeras_VorticityLevels_Def.hpp
+       evaluators/Aeras_VorticityLevels.hpp
        evaluators/Aeras_XZHydrostatic_VelResid_Def.hpp
        evaluators/Aeras_XZHydrostatic_VelResid.hpp
        evaluators/Aeras_XZHydrostatic_TemperatureResid_Def.hpp
@@ -136,6 +143,8 @@
        evaluators/Aeras_DOFLaplaceInterpolationLevels_Def.hpp
        evaluators/Aeras_DOFDivInterpolationLevels.hpp
        evaluators/Aeras_DOFDivInterpolationLevels_Def.hpp
+       evaluators/Aeras_DOFDivInterpolationLevelsXZ.hpp
+       evaluators/Aeras_DOFDivInterpolationLevelsXZ_Def.hpp
        evaluators/Aeras_DOFDInterpolationLevels.hpp
        evaluators/Aeras_DOFDInterpolationLevels_Def.hpp
        evaluators/Aeras_Atmosphere_Moisture.hpp

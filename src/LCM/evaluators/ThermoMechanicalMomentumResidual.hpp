@@ -59,10 +59,10 @@ private:
   std::string matModel;
 
   // Work space FCs
-  Intrepid::FieldContainer<ScalarT> F_inv;
-  Intrepid::FieldContainer<ScalarT> F_invT;
-  Intrepid::FieldContainer<ScalarT> JF_invT;
-  Intrepid::FieldContainer<ScalarT> P;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> P;
 };
 }
 

@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 
 //**********************************************************************
@@ -23,10 +23,14 @@ ConcentrationResid(const Teuchos::ParameterList& p,
   PotentialGrad     ("Potential Gradient", dl->qp_gradient),
   ConcentrationResidual ("Concentration Residual",  dl->node_vector )
 {
+  if (p.isType<bool>("Disable Transient"))
+    enableTransient = !p.get<bool>("Disable Transient");
+  else enableTransient = true;
+
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(Concentration);
-  this->addDependentField(Concentration_dot);
+  if (enableTransient)  this->addDependentField(Concentration_dot);
   this->addDependentField(ConcentrationGrad);
   this->addDependentField(PotentialGrad);
 
@@ -60,7 +64,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(Concentration,fm);
-  this->utils.setFieldData(Concentration_dot,fm);
+  if (enableTransient) this->utils.setFieldData(Concentration_dot,fm);
   this->utils.setFieldData(ConcentrationGrad,fm);
   this->utils.setFieldData(PotentialGrad,fm);
 
@@ -72,7 +76,7 @@ template<typename EvalT, typename Traits>
 void PNP::ConcentrationResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
   // Scale gradient into a flux, reusing same memory
 //  FST::scalarMultiplyDataData<ScalarT> (PhiFlux, Permittivity, PhiGrad);

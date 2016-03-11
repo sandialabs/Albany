@@ -10,7 +10,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
 
 namespace Aeras {
@@ -22,9 +22,9 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  rho      (p.get<std::string> ("QP Variable Name"), dl->qp_scalar_level),
+  rho      (p.get<std::string> ("QP Variable Name"), dl->node_scalar_level),
   rhoGrad  (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_gradient_level),
-  rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_scalar_level),
+  rhoDot   (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_scalar_level),
   coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
   Residual (p.get<std::string> ("Residual Name"), dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),

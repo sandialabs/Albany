@@ -60,15 +60,9 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     //! retrieve the state data
     void getAllocatedStates(
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-        <Intrepid::FieldContainer<RealType> > > > oldSt,
+        <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldSt,
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-        <Intrepid::FieldContainer<RealType> > > > newSt) const;
-
-    //! is this the adjoint problem?
-    bool isAdjoint;
-
-    //! should the adjoint problem be solved with an enriched basis?
-    bool enrichAdjoint;
+        <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newSt) const;
 
   private:
     
@@ -115,11 +109,11 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
 
     //! old state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > oldState;
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState;
 
     //! new state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > newState;
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState;
 
 };
 
@@ -168,11 +162,6 @@ constructEvaluators(
   using Teuchos::ArrayRCP;
   using Teuchos::ParameterList;
 
-  typedef Intrepid::FieldContainer<RealType> FieldContainer;
-  typedef RCP<Intrepid::Basis<RealType, FieldContainer> > Basis;
-  typedef Intrepid::DefaultCubatureFactory<RealType> CubatureFactory;
-  typedef RCP<Intrepid::Cubature<RealType> > Cubature;
-
   // get the name of the current element block
   std::string ebName = meshSpecs.ebName;
 
@@ -192,8 +181,6 @@ constructEvaluators(
 
   // name variables
   ArrayRCP<std::string> dofNames(1);
-  ArrayRCP<std::string> dofDotNames(1);
-  ArrayRCP<std::string> dofDotDotNames(1);
   ArrayRCP<std::string> residNames(1);
   dofNames[0] = "Displacement";
   residNames[0] = dofNames[0] + " Residual";
@@ -410,12 +397,11 @@ constructEvaluators(
 
   if (isAdjoint) {
 
+    assert(Teuchos::nonnull(qoiParams));
     std::string qoiName = qoiParams->get<std::string>("Name","");
 
     if (qoiName == "Lp Stress")
     {{
-
-       std::cout << "BUILDING LP STRESS" << std::endl;
 
        // input
        RCP<ParameterList> p = rcp(new ParameterList("Lp Stress"));

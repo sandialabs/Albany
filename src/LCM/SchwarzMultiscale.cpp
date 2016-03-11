@@ -665,12 +665,17 @@ allocateVectors()
   x_dotT_vecs.resize(num_models_);
 
   for (auto m = 0; m < num_models_; ++m) {
-    Teuchos::RCP<Tpetra_Vector>
-    xT_vec = Teuchos::rcp(new Tpetra_Vector(*apps_[m]->getInitialSolutionT()));
 
+    const Teuchos::RCP<const Tpetra_MultiVector> xMV = apps_[m]->getAdaptSolMgrT()->getInitialSolution();
+    Teuchos::RCP<Tpetra_Vector>
+    xT_vec = Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(0)));
+
+    // Error if xdot isnt around
+    TEUCHOS_TEST_FOR_EXCEPTION(xMV->getNumVectors() < 2, std::logic_error,
+      "SchwarzMultiscale Error! Time derivative data is not present!");
     Teuchos::RCP<Tpetra_Vector>
     x_dotT_vec = Teuchos::rcp(
-        new Tpetra_Vector(*apps_[m]->getInitialSolutionDotT()));
+        new Tpetra_Vector(*xMV->getVector(1)));
 
     xT_vecs[m] = Thyra::createVector(xT_vec, spaces[m]);
     x_dotT_vecs[m] = Thyra::createVector(x_dotT_vec, spaces[m]);

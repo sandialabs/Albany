@@ -7,8 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 
 
 namespace LCM {
@@ -79,11 +79,11 @@ void TLPoroStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  typedef Intrepid::FunctionSpaceTools FST;
-  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
   if (numDims == 1) {
-    Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
+    Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
     for (int cell=0; cell < workset.numCells; ++cell) {
           for (int qp=0; qp < numQPs; ++qp) {
               for (int dim=0; dim<numDims; ++ dim) {

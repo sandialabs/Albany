@@ -175,9 +175,9 @@ evaluateFields(typename Traits::EvalData workset)
       } else 
       if( tensorRank == 2 ){
         int nterms = components.dimension(0);
-        Intrepid::FieldContainer<int>& c = components;
+   //     Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& c = components;
         for(std::size_t ic=0; ic<nterms; ic++){
-          s = -field(cell,qp,c(ic,0),c(ic,1)) * weights(cell,qp);
+          s = -field(cell,qp,components(ic,0),components(ic,1)) * weights(cell,qp);
           this->local_response(cell,ic) += s;
           this->global_response(ic) += s;
         }

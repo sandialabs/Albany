@@ -7,7 +7,7 @@
 #if !defined(LCM_ParallelNeohookeanModel_Def_hpp)
 #define LCM_ParallelNeohookeanModel_Def_hpp
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "utility/math/Tensor.hpp"
@@ -92,6 +92,7 @@ KOKKOS_INLINE_FUNCTION void
 NeohookeanKernel<EvalT, Traits>::
 operator()(int cell) const
 {
+#if !defined(ALBANY_NIGHTLY_TEST)
   ScalarT kappa;
   ScalarT mu, mubar;
   ScalarT Jm53, Jm23;
@@ -163,6 +164,7 @@ operator()(int cell) const
       }
     }
   }
+#endif
 }
 }
 

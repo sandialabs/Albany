@@ -18,8 +18,8 @@
 
 // Capitalize Solution so that it sorts before other fields in Paraview. Saves a
 // few button clicks, e.g. when warping by vector.
-const char* Albany::APFMeshStruct::solution_name = "Solution";
-const char* Albany::APFMeshStruct::residual_name = "residual";
+const char* Albany::APFMeshStruct::solution_name[3] = {"Solution", "SolutionDot", "SolutionDotDot"};
+const char* Albany::APFMeshStruct::residual_name = {"residual"};
 
 static void loadSets(
     apf::Mesh* m,
@@ -126,6 +126,7 @@ void Albany::APFMeshStruct::init(
 
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
   useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
+  useDOFOffsetHack = params->get<bool>("Offset DOF Hack", false);
 
   compositeTet = false;
 
@@ -167,6 +168,7 @@ void Albany::APFMeshStruct::init(
   cubatureDegree = params->get("Cubature Degree", 3);
   int worksetSizeMax = params->get("Workset Size", 50);
   interleavedOrdering = params->get("Interleaved Ordering",true);
+  num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
 
@@ -241,31 +243,76 @@ Albany::APFMeshStruct::setFieldAndBulkData(
 
   this->nodal_data_base = sis->getNodalDataBase();
 
-  Teuchos::Array<std::string> defaultLayout;
-  solVectorLayout =
+  Teuchos::Array<std::string> defaultLayout; // empty
+  solVectorLayout.resize(3);
+
+  // Set this to the user set value or to empty if not specified
+  solVectorLayout[0] =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
+
+  // check that the user entered an even number of strings
+  TEUCHOS_TEST_FOR_EXCEPTION((solVectorLayout[0].size() % 2), std::logic_error,
+      "Error in input file: specification of solution vector layout is incorrect\n");
+
+  // Set up a default layout for solution dot, based on what was specified in the base layout
+  Teuchos::Array<std::string> dotLayout;
+  dotLayout.resize(solVectorLayout[0].size());
+  for(int i = 0; i < solVectorLayout[0].size(); i += 2){
+     dotLayout[i] = solVectorLayout[0][i] + "Dot"; // concat the term Dot
+     dotLayout[i + 1] = solVectorLayout[0][i + 1];
+  }
+
+  // Let the user specify something beyond the default if desired
+  solVectorLayout[1] =
+    params->get<Teuchos::Array<std::string> >("SolutionDot Vector Components", dotLayout);
+
+  TEUCHOS_TEST_FOR_EXCEPTION((solVectorLayout[1].size() % 2), std::logic_error,
+      "Error in input file: specification of solution vector dot layout is incorrect\n");
+
+  // Set up a default layout for solution dot, based on what was specified in the base layout
+  Teuchos::Array<std::string> dotdotLayout;
+  dotdotLayout.resize(solVectorLayout[0].size());
+  for(int i = 0; i < solVectorLayout[0].size(); i += 2){
+     dotdotLayout[i] = solVectorLayout[0][i] + "DotDot"; // concat the term DotDot
+     dotdotLayout[i + 1] = solVectorLayout[0][i + 1];
+  }
+
+  solVectorLayout[2] =
+    params->get<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", dotdotLayout);
+
+  TEUCHOS_TEST_FOR_EXCEPTION((solVectorLayout[2].size() % 2), std::logic_error,
+      "Error in input file: specification of solution vector dotdot layout is incorrect\n");
 
   solutionInitialized = false;
   residualInitialized = false;
 
-  if (solVectorLayout.size() == 0) {
-    int valueType;
-    if (neq==1)
-      valueType = apf::SCALAR;
-    else if (neq == 2 || neq == 3)
-      valueType = apf::VECTOR;
-    else {
-      assert(neq == 4 || neq == 9);
-      valueType = apf::MATRIX;
-    }
-    this->createNodalField(residual_name,valueType);
-    /* field may have been created by restart mechanism */
-    if (mesh->findField(solution_name))
-      solutionInitialized = true;
-    else {
-      this->createNodalField(solution_name,valueType);
-      if (hasRestartSolution)
+  if (solVectorLayout[0].size() == 0) {
+
+    // If the user has not specified a solution vector layout, provide a simple default
+    // Note that the logic here requires that the user enter something for the "Solution Vector Components",
+    // or they will get the default.
+
+    for(int i = 0; i <= num_time_deriv; i++){
+
+      int valueType;
+      if (neq==1)
+        valueType = apf::SCALAR;
+      else if (neq == 2 || neq == 3)
+        valueType = apf::VECTOR;
+      else {
+        assert(neq == 4 || neq == 9);
+        valueType = apf::MATRIX;
+      }
+      if(i == 0)
+        this->createNodalField(residual_name,valueType);
+      /* field may have been created by restart mechanism */
+      if (mesh->findField(solution_name[i]))
         solutionInitialized = true;
+      else {
+        this->createNodalField(solution_name[i],valueType);
+        if (hasRestartSolution)
+          solutionInitialized = true;
+      }
     }
   }
   else
@@ -318,30 +365,42 @@ Albany::APFMeshStruct::setFieldAndBulkData(
 }
 
 void
-Albany::APFMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
+Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >& fieldLayout)
 { // user is breaking up or renaming solution & residual fields
 
-  TEUCHOS_TEST_FOR_EXCEPTION((fieldLayout.size() % 2), std::logic_error,
-      "Error in input file: specification of solution vector layout is incorrect\n");
+  for(int fcomp = 0; fcomp <= num_time_deriv; fcomp++){
 
-  int valueType;
+    TEUCHOS_TEST_FOR_EXCEPTION((fieldLayout[fcomp].size() % 2), std::logic_error,
+        "Error in input file: specification of solution vector layout is incorrect\n");
 
-  for (std::size_t i=0; i < fieldLayout.size(); i+=2) {
+    int valueType;
 
-    if (fieldLayout[i+1] == "S")
-      valueType = apf::SCALAR;
-    else if (fieldLayout[i+1] == "V")
-      valueType = apf::VECTOR;
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Error in input file: specification of solution vector layout is incorrect\n");
+    for (std::size_t i=0; i < fieldLayout[fcomp].size(); i+=2) {
 
-    this->createNodalField(fieldLayout[i].c_str(),valueType);
-    this->createNodalField(fieldLayout[i].append("Res").c_str(),valueType);
+      TEUCHOS_TEST_FOR_EXCEPTION(mesh->findField(fieldLayout[fcomp][i].c_str()), std::logic_error,
+            "Error in input file: specification of solution vector layout is incorrect\n"
+            << " Found duplicate field name.");
+
+      if (fieldLayout[fcomp][i+1] == "S")
+        valueType = apf::SCALAR;
+      else if (fieldLayout[fcomp][i+1] == "V")
+        valueType = apf::VECTOR;
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+            "Error in input file: specification of solution vector layout is incorrect\n");
+
+      this->createNodalField(fieldLayout[fcomp][i].c_str(),valueType);
+      // Add the residual field - based on the text entered in the "Solution" PL only
+      if(fcomp == 0){
+        std::string res_name = fieldLayout[fcomp][i];
+        res_name.append("Res");
+        this->createNodalField(res_name.c_str(),valueType);
+      }
+    }
+
+    if (hasRestartSolution)
+      solutionInitialized = true;
   }
-
-  if (hasRestartSolution)
-    solutionInitialized = true;
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
@@ -390,7 +449,7 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
+  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
@@ -398,6 +457,10 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
   Teuchos::Array<std::string> defaultFields;
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layouts of solution vector components");
+  validPL->set<Teuchos::Array<std::string> >("SolutionDot Vector Components", defaultFields,
+      "Names and layouts of solution_dot vector components");
+  validPL->set<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", defaultFields,
+      "Names and layouts of solution_dotdot vector components");
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
@@ -421,6 +484,9 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<bool>("QP Temperature from Nodes", false,
                      "Hack to initialize QP Temperature from Solution");
+
+  validPL->set<bool>("Offset DOF Hack", false,
+      "Offset DOF numberings to start at 2^31 - 1 to test GO types");
 
   return validPL;
 }

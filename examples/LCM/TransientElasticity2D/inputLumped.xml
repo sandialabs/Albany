@@ -43,6 +43,8 @@
     <Parameter name="2D Scale" type="double" value="0.2"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="Exodus Output File Name" type="string" value="trel2d.exo"/>
+    <!-- displacement, velocity, acceleration -->
+    <Parameter name="Number Of Time Derivatives" type="int" value="2"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

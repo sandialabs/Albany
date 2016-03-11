@@ -11,8 +11,8 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 #include "Albany_Layouts.hpp"
 
@@ -44,11 +44,11 @@ private:
 
   // Input:
   //! Numerical integration rule
-  Teuchos::RCP<Intrepid::Cubature<RealType>>
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>
   cubature_;
 
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
   intrepid_basis_;
 
   //! Vector to take the jump of
@@ -56,16 +56,16 @@ private:
   vector_;
 
   // Reference Cell FieldContainers
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_values_;
 
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_grads_;
 
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_points_;
 
-  Intrepid::FieldContainer<RealType>
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
   ref_weights_;
 
   // Output:

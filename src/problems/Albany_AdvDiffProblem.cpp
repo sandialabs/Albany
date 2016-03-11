@@ -6,8 +6,8 @@
 
 #include "Albany_AdvDiffProblem.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -28,6 +28,7 @@ AdvDiffProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (useAugForm) //if we're using the augmented form of the equations, there are 2 extra auxiliary dofs / node (in 2D).
     neq = neq + 2;
   std::cout << "useAugForm, neq: " << useAugForm << ", " << neq << std::endl; 
+
 }
 
 Albany::AdvDiffProblem::

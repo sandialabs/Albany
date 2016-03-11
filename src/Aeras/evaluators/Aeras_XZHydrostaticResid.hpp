@@ -47,9 +47,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<ScalarT,Cell,Node> rho;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
+  PHX::MDField<ScalarT,Cell,Node> rhoDot;
   PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
 
   // Output:

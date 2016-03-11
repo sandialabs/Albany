@@ -82,6 +82,8 @@ evaluateFields(typename Traits::EvalData workset)
   const int neq = workset.wsElNodeEqID[0][0].size();
   const int nunk = neq*numNodes;
 
+  Teuchos::RCP<Tpetra_Vector> dqdx = workset.qoi;
+
   for (int cell=0; cell < workset.numCells; ++cell) {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > const& nodeID =
       workset.wsElNodeEqID[cell];
@@ -89,11 +91,12 @@ evaluateFields(typename Traits::EvalData workset)
     for (int node=0; node < numNodes; ++node) {
       for (int eq=0; eq < neq; ++eq) {
         const LO row = nodeID[node][eq];
-        // scatter qoi(cell).fastAccessDx(lunk) into qoi vector
+        dqdx->sumIntoLocalValue(row, qoi(cell).fastAccessDx(lunk));
         lunk++;
       }
     }
   }
+
 }
 
 }

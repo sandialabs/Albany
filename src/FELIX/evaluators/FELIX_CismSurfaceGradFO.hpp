@@ -43,18 +43,19 @@ public:
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
   
   ScalarT dummyParam;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node> dsdx_node;
-  PHX::MDField<ScalarT,Cell,Node> dsdy_node;
+  PHX::MDField<ParamScalarT,Cell,Node> dsdx_node;
+  PHX::MDField<ParamScalarT,Cell,Node> dsdy_node;
   //! Basis Functions
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradS_qp;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> gradS_qp;
 
   unsigned int numQPs, numDims, numNodes;
   

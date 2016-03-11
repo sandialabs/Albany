@@ -17,7 +17,7 @@
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #include "Petra_Converters.hpp"
 
-//IK, 7/15/14: adding option to write the mass matrix to matrix market file, which is needed 
+//IK, 7/15/14: adding option to write the mass matrix to matrix market file, which is needed
 //for some applications.  Uncomment the following line to turn on.
 //#define WRITE_MASS_MATRIX_TO_MM_FILE
 
@@ -34,10 +34,12 @@ Albany::ModelEvaluator::ModelEvaluator(
 {
   Teuchos::RCP<Teuchos::FancyOStream> out =
     Teuchos::VerboseObjectBase::getDefaultOStream();
+
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+
 //IKT, 5/18/15:
 //Test for Spectral elements requested, which do not work now with Albany executable.
-#ifdef ALBANY_AERAS 
-    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+#ifdef ALBANY_AERAS
     std::string& method = discParams.get("Method", "STK1D");
     if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras"){
        TEUCHOS_TEST_FOR_EXCEPTION(true,
@@ -46,6 +48,9 @@ Albany::ModelEvaluator::ModelEvaluator(
                                << "!  Please re-run with AlbanyT executable." << std::endl);
     }
 #endif
+
+  // Get number of time derivatives
+  num_time_deriv = discParams.get<int>("Number Of Time Derivatives");
 
   // Parameters (e.g., for sensitivities, SG expansions, ...)
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
@@ -94,7 +99,7 @@ Albany::ModelEvaluator::ModelEvaluator(
   //`const Epetra_Comm& comm = app->getMap()->Comm();
   //const Epetra_Comm& comm = *app->getComm();
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT); 
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   for (int i=0; i<num_param_vecs; i++) {
 
     // Initialize Sacado parameter vector
@@ -196,11 +201,11 @@ Albany::ModelEvaluator::get_p_map(int l) const
     std::endl <<
     "Error!  Albany::ModelEvaluator::get_p_map():  " <<
     "Invalid parameter index l = " << l << std::endl);
-  if (l < num_param_vecs) 
+  if (l < num_param_vecs)
     return epetra_param_map[l];
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm(); 
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
   Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  return Petra::TpetraMap_To_EpetraMap(distParamLib->get(dist_param_names[l-num_param_vecs])->map(), comm); 
+  return Petra::TpetraMap_To_EpetraMap(distParamLib->get(dist_param_names[l-num_param_vecs])->map(), comm);
 }
 
 Teuchos::RCP<const Epetra_Map>
@@ -252,10 +257,10 @@ Albany::ModelEvaluator::get_x_dot_init() const
 Teuchos::RCP<const Epetra_Vector>
 Albany::ModelEvaluator::get_x_dotdot_init() const
 {
-  Teuchos::RCP<const Epetra_Vector> x_dotdot_init
-    = Teuchos::rcp(new Epetra_Vector(app->getAdaptSolMgr()->getInitialSolutionDot()->Map()));
-  
-  return x_dotdot_init;
+#ifdef ALBANY_MOVE_MEMBER_FN_ADAPTSOLMGR_TPETRA
+  return app->getAdaptSolMgr()->getInitialSolutionDotDot();
+#endif
+   return app->getInitialSolutionDotDot();
 }
 
 
@@ -271,12 +276,12 @@ Albany::ModelEvaluator::get_p_init(int l) const
 
   if (l < num_param_vecs)
     return epetra_param_vec[l];
-  Teuchos::RCP<Epetra_Vector> epetra_param_vec_to_return; 
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm(); 
+  Teuchos::RCP<Epetra_Vector> epetra_param_vec_to_return;
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
   Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->vector(), epetra_param_vec_to_return,
-                                      comm); 
-  return epetra_param_vec_to_return; 
+                                      comm);
+  return epetra_param_vec_to_return;
   //return distParamLib->get(dist_param_names[l-num_param_vecs])->vector();
 }
 
@@ -353,8 +358,8 @@ Albany::ModelEvaluator::create_DfDp_op(int l) const
   // stuff I'm merging to work. If so, I might bring back an Epetra version of
   // DistributedParameterDerivativeOp.
 //IK, 6/27/14: commented out for now for code to compile...
-//DistributedParameterDerivativeOp is a Tpetra_Operator now.... 
-//I think distributed responses will work only once we switch to Albany_ModelEvaluatorT in Tpetra branch.  
+//DistributedParameterDerivativeOp is a Tpetra_Operator now....
+//I think distributed responses will work only once we switch to Albany_ModelEvaluatorT in Tpetra branch.
 
 return Teuchos::rcp(new DistributedParameterDerivativeOp(
                       app, dist_param_names[l-num_param_vecs]));
@@ -431,30 +436,38 @@ Albany::ModelEvaluator::createInArgs() const
   InArgsSetup inArgs;
   inArgs.setModelEvalDescription(this->description());
 
-  inArgs.setSupports(IN_ARG_t,true);
   inArgs.setSupports(IN_ARG_x,true);
-  inArgs.setSupports(IN_ARG_x_dot,true);
-  inArgs.setSupports(IN_ARG_x_dotdot,true);
-  inArgs.setSupports(IN_ARG_alpha,true);
-  inArgs.setSupports(IN_ARG_omega,true);
-  inArgs.setSupports(IN_ARG_beta,true);
+  if(num_time_deriv > 0){
+    inArgs.setSupports(IN_ARG_t,true);
+    inArgs.setSupports(IN_ARG_x_dot,true);
+    inArgs.setSupports(IN_ARG_alpha,true);
+    inArgs.setSupports(IN_ARG_beta,true);
+  }
+  if(num_time_deriv > 1){
+    inArgs.setSupports(IN_ARG_x_dotdot,true);
+    inArgs.setSupports(IN_ARG_omega,true);
+  }
   inArgs.set_Np(num_param_vecs+num_dist_param_vecs);
 
 #ifdef ALBANY_SG
   inArgs.setSupports(IN_ARG_x_sg,true);
-  inArgs.setSupports(IN_ARG_x_dot_sg,true);
-  inArgs.setSupports(IN_ARG_x_dotdot_sg,true);
+  if(num_time_deriv > 0)
+    inArgs.setSupports(IN_ARG_x_dot_sg,true);
+  if(num_time_deriv > 1)
+    inArgs.setSupports(IN_ARG_x_dotdot_sg,true);
   for (int i=0; i<num_param_vecs; i++)
     inArgs.setSupports(IN_ARG_p_sg, i, true);
   inArgs.setSupports(IN_ARG_sg_basis,true);
   inArgs.setSupports(IN_ARG_sg_quadrature,true);
   inArgs.setSupports(IN_ARG_sg_expansion,true);
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
   inArgs.setSupports(IN_ARG_x_mp,true);
-  inArgs.setSupports(IN_ARG_x_dot_mp,true);
-  inArgs.setSupports(IN_ARG_x_dotdot_mp,true);
+  if(num_time_deriv > 0)
+    inArgs.setSupports(IN_ARG_x_dot_mp,true);
+  if(num_time_deriv > 1)
+    inArgs.setSupports(IN_ARG_x_dotdot_mp,true);
   for (int i=0; i<num_param_vecs; i++)
     inArgs.setSupports(IN_ARG_p_mp, i, true);
 #endif
@@ -547,8 +560,8 @@ Albany::ModelEvaluator::createOutArgs() const
       outArgs.setSupports(OUT_ARG_DgDp_sg, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
   }
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
   // Multi-point
   outArgs.setSupports(OUT_ARG_f_mp,true);
@@ -595,37 +608,44 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   Teuchos::RCP<const Epetra_Vector> x = inArgs.get_x();
   Teuchos::RCP<const Epetra_Vector> x_dot;
   Teuchos::RCP<const Epetra_Vector> x_dotdot;
-  
+
   //create comm and node objects for Epetra -> Tpetra conversions
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT); 
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   //Create Tpetra copy of x, call it xT
-  Teuchos::RCP<const Tpetra_Vector> xT; 
-  if (x != Teuchos::null) 
-    xT  = Petra::EpetraVector_To_TpetraVectorConst(*x, commT); 
+  Teuchos::RCP<const Tpetra_Vector> xT;
+  if (x != Teuchos::null)
+    xT  = Petra::EpetraVector_To_TpetraVectorConst(*x, commT);
 
   double alpha     = 0.0;
   double omega     = 0.0;
   double beta      = 1.0;
   double curr_time = 0.0;
-  
-  x_dot = inArgs.get_x_dot();
-  x_dotdot = inArgs.get_x_dotdot();
+
+  if(num_time_deriv > 0)
+    x_dot = inArgs.get_x_dot();
+  if(num_time_deriv > 1)
+    x_dotdot = inArgs.get_x_dotdot();
+
   //Declare and create Tpetra copy of x_dot, call it x_dotT
   Teuchos::RCP<const Tpetra_Vector> x_dotT;
-  if (x_dotT != Teuchos::null)  
+  if (Teuchos::nonnull(x_dot))
     x_dotT = Petra::EpetraVector_To_TpetraVectorConst(*x_dot, commT);
+
   //Declare and create Tpetra copy of x_dotdot, call it x_dotdotT
   Teuchos::RCP<const Tpetra_Vector> x_dotdotT;
-  if (x_dotdotT != Teuchos::null)  
+  if (Teuchos::nonnull(x_dotdot))
     x_dotdotT = Petra::EpetraVector_To_TpetraVectorConst(*x_dotdot, commT);
-  
-  if (x_dot != Teuchos::null || x_dotdot != Teuchos::null) {
+
+  if (Teuchos::nonnull(x_dot)){
     alpha = inArgs.get_alpha();
-    omega = inArgs.get_omega();
     beta = inArgs.get_beta();
     curr_time  = inArgs.get_t();
   }
+  if (Teuchos::nonnull(x_dotdot)) {
+    omega = inArgs.get_omega();
+  }
+
   for (int i=0; i<num_param_vecs; i++) {
     Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
     if (p != Teuchos::null) {
@@ -639,7 +659,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     //create Tpetra copy of p
     Teuchos::RCP<const Tpetra_Vector> pT;
     if (p != Teuchos::null) {
-      pT = Petra::EpetraVector_To_TpetraVectorConst(*p, commT); 
+      pT = Petra::EpetraVector_To_TpetraVectorConst(*p, commT);
       //*(distParamLib->get(dist_param_names[i])->vector()) = *p;
       *(distParamLib->get(dist_param_names[i])->vector()) = *pT;
     }
@@ -659,7 +679,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   //IK, 7/15/14: needed for writing mass matrix out to matrix market file
   EpetraExt::ModelEvaluator::Evaluation<Epetra_Vector> ftmp = outArgs.get_f();
 #endif
-  
+
   if (W_out != Teuchos::null) {
     W_out_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out, true);
 #ifdef WRITE_MASS_MATRIX_TO_MM_FILE
@@ -694,7 +714,7 @@ x->Print(std::cout);
     //Warning: to read this in to MATLAB correctly, code must be run in serial.
     //Otherwise Mass will have a distributed Map which would also need to be read in to MATLAB for proper
     //reading in of Mass.
-    app->computeGlobalJacobian(1.0, 0.0, 0.0, curr_time, x_dot.get(), x_dotdot.get(), *x, 
+    app->computeGlobalJacobian(1.0, 0.0, 0.0, curr_time, x_dot.get(), x_dotdot.get(), *x,
                                sacado_param_vec, ftmp.get(), *Mass);
     EpetraExt::RowMatrixToMatrixMarketFile("mass.mm", *Mass);
     EpetraExt::BlockMapToMatrixMarketFile("rowmap.mm", Mass->RowMap());
@@ -789,10 +809,11 @@ f_out->Print(std::cout);
   // Response functions
   for (int i=0; i<outArgs.Ng(); i++) {
     //Set curr_time to final time at which response occurs.
-    curr_time  = inArgs.get_t();
+    if(num_time_deriv > 0)
+      curr_time  = inArgs.get_t();
     Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(i);
     //Declare Tpetra_Vector copy of g_out
-    Teuchos::RCP<Tpetra_Vector> g_outT; 
+    Teuchos::RCP<Tpetra_Vector> g_outT;
     bool g_computed = false;
 
     Derivative dgdx_out = outArgs.get_DgDx(i);
@@ -827,22 +848,22 @@ f_out->Print(std::cout);
                             sacado_param_vec[j][p_indexes[k]].baseValue);
         }
         //create Tpetra copy of g_out, call it g_outT
-        if (g_out != Teuchos::null) 
-           g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT); 
+        if (g_out != Teuchos::null)
+           g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
         //create Tpetra copy of dgdp_out, call it dgdp_outT
-        if (dgdp_out != Teuchos::null) 
-           dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT); 
+        if (dgdp_out != Teuchos::null)
+           dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT);
 	app->evaluateResponseTangentT(i, alpha, beta, omega, curr_time, false,
-				     x_dotT.get(), x_dotdotT.get(), *xT, 
+				     x_dotT.get(), x_dotdotT.get(), *xT,
 				     sacado_param_vec, p_vec.get(),
 				     NULL, NULL, NULL, NULL, g_outT.get(), NULL,
 				     dgdp_outT.get());
         //convert g_outT to Epetra_Vector g_out
-        if (g_out != Teuchos::null) 
-          Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm); 	
+        if (g_out != Teuchos::null)
+          Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
         //convert dgdp_outT to Epetra_MultiVector dgdp_out
-        if (dgdp_out != Teuchos::null) 
-          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, comm); 	
+        if (dgdp_out != Teuchos::null)
+          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, comm);
         g_computed = true;
       }
     }
@@ -855,14 +876,14 @@ f_out->Print(std::cout);
         app->evaluateResponseDistParamDeriv(i, curr_time, x_dot.get(), x_dotdot.get(), *x, sacado_param_vec, dist_param_names[j], dgdp_out.getMultiVector().get());
       }
     }
-    
+
     if (g_out != Teuchos::null && !g_computed) {
       //create Tpetra copy of g_out, call it g_outT
-      g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT); 
-      app->evaluateResponseT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec, 
+      g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
+      app->evaluateResponseT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec,
 			    *g_outT);
-      //convert g_outT to Epetra_Vector g_out 
-      Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm); 
+      //convert g_outT to Epetra_Vector g_out
+      Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
     }
   }
 
@@ -876,13 +897,19 @@ f_out->Print(std::cout);
                  inArgs.get_sg_quadrature(),
                  inArgs.get_sg_expansion(),
                  x_sg->productComm());
-    InArgs::sg_const_vector_t x_dot_sg  = inArgs.get_x_dot_sg();
-    InArgs::sg_const_vector_t x_dotdot_sg  = inArgs.get_x_dotdot_sg();
+    InArgs::sg_const_vector_t x_dot_sg  = Teuchos::null;
+    InArgs::sg_const_vector_t x_dot_sg  = Teuchos::null;
+    if(num_time_deriv > 0)
+      x_dotdot_sg  = inArgs.get_x_dotdot_sg();
+    if(num_time_deriv > 1)
+      x_dotdot_sg  = inArgs.get_x_dotdot_sg();
     if (x_dot_sg != Teuchos::null || x_dotdot_sg != Teuchos::null) {
       alpha = inArgs.get_alpha();
-      omega = inArgs.get_omega();
       beta = inArgs.get_beta();
       curr_time  = inArgs.get_t();
+    }
+    if (x_dotdot_sg != Teuchos::null) {
+      omega = inArgs.get_omega();
     }
 
     InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
@@ -1005,21 +1032,28 @@ f_out->Print(std::cout);
                                 *g_sg);
     }
   }
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
   //
   // Multi-point evaluation
   //
   mp_const_vector_t x_mp = inArgs.get_x_mp();
   if (x_mp != Teuchos::null) {
-    mp_const_vector_t x_dot_mp  = inArgs.get_x_dot_mp();
-    mp_const_vector_t x_dotdot_mp  = inArgs.get_x_dotdot_mp();
+    mp_const_vector_t x_dot_mp  = Teuchos::null;
+    mp_const_vector_t x_dotdot_mp  = Teuchos::null;
+    if(num_time_deriv > 0)
+      x_dot_mp  = inArgs.get_x_dot_mp();
+    if(num_time_deriv > 1)
+      x_dotdot_mp  = inArgs.get_x_dotdot_mp();
     if (x_dot_mp != Teuchos::null || x_dotdot_mp != Teuchos::null) {
       alpha = inArgs.get_alpha();
-      omega = inArgs.get_omega();
+      //omega = inArgs.get_omega();
       beta = inArgs.get_beta();
       curr_time  = inArgs.get_t();
+    }
+    if (x_dotdot_mp != Teuchos::null) {
+      omega = inArgs.get_omega();
     }
 
     Teuchos::Array<int> p_mp_index;

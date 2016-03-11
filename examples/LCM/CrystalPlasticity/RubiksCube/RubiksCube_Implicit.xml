@@ -1,4 +1,13 @@
 <ParameterList>
+  <!-- Dumping Matrix Market to file
+         <ParameterList name="Debug Output">
+     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+  </ParameterList>
+  -->
+  <ParameterList name="Scaling">
+    <Parameter name="Scale" type="double" value="1.0e3"/>
+  </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
@@ -8,7 +17,7 @@
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
         <Parameter name="Time Values" type="Array(double)" value="{0.00, 1.0, 2.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{0.00, 0.10, 0.20}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{0.00, 1.0, 2.0}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
@@ -21,7 +30,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube_Mesh3.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="RubiksCube.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="RubiksCube_Implicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
@@ -39,7 +48,7 @@
       <ParameterList name="Stepper">
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="500"/>
+        <Parameter name="Max Steps" type="int" value="10000"/>
         <Parameter name="Max Value" type="double" value="1.0"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
@@ -51,17 +60,20 @@
       </ParameterList>
       <ParameterList name="Step Size">
         <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.0005"/>
-       <Parameter name="Max Step Size" type="double" value="0.02"/>
+       <Parameter name="Initial Step Size" type="double" value="0.0001"/>
+       <Parameter name="Max Step Size" type="double" value="0.0001"/>
        <Parameter name="Min Step Size" type="double" value="0.00000001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Aggressiveness" type="double" value="0.2"/>
+       <Parameter name="Aggressiveness" type="double" value="0.1"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
       <ParameterList name="Direction">
         <Parameter name="Method" type="string" value="Newton"/>
         <ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-10"/>
+          </ParameterList>
           <Parameter name="Forcing Term Method" type="string" value="Constant"/>
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
           <ParameterList name="Stratimikos Linear Solver">
@@ -86,7 +98,6 @@
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
                     <ParameterList name="Block GMRES">
-                      <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
                       <Parameter name="Output Frequency" type="int" value="0"/>
                       <Parameter name="Output Style" type="int" value="0"/>
                       <Parameter name="Verbosity" type="int" value="0"/>
@@ -115,11 +126,16 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
+        <Parameter name="Method" type="string" value="Full Step"/>
+        <ParameterList name="Full Step">
+        </ParameterList>
+        <!--
+                     <Parameter name="Method" type="string" value="Backtrack"/>
         <ParameterList name="Backtrack">
           <Parameter name="Reduction Factor" type="double" value="0.5"/>
           <Parameter name="Max Iters" type="int" value="10"/>
         </ParameterList>
-        <Parameter name="Method" type="string" value="Backtrack"/>
+        -->
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
@@ -136,7 +152,7 @@
        <Parameter name="Number of Tests" type="int" value="4"/>
         <ParameterList name="Test 0">
          <Parameter name="Test Type" type="string" value="RelativeNormF"/>
-         <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+         <Parameter name="Tolerance" type="double" value="1.0e-9"/>
         </ParameterList>
         <ParameterList name="Test 1">
          <Parameter name="Test Type" type="string" value="MaxIters"/>
@@ -152,7 +168,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">

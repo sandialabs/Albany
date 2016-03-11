@@ -10,6 +10,7 @@ SET(SOURCES
   evaluators/QCAD_PoissonResid.cpp
   evaluators/QCAD_PoissonSource.cpp
   evaluators/QCAD_PoissonSourceNeumann.cpp
+  evaluators/QCAD_PoissonSourceInterface.cpp
   evaluators/QCAD_PoissonDirichlet.cpp
   evaluators/QCAD_PoissonNeumann.cpp
   evaluators/QCAD_ResponseRegionBoundary.cpp
@@ -53,6 +54,8 @@ SET(HEADERS
   evaluators/QCAD_PoissonSource_Def.hpp
   evaluators/QCAD_PoissonSourceNeumann.hpp
   evaluators/QCAD_PoissonSourceNeumann_Def.hpp
+  evaluators/QCAD_PoissonSourceInterface.hpp
+  evaluators/QCAD_PoissonSourceInterface_Def.hpp
   evaluators/QCAD_PoissonDirichlet.hpp
   evaluators/QCAD_PoissonDirichlet_Def.hpp
   evaluators/QCAD_PoissonNeumann.hpp

@@ -60,16 +60,16 @@ namespace QCAD {
 
   void CopyStateToContainer(Albany::StateArrays& src,
 			    std::string stateNameToCopy,
-			    std::vector<Intrepid::FieldContainer<RealType> >& dest);
-  void CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+			    std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& dest);
+  void CopyContainerToState(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
 			    Albany::StateArrays& dest,
 			    std::string stateNameOfCopy);
-  void CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
-		     std::vector<Intrepid::FieldContainer<RealType> >& dest);
-  void AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
-			       std::vector<Intrepid::FieldContainer<RealType> >& dest,
+  void CopyContainer(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
+		     std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& dest);
+  void AddContainerToContainer(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
+			       std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& dest,
 			       double srcFactor, double thisFactor); // dest = thisFactor * dest + srcFactor * src
-  void AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+  void AddContainerToState(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
 			    Albany::StateArrays& dest,
 			   std::string stateName, double srcFactor, double thisFactor); // dest[stateName] = thisFactor * dest[stateName] + srcFactor * src
 
@@ -81,14 +81,14 @@ namespace QCAD {
 			      Albany::StateArrays& dest, std::string destStateNameToSubtractFrom);
   
   double getMaxDifference(Albany::StateArrays& states, 
-			  std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+			  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& prevState,
 			  std::string stateName);
 
   double getNorm2Difference(Albany::StateArrays& states,   
-			    std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+			    std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& prevState,
 			    std::string stateName);
-  double getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& container, const Teuchos::RCP<const Epetra_Comm>& comm);
-  int getElementCount(std::vector<Intrepid::FieldContainer<RealType> >& container);
+  double getNorm2(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& container, const Teuchos::RCP<const Epetra_Comm>& comm);
+  int getElementCount(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& container);
   
   void ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift,
 			     Teuchos::RCP<Teuchos::ParameterList>& eigList);
@@ -1783,12 +1783,12 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
   eigenDataResult = Teuchos::null;
 
   //Field Containers to store states used in Poisson-Schrodinger loop
-  std::vector<Intrepid::FieldContainer<RealType> > acceptedSolution;
-  std::vector<Intrepid::FieldContainer<RealType> > acceptedDensity;
-  std::vector<Intrepid::FieldContainer<RealType> > trialSolution;
-  std::vector<Intrepid::FieldContainer<RealType> > trialDensity;
-  std::vector<Intrepid::FieldContainer<RealType> > mixDensity;
-  std::vector<Intrepid::FieldContainer<RealType> > prevConductionBand;
+  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > acceptedSolution;
+  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > acceptedDensity;
+  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > trialSolution;
+  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > trialDensity;
+  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > mixDensity;
+  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > prevConductionBand;
 
   //Create Initial Poisson solver & fill its parameters
   subSolvers[ "InitPoisson" ] = CreateSubSolver( "InitPoisson", getSubSolverParams("InitPoisson") , *solverComm); //, saved_initial_guess);
@@ -3353,7 +3353,7 @@ void QCAD::SolveModel(const QCAD::SolverSubSolver& ss,
 
 void QCAD::CopyStateToContainer(Albany::StateArrays& state_arrays,
 			  std::string stateNameToCopy,
-			  std::vector<Intrepid::FieldContainer<RealType> >& dest)
+			  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& dest)
 {
   Albany::StateArrayVec& src = state_arrays.elemStateArrays;
   int numWorksets = src.size();
@@ -3381,7 +3381,7 @@ void QCAD::CopyStateToContainer(Albany::StateArrays& state_arrays,
 
 
 //Note: state must be allocated already
-void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+void QCAD::CopyContainerToState(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
 			  Albany::StateArrays& state_arrays,
 			  std::string stateNameOfCopy)
 {
@@ -3404,8 +3404,8 @@ void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >
 }
 
 
-void QCAD::CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
-			 std::vector<Intrepid::FieldContainer<RealType> >& dest)
+void QCAD::CopyContainer(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
+			 std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& dest)
 {
   int numWorksets = src.size();
 
@@ -3414,13 +3414,13 @@ void QCAD::CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
   
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    dest[ws] = src[ws]; //assignment operator in Intrepid::FieldContainer
+    dest[ws] = src[ws]; //assignment operator in Intrepid2::FieldContainer
   }
 }
 
 // dest = thisFactor * dest + srcFactor * src
-void QCAD::AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
-				   std::vector<Intrepid::FieldContainer<RealType> >& dest,
+void QCAD::AddContainerToContainer(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
+				   std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& dest,
 				   double srcFactor, double thisFactor)
 {
   int numWorksets = src.size();
@@ -3444,7 +3444,7 @@ void QCAD::AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType
 
 // dest[stateName] = thisFactor * dest[stateName] + srcFactor * src
 //  Note: state must be allocated already
-void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+void QCAD::AddContainerToState(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& src,
 			 Albany::StateArrays& state_arrays,
 			 std::string stateName, double srcFactor, double thisFactor)
 {
@@ -3528,7 +3528,7 @@ void QCAD::SubtractStateFromState(Albany::StateArrays& state_arrays,
 }
 
 double QCAD::getMaxDifference(Albany::StateArrays& state_arrays, 
-		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+		      std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& prevState,
 		      std::string stateName)
 {
   double maxDiff = 0.0;
@@ -3559,7 +3559,7 @@ double QCAD::getMaxDifference(Albany::StateArrays& state_arrays,
 
 
 double QCAD::getNorm2Difference(Albany::StateArrays& state_arrays, 
-				std::vector<Intrepid::FieldContainer<RealType> >& prevState,
+				std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& prevState,
 				std::string stateName)
 {
   double norm2 = 0.0;
@@ -3586,7 +3586,7 @@ double QCAD::getNorm2Difference(Albany::StateArrays& state_arrays,
 }
 
 
-double QCAD::getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& container, const Teuchos::RCP<const Epetra_Comm>& comm)
+double QCAD::getNorm2(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& container, const Teuchos::RCP<const Epetra_Comm>& comm)
 {
   double norm2 = 0.0;
   int numWorksets = container.size();
@@ -3611,7 +3611,7 @@ double QCAD::getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& containe
   return global_norm2;
 }
 
-int QCAD::getElementCount(std::vector<Intrepid::FieldContainer<RealType> >& container)
+int QCAD::getElementCount(std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >& container)
 {
   int cnt = 0;
   int numWorksets = container.size();

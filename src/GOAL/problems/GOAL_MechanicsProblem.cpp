@@ -18,9 +18,7 @@ GOALMechanicsProblem::GOALMechanicsProblem(
     const int numDim,
     Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params, paramLib),
-  numDims(numDim),
-  isAdjoint(false),
-  enrichAdjoint(false)
+  numDims(numDim)
 {
   // compute number of equations
   int numEq = 0;
@@ -83,8 +81,6 @@ void GOALMechanicsProblem::buildProblem(
         *fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, Teuchos::null);
   }
 
-  // construct dirichlet bc evaluators
-  constructDirichletEvaluators(*meshSpecs[0], this->params);
 }
 
 /*****************************************************************************/
@@ -104,21 +100,6 @@ buildEvaluators(
 }
 
 /*****************************************************************************/
-void GOALMechanicsProblem::constructDirichletEvaluators(
-    const Albany::MeshSpecsStruct& meshSpecs,
-    Teuchos::RCP<Teuchos::ParameterList>& bcs)
-{
-  dfm = Teuchos::null;
-}
-
-/*****************************************************************************/
-void GOALMechanicsProblem::constructNeumannEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
-{
-  nfm = Teuchos::null;
-}
-
-/*****************************************************************************/
 Teuchos::RCP<const Teuchos::ParameterList> GOALMechanicsProblem::
 getValidProblemParameters() const
 {
@@ -134,9 +115,9 @@ getValidProblemParameters() const
 /*****************************************************************************/
 void GOALMechanicsProblem::getAllocatedStates(
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > oldSt,
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldSt,
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP
-      <Intrepid::FieldContainer<RealType> > > > newSt) const
+      <Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newSt) const
 {
   oldSt = oldState;
   newSt = newState;

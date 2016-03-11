@@ -12,7 +12,9 @@
 
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_Ptr.hpp"
+#if defined(ALBANY_EPETRA)
 #include "Petra_Converters.hpp"
+#endif
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -58,9 +60,9 @@ void ObserverImpl::observeSolution (
       peridigmManager->updateState();
 
       int myPID = nonOverlappedSolution.Map().Comm().MyPID();
-//       if(myPID == 0)
-//         std::cout << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE = "
-//                   << obcFunctional << "\n" << std::endl;
+      if(myPID == 0)
+        std::cout << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE (OBSERVER) = "
+                  << obcFunctional << "\n" << std::endl;
     }
 #endif
 #endif
@@ -88,7 +90,8 @@ void ObserverImpl::observeSolution (
 
 void ObserverImpl::observeSolutionT(
   double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
-  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT)
+  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
+  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT)
 {
   app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT,
                                    Teuchos::null, nonOverlappedSolutionT);
@@ -96,6 +99,15 @@ void ObserverImpl::observeSolutionT(
 
   StatelessObserverImpl::observeSolutionT(stamp, nonOverlappedSolutionT,
                                           nonOverlappedSolutionDotT);
+}
+
+void ObserverImpl::observeSolutionT(
+  double stamp, const Tpetra_MultiVector &nonOverlappedSolutionT)
+{
+  app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionT);
+  app_->getStateMgr().updateStates();
+
+  StatelessObserverImpl::observeSolutionT(stamp, nonOverlappedSolutionT);
 }
 
 } // namespace Albany

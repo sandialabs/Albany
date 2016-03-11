@@ -7,8 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
 namespace LCM {
@@ -83,8 +83,8 @@ void TLElasResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::cout.precision(15);
-  typedef Intrepid::FunctionSpaceTools FST;
-  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
   // using AD gives us P directly, we don't need to transform it
   if (matModel == "Neohookean AD")

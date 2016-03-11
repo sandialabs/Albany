@@ -5,10 +5,9 @@
 //*****************************************************************//
 
 #define DEBUG_FREQ 100000000000
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
 #include "LocalNonlinearSolver.hpp"
 
 namespace LCM
@@ -189,12 +188,12 @@ computeState(typename Traits::EvalData workset,
   ScalarT Jm23, p, dgam, dgam_plastic, a0, a1, f, smag, temp_adj_relaxation_para_;
   ScalarT sq23(std::sqrt(2. / 3.));
 
-  Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
+  Intrepid2::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
       num_dims_);
-  Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
+  Intrepid2::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
       num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-  Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
+  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  Intrepid2::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
 
   long int debug_output_counter = 0;
 
@@ -237,18 +236,18 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute trial state
-      Fpinv = Intrepid::inverse(Fpn);
-      Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-      be = Jm23 * F * Cpinv * Intrepid::transpose(F);
+      Fpinv = Intrepid2::inverse(Fpn);
+      Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+      be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
 
-      a0 = Intrepid::norm(Intrepid::dev(be));
-      a1 = Intrepid::trace(be);
+      a0 = Intrepid2::norm(Intrepid2::dev(be));
+      a1 = Intrepid2::trace(be);
 
-      s = mu * Intrepid::dev(be);
+      s = mu * Intrepid2::dev(be);
 
-      mubar = Intrepid::trace(be) * mu / (num_dims_);
+      mubar = Intrepid2::trace(be) * mu / (num_dims_);
 
-      smag = Intrepid::norm(s);
+      smag = Intrepid2::norm(s);
 
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
@@ -263,6 +262,10 @@ computeState(typename Traits::EvalData workset,
           int count = 0;
           // ScalarT H = 0.0;
           dgam = 0.0;
+          ScalarT debug_X[32];
+          ScalarT debug_F[32];
+          ScalarT debug_dFdX[32];
+
 
           LocalNonlinearSolver<EvalT, Traits> solver;
 
@@ -273,29 +276,61 @@ computeState(typename Traits::EvalData workset,
 
           X[0] = creep_initial_guess_;
 
-          F[0] = X[0] - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.)- 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.);
+          F[0] = X[0] - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*std::pow( (a0 - 2./3. *  X[0] * a1) * (a0 - 2./3. *  X[0] * a1), strain_rate_expo_ /2.);
 
-          dFdX[0] = 1. - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*( strain_rate_expo_ /2. )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.) - 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.- 1.)*(8./9. * X[0] * std::pow(a1, 2.) - 4./3. * a0 * a1);
+          dFdX[0] = 1. - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*( strain_rate_expo_ /2. )*std::pow( (a0 - 2./3. *  X[0] * a1) * (a0 - 2./3. *  X[0] * a1), strain_rate_expo_ /2.- 1.)*(8./9. * X[0] * a1 * a1 - 4./3. * a0 * a1);
+
+          if ((typeid(ScalarT) == typeid(double)) && (F[0] != F[0])) {
+            std::cerr << "F[0] is NaN, here are some contributing values:n";
+            std::cerr << "Fpinv is " << Fpinv << 'n';
+            std::cerr << "Cpinv is " << Fpinv << 'n';
+            std::cerr << "a0 is " << a0 << 'n';
+            std::cerr << "a1 is " << a1 << 'n';
+            std::cerr << "mu is " << mu << 'n';
+            std::cerr << "strain_rate_expo_ is " << strain_rate_expo_ << 'n';
+            std::cerr << "temp_adj_relaxation_para_ is " << temp_adj_relaxation_para_ << 'n';
+            std::cerr << "dt is " << delta_time(0) << 'n';
+           }
+
+          debug_X[0] = X[0];
+          debug_F[0] = F[0];
+          debug_dFdX[0] = dFdX[0];
 
           while (!converged && count <= 30)
           {
             count++;
             solver.solve(dFdX, X, F);
 
-            F[0] = X[0] - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.)- 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.);
+            F[0] = X[0] - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*std::pow( (a0 - 2./3. *  X[0] * a1) * (a0 - 2./3. *  X[0] * a1), strain_rate_expo_ /2.);
 
-          dFdX[0] = 1. - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*( strain_rate_expo_ /2. )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.) - 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.- 1.)*(8./9. * X[0] * std::pow(a1, 2.) - 4./3. * a0 * a1);
-
+            dFdX[0] = 1. - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*( strain_rate_expo_ /2. )*std::pow( (a0 - 2./3. *  X[0] * a1) * (a0 - 2./3. *  X[0] * a1), strain_rate_expo_ /2.- 1.)*(8./9. * X[0] * a1 * a1 - 4./3. * a0 * a1);
+ 
 
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"Creep Solver count = "<<count<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"X[0] = "<<X[0]<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"F[0] = "<<F[0]<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dFdX[0] = "<<dFdX[0]<<std::endl;
    
+            debug_X[count] = X[0];
+            debug_F[count] = F[0];
+            debug_dFdX[count] = dFdX[0]; 
+
 
             res = std::abs(F[0]);
             if (res < 1.e-10 )
               converged = true;
+    
+            if (count == 30) {
+              std::cerr << "detected NaN, here are the X, F, dfdX values at each iteration:\n";
+              for (int i = 0; i < 30; ++i) {
+              std::cout<<"i = " << i <<std::endl;
+              std::cout<<"debug_X =" << debug_X[i] <<std::endl;
+              std::cout<<"debug_F =" << debug_F[i] <<std::endl;
+              std::cout<<"debug_dFdX =" << debug_dFdX[i] <<std::endl;
+                 }
+              }
+
+            
 
             TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
                 std::endl <<
@@ -312,7 +347,7 @@ computeState(typename Traits::EvalData workset,
           dgam = X[0];
       
           // plastic direction
-          N =  s / Intrepid::norm(s);
+          N =  s / Intrepid2::norm(s);
 
           // update s
           s -= 2.0 * mubar * dgam * N;
@@ -326,7 +361,7 @@ computeState(typename Traits::EvalData workset,
           // exponential map to get Fpnew
           A = dgam * N;
           eqps(cell, pt) = eqpsold(cell, pt);
-          expA = Intrepid::exp(A);
+          expA = Intrepid2::exp(A);
           Fpnew = expA * Fpn;
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
@@ -370,8 +405,8 @@ computeState(typename Traits::EvalData workset,
         {
           count++;
           solver.solve(dFdX, X, F);
-          H = 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(smag + 2./3.*(K * X[0]) - f, strain_rate_expo_ );
-          dH =  strain_rate_expo_ * 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * (2.* K)/3. * std::pow(smag + 2./3.*(K * X[0]) - f, strain_rate_expo_ - 1. );
+          H = 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow((smag + 2./3.*(K * X[0]) - f) * (smag + 2./3.*(K * X[0]) - f), strain_rate_expo_ / 2. );
+          dH =  strain_rate_expo_ * 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * (2.* K)/3. * std::pow((smag + 2./3.*(K * X[0]) - f) * (smag + 2./3.*(K * X[0]) - f), (strain_rate_expo_ - 1.) / 2. );
           F[0] = f - 2. * mubar * (1. + K/(3. * mubar)) * X[0] - H;
           dFdX[0] = -2. * mubar * (1. + K/(3. * mubar)) - dH;
 
@@ -397,18 +432,18 @@ computeState(typename Traits::EvalData workset,
         dgam_plastic = X[0];
 
         // plastic direction
-        N =  s / Intrepid::norm(s);
+        N =  s / Intrepid2::norm(s);
 
         // update s
 
         s -= 2.0 * mubar * dgam_plastic * N + f * N - 2. * mubar * ( 1. + K/(3. * mubar)) * dgam_plastic * N;
 
-        dgam = dgam_plastic + delta_time(0) * temp_adj_relaxation_para_ * std::pow(Intrepid::norm(s), strain_rate_expo_ );
+        dgam = dgam_plastic + delta_time(0) * temp_adj_relaxation_para_ * std::pow(Intrepid2::norm(s), strain_rate_expo_ );
 
         alpha = eqpsold(cell, pt) + sq23 * dgam_plastic ;
 
         // plastic direction
-        N =  s / Intrepid::norm(s);
+        N =  s / Intrepid2::norm(s);
 
         // update eqps
         eqps(cell, pt) = alpha;
@@ -421,7 +456,7 @@ computeState(typename Traits::EvalData workset,
 
         // exponential map to get Fpnew
         A = dgam * N;
-        expA = Intrepid::exp(A);
+        expA = Intrepid2::exp(A);
         Fpnew = expA * Fpn;
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -453,7 +488,7 @@ if (have_temperature_) {
         ScalarT three_kappa = elastic_modulus(cell,pt) /
           (1.0 - 2.0*poissons_ratio(cell,pt));
         F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid::det(F);
+        ScalarT J = Intrepid2::det(F);
         sigma.fill(stress,cell,pt,0,0);
         sigma -= three_kappa * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;

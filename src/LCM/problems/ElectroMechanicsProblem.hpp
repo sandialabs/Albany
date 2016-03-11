@@ -31,7 +31,7 @@ class ElectroMechanicsProblem: public Albany::AbstractProblem
 {
 public:
 
-  typedef Intrepid::FieldContainer<RealType> FC;
+  typedef Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> FC;
 
   ///
   /// Default constructor
@@ -222,8 +222,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   typedef Teuchos::RCP<
-      Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType>>>
-  IntrepidBasis;
+      Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
+  Intrepid2Basis;
 
   // Collect problem-specific response parameters
 
@@ -274,9 +274,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         "Average J Stabilization Parameter");
 
   // get the intrepid basis for the given cell topology
-  IntrepidBasis intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  Teuchos::RCP<Intrepid::Cubature<RealType>> cubature =
+  Intrepid2Basis intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature =
       cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   // Note that these are the volume element quantities

@@ -10,7 +10,6 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#include "AAdapt_AbstractAdapter.hpp"
 #include "AAdapt_AbstractAdapterT.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #include "Albany_PUMIDiscretization.hpp"
@@ -38,9 +37,12 @@ public:
   bool queryAdaptationCriteria(int iteration);
 
   //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
+/*
   bool adaptMesh(
     const Teuchos::RCP<const Tpetra_Vector>& solution,
     const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
+*/
+  bool adaptMesh();
 
   void adaptInPartition();
 

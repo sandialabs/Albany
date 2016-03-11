@@ -9,14 +9,14 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
-#include "TpetraExt_MatrixMatrix.hpp"
 
 //uncomment the following to write stuff out to matrix market to debug
-//#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 
-#ifdef WRITE_TO_MATRIX_MARKET
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 static
 int mm_counter = 0;
+#include "TpetraExt_MMHelpers.hpp"
 #endif // WRITE_TO_MATRIX_MARKET
 
 //#define OUTPUT_TO_SCREEN 
@@ -90,12 +90,23 @@ Aeras::HVDecorator::HVDecorator(
 #endif
 
   // Create and store mass and Laplacian operators (in CrsMatrix form). 
-  const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperator(1.0, 0.0, 0.0); 
-  const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 0.0, 1.0); 
-#ifdef WRITE_TO_MATRIX_MARKET
-  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass);
-  Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
-#endif
+  const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperatorDiag(1.0, 0.0, 0.0); 
+
+  //OG We need a different fix to build Laplace operator in Aeras:Hydrostatic, because
+  //x_dotdot variable was not accommodated for in Aeras_Scatter/Gather. The easiest way to construct
+  //Laplace is to use n_coeff as a flag/marker. It seems that in Aeras:Hydrostatic
+  //some vars already have gradient evaluators (at least, temperature).
+  //If we pass alpha=0, beta=1, omega=22 (I will fix it to be some nice readable '#define BUILD_LAPLACE 22' value),
+  //and have logic like
+  //  if( n_coeff == BUILD_LAPLACE AND j_coeff == 1){
+  //       Residual = Laplace (xT) }
+  //  in evaluators, then we can capture a Laplace operator. Note that there is no particular reason
+  //to use beta coefficient instead of alpha, only to save one's time to write gradient evaluators
+  //for x_dot variables.
+  //If we do this for Aeras:Hyperviscosity, we'd better change Aeras:ShallowWater for consistency, too.
+  //I may add some check to keep both codes working till kernels in ShallowWater are rewritten.
+  //const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 1.0, 22.0);
+  const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 0.0, 1.0);
 
   // Do some preprocessing to speed up subsequent residual calculations.
   // 1. Store the lumped mass diag reciprocal.
@@ -107,6 +118,15 @@ Aeras::HVDecorator::HVDecorator(
   // 3. Remove the structural nonzeros, numerical zeros, from the Laplace
   // operator.
   laplace_ = getOnlyNonzeros(laplace);
+
+//OG In case of a parallel run by some reason laplace.mm file contains indices
+//out of range with non-trivial entries. I haven't debugged this yet. AB suggested to
+//compare the product L*x (L is the Laplace, x is an arbitrary vector)
+//in case of a parallel and serial run.
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
+  Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", mass);
+  Tpetra_MatrixMarket_Writer::writeSparseFile("laplace.mm", laplace_);
+#endif
 }
  
 //IKT: the following function creates either the mass or Laplacian operator, to be 
@@ -119,7 +139,40 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  double curr_time = 0.0; 
+  double curr_time = 0.0;
+  //Get implicit_graphT from discretization object
+  Teuchos::RCP<const Tpetra_CrsGraph> implicit_graphT = 
+    app->getDiscretization()->getImplicitJacobianGraphT();  
+  //Define operator Op from implicit_graphT
+  const Teuchos::RCP<Tpetra_Operator> Op =
+    Teuchos::nonnull(implicit_graphT) ? 
+    Teuchos::rcp(new Tpetra_CrsMatrix(implicit_graphT)) :
+    Teuchos::null; 
+  const Teuchos::RCP<Tpetra_CrsMatrix> Op_crs =
+    Teuchos::nonnull(Op) ?
+    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Op, true) :
+    Teuchos::null;
+  const Teuchos::RCP<const Tpetra_Vector> xT = ConverterT::getConstTpetraVector(this->getNominalValues().get_x());
+  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
+    Teuchos::nonnull(this->getNominalValues().get_x_dot()) ?
+    ConverterT::getConstTpetraVector(this->getNominalValues().get_x_dot()) :
+    Teuchos::null;
+  //IKT: it's important to make x_dotdotT non-null.  Otherwise 2nd derivative terms defining the laplace operator
+  //will not get set in PHAL_GatherSolution_Def.hpp. 
+  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+  const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
+  app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
+                               sacado_param_vec, fT.get(), *Op_crs);
+  return Op_crs; 
+}
+
+Teuchos::RCP<Tpetra_CrsMatrix> 
+Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
+{
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  double curr_time = 0.0;
   const Teuchos::RCP<Tpetra_Operator> Op =
     Teuchos::nonnull(this->create_W_op()) ?
     ConverterT::getTpetraOperator(this->create_W_op()) :
@@ -352,7 +405,7 @@ Aeras::HVDecorator::evalModelImpl(
   //compute xtildeT 
   applyLinvML(xT, xtildeT); 
 
-#ifdef WRITE_TO_MATRIX_MARKET
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //writing to MatrixMarket for debug
   char name[100];  //create string for file name
   sprintf(name, "xT_%i.mm", mm_counter);

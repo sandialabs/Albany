@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -51,7 +51,7 @@ template<typename EvalT, typename Traits>
 void JouleHeating<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>
+  Intrepid2::FunctionSpaceTools::dotMultiplyDataData<ScalarT>
     (jouleHeating, potentialFlux, potentialGrad);
 }
 // **********************************************************************

@@ -18,8 +18,7 @@ ODEProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, 2),
   numDim(numDim_)
-{
-}
+{ }
 
 Albany::ODEProblem::
 ~ODEProblem()

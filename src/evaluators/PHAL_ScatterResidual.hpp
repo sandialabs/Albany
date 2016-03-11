@@ -15,7 +15,9 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Vector.h"
+#endif
 
 namespace PHAL {
 /** \brief Scatters result from the residual fields into the

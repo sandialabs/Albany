@@ -7,8 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
 namespace LCM {
@@ -79,8 +79,8 @@ void ThermoMechanicalMomentumResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::cout.precision(15);
-  typedef Intrepid::FunctionSpaceTools FST;
-  typedef Intrepid::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
    RST::inverse(F_inv, defgrad);
    RST::transpose(F_invT, F_inv);

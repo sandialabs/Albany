@@ -65,7 +65,6 @@
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
   <ParameterList name="Piro">
-    <Parameter name="Jacobian Operator" type="string" value="Finite Difference"/>
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>

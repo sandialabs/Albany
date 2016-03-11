@@ -38,7 +38,7 @@ ShallowWaterResponseL2Norm(Teuchos::ParameterList& p,
   numDims = coord_dims[2]; //# spatial dimensions
   std::vector<PHX::DataLayout::size_type> dims;
   flow_state_field.fieldTag().dataLayout().dimensions(dims);
-  vecDim = dims[2]; //# dofs per node
+  nPrimaryDOFs = 3; //we have 3 primary dofs for ShallowWater: h, u, v 
   numNodes =  dims[1]; //# nodes per element
 
  
@@ -99,18 +99,18 @@ preEvaluate(typename Traits::PreEvalData workset)
 template<typename EvalT, typename Traits>
 void Aeras::ShallowWaterResponseL2Norm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{   
+{  
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
-  Intrepid::FieldContainer<ScalarT> flow_state_field_qp(workset.numCells, numQPs, vecDim); //flow_state_field at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_qp(workset.numCells, numQPs, nPrimaryDOFs); //flow_state_field at quad points
   
   //Interpolate flow_state_field from nodes -> quadrature points.  
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     this->local_response(cell,3) = 0.0;  
     this->global_response(3) = 0.0; 
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i<vecDim; i++) {
+      for (std::size_t i=0; i<nPrimaryDOFs; i++) {
         // Zero out for node==0; then += for node = 1 to numNodes
         flow_state_field_qp(cell,qp,i) = 0.0;
         flow_state_field_qp(cell,qp,i) = flow_state_field(cell, 0, i)*BF(cell, 0, qp); 
@@ -121,17 +121,13 @@ evaluateFields(typename Traits::EvalData workset)
      }
    }
 
-  //Get final time from workset.  This is for setting time-dependent exact solution. 
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  const RealType final_time  = workset.current_time;
-  *out << "final time = " << final_time << std::endl; 
  
   //Calculate L2 norm squared of each component of solution
   ScalarT wm;
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       wm = weighted_measure(cell,qp);
-      for (std::size_t dim=0; dim<vecDim; ++dim) {
+      for (std::size_t dim=0; dim<nPrimaryDOFs; ++dim) {
         this->local_response(cell,dim) += wm*flow_state_field_qp(cell,qp,dim)*flow_state_field_qp(cell,qp,dim);
         this->global_response(dim) += wm*flow_state_field_qp(cell,qp,dim)*flow_state_field_qp(cell,qp,dim);
       }
@@ -149,6 +145,9 @@ void Aeras::ShallowWaterResponseL2Norm<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  //Get final time from workset.  This is for setting time-dependent exact solution. 
+  const RealType final_time  = workset.current_time;
+  *out << "final time = " << final_time << std::endl; 
 #if 0
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =

@@ -33,7 +33,15 @@
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- Kfield Boundary Conditions -->
+      <ParameterList name="Pressure Dependent DBC on NS nodelist_3 for DOF C">
+        <Parameter name="BC Function" type="string" value="Equilibrium Concentration"/>
+        <Parameter name="Applied Concentration" type="double" value="5.6e-4"/>
+        <!-- Pressure factor is V_{H}/R/T -->
+        <Parameter name="Pressure Factor" type="double" value="0.801860315932965"/>
+      </ParameterList>
+      <!--
       <Parameter name="DBC on NS nodelist_3 for DOF C" type="double" value="5.6e-4"/>
+      -->
       <Parameter name="DBC on NS nodelist_4 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_5 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="DBC on NS nodelist_1 for DOF K">
@@ -147,7 +155,7 @@
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
@@ -209,7 +217,7 @@
           <Parameter name="Number of Tests" type="int" value="2"/>
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
-            <Parameter name="Number of Nonlinear Iterations" type="int" value="3"/>
+            <Parameter name="Number of Nonlinear Iterations" type="int" value="4"/>
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>

@@ -6,8 +6,8 @@
 
 #include "HydMorphProblem.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -32,8 +32,6 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   }
-
-
 }
 
 Albany::HydMorphProblem::

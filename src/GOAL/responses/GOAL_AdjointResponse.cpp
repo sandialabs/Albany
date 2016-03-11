@@ -6,6 +6,8 @@
 
 #include "GOAL_AdjointResponse.hpp"
 #include "GOAL_MechanicsProblem.hpp"
+#include "GOAL_BCUtils.hpp"
+#include "GOAL_LinearSolve.hpp"
 #include "Albany_GOALDiscretization.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "PHAL_Utilities.hpp"
@@ -36,12 +38,12 @@ AdjointResponse::AdjointResponse(
   time(0),
   enrichAdjoint(false),
   application(app),
+  problem(prob),
   stateManager(sm),
   meshSpecs(ms),
   params(rp)
 {
   print("Building adjoint pde instantiations");
-  problem = Teuchos::rcp_dynamic_cast<Albany::GOALMechanicsProblem>(prob);
   enrichAdjoint = problem->enrichAdjoint;
   buildFieldManagers();
 }
@@ -50,8 +52,20 @@ AdjointResponse::~AdjointResponse()
 {
 }
 
+static void changeMeshSpecs(
+    int add,
+    ArrayRCP<RCP<Albany::MeshSpecsStruct> >& ms)
+{
+  for (int i=0; i < ms.size(); ++i){
+    ms[i]->polynomialOrder += add;
+    ms[i]->cubatureDegree += add;
+  }
+}
+
 void AdjointResponse::buildFieldManagers()
 {
+  if (enrichAdjoint)
+    changeMeshSpecs(1, meshSpecs);
   problem->isAdjoint = true;
   int physSets = meshSpecs.size();
   fm.resize(physSets);
@@ -62,6 +76,8 @@ void AdjointResponse::buildFieldManagers()
         Albany::BUILD_RESPONSE_FM, rcp(&params, false));
   }
   problem->isAdjoint = false;
+  if (enrichAdjoint)
+    changeMeshSpecs(-1, meshSpecs);
 }
 
 static RCP<Albany::GOALDiscretization> getDiscretization(
@@ -93,6 +109,10 @@ void AdjointResponse::initializeLinearSystem()
   RCP<const Tpetra_CrsGraph> og = discretization->getOverlapJacobianGraphT();
   x = rcp(new Tpetra_Vector(m));
   overlapX = rcp(new Tpetra_Vector(om));
+  z = rcp(new Tpetra_Vector(m));
+  overlapZ = rcp(new Tpetra_Vector(om));
+  qoi = rcp(new Tpetra_Vector(m));
+  overlapQoI = rcp(new Tpetra_Vector(om));
   jac = rcp(new Tpetra_CrsMatrix(g));
   overlapJac = rcp(new Tpetra_CrsMatrix(og));
   importer = rcp(new Tpetra_Import(m, om));
@@ -103,7 +123,7 @@ void AdjointResponse::initializeLinearSystem()
 
 void AdjointResponse::initializeWorkset(PHAL::Workset& workset)
 {
-  workset.is_adjoint = false;
+  workset.is_adjoint = true;
   workset.j_coeff = 1.0;
   workset.m_coeff = 0.0;
   workset.n_coeff = 0.0;
@@ -113,6 +133,7 @@ void AdjointResponse::initializeWorkset(PHAL::Workset& workset)
   workset.xT = overlapX;
   workset.xdotT = dummy;
   workset.xdotdotT = dummy;
+  workset.qoi = overlapQoI;
   workset.JacT = overlapJac;
   workset.x_importerT = importer;
   workset.comm = x->getMap()->getComm();
@@ -132,6 +153,9 @@ void AdjointResponse::fillLinearSystem()
     fm[wsPhysIndex[ws]]->evaluateFields<J>(workset);
   }
   jac->doExport(*overlapJac, *exporter, Tpetra::ADD);
+  qoi->doExport(*overlapQoI, *exporter, Tpetra::ADD);
+  computeAdjointHierarchicBCs(time, *application.get(), qoi, jac);
+  jac->fillComplete();
 }
 
 void AdjointResponse::evaluateResponseT(
@@ -147,9 +171,15 @@ void AdjointResponse::evaluateResponseT(
   time = currentTime;
   discretization = getDiscretization(application);
   discretization->attachSolutionToMesh(xT);
+  if (enrichAdjoint)
+    discretization->changeP(1);
   postRegistrationSetup();
   initializeLinearSystem();
   fillLinearSystem();
+  solveLinearSystem(application, jac, z, qoi);
+  discretization->attachAdjointSolutionToMesh(*z);
+  if (enrichAdjoint)
+    discretization->changeP(-1);
   evalCtr++;
 }
 

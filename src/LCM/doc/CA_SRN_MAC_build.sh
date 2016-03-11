@@ -318,7 +318,7 @@ cmake  \\
     -D Trilinos_ENABLE_Belos:BOOL=ON \\
     -D Trilinos_ENABLE_ML:BOOL=ON \\
     -D Trilinos_ENABLE_Phalanx:BOOL=ON \\
-    -D Trilinos_ENABLE_Intrepid:BOOL=ON \\
+    -D Trilinos_ENABLE_Intrepid2:BOOL=ON \\
     -D Trilinos_ENABLE_NOX:BOOL=ON \\
     -D Trilinos_ENABLE_Stratimikos:BOOL=ON \\
     -D Trilinos_ENABLE_Thyra:BOOL=ON \\

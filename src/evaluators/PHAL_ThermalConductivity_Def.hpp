@@ -61,11 +61,13 @@ ThermalConductivity(Teuchos::ParameterList& p) :
 
   }
 
+#ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion" || type == "Log Normal RF") {
 
     init_KL_RF(type, *cond_list, p);
 
   }
+#endif
 
   else if (type == "Block Dependent")
   {
@@ -95,11 +97,13 @@ ThermalConductivity(Teuchos::ParameterList& p) :
        init_constant(value, p);
 
     }
+#ifdef ALBANY_STOKHOS
     else if (typ == "Truncated KL Expansion" || typ == "Log Normal RF") {
 
        init_KL_RF(typ, subList, p);
 
     }
+#endif
   } // Block dependent
 
   else {
@@ -129,6 +133,7 @@ init_constant(ScalarT value, Teuchos::ParameterList& p){
 
 } // init_constant
 
+#ifdef ALBANY_STOKHOS
 template<typename EvalT, typename Traits>
 void
 ThermalConductivity<EvalT, Traits>::
@@ -165,6 +170,7 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
     }
 
 } // (type == "Truncated KL Expansion" || type == "Log Normal RF")
+#endif
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
@@ -189,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-
+#ifdef ALBANY_STOKHOS
   else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -203,6 +209,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -213,11 +220,12 @@ ThermalConductivity<EvalT,Traits>::getValue(const std::string &n)
   if (is_constant) {
     return constant_value;
   }
-
+#ifdef ALBANY_STOKHOS
   for (int i=0; i<rv.size(); i++) {
     if (n == Albany::strint("Thermal Conductivity KL Random Variable",i))
       return rv[i];
   }
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
                      "Error! Logic error in getting paramter " << n

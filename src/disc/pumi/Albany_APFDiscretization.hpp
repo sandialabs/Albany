@@ -52,6 +52,14 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
+#ifdef ALBANY_AERAS
+    // GAH - Is this right for Aeras? Probably do not use PUMI with Aeras I am assuming.
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const
+                 { return this->getOverlapJacobianGraphT(); }
+    Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const
+                 { return this->getJacobianGraphT(); }
+#endif
+
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
@@ -107,12 +115,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Get number of total DOFs per node
     int getNumEq() const { return neq; }
 
-    //! Get the names of the solution fields
-    virtual std::vector<std::string> getSolNames() const { return solNames; }
-
-    //! Get the solution index offsets
-    virtual std::vector<int> getSolIndex() const { return solIndex; }
-
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names
@@ -120,17 +122,22 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    void writeAnySolutionToMeshDatabase(const ST* soln, const double time, const bool overlapped = false);
-    void writeAnySolutionToFile(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToMeshDatabase(const ST* soln, const int index, const bool overlapped = false);
+    void writeAnySolutionToFile(const double time);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionMV(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionMVToFile(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
 
     void writeRestartFile(const double time);
 
     virtual void writeMeshDebug (const std::string& filename);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
+
+    Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const;
 
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -179,15 +186,15 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     // Copy field data from Tpetra_Vector to APF
     void setField(const char* name, const ST* data, bool overlapped,
                   int offset = 0, int nentries = -1);
-    void setSplitFields(const std::vector<std::string>& names,
-                        const std::vector<int>& indices,
+    void setSplitFields(const Teuchos::Array<std::string>& names,
+                        const Teuchos::Array<int>& indices,
                         const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
     void getField(const char* name, ST* dataT, bool overlapped, int offset = 0,
                   int nentries = -1) const;
-    void getSplitFields(const std::vector<std::string>& names,
-                        const std::vector<int>& indices,
+    void getSplitFields(const Teuchos::Array<std::string>& names,
+                        const Teuchos::Array<int>& indices,
                         ST* dataT, bool overlapped) const;
 
     // Rename exodus output file when the problem is resized
@@ -343,9 +350,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void removeNodalDataFromAPF();
 
     // ! Split Solution fields
-    std::vector<std::string> solNames;
-    std::vector<std::string> resNames;
-    std::vector<int> solIndex;
+    SolutionLayout solNames; // solNames[time_deriv_vector][Field]
+    Teuchos::Array<std::string> resNames; // resNames[Field]
 
   private:
 

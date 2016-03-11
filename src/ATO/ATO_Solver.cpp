@@ -411,7 +411,7 @@ ATO::Solver::evalModel(const InArgs& inArgs,
 
     if(numColumns > 0){
       // collect homogenized values
-      Intrepid::FieldContainer<RealType> Cvals(numColumns,numColumns);
+      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> Cvals(numColumns,numColumns);
       for(int i=0; i<numColumns; i++){
         Teuchos::RCP<const Epetra_Vector> g = hs.homogenizationProblems[i].responses_out->get_g(hs.responseIndex);
         for(int j=0; j<numColumns; j++){

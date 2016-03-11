@@ -78,7 +78,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
       }
     }
 
-    // Since Intrepid will later perform calculations on the entire workset size
+    // Since Intrepid2 will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable 
     // values. Leaving this out leads to calculations on singular elements.
     for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
@@ -105,7 +105,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
       }
     }
 
-    // Since Intrepid will later perform calculations on the entire workset size
+    // Since Intrepid2 will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable 
     // values. Leaving this out leads to calculations on singular elements.
     for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
@@ -167,7 +167,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
 #endif
 }
 // **********************************************************************
-#ifdef ALBANY_MESH_TANFAD
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
 template<typename Traits>
 GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p,
@@ -236,7 +236,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  // Since Intrepid will later perform calculations on the entire workset size
+  // Since Intrepid2 will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to calculations on singular elements.
   //

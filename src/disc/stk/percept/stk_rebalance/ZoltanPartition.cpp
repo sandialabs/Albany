@@ -931,7 +931,7 @@ void Zoltan::determine_new_partition (bool &RebalancingNeeded)
                                   &num_exported,    &export_gids,
                                   &export_lids,     &export_procs );
   if (status != ZOLTAN_OK) {
-    throw std::runtime_error("Zoltan_Balance() returned error code " + status);
+    throw std::runtime_error(std::string("Zoltan_Balance() returned error code ") + std::to_string(status));
   }
 
   //: Initialize destination processor IDs (dest_proc_ids)

@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 #include "PHAL_Utilities.hpp"
 
@@ -88,17 +88,17 @@ template<typename EvalT, typename Traits>
 void HelmholtzResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools FST;
 
-  FST::integrate<ScalarT>(UResidual, UGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
-  FST::integrate<ScalarT>(VResidual, VGrad, wGradBF, Intrepid::COMP_CPP, false);
+  FST::integrate<ScalarT>(UResidual, UGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate<ScalarT>(VResidual, VGrad, wGradBF, Intrepid2::COMP_CPP, false);
 
   PHAL::scale(UResidual, -1.0);
   PHAL::scale(VResidual, -1.0);
 
   if (haveSource) {
-    FST::integrate<ScalarT>(UResidual, USource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-    FST::integrate<ScalarT>(VResidual, VSource, wBF, Intrepid::COMP_CPP, true);
+    FST::integrate<ScalarT>(UResidual, USource, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate<ScalarT>(VResidual, VSource, wBF, Intrepid2::COMP_CPP, true);
   }
 
   if (ksqr != 1.0) {
@@ -106,8 +106,8 @@ evaluateFields(typename Traits::EvalData workset)
     PHAL::scale(V, ksqr);
   }
 
-  FST::integrate<ScalarT>(UResidual, U, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  FST::integrate<ScalarT>(VResidual, V, wBF, Intrepid::COMP_CPP, true);
+  FST::integrate<ScalarT>(UResidual, U, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate<ScalarT>(VResidual, V, wBF, Intrepid2::COMP_CPP, true);
 
  // Potential code for "attenuation"  (1 - 0.05i)k^2 \phi
  /*
@@ -117,8 +117,8 @@ evaluateFields(typename Traits::EvalData workset)
     V[i] *=  alpha;
   }
 
-  FST::integrate<ScalarT>(UResidual, V, wBF, Intrepid::COMP_CPP, true); // "true" sums into
-  FST::integrate<ScalarT>(VResidual, U, wBF, Intrepid::COMP_CPP, true);
+  FST::integrate<ScalarT>(UResidual, V, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate<ScalarT>(VResidual, U, wBF, Intrepid2::COMP_CPP, true);
  */
 }
 

@@ -35,6 +35,10 @@ public:
       const Thyra::VectorBase<ST> &solution_dot,
       const ST stamp);
 
+  virtual void observeSolution(
+      const Thyra::MultiVectorBase<ST> &solution,
+      const ST stamp);
+
 private:
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
@@ -45,12 +49,17 @@ private:
       const Thyra::VectorBase<ST> &solution_dot,
       const ST defaultStamp);
 
+  void observeSolutionImpl(
+      const Thyra::MultiVectorBase<ST> &solution,
+      const ST defaultStamp);
+
   void observeTpetraSolutionImpl(
       const Tpetra_Vector &solution,
       Teuchos::Ptr<const Tpetra_Vector> solution_dot,
       const ST defaultStamp);
 
   ObserverImpl impl_;
+
 };
 
 } // namespace Albany

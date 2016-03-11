@@ -82,6 +82,30 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     field_map_.insert(std::make_pair(s_mod, shear_mod_));
     parseParameters(s_mod, p, paramLib);
   }
+  // C11
+  std::string c11_mod("C11");
+  if (mat_params->isSublist(c11_mod)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(c11_mod, dl_->qp_scalar);
+    c11_ = tmp;
+    field_map_.insert(std::make_pair(c11_mod, c11_));
+    parseParameters(c11_mod, p, paramLib);
+  }
+  // C12
+  std::string c12_mod("C12");
+  if (mat_params->isSublist(c12_mod)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(c12_mod, dl_->qp_scalar);
+    c12_ = tmp;
+    field_map_.insert(std::make_pair(c12_mod, c12_));
+    parseParameters(c12_mod, p, paramLib);
+  }
+  // C44
+  std::string c44_mod("C44");
+  if (mat_params->isSublist(c44_mod)) {
+    PHX::MDField<ScalarT, Cell, QuadPoint> tmp(c44_mod, dl_->qp_scalar);
+    c44_ = tmp;
+    field_map_.insert(std::make_pair(c44_mod, c44_));
+    parseParameters(c44_mod, p, paramLib);
+  }
   // yield strength
   std::string yield("Yield Strength");
   if (mat_params->isSublist(yield)) {
@@ -298,7 +322,9 @@ evaluateFields(typename Traits::EvalData workset)
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
+#ifdef ALBANY_STOKHOS
     Stokhos::KL::ExponentialRandomField<RealType>*  exp_rf_kl =  exp_rf_kl_map_[it->first].get();
+#endif
     ScalarT constant_value = constant_value_map_[it->first];
     if (is_constant_map_[it->first]) {
       for (int cell(0); cell < workset.numCells; ++cell) {
@@ -313,8 +339,10 @@ evaluateFields(typename Traits::EvalData workset)
           for (int i(0); i < num_dims_; ++i)
             point[i] = Sacado::ScalarValue<MeshScalarT>::eval(
                 coord_vec_(cell, pt, i));
-          it->second(cell, pt) =
+#ifdef ALBANY_STOKHOS
+         it->second(cell, pt) =
               exp_rf_kl_map_[it->first]->evaluate(point, rv_map_[it->first]);
+#endif
         }
       }
     }
@@ -350,8 +378,10 @@ evaluateFields(typename Traits::EvalData workset)
 
     constant_value = constant_value_map_[it->first];
     second=it->second;
+#ifdef ALBANY_STOKHOS
     exp_rf_kl = exp_rf_kl_map_[it->first].get();
     rv_map = &rv_map_[it->first];
+#endif
 
     if (have_temperature_){
        if (temp_type_map_[it->first] == "Linear" ) {
@@ -449,7 +479,9 @@ parseParameters(const std::string &n,
             std::make_pair(n, pl.get<RealType>("Exponential Parameter", 0.0)));
       }
     }
-  } else if (type == "Truncated KL Expansion") {
+  } 
+#ifdef ALBANY_STOKHOS
+  else if (type == "Truncated KL Expansion") {
     is_constant_map_.insert(std::make_pair(n, false));
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
       fx(p.get<std::string>("QP Coordinate Vector Name"), dl_->qp_vector);
@@ -471,6 +503,7 @@ parseParameters(const std::string &n,
       rv_map_[n][i] = pl.get(ss, 0.0);
     }
   }
+#endif
 }
 //------------------------------------------------------------------------------
 }

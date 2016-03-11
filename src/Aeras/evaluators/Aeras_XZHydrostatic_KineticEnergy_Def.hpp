@@ -11,7 +11,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "PHAL_Utilities.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
 
 namespace Aeras {
@@ -66,6 +66,7 @@ typename XZHydrostatic_KineticEnergy<EvalT,Traits>::ScalarT&
 XZHydrostatic_KineticEnergy<EvalT,Traits>::getValue(const std::string &n)
 {
   if (n=="KineticEnergy") return ke0;
+  return ke0;
 }
 
 }

@@ -62,7 +62,7 @@ class AdjointResponse :
     bool enrichAdjoint;
 
     Teuchos::RCP<Albany::Application> application;
-    Teuchos::RCP<Albany::GOALMechanicsProblem> problem;
+    Teuchos::RCP<Albany::AbstractProblem> problem;
     Teuchos::RCP<Albany::StateManager> stateManager;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
     Teuchos::ParameterList params;
@@ -72,6 +72,10 @@ class AdjointResponse :
 
     Teuchos::RCP<Tpetra_Vector> x;
     Teuchos::RCP<Tpetra_Vector> overlapX;
+    Teuchos::RCP<Tpetra_Vector> z;
+    Teuchos::RCP<Tpetra_Vector> overlapZ;
+    Teuchos::RCP<Tpetra_Vector> qoi;
+    Teuchos::RCP<Tpetra_Vector> overlapQoI;
     Teuchos::RCP<Tpetra_CrsMatrix> jac;
     Teuchos::RCP<Tpetra_CrsMatrix> overlapJac;
     Teuchos::RCP<Tpetra_Import> importer;

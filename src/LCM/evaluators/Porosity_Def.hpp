@@ -45,6 +45,7 @@ namespace LCM {
       // Add Porosity as a Sacado-ized parameter
       this->registerSacadoParameter("Porosity", paramLib);
     }
+#ifdef ALBANY_STOKHOS
     else if (type == "Truncated KL Expansion") {
       is_constant = false;
       PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
@@ -65,6 +66,7 @@ namespace LCM {
         rv[i] = porosity_list->get(ss, 0.0);
       }
     }
+#endif
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, 
                                  Teuchos::Exceptions::InvalidParameter,
@@ -203,6 +205,7 @@ namespace LCM {
         }
       }
     }
+#ifdef ALBANY_STOKHOS
     else {
       for (int cell=0; cell < numCells; ++cell) {
         for (int qp=0; qp < numQPs; ++qp) {
@@ -213,6 +216,7 @@ namespace LCM {
         }
       }
     }
+#endif
 
     // if the porous media is deforming
     if ((isPoroElastic) && (isCompressibleSolidPhase) && (isCompressibleFluidPhase)) {
@@ -304,10 +308,12 @@ namespace LCM {
       return initialPorosityValue;
     else if (n == "Grain Bulk Modulus Value")
       return GrainBulkModulus;
+#ifdef ALBANY_STOKHOS
     for (int i=0; i<rv.size(); i++) {
       if (n == Albany::strint("Porosity KL Random Variable",i))
         return rv[i];
     }
+#endif
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                std::endl <<
                                "Error! Logic error in getting parameter " << n

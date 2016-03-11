@@ -11,7 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
 
@@ -87,6 +87,30 @@ ShallowWaterHyperViscosity<EvalT,Traits>::getValue(const std::string &n)
 }
 
 //**********************************************************************
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterHyperViscosity<EvalT, Traits>::
+operator() (const ShallowWaterHyperViscosity_Tag& tag, const int& cell) const{ 
+
+if (useHyperviscosity == false) { //no hyperviscosity
+      for(int qp = 0; qp < numQPs; ++qp) {
+        for (int i=0; i<vecDim; ++i)
+           hyperviscosity(cell, qp, i) = 0.0;
+    }
+  }
+  else { //hyperviscosity
+    if (hvType == CONSTANT) {
+      for(int qp = 0; qp < numQPs; ++qp) {
+        for (int i=0; i<vecDim; ++i)
+           hyperviscosity(cell, qp, i) = hvTau;
+        }
+      }
+    }
+
+}
+#endif
+//*********************************************************************
 template<typename EvalT, typename Traits>
 void ShallowWaterHyperViscosity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -114,12 +138,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-  if (useHyperviscosity == false) //no hyperviscosity 
-      hyperviscosity.deep_copy(0.0);
-  else {//hyperviscosity 
-    if (hvType == CONSTANT) 
-      hyperviscosity.deep_copy(hvTau);
-  }
+
+  Kokkos::parallel_for(ShallowWaterHyperViscosity_Policy(0,workset.numCells),*this);
+
 #endif
 
 }

@@ -81,8 +81,8 @@ namespace Albany {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -114,16 +114,22 @@ Albany::GPAMProblem::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
+
+  // Problem is transient
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv < 0 || number_of_time_deriv > 1,
+      std::logic_error,
+      "Albany_GPAMProblem must be defined as a steady or transient calculation.");
   
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -150,16 +156,23 @@ Albany::GPAMProblem::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "Concentration";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if(number_of_time_deriv > 0)
+       dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "GPAM Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+
+     if(number_of_time_deriv == 1)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+     else
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
+     if(number_of_time_deriv == 1)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
 // Uncommented this
      fm0.template registerEvaluator<EvalT>
@@ -204,6 +217,8 @@ Albany::GPAMProblem::constructEvaluators(
     p->set<string>("QP Variable Name", "Concentration");
     p->set<string>("QP Time Derivative Variable Name", "Concentration_dot");
     p->set<string>("Gradient QP Variable Name", "Concentration Gradient");
+    if(number_of_time_deriv == 0)
+       p->set<bool>("Disable Transient", true);
     
     //Output
     p->set<string>("Residual Name", "GPAM Residual");

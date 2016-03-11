@@ -7,8 +7,8 @@
 #ifndef FELIX_HYDROLOGY_PROBLEM_HPP
 #define FELIX_HYDROLOGY_PROBLEM_HPP 1
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
@@ -97,7 +97,7 @@ protected:
 
   Teuchos::RCP<Albany::Layouts> dl;
 
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
 };
 
 // ===================================== IMPLEMENTATION ======================================= //
@@ -118,13 +118,13 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Retrieving FE information (basis and cell type)
   if (intrepidBasis.get()==0)
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
   // Building the right quadrature formula
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   // Some constants
   const int numNodes = intrepidBasis->getCardinality();
@@ -239,31 +239,31 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Drainage Sheet Depth
-  ev = evalUtils.constructDOFInterpolationEvaluator("h");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("h");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Ice Thickness
-  ev = evalUtils.constructDOFInterpolationEvaluator("H");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("H");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Surface Height
-  ev = evalUtils.constructDOFInterpolationEvaluator("z_s");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("z_s");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Sliding Velocity Norm
-  ev = evalUtils.constructDOFInterpolationEvaluator("u_b");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("u_b");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Basal Friction Coefficient
-  ev = evalUtils.constructDOFInterpolationEvaluator("beta");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("beta");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Surface Water Input
-  ev = evalUtils.constructDOFInterpolationEvaluator("omega");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("omega");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Geothermal Flux
-  ev = evalUtils.constructDOFInterpolationEvaluator("G");
+  ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("G");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // ----- Hydrology Hydrostatic Potential ---- //

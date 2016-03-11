@@ -70,8 +70,8 @@ class MesoScaleLinkProblem : public Albany::AbstractProblem {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState_,
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState_
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState_,
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState_
     ) const;
 
   private:
@@ -112,8 +112,8 @@ class MesoScaleLinkProblem : public Albany::AbstractProblem {
     Teuchos::RCP<MPI_Comm> interCommunicator;
     int numMesoPEs;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState;
 
 };
 
@@ -159,14 +159,14 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
   std::string elementBlockName = meshSpecs.ebName;
 
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(&meshSpecs.ctd));
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-  intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
 
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
   const int numDim = cubature->getDimension();
   const int numQPts = cubature->getNumPoints();
@@ -191,10 +191,10 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
 
   Teuchos::ArrayRCP<std::string> dof_names(1);
   dof_names[0] = "Displacement";
-  Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
+  Teuchos::ArrayRCP<std::string> dof_names_dot(1);
 
   if(supportsTransient)
-    dof_names_dotdot[0] = dof_names[0] + "_dotdot";
+    dof_names_dot[0] = dof_names[0] + "_dot";
 
   Teuchos::ArrayRCP<std::string> resid_names(1);
   resid_names[0] = dof_names[0] + " Residual";
@@ -203,13 +203,13 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
   (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
 
   if(supportsTransient) fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+    (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
 
   fm0.template registerEvaluator<EvalT>
   (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
   if(supportsTransient) fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dotdot));
+    (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot));
 
   else fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names));
@@ -384,7 +384,7 @@ Albany::MesoScaleLinkProblem::constructEvaluators(
     // extra input for time dependent term
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-    p->set<std::string>("Time Dependent Variable Name", "Displacement_dotdot");
+    p->set<std::string>("Time Dependent Variable Name", "Displacement_dot");
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
     //Output

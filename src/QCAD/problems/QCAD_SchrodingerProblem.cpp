@@ -7,8 +7,8 @@
 #include "QCAD_SchrodingerProblem.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 
@@ -67,6 +67,9 @@ QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::Parame
       }
     }
   }
+
+  // Problem is transient
+  params->set<int>("Number Of Time Derivatives", 1);
 
   TEUCHOS_TEST_FOR_EXCEPTION(params->isSublist("Source Functions"), Teuchos::Exceptions::InvalidParameter,
 		     "\nError! Schrodinger problem does not parse Source Functions sublist\n" 

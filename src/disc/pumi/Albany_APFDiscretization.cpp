@@ -12,7 +12,9 @@
 #endif
 
 #include "Albany_Utils.hpp"
+#ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
+#endif
 #include "Albany_PUMIOutput.hpp"
 #include <string>
 #include <iostream>
@@ -86,23 +88,37 @@ void Albany::APFDiscretization::init()
   bool shouldTransferIPData = false;
   this->updateMesh(shouldTransferIPData);
 
-  Teuchos::Array<std::string> layout = meshStruct->solVectorLayout;
+// layout[num deriv vectors][DOF_component]
+  Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
+  int number_of_solution_vecs = layout.size();
   int index;
+  solNames.resizeTimeDeriv(number_of_solution_vecs);
+ 
 
-  for (std::size_t i=0; i < layout.size(); i+=2) {
-    solNames.push_back(layout[i]);
-    resNames.push_back(layout[i].append("Res"));
-    if (layout[i+1] == "S") {
-      index = 1;
-      solIndex.push_back(index);
-    }
-    else if (layout[i+1] == "V") {
-      index = getNumDim();
-      solIndex.push_back(index);
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
-        "Layout '" << layout[i+1] << "' is not supported.");
+  for (std::size_t i=0; i < layout[0].size(); i+=2) {
+
+    std::string res_name = layout[0][i];
+    res_name.append("Res");
+
+    resNames.push_back(res_name);
+
+  }
+
+  for (int j=0; j < number_of_solution_vecs; j++) {
+    for (std::size_t i=0; i < layout[j].size(); i+=2) {
+      solNames.getTimeDeriv(j).push_back(layout[j][i]);
+      if (layout[j][i+1] == "S") {
+        index = 1; // num DOFs in sub-vector
+        solNames.getTimeIdx(j).push_back(index);
+      }
+      else if (layout[j][i+1] == "V") {
+        index = getNumDim(); // num DOFs in sub-vector
+        solNames.getTimeIdx(j).push_back(index);
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          true, std::logic_error,
+          "Layout '" << layout[j][i+1] << "' is not supported.");
+      }
     }
   }
 
@@ -352,7 +368,7 @@ void Albany::APFDiscretization::setField(
 }
 
 void Albany::APFDiscretization::setSplitFields(
-  const std::vector<std::string>& names, const std::vector<int>& indices,
+  const Teuchos::Array<std::string>& names, const Teuchos::Array<int>& indices,
   const ST* data, bool overlapped)
 {
   const int spdim = getNumDim();
@@ -375,6 +391,7 @@ void Albany::APFDiscretization::getField(
   const int
     spdim = getNumDim(),
     albany_nc = albanyCountComponents(spdim, apf::countComponents(f));
+
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
     GO node_gid = apf::getNumber(globalNumbering,node);
@@ -398,7 +415,7 @@ void Albany::APFDiscretization::getField(
 }
 
 void Albany::APFDiscretization::getSplitFields(
-  const std::vector<std::string>& names, const std::vector<int>& indices, ST* data,
+  const Teuchos::Array<std::string>& names, const Teuchos::Array<int>& indices, ST* data,
   bool overlapped) const
 {
   const int spdim = getNumDim();
@@ -424,41 +441,78 @@ void Albany::APFDiscretization::writeSolutionT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
-  writeAnySolutionToMeshDatabase(&(data[0]),time_value,overlapped);
-  writeAnySolutionToFile(&(data[0]),time_value,overlapped);
+  writeAnySolutionToMeshDatabase(&(data[0]), 0, overlapped);
+  writeAnySolutionToFile(time_value);
+}
+
+void Albany::APFDiscretization::writeSolutionMV(
+  const Tpetra_MultiVector& solnT, const double time_value, const bool overlapped)
+{
+
+  for(int i = 0; i <= meshStruct->num_time_deriv; i++){
+
+    Teuchos::RCP<const Tpetra_Vector> colT = solnT.getVector(i);
+    Teuchos::ArrayRCP<const ST> data = colT->get1dView();
+    writeAnySolutionToMeshDatabase(&(data[0]), i, overlapped);
+  }
+
+  writeAnySolutionToFile(time_value);
+
 }
 
 void Albany::APFDiscretization::writeSolutionToMeshDatabaseT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
-  writeAnySolutionToMeshDatabase(&(data[0]),time_value,overlapped);
+  writeAnySolutionToMeshDatabase(&(data[0]), 0, overlapped);
+}
+
+void Albany::APFDiscretization::writeSolutionMVToMeshDatabase(
+  const Tpetra_MultiVector& solnT, const double time_value, const bool overlapped)
+{
+  for(int i = 0; i <= meshStruct->num_time_deriv; i++){
+
+    Teuchos::RCP<const Tpetra_Vector> colT = solnT.getVector(i);
+    Teuchos::ArrayRCP<const ST> data = colT->get1dView();
+    writeAnySolutionToMeshDatabase(&(data[0]), i, overlapped);
+  }
 }
 
 void Albany::APFDiscretization::writeSolutionToFileT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
-  writeAnySolutionToFile(&(data[0]),time_value,overlapped);
+  writeAnySolutionToFile(time_value);
+}
+
+void Albany::APFDiscretization::writeSolutionMVToFile(
+  const Tpetra_MultiVector& solnT, const double time_value, const bool overlapped)
+{
+  for(int i = 0; i <= meshStruct->num_time_deriv; i++){
+
+    Teuchos::RCP<const Tpetra_Vector> colT = solnT.getVector(i);
+    Teuchos::ArrayRCP<const ST> data = colT->get1dView();
+    writeAnySolutionToFile(time_value);
+  }
 }
 
 #if defined(ALBANY_EPETRA)
 void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
-  writeAnySolutionToMeshDatabase(&(soln[0]),time_value,overlapped);
-  writeAnySolutionToFile(&(soln[0]),time_value,overlapped);
+  writeAnySolutionToMeshDatabase(&(soln[0]), 0, overlapped);
+  writeAnySolutionToFile(time_value);
 }
 #endif
 
 static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
 {
-  if (!(meshStruct->useTemperatureHack && meshStruct->solutionInitialized))
+  if (!meshStruct->useTemperatureHack)
     return;
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* t = m->findField("temp");
   if (!t)
-    t = m->findField(Albany::APFMeshStruct::solution_name);
+    t = m->findField(Albany::APFMeshStruct::solution_name[0]);
   assert(t);
   apf::Field* told = m->findField("temp_old");
   if (!told)
@@ -470,22 +524,19 @@ static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
 }
 
 void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
-      const ST* soln, const double time_value,
-      const bool overlapped)
+      const ST* soln, const int index, const bool overlapped)
 {
-  saveOldTemperature(meshStruct);
-  (void) time_value;
-  if (solNames.size() == 0)
-    this->setField(APFMeshStruct::solution_name,soln,overlapped);
+  // index is time deriv vector (solution, solution_dot, or solution_dotdot
+  if (solNames.getTimeDeriv(index).size() == 0)
+    this->setField(APFMeshStruct::solution_name[index],soln,overlapped);
   else
-    this->setSplitFields(solNames,solIndex,soln,overlapped);
-
+    this->setSplitFields(solNames.getTimeDeriv(index), solNames.getTimeIdx(index), soln, overlapped);
   meshStruct->solutionInitialized = true;
+  saveOldTemperature(meshStruct);
 }
 
 void Albany::APFDiscretization::writeAnySolutionToFile(
-      const ST* soln, const double time_value,
-      const bool overlapped)
+      const double time_value)
 {
   // Skip this write unless the proper interval has been reached.
   if (outputInterval++ % meshStruct->outputInterval)
@@ -578,10 +629,10 @@ void
 Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
   Teuchos::ArrayRCP<const ST> data = residualT.get1dView();
-  if (solNames.size() == 0)
+  if (solNames.getTimeDeriv(0).size() == 0) // dont have solution_dot or solution_dotdot
     this->setField(APFMeshStruct::residual_name,&(data[0]),/*overlapped=*/false);
   else
-    this->setSplitFields(resNames,solIndex,&(data[0]),/*overlapped=*/false);
+    this->setSplitFields(resNames, solNames.getTimeIdx(0), &(data[0]), /*overlapped=*/false);
 
   meshStruct->residualInitialized = true;
 }
@@ -590,10 +641,10 @@ Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 void
 Albany::APFDiscretization::setResidualField(const Epetra_Vector& residual)
 {
-  if (solNames.size() == 0)
+  if (solNames.getTimeDeriv(0).size() == 0)
     this->setField(APFMeshStruct::residual_name,&(residual[0]),/*overlapped=*/false);
   else
-    this->setSplitFields(resNames,solIndex,&(residual[0]),/*overlapped=*/false);
+    this->setSplitFields(resNames, solNames.getTimeIdx(0), &(residual[0]), /*overlapped=*/false);
 
   meshStruct->residualInitialized = true;
 }
@@ -609,10 +660,34 @@ Albany::APFDiscretization::getSolutionFieldT(bool overlapped) const
     Teuchos::ArrayRCP<ST> data = solnT->get1dViewNonConst();
 
     if (meshStruct->solutionInitialized) {
-      if (solNames.size() == 0)
-        this->getField(APFMeshStruct::solution_name,&(data[0]),overlapped);
+      if (solNames.getTimeDeriv(0).size() == 0)
+        this->getField(APFMeshStruct::solution_name[0],&(data[0]),overlapped);
       else
-        this->getSplitFields(solNames,solIndex,&(data[0]),overlapped);
+        this->getSplitFields(solNames.getTimeDeriv(0), solNames.getTimeIdx(0), &(data[0]), overlapped);
+    }
+    else if ( ! PCU_Comm_Self())
+      *out <<__func__<<": uninit field" << std::endl;
+  }
+  return solnT;
+}
+
+Teuchos::RCP<Tpetra_MultiVector>
+Albany::APFDiscretization::getSolutionMV(bool overlapped) const 
+{
+  // Copy soln vector into solution field, one node at a time
+  Teuchos::RCP<Tpetra_MultiVector> solnT = Teuchos::rcp(
+    new Tpetra_MultiVector(overlapped ? overlap_mapT : mapT, meshStruct->num_time_deriv + 1, false));
+
+  for(int i = 0; i <= meshStruct->num_time_deriv; i++){
+
+    Teuchos::RCP<Tpetra_Vector> colT = solnT->getVectorNonConst(i);
+    Teuchos::ArrayRCP<ST> data = colT->get1dViewNonConst();
+
+    if (meshStruct->solutionInitialized) {
+      if (solNames.getTimeDeriv(i).size() == 0)
+        this->getField(APFMeshStruct::solution_name[i], &(data[0]), overlapped);
+      else
+        this->getSplitFields(solNames.getTimeDeriv(i), solNames.getTimeIdx(i), &(data[0]), overlapped);
     }
     else if ( ! PCU_Comm_Self())
       *out <<__func__<<": uninit field" << std::endl;
@@ -629,10 +704,10 @@ Albany::APFDiscretization::getSolutionField(bool overlapped) const
     new Epetra_Vector(overlapped ? *overlap_map : *map));
 
   if (meshStruct->solutionInitialized) {
-    if (solNames.size() == 0)
-      this->getField(APFMeshStruct::solution_name,&((*soln)[0]),overlapped);
+    if (solNames.getTimeDeriv(0).size() == 0)
+      this->getField(APFMeshStruct::solution_name[0],&((*soln)[0]),overlapped);
     else
-      this->getSplitFields(solNames,solIndex,&((*soln)[0]),overlapped);
+      this->getSplitFields(solNames.getTimeDeriv(0), solNames.getTimeIdx(0), &((*soln)[0]), overlapped);
   }
   else if ( ! PCU_Comm_Self())
     *out <<__func__<<": uninit field" << std::endl;
@@ -693,6 +768,19 @@ void Albany::APFDiscretization::computeSideSets()
   computeSideSetsBase();
 }
 
+static void offsetNumbering(
+    apf::GlobalNumbering* n,
+    apf::DynamicArray<apf::Node> const& nodes)
+{
+  const GO startIdx = 2147483647L;
+  for (int i=0; i < nodes.getSize(); ++i)
+  {
+    GO oldIdx = apf::getNumber(n, nodes[i]);
+    GO newIdx = startIdx + oldIdx;
+    number(n, nodes[i], newIdx);
+  }
+}
+
 void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
     apf::FieldShape* shape)
 {
@@ -701,6 +789,8 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
   globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned",shape));
   apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
+  if (meshStruct->useDOFOffsetHack)
+    offsetNumbering(globalNumbering, ownedNodes);
   numOwnedNodes = ownedNodes.getSize();
   apf::synchronize(globalNumbering);
   Teuchos::Array<GO> indices(numOwnedNodes);
@@ -839,18 +929,27 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
  * STK bucket size is set to the workset size. We will "chunk" the elements into worksets here.
  */
 
-  // This function is called each adaptive cycle. Need to reset the 2D array "buckets" back to the initial size.
-  for(int i = 0; i < buckets.size(); i++)
-    buckets[i].clear();
+  int worksetSize = meshStruct->worksetSize;
 
   buckets.clear();
+
+  /* even with exponential growth, appending to a vector
+   * of vectors may be expensive is std::move-style optimizations
+   * aren't done.
+   * we know there will be at least (#elements / worksetSize) worksets,
+   * so reserve that much and avoid resizes until then. */
+  buckets.reserve(m->count(numDim) / worksetSize + 1);
+
+  /* likewise, wsEBNames is of a type which does not
+   * resize exponentially, so during this procedure
+   * we'll replace it with a std::vector */
+  std::vector<std::string> wsEBNames_vec;
+  wsEBNames_vec.reserve(m->count(numDim) / worksetSize + 1);
 
   std::map<apf::StkModel*, int> bucketMap;
   std::map<apf::StkModel*, int>::iterator buck_it;
   apf::StkModels& sets = meshStruct->getSets();
   int bucket_counter = 0;
-
-  int worksetSize = meshStruct->worksetSize;
 
   // iterate over all elements
   apf::MeshIterator* it = m->begin(numDim);
@@ -858,23 +957,19 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   while ((element = m->iterate(it)))
   {
     apf::ModelEntity* mr = m->toModel(element);
-    apf::StkModel* block = sets.invMaps[getNumDim()][mr];
+    apf::StkModel* block = sets.invMaps[numDim][mr];
     TEUCHOS_TEST_FOR_EXCEPTION(!block, std::logic_error,
 		   "Error: no element block for model region on line " << __LINE__ << " of file " << __FILE__ << std::endl);
     // find the latest bucket being filled with elements for this block
     buck_it = bucketMap.find(block);
     if((buck_it == bucketMap.end()) ||  // this block hasn't been encountered yet
        (buckets[buck_it->second].size() >= worksetSize)){ // the current bucket for this block is "full"
-      // Associate this elem_blk with a new bucket
+      // Associate this elem_blk with the new bucket
       bucketMap[block] = bucket_counter;
-      // resize the bucket array larger by one
-      buckets.resize(bucket_counter + 1);
-      wsEBNames.resize(bucket_counter + 1);
-      // save the element in the bucket
-      buckets[bucket_counter].push_back(element);
-      // save the name of the new element block
-      std::string EB_name = block->stkName;
-      wsEBNames[bucket_counter] = EB_name;
+      // start this new bucket off with the current element
+      buckets.push_back(std::vector<apf::MeshEntity*>(1,element));
+      // associate a bucket (workset) with an element block via a string
+      wsEBNames_vec.push_back(block->stkName);
       bucket_counter++;
     }
     else { // put the element in the proper bucket
@@ -882,6 +977,11 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
     }
   }
   m->end(it);
+
+  /* now copy the std::vector into the plain array */
+  wsEBNames.resize(wsEBNames_vec.size());
+  for (size_t i = 0; i < wsEBNames_vec.size(); ++i)
+    wsEBNames[i] = wsEBNames_vec[i];
 
   int numBuckets = bucket_counter;
 
@@ -960,7 +1060,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   //
   // For each state, create storage for the data for on processor elements
   // elemGIDws.size() is the number of elements on this processor ...
-  // Note however that Intrepid will stride over numBuckets * worksetSize
+  // Note however that Intrepid2 will stride over numBuckets * worksetSize
   // so we must allocate enough storage for that
 
   std::size_t numElementsAccessed = numBuckets * worksetSize;
@@ -1439,7 +1539,7 @@ void Albany::APFDiscretization::releaseMesh () {
     globalNumbering = 0;
   }
   if (elementNumbering) {
-    apf::destroyGlobalNumbering(elementNumbering);  
+    apf::destroyGlobalNumbering(elementNumbering);
     elementNumbering = 0;
   }
 }
@@ -1494,10 +1594,10 @@ static void temperaturesToQP(
 {
   int o = cubatureDegree;
   if (!try_interpolate(m, "temp", o, "Temperature"))
-    try_interpolate(m, Albany::APFMeshStruct::solution_name, o, "Temperature");
+    try_interpolate(m, Albany::APFMeshStruct::solution_name[0], o, "Temperature");
   if (!try_interpolate(m, "temp_old", o, "Temperature_old"))
     if (!try_interpolate(m, "temp", o, "Temperature_old"))
-      try_interpolate(m, Albany::APFMeshStruct::solution_name, o, "Temperature_old");
+      try_interpolate(m, Albany::APFMeshStruct::solution_name[0], o, "Temperature_old");
 }
 
 /* LCM's ThermoMechanicalCoefficients evaluator

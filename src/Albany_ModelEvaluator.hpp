@@ -101,6 +101,9 @@ namespace Albany {
     //! Number of parameter vectors
     int num_param_vecs;
 
+    //! Number of time derivatives
+    int num_time_deriv;
+
     //! List of free parameter names
     Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
 

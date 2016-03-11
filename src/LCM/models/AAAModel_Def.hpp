@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 
@@ -52,10 +52,10 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
 
-  Intrepid::Tensor<ScalarT> F(num_dims_);
-  Intrepid::Tensor<ScalarT> S(num_dims_);
-  Intrepid::Tensor<ScalarT> B(num_dims_); //left Cauchy-Green deformation tensor
-  Intrepid::Tensor<ScalarT> Id = Intrepid::identity<ScalarT>(num_dims_);
+  Intrepid2::Tensor<ScalarT> F(num_dims_);
+  Intrepid2::Tensor<ScalarT> S(num_dims_);
+  Intrepid2::Tensor<ScalarT> B(num_dims_); //left Cauchy-Green deformation tensor
+  Intrepid2::Tensor<ScalarT> Id = Intrepid2::identity<ScalarT>(num_dims_);
 
   //per Rajagopal and Tao, Journal of Elasticity 28(2) (1992), 165-184
   ScalarT mu = 2.0 * (alpha_);
@@ -66,13 +66,13 @@ computeState(typename Traits::EvalData workset,
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
       F.fill(defGrad,cell, pt,0,0);
-      B = F * Intrepid::transpose(F);
+      B = F * Intrepid2::transpose(F);
 
       ScalarT pressure = kappa * (J(cell, pt) - 1.0);
 
       // Cauchy stress
       S = -pressure * Id
-          + 2.0 * (alpha_ + 2.0 * beta_ * (Intrepid::I1(B) - 3.0)) * B;
+          + 2.0 * (alpha_ + 2.0 * beta_ * (Intrepid2::I1(B) - 3.0)) * B;
 
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {

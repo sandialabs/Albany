@@ -100,7 +100,7 @@ void performNodalMeshReduction(
   }
   std::sort(relatedEntities.begin(), relatedEntities.end(), stk::mesh::EntityLess(bulkData));
   relatedEntities.erase(
-      std::unique(relatedEntities.begin(), relatedEntities.end(), stk::mesh::EntityEqual()),
+      std::unique(relatedEntities.begin(), relatedEntities.end()),
       relatedEntities.end());
 
   std::vector<stk::mesh::Entity> sampleClosure;

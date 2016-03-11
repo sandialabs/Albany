@@ -21,7 +21,7 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 const double pi = 3.1415926535897932385;

@@ -53,6 +53,7 @@ cmake \
  -D Trilinos_ENABLE_ML:BOOL=ON \
  -D Trilinos_ENABLE_Phalanx:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
  -D Trilinos_ENABLE_Thyra:BOOL=ON \
@@ -106,7 +107,6 @@ cmake \
  -D Kokkos_ENABLE_Serial:BOOL=ON \
  -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
  -D Kokkos_ENABLE_Pthread:BOOL=OFF \
- -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
 \
  ../
 

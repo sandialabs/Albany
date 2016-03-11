@@ -22,12 +22,14 @@
 #include "Albany_StateManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
-#include <Intrepid_FieldContainer.hpp>
+#include <Intrepid2_FieldContainer.hpp>
 
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #if defined(ALBANY_EPETRA)
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
+#endif
 #endif
 
 #include "PHAL_AlbanyTraits.hpp"
@@ -57,7 +59,9 @@ struct Workset {
   unsigned int wsIndex;
   unsigned int numEqs;
 
+#ifdef ALBANY_STOKHOS
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
+#endif
 
 #if defined(ALBANY_EPETRA)
   // These are solution related.
@@ -163,6 +167,9 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
 
   Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos;
+  std::vector<PHX::index_size_type> Jacobian_deriv_dims;
+  std::vector<PHX::index_size_type> Tangent_deriv_dims;
+
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
@@ -259,6 +266,10 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
+#endif
+
+#ifdef ALBANY_GOAL
+  Teuchos::RCP<Tpetra_Vector> qoi;
 #endif
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT

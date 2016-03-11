@@ -22,7 +22,7 @@
 #include "Aeras_DOFInterpolationLevels.hpp"
 #include "Aeras_DOFVecInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
-#include "Aeras_DOFDivInterpolationLevels.hpp"
+#include "Aeras_DOFDivInterpolationLevelsXZ.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
 #include "Aeras_Atmosphere_Moisture.hpp"
@@ -113,8 +113,8 @@ namespace Aeras {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_CubaturePolylib.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Aeras_Eta.hpp"
@@ -151,15 +151,30 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
 
 
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
+  
+  //Get element name
+  const CellTopologyData *ctd = cellType->getCellTopologyData();
+  std::string name     = ctd->name;
+  size_t      len      = name.find("_");
+  if (len != std::string::npos) name = name.substr(0,len);
+  if (name == "Line") 
+		TEUCHOS_TEST_FOR_EXCEPTION(true,
+		Teuchos::Exceptions::InvalidParameter,"Aeras::XZHydrostatic no longer works with isoparameteric " <<
+		"Lines! Please re-run with spectral elements (IKT, 1/18/2016).");
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > cubatures(1, polylib); 
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(cubatures));
+
+  //Regular Gauss Quadrature.
+  //Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
+  //RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = meshSpecs.ctd.node_count;
@@ -295,7 +310,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     (evalUtils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+    (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature, intrepidBasis));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
@@ -402,7 +417,6 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Gradient QP Pressure",             "Gradient QP Pressure");
     p->set<std::string>("EtaDotdVelx",                      "EtaDotdVelx");
     p->set<std::string>("D Vel Name",                       "Component Derivative of Velocity");
-    //p->set<string>("Spherical Coord Name",       "Lat-Long");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
@@ -646,9 +660,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     // Input
     p->set<string>("Variable Name",          "PiVelx");
     p->set<string>("Gradient BF Name",       "Grad BF");
+
     p->set<string>("Divergence Variable Name", "Divergence QP PiVelx");
    
-    ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::DOFDivInterpolationLevelsXZ<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
   {//Compontent Derivative of  Velocity 
@@ -744,9 +759,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
       // Input
       p->set<string>("Variable Name",          "U"+dof_names_tracers[t]);
       p->set<string>("Gradient BF Name",       "Grad BF");
+
       p->set<string>("Divergence Variable Name", "U"+dof_names_tracers[t]+"_divergence");
     
-      ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
+      ev = rcp(new Aeras::DOFDivInterpolationLevelsXZ<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 

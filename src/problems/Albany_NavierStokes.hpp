@@ -121,8 +121,8 @@ namespace Albany {
 
 #include <boost/type_traits/is_same.hpp>
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -165,15 +165,15 @@ Albany::NavierStokes::constructEvaluators(
  
   const CellTopologyData * const elem_top = &meshSpecs.ctd;
  
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -196,6 +196,12 @@ Albany::NavierStokes::constructEvaluators(
    bool supportsTransient=true;
    int offset=0;
 
+   // Problem is transient
+   TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv < 0 || number_of_time_deriv > 1,
+      std::logic_error,
+      "Albany_NavierStokesProblem must be defined as a steady or transient calculation.");
+
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
@@ -206,16 +212,23 @@ Albany::NavierStokes::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "Velocity";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if(number_of_time_deriv > 0)
+       dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "Momentum Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+     else
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0], offset));
@@ -245,16 +258,23 @@ Albany::NavierStokes::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "Pressure";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if(number_of_time_deriv > 0)
+       dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "Continuity Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+     else
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
@@ -269,16 +289,22 @@ Albany::NavierStokes::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "Temperature";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if(number_of_time_deriv > 0)
+       dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = dof_names[0]+" Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+     else
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
@@ -308,16 +334,22 @@ Albany::NavierStokes::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "Neutron Flux";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if(number_of_time_deriv > 0)
+       dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = dof_names[0]+" Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator(false, dof_names, dof_names_dot, offset));
+     else
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+     if(number_of_time_deriv > 0)
+       fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
@@ -358,7 +390,7 @@ Albany::NavierStokes::constructEvaluators(
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Coordinate Vector Name","Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
@@ -727,18 +759,18 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
     
     RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+    RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
   
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Node Variable Name", "Neumannx");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
     
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Side Cubature", sideCubature);
     
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<RCP<shards::CellTopology> >("Side Type", sideType);
@@ -767,18 +799,18 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
 
     RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+    RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Node Variable Name", "Neumanny");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
 
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Side Cubature", sideCubature);
 
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<RCP<shards::CellTopology> >("Side Type", sideType);
@@ -807,18 +839,18 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Side Set ID", meshSpecs.ssNames[0]);
 
     RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology(side_top));
-    RCP <Intrepid::Cubature<RealType> > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
+    RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > sideCubature = cubFactory.create(*sideType, meshSpecs.cubatureDegree);
 
     // Inputs: X, Y at nodes, Cubature, and Basis
     p->set<string>("Node Variable Name", "Neumannz");
     p->set<string>("Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Coordinate Data Layout", dl->vertices_vector);
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
 
-    p->set< RCP<Intrepid::Cubature<RealType> > >("Side Cubature", sideCubature);
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Side Cubature", sideCubature);
 
-    p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >
-        ("Intrepid Basis", intrepidBasis);
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
 
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<RCP<shards::CellTopology> >("Side Type", sideType);
@@ -901,6 +933,8 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Porosity QP Variable Name", "Porosity");
     p->set<string>("Permeability Term", "Permeability Term");
     p->set<string>("Forchheimer Term", "Forchheimer Term");
+    if(number_of_time_deriv == 0)
+       p->set<bool>("Disable Transient", true);
  
     p->set<bool>("Porous Media", porousMedia);
 
@@ -1031,6 +1065,8 @@ Albany::NavierStokes::constructEvaluators(
     p->set<string>("Density QP Variable Name", "Density");
     p->set<string>("Specific Heat QP Variable Name", "Specific Heat");
     p->set<string>("Thermal Conductivity Name", "Thermal Conductivity");
+    if(number_of_time_deriv == 0)
+       p->set<bool>("Disable Transient", true);
     
     p->set<bool>("Have Source", haveSource);
     p->set<string>("Source Name", "Heat Source");

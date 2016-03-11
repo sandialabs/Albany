@@ -40,8 +40,7 @@ bool SimAdapt::queryAdaptationCriteria(int iteration)
   return false;
 }
 
-bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
-                         const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution)
+bool SimAdapt::adaptMesh()
 {
   /* dig through all the abstrations to obtain pointers
      to the various structures needed */
@@ -61,19 +60,20 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   assert(!should_transfer_ip_data);
   /* compute the size field via SPR error estimation
      on the solution gradient */
-  apf::Field* sol_fld = apf_m->findField(Albany::APFMeshStruct::solution_name);
-  assert(apf::countComponents(sol_fld) == 1);
-  apf::Field* grad_ip_fld = spr::getGradIPField(sol_fld, "grad_sol",
+  apf::Field* sol_flds[3];
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
+    sol_flds[i] = apf_m->findField(Albany::APFMeshStruct::solution_name[i]);
+  apf::Field* grad_ip_fld = spr::getGradIPField(sol_flds[0], "grad_sol",
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
-//  Estimation meshFinal;
-
   apf::destroyField(grad_ip_fld);
+#ifdef SIMDEBUG
   /* write the mesh with size field to file */
   std::stringstream ss;
   ss << "size_" << callcount << '_';
   std::string s = ss.str();
   apf::writeVtkFiles(s.c_str(), apf_m);
+#endif
   /* create the Simmetrix adapter */
   pMSAdapt adapter = MSA_new(sim_pm, 1);
   /* copy the size field from APF to the Simmetrix adapter */
@@ -89,10 +89,13 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   apf::destroyField(size_fld);
   /* tell the adapter to transfer the solution and residual fields */
   apf::Field* res_fld = apf_m->findField(Albany::APFMeshStruct::residual_name);
-  pField sim_sol_fld = apf::getSIMField(sol_fld);
+  pField sim_sol_flds[3];
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
+    sim_sol_flds[i] = apf::getSIMField(sol_flds[i]);
   pField sim_res_fld = apf::getSIMField(res_fld);
   pPList sim_fld_lst = PList_new();
-  PList_append(sim_fld_lst, sim_sol_fld);
+  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
+    PList_append(sim_fld_lst, sim_sol_flds[i]);
   PList_append(sim_fld_lst, sim_res_fld);
   if (apf_ms->useTemperatureHack) {
     /* transfer Temperature_old at the nodes */
@@ -111,8 +114,8 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   Field_write(sim_sol_fld, simname, 0, 0, 0);
   sprintf(simname, "preadapt_res_%d.fld", callcount);
   Field_write(sim_res_fld, simname, 0, 0, 0);
-#endif
   Albany::debugAMPMesh(apf_m, "before");
+#endif
   /* run the adapter */
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
@@ -125,11 +128,11 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   Field_write(sim_sol_fld, simname, 0, 0, 0);
   sprintf(simname, "adapted_res_%d.fld", callcount);
   Field_write(sim_res_fld, simname, 0, 0, 0);
+  Albany::debugAMPMesh(apf_m, "after");
 #endif
 
   /* run APF verification on the resulting mesh */
   apf_m->verify();
-  Albany::debugAMPMesh(apf_m, "after");
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data);
   /* see the comment in Albany_APFDiscretization.cpp */
@@ -137,6 +140,7 @@ bool SimAdapt::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   ++callcount;
   return true;
 }
+
 
 Teuchos::RCP<const Teuchos::ParameterList> SimAdapt::getValidAdapterParameters()
 {

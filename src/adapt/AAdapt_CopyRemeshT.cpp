@@ -76,8 +76,7 @@ AAdapt::CopyRemeshT::queryAdaptationCriteria(int iter) {
 
 //----------------------------------------------------------------------------
 bool
-AAdapt::CopyRemeshT::adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
-              const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution){
+AAdapt::CopyRemeshT::adaptMesh(){
 
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
   std::cout << "Adapting mesh using AAdapt::CopyRemesh method       \n";

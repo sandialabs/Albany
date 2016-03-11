@@ -11,7 +11,7 @@
 
 #define THREE_D 3
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
@@ -213,12 +213,12 @@ computeState(typename Traits::EvalData workset,
 
   int numCells = workset.numCells;
 
-  Intrepid::Tensor<ScalarT> X(THREE_D), x(THREE_D), linear_x(THREE_D);
-  Intrepid::Vector<ScalarT> E(THREE_D), D(THREE_D), linear_D(THREE_D);
+  Intrepid2::Tensor<ScalarT> X(THREE_D), x(THREE_D), linear_x(THREE_D);
+  Intrepid2::Vector<ScalarT> E(THREE_D), D(THREE_D), linear_D(THREE_D);
   Teuchos::Array<ScalarT> oldfractions(nVariants);
   Teuchos::Array<ScalarT> newfractions(nVariants);
 
-  Intrepid::FieldContainer<int> transitionMap;
+  Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device> transitionMap;
   transitionMap.resize(transitions.size());
 
   for (int cell=0; cell < numCells; ++cell) {
@@ -264,10 +264,10 @@ computeState(typename Traits::EvalData workset,
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::findEquilibriumState(
-Intrepid::FieldContainer<int>& transitionMap,
+Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& transitionMap,
 Teuchos::Array<ScalarT>& oldfractions,
 Teuchos::Array<ScalarT>& newfractions,
-Intrepid::Tensor<ScalarT>& x, Intrepid::Vector<ScalarT>& E)
+Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E)
 /******************************************************************************/
 {
 
@@ -369,17 +369,17 @@ bool FerroicModel<EvalT, Traits>::converged(std::vector<ScalarT>& R,
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::
 computeResidualandJacobian(
-  Intrepid::FieldContainer<int> transitionMap,
-  Intrepid::Tensor<ScalarT>& x, Intrepid::Vector<ScalarT>& E,
+  Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device> transitionMap,
+  Intrepid2::Tensor<ScalarT>& x, Intrepid2::Vector<ScalarT>& E,
   Teuchos::Array<ScalarT>& fractions,
   std::vector<ScalarT>& S, std::vector<ScalarT>& R, std::vector<ScalarT>& dRdS)
 /******************************************************************************/
 {
 
-  Intrepid::Tensor<DFadType> X; X.set_dimension(THREE_D); X.clear();
-  Intrepid::Tensor<DFadType> linear_x; linear_x.set_dimension(THREE_D); linear_x.clear();
-  Intrepid::Vector<DFadType> D; D.set_dimension(THREE_D); D.clear();
-  Intrepid::Vector<DFadType> linear_D; linear_D.set_dimension(THREE_D); linear_D.clear();
+  Intrepid2::Tensor<DFadType> X; X.set_dimension(THREE_D); X.clear();
+  Intrepid2::Tensor<DFadType> linear_x; linear_x.set_dimension(THREE_D); linear_x.clear();
+  Intrepid2::Vector<DFadType> D; D.set_dimension(THREE_D); D.clear();
+  Intrepid2::Vector<DFadType> linear_D; linear_D.set_dimension(THREE_D); linear_D.clear();
 
   int nTotalDofs = S.size();
   int nVariants = crystalVariants.size();
@@ -494,23 +494,23 @@ template<typename EvalT, typename Traits>
 template<typename T>
 void FerroicModel<EvalT, Traits>::
 computeState(Teuchos::Array<T>& fractions,
-             Intrepid::Tensor<ScalarT>& x, Intrepid::Tensor<T>& X, Intrepid::Tensor<T>& linear_x,
-             Intrepid::Vector<ScalarT>& E, Intrepid::Vector<T>& D, Intrepid::Vector<T>& linear_D)
+             Intrepid2::Tensor<ScalarT>& x, Intrepid2::Tensor<T>& X, Intrepid2::Tensor<T>& linear_x,
+             Intrepid2::Vector<ScalarT>& E, Intrepid2::Vector<T>& D, Intrepid2::Vector<T>& linear_D)
 /******************************************************************************/
 {
-  Intrepid::Tensor4<T> C; 
+  Intrepid2::Tensor4<T> C; 
   C.set_dimension(THREE_D); C.clear();
 
-  Intrepid::Tensor3<T> h; 
+  Intrepid2::Tensor3<T> h; 
   h.set_dimension(THREE_D); h.clear();
 
-  Intrepid::Tensor<T> beta; 
+  Intrepid2::Tensor<T> beta; 
   beta.set_dimension(THREE_D); beta.clear();
 
-  Intrepid::Tensor<T> remanent_x; 
+  Intrepid2::Tensor<T> remanent_x; 
   remanent_x.set_dimension(THREE_D); remanent_x.clear();
 
-  Intrepid::Vector<T> remanent_D; 
+  Intrepid2::Vector<T> remanent_D; 
   remanent_D.set_dimension(THREE_D); remanent_D.clear();
 
   int nVariants = crystalVariants.size();
@@ -522,7 +522,7 @@ computeState(Teuchos::Array<T>& fractions,
     h += fractions[i]*variant.h;
     beta += fractions[i]*variant.beta;
   }
-  Intrepid::Tensor<T> eps = Intrepid::inverse(beta);
+  Intrepid2::Tensor<T> eps = Intrepid2::inverse(beta);
 
   linear_x = x - remanent_x;
 
@@ -536,10 +536,10 @@ computeState(Teuchos::Array<T>& fractions,
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 void FerroicModel<EvalT, Traits>::findActiveTransitions(
-Intrepid::FieldContainer<int>& transitionMap,
+Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& transitionMap,
 Teuchos::Array<ScalarT>& fractions,
-Intrepid::Tensor<ScalarT>& X, Intrepid::Tensor<ScalarT>& linear_x,
-Intrepid::Vector<ScalarT>& E, Intrepid::Vector<ScalarT>& linear_D)
+Intrepid2::Tensor<ScalarT>& X, Intrepid2::Tensor<ScalarT>& linear_x,
+Intrepid2::Vector<ScalarT>& E, Intrepid2::Vector<ScalarT>& linear_D)
 /******************************************************************************/
 {
 
@@ -614,9 +614,9 @@ computeStateParallel(typename Traits::EvalData workset,
 }
 
 /******************************************************************************/
-void changeBasis(Intrepid::Tensor4<RealType>& inMatlBasis, 
-            const Intrepid::Tensor4<RealType>& inGlobalBasis,
-            const Intrepid::Tensor<RealType>& R)
+void changeBasis(Intrepid2::Tensor4<RealType>& inMatlBasis, 
+            const Intrepid2::Tensor4<RealType>& inGlobalBasis,
+            const Intrepid2::Tensor<RealType>& R)
 /******************************************************************************/
 {
     int num_dims = R.get_dimension();
@@ -632,9 +632,9 @@ void changeBasis(Intrepid::Tensor4<RealType>& inMatlBasis,
             inMatlBasis(i,j,k,l) += inGlobalBasis(q,r,s,t)*R(i,q)*R(j,r)*R(k,s)*R(l,t);
 }
 /******************************************************************************/
-void changeBasis(Intrepid::Tensor3<RealType>& inMatlBasis, 
-            const Intrepid::Tensor3<RealType>& inGlobalBasis,
-            const Intrepid::Tensor<RealType>& R)
+void changeBasis(Intrepid2::Tensor3<RealType>& inMatlBasis, 
+            const Intrepid2::Tensor3<RealType>& inGlobalBasis,
+            const Intrepid2::Tensor<RealType>& R)
 /******************************************************************************/
 {
     int num_dims = R.get_dimension();
@@ -648,9 +648,9 @@ void changeBasis(Intrepid::Tensor3<RealType>& inMatlBasis,
            inMatlBasis(i,j,k) += inGlobalBasis(q,r,s)*R(i,q)*R(j,r)*R(k,s);
 }
 /******************************************************************************/
-void changeBasis(Intrepid::Tensor<RealType>& inMatlBasis, 
-            const Intrepid::Tensor<RealType>& inGlobalBasis,
-            const Intrepid::Tensor<RealType>& R)
+void changeBasis(Intrepid2::Tensor<RealType>& inMatlBasis, 
+            const Intrepid2::Tensor<RealType>& inGlobalBasis,
+            const Intrepid2::Tensor<RealType>& R)
 /******************************************************************************/
 {
     int num_dims = R.get_dimension();
@@ -663,7 +663,7 @@ void changeBasis(Intrepid::Tensor<RealType>& inMatlBasis,
 }
 /******************************************************************************/
 void parseBasis(const Teuchos::ParameterList& pBasis,
-           Intrepid::Tensor<RealType>& R)
+           Intrepid2::Tensor<RealType>& R)
 /******************************************************************************/
 {
   if(pBasis.isType<Teuchos::Array<RealType>>("X axis")){
@@ -777,7 +777,7 @@ CrystalVariant::CrystalVariant(Teuchos::Array<Teuchos::RCP<CrystalPhase>>& phase
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 FerroicModel<EvalT, Traits>::
-CrystalPhase::CrystalPhase(Intrepid::Tensor<RealType>& R,
+CrystalPhase::CrystalPhase(Intrepid2::Tensor<RealType>& R,
                            Teuchos::ParameterList& cParam)
 /******************************************************************************/
 {
@@ -801,11 +801,11 @@ CrystalPhase::CrystalPhase(Intrepid::Tensor<RealType>& R,
   TEUCHOS_TEST_FOR_EXCEPTION(num_dims!=THREE_D, std::invalid_argument,
        ">>> ERROR (FerroicModel):  Only 3D supported");
   C.set_dimension(num_dims); C.clear();
-  Intrepid::Tensor4<RealType> Ctmp(num_dims); Ctmp.clear();
+  Intrepid2::Tensor4<RealType> Ctmp(num_dims); Ctmp.clear();
   h.set_dimension(num_dims); h.clear();
-  Intrepid::Tensor3<RealType> htmp(num_dims); htmp.clear();
+  Intrepid2::Tensor3<RealType> htmp(num_dims); htmp.clear();
   beta.set_dimension(num_dims); beta.clear();
-  Intrepid::Tensor<RealType> betatmp(num_dims); betatmp.clear();
+  Intrepid2::Tensor<RealType> betatmp(num_dims); betatmp.clear();
 
   // create constants in tensor form
   Ctmp(0,0,0,0) = C11; Ctmp(0,0,1,1) = C12; Ctmp(0,0,2,2) = C23;
@@ -819,14 +819,14 @@ CrystalPhase::CrystalPhase(Intrepid::Tensor<RealType>& R,
   htmp(1,1,2) = h15/2.0; htmp(1,2,1) = h15/2.0;
   htmp(2,0,0) = h31; htmp(2,1,1) = h31; htmp(2,2,2) = h33;
 
-  Intrepid::Tensor<RealType> eps(num_dims);
+  Intrepid2::Tensor<RealType> eps(num_dims);
   eps.clear();
 
   eps(0,0) = E11;
   eps(1,1) = E11;
   eps(2,2) = E33;
 
-  betatmp = Intrepid::inverse(eps);
+  betatmp = Intrepid2::inverse(eps);
 
   // rotate into material basis
   LCM::changeBasis(C, Ctmp, R);

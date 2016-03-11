@@ -131,11 +131,9 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
-        <ParameterList name="Backtrack">
-          <Parameter name="Reduction Factor" type="double" value="0.5"/>
-          <Parameter name="Max Iters" type="int" value="10"/>
+        <ParameterList name="Full Step">
         </ParameterList>
-        <Parameter name="Method" type="string" value="Backtrack"/>
+        <Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
@@ -144,14 +142,14 @@
         <!-- set the output information -->
         <ParameterList name="Output Information">
           <Parameter name="Error" type="bool" value="1"/>
-          <Parameter name="Warning" type="bool" value="1"/>
+          <Parameter name="Warning" type="bool" value="0"/>
           <Parameter name="Outer Iteration" type="bool" value="1"/>
-          <Parameter name="Parameters" type="bool" value="1"/>
-          <Parameter name="Details" type="bool" value="1"/>
-          <Parameter name="Linear Solver Details" type="bool" value="1"/>
-          <Parameter name="Stepper Iteration" type="bool" value="1"/>
-          <Parameter name="Stepper Details" type="bool" value="1"/>
-          <Parameter name="Stepper Parameters" type="bool" value="1"/>
+          <Parameter name="Parameters" type="bool" value="0"/>
+          <Parameter name="Details" type="bool" value="0"/>
+          <Parameter name="Linear Solver Details" type="bool" value="0"/>
+          <Parameter name="Stepper Iteration" type="bool" value="0"/>
+          <Parameter name="Stepper Details" type="bool" value="0"/>
+          <Parameter name="Stepper Parameters" type="bool" value="0"/>
         </ParameterList>
       </ParameterList>
       <ParameterList name="Solver Options">

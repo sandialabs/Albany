@@ -15,7 +15,7 @@
 #include "Aeras_Eta.hpp"
 
 // NINT(x) - nearest whole number
-#define NINT(x) ( fabs(x)-fabs(int(x)) > 0.5 ) ? (x/fabs(x))*(int(fabs(x)+1)) : int(x)
+#define NINT(x) ( fabs(x)-std::abs(int(x)) > 0.5 ) ? (x/fabs(x))*(int(fabs(x)+1)) : int(x)
 
 // DIM(x,y) - gives x-y if this is positive and zero in the other case
 # define DIM(x,y) (x-y > 0.0) ? x-y : 0.0 

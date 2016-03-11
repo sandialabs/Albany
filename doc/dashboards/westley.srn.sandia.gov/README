@@ -1,0 +1,4 @@
+Note:
+
+This directory holds the dashboard scripts that run on westley.srn.sandia.gov, that builds and runs the Albany_MIC
+tests.

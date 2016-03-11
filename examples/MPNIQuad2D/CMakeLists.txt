@@ -7,16 +7,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
 endif()
-if (ALBANY_MUELU)
-  if (ALBANY_64BIT_INT)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_64.xml
-                 ${CMAKE_CURRENT_BINARY_DIR}/inputT_64.xml COPYONLY)
-    add_test(${testName}_Tpetra ${AlbanyT.exe} inputT_64.xml)
-  else ()
+if (ALBANY_STOKHOS AND ALBANY_MUELU)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
     add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
-  endif ()
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists

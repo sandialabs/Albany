@@ -6,8 +6,8 @@
 
 #include "Albany_PNPProblem.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -28,6 +28,7 @@ PNPProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Print out a summary of the problem
   *out << "PNP problem: with numSpecies = " << numSpecies << std::endl;
+
 }
 
 Albany::PNPProblem::

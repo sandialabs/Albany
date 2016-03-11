@@ -12,8 +12,8 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Intrepid_CellTools.hpp"
-#include "Intrepid_Cubature.hpp"
+#include "Intrepid2_CellTools.hpp"
+#include "Intrepid2_Cubature.hpp"
 
 namespace LCM {
 /** \brief
@@ -29,7 +29,8 @@ class HDiffusionDeformationMatterResidual : public PHX::EvaluatorWithBaseImpl<Tr
 
 public:
 
-  HDiffusionDeformationMatterResidual(const Teuchos::ParameterList& p);
+  HDiffusionDeformationMatterResidual(Teuchos::ParameterList& p,
+                                      const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -79,24 +80,26 @@ private:
   //bool haveMechSource;
   bool enableTransient;
 
+  bool have_eqps_;
+  
   unsigned int numNodes;
   unsigned int numQPs;
   unsigned int numDims;
   unsigned int worksetSize;
 
   // Temporary FieldContainers
-  Intrepid::FieldContainer<ScalarT> Hflux;
-  Intrepid::FieldContainer<ScalarT> C;
-  Intrepid::FieldContainer<ScalarT> Cinv;
-  Intrepid::FieldContainer<ScalarT> CinvTgrad;
-  Intrepid::FieldContainer<ScalarT> CinvTgrad_old;
-  Intrepid::FieldContainer<ScalarT> artificalDL;
-  Intrepid::FieldContainer<ScalarT> stabilizedDL;
-  Intrepid::FieldContainer<ScalarT> tauStress;
-  Intrepid::FieldContainer<ScalarT> pterm;
-  Intrepid::FieldContainer<ScalarT> tpterm;
-  Intrepid::FieldContainer<ScalarT> tauH;
-  Intrepid::FieldContainer<ScalarT> CinvTaugrad;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Hflux;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTgrad;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTgrad_old;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> artificalDL;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> stabilizedDL;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tauStress;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tpterm;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tauH;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTaugrad;
 
 
   ScalarT CLbar, vol ;

@@ -14,11 +14,48 @@ Albany::AbstractProblem::AbstractProblem(
   const int neq_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   neq(neq_),
+  number_of_time_deriv(-1),
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
-  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_)))
-{}
+  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_))),
+  isAdjoint(false),
+  enrichAdjoint(false)
+{
+
+ /* 
+  * Set the number of time derivatives. Semantics are to set the number of time derivatives:
+  * x = 0, xdot = 1, xdotdot = 2
+  * using the Discretization parameter "Number Of Time Derivatives" if this is specified, or if not
+  * set it to zero if the problem is steady, or to one if it is transient. This needs to be overridden
+  * in each problem is this logic is not sufficient.
+  */
+
+  /* Override this logic by specifying the below in the Discretization PL with
+
+  <Parameter name="Number Of Time Derivatives" type="int" value="2"/>
+  */
+
+  std::string solutionMethod = params->get("Solution Method", "Steady");
+  if(solutionMethod == "Steady")
+    number_of_time_deriv = 0;
+  else if(solutionMethod == "Continuation")
+    number_of_time_deriv = 0;
+  else if(solutionMethod == "Transient")
+    number_of_time_deriv = 1;
+  else if(solutionMethod == "Eigensolve")
+    number_of_time_deriv = 0;
+  else if(solutionMethod == "Aeras Hyperviscosity")
+    number_of_time_deriv = 1;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+            std::logic_error, "Solution Method must be Steady, Transient, "
+            << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
+
+   // Set the number in the Problem PL
+   params->set<int>("Number Of Time Derivatives", number_of_time_deriv);
+
+}
 
 unsigned int
 Albany::AbstractProblem::numEquations() const
@@ -67,6 +104,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
+  validPL->sublist("Initial Condition DotDot", false, "");
   validPL->sublist("Source Functions", false, "");
   validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");
@@ -78,6 +116,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Adaptation", false, "");
   validPL->sublist("Catalyst", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
+  validPL->set<int>("Number Of Time Derivatives", 1, "Number of time derivatives in use in the problem");
 
   validPL->set<bool>("Ignore Residual In Jacobian", false,
                      "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
@@ -103,6 +142,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   
   // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015) 
   validPL->sublist("Schottky Barrier", false, "");
-   
+  
+  // Add "Interface Traps" for QCAD (Suzey Gao, 12/22/2015)
+  validPL->sublist("Interface Traps", false, ""); 
+
   return validPL;
 }

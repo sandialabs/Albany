@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -17,7 +17,8 @@ MapToPhysicalFrame<EvalT, Traits>::
 MapToPhysicalFrame(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   coords_vertices  (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector),
-  cubature         (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  cubature         (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device> > > > ("Intrepid2 Basis") ),
   cellType         (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   coords_qp        (p.get<std::string>  ("Coordinate Vector Name"), dl->qp_gradient)
 {
@@ -124,7 +125,7 @@ void mapToPhysicalFrame(ArrayPhysPoint      &        physPoints,
     case shards::Hexahedron<20>::key:
     case shards::Wedge<15>::key:
       TEUCHOS_TEST_FOR_EXCEPTION( (true), std::invalid_argument,
-                          ">>> ERROR (Intrepid::CellTools::mapToPhysicalFrame): Cell topology not supported. ");
+                          ">>> ERROR (Intrepid2::CellTools::mapToPhysicalFrame): Cell topology not supported. ");
       break;
 
     // Base and Extended Line, Beam and Shell topologies 
@@ -139,11 +140,11 @@ void mapToPhysicalFrame(ArrayPhysPoint      &        physPoints,
     case shards::ShellQuadrilateral<8>::key:
     case shards::ShellQuadrilateral<9>::key:
       TEUCHOS_TEST_FOR_EXCEPTION( (true), std::invalid_argument,
-                          ">>> ERROR (Intrepid::CellTools::mapToPhysicalFrame): Cell topology not supported. ");
+                          ">>> ERROR (Intrepid2::CellTools::mapToPhysicalFrame): Cell topology not supported. ");
       break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION( (true), std::invalid_argument,
-                          ">>> ERROR (Intrepid::CellTools::mapToPhysicalFrame): Cell topology not supported.");
+                          ">>> ERROR (Intrepid2::CellTools::mapToPhysicalFrame): Cell topology not supported.");
   }// switch  
 
   // Temp (F,P) array for the values of nodal basis functions at the reference points
@@ -163,8 +164,14 @@ template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::CellTools<RealType>::mapToPhysicalFrame
-       (coords_qp, refPoints, coords_vertices, *cellType);
+  if (intrepidBasis != Teuchos::null){ 
+    Intrepid2::CellTools<RealType>::mapToPhysicalFrame
+         (coords_qp, refPoints, coords_vertices, intrepidBasis);
+  }
+  else {
+    Intrepid2::CellTools<RealType>::mapToPhysicalFrame
+         (coords_qp, refPoints, coords_vertices, *cellType);
+  }
  // mapToPhysicalFrame<RealType>(coords_qp, refPoints, coords_vertices, *cellType);
   
 }

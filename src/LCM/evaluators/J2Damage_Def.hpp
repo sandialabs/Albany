@@ -6,7 +6,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "LocalNonlinearSolver.hpp"
 
 #include <typeinfo>
@@ -117,8 +117,8 @@ namespace LCM {
     bool print = false;
     //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
-    typedef Intrepid::FunctionSpaceTools FST;
-    typedef Intrepid::RealSpaceTools<ScalarT> RST;
+    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     ScalarT kappa, H, H2, phi, phi_old;
     ScalarT mu, mubar;
@@ -129,16 +129,16 @@ namespace LCM {
     ScalarT sq23 = std::sqrt(2. / 3.);
 
     // scratch space FCs
-    Intrepid::Tensor<ScalarT> be(3);
-    Intrepid::Tensor<ScalarT> s(3);
-    Intrepid::Tensor<ScalarT> N(3);
-    Intrepid::Tensor<ScalarT> A(3);
-    Intrepid::Tensor<ScalarT> expA(3);
+    Intrepid2::Tensor<ScalarT> be(3);
+    Intrepid2::Tensor<ScalarT> s(3);
+    Intrepid2::Tensor<ScalarT> N(3);
+    Intrepid2::Tensor<ScalarT> A(3);
+    Intrepid2::Tensor<ScalarT> expA(3);
 
     //Albany::StateVariables  oldState = *workset.oldState;
-    //Intrepid::FieldContainer<RealType>& Fpold   = *oldState[fpName];
-    //Intrepid::FieldContainer<RealType>& eqpsold = *oldState[eqpsName];
-    //Intrepid::FieldContainer<RealType>& phi_old_FC = *oldState["Damage"];
+    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& Fpold   = *oldState[fpName];
+    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& eqpsold = *oldState[eqpsName];
+    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& phi_old_FC = *oldState["Damage"];
 
     Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
@@ -215,9 +215,9 @@ namespace LCM {
 
         // std::cout << "be: \n" << be;
 
-        trd3 = Intrepid::trace(be) / 3.;
+        trd3 = Intrepid2::trace(be) / 3.;
         mubar = trd3 * mu;
-        s = mu * (be - trd3 * Intrepid::eye<ScalarT>(3));
+        s = mu * (be - trd3 * Intrepid2::eye<ScalarT>(3));
 
         // std::cout << "s: \n" << s;
 
@@ -287,7 +287,7 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-          expA = Intrepid::exp<ScalarT>(A);
+          expA = Intrepid2::exp<ScalarT>(A);
 
           // std::cout << "expA: \n";
           // for (int i=0; i < numDims; ++i)
@@ -330,15 +330,15 @@ namespace LCM {
             stress(cell, qp, i, j) *= H2;
 
         // update be
-        be = ScalarT(1 / mu) * s + trd3 * Intrepid::eye<ScalarT>(3);
+        be = ScalarT(1 / mu) * s + trd3 * Intrepid2::eye<ScalarT>(3);
 
         // compute energy
         energy(cell, qp) = 0.5 * kappa
             * (0.5 * (J(cell, qp) * J(cell, qp) - 1.0) - std::log(J(cell, qp)))
-            + 0.5 * mu * (Intrepid::trace(be) - 3.0);
+            + 0.5 * mu * (Intrepid2::trace(be) - 3.0);
 
         // compute seff for damage coupling
-        seff(cell, qp) = Intrepid::norm(ScalarT(1.0 / J(cell, qp)) * s);
+        seff(cell, qp) = Intrepid2::norm(ScalarT(1.0 / J(cell, qp)) * s);
 
         if (print) {
           std::cout << "********" << std::endl;

@@ -14,10 +14,6 @@
 
 #include "Albany_Layouts.hpp"
 
-namespace Albany {
-class Application;
-}
-
 namespace GOAL {
 
 template<typename EvalT, typename Traits>

@@ -16,7 +16,9 @@
 #include <boost/random/variate_generator.hpp>
 
 #include "Teuchos_Array.hpp"
+#ifdef ALBANY_PAMGEN
 #include "RTC_FunctionRTC.hh"
+#endif
 
 namespace AAdapt {
 
@@ -178,6 +180,16 @@ class AerasXScalarAdvection : public AnalyticFunction {
   private:
     int numDim; // size of coordinate vector X
     int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasHydrostaticBaroclinicInstabilities : public AnalyticFunction {
+  public:
+    AerasHydrostaticBaroclinicInstabilities(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    const int numDim; // size of coordinate vector X
+    const int neq;    // size of solution vector x
     Teuchos::Array<double> data;
 };
 
@@ -454,9 +466,11 @@ class ExpressionParser : public AnalyticFunction {
     std::string expressionX;
     std::string expressionY;
     std::string expressionZ;
+#ifdef ALBANY_PAMGEN
     PG_RuntimeCompiler::Function rtcFunctionX;
     PG_RuntimeCompiler::Function rtcFunctionY;
     PG_RuntimeCompiler::Function rtcFunctionZ;
+#endif
 };
 
 }

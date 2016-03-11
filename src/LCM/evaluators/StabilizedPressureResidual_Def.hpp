@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Phalanx_DataLayout.hpp>
 #include <Sacado_ParameterRegistration.hpp>
 #include <Teuchos_TestForException.hpp>
@@ -74,7 +74,7 @@ template<typename EvalT, typename Traits>
 void StabilizedPressureResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::Tensor<ScalarT> sigma(num_dims_);
+  Intrepid2::Tensor<ScalarT> sigma(num_dims_);
 
   if (small_strain_) {
     // small strain version needs no pull back
@@ -84,7 +84,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       for (int pt = 0; pt < num_pts_; ++pt) {
         sigma.fill( stress_,cell,pt,0,0);
-        ScalarT dUdJ = (1.0/num_dims_) * Intrepid::trace(sigma);
+        ScalarT dUdJ = (1.0/num_dims_) * Intrepid2::trace(sigma);
         for (int node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,node,pt) *
             (dUdJ - pressure_(cell,pt)) / bulk_modulus_(cell,pt);
@@ -104,8 +104,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   } else {
-    Intrepid::Tensor<ScalarT> F(num_dims_);
-    Intrepid::Tensor<ScalarT> Cinv(num_dims_);
+    Intrepid2::Tensor<ScalarT> F(num_dims_);
+    Intrepid2::Tensor<ScalarT> Cinv(num_dims_);
 
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
@@ -113,7 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       for (int pt = 0; pt < num_pts_; ++pt) {
         sigma.fill( stress_,cell,pt,0,0);
-        ScalarT dUdJ = (1.0/num_dims_) * Intrepid::trace(sigma);
+        ScalarT dUdJ = (1.0/num_dims_) * Intrepid2::trace(sigma);
         for (int node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,node,pt) *
             (dUdJ - pressure_(cell,pt)) / bulk_modulus_(cell,pt);
@@ -124,8 +124,8 @@ evaluateFields(typename Traits::EvalData workset)
       ScalarT stab_term = 0.5 * alpha_;
       for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill( def_grad_,cell,pt,0,0);
-        ScalarT J = Intrepid::det(F);
-        Cinv = Intrepid::inverse( Intrepid::transpose(F) * F );
+        ScalarT J = Intrepid2::det(F);
+        Cinv = Intrepid2::inverse( Intrepid2::transpose(F) * F );
         ScalarT stab_param = stab_term * h_(cell,pt) * h_(cell,pt) / 
           shear_modulus_(cell,pt);
         for (int node = 0; node < num_nodes_; ++node) {

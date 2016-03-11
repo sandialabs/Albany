@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include <Phalanx_FieldManager.hpp>
 #include <Teuchos_CommHelpers.hpp>
 
@@ -92,7 +92,7 @@ void write (Albany::MDArray& mda, const MDArray& f) {
 #ifdef amb_do_check
 class Checker {
 private:
-  typedef Intrepid::Tensor<RealType> Tensor;
+  typedef Intrepid2::Tensor<RealType> Tensor;
   int wi_, cell_, qp_, node_;
   void display (const std::string& name, const Tensor& a,
                 const std::string& msg) {
@@ -112,7 +112,7 @@ private:
 public:
   Checker (int wi, int cell, int qp, int node = 0)
     : wi_(wi), cell_(cell), qp_(qp), node_(node) {}
-#define loopa(i, dim) for (Intrepid::Index i = 0; i < a.get_dimension(); ++i)
+#define loopa(i, dim) for (Intrepid2::Index i = 0; i < a.get_dimension(); ++i)
   bool ok_numbers (const std::string& name, const Tensor& a) {
     loopa(i, 0) loopa(j, 1) {
       const bool is_inf = std::isinf(a(i,j)), is_nan = std::isnan(a(i,j));
@@ -126,7 +126,7 @@ public:
   bool first () const
     { return wi_ == 0 && cell_ == 0 && qp_ == 0 && node_ == 0; }
   bool is_rotation (const std::string& name, const Tensor& a) {
-    const double det = Intrepid::det(a);
+    const double det = Intrepid2::det(a);
     if (std::abs(det - 1) >= 1e-10) {
       std::stringstream ss;
       ss << "det = " << det;
@@ -160,7 +160,7 @@ public:
 };
 #else // amb_do_check
 class Checker {
-  typedef Intrepid::Tensor<RealType> Tensor;
+  typedef Intrepid2::Tensor<RealType> Tensor;
 public:
   Checker (int wi, int cell, int qp, int node = 0) {}
   bool first () const { return false; }
@@ -171,9 +171,9 @@ public:
 };    
 #endif // amb_do_check
 
-Intrepid::Tensor<RealType>&
-symmetrize (Intrepid::Tensor<RealType>& a) {
-  const Intrepid::Index dim = a.get_dimension();
+Intrepid2::Tensor<RealType>&
+symmetrize (Intrepid2::Tensor<RealType>& a) {
+  const Intrepid2::Index dim = a.get_dimension();
   if (dim > 1) {
     a(0,1) = a(1,0) = 0.5*(a(0,1) + a(1,0));
     if (dim > 2) {
@@ -187,39 +187,39 @@ symmetrize (Intrepid::Tensor<RealType>& a) {
 struct Direction { enum Enum { g2G, G2g }; };
 
 void calc_right_polar_LieR_LieS_G2g (
-  const Intrepid::Tensor<RealType>& F, Intrepid::Tensor<RealType> RS[2],
+  const Intrepid2::Tensor<RealType>& F, Intrepid2::Tensor<RealType> RS[2],
   Checker& c)
 {
   c.ok_numbers("F", F);
-  { std::pair< Intrepid::Tensor<RealType>, Intrepid::Tensor<RealType> >
-      RSpair = Intrepid::polar_right(F);
+  { std::pair< Intrepid2::Tensor<RealType>, Intrepid2::Tensor<RealType> >
+      RSpair = Intrepid2::polar_right(F);
     RS[0] = RSpair.first; RS[1] = RSpair.second; }
   if (c.first() ||
       ! (c.ok_numbers("R", RS[0]) && c.ok_numbers("S", RS[1]) &&
          c.is_rotation("R", RS[0]) && c.is_symmetric("S", RS[1])))
     pr("F = [\n" << F << "];\nR = [\n" << RS[0] << "];\nS = [\n"
        << RS[1] << "];");    
-  RS[0] = Intrepid::log_rotation(RS[0]);
+  RS[0] = Intrepid2::log_rotation(RS[0]);
   c.ok_numbers("r", RS[0]); c.is_antisymmetric("r", RS[0]);
-  RS[1] = Intrepid::log_sym(RS[1]);
+  RS[1] = Intrepid2::log_sym(RS[1]);
   symmetrize(RS[1]);
   c.ok_numbers("s", RS[1]); c.is_symmetric("s write", RS[1]);
   if (c.first()) pr("r =[\n" << RS[0] << "];\ns =[\n" << RS[1] << "];");
 }
 
 void calc_right_polar_LieR_LieS_g2G (
-  Intrepid::Tensor<RealType>& R, Intrepid::Tensor<RealType>& S, Checker& c)
+  Intrepid2::Tensor<RealType>& R, Intrepid2::Tensor<RealType>& S, Checker& c)
 {
   c.ok_numbers("r", R); c.is_antisymmetric("r", R);
   c.ok_numbers("s", S); c.is_symmetric("s read", S);
   if (c.first()) pr("r = [\n" << R << "];\ns = [\n" << S << "];");
   // Math.
-  R = Intrepid::exp_skew_symmetric(R);
+  R = Intrepid2::exp_skew_symmetric(R);
   c.ok_numbers("R", R); c.is_rotation("R", R);
-  S = Intrepid::exp(S);
+  S = Intrepid2::exp(S);
   symmetrize(S);
   c.ok_numbers("S", S); c.is_symmetric("S", S);
-  R = Intrepid::dot(R, S);
+  R = Intrepid2::dot(R, S);
   c.ok_numbers("F", R);
   if (c.first()) pr("F = [\n" << R << "];");
 }
@@ -244,9 +244,9 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
       Checker c(wi, cell, qp);
       if (dir == Direction::G2g) {
         // Copy mda2 (provisional) -> local.
-        Intrepid::Tensor<RealType> F(mda1.dimension(2));
+        Intrepid2::Tensor<RealType> F(mda1.dimension(2));
         loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
-        Intrepid::Tensor<RealType> RS[2];
+        Intrepid2::Tensor<RealType> RS[2];
         calc_right_polar_LieR_LieS_G2g(F, RS, c);
         // Copy local -> mda1, mda2.
         loop(mda1, i, 2) loop(mda1, j, 3) {
@@ -255,7 +255,7 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
         }
       } else {
         // Copy mda1,2 -> local.
-        Intrepid::Tensor<RealType> R(mda1.dimension(2)), S(mda2.dimension(2));
+        Intrepid2::Tensor<RealType> R(mda1.dimension(2)), S(mda2.dimension(2));
         loop(mda1, i, 2) loop(mda1, j, 3) {
           R(i, j) = mda1(cell, qp, i, j);
           S(i, j) = mda2(cell, qp, i, j);
@@ -377,10 +377,10 @@ fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
                   row, col, f_G_qp(cell, qp, i, j) * wbf(cell, node, qp));
           } break;
           case Transformation::right_polar_LieR_LieS: {
-            Intrepid::Tensor<RealType> F(ndim);
+            Intrepid2::Tensor<RealType> F(ndim);
             loop(f_G_qp, i, 2) loop(f_G_qp, j, 3)
               F(i, j) = f_G_qp(cell, qp, i, j);
-            Intrepid::Tensor<RealType> RS[2];
+            Intrepid2::Tensor<RealType> RS[2];
             calc_right_polar_LieR_LieS_G2g(F, RS, c);
             for (int fi = 0; fi < f.num_g_fields; ++fi) {
               for (int i = 0, col = 0; i < ndim; ++i)
@@ -965,7 +965,7 @@ aadapt_rc_apply_to_all_eval_types(eti_fn)
 
 namespace {
 namespace testing {
-typedef Intrepid::Tensor<RealType> Tensor;
+typedef Intrepid2::Tensor<RealType> Tensor;
 
 // Some deformation gradient tensors with det(F) > 0 for use in testing.
 /*
@@ -1000,6 +1000,7 @@ double eval_f (const double x, const double y, const double z, int ivec) {
   case 8: return x*x;
   case 9: return x*x*x;
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: unhandled argument in evalf() in AAdapt_RC_Manager.cpp" << std::endl);
 }
 
 // Axis-aligned bounding box on the vertices.
@@ -1021,7 +1022,7 @@ void getBoundingBox (const PHX::MDField<RealType, Cell, Vertex, Dim>& vs,
 }
 
 // F field.
-Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
+Intrepid2::Tensor<RealType> eval_F (const RealType p[3]) {
 #define in01(u) (0 <= (u) && (u) <= 1)
   TEUCHOS_ASSERT(in01(p[0]) && in01(p[1]) && in01(p[2]));
 #undef in01
@@ -1031,9 +1032,9 @@ Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
   for (int k = 0; k < 3; ++k) {
     Tensor F(3);
     lpij F(i,j) = Fs[k][i][j];
-    std::pair<Tensor, Tensor> RS = Intrepid::polar_right(F);
-    RS.first = Intrepid::log_rotation(RS.first);
-    RS.second = Intrepid::log_sym(RS.second);
+    std::pair<Tensor, Tensor> RS = Intrepid2::polar_right(F);
+    RS.first = Intrepid2::log_rotation(RS.first);
+    RS.second = Intrepid2::log_sym(RS.second);
     symmetrize(RS.second);
     // Right now, we are not doing anything to handle phase wrapping in r =
     // logm(R). That means that projection with Lie transformation does not work
@@ -1042,9 +1043,9 @@ Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
     if (k == 0) r += p[k]*RS.first;
     s += p[k]*RS.second;
   }
-  const Tensor R = Intrepid::exp_skew_symmetric(r);
-  Tensor S = Intrepid::exp(s); symmetrize(S);
-  return Intrepid::dot(R, S);
+  const Tensor R = Intrepid2::exp_skew_symmetric(r);
+  Tensor S = Intrepid2::exp(s); symmetrize(S);
+  return Intrepid2::dot(R, S);
 #undef lpij
 }
 
@@ -1119,7 +1120,7 @@ void testProjector (
         RealType p[3];
         for (int k = 0; k < 3; ++k)
           p[k] = (coord_qp(cell, qp, k) - lo[k])/(hi[k] - lo[k]);
-        const Intrepid::Tensor<RealType> F = eval_F(p);
+        const Intrepid2::Tensor<RealType> F = eval_F(p);
         loop(f_mdf, i, 2) loop(f_mdf, j, 3) f_mdf(cell, qp, i, j) = F(i, j);
       }
     }
@@ -1297,7 +1298,7 @@ fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
         // I don't have a bounding box, so come up with something reasonable.
         RealType alpha[3] = {0, 0, 0};
         alpha[0] = (100 + p.x[0])/200;
-        const Intrepid::Tensor<RealType> F = eval_F(alpha);
+        const Intrepid2::Tensor<RealType> F = eval_F(alpha);
         loop(f_mdf, i, 2) loop(f_mdf, j, 3) fv.f[num_dim*i + j] = F(i,j);
       }
       td.f_true_qp[p] = fv;

@@ -1,0 +1,247 @@
+<ParameterList>
+
+  <ParameterList name="Problem">
+    
+    <!-- physics model -->
+    <Parameter name="Name" type="string" value="Phase 3D"/>
+
+     <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
+
+    <!-- Material database that holds the material parameters in each element block -->
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+
+    <!-- solution method - Steady / Continuation (quasi-static / load-stepping) / Transient (time-dependent)-->
+<!--   <Parameter name="Solution Method" type="string" value="Transient"/>-->
+   <Parameter name="Solution Method" type="string" value="Continuation"/>
+    <ParameterList name="Initial Condition">
+       <Parameter name="Function" type="string" value="Constant"/>
+       <Parameter name="Function Data" type="Array(double)" value="{300.0}"/>
+    </ParameterList>
+ 
+<!--  Dirichlet boundary conditions prescribed temperatures in this case --> 
+     <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS Bottom_Surface for DOF Temperature" type="double" value="300.0"/> 
+  <!--    <Parameter name="DBC on NS Top_Surface for DOF Temperature" type="double" value="300.0"/> -->
+     </ParameterList> 
+
+    <!--  Neumann boundary conditions prescribed fluxes in this case -->
+    <ParameterList name="Neumann BCs">
+      <Parameter name="NBC on SS Top_Surface for DOF U set (dudx, dudy, dudz)" type="Array(double)" value="{0.0, 0.0, 0.0}"/>
+    </ParameterList>
+ 
+
+    <!-- not too sure about this one - won't be necessary for simple heat transfer problems, though -->
+    <ParameterList name="Parameters">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Parameter 0" type="string" value="Time"/>
+    </ParameterList>
+
+    <!--  response functions values used for post-processing e.g. can compare solution average of temperature over the entire mesh to a pre-defined value in the input file not necessary for now -->
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
+    </ParameterList>
+
+     <ParameterList name="Adaptation">
+      <Parameter name="Equilibrate" type="bool" value="false"/>
+      <Parameter name="Remesh Strategy" type="string" value="Step Number" />
+      <Parameter name="Method" type="string" value="Sim" />
+      <Parameter name="Remesh Step Number" type="Array(int)" value="{4,8,12,16,20,24,28,32,36,40,42,46,50,54,58}"/>
+      <Parameter name="Error Bound" type="double" value="0.09" />
+      <Parameter name="Max Size" type="double" value="4e-5" />
+    </ParameterList>
+
+  </ParameterList>
+
+
+
+  <!-- Discretization block where mesh stuff happens -->
+   <ParameterList name="Discretization">
+
+    <!-- pumi discretization -->
+    <Parameter name="Method" type="string" value="Sim"/>
+
+    <!-- partition mesh in memory from serial to parallel mesh
+    <Parameter name="Call serial global partition" type="bool" value="false"/>
+-->
+<!-- for single mesh without parallal processing-->
+    <Parameter name="Sim Input File Name" type="string" value="./movinglaser.sms"/>
+<!-- for partitioned mesh with parallal processing-->
+   <!-- <Parameter name="Sim Input File Name" type="string" value="./parts.sms"/>-->
+    <Parameter name="Sim Model Input File Name" type="string" value="./movinglaser.smd"/>
+    <Parameter name="Parasolid Model Input File Name" type="string" value="./movinglaser_nat.xmt_txt" />
+
+   <!-- output name - either *.vtk or *.exo -->
+    <Parameter name="Sim Output File Name" type="string" value="TransientN.vtk"/>
+
+    <!-- associate parasolid / mesh model region ID with an element block name -->
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{95,3616, Upper_Region,Lower_Region}"/>
+
+    <!-- associate parasolid / mesh model face ID with a node set name (for Dirichlet BCs) -->
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x1:{3610, Bottom_Surface}"/>
+
+    <!-- associate parasolid / mesh model face ID with a side set name (for Neumann BCs)-->
+    <Parameter name="Side Set Associations" type="TwoDArray(string)" value="2x9:{1, 79,81,83,85, 3588,3593,3598,3603, Top_Surface, Upper_1,Upper_2,Upper_3,Upper_4, Lower_1,Lower_2,Lower_3,Lower_4}"/>
+  
+    <!-- separate physics by material region -->
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
+
+    <!-- Quadrature point =1 -->
+<!--    <Parameter name="Cubature Degree" type="int" value="1" />-->
+
+    <!-- Storing Solution variable in the mid of element using values from QPs -->
+    <Parameter name="QP Temperature from Nodes" type="bool" value="true"/>
+
+  </ParameterList>
+
+  <!--Where info for regression tests based on solution are set e.g. values for solution average and a tolerance for comparison would be set here not necessary for now 
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+  </ParameterList>
+-->
+  <!-- Solver information follows: This will remain the same from problem to problem if you are solving simple heat equation problems -->
+  <ParameterList name="Piro">
+    <ParameterList name="LOCA">
+      <ParameterList name="Bifurcation">
+      </ParameterList>
+      <ParameterList name="Constraints">
+      </ParameterList>
+      <ParameterList name="Predictor">
+        <Parameter name="Method" type="string" value="Constant"/>
+      </ParameterList>
+      <ParameterList name="Stepper">
+        <Parameter name="Continuation Method" type="string" value="Natural"/>
+        <Parameter name="Initial Value" type="double" value="0.0"/>
+        <Parameter name="Continuation Parameter" type="string" value="Time"/>
+        <Parameter name="Max Steps" type="int" value="60"/>
+        <Parameter name="Max Value" type="double" value="60e-5"/>
+        <Parameter name="Min Value" type="double" value="0.0"/>
+        <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
+        <ParameterList name="Eigensolver">
+          <Parameter name="Method" type="string" value="Anasazi"/>
+          <Parameter name="Operator" type="string" value="Jacobian Inverse"/>
+          <Parameter name="Num Eigenvalues" type="int" value="1"/>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Step Size">
+        <Parameter name="Initial Step Size" type="double" value="1e-5"/>
+        <Parameter name="Method" type="string" value="Constant"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="NOX">
+      <ParameterList name="Direction">
+        <Parameter name="Method" type="string" value="Newton"/>
+        <ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1.0e-4"/>
+          </ParameterList>
+          <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+          <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+          <ParameterList name="Stratimikos Linear Solver">
+            <ParameterList name="NOX Stratimikos Options">
+            </ParameterList>
+            <ParameterList name="Stratimikos">
+              <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+              <ParameterList name="Linear Solver Types">
+                <ParameterList name="Belos">
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="low"/>
+                  </ParameterList>
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+                  <ParameterList name="Solver Types">
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
+                      <Parameter name="Output Frequency" type="int" value="1"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Verbosity" type="int" value="0"/>
+                      <Parameter name="Maximum Iterations" type="int" value="1200"/>
+                      <Parameter name="Block Size" type="int" value="20"/>
+                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="true" />
+                      <Parameter name="Orthogonalization" type="string" value="DGKS"/>
+                      <Parameter name="Implicit Residual Scaling" type="string" value="Norm of Preconditioned Initial Residual"/>
+                      <Parameter name="Explicit Residual Scaling" type="string" value="Norm of RHS"/>
+                    </ParameterList>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+              <ParameterList name="Preconditioner Types">
+                <ParameterList name="Ifpack">
+                  <Parameter name="Overlap" type="int" value="2"/>
+                  <Parameter name="Prec Type" type="string" value="ILU"/>
+                  <ParameterList name="Ifpack Settings">
+                    <Parameter name="fact: drop tolerance" type="double" value="0"/>
+                    <Parameter name="fact: level-of-fill" type="int" value="1"/>
+                    <Parameter name="schwarz: filter singletons" type="bool" value="true"/>
+                    <Parameter name="schwarz: reordering type" type="string" value="rcm"/>
+                  </ParameterList>
+                </ParameterList>
+                <ParameterList name="Ifpack2">
+                  <Parameter name="Prec Type" type="string" value="RILUK"/>
+                  <ParameterList name="Ifpack2 Settings">
+                    <Parameter name="fact: drop tolerance" type="double" value="0"/>
+                    <Parameter name="fact: iluk level-of-fill" type="int" value="0"/>
+                    <Parameter name="fact: ilut level-of-fill" type="double" value="0"/>
+                    <Parameter name="schwarz: filter singletons" type="bool" value="true"/>
+                    <Parameter name="schwarz: use reordering" type="bool" value="true"/>
+                    <Parameter name="schwarz: overlap level" type="int" value="0"/>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Line Search">
+        <ParameterList name="Full Step">
+          <Parameter name="Full Step" type="double" value="1"/>
+        </ParameterList>
+        <Parameter name="Method" type="string" value="Full Step"/>
+      </ParameterList>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Printing">
+        <ParameterList name="Output Information">
+          <Parameter name="Error" type="bool" value="true"/>
+          <Parameter name="Warning" type="bool" value="true"/>
+          <Parameter name="Outer Iteration" type="bool" value="true"/>
+          <Parameter name="Parameters" type="bool" value="false"/>
+          <Parameter name="Details" type="bool" value="false"/>
+          <Parameter name="Linear Solver Details" type="bool" value="false"/>
+          <Parameter name="Stepper Iteration" type="bool" value="true"/>
+          <Parameter name="Stepper Details" type="bool" value="true"/>
+          <Parameter name="Stepper Parameters" type="bool" value="false"/>
+        </ParameterList>
+        <Parameter name="Output Precision" type="int" value="3"/>
+        <Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <ParameterList name="Solver Options">
+        <Parameter name="Status Test Check Type" type="string" value="Complete"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+        <Parameter name="Test Type" type="string" value="Combo"/>
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Number of Tests" type="int" value="4"/>
+        <ParameterList name="Test 0">
+          <Parameter name="Test Type" type="string" value="NormF"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Unscaled"/>
+          <Parameter name="Tolerance" type="double" value="1.0e-4"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
+          <Parameter name="Test Type" type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations" type="int" value="100"/>
+        </ParameterList>
+        <ParameterList name="Test 2">
+          <Parameter name="Test Type" type="string" value="FiniteValue"/>
+        </ParameterList>
+        <ParameterList name="Test 3">
+          <Parameter name="Test Type" type="string" value="NormUpdate"/>
+          <Parameter name="Scale Type" type="string" value="Unscaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-11"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>
+

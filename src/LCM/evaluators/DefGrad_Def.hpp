@@ -7,8 +7,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
-#include "Intrepid_RealSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Intrepid2_RealSpaceTools.hpp"
 #include "LCM_Utils.h"
 
 #include <typeinfo>
@@ -107,7 +107,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  // Since Intrepid will later perform calculations on the entire workset size
+  // Since Intrepid2 will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to inversion of 0 tensors.
   for (int cell = workset.numCells; cell < worksetSize; ++cell) {
@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
+  Intrepid2::RealSpaceTools<ScalarT>::det(J, defgrad);
 
   if (weightedAverage) {
     ScalarT Jbar, wJbar, vol;
@@ -166,7 +166,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }*/
 
-  // Since Intrepid will later perform calculations on the entire workset size
+  // Since Intrepid2 will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to inversion of 0 tensors.
   for (int cell=workset.numCells; cell < worksetSize; ++cell)
@@ -174,7 +174,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i=0; i < numDims; ++i)
         defgrad(cell,qp,i,i) = 1.0;
 
-  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
+  Intrepid2::RealSpaceTools<ScalarT>::det(J, defgrad);
 
   if (weightedAverage)
   {

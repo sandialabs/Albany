@@ -64,6 +64,7 @@
     <Parameter name="Method" type="string" value="Ioss" />
     <Parameter name="Exodus Output File Name" type="string" value="output/wavefns_formula2D.exo" />
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
+    <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
   </ParameterList>
 
   <ParameterList name="Regression Results">

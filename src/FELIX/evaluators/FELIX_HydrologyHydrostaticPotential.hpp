@@ -27,7 +27,7 @@ class HydrologyHydrostaticPotential : public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   HydrologyHydrostaticPotential (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
@@ -40,11 +40,11 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint>      z_s;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      H;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>      z_s;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>      H;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint>      phi_H;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>      phi_H;
 
   int numQPs;
 

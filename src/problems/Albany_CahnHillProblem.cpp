@@ -6,8 +6,8 @@
 
 #include "Albany_CahnHillProblem.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -22,8 +22,7 @@ CahnHillProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   numDim(numDim_),
   haveNoise(false),
   commT(commT_)
-{
-}
+{}
 
 Albany::CahnHillProblem::
 ~CahnHillProblem()

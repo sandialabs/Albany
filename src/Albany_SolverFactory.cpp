@@ -9,12 +9,12 @@
 
 #include "Albany_SolverFactory.hpp"
 #if defined(ALBANY_EPETRA)
-#include "Albany_PiroObserver.hpp"
-#include "Piro_Epetra_SolverFactory.hpp"
-#include "Petra_Converters.hpp"
-#include "Albany_SaveEigenData.hpp"
-#include "Albany_ObserverFactory.hpp"
-#include "NOX_Epetra_Observer.H"
+#  include "Albany_PiroObserver.hpp"
+#  include "Piro_Epetra_SolverFactory.hpp"
+#  include "Petra_Converters.hpp"
+#  include "Albany_SaveEigenData.hpp"
+#  include "Albany_ObserverFactory.hpp"
+#  include "NOX_Epetra_Observer.H"
 #endif
 #include "Albany_PiroObserverT.hpp"
 #include "Albany_ModelFactory.hpp"
@@ -22,28 +22,22 @@
 #include "Piro_ProviderBase.hpp"
 
 #include "Piro_SolverFactory.hpp"
-#include "Piro_AdaptiveSolverFactory.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Piro_StratimikosUtils.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
 #ifdef ALBANY_IFPACK2
-#include "Teuchos_AbstractFactoryStd.hpp"
-#include "Thyra_Ifpack2PreconditionerFactory.hpp"
+#  include "Teuchos_AbstractFactoryStd.hpp"
+#  include "Thyra_Ifpack2PreconditionerFactory.hpp"
 #endif /* ALBANY_IFPACK2 */
 
 #ifdef ALBANY_MUELU
-#include <Thyra_MueLuPreconditionerFactory.hpp>
-#ifdef ALBANY_USE_PUBLICTRILINOS
-#include "Stratimikos_MueluTpetraHelpers.hpp"
-#else
-#include "Stratimikos_MueLuHelpers.hpp"
-#endif
+#  include "Stratimikos_MueLuHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_TEKO
-#include "Teko_StratimikosFactory.hpp"
+#  include "Teko_StratimikosFactory.hpp"
 #endif
 
 #ifdef ALBANY_QCAD
@@ -69,9 +63,6 @@
 #ifdef ALBANY_AERAS
   #include "Aeras/Aeras_HVDecorator.hpp"
 #endif
-
-//#include "Thyra_EpetraModelEvaluator.hpp"
-//#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
@@ -206,11 +197,11 @@ Albany::SolverFactory::SolverFactory(
   appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
-  // do not set default solver parameters for QCAD::Solver or ATO::Solver problems, 
+  // do not set default solver parameters for QCAD::Solver or ATO::Solver problems,
   // ... as they handle this themselves
   std::string solution_method = appParams->sublist("Problem").get("Solution Method", "Steady");
   if (solution_method != "QCAD Multi-Problem" &&
-      solution_method != "ATO Problem" ) {  
+      solution_method != "ATO Problem" ) {
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -226,11 +217,11 @@ Albany::SolverFactory::SolverFactory(
   : appParams(input_appParams), out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 
-  // do not set default solver parameters for QCAD::Solver or ATO::Solver problems, 
+  // do not set default solver parameters for QCAD::Solver or ATO::Solver problems,
   // ... as they handle this themselves
   std::string solution_method = appParams->sublist("Problem").get("Solution Method", "Steady");
   if (solution_method != "QCAD Multi-Problem" &&
-      solution_method != "ATO Problem" ) {  
+      solution_method != "ATO Problem" ) {
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -308,17 +299,18 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
       // Create and setup the Piro solver factory
-      Piro::Epetra::SolverFactory piroFactory;
+      Piro::Epetra::SolverFactory piroEpetraFactory;
       {
         // Do we need: Observers for output from time-stepper ??
 	const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
 	  rcp(new QCAD::CoupledPS_NOXObserverConstructor(ps_model));
 	  //  rcp(new NOXObserverConstructor(poisson_app));
-	piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
+	piroEpetraFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
 
 	// LOCA auxiliary objects -- needed?
       }
-      return piroFactory.createSolver(piroParams, ps_model);
+    // Piro::Epetra::SolverFactory
+      return piroEpetraFactory.createSolver(piroParams, ps_model);
 
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
@@ -338,7 +330,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
       const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appComm);
 
-      
+
       //QCAD::GenEigensolver uses a state manager as an observer (for now)
       RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
 
@@ -396,21 +388,21 @@ Albany::SolverFactory::createAndGetAlbanyApp(
     }
 
     // Create and setup the Piro solver factory
-    Piro::Epetra::SolverFactory piroFactory;
+    Piro::Epetra::SolverFactory piroEpetraFactory;
     {
       // Observers for output from time-stepper
       const RCP<Piro::ProviderBase<Rythmos::IntegrationObserverBase<double> > > rythmosObserverProvider =
         rcp(new RythmosObserverConstructor(app));
-      piroFactory.setSource<Rythmos::IntegrationObserverBase<double> >(rythmosObserverProvider);
+      piroEpetraFactory.setSource<Rythmos::IntegrationObserverBase<double> >(rythmosObserverProvider);
 
       const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
         rcp(new NOXObserverConstructor(app));
-      piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
+      piroEpetraFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
 
       // LOCA auxiliary objects
       {
         const RCP<AAdapt::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
-        piroFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
+        piroEpetraFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
 
         const RCP<Piro::ProviderBase<NOX::Epetra::Observer> >
           noxStatelessObserverProvider = rcp(
@@ -418,11 +410,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> > saveEigenDataProvider =
           rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(),
                                            noxStatelessObserverProvider));
-        piroFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(saveEigenDataProvider);
+        piroEpetraFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(saveEigenDataProvider);
       }
     }
 
-    return piroFactory.createSolver(piroParams, model);
+    // Piro::Epetra::SolverFactory
+    return piroEpetraFactory.createSolver(piroParams, model);
 }
 
 Teuchos::RCP<Thyra::ModelEvaluator<double> >
@@ -470,7 +463,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-    if ( solutionMethod == "QCAD Multi-Problem" || 
+    if ( solutionMethod == "QCAD Multi-Problem" ||
          solutionMethod == "QCAD Poisson-Schrodinger" ||
          solutionMethod == "ATO Problem" ) {
        // These QCAD and ATO solvers do not contain a primary Albany::Application instance and so albanyApp is null.
@@ -511,64 +504,12 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 #endif
 
 namespace {
-//   Problem: Instead of renaming the sublist MueLu to MueLu-Tpetra,
-// Piro::renamePreconditionerParamList caused a new empty sublist called
-// MueLu-Tpetra to be created. Because it was empty, MueLu would behave badly,
-// being given no user-set parameter values. Hence the worst-case bug was
-// occurring: the program would run, but the performance would be terrible.
-//   Analysis: Piro::renamePreconditionerParamList uses setName to change the
-// sublist MueLu to MueLu-Tpetra. That does not actually work. But I think it's
-// possible there is a bug in Teuchos::ParameterList, and setName should in fact
-// work. The implementation of setName simply sets the private variable name_ to
-// the new name, but it does not change the associated key in params_. I think
-// that, or something related, is causing the problem. If I pin down the problem
-// as a bug in Teuchos::ParameterList, then I'll submit a bug report and revert
-// the following change.
-//   (Temporary) Solution: Here I implement a version of
-// renamePreconditionerParamList that uses set and then remove to do the
-// renaming. That works, although it's probably inefficient.
-//   Followup: Once I determine the exact issue with setName, I'll either (1)
-// move this implementation to Piro or (2) submit a bug report and remove this
-// implementation once the fix is in Teuchos::ParameterList.
-void renamePreconditionerParamList(
-  const Teuchos::RCP<Albany::Application>& app,
-  const Teuchos::RCP<Teuchos::ParameterList>& stratParams, 
-  const std::string &oldname, const std::string& newname)
-{
-  if (stratParams->isType<std::string>("Preconditioner Type")) {
-    const std::string&
-      currentval = stratParams->get<std::string>("Preconditioner Type");
-    if (currentval == oldname) {
-      stratParams->set<std::string>("Preconditioner Type", newname);
-      // Does the old sublist exist?
-      if (stratParams->isSublist("Preconditioner Types") &&
-          stratParams->sublist("Preconditioner Types", true).isSublist(oldname)) {
-        Teuchos::ParameterList& ptypes =
-          stratParams->sublist("Preconditioner Types", true);
-        Teuchos::ParameterList& mlist = ptypes.sublist(oldname, true);
-        // Copy the oldname sublist to the newname sublist.
-        ptypes.set(newname, mlist);
-        // Remove the oldname sublist.
-        ptypes.remove(oldname);
-
-         const Teuchos::RCP<Albany::RigidBodyModes>&
-            rbm = app->getProblem()->getNullSpace();
-         rbm->updatePL(sublist(sublist(stratParams, "Preconditioner Types"), newname));
-      }
-    }
-  }      
-}
 
 void enableIfpack2(Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
 {
 #ifdef ALBANY_IFPACK2
-# ifdef ALBANY_64BIT_INT
   typedef Thyra::PreconditionerFactoryBase<ST> Base;
-  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
-# else
-  typedef Thyra::PreconditionerFactoryBase<double> Base;
-  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
-# endif
+  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra_CrsMatrix> Impl;
   linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
 #endif
 }
@@ -578,23 +519,7 @@ void enableMueLu(Teuchos::RCP<Albany::Application>& albanyApp,
                  Stratimikos::DefaultLinearSolverBuilder& linearSolverBuilder)
 {
 #ifdef ALBANY_MUELU
-# ifdef ALBANY_USE_PUBLICTRILINOS
-#  ifdef ALBANY_64BIT_INT
-  renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-  Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder);
-  Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#  else
-  Stratimikos::enableMueLuTpetra(linearSolverBuilder);
-#  endif
-# else
-#  ifdef ALBANY_64BIT_INT
-  renamePreconditionerParamList(albanyApp, stratList, "MueLu", "MueLu-Tpetra");
-  Stratimikos::enableMueLu(linearSolverBuilder);
-  Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-#  else
-  Stratimikos::enableMueLu(linearSolverBuilder);
-#  endif
-# endif
+  Stratimikos::enableMueLu<LO, GO, KokkosNode>(linearSolverBuilder);
 #endif
 }
 } // namespace
@@ -604,7 +529,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-  const Teuchos::RCP<const Tpetra_Vector>& initial_guess, 
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
   bool createAlbanyApp)
 {
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
@@ -613,7 +538,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "QCAD Multi-Problem does not work with AlbanyT executable!  QCAD::Solver class needs to be implemented with Thyra::ModelEvaluator instead of EpetraExt. \n");
-    //IK, 8/26/14: need to implement QCAD::SolverT class that returns Thyra::ModelEvaluator instead of EpetraExt one 
+    //IK, 8/26/14: need to implement QCAD::SolverT class that returns Thyra::ModelEvaluator instead of EpetraExt one
     //and takes in Tpetra / Teuchos_Comm objects.
     //return rcp(new QCAD::SolverT(appParams, solverComm, initial_guess));
 #else /* ALBANY_QCAD */
@@ -635,15 +560,15 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       linearSolverBuilder.setParameterList(stratList);
       const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
-      const RCP<QCADT::CoupledPoissonSchrodinger> ps_model = 
+      const RCP<QCADT::CoupledPoissonSchrodinger> ps_model =
             rcp(new QCADT::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess, lowsFactory));
      //FIXME, IKT, 5/22/15: add observer!
       //const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
       //const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
-      // Create and setup the Piro solver factory -- need to convert to not be based on Epetra!  
+      // Create and setup the Piro solver factory -- need to convert to not be based on Epetra!
       //Piro::Epetra::SolverFactory piroFactory;
-      // Replace above with Piro::AdaptiveSolverFactory piroFactory; ?
+      // Replace above with Piro::SolverFactory piroFactory; ?
       /*{
         // Do we need: Observers for output from time-stepper ??
          const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
@@ -654,7 +579,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
         // LOCA auxiliary objects -- needed?
          }
       */
-      return piroFactory.createSolver<ST>(piroParams, ps_model);
+      // Piro::SolverFactory
+//      return piroFactory.createSolver<ST>(piroParams, ps_model);
+      RCP<Thyra::AdaptiveSolutionManager> solMgrT = Teuchos::null;
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, ps_model, solMgrT, Teuchos::null /* observer */);
 
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
@@ -683,7 +611,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_QCAD */
     }
 
-//IK, 10/16/14: ATO::Solver needs to be converted to Tpetra? 
+//IK, 10/16/14: ATO::Solver needs to be converted to Tpetra?
 // if (solutionMethod == "ATO Problem") {
 //#ifdef ALBANY_ATO
 //      return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
@@ -692,13 +620,38 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //#endif /* ALBANY_ATO */
 //    }
 
-#ifdef ALBANY_AERAS 
+#ifdef ALBANY_AERAS
   if (solutionMethod == "Aeras Hyperviscosity") {
     //std::cout <<"In Albany_SolverFactory: solutionMethod = Aeras Hyperviscosity" << std::endl;
     //Check if HV coefficient tau is zero of "Explicit HV" is false. Then there is no need for Aeras HVDecorator.
 
-    bool useExplHyperviscosity = problemParams->sublist("Shallow Water Problem").get<bool>("Use Explicit Hyperviscosity", false);
-    double tau = problemParams->sublist("Shallow Water Problem").get<double>("Hyperviscosity Tau", 0.0);
+    double tau;
+    bool useExplHyperviscosity;
+
+    std::string swProblem_name    = "Shallow Water Problem",
+    		    hydroProblem_name = "Hydrostatic Problem";
+
+    bool swProblem = problemParams->isSublist(swProblem_name);
+    bool hydroProblem = problemParams->isSublist(hydroProblem_name);
+
+    if( (!swProblem) && (!hydroProblem) ){
+
+  	  *out << "Error: Hyperviscosity can only be used with Aeras:Shallow Water or Aeras:Hydrostatic." << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Error: cannot locate " << swProblem_name <<" or " << hydroProblem_name << " sublist in the input file." << "\n");
+    }
+
+    if ( swProblem ){
+       tau = problemParams->sublist(swProblem_name).get<double>("Hyperviscosity Tau", 0.0);
+       useExplHyperviscosity = problemParams->sublist(swProblem_name).get<bool>("Use Explicit Hyperviscosity", false);
+       *out << "Reading Shallow Water Problem List: Using explicit hyperviscosity? " <<useExplHyperviscosity << "\n";
+    }
+    if ( hydroProblem ){
+       tau = problemParams->sublist(hydroProblem_name).get<double>("Hyperviscosity Tau", 0.0);
+       useExplHyperviscosity = problemParams->sublist(hydroProblem_name).get<bool>("Use Explicit Hyperviscosity", false);
+       *out << "Reading Hydrostatic Problem List: Using explicit hyperviscosity? " <<useExplHyperviscosity << "\n";
+    }
+
 
     if( (useExplHyperviscosity) && (tau != 0.0) ){
 
@@ -724,13 +677,14 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     albanyApp = app;
 
     RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
- 
+
     modelWithSolveT =
       rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelHV, lowsFactory));
 
     const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
 
-    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    // Piro::SolverFactory
+    return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, Teuchos::null, observer);
 
     }//if useExplHV=true and tau <>0.
 
@@ -741,11 +695,18 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
- 
-    //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input 
-    //files for each model).  This makes sense I think.  
+
+#ifndef ALBANY_DTK
+    if (appComm->getSize() > 1)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error: cannot run Coupled Schwarz problem on > 1 procs when DTK is disabled.  "
+        <<"Rebuild Trilinos and Albany with DTK to run Coupled Schwarz in parallel." << "\n");
+#endif //ALBANY_DTK
+
+    //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input
+    //files for each model).  This makes sense I think.
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
-   
+
     const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
     // Create and setup the Piro solver factory
     Piro::SolverFactory piroFactory;
@@ -761,14 +722,16 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
-    
-    const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
+
+    const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm,
                                                                          initial_guess, lowsFactory));
 
     const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
 
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
-    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
+    // Piro::SolverFactory
+//    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
+    return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, coupled_model_with_solveT, Teuchos::null, observer);
   }
 #endif /* LCM and Schwarz */
 
@@ -788,6 +751,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 	*out << "Error: cannot locate Stratimikos solver parameters in the input file." << std::endl;
     *out << "Printing the Piro parameter list:" << std::endl;
     piroParams->print(*out);
+// GAH: this is an error - should be fatal
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Error: cannot locate Stratimikos solver parameters in the input file." << "\n");
   }
 
 
@@ -799,7 +765,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     enableIfpack2(linearSolverBuilder);
-    enableMueLu(albanyApp, stratList, linearSolverBuilder);   
+    enableMueLu(albanyApp, stratList, linearSolverBuilder);
 #ifdef ALBANY_TEKO
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
 #endif
@@ -812,31 +778,30 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelT, lowsFactory));
   }
 
-  const RCP<LOCA::Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
+  const RCP<Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
+  Piro::SolverFactory piroFactory;
 
   if(solMgrT->isAdaptive()){
-    Piro::AdaptiveSolverFactory piroFactory;
     if(TpetraBuild){
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, solMgrT, observer);
     }
 #if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, solMgrT, observer);
     }
 #endif
   }
   else {
-    Piro::SolverFactory piroFactory;
     if(TpetraBuild){
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, Teuchos::null, observer);
     }
 #if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
-      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+      return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, modelWithSolveT, Teuchos::null, observer);
     }
 #endif
   }
@@ -1304,6 +1269,12 @@ Albany::SolverFactory::getValidAppParameters() const
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));;
   validPL->sublist("Problem",            false, "Problem sublist");
   validPL->sublist("Debug Output",       false, "Debug Output sublist");
+  validPL->sublist("Scaling",            false, "Jacobian/Residual Scaling sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Consistent Interpolation",    false, "DTK Consistent Interpolation sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Search",    false, "DTK Search sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("L2 Projection",    false, "DTK L2 Projection sublist");
+  validPL->sublist("DataTransferKit",    false, "DataTransferKit sublist").sublist("Point Cloud",    false, "DTK Point Cloud sublist");
   validPL->sublist("Discretization",     false, "Discretization sublist");
   validPL->sublist("Quadrature",         false, "Quadrature sublist");
   validPL->sublist("Regression Results", false, "Regression Results sublist");

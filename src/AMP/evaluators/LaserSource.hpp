@@ -18,6 +18,8 @@
 #include "Teuchos_Array.hpp"
 #include "Albany_Layouts.hpp"
 
+#include "Laser.hpp"
+
 namespace AMP {
 ///
 /// \brief Laser Source
@@ -69,6 +71,8 @@ private:
   unsigned int num_dims_;
   unsigned int num_nodes_;
   unsigned int workset_size_;
+
+  Laser LaserData_;
 
   Teuchos::RCP<const Teuchos::ParameterList>
      getValidLaserSourceParameters() const;

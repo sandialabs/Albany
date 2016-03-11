@@ -12,10 +12,14 @@
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types
-#include "Stokhos_Sacado_Kokkos.hpp"
 #include "Sacado.hpp"
 #include "Sacado_MathFunctions.hpp"
-#include "Stokhos_Sacado_MathFunctions.hpp"
+#ifdef ALBANY_STOKHOS
+#    include "Stokhos_Sacado_Kokkos.hpp"
+#    include "Stokhos_Sacado_MathFunctions.hpp"
+#    include "Sacado_PCE_OrthogPoly.hpp"
+#    include "Sacado_MP_Vector.hpp"
+#endif
 #include "Sacado_ELRFad_DFad.hpp"
 #include "Sacado_ELRCacheFad_DFad.hpp"
 #include "Sacado_Fad_DFad.hpp"
@@ -23,15 +27,15 @@
 #include "Sacado_ELRFad_SLFad.hpp"
 #include "Sacado_ELRFad_SFad.hpp"
 #include "Sacado_CacheFad_DFad.hpp"
-#include "Sacado_PCE_OrthogPoly.hpp"
-#include "Sacado_MP_Vector.hpp"
 #include "Phalanx_KokkosDeviceTypes.hpp"
 
 // ETP:  Uncomment all three of these for enabling partial specializations
 // of Fad types for multipoint ensemble propagation.
-#include "Sacado_Fad_DFad_MP_Vector.hpp"
-#include "Sacado_Fad_SLFad_MP_Vector.hpp"
-#include "Sacado_Fad_ViewFad_MP_Vector.hpp"
+#ifdef ALBANY_STOKHOS
+#  include "Sacado_Fad_DFad_MP_Vector.hpp"
+#  include "Sacado_Fad_SLFad_MP_Vector.hpp"
+#  include "Sacado_Fad_ViewFad_MP_Vector.hpp"
+#endif
 
 //amb Need to move to configuration.
 //#define ALBANY_SFAD_SIZE 27
@@ -44,6 +48,7 @@
 typedef double RealType;
 
 // SG data types
+#ifdef ALBANY_STOKHOS
 typedef Stokhos::StandardStorage<int,RealType> StorageType;
 typedef Sacado::PCE::OrthogPoly<RealType,StorageType> SGType;
 
@@ -53,6 +58,7 @@ typedef Sacado::PCE::OrthogPoly<RealType,StorageType> SGType;
 #endif
 typedef Stokhos::StaticFixedStorage<int,RealType,ALBANY_ENSEMBLE_SIZE,PHX::Device> MPStorageType;
 typedef Sacado::MP::Vector<MPStorageType> MPType;
+#endif
 
 // Switch between dynamic and static FAD types
 #ifdef ALBANY_FAST_FELIX
@@ -65,8 +71,10 @@ typedef Sacado::MP::Vector<MPStorageType> MPType;
 #else
 #define ALBANY_SFAD_SIZE 300
   typedef Sacado::Fad::DFad<RealType> FadType;
+#ifdef ALBANY_STOKHOS
   typedef Sacado::Fad::DFad<SGType> SGFadType;
   typedef Sacado::Fad::DFad<MPType> MPFadType;
+#endif
 #endif
 
 typedef Sacado::Fad::DFad<RealType> TanFadType;
@@ -140,5 +148,14 @@ namespace Albany {
   ADValue(const T& x) { return Sacado::ScalarValue<T>::eval(x); }
 
 }
+
+// Code macros to support deprecated warnings
+#ifdef ALBANY_ENABLE_DEPRECATED
+#  if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+#    define ALBANY_DEPRECATED  __attribute__((__deprecated__))
+#  else
+#    define ALBANY_DEPRECATED
+#  endif
+#endif
 
 #endif

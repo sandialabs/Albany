@@ -81,8 +81,8 @@ namespace Albany {
 
 }
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
@@ -115,15 +115,15 @@ Albany::AdvDiffProblem::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
   
-  RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-    intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
+  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+    intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  Intrepid::DefaultCubatureFactory<RealType> cubFactory;
-  RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -138,8 +138,16 @@ Albany::AdvDiffProblem::constructEvaluators(
 
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   bool supportsTransient=true;
+   bool supportsTransient = false;
+   if(number_of_time_deriv > 0) 
+      supportsTransient = true;
    int offset=0;
+
+   // This problem appears to be only defined as a transient problem, throw exception if it is not
+   TEUCHOS_TEST_FOR_EXCEPTION(
+      number_of_time_deriv != 1,
+      std::logic_error,
+      "Albany_AdvDiffProblem must be defined as a transient calculation.");
 
    // Temporary variable used numerous times below
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
@@ -150,15 +158,19 @@ Albany::AdvDiffProblem::constructEvaluators(
      Teuchos::ArrayRCP<string> dof_names_dot(1);
      Teuchos::ArrayRCP<string> resid_names(1);
      dof_names[0] = "U";
-     dof_names_dot[0] = dof_names[0]+"_dot";
+     if (supportsTransient)
+       dof_names_dot[0] = dof_names[0]+"_dot";
      resid_names[0] = "AdvDiff Residual";
-     fm0.template registerEvaluator<EvalT>
-       (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+
+     if (supportsTransient) fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+     else fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
 
      fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0], offset));
 
-     fm0.template registerEvaluator<EvalT>
+     if (supportsTransient) fm0.template registerEvaluator<EvalT>
        (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0], offset));
 
      //     fm0.template registerEvaluator<EvalT>

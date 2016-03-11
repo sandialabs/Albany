@@ -7,7 +7,7 @@
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Epetra_Vector.h"
 #include "PHAL_Utilities.hpp"
 
@@ -113,18 +113,19 @@ evaluateFields(typename Traits::EvalData workset)
   if(workset.n_coeff != -1.0){
     albanyIsCreatingMassMatrix = false;
   }
-  if(!albanyIsCreatingMassMatrix){
-    TEUCHOS_TEST_FOR_EXCEPTION("PeridigmForceBase::evaluateFields not implemented for this template type.",
-			       Teuchos::Exceptions::InvalidParameter, "Need specialization.");
-  }
 
-  if(supportsTransient && albanyIsCreatingMassMatrix){
-    for(int cell = 0; cell < workset.numCells; ++cell){
-      this->residual(cell, 0, 0) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 0);
-      this->residual(cell, 0, 1) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 1);
-      this->residual(cell, 0, 2) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 2);
+  if(albanyIsCreatingMassMatrix){
+    if(supportsTransient && albanyIsCreatingMassMatrix){
+      for(int cell = 0; cell < workset.numCells; ++cell){
+	this->residual(cell, 0, 0) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 0);
+	this->residual(cell, 0, 1) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 1);
+	this->residual(cell, 0, 2) = -1.0 * this->density(cell) * this->sphereVolume(cell,0) * this->acceleration(cell, 0, 2);
+      }
     }
   }
+
+  // If Albany is not creating the mass matrix, this function is a no-op, and the
+  // tangent matrix is copied from Peridigm in a downstream operation.
 }
 
 //**********************************************************************

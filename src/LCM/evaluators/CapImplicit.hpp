@@ -6,7 +6,7 @@
 #ifndef CAPIMPLICIT_HPP
 #define CAPIMPLICIT_HPP
 
-#include <Intrepid_MiniTensor.h>
+#include <Intrepid2_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -47,38 +47,38 @@ namespace LCM {
 
     // all local functions used in computing cap model stress:
     ScalarT
-    compute_f(Intrepid::Tensor<ScalarT> & sigma,
-        Intrepid::Tensor<ScalarT> & alpha,
+    compute_f(Intrepid2::Tensor<ScalarT> & sigma,
+        Intrepid2::Tensor<ScalarT> & alpha,
         ScalarT & kappa);
 
     std::vector<ScalarT>
-    initialize(Intrepid::Tensor<ScalarT> & sigmaVal,
-        Intrepid::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
+    initialize(Intrepid2::Tensor<ScalarT> & sigmaVal,
+        Intrepid2::Tensor<ScalarT> & alphaVal, ScalarT & kappaVal,
         ScalarT & dgammaVal);
 
     void
     compute_ResidJacobian(std::vector<ScalarT> const & XXVal,
         std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-        const Intrepid::Tensor<ScalarT> & sigmaVal,
-        const Intrepid::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
-        Intrepid::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
+        const Intrepid2::Tensor<ScalarT> & sigmaVal,
+        const Intrepid2::Tensor<ScalarT> & alphaVal, const ScalarT & kappaVal,
+        Intrepid2::Tensor4<ScalarT> const & Celastic, bool kappa_flag);
 
     DFadType
-    compute_f(Intrepid::Tensor<DFadType> & sigma,
-        Intrepid::Tensor<DFadType> & alpha, DFadType & kappa);
+    compute_f(Intrepid2::Tensor<DFadType> & sigma,
+        Intrepid2::Tensor<DFadType> & alpha, DFadType & kappa);
 
     D2FadType
-    compute_g(Intrepid::Tensor<D2FadType> & sigma,
-        Intrepid::Tensor<D2FadType> & alpha, D2FadType & kappa);
+    compute_g(Intrepid2::Tensor<D2FadType> & sigma,
+        Intrepid2::Tensor<D2FadType> & alpha, D2FadType & kappa);
 
-    Intrepid::Tensor<DFadType>
+    Intrepid2::Tensor<DFadType>
     compute_dgdsigma(std::vector<DFadType> const & XX);
 
     DFadType
     compute_Galpha(DFadType J2_alpha);
 
-    Intrepid::Tensor<DFadType>
-    compute_halpha(Intrepid::Tensor<DFadType> const & dgdsigma,
+    Intrepid2::Tensor<DFadType>
+    compute_halpha(Intrepid2::Tensor<DFadType> const & dgdsigma,
         DFadType const J2_alpha);
 
     DFadType
