@@ -50,16 +50,16 @@ namespace FELIX {
     int numSurfaceQPs;
     int numSideDims;
 
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>       averaged_velocity;
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint>              div_averaged_velocity;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         SMB;
-    PHX::MDField<RealType,Cell,Side,Node,QuadPoint>        BF_surface;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         obs_thickness;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         thickness;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         thicknessRMS;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
     PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_2d;
 
-    ScalarT p_resp, p_reg, resp, reg;
-    double scaling, alpha, asinh_scaling;
+    ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
+    double scaling, alpha, alphaH, alphaSMB, asinh_scaling;
 
     Teuchos::RCP<const CellTopologyData> cell_topo;
   };
