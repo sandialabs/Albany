@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -98,6 +98,8 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getFieldManager();
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > getDirichletFieldManager() ;
     Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > getNeumannFieldManager();
+    
+    Teuchos::Array<Teuchos::Array<int>> getOffsets() {return offsets_;}  
 
     //! Return the Null space object used to communicate with MP
     const Teuchos::RCP<Albany::RigidBodyModes>& getNullSpace(){ return rigidBodyModes; }
@@ -115,17 +117,13 @@ namespace Albany {
     //! Get a list of the Special fields needed to implement the problem
     const AbstractFieldContainer::FieldContainerRequirements getFieldRequirements(){ return requirements; }
 
-    //! Is this the adjoint problem
-    bool isAdjoint;
-
-    //! Should the adjoint problem be solved with an enriched basis
-    bool enrichAdjoint;
-
-    //! get the offset corresponding to a variable name
-    virtual int getOffset(std::string const& var) {return 1;}
+    //! Allow the Problem to modify the solver settings, for example by adding a custom status test.
+    virtual void
+      applyProblemSpecificSolverSettings(Teuchos::RCP<Teuchos::ParameterList> params){}
 
   protected:
 
+    Teuchos::Array<Teuchos::Array<int> > offsets_; 
     //! List of valid problem params common to all problems, as
     //! a starting point for the specific  getValidProblemParameters
     Teuchos::RCP<Teuchos::ParameterList>

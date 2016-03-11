@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -756,6 +756,10 @@ endif()
 IF (ALBANY_DAKOTA AND ALBANY_EPETRA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
+ENDIF ()
+IF (ALBANY_DAKOTA)
+  add_executable(AlbanyDakotaT Main_DakotaT.cpp Albany_DakotaT.cpp Albany_DakotaT.hpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakotaT)
 ENDIF ()
 
 IF (ALBANY_MOR AND ALBANY_EPETRA)

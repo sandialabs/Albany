@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -11,6 +11,8 @@ set(Subdivision.exe   ${Albany_BINARY_DIR}/src/LCM/Subdivision)
 set(SubdivisionT.exe   ${Albany_BINARY_DIR}/src/LCM/SubdivisionT)
 set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
 set(MPST.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulatorT)
+set(DTK_Interp_and_Error.exe ${Albany_BINARY_DIR}/src/LCM/DTK_Interp_and_Error)
+set(DTK_Interp_Volume_to_NS.exe ${Albany_BINARY_DIR}/src/LCM/DTK_Interp_Volume_to_NS)
 
 IF(ALBANY_HAVE_STK)
 IF(ALBANY_SEACAS)
@@ -53,6 +55,10 @@ IF(ALBANY_SEACAS)
     add_subdirectory(PeridigmCoupling)
   ENDIF()
 ENDIF(ALBANY_SEACAS)
+
+IF(ALBANY_DTK)
+  add_subdirectory(DTKInterp)
+ENDIF()
 
 add_subdirectory(Catalyst)
 add_subdirectory(DomainTear2D)

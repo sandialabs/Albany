@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -24,6 +24,11 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
     num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
+  // Store an RCP to the NOX status test, if available
+  if (p->isParameter("NOX Status Test")) {
+    nox_status_test_ = p->get< Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> >("NOX Status Test");
+  }
+
   integration_scheme_ = IntegrationScheme::EXPLICIT;
   if (p->isParameter("Integration Scheme")) {
     std::string integration_scheme_string = p->get<std::string>(
@@ -139,16 +144,19 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   c11_ = e_list.get<RealType>("C11");
   c12_ = e_list.get<RealType>("C12");
   c44_ = e_list.get<RealType>("C44");
+  c11_temperature_coeff_ = e_list.get<RealType>("M11",0.0);
+  c12_temperature_coeff_ = e_list.get<RealType>("M12",0.0);
+  c44_temperature_coeff_ = e_list.get<RealType>("M44",0.0);
+  reference_temperature_ = e_list.get<RealType>("Reference Temperature",0.0);
 
-  Intrepid2::Tensor4<RealType, CP::MAX_DIM> C(Intrepid2::ZEROS);
+
+  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM> C(Intrepid2::ZEROS);
   C.set_dimension(num_dims_);
+  CP::computeCubicElasticityTensor(c11_, c12_, c44_, C);
 
-  for (int i = 0; i < num_dims_; ++i) {
-    C(i, i, i, i) = c11_;
-    for (int j = i + 1; j < num_dims_; ++j) {
-      C(i, i, j, j) = C(j, j, i, i) = c12_;
-      C(i, j, i, j) = C(j, i, j, i) = C(i, j, j, i) = C(j, i, i, j) = c44_;
-    }
+  if (verbosity_ > 2) {
+    // print elasticity tensor
+    std::cout << ">>> C :" << std::endl << C << std::endl;
   }
 
   // TODO check if basis is given else default
@@ -179,7 +187,13 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   //
   // rotate elastic tensor and slip systems to match given orientation
   //
+  // Intrepid2::Tensor4<ScalarT, CP::MAX_DIM> C_;
   C_ = Intrepid2::kronecker(orientation_, C);
+
+  if (verbosity_ > 2) {
+    // print rotated elasticity tensor
+    std::cout << ">>> C_ :" << std::endl << C_ << std::endl;
+  }
 
   // Get slip system information
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
@@ -282,6 +296,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       slip_systems_[num_ss].exponent_saturation_ = 
         h_list.get<RealType>("Saturation Exponent", 0.0);
     }
+    else {
+      slip_systems_[num_ss].hardening_law = CP::HardeningLaw::UNDEFINED;
+    }
 
     if (verbosity_ > 2) {
       std::cout << "Slip system number " << num_ss << std::endl;
@@ -325,7 +342,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
   //
-  // define the evaluated fields for optional output
+  // define the evaluated fields
   //
   this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(Re_string, dl->qp_tensor));
@@ -335,6 +352,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(residual_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
+  if (have_temperature_) {
+    this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+  }
 
   //
   // define the state variables
@@ -387,15 +407,17 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
 
-  // mechanical source (body force)
-  this->num_state_variables_++;
-  this->state_var_names_.push_back(source_string);
-  this->state_var_layouts_.push_back(dl->qp_scalar);
-  this->state_var_init_types_.push_back("scalar");
-  this->state_var_init_values_.push_back(0.0);
-  this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(
-      p->get<bool>("Output Mechanical Source", false));
+  // mechanical source
+  if (have_temperature_) {
+    this->num_state_variables_++;
+    this->state_var_names_.push_back(source_string);
+    this->state_var_layouts_.push_back(dl->qp_scalar);
+    this->state_var_init_types_.push_back("scalar");
+    this->state_var_init_values_.push_back(0.0);
+    this->state_var_old_state_flags_.push_back(false);
+    this->state_var_output_flags_.push_back(
+        p->get<bool>("Output Mechanical Source", false));
+  }
 
   // gammas for each slip system
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
@@ -509,7 +531,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
-  PHX::MDField<ScalarT> source = *eval_fields[source_string];
+  PHX::MDField<ScalarT> source;
+  if (have_temperature_) {
+    source = *eval_fields[source_string];
+  }
   PHX::MDField<ScalarT> cp_residual = *eval_fields[residual_string];
 
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
@@ -560,8 +585,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
   // -- Local variables for implicit integration routine --
 
-  // DJL todo:  Can we just use RealType for most of these?
-
   // Known quantities
   Intrepid2::Tensor<RealType, CP::MAX_DIM> Fp_n(num_dims_);
   Intrepid2::Vector<RealType, CP::MAX_SLIP> slip_n(num_slip_);
@@ -586,6 +609,28 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
+      if (have_temperature_) {
+
+        RealType const tlocal = 
+          Sacado::ScalarValue<ScalarT>::eval(temperature_(cell,pt));
+
+        RealType const c11 = c11_ + c11_temperature_coeff_ *
+          (tlocal - reference_temperature_);
+        RealType const c12 = c12_ + c12_temperature_coeff_ *
+          (tlocal - reference_temperature_);
+        RealType const c44 = c44_ + c44_temperature_coeff_ *
+          (tlocal - reference_temperature_);
+        Intrepid2::Tensor4<ScalarT, CP::MAX_DIM> C(num_dims_);
+        CP::computeCubicElasticityTensor(c11, c12, c44, C);
+        C_ = Intrepid2::kronecker(orientation_, C);
+
+        if (verbosity_ > 2) {
+          std::cout << "tlocal: " << tlocal << std::endl;
+          std::cout << "c11, c12, c44: " << c11 << c12 << c44 << std::endl;
+        }
+
+      }
+
       equivalent_plastic_strain = 
         Sacado::ScalarValue<ScalarT>::eval(eqps(cell, pt));
 
@@ -599,7 +644,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       for (int s(0); s < num_slip_; ++s) {
         slip_n[s] = (*(previous_slips[s]))(cell, pt);
         //
-        // initialize state n+1 with either (a) zero slip incremet or (b) a predictor
+        // initialize state n+1 with either (a) zero slip increment or (b) a 
+        // predictor
         //
         slip_np1[s] = slip_n[s];
         if (apply_slip_predictor_ == true) {
@@ -763,7 +809,6 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
                 x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
               }
 
-
               LCM::MiniSolver<MIN, STEP, NLS, EvalT, NLS_DIM>
               mini_solver(minimizer, step, slip_nls, x);
 
@@ -846,9 +891,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
             minimizer.printReport(std::cout);
           }
 
-          TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
-          std::logic_error,
-          "Error: CrystalPlasticity implicit state update failed to converge!");
+          assert (minimizer.converged==true);
+          // TEUCHOS_TEST_FOR_EXCEPTION(!minimizer.converged,
+          //std::logic_error,
+          //"Error: CrystalPlasticity implicit state update failed to converge!");
 
           // We now have the solution for slip_np1, including sensitivities (if any)
           // Re-evaluate all the other state variables based on slip_np1
@@ -882,10 +928,10 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       }
 
       // Compute the equivalent plastic strain from the velocity gradient:
-      //  eqps_dot = (2/3) * sqrt[ sym(Lp) : sym(Lp) ]
-      RealType delta_eqps = Sacado::ScalarValue<ScalarT>::eval(
-        Intrepid2::dotdot(Intrepid2::sym(Lp_np1),Intrepid2::sym(Lp_np1)));
-      delta_eqps = 2.0/3.0 * dt * (std::sqrt(delta_eqps));
+      //  eqps_dot = sqrt[2/3* sym(Lp) : sym(Lp)]
+      Intrepid2::Tensor<ScalarT, CP::MAX_DIM> const Dp = Intrepid2::sym(Lp_np1);
+      RealType const delta_eqps = dt * std::sqrt(2.0 / 3.0 *
+        Sacado::ScalarValue<ScalarT>::eval(Intrepid2::dotdot(Dp,Dp)));
       equivalent_plastic_strain += delta_eqps;
       eqps(cell, pt) = equivalent_plastic_strain;
 
@@ -899,9 +945,28 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
       // Compute polar rotation to get Re
       Re_np1 = Intrepid2::polar_rotation(Fe);
 
-      // Copy data from local data structures back into Albany fields
-      source(cell, pt) = 0.0;
+      ///
+      /// Copy data from local data structures back into Albany fields
+      ///
+
+      // mechanical heat source
+      if (have_temperature_) {
+        source(cell, pt) = 0.0;
+        if (dt > 0.0) {
+          rate_slip = (slip_np1 - slip_n) / dt;
+          RealType plastic_dissipation(0.0);
+          for (int slip_system(0); slip_system < num_slip_; ++slip_system) {
+            plastic_dissipation += Sacado::ScalarValue<ScalarT>::eval(
+              rate_slip[slip_system] * shear_np1[slip_system]);
+          }
+          source(cell, pt) = 0.9 / (density_ * heat_capacity_) * plastic_dissipation;
+        }
+      }
+
+      // residual norm
       cp_residual(cell, pt) = norm_slip_residual;
+
+      // num_dims_ x num_dims_ dimensional array variables
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
           xtal_rotation(cell, pt, i, j) = Re_np1(i, j);
@@ -910,6 +975,8 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
           velocity_gradient(cell, pt, i, j) = Lp_np1(i, j);
         }
       }
+
+      // num_slip_ dimensional array variables
       for (int s(0); s < num_slip_; ++s) {
         (*(slips[s]))(cell, pt) = slip_np1[s];
         (*(hards[s]))(cell, pt) = hardness_np1[s];

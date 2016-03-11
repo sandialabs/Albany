@@ -20,7 +20,7 @@
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0"
-		 type="string" value="Project IP to Nodal Field"/>
+		 type="string" value="IP to Nodal Field"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Number of Fields" type="int" value="1"/>
         <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
@@ -240,7 +240,7 @@
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="Combo"/>
-          <Parameter name="Combo Type" type="string" value="OR"/>
+          <Parameter name="Combo Type" type="string" value="AND"/>
           <Parameter name="Number of Tests" type="int" value="2"/>
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
@@ -249,7 +249,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-14"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">

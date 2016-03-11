@@ -122,15 +122,23 @@ case "$SCRIPT_NAME" in
 	case "$BUILD_TYPE" in
 	    debug)
 		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags||g;" "$CONFIG_FILE"
 		;;
 	    release)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
 		;;
 	    profile)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags||g;" "$CONFIG_FILE"
 		;;
 	    small)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags||g;" "$CONFIG_FILE"
+		;;
+            mixed)
+		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-std=c++11 -g -O0|g;" "$CONFIG_FILE"
 		;;
 	    *)
 		echo "Unrecognized build type option"

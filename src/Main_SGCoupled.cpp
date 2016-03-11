@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -89,14 +89,14 @@ int main(int argc, char *argv[]) {
       Teuchos::rcp(new Piro::Epetra::StokhosSolver(coupledPiroParams, 
 						   globalComm));
     Teuchos::RCP<const Epetra_Comm> app_comm = coupledSolver->getSpatialComm();
+    Teuchos::RCP<const Teuchos_Comm> app_commT = Albany::createTeuchosCommFromEpetraComm(app_comm);
 
     // Set up each model
     Teuchos::Array< Teuchos::RCP<NOX::Epetra::Observer> > observers(num_models);
     for (int m=0; m<num_models; m++) {
       Albany::SolverFactory slvrfctry(
-	model_filenames[m], 
-	Albany::createTeuchosCommFromEpetraComm(app_comm));
-      models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], app_comm);
+	model_filenames[m], app_commT);
+      models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], app_commT);
       Teuchos::ParameterList& appParams = slvrfctry.getParameters();
       piroParams[m] = Teuchos::rcp(&(appParams.sublist("Piro")),false);
       observers[m] = Teuchos::rcp(new Albany_NOXObserver(apps[m]));

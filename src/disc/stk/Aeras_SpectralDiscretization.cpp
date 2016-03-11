@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -90,8 +90,8 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-#endif
   *out << "Explicit scheme in Aeras? " << explicit_scheme << std::endl;
+#endif
 
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
@@ -209,6 +209,20 @@ Aeras::SpectralDiscretization::getJacobianGraph() const
 }
 #endif
 
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getMapT(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getOverlapMapT(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
+}
+
 Teuchos::RCP<const Tpetra_CrsGraph>
 Aeras::SpectralDiscretization::getJacobianGraphT() const
 {
@@ -288,6 +302,21 @@ Teuchos::RCP<const Tpetra_Map>
 Aeras::SpectralDiscretization::getOverlapNodeMapT() const
 {
   return overlap_node_mapT;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getNodeMapT(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
+  return Teuchos::null;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getOverlapNodeMapT(const std::string& field_name)
+  const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
+  return Teuchos::null;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
@@ -1082,6 +1111,14 @@ Aeras::SpectralDiscretization::getSolutionFieldT(Tpetra_Vector &resultT,
 }
 
 void
+Aeras::SpectralDiscretization::getFieldT(Tpetra_Vector &result,
+                                        const std::string& name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+      "Aeras::SpectralDiscretization::getField() not implemented!");
+}
+
+void
 Aeras::SpectralDiscretization::getSolutionMV(Tpetra_MultiVector &resultT,
                                                  const bool overlapped) const
 {
@@ -1186,6 +1223,14 @@ Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 
   container->saveSolnVectorT(solnT, locally_owned, node_mapT);
 
+}
+
+void
+Aeras::SpectralDiscretization::setFieldT(const Tpetra_Vector &result,
+                                        const std::string& name,
+                                        bool overlapped)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::setField() not implemented!");
 }
 
 void
@@ -2237,7 +2282,9 @@ Teuchos::RCP<Tpetra_CrsGraph> Aeras::SpectralDiscretization::computeOverlapGraph
   Teuchos::RCP<Tpetra_CrsGraph> Graph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
                                                     neq*nodes_per_element));
 
-  std::cout << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl;
+#ifdef OUTPUT_TO_SCREEN
+  *out << "neq*nodes_per_element: " << neq*nodes_per_element << std::endl;
+#endif
 
   stk::mesh::Selector select_owned =
     stk::mesh::Selector(metaData.locally_owned_part());

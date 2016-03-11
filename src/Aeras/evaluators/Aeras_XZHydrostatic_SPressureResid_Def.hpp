@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -29,6 +29,12 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
+
+  Teuchos::ParameterList* xsa_params =
+	  p.isParameter("XZHydrostatic Problem") ?
+	  p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
+	  p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
+
   this->addDependentField(wBF);
   this->addDependentField(spDot);
   this->addDependentField(divpivelx);
@@ -38,6 +44,8 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   this->setName("Aeras::XZHydrostatic_SPressureResid" +PHX::typeAsString<EvalT>());
 
   sp0 = 0.0;
+
+  pureAdvection = xsa_params->get<bool>("Pure Advection", false);
 }
 
 //**********************************************************************
@@ -70,19 +78,26 @@ evaluateFields(typename Traits::EvalData workset)
   const Eta<EvalT> &E = Eta<EvalT>::self();
 
   if( !obtainLaplaceOp ){
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        ScalarT sum = 0;
-        for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
-          int node = qp;
-          Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
-    /*    if (cell == 0) 
+	  if( !pureAdvection ){
+		  for (int cell=0; cell < workset.numCells; ++cell) {
+			  for (int qp=0; qp < numQPs; ++qp) {
+				  ScalarT sum = 0;
+				  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
+				  int node = qp;
+				  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+				  /*    if (cell == 0)
           if (node == qp) 
             std::cout << "cell, node, wBF, res, spDot: " << cell 
                                  << ", " << node << ", " << wBF(cell,node,qp) << ", " 
                                  << Residual(cell,node) <<", " << spDot(cell,qp) << std::endl; */
-      }
-    }
+			  }
+		  }
+	  }//end of (if not  pureAdvection)
+	  else{
+		  for (int cell=0; cell < workset.numCells; ++cell)
+		   	 for (int node=0; node < numNodes; ++node)
+		  		 Residual(cell,node) += spDot(cell,node)*wBF(cell,node,node);
+	  }
   }//end of (if build laplace)
   else{
 	  //no Laplace for surface pressure, zero block instead

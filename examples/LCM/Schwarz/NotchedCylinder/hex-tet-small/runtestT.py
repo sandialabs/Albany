@@ -20,10 +20,10 @@ logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-6; 
-meanvalue = 0.000895993786998; 
+meanvalue = 0.000922355872781;
 
 # run AlbanyT 
-command = ["./AlbanyT", "notched-cylinder-S.xml"]
+command = ["./AlbanyT", "notched-cylinder-S-ctest.xml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

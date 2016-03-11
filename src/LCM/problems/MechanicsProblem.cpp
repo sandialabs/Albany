@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -246,6 +246,9 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
     have_topmod_adaptation_ = adaptation_method_name == "Topmod";
   }
+
+  // Create a user-defined NOX status test that can be passed to the ModelEvaluators
+  userDefinedNOXStatusTest = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag); 
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
@@ -334,6 +337,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
       this->params, this->paramLib);
+  offsets_ = dirUtils.getOffsets(); 
 
 }
 //------------------------------------------------------------------------------
@@ -456,4 +460,31 @@ getAllocatedStates(
     {
   old_state = old_state_;
   new_state = new_state_;
+}
+
+//------------------------------------------------------------------------------
+void
+Albany::MechanicsProblem::
+applyProblemSpecificSolverSettings(
+    Teuchos::RCP<Teuchos::ParameterList> params)
+{
+  Teuchos::RCP<Teuchos::ParameterList> statusTestsParameterList;
+  if(params->isSublist("Piro")){
+    if(params->sublist("Piro").isSublist("NOX")){
+      if(params->sublist("Piro").sublist("NOX").isSublist("Status Tests")){
+	statusTestsParameterList = Teuchos::rcpFromRef( params->sublist("Piro").sublist("NOX").sublist("Status Tests") );
+      }
+    }
+  }
+
+  if(!statusTestsParameterList.is_null()){
+    int numberOfStatusTests = statusTestsParameterList->get<int>("Number of Tests");
+    std::stringstream ss;
+    ss << "Test " << numberOfStatusTests;
+    std::string testName = ss.str();
+    statusTestsParameterList->set("Number of Tests", numberOfStatusTests + 1);
+    statusTestsParameterList->sublist(testName);
+    statusTestsParameterList->sublist(testName).set("Test Type", "User Defined");
+    statusTestsParameterList->sublist(testName).set("User Status Test", userDefinedNOXStatusTest);
+  }
 }

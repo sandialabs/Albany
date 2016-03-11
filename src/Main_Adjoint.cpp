@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -55,8 +55,7 @@ int main(int argc, char *argv[]) {
     }
 
     Albany::SolverFactory slvrfctry(xmlfilename, comm);
-    RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create(appComm, appComm);
+    RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create(comm, comm);
 
     EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
@@ -137,14 +136,10 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor setupAdjTimer(*setupAdjTime); //start timer
 
     Albany::SolverFactory adjslvrfctry(xmladjfilename, comm);
-    RCP<Epetra_Comm> adjappComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<EpetraExt::ModelEvaluator> AdjApp; {
-      Teuchos::RCP<const Teuchos_Comm>
-        commT = Albany::createTeuchosCommFromEpetraComm(adjappComm);
-      AdjApp = adjslvrfctry.create(
-        adjappComm, adjappComm,
-        Petra::EpetraVector_To_TpetraVectorConst(*xinit, commT));
-    }
+    RCP<EpetraExt::ModelEvaluator> AdjApp;
+    AdjApp = adjslvrfctry.create(
+        comm, comm,
+        Petra::EpetraVector_To_TpetraVectorConst(*xinit, comm));
 
     EpetraExt::ModelEvaluator::InArgs adj_params_in = AdjApp->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs adj_responses_out = AdjApp->createOutArgs();

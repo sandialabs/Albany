@@ -1,5 +1,5 @@
 ************************************************************************
-     Albany 2.0:  Copyright 2012 Sandia Corporation
+     Albany 3.0:  Copyright 2016 Sandia Corporation
 
 Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
 the U.S. Government retains certain rights in this software.
@@ -15,7 +15,7 @@ notice, this list of conditions and the following disclaimer.
 notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution.
 
-3. Neither the name of the Corporation nor the names of the
+3. Neither the name of the Sandia Corporation nor the names of the
 contributors may be used to endorse or promote products derived from
 this software without specific prior written permission.
 

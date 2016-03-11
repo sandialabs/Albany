@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -41,7 +41,7 @@ buildProblem(
   int phys_sets = meshSpecs.size();
   *out << "Num MeshSpecs: " << phys_sets << std::endl;
   fm.resize(phys_sets);
-
+  
   for (int ps=0; ps<phys_sets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
@@ -80,6 +80,7 @@ void Albany::PhaseProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> bcUtils;
   dfm = bcUtils.constructBCEvaluators(nodeSetIDs, bcNames,
       this->params, this->paramLib);
+  offsets_ = bcUtils.getOffsets(); 
 }
 
 // Neumann BCs

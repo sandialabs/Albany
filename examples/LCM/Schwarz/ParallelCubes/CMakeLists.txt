@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -63,5 +63,5 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 if(ALBANY_DTK)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-add_test(NAME CoupledSchwarz_${testName}_DTK_8proc COMMAND "python" "runtestT_dtk_8proc.py")
+add_test(NAME Schwarz_${testName}_DTK_8proc COMMAND "python" "runtestT_dtk_8proc.py")
 endif()

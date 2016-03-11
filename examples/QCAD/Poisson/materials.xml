@@ -72,7 +72,7 @@
     </ParameterList>
 
     <ParameterList name="sioxideinterface">
-      <Parameter name="elementBlock" type="string" value="silicon.psubstrate" />
+      <Parameter name="elementBlock" type="string" value="silicon.psub" />
     </ParameterList>
 
   </ParameterList>
@@ -131,6 +131,10 @@
       <Parameter name="Charge Parameter Name" type="string" value="Oxide Charge" />
       <Parameter name="Charge Parameter Scaling" type="double" value="1e18" />
       <!-- <Parameter name="Charge Value" type="double" value="1e10" /> -->
+    </ParameterList>
+
+    <ParameterList name="sio2.noq">
+      <Parameter name="material" type="string" value="SiliconDioxide" />
     </ParameterList>
 
     <ParameterList name="sio2.quantum">

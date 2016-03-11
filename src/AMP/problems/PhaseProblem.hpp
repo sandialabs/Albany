@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -9,6 +9,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_TestForException.hpp"
 
 #include "Albany_AbstractProblem.hpp"
 
@@ -102,10 +103,13 @@ protected:
 #include "PHAL_SaveStateField.hpp"
 
 #include "RhoCp.hpp"
+#include "Phi.hpp"
+#include "Psi.hpp"
 #include "ThermalCond.hpp"
 #include "PhaseSource.hpp"
 #include "LaserSource.hpp"
 #include "PhaseResidual.hpp"
+#include "EnergyDot.hpp"
 #include "AMP_Time.hpp"
 
 template <typename EvalT>
@@ -135,6 +139,22 @@ Albany::PhaseProblem::constructEvaluators(
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
   std::string eb_name = meshSpecs.ebName;
+ // check name of element blocks. Must be Powder and Solid
+  // M. Juha: I am forcing this here because I need to pass the
+  // properties of both materials to ThermalCond evaluator. Anyway,
+  // for this analysis we will always have powder and solid (substrate) as
+  // materials. Please, if you find a better way to do it, then change it!
+  // check element block names
+  if ((eb_name != "Powder_Region") && (eb_name != "Solid_Region")){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Element block names must be Powder_Region or Solid_Region ***\n")
+  }
+  
+ // check names of material names
+  std::string material_name;
+  material_name = material_db_->getElementBlockParam<std::string>(eb_name,"material");
+  if ( (material_name != "Solid") && (material_name != "Powder") ){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Material name must be Powder or Solid ***\n")
+  }
  
   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
     intrepid_basis = Albany::getIntrepid2Basis(*elem_top);
@@ -248,18 +268,85 @@ Albany::PhaseProblem::constructEvaluators(
      
   }
 
-  { // Thermal Conductivity
-    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity"));
+  { //Phi
+    Teuchos::RCP<ParameterList> p = rcp(new ParameterList("Phi parameters"));
 
     Teuchos::ParameterList& param_list =
-      material_db_->getElementBlockSublist(eb_name, "Thermal Conductivity");    
+      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
 
-    //Input
-    p->set<string>("Coordinate Name","Coord Vec");
+    // Input
+    p->set<string>("Temperature Name","Temperature");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
 
     //Output
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
+
+    ev = rcp(new AMP::Phi<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+    p = stateMgr.registerStateVariable("Phi", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", 0.0, true);
+    
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev); 
+
+  }
+
+  { //Psi
+    RCP<ParameterList> p = rcp(new ParameterList("Psi parameters"));
+    
+    double psi_initial(0.0);
+    if (material_db_->isElementBlockSublist(eb_name, "Initial Psi")) 
+      {
+	Teuchos::ParameterList& param = 
+	  material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
+        psi_initial = param.get<double>("Psi");
+      }
+
+    Teuchos::ParameterList& param_list = 
+      material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
+
+    // Input
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Temperature Name","Temperature");
+    p->set<Teuchos::ParameterList*>("Parameter List", &param_list); 
+
+    //Output
+    p->set<string>("Psi Name","Psi");
+
+    ev = rcp(new AMP::Psi<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+
+    p = stateMgr.registerStateVariable("Psi", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", psi_initial, true);
+    
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev); 
+  }
+
+
+  { // Thermal Conductivity
+    RCP<ParameterList> p = rcp(new ParameterList("Thermal Conductivity"));
+    
+   
+    // get data for powder
+    Teuchos::ParameterList& param_list_powder =
+      material_db_->getElementBlockSublist("Powder_Region", "Thermal Conductivity");  
+    
+    // get data for substrate (solid))
+    Teuchos::ParameterList& param_list_solid =
+      material_db_->getElementBlockSublist("Solid_Region", "Thermal Conductivity");  
+
+    //Input
+    p->set<string>("Coordinate Name","Coord Vec");
+    p->set<Teuchos::ParameterList*>("Powder Parameter List", &param_list_powder);
+    p->set<Teuchos::ParameterList*>("Solid Parameter List", &param_list_solid);
+
+    //Output
     p->set<string>("Thermal Conductivity Name", "k");
+    p->set<string>("Psi Name", "Psi");
 
     ev = rcp(new AMP::ThermalCond<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -319,6 +406,37 @@ Albany::PhaseProblem::constructEvaluators(
     ev = rcp(new AMP::LaserSource<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }  
+  
+  
+  { // Energy dot
+    RCP<ParameterList> p = rcp(new ParameterList("Energy Rate Params"));
+
+    // take phase change parameter list
+    Teuchos::ParameterList& param_list_phase =
+      material_db_->getElementBlockSublist(eb_name, "Phase Change Properties"); 
+    
+    //Input
+    p->set<string>("Temperature Name","Temperature");
+    p->set<string>("Temperature Time Derivative Name","Temperature_dot");
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
+    p->set<string>("Time Name","Time");
+    p->set<string>("Delta Time Name","Delta Time");
+    p->set<string>("Rho Cp Name", "Rho Cp");
+    p->set<Teuchos::ParameterList*>("Phase Change Parameter List", &param_list_phase);
+    
+    // take initial Psi parameter list
+    Teuchos::ParameterList& param_list_psi =
+      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
+    p->set<Teuchos::ParameterList*>("Initial Phi Parameter List", &param_list_psi);
+    
+    //Output
+    p->set<string>("Energy Rate Name", "Energy Rate");
+
+    ev = rcp(new AMP::EnergyDot<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
 
   { // Phase Residual
     RCP<ParameterList> p = rcp(new ParameterList("u Resid"));
@@ -333,6 +451,9 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Rho Cp Name","Rho Cp");
     p->set<string>("Source Name","Source");
     p->set<string>("Laser Source Name","Laser Source");
+    p->set<string>("Phi Name","Phi");
+    p->set<string>("Psi Name","Psi");
+    p->set<string>("Energy Rate Name", "Energy Rate");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
 

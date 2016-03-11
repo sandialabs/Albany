@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -995,6 +995,22 @@ ELSE()
   # Remove the CTestCustom.cmake file in the build directory if it exists
   #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
+
+# It is not currently possible to determine the status of "Kokkos_ENABLE_Cuda" from Albany. So we will deduce it
+# from ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h
+IF(NOT DEFINED Kokkos_ENABLE_Cuda)
+  SET(Kokkos_ENABLE_Cuda OFF)
+  IF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
+    FILE(READ ${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h CURRENT_CONFIG)
+    STRING(REGEX MATCH "\#define KOKKOS_HAVE_CUDA" KOKKOS_CUDA_IS_SET ${CURRENT_CONFIG})
+    IF("#define KOKKOS_HAVE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
+     MESSAGE("-- Kokkos is configured to use CUDA, Albany will also.")
+     SET(Kokkos_ENABLE_Cuda ON)
+    ELSE("#define KOKKOS_HAVE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
+     MESSAGE("-- Kokkos is not configured to use CUDA, Albany will NOT be compiled for CUDA.")
+    ENDIF("#define KOKKOS_HAVE_CUDA" STREQUAL "${KOKKOS_CUDA_IS_SET}")
+  ENDIF(EXISTS "${Trilinos_INCLUDE_DIRS}/KokkosCore_config.h")
+ENDIF(NOT DEFINED Kokkos_ENABLE_Cuda)
 
 # set optional dependency on the BGL, defaults to Enabled
 # This option is added due to issued with compiling BGL with the intel compilers

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -74,7 +74,7 @@ protected:
 
   std::vector<double> elecAffinity, bandGap, fermiEnergy;
   std::vector<double> trapDensity, acceptorDegFac, donorDegFac; 
-  std::vector<std::string> trapSpectrum; 
+  std::vector<std::string> trapSpectrum, trapType; 
 
   Teuchos::Array<int> offset;
   Teuchos::RCP<MaterialDatabase> materialDB;

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -88,6 +88,9 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,level) +=    UTracerDiv(cell,qp,level) * wBF(cell,node,qp);
           //Residual(cell,node,level) += etadotdTracer(cell,qp,level) * wBF(cell,node,qp);
           Residual(cell,node,level) += dedotpiTracerde(cell,qp,level) * wBF(cell,node,qp);
+
+          //std::cout <<"IN TRACERS: TracerSrc" << TracerSrc(cell,qp,level) <<" UTracerDiv "<< UTracerDiv(cell,qp,level) << "\n";
+
         //}
       }
     }

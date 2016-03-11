@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -51,6 +51,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> k_;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
   PHX::MDField<ScalarT,Cell,QuadPoint> source_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> psi_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> energyDot_;
   PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
   PHX::MDField<ScalarT,Dummy> time;
   PHX::MDField<ScalarT,Dummy> deltaTime;
@@ -65,7 +68,7 @@ private:
   bool enable_transient_;
   std::string Temperature_Name_;
   Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term1_;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term2_;
+//  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term2_;
 
 };
 }

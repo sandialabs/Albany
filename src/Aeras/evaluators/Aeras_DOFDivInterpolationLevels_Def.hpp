@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -38,7 +38,17 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
   this->addEvaluatedField(div_val_qp);
 
   this->setName("Aeras::DOFDivInterpolationLevels"+PHX::typeAsString<EvalT>());
-  //std::cout<< "Aeras::DOFDivInterpolationLevels: " << numNodes << " " << numDims << " " << numQPs << " " << numLevels << std::endl;
+
+  Teuchos::ParameterList* xsa_params =
+      p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
+  originalDiv = xsa_params->get<bool>("Original Divergence", true);
+
+  std::cout << "ORIGINAL DIV ? " << originalDiv <<"\n";
+
+  //OG Since there are a few evaluators that use div, it is possible to control
+  //print statements with it:
+  //myName = p.get<std::string>   ("Divergence Variable Name");
+  //if(myName == "Utr1_divergence" )...
 }
 
 //**********************************************************************
@@ -68,60 +78,49 @@ void DOFDivInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::set(div_val_qp, 0.0);
-#define ORIGINAL_DIV 1
-#if ORIGINAL_DIV
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int node= 0 ; node < numNodes; ++node) 
-        for (int level=0; level < numLevels; ++level) 
-          for (int dim=0; dim<numDims; dim++) {
-            div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
-            //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
-            //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
 
-         }
-#else
+  if( originalDiv ){
+	  for (int cell=0; cell < workset.numCells; ++cell){
+		  for (int qp=0; qp < numQPs; ++qp)
+			  for (int node= 0 ; node < numNodes; ++node)
+				  for (int level=0; level < numLevels; ++level)
+					  for (int dim=0; dim<numDims; dim++) {
+						  div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
+						  //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
+						  //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
+					  }
+	  }
 
-//taking code from Shallow Water, Kokkos version
+  }//end of original div
+  else{
+	  //rather slow, needs revision
+	  for (int cell=0; cell < workset.numCells; ++cell){
+		  for (int level=0; level < numLevels; ++level) {
+			  for (std::size_t node=0; node < numNodes; ++node) {
 
-for (int cell=0; cell < workset.numCells; ++cell){
+				  const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
+				  const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
+				  const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
+				  const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
+				  const MeshScalarT det_j  = jacobian_det(cell,node);
 
-	for (std::size_t node=0; node < numNodes; ++node) {
+				  vcontra(node, 0 ) = det_j*(
+						  jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
+				  vcontra(node, 1 ) = det_j*(
+						  jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
+			  }//end of nodal loop
+		      for (int qp=0; qp < numQPs; ++qp) {
+				  for (int node=0; node < numNodes; ++node) {
+					  div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
+            	       						   +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
+					  }
+			  }
+			  for (int qp=0; qp < numQPs; ++qp)
+				  div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
 
-		//std::cout <<"Here 1\n";
-		const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
-		const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
-		const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
-		const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
-		const MeshScalarT det_j  = jacobian_det(cell,node);
-
-		for (int level=0; level < numLevels; ++level) {
-			// constructing contravariant velocity
-			//std::cout <<"Here 2\n";
-			vcontra(node, 0 ) = det_j*(
-					jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
-			vcontra(node, 1 ) = det_j*(
-					jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
-
-			for (int qp=0; qp < numQPs; ++qp) {
-				//std::cout <<"Here 3\n";
-				div_val_qp(cell, qp, level) = 0.0;
-				for (int node=0; node < numNodes; ++node) {
-					div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
-            	    				   +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
-				}
-			}
-
-			for (int qp=0; qp < numQPs; ++qp) {
-				//std::cout <<"Here 4\n";
-				div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
-			}
-		}//end level loop
-	}//end of nodal loop
-	//std::cout <<"Here 5\n";
-}//end of cell loop
-#endif
-
+		  }//end level loop
+	  }//end of cell loop
+  }//end of new div
 
 }
 

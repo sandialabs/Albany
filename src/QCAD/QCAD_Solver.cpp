@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -2215,12 +2215,11 @@ QCAD::Solver::CreateSubSolver(const std::string& name, const Teuchos::RCP<Teucho
       Albany::SolverFactory slvrfctry(modified_appParams, mpiCommT);
         
       //! Create solver and application objects via solver factory
-      RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
       RCP<const Tpetra_Vector> initial_guessT;
       if (Teuchos::nonnull(initial_guess)) {
         initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, mpiCommT);
       }
-      ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
+      ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, mpiCommT, mpiCommT, initial_guessT);
   }
   else {
     //TODO: check if app and model are non-null (could have had freeUp() called?) and if so need to re-create via factory?

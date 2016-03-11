@@ -1,6 +1,6 @@
 <ParameterList>
   <ParameterList name="Scaling">
-    <Parameter name="Scale" type="double" value="1e9"/>
+    <Parameter name="Scale" type="double" value="1.0e00"/>
   </ParameterList>
   <ParameterList name="DataTransferKit">
     <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>

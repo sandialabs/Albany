@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -441,6 +441,9 @@ evaluateFields(typename Traits::EvalData workset)
                                "to call this function for a higher order element. \n"); 
     Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   } else {
+
+#define HOMMEMAP 0
+#if !(HOMMEMAP)
     Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  phi(numQPs,spatialDim);
     Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> dphi(numQPs,spatialDim,basisDim);
     Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> norm(numQPs);
@@ -454,6 +457,7 @@ evaluateFields(typename Traits::EvalData workset)
     
     for (int e = 0; e<numelements;      ++e) {
       for (int v = 0; v<numNodes;      ++v) {
+
           //  phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
           //const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
           const MeshScalarT latitude  = std::asin(coordVec(e,v,2));  //theta
@@ -467,6 +471,19 @@ evaluateFields(typename Traits::EvalData workset)
           theta_nodal(e,v) = latitude;
 
       }
+
+  	  //OG Pulling out coords of first 4 vertices which are also coords of element's corners
+      //this is the case for np=4 only!
+      if(0){
+    	  std::cout << "Cell number "<< e <<"\n";
+    	  for(int v = 0; v < numNodes; v++){
+  	         if( (v == 0) || (v == 3) || (v == 12) || (v == 15)){
+  		        std::cout << "Vertex number "<< v << ", coordinates lon, lat= "
+  		    		   << lambda_nodal(e,v) <<", "<<theta_nodal(e,v)<<"\n";
+  	         }
+    	  }
+      }
+
     }
     
     for (int e = 0; e<numelements;      ++e) {
@@ -575,18 +592,28 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (int q = 0; q<numQPs;          ++q) 
         for (int b1= 0; b1<basisDim;     ++b1) 
-          for (int b2= 0; b2<basisDim;   ++b2)
+          for (int b2= 0; b2<basisDim;   ++b2){
             jacobian(e,q,b1,b2) *= earthRadius/norm(q);
-
+          }
     }
-    
+#endif   //end another map
   }//end else
+
   
   
   
   /////////////implementing the map and Jacobian exactly like homme's,
   /////////////no generality.
-  if(0){
+  //OG I wonder what kind of generality is expected from the map for quad on a sphere
+  //to a square reference element. I need to verify other parts of the code so
+  //I am turning this map on after tweaking code for element's corners. This should work for
+  //order 2 and order 3 elements (np=3, np=4 in homme). Note that this code produces different
+  // metric terms depending on orientation within the reference element.
+  //I matched the orientation in Aeras and homme below for one special case of NE=2, cell 23
+  //so that local divergence in cell 23 of some artificial field matches the homme divergence.
+  //Local metric terms do not match though.
+
+#if HOMMEMAP
   
   Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   Q(4);
   Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   C(3,4);
@@ -623,14 +650,30 @@ evaluateFields(typename Traits::EvalData workset)
       Q(0) = (1-a)*(1-b)/4.; Q(1) = (1+a)*(1-b)/4.;
       Q(2) = (1+a)*(1+b)/4.; Q(3) = (1-a)*(1+b)/4.;
       
-      
+      //OG Old code, will not work with current meshing because
+      // corner nodes are not nodes from 0 to 4 anymore.
+
       //corner 1,2,3,4 = Vertex 0,1,2,3
       //can be pulled out from q loop
-      for (int v = 0; v<4; v++) {
+      /*for (int v = 0; v<4; v++) {
         for (int d = 0; d<3; d++)
           C(d,v) = coordVec(e,v,d);
+      }*/
+
+      {int np = (int)std::sqrt(numQPs);
+       int v = 0;//0
+       for (int d = 0; d<3; d++)
+         C(d,0) = coordVec(e,v,d);
+       v = np - 1; //3
+       for (int d = 0; d<3; d++)
+         C(d,1) = coordVec(e,v,d);
+       v = numQPs - 1; //15
+       for (int d = 0; d<3; d++)
+         C(d,2) = coordVec(e,v,d);
+       v = numQPs - np; //12
+       for (int d = 0; d<3; d++)
+         C(d,3) = coordVec(e,v,d);
       }
-      
       
       for (int i = 0; i<3; i++)
         for(int j = 0; j<4; j++)
@@ -706,7 +749,7 @@ evaluateFields(typename Traits::EvalData workset)
     }//end q loop for quad points
     
   }//end e loop for elements
-  }//end of if-statement which turns on/off homme;s map
+ #endif //end of if-statement which turns on/off homme;s map
   //////////////////////////////////////////////////////////////////////
 
 

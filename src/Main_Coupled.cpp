@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -82,9 +82,7 @@ int main(int argc, char *argv[]) {
     for (int m=0; m<num_models; m++) {
       Albany::SolverFactory slvrfctry(model_filenames[m], 
 				      comm);
-      RCP<Epetra_Comm> appComm = 
-	Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-      models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], appComm);
+      models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], comm);
       Teuchos::ParameterList& appParams = slvrfctry.getParameters();
       piroParams[m] = Teuchos::rcp(&(appParams.sublist("Piro")),false);
     }

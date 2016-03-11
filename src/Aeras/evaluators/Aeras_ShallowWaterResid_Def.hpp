@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -1252,7 +1252,16 @@ evaluateFields(typename Traits::EvalData workset)
 		}
 #endif
 
-
+//OG This is for debugging, for the mesh with 24 total elements.
+/*
+		if(cell == 23){
+			for(int node = 0; node < numNodes; node++){
+				std::cout << "QP = " << node <<"\n";
+		std::cout <<"Metric term, jac_inv:"<< jacobian_inv(cell, node, 0, 0) <<" "<<jacobian_inv(cell, node, 0, 1) <<" \n";
+		std::cout << "                      "<<jacobian_inv(cell, node, 1, 0) <<" "<<jacobian_inv(cell, node, 1, 1) <<" \n";
+			}
+		}
+*/
 
 
 		if (useImplHyperviscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi)
