@@ -14,6 +14,8 @@
 #include "Aeras_Layouts.hpp"
 
 #include "Aeras_Eta.hpp"
+#include "Aeras_ShallowWaterConstants.hpp"
+
 namespace Aeras {
 
 //**********************************************************************
@@ -35,7 +37,7 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
   
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   
-  const bool invalidString = (topoTypeString != "None" && topoTypeString != "Mountain1");
+  const bool invalidString = (topoTypeString != "None" && topoTypeString != "Mountain1") && (topoTypeString != "SphereMountain1");
   
   TEUCHOS_TEST_FOR_EXCEPTION( invalidString,
                              std::logic_error,
@@ -66,6 +68,25 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION((topoData.size() != numParam),
                                std::logic_error,
                                "Error! Invalid specification of params for Mountain1: incorrect length of " <<
+                               "Topography Data ; required numParam = " << numParam <<
+                               ", provided data.size() = " << topoData.size()
+                               <<  std::endl) ;
+  }
+  else if ( topoTypeString == "SphereMountain1") {
+  	topoType = SPHERE_MOUNTAIN1;
+  	
+  	numParam = 3;
+  	Teuchos::Array<double> defaultData(numParam);
+  	
+  	defaultData[0] = 2000.0; // height
+  	defaultData[1] = 2.356194490192345; // width = 3 * pi / 4 (radians)
+  	defaultData[2] = 0.196349540849362; // halfWidth = pi / 16.0 (radians)
+  	
+  	topoData = xzhydrostatic_list->get("Topography Data", defaultData);
+    
+    TEUCHOS_TEST_FOR_EXCEPTION((topoData.size() != numParam),
+                               std::logic_error,
+                               "Error! Invalid specification of params for SphereMountain1: incorrect length of " <<
                                "Topography Data ; required numParam = " << numParam <<
                                ", provided data.size() = " << topoData.size()
                                <<  std::endl) ;
@@ -141,6 +162,37 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
     
+  }
+  else if ( topoType == SPHERE_MOUNTAIN1 ){
+  	const double cntrLat = 0.0;
+	const double cntrLon = 4.712388980384690; // 3 * pi / 2
+
+	const double mtnHeight = topoData[0];
+	const double mtnWidth = topoData[1];
+	const double mtnHalfWidth = topoData[2];
+	
+	const double PI = 3.141592653589793;
+	
+	const double G = Aeras::ShallowWaterConstants::self().gravity;
+  
+  	for ( int cell = 0; cell < workset.numCells; ++cell ) {
+  		for ( int node = 0; node < numNodes; ++node ) {
+			const double x = workset.wsCoords[cell][node][0];
+			const double y = workset.wsCoords[cell][node][1];
+			const double z = workset.wsCoords[cell][node][2];
+			
+			const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
+			const double lambda = std::atan2( y, x );
+			
+			const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) + 
+					std::cos( cntrLon ) * std::cos( theta ) * std::cos( cntrLon - lambda ) );
+					
+			const double zsurf = radialDist < mtnWidth ? 0.5 * mtnHeight * ( 1.0 + std::cos ( PI * radialDist / mtnWidth ) ) *
+				std::cos( PI * radialDist / mtnHalfWidth ) * std::cos( PI * radialDist / mtnHalfWidth ) : 0.0;
+		
+			PhiSurf(cell, node) = G * zsurf;
+  		}
+  	}
   }
       
 }

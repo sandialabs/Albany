@@ -25,13 +25,21 @@ Albany::PiroObserverT::PiroObserverT(
       observe_responses_ = true;
     stepper_counter_ = 0;  
     observe_responses_every_n_steps_ = app->observeResponsesFreq();  
+
+    relative_responses = app->getMarkersForRelativeResponses();
+    if(relative_responses.size()){
+    	calculateRelativeResponses = true;
+    }else{
+    	calculateRelativeResponses = false;
+    }
+    firstResponseObtained = false;
   }
 
 void
 Albany::PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
 {
-  stepper_counter_++; 
   this->observeSolutionImpl(solution, Teuchos::ScalarTraits<ST>::zero());
+  stepper_counter_++;
 }
 
 void
@@ -39,8 +47,8 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution,
     const ST stamp)
 {
-  stepper_counter_++; 
   this->observeSolutionImpl(solution, stamp);
+  stepper_counter_++; 
 }
 
 void
@@ -49,8 +57,8 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution_dot,
     const ST stamp)
 {
-  stepper_counter_++; 
   this->observeSolutionImpl(solution, solution_dot, stamp);
+  stepper_counter_++; 
 }
 
 void
@@ -58,8 +66,8 @@ Albany::PiroObserverT::observeSolution(
     const Thyra::MultiVectorBase<ST> &solution,
     const ST stamp)
 {
-  stepper_counter_++; 
   this->observeSolutionImpl(solution, stamp);
+  stepper_counter_++; 
 }
 
 namespace { // anonymous
@@ -192,21 +200,68 @@ Albany::PiroObserverT::observeResponse(
 
     // Note that we don't have g_names support in thyra yet.  Once
     // this is added, we can print response names as well.
-  
+
+    //OG It seems that outArgs.Ng() always returns 1, so, there is 1 response vector only, Response[0].
+    //This response vector contains different responses (min, max, norms) and it would be good
+    //to have functionality to obtain relative responses only for some values. But it would require more
+    //parameters in param list. Alternatively, one can rewrite the code below to use is_relative
+    //as an array of markers for relative responses for Response[0] only. This is not the case
+    //right now and if in the param list "Relative Responses"="{0}", the code below will compute
+    //relative values for all terms in vector Response[0].
+    if((!firstResponseObtained) && calculateRelativeResponses ){
+	  storedResponses.resize(outArgs.Ng());
+	  is_relative.resize(outArgs.Ng(), false);
+    }
+
     for(int i=0;i<outArgs.Ng();i++) {
       std::stringstream ss;
       std::map<int,std::string>::const_iterator itr = m_response_index_to_name.find(i);
       if(itr!=m_response_index_to_name.end())
-        ss << "   Response \"" << itr->second << "\" = ";
+        ss << "         Response \"" << itr->second << "\" = ";
       else
-        ss << "   Response[" << i << "] = ";
+        ss << "         Response[" << i << "] = ";
+
+      //ss << "relative resp size? " << relative_responses.size() << "\n";
+      //ss << "relative resp values? " << relative_responses << "\n";
 
       Teuchos::RCP<Thyra::VectorBase<double> > g = outArgs.get_g(i);
       *out << ss.str(); // "   Response[" << i << "] = ";
       for(Thyra::Ordinal k=0;k<g->space()->dim();k++)
         *out << std::setw(value_width) << Thyra::get_ele(*g,k) << " ";
-        *out << std::endl;
-    }
+      *out << std::endl;
+
+      if(firstResponseObtained && calculateRelativeResponses )
+      if(is_relative[i]){
+    	  *out << "\n";
+	      *out << "Relative Response[" << i << "] = ";
+          for( int j = 0; j < storedResponses[i].size(); j++){
+        	  double prevresp = storedResponses[i][j];
+        	  if( std::abs(prevresp) > tol ){
+        		  *out << std::setw(value_width) << (Thyra::get_ele(*g,j) - prevresp)/prevresp << " ";
+        	  }else{
+        		  *out << " N/A(int. value 0) ";
+        	  }
+          }
+    	  *out << "\n";
+      }
+
+      if( (!firstResponseObtained) && calculateRelativeResponses ){
+    	  for(int j = 0; j < relative_responses.size(); j++){
+    		  unsigned int resp_index = relative_responses[j];
+    		  if( (resp_index < outArgs.Ng()) )
+    			  is_relative[resp_index] = true;
+    	  }
+
+      }
+      //Save first responses for relative changes in st
+      if( (!firstResponseObtained) && calculateRelativeResponses ){
+      	  int gsize = g->space()->dim();
+      	  storedResponses[i].resize(gsize);
+      	  for (int j = 0; j < gsize; j++)
+      		  storedResponses[i][j] = Thyra::get_ele(*g,j);
+      }//end if !firstRessponseObtained
+    }//end of loop over outArgs.Ng()
+    firstResponseObtained = true;
   }
 }
 

@@ -230,7 +230,7 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         # Integration scheme
         WriteParameter("Integration Scheme", "string", mat_params["integration_scheme"], mat_file, indent)
         if mat_params["integration_scheme"] == "Implicit":
-            WriteParameter("Nonlinear Solver Step Type", "double", mat_params["nonlinear_solver_step_type"], mat_file, indent) 
+            WriteParameter("Nonlinear Solver Step Type", "string", mat_params["nonlinear_solver_step_type"], mat_file, indent) 
             WriteParameter("Implicit Integration Relative Tolerance", "double", mat_params["implicit_integration_relative_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Absolute Tolerance", "double", mat_params["implicit_integration_absolute_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)

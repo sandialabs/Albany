@@ -34,6 +34,8 @@
             <Parameter name="Equation" type="int" value="0" />
             </ParameterList>
       <Parameter name="Response 3" type="string" value="Aeras Shallow Water L2 Norm"/>
+      <Parameter name="Relative Responses Markers" type="Array(unsigned int)" value="{0}"/>
+      <Parameter name="Responses Observation Frequency" type="int" value="10"/>
     </ParameterList>
 
     <ParameterList name="Parameters">

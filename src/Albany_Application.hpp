@@ -144,7 +144,9 @@ namespace Albany {
     bool observeResponses() const {return observe_responses;} 
     
     int observeResponsesFreq() const {return response_observ_freq;} 
- 
+
+    Teuchos::Array<unsigned int> getMarkersForRelativeResponses() const {return relative_responses;}
+
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
@@ -789,7 +791,7 @@ namespace Albany {
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
     //! Routines for setting a scaling to be applied to the Jacobian/resdiual 
-    void setScale(Teuchos::RCP<const Tpetra_CrsMatrix> jacT = Teuchos::null); 
+    void setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT = Teuchos::null); 
     void setScaleBCDofs(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
@@ -1151,7 +1153,7 @@ namespace Albany {
     double scale; 
     double scaleBCdofs; 
     //Scaling types
-    enum SCALETYPE {CONSTANT, DIAG};
+    enum SCALETYPE {CONSTANT, DIAG, ABSROWSUM};
     SCALETYPE scale_type;
 
     //! Shape Optimization data
@@ -1206,6 +1208,9 @@ namespace Albany {
     
     //how often one wants the responses to be computed/printed
     int response_observ_freq; 
+
+    //local responses
+    Teuchos::Array<unsigned int> relative_responses;
 
   };
 }

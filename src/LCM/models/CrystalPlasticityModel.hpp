@@ -9,6 +9,7 @@
 
 #include "CrystalPlasticityCore.hpp"
 #include "ConstitutiveModel.hpp"
+#include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
 namespace LCM
 {
@@ -77,6 +78,21 @@ public:
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
       }
 
+  ///
+  ///  Set a NOX status test to Failed, which will trigger Piro to cut the global
+  ///  load step, assuming the load-step-reduction feature is active.
+  ///
+  void
+  forceGlobalLoadStepReduction()
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+	  nox_status_test_.is_null(),
+          std::logic_error,
+          "\n**** Error in CrystalPlasticityModel, error accessing NOX status test.");
+
+    nox_status_test_->status_ = NOX::StatusTest::Failed;
+  }
+
 private:
 
   ///
@@ -132,6 +148,11 @@ private:
   RealType implicit_nonlinear_solver_absolute_tolerance_;
   int implicit_nonlinear_solver_max_iterations_;
   int implicit_nonlinear_solver_min_iterations_;
+
+  ///
+  /// Pointer to NOX status test, allows the material model to force a global load step reduction
+  ///
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
 
   ///
   /// Output options 

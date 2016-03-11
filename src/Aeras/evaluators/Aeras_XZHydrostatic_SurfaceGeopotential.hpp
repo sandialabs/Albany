@@ -45,7 +45,7 @@ private:
 
   const int numNodes;
                      
-  enum TOPOGRAPHYTYPE {NONE, MOUNTAIN1};
+  enum TOPOGRAPHYTYPE {NONE, MOUNTAIN1, SPHERE_MOUNTAIN1};
   TOPOGRAPHYTYPE topoType;
   
   int numParam;

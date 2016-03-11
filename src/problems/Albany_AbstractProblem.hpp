@@ -120,6 +120,10 @@ namespace Albany {
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>&
       getSideSetFieldRequirements () const {return ss_requirements;}
 
+    //! Allow the Problem to modify the solver settings, for example by adding a custom status test.
+    virtual void
+      applyProblemSpecificSolverSettings(Teuchos::RCP<Teuchos::ParameterList> params){}
+
   protected:
 
     Teuchos::Array<Teuchos::Array<int> > offsets_; 

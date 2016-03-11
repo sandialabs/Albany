@@ -80,7 +80,14 @@ protected:
   Teuchos::RCP<Teuchos::FancyOStream> out; 
 
   int observe_responses_every_n_steps_; 
- 
+
+  bool firstResponseObtained;
+  bool calculateRelativeResponses;
+  std::vector< std::vector<double> > storedResponses;
+  Teuchos::Array<unsigned int> relative_responses;
+  std::vector<bool> is_relative;
+  const double tol = 1e-15;
+
 };
 
 } // namespace Albany
