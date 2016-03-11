@@ -749,7 +749,7 @@ evaluateFields(typename Traits::EvalData workset)
     }//end q loop for quad points
     
   }//end e loop for elements
- #endif //end of if-statement which turns on/off homme;s map
+#endif //end of if-statement which turns on/off homme;s map
   //////////////////////////////////////////////////////////////////////
 
 
