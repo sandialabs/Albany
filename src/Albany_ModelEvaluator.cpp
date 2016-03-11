@@ -97,6 +97,7 @@ Albany::ModelEvaluator::ModelEvaluator(
 #ifdef ALBANY_STOKHOS
   p_sg_vals.resize(num_param_vecs);
   p_mp_vals.resize(num_param_vecs);
+#endif
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   for (int i=0; i<num_param_vecs; i++) {
 
