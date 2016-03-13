@@ -29,15 +29,21 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
 
 {
 
-  Teuchos::ParameterList* xzhydrostatic_list = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
+  // Teuchos::ParameterList* xzhydrostatic_list = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
+  Teuchos::ParameterList* xzhydrostatic_list =
+	  p.isParameter("XZHydrostatic Problem") ?
+	  p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
+	  p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
+
 
   //std::string topoTypeString = surfGeopList->get<std::string>("Topography Type", "None");
   
   std::string topoTypeString = xzhydrostatic_list->get<std::string> ("Topography Type", "None");
-  
+
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   
-  const bool invalidString = (topoTypeString != "None" && topoTypeString != "Mountain1") && (topoTypeString != "SphereMountain1");
+  const bool invalidString = ( (topoTypeString != "None") && (topoTypeString != "Mountain1") && (topoTypeString != "SphereMountain1")
+		                     && (topoTypeString != "AspBaroclinic") );
   
   TEUCHOS_TEST_FOR_EXCEPTION( invalidString,
                              std::logic_error,
@@ -45,9 +51,6 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
                              << " encountered. " << std::endl);
   
 
-  
-  
-  
   if (topoTypeString == "None"){
     topoType = NONE;
   }
@@ -91,7 +94,12 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
                                ", provided data.size() = " << topoData.size()
                                <<  std::endl) ;
   }
+  else if ( topoTypeString == "AspBaroclinic"){
+	topoType = ASP_BAROCLINIC;
+  }
   
+  std::cout << "The topography type is " << topoTypeString << "\n";
+
   
   this->addEvaluatedField(PhiSurf);
 
@@ -193,6 +201,42 @@ evaluateFields(typename Traits::EvalData workset)
 			PhiSurf(cell, node) = G * zsurf;
   		}
   	}
+  }else if (topoType == ASP_BAROCLINIC){
+	  //copying lines from homme
+	  /*eta_sfc    = 1.d0
+	    cos_tmp    = u0 * (cos((eta_sfc-eta0)*pi*0.5d0))**1.5d0
+	    a_omega    = a*omega
+
+	    surface_geopotential = (
+	                 (   -2.d0*(SIN(rot_lat))**6 * ( (COS(rot_lat))**2 + 1.d0/3.d0  ) + 10.d0/63.d0)*COS_tmp   &
+	                 + (8.d0/5.d0*(COS(rot_lat))**3 * ((SIN(rot_lat))**2 + 2.d0/3.d0) - pi/4.d0)*a_omega)*COS_tmp
+	                 */
+
+    const double a = Aeras::ShallowWaterConstants::self().earthRadius;
+	const double omega = Aeras::ShallowWaterConstants::self().omega;
+	const double eta0 = 0.252;
+	const double etas = 1.0;
+	const double u0 = 35.0;
+	const double pi = 3.141592653589793;
+
+	for ( int cell = 0; cell < workset.numCells; ++cell ) {
+	  	for ( int node = 0; node < numNodes; ++node ) {
+
+			const double x = workset.wsCoords[cell][node][0];
+			const double y = workset.wsCoords[cell][node][1];
+			const double z = workset.wsCoords[cell][node][2];
+
+			const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
+
+			const double costmp = u0*std::pow( std::cos( (etas-eta0)*pi*0.5), 1.5);
+
+			PhiSurf(cell, node) = (
+					(  -2.*std::pow(std::sin(theta),6.0)*( std::pow(std::cos(theta),2.0) + 1./3.) + 10./63. )*costmp
+				+   ( 8./5.*std::pow( std::cos(theta), 3. ) * ( std::pow(std::sin(theta),2.0) + 2./3. ) - pi/4.)*a*omega
+			)*costmp;
+	  	}
+	}
+
   }
       
 }
