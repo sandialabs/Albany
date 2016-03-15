@@ -27,6 +27,7 @@ public:
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using Workset = typename Traits::EvalData;
+
   using FieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>;
   using DataLayoutMap = std::map<std::string, Teuchos::RCP<PHX::DataLayout>>;
 
@@ -57,7 +58,9 @@ public:
   ///
   virtual
   ~AbstractModel()
-  {};
+  {
+    return;
+  };
 
   ///
   /// No copy constructor
@@ -85,7 +88,7 @@ public:
   ///
   virtual
   DataLayoutMap
-  getDependentFieldMap()
+  getDependentFieldMap() final
   {
     return dep_field_map_;
   }
@@ -95,7 +98,7 @@ public:
   ///
   virtual
   DataLayoutMap
-  getEvaluatedFieldMap()
+  getEvaluatedFieldMap() final
   {
     return eval_field_map_;
   }
@@ -107,7 +110,7 @@ public:
   void
   setDependentField(
       std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
+      Teuchos::RCP<PHX::DataLayout> const & field) final
   {
     dep_field_map_.insert(std::make_pair(field_name, field));
   }
@@ -119,7 +122,7 @@ public:
   void
   setEvaluatedField(
       std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
+      Teuchos::RCP<PHX::DataLayout> const & field) final
   {
     eval_field_map_.insert(std::make_pair(field_name, field));
   }
@@ -127,43 +130,50 @@ public:
   ///
   /// state variable registration helpers
   ///
+  virtual
   std::string
-  getStateVarName(int state_var)
+  getStateVarName(int state_var) final
   {
     return state_var_names_[state_var];
   }
 
+  virtual
   Teuchos::RCP<PHX::DataLayout>
-  getStateVarLayout(int state_var)
+  getStateVarLayout(int state_var) final
   {
     return state_var_layouts_[state_var];
   }
 
+  virtual
   std::string
-  getStateVarInitType(int state_var)
+  getStateVarInitType(int state_var) final
   {
     return state_var_init_types_[state_var];
   }
 
+  virtual
   double
-  getStateVarInitValue(int state_var)
+  getStateVarInitValue(int state_var) final
   {
     return state_var_init_values_[state_var];
   }
 
+  virtual
   bool
-  getStateVarOldStateFlag(int state_var)
+  getStateVarOldStateFlag(int state_var) final
   {
     return state_var_old_state_flags_[state_var];
   }
 
+  virtual
   bool
-  getStateVarOutputFlag(int state_var)
+  getStateVarOutputFlag(int state_var) final
   {
     return state_var_output_flags_[state_var];
   }
 
-  int getNumStateVariables()
+  virtual
+  int getNumStateVariables() final
   {
     return num_state_variables_;
   }
@@ -173,17 +183,20 @@ protected:
   ///
   /// Number of State Variables
   ///
-  int num_state_variables_;
+  int
+  num_state_variables_{0};
 
   ///
   /// Number of dimensions
   ///
-  int num_dims_;
+  int
+  num_dims_{0};
 
   ///
   /// Number of integration points
   ///
-  int num_pts_;
+  int
+  num_pts_{0};
 
   ///
   /// Map of field names
