@@ -71,6 +71,17 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
   const Teuchos::MpiComm<int>* theComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
   if (params->get<bool>("Use Serial Mesh", false) && commT->getSize() > 1){
+
+
+//AGS: 3/15/16: A new commit to Trilinos is causing this rebalance
+// capability to cause the code to hang. 
+// Calling exit(-1)  instead until this is fixed.
+
+std::cout << "****Use Serial Mesh capability is causing code to hang"
+          << "****as of 3/15/16. Exiting!!! " << std::endl;
+exit(-1);
+
+ 
     // We are parallel but reading a single exodus file
     useSerialMesh = true;
 
