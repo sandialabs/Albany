@@ -86,9 +86,8 @@ public:
   ///
   /// Return a map to the dependent fields
   ///
-  virtual
   DataLayoutMap
-  getDependentFieldMap() final
+  getDependentFieldMap()
   {
     return dep_field_map_;
   }
@@ -96,9 +95,8 @@ public:
   ///
   /// Return a map to the evaluated fields
   ///
-  virtual
   DataLayoutMap
-  getEvaluatedFieldMap() final
+  getEvaluatedFieldMap()
   {
     return eval_field_map_;
   }
@@ -106,11 +104,10 @@ public:
   ///
   /// Convenience function to set dependent fields.
   ///
-  virtual
   void
   setDependentField(
       std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field) final
+      Teuchos::RCP<PHX::DataLayout> const & field)
   {
     dep_field_map_.insert(std::make_pair(field_name, field));
   }
@@ -118,11 +115,10 @@ public:
   ///
   /// Convenience function to set evaluated fields.
   ///
-  virtual
   void
   setEvaluatedField(
       std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field) final
+      Teuchos::RCP<PHX::DataLayout> const & field)
   {
     eval_field_map_.insert(std::make_pair(field_name, field));
   }
@@ -130,50 +126,43 @@ public:
   ///
   /// state variable registration helpers
   ///
-  virtual
   std::string
-  getStateVarName(int state_var) final
+  getStateVarName(int state_var)
   {
     return state_var_names_[state_var];
   }
 
-  virtual
   Teuchos::RCP<PHX::DataLayout>
-  getStateVarLayout(int state_var) final
+  getStateVarLayout(int state_var)
   {
     return state_var_layouts_[state_var];
   }
 
-  virtual
   std::string
-  getStateVarInitType(int state_var) final
+  getStateVarInitType(int state_var)
   {
     return state_var_init_types_[state_var];
   }
 
-  virtual
   double
-  getStateVarInitValue(int state_var) final
+  getStateVarInitValue(int state_var)
   {
     return state_var_init_values_[state_var];
   }
 
-  virtual
   bool
-  getStateVarOldStateFlag(int state_var) final
+  getStateVarOldStateFlag(int state_var)
   {
     return state_var_old_state_flags_[state_var];
   }
 
-  virtual
   bool
-  getStateVarOutputFlag(int state_var) final
+  getStateVarOutputFlag(int state_var)
   {
     return state_var_output_flags_[state_var];
   }
 
-  virtual
-  int getNumStateVariables() final
+  int getNumStateVariables()
   {
     return num_state_variables_;
   }
