@@ -10,17 +10,7 @@
 namespace LCM
 {
 
-//
-//
-//
-template<typename EvalT, typename Traits>
-VariationalModel<EvalT, Traits>::
-VariationalModel(
-    Teuchos::ParameterList * p,
-    Teuchos::RCP<Albany::Layouts> const & dl)
-{
-  return;
-}
+// Placeholder
 
 } // namespace LCM
 

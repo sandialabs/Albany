@@ -84,43 +84,24 @@ public:
       FieldMap eval_fields) = 0;
 
   ///
-  /// Return a map to the dependent fields
+  /// Accessors and mutators
   ///
-  DataLayoutMap
-  getDependentFieldMap()
+  int
+  getNumDimensions()
   {
-    return dep_field_map_;
+    return num_dims_;
   }
 
-  ///
-  /// Return a map to the evaluated fields
-  ///
-  DataLayoutMap
-  getEvaluatedFieldMap()
+  int
+  getNumCubaturePoints()
   {
-    return eval_field_map_;
+    return num_pts_;
   }
 
-  ///
-  /// Convenience function to set dependent fields.
-  ///
-  void
-  setDependentField(
-      std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
+  int
+  getNumStateVariables()
   {
-    dep_field_map_.insert(std::make_pair(field_name, field));
-  }
-
-  ///
-  /// Convenience function to set evaluated fields.
-  ///
-  void
-  setEvaluatedField(
-      std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
-  {
-    eval_field_map_.insert(std::make_pair(field_name, field));
+    return num_state_variables_;
   }
 
   ///
@@ -162,18 +143,45 @@ public:
     return state_var_output_flags_[state_var];
   }
 
-  int getNumStateVariables()
+  ///
+  /// Deal with fields
+  ///
+
+  Teuchos::RCP<std::map<std::string, std::string>>
+  getFieldNameMap()
   {
-    return num_state_variables_;
+    return field_name_map_;
+  }
+
+  DataLayoutMap
+  getDependentFieldMap()
+  {
+    return dep_field_map_;
+  }
+
+  DataLayoutMap
+  getEvaluatedFieldMap()
+  {
+    return eval_field_map_;
+  }
+
+  void
+  setDependentField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    dep_field_map_.insert(std::make_pair(field_name, field));
+  }
+
+  void
+  setEvaluatedField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    eval_field_map_.insert(std::make_pair(field_name, field));
   }
 
 protected:
-
-  ///
-  /// Number of State Variables
-  ///
-  int
-  num_state_variables_{0};
 
   ///
   /// Number of dimensions
@@ -188,10 +196,10 @@ protected:
   num_pts_{0};
 
   ///
-  /// Map of field names
+  /// Number of State Variables
   ///
-  Teuchos::RCP<std::map<std::string, std::string>>
-  field_name_map_;
+  int
+  num_state_variables_{0};
 
   std::vector<std::string>
   state_var_names_;
@@ -210,6 +218,12 @@ protected:
 
   std::vector<bool>
   state_var_output_flags_;
+
+  ///
+  /// Map of field names
+  ///
+  Teuchos::RCP<std::map<std::string, std::string>>
+  field_name_map_;
 
   DataLayoutMap
   dep_field_map_;
