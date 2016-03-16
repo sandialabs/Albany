@@ -9,7 +9,7 @@
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
-    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness, thickness_RMS, temperature,surface_height, surface_mass_balance}"/>
+    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness, observed_thickness, thickness_RMS, temperature,surface_height, surface_mass_balance}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
@@ -97,6 +97,8 @@
           <Parameter name="basal_friction Field Type" type="string" value="Node Scalar"/>
           <Parameter name="thickness File Name"       type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
           <Parameter name="thickness Field Type"      type="string" value="Node Scalar"/>
+          <Parameter name="observed_thickness File Name"       type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
+          <Parameter name="observed_thickness Field Type"      type="string" value="Node Scalar"/>
           <Parameter name="thickness_RMS File Name"   type="string" value="../AsciiMeshes/GisUnstructFiles/thickness_RMS.ascii"/>
           <Parameter name="thickness_RMS Field Type"  type="string" value="Node Scalar"/>
           <Parameter name="surface_height File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
