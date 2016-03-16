@@ -98,11 +98,9 @@ public:
     return num_pts_;
   }
 
+  virtual
   int
-  getNumStateVariables()
-  {
-    return num_state_variables_;
-  }
+  getNumStateVariables() = 0;
 
   ///
   /// state variable registration helpers
@@ -194,12 +192,6 @@ protected:
   ///
   int
   num_pts_{0};
-
-  ///
-  /// Number of State Variables
-  ///
-  int
-  num_state_variables_{0};
 
   std::vector<std::string>
   state_var_names_;

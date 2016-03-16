@@ -80,6 +80,13 @@ public:
       FieldMap dep_fields,
       FieldMap eval_fields);
 
+  virtual
+  int
+  getNumStateVariables() final
+  {
+    return num_state_variables_;
+  }
+
   ///
   /// Integration point location flag
   ///
@@ -162,6 +169,12 @@ public:
   }
 
 protected:
+
+  ///
+  /// Number of State Variables
+  ///
+  int
+  num_state_variables_{0};
 
   ///
   /// flag for integration point locations

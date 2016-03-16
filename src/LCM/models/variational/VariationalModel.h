@@ -15,7 +15,8 @@ namespace LCM
 ///
 /// Variational Constitutive Model Base Class
 ///
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits,
+typename StateVars, typename InternalVars>
 class VariationalModel : public AbstractModel<EvalT, Traits>
 {
 public:
@@ -61,25 +62,22 @@ public:
   /// Methods to compute the state (e.g. energy, gradient, Hessian)
   ///
   virtual
-  void
+  ScalarT
   computeEnergy(
-      Workset workset,
-      FieldMap dep_fields,
-      FieldMap eval_fields) = 0;
+      StateVars const & state_vars,
+      InternalVars const & internal_vars) = 0;
 
   virtual
-  void
-  computeGradient(
-      Workset workset,
-      FieldMap dep_fields,
-      FieldMap eval_fields) = 0;
+  StateVars
+  computeFlux(
+      StateVars const & state_vars,
+      InternalVars const & internal_vars) = 0;
 
   virtual
   void
   computeHessian(
-      Workset workset,
-      FieldMap dep_fields,
-      FieldMap eval_fields) = 0;
+      StateVars const & state_vars,
+      InternalVars const & internal_vars) = 0;
 };
 
 } // namespace LCM
