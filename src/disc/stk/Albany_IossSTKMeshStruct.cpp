@@ -70,41 +70,19 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   }
 
   const Teuchos::MpiComm<int>* theComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
+
+  mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(*theComm->getRawMpiComm()));
+
+  // Use Greg Sjaardema's capability to repartition on the fly.
+  //    Several partitioning choices: rcb, rib, hsfc, kway, kway-gemo, linear, random
+  //          linear does not require Zoltan or metis
   if (params->get<bool>("Use Serial Mesh", false) && commT->getSize() > 1){
-
-
-//AGS: 3/15/16: A new commit to Trilinos is causing this rebalance
-// capability to cause the code to hang. 
-// Calling exit(-1)  instead until this is fixed.
-
-std::cout << "****Use Serial Mesh capability is causing code to hang"
-          << "****as of 3/15/16. Exiting!!! " << std::endl;
-exit(-1);
-
- 
-    // We are parallel but reading a single exodus file
-    useSerialMesh = true;
-
-    // Read a single exodus mesh on Proc 0 then rebalance it across the machine
-    MPI_Group group_world;
-    MPI_Group peZero;
-    MPI_Comm peZeroComm;
-    //MPI_Comm theComm = Albany::getMpiCommFromEpetraComm(*comm);
-    int process_rank[1]; // the reader process
-    process_rank[0] = 0;
-    int my_rank = commT->getRank();
-
-    //get the group under theComm
-    MPI_Comm_group(*theComm->getRawMpiComm(), &group_world);
-    // create the new group. This group includes only processor zero - that is the only processor that reads the file
-    MPI_Group_incl(group_world, 1, process_rank, &peZero);
-    // create the new communicator - it just contains processor zero
-    MPI_Comm_create(*theComm->getRawMpiComm(), peZero, &peZeroComm);
-
-    mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(peZeroComm));
-  }
-  else {
-    mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(*theComm->getRawMpiComm()));
+  //    Option  external  reads the nemesis files, and must be the default 
+#ifdef ALBANY_ZOLTAN
+    mesh_data->property_add(Ioss::Property("DECOMPOSITION_METHOD", "rib"));
+#else
+    mesh_data->property_add(Ioss::Property("DECOMPOSITION_METHOD", "linear"));
+#endif
   }
 
   // Create input mesh
