@@ -30,7 +30,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j16")
+set (CTEST_FLAGS "-j12")
 
 set (CTEST_DROP_METHOD "http")
 
@@ -54,7 +54,6 @@ set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 #Why does CDash script not find BOOST_DIR, NETCDF_DIR from loaded modules? 
 set(BOOST_DIR  /projects/install/Darwin10.10-x86_64/sems/tpl/boost/1.58.0/gcc/5.1.0/base)
 set(NETCDF_DIR /projects/install/Darwin10.10-x86_64/sems/tpl/netcdf/4.3.2/gcc/5.1.0/parallel)
-set(HDF5_DIR   /projects/install/Darwin10.10-x86_64/sems/tpl/hdf5/1.8.12/gcc/5.1.0/parallel)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -174,16 +173,15 @@ if (BUILD_TRILINOS)
 
   set (CONFIGURE_OPTIONS
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DHDF5_LIBRARY_DIRS:PATH=${HDF5_DIR}/lib"
-    "-DHDF5_INCLUDE_DIRS:PATH=${HDF5_DIR}/include"
-    "-DNetcdf_LIBRARY_DIRS:PATH=${NETCDF_DIR}/lib"
+    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF_DIR}/lib"
+    "-DTPL_Netcdf_LIBRARIES:FILEPATH=${NETCDF_DIR}/lib/libnetcdf.dylib"
     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include" 
-    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_DIR}/include"
-    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib" 
-    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include" 
+    "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
+    "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
     "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_DIR}/include" 
-    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib" 
+    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
+    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF" 
@@ -347,6 +345,7 @@ if (BUILD_TRILINOS)
   set_property (GLOBAL PROPERTY Label GaiaTrilinos)
   #set (CTEST_BUILD_TARGET all)
   set (CTEST_BUILD_TARGET install)
+  set (CTEST_BUILD_FLAGS -j12)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
