@@ -310,6 +310,11 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
     rate_slip.fill(Intrepid2::ZEROS);
   }
 
+  // Ensure that the slip increment is bounded
+   if (Intrepid2::norm(rate_slip * dt_) > 1.0) {
+       failed =  true;
+       return residual;
+   }
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT>(
       slip_systems_,
