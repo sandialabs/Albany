@@ -421,12 +421,19 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     keep_proc = nCellsActive > 0;
     createReducedMPI(keep_proc, reducedComm);
 #endif
-    if (keep_proc) { //in the case we're using the reduced Comm, only call routines if there is a nonzero # of elts on a proc. 
+    if (keep_proc) { //in the case we're using the reduced Comm, only call routines if there is a nonzero # of elts on a proc.
 #ifdef REDUCED_COMM 
       reducedMpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
+   #ifdef CISM_USE_EPETRA
+      reducedMpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
+   #endif
 #else
-      reducedMpiCommT = mpiCommT; 
+      reducedMpiCommT = mpiCommT;
+   #ifdef CISM_USE_EPETRA
+      reducedMpiComm = mpiComm;
+   #endif
 #endif
+ 
     
 
     // ---------------------------------------------
