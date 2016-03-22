@@ -2340,6 +2340,12 @@ applyGlobalDistParamDerivImplT(const double current_time,
     Tpetra_MultiVector temp(*fpVT,Teuchos::Copy);
     distParamLib->get(dist_param_name)->export_add(*fpVT, *overlapped_fpVT);
     fpVT->update(1.0, temp, 1.0); //fpTV += temp;
+
+    std::stringstream sensitivity_name; sensitivity_name << dist_param_name << "_sensitivity";
+    if(distParamLib->has(sensitivity_name.str())) {
+      distParamLib->get(sensitivity_name.str())->vector()->update(1.0,*fpVT->getVector(0),1.0);
+      distParamLib->get(sensitivity_name.str())->scatter();
+    }
   }
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
@@ -2485,6 +2491,14 @@ evaluateResponseDistParamDeriv(
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
   responses[response_index]->evaluateDistParamDeriv(t, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
+  if (dg_dp != NULL){
+    std::stringstream sensitivity_name; sensitivity_name << dist_param_name << "_sensitivity";
+    if(distParamLib->has(sensitivity_name.str())) {
+      distParamLib->get(sensitivity_name.str())->vector()->update(1.0, *Petra::EpetraVector_To_TpetraVectorNonConst(*(*dg_dp)(0), commT),1.0);
+      distParamLib->get(sensitivity_name.str())->scatter();
+    }
+  }
+
 }
 #endif
 
