@@ -725,6 +725,19 @@ else {
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  {
+    std::string stateName("basal_friction_sensitivity");
+    entity= Albany::StateStruct::NodalDistParameter;
+    stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity,"bottom");
+  }
+
+  {
+    std::string stateName("thickness_sensitivity");
+    entity= Albany::StateStruct::NodalDistParameter;
+    stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity,"bottom");
+  }
+
+
   // -------------------------------- FELIX evaluators ------------------------- //
 
   // --- FO Stokes Resid --- //
