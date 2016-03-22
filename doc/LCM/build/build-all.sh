@@ -74,6 +74,7 @@ for PACKAGE in $PACKAGES; do
                 echo "MODULE: $MODULE"
                 module load "$MODULE"
                 "$COMMAND" "$PACKAGE" "$NUM_PROCS"
+                module purge
             done
         done
     done
