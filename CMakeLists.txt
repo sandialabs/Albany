@@ -551,6 +551,8 @@ IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
      ELSE()
       MESSAGE("---> CISM_EPETRA     is Disabled, NOT compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Tpetra software stack.")
     ENDIF()
+  ELSE()
+    MESSAGE("---> CISM_EPETRA     is Disabled, NOT compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Tpetra software stack.")
   ENDIF()
   IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE OR ENABLE_DEMO_PDES)
      MESSAGE("-- WARNING: cism_driver will not link properly when built if
