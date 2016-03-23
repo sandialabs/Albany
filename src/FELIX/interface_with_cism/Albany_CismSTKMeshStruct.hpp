@@ -104,13 +104,13 @@ namespace Albany {
     int NumSouthFaces; 
     int NumNorthFaces; 
     double (*xyz)[3]; //hard-coded for 3D for now 
-    double* sh; //surface height
-    double* thck; //thickness
+    std::vector<double> sh; //surface height
+    std::vector<double> thck; //thickness
     double (*shGrad)[2]; //surface height gradient (ds/dx, ds/dy)
-    double* beta;
+    std::vector<double> beta;
     GO* dirichletNodeMask;  
     int (*eles)[8]; //hard-coded for 3D hexes for now 
-    double *flwa; //double array that gives value of flow factor  
+    std::vector<double> flwa; //double array that gives value of flow factor  
     bool have_sh; // Does surface height data exist?
     bool have_thck; // Does thickness data field exist? 
     bool have_shGrad; // Does surface height gradient data exist?
@@ -120,8 +120,8 @@ namespace Albany {
     bool have_flwa; // Does flwa (flow factor) file exist?
     bool have_beta; // Does beta (basal fraction) file exist?
     bool have_dirichlet;
-    double *uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
-    double *vvel;  
+    std::vector<double> uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
+    std::vector<double> vvel;  
     int (*bf)[5]; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
     int (*tf)[5]; 
     int (*wf)[5]; 

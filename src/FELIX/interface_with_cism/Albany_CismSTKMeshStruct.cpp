@@ -96,8 +96,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   ef = new int[NumEastFaces][5]; 
   sf = new int[NumSouthFaces][5]; 
   nf = new int[NumNorthFaces][5]; 
-  sh = new double[NumNodes];
-  thck = new double[NumNodes];
+  sh.resize(NumNodes); 
+  thck.resize(NumNodes);
   shGrad = new double[NumNodes][2];
   Teuchos::Array<GO> globalNodesID(NumNodes); // local; doesn't have to be class data unless desired
   Teuchos::Array<GO> globalElesID(NumEles);
@@ -107,10 +107,10 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   Teuchos::Array<GO> eastFacesID(NumEastFaces); 
   Teuchos::Array<GO> southFacesID(NumSouthFaces); 
   Teuchos::Array<GO> northFacesID(NumNorthFaces); 
-  flwa = new double[NumEles];
-  beta = new double[NumNodes];
-  uvel = new double[NumNodes];
-  vvel = new double[NumNodes];
+  flwa.resize(NumEles); 
+  beta.resize(NumNodes);
+  uvel.resize(NumNodes); 
+  vvel.resize(NumNodes);
 
   //check if optional input fields exist
   if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
@@ -321,8 +321,6 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
   delete [] xyz;
   delete [] dirichletNodeMask;
-  delete [] sh;
-  delete [] thck;
   delete [] shGrad;
   delete [] bf;
   delete [] tf;
@@ -331,8 +329,6 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
   delete [] sf;
   delete [] nf;
   delete [] eles;
-  delete [] uvel; 
-  delete [] vvel; 
 }
 
 void
