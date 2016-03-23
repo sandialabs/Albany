@@ -290,6 +290,7 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   // Return immediately if something failed catastrophically.
   if (failed == true) {
+    residual.fill(Intrepid2::ZEROS);
     return residual;
   }
 
