@@ -30,6 +30,8 @@ public:
 
   virtual NOX::StatusTest::StatusType getStatus() const;
 
+  void syncFlag();
+
   virtual std::ostream& print(std::ostream& stream, int indent = 0) const;
 
   //! Current status
