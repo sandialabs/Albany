@@ -86,19 +86,19 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                <<", NumWestFaces = " << NumWestFaces << ", NumEastFaces = "<< NumEastFaces 
               << ", NumSouthFaces = " << NumSouthFaces << ", NumNorthFaces = " << NumNorthFaces <<  std::endl;
   }
-  xyz = new double[NumNodes][3];
-  eles = new int[NumEles][8];
-  dirichletNodeMask = new int[NumNodes];
+  resizeVec(xyz, NumNodes, 3); 
+  resizeVec(eles, NumEles, 8);
+  dirichletNodeMask.resize(NumNodes);
   //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
-  bf = new int[NumBasalFaces][5]; 
-  tf = new int[NumBasalFaces][5]; 
-  wf = new int[NumWestFaces][5]; 
-  ef = new int[NumEastFaces][5]; 
-  sf = new int[NumSouthFaces][5]; 
-  nf = new int[NumNorthFaces][5]; 
+  resizeVec(bf, NumBasalFaces, 5); 
+  resizeVec(tf, NumBasalFaces, 5); 
+  resizeVec(wf, NumWestFaces, 5); 
+  resizeVec(ef, NumEastFaces, 5); 
+  resizeVec(sf, NumSouthFaces, 5); 
+  resizeVec(nf, NumNorthFaces, 5); 
   sh.resize(NumNodes); 
   thck.resize(NumNodes);
-  shGrad = new double[NumNodes][2];
+  resizeVec(shGrad, NumNodes, 2); 
   Teuchos::Array<GO> globalNodesID(NumNodes); // local; doesn't have to be class data unless desired
   Teuchos::Array<GO> globalElesID(NumEles);
   Teuchos::Array<GO> basalFacesID(NumBasalFaces); 
@@ -319,16 +319,6 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
 Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
-  delete [] xyz;
-  delete [] dirichletNodeMask;
-  delete [] shGrad;
-  delete [] bf;
-  delete [] tf;
-  delete [] wf;
-  delete [] ef;
-  delete [] sf;
-  delete [] nf;
-  delete [] eles;
 }
 
 void
@@ -629,4 +619,23 @@ Albany::CismSTKMeshStruct::getValidDiscretizationParameters() const
     this->getValidGenericSTKParameters("Valid ASCII_DiscParams");
 
   return validPL;
+}
+
+void 
+Albany::CismSTKMeshStruct::resizeVec(std::vector<std::vector<double> > &vec , const unsigned int rows , const unsigned int columns)
+{
+  vec.resize(rows);
+  for( auto &it : vec )
+  {
+    it.resize(columns);
+  }
+}
+void 
+Albany::CismSTKMeshStruct::resizeVec(std::vector<std::vector<int> > &vec , const unsigned int rows , const unsigned int columns)
+{
+  vec.resize(rows);
+  for( auto &it : vec )
+  {
+    it.resize(columns);
+  }
 }
