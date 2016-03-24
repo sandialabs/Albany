@@ -26,6 +26,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   if(name == "Constant")
     F = Teuchos::rcp(new AAdapt::ConstantFunction(neq, numDim, data));
 
+  else if(name == "Step X")
+    F = Teuchos::rcp(new AAdapt::StepX(neq, numDim, data));
+  
   else if(name == "1D Gauss-Sin")
     F = Teuchos::rcp(new AAdapt::GaussSin(neq, numDim, data));
 
@@ -141,6 +144,37 @@ void AAdapt::ConstantFunction::compute(double* x, const double* X) {
       x[i] = data[i];
 }
 
+//*****************************************************************************
+AAdapt::StepX::StepX(int neq_, int numDim_,
+    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 5),
+                             std::logic_error,
+                             "Error! Invalid specification of initial condition: incorrect length of Function Data for Step X; Length = " << 5 << ", data.size() = " << data.size() <<  std::endl) ;
+}
+
+void AAdapt::StepX::compute(double* x, const double* X) {
+    // Temperature bottom
+    double T0 = data[0];
+    // Temperature top
+    double T1 = data[1];
+    // constant temperature
+    double T = data[2];
+    // bottom x-coordinate
+    double X0 = data[3];
+    // top x-coordinate
+    double X1 = data[4];
+    
+    const double TOL = 1.0e-12;
+    
+    // bottom
+    if ( X[0] < ( X0 + TOL) ) {
+        x[0] = T0;
+    } else if ( X[0] > ( X1 - TOL) ){
+        x[0] = T1;
+    } else {
+        x[0] = T;
+    }
+}
 //*****************************************************************************
 // Private convenience function
 long AAdapt::seedgen(int worksetID) {
