@@ -18,9 +18,20 @@ template<typename EvalT, typename Traits>
 ConstitutiveModel<EvalT, Traits>::
 ConstitutiveModel(
     Teuchos::ParameterList * p,
-    Teuchos::RCP<Albany::Layouts> const & dl) :
-    AbstractModel<EvalT, Traits>::AbstractModel(p, dl)
+    Teuchos::RCP<Albany::Layouts> const & dl)
 {
+  // extract number of integration points and dimensions
+  std::vector<PHX::DataLayout::size_type>
+  dims;
+
+  dl->qp_tensor->dimensions(dims);
+
+  num_pts_ = dims[1];
+  num_dims_ = dims[2];
+
+  field_name_map_ =
+      p->get<Teuchos::RCP<std::map<std::string, std::string>>>("Name Map");
+
   if (p->isType<bool>("Have Temperature") == true) {
 
     have_temperature_ = p->get<bool>("Have Temperature");

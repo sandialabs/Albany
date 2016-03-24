@@ -7,8 +7,6 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
-#include "AbstractModel.hpp"
-
 namespace LCM
 {
 
@@ -16,16 +14,16 @@ namespace LCM
 /// Constitutive Model Base Class
 ///
 template<typename EvalT, typename Traits>
-class ConstitutiveModel : public AbstractModel<EvalT, Traits>
+class ConstitutiveModel
 {
 public:
 
-  using ScalarT = typename AbstractModel<EvalT, Traits>::ScalarT;
-  using MeshScalarT = typename AbstractModel<EvalT, Traits>::MeshScalarT;
-  using Workset = typename AbstractModel<EvalT, Traits>::Workset;
+  using ScalarT = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
+  using Workset = typename Traits::EvalData;
 
-  using FieldMap = typename AbstractModel<EvalT, Traits>::FieldMap;
-  using DataLayoutMap = typename AbstractModel<EvalT, Traits>::DataLayoutMap;
+  using FieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>;
+  using DataLayoutMap = std::map<std::string, Teuchos::RCP<PHX::DataLayout>>;
 
   ///
   /// Constructor
@@ -80,11 +78,102 @@ public:
       FieldMap dep_fields,
       FieldMap eval_fields);
 
-  virtual
+  ///
+  /// Accessors and mutators
+  ///
   int
-  getNumStateVariables() final
+  getNumDimensions()
+  {
+    return num_dims_;
+  }
+
+  int
+  getNumCubaturePoints()
+  {
+    return num_pts_;
+  }
+
+  int
+  getNumStateVariables()
   {
     return num_state_variables_;
+  }
+
+  ///
+  /// state variable registration helpers
+  ///
+  std::string
+  getStateVarName(int state_var)
+  {
+    return state_var_names_[state_var];
+  }
+
+  Teuchos::RCP<PHX::DataLayout>
+  getStateVarLayout(int state_var)
+  {
+    return state_var_layouts_[state_var];
+  }
+
+  std::string
+  getStateVarInitType(int state_var)
+  {
+    return state_var_init_types_[state_var];
+  }
+
+  double
+  getStateVarInitValue(int state_var)
+  {
+    return state_var_init_values_[state_var];
+  }
+
+  bool
+  getStateVarOldStateFlag(int state_var)
+  {
+    return state_var_old_state_flags_[state_var];
+  }
+
+  bool
+  getStateVarOutputFlag(int state_var)
+  {
+    return state_var_output_flags_[state_var];
+  }
+
+  ///
+  /// Deal with fields
+  ///
+
+  Teuchos::RCP<std::map<std::string, std::string>>
+  getFieldNameMap()
+  {
+    return field_name_map_;
+  }
+
+  DataLayoutMap
+  getDependentFieldMap()
+  {
+    return dep_field_map_;
+  }
+
+  DataLayoutMap
+  getEvaluatedFieldMap()
+  {
+    return eval_field_map_;
+  }
+
+  void
+  setDependentField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    dep_field_map_.insert(std::make_pair(field_name, field));
+  }
+
+  void
+  setEvaluatedField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    eval_field_map_.insert(std::make_pair(field_name, field));
   }
 
   ///
@@ -169,6 +258,48 @@ public:
   }
 
 protected:
+
+  ///
+  /// Number of dimensions
+  ///
+  int
+  num_dims_{0};
+
+  ///
+  /// Number of integration points
+  ///
+  int
+  num_pts_{0};
+
+  std::vector<std::string>
+  state_var_names_;
+
+  std::vector<Teuchos::RCP<PHX::DataLayout>>
+  state_var_layouts_;
+
+  std::vector<std::string>
+  state_var_init_types_;
+
+  std::vector<double>
+  state_var_init_values_;
+
+  std::vector<bool>
+  state_var_old_state_flags_;
+
+  std::vector<bool>
+  state_var_output_flags_;
+
+  ///
+  /// Map of field names
+  ///
+  Teuchos::RCP<std::map<std::string, std::string>>
+  field_name_map_;
+
+  DataLayoutMap
+  dep_field_map_;
+
+  DataLayoutMap
+  eval_field_map_;
 
   ///
   /// Number of State Variables
