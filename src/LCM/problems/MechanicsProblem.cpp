@@ -211,7 +211,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int null_space_dim(0);
   if (have_mech_eq_) {
     if (num_dims_ == 1) {
-      null_space_dim = 0;
+      null_space_dim = 1;
     }
     else if (num_dims_ == 2) {
       null_space_dim = 3;
