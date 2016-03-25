@@ -676,7 +676,14 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
      double time_label = monotonicTimeLabel(time);
 
-     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
+     mesh_data->begin_output_step(outputFileIdx, time_label);
+     int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
+     // Writing mesh global variables
+     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates())
+     {
+       mesh_data->write_global (outputFileIdx, it.first, it.second);
+     }
+     mesh_data->end_output_step(outputFileIdx);
 
      if (mapT->getComm()->getRank()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
@@ -766,7 +773,14 @@ writeSolutionToFileT(const Tpetra_Vector& solnT, const double time,
 
    double time_label = monotonicTimeLabel(time);
 
-     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
+     mesh_data->begin_output_step(outputFileIdx, time_label);
+     int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
+     // Writing mesh global variables
+     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates())
+     {
+       mesh_data->write_global (outputFileIdx, it.first, it.second);
+     }
+     mesh_data->end_output_step(outputFileIdx);
 
      if (mapT->getComm()->getRank()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
@@ -832,7 +846,14 @@ writeSolutionMVToFile(const Tpetra_MultiVector& solnT, const double time,
 
    double time_label = monotonicTimeLabel(time);
 
-     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
+     mesh_data->begin_output_step(outputFileIdx, time_label);
+     int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
+     // Writing mesh global variables
+     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates())
+     {
+       mesh_data->write_global (outputFileIdx, it.first, it.second);
+     }
+     mesh_data->end_output_step(outputFileIdx);
 
      if (mapT->getComm()->getRank()==0) {
        *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
@@ -2333,6 +2354,13 @@ void Albany::STKDiscretization::setupExodusOutput()
     mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(Albany::getMpiCommFromTeuchosComm(commT)));
     mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
+
+    // Adding mesh global variables
+    for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates())
+    {
+      boost::any mvs = it.second;
+      mesh_data->add_global (outputFileIdx, it.first, mvs, stk::util::ParameterType::DOUBLEVECTOR);
+    }
 
     const stk::mesh::FieldVector &fields = mesh_data->meta_data().get_fields();
     for (size_t i=0; i < fields.size(); i++) {

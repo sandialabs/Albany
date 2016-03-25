@@ -200,6 +200,15 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error: GenericSTKFieldContainer - cannot match unknown entity : " << st.entity << std::endl);
 
+    // Checking if the field is layered, in which case the normalized layer coordinates need to be stored in the meta data
+    if (st.layered)
+    {
+      std::string tmp_str = st.name + "_NLC";
+
+      TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
+                                  "Error! Another layered state with the same name already exists.\n");
+      mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
+    }
   }
 }
 

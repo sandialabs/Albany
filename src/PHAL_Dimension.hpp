@@ -23,6 +23,12 @@ struct VecDim : public shards::ArrayDimTag {
   static const VecDim& tag();
 };
 
+struct LayerDim : public shards::ArrayDimTag {
+  LayerDim(){};
+  const char * name() const ;
+  static const LayerDim& tag();
+};
+
 struct QuadPoint : public shards::ArrayDimTag {
   QuadPoint(){};
   const char * name() const ;

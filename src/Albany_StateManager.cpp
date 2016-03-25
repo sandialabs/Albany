@@ -497,6 +497,7 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   }
   stateRef.output = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
+  stateRef.layered = (dl->name(dl->rank()-1) == "LayerDim");
 
   // If space is needed for old state
   if (registerOldState) {

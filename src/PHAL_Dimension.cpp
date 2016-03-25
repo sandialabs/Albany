@@ -18,6 +18,11 @@ const char * VecDim::name() const
 const VecDim & VecDim::tag()
 { static const VecDim myself ; return myself ; }
 
+const char * LayerDim::name() const
+{ static const char n[] = "LayerDim" ; return n ; }
+const LayerDim & LayerDim::tag()
+{ static const LayerDim myself ; return myself ; }
+
 const char * QuadPoint::name() const
 { static const char n[] = "QuadPoint" ; return n ; }
 const QuadPoint & QuadPoint::tag()
