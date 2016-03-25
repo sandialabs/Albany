@@ -10,10 +10,10 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-QuadPointsToCellInterpolation<EvalT, Traits>::
-QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl) :
+template<typename EvalT, typename Traits, typename ScalarT>
+QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::
+QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
+                                  const Teuchos::RCP<Albany::Layouts>& dl) :
   w_measure (p.get<std::string>("Weighted Measure Name"), dl->qp_scalar)
 {
   isVectorField = p.get<bool>("Is Vector Field");
@@ -42,8 +42,8 @@ QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void QuadPointsToCellInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -54,8 +54,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void QuadPointsToCellInterpolation<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ScalarT>
+void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   ScalarT meas;
 
@@ -86,6 +86,26 @@ void QuadPointsToCellInterpolation<EvalT, Traits>::evaluateFields (typename Trai
     }
     field_cell(cell) /= numQPs;
   }
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+QuadPointsToCellInterpolation<EvalT, Traits>::
+QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
+                               const Teuchos::RCP<Albany::Layouts>& dl) :
+  QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
+{
+  // Nothing to be done here
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+QuadPointsToCellInterpolation_noDeriv<EvalT, Traits>::
+QuadPointsToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
+                                       const Teuchos::RCP<Albany::Layouts>& dl) :
+  QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
+{
+  // Nothing to be done here
 }
 
 } // Namespace PHAL

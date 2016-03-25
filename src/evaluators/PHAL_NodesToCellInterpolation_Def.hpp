@@ -10,10 +10,10 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-NodesToCellInterpolation<EvalT, Traits>::
-NodesToCellInterpolation (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl) :
+template<typename EvalT, typename Traits, typename ScalarT>
+NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::
+NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
   BF        (p.get<std::string>("BF Variable Name"), dl->node_qp_scalar),
   w_measure (p.get<std::string>("Weighted Measure Name"), dl->qp_scalar)
 {
@@ -21,15 +21,15 @@ NodesToCellInterpolation (const Teuchos::ParameterList& p,
 
   if (isVectorField)
   {
-    field_node = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Node Name"), dl->node_vector);
-    field_cell = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_vector);
+    field_node = PHX::MDField<ScalarT> (p.get<std::string> ("Field Node Name"), dl->node_vector);
+    field_cell = PHX::MDField<ScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_vector);
 
     vecDim = dl->node_vector->dimension(2);
   }
   else
   {
-    field_node = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Node Name"), dl->node_scalar);
-    field_cell = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_scalar2);
+    field_node = PHX::MDField<ScalarT> (p.get<std::string> ("Field Node Name"), dl->node_scalar);
+    field_cell = PHX::MDField<ScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_scalar2);
   }
 
   numQPs   = dl->qp_scalar->dimension(1);
@@ -45,8 +45,8 @@ NodesToCellInterpolation (const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void NodesToCellInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -58,11 +58,11 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void NodesToCellInterpolation<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ScalarT>
+void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   MeshScalarT meas;
-  ParamScalarT field_qp;
+  ScalarT field_qp;
 
   for (int cell=0; cell<workset.numCells; ++cell)
   {
@@ -100,6 +100,26 @@ void NodesToCellInterpolation<EvalT, Traits>::evaluateFields (typename Traits::E
       field_cell(cell) /= meas;
     }
   }
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+NodesToCellInterpolation<EvalT, Traits>::
+NodesToCellInterpolation (const Teuchos::ParameterList& p,
+                          const Teuchos::RCP<Albany::Layouts>& dl) :
+  NodesToCellInterpolationBase<EvalT, Traits, typename EvalT::ScalarT> (p,dl)
+{
+  // Nothing to be done here
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+NodesToCellInterpolation_noDeriv<EvalT, Traits>::
+NodesToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
+                                  const Teuchos::RCP<Albany::Layouts>& dl) :
+  NodesToCellInterpolationBase<EvalT, Traits, typename EvalT::ParamScalarT> (p,dl)
+{
+  // Nothing to be done here
 }
 
 } // Namespace PHAL

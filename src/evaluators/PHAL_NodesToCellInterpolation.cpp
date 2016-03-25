@@ -10,3 +10,4 @@
 #include "PHAL_NodesToCellInterpolation_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NodesToCellInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::NodesToCellInterpolation_noDeriv)

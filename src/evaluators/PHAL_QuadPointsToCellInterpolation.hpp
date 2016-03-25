@@ -22,14 +22,14 @@ namespace PHAL
 
 */
 
-template<typename EvalT, typename Traits>
-class QuadPointsToCellInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                      public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
+class QuadPointsToCellInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                          public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
-                                 const Teuchos::RCP<Albany::Layouts>& dl);
+  QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
+                                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -39,7 +39,6 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ScalarT     ScalarT;
 
   int numQPs;
   int vecDim;
@@ -52,6 +51,22 @@ private:
 
   // Output:
   PHX::MDField<ScalarT>     field_cell;
+};
+
+template<typename EvalT, typename Traits>
+class QuadPointsToCellInterpolation : public QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>
+{
+public:
+  QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
+                                 const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits>
+class QuadPointsToCellInterpolation_noDeriv : public QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>
+{
+public:
+  QuadPointsToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
+                                         const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 } // Namespace PHAL

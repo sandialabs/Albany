@@ -10,4 +10,4 @@
 #include "PHAL_DOFGradInterpolationSide_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFGradInterpolationSide)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFGradInterpolationSide_noDeriv)

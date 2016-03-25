@@ -167,21 +167,42 @@ namespace Albany {
        const std::string& dof_names,
        const std::string& sideSetName);
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFInterpolationSideEvaluator_noDeriv(
+       const std::string& dof_names,
+       const std::string& sideSetName);
+
     //! Interpolation functions for vector ScalarT defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecInterpolationSideEvaluator(
        const std::string& dof_names,
        const std::string& sideSetName);
-    
+
     //! Interpolation functions for vector ParamScalarT quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFVecInterpolationSideParamEvaluator(
+    constructDOFVecInterpolationSideEvaluator_noDeriv(
        const std::string& dof_names,
        const std::string& sideSetName);
 
     //! Interpolation functions for gradient of quantities defined on a side set
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationSideEvaluator(
+      const std::string& dof_names,
+      const std::string& sideSetName);
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFGradInterpolationSideEvaluator_noDeriv(
+      const std::string& dof_names,
+      const std::string& sideSetName);
+
+    //! Interpolation functions for gradient of vector quantities defined on a side set
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFVecGradInterpolationSideEvaluator(
+      const std::string& dof_names,
+      const std::string& sideSetName);
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFVecGradInterpolationSideEvaluator_noDeriv(
       const std::string& dof_names,
       const std::string& sideSetName);
 
@@ -214,9 +235,23 @@ namespace Albany {
        const Teuchos::RCP<shards::CellTopology>& cellType,
        const std::string& side_dof_name = "");
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFCellToSideEvaluator_noDeriv(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& side_dof_name = "");
+
     //! Same as above, for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFVecCellToSideEvaluator(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& side_dof_name = "");
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFVecCellToSideEvaluator_noDeriv(
        const std::string& cell_dof_name,
        const std::string& sideSetName,
        const Teuchos::RCP<shards::CellTopology>& cellType,
@@ -228,15 +263,31 @@ namespace Albany {
       const std::string& dof_name,
       bool isVectorField = false);
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructNodesToCellInterpolationEvaluator_noDeriv(
+      const std::string& dof_name,
+      bool isVectorField = false);
+
     //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructQuadPointsToCellInterpolationEvaluator(
       const std::string& dof_name,
       bool isVectorField = false);
 
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructQuadPointsToCellInterpolationEvaluator_noDeriv(
+      const std::string& dof_name,
+      bool isVectorField = false);
+
     //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructSideQuadPointsToSideInterpolationEvaluator(
+      const std::string& dof_name,
+      const std::string& sideSetName,
+      bool isVectorField = false);
+
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructSideQuadPointsToSideInterpolationEvaluator_noDeriv(
       const std::string& dof_name,
       const std::string& sideSetName,
       bool isVectorField = false);

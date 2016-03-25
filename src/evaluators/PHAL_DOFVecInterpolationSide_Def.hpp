@@ -39,13 +39,13 @@ DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
 template<typename EvalT, typename Traits>
 DOFVecInterpolationSide<EvalT, Traits>::
 DOFVecInterpolationSide(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) : 
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
   DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>(p, dl) {};
 
 template<typename EvalT, typename Traits>
-DOFVecInterpolationSideParam<EvalT, Traits>::
-DOFVecInterpolationSideParam(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) : 
+DOFVecInterpolationSide_noDeriv<EvalT, Traits>::
+DOFVecInterpolationSide_noDeriv(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
   DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>(p, dl) {};
 
 

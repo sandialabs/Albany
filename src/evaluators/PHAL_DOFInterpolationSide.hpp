@@ -21,14 +21,14 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFInterpolationSide : public PHX::EvaluatorWithBaseImpl<Traits>,
-                             public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFInterpolationSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  DOFInterpolationSide (const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFInterpolationSideBase (const Teuchos::ParameterList& p,
+                            const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
@@ -36,8 +36,6 @@ public:
   void evaluateFields (typename Traits::EvalData d);
 
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
 
   std::string sideSetName;
 
@@ -53,6 +51,22 @@ private:
 
   int numSideNodes;
   int numSideQPs;
+};
+
+template<typename EvalT, typename Traits>
+class DOFInterpolationSide: public DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>
+{
+public:
+  DOFInterpolationSide (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits>
+class DOFInterpolationSide_noDeriv: public DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
+{
+public:
+  DOFInterpolationSide_noDeriv (const Teuchos::ParameterList& p,
+                                const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 } // Namespace PHAL

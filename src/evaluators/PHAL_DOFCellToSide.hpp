@@ -21,37 +21,51 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFCellToSide : public PHX::EvaluatorWithBaseImpl<Traits>,
-       public PHX::EvaluatorDerived<EvalT, Traits>  {
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFCellToSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DOFCellToSide(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFCellToSideBase (const Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
-  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ParamScalarT,Cell,Node> val_cell;
+  PHX::MDField<ScalarT,Cell,Node> val_cell;
 
   // Output:
   //! Values on side
-  PHX::MDField<ParamScalarT,Cell,Side,Node> val_side;
+  PHX::MDField<ScalarT,Cell,Side,Node> val_side;
 
 
   int numSideNodes;
+};
+
+template<typename EvalT, typename Traits>
+class DOFCellToSide : public DOFCellToSideBase<EvalT, Traits, typename EvalT::ScalarT>
+{
+public:
+  DOFCellToSide (const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits>
+class DOFCellToSide_noDeriv : public DOFCellToSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
+{
+public:
+  DOFCellToSide_noDeriv (const Teuchos::ParameterList& p,
+                         const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 } // Namespace PHAL

@@ -22,14 +22,14 @@ namespace PHAL
 
 */
 
-template<typename EvalT, typename Traits>
-class NodesToCellInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                      public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
+class NodesToCellInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                     public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  NodesToCellInterpolation (const Teuchos::ParameterList& p,
-                                 const Teuchos::RCP<Albany::Layouts>& dl);
+  NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
+                                const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -39,7 +39,6 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   int numNodes;
   int numQPs;
@@ -48,12 +47,28 @@ private:
   bool isVectorField;
 
   // Input:
-  PHX::MDField<ParamScalarT>                       field_node;
+  PHX::MDField<ScalarT>                       field_node;
   PHX::MDField<RealType,Cell,Node,QuadPoint>  BF;
   PHX::MDField<MeshScalarT,Cell,Node>         w_measure;
 
   // Output:
-  PHX::MDField<ParamScalarT>     field_cell;
+  PHX::MDField<ScalarT>                       field_cell;
+};
+
+template<typename EvalT, typename Traits>
+class NodesToCellInterpolation : public NodesToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>
+{
+public:
+  NodesToCellInterpolation (const Teuchos::ParameterList& p,
+                            const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits>
+class NodesToCellInterpolation_noDeriv : public NodesToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>
+{
+public:
+  NodesToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
+                                    const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 } // Namespace PHAL

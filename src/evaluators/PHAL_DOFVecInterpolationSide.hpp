@@ -22,14 +22,14 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits, typename Type>
+template<typename EvalT, typename Traits, typename ScalarT>
 class DOFVecInterpolationSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                public PHX::EvaluatorDerived<EvalT, Traits>
+                                    public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   DOFVecInterpolationSideBase (const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl);
+                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
@@ -38,7 +38,7 @@ public:
 
 private:
 
-  typedef Type ParamScalarT;
+  typedef ScalarT ParamScalarT;
 
   std::string sideSetName;
 
@@ -66,11 +66,11 @@ public:
 };
 
 template<typename EvalT, typename Traits>
-class DOFVecInterpolationSideParam : public DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
+class DOFVecInterpolationSide_noDeriv : public DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
 {
 public:
-  DOFVecInterpolationSideParam (const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFVecInterpolationSide_noDeriv (const Teuchos::ParameterList& p,
+                                   const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 

@@ -10,9 +10,9 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFVecCellToSide<EvalT, Traits>::
-DOFVecCellToSide(const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename ScalarT>
+DOFVecCellToSideBase<EvalT, Traits, ScalarT>::
+DOFVecCellToSideBase(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_cell    (p.get<std::string> ("Cell Variable Name"), dl->node_vector),
@@ -49,8 +49,8 @@ DOFVecCellToSide(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFVecCellToSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFVecCellToSideBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -59,8 +59,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFVecCellToSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFVecCellToSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
@@ -81,6 +81,26 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+DOFVecCellToSide<EvalT, Traits>::
+DOFVecCellToSide (const Teuchos::ParameterList& p,
+                  const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFVecCellToSideBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
+{
+  // Nothing to be done here
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+DOFVecCellToSide_noDeriv<EvalT, Traits>::
+DOFVecCellToSide_noDeriv (const Teuchos::ParameterList& p,
+                          const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFVecCellToSideBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
+{
+  // Nothing to be done here
 }
 
 } // Namespace PHAL

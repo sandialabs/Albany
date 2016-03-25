@@ -10,10 +10,10 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-SideQuadPointsToSideInterpolation<EvalT, Traits>::
-SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl) :
+template<typename EvalT, typename Traits, typename ScalarT>
+SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
+SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
+                                       const Teuchos::RCP<Albany::Layouts>& dl) :
   w_measure (p.get<std::string>("Weighted Measure Name"), dl->side_qp_scalar)
 {
   isVectorField = p.get<bool>("Is Vector Field");
@@ -21,8 +21,8 @@ SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
   sideSetName = p.get<std::string>("Side Set Name");
   if (isVectorField)
   {
-    field_qp   = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_vector);
-    field_side = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Side Name"), dl->side_vector);
+    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_vector);
+    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl->side_vector);
 
     numSides = dl->side_qp_vector->dimension(1);
     numQPs   = dl->side_qp_vector->dimension(2);
@@ -30,8 +30,8 @@ SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
   }
   else
   {
-    field_qp   = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_scalar);
-    field_side = PHX::MDField<ParamScalarT> (p.get<std::string> ("Field Side Name"), dl->side_scalar);
+    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_scalar);
+    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl->side_scalar);
 
     numSides = dl->side_qp_scalar->dimension(1);
     numQPs   = dl->side_qp_scalar->dimension(2);
@@ -44,8 +44,8 @@ SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
   this->setName("SideQuadPointsToSideInterpolation"+PHX::typeAsString<EvalT>());
 }
 
-template<typename EvalT, typename Traits>
-void SideQuadPointsToSideInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -55,14 +55,14 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData (field_side,fm);
 }
 
-template<typename EvalT, typename Traits>
-void SideQuadPointsToSideInterpolation<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ScalarT>
+void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   // Note: since only required sides are processed by the evaluator,
   //       if we don't zero out the values from the previous workset
   //       we may save this field using old values and make a mess!
 
-  ParamScalarT zero = 0.;
+  ScalarT zero = 0.;
   field_side.deep_copy (zero);
 
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
@@ -75,7 +75,7 @@ void SideQuadPointsToSideInterpolation<EvalT, Traits>::evaluateFields (typename 
     const int cell = it_side.elem_LID;
     const int side = it_side.side_local_id;
 
-    ParamScalarT meas = 0.0;
+    MeshScalarT meas = 0.0;
     for (int qp(0); qp<numQPs; ++qp)
     {
       meas += w_measure(cell,side,qp);
@@ -100,5 +100,25 @@ void SideQuadPointsToSideInterpolation<EvalT, Traits>::evaluateFields (typename 
     }
   }
 }
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+SideQuadPointsToSideInterpolation<EvalT, Traits>::
+SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
+                                   const Teuchos::RCP<Albany::Layouts>& dl) :
+  SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
+{
+  // Nothing to be done here
+};
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+SideQuadPointsToSideInterpolation_noDeriv<EvalT, Traits>::
+SideQuadPointsToSideInterpolation_noDeriv (const Teuchos::ParameterList& p,
+                                           const Teuchos::RCP<Albany::Layouts>& dl) :
+  SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
+{
+  // Nothing to be done here
+};
 
 } // Namespace PHAL

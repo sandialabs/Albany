@@ -12,10 +12,10 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFInterpolationSide<EvalT, Traits>::
-DOFInterpolationSide(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
+template<typename EvalT, typename Traits, typename ScalarT>
+DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
+DOFInterpolationSideBase (const Teuchos::ParameterList& p,
+                          const Teuchos::RCP<Albany::Layouts>& dl) :
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_node    (p.get<std::string> ("Variable Name"), dl->side_node_scalar),
   BF          (p.get<std::string> ("BF Name"), dl->side_node_qp_scalar),
@@ -34,8 +34,8 @@ DOFInterpolationSide(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -45,8 +45,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
@@ -68,6 +68,26 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+DOFInterpolationSide<EvalT, Traits>::
+DOFInterpolationSide (const Teuchos::ParameterList& p,
+                      const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
+{
+  // Nothing to be done here
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+DOFInterpolationSide_noDeriv<EvalT, Traits>::
+DOFInterpolationSide_noDeriv (const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
+{
+  // Nothing to be done here
 }
 
 } // Namespace PHAL

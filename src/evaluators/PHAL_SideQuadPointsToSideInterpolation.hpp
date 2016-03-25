@@ -22,14 +22,14 @@ namespace PHAL
 
 */
 
-template<typename EvalT, typename Traits>
-class SideQuadPointsToSideInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                      public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
+class SideQuadPointsToSideInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                              public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
-                                     const Teuchos::RCP<Albany::Layouts>& dl);
+  SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
+                                         const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -39,7 +39,6 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   int numQPs;
   int vecDim;
@@ -50,11 +49,29 @@ private:
   std::string sideSetName;
 
   // Input:
-  PHX::MDField<ParamScalarT>                    field_qp;
+  PHX::MDField<ScalarT>                         field_qp;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> w_measure;
 
   // Output:
-  PHX::MDField<ParamScalarT>     field_side;
+  PHX::MDField<ScalarT>                         field_side;
+};
+
+template<typename EvalT, typename Traits>
+class SideQuadPointsToSideInterpolation : public SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>
+{
+public:
+
+  SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
+                                     const Teuchos::RCP<Albany::Layouts>& dl);
+};
+
+template<typename EvalT, typename Traits>
+class SideQuadPointsToSideInterpolation_noDeriv : public SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>
+{
+public:
+
+  SideQuadPointsToSideInterpolation_noDeriv (const Teuchos::ParameterList& p,
+                                             const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
 } // Namespace PHAL

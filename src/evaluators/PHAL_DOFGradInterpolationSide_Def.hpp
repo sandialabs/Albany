@@ -12,20 +12,20 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFGradInterpolationSide<EvalT, Traits>::
-DOFGradInterpolationSide(const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename ScalarT>
+DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
+DOFGradInterpolationSideBase(const Teuchos::ParameterList& p,
                          const Teuchos::RCP<Albany::Layouts>& dl) :
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_node    (p.get<std::string> ("Variable Name"), dl->side_node_scalar),
   gradBF      (p.get<std::string> ("Gradient BF Name"), dl->side_node_qp_gradient),
-  val_qp      (p.get<std::string> ("Gradient Variable Name"), dl->side_qp_gradient )
+  grad_qp      (p.get<std::string> ("Gradient Variable Name"), dl->side_qp_gradient )
 {
   this->addDependentField(val_node);
   this->addDependentField(gradBF);
-  this->addEvaluatedField(val_qp);
+  this->addEvaluatedField(grad_qp);
 
-  this->setName("DOFGradInterpolationSide" );
+  this->setName("DOFGradInterpolationSideBase" );
 
   std::vector<PHX::DataLayout::size_type> dims;
   gradBF.fieldTag().dataLayout().dimensions(dims);
@@ -35,19 +35,19 @@ DOFGradInterpolationSide(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFGradInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(val_node,fm);
   this->utils.setFieldData(gradBF,fm);
-  this->utils.setFieldData(val_qp,fm);
+  this->utils.setFieldData(grad_qp,fm);
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFGradInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
@@ -64,14 +64,34 @@ evaluateFields(typename Traits::EvalData workset)
     {
       for (int dim=0; dim<numDims; ++dim)
       {
-        val_qp(cell,side,qp,dim) = 0.;
+        grad_qp(cell,side,qp,dim) = 0.;
         for (int node=0; node<numSideNodes; ++node)
         {
-          val_qp(cell,side,qp,dim) += val_node(cell,side,node) * gradBF(cell,side,node,qp,dim);
+          grad_qp(cell,side,qp,dim) += val_node(cell,side,node) * gradBF(cell,side,node,qp,dim);
         }
       }
     }
   }
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+DOFGradInterpolationSide<EvalT, Traits>::
+DOFGradInterpolationSide(const Teuchos::ParameterList& p,
+                         const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
+{
+  // Nothing to be done here
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+DOFGradInterpolationSide_noDeriv<EvalT, Traits>::
+DOFGradInterpolationSide_noDeriv(const Teuchos::ParameterList& p,
+                         const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
+{
+  // Nothing to be done here
 }
 
 } // Namespace PHAL
