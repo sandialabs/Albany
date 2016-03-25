@@ -45,7 +45,6 @@ SaveSideSetStateField<PHAL::AlbanyTraits::Residual, Traits>::
 SaveSideSetStateField (const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  isVectorField = p.get<bool>("Is Vector Field");
   sideSetName   = p.get<std::string>("Side Set Name");
 
   fieldName = p.get<std::string>("Field Name");
@@ -121,7 +120,7 @@ evaluateFields(typename Traits::EvalData workset)
   int size = dims.size();
   const std::string& tag2 = size>2 ? field.fieldTag().dataLayout().name(2) : "";
   TEUCHOS_TEST_FOR_EXCEPTION (size>2 && tag2!="Node" && tag2!="Dim" && tag2!="VecDim", std::logic_error,
-                              "Error! Invalid field layout in LoadSideSetStateField.\n");
+                              "Error! Invalid field layout in SaveSideSetStateField.\n");
 
   // Loop on the sides of this sideSet that are in this workset
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
@@ -210,7 +209,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
-                                    "Error! Unexpected array dimensions in LoadSideSetStateField: " << size << ".\n");
+                                    "Error! Unexpected array dimensions in SaveSideSetStateField: " << size << ".\n");
     }
   }
 }

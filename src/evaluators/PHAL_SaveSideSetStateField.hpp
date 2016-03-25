@@ -59,8 +59,6 @@ private:
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
   PHX::MDField<ScalarT>       field;
 
-  bool        isVectorField;
-
   std::string sideSetName;
   std::string fieldName;
   std::string stateName;
