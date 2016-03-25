@@ -82,6 +82,7 @@
 #include "FELIX/problems/FELIX_Elliptic2D.hpp"
 
 #ifdef ALBANY_EPETRA
+#include "FELIX/problems/FELIX_StokesFOHydrology.hpp"
 #include "FELIX/problems/FELIX_StokesFOThickness.hpp"
 #endif
 
@@ -417,7 +418,14 @@ Albany::ProblemFactory::create()
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO H requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
 #endif
-    }
+  }
+  else if (method == "FELIX Coupled FO Hydrology 3D" ) {
+#ifdef ALBANY_EPETRA
+      strategy = rcp(new FELIX::StokesFOHydrology(problemParams, paramLib, 3));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO Hydrology requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
+#endif
+  }
   else if (method == "FELIX Stokes L1L2 2D") {
     strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
   }
