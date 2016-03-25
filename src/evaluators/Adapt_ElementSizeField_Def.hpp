@@ -153,7 +153,7 @@ template<typename Traits>
 void Adapt::ElementSizeField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  double value;
+  typename ElementSizeFieldBase<PHAL::AlbanyTraits::Residual, Traits>::MeshScalarT value;
 
   if( this->outputCellAverage ) { // nominal radius
 
