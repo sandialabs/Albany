@@ -103,9 +103,9 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    if (regularizationParamPtr!=0 &&  printedH!=*regularizationParamPtr)
+    if (regularizationParamPtr!=0 &&  std::fabs(printedH-*regularizationParamPtr)>0.0001)
     {
-        *output << "[Field Norm] h = " << *regularizationParamPtr << "\n";
+        *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] h = " << *regularizationParamPtr << "\n";
         printedH = *regularizationParamPtr;
     }
 #endif

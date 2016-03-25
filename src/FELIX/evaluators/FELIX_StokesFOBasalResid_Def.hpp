@@ -43,7 +43,7 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   vecDim       = dims[2];
 
   basalSideName = p.get<std::string>("Side Set Name");
-  regularized= p.isParameter("Regularize With Continuation") ? p.get<bool>("Regularize With Continuation") : false;
+  regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
 
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
@@ -60,6 +60,7 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
     }
   }
 
+  printedFF = -1.0;
   this->setName("StokesFOBasalResid"+PHX::typeAsString<EvalT>());
 }
 
@@ -86,7 +87,7 @@ void StokesFOBasalResid<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    if (printedFF!=ff)
+    if (std::fabs(printedFF-ff)/ff>0.0001)
     {
         *output << "[Basal Residual] ff = " << ff << "\n";
         printedFF = ff;
@@ -103,6 +104,7 @@ void StokesFOBasalResid<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
     return;
 
   const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
+
   for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell
