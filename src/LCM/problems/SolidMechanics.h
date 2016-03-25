@@ -152,7 +152,7 @@ public:
       ///
       /// RCP to matDB object
       ///
-      Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+      Teuchos::RCP<MaterialDatabase> material_db_;
 
       ///
       /// old state data

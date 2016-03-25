@@ -32,7 +32,7 @@ HMCProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<std::string>("MaterialDB Filename")){
     validMaterialDB = true;
     std::string filename = params->get<std::string>("MaterialDB Filename");
-    material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
+    material_db_ = Teuchos::rcp(new LCM::MaterialDatabase(filename, commT));
   }
   TEUCHOS_TEST_FOR_EXCEPTION(!validMaterialDB,
                              std::logic_error,
