@@ -95,7 +95,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
   if (params->isParameter("Required Surface Fields"))
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify surface requirements, you must also specify a valid 'Surface Side Name'.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (surfaceSideName=="INVALID", std::logic_error, "Error! In order to specify surface requirements, you must also specify a valid 'Surface Side Name'.\n");
 
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Surface Fields");
     this->ss_requirements[surfaceSideName].reserve(req.size()); // Note: same motivation as for the basal side
