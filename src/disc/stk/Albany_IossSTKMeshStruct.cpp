@@ -297,7 +297,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   int index = params->get("Restart Index",-1); // Default to no restart
   double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
   Ioss::Region& region = *(mesh_data->get_input_io_region());
-
   /*
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
@@ -416,6 +415,12 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
           }
     }
+
+    // Read global mesh variables
+    for (auto& it : fieldContainer->getMeshVectorStates())
+    {
+      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
+    }
   }
   else
   {
@@ -436,7 +441,16 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       coherence = !coherence; // Both fields should be present or absent so coherence should change exactly twice
     }
   }
-  TEUCHOS_TEST_FOR_EXCEPTION (!coherence, std::runtime_error, "Error! The maps 'side_map' and 'side_node_map' should either both be present or both missing, but only one of them was found in the mesh file.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (!coherence, std::runtime_error, "Error! The maps 'side_to_cell_map' and 'side_nodes_ids' should either both be present or both missing, but only one of them was found in the mesh file.\n");
+
+  if (useSerialMesh)
+  {
+    // Only proc 0 actually read the mesh, and can confirm whether or not the side maps were present
+    // Unfortunately, Teuchos does not have a specialization for type bool when it comes to communicators, so we need ints
+    int bool_to_int = side_maps_present ? 1 : 0;
+    Teuchos::broadcast(*commT,0,1,&bool_to_int);
+    side_maps_present = bool_to_int == 1 ? true : false;
+  }
 
   // Loading required input fields from file
   this->loadRequiredInputFields (req,commT);
