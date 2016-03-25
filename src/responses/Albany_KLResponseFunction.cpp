@@ -8,7 +8,9 @@
 
 #include "Albany_KLResponseFunction.hpp"
 #if defined(ALBANY_EPETRA)
+#ifdef ALBANY_STOKHOS
 #  include "Stokhos_PCEAnasaziKL.hpp"
+#endif
 #endif
 #include "Teuchos_Array.hpp"
 #include "Teuchos_VerboseObject.hpp"

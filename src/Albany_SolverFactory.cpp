@@ -187,8 +187,8 @@ using Teuchos::ParameterList;
 
 
 Albany::SolverFactory::SolverFactory(
-			  const std::string& inputFile,
-			  const RCP<const Teuchos_Comm>& tcomm)
+        const std::string& inputFile,
+        const RCP<const Teuchos_Comm>& tcomm)
   : out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 
@@ -212,8 +212,8 @@ Albany::SolverFactory::SolverFactory(
 
 
 Albany::SolverFactory::SolverFactory(
-    		          const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
-			  const RCP<const Teuchos_Comm>& tcomm)
+                  const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
+        const RCP<const Teuchos_Comm>& tcomm)
   : appParams(input_appParams), out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 
@@ -302,12 +302,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       Piro::Epetra::SolverFactory piroEpetraFactory;
       {
         // Do we need: Observers for output from time-stepper ??
-	const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
-	  rcp(new QCAD::CoupledPS_NOXObserverConstructor(ps_model));
-	  //  rcp(new NOXObserverConstructor(poisson_app));
-	piroEpetraFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
+  const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
+    rcp(new QCAD::CoupledPS_NOXObserverConstructor(ps_model));
+    //  rcp(new NOXObserverConstructor(poisson_app));
+  piroEpetraFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
 
-	// LOCA auxiliary objects -- needed?
+  // LOCA auxiliary objects -- needed?
       }
     // Piro::Epetra::SolverFactory
       return piroEpetraFactory.createSolver(piroParams, ps_model);
@@ -629,14 +629,14 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     bool useExplHyperviscosity;
 
     std::string swProblem_name    = "Shallow Water Problem",
-    		    hydroProblem_name = "Hydrostatic Problem";
+            hydroProblem_name = "Hydrostatic Problem";
 
     bool swProblem = problemParams->isSublist(swProblem_name);
     bool hydroProblem = problemParams->isSublist(hydroProblem_name);
 
     if( (!swProblem) && (!hydroProblem) ){
 
-  	  *out << "Error: Hyperviscosity can only be used with Aeras:Shallow Water or Aeras:Hydrostatic." << std::endl;
+      *out << "Error: Hyperviscosity can only be used with Aeras:Shallow Water or Aeras:Hydrostatic." << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "Error: cannot locate " << swProblem_name <<" or " << hydroProblem_name << " sublist in the input file." << "\n");
     }
@@ -748,7 +748,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
   if(Teuchos::is_null(stratList)){
 
-	*out << "Error: cannot locate Stratimikos solver parameters in the input file." << std::endl;
+  *out << "Error: cannot locate Stratimikos solver parameters in the input file." << std::endl;
     *out << "Printing the Piro parameter list:" << std::endl;
     piroParams->print(*out);
 // GAH: this is an error - should be fatal
@@ -1098,6 +1098,7 @@ int Albany::SolverFactory::checkAnalysisTestResults(
 }
 
 #if defined(ALBANY_EPETRA)
+#ifdef ALBANY_STOKHOS
 int Albany::SolverFactory::checkSGTestResults(
   int response_index,
   const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
@@ -1120,9 +1121,9 @@ int Albany::SolverFactory::checkSGTestResults(
           testParams->get<Teuchos::Array<double> >
             (Albany::strint("Stochastic Galerkin Expansion Test Values",i));
         TEUCHOS_TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
-	for (int j=0; j<g_sg->size(); j++) {
-	  failures +=
-	    scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol);
+  for (int j=0; j<g_sg->size(); j++) {
+    failures +=
+      scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol);
           comparisons++;
         }
       }
@@ -1167,6 +1168,7 @@ int Albany::SolverFactory::checkSGTestResults(
 
   return failures;
 }
+#endif
 #endif
 
 ParameterList* Albany::SolverFactory::getTestParameters(int response_index) const
@@ -1220,14 +1222,14 @@ void Albany::SolverFactory::setSolverParamDefaults(
     printParams.set("Output Precision", 3);
     printParams.set("Output Processor", 0);
     printParams.set("Output Information",
-		    NOX::Utils::OuterIteration +
-		    NOX::Utils::OuterIterationStatusTest +
-		    NOX::Utils::InnerIteration +
-		    NOX::Utils::Parameters +
-		    NOX::Utils::Details +
-		    NOX::Utils::LinearSolverDetails +
-		    NOX::Utils::Warning +
-		    NOX::Utils::Error);
+        NOX::Utils::OuterIteration +
+        NOX::Utils::OuterIterationStatusTest +
+        NOX::Utils::InnerIteration +
+        NOX::Utils::Parameters +
+        NOX::Utils::Details +
+        NOX::Utils::LinearSolverDetails +
+        NOX::Utils::Warning +
+        NOX::Utils::Error);
 
     // Sublist for line search
     ParameterList& searchParams = noxParams.sublist("Line Search");

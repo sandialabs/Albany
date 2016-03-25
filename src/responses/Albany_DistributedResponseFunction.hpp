@@ -11,8 +11,10 @@
 
 #include "Albany_AbstractResponseFunction.hpp"
 #if defined(ALBANY_EPETRA)
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_ProductEpetraOperator.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
+#endif
 #endif
 
 namespace Albany {
@@ -23,10 +25,10 @@ namespace Albany {
    * Implements a few methods of AbstractResponseFunction specifically for
    * distributred responses, i.e., those that involve a distributed map.
    */
-  class DistributedResponseFunction : 
+  class DistributedResponseFunction :
     public AbstractResponseFunction {
   public:
-  
+
     //! Default constructor
     DistributedResponseFunction() {};
 
@@ -48,7 +50,7 @@ namespace Albany {
       Epetra_Operator* dg_dxdotdot,
       Epetra_MultiVector* dg_dp) = 0;
 #endif
-    
+
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
     virtual void evaluateGradientT(
       const double current_time,
@@ -79,8 +81,8 @@ namespace Albany {
       Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
       Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdotdot,
       Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) = 0;
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
     //! Evaluate multi-point derivative
     virtual void evaluateMPGradient(
@@ -102,7 +104,7 @@ namespace Albany {
     //! \name Implementation of AbstractResponseFunction virtual methods
     //@{
 
-    /*! 
+    /*!
      * \brief Is this response function "scalar" valued, i.e., has a replicated
      * local response map.
      */
@@ -137,7 +139,7 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
-    
+
    //! Evaluate stochastic Galerkin derivative
 #ifdef ALBANY_SG
     //! Evaluate stochastic Galerkin derivative
@@ -155,8 +157,8 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
     //! Evaluate multi-point derivative
     virtual void evaluateMPDerivative(
@@ -182,7 +184,7 @@ namespace Albany {
 
     //! Private to prohibit copying
     DistributedResponseFunction(const DistributedResponseFunction&);
-    
+
     //! Private to prohibit copying
     DistributedResponseFunction& operator=(const DistributedResponseFunction&);
 
