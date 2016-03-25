@@ -492,11 +492,11 @@ FELIX::StokesFOThickness::constructEvaluators(
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideParamEvaluator("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator_noDeriv("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideParamEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator_noDeriv("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
