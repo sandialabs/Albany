@@ -24,13 +24,13 @@ namespace FELIX
 
 template<typename EvalT, typename Traits>
 class BasalFrictionCoefficientGradient : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                 public PHX::EvaluatorDerived<EvalT, Traits>
+                                         public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
   typedef typename EvalT::ScalarT ScalarT;
 
   BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
-                            const Teuchos::RCP<Albany::Layouts>& dl);
+                                    const Teuchos::RCP<Albany::Layouts>& dl);
 
   virtual ~BasalFrictionCoefficientGradient () {}
 
@@ -47,29 +47,37 @@ private:
 
   void computeEffectivePressure (int cell, int side);
 
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
+  typedef typename EvalT::MeshScalarT   MeshScalarT;
+  typedef typename EvalT::ParamScalarT  ParamScalarT;
 
   // Input:
   PHX::MDField<ParamScalarT,Cell,Side,Node>               beta_given;
   PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>               N;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           U;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           gradN;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>       gradU;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>               u_norm;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           grad_beta;
 
-  std::string                     basalSideName;
+  std::string basalSideName;
 
   int numSideNodes;
   int numSideQPs;
   int sideDim;
+  int vecDim;
+
+  double A;
 
   bool use_stereographic_map;
   double x_0;
   double y_0;
   double R2;
 
-  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  enum BETA_TYPE {INVALID, GIVEN_CONSTANT, GIVEN_FIELD, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
 };
 

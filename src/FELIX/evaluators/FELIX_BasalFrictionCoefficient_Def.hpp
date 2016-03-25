@@ -13,14 +13,17 @@
 #include "FELIX_HomotopyParameter.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 namespace FELIX
 {
 
 template<typename EvalT, typename Traits>
 BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos::ParameterList& p,
-                                                                   const Teuchos::RCP<Albany::Layouts>& dl)
+                                                                   const Teuchos::RCP<Albany::Layouts>& dl) :
+  muField     ("Coulomb Friction Coefficient", dl->shared_param),
+  lambdaField ("Bed Roughness", dl->shared_param),
+  powerField  ("Power Exponent", dl->shared_param)
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -67,12 +70,12 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     if (is_hydrology)
     {
       BF = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->node_scalar);
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
     }
     else
     {
       BF = PHX::MDField<RealType>(p.get<std::string> ("BF Side Variable Name"), dl->side_node_qp_scalar);
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->side_node_scalar);
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->side_node_scalar);
     }
 
     this->addDependentField (BF);
@@ -82,29 +85,26 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   {
     beta_type = POWER_LAW;
 
-    mu    = beta_list.get<double>("Coulomb Friction Coefficient");
-    power = beta_list.get("Power Exponent",1.0);
-    TEUCHOS_TEST_FOR_EXCEPTION(power<-1.0, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Power Exponent\" must be greater than (or equal to) -1.\n");
 
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (power law):\n\n"
             << "      beta = mu * N * |u|^p \n\n"
-            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
-            << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - p  (Power Exponent): " << power << "\n";
+            << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
     if (is_hydrology)
     {
-      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
     }
     else
     {
-      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
+      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
     }
+    this->addDependentField (muField);
+    this->addDependentField (lambdaField);
+    this->addDependentField (powerField);
     this->addDependentField (u_norm);
     this->addDependentField (N);
   }
@@ -112,12 +112,16 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   {
     beta_type = REGULARIZED_COULOMB;
 
-    mu     = beta_list.get<double>("Coulomb Friction Coefficient");
-    power  = beta_list.get("Power Exponent",1.0);
-    lambda = beta_list.get("Bed Roughness",1e-4);
+    printedMu      = -9999.999;
+    printedLambda  = -9999.999;
+    printedQ       = -9999.999;
     if (beta_list.isParameter("Constant Flow Factor A"))
     {
       A = beta_list.get<double>("Constant Flow Factor A");
+
+      // A*N^{1/q} is dimensionally correct only for q=1/3. To fix this, we modify A
+      // so that the formula becomes (A_mod*N)^{1/q}. This means that A_mod = A^{1/3}
+      A = std::cbrt(A);
     }
     else
     {
@@ -126,26 +130,24 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
             << "      beta = mu * N * |u|^{p-1} / [|u| + lambda*A*N^(1/p)]^p\n\n"
-            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
-            << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - lambda (Bed Roughness or Regularization Parameter): " << lambda << "\n"
-            << "    - A (Flow Factor A): " << A << "\n"
-            << "    - p  (Power Exponent): " << power << "\n";
+            << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
     if (is_hydrology)
     {
-      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
     }
     else
     {
-      N      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
+      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
       u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
     }
-
-    this->addDependentField (u_norm);
+    this->addDependentField (muField);
+    this->addDependentField (lambdaField);
+    this->addDependentField (powerField);
     this->addDependentField (N);
+    this->addDependentField (u_norm);
   }
   else
   {
@@ -153,6 +155,7 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
         std::endl << "Error in FELIX::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
   }
 
+  fixed_point_beta = beta_list.get("Fixed Point Beta",false);
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
@@ -204,6 +207,9 @@ postRegistrationSetup (typename Traits::SetupData d,
       break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
+      this->utils.setFieldData(muField,fm);
+      this->utils.setFieldData(lambdaField,fm);
+      this->utils.setFieldData(powerField,fm);
       this->utils.setFieldData(N,fm);
       this->utils.setFieldData(u_norm,fm);
   }
@@ -216,6 +222,34 @@ postRegistrationSetup (typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
+  ScalarT mu, lambda, power;
+
+  if (beta_type==POWER_LAW || beta_type==REGULARIZED_COULOMB)
+  {
+    mu = muField(0);
+    lambda = lambdaField(0);
+    power = powerField(0);
+    TEUCHOS_TEST_FOR_EXCEPTION (power<-1.0, Teuchos::Exceptions::InvalidParameter,
+                                "\nError in FELIX::BasalFrictionCoefficient: \"Power Exponent\" must be greater than (or equal to) -1.\n");
+#ifdef OUTPUT_TO_SCREEN
+    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+    if (printedMu!=mu)
+    {
+      *output << "[Basal Friction Coefficient<" << PHX::typeAsString<EvalT>() << ">] mu = " << mu << "\n";
+      printedMu = mu;
+    }
+    if (printedLambda!=lambda)
+    {
+      *output << "[Basal Friction Coefficient<" << PHX::typeAsString<EvalT>() << ">] lambda = " << lambda << "\n";
+      printedLambda = lambda;
+    }
+    if (printedQ!=power)
+    {
+      *output << "[Basal Friction Coefficient<" << PHX::typeAsString<EvalT>() << ">]] power = " << power << "\n";
+      printedQ = power;
+    }
+#endif
+  }
   if (is_hydrology)
   {
     ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
@@ -252,8 +286,8 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
         for (int cell=0; cell<workset.numCells; ++cell)
           for (int qp=0; qp<numQPs; ++qp)
           {
-            beta(cell,qp) = mu * N(cell,qp) * std::pow (u_norm(cell,qp),power-1)
-                          / std::pow( std::pow(u_norm(cell,qp),1-ff) + lambda*A*std::pow(N(cell,qp),1./power), power);
+            beta(cell,qp) = ff + mu * N(cell,qp) * std::pow (u_norm(cell,qp),power-1)
+                          / std::pow( u_norm(cell,qp) + lambda*std::pow(A*N(cell,qp),1./power), power);
           }
         break;
     }
@@ -282,7 +316,12 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
     ScalarT ff = 0;
     if (homotopyParam!=0)
       ff = pow(10.0, -10.0*homotopyParam);
-
+/*
+    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+    *output << "h = " << homotopyParam << "\n"
+            << "mu = " << mu << "\n"
+            << "lambda = " << lambda << "\n";
+*/
     const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
     for (auto const& it_side : sideSet)
     {
@@ -314,10 +353,22 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
           break;
 
         case REGULARIZED_COULOMB:
-          for (int qp=0; qp<numQPs; ++qp)
+          if (fixed_point_beta)
           {
-            beta(cell,side,qp) = mu * N(cell,side,qp) * std::pow (u_norm(cell,side,qp),power-1)
-                               / std::pow( std::pow(u_norm(cell,side,qp),1-ff) + lambda*A*std::pow(N(cell,side,qp),1./power), power);
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT d = std::pow( u_norm(cell,side,qp) + lambda*std::pow(A*N(cell,side,qp),1./power), power);
+              double dd = Albany::ADValue(d);
+              beta(cell,side,qp) = mu * N(cell,side,qp) * std::pow (u_norm(cell,side,qp),power-1) / dd;
+            }
+          }
+          else
+          {
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT q = u_norm(cell,side,qp) / ( u_norm(cell,side,qp) + lambda*std::pow(A*N(cell,side,qp),1./power) );
+              beta(cell,side,qp) = mu * N(cell,side,qp) * std::pow( q, power) / u_norm(cell,side,qp);
+            }
           }
           break;
       }
