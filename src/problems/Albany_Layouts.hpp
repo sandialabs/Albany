@@ -65,6 +65,8 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> qp_vecgradient;
     //! Data Layout for vector gradient quantity that lives on a cell
     Teuchos::RCP<PHX::DataLayout> cell_vecgradient;
+    //! Data Layout for vector gradient quantity that lives at quad points
+    Teuchos::RCP<PHX::DataLayout> side_qp_vecgradient;
     //! Data Layout for vector gradient quantity that lives on a side
     Teuchos::RCP<PHX::DataLayout> side_vecgradient;
     //! Data Layout for third order tensor quantity that lives at nodes
