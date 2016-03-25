@@ -66,7 +66,7 @@ createResponseFunction(
 
   else if (name == "Solution Max Value") {
     int eq = responseParams.get("Equation", 0);
-    int neq = app->getNumEquations(); 
+    int neq = app->getNumEquations();
     bool inor =  responseParams.get("Interleaved Ordering", true);
 
     responses.push_back(
@@ -109,43 +109,45 @@ createResponseFunction(
       std::string name = responseParams.get<std::string>(id);
       std::string sublist_name = Albany::strint("ResponseParams",i);
       createResponseFunction(name, responseParams.sublist(sublist_name),
-			     aggregated_responses);
+           aggregated_responses);
 
     }
     scalar_responses.resize(aggregated_responses.size());
     for (int i=0; i<aggregated_responses.size(); i++) {
       TEUCHOS_TEST_FOR_EXCEPTION(
-	aggregated_responses[i]->isScalarResponse() != true, std::logic_error,
-	"Response function " << i << " is not a scalar response function." <<
-	std::endl <<
-	"The aggregated response can only aggregate scalar response " <<
-	"functions!");
+  aggregated_responses[i]->isScalarResponse() != true, std::logic_error,
+  "Response function " << i << " is not a scalar response function." <<
+  std::endl <<
+  "The aggregated response can only aggregate scalar response " <<
+  "functions!");
       scalar_responses[i] =
-	Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(
-	  aggregated_responses[i]);
+  Teuchos::rcp_dynamic_cast<ScalarResponseFunction>(
+    aggregated_responses[i]);
     }
     responses.push_back(
       rcp(new Albany::AggregateScalarResponseFunction(comm, scalar_responses)));
   }
 
   else if (name == "Field Integral" ||
-	   name == "Field Value" ||
-	   name == "Field Average" ||
-	   name == "Surface Velocity Mismatch" ||
-	   name == "Surface Mass Balance Mismatch" ||
+     name == "Field Value" ||
+     name == "Field Average" ||
+     name == "Squared L2 Error Side" ||
+     name == "Squared L2 Error Side No Target Deriv" ||
+     name == "Surface Velocity Mismatch" ||
+     name == "Surface Mass Balance Mismatch" ||
            name == "Aeras Shallow Water L2 Error" ||
            name == "Aeras Shallow Water L2 Norm" ||
            name == "Aeras Total Volume" ||
-	   name == "Center Of Mass" ||
-	   name == "Save Field" ||
-	   name == "Region Boundary" ||
-	   name == "Element Size Field" ||
-	   name == "Save Nodal Fields" ||
-	   name == "Stiffness Objective" ||
-	   name == "Internal Energy Objective" ||
-	   name == "Tensor PNorm Objective" ||
-	   name == "Homogenized Constants Response" ||
-	   name == "Modal Objective" ||
+     name == "Center Of Mass" ||
+     name == "Save Field" ||
+     name == "Region Boundary" ||
+     name == "Element Size Field" ||
+     name == "Save Nodal Fields" ||
+     name == "Stiffness Objective" ||
+     name == "Internal Energy Objective" ||
+     name == "Tensor PNorm Objective" ||
+     name == "Homogenized Constants Response" ||
+     name == "Modal Objective" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
@@ -191,10 +193,10 @@ createResponseFunction(
     Array< RCP<AbstractResponseFunction> > base_responses;
     std::string name = responseParams.get<std::string>("Response");
     createResponseFunction(name, responseParams.sublist("ResponseParams"),
-			   base_responses);
+         base_responses);
     for (int i=0; i<base_responses.size(); i++)
       responses.push_back(
-	rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
+  rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
   }
 
 #ifdef ALBANY_QCAD
@@ -203,8 +205,8 @@ createResponseFunction(
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
       responses.push_back(
-	rcp(new QCAD::SaddleValueResponseFunction(
-	      app, prob, meshSpecs[i], stateMgr, responseParams)));
+  rcp(new QCAD::SaddleValueResponseFunction(
+        app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
 #endif

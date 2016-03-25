@@ -16,6 +16,7 @@
 #endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
 #include "Adapt_ElementSizeField.hpp"
+#include "PHAL_ResponseSquaredL2ErrorSide.hpp"
 #include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
@@ -108,7 +109,22 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 
 #ifdef ALBANY_FELIX
-
+  else if (responseName == "Squared L2 Error Side")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSide<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSide<EvalT,Traits>(*p,dls));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Side No Target Deriv")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSide_noTargetDeriv<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSide_noTargetDeriv<EvalT,Traits>(*p,dls));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
   else if (responseName == "Surface Velocity Mismatch")
   {
     if (dls.size()<=1)

@@ -267,6 +267,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFSideToCell.cpp
   evaluators/PHAL_DOFVecCellToSide.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
+  evaluators/PHAL_DOFVecGradInterpolationSide.cpp
   evaluators/PHAL_DOFTensorGradInterpolation.cpp
   evaluators/PHAL_DOFTensorInterpolation.cpp
   evaluators/PHAL_DOFVecInterpolation.cpp
@@ -296,6 +297,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_SharedParameter.cpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/PHAL_Source.cpp
+  evaluators/PHAL_ResponseSquaredL2ErrorSide.cpp
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/QCAD_EvaluatorTools.cpp
   evaluators/QCAD_MathVector.cpp
@@ -385,6 +387,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFVecCellToSide_Def.hpp
   evaluators/PHAL_DOFVecGradInterpolation.hpp
   evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
+  evaluators/PHAL_DOFVecGradInterpolationSide.hpp
+  evaluators/PHAL_DOFVecGradInterpolationSide_Def.hpp
   evaluators/PHAL_DOFVecInterpolation.hpp
   evaluators/PHAL_DOFVecInterpolation_Def.hpp
   evaluators/PHAL_DOFVecInterpolationSide.hpp
@@ -419,6 +423,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_QuadPointsToCellInterpolation_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
+  evaluators/PHAL_ResponseSquaredL2ErrorSide.hpp
+  evaluators/PHAL_ResponseSquaredL2ErrorSide_Def.hpp
   evaluators/PHAL_SaveCellStateField.hpp
   evaluators/PHAL_SaveCellStateField_Def.hpp
   evaluators/PHAL_SaveNodalField.hpp
