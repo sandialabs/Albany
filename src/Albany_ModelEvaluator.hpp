@@ -106,6 +106,8 @@ namespace Albany {
 
     //! List of free parameter names
     Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
+    Teuchos::Array< Teuchos::RCP< Epetra_Vector > > param_lower_bd;
+    Teuchos::Array< Teuchos::RCP< Epetra_Vector > > param_upper_bd;
 
     //! Sacado parameter vector
     mutable Teuchos::Array<ParamVec> sacado_param_vec;
