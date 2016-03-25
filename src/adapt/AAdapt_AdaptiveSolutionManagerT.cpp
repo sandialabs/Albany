@@ -82,9 +82,9 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
   const Teuchos::RCP<const Tpetra_Map> overlapMapT = disc_->getOverlapMapT();
 #ifdef ALBANY_AERAS
-  //IKT, 1/20/15: the following is needed to ensure Laplace matrix is non-diagonal 
-  //for Aeras problems that have hyperviscosity and are integrated using an explicit time 
-  //integration scheme. 
+  //IKT, 1/20/15: the following is needed to ensure Laplace matrix is non-diagonal
+  //for Aeras problems that have hyperviscosity and are integrated using an explicit time
+  //integration scheme.
   const Teuchos::RCP<const Tpetra_CrsGraph> overlapJacGraphT = disc_
       ->getImplicitOverlapJacobianGraphT();
 #else
@@ -130,7 +130,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
              problemParams->sublist("Initial Condition Dot"));
           current_soln->getVectorNonConst(1)->doExport(*overlapped_soln->getVector(1), *exporterT, Tpetra::INSERT);
        }
-       else {
+       else if (current_soln->getNumVectors()>1){
           current_soln->getVectorNonConst(1)->putScalar(0.0);
        }
 
@@ -141,7 +141,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
              problemParams->sublist("Initial Condition DotDot"));
           current_soln->getVectorNonConst(2)->doExport(*overlapped_soln->getVector(2), *exporterT, Tpetra::INSERT);
         }
-        else {
+        else if (current_soln->getNumVectors()>2){
           current_soln->getVectorNonConst(2)->putScalar(0.0);
         }
 
@@ -345,13 +345,13 @@ AAdapt::AdaptiveSolutionManagerT::scatterXT(
   overlapped_soln->getVectorNonConst(0)->doImport(xT, *importerT, Tpetra::INSERT);
 
   if (x_dotT){
-     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 2, std::logic_error, 
+     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 2, std::logic_error,
          "AdaptiveSolutionManager error: x_dotT defined but only a single solution vector is available");
      overlapped_soln->getVectorNonConst(1)->doImport(*x_dotT, *importerT, Tpetra::INSERT);
   }
 
   if (x_dotdotT){
-     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 3, std::logic_error, 
+     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 3, std::logic_error,
          "AdaptiveSolutionManager error: x_dotdotT defined but xDotDot isn't defined in the multivector");
      overlapped_soln->getVectorNonConst(2)->doImport(*x_dotdotT, *importerT, Tpetra::INSERT);
   }
