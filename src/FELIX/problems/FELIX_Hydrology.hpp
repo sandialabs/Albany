@@ -27,7 +27,7 @@
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_FieldNorm.hpp"
 #include "FELIX_HydrologyWaterDischarge.hpp"
-#include "FELIX_HydrologyMelting.hpp"
+#include "FELIX_HydrologyMeltingRate.hpp"
 #include "FELIX_HydrologyResidualEllipticEqn.hpp"
 #include "FELIX_HydrologyResidualEvolutionEqn.hpp"
 #include "FELIX_SubglacialHydrostaticPotential.hpp"
@@ -279,7 +279,7 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   //Output
   p->set<std::string> ("Melting Rate QP Variable Name","Melting Rate");
 
-  ev = rcp(new FELIX::HydrologyMelting<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev = rcp(new FELIX::HydrologyMeltingRate<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Sliding Velocity -------- //

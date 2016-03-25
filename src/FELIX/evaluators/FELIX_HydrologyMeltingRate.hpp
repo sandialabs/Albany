@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_HYDROLOGY_MELTING_HPP
-#define FELIX_HYDROLOGY_MELTING_HPP 1
+#ifndef FELIX_HYDROLOGY_MELTING_RATE_HPP
+#define FELIX_HYDROLOGY_MELTING_RATE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,16 +22,16 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits>
-class HydrologyMelting : public PHX::EvaluatorWithBaseImpl<Traits>,
-                         public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyMeltingRate : public PHX::EvaluatorWithBaseImpl<Traits>,
+                             public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  HydrologyMelting (const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+  HydrologyMeltingRate (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -42,11 +42,13 @@ private:
 
   // Input:
   PHX::MDField<ParamScalarT>      u_b;
-  PHX::MDField<ParamScalarT>      beta;
+  PHX::MDField<ScalarT>           beta;
+  PHX::MDField<ParamScalarT>      beta_p;
   PHX::MDField<ParamScalarT>      G;
 
   // Output:
-  PHX::MDField<ParamScalarT>      m;
+  PHX::MDField<ScalarT>           m;
+  PHX::MDField<ParamScalarT>      m_p;
 
   bool              stokes_coupling;
   std::string       sideSetName;
@@ -59,4 +61,4 @@ private:
 
 } // Namespace FELIX
 
-#endif // FELIX_HYDROLOGY_MELTING_HPP
+#endif // FELIX_HYDROLOGY_MELTING_RATE_HPP

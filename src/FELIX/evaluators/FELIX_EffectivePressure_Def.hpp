@@ -6,52 +6,71 @@
 
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
+#include "Teuchos_VerboseObject.hpp"
+
+#include "FELIX_HomotopyParameter.hpp"
+
+//uncomment the following line if you want debug output to be printed to screen
+#define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterList& p,
-                                           const Teuchos::RCP<Albany::Layouts>& dl)
+                                                     const Teuchos::RCP<Albany::Layouts>& dl) :
+  alphaField ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param)
 {
-  bool surrogate = p.isParameter("Surrogate") ? p.get<bool>("Surrogate") : true;
-  bool stokes = p.isParameter("Stokes") ? p.get<bool>("Stokes") : false;
+  surrogate = p.isParameter("Surrogate") ? p.get<bool>("Surrogate") : true;
+  stokes = p.isParameter("Stokes") ? p.get<bool>("Stokes") : false;
+
+  TEUCHOS_TEST_FOR_EXCEPTION (surrogate && !stokes, std::logic_error, "Error! Surrogate effective pressure makes sense only for Stokes.\n");
 
   if (stokes)
   {
-    phiH = PHX::MDField<ScalarT>(p.get<std::string> ("Hydrostatic Potential Variable Name"), dl->side_node_scalar);
-    N    = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), dl->side_node_scalar);
+    if (surrogate)
+    {
+      this->addDependentField (alphaField);
+      regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
+      printedAlpha = -1.0;
+    }
+    else
+    {
+      phi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->side_node_scalar);
+      z_s = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->side_node_scalar);
+
+      this->addDependentField (phi);
+      this->addDependentField (z_s);
+    }
+
+    H   = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->side_node_scalar);
+    N = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), dl->side_node_scalar);
 
     basalSideName = p.get<std::string>("Side Set Name");
     numNodes = dl->side_node_scalar->dimension(2);
   }
   else
   {
-    phiH = PHX::MDField<ScalarT>(p.get<std::string> ("Hydrostatic Potential Variable Name"), dl->node_scalar);
+    H    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
+    z_s  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
     N    = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar);
+    phi  = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
 
     numNodes = dl->node_scalar->dimension(1);
-  }
-
-  if (surrogate)
-  {
-    alpha = p.get<double>("Hydraulic-Over-Hydrostatic Potential Ratio");
-
-    TEUCHOS_TEST_FOR_EXCEPTION (alpha<0 || alpha>1, Teuchos::Exceptions::InvalidParameter,
-                                "Error! 'Hydraulic-Over-Hydrostatic Potential Ratio' must be in [0,1].\n");
-  }
-  else
-  {
-    if (stokes)
-      phi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->side_node_scalar);
-    else
-      phi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
 
     this->addDependentField (phi);
+    this->addDependentField (z_s);
   }
 
-  this->addDependentField (phiH);
+  this->addDependentField (H);
   this->addEvaluatedField (N);
+
+  // Setting parameters
+  Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
+
+  rho_i = physics.get<double>("Ice Density");
+  rho_w = physics.get<double>("Water Density");
+  g     = physics.get<double>("Gravity Acceleration");
 
   this->setName("EffectivePressure"+PHX::typeAsString<EvalT>());
 }
@@ -62,10 +81,13 @@ void EffectivePressure<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(phiH,fm);
+  this->utils.setFieldData(alphaField,fm);
+  this->utils.setFieldData(H,fm);
   if (!surrogate)
+  {
+    this->utils.setFieldData(z_s,fm);
     this->utils.setFieldData(phi,fm);
-
+  }
   this->utils.setFieldData(N,fm);
 }
 
@@ -73,6 +95,23 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void EffectivePressure<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
+  ScalarT alpha = alphaField(0);
+//  TEUCHOS_TEST_FOR_EXCEPTION (surrogate && (alpha<0 || alpha>1), Teuchos::Exceptions::InvalidParameter,
+//                              "Error! 'Hydraulic-Over-Hydrostatic Potential Ratio' must be in [0,1].\n");
+  if (regularized)
+  {
+    ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
+    alpha = alpha*std::sqrt(homotopyParam);
+  }
+
+#ifdef OUTPUT_TO_SCREEN
+  Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+  if (surrogate && std::fabs(printedAlpha-alpha)>0.0001)
+  {
+    *output << "[Effective Pressure<" << PHX::typeAsString<EvalT>() << ">]] alpha = " << alpha << "\n";
+    printedAlpha = alpha;
+  }
+#endif
   if (stokes)
   {
     const Albany::SideSetList& ssList = *(workset.sideSets);
@@ -94,7 +133,10 @@ void EffectivePressure<EvalT, Traits>::evaluateFields (typename Traits::EvalData
 
         for (int node=0; node<numNodes; ++node)
         {
-          N (cell,side,node) = (1-alpha)*phiH(cell,side,node);
+          // N = p_i-p_w
+          // p_i = rho_i*g*H
+          // p_w = alpha*p_i
+          N (cell,side,node) = (1-alpha)*rho_i*g*H(cell,side,node);
         }
       }
     }
@@ -108,31 +150,24 @@ void EffectivePressure<EvalT, Traits>::evaluateFields (typename Traits::EvalData
 
         for (int node=0; node<numNodes; ++node)
         {
-          N (cell,side,node) = phiH(cell,side,node) - phi (cell,side,node);
+          // N = p_i-p_w
+          // p_i = rho_i*g*H
+          // p_w = rho_w*g*z_b - phi
+          N (cell,side,node) = rho_i*g*H(cell,side,node) + rho_w*g*(z_s(cell,side,node) - H(cell,side,node)) - phi (cell,side,node);
         }
       }
     }
   }
   else
   {
-    if (surrogate)
+    for (int cell=0; cell<workset.numCells; ++cell)
     {
-      for (int cell=0; cell<workset.numCells; ++cell)
+      for (int node=0; node<numNodes; ++node)
       {
-        for (int node=0; node<numNodes; ++node)
-        {
-          N(cell,node) = (1-alpha)*phiH(cell,node);
-        }
-      }
-    }
-    else
-    {
-      for (int cell=0; cell<workset.numCells; ++cell)
-      {
-        for (int node=0; node<numNodes; ++node)
-        {
-          N(cell,node) = phi(cell,node) - phiH(cell,node);
-        }
+        // N = p_i-p_w
+        // p_i = rho_i*g*H
+        // p_w = rho_w*g*z_b - phi
+        N(cell,node) = rho_i*g*H(cell,node) + rho_w*g*(z_s(cell,node) - H(cell,node) - phi(cell,node));
       }
     }
   }

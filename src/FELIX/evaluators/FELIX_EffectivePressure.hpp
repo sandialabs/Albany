@@ -27,32 +27,44 @@ class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT      ScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
 
   EffectivePressure (const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                     const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
 
   void evaluateFields(typename Traits::EvalData d);
 
+  ScalarT& getValue(const std::string &name);
+
 private:
 
   // Input:
-  PHX::MDField<ScalarT> phiH;
-  PHX::MDField<ScalarT> phi;
+  PHX::MDField<ParamScalarT> H;
+  PHX::MDField<ParamScalarT> z_s;
+  PHX::MDField<ScalarT>      phi;
 
   // Output:
-  PHX::MDField<ScalarT> N;
+  PHX::MDField<ScalarT>      N;
 
   std::string basalSideName;
 
   int numNodes;
 
+  bool   regularized;
   bool   surrogate;
   bool   stokes;
-  double alpha;
+  double rho_i;
+  double rho_w;
+  double g;
+
+
+  PHX::MDField<ScalarT,Dim> alphaField;
+  ScalarT printedAlpha;
+  ScalarT dummyParam;
 };
 
 } // Namespace FELIX

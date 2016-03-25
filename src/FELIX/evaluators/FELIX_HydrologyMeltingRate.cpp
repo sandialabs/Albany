@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_HydrologyMelting.hpp"
-#include "FELIX_HydrologyMelting_Def.hpp"
+#include "FELIX_HydrologyMeltingRate.hpp"
+#include "FELIX_HydrologyMeltingRate_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyMelting)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyMeltingRate)

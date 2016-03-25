@@ -11,7 +11,7 @@ namespace FELIX {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-HydrologyMelting<EvalT, Traits>::HydrologyMelting (const Teuchos::ParameterList& p,
+HydrologyMeltingRate<EvalT, Traits>::HydrologyMeltingRate (const Teuchos::ParameterList& p,
                                                    const Teuchos::RCP<Albany::Layouts>& dl)
 {
   if (p.isParameter("Stokes Coupling"))
@@ -28,51 +28,61 @@ HydrologyMelting<EvalT, Traits>::HydrologyMelting (const Teuchos::ParameterList&
     sideSetName = p.get<std::string>("Side Set Name");
 
     u_b  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
-    beta = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl->side_qp_scalar);
+    beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl->side_qp_scalar);
     G    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Geothermal Heat Source Side QP Variable Name"), dl->side_qp_scalar);
-    m    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Melting Rate Side QP Variable Name"),dl->side_qp_scalar);
+    m    = PHX::MDField<ScalarT>(p.get<std::string> ("MeltingRate Rate Side QP Variable Name"),dl->side_qp_scalar);
 
     numQPs = dl->side_qp_scalar->dimension(2);
+
+    this->addDependentField(beta);
+    this->addEvaluatedField(m);
   }
   else
   {
-    u_b  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
-    beta = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient QP Variable Name"), dl->qp_scalar);
-    G    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Geothermal Heat Source QP Variable Name"), dl->qp_scalar);
-    m    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"),dl->qp_scalar);
+    u_b    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+    beta_p = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient QP Variable Name"), dl->qp_scalar);
+    G      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Geothermal Heat Source QP Variable Name"), dl->qp_scalar);
+    m_p    = PHX::MDField<ParamScalarT>(p.get<std::string> ("MeltingRate Rate QP Variable Name"),dl->qp_scalar);
 
     numQPs = dl->qp_scalar->dimension(1);
+
+    this->addDependentField(beta_p);
+    this->addEvaluatedField(m_p);
   }
 
   this->addDependentField(u_b);
-  this->addDependentField(beta);
   this->addDependentField(G);
-
-  this->addEvaluatedField(m);
 
   // Setting parameters
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
   L = physical_params.get<double>("Ice Latent Heat");
 
-  this->setName("HydrologyMelting"+PHX::typeAsString<EvalT>());
+  this->setName("HydrologyMeltingRate"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void HydrologyMelting<EvalT, Traits>::
+void HydrologyMeltingRate<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(u_b,fm);
-  this->utils.setFieldData(beta,fm);
   this->utils.setFieldData(G,fm);
-
-  this->utils.setFieldData(m,fm);
+  if (stokes_coupling)
+  {
+    this->utils.setFieldData(beta,fm);
+    this->utils.setFieldData(m,fm);
+  }
+  else
+  {
+    this->utils.setFieldData(beta_p,fm);
+    this->utils.setFieldData(m_p,fm);
+  }
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void HydrologyMelting<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+void HydrologyMeltingRate<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
   // m = \frac{ G - \beta |u_b|^2 + \nabla (phiH-N)\cdot q }{L} %% The nonlinear term \nabla (phiH-N)\cdot q can be ignored
 
@@ -82,7 +92,7 @@ void HydrologyMelting<EvalT, Traits>::evaluateFields (typename Traits::EvalData 
     {
       for (int qp=0; qp < numQPs; ++qp)
       {
-        m(cell,qp) = (G(cell,qp) - beta(cell,qp) * std::pow(u_b(cell,qp),2) ) / L; //- nonlin_coeff * prod) / L;
+        m_p(cell,qp) = (G(cell,qp) - beta_p(cell,qp) * std::pow(u_b(cell,qp),2) ) / L; //- nonlin_coeff * prod) / L;
       }
     }
   }
