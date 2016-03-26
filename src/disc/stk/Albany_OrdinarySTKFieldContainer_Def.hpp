@@ -38,6 +38,13 @@ static const char *res_tag_name[1] = {
       "Exodus Residual Name",
       };
 
+
+static const char *sol_dtk_tag_name[3] = {
+      "Exodus Solution STK Name",
+      "Exodus SolutionDot STK Name",
+      "Exodus SolutionDotDot STK Name"
+      };
+
 static const char *res_id_name[1] = {
       "residual",
       };
@@ -80,7 +87,7 @@ Albany::OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
 
 #if defined(ALBANY_DTK)
     solution_field_dtk[num_vecs] = & metaData_->declare_field< VFT >(stk::topology::NODE_RANK,
-                                    params_->get<std::string>(res_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
+                                    params_->get<std::string>(sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
     stk::mesh::put_field(*solution_field_dtk[num_vecs] , metaData_->universal_part() , neq_);
 #endif
 
