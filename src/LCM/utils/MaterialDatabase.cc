@@ -14,7 +14,7 @@
 LCM::MaterialDatabase::
 MaterialDatabase(
     std::string const & input_file,
-    Teuchos::RCP<Teuchos::Comm<int>> const & tcomm)
+    Teuchos::RCP<Teuchos::Comm<int> const> & tcomm)
 {
   if (input_file.length() == 0) {
     return;

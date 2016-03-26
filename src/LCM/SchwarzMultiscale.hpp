@@ -137,7 +137,7 @@ private:
   param_names_;
   
   /// RCP to matDB object
-  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase>>
+  Teuchos::Array<Teuchos::RCP<MaterialDatabase>>
   material_dbs_;
 
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>

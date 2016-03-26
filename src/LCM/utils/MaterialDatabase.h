@@ -22,7 +22,7 @@ public:
   /// Default constructor
   MaterialDatabase(
       std::string const & input_file,
-      Teuchos::RCP<Teuchos::Comm<int>> const & tcomm);
+      Teuchos::RCP<Teuchos::Comm<int> const> & tcomm);
 
   /// Destructor
   ~MaterialDatabase();
