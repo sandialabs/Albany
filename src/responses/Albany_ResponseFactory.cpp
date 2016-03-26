@@ -50,9 +50,9 @@ createResponseFunction(
   using Teuchos::rcp;
   using Teuchos::ParameterList;
   using Teuchos::Array;
-
+  
   RCP<const Teuchos_Comm> comm = app->getComm();
-
+  
   if (name == "Solution Average") {
     responses.push_back(rcp(new Albany::SolutionAverageResponseFunction(comm)));
   }
@@ -147,7 +147,8 @@ createResponseFunction(
 	   name == "Homogenized Constants Response" ||
 	   name == "Modal Objective" ||
            name == "PHAL Field Integral" ||
-           name == "PHAL Field IntegralT") {
+           name == "PHAL Field IntegralT" ||
+           name == "PHAL Thermal EnergyT" ) {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
 #if defined(ALBANY_LCM)

@@ -15,6 +15,7 @@
 #include "PHAL_ResponseFieldIntegral.hpp"
 #endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
+#include "PHAL_ResponseThermalEnergyT.hpp"
 #include "Adapt_ElementSizeField.hpp"
 #include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
@@ -191,6 +192,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   {
     RCP<PHAL::ResponseFieldIntegralT<EvalT,Traits> > res_ev =
       rcp(new PHAL::ResponseFieldIntegralT<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  
+  else if (responseName == "PHAL Thermal EnergyT")
+  {
+    RCP<PHAL::ResponseThermalEnergyT<EvalT,Traits> > res_ev =
+      rcp(new PHAL::ResponseThermalEnergyT<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

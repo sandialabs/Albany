@@ -276,6 +276,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_SharedParameter.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
+  evaluators/PHAL_ResponseThermalEnergyT.cpp
   evaluators/PHAL_ScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/QCAD_ResponseFieldIntegral.cpp
@@ -383,6 +384,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SharedParameter_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
+  evaluators/PHAL_ResponseThermalEnergyT.hpp
+  evaluators/PHAL_ResponseThermalEnergyT_Def.hpp
   evaluators/PHAL_ScatterScalarResponse.hpp
   evaluators/PHAL_ScatterScalarResponse_Def.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT.hpp
