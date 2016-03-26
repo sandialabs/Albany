@@ -4,13 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
-#include <Phalanx_DataLayout.hpp>
+#include "NOXSolverPrePostOperator.h"
+#include <iostream>
 
-namespace LCM
+void NOXSolverPrePostOperator::runPreSolve(const NOX::Solver::Generic& solver)
 {
-
-// Placeholder
-
-} // namespace LCM
-
+  if(!status_test_.is_null()){
+    status_test_->status_ = NOX::StatusTest::Unevaluated;
+  }
+}

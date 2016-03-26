@@ -3,13 +3,15 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include <sstream>
+
 #include "SchwarzMultiscale.hpp"
-#include "Albany_SolverFactory.hpp"
+
 #include "Albany_ModelFactory.hpp"
+#include "Albany_SolverFactory.hpp"
+#include "Schwarz_CoupledJacobian.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#include "Schwarz_CoupledJacobian.hpp"
-#include <sstream>
 
 //uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -282,7 +284,7 @@ SchwarzMultiscale(
     matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
 
     material_dbs_[m] =
-        Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
+      Teuchos::rcp(new LCM::MaterialDatabase(matdb_filename, commT_));
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 

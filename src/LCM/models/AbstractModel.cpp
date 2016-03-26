@@ -4,13 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
-#include <Phalanx_DataLayout.hpp>
+#include "PHAL_AlbanyTraits.hpp"
 
-namespace LCM
-{
+#include "AbstractModel.hpp"
 
-// Placeholder
-
-} // namespace LCM
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::AbstractModel)
 

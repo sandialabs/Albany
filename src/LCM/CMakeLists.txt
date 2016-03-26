@@ -315,7 +315,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
+    	${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
     	utils/lame/LameUtils.cpp
     	evaluators/lame/LameStress.cpp
     	evaluators/SetField.cpp
@@ -336,7 +336,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
+    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
     	  evaluators/SetField.cpp
@@ -360,7 +360,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
+    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
     	  evaluators/SetField.cpp
@@ -381,7 +381,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
+    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
     	  evaluators/SetField.cpp

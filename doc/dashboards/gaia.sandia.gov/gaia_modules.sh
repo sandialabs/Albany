@@ -1,9 +1,14 @@
-
-
 #!/bin/bash
 
-#module unload cmake netcdf-hdf5parallel/4.2.0 python
-#module swap PrgEnv-intel PrgEnv-gnu; 
-#module load cmake/2.8.11.2 python cray-netcdf-hdf5parallel usg-default-modules/1.1
-#module load boost/1.58.0
+module unload python/3.4.2
+module unload gcc/5.1.0/openmpi/1.6.5
+module unload gcc/5.1.0/base
+
+module load cmake/2.8.12
+module load gcc/5.1.0/openmpi/1.6.5
+module load python/2.7.9
+module load hdf5/1.8.12/gcc/5.1.0/openmpi/1.6.5
+module load netcdf/4.3.2/gcc/5.1.0/parallel
+module load boost/1.58.0/gcc/5.1.0
+
 module list

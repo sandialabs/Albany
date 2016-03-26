@@ -220,6 +220,18 @@ Aeras::HydrostaticProblem::getValidProblemParameters() const
 namespace Aeras{
 template <>
 Teuchos::RCP<const PHX::FieldTag>
+HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::DistParamDeriv>(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fieldManagerChoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+{
+  //Do nothing -- DistParamDerivs are not meant to work for Aeras and with AlbanyT 
+}
+
+template <>
+Teuchos::RCP<const PHX::FieldTag>
 HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,

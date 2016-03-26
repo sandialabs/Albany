@@ -7,7 +7,7 @@
 
 namespace LCM {
 
-Teuchos::RCP<QCAD::MaterialDatabase>
+Teuchos::RCP<MaterialDatabase>
 createMaterialDatabase(
     Teuchos::RCP<Teuchos::ParameterList> const & params,
     Teuchos::RCP<Teuchos_Comm const> & commT)
@@ -23,7 +23,7 @@ createMaterialDatabase(
   std::string
   filename = params->get<std::string>("MaterialDB Filename");
 
-  return Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
+  return Teuchos::rcp(new MaterialDatabase(filename, commT));
 }
 
 } // namespace LCM

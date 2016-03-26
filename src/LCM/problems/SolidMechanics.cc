@@ -3,85 +3,28 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#if 0
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "LCM_Utils.h"
-#include "MechanicsProblem.hpp"
+#include "SolidMechanics.h"
 #include "PHAL_AlbanyTraits.hpp"
 #include "NOXSolverPrePostOperator.h"
 
-void
-Albany::MechanicsProblem::
-getVariableType(Teuchos::ParameterList& param_list,
-    const std::string& default_type,
-    Albany::MechanicsProblem::MECH_VAR_TYPE& variable_type,
-    bool& have_variable,
-    bool& have_equation)
-{
-  std::string type = param_list.get("Variable Type", default_type);
-  if (type == "None")
-    variable_type = MECH_VAR_TYPE_NONE;
-  else if (type == "Constant")
-    variable_type = MECH_VAR_TYPE_CONSTANT;
-  else if (type == "DOF")
-    variable_type = MECH_VAR_TYPE_DOF;
-  else if (type == "Time Dependent")
-    variable_type = MECH_VAR_TYPE_TIMEDEP;
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Unknown variable type " << type << '\n');
-  have_variable = (variable_type != MECH_VAR_TYPE_NONE);
-  have_equation = (variable_type == MECH_VAR_TYPE_DOF);
-
-}
 //------------------------------------------------------------------------------
-std::string
-Albany::MechanicsProblem::
-variableTypeToString(Albany::MechanicsProblem::MECH_VAR_TYPE variable_type)
-{
-  if (variable_type == MECH_VAR_TYPE_NONE)
-    return "None";
-  else if (variable_type == MECH_VAR_TYPE_CONSTANT)
-    return "Constant";
-  else if (variable_type == MECH_VAR_TYPE_TIMEDEP)
-    return "Time Dependent";
-  return "DOF";
-}
-
-//------------------------------------------------------------------------------
-Albany::MechanicsProblem::
-MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
-    const Teuchos::RCP<ParamLib>& param_lib,
-    const int num_dims,
-    const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-    Teuchos::RCP<const Teuchos::Comm<int>>& commT) :
+Albany::SolidMechanics::
+SolidMechanics(
+    Teuchos::RCP<Teuchos::ParameterList> const & params,
+    Teuchos::RCP<ParamLib> const & param_lib,
+    int const num_dims,
+    Teuchos::RCP<Teuchos::Comm<int> const> & comm) :
     Albany::AbstractProblem(params, param_lib),
-    have_source_(false),
-    thermal_source_(SOURCE_TYPE_NONE),
-    thermal_source_evaluated_(false),
-    have_contact_(false),
     num_dims_(num_dims),
-    have_mech_eq_(false),
-    have_temperature_eq_(false),
-    have_pore_pressure_eq_(false),
-    have_transport_eq_(false),
-    have_hydrostress_eq_(false),
-    have_damage_eq_(false),
-    have_stab_pressure_eq_(false),
-    have_peridynamics_(false),
-    have_topmod_adaptation_(false),
-    have_sizefield_adaptation_(false),
-    rc_mgr_(rc_mgr)
+    have_mech_eq_(false)
 {
 
   std::string& method = params->get("Name", "Mechanics ");
   *out << "Problem Name = " << method << '\n';
-
-  // Are any source functions specified?
-  have_source_ = params->isSublist("Source Functions");
-
-  // Is contact specified?
-  have_contact_ = params->isSublist("Contact");
 
   // Is adaptation specified?
   bool adapt_sublist_exists = params->isSublist("Adaptation");
@@ -103,46 +46,10 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       mech_type_,
       have_mech_,
       have_mech_eq_);
-  getVariableType(params->sublist("Temperature"),
-      "None",
-      temperature_type_,
-      have_temperature_,
-      have_temperature_eq_);
-  getVariableType(params->sublist("Pore Pressure"),
-      "None",
-      pore_pressure_type_,
-      have_pore_pressure_,
-      have_pore_pressure_eq_);
-  getVariableType(params->sublist("Transport"),
-      "None",
-      transport_type_,
-      have_transport_,
-      have_transport_eq_);
-  getVariableType(params->sublist("HydroStress"),
-      "None",
-      hydrostress_type_,
-      have_hydrostress_,
-      have_hydrostress_eq_);
-  getVariableType(params->sublist("Damage"),
-      "None",
-      damage_type_,
-      have_damage_,
-      have_damage_eq_);
-  getVariableType(params->sublist("Stabilized Pressure"),
-      "None",
-      stab_pressure_type_,
-      have_stab_pressure_,
-      have_stab_pressure_eq_);
 
   // Compute number of equations
   int num_eq = 0;
   if (have_mech_eq_) num_eq += num_dims_;
-  if (have_temperature_eq_) num_eq += 1;
-  if (have_pore_pressure_eq_) num_eq += 1;
-  if (have_transport_eq_) num_eq += 1;
-  if (have_hydrostress_eq_) num_eq += 1;
-  if (have_damage_eq_) num_eq += 1;
-  if (have_stab_pressure_eq_) num_eq += 1;
   this->setNumEquations(num_eq);
 
   // Print out a summary of the problem
@@ -150,53 +57,9 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       << "\tSpatial dimension             : " << num_dims_ << '\n'
       << "\tMechanics variables           : "
       << variableTypeToString(mech_type_)
-      << '\n'
-      << "\tTemperature variables         : "
-      << variableTypeToString(temperature_type_)
-      << '\n'
-      << "\tPore Pressure variables       : "
-      << variableTypeToString(pore_pressure_type_)
-      << '\n'
-      << "\tTransport variables           : "
-      << variableTypeToString(transport_type_)
-      << '\n'
-      << "\tHydroStress variables         : "
-      << variableTypeToString(hydrostress_type_)
-      << '\n'
-      << "\tDamage variables              : "
-      << variableTypeToString(damage_type_)
-      << '\n'
-      << "\tStabilized Pressure variables : "
-      << variableTypeToString(stab_pressure_type_)
       << '\n';
 
-  material_db_ = LCM::createMaterialDatabase(params, commT);
-
-  // Determine the Thermal source 
-  //   - the "Source Functions" list must be present in the input file,
-  //   - we must have temperature and have included a temperature equation
-
-  if (have_source_ && have_temperature_ && have_temperature_eq_) {
-    // If a thermal source is specified
-    if (params->sublist("Source Functions").isSublist("Thermal Source")) {
-
-      Teuchos::ParameterList& thSrcPL = params->sublist("Source Functions")
-          .sublist("Thermal Source");
-
-      if (thSrcPL.get<std::string>("Thermal Source Type", "None")
-          == "Block Dependent") {
-
-        if (Teuchos::nonnull(material_db_)) {
-          thermal_source_ = SOURCE_TYPE_MATERIAL;
-        }
-      }
-      else {
-
-        thermal_source_ = SOURCE_TYPE_INPUT;
-
-      }
-    }
-  }
+  material_db_ = LCM::createMaterialDatabase(params, comm);
 
   //the following function returns the problem information required for
   //setting the rigid body modes (RBMs) for elasticity problems (in
@@ -252,63 +115,63 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   userDefinedNOXStatusTest = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag); 
 }
 //------------------------------------------------------------------------------
-Albany::MechanicsProblem::
-~MechanicsProblem()
+Albany::SolidMechanics::
+~SolidMechanics()
 {
 }
 //------------------------------------------------------------------------------
 void
-Albany::MechanicsProblem::
+Albany::SolidMechanics::
 buildProblem(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs,
-    Albany::StateManager& stateMgr)
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> mesh_specs,
+    Albany::StateManager& state_mgr)
 {
   // Construct All Phalanx Evaluators
-  int physSets = meshSpecs.size();
+  int physSets = mesh_specs.size();
   *out << "Num MeshSpecs: " << physSets << '\n';
   fm.resize(physSets);
   bool haveSidesets = false;
 
-  *out << "Calling MechanicsProblem::buildEvaluators" << '\n';
+  *out << "Calling SolidMechanics::buildEvaluators" << '\n';
   for (int ps = 0; ps < physSets; ++ps) {
     fm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
+    buildEvaluators(*fm[ps], *mesh_specs[ps], state_mgr, BUILD_RESID_FM,
         Teuchos::null);
-    if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
+    if (mesh_specs[ps]->ssNames.size() > 0) haveSidesets = true;
   }
-  *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
-  constructDirichletEvaluators(*meshSpecs[0]);
+  *out << "Calling SolidMechanics::constructDirichletEvaluators" << '\n';
+  constructDirichletEvaluators(*mesh_specs[0]);
 
   if (haveSidesets) {
-    *out << "Calling MechanicsProblem::constructNeumannEvaluators" << '\n';
-    constructNeumannEvaluators(meshSpecs[0]);
+    *out << "Calling SolidMechanics::constructNeumannEvaluators" << '\n';
+    constructNeumannEvaluators(mesh_specs[0]);
   }
 
 }
 //------------------------------------------------------------------------------
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag>>
-Albany::MechanicsProblem::
-buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-    const Albany::MeshSpecsStruct& meshSpecs,
-    Albany::StateManager& stateMgr,
-    Albany::FieldManagerChoice fmchoice,
-    const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+Albany::SolidMechanics::
+buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& field_mgr,
+    const Albany::MeshSpecsStruct& mesh_specs,
+    Albany::StateManager& state_mgr,
+    Albany::FieldManagerChoice fm_choice,
+    const Teuchos::RCP<Teuchos::ParameterList>& response_list)
 {
-  // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+  // Call constructeEvaluators<EvalT>(*rfm[0], *mesh_specs[0], state_mgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<MechanicsProblem> op(*this,
-      fm0,
-      meshSpecs,
-      stateMgr,
-      fmchoice,
-      responseList);
+  ConstructEvaluatorsOp<SolidMechanics> op(*this,
+      field_mgr,
+      mesh_specs,
+      state_mgr,
+      fm_choice,
+      response_list);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
   return *op.tags;
 }
 //------------------------------------------------------------------------------
 void
-Albany::MechanicsProblem::
-constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
+Albany::SolidMechanics::
+constructDirichletEvaluators(const Albany::MeshSpecsStruct& mesh_specs)
 {
 
   // Construct Dirichlet evaluators for all nodesets and names
@@ -320,13 +183,6 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
     if (num_dims_ > 2) dirichletNames[index++] = "Z";
   }
 
-  if (have_temperature_eq_) dirichletNames[index++] = "T";
-  if (have_pore_pressure_eq_) dirichletNames[index++] = "P";
-  if (have_transport_eq_) dirichletNames[index++] = "C";
-  if (have_hydrostress_eq_) dirichletNames[index++] = "TAU";
-  if (have_damage_eq_) dirichletNames[index++] = "D";
-  if (have_stab_pressure_eq_) dirichletNames[index++] = "SP";
-
   // Pass on the Application as well that is needed for
   // the coupled Schwarz BC. It is just ignored otherwise.
   Teuchos::RCP<Albany::Application> const &
@@ -336,7 +192,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
       "Application", application);
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
+  dfm = dirUtils.constructBCEvaluators(mesh_specs.nsNames, dirichletNames,
       this->params, this->paramLib);
   offsets_ = dirUtils.getOffsets(); 
 
@@ -344,12 +200,12 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 //------------------------------------------------------------------------------
 // Traction BCs
 void
-Albany::MechanicsProblem::
+Albany::SolidMechanics::
 constructNeumannEvaluators(
-    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+    Albany::MeshSpecsStruct const & mesh_specs)
 {
   // Note: we only enter this function if sidesets are defined in the mesh file
-  // i.e. meshSpecs.ssNames.size() > 0
+  // i.e. mesh_specs.ssNames.size() > 0
 
   Albany::BCUtils<Albany::NeumannTraits> neuUtils;
 
@@ -412,8 +268,11 @@ constructNeumannEvaluators(
 
   nfm.resize(1); // Elasticity problem only has one element block
 
+  Teuchos::RCP<Albany::MeshSpecsStruct> const &
+  pmesh_specs = Teuchos::rcp(&mesh_specs, false);
+
   nfm[0] = neuUtils.constructBCEvaluators(
-      meshSpecs,
+      pmesh_specs,
       neumannNames,
       dof_names,
       true,
@@ -427,29 +286,23 @@ constructNeumannEvaluators(
 
 //------------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::MechanicsProblem::
+Albany::SolidMechanics::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-      this->getGenericProblemParams("ValidMechanicsProblemParams");
+      this->getGenericProblemParams("ValidSolidMechanicsParams");
 
   validPL->set<std::string>("MaterialDB Filename",
       "materials.xml",
       "Filename of material database xml file");
   validPL->sublist("Displacement", false, "");
-  validPL->sublist("Temperature", false, "");
-  validPL->sublist("Pore Pressure", false, "");
-  validPL->sublist("Transport", false, "");
-  validPL->sublist("HydroStress", false, "");
-  validPL->sublist("Damage", false, "");
-  validPL->sublist("Stabilized Pressure", false, "");
 
   return validPL;
 }
 
 //------------------------------------------------------------------------------
 void
-Albany::MechanicsProblem::
+Albany::SolidMechanics::
 getAllocatedStates(
     Teuchos::ArrayRCP<
         Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
@@ -465,7 +318,7 @@ getAllocatedStates(
 
 //------------------------------------------------------------------------------
 void
-Albany::MechanicsProblem::
+Albany::SolidMechanics::
 applyProblemSpecificSolverSettings(
     Teuchos::RCP<Teuchos::ParameterList> params)
 {
@@ -507,3 +360,4 @@ applyProblemSpecificSolverSettings(
     solverOptionsParameterList->set("User Defined Pre/Post Operator", pre_post_operator);
   }
 }
+#endif

@@ -85,7 +85,7 @@ namespace Albany {
     int numDim;
     bool haveMatDB;
     std::string mtrlDbFilename;
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<MaterialDatabase> materialDB;
 
   };
 
@@ -267,7 +267,7 @@ Albany::LameProblem::constructEvaluators(
         p->set<string>("Element Block Name", meshSpecs.ebName);
 
     if(haveMatDB)
-      p->set< RCP<QCAD::MaterialDatabase>>("MaterialDB", materialDB);
+      p->set< RCP<MaterialDatabase>>("MaterialDB", materialDB);
 
     // Materials specification
     Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");
