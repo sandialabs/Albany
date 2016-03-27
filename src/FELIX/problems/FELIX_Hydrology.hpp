@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -30,7 +30,6 @@
 #include "FELIX_HydrologyMeltingRate.hpp"
 #include "FELIX_HydrologyResidualEllipticEqn.hpp"
 #include "FELIX_HydrologyResidualEvolutionEqn.hpp"
-#include "FELIX_SubglacialHydrostaticPotential.hpp"
 
 namespace FELIX
 {
@@ -235,21 +234,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   fm0.template registerEvaluator<EvalT> (ev);
 
   // --------------------------------- FELIX evaluators -------------------------------- //
-
-  // ----- Ice Hydrostatic Potential ---- //
-
-  p = rcp(new Teuchos::ParameterList("Ice Hydrostatic Potential"));
-
-  //Input
-  p->set<std::string> ("Ice Thickness Variable Name","Ice Thickness");
-  p->set<std::string> ("Surface Height Variable Name","Surface Height");
-  p->set<Teuchos::ParameterList*> ("FELIX Physical Parameters",&params->sublist("FELIX Physical Parameters"));
-
-  // Output
-  p->set<std::string> ("Ice Potential Variable Name","Ice Overburden");
-
-  ev = rcp(new FELIX::SubglacialHydrostaticPotential<EvalT,PHAL::AlbanyTraits>(*p,dl));
-  fm0.template registerEvaluator<EvalT>(ev);
 
   // ------- Hydrology Water Discharge -------- //
   p = rcp(new Teuchos::ParameterList("Hydrology Water Discharge"));

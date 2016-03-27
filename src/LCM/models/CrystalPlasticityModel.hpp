@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -9,6 +9,7 @@
 
 #include "CrystalPlasticityCore.hpp"
 #include "ConstitutiveModel.hpp"
+#include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
 namespace LCM
 {
@@ -29,7 +30,7 @@ public:
     UNDEFINED = 0, SLIP = 1, SLIP_HARDNESS = 2
   };
 
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -77,6 +78,21 @@ public:
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
       }
 
+  ///
+  ///  Set a NOX status test to Failed, which will trigger Piro to cut the global
+  ///  load step, assuming the load-step-reduction feature is active.
+  ///
+  void
+  forceGlobalLoadStepReduction()
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+	  nox_status_test_.is_null(),
+          std::logic_error,
+          "\n**** Error in CrystalPlasticityModel, error accessing NOX status test.");
+
+    nox_status_test_->status_ = NOX::StatusTest::Failed;
+  }
+
 private:
 
   ///
@@ -93,7 +109,9 @@ private:
   /// Crystal elasticity parameters
   ///
   RealType c11_, c12_, c44_;
-  Intrepid2::Tensor4<RealType, CP::MAX_DIM> C_;
+  RealType c11_temperature_coeff_, c12_temperature_coeff_, 
+    c44_temperature_coeff_, reference_temperature_;
+  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM> C_;
   Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
 
   ///
@@ -132,7 +150,12 @@ private:
   int implicit_nonlinear_solver_min_iterations_;
 
   ///
-  /// Output options
+  /// Pointer to NOX status test, allows the material model to force a global load step reduction
+  ///
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
+
+  ///
+  /// Output options 
   ///
   int verbosity_;
   bool write_data_file_;

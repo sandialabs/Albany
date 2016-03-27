@@ -120,10 +120,6 @@ postRegistrationSetup(typename Traits::SetupData d,
         for (int qp=0; qp<numSideQPs; ++qp)
         {
           BF(cell,side,node,qp) = val_at_cub_points(node,qp);
-          for (int ider=0; ider<sideDims; ++ider)
-          {
-            GradBF(cell,side,node,qp,ider) = grad_at_cub_points(node,qp,ider);
-          }
         }
       }
     }
@@ -135,6 +131,8 @@ template<typename EvalT, typename Traits>
 void ComputeBasisFunctionsSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  //TODO: use Intrepid routines as much as possible 
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
@@ -208,6 +206,20 @@ evaluateFields(typename Traits::EvalData workset)
         break;
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! The dimension of the side should be 1 or 2.\n");
+    }
+
+    for (int node=0; node<numSideNodes; ++node)
+    {
+      for (int qp=0; qp<numSideQPs; ++qp)
+      {
+        for (int ider=0; ider<sideDims; ++ider) //TODO: should be sideDims+1
+        {
+          GradBF(cell,side,node,qp,ider)=0;
+          for(int j=0; j< sideDims; ++j)
+            for(int k=0; k< sideDims; ++k)
+              GradBF(cell,side,node,qp,ider) +=  tangents(j,ider,qp)*inv_metric(cell,side,qp,j,k)*grad_at_cub_points(node,qp,k);
+        }
+      }
     }
   }
 }

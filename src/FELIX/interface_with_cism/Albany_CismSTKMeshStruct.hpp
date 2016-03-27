@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -109,14 +109,6 @@ namespace Albany {
     double* thck; //thickness
     double (*shGrad)[2]; //surface height gradient (ds/dx, ds/dy)
     double* beta;
-    GO* globalElesID; //int array to define element map 
-    GO* globalNodesID; //int array to define node map 
-    GO* basalFacesID; //int array to define basal face map 
-    GO* topFacesID; //int array to define top face map 
-    GO* westFacesID; 
-    GO* eastFacesID; 
-    GO* southFacesID; 
-    GO* northFacesID;
     GO* dirichletNodeMask;  
     int (*eles)[8]; //hard-coded for 3D hexes for now 
     double *flwa; //double array that gives value of flow factor  

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -111,6 +111,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos_Comm> getComm() const;
 
 #if defined(ALBANY_EPETRA)
+    //! Get Epetra communicator
+    Teuchos::RCP<const Epetra_Comm> getEpetraComm() const;
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
 #endif
@@ -138,6 +140,12 @@ namespace Albany {
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
 
 #endif
+
+    bool observeResponses() const {return observe_responses;} 
+    
+    int observeResponsesFreq() const {return response_observ_freq;} 
+
+    Teuchos::Array<unsigned int> getMarkersForRelativeResponses() const {return relative_responses;}
 
 #if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
@@ -750,7 +758,7 @@ namespace Albany {
 
     void defineTimers();
 
-    void removeAztecPL(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    void removeEpetraRelatedPLs(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   public:
 
@@ -781,6 +789,10 @@ namespace Albany {
 
     //! Routine to load common sideset info into workset
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
+
+    //! Routines for setting a scaling to be applied to the Jacobian/resdiual 
+    void setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT = Teuchos::null); 
+    void setScaleBCDofs(PHAL::Workset& workset);  
 
 #if defined(ALBANY_EPETRA)
     void setupBasicWorksetInfo(
@@ -1007,7 +1019,7 @@ namespace Albany {
 #endif //ALBANY_LCM
 
   protected:
-
+   
 #if defined(ALBANY_EPETRA)
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
@@ -1116,6 +1128,8 @@ namespace Albany {
 #endif
 #endif
 
+    bool explicit_scheme; 
+
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
@@ -1137,6 +1151,10 @@ namespace Albany {
 
     //Value to scale Jacobian/Residual by to possibly improve conditioning
     double scale; 
+    double scaleBCdofs; 
+    //Scaling types
+    enum SCALETYPE {CONSTANT, DIAG, ABSROWSUM};
+    SCALETYPE scale_type;
 
     //! Shape Optimization data
     bool shapeParamsHaveBeenReset;
@@ -1180,6 +1198,19 @@ namespace Albany {
     int derivatives_check_;
 
     int num_time_deriv;
+    
+    //The following are for Jacobian/residual scaling 
+    Teuchos::Array<Teuchos::Array<int> > offsets_;
+    Teuchos::RCP<Tpetra_Vector> scaleVec_;  
+
+    //boolean read from input file telling code whether to compute/print responses every step 
+    bool observe_responses; 
+    
+    //how often one wants the responses to be computed/printed
+    int response_observ_freq; 
+
+    //local responses
+    Teuchos::Array<unsigned int> relative_responses;
 
   };
 }

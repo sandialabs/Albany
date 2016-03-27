@@ -61,8 +61,9 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Columnwise Ordering" type="bool" value="false"/>
-    <Parameter name="Method" type="string" value="Extruded"/>
+    <Parameter name="Interleaved Ordering" type="bool" value="true"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
+    <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_coupled.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
@@ -76,8 +77,8 @@
       <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
       <ParameterList name="basalside">
         <Parameter name="Method" type="string" value="Ioss"/>
-        <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
+        <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
         <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
@@ -106,14 +107,16 @@
       </ParameterList>
     </ParameterList>
   </ParameterList> <!--Discretization -->
+
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{106350624.657}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{106289755.966}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17486258.5734}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17393667.6095}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
+
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -193,6 +193,7 @@ void AAdapt::MeshAdapt::initAdapt()
 
 void AAdapt::MeshAdapt::beforeAdapt()
 {
+  TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to APF Mesh");
   if (should_transfer_ip_data)
     pumi_discretization->attachQPData();
   szField->copyInputFields();

@@ -13,7 +13,6 @@ set (CTEST_SOURCE_NAME repos)
 set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
-set (BOOSTDIR /home/ikalash/Install/boost_1_55_0)
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -47,6 +46,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -84,6 +84,27 @@ if (DOWNLOAD)
       message(FATAL_ERROR "Cannot clone Albany repository!")
     endif ()
   endif ()
+
+  #
+  # Get cism-piscees
+  #
+  #
+  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/cism-piscees")
+    execute_process (COMMAND "${CTEST_GIT_COMMAND}"
+      clone ${cism-piscees_REPOSITORY_LOCATION} -b felix_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
+      OUTPUT_VARIABLE _out
+      ERROR_VARIABLE _err
+      RESULT_VARIABLE HAD_ERROR)
+    message(STATUS "out: ${_out}")
+    message(STATUS "err: ${_err}")
+    message(STATUS "res: ${HAD_ERROR}")
+    if (HAD_ERROR)
+      message(FATAL_ERROR "Cannot clone cism-piscees repository!")
+    endif ()
+  endif ()
+
+  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+
 
 endif ()
 
@@ -141,7 +162,6 @@ if (BUILD_ALB64)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany64Bit)
   set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
 
-  set (CISMDIR "/home/ikalash/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
@@ -161,10 +181,10 @@ if (BUILD_ALB64)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
+    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_LAME:BOOL=OFF")
   
@@ -264,7 +284,6 @@ if (BUILD_ALB32)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany32Bit)
   set_property (GLOBAL PROPERTY Label IKTAlbany32Bit)
 
-  set (CISMDIR "/home/ikalash/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
@@ -284,10 +303,13 @@ if (BUILD_ALB32)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
+    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
+    "-DENABLE_INSTALL:BOOL=ON"
+    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
+    "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
     "-DENABLE_LAME:BOOL=OFF")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32Bit")
@@ -320,7 +342,8 @@ if (BUILD_ALB32)
   # Build Albany
   #
 
-  set (CTEST_BUILD_TARGET all)
+  #set (CTEST_BUILD_TARGET all)
+  set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
@@ -387,7 +410,6 @@ if (BUILD_ALB32_NOEPETRA)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoEpetra)
   set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoEpetra)
 
-  set (CISMDIR "/home/ikalash/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
@@ -407,10 +429,10 @@ if (BUILD_ALB32_NOEPETRA)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
+    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_LAME:BOOL=OFF")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra")
@@ -508,7 +530,6 @@ if (BUILD_ALB64_NOEPETRA)
   set_property (GLOBAL PROPERTY SubProject IKTAlbany64BitNoEpetra)
   set_property (GLOBAL PROPERTY Label IKTAlbany64BitNoEpetra)
 
-  set (CISMDIR "/home/ikalash/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
@@ -528,11 +549,11 @@ if (BUILD_ALB64_NOEPETRA)
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
     "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
+    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_LAME:BOOL=OFF")
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany64BitNoEpetra")
@@ -628,9 +649,6 @@ endif ()
 # Need to add the openmpi libraries at the front of LD_LIBRARY_PATH
 #
 
-set (ENV{LD_LIBRARY_PATH} 
-  /projects/albany/clang/lib:${INITIAL_LD_LIBRARY_PATH}
-  )
 
 if (BUILD_ALBFUNCTOR)
   # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
@@ -638,21 +656,21 @@ if (BUILD_ALBFUNCTOR)
   set_property (GLOBAL PROPERTY SubProject IKTAlbanyFunctor)
   set_property (GLOBAL PROPERTY Label IKTAlbanyFunctor)
 
-  set (CISMDIR "/home/ikalash/cism-piscees")
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
-    "-DENABLE_LCM:BOOL=ON"
-    "-DENABLE_CONTACT:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=OFF"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_LCM_TEST_EXES:BOOL=OFF"
+    "-DENABLE_CONTACT:BOOL=OFF"
+    "-DENABLE_HYDRIDE:BOOL=OFF"
     "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_MOR:BOOL=OFF"
-    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_ATO:BOOL=OFF"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
@@ -660,9 +678,10 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CISMDIR}/libdycore"
+    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_DAKOTA_RESTART_EXAMPLES=OFF"
+    "-DENABLE_SLFAD:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=ON"
     "-DENSEMBLE_SIZE:INT=16"
     "-DENABLE_64BIT_INT:BOOL=OFF"
@@ -740,3 +759,116 @@ if (BUILD_ALBFUNCTOR)
     endif ()
   endif ()
 endif ()
+
+if (BUILD_CISM_PISCEES)
+
+  # Configure the CISM-Albany build 
+  #
+  set_property (GLOBAL PROPERTY SubProject IKTCismAlbany)
+  set_property (GLOBAL PROPERTY Label IKTCismAlbany)
+
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (NETCDF_DIR /home/ikalash/Install/netcdf-4.2-fortran) 
+
+  set (CONFIGURE_OPTIONS
+    "-DCISM_USE_TRILINOS:BOOL=ON"
+    "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
+    "-DCISM_MPI_MODE:BOOL=ON"
+    "-DCISM_SERIAL_MODE:BOOL=OFF"
+    "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
+    "-DALBANY_FELIX_DYCORE:BOOL=ON"
+    "-DALBANY_FELIX_CTEST:BOOL=ON"
+    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
+    "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
+    "-DCISM_NETCDF_LIBS='netcdff'"
+    "-DCMAKE_Fortran_FLAGS='-g -O2 -ffree-line-length-none -fPIC -fno-range-check'"
+    "-DCMAKE_VERBOSE_MAKEFILE=OFF"
+  )
+
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTCismAlbany)
+  endif ()
+
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/cism-piscees"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    APPEND
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany configure results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot configure CISM-Albany build!")
+  endif ()
+ 
+   #
+   # Build CISM-Albany
+   #
+   #
+    set (CTEST_TARGET all)
+
+  MESSAGE("\nBuilding target: '${CTEST_TARGET}' ...\n")
+
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  LIBS_NUM_ERRORS
+    APPEND
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Build
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany build results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot build CISM-Albany!")
+  endif ()
+
+  if (LIBS_NUM_ERRORS GREATER 0)
+    message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
+  endif ()
+
+  #
+  # Run CISM-Albany tests
+  #
+
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+#                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#    NUMBER_FAILED  TEST_NUM_FAILED
+    RETURN_VALUE  HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Test
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
+    endif ()
+  endif ()
+
+#  if (HAD_ERROR)
+#  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
+#  endif ()
+
+endif ()
+

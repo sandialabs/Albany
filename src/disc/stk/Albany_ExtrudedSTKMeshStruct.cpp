@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -59,6 +59,12 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn = "bottom";
+  nsNames.push_back(nsn);
+  nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
+  nsn = "top";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
 #ifdef ALBANY_SEACAS
@@ -299,14 +305,16 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
+  stk::mesh::PartVector singlePartVecBottom(1);
+  stk::mesh::PartVector singlePartVecTop(1);
   stk::mesh::PartVector emptyPartVec;
   unsigned int ebNo = 0; //element block #???
 
-  singlePartVec[0] = nsPartVec["bottom"];
+  singlePartVecBottom[0] = nsPartVec["bottom"];
+  singlePartVecTop[0] = nsPartVec["top"];
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  typedef AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   // Fields required for extrusion
   ScalarFieldType* surface_height_field = metaData2D.get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
@@ -326,7 +334,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     stk::mesh::EntityId node2dId = bulkData2D.identifier(node2d) - 1;
     GO nodeId = il * vertexColumnShift + vertexLayerShift * node2dId + 1;
     if (il == 0)
-      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVec);
+      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVecBottom);
+    else if (il == numLayers)
+      node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, singlePartVecTop);
     else
       node = bulkData->declare_entity(stk::topology::NODE_RANK, nodeId, nodePartVec);
 

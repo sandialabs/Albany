@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -144,9 +144,6 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
   //FIXME?: assuming for now 1 element block
   unsigned int ebNo = 0;
-
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 

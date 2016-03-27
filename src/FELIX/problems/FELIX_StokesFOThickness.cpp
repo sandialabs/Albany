@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -20,7 +20,7 @@ FELIX::StokesFOThickness::
 StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_),
+  Albany::AbstractProblem(params_, paramLib_, numDim_),
   numDim(numDim_)
 {
   //Set # of PDEs per node.
@@ -150,15 +150,15 @@ buildProblem(
   const int numCellVertices     = cellType->getNodeCount();
   const int numCellNodes        = cellBasis->getCardinality();
   const int numCellQPs          = cellCubature->getNumPoints();
-  const int vecDimFO            = std::min((int)neq,(int)2);
   const int numCellSides        = cellType->getFaceCount();
   const int numBasalSideNodes   = (basalSideName=="INVALID" ? 0 : basalSideBasis->getCardinality());
   const int numBasalQPs         = (basalSideName=="INVALID" ? 0 : basalCubature->getNumPoints());
   const int numSurfaceSideNodes = (surfaceSideName=="INVALID" ? 0 : surfaceSideBasis->getCardinality());
   const int numSurfaceQPs       = (surfaceSideName=="INVALID" ? 0 : surfaceCubature->getNumPoints());
   const int worksetSize         = meshSpecs[0]->worksetSize;
+  vecDimFO                      = std::min((int)neq,(int)2);
 
-#ifdef OUTPUT_TO_SCREEN
+//#ifdef OUTPUT_TO_SCREEN
   *out << "Field Dimensions: \n"
        << "  Workset            = " << worksetSize << "\n"
        << "  Vertices           = " << numCellVertices << "\n"
@@ -170,7 +170,7 @@ buildProblem(
        << "  BasalSideQuadPts   = " << numBasalQPs << "\n"
        << "  SurfaceSideNodes   = " << numSurfaceSideNodes << "\n"
        << "  SurfaceSideQuadPts = " << numSurfaceQPs << std::endl;
-#endif
+//#endif
 
   // Building the layouts
   // NOTE: we build two side layouts, since basal and surface cubatures may differ
@@ -183,7 +183,7 @@ buildProblem(
   if (basalSideName!="INVALID")
   {
     dl_basal = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,
-                                       numDim,vecDimFO,numCellSides,numBasalSideNodes,numBasalQPs));
+                                       numDim,neq,numCellSides,numBasalSideNodes,numBasalQPs));
     dls[basalSideName] = dl_basal;
   }
   if (surfaceSideName!="INVALID")
@@ -238,6 +238,7 @@ FELIX::StokesFOThickness::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
+   offsets_ = dirUtils.getOffsets(); 
 }
 
 // Neumann BCs
@@ -255,6 +256,7 @@ FELIX::StokesFOThickness::constructNeumannEvaluators(const Teuchos::RCP<Albany::
    if(!nbcUtils.haveBCSpecified(this->params)) {
       return;
    }
+
 
    // Construct BC evaluators for all side sets and names
    // Note that the string index sets up the equation offset, so ordering is important

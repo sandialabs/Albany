@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -193,6 +193,16 @@ class AerasHydrostaticBaroclinicInstabilities : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class AerasHydrostaticPureAdvection1 : public AnalyticFunction {
+  public:
+    AerasHydrostaticPureAdvection1(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    const int numDim; // size of coordinate vector X
+    const int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 class AerasXZHydrostatic : public AnalyticFunction {
   public:
     AerasXZHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_);
@@ -260,6 +270,16 @@ class AerasHydrostatic : public AnalyticFunction {
   private:
     int numDim; // size of coordinate vector X
     int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasRestingHydrostatic : public AnalyticFunction {
+	public:
+    AerasRestingHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    const int numDim; // size of coordinate vector X
+    const int neq;    // size of solution vector x
     Teuchos::Array<double> data;
 };
 

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -195,48 +195,6 @@ namespace Aeras
     }
   };
 
-#if defined(ALBANY_EPETRA)
-  typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
-
-  struct DOFsStruct
-  {
-    Teuchos::RCP<Epetra_Map> node_map;
-    Teuchos::RCP<Epetra_Map> overlap_node_map;
-    Teuchos::RCP<Epetra_Map> map;
-    Teuchos::RCP<Epetra_Map> overlap_map;
-    Albany::NodalDOFManager dofManager;
-    Albany::NodalDOFManager overlap_dofManager;
-    std::vector< std::vector<LO> > wsElNodeEqID_rawVec;
-    std::vector<Albany::IDArray> wsElNodeEqID;
-    std::vector< std::vector<GO> > wsElNodeID_rawVec;
-    std::vector<GIDArray> wsElNodeID;
-  };
-
-  struct NodalDOFsStructContainer
-  {
-    typedef std::map<std::pair<std::string,int>, DOFsStruct >  MapOfDOFsStructs;
-
-    MapOfDOFsStructs mapOfDOFsStructs;
-    std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
-    const DOFsStruct& getDOFsStruct(const std::string& field_name) const
-    {
-      // TODO: handole errors
-      return fieldToMap.find(field_name)->second->second;
-    }
-
-    void addEmptyDOFsStruct(const std::string& field_name,
-                            const std::string& meshPart,
-                            int numComps)
-    {
-      if(numComps != 1)
-        mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,1),DOFsStruct()));
-      fieldToMap[field_name] =
-        mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,numComps),
-                                          DOFsStruct())).first;
-    }
-  };
-#endif // ALBANY_EPETRA
-
   class SpectralDiscretization : public Albany::AbstractDiscretization
   {
   public:
@@ -271,11 +229,16 @@ namespace Aeras
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
+    //! Get field overlapped node map
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const;
+
 #if defined(ALBANY_EPETRA)
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
-
 #endif
+
+    //! Get field DOF map
+    Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const;
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Jacobian graph
@@ -309,7 +272,12 @@ namespace Aeras
 #endif
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
+    //! Get field Tpetra node map
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const;
+    //! Get field overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
+    //! Get field overlapped DOF map
+    Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const;
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::NodeSetList& getNodeSets() const
@@ -350,29 +318,30 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     getWsElNodeID() const;
 
-#if defined(ALBANY_EPETRA)
+
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID,
     //! works for both scalar and vector fields
     const std::vector<Albany::IDArray>&
     getElNodeEqID(const std::string& field_name) const
     {
-      return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::SpectralDiscretization: getElNodeEqID(const std::string& field_name) const not implemented");
     }
 
     const Albany::NodalDOFManager&
     getDOFManager(const std::string& field_name) const
     {
-      return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::SpectralDiscretization: getDOFManager(const std::string& field_name) const not implemented");
     }
 
     const Albany::NodalDOFManager&
     getOverlapDOFManager(const std::string& field_name) const
     {
-      return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_dofManager;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Albany::SpectralDiscretization: getOverlapDOFManager(const std::string& field_name) const not implemented");
+
     }
-#endif
-
-
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -525,6 +494,11 @@ namespace Aeras
     {
       return neq;
     }
+   
+    bool isExplicitScheme() const 
+    {
+      return explicit_scheme; 
+    }
 
     //! Get number of levels (for hydrostatic problems) 
     int getNumLevels() const { return numLevels; }
@@ -610,6 +584,16 @@ namespace Aeras
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
 #endif
+
+    //! Copy field from STK Mesh field to given Epetra_Vector
+    void getFieldT(Tpetra_Vector &field_vector,
+                  const std::string& field_name) const;
+
+    // Copy field vector into STK Mesh field
+    void setFieldT(const Tpetra_Vector &field_vector,
+                  const std::string& field_name,
+                  bool overlapped=false);
+
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
     void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
@@ -732,16 +716,6 @@ namespace Aeras
     //! Overlapped unknown map and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT;
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
-
-#if defined(ALBANY_EPETRA)
-    Teuchos::RCP<Epetra_Map> node_map;
-    Teuchos::RCP<Epetra_Map> map;
-    Teuchos::RCP<Epetra_Map> overlap_node_map;
-    Teuchos::RCP<Epetra_Map> overlap_map;
-
-    NodalDOFsStructContainer nodalDOFsStructContainer;
-#endif
-
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT; 

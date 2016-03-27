@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -218,16 +218,16 @@ namespace LCM {
       }
     }
 
-    // second source term
-    if ( have_second_source_ ) {
-      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          for (std::size_t node = 0; node < num_nodes_; ++node) {
-            residual_(cell,node) -= w_bf_(cell,node,pt) * second_source_(cell,pt);
-          }
-        }
-      }
-    }
+     // second source term
+     if ( have_second_source_ ) {
+       for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+           for (std::size_t node = 0; node < num_nodes_; ++node) {
+             residual_(cell,node) -= w_bf_(cell,node,pt) * second_source_(cell,pt);
+           }
+         }
+       }
+     }
 
     // convection term
     if ( have_convection_ ) {

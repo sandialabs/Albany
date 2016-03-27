@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -672,6 +672,88 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
+          typename PHAL::Ref<ScalarT>::type
+                    valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                              this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                              this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+          const int row = nodeID[node][this->offset + eq];
+          for (int col=0; col<num_cols; col++) {
+            double val = 0.0;
+            for (int i=0; i<num_deriv; ++i)
+              val += valref.dx(i)*local_Vp[i][col];
+            fpVT->sumIntoLocalValue(row, col, val);
+          }
+        }
+      }
+    }
+  }
+}
+
+// **********************************************************************
+template<typename Traits>
+void ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
+  if(level_it == extruded_params_levels->end()) //if parameter is not extruded use usual scatter.
+    return ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(workset);
+
+
+
+  int fieldLevel = level_it->second;
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
+  bool trans = workset.transpose_dist_param_deriv;
+  int num_cols = workset.VpT->getNumVectors();
+
+  int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
+
+  if (trans) {
+    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+
+    int numLayers = layeredMeshNumbering.numLayers;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+    const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
+        workset.local_Vp[cell];
+      const int num_deriv = local_Vp.size()/this->numFields;
+      for (int i=0; i<num_deriv; i++) {
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[i]);
+        LO base_id, ilayer;
+        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+        LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+        GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
+
+        for (int col=0; col<num_cols; col++) {
+          double val = 0.0;
+          for (std::size_t node = 0; node < this->numNodes; ++node) {
+            for (std::size_t eq = 0; eq < this->numFields; eq++) {
+              typename PHAL::Ref<ScalarT>::type
+                        valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                                  this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                                  this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+              val += valref.dx(i)*local_Vp[node*this->numFields+eq][col];
+            }
+          }
+          const LO row = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_map()->getLocalElement(ginode);
+          if(row >=0)
+            fpVT->sumIntoLocalValue(row, col, val);
+        }
+      }
+    }
+  }
+  else {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
+        workset.wsElNodeEqID[cell];
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
+        workset.local_Vp[cell];
+      const int num_deriv = local_Vp.size();
+
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+        for (std::size_t eq = 0; eq < this->numFields; eq++) {
           typename PHAL::Ref<ScalarT>::type
                     valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                               this->tensorRank == 1 ? this->valVec(cell,node,eq) :

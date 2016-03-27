@@ -1,3 +1,9 @@
+//*****************************************************************//
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
 #include "Albany_Application.hpp"
 #include "PHAL_Utilities.hpp"
 
@@ -10,6 +16,17 @@ namespace PHAL {
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
+  const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
+  if (Teuchos::nonnull(pl)) {
+    const bool extrudedColumnCoupled = pl->isParameter("Extruded Column Coupled in 2D Response") ? pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
+    if(extrudedColumnCoupled)
+      { //all column is coupled
+        int side_node_count = ms->ctd.side[2].topology->node_count;
+        int node_count = ms->ctd.node_count;
+        int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+        return app->getNumEquations()*(node_count + side_node_count*numLevels);
+      }
+  }
   return app->getNumEquations() * ms->ctd.node_count;
 }
 
@@ -27,7 +44,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
- const Albany::Application* app, const int ebi)
+ const Albany::Application* app, const int ebi, const bool explicit_scheme)
 {
   const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
   if (Teuchos::nonnull(pl)) {
@@ -35,8 +52,9 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     if(problemName == "FELIX Coupled FO H 3D")
     { //all column is coupled
       int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+      int node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.node_count;
       int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
-      return app->getNumEquations()*side_node_count*numLevels;
+      return app->getNumEquations()*(node_count + side_node_count*numLevels);
     }
 #ifdef ALBANY_GOAL
     if ((problemName == "GOAL Mechanics 2D") ||
@@ -49,20 +67,26 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       return d->getNumNodesPerElem(ebi) * app->getNumEquations();
     }
 #endif
+#ifdef ALBANY_AERAS
+    if ((problemName == "Aeras Hydrostatic")  && (explicit_scheme == true))
+    {
+      return 1;
+    }
+#endif
    }
    return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
      app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
- const Albany::Application* app, const int ebi)
+ const Albany::Application* app, const int ebi, const bool explicit_scheme)
 {
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
     app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
- const Albany::Application* app, const int ebi)
+ const Albany::Application* app, const int ebi, const bool explicit_scheme)
 {
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
     app, app->getEnrichedMeshSpecs()[ebi].get());

@@ -1,17 +1,20 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
+#endif
 
 using Teuchos::RCP;
 using Teuchos::rcp;
 
 namespace {
+#ifdef ALBANY_EPETRA
 class SGConverter : public Petra::Converter {
 public:
   SGConverter (Albany::AbstractResponseFunction* arf,
@@ -68,6 +71,7 @@ public:
 private:
   Albany::AbstractResponseFunction* arf_;
 };
+#endif
 }
 
 #ifdef ALBANY_SG

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -104,10 +104,7 @@ Albany::ModelEvaluator::ModelEvaluator(
   p_sg_vals.resize(num_param_vecs);
   p_mp_vals.resize(num_param_vecs);
 #endif
-  //`const Epetra_Comm& comm = app->getMap()->Comm();
-  //const Epetra_Comm& comm = *app->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   for (int i=0; i<num_param_vecs; i++) {
 
     // Initialize Sacado parameter vector
@@ -258,8 +255,7 @@ Albany::ModelEvaluator::get_p_map(int l) const
     "Invalid parameter index l = " << l << std::endl);
   if (l < num_param_vecs)
     return epetra_param_map[l];
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   return Petra::TpetraMap_To_EpetraMap(distParamLib->get(dist_param_names[l-num_param_vecs])->map(), comm);
 }
 
@@ -332,8 +328,7 @@ Albany::ModelEvaluator::get_p_init(int l) const
   if (l < num_param_vecs)
     return epetra_param_vec[l];
   Teuchos::RCP<Epetra_Vector> epetra_param_vec_to_return;
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->vector(), epetra_param_vec_to_return,
                                       comm);
   return epetra_param_vec_to_return;
@@ -356,8 +351,7 @@ Albany::ModelEvaluator::get_p_lower_bounds(int l) const
   }
 
   Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector(), epetra_bounds_vec_to_return, comm);
   return epetra_bounds_vec_to_return;
 }
@@ -377,8 +371,7 @@ Albany::ModelEvaluator::get_p_upper_bounds(int l) const
   }
 
   Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->upper_bounds_vector(), epetra_bounds_vec_to_return, comm);
   return epetra_bounds_vec_to_return;
 }
@@ -668,9 +661,9 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   Teuchos::RCP<const Epetra_Vector> x_dot;
   Teuchos::RCP<const Epetra_Vector> x_dotdot;
 
-  //create comm and node objects for Epetra -> Tpetra conversions
+  //get comm for Epetra -> Tpetra conversions
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   //Create Tpetra copy of x, call it xT
   Teuchos::RCP<const Tpetra_Vector> xT;
   if (x != Teuchos::null)

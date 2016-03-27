@@ -7,6 +7,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHard.g
                ${CMAKE_CURRENT_BINARY_DIR}/MultiSlipPlaneHard.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHardRev.g
+               ${CMAKE_CURRENT_BINARY_DIR}/MultiSlipPlaneHardRev.g COPYONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHard_Implicit.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MultiSlipPlaneHard_Implicit.xml COPYONLY)
@@ -28,6 +30,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MultiSlipPlaneHard_Implicit_Active_Se
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_hard_implicit.py
                ${CMAKE_CURRENT_BINARY_DIR}/plot_hard_implicit.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/examineCondition.py
+               ${CMAKE_CURRENT_BINARY_DIR}/examineCondition.py COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)

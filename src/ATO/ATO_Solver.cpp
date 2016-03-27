@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -1045,7 +1045,7 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
     RCP<const Tpetra_Vector> initial_guessT = Teuchos::null;
     if (!initial_guess.is_null())
       initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT);
-    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
+    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, commT, commT, initial_guessT);
   }
 
 

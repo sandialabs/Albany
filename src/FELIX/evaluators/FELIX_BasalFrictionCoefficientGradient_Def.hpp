@@ -43,7 +43,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_CONSTANT;
   }
-  else if (betaType == "Given Field")
+  else if ((betaType == "Given Field") || (betaType == "Exponent of Given Field"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant beta, loaded from file.\n";

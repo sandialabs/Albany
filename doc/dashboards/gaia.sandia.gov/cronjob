@@ -1,0 +1,7 @@
+#the following is run on the edison01 login
+
+00 10 * * 1-7  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyEdisonCDash; bash -l -c "source edison_modules.sh; bash nightly_cron_script_trilinos_edison.sh"
+00 05 * * 1-7  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyEdisonCDash; bash -l -c "source edison_modules.sh; bash nightly_cron_script_albany_edison.sh"
+30 06 * * 1-7  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyEdisonCDash; bash -l -c "source edison_modules.sh; bash nightly_cron_script_cismAlbany_edison.sh"
+00 09 * * 1-7 chmod -R 0755 /project/projectdirs/piscees/nightlyEdisonCDash
+

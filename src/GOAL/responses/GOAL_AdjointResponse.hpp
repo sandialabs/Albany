@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -9,7 +9,6 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
-#include "Albany_AbstractProblem.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -62,7 +61,7 @@ class AdjointResponse :
     bool enrichAdjoint;
 
     Teuchos::RCP<Albany::Application> application;
-    Teuchos::RCP<Albany::AbstractProblem> problem;
+    Teuchos::RCP<Albany::GOALMechanicsProblem> problem;
     Teuchos::RCP<Albany::StateManager> stateManager;
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
     Teuchos::ParameterList params;

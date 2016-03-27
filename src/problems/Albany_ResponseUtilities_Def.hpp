@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -149,11 +149,24 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
   else if (responseName == "Surface Mass Balance Mismatch")
   {
-    RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
-      rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    if (dls.size()<=1)
+    {
+      // No side data layouts have been passed to this class
+      RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
+        rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
+      fm.template registerEvaluator<EvalT>(res_ev);
+      response_tag = res_ev->getResponseFieldTag();
+      fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    }
+    else
+    {
+      // Specific layouts for the sides have been passed to the class
+      RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
+        rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dls));
+      fm.template registerEvaluator<EvalT>(res_ev);
+      response_tag = res_ev->getResponseFieldTag();
+      fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    }
   }
 
 #endif

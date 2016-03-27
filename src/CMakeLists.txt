@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -177,6 +177,7 @@ SET(HEADERS ${HEADERS}
 ENDIF()
 SET(SOURCES ${SOURCES}
   responses/Albany_AggregateScalarResponseFunction.cpp
+  responses/Albany_CumulativeScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
   responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
@@ -195,6 +196,7 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
+  responses/Albany_CumulativeScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp
@@ -264,6 +266,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFInterpolationSide.cpp
   evaluators/PHAL_DOFGradInterpolation.cpp
   evaluators/PHAL_DOFGradInterpolationSide.cpp
+  evaluators/PHAL_DOFDivInterpolationSide.cpp
   evaluators/PHAL_DOFSideToCell.cpp
   evaluators/PHAL_DOFVecCellToSide.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
@@ -373,6 +376,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFGradInterpolation_Def.hpp
   evaluators/PHAL_DOFGradInterpolationSide.hpp
   evaluators/PHAL_DOFGradInterpolationSide_Def.hpp
+  evaluators/PHAL_DOFDivInterpolationSide.hpp
+  evaluators/PHAL_DOFDivInterpolationSide_Def.hpp
   evaluators/PHAL_DOFInterpolation.hpp
   evaluators/PHAL_DOFInterpolation_Def.hpp
   evaluators/PHAL_DOFInterpolationSide.hpp
@@ -800,6 +805,10 @@ endif()
 IF (ALBANY_DAKOTA AND ALBANY_EPETRA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
+ENDIF ()
+IF (ALBANY_DAKOTA)
+  add_executable(AlbanyDakotaT Main_DakotaT.cpp Albany_DakotaT.cpp Albany_DakotaT.hpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakotaT)
 ENDIF ()
 
 IF (ALBANY_MOR AND ALBANY_EPETRA)

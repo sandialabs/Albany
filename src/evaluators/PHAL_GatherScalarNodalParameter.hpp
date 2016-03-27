@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -45,6 +45,7 @@ public:
 
   // This function requires template specialization, in derived class below
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
+  virtual ~GatherScalarNodalParameterBase(){};
 
 protected:
 
@@ -69,6 +70,24 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 };
 
+// General version for most evaluation types
+template<typename EvalT, typename Traits>
+class GatherScalarExtruded2DNodalParameter :
+    public GatherScalarNodalParameterBase<EvalT, Traits>  {
+
+public:
+  GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+    GatherScalarNodalParameterBase<EvalT, Traits>(p, dl) {
+    fieldLevel = p.get<int>("Field Level");
+  }
+
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename EvalT::ParamScalarT ParamScalarT;
+  int fieldLevel;
+};
+
+
 // **************************************************************
 // **************************************************************
 // * Specializations
@@ -92,6 +111,24 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
+};
+
+
+template<typename Traits>
+class GatherScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::DistParamDeriv,Traits> :
+    public GatherScalarNodalParameterBase<PHAL::AlbanyTraits::DistParamDeriv,
+                                          Traits>  {
+
+public:
+  GatherScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+    GatherScalarNodalParameterBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p, dl) {
+    fieldLevel = p.get<int>("Field Level");
+  }
+
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ParamScalarT ParamScalarT;
+  int fieldLevel;
 };
 
 }

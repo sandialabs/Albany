@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -19,6 +19,7 @@
 #include "PHAL_DOFCellToSide.hpp"
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_DOFGradInterpolationSide.hpp"
+#include "PHAL_DOFDivInterpolationSide.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFInterpolationSide.hpp"
 #include "PHAL_DOFTensorInterpolation.hpp"
@@ -238,6 +239,29 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarNodalParameter(
     return rcp(new PHAL::GatherScalarNodalParameter<EvalT,Traits>(*p,dl));
 }
 
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarExtruded2DNodalParameter(
+       const std::string& param_name,
+       const std::string& field_name)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    using std::string;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Parameter"));
+    p->set<std::string>("Parameter Name", param_name);
+    if (field_name!="")
+      p->set<std::string>("Field Name", field_name);
+    else
+      p->set<std::string>("Field Name", param_name);
+
+      p->set<int>("Field Level", 0);
+    return rcp(new PHAL::GatherScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
+}
+
 template<typename EvalT, typename Traits>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
@@ -262,6 +286,34 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
     p->set<std::string>("Scatter Field Name", scatterName);
 
     return rcp(new PHAL::ScatterResidual<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluatorWithExtrudedParams(
+       bool isVectorField,
+       Teuchos::ArrayRCP<std::string> resid_names,
+       Teuchos::RCP<std::map<std::string, int> > extruded_params_levels,
+       int offsetToFirstDOF, std::string scatterName)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    using std::string;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Scatter Residual"));
+    p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names);
+    p->set< Teuchos::RCP<std::map<std::string, int> > >("Extruded Params Levels", extruded_params_levels);
+
+    if(isVectorField)
+      p->set<int>("Tensor Rank", 1);
+    else
+      p->set<int>("Tensor Rank", 0);
+
+    p->set<int>("Offset of First DOF", offsetToFirstDOF);
+    p->set<std::string>("Scatter Field Name", scatterName);
+
+    return rcp(new PHAL::ScatterResidualWithExtrudedParams<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>
@@ -560,6 +612,7 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationSideEvaluator
     using Teuchos::ParameterList;
 
     RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation Side "+dof_name));
+
     // Input
     p->set<std::string>("Variable Name", dof_name);
     p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
@@ -569,6 +622,29 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationSideEvaluator
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
     return rcp(new PHAL::DOFGradInterpolationSide_noDeriv<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructDOFDivInterpolationSideEvaluator(
+       const std::string& dof_name,
+       const std::string& sideSetName)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Div Interpolation Side "+dof_name));
+
+    // Input
+    p->set<std::string>("Variable Name", dof_name);
+    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
+    p->set<std::string> ("Side Set Name",sideSetName);
+
+    // Output (assumes same Name as input)
+    p->set<std::string>("Divergence Variable Name", dof_name+" Divergence");
+
+    return rcp(new PHAL::DOFDivInterpolationSide<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>

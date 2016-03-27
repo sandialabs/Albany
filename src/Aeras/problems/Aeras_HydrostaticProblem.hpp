@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -18,12 +18,12 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_GatherSolution.hpp"
 #include "Aeras_ScatterResidual.hpp"
+#include "Aeras_ComputeAndScatterJac.hpp"
 #include "Aeras_DOFInterpolation.hpp"
 #include "Aeras_DOFInterpolationLevels.hpp"
 #include "Aeras_DOFVecInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolation.hpp"
 #include "Aeras_DOFDivInterpolationLevels.hpp"
-#include "Aeras_DOFDivInterpolationLevelsSEM.hpp"
 #include "Aeras_VorticityLevels.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
@@ -47,6 +47,19 @@
 
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
+
+#include "Intrepid2_FieldContainer.hpp"
+#include "Intrepid2_CubaturePolylib.hpp"
+#include "Intrepid2_CubatureTensor.hpp"
+
+#include "Shards_CellTopology.hpp"
+
+#include "Aeras_Eta.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_ProblemUtils.hpp"
+#include "Albany_EvaluatorUtils.hpp"
+#include "Aeras/responses/Aeras_LayeredResponseUtilities.hpp"
+#include "PHAL_Neumann.hpp"
 
 namespace Aeras {
 
@@ -117,23 +130,6 @@ namespace Aeras {
     const int numTracers;
   };
 
-}
-
-#include "Intrepid2_FieldContainer.hpp"
-#include "Intrepid2_CubaturePolylib.hpp"
-#include "Intrepid2_CubatureTensor.hpp"
-
-#include "Shards_CellTopology.hpp"
-
-#include "Aeras_Eta.hpp"
-#include "Albany_Utils.hpp"
-#include "Albany_ProblemUtils.hpp"
-#include "Albany_EvaluatorUtils.hpp"
-#include "Aeras/responses/Aeras_LayeredResponseUtilities.hpp"
-#include "PHAL_Neumann.hpp"
-
-#include "Aeras_XZHydrostaticResid.hpp"
-
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Aeras::HydrostaticProblem::constructEvaluators(
@@ -152,7 +148,8 @@ Aeras::HydrostaticProblem::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   {
     Teuchos::ParameterList& xzhydrostatic_params = params->sublist("Hydrostatic Problem");
     const typename EvalT::ScalarT Ptop = xzhydrostatic_params.get<double>("Ptop", 101.325); 
@@ -439,6 +436,13 @@ Aeras::HydrostaticProblem::constructEvaluators(
     // Input
     p->set<string>("Velx",                   dof_names_levels[0]);
     p->set<string>("Gradient BF Name",       "Grad BF");
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    p->set<string>("Jacobian Name",              "Jacobian");
+    ///for sem vorticity
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    ///for sem vorticity
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
     //Output
     p->set<string>("Vorticity Variable Name", "Vorticity_QP");
    
@@ -739,28 +743,28 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
   {//Gradient Pi weighted Velocity 
     RCP<ParameterList> p = rcp(new ParameterList("Divergence PiVelx"));
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
     // Input
     p->set<string>("Variable Name",          "PiVelx");
     p->set<string>("Gradient BF Name",       "Grad BF");
+
+    ///for strong divergence
+    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    ///for strong divergence
+    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+        ("Intrepid2 Basis", intrepidBasis);
+    ///for strong divergence
+    p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    ///for strong divergence
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+
     //Output
     p->set<string>("Divergence Variable Name", "Divergence QP PiVelx");
    
     ev = rcp(new Aeras::DOFDivInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-    fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  {//Divergence of Pi weighted Velocity
-    RCP<ParameterList> p = rcp(new ParameterList("Divergence PiVelx SEM"));
-    // Input
-    p->set<string>("Variable Name",          "PiVelx");
-    p->set<string>("Gradient BF Name",       "Grad BF");
-    p->set<string>("Jacobian Det Name",          "Jacobian Det");
-    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
-    //add grad at _cub_points
-    //Output
-    p->set<string>("Divergence SEM Variable Name", "Divergence SEM QP PiVelx");
-
-    ev = rcp(new Aeras::DOFDivInterpolationLevelsSEM<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -854,9 +858,24 @@ Aeras::HydrostaticProblem::constructEvaluators(
 
     {//Divergence QP UTracer
       RCP<ParameterList> p = rcp(new ParameterList("Divergence UTracer"));
+
+      p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+      Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+      p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
       // Input
       p->set<string>("Variable Name",          "U"+dof_names_tracers[t]);
       p->set<string>("Gradient BF Name",       "Grad BF");
+
+      ///for strong divergence
+      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      ///for strong divergence
+      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+              ("Intrepid2 Basis", intrepidBasis);
+      ///for strong divergence
+      p->set<string>("Jacobian Det Name",          "Jacobian Det");
+          ///for strong divergence
+      p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
+
       //Output
       p->set<string>("Divergence Variable Name", "U"+dof_names_tracers[t]+"_divergence");
     
@@ -945,4 +964,8 @@ Aeras::HydrostaticProblem::constructEvaluators(
 
   return Teuchos::null;
 }
+
+
+}
+
 #endif // AERAS_HYDROSTATICPROBLEM_HPP

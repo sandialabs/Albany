@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -9,6 +9,8 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+
+#include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
 #include "Albany_AbstractProblem.hpp"
 
@@ -94,6 +96,12 @@ public:
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC>>>
       new_state) const;
 
+  ///
+  /// Add a custom NOX Status Test (for example, to trigger a global load step reduction)
+  ///
+  void
+  applyProblemSpecificSolverSettings(Teuchos::RCP<Teuchos::ParameterList> params);
+
   //----------------------------------------------------------------------------
 private:
 
@@ -135,6 +143,7 @@ public:
   void
   constructNeumannEvaluators(
       const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+  
 
   //----------------------------------------------------------------------------
 protected:
@@ -339,6 +348,11 @@ protected:
   ///
   Teuchos::RCP<AAdapt::rc::Manager> rc_mgr_;
 
+  ///
+  /// User defined NOX Status Test that allows model evaluators to set the NOX status to "failed".
+  /// This is useful because it forces a global load step reduction.
+  ///
+  Teuchos::RCP<NOX::StatusTest::Generic> userDefinedNOXStatusTest;
 };
 //------------------------------------------------------------------------------
 }
@@ -456,6 +470,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   *out << "material model name: " << material_model_name << std::endl;
 #endif
 
+  // insert user-defined NOX Status Test for material models that use it
+  {
+    std::string matName = material_db_->getElementBlockParam<std::string>(eb_name, "material");
+    Teuchos::ParameterList& param_list = material_db_->getElementBlockSublist(eb_name, matName);
+    std::string materialModelName = param_list.sublist("Material Model").get<std::string>("Model Name");
+    if(materialModelName == "CrystalPlasticity"){
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
+	Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(userDefinedNOXStatusTest);
+      param_list.set< Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> >("NOX Status Test", statusTest);
+    }
+  }
+
   // define cell topologies
   Teuchos::RCP<shards::CellTopology> comp_cellType =
       Teuchos::rcp(
@@ -502,9 +528,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     small_strain = true;
   }
 
-  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
-    small_strain = true;
-  }
+//  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
+//    small_strain = true;
+//  }
 
   // Surface element checking
   bool surface_element = false;
@@ -1304,7 +1330,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // There may not be a source in every element block
 
       if (material_db_->isElementBlockSublist(eb_name, "Source Functions")) { // Thermal source in matDB
-
+          
         Teuchos::ParameterList& srcParamList = material_db_->
             getElementBlockSublist(eb_name, "Source Functions");
 
@@ -1319,6 +1345,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
           thermal_source_evaluated_ = true;
         }
+      }
+      else // Do not evaluate heat source in TransportResidual
+      {
+          thermal_source_evaluated_ = false;
       }
     }
     else
@@ -1932,6 +1962,17 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
           AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
       }
+      
+      // Mechanics residual need value of density for transient analysis.
+      // Get it from material. Assumed constant in element block.
+            if (material_db_->isElementBlockParam(eb_name,"Density"))
+            {
+                RealType density =
+                    material_db_->getElementBlockParam<RealType>(eb_name, 
+                        "Density");
+                p->set<RealType>("Density", density);
+            }
+      
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
       //Output
       p->set<std::string>("Residual Name", "Displacement Residual");
@@ -2756,7 +2797,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     ev = Teuchos::rcp(new LCM::HDiffusionDeformationMatterResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-
   }
 
   if (have_transport_eq_ && surface_element) { // Transport Resid for Surface

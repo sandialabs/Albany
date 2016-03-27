@@ -54,6 +54,7 @@
     </ParameterList>
 
     <ParameterList name="FELIX Basal Friction Coefficient">
+      <Parameter name="Basal Side Name" type="string" value="basalside"/>
       <Parameter name="Type" type="string" value="Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
     </ParameterList>
 

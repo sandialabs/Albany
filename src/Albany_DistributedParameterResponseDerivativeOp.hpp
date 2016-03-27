@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -116,8 +116,7 @@ namespace Albany {
      * with this operator.
      */
     virtual const Epetra_Comm& Comm() const {
-      comm_e = createEpetraCommFromTeuchosComm(
-        app->getDistParamLib()->get(param_name)->map()->getComm());
+      comm_e = app->getEpetraComm();
       return *comm_e;
     }
 
@@ -185,8 +184,8 @@ namespace Albany {
 
     // For conversion. Since the methods return const&, the data cannot be
     // temporaries.
-    mutable Teuchos::RCP<Epetra_Comm> comm_e;
-    mutable Teuchos::RCP<Epetra_Map> domain_map, range_map;
+    mutable Teuchos::RCP<const Epetra_Comm> comm_e;
+    mutable Teuchos::RCP<const Epetra_Map> domain_map, range_map;
 
   }; // class DistributedParameterResponseDerivativeOp
 

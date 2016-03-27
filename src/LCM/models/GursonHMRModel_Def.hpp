@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -201,7 +201,11 @@ computeState(typename Traits::EvalData workset,
       Fpinv = Intrepid2::inverse(Fpn);
       Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
       be = F * Cpinv * Intrepid2::transpose(F);
+#if defined(KOKKOS_HAVE_CUDA)
+      logbe = Intrepid2::log<ScalarT>(be);
+#else
       logbe = Intrepid2::log_sym<ScalarT>(be);
+#endif
       trlogbeby3 = Intrepid2::trace(logbe) / 3.0;
       detbe = Intrepid2::det<ScalarT>(be);
       s = mu * (logbe - trlogbeby3 * I);

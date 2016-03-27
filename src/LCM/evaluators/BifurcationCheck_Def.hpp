@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -57,7 +57,7 @@ namespace LCM {
   void BifurcationCheck<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    Intrepid2::Vector<ScalarT> direction(1.0, 0.0, 0.0);
+    Intrepid2::Vector<ScalarT, 3> direction(1.0, 0.0, 0.0);
     Intrepid2::Tensor4<ScalarT, 3> tangent;
     bool ellipticity_flag(false);
     ScalarT min_detA(1.0);
@@ -67,13 +67,24 @@ namespace LCM {
 
         tangent.fill( tangent_,cell,pt,0,0,0,0);
         ellipticity_flag_(cell,pt) = 0;
-
-        //boost::tie(ellipticity_flag, direction) 
-         // = Intrepid2::check_strong_ellipticity(tangent);
-        
+       
         double interval = parametrization_interval_;
 
-	    if (parametrization_type_ == "Spherical") {
+        if (parametrization_type_ == "Oliver") {
+            
+          boost::tie(ellipticity_flag, direction) 
+            = Intrepid2::check_strong_ellipticity(tangent);
+          min_detA = Intrepid2::det(
+            Intrepid2::dot2(direction,Intrepid2::dot(tangent, direction)));
+        }
+	    else if (parametrization_type_ == "PSO") {
+	      
+	      Intrepid2::Vector<ScalarT, 2> arg_minimum;
+		  
+		  min_detA = stereographic_pso(tangent, arg_minimum, direction);
+	    
+	    } 
+	    else if (parametrization_type_ == "Spherical") {
 	      
 	      Intrepid2::Vector<ScalarT, 2> arg_minimum;
 		  
@@ -92,27 +103,27 @@ namespace LCM {
 	    else if(parametrization_type_ == "Projective") {
 	    
 	      Intrepid2::Vector<ScalarT, 3> arg_minimum;      
-		
+		  
 		  min_detA = projective_sweep(tangent, arg_minimum, direction, interval);
 		  projective_newton_raphson(tangent, arg_minimum, direction, min_detA);
-	    
+	      
 	    } 
 	    else if(parametrization_type_ == "Tangent") {
 	    
 	      Intrepid2::Vector<ScalarT, 2> arg_minimum;
-		
+		  
 		  min_detA = tangent_sweep(tangent, arg_minimum, direction, interval);		
 		  tangent_newton_raphson(tangent, arg_minimum, direction, min_detA);
-	    
+	      
 	    } 
 	    else if(parametrization_type_ == "Cartesian") {
 		
 		  Intrepid2::Vector<ScalarT, 2> arg_minimum1;
 		  Intrepid2::Vector<ScalarT, 2> arg_minimum2;
 		  Intrepid2::Vector<ScalarT, 2> arg_minimum3;
-		  Intrepid2::Vector<ScalarT> direction1(1.0, 0.0, 0.0);
-		  Intrepid2::Vector<ScalarT> direction2(0.0, 1.0, 0.0);
-		  Intrepid2::Vector<ScalarT> direction3(0.0, 0.0, 1.0);
+		  Intrepid2::Vector<ScalarT, 3> direction1(1.0, 0.0, 0.0);
+		  Intrepid2::Vector<ScalarT, 3> direction2(0.0, 1.0, 0.0);
+		  Intrepid2::Vector<ScalarT, 3> direction3(0.0, 0.0, 1.0);
 	      
 		  ScalarT min_detA1 = cartesian_sweep(tangent, 
 		    arg_minimum1, 1, direction1, interval);
@@ -149,18 +160,18 @@ namespace LCM {
 		    min_detA = min_detA3;		  
 		    direction = direction3;
 		  }
-	    
+	      
 	    } 
 	    else {
 	    
 	      Intrepid2::Vector<ScalarT, 2> arg_minimum;
-		
+		  
 		  min_detA = spherical_sweep(tangent, arg_minimum, direction, interval);		
 		  spherical_newton_raphson(tangent, arg_minimum, direction, min_detA);
 	    }
         
-        ellipticity_flag = false;
-        if(min_detA <= 0.0) ellipticity_flag = true;
+        ellipticity_flag = true;
+        if(min_detA <= 0.0) ellipticity_flag = false;
 
         ellipticity_flag_(cell,pt) = ellipticity_flag;
         min_detA_(cell,pt) = min_detA;
@@ -181,7 +192,7 @@ namespace LCM {
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   spherical_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 2> & arg_minimum, 
-    Intrepid2::Vector<ScalarT> & direction, double const & interval)
+    Intrepid2::Vector<ScalarT, 3> & direction, double const & interval)
   { 
     Intrepid2::Index const 
     p_number = floor(1.0/interval);
@@ -227,34 +238,6 @@ namespace LCM {
     theta_num_points = p_number * 2 + 1;
     //theta_num_points = p_number + 1;
     
-    /*----------------------------- landscape data ---------------------------//
-    std::string directory = "./LandscapeData/";
-    std::string filename = directory + "Spherical-Sweep.txt";
-    std::ofstream fout(filename);
-    for (int i=0; i<=128; i++) {
-      for (int j=0; j<=128; j++) {
-        ScalarT phi = phi_min + i*(phi_max-phi_min)/128.0;
-        ScalarT theta = theta_min + j*(theta_max-theta_min)/128.0;
-        Intrepid2::Vector<ScalarT, 3>
-        normal(sin(phi) * sin(theta), cos(phi), sin(phi) * cos(theta));
-      
-        // Localization tensor
-        Intrepid2::Tensor<ScalarT, 3>
-        Q = Intrepid2::dot2(normal, Intrepid2::dot(tangent, normal));
-        ScalarT determinant = Intrepid2::det(Q);
-        fout.width(15);
-        fout << phi;
-        fout.width(15);
-        fout << theta;
-        fout.width(15);
-        fout << determinant << std::endl;
-      }
-    }
-    fout << std::endl;
-    fout << std::flush;
-    fout.close();
-    //------------------------------------------------------------------------*/
-
     Intrepid2::Vector<ScalarT, 2> const
     sphere_min(phi_min, theta_min);
 
@@ -299,7 +282,7 @@ namespace LCM {
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   stereographic_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 2> & arg_minimum,  
-    Intrepid2::Vector<ScalarT> & direction, double const & interval)
+    Intrepid2::Vector<ScalarT, 3> & direction, double const & interval)
   {    
     Intrepid2::Index const 
     p_number = floor(1.0/interval);
@@ -344,38 +327,6 @@ namespace LCM {
     Intrepid2::Index const
     y_num_points = p_number * 2 + 1;
     //y_num_points = p_number + 1;
-
-    /*----------------------------- landscape data ---------------------------//
-    std::string directory = "./LandscapeData/";
-    std::string filename = directory + "Stereographic-Sweep.txt";
-    std::ofstream fout(filename);
-    for (int i=0; i<=128; i++) {
-      for (int j=0; j<=128; j++) {
-        ScalarT x = x_min + i*(x_max-x_min)/128.0;
-        ScalarT y = y_min + j*(y_max-y_min)/128.0;
-
-        ScalarT r2 = x * x + y * y;
-
-        Intrepid2::Vector<ScalarT, 3> 
-        normal(2.0 * x, 2.0 * y, r2 - 1.0);
-        normal /= (r2 + 1.0);
-      
-        // Localization tensor
-        Intrepid2::Tensor<ScalarT, 3>
-        Q = Intrepid2::dot2(normal, Intrepid2::dot(tangent, normal));
-        ScalarT determinant = Intrepid2::det(Q);
-        fout.width(15);
-        fout << x;
-        fout.width(15);
-        fout << y;
-        fout.width(15);
-        fout << determinant << std::endl;
-      }
-    }
-    fout << std::endl;
-    fout << std::flush;
-    fout.close();
-    //------------------------------------------------------------------------*/
 
     Intrepid2::Vector<ScalarT, 2> const
     stereographic_min(x_min, y_min);
@@ -423,7 +374,7 @@ namespace LCM {
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   projective_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 3> & arg_minimum,  
-    Intrepid2::Vector<ScalarT> & direction, double const & interval)
+    Intrepid2::Vector<ScalarT, 3> & direction, double const & interval)
   {   
     Intrepid2::Index const 
     p_number = floor(1.0/interval);
@@ -478,50 +429,7 @@ namespace LCM {
     Intrepid2::Index const
     z_num_points = p_number * 2 + 1;
     //z_num_points = p_number + 1;
-    
-    /*----------------------------- landscape data ---------------------------//
-    std::string directory = "./LandscapeData/";
-    std::string filename = directory + "Projective-Sweep.txt";
-    std::ofstream fout(filename);
-    for (int i=0; i<=x_num_points; i++) {
-      for (int j=0; j<=y_num_points; j++) {
-        for (int k=0; k<=z_num_points; k++) {
-        ScalarT x = x_min + i*(x_max-x_min)/(x_num_points-1);
-        ScalarT y = y_min + j*(y_max-y_min)/(y_num_points-1);
-        ScalarT z = z_min + k*(z_max-z_min)/(z_num_points-1);
-
-        Intrepid2::Vector<ScalarT, 3>
-        normal(x, y, z);
-
-        ScalarT const
-        n = Intrepid2::norm(normal);
-
-        if (n > 0.0) {
-          normal /= n;
-        } else {
-          normal = Intrepid2::Vector<ScalarT, 3>(1.0, 1.0, 1.0);
-        }
-      
-        // Localization tensor
-        Intrepid2::Tensor<ScalarT, 3>
-        Q = Intrepid2::dot2(normal, Intrepid2::dot(tangent, normal));
-        ScalarT determinant = Intrepid2::det(Q);
-        fout.width(15);
-        fout << x;
-        fout.width(15);
-        fout << y;
-        fout.width(15);
-        fout << z;
-        fout.width(15);
-        fout << determinant << std::endl;
-        }
-      }
-    }
-    fout << std::endl;
-    fout << std::flush;
-    fout.close();
-    //------------------------------------------------------------------------*/    
-    
+       
     Intrepid2::Vector<ScalarT, 3> const
     projective_min(x_min, y_min, z_min);
 
@@ -564,7 +472,7 @@ namespace LCM {
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   tangent_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 2> & arg_minimum,  
-    Intrepid2::Vector<ScalarT> & direction, double const & interval)
+    Intrepid2::Vector<ScalarT, 3> & direction, double const & interval)
   {   
     Intrepid2::Index const 
     p_number = floor(1.0/interval);
@@ -610,49 +518,6 @@ namespace LCM {
     y_num_points = p_number * 2 + 1;
     //y_num_points = p_number + 1;
     
-    /*----------------------------- landscape data ---------------------------//
-    std::string directory = "./LandscapeData/";
-    std::string filename = directory + "Tangent-Sweep.txt";
-    std::ofstream fout(filename);
-    for (int i=0; i<=128; i++) {
-      for (int j=0; j<=128; j++) {
-        ScalarT x = x_min + i*(x_max-x_min)/128.0;
-        ScalarT y = y_min + j*(y_max-y_min)/128.0;
-
-        ScalarT const
-        r = std::sqrt(x * x + y * y);
-
-        Intrepid2::Vector<ScalarT, 3>
-        normal(3, Intrepid2::ZEROS);
-
-        if (r > 0.0) {
-          normal(0) = x * std::sin(r) / r;
-          normal(1) = y * std::sin(r) / r;
-          normal(2) = std::cos(r);
-        } else {
-          normal(0) = 0.0;
-          normal(1) = 0.0;
-          normal(2) = 1.0;
-        }
-
-      
-        // Localization tensor
-        Intrepid2::Tensor<ScalarT, 3>
-        Q = Intrepid2::dot2(normal, Intrepid2::dot(tangent, normal));
-        ScalarT determinant = Intrepid2::det(Q);
-        fout.width(15);
-        fout << x;
-        fout.width(15);
-        fout << y;
-        fout.width(15);
-        fout << determinant << std::endl;
-      }
-    }
-    fout << std::endl;
-    fout << std::flush;
-    fout.close();
-    //------------------------------------------------------------------------*/    
-
     Intrepid2::Vector<ScalarT, 2> const
     tangent_min(x_min, y_min);
 
@@ -695,7 +560,7 @@ namespace LCM {
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   cartesian_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
     Intrepid2::Vector<ScalarT, 2> & arg_minimum, int surface_index,  
-    Intrepid2::Vector<ScalarT> & direction, double const & interval)
+    Intrepid2::Vector<ScalarT, 3> & direction, double const & interval)
   {    
     Intrepid2::Index const 
     p_number = floor(1.0/interval);
@@ -730,39 +595,7 @@ namespace LCM {
 
     Intrepid2::Index const
     p_surface_num_points = 1;
-
-    /*----------------------------- landscape data ---------------------------//
-    std::string directory = "./LandscapeData/";
-    std::string filename = directory + "Cartesian-Sweep.txt";
-    std::ofstream fout(filename);
-    for (int i=0; i<=128; i++) {
-      for (int j=0; j<=128; j++) {
-        ScalarT x = p_min + i*(p_max-p_min)/128;
-        ScalarT y = p_min + j*(p_max-p_min)/128;
-        ScalarT z = 1.0;
-
-        Intrepid2::Vector<ScalarT, 3>
-        normal(z, x, y);
-        
-        normal = Intrepid2::unit(normal);
-      
-        // Localization tensor
-        Intrepid2::Tensor<ScalarT, 3>
-        Q = Intrepid2::dot2(normal, Intrepid2::dot(tangent, normal));
-        ScalarT determinant = Intrepid2::det(Q);
-        fout.width(15);
-        fout << x;
-        fout.width(15);
-        fout << y;
-        fout.width(15);
-        fout << determinant << std::endl;
-      }
-    }
-    fout << std::endl;
-    fout << std::flush;
-    fout.close();
-    //------------------------------------------------------------------------*/
-    
+   
     ScalarT min_detA(1.0);
     
     if (surface_index == 1) {
@@ -881,7 +714,7 @@ namespace LCM {
   void BifurcationCheck<EvalT, Traits>::
   spherical_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 2> & parameters,
-    Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
+    Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
   {    
     Intrepid2::Vector<ScalarT, 2> Xval;
     Intrepid2::Vector<DFadType, 2> Xfad;
@@ -973,6 +806,7 @@ namespace LCM {
       for (int i(0); i < 3; ++i)
         direction[i] = (n[i].val()).val();
       
+      
       for (int i(0); i < 2; ++i)
         parameters[i] = X[i];
 
@@ -990,7 +824,7 @@ namespace LCM {
   void BifurcationCheck<EvalT, Traits>::
   stereographic_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 2> & parameters,
-    Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
+    Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
   {    
     Intrepid2::Vector<ScalarT, 2> Xval;
     Intrepid2::Vector<DFadType, 2> Xfad;
@@ -1099,7 +933,7 @@ namespace LCM {
   void BifurcationCheck<EvalT, Traits>::
   projective_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 3> & parameters,
-    Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
+    Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
   { 
     Intrepid2::Vector<ScalarT, 4> parameters_new;
     ScalarT nNorm = Intrepid2::norm(parameters);
@@ -1222,7 +1056,7 @@ namespace LCM {
   void BifurcationCheck<EvalT, Traits>::
   tangent_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 2> & parameters,
-    Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
+    Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
   {    
     Intrepid2::Vector<ScalarT, 2> Xval;
     Intrepid2::Vector<DFadType, 2> Xfad;
@@ -1331,7 +1165,7 @@ namespace LCM {
   void BifurcationCheck<EvalT, Traits>::
   cartesian_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
     Intrepid2::Vector<ScalarT, 2> & parameters, int surface_index,
-    Intrepid2::Vector<ScalarT> & direction, ScalarT & min_detA)
+    Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA)
   {    
     Intrepid2::Vector<ScalarT, 2> Xval;
     Intrepid2::Vector<DFadType, 2> Xfad;
@@ -1454,13 +1288,134 @@ namespace LCM {
           
   //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
+  typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
+  stereographic_pso(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
+    Intrepid2::Vector<ScalarT, 2> & arg_minimum, 
+    Intrepid2::Vector<ScalarT, 3> & direction)
+  {
+    double w = 0.7;
+    double c1 = 0.5;
+    double c2 = 0.5;
+    double r = 1.0;
+    
+    int const group_size = 10;
+    
+    std::vector<Intrepid2::Vector<ScalarT, 2>> arg_group(group_size);
+    std::vector<Intrepid2::Vector<ScalarT, 2>> arg_velocity_group(group_size);
+    
+    std::vector<Intrepid2::Vector<ScalarT, 2>> arg_ibest(group_size);
+    std::vector<ScalarT> detA_ibest(group_size);
+    
+    Intrepid2::Vector<ScalarT, 2> arg_gbest;    
+    ScalarT detA_gbest = std::numeric_limits<ScalarT>::max();
+    
+    std::random_device rd;
+    std::mt19937 mt_eng(rd());
+    std::uniform_real_distribution<double> real_dist(-1.0, 1.0);
+  
+    for (int i=0; i<group_size; i++) {
+    
+      Intrepid2::Vector<ScalarT, 2> arg_tmp;
+      Intrepid2::Vector<ScalarT, 2> arg_velocity_tmp;
+      
+      for (int j=0; j<2; j++) {
+        arg_tmp(j) = real_dist(mt_eng);
+        arg_velocity_tmp(j) = real_dist(mt_eng) * 0.2;
+      }
+
+      arg_group[i] = arg_tmp;
+      arg_velocity_group[i] = arg_velocity_tmp;
+    
+      ScalarT r2 = arg_tmp[0] * arg_tmp[0] + arg_tmp[1] * arg_tmp[1];
+
+      Intrepid2::Vector<ScalarT, 3> 
+      n(2.0 * arg_tmp[0], 2.0 * arg_tmp[1], r2 - 1.0);
+      n /= (r2 + 1.0);
+      
+      arg_ibest[i] = arg_tmp;
+      detA_ibest[i] = Intrepid2::det(Intrepid2::dot2(n,Intrepid2::dot(tangent, n)));
+            
+      if ( detA_gbest>detA_ibest[i] ) {
+        detA_gbest = detA_ibest[i];
+        arg_gbest = arg_group[i];
+      }      
+    } // group initialization
+        
+    bool converged = false;
+    int iter = 0;
+    int const iter_max = 1000;
+    ScalarT error0 = 1.0;
+    while ( !converged ) {
+      
+      ScalarT error = 0.0;
+      
+      for (int i=0; i<group_size; i++) {
+                        
+        arg_velocity_group[i] = w*arg_velocity_group[i] 
+          + c1*real_dist(mt_eng)*(arg_ibest[i]-arg_group[i])
+          + c2*real_dist(mt_eng)*(arg_gbest-arg_group[i]);
+        arg_group[i] += r * arg_velocity_group[i];
+        
+        Intrepid2::Vector<ScalarT, 2> arg_tmp = arg_group[i];
+        
+        ScalarT r2 = arg_tmp[0] * arg_tmp[0] + arg_tmp[1] * arg_tmp[1];
+
+        Intrepid2::Vector<ScalarT, 3> 
+        n(2.0 * arg_tmp[0], 2.0 * arg_tmp[1], r2 - 1.0);
+        n /= (r2 + 1.0);
+        
+        ScalarT detA_tmp = Intrepid2::det(Intrepid2::dot2(n,Intrepid2::dot(tangent, n)));
+                
+        if ( detA_ibest[i]>detA_tmp ) {
+          detA_ibest[i] = detA_tmp;
+          arg_ibest[i] = arg_tmp;
+        } 
+      
+        if ( detA_gbest>detA_ibest[i] ) {
+          detA_gbest = detA_ibest[i];
+          arg_gbest = arg_group[i];
+        }
+        
+        //error += abs(detA_ibest[i] - detA_gbest);
+        error += (detA_tmp - detA_gbest)*(detA_tmp - detA_gbest);
+      }
+
+      //error /= group_size;
+      error = sqrt(error/(group_size-1));
+      if ( iter==0 ) error0 = error;
+      if ( error<=1E-11 || error/error0<=1E-11 ) break;
+      
+      iter ++;            
+      if ( iter>iter_max ) break;           
+            
+    } // group generation iteration
+           
+    ScalarT r2 = arg_gbest[0] * arg_gbest[0] + arg_gbest[1] * arg_gbest[1];
+
+    Intrepid2::Vector<ScalarT, 3> 
+    n(2.0 * arg_gbest[0], 2.0 * arg_gbest[1], r2 - 1.0);
+    n /= (r2 + 1.0);
+    
+    for (int i(0); i < 3; ++i) {
+       direction(i) = n(i);
+    }
+    
+    for (int i(0); i < 2; ++i) {
+       arg_minimum(i) = arg_gbest(i);
+    }
+            
+    return detA_gbest;    
+  }
+  
+  //----------------------------------------------------------------------------
+  template<typename EvalT, typename Traits>
   Intrepid2::Vector<typename BifurcationCheck<EvalT, Traits>::D2FadType, 3> 
   BifurcationCheck<EvalT, Traits>::
   spherical_get_normal(Intrepid2::Vector<D2FadType, 2> & parameters)
   {
     Intrepid2::Vector<D2FadType, 3> 
-    normal(sin(parameters[0]) * sin(parameters[1]), 
-    cos(parameters[0]), sin(parameters[0]) * cos(parameters[1]));
+    normal(sin(parameters[0]) * cos(parameters[1]), 
+      sin(parameters[0]) * sin(parameters[1]), cos(parameters[0]));
     
     return normal;
   }

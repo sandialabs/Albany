@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -14,28 +14,8 @@
 
 namespace LCM{
 
-///
-/// miniMinimize function that wraps the MiniTensor Nonlinear Solvers
-/// and deals with Albany traits and AD sensitivities.
-///
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
-void
-miniMinimize(
-    MIN & minimizer,
-    STEP & step_method,
-    FN & function,
-    Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
-
-template<typename MIN, typename STEP, typename FN, typename T, Intrepid2::Index N>
-void
-miniMinimize(
-    MIN & minimizer,
-    STEP & step_method,
-    FN & function,
-    Intrepid2::Vector<T, N> & soln);
-
 //
-//
+// Class for dealing with Albany traits.
 //
 template<
 typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
@@ -47,6 +27,10 @@ struct MiniSolver
       FN & function,
       Intrepid2::Vector<typename EvalT::ScalarT, N> & soln);
 };
+
+//
+// MiniSolver class specializations for Albany traits.
+//
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
 struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>

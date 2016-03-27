@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -67,14 +67,23 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   // if this is a restart solution
   if (disc_->hasRestartSolution()) {
     if (paramLib_->isParameter("Time")) {
+
       double initialValue = 0.0;
-        if(appParams->get<std::string>("Solution Method", "Steady") == "Continuation")
-          initialValue =
-            appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
-            get<double>("Initial Value", 0.0);
-        else if(appParams->get<std::string>("Solution Method", "Steady") == "Transient")
-          initialValue =
-            appParams->sublist("Piro").sublist("Trapezoid Rule").get<double>("Initial Time", 0.0);
+
+      if(appParams->sublist("Problem").
+         get<std::string>("Solution Method", "Steady") == "Continuation")
+      {
+        initialValue =
+          appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").
+          get<double>("Initial Value", 0.0);
+      }
+      else if(appParams->sublist("Problem").
+              get<std::string>("Solution Method", "Steady") == "Transient")
+      {
+        initialValue =
+          appParams->sublist("Piro").sublist("Trapezoid Rule").
+          get<double>("Initial Time", 0.0);
+      }
       paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
     }
   }
@@ -130,9 +139,6 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
              problemParams->sublist("Initial Condition Dot"));
           current_soln->getVectorNonConst(1)->doExport(*overlapped_soln->getVector(1), *exporterT, Tpetra::INSERT);
        }
-       else if (current_soln->getNumVectors()>1){
-          current_soln->getVectorNonConst(1)->putScalar(0.0);
-       }
 
        if(num_time_deriv > 1){
           overlapped_soln->getVectorNonConst(2)->doImport(*current_soln->getVector(2), *importerT, Tpetra::INSERT);
@@ -140,9 +146,6 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
              overlapped_soln->getVectorNonConst(2), wsElNodeEqID, wsEBNames, coords, neq, numDim,
              problemParams->sublist("Initial Condition DotDot"));
           current_soln->getVectorNonConst(2)->doExport(*overlapped_soln->getVector(2), *exporterT, Tpetra::INSERT);
-        }
-        else if (current_soln->getNumVectors()>2){
-          current_soln->getVectorNonConst(2)->putScalar(0.0);
         }
 
     }

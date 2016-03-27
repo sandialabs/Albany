@@ -1,5 +1,5 @@
 ##*****************************************************************//
-##    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
@@ -159,6 +159,29 @@ IF(NOT ALBANY_HAVE_STK)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp)
 ENDIF()
 
+IF(Kokkos_ENABLE_Cuda)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonModel.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonHMRModel.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/FM_AlbanyInterface.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/CrystalPlasticityCore.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityCore.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityCore_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/CrystalPlasticityModel.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityModel.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp)
+ENDIF()
+
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/lame/LameUtils.cpp
@@ -205,6 +228,7 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
+  ${LCM_DIR}/utils/dtk_interp_and_error
   ${ALBANY_PUMI_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
@@ -229,6 +253,11 @@ IF ( INSTALL_ALBANY )
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+ENDIF()
+
+IF (LCM_TEST_EXES AND ALBANY_DTK) 
+  add_executable(DTK_Interp_and_Error utils/dtk_interp_and_error/dtk_interp_and_error.cpp)
+  add_executable(DTK_Interp_Volume_to_NS utils/dtk_interp_and_error/interpolation_volume_to_ns.cpp)
 ENDIF()
 
 IF (LCM_TEST_EXES AND ALBANY_BGL) 
@@ -386,9 +415,14 @@ ENDIF(BUILD_SHARED_LIBS)
 
 IF(ALBANY_STK_REBALANCE)
   SET(LCM_UT_LIBS ${LCM_UT_LIBS} albanySTKRebalance)
-endif()
+ENDIF()
    
 #Linking tests
+IF (LCM_TEST_EXES AND ALBANY_DTK)
+  set (repeat_libs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${LCM_UT_LIBS} ${ALBANY_LIBRARIES})
+  target_link_libraries(DTK_Interp_and_Error ${repeat_libs} ${ALL_LIBRARIES})
+  target_link_libraries(DTK_Interp_Volume_to_NS ${repeat_libs} ${ALL_LIBRARIES})
+ENDIF()
 IF (LCM_TEST_EXES AND ALBANY_BGL)
   set (repeat_libs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${LCM_UT_LIBS} ${ALBANY_LIBRARIES})
   target_link_libraries(MaterialPointSimulator ${repeat_libs} ${ALL_LIBRARIES})

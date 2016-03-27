@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -28,6 +28,7 @@ class StokesFOBasalResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
   StokesFOBasalResid (const Teuchos::ParameterList& p,
                       const Teuchos::RCP<Albany::Layouts>& dl);
@@ -45,7 +46,7 @@ private:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>         beta;
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>  u;
   PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   BF;
-  PHX::MDField<RealType,Cell,Side,QuadPoint>        w_measure;
+  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     w_measure;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim>            basalResid;
@@ -58,6 +59,7 @@ private:
   int numSideQPs;
   int sideDim;
   int vecDim;
+  int vecDimFO;
 
   bool regularized;
 };

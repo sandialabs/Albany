@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -54,7 +54,7 @@ SaddleValueResponseFunction(
   Teuchos::Array<double> ar;
   Teuchos::RCP<const Teuchos_Comm> commT = application->getComm(); 
 #if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  comm = application->getEpetraComm();
 #endif
   imagePtSize   = params.get<double>("Image Point Size", 0.01);
   nImagePts     = params.get<int>("Number of Image Points", 10);

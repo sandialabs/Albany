@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -47,10 +47,21 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> val_node;
   //! Basis Functions
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-
+  //
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
+  //
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
   // Output:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> vort_val_qp;
+
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refPoints;
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
+
+  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>     vco;
 
   const int numNodes;
   const int numDims;

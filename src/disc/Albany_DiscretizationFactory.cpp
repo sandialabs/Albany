@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -490,11 +490,11 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       case Albany::AbstractMeshStruct::STK_MS: {
         Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
         Teuchos::RCP<Albany::STKDiscretization> disc;
-/*#ifdef ALBANY_FELIX
+#ifdef ALBANY_FELIX
         if (method == "Extruded")
           disc = Teuchos::rcp(new Albany::STKDiscretizationStokesH(ms, commT, rigidBodyModes));
         else
-#endif*/
+#endif
           disc = Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes, sideSetEquations));
         disc->updateMesh();
         return disc;

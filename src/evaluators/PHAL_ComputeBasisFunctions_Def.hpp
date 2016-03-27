@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -97,7 +97,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef typename Intrepid2::CellTools<MeshScalarT>   ICT;
   typedef Intrepid2::FunctionSpaceTools                IFST;
 
-  ICT::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
+  Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
   ICT::setJacobianInv (jacobian_inv, jacobian);
   ICT::setJacobianDet (jacobian_det, jacobian);
 

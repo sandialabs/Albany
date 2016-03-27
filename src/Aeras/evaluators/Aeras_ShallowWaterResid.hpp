@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -54,6 +54,7 @@ private:
 	// Input:
 	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1?
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;

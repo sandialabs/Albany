@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -49,13 +49,12 @@ namespace FELIX {
     int numSurfaceQPs;
     int numSideDims;
 
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>    velocity;
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>    observedVelocity;
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>    observedVelocityRMS;
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>       grad_beta;
-    PHX::MDField<RealType,Cell,Side,Node,QuadPoint>     BF_surface;
-    PHX::MDField<RealType,Cell,Side,QuadPoint>          w_measure_basal;
-    PHX::MDField<RealType,Cell,Side,QuadPoint>          w_measure_surface;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>       velocity;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocity;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocityRMS;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_beta;
+    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_basal;
+    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_surface;
 
     ScalarT p_resp, p_reg, resp, reg;
     double scaling, alpha, asinh_scaling;

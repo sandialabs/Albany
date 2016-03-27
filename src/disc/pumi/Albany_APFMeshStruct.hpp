@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -15,7 +15,9 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#ifdef ALBANY_EPETRA
 #include "EpetraExt_MultiComm.h"
+#endif
 #include <PHAL_Dimension.hpp>
 
 #include <apf.h>

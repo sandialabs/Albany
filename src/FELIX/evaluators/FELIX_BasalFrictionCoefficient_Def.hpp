@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -60,12 +60,15 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     beta_type = GIVEN_CONSTANT;
     beta_given_val = beta_list.get<double>("Constant Given Beta Value");
   }
-  else if (betaType == "Given Field")
+  else if ((betaType == "Given Field")|| (betaType == "Exponent of Given Field"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant beta field, loaded from mesh or file.\n";
 #endif
-    beta_type = GIVEN_FIELD;
+    if (betaType == "Given Field")
+      beta_type = GIVEN_FIELD;
+    else
+      beta_type = EXP_GIVEN_FIELD;
 
     if (is_hydrology)
     {
@@ -202,6 +205,7 @@ postRegistrationSetup (typename Traits::SetupData d,
       }
       break;
     case GIVEN_FIELD:
+    case EXP_GIVEN_FIELD:
       this->utils.setFieldData(BF,fm);
       this->utils.setFieldData(beta_given_field,fm);
       break;
@@ -290,6 +294,19 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
                           / std::pow( u_norm(cell,qp) + lambda*std::pow(A*N(cell,qp),1./power), power);
           }
         break;
+
+      case EXP_GIVEN_FIELD:
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,qp) = 0.;
+            for (int node=0; node<numNodes; ++node)
+            {
+              beta(cell,qp) += BF(cell,node,qp)*beta_given_field(cell,node);
+            }
+            beta(cell,qp) = std::exp(beta(cell,qp));
+          }
+        break;
     }
 
     // Correct the value if we are using a stereographic map
@@ -369,6 +386,18 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
               ScalarT q = u_norm(cell,side,qp) / ( u_norm(cell,side,qp) + lambda*std::pow(A*N(cell,side,qp),1./power) );
               beta(cell,side,qp) = mu * N(cell,side,qp) * std::pow( q, power) / u_norm(cell,side,qp);
             }
+          }
+          break;
+
+        case EXP_GIVEN_FIELD:
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,side,qp) = 0.;
+            for (int node=0; node<numNodes; ++node)
+            {
+              beta(cell,side,qp) += BF(cell,side,node,qp)*beta_given_field(cell,side,node);
+            }
+            beta(cell,side,qp) = std::exp(beta(cell,side,qp));
           }
           break;
       }

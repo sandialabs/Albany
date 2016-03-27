@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -85,7 +85,7 @@ class AbstractDiscretization {
     //! Get Tpetra DOF map
     virtual Teuchos::RCP<const Tpetra_Map> getMapT() const = 0;
     //! Get Tpetra DOF map
-    //dp-convert virtual Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const = 0;
+    virtual Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const = 0;
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlapped DOF map
@@ -96,7 +96,7 @@ class AbstractDiscretization {
     //! Get Tpetra overlapped DOF map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const = 0;
     //! Get field overlapped DOF map
-    //virtual Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const = 0;
+    virtual Teuchos::RCP<const Tpetra_Map> getOverlapMapT(const std::string& field_name) const = 0;
 
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Jacobian graph
@@ -131,6 +131,9 @@ class AbstractDiscretization {
     //! Get Tpetra Node map
     virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT() const = 0;
 
+    //! Get Field Node map
+    virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const = 0;
+
 #if defined(ALBANY_EPETRA)
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
@@ -140,6 +143,12 @@ class AbstractDiscretization {
 #endif
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
+    
+    //! Returns boolean telling code whether explicit scheme is used (needed for Aeras problems only) 
+    virtual bool isExplicitScheme() const = 0;
+
+    //! Get Field Node map
+    virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const = 0;
 
     //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;
@@ -157,7 +166,6 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       getWsElNodeID() const = 0;
 
-#if defined(ALBANY_EPETRA)
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
     virtual const std::vector<IDArray>& getElNodeEqID(const std::string& field_name) const = 0;
 
@@ -166,7 +174,6 @@ class AbstractDiscretization {
 
     //! Get Dof Manager of field field_name
     virtual const NodalDOFManager& getOverlapDOFManager(const std::string& field_name) const = 0;
-#endif
 
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const = 0;
@@ -226,7 +233,7 @@ class AbstractDiscretization {
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const = 0;
 #endif
-    //dp-convert virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
+    virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
 
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
@@ -253,6 +260,9 @@ class AbstractDiscretization {
     //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
 #endif
+    //! Set the field vector into mesh database
+    virtual void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
+
     //! Set the residual field for output - Tpetra version
     virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;
 

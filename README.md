@@ -1,6 +1,10 @@
 # Albany
 
-Albany is an implicit, unstructured grid, finite element code for the solution and analysis of partial differential equations.
+Albany is an implicit, unstructured grid, finite element code for the solution and analysis of multiphysics
+problems. The Albany repository on the GitHub site contains hundreds of regression tests and examples
+that demonstrate the code's capabilities on a wide variety of problems including fluid mechanics, solid 
+mechanics (elasticity and plasticity), ice-sheet flow, 
+[quantum device modeling](http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6242832), and many other applications.
 
 ## Features
 
@@ -10,27 +14,21 @@ Albany is an implicit, unstructured grid, finite element code for the solution a
 
 Illustration of a von Karman vortex street that forms around a heated tube bundle under certain conditions
 
-### Repo branches
-
-The Git repository contains two branches, *master* and *tpetra*. The master branch contains the stable version of Albany that is 
-based on Epetra distributed solver data structures.
-
-The *tpetra* branch is under development to replace the Epetra architecture with
-the Tpetra and Thyra Trilinos packages. With Tpetra, the ordinal size of the
-distributed data structures is a template parameter which is chosen to match the
-fundamental word size of the target computing platform. This enables the calculation of
-very large problems (those over 2.1 billion degrees of freedom). Additionally, Tpetra internally
-uses the Kokkos multicore package to support generic multithreaded multicore computing across
-a wide variety of platforms.
-
 ### Software architecture
 
-Albany heavily leverages the Trilinos Framework, available at:
+Albany heavily leverages the [Trilinos](https://trilinos.org) Framework, available at:
 
-	git clone https://software.sandia.gov/trilinos/repositories/publicTrilinos
+	git clone https://github.com/trilinos/Trilinos.git
 
 and optionally depends on the SCOREC Parallel Unstructured Mesh Infrastructure 
-[http://www.scorec.rpi.edu/pumi](http://www.scorec.rpi.edu/pumi)
+[http://www.scorec.rpi.edu/pumi](http://www.scorec.rpi.edu/pumi).
+
+Albany supports the solution of very large problems (those over 2.1 billion degrees of freedom) using MPI, and
+also demonstrates the use of the [Kokkos](https://github.com/kokkos) hardware abstraction package to support 
+generic manycore computing across a variety of platforms - MPI + [threads, OpenMP, Cuda, Intel MIC].
+
+In addition to supporting embedded sensitivity analysis and uncertainty quantification, Albany can be tightly-coupled
+to [Dakota](https://dakota.sandia.gov) using the Trilinos TriKota package.
 
 ## Building Albany
 
@@ -39,9 +37,8 @@ Detailed build instructions for both Trilinos and Albany are maintained at
 
 ## Nightly Build and Test Results
 
-Ths nightly build results for the Trilinos and SCOREC libraries and the *master* and *tpetra* branches
-of Albany are posted on the Albany CDash site. Further, the results of the regression test suite of both
-branches (gathered on a SMP server) are presented on the CDash site at 
+Ths nightly build results for the Trilinos and SCOREC libraries along with
+Albany and the status of the Albany regression tests are posted on the Albany CDash site at
 [http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany)
 
 The regression test suite is contained within the Albany repository in the directory:
@@ -58,7 +55,8 @@ example directory. The vast majority of Albany tests run in parallel using MPI.
 
 ## Documentation
 
-The HTML user guide is maintained inside the Albany repository at:
+The [HTML user guide](http://gahansen.github.io/Albany/user-guide/guide.html) is 
+maintained inside the Albany repository at:
 
 	/doc/user-guide/guide.html
 
