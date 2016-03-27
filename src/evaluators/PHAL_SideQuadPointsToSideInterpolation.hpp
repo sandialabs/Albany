@@ -56,23 +56,15 @@ private:
   PHX::MDField<ScalarT>                         field_side;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class SideQuadPointsToSideInterpolation : public SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>
-{
-public:
-
-  SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
-                                     const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using SideQuadPointsToSideInterpolation = SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class SideQuadPointsToSideInterpolation_noDeriv : public SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>
-{
-public:
+using SideQuadPointsToSideInterpolationMesh = SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
-  SideQuadPointsToSideInterpolation_noDeriv (const Teuchos::ParameterList& p,
-                                             const Teuchos::RCP<Albany::Layouts>& dl);
-};
+template<typename EvalT, typename Traits>
+using SideQuadPointsToSideInterpolationParam = SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

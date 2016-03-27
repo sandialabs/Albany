@@ -39,7 +39,6 @@
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
 #include "FELIX_StokesFOBodyForce.hpp"
-#include "FELIX_SubglacialHydrostaticPotential.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_FieldNorm.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
@@ -399,7 +398,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   else
   {
     // Interpolate drainage sheet depth
-    ev = evalUtils.constructDOFInterpolationSideEvaluator_noDeriv("Drainage Sheet Depth", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Drainage Sheet Depth", basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
   }
 
@@ -416,7 +415,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate temperature from nodes to cell
-  ev = evalUtils.constructNodesToCellInterpolationEvaluator_noDeriv ("temperature",false);
+  ev = evalUtils.getPSUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Intepolate surface height
@@ -438,11 +437,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Restrict ice thickness from cell-based to cell-side-based
-  ev = evalUtilsBasal.constructDOFCellToSideEvaluator_noDeriv("Ice Thickness",basalSideName,cellType);
+  ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator ("Ice Thickness",basalSideName,cellType);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Restrict surface height from cell-based to cell-side-based
-  ev = evalUtilsBasal.constructDOFCellToSideEvaluator_noDeriv("Surface Height",basalSideName,cellType);
+  ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator ("Surface Height",basalSideName,cellType);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate velocity on QP on side
@@ -450,11 +449,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate thickness on QP on side
-  ev = evalUtilsBasal.constructDOFInterpolationSideEvaluator_noDeriv("Ice Thickness", basalSideName);
+  ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate surface height on QP on side
-  ev = evalUtilsBasal.constructDOFInterpolationSideEvaluator_noDeriv("Surface Height", basalSideName);
+  ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate hydraulic potential gradient
@@ -462,11 +461,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate surface water input
-  ev = evalUtils.constructDOFInterpolationSideEvaluator_noDeriv("Surface Water Input", basalSideName);
+  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Water Input", basalSideName);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate geothermal flux
-  ev = evalUtils.constructDOFInterpolationSideEvaluator_noDeriv("Geothermal Flux", basalSideName);
+  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Geothermal Flux", basalSideName);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // -------------------- Special evaluators for surface side handling ----------------- //
@@ -478,11 +477,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator_noDeriv("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator_noDeriv("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
@@ -547,22 +546,6 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   p->set<std::string>("Field Norm Name","Sliding Velocity");
 
   ev = Teuchos::rcp(new FELIX::FieldNorm<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
-  fm0.template registerEvaluator<EvalT>(ev);
-
-  //--- Hydrostatic potential calculation ---//
-  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Hydrostatic Potential"));
-
-  // Input
-  p->set<std::string>("Ice Thickness Variable Name","Ice Thickness");
-  p->set<std::string>("Surface Height Variable Name","Surface Height");
-  p->set<std::string>("Side Set Name", basalSideName);
-  p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
-  p->set<bool>("Stokes", true);
-
-  // Output
-  p->set<std::string>("Hydrostatic Potential Variable Name","Subglacial Hydrostatic Potential");
-
-  ev = Teuchos::rcp(new FELIX::SubglacialHydrostaticPotential<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Effective pressure calculation ---//

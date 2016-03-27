@@ -36,20 +36,6 @@ DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
   vecDim = dims[3];
 }
 
-template<typename EvalT, typename Traits>
-DOFVecInterpolationSide<EvalT, Traits>::
-DOFVecInterpolationSide(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>(p, dl) {};
-
-template<typename EvalT, typename Traits>
-DOFVecInterpolationSide_noDeriv<EvalT, Traits>::
-DOFVecInterpolationSide_noDeriv(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFVecInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>(p, dl) {};
-
-
-
 //**********************************************************************
 template<typename EvalT, typename Traits, typename Type>
 void DOFVecInterpolationSideBase<EvalT, Traits, Type>::

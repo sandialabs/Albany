@@ -88,24 +88,4 @@ void QuadPointsToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (
   }
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-QuadPointsToCellInterpolation<EvalT, Traits>::
-QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
-{
-  // Nothing to be done here
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-QuadPointsToCellInterpolation_noDeriv<EvalT, Traits>::
-QuadPointsToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
-                                       const Teuchos::RCP<Albany::Layouts>& dl) :
-  QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
-{
-  // Nothing to be done here
-}
-
 } // Namespace PHAL

@@ -57,23 +57,15 @@ private:
   int vecDim;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class DOFVecGradInterpolationSide : public DOFVecGradInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>
-{
-public:
-
-  DOFVecGradInterpolationSide (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFVecGradInterpolationSide = DOFVecGradInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class DOFVecGradInterpolationSide_noDeriv : public DOFVecGradInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
-{
-public:
+using DOFVecGradInterpolationSideMesh = DOFVecGradInterpolationSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
-  DOFVecGradInterpolationSide_noDeriv (const Teuchos::ParameterList& p,
-                                       const Teuchos::RCP<Albany::Layouts>& dl);
-};
+template<typename EvalT, typename Traits>
+using DOFVecGradInterpolationSideParam = DOFVecGradInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

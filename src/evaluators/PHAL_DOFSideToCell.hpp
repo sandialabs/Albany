@@ -21,23 +21,21 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFSideToCell : public PHX::EvaluatorWithBaseImpl<Traits>,
-                      public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFSideToCellBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  DOFSideToCell(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFSideToCellBase (const Teuchos::ParameterList& p,
+                     const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& vm);
 
-  void evaluateFields(typename Traits::EvalData d);
+  void evaluateFields (typename Traits::EvalData d);
 
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
 
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
@@ -52,6 +50,16 @@ private:
 
   int numSideNodes;
 };
+
+// Some shortcut names
+template<typename EvalT, typename Traits>
+using DOFSideToCell = DOFSideToCellBase<EvalT,Traits,typename EvalT::ScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFSideToCellMesh = DOFSideToCellBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFSideToCellParam = DOFSideToCellBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

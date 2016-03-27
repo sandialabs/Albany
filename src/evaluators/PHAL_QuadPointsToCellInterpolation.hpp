@@ -53,21 +53,15 @@ private:
   PHX::MDField<ScalarT>     field_cell;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class QuadPointsToCellInterpolation : public QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>
-{
-public:
-  QuadPointsToCellInterpolation (const Teuchos::ParameterList& p,
-                                 const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using QuadPointsToCellInterpolation = QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class QuadPointsToCellInterpolation_noDeriv : public QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>
-{
-public:
-  QuadPointsToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
-                                         const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using QuadPointsToCellInterpolationMesh = QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using QuadPointsToCellInterpolationParam = QuadPointsToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

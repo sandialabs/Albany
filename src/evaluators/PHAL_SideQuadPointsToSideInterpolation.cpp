@@ -9,5 +9,4 @@
 #include "PHAL_SideQuadPointsToSideInterpolation.hpp"
 #include "PHAL_SideQuadPointsToSideInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SideQuadPointsToSideInterpolation)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SideQuadPointsToSideInterpolation_noDeriv)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::SideQuadPointsToSideInterpolationBase)

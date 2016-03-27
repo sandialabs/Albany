@@ -102,24 +102,4 @@ void NodesToCellInterpolationBase<EvalT, Traits, ScalarT>::evaluateFields (typen
   }
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-NodesToCellInterpolation<EvalT, Traits>::
-NodesToCellInterpolation (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-  NodesToCellInterpolationBase<EvalT, Traits, typename EvalT::ScalarT> (p,dl)
-{
-  // Nothing to be done here
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-NodesToCellInterpolation_noDeriv<EvalT, Traits>::
-NodesToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
-                                  const Teuchos::RCP<Albany::Layouts>& dl) :
-  NodesToCellInterpolationBase<EvalT, Traits, typename EvalT::ParamScalarT> (p,dl)
-{
-  // Nothing to be done here
-}
-
 } // Namespace PHAL

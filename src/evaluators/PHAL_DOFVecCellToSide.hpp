@@ -53,21 +53,15 @@ private:
   int vecDim;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class DOFVecCellToSide : public DOFVecCellToSideBase<EvalT, Traits, typename EvalT::ScalarT>
-{
-public:
-  DOFVecCellToSide (const Teuchos::ParameterList& p,
-                 const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFVecCellToSide = DOFVecCellToSideBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class DOFVecCellToSide_noDeriv : public DOFVecCellToSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
-{
-public:
-  DOFVecCellToSide_noDeriv (const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFVecCellToSideMesh = DOFVecCellToSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFVecCellToSideParam = DOFVecCellToSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

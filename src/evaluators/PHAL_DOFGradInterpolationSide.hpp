@@ -37,6 +37,8 @@ public:
 
 private:
 
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
   std::string sideSetName;
 
   // Input:
@@ -54,23 +56,15 @@ private:
   int numDims;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class DOFGradInterpolationSide : public DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>
-{
-public:
-
-  DOFGradInterpolationSide (const Teuchos::ParameterList& p,
-                            const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFGradInterpolationSide = DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class DOFGradInterpolationSide_noDeriv : public DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>
-{
-public:
+using DOFGradInterpolationSideMesh = DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
-  DOFGradInterpolationSide_noDeriv (const Teuchos::ParameterList& p,
-                                    const Teuchos::RCP<Albany::Layouts>& dl);
-};
+template<typename EvalT, typename Traits>
+using DOFGradInterpolationSideParam = DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

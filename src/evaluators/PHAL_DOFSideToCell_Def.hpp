@@ -10,9 +10,9 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFSideToCell<EvalT, Traits>::
-DOFSideToCell(const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename ScalarT>
+DOFSideToCellBase<EvalT, Traits, ScalarT>::
+DOFSideToCellBase(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl) :
   sideSetName (p.get<std::string> ("Side Set Name")),
   val_cell    (p.get<std::string> ("Cell Variable Name"), dl->node_scalar),
@@ -21,7 +21,7 @@ DOFSideToCell(const Teuchos::ParameterList& p,
   this->addDependentField(val_side);
   this->addEvaluatedField(val_cell);
 
-  this->setName("DOFSideToCell" );
+  this->setName("DOFSideToCell"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->side_node_qp_gradient->dimensions(dims);
@@ -46,8 +46,8 @@ DOFSideToCell(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFSideToCell<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFSideToCellBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -56,8 +56,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFSideToCell<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFSideToCellBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   const Albany::SideSetList& ssList = *(workset.sideSets);

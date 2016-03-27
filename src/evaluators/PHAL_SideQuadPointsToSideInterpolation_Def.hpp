@@ -101,24 +101,4 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
   }
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-SideQuadPointsToSideInterpolation<EvalT, Traits>::
-SideQuadPointsToSideInterpolation (const Teuchos::ParameterList& p,
-                                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
-{
-  // Nothing to be done here
-};
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-SideQuadPointsToSideInterpolation_noDeriv<EvalT, Traits>::
-SideQuadPointsToSideInterpolation_noDeriv (const Teuchos::ParameterList& p,
-                                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  SideQuadPointsToSideInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
-{
-  // Nothing to be done here
-};
-
 } // Namespace PHAL

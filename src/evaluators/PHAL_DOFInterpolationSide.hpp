@@ -53,21 +53,15 @@ private:
   int numSideQPs;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class DOFInterpolationSide: public DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ScalarT>
-{
-public:
-  DOFInterpolationSide (const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFInterpolationSide = DOFInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class DOFInterpolationSide_noDeriv: public DOFInterpolationSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
-{
-public:
-  DOFInterpolationSide_noDeriv (const Teuchos::ParameterList& p,
-                                const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFInterpolationSideMesh = DOFInterpolationSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFInterpolationSideParam = DOFInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

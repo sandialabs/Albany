@@ -83,24 +83,4 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFVecCellToSide<EvalT, Traits>::
-DOFVecCellToSide (const Teuchos::ParameterList& p,
-                  const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFVecCellToSideBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
-{
-  // Nothing to be done here
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFVecCellToSide_noDeriv<EvalT, Traits>::
-DOFVecCellToSide_noDeriv (const Teuchos::ParameterList& p,
-                          const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFVecCellToSideBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
-{
-  // Nothing to be done here
-}
-
 } // Namespace PHAL

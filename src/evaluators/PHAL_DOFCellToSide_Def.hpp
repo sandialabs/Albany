@@ -77,24 +77,4 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFCellToSide<EvalT, Traits>::
-DOFCellToSide (const Teuchos::ParameterList& p,
-               const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFCellToSideBase<EvalT,Traits,typename EvalT::ScalarT> (p,dl)
-{
-  // Nothing to be done here
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFCellToSide_noDeriv<EvalT, Traits>::
-DOFCellToSide_noDeriv (const Teuchos::ParameterList& p,
-               const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFCellToSideBase<EvalT,Traits,typename EvalT::ParamScalarT> (p,dl)
-{
-  // Nothing to be done here
-}
-
 } // Namespace PHAL

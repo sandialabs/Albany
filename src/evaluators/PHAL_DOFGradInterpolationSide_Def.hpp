@@ -74,24 +74,4 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFGradInterpolationSide<EvalT, Traits>::
-DOFGradInterpolationSide(const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
-{
-  // Nothing to be done here
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFGradInterpolationSide_noDeriv<EvalT, Traits>::
-DOFGradInterpolationSide_noDeriv(const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFGradInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
-{
-  // Nothing to be done here
-}
-
 } // Namespace PHAL

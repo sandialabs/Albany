@@ -55,21 +55,15 @@ private:
   PHX::MDField<ScalarT>                       field_cell;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class NodesToCellInterpolation : public NodesToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>
-{
-public:
-  NodesToCellInterpolation (const Teuchos::ParameterList& p,
-                            const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using NodesToCellInterpolation = NodesToCellInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class NodesToCellInterpolation_noDeriv : public NodesToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>
-{
-public:
-  NodesToCellInterpolation_noDeriv (const Teuchos::ParameterList& p,
-                                    const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using NodesToCellInterpolationMesh = NodesToCellInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using NodesToCellInterpolationParam = NodesToCellInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

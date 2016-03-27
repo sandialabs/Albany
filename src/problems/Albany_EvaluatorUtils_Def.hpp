@@ -36,21 +36,21 @@
 
 /********************  Problem Utils Class  ******************************/
 
-template<typename EvalT, typename Traits>
-Albany::EvaluatorUtils<EvalT,Traits>::EvaluatorUtils(
+template<typename EvalT, typename Traits, typename ScalarT>
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::EvaluatorUtilsBase(
      Teuchos::RCP<Albany::Layouts> dl_) :
      dl(dl_)
 {
 }
 
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -72,13 +72,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
 }
 
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -97,14 +97,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator(
 }
 
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_withAcceleration(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_withAcceleration(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
        Teuchos::ArrayRCP<std::string> dof_names_dotdot,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -134,14 +134,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_withAccel
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_withAcceleration(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_withAcceleration(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
        Teuchos::ArrayRCP<std::string> dof_names_dotdot,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -169,12 +169,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_withAccel
 }
 
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransient(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_noTransient(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> dof_names,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -195,12 +195,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransie
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransient(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherSolutionEvaluator_noTransient(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> dof_names,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -218,11 +218,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransie
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarNodalParameter(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherScalarNodalParameter(
        const std::string& param_name,
-       const std::string& field_name)
+       const std::string& field_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -240,11 +240,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarNodalParameter(
 }
 
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarExtruded2DNodalParameter(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherScalarExtruded2DNodalParameter(
        const std::string& param_name,
-       const std::string& field_name)
+       const std::string& field_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -262,12 +262,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarExtruded2DNodalParame
     return rcp(new PHAL::GatherScalarExtruded2DNodalParameter<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvaluator(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
-       int offsetToFirstDOF, std::string scatterName)
+       int offsetToFirstDOF, std::string scatterName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -288,13 +288,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
     return rcp(new PHAL::ScatterResidual<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluatorWithExtrudedParams(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvaluatorWithExtrudedParams(
        bool isVectorField,
        Teuchos::ArrayRCP<std::string> resid_names,
        Teuchos::RCP<std::map<std::string, int> > extruded_params_levels,
-       int offsetToFirstDOF, std::string scatterName)
+       int offsetToFirstDOF, std::string scatterName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -316,12 +316,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluatorWithExtru
     return rcp(new PHAL::ScatterResidualWithExtrudedParams<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructScatterResidualEvaluator(
        int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
-       int offsetToFirstDOF, std::string scatterName)
+       int offsetToFirstDOF, std::string scatterName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -339,9 +339,9 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructScatterResidualEvaluator(
     return rcp(new PHAL::ScatterResidual<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator(std::string strCurrentDisp)
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructGatherCoordinateVectorEvaluator(std::string strCurrentDisp) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -362,13 +362,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherCoordinateVectorEvaluator(s
     return rcp(new PHAL::GatherCoordinateVector<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMapToPhysicalFrameEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature,
-    const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis)
-
+    const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -389,12 +388,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameEvaluator(
     return rcp(new PHAL::MapToPhysicalFrame<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructMapToPhysicalFrameSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature,
-    const std::string& sideSetName)
+    const std::string& sideSetName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -413,12 +412,12 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructMapToPhysicalFrameSideEvaluator(
     return rcp(new PHAL::MapToPhysicalFrameSide<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctionsEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis,
-    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature)
+    const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -449,13 +448,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     return rcp(new PHAL::ComputeBasisFunctions<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctionsSideEvaluator(
     const Teuchos::RCP<shards::CellTopology>& cellType,
     const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasisSide,
     const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureSide,
-    const std::string& sideSetName)
+    const std::string& sideSetName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -481,13 +480,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsSideEvaluato
     return rcp(new PHAL::ComputeBasisFunctionsSide<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFCellToSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideEvaluator(
        const std::string& cell_dof_name,
        const std::string& sideSetName,
        const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& side_dof_name)
+       const std::string& side_dof_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -506,41 +505,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFCellToSideEvaluator(
     else
       p->set<std::string>("Side Variable Name", cell_dof_name);
 
-    return rcp(new PHAL::DOFCellToSide<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFCellToSideBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFCellToSideEvaluator_noDeriv(
-       const std::string& cell_dof_name,
-       const std::string& sideSetName,
-       const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& side_dof_name)
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Cell To Side"));
-
-    // Input
-    p->set<std::string>("Cell Variable Name", cell_dof_name);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<std::string>("Side Set Name", sideSetName);
-
-    // Output
-    if (side_dof_name!="")
-      p->set<std::string>("Side Variable Name", side_dof_name);
-    else
-      p->set<std::string>("Side Variable Name", cell_dof_name);
-
-    return rcp(new PHAL::DOFCellToSide_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator_noDeriv(
-       const std::string& dof_name)
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvaluator_noDeriv(
+       const std::string& dof_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -557,11 +528,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator_noDeriv
     return rcp(new PHAL::DOFInterpolation_noDeriv<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationEvaluator(
        const std::string& dof_name,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -579,11 +550,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator(
     return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationSideEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName)
+       const std::string& sideSetName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -598,37 +569,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationSideEvaluator
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFGradInterpolationSide<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFGradInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationSideEvaluator_noDeriv(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFDivInterpolationSideEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName)
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation Side "+dof_name));
-
-    // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
-    p->set<std::string> ("Side Set Name",sideSetName);
-
-    // Output (assumes same Name as input)
-    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
-
-    return rcp(new PHAL::DOFGradInterpolationSide_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFDivInterpolationSideEvaluator(
-       const std::string& dof_name,
-       const std::string& sideSetName)
+       const std::string& sideSetName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -647,10 +595,10 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFDivInterpolationSideEvaluator(
     return rcp(new PHAL::DOFDivInterpolationSide<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator_noDeriv(
-    const std::string& dof_name)
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationEvaluator_noDeriv(
+    const std::string& dof_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -667,11 +615,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFGradInterpolationEvaluator_noD
     return rcp(new PHAL::DOFGradInterpolation_noDeriv<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvaluator(
        const std::string& dof_name,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -689,11 +637,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationEvaluator(
     return rcp(new PHAL::DOFInterpolation<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationSideEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName)
+       const std::string& sideSetName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -708,36 +656,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationSideEvaluator(
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFInterpolationSide<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFInterpolationSideEvaluator_noDeriv(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorInterpolationEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName)
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-    using std::string;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation Side "+dof_name));
-    // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("BF Name", "BF "+sideSetName);
-    p->set<std::string>("Side Set Name",sideSetName);
-
-    // Output (assumes same Name as input)
-
-    return rcp(new PHAL::DOFInterpolationSide_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFTensorInterpolationEvaluator(
-       const std::string& dof_name,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -754,11 +680,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFTensorInterpolationEvaluator(
     return rcp(new PHAL::DOFTensorInterpolation<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFTensorGradInterpolationEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorGradInterpolationEvaluator(
        const std::string& dof_name,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -776,13 +702,13 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFTensorGradInterpolationEvaluat
     return rcp(new PHAL::DOFTensorGradInterpolation<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecCellToSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecCellToSideEvaluator(
        const std::string& cell_dof_name,
        const std::string& sideSetName,
        const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& side_dof_name)
+       const std::string& side_dof_name) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -801,42 +727,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecCellToSideEvaluator(
     else
       p->set<std::string>("Side Variable Name", cell_dof_name);
 
-    return rcp(new PHAL::DOFVecCellToSide<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFVecCellToSideBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecCellToSideEvaluator_noDeriv(
-       const std::string& cell_dof_name,
-       const std::string& sideSetName,
-       const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& side_dof_name)
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Cell To Side"));
-
-    // Input
-    p->set<std::string>("Cell Variable Name", cell_dof_name);
-    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set<std::string>("Side Set Name", sideSetName);
-
-    // Output
-    if (side_dof_name!="")
-      p->set<std::string>("Side Variable Name", side_dof_name);
-    else
-      p->set<std::string>("Side Variable Name", cell_dof_name);
-
-    return rcp(new PHAL::DOFVecCellToSide_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolationEvaluator(
        const std::string& dof_name,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -854,11 +752,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationEvaluator(
     return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolationSideEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName)
+       const std::string& sideSetName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -876,34 +774,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationSideEvalua
     return rcp(new PHAL::DOFVecGradInterpolationSide<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecGradInterpolationSideEvaluator_noDeriv(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName)
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation Side "+dof_name));
-    // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF "+sideSetName);
-    p->set<std::string> ("Side Set Name",sideSetName);
-
-    // Output (assumes same Name as input)
-    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
-
-    return rcp(new PHAL::DOFVecGradInterpolationSide_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
-       const std::string& dof_name,
-       int offsetToFirstDOF)
+       int offsetToFirstDOF) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -920,11 +795,11 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationEvaluator(
     return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationSideEvaluator(
        const std::string& dof_name,
-       const std::string& sideSetName)
+       const std::string& sideSetName) const
 {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -938,35 +813,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideEvaluator(
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFVecInterpolationSide<EvalT, Traits>(*p,dl));
+    return rcp(new PHAL::DOFVecInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructDOFVecInterpolationSideEvaluator_noDeriv(
-       const std::string& dof_name,
-       const std::string& sideSetName)
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Vec Interpolation Side "+dof_name));
-    // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("BF Name", "BF "+sideSetName);
-    p->set<std::string>("Side Set Name",sideSetName);
-
-    // Output (assumes same Name as input)
-
-    return rcp(new PHAL::DOFVecInterpolationSide_noDeriv<EvalT, Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructNodesToCellInterpolationEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructNodesToCellInterpolationEvaluator(
   const std::string& dof_name,
-  bool isVectorField)
+  bool isVectorField) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF Nodes to Cell Interpolation "+dof_name));
@@ -980,35 +834,14 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructNodesToCellInterpolationEvaluator
   // Output
   p->set<std::string>("Field Cell Name", dof_name);
 
-  return Teuchos::rcp(new PHAL::NodesToCellInterpolation<EvalT,Traits>(*p,dl));
+  return Teuchos::rcp(new PHAL::NodesToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructNodesToCellInterpolationEvaluator_noDeriv(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInterpolationEvaluator(
   const std::string& dof_name,
-  bool isVectorField)
-{
-  Teuchos::RCP<Teuchos::ParameterList> p;
-  p = Teuchos::rcp(new Teuchos::ParameterList("DOF Nodes to Cell Interpolation "+dof_name));
-
-  // Input
-  p->set<std::string>("BF Variable Name", "BF");
-  p->set<std::string>("Field Node Name", dof_name);
-  p->set<std::string>("Weighted Measure Name", "Weights");
-  p->set<bool>("Is Vector Field", isVectorField);
-
-  // Output
-  p->set<std::string>("Field Cell Name", dof_name);
-
-  return Teuchos::rcp(new PHAL::NodesToCellInterpolation_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructQuadPointsToCellInterpolationEvaluator(
-  const std::string& dof_name,
-  bool isVectorField)
+  bool isVectorField) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF QuadPoint to Cell Interpolation "+dof_name));
@@ -1021,35 +854,15 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructQuadPointsToCellInterpolationEval
   // Output
   p->set<std::string>("Field Cell Name", dof_name);
 
-  return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolation<EvalT,Traits>(*p,dl));
+  return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructQuadPointsToCellInterpolationEvaluator_noDeriv(
-  const std::string& dof_name,
-  bool isVectorField)
-{
-  Teuchos::RCP<Teuchos::ParameterList> p;
-  p = Teuchos::rcp(new Teuchos::ParameterList("DOF QuadPoint to Cell Interpolation "+dof_name));
-
-  // Input
-  p->set<std::string>("Field QP Name", dof_name);
-  p->set<std::string>("Weighted Measure Name", "Weights");
-  p->set<bool>("Is Vector Field", isVectorField);
-
-  // Output
-  p->set<std::string>("Field Cell Name", dof_name);
-
-  return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolation_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructSideQuadPointsToSideInterpolationEvaluator(
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructSideQuadPointsToSideInterpolationEvaluator(
   const std::string& dof_name,
   const std::string& sideSetName,
-  bool isVectorField)
+  bool isVectorField) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF Side QuadPoint to Side Interpolation "+dof_name));
@@ -1063,27 +876,5 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructSideQuadPointsToSideInterpolation
   // Output
   p->set<std::string>("Field Side Name", dof_name);
 
-  return Teuchos::rcp(new PHAL::SideQuadPointsToSideInterpolation<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtils<EvalT,Traits>::constructSideQuadPointsToSideInterpolationEvaluator_noDeriv(
-  const std::string& dof_name,
-  const std::string& sideSetName,
-  bool isVectorField)
-{
-  Teuchos::RCP<Teuchos::ParameterList> p;
-  p = Teuchos::rcp(new Teuchos::ParameterList("DOF Side QuadPoint to Side Interpolation "+dof_name));
-
-  // Input
-  p->set<std::string>("Field QP Name", dof_name);
-  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+sideSetName);
-  p->set<std::string>("Side Set Name", sideSetName);
-  p->set<bool>("Is Vector Field", isVectorField);
-
-  // Output
-  p->set<std::string>("Field Side Name", dof_name);
-
-  return Teuchos::rcp(new PHAL::SideQuadPointsToSideInterpolation_noDeriv<EvalT,Traits>(*p,dl));
+  return Teuchos::rcp(new PHAL::SideQuadPointsToSideInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }

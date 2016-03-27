@@ -52,21 +52,15 @@ private:
   int numSideNodes;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class DOFCellToSide : public DOFCellToSideBase<EvalT, Traits, typename EvalT::ScalarT>
-{
-public:
-  DOFCellToSide (const Teuchos::ParameterList& p,
-                 const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFCellToSide = DOFCellToSideBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class DOFCellToSide_noDeriv : public DOFCellToSideBase<EvalT, Traits, typename EvalT::ParamScalarT>
-{
-public:
-  DOFCellToSide_noDeriv (const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl);
-};
+using DOFCellToSideMesh = DOFCellToSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFCellToSideParam = DOFCellToSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

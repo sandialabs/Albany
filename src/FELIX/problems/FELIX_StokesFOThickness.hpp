@@ -34,7 +34,6 @@
 #include "PHAL_DOFVecInterpolationSide.hpp"
 
 #include "FELIX_EffectivePressure.hpp"
-#include "FELIX_SubglacialHydrostaticPotential.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
 #ifdef CISM_HAS_FELIX
@@ -571,11 +570,11 @@ FELIX::StokesFOThickness::constructEvaluators(
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator_noDeriv("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator_noDeriv("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
@@ -734,22 +733,6 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Field Norm Name","Sliding Velocity");
 
     ev = Teuchos::rcp(new FELIX::FieldNorm<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-    //--- Hydrostatic potential calculation ---//
-    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Hydrostatic Potential"));
-
-    // Input
-    p->set<std::string>("Ice Thickness Variable Name","Ice Thickness");
-    p->set<std::string>("Surface Height Variable Name","Surface Height");
-    p->set<std::string>("Side Set Name", basalSideName);
-    p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
-    p->set<bool>("Stokes", true);
-
-    // Output
-    p->set<std::string>("Hydrostatic Potential Variable Name","Subglacial Hydrostatic Potential");
-
-    ev = Teuchos::rcp(new FELIX::SubglacialHydrostaticPotential<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Effective pressure (surrogate) calculation ---//

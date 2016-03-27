@@ -9,5 +9,4 @@
 #include "PHAL_QuadPointsToCellInterpolation.hpp"
 #include "PHAL_QuadPointsToCellInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::QuadPointsToCellInterpolation)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::QuadPointsToCellInterpolation_noDeriv)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::QuadPointsToCellInterpolationBase)

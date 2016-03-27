@@ -6,7 +6,6 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace PHAL {
@@ -68,26 +67,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFInterpolationSide<EvalT, Traits>::
-DOFInterpolationSide (const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>(p,dl)
-{
-  // Nothing to be done here
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-DOFInterpolationSide_noDeriv<EvalT, Traits>::
-DOFInterpolationSide_noDeriv (const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
-  DOFInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dl)
-{
-  // Nothing to be done here
 }
 
 } // Namespace PHAL
