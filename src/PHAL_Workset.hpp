@@ -31,7 +31,6 @@
 #endif
 #endif
 
-#include "PHAL_AlbanyTraits.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
@@ -56,8 +55,6 @@ class Application;
 namespace PHAL {
 
 struct Workset {
-
-  typedef AlbanyTraits::EvalTypes ET;
 
   Workset() :
     transientTerms(false), accelerationTerms(false), ignore_residual(false) {}
