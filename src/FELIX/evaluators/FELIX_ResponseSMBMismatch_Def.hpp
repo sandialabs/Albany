@@ -28,6 +28,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teucho
 
   const std::string& flux_div_name              = paramList->get<std::string>("Flux Divergence Side QP Variable Name");
   const std::string& smb_name                   = paramList->get<std::string>("SMB Side QP Variable Name");
+  const std::string& smbRMS_name                = paramList->get<std::string>("SMB RMS Side QP Variable Name");
   const std::string& thickness_name             = paramList->get<std::string>("Thickness Side QP Variable Name");
   const std::string& grad_thickness_name        = paramList->get<std::string>("Thickness Gradient Name");
   const std::string& obs_thickness_name         = paramList->get<std::string>("Observed Thickness Side QP Variable Name");
@@ -41,6 +42,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teucho
 
   flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(flux_div_name, dl_basal->side_qp_scalar);
   SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl_basal->side_qp_scalar);
+  SMBRMS                = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smbRMS_name, dl_basal->side_qp_scalar);
   thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->side_qp_scalar);
   grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->side_qp_gradient);
   obs_thickness         = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(obs_thickness_name, dl_basal->side_qp_scalar);
@@ -62,6 +64,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teucho
   // add dependent fields
   this->addDependentField(flux_div);
   this->addDependentField(SMB);
+  this->addDependentField(SMBRMS);
   this->addDependentField(thickness);
   this->addDependentField(grad_thickness);
   this->addDependentField(obs_thickness);
@@ -103,6 +106,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   const std::string& flux_div_name              = paramList->get<std::string>("Flux Divergence Side QP Variable Name");
   const std::string& smb_name                   = paramList->get<std::string>("SMB Side QP Variable Name");
+  const std::string& smbRMS_name                = paramList->get<std::string>("SMB RMS Side QP Variable Name");
   const std::string& thickness_name             = paramList->get<std::string>("Thickness Side QP Variable Name");
   const std::string& grad_thickness_name        = paramList->get<std::string>("Thickness Gradient Name");
   const std::string& obs_thickness_name         = paramList->get<std::string>("Observed Thickness Side QP Variable Name");
@@ -111,6 +115,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(flux_div_name, dl->side_qp_scalar);
   SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl->side_qp_scalar);
+  SMBRMS                = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smbRMS_name, dl->side_qp_scalar);
   thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl->side_qp_scalar);
   grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl->side_qp_gradient);
   obs_thickness         = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(obs_thickness_name, dl->side_qp_scalar);
@@ -132,6 +137,7 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   // add dependent fields
   this->addDependentField(flux_div);
   this->addDependentField(SMB);
+  this->addDependentField(SMBRMS);
   this->addDependentField(thickness);
   this->addDependentField(grad_thickness);
   this->addDependentField(obs_thickness);
@@ -163,6 +169,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename T
 {
   this->utils.setFieldData(flux_div, fm);
   this->utils.setFieldData(SMB, fm);
+  this->utils.setFieldData(SMBRMS, fm);
   this->utils.setFieldData(thickness, fm);
   this->utils.setFieldData(grad_thickness, fm);
   this->utils.setFieldData(obs_thickness, fm);
@@ -205,7 +212,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
 
       ScalarT t = 0;
       for (int qp=0; qp<numSurfaceQPs; ++qp)
-        t += pow(flux_div(cell,side,qp)-SMB(cell,side,qp),2) * w_measure_2d(cell,side,qp);
+        t += pow((flux_div(cell,side,qp)-SMB(cell,side,qp))/SMBRMS(cell,side,qp),2) * w_measure_2d(cell,side,qp);
         
       this->local_response(cell, 0) += t*scaling*alphaSMB;
       //std::cout << this->local_response(cell, 0) << std::endl;

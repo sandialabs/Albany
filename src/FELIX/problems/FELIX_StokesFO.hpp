@@ -693,6 +693,9 @@ else {
     //---- Interpolate surface velocity on QP on side
     ev = evalUtilsBasal.constructDOFInterpolationSideParamEvaluator("Surface Mass Balance", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
+    
+    ev = evalUtilsBasal.constructDOFInterpolationSideParamEvaluator("Surface Mass Balance RMS", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
 
     ev = evalUtilsBasal.constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1010,6 +1013,13 @@ else {
     ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
+    // Load surface velocity
+    entity= Albany::StateStruct::NodalDataToElemNode;
+    stateName = "surface_mass_balance_RMS";
+    fieldName = "Surface Mass Balance RMS";
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
 
     // Load surface velocity
     entity= Albany::StateStruct::NodalDataToElemNode;
@@ -1045,6 +1055,7 @@ else {
     paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
     paramList->set<std::string>("SMB Side QP Variable Name","Surface Mass Balance");
+    paramList->set<std::string>("SMB RMS Side QP Variable Name","Surface Mass Balance RMS");
     paramList->set<std::string>("Flux Divergence Side QP Variable Name","Flux Divergence");
     paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
     paramList->set<std::string>("Thickness RMS Side QP Variable Name","Ice Thickness RMS");
