@@ -43,6 +43,9 @@
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
 #include "Aeras_ShallowWaterResponseL2Norm.hpp"
 #endif
+#ifdef ALBANY_AMP
+#include "Energy.hpp"
+#endif
 
 template<typename EvalT, typename Traits>
 Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
@@ -205,7 +208,18 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-
+  
+#ifdef ALBANY_AERAS
+  else if (responseName == "AMP Energy")
+  {
+    RCP<AMP::Energy<EvalT,Traits> > res_ev =
+      rcp(new AMP::Energy<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+#endif
+  
 #ifdef ALBANY_AERAS
   else if (responseName == "Aeras Shallow Water L2 Error")
   {

@@ -148,7 +148,8 @@ createResponseFunction(
 	   name == "Modal Objective" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT" ||
-           name == "PHAL Thermal EnergyT" ) {
+           name == "PHAL Thermal EnergyT" ||
+		   name == "AMP Energy") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
 #if defined(ALBANY_LCM)
