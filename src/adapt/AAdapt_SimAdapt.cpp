@@ -48,6 +48,8 @@ bool SimAdapt::queryAdaptationCriteria(int iteration)
 
 bool SimAdapt::adaptMesh()
 {
+    TEUCHOS_FUNC_TIME_MONITOR("SimAdapt: Adapt Mesh");
+    
   /* dig through all the abstrations to obtain pointers
      to the various structures needed */
   static int callcount = 0;

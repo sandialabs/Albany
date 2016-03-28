@@ -2646,7 +2646,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Thermal Transient Coefficient Name",
         "Thermal Transient Coefficient");
     p->set<std::string>("Delta Time Name", "Delta Time");
-
+    
+    // MJJ: Need this here to compute responses later
+    RealType heat_capacity = param_list.get<RealType>("Heat Capacity");
+    RealType density = param_list.get<RealType>("Density");
+    pFromProb->set<RealType>("Heat Capacity",heat_capacity);
+    pFromProb->set<RealType>("Density",density);
+    
     if (have_mech_eq_) {
       p->set<bool>("Have Mechanics", true);
       p->set<std::string>("Deformation Gradient Name", defgrad);
