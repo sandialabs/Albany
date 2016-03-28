@@ -288,6 +288,11 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Phi Name","Phi");
     p->set<string>("Psi Name","Psi");
 
+    //  //Need these to compute responses later:
+    RealType Tm = param_list.get<RealType>("Melting Temperature Value");    // Melting temperature
+    pFromProb->set<RealType>("Melting Temperature Value",Tm);
+
+    
     ev = rcp(new AMP::Phi<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
     
@@ -439,6 +444,14 @@ Albany::PhaseProblem::constructEvaluators(
     //Output
     p->set<string>("Energy Rate Name", "Energy Rate");
 
+    //  //Need these to compute responses later:
+    RealType Cl = param_list_phase.get<RealType>("Volumetric Heat Capacity Liquid Value");	  // Volumetric heat capacity in liquid
+    RealType L  = param_list_phase.get<RealType>("Latent Heat Value");    // Latent heat of fusion/melting
+  
+   
+    pFromProb->set<RealType>("Volumetric Heat Capacity Liquid Value",Cl);
+    pFromProb->set<RealType>("Latent Heat Value",L);
+    
     ev = rcp(new AMP::EnergyDot<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -470,26 +483,6 @@ Albany::PhaseProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  { //AMP Energy
-   RCP<ParameterList> p = rcp(new ParameterList("AMP Energy"));
-
-   std::string matName =  material_db_->getElementBlockParam<std::string>(eb_name, "material");
-   Teuchos::ParameterList& param_list = material_db_->getElementBlockSublist(eb_name, matName);
-   p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
-	
-   
-  //Need these to compute responses later:
-   RealType Cl_ = param_list.get<RealType>("Volumetric Heat Capacity Liquid Value");	  // Volumetric heat capacity in liquid
-   RealType L_  = param_list.get<RealType>("Latent Heat Value");    // Latent heat of fusion/melting
-   RealType Tm_ = param_list.get<RealType>("Melting Temperature Value");    // Melting temperature
-   
-   pFromProb->set<RealType>("Volumetric Heat Capacity Liquid Value",Cl_);
-   pFromProb->set<RealType>("Latent Heat Value",L_);
-   pFromProb->set<RealType>("Melting Temperature Value",Tm_);
-
-  }
-  
-
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
     fm0.requireField<EvalT>(res_tag);
@@ -498,7 +491,7 @@ Albany::PhaseProblem::constructEvaluators(
 
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
-    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, pFromProb, stateMgr);
   }
 
   return Teuchos::null;
