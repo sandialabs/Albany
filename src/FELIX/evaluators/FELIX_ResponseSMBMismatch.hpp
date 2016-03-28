@@ -52,6 +52,7 @@ namespace FELIX {
 
     PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         SMB;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         SMBRMS;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         obs_thickness;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         thickness;
     PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         thicknessRMS;

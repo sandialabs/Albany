@@ -291,9 +291,32 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     if (basalSideName!="INVALID")
     {
-      // Interpolate the 3D state on the side (the some evaluators need thickness as a side field)
+      // Interpolate the 3D state on the side (some evaluators need thickness as a side field)
       ev = evalUtilsBasal.constructDOFCellToSideEvaluator(fieldName,basalSideName,cellType);
       fm0.template registerEvaluator<EvalT> (ev);
+
+      stateName = "thickness_side_avg";
+      if (std::find(req.begin(),req.end(),stateName)!=req.end())
+      {
+        // We interpolate the thickness from quad point to cell
+        ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+        fm0.template registerEvaluator<EvalT>(ev);
+
+        // We save it on the basal mesh
+        p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_scalar, basalEBName, true);
+        p->set<bool>("Is Vector Field", false);
+        ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+        fm0.template registerEvaluator<EvalT>(ev);
+        if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+        {
+          // Only PHAL::AlbanyTraits::Residual evaluates something
+          if (ev->evaluatedFields().size()>0)
+          {
+            // Require save thickness
+            fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+          }
+        }
+      }
     }
   }
   else
@@ -707,7 +730,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     //---- Interpolate surface velocity on QP on side
     ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
-
   }
 
   if (surfaceSideName!="INVALID")
@@ -769,11 +791,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("Velocity Side QP Variable Name", "Basal Velocity");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
-    bool regularize = params->isSublist("FELIX Basal Friction Coefficient")
-                   && params->sublist("FELIX Basal Friction Coefficient").isParameter("Regularize With Continuation") ?
-                      params->sublist("FELIX Basal Friction Coefficient").get<bool>("Regularize With Continuation") :
-                      false;
-    p->set<bool>("Regularize With Continuation", regularize);
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
     //Output
     p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
@@ -800,17 +818,68 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     // Input
     p->set<std::string>("Hydrostatic Potential Variable Name","Subglacial Hydrostatic Potential");
+    p->set<std::string>("Ice Thickness Variable Name", "Ice Thickness");
     p->set<std::string>("Side Set Name", basalSideName);
-    double alpha = params->sublist("FELIX Basal Friction Coefficient").get<double>("Hydraulic-Over-Hydrostatic Potential Ratio",0.0);
-    p->set<double>("Hydraulic-Over-Hydrostatic Potential Ratio",alpha);
     p->set<bool>("Surrogate", true);
     p->set<bool>("Stokes", true);
+    p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
     // Output
     p->set<std::string>("Effective Pressure Variable Name","Effective Pressure");
 
     ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Shared Parameter for basal friction coefficient: alpha ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: alpha"));
+
+    param_name = "Hydraulic-Over-Hydrostatic Potential Ratio";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Alpha>> ptr_alpha;
+    ptr_alpha = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Alpha>(*p,dl));
+    ptr_alpha->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_alpha);
+
+    //--- Shared Parameter for basal friction coefficient: lambda ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: lambda"));
+
+    param_name = "Bed Roughness";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Lambda>> ptr_lambda;
+    ptr_lambda = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Lambda>(*p,dl));
+    ptr_lambda->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,0.0));
+    fm0.template registerEvaluator<EvalT>(ptr_lambda);
+
+    //--- Shared Parameter for basal friction coefficient: mu ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: mu"));
+
+    param_name = "Coulomb Friction Coefficient";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Mu>> ptr_mu;
+    ptr_mu = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Mu>(*p,dl));
+    ptr_mu->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_mu);
+
+    //--- Shared Parameter for basal friction coefficient: power ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("Basal Friction Coefficient: power"));
+
+    param_name = "Power Exponent";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set<double>("Parameter Value", params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,0.0));
+    p->set< Teuchos::RCP<PHX::DataLayout> >("Data Layout", dl_basal->shared_param);
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Power>> ptr_power;
+    ptr_power = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Power>(*p,dl));
+    ptr_power->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_power);
 
     //--- FELIX basal friction coefficient ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
@@ -833,7 +902,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   if (basalSideName!="INVALID")
   {
-
     fieldName = "Flux Divergence";
     stateName = "flux_divergence";
     p = Teuchos::rcp(new Teuchos::ParameterList("Flux Divergence"));
@@ -854,29 +922,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     ev = Teuchos::rcp(new FELIX::FluxDiv<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
-
-
-    if(isThicknessAParameter)
-    {
-      // We interpolate beta from quad point to cell
-      ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      // We save it on the basal mesh
-      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_scalar, basalEBName, true);
-      p->set<bool>("Is Vector Field", false);
-      ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
-      fm0.template registerEvaluator<EvalT>(ev);
-      if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-      {
-        // Only PHAL::AlbanyTraits::Residual evaluates something
-        if (ev->evaluatedFields().size()>0)
-        {
-          // Require save beta
-          fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
-        }
-      }
-    }
   }
 
 #ifdef ALBANY_EPETRA
@@ -964,10 +1009,18 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   if (basalSideName!="INVALID")
   {
+    //--- FELIX basal friction coefficient gradient ---//
+    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient Gradient"));
+
     // Input
     p->set<std::string>("Given Beta Variable Name", "Beta");
     p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<std::string>("Effective Pressure QP Name", "Effective Pressure");
+    p->set<std::string>("Effective Pressure Gradient QP Name", "Effective Pressure Gradient");
+    p->set<std::string>("Basal Velocity QP Name", "Basal Velocity");
+    p->set<std::string>("Basal Velocity Gradient QP Name", "Basal Velocity Gradient");
+    p->set<std::string>("Sliding Velocity QP Name", "Sliding Velocity");
     p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
@@ -978,7 +1031,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficientGradient<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // Load surface velocity
+    // Load surface mass balance
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "surface_mass_balance";
     fieldName = "Surface Mass Balance";
@@ -986,24 +1039,29 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
+    // Load surface mass balance RMS
+    entity= Albany::StateStruct::NodalDataToElemNode;
+    stateName = "surface_mass_balance_RMS";
+    fieldName = "Surface Mass Balance RMS";
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
 
-    // Load surface velocity
+    // Load observed thickness
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    stateName = "observed_thickness";
+    fieldName = "Observed Ice Thickness";
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Load thickness RMS
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "thickness_RMS";
     fieldName = "Ice Thickness RMS";
     p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-
-    stateName = "observed_thickness";
-    fieldName = "Observed Ice Thickness";
-    entity = Albany::StateStruct::NodalDataToElemNode;
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
-    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
-
-
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
@@ -1021,6 +1079,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
     paramList->set<std::string>("SMB Side QP Variable Name","Surface Mass Balance");
+    paramList->set<std::string>("SMB RMS Side QP Variable Name","Surface Mass Balance RMS");
     paramList->set<std::string>("Flux Divergence Side QP Variable Name","Flux Divergence");
     paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
     paramList->set<std::string>("Thickness RMS Side QP Variable Name","Ice Thickness RMS");
