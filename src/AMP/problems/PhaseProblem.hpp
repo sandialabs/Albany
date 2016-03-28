@@ -55,6 +55,7 @@ public:
 
   Teuchos::RCP<const Teuchos::ParameterList> 
   getValidProblemParameters() const;
+  
 
 private:
 
@@ -111,6 +112,7 @@ protected:
 #include "PhaseResidual.hpp"
 #include "EnergyDot.hpp"
 #include "AMP_Time.hpp"
+#include "Energy.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -129,6 +131,10 @@ Albany::PhaseProblem::constructEvaluators(
   using std::vector;
   using std::string;
   using PHAL::AlbanyTraits;
+
+  // Collect problem-specific response parameters
+  Teuchos::RCP<Teuchos::ParameterList> pFromProb = Teuchos::rcp(
+      new Teuchos::ParameterList("Response Parameters from Problem"));
 
   // // Problem is transient
   // TEUCHOS_TEST_FOR_EXCEPTION(
@@ -463,6 +469,26 @@ Albany::PhaseProblem::constructEvaluators(
     ev = rcp(new AMP::PhaseResidual<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  { //AMP Energy
+   RCP<ParameterList> p = rcp(new ParameterList("AMP Energy"));
+
+   std::string matName =  material_db_->getElementBlockParam<std::string>(eb_name, "material");
+   Teuchos::ParameterList& param_list = material_db_->getElementBlockSublist(eb_name, matName);
+   p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
+	
+   
+  //Need these to compute responses later:
+   RealType Cl_ = param_list.get<RealType>("Volumetric Heat Capacity Liquid Value");	  // Volumetric heat capacity in liquid
+   RealType L_  = param_list.get<RealType>("Latent Heat Value");    // Latent heat of fusion/melting
+   RealType Tm_ = param_list.get<RealType>("Melting Temperature Value");    // Melting temperature
+   
+   pFromProb->set<RealType>("Volumetric Heat Capacity Liquid Value",Cl_);
+   pFromProb->set<RealType>("Latent Heat Value",L_);
+   pFromProb->set<RealType>("Melting Temperature Value",Tm_);
+
+  }
+  
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
