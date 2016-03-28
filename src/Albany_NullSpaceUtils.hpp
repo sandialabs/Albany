@@ -11,8 +11,62 @@
 
 namespace Albany {
 
+struct Tpetra_NullSpace_Traits {
+
+  typedef Tpetra_MultiVector base_array_type;
+  typedef Teuchos::RCP<base_array_type> array_type;
+  typedef base_array_type::global_ordinal_type GO_type;
+  typedef base_array_type::local_ordinal_type LO_type;
+  const int Ndof;
+  const int NscalarDof;
+  const int NSdim;
+  const LO_type vec_leng;
+  array_type Array;
+
+  Tpetra_NullSpace_Traits(const int ndof, const int nscalardof, const int nsdim,
+     const LO_type veclen, array_type &array)
+   : Ndof(ndof), NscalarDof(nscalardof), NSdim(nsdim), vec_leng(veclen), Array(array) {}
+
+  void zero(){
+      Array->putScalar(0.0);
+  }
+
+  double &ArrObj(const LO_type DOF, const int i, const int j){
+     Teuchos::ArrayRCP<ST> rdata = Array->getDataNonConst(j);
+     return rdata[DOF + i];
+  }
+
+};
+
+struct Epetra_NullSpace_Traits {
+
+  typedef std::vector<ST> array_type;
+  const int Ndof;
+  const int NscalarDof;
+  const int NSdim;
+  const array_type::size_type vec_leng;
+  array_type& Array;
+
+  Epetra_NullSpace_Traits(const int ndof, const int nscalardof, const int nsdim, const array_type::size_type veclen,
+      array_type &array)
+   : Ndof(ndof), NscalarDof(nscalardof), NSdim(nsdim), vec_leng(veclen), Array(array) {}
+
+  void zero(){
+    for (array_type::size_type i = 0; i < vec_leng*(NSdim + NscalarDof); i++)
+       Array[i] = 0.0;
+  }
+
+  double &ArrObj(const array_type::size_type DOF, const int i, const int j){
+     return Array[DOF + i + j * vec_leng];
+  }
+
+};
+
 class RigidBodyModes {
 public:
+  typedef Tpetra_MultiVector::global_ordinal_type GO_type;
+  typedef Tpetra_MultiVector::local_ordinal_type LO_type;
+
   //! Construct RBM object.
   RigidBodyModes(int numPDEs);
 
@@ -29,16 +83,6 @@ public:
   //! Update the parameter list.
   void updatePL(const Teuchos::RCP<Teuchos::ParameterList>& mlParams);
 
-  //! Resize object as mesh changes. Parameters must already have been set.
-  void resize(const int numSpaceDim, const LO numNodes);
-
-  //! Access the arrays to store the coordinates.
-  void getCoordArrays(double*& x, double*& y, double*& z);
-
-  //! Access the arrays to store the coordinates -- same as x, y and z but
-  //! concatenated.
-  double* getCoordArray();
-
   //! Is ML used on this problem?
   bool isMLUsed() const { return mlUsed; }
 
@@ -50,19 +94,23 @@ public:
   //! set. soln_map must be set only if using MueLu and numElasticityDim >
   //! 0. Both maps are nonoverlapping.
   void setCoordinatesAndNullspace(
-    const Teuchos::RCP<const Tpetra_Map>& node_map,
+    const Teuchos::RCP<Tpetra_MultiVector> &coordMV,
     const Teuchos::RCP<const Tpetra_Map>& soln_map = Teuchos::null);
 
   //! Pass only the coordinates.
-  void setCoordinates(const Teuchos::RCP<const Tpetra_Map>& node_map);
+  void setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV);
 
 private:
-  int numPDEs, numElasticityDim, numScalar, nullSpaceDim, numSpaceDim, numNodes;
+  int numPDEs, numElasticityDim, numScalar, nullSpaceDim;
   bool mlUsed, mueLuUsed, setNonElastRBM;
 
   Teuchos::RCP<Teuchos::ParameterList> plist;
 
-  std::vector<double> xyz, rr;
+  Teuchos::RCP<Tpetra_MultiVector> coordMV;
+
+  Tpetra_NullSpace_Traits::array_type trr;
+  Epetra_NullSpace_Traits::array_type err;
+
 };
 
 } // namespace Albany

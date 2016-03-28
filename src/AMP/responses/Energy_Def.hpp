@@ -11,81 +11,64 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
 
-    namespace AMP {
-         template<typename EvalT, typename Traits>
-         Energy<EvalT, Traits>::
-         Energy(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-         weighted_measure	("Weights", dl->qp_scalar),
-         T_			("Temperature Name", dl->qp_scalar),
-         time_		("Time Name", dl->workset_scalar),
-         phi_		("Phi Name", dl->qp_scalar),
-         rho_Cp_		("Rho Cp Name", dl->qp_scalar)
+namespace AMP {
+ template<typename EvalT, typename Traits>
+ Energy<EvalT, Traits>::
+ Energy(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+ weighted_measure	("Weights", dl->qp_scalar),
+ T_			("Temperature Name", dl->qp_scalar),
+ time_			("Time Name", dl->workset_scalar),
+ phi_			("Phi Name", dl->qp_scalar),
+ rho_Cp_		("Rho Cp Name", dl->qp_scalar)
 
 {
-    		this->addDependentField(weighted_measure);
-        this->addDependentField(T_);
-        this->addDependentField(phi_);
-        this->addDependentField(rho_Cp_);
-        this->addDependentField(time_);
+ // get parameters from problem
+ Teuchos::RCP<Teuchos::ParameterList> pFromProb = p.get<Teuchos::RCP<Teuchos::ParameterList>>("Parameters From Problem");
+ // get properties
+ Cl_ = pFromProb->get<RealType>("Volumetric Heat Capacity Liquid Value");
+ L_  = pFromProb->get<RealType>("Latent Heat Value"); 
+ Tm_ = pFromProb->get<RealType>("Melting Temperature Value"); 
+ 
 
-		// number of quad points per cell and dimension of space 
-        std::vector<PHX::Device::size_type> dims;
-        Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-        scalar_dl->dimensions(dims);
-        workset_size_ = dims[0];
-        num_qps_ = dims[1];
+ this->addDependentField(weighted_measure);
+ this->addDependentField(T_);
+ this->addDependentField(phi_);
+ this->addDependentField(rho_Cp_);
+ this->addDependentField(time_);
 
-        // Only verify Change Phase Parameter list because initial Phi already
-        // verified inside Phi evaluator (I hope so)
-        Teuchos::ParameterList* cond_list =
-                p.get<Teuchos::ParameterList*>("Parameter List");
-        Teuchos::RCP<const Teuchos::ParameterList> reflist =
-                this->getValidResponseParameters();
-        cond_list->validateParameters(*reflist, 0);
-
-/*
-        // Get volumetric heat capacity
-        Cl_ = cond_list->get<double>("Volumetric Heat Capacity Liquid Value", 5.95e6);
-        // Get latent heat value
-        L_ = cond_list->get<double>("Latent Heat Value", 2.18e9);
+ // number of quad points per cell and dimension of space 
+ std::vector<PHX::Device::size_type> dims;
+ Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
+ scalar_dl->dimensions(dims);
+ workset_size_ = dims[0];
+ num_qps_ = dims[1];
 
 
-        // later we need to verify that user have input proper values. Not done
-        // now! But do it soon!
+ Teuchos::ParameterList* cond_list = p.get<Teuchos::ParameterList*>("Parameter List");
+ Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
+ cond_list->validateParameters(*reflist, 0);
 
+ this->setName("Energy" + PHX::typeAsString<EvalT>());      
 
-        cond_list = p.get<Teuchos::ParameterList*>("Initial Phi Parameter List");
-
-        // Get melting temperature
-        Tm_ = cond_list->get("Melting Temperature Value", 1700.0);
-
-        // Get delta temperature value
-        Tc_ = cond_list->get("delta Temperature Value", 50.0); 
-*/
-		this->setName("Energy" + PHX::typeAsString<EvalT>());      
-
-		using PHX::MDALayout;
-		//Setup scatter evaluater
-		p.set("Stand-alone Evaluator", false);
-		std::string local_response_name = "Local Response Energy";
-		std::string global_response_name = "Global Response Energy";
+ using PHX::MDALayout;
+ //Setup scatter evaluater
+ p.set("Stand-alone Evaluator", false);
+ std::string local_response_name = "Local Response Energy";
+ std::string global_response_name = "Global Response Energy";
         
-		int responseSize = 2;
+ int responseSize = 2;
 
-		Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(
-		new MDALayout<Cell,Dim>(workset_size_, responseSize));
-		PHX::Tag<ScalarT> local_response_tag(local_response_name,
-                                       local_response_layout);
-		p.set("Local Response Field Tag", local_response_tag);
+ Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(
+ new MDALayout<Cell,Dim>(workset_size_, responseSize));
+ PHX::Tag<ScalarT> local_response_tag(local_response_name, local_response_layout);
+ p.set("Local Response Field Tag", local_response_tag);
 
-		Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(
-		new MDALayout<Dim>(responseSize));
-		PHX::Tag<ScalarT> global_response_tag(global_response_name,
-                                        global_response_layout);
-		p.set("Global Response Field Tag", global_response_tag);
-		PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
+ Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
+ PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
+ p.set("Global Response Field Tag", global_response_tag);
+ PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
 		
-    }
+}
 
     //**********************************************************************
 
@@ -148,7 +131,7 @@
     {
         for (std::size_t qp = 0; qp < num_qps_; ++qp)
         {
-			volume = weighted_measure(cell,qp);
+	    volume = weighted_measure(cell,qp);
             phi = phi_(cell, qp);
             Cs = rho_Cp_(cell, qp);
             Cd = Cs;
@@ -156,26 +139,24 @@
             std:: cout<<"Cs="<<Cs<<std::endl;
             std:: cout<<"Cd="<<Cd<<std::endl;
 
-			this->local_response(cell, 0) += volume;
-			this->global_response(0) += volume;
+	    this->local_response(cell, 0) += volume;
+	    this->global_response(0) += volume;
 			
             // Compute Phase function, p
             p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
             // compute energy
             energy = (Cs * T_(cell, qp) +  p * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)))*weighted_measure(cell,qp);
 			
-			this->local_response(cell, 2) += energy;
-			this->global_response(2) += energy;
-          std:: cout<<"volume="<<volume<<std::endl;
-          std:: cout<<"energy="<<energy<<std::endl;
-
-
+	    this->local_response(cell, 2) += energy;
+	    this->global_response(2) += energy;
+            std:: cout<<"volume="<<volume<<std::endl;
+            std:: cout<<"energy="<<energy<<std::endl;
         }
     }
 	
 	// Do any local-scattering necessary
 	PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
-}
+ }
 
     //**********************************************************************
 

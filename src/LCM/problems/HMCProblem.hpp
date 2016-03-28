@@ -12,6 +12,7 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "ConstitutiveModelInterface.hpp"
+#include "MaterialDatabase.h"
 
 #ifdef ALBANY_ATO
 #include "ATO_OptimizationProblem.hpp"

@@ -20,6 +20,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
+#include "MaterialDatabase.h"
 
 static int dir_count = 0; //counter for registration of dirichlet_field 
  
