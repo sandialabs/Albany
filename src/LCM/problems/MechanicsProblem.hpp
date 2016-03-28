@@ -21,6 +21,8 @@
 
 #include "AAdapt_RC_Manager.hpp"
 
+static int dir_count = 0; //counter for registration of dirichlet_field 
+ 
 namespace Albany
 {
 
@@ -720,14 +722,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string total_bubble_density = (*fnm)["Total_Bubble_Density"];
   std::string bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
   
-  // IKT, 3/27/16: register dirichlet_field for specifying Dirichlet data from a field 
-  // in the input exodus mesh. 
-  /*{
-    std::string stateName("dirichlet_field");
-    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
-    std::string elementBlockName = meshSpecs.ebName;
-    stateMgr.registerStateVariable(stateName, dl_->node_vector, elementBlockName, true, &entity, "");
-  }*/
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -1154,6 +1148,16 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+  // IKT, 3/27/16: register dirichlet_field for specifying Dirichlet data from a field 
+  // in the input exodus mesh.
+  if (dir_count == 0){ //constructEvaluators gets called multiple times for different specializations.  
+                       //Make sure dirichlet_field gets registered only once via counter.
+                       //I don't quite understand why this is needed for LCM but not for FELIX... 
+    //dirichlet_field
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+    stateMgr.registerStateVariable("dirichlet_field", dl_->node_vector, eb_name, true, &entity, "");
+    dir_count++; 
   }
 
   if (have_mech_eq_) { // Current Coordinates
