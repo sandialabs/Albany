@@ -462,6 +462,7 @@ namespace Albany {
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
+    Teuchos::RCP<Tpetra_MultiVector> coordMV;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
