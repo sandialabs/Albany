@@ -209,7 +209,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
   
-#ifdef ALBANY_AERAS
+#ifdef ALBANY_AMP
   else if (responseName == "AMP Energy")
   {
     RCP<AMP::Energy<EvalT,Traits> > res_ev =
