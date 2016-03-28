@@ -39,11 +39,15 @@ static const char *res_tag_name[1] = {
       };
 
 
+#ifdef ALBANY_LCM
+#ifdef ALBANY_DTK 
 static const char *sol_dtk_tag_name[3] = {
-      "Exodus Solution STK Name",
-      "Exodus SolutionDot STK Name",
-      "Exodus SolutionDotDot STK Name"
+      "Exodus Solution DTK Name",
+      "Exodus SolutionDot DTK Name",
+      "Exodus SolutionDotDot DTK Name"
       };
+#endif
+#endif
 
 static const char *res_id_name[1] = {
       "residual",
