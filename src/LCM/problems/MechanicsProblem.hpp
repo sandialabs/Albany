@@ -719,6 +719,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string he_concentration = (*fnm)["He_Concentration"];
   std::string total_bubble_density = (*fnm)["Total_Bubble_Density"];
   std::string bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
+  
+  // IKT, 3/27/16: register dirichlet_field for specifying Dirichlet data from a field 
+  // in the input exodus mesh. 
+  {
+    std::string stateName("dirichlet_field");
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+    std::string elementBlockName = meshSpecs.ebName;
+    stateMgr.registerStateVariable(stateName, dl_->node_vector, elementBlockName, true, &entity, "");
+  }
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
