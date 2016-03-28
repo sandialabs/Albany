@@ -249,7 +249,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   }
 
   // Create a user-defined NOX status test that can be passed to the ModelEvaluators
-  userDefinedNOXStatusTest = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag); 
+  nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag); 
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::
@@ -493,7 +493,7 @@ applyProblemSpecificSolverSettings(
     newStatusTestParameterList.set<int>("Number of Tests", 2);
     newStatusTestParameterList.sublist("Test 0");
     newStatusTestParameterList.sublist("Test 0").set("Test Type", "User Defined");
-    newStatusTestParameterList.sublist("Test 0").set("User Status Test", userDefinedNOXStatusTest);
+    newStatusTestParameterList.sublist("Test 0").set("User Status Test", nox_status_test_);
     newStatusTestParameterList.sublist("Test 1") = originalStatusTestParameterList;
     *statusTestsParameterList = newStatusTestParameterList;
 
@@ -502,7 +502,7 @@ applyProblemSpecificSolverSettings(
     Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
       Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
-      Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(userDefinedNOXStatusTest);
+      Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test_);
     nox_solver_pre_post_operator->setStatusTest(statusTest);
     solverOptionsParameterList->set("User Defined Pre/Post Operator", pre_post_operator);
   }

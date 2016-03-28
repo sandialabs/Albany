@@ -355,7 +355,7 @@ protected:
   /// User defined NOX Status Test that allows model evaluators to set the NOX status to "failed".
   /// This is useful because it forces a global load step reduction.
   ///
-  Teuchos::RCP<NOX::StatusTest::Generic> userDefinedNOXStatusTest;
+  Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test_;
 };
 //------------------------------------------------------------------------------
 }
@@ -480,7 +480,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     std::string materialModelName = param_list.sublist("Material Model").get<std::string>("Model Name");
     if(materialModelName == "CrystalPlasticity"){
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
-	Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(userDefinedNOXStatusTest);
+	Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test_);
       param_list.set< Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> >("NOX Status Test", statusTest);
     }
   }
