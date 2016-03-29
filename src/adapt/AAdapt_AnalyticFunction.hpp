@@ -201,6 +201,7 @@ class AerasHydrostaticBaroclinicInstabilities2 : public AnalyticFunction {
     const int numDim; // size of coordinate vector X
     const int neq;    // size of solution vector x
     Teuchos::Array<double> data;
+    bool printedHybrid;
 };
 
 class AerasHydrostaticPureAdvection1 : public AnalyticFunction {

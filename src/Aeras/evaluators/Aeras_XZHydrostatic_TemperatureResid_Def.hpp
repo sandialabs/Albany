@@ -130,6 +130,20 @@ evaluateFields(typename Traits::EvalData workset)
 				  }
 			  }
 		  }
+
+		  /*//OG debugging statements
+		  {
+			  int level = 2;
+
+			  std::cout << "level = " << level << " PRINT TRESID ------------------ \n";
+			  for (int qp=0; qp < numQPs; ++qp) {
+			     std::cout << "tresid qp = "<<qp << "value = " <<  Residual(23,qp,level)/wBF(23,qp,qp) << "\n";
+			  }
+
+		  }*/
+
+
+
 	  }//end of (if not pureAdvection)
 	  else{
 		  for (int cell=0; cell < workset.numCells; ++cell)

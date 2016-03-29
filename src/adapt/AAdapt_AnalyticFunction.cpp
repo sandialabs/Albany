@@ -976,7 +976,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 
 //*****************************************************************************
 AAdapt::AerasHydrostaticBaroclinicInstabilities2::AerasHydrostaticBaroclinicInstabilities2(int neq_, int numDim_, Teuchos::Array<double> data_)
-  : numDim(numDim_), neq(neq_), data(data_) {
+  : numDim(numDim_), neq(neq_), data(data_), printedHybrid(false) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
                              std::logic_error,
                              "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model " << neq
@@ -986,6 +986,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
 
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
+  const double Ptop = 219.4067;
   const double SP0 =  1e5;     // = p0
   const double u0  =  35.0;     //
 
@@ -993,9 +994,8 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
   //A[top] = 0.00219406700000001 = eta_top = p_top/p0,
   //that is, p_top = A[top]*p0 = 219.4067 .
 
-  const double Ptop = 219.4067;
   const double Eta0 = 0.252, Etas=1.0, Etat=0.2, TT0=288.0,
-		       Gamma = 0.005, deltaT = 4.8E+5, Rd = 287.0;
+		       Gamma = 0.005, deltaT = 4.8E+5, Rd = 287.04;
 
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
@@ -1010,12 +1010,57 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
   const double Ps   = P0;
   const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
 
+  //This will be used later for tracers.
   for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
   for (int i=0; i<numLevels; ++i) {
     const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
     const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
     Pi[i] = (pp - pm) / EP.delta(i);
   }
+
+
+  //Uncomment if you want A,B coefficients in homme format.
+  if(!printedHybrid){
+  std::cout << "--------------------PRINTING HYBRID COEFS ----------------------\n";
+  int prec = 15;
+  std::cout << numLevels << "   ! hyam \n";
+  for (int i=0; i<numLevels; ++i) {
+      std::cout << std::setprecision(prec) << EP.A(i) << "\n";
+  }
+  std::cout << numLevels << "   ! hybm \n";
+  for (int i=0; i<numLevels; ++i) {
+      std::cout << std::setprecision(prec) << EP.B(i) << "\n";
+  }
+  /* This option is for analyt. coefficients on the interfaces. Not consistent, see Chapter 12.4.
+  std::cout << numLevels+1 << "   ! hyai \n";
+  for (int i=0; i<(numLevels+1); ++i) {
+      std::cout << std::setprecision(prec) << EP.A(i-.5) << "\n";
+  }
+  std::cout << numLevels+1 << "   ! hybi \n";
+  for (int i=0; i<(numLevels+1); ++i) {
+      std::cout << std::setprecision(prec) << EP.B(i-.5) << "\n";
+  }
+  */
+  std::cout << numLevels+1 << "   ! hyai \n";
+  std::cout << std::setprecision(prec) << Ptop/P0 << "\n";
+  for (int i=1; i<numLevels; ++i) {
+      std::cout << std::setprecision(prec) << (EP.A(i-1)+EP.A(i))/2. << "\n";
+  }
+  std::cout << "0" << "\n";
+  std::cout << numLevels+1 << "   ! hybi \n";
+  std::cout << "0" << "\n";
+  for (int i=1; i<numLevels; ++i) {
+      std::cout << std::setprecision(prec) << (EP.B(i-1)+EP.B(i))/2. << "\n";
+  }
+  std::cout << "1" << "\n";
+  std::cout << "--------------END OF PRINTING HYBRID COEFS ----------------------\n";
+  std::cout << "Eta values:\n";
+  for (int i=0; i<numLevels; ++i) {
+      std::cout << std::setprecision(prec) << EP.eta(i) << "\n";
+  }
+  printedHybrid = true;
+  }
+  ////////////////////// end of printing out coefficients in homme format
 
   const double x = X[0];
   const double y = X[1];
@@ -1070,13 +1115,56 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
     solution[offset++] = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ;
     solution[offset++] = 0.0;
 
-    //Temperature
-    const double Tavg =  Eta<Etat ? TT0 * std::pow(Eta, Rd*Gamma/g) + deltaT * std::pow(Etat - Eta, 5) : TT0 * std::pow(Eta, Rd*Gamma/g);
-    const double TT0 = (3.0/4.0) * ((Eta*constPi*u0)/Rd) * sinEtav * std::pow(cosEtav, 0.5);
-    const double TT1 = (-2 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1/3.0) + 10.0/63.0) * 2.0 * u0* std::pow(cosEtav,1.5);
-    const double TT2 = ((8.0/5.0) * std::pow(cosTheta,3) * (std::pow(sinTheta, 2) + 2.0/3.0) - constPi/4.0) * a * omega;
+    //homme lines
+    /*
+        temperature  = t_mean(eta) + t_deviation(rot_lon,rot_lat,eta)
+        ...
+        REAL(r8) FUNCTION t_mean(eta)
+...
+    exponent = Rd*gamma/g
+    delta_T  = 480000.d0  ! in K, for T mean calculation
+    IF (eta.gt.(eta_strato)) THEN
+       t_mean = T0*eta**exponent                                ! mean temperature at each level (troposphere)
+    ELSE
+       t_mean = T0*eta**exponent + delta_T*(eta_strato-eta)**5  ! mean temperature at each level (stratosphere)
+    ENDIF
 
-    solution[offset++] = Tavg + TT0 * (TT1 + TT2); //T0;
+  REAL(r8) FUNCTION t_deviation(lon,lat,eta)
+...
+    factor       = eta*pi*u0/Rd
+    phi_vertical = (eta - eta0) * 0.5d0*pi
+    a_omega      = a*omega
+
+    t_deviation = factor * 1.5d0 * SIN(phi_vertical) * (cos(phi_vertical))**0.5d0 *                        &
+                  ((-2.d0*(SIN(rot_lat))**6 * ((COS(rot_lat))**2 + 1.d0/3.d0) + 10.d0/63.d0)*              &
+                  u0 * (COS(phi_vertical))**1.5d0  +                                                       &
+                  (8.d0/5.d0*(COS(rot_lat))**3 * ((SIN(rot_lat))**2 + 2.d0/3.d0) - pi/4.d0)*a_omega*0.5d0 )
+  END FUNCTION t_deviation
+     */
+
+    //Temperature
+    //const double Tavg =  Eta<Etat ? TT0 * std::pow(Eta, Rd*Gamma/g) + deltaT * std::pow(Etat - Eta, 5) : TT0 * std::pow(Eta, Rd*Gamma/g);
+    //const double tt0 = (3.0/4.0) * ((Eta*constPi*u0)/Rd) * sinEtav * std::pow(cosEtav, 0.5);
+    //const double tt1 = (-2 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1/3.0) + 10.0/63.0) * 2.0 * u0* std::pow(cosEtav,1.5);
+    //const double tt2 = ((8.0/5.0) * std::pow(cosTheta,3) * (std::pow(sinTheta, 2) + 2.0/3.0) - constPi/4.0) * a * omega;
+
+    double Tavg =  TT0 * std::pow(Eta, Rd*Gamma/g);
+    if( Eta <= Etat ) Tavg += deltaT * std::pow(Etat - Eta, 5.0);
+
+    double factor       = Eta*constPi*u0/Rd;
+    double phi_vertical = (Eta - Eta0) * .5 *constPi;
+    double a_omega      = a*omega;
+
+    double t_deviation = factor*1.5* std::sin(phi_vertical) * std::pow(std::cos(phi_vertical),0.5) *
+                  ((-2.* std::pow(std::sin(theta),6.) * ( std::pow(std::cos(theta),2.) + 1./3.) + 10./63.)*
+                  u0 * std::pow(std::cos(phi_vertical),1.5)  +
+                  (8./5.*std::pow(std::cos(theta),3.) * (std::pow(std::sin(theta),2.) + 2./3.) - constPi/4.)*a_omega*0.5 );
+
+    solution[offset++] = Tavg + t_deviation; //Tavg + TT0 * (TT1 + TT2);
+
+//    if(i == 2){
+//    	std::cout << "what is t= " << Tavg + t_deviation << ", lon = " << lambda << ", th=" << theta <<"\n";
+//    }
   }
 
 
