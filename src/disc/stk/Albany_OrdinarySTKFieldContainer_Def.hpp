@@ -28,25 +28,24 @@ static const char *sol_id_name[3] = {
       "solution_dotdot"
       };
 
+#ifdef ALBANY_DTK
 static const char *sol_dtk_id_name[3] = {
       "solution dtk",
       "solution_dot dtk",
       "solution_dotdot dtk"
       };
+#endif
 
 static const char *res_tag_name[1] = {
       "Exodus Residual Name",
       };
 
-
-#ifdef ALBANY_LCM
-#ifdef ALBANY_DTK 
+#ifdef ALBANY_DTK
 static const char *sol_dtk_tag_name[3] = {
       "Exodus Solution DTK Name",
       "Exodus SolutionDot DTK Name",
       "Exodus SolutionDotDot DTK Name"
       };
-#endif
 #endif
 
 static const char *res_id_name[1] = {
