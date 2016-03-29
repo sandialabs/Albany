@@ -119,14 +119,15 @@ evaluateFields(typename Traits::EvalData workset)
             phi = phi_(cell, qp);
             Cs = rho_Cp_(cell, qp);
             Cd = Cs;
-            this->local_response(cell, 0) += volume;
+	    
+	    this->local_response(cell, 0) += volume;
             this->global_response(0) += volume;
 
             // Compute Phase function, p
             p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
             // compute energy
             energy = (Cs * T_(cell, qp) + p * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_))) * weighted_measure(cell, qp);
-
+	    
             this->local_response(cell, 1) += energy;
             this->global_response(1) += energy;
         }
@@ -146,6 +147,11 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // Do global scattering
     PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
+
+    PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+    std::cout << "Total Volume is " << *gr << std::endl;
+    ++gr;
+    std::cout << "Total Energy is " << *gr << std::endl;  
 
 }
 //**********************************************************************
