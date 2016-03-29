@@ -55,6 +55,7 @@ public:
 
   Teuchos::RCP<const Teuchos::ParameterList> 
   getValidProblemParameters() const;
+  
 
 private:
 
@@ -111,6 +112,7 @@ protected:
 #include "PhaseResidual.hpp"
 #include "EnergyDot.hpp"
 #include "AMP_Time.hpp"
+#include "Energy.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -129,6 +131,10 @@ Albany::PhaseProblem::constructEvaluators(
   using std::vector;
   using std::string;
   using PHAL::AlbanyTraits;
+
+  // Collect problem-specific response parameters
+  Teuchos::RCP<Teuchos::ParameterList> pFromProb = Teuchos::rcp(
+      new Teuchos::ParameterList("Response Parameters from Problem"));
 
   // // Problem is transient
   // TEUCHOS_TEST_FOR_EXCEPTION(
@@ -282,6 +288,11 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Phi Name","Phi");
     p->set<string>("Psi Name","Psi");
 
+    //  //Need these to compute responses later:
+    RealType Tm = param_list.get<RealType>("Melting Temperature Value");    // Melting temperature
+    pFromProb->set<RealType>("Melting Temperature Value",Tm);
+
+    
     ev = rcp(new AMP::Phi<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
     
@@ -433,6 +444,14 @@ Albany::PhaseProblem::constructEvaluators(
     //Output
     p->set<string>("Energy Rate Name", "Energy Rate");
 
+    //  //Need these to compute responses later:
+    RealType Cl = param_list_phase.get<RealType>("Volumetric Heat Capacity Liquid Value");	  // Volumetric heat capacity in liquid
+    RealType L  = param_list_phase.get<RealType>("Latent Heat Value");    // Latent heat of fusion/melting
+  
+   
+    pFromProb->set<RealType>("Volumetric Heat Capacity Liquid Value",Cl);
+    pFromProb->set<RealType>("Latent Heat Value",L);
+    
     ev = rcp(new AMP::EnergyDot<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -472,7 +491,7 @@ Albany::PhaseProblem::constructEvaluators(
 
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
-    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, pFromProb, stateMgr);
   }
 
   return Teuchos::null;

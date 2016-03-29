@@ -581,18 +581,19 @@ void Albany::STKDiscretization::setupMLCoords()
   const int numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::VectorFieldType*
     coordinates_field = stkMeshStruct->getCoordinatesField();
-  rigidBodyModes->resize(numDim, numOwnedNodes);
-  double* const coords = rigidBodyModes->getCoordArray();
+  coordMV = Teuchos::rcp(
+      new Tpetra_MultiVector(node_mapT, numDim, false));
+
 
   for (int i = 0; i < numOwnedNodes; i++) {
     GO node_gid = gid(ownednodes[i]);
     int node_lid = node_mapT->getLocalElement(node_gid);
     double* X = stk::mesh::field_data(*coordinates_field, ownednodes[i]);
     for (int j = 0; j < numDim; j++)
-      coords[j*numOwnedNodes + node_lid] = X[j];
+      coordMV->replaceLocalValue(node_lid, j, X[j]);
   }
 
-  rigidBodyModes->setCoordinatesAndNullspace(node_mapT, mapT);
+  rigidBodyModes->setCoordinatesAndNullspace(coordMV, mapT);
 
   // Some optional matrix-market output was tagged on here; keep that
   // functionality.
@@ -603,14 +604,11 @@ void Albany::STKDiscretization::writeCoordsToMatrixMarket() const
 {
   //if user wants to write the coordinates to matrix market file, write them to matrix market file
   if (rigidBodyModes->isMLUsed() && stkMeshStruct->writeCoordsToMMFile) {
-    double *xx, *yy, *zz;
-    rigidBodyModes->getCoordArrays(xx, yy, zz);
     if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
     int numMyElements = (node_mapT->getComm()->getRank() == 0) ? node_mapT->getGlobalNumElements() : 0;
     Teuchos::RCP<Tpetra_Import> importOperatorT;
     Teuchos::RCP<Tpetra_Map> serial_mapT;
-    Teuchos::ArrayView<ST> xxAV = Teuchos::arrayView(xx, numOwnedNodes);
-    Teuchos::RCP<Tpetra_Vector> xCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, xxAV));
+    Teuchos::RCP<const Tpetra_Vector> xCoordsT = coordMV->getVector(0);
     //Writing of coordinates to MatrixMarket file for Ray
     if (node_mapT->getComm()->getSize() > 1) {
       serial_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, numMyElements, 0, node_mapT->getComm()));
@@ -623,9 +621,8 @@ void Albany::STKDiscretization::writeCoordsToMatrixMarket() const
     }
     else
       Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
-    if (yy != NULL) {
-      Teuchos::ArrayView<ST> yyAV = Teuchos::arrayView(yy, numOwnedNodes);
-      Teuchos::RCP<Tpetra_Vector> yCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, yyAV));
+    if (coordMV->getNumVectors() > 1) {
+      Teuchos::RCP<const Tpetra_Vector> yCoordsT =  coordMV->getVector(1);
       if (node_mapT->getComm()->getSize() > 1) {
         Teuchos::RCP<Tpetra_Vector> yCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
@@ -634,9 +631,8 @@ void Albany::STKDiscretization::writeCoordsToMatrixMarket() const
       else
         Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
     }
-    if (zz != NULL){
-      Teuchos::ArrayView<ST> zzAV = Teuchos::arrayView(zz, numOwnedNodes);
-      Teuchos::RCP<Tpetra_Vector> zCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, zzAV));
+    if (coordMV->getNumVectors() > 2){
+      Teuchos::RCP<const Tpetra_Vector> zCoordsT =  coordMV->getVector(2);
       if (node_mapT->getComm()->getSize() > 1) {
         Teuchos::RCP<Tpetra_Vector> zCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);

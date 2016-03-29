@@ -27,6 +27,7 @@ public:
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using Workset = typename Traits::EvalData;
+
   using FieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>;
   using DataLayoutMap = std::map<std::string, Teuchos::RCP<PHX::DataLayout>>;
 
@@ -57,7 +58,9 @@ public:
   ///
   virtual
   ~AbstractModel()
-  {};
+  {
+    return;
+  };
 
   ///
   /// No copy constructor
@@ -81,48 +84,23 @@ public:
       FieldMap eval_fields) = 0;
 
   ///
-  /// Return a map to the dependent fields
+  /// Accessors and mutators
   ///
-  virtual
-  DataLayoutMap
-  getDependentFieldMap()
+  int
+  getNumDimensions()
   {
-    return dep_field_map_;
+    return num_dims_;
   }
 
-  ///
-  /// Return a map to the evaluated fields
-  ///
-  virtual
-  DataLayoutMap
-  getEvaluatedFieldMap()
+  int
+  getNumCubaturePoints()
   {
-    return eval_field_map_;
+    return num_pts_;
   }
 
-  ///
-  /// Convenience function to set dependent fields.
-  ///
   virtual
-  void
-  setDependentField(
-      std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
-  {
-    dep_field_map_.insert(std::make_pair(field_name, field));
-  }
-
-  ///
-  /// Convenience function to set evaluated fields.
-  ///
-  virtual
-  void
-  setEvaluatedField(
-      std::string const & field_name,
-      Teuchos::RCP<PHX::DataLayout> const & field)
-  {
-    eval_field_map_.insert(std::make_pair(field_name, field));
-  }
+  int
+  getNumStateVariables() = 0;
 
   ///
   /// state variable registration helpers
@@ -163,33 +141,57 @@ public:
     return state_var_output_flags_[state_var];
   }
 
-  int getNumStateVariables()
+  ///
+  /// Deal with fields
+  ///
+
+  Teuchos::RCP<std::map<std::string, std::string>>
+  getFieldNameMap()
   {
-    return num_state_variables_;
+    return field_name_map_;
+  }
+
+  DataLayoutMap
+  getDependentFieldMap()
+  {
+    return dep_field_map_;
+  }
+
+  DataLayoutMap
+  getEvaluatedFieldMap()
+  {
+    return eval_field_map_;
+  }
+
+  void
+  setDependentField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    dep_field_map_.insert(std::make_pair(field_name, field));
+  }
+
+  void
+  setEvaluatedField(
+      std::string const & field_name,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    eval_field_map_.insert(std::make_pair(field_name, field));
   }
 
 protected:
 
   ///
-  /// Number of State Variables
-  ///
-  int num_state_variables_;
-
-  ///
   /// Number of dimensions
   ///
-  int num_dims_;
+  int
+  num_dims_{0};
 
   ///
   /// Number of integration points
   ///
-  int num_pts_;
-
-  ///
-  /// Map of field names
-  ///
-  Teuchos::RCP<std::map<std::string, std::string>>
-  field_name_map_;
+  int
+  num_pts_{0};
 
   std::vector<std::string>
   state_var_names_;
@@ -208,6 +210,12 @@ protected:
 
   std::vector<bool>
   state_var_output_flags_;
+
+  ///
+  /// Map of field names
+  ///
+  Teuchos::RCP<std::map<std::string, std::string>>
+  field_name_map_;
 
   DataLayoutMap
   dep_field_map_;

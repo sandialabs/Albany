@@ -24,7 +24,7 @@ files = ["CTestConfig.cmake",
          "nightly_cron_script_trilinos_gaia.sh",
          "process_output.sh",
          "send_email.sh",
-         "sync.py",
+         "sync_files.py",
          "trilinosAeras"]
 
 home = os.getenv("HOME")
@@ -92,7 +92,7 @@ if __name__ == "__main__":
                         dest="defaults", default=False, help="list the default "
                         "directories that will be used and exit")
     parser.add_argument("-f", "--force", action="store_true", dest="force",
-                        defualt=False, help="force creation of the project "
+                        default=False, help="force creation of the project "
                         "directory")
     parser.add_argument("-l", "--list", action="store_true", dest="list",
                         default=False, help="list the files to be synced and "

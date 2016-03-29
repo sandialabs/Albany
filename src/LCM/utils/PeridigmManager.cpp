@@ -12,7 +12,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Phalanx_DataLayout.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "MaterialDatabase.h"
 #include "PHAL_Dimension.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <Teuchos_LAPACK.hpp>
@@ -59,10 +59,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   }
 
   // Read the material data base file, if any
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDataBase;
+  Teuchos::RCP<MaterialDatabase> materialDataBase;
   if(problemParams.isType<std::string>("MaterialDB Filename")){
     std::string filename = problemParams.get<std::string>("MaterialDB Filename");
-    materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, teuchosComm));
+    materialDataBase = Teuchos::rcp(new MaterialDatabase(filename, teuchosComm));
   }
 
   stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);

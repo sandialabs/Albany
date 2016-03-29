@@ -421,12 +421,19 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     keep_proc = nCellsActive > 0;
     createReducedMPI(keep_proc, reducedComm);
 #endif
-    if (keep_proc) { //in the case we're using the reduced Comm, only call routines if there is a nonzero # of elts on a proc. 
+    if (keep_proc) { //in the case we're using the reduced Comm, only call routines if there is a nonzero # of elts on a proc.
 #ifdef REDUCED_COMM 
       reducedMpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
+   #ifdef CISM_USE_EPETRA
+      reducedMpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
+   #endif
 #else
-      reducedMpiCommT = mpiCommT; 
+      reducedMpiCommT = mpiCommT;
+   #ifdef CISM_USE_EPETRA
+      reducedMpiComm = mpiComm;
+   #endif
 #endif
+ 
     
 
     // ---------------------------------------------
@@ -544,8 +551,10 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 #ifdef CISM_USE_EPETRA
      node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *reducedMpiComm)); //node_map is 1-based
 #else
-    Teuchos::ArrayView<const GO> global_node_id_owned_map_AV = Teuchos::arrayView(global_node_id_owned_map_Ptr, nNodes);
-    node_map = Teuchos::rcp(new Tpetra_Map(INVALID, global_node_id_owned_map_AV, 0, reducedMpiCommT));
+    Teuchos::Array<GO> global_node_id_owned_map(nNodes); 
+    for (int i=0; i<nNodes; i++)
+      global_node_id_owned_map[i] = global_node_id_owned_map_Ptr[i];
+    node_map = Teuchos::rcp(new Tpetra_Map(INVALID, global_node_id_owned_map, 0, reducedMpiCommT));
 #endif
  }
 

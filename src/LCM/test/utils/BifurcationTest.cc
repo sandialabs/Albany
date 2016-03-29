@@ -16,7 +16,6 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_TestForException.hpp>
 #include <Teuchos_as.hpp>
-#include <QCAD_MaterialDatabase.hpp>
 #include <Phalanx.hpp>
 
 #include <PHAL_AlbanyTraits.hpp>
@@ -29,6 +28,7 @@
 #include <Intrepid2_MiniTensor.h>
 #include <typeinfo>
 
+#include "MaterialDatabase.h"
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"

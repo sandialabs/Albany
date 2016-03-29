@@ -182,7 +182,7 @@ public:
   // at step N+1.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
   Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x) const;
+  gradient(Intrepid2::Vector<T, N> const & x);
 
 
   //! Default implementation of hessian.
