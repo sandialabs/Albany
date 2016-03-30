@@ -55,14 +55,8 @@ void ObserverImpl::observeSolution (
     const Teuchos::RCP<LCM::PeridigmManager>&
       peridigmManager = LCM::PeridigmManager::self();
     if (Teuchos::nonnull(peridigmManager)) {
-      double obcFunctional = peridigmManager->obcEvaluateFunctional();
       peridigmManager->writePeridigmSubModel(stamp);
       peridigmManager->updateState();
-
-      int myPID = nonOverlappedSolution.Map().Comm().MyPID();
-      if(myPID == 0)
-        std::cout << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FUNCTIONAL VALUE (OBSERVER) = "
-                  << obcFunctional << "\n" << std::endl;
     }
 #endif
 #endif
