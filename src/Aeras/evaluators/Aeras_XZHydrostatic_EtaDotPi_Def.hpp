@@ -102,16 +102,40 @@ evaluateFields(typename Traits::EvalData workset)
 	std::vector<ScalarT> etadotpi(numLevels+1);
 
 	if(!pureAdvection){
+
+
+		/*//OG debugging statements
+		std::cout << "Printing DIVPIVELX ----------------------------------------\n";
+		for (int level=0; level < numLevels; ++level){
+			std::cout << "level = " << level << "\n";
+		for (int qp=0; qp < numQPs; ++qp) {
+			std::cout << "qp = "<<qp << " divdp = "<< divpivelx(23,qp,level)*E.delta(level) << " Edelta= "<< E.delta(level) <<"\n";
+
+		}
+		}
+		*/
+
+
+
 		for (int cell=0; cell < workset.numCells; ++cell) {
 			for (int qp=0; qp < numQPs; ++qp) {
 				ScalarT pdotp0 = 0;
 				for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * E.delta(level);
 				for (int level=0; level < numLevels; ++level) {
+				//definign etadotpi on interfaces
 					ScalarT integral = 0;
 					for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * E.delta(j);
 					etadotpi[level] = -E.B(level+.5)*pdotp0 - integral;
 				}
 				etadotpi[0] = etadotpi[numLevels] = 0;
+
+				/*//OG debugging statements
+				if((cell == 23) && (qp == 0)){
+					std::cout << "Etadotdpdn ------------------------------------\n";
+					for (int level=0; level < numLevels+1; ++level) {
+						std::cout << "level = " << level << "etadotdpdn = "<< etadotpi[level] <<"\n";
+					}
+				}*/
 
 				//Vertical Finite Differencing
 				for (int level=0; level < numLevels; ++level) {
@@ -131,6 +155,8 @@ evaluateFields(typename Traits::EvalData workset)
 						etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
 					}
 
+					//OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
+					//
 					for (int i = 0; i < tracerNames.size(); ++i) {
 						const ScalarT q_m = 0.5*( Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)
 								+ Tracer[tracerNames[i]](cell,qp,level_m) / Pi(cell,qp,level_m) );
@@ -139,7 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
 						//etadotdTracer[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
 						dedotpiTracerde[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
 					}
-
+                    //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
 					Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
 
 				}

@@ -85,13 +85,26 @@ evaluateFields(typename Traits::EvalData workset)
 				  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
 				  int node = qp;
 				  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
-				  /*    if (cell == 0)
-          if (node == qp) 
-            std::cout << "cell, node, wBF, res, spDot: " << cell 
-                                 << ", " << node << ", " << wBF(cell,node,qp) << ", " 
-                                 << Residual(cell,node) <<", " << spDot(cell,qp) << std::endl; */
 			  }
+
+			  /*//OG debugging statements
+			  if(cell == 23){
+				 std::cout << "Name? " << this->getName() << "-----------------------------------------------------\n";
+				 std::cout << "SP residual = " << Residual(cell,0)/wBF(cell,0,0) << " spdot = "<< spDot(cell,0) <<"\n";
+				 //std::cout << "SP ITSELF = " << Residual(cell,0) << " spdot = "<< spDot(cell,0) <<"\n";
+			  }
+			  */
+
 		  }
+
+		  /*//OG debugging statements
+		  {
+			  for (int qp=0; qp < numQPs; ++qp) {
+			     std::cout << "SP resid qp = "<<qp << "value = " <<  Residual(23,qp)/wBF(23,qp,qp) << "\n";
+			  }
+		  }*/
+
+
 	  }//end of (if not  pureAdvection)
 	  else{
 		  for (int cell=0; cell < workset.numCells; ++cell)

@@ -157,6 +157,7 @@ evaluateFields(typename Traits::EvalData workset)
             p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
             energyDot_(cell, qp) = (Cs + p * (Cl_ - Cs)) * T_dot_(cell, qp) +
                     dpdphi * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi_dot;
+		
         }
     }
 }

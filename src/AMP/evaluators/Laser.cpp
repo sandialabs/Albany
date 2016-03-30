@@ -18,9 +18,9 @@ namespace AMP
 
     std::cout << "Reading file ..." << std::endl;
 
-    RealType t,x,z;
+    RealType t,x,z,power_fraction;
     int power;
-    while (is >> t >> x >> z >> power)
+    while (is >> t >> x >> z >> power >> power_fraction)
       {
 	//data
 	LaserCenter Data;
@@ -29,6 +29,7 @@ namespace AMP
 	Data.x = x;
 	Data.z = z;
 	Data.power = power;
+  Data.power_fraction = power_fraction;
 	//
 	LaserData_.push_back(Data);
       }
@@ -55,7 +56,7 @@ namespace AMP
   }
 
   // interpolate
-  void Laser::getLaserPosition(RealType t, LaserCenter val, RealType &x, RealType &z, int &power)
+  void Laser::getLaserPosition(RealType t, LaserCenter val, RealType &x, RealType &z, int &power, RealType &power_fraction)
   {
     Teuchos::Array<LaserCenter>::iterator low;
     // this line below works because Teuchos::Array<T> is a lighweight implementation of
@@ -71,6 +72,7 @@ namespace AMP
     RealType x1 = low->x;	
     RealType z1 = low->z;
     int power1 = low->power;
+    RealType power_fraction1 = low->power_fraction; 
     
     if ( low != LaserData_.begin() )
       {
@@ -88,6 +90,7 @@ namespace AMP
     RealType x2 = low->x;	
     RealType z2 = low->z;
     int power2 = low->power;
+    RealType power_fraction2 = low->power_fraction;
    
     // now interpolate data between point 1 and 2:
     // P = (1-q)*A + q*B
@@ -103,6 +106,8 @@ namespace AMP
     x = (1.0 - q)*x1 + q*x2;
     // z position
     z = (1.0 - q)*z1 + q*z2;
+    // power fraction
+    power_fraction = (1.0 - q)*power_fraction1 + q*power_fraction2;
 
     // check if laser is on or off at time t
     if (  (power1 == 1 ) && (power2 == 1) )
