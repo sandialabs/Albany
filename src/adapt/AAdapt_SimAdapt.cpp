@@ -356,7 +356,7 @@ bool SimAdapt::adaptMesh()
   Field_write(sim_res_fld, simname, 0, 0, 0);
   Albany::debugAMPMesh(apf_m, "after");
 #endif
-
+  
   /* run APF verification on the resulting mesh */
   apf_m->verify();
   /* update Albany structures to reflect the adapted mesh */
