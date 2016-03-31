@@ -68,8 +68,6 @@ private:
   bool enable_transient_;
   std::string Temperature_Name_;
   Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term1_;
-//  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term2_;
-
 };
 }
 

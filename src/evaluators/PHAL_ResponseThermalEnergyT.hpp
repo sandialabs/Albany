@@ -41,6 +41,10 @@ namespace PHAL {
 
     // temperature
     PHX::MDField<ScalarT> field;
+    // time
+//    PHX::MDField<ScalarT,Dummy> time;
+//    PHX::MDField<ScalarT,Dummy> deltaTime;
+    // coordinates
     PHX::MDField<MeshScalarT> coordVec;
     // Quadrature points
     PHX::MDField<MeshScalarT> weights;

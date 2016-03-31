@@ -694,6 +694,11 @@ evaluateFields(typename Traits::EvalData workset)
       sphere_coord(e,q,0) = longitude;
       sphere_coord(e,q,1) = latitude;
       
+      /*// OG debugging statements
+      if(e == 23){
+    	  std::cout << "Elem coordinates. qp = "<<q << "lon, lat = " << longitude << " " << latitude << "\n";
+      }*/
+
       MeshScalarT sinT, cosT, sinL, cosL;
       
       sinT = std::sin(latitude);

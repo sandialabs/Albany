@@ -228,6 +228,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::DistParamDeriv>(
   const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   //Do nothing -- DistParamDerivs are not meant to work for Aeras and with AlbanyT 
+	return Teuchos::null;
 }
 
 template <>

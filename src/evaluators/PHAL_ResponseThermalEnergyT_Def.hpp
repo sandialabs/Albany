@@ -15,6 +15,8 @@ ResponseThermalEnergyT(Teuchos::ParameterList& p,
 		      const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec("Coord Vec", dl->qp_gradient),
   weights("Weights", dl->qp_scalar)
+//  time("Time",dl->workset_scalar),
+//  deltaTime("Delta Time",dl->workset_scalar)
 {
   // get and validate Response parameter list
   Teuchos::ParameterList* plist = 
@@ -62,6 +64,8 @@ ResponseThermalEnergyT(Teuchos::ParameterList& p,
   // add dependent fields
   this->addDependentField(field);
   this->addDependentField(coordVec);
+//  this->addDependentField(time);
+//  this->addDependentField(deltaTime);
   this->addDependentField(weights);
   this->setName(field_name+" Response Field IntegralT"+PHX::typeAsString<EvalT>());
 
@@ -89,6 +93,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(field,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weights,fm);
+//  this->utils.setFieldData(time,fm);
+//  this->utils.setFieldData(deltaTime,fm);
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
 

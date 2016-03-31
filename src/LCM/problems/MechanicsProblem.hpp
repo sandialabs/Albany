@@ -1149,7 +1149,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
+    }
   // IKT, 3/27/16: register dirichlet_field for specifying Dirichlet data from a field 
   // in the input exodus mesh.
   if (dir_count == 0){ //constructEvaluators gets called multiple times for different specializations.  
