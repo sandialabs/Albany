@@ -24,6 +24,8 @@ Please remove when issue is resolved
 #include "Adapt_NodalDataVector.hpp"
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
+#include "Epetra_LinearProblem.h"
+#include "AztecOO.h"
 
 #ifdef ATO_USES_ISOLIB
 #include "Albany_STKDiscretization.hpp"
@@ -831,8 +833,11 @@ ATO::Solver::smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct)
   if(topoStruct->filter != Teuchos::null){
     Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
     Epetra_Vector filtered_topoVec(*topoVec);
-    topoStruct->filter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, filtered_topoVec);
-    *topoVec = filtered_topoVec;
+    int num = topoStruct->filter->getNumIterations();
+    for(int i=0; i<num; i++){
+      topoStruct->filter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, filtered_topoVec);
+      *topoVec = filtered_topoVec;
+    }
   } else
   if(topoStruct->postFilter != Teuchos::null){
     Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
@@ -867,15 +872,17 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
 
     // copy topology into Epetra_Vector to apply the filter and/or communicate boundary data
     Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
-    Teuchos::RCP<Epetra_Vector> overlapTopoVec = topoStruct->overlapVector;
     double* ltopo; topoVec->ExtractView(&ltopo);
     int numLocalNodes = topoVec->MyLength();
     int offset = itopo*numLocalNodes;
     for(int lid=0; lid<numLocalNodes; lid++)
       ltopo[lid] = p[lid+offset];
 
-    if(!topoStruct->filterIsRecursive) smoothTopology(topoStruct);
+    smoothTopology(topoStruct);
+// HACK
+//    if(!topoStruct->filterIsRecursive) smoothTopology(topoStruct);
 
+    Teuchos::RCP<Epetra_Vector> overlapTopoVec = topoStruct->overlapVector;
     overlapTopoVec->Import(*topoVec, *importer, Insert);
 
     // copy the topology into the state manager
@@ -1000,9 +1007,14 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
     // apply filter if requested
     Epetra_Vector filtered_ObjectiveGradientVec(*ObjectiveGradientVec[ivec]);
     if(_derivativeFilter != Teuchos::null){
-      _derivativeFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, 
-                                                    *ObjectiveGradientVec[ivec],
-                                                     filtered_ObjectiveGradientVec);
+
+      int num = _derivativeFilter->getNumIterations();
+      for(int i=0; i<num; i++){
+        _derivativeFilter->FilterOperator()->Multiply(/*UseTranspose=*/true, 
+                                                      *ObjectiveGradientVec[ivec],
+                                                       filtered_ObjectiveGradientVec);
+        *ObjectiveGradientVec[ivec] = filtered_ObjectiveGradientVec;
+      }
       filtered_ObjectiveGradientVec.ExtractView(&lvec);
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvec, numLocalNodes*sizeof(double));
     } else {
@@ -1068,13 +1080,14 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
         }
     }
 
-    topologyStructs[itopo]->topology = _topologyInfoStructs[itopo]->topology;
-    topologyStructs[itopo]->localVector = topoVec;
+    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
+    smoothTopology(topoStruct);
 
     Teuchos::RCP<Epetra_Vector> overlapTopoVec = _topologyInfoStructs[itopo]->overlapVector;
     overlapTopoVec->Import(*topoVec, *importer, Insert);
 
-    double* otopo; overlapTopoVec->ExtractView(&otopo);
+    topologyStructs[itopo]->topology = _topologyInfoStructs[itopo]->topology;
+    topologyStructs[itopo]->dataVector = overlapTopoVec;
   }
 
   return _atoProblem->ComputeMeasure(measureType, topologyStructs, measure, dmdp);
@@ -1101,7 +1114,8 @@ void
 ATO::Solver::Compute(double* p, double& g, double* dgdp, double& c, double* dcdp)
 /******************************************************************************/
 {
-  if(_iteration!=0) smoothTopology(p);
+// HACK
+//  if(_iteration!=0) smoothTopology(p);
   
   Compute((const double*)p, g, dgdp, c, dcdp);
 }
@@ -1836,6 +1850,10 @@ ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
   if( params.isType<Teuchos::Array<std::string> >("Blocks") ){
     blocks = params.get<Teuchos::Array<std::string> >("Blocks");
   }
+  if( params.isType<int>("Iterations") ){
+    iterations = params.get<int>("Iterations");
+  } else
+    iterations = 1;
 
 }
 

@@ -51,6 +51,7 @@ namespace ATO {
              Teuchos::RCP<Epetra_Import>       importer,
              Teuchos::RCP<Epetra_Export>       exporter);
       Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
+      int getNumIterations(){return iterations;}
     protected:
       void importNeighbors(
              std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors,
@@ -58,6 +59,7 @@ namespace ATO {
              Teuchos::RCP<Epetra_Export>       exporter);
 
       Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
+      int iterations;
       double filterRadius;
       Teuchos::Array<std::string> blocks;
   };

@@ -33,7 +33,7 @@ ScaleVector(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(outVector);
 
   if(p.isSublist("Homogenized Constants")){
-    homogenizedConstantsName = p.sublist("Homogenized Constants").get<std::string>("Name");
+    homogenizedConstantsName = p.sublist("Homogenized Constants").get<std::string>("Conduction Name");
     useHomogenizedConstants = true;
     Albany::StateManager* stateMgr = p.get<Albany::StateManager*>("State Manager");
     Teuchos::RCP<Albany::Layouts> dl = p.get<Teuchos::RCP<Albany::Layouts> >("Data Layout");

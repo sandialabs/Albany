@@ -51,6 +51,7 @@ namespace ATO {
 
     Teuchos::Array<std::string> dFdpNames;
     std::string FName;
+    std::string elementBlockName;
     static const std::string className;
 
     PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
@@ -128,6 +129,7 @@ class StiffnessObjective
    using StiffnessObjectiveBase<EvalT,Traits>::topologies;
    using StiffnessObjectiveBase<EvalT,Traits>::dFdpNames;
    using StiffnessObjectiveBase<EvalT,Traits>::FName;
+   using StiffnessObjectiveBase<EvalT,Traits>::elementBlockName;
    using StiffnessObjectiveBase<EvalT,Traits>::className;
    using StiffnessObjectiveBase<EvalT,Traits>::qp_weights;
    using StiffnessObjectiveBase<EvalT,Traits>::BF;
@@ -161,6 +163,7 @@ class StiffnessObjective<PHAL::AlbanyTraits::Residual,Traits>
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topologies;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::dFdpNames;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::FName;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::elementBlockName;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::className;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::qp_weights;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::BF;

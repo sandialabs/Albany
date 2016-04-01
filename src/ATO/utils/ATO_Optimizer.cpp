@@ -365,7 +365,7 @@ Optimizer_OCG::Optimize()
         double be = dfdp[i]/(dgdp[i]-gmax_dgdp)/vmid;
         be = (be > 0.0) ? be : 0.0;
         double p_old = p_last[i];
-//        double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+//        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
         double p_new = p_old*pow(be,_stabExponent);
         // limit change
         double dval = p_new - p_old;
@@ -726,7 +726,7 @@ Optimizer_OC::computeUpdatedTopology()
   comm->SumAll(&dfdp_tot, &g_dfdp_tot, 1);
   comm->SumAll(&dmdp_tot, &g_dmdp_tot, 1);
 
-  v2 = -10.0* g_dfdp_tot / g_dmdp_tot;
+  v2 = -1000.0* g_dfdp_tot / g_dmdp_tot;
 
   if(comm->MyPID()==0){
     std::cout << "Measure enforcement: Target = " << _measureConstraint <<  std::endl;
@@ -748,7 +748,7 @@ Optimizer_OC::computeUpdatedTopology()
       else
         be = -dfdp[i]/vmid;
       double p_old = p_last[i];
-//      double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+//      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
       double p_new = p_old*pow(be,_stabExponent);
       // limit change
       double dval = p_new - p_old;
@@ -836,7 +836,7 @@ Optimizer_OC::computeUpdatedTopology()
       else
         be = -dfdp[i]/vmid;
       double p_old = p_last[i];
-//      double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+//      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
       double p_new = p_old*pow(be,_stabExponent);
       // limit change
       double dval = p_new - p_old;
@@ -875,7 +875,7 @@ Optimizer_OC::computeUpdatedTopology()
         else
           be = -dfdp[i]/vmid;
         double p_old = p_last[i];
-//        double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
+//        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
         double p_new = p_old*pow(be,_stabExponent);
         // limit change
         double dval = p_new - p_old;

@@ -19,7 +19,7 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
 
 {
 
-  std::string elementBlockName = meshSpecs->ebName;
+  elementBlockName = meshSpecs->ebName;
 
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
@@ -120,10 +120,13 @@ preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
+
 template<typename Traits>
 void ATO::StiffnessObjective<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  if( elementBlockName != workset.EBName ) return;
 
   int nTopos = topologies->size();
 
@@ -150,84 +153,31 @@ evaluateFields(typename Traits::EvalData workset)
   double response;
   Teuchos::Array<double> dResponse(nTopos);
   
+  for(int cell=0; cell<numCells; cell++){
 
-  if( size == 3 ){
-/*
-    for(int cell=0; cell<numCells; cell++){
-      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-        double topoVal = 0.0;
+    for(int itopo=0; itopo<nTopos; itopo++)
+      for(int node=0; node<numNodes; node++) 
+        dEdp[itopo](cell,node) = 0.0;
+
+    for(int qp=0; qp<numQPs; qp++){
+
+      // compute topology values at this qp
+      for(int itopo=0; itopo<nTopos; itopo++){
+        topoVals[itopo] = 0.0;
         for(int node=0; node<numNodes; node++)
-          topoVal += topo(cell,node)*BF(cell,node,qp);
-        double P = topology->Penalize(functionIndex,topoVal);
-        double dP = topology->dPenalize(functionIndex,topoVal);
-        double dE = 0.0;
-        for(int i=0; i<numDims; i++)
-          dE += gradX(cell,qp,i)*workConj(cell,qp,i)/2.0;
-        dE *= qp_weights(cell,qp);
-        internalEnergy += P*dE;
-        for(int node=0; node<numNodes; node++)
-          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
+          topoVals[itopo] += topo[itopo](cell,node)*BF(cell,node,qp);
       }
-    }
-*/
-  } else
-  if( size == 4 ){
-    for(int cell=0; cell<numCells; cell++){
 
+      penaltyModel->Evaluate(topoVals, topologies, cell, qp, response, dResponse);
+
+      internalEnergy += response*qp_weights(cell,qp);
+
+      // assemble
       for(int itopo=0; itopo<nTopos; itopo++)
-        for(int node=0; node<numNodes; node++) 
-          dEdp[itopo](cell,node) = 0.0;
-
-      for(int qp=0; qp<numQPs; qp++){
-
-        // compute topology values at this qp
-        for(int itopo=0; itopo<nTopos; itopo++){
-          topoVals[itopo] = 0.0;
-          for(int node=0; node<numNodes; node++)
-            topoVals[itopo] += topo[itopo](cell,node)*BF(cell,node,qp);
-        }
-
-        penaltyModel->Evaluate(topoVals, topologies, cell, qp, response, dResponse);
-
-        internalEnergy += response*qp_weights(cell,qp);
-
-        // assemble
-        for(int itopo=0; itopo<nTopos; itopo++)
-          for(int node=0; node<numNodes; node++)
-            dEdp[itopo](cell,node) += dResponse[itopo]*BF(cell,node,qp)*qp_weights(cell,qp);
-
-        
-      }
-    }
-  } else
-  if( size == 5 ){
-/*
-    for(int cell=0; cell<numCells; cell++){
-      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-        double topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
-          topoVal += topo(cell,node)*BF(cell,node,qp);
-        double P = topology->Penalize(functionIndex,topoVal);
-        double dP = topology->dPenalize(functionIndex,topoVal);
-        double dE = 0.0;
-        for(int i=0; i<numDims; i++)
-          for(int j=0; j<numDims; j++)
-            for(int k=0; k<numDims; k++)
-              dE += gradX(cell,qp,i,j,k)*workConj(cell,qp,i,j,k)/2.0;
-        dE *= qp_weights(cell,qp);
-        internalEnergy += P*dE;
-        for(int node=0; node<numNodes; node++)
-          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
-      }
+          dEdp[itopo](cell,node) += dResponse[itopo]*BF(cell,node,qp)*qp_weights(cell,qp);
     }
-*/
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>5, Teuchos::Exceptions::InvalidParameter,
-      "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
   }
-
   F(0) += internalEnergy;
 }
 

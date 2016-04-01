@@ -92,6 +92,13 @@ ComputeMeasure(std::string measureType, double& measure)
   } else
 
   if(measureType == "Mass"){
+
+    // JR:  A reference mass is difficult to define.  return 1.0 so that
+    // mass constraints are absolute, not relative.
+    
+    measure = 1.0;
+
+    /*
     double localm = 0.0;
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
@@ -113,6 +120,7 @@ ComputeMeasure(std::string measureType, double& measure)
     }
   
     comm->SumAll(&localm, &measure, 1);
+    */
   }
 }
 
@@ -156,7 +164,7 @@ computeMeasure(std::string measureType,
   Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
   for(int itopo=0; itopo<nTopologies; itopo++){
     topologies[itopo] = topologyStructs[itopo]->topology;
-    topologyStructs[itopo]->localVector->ExtractView(&topoValues[itopo]);
+    topologyStructs[itopo]->dataVector->ExtractView(&topoValues[itopo]);
   }
 
   std::vector<double*> odmdp(nTopologies);
@@ -252,7 +260,7 @@ computeConformalMeasure(std::string measureType,
   Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
   for(int itopo=0; itopo<nTopologies; itopo++){
     topologies[itopo] = topologyStructs[itopo]->topology;
-    topologyStructs[itopo]->localVector->ExtractView(&topoValues[itopo]);
+    topologyStructs[itopo]->dataVector->ExtractView(&topoValues[itopo]);
   }
 
   std::vector<double*> odmdp(nTopologies);
@@ -285,7 +293,7 @@ computeConformalMeasure(std::string measureType,
 
  
     int materialTopologyIndex = blockMeasureModel->getMaterialTopologyIndex();
-    double* p; topologyStructs[materialTopologyIndex]->localVector->ExtractView(&p);
+    double* p; topologyStructs[materialTopologyIndex]->dataVector->ExtractView(&p);
     Teuchos::RCP<Topology> materialTopology = topologyStructs[materialTopologyIndex]->topology;
       
     for(int cell=0; cell<numCells; cell++){
@@ -379,7 +387,7 @@ double& v, double* dvdp)
 {
 
   Teuchos::RCP<Topology> topology = topologyStructs[0]->topology;
-  double* p; topologyStructs[0]->localVector->ExtractView(&p);
+  double* p; topologyStructs[0]->dataVector->ExtractView(&p);
 
   double localv = 0.0;
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
@@ -761,8 +769,12 @@ create(const Teuchos::ParameterList& measureParams )
       (*blockMeasureMap)[name] = Teuchos::rcp(new VolumeMeasure(blockSpec, measureParams));
     } else 
 
-//    if( measureType == "Center of Gravity" ){
-//      (*blockMeasureMap)[name] = Teuchos::rcp(new CenterOfGravity(blockSpec, measureParams));
+//    if( measureType == "Center of Mass" ){
+//      if( matType == "Mixture" ){
+//        (*blockMeasureMap)[name] = Teuchos::rcp(new CenterOfMass_Mixture(blockSpec, measureParams));
+//      } else {
+//        (*blockMeasureMap)[name] = Teuchos::rcp(new CenterOfMass_Material(blockSpec, measureParams));
+//      }
 //    } else 
 
 //    if( measureType == "Centroid" ){

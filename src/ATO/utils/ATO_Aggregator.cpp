@@ -334,21 +334,31 @@ Aggregator_Scaled::Evaluate()
         comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
       normalize[i] = (globalVal != 0.0) ? 1.0/fabs(globalVal) : 1.0;
     }
+    if( comm != Teuchos::null ){
+      if( comm->MyPID()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Normalizing:" << std::endl;
+        for(int i=0; i<numValues; i++){
+          std::cout << "   " << values[i].name << " init = " << normalize[i] << std::endl;
+        }
+        std::cout << "************************************************************************" << std::endl;
+      }
+    } 
   }
 
   for(int sv=0; sv<numValues; sv++){
     Albany::StateArrayVec& src = values[sv].app->getStateMgr().getStateArrays().elemStateArrays;
     Albany::MDArray& valSrc = src[0][values[sv].name];
+    double globalVal, val = valSrc(0);
     if( comm != Teuchos::null ){
-      double globalVal, val = valSrc(0);
       comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
       if( comm->MyPID()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
         std::cout << "************************************************************************" << std::endl;
       }
-    }
-    *valueAggregated += normalize[sv]*weights[sv]*valSrc(0);
+    } else globalVal = val;
+    *valueAggregated += normalize[sv]*weights[sv]*globalVal;
     valSrc(0)=0.0;
   }
   
@@ -406,19 +416,18 @@ void Aggregator_Extremum<C>::Evaluate()
     Albany::MDArray& valSrc = src[0][values[0].name];
     double extremum = valSrc(0);
     for(int sv=0; sv<numValues; sv++){
+      double globalVal, val = valSrc(0);
       if( comm != Teuchos::null ){
-        double globalVal, val = valSrc(0);
         comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
         if( comm->MyPID()==0 ){
           std::cout << "************************************************************************" << std::endl;
           std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
           std::cout << "************************************************************************" << std::endl;
         }
-      }
-      double val = valSrc(0);
-      if( compare(val,extremum) ){
+      } else globalVal = val;
+      if( compare(globalVal,extremum) ){
         extremum_index = sv;
-        extremum = val;
+        extremum = globalVal;
       }
       valSrc(0)=0.0;
     }

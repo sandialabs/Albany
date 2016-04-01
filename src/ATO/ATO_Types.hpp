@@ -8,7 +8,7 @@ namespace ATO {
 
 typedef struct TopologyStruct {
   Teuchos::RCP<ATO::Topology> topology;
-  Teuchos::RCP<Epetra_Vector> localVector;
+  Teuchos::RCP<Epetra_Vector> dataVector;
 } TopologyStruct;
 
 }
