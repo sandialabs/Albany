@@ -5,11 +5,10 @@
 //*****************************************************************//
 #include <sstream>
 
-#include "SchwarzMultiscale.hpp"
-
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
+#include "Schwarz_Multiscale.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
