@@ -26,6 +26,7 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#include "PHAL_AddNoise.hpp"
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_DOFCellToSide.hpp"
 #include "PHAL_DOFVecCellToSide.hpp"
@@ -412,6 +413,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     {
       // ...and basal_friction is one of them.
       entity = Albany::StateStruct::NodalDataToElemNode;
+      fieldName = "Beta Given";
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
       if (isBetaAParameter)
       {
@@ -707,6 +709,10 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = evalUtilsBasal.constructDOFInterpolationSideEvaluator("Effective Pressure", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
+    //---- Interpolate effective pressure gradient on QP on side
+    ev = evalUtilsBasal.constructDOFGradInterpolationSideEvaluator("Effective Pressure", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
     //---- Restrict surface height from cell-based to cell-side-based
     ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator("Surface Height",basalSideName,cellType);
     fm0.template registerEvaluator<EvalT> (ev);
@@ -753,6 +759,26 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     //---- Interpolate velocity (the solution) on QP on side
     ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (params->isSublist("FELIX Noise"))
+  {
+    if (params->sublist("FELIX Noise").isSublist("Observed Surface Velocity"))
+    {
+      // ---- Add noise to the measures ---- //
+      p = Teuchos::rcp(new Teuchos::ParameterList("Noisy Observed Velocity"));
+
+      //Input
+      p->set<std::string>("Field Name",       "Observed Surface Velocity");
+      p->set<Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_surface->side_qp_vector);
+      p->set<Teuchos::ParameterList*>("PDF Parameters", &params->sublist("FELIX Noise").sublist("Observed Surface Velocity"));
+
+      // Output
+      p->set<std::string>("Noisy Field Name", "Noisy Observed Surface Velocity");
+
+      ev = Teuchos::rcp(new PHAL::AddNoiseParam<EvalT,PHAL::AlbanyTraits> (*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   // -------------------------------- FELIX evaluators ------------------------- //
@@ -840,7 +866,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Alpha>> ptr_alpha;
     ptr_alpha = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Alpha>(*p,dl));
-    ptr_alpha->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
+    ptr_alpha->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_alpha);
 
     //--- Shared Parameter for basal friction coefficient: lambda ---//
@@ -852,7 +878,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Lambda>> ptr_lambda;
     ptr_lambda = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Lambda>(*p,dl));
-    ptr_lambda->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,0.0));
+    ptr_lambda->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_lambda);
 
     //--- Shared Parameter for basal friction coefficient: mu ---//
@@ -864,7 +890,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Mu>> ptr_mu;
     ptr_mu = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Mu>(*p,dl));
-    ptr_mu->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
+    ptr_mu->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_mu);
 
     //--- Shared Parameter for basal friction coefficient: power ---//
@@ -872,13 +898,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     param_name = "Power Exponent";
     p->set<std::string>("Parameter Name", param_name);
-    p->set<double>("Parameter Value", params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,0.0));
-    p->set< Teuchos::RCP<PHX::DataLayout> >("Data Layout", dl_basal->shared_param);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
     Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Power>> ptr_power;
     ptr_power = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Power>(*p,dl));
-    ptr_power->setNominalValue(params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
+    ptr_power->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_power);
 
     //--- FELIX basal friction coefficient ---//
@@ -1013,7 +1037,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient Gradient"));
 
     // Input
-    p->set<std::string>("Given Beta Variable Name", "Beta");
+    p->set<std::string>("Beta Variable Name", "Beta");
     p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<std::string>("Effective Pressure QP Name", "Effective Pressure");
@@ -1086,7 +1110,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<std::string>("Observed Thickness Side QP Variable Name","Observed Ice Thickness");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","Observed Surface Velocity");
     paramList->set<std::string>("Observed Surface Velocity RMS Side QP Variable Name","Observed Surface Velocity RMS");
-    paramList->set<std::string>("BF Surface Name","BF " + surfaceSideName);
     paramList->set<std::string>("Weighted Measure Basal Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure 2D Name","Weighted Measure " + basalSideName);
     paramList->set<std::string>("Weighted Measure Surface Name","Weighted Measure " + surfaceSideName);

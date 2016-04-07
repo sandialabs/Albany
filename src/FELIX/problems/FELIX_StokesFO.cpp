@@ -240,7 +240,7 @@ FELIX::StokesFO::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
-   offsets_ = dirUtils.getOffsets(); 
+   offsets_ = dirUtils.getOffsets();
 }
 
 // Neumann BCs
@@ -336,6 +336,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("FELIX Physical Parameters", false, "");
+  validPL->sublist("FELIX Noise", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
 
   return validPL;
