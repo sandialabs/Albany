@@ -255,6 +255,7 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES}
   evaluators/Adapt_ElementSizeField.cpp
   evaluators/PHAL_Absorption.cpp
+  evaluators/PHAL_AddNoise.cpp
   evaluators/PHAL_ComputeBasisFunctions.cpp
   evaluators/PHAL_ComputeBasisFunctionsSide.cpp
   evaluators/PHAL_Dirichlet.cpp
@@ -360,6 +361,8 @@ SET(HEADERS ${HEADERS}
   evaluators/Adapt_ElementSizeField_Def.hpp
   evaluators/PHAL_Absorption.hpp
   evaluators/PHAL_Absorption_Def.hpp
+  evaluators/PHAL_AddNoise.hpp
+  evaluators/PHAL_AddNoise_Def.hpp
   evaluators/PHAL_Constant.hpp
   evaluators/PHAL_Constant_Def.hpp
   evaluators/PHAL_Dirichlet.hpp
