@@ -20,7 +20,7 @@ public:
   typedef typename EvalT::ScalarT     ScalarT;
 
   ResponseSquaredL2ErrorSideBase (Teuchos::ParameterList& p,
-                                  const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dl);
+                                  const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
@@ -38,35 +38,27 @@ private:
   std::string sideSetName;
 
   int sideDim;
-  int numNodes;
   int numQPs;
-  int vecDim;
   int fieldDim;
+
   bool target_zero;
   RealType scaling;
 
   PHX::MDField<ScalarT>                           computedField;
   PHX::MDField<TargetScalarT>                     targetField;
 
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint> BF;
   PHX::MDField<RealType,Cell,Side,QuadPoint>      w_measure;
 };
 
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class ResponseSquaredL2ErrorSide : public ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ScalarT>
-{
-public:
-  ResponseSquaredL2ErrorSide (Teuchos::ParameterList& p,
-                              const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
-};
+using ResponseSquaredL2ErrorSideTargetST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-class ResponseSquaredL2ErrorSide_noTargetDeriv : public ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ParamScalarT>
-{
-public:
-  ResponseSquaredL2ErrorSide_noTargetDeriv (Teuchos::ParameterList& p,
-                                            const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
-};
+using ResponseSquaredL2ErrorSideTargetMeshST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using ResponseSquaredL2ErrorSideTargetParamST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

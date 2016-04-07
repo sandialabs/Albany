@@ -9,5 +9,4 @@
 #include "PHAL_ResponseSquaredL2ErrorSide.hpp"
 #include "PHAL_ResponseSquaredL2ErrorSide_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ResponseSquaredL2ErrorSide)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::ResponseSquaredL2ErrorSide_noTargetDeriv)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFInterpolationSideBase)

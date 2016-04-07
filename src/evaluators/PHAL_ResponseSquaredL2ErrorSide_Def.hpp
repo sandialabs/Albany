@@ -22,9 +22,7 @@ ResponseSquaredL2ErrorSideBase(Teuchos::ParameterList& p, const std::map<std::st
 
   // Gathering dimensions
   sideDim  = dl->side_gradient->dimension(2);
-  numNodes = dl->side_node_scalar->dimension(2);
   numQPs   = dl->side_qp_scalar->dimension(2);
-  vecDim   = dl->side_vector->dimension(2);
 
   Teuchos::RCP<PHX::DataLayout> layout;
   std::string rank,fname,target_fname;
@@ -37,7 +35,6 @@ ResponseSquaredL2ErrorSideBase(Teuchos::ParameterList& p, const std::map<std::st
 
   computedField = PHX::MDField<ScalarT>(fname,layout);
   targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
-  BF            = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>("BF " + sideSetName, dl->side_node_qp_scalar);
   w_measure     = PHX::MDField<RealType,Cell,Side,QuadPoint>("Weighted Measure " + sideSetName, dl->side_qp_scalar);
   scaling       = plist->get("Scaling",1.0);
 
@@ -49,7 +46,6 @@ ResponseSquaredL2ErrorSideBase(Teuchos::ParameterList& p, const std::map<std::st
   }
   else
     this->addDependentField(targetField);
-  this->addDependentField(BF);
   this->addDependentField(w_measure);
 
   this->setName("Response Squared L2 Error Side" + PHX::typeAsString<EvalT>());
@@ -76,7 +72,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 {
   this->utils.setFieldData(computedField,fm);
   this->utils.setFieldData(targetField,fm);
-  this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
 
   if (target_zero)
@@ -117,9 +112,9 @@ void PHAL::ResponseSquaredL2ErrorSideBase<EvalT, Traits, TargetScalarT>::evaluat
       const int side = it_side.side_local_id;
 
       ScalarT sum = 0;
-      ScalarT sq = 0;
       for (int qp=0; qp<numQPs; ++qp)
       {
+        ScalarT sq = 0;
         // Computing squared difference at qp
         if (fieldDim==0)
           sq += std::pow(computedField(cell,side,qp)-targetField(cell,side,qp),2);
@@ -131,10 +126,7 @@ void PHAL::ResponseSquaredL2ErrorSideBase<EvalT, Traits, TargetScalarT>::evaluat
             for (int k=0; k<computedField.fieldTag().dataLayout().dimension(4); ++k)
               sq += std::pow(computedField(cell,side,qp,j,k)-targetField(cell,side,qp,j,k),2);
 
-        for (int node=0; node<numNodes; ++node)
-        {
-          sum += sq * BF (cell,side,node,qp) * w_measure(cell,side,qp);
-        }
+        sum += sq * w_measure(cell,side,qp);
       }
 
       this->local_response(cell, 0) += sum*scaling;
@@ -191,22 +183,4 @@ getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teu
   }
 
   return dim;
-}
-
-// **********************************************************************
-template<typename EvalT, typename Traits>
-PHAL::ResponseSquaredL2ErrorSide<EvalT, Traits>::
-ResponseSquaredL2ErrorSide(Teuchos::ParameterList& p, const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls) :
-  ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ScalarT>(p,dls)
-{
-  // Nothing to be done here
-}
-
-// **********************************************************************
-template<typename EvalT, typename Traits>
-PHAL::ResponseSquaredL2ErrorSide_noTargetDeriv<EvalT, Traits>::
-ResponseSquaredL2ErrorSide_noTargetDeriv(Teuchos::ParameterList& p, const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls) :
-  ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ParamScalarT>(p,dls)
-{
-  // Nothing to be done here
 }
