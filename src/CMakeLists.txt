@@ -301,6 +301,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_SharedParameter.cpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/PHAL_Source.cpp
+  evaluators/PHAL_ResponseSquaredL2Error.cpp
   evaluators/PHAL_ResponseSquaredL2ErrorSide.cpp
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/QCAD_EvaluatorTools.cpp
@@ -431,6 +432,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_QuadPointsToCellInterpolation_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
+  evaluators/PHAL_ResponseSquaredL2Error.hpp
+  evaluators/PHAL_ResponseSquaredL2Error_Def.hpp
   evaluators/PHAL_ResponseSquaredL2ErrorSide.hpp
   evaluators/PHAL_ResponseSquaredL2ErrorSide_Def.hpp
   evaluators/PHAL_SaveCellStateField.hpp
