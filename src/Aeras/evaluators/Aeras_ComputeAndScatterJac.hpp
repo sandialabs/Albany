@@ -44,7 +44,10 @@ public:
   virtual void evaluateFields(typename Traits::EvalData d)=0;
   
 protected:
+
+  //OG not used anymore
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
+  //OG not used anymore
   std::vector< PHX::MDField<ScalarT> > val;
   const int numNodes;
   const int numDims;
@@ -62,6 +65,9 @@ protected:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+
+protected:
+  double sqrtHVcoef;
 
 };
 
@@ -117,6 +123,7 @@ KOKKOS_INLINE_FUNCTION
 KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& i) const;
 #endif
+
 
 };
 

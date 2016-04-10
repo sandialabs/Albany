@@ -492,6 +492,20 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
 
     p->set<string>("Scatter Field Name", "Compute And Scatter Jacobian");
 
+
+    Teuchos::ParameterList& hydrostatic_params = params->sublist("Hydrostatic Problem");
+    const bool useExplHV = hydrostatic_params.get<bool>("Use Explicit Hyperviscosity", false);
+    const bool useImplHV = hydrostatic_params.get<bool>("Use Implicit Hyperviscosity", false);
+    if ( useImplHV )
+  		TEUCHOS_TEST_FOR_EXCEPTION(true,
+  		Teuchos::Exceptions::InvalidParameter,"Aeras::Hydrostatic: Implicit HV is not implemented, check parameter 'Use Implicit Hyperviscosity'. \n");
+
+    double HVcoef = hydrostatic_params.get<double>("Hyperviscosity Tau", 0.0);
+    if ( !useExplHV ) HVcoef = 0.0;
+
+
+    p->set<double>("HV coefficient", HVcoef);
+
     ev = rcp(new Aeras::ComputeAndScatterJac<EvalT,AlbanyTraits>(*p,dl));
     fm0.registerEvaluator<EvalT>(ev);
   }
