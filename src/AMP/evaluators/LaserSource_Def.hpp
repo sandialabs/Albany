@@ -125,17 +125,17 @@ void LaserSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // current time
-  const RealType t = workset.current_time;
+ const RealType t = workset.current_time;
   
   AMP::LaserCenter Val;
   Val.t = t;
   
-  RealType x, z;
+  RealType x, z, power_fraction;
   int power;
-  LaserData_.getLaserPosition(t,Val,x,z,power);
+  LaserData_.getLaserPosition(t,Val,x,z,power,power_fraction);
   ScalarT Laser_center_x = x;
   ScalarT Laser_center_z = z;
-
+  ScalarT Laser_power_fraction = power_fraction;
 
   // source function
   ScalarT pi = 3.1415926535897932;
@@ -143,7 +143,7 @@ evaluateFields(typename Traits::EvalData workset)
   // laser on or off
   if ( power == 1 )
     {
-      LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power;
+      LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power*Laser_power_fraction;
     }
   else
     {
@@ -172,17 +172,6 @@ evaluateFields(typename Traits::EvalData workset)
 	  MeshScalarT X = coord_(cell,qp,0);
 	  MeshScalarT Y = coord_(cell,qp,1);
 	  MeshScalarT Z = coord_(cell,qp,2);
-//  Code for moving laser point
-    // ScalarT LaserVelocity_x = 1.0;
-    // ScalarT LaserVelocity_z = 0.0;
-    // ScalarT Laser_Init_position_x = 0.0;
-    // ScalarT Laser_Init_position_z = 0.0;
-
-
-    // ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*(time(0)-deltaTime(0));
-    // ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*(time(0)-deltaTime(0));
-    // ScalarT Laser_center_x = x;
-    // ScalarT Laser_center_z = z;
 
 //  Note:(0.0002 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.
     ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*(0.0002-Y))-b1*exp(-2.0*a*beta*(0.0002-Y))) - B*(c2*exp(-2.0*a*(lambda - beta*(0.0002-Y)))-c1*exp(2.0*a*(lambda-beta*(0.0002-Y))))) + f3*(exp(-beta*(0.0002-Y))+powder_hemispherical_reflectivity*exp(beta*(0.0002-Y) - 2.0*lambda)));
@@ -191,6 +180,7 @@ evaluateFields(typename Traits::EvalData workset)
      if (radius < laser_beam_radius && beta*(0.0002-Y) <= lambda)
             laser_source_(cell,qp) =beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*depth_profile;
      else   laser_source_(cell,qp) =0.0;
+	
     }
   }
 }

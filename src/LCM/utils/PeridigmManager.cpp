@@ -12,7 +12,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Phalanx_DataLayout.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "MaterialDatabase.h"
 #include "PHAL_Dimension.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <Teuchos_LAPACK.hpp>
@@ -59,10 +59,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   }
 
   // Read the material data base file, if any
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDataBase;
+  Teuchos::RCP<MaterialDatabase> materialDataBase;
   if(problemParams.isType<std::string>("MaterialDB Filename")){
     std::string filename = problemParams.get<std::string>("MaterialDB Filename");
-    materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, teuchosComm));
+    materialDataBase = Teuchos::rcp(new MaterialDatabase(filename, teuchosComm));
   }
 
   stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
@@ -426,16 +426,9 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   for(unsigned int i=0 ; i<initialX.size() ; ++i)
     previousSolutionPositions[i] = initialX[i];
 
+  Albany_MPI_Comm mpiComm = Albany::getMpiCommFromTeuchosComm(teuchosComm);
 
-//   std::cout << "DJL DEBUGGING num peridigm pts " << peridigmNodeGlobalIds.size() << std::endl;
-//   for(unsigned int i=0 ; i<peridigmNodeGlobalIds.size() ; i++){
-//     std::cout << "DJL DEBUGGING global id " << peridigmNodeGlobalIds[i] << ", initialX (" << initialX[i*3] << ", " << initialX[i*3+1] << ", " << initialX[i*3+2] << ")" << std::endl;
-//   }
-
-  // Create a Peridigm discretization
-  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
-  peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(*mpiComm->getRawMpiComm(),
+  peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(mpiComm,
     peridigmParams,
     static_cast<int>(peridigmNodeGlobalIds.size()),
     &peridigmNodeGlobalIds[0],
@@ -448,7 +441,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     &nodeBlockId[0]));
 
   // Create a Peridigm object
-  peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(*mpiComm->getRawMpiComm(),
+  peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(mpiComm,
     peridigmParams,
     peridynamicDiscretization));
 
@@ -523,21 +516,20 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access volume field (volume field is expected because it is assumed that thre are sphere elements in the simulation).\n\n");
 
   // Create a selector to select everything in the universal part that is locally owned
-  stk::mesh::Selector selector =
-    stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
+  stk::mesh::Selector local_elem_selector =
+    stk::mesh::Selector( metaData->universal_part() ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
   // Select element mesh entities that match the selector
   std::vector<stk::mesh::Entity> elements;
-  stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elements);
+  stk::mesh::get_selected_entities(local_elem_selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elements);
 
-  // Collect data for the proximity search
+  // Collect data for the proximity search and for filling OBCDataPoint structures downstream
   std::vector<double> proximitySearchCoords(3*elements.size(), 0.0);
   std::vector<double> proximitySearchRadii(elements.size(), 0.0);
-  std::vector<int> globalIds(elements.size());
-  std::vector<int> isSphere(elements.size());
-
+  std::vector<int> proximitySearchGlobalElemIds(elements.size());
+  double maxProximitySearchRadius(0.0);
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
-    globalIds[iElem] = bulkData->identifier(elements[iElem]) - 1;
+    proximitySearchGlobalElemIds[iElem] = bulkData->identifier(elements[iElem]) - 1;
     int numNodes = bulkData->num_nodes(elements[iElem]);
     const stk::mesh::Entity* nodes = bulkData->begin_nodes(elements[iElem]);
     if(numNodes == 1){
@@ -546,17 +538,18 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
       double* volume = stk::mesh::field_data(*volumeField, elements[iElem]);
       for(int dof=0 ; dof<3 ; ++dof){
 	proximitySearchCoords[3*iElem+dof] = coord[dof];
-	// DJL there is a bug in the proximity search, it doesn't work properly in parallel if the radius is set to 0.0.
-	// So, set it to some small number, like a 1/1000 times the cube root of the volume.
-	proximitySearchRadii[iElem] = 0.001 * std::cbrt(volume[0]);
-	isSphere[iElem] = 1;
+      }
+      // DJL there is a bug in the proximity search, it doesn't work properly in parallel if the radius is set to 0.0.
+      // So, set it to some small number, like a 1/1000 times the cube root of the volume.
+      proximitySearchRadii[iElem] = 0.001 * std::cbrt(volume[0]);
+      if(proximitySearchRadii[iElem] > maxProximitySearchRadius){
+	maxProximitySearchRadius = proximitySearchRadii[iElem];
       }
     }
-
     else{
       // If the element is not a sphere element, use its barycenter in the proximity search and set
       // the search radius to be slightly larger than the largest element dimension
-      double radiusMultiplier = 1.1;
+      double radiusMultiplier = 1.5;
       double largestElementDimensionSquared = 0.0;
       for(int i=0 ; i<numNodes ; ++i){
 	double* pt1 = stk::mesh::field_data(*coordinatesField, nodes[i]);
@@ -575,30 +568,38 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	proximitySearchCoords[3*iElem+dof] /= numNodes;
       }
       proximitySearchRadii[iElem] = radiusMultiplier * std::sqrt(largestElementDimensionSquared);
-      isSphere[iElem] = 0;
+      if(proximitySearchRadii[iElem] > maxProximitySearchRadius){
+	maxProximitySearchRadius = proximitySearchRadii[iElem];
+      }
     }
   }
 
-  // Optain a Epetra_MpiComm object using a Teuchos_Comm
-  const Teuchos::MpiComm<int>* mpiCommWrapper = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiCommWrapper == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
-  MPI_Comm mpiComm = static_cast<MPI_Comm>(*mpiCommWrapper->getRawMpiComm());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), failed to dynamically cast comm object to MPI_Comm.\n");
-  Epetra_MpiComm epetraComm(mpiComm);
+  // This is a work-around for an apparent bug in the proximity search
+  // There appears to be a glitch when many nodes have zero neighbors, so use a larger
+  // search radius than needed
+  vector<double> localValDouble(1), globalValDouble(1);
+  localValDouble[0] = maxProximitySearchRadius;
+  Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_MAX, 1, &localValDouble[0], &globalValDouble[0]);
+  maxProximitySearchRadius = globalValDouble[0];
+  for(unsigned int i=0 ; i<proximitySearchRadii.size() ; i++){
+    proximitySearchRadii[i] = maxProximitySearchRadius;
+  }
+
+  Teuchos::RCP<Epetra_Comm> epetraComm =  Albany::createEpetraCommFromTeuchosComm(teuchosComm);
 
   // Create Epetra_BlockMaps for the Peridigm proximity search
   Epetra_BlockMap epetraOneDimensionalMap(-1,
 					  static_cast<int>( elements.size() ),
-					  &globalIds[0],
+					  &proximitySearchGlobalElemIds[0],
 					  1,
 					  0,
-					  epetraComm);
+					  *epetraComm);
   Epetra_BlockMap epetraThreeDimensionalMap(-1,
 					    static_cast<int>( elements.size() ),
-					    &globalIds[0],
+					    &proximitySearchGlobalElemIds[0],
 					    3,
 					    0,
-					    epetraComm);
+					    *epetraComm);
 
   // Input for proximity search routine
   Teuchos::RCP<Epetra_Vector> epetraProximitySearchCoords = Teuchos::rcp(new Epetra_Vector(epetraThreeDimensionalMap));
@@ -628,23 +629,37 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 						   epetraOneDimensionalOverlapMap->MyGlobalElements(),
 						   3,
 						   0,
-						   epetraComm);
+						   *epetraComm);
 
-  // To determine which peridynamic nodes are within a given on-processor element, we need to ghost
-  // the coordinates of each potential node and determine if that node is associated with a sphere element
-  Teuchos::RCP<Epetra_Vector> epetraIsSphere = Teuchos::rcp(new Epetra_Vector(epetraOneDimensionalMap));
+  // Ghost information for off-processor points
+  Teuchos::RCP<Epetra_Vector> epetraSphereVolume = Teuchos::rcp(new Epetra_Vector(epetraOneDimensionalMap));
+  Teuchos::RCP<Epetra_Vector> epetraSphereNodeId = Teuchos::rcp(new Epetra_Vector(epetraOneDimensionalMap));
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
-    (*epetraIsSphere)[iElem] = static_cast<double>(isSphere[iElem]);
+    int elemId = bulkData->identifier(elements[iElem]) - 1;
+    int numNodes = bulkData->num_nodes(elements[iElem]);
+    const stk::mesh::Entity* nodes = bulkData->begin_nodes(elements[iElem]);
+    if(numNodes == 1){
+      double* volume = stk::mesh::field_data(*volumeField, elements[iElem]);
+      (*epetraSphereVolume)[iElem] = volume[0];
+      (*epetraSphereNodeId)[iElem] = static_cast<double>( bulkData->identifier(nodes[0]) - 1 );
+    }
+    else{
+      (*epetraSphereVolume)[iElem] = 0.0;
+      (*epetraSphereNodeId)[iElem] = -2;
+    }
   }
 
   // Bring all necessary off-processor data onto this processor
   Epetra_Vector epetraOverlapCoords(epetraThreeDimensionalOverlapMap);
-  Epetra_Vector epetraOverlapIsSphere(*epetraOneDimensionalOverlapMap);
+  Epetra_Vector epetraOverlapSphereVolume(*epetraOneDimensionalOverlapMap);
+  Epetra_Vector epetraOverlapSphereNodeId(*epetraOneDimensionalOverlapMap);
   Epetra_Import threeDimensionalImporter(epetraThreeDimensionalOverlapMap, epetraThreeDimensionalMap);
   Epetra_Import oneDimensionalImporter(*epetraOneDimensionalOverlapMap, epetraOneDimensionalMap);
   int coordsImportErrorCode = epetraOverlapCoords.Import(*epetraProximitySearchCoords, threeDimensionalImporter, Insert);
-  int isSphereImportErrorCode = epetraOverlapIsSphere.Import(*epetraIsSphere, oneDimensionalImporter, Insert);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordsImportErrorCode != 0 || isSphereImportErrorCode != 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), import operation failed!\n\n");
+  int volumeImportErrorCode = epetraOverlapSphereVolume.Import(*epetraSphereVolume, oneDimensionalImporter, Insert);
+  int sphereNodeIdImportErrorCode = epetraOverlapSphereNodeId.Import(*epetraSphereNodeId, oneDimensionalImporter, Insert);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordsImportErrorCode != 0 || volumeImportErrorCode != 0 || sphereNodeIdImportErrorCode != 0,
+			      "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), import operation failed!\n\n");
 
   // Store the cell topology for each on-processor element
   std::map<int, CellTopologyData> albanyGlobalElementIdToCellTopolotyData;
@@ -666,12 +681,6 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   // All sphere elements that could possibly be within an on-processor solid element are now available
   // on processor.  Some other points have been ghosted as well (barycenters of solid elements); they
   // will be ignored as we check for peridynamic nodes within each on-processor solid element.
-
-  // After identifying all the peridynamic nodes that lie within an on-processor solid element, a set
-  // of Epetra_Vectors will be created for use with ghosting operations downstream.  Initially, data
-  // for construction of the Epetra_Vectors will be stored in stl containers
-  std::vector<int> peridynamicNodeGlobalIds;
-  std::map<int, int> peridynamicNodeOverlappingElement;
 
   // Loop over all the on-processor nodes and check to see if any of the peridynamic nodes identified
   // by the proximity search are within the element
@@ -701,10 +710,11 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
       for(int iNeighbor=0 ; iNeighbor<numNeighbors ; iNeighbor++){
 
 	int neighborIndex = neighborList[neighborhoodListIndex++];
-	int neighborIsSphere = epetraOverlapIsSphere[neighborIndex];
+	int neighborSphereNodeId = static_cast<int>( epetraOverlapSphereNodeId[neighborIndex] );
+	double neighborSphereVolume = epetraOverlapSphereVolume[neighborIndex];
 
 	// If the neighbor is a peridynamic sphere element, check to see if it's within the solid element
-	if(neighborIsSphere){
+	if(neighborSphereNodeId > -1){
 
 	  std::vector<double> neighborCoords(3);
 	  for(int dof=0 ; dof<3 ; dof++){
@@ -752,12 +762,13 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
 	  if(inElement){
 	    OBCDataPoint dataPoint;
+	    dataPoint.sphereElementVolume = neighborSphereVolume;
 	    for(int dof=0 ; dof<3 ; dof++){
 	      dataPoint.initialCoords[dof] = neighborCoords[dof];
 	      dataPoint.currentCoords[dof] = 0.0;
 	      dataPoint.naturalCoords[dof] = point[dof];
 	    }
-	    dataPoint.peridigmGlobalId = epetraOverlapIsSphere.Map().GID(neighborIndex);
+	    dataPoint.peridigmGlobalId = neighborSphereNodeId;
 	    dataPoint.albanyElement = elements[iElem];
 	    dataPoint.cellTopologyData = cellTopologyData;
 	    obcDataPoints->push_back(dataPoint);
@@ -765,16 +776,6 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	}
       }
     }
-  }
-
-  // Store the volume of the sphere element
-  const Epetra_Vector& peridigmVolume = *(peridigm->getVolume());
-  const Epetra_BlockMap& peridigmVolumeMap = peridigmVolume.Map();
-  for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
-    int globalId = (*obcDataPoints)[i].peridigmGlobalId;
-    int localId = peridigmVolumeMap.LID(globalId);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(localId < 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), invalid local id!\n\n");
-    (*obcDataPoints)[i].sphereElementVolume = peridigmVolume[localId];
   }
 
   // Create an Epetra_Vector for importing the displacements of the peridynamic nodes
@@ -788,7 +789,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 				&tempGlobalIds[0],
 				3,
 				0,
-				epetraComm);
+				*epetraComm);
 
   obcPeridynamicNodeCurrentCoords = Teuchos::rcp(new Epetra_Vector(epetraTempMap));
 
@@ -798,8 +799,10 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &localVal[0], &globalVal[0]);
   int numberOfOverlappingPeridynamicNodes = globalVal[0];
 
-  std::cout << "\n-- Overlapping Element Search --" << std::endl;
-  std::cout << "  number of peridynamic nodes in overlap region: " << numberOfOverlappingPeridynamicNodes << std::endl;
+  if(teuchosComm->getRank() == 0){
+    std::cout << "\n-- Overlapping Element Search --" << std::endl;
+    std::cout << "  number of peridynamic nodes in overlap region: " << numberOfOverlappingPeridynamicNodes << std::endl;
+  }
 }
 
 double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalDerivWrtDisplacement)
@@ -1184,7 +1187,6 @@ double LCM::PeridigmManager::getDisplacementNeighborhoodFit(int globalAlbanyNode
     for(int iID=0 ; iID<numOwnedPoints ; ++iID){
       // Sum in the contributions for the neighbors
       int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-//       std::cout << "DJL DEBUGGING " << iID << " of " << numOwnedPoints << " has " << numNeighbors << " neighbors." << std::endl;
       if(iID==localAlbanyNodeId){
         neighborDispValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);
         neighborXValues = Teuchos::ArrayRCP<double>(numNeighbors,0.0);

@@ -1,6 +1,6 @@
 
 # Begin User inputs:
-set (CTEST_SITE "edison.nersc.gov" ) # generally the output of hostname
+set (CTEST_SITE "gaia.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -10,7 +10,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_NAME "edison-gcc-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_NAME "gaia-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
 
@@ -30,7 +30,7 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-set (CTEST_FLAGS "-j16")
+set (CTEST_FLAGS "-j12")
 
 set (CTEST_DROP_METHOD "http")
 
@@ -47,13 +47,13 @@ find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
-set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
+#set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.git)
 
 
 #IKT, 8/27/15: FIXME 
 #Why does CDash script not find BOOST_DIR, NETCDF_DIR from loaded modules? 
-set(BOOST_DIR /usr/common/graphics/boost/1.58.0)
-set(NETCDF_DIR /opt/cray/netcdf-hdf5parallel/4.3.3.1/GNU/5.1)
+set(BOOST_DIR  /projects/install/Darwin10.10-x86_64/sems/tpl/boost/1.58.0/gcc/5.1.0/base)
+set(NETCDF_DIR /projects/install/Darwin10.10-x86_64/sems/tpl/netcdf/4.3.2/gcc/5.1.0/parallel)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -122,19 +122,19 @@ if (DOWNLOAD_ALBANY)
   # Get cism-piscees
   #
 
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/cism-piscees")
-    execute_process (COMMAND "${CTEST_GIT_COMMAND}"
-      clone ${cism-piscees_REPOSITORY_LOCATION} -b felix_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone cism-piscees repository!")
-    endif ()
-  endif ()
+  # if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/cism-piscees")
+  #   execute_process (COMMAND "${CTEST_GIT_COMMAND}"
+  #     clone ${cism-piscees_REPOSITORY_LOCATION} -b felix_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
+  #     OUTPUT_VARIABLE _out
+  #     ERROR_VARIABLE _err
+  #     RESULT_VARIABLE HAD_ERROR)
+  #   message(STATUS "out: ${_out}")
+  #   message(STATUS "err: ${_err}")
+  #   message(STATUS "res: ${HAD_ERROR}")
+  #   if (HAD_ERROR)
+  #     message(FATAL_ERROR "Cannot clone cism-piscees repository!")
+  #   endif ()
+  # endif ()
 
   set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 
@@ -175,6 +175,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
     "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF_DIR}/lib"
+    "-DTPL_Netcdf_LIBRARIES:FILEPATH=${NETCDF_DIR}/lib/libnetcdf.dylib"
     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include" 
     "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
     "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
@@ -185,7 +186,7 @@ if (BUILD_TRILINOS)
     "-D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF" 
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
-    "-DTrilinos_ENABLE_Fortran:BOOL=ON"
+    "-DTrilinos_ENABLE_Fortran:BOOL=OFF"
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
     "-DTrilinos_ASSERT_MISSING_PACKAGES=OFF"
@@ -223,6 +224,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
     "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
     "-DTrilinos_ENABLE_Piro:BOOL=ON"
+    "-DTrilinos_ENABLE_ROL:BOOL=ON"
     "-DTrilinos_ENABLE_STKIO:BOOL=ON"
     "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
     "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
@@ -292,18 +294,18 @@ if (BUILD_TRILINOS)
     "-DTpetra_INST_INT_LONG:BOOL=OFF"
     "-DTpetra_INST_INT_UNSIGNED:BOOL=OFF"
     #
-    "-DMPI_USE_COMPILER_WRAPPERS:BOOL=OFF"
-    "-DCMAKE_CXX_COMPILER:FILEPATH=CC"
-    "-DCMAKE_C_COMPILER:FILEPATH=cc"
-    "-DCMAKE_Fortran_COMPILER:FILEPATH=ftn"
-    "-DTrilinos_ENABLE_Fortran=ON"
+    #"-DMPI_USE_COMPILER_WRAPPERS:BOOL=OFF"
+    #"-DCMAKE_CXX_COMPILER:FILEPATH=c++"
+    #"-DCMAKE_C_COMPILER:FILEPATH=cc"
+    #"-DTPL_ENABLE_MPI:BOOL=ON"
+    "-DMPI_BASE_DIR:PATH=/projects/install/Darwin10.10-x86_64/sems/compiler/gcc/5.1.0/openmpi/1.6.5"
+    "-DMPI_EXEC:FILEPATH=/projects/install/Darwin10.10-x86_64/sems/compiler/gcc/5.1.0/openmpi/1.6.5/bin/mpiexec"
     "-DCMAKE_C_FLAGS:STRING=-O3 -DREDUCE_SCATTER_BUG"
     "-DCMAKE_CXX_FLAGS:STRING=-O3 -DREDUCE_SCATTER_BUG -DBOOST_NO_HASH"
     "-DTrilinos_ENABLE_SHADOW_WARNINGS=OFF"
     "-DTrilinos_ENABLE_CXX11=ON"
     "-DTPL_ENABLE_Pthread:BOOL=OFF"
     "-DTPL_ENABLE_BinUtils:BOOL=OFF"
-    "-DTrilinos_ENABLE_ROL:BOOL=ON"
     #
     "-DMPI_EXEC:FILEPATH=srun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING=4"
@@ -343,6 +345,7 @@ if (BUILD_TRILINOS)
   set_property (GLOBAL PROPERTY Label GaiaTrilinos)
   #set (CTEST_BUILD_TARGET all)
   set (CTEST_BUILD_TARGET install)
+  set (CTEST_BUILD_FLAGS -j12)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
@@ -404,7 +407,6 @@ if (BUILD_ALB_Aeras)
     "-DENABLE_INSTALL:BOOL=ON"
     "-DENABLE_64BIT:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/AlbanyAerasInstall"
-    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_FAST_Aeras:BOOL=ON"
     )
   

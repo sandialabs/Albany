@@ -188,7 +188,7 @@ evaluateResponseT(const double current_time,
 
   // Set data in Workset struct
   PHAL::Workset workset;
- 
+  
   application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), p);
   workset.gT = Teuchos::rcp(&gT,false);
 

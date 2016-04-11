@@ -694,6 +694,11 @@ evaluateFields(typename Traits::EvalData workset)
       sphere_coord(e,q,0) = longitude;
       sphere_coord(e,q,1) = latitude;
       
+      /*// OG debugging statements
+      if(e == 23){
+    	  std::cout << "Elem coordinates. qp = "<<q << "lon, lat = " << longitude << " " << latitude << "\n";
+      }*/
+
       MeshScalarT sinT, cosT, sinL, cosL;
       
       sinT = std::sin(latitude);
@@ -749,7 +754,7 @@ evaluateFields(typename Traits::EvalData workset)
     }//end q loop for quad points
     
   }//end e loop for elements
- #endif //end of if-statement which turns on/off homme;s map
+#endif //end of if-statement which turns on/off homme;s map
   //////////////////////////////////////////////////////////////////////
 
 

@@ -284,15 +284,6 @@ int main(int argc, char *argv[]) {
     if (writeToCoutSoln == true) 
        std::cout << "xfinal: " << *xfinal << std::endl;
 
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-    if (Teuchos::nonnull(LCM::PeridigmManager::self())) {
-      *out << setprecision(12) << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE (MAIN) = "
-           << LCM::PeridigmManager::self()->obcEvaluateFunctional()  << "\n" << std::endl;
-    }
-#endif
-#endif
-
     if (debugParams.get<bool>("Analyze Memory", false))
       Albany::printMemoryAnalysis(std::cout, comm);
 

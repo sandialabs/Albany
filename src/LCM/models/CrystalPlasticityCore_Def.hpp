@@ -261,8 +261,14 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Vector<T, N>
 CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
-    Intrepid2::Vector<T, N> const & x) const
+    Intrepid2::Vector<T, N> const & x)
 {
+  // Get a convenience reference to the failed flag in case it is used more
+  // than once.
+  bool &
+  failed = Intrepid2::Function_Base<
+  CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, ArgT>::failed;
+
   // Tensor mechanical state variables
   Intrepid2::Tensor<T, NumDimT> Fp_np1(num_dim_);
   Intrepid2::Tensor<T, NumDimT> Lp_np1(num_dim_);
@@ -282,6 +288,12 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   Intrepid2::Vector<T, N> residual(num_unknowns);
 
+  // Return immediately if something failed catastrophically.
+  if (failed == true) {
+    residual.fill(Intrepid2::ZEROS);
+    return residual;
+  }
+
   Intrepid2::Tensor<T, NumDimT> const
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
@@ -299,6 +311,11 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
     rate_slip.fill(Intrepid2::ZEROS);
   }
 
+  // Ensure that the slip increment is bounded
+   if (Intrepid2::norm(rate_slip * dt_) > 1.0) {
+       failed =  true;
+       return residual;
+   }
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT>(
       slip_systems_,

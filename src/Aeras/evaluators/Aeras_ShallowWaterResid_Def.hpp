@@ -1814,6 +1814,45 @@ ShallowWaterResid<EvalT,Traits>::curl(const Intrepid2::FieldContainer_Kokkos<Sca
 		}
 		curl(qp) = curl(qp)/jacobian_det(cell,qp);
 	}
+
+/////////// Debugging option, to verufy 3d code
+
+	/*if(cell == 0){
+	Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  dummy(numNodes,2);
+	dummy.initialize();
+	covariantVector.initialize();
+	curl.initialize();
+
+    for (std::size_t node=0; node < numNodes; ++node) {
+		dummy(node,0) = node;
+		dummy(node,1) = node;
+    }
+
+    for (std::size_t node=0; node < numNodes; ++node) {
+
+		const MeshScalarT j00 = nodal_jacobian(node, 0, 0);
+		const MeshScalarT j01 = nodal_jacobian(node, 0, 1);
+		const MeshScalarT j10 = nodal_jacobian(node, 1, 0);
+		const MeshScalarT j11 = nodal_jacobian(node, 1, 1);
+
+		covariantVector(node, 0 ) = j00*dummy(node, 0) + j10*dummy(node, 1);
+		covariantVector(node, 1 ) = j01*dummy(node, 0) + j11*dummy(node, 1);
+    }
+
+	for (std::size_t qp=0; qp < numQPs; ++qp) {
+		for (std::size_t node=0; node < numNodes; ++node) {
+
+			curl(qp) +=   covariantVector(node, 1)*grad_at_cub_points(node, qp,0)
+                		  - covariantVector(node, 0)*grad_at_cub_points(node, qp,1);
+		}
+		curl(qp) = curl(qp)/jacobian_det(cell,qp);
+	}
+	std::cout << "Vorticity DEBUG \n";
+    for (std::size_t node=0; node < numNodes; ++node) {
+		std::cout << "vort(" << node << ") = " << curl(node) <<"\n";
+    }
+	}*/
+
 }
 #endif
 

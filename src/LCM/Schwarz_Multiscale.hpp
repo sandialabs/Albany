@@ -16,20 +16,21 @@
 namespace LCM {
 
 ///
-/// \brief Definition for the SchwarzMultiscale
+/// SchwarzMultiscale coupling class
 ///
 class SchwarzMultiscale: public Thyra::ModelEvaluatorDefaultBase<ST> {
 
 public:
 
   /// Constructor
-  SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
+  SchwarzMultiscale(
+      Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
       Teuchos::RCP<Tpetra_Vector const > const & initial_guessT, 
-      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const > const &
+      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
       solver_factory);
 
-  ///Destructor
+  /// Destructor
   ~SchwarzMultiscale();
 
   /// Return solution vector map
@@ -52,8 +53,11 @@ public:
   Teuchos::RCP<Teuchos::Array<std::string> const>
   get_p_names(int l) const;
 
-  Teuchos::ArrayView<const std::string> get_g_names(int j) const
-  { TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed"); }
+  Teuchos::ArrayView<const std::string>
+  get_g_names(int j) const
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
+  }
 
   Thyra::ModelEvaluatorBase::InArgs<ST>
   getNominalValues() const;
@@ -132,18 +136,18 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
-  //! List of free parameter names
+  /// List of free parameter names
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
   param_names_;
   
   /// RCP to matDB object
-  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase>>
+  Teuchos::Array<Teuchos::RCP<MaterialDatabase>>
   material_dbs_;
 
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
   models_;
 
-  //! Own the application parameters.
+  /// Own the application parameters.
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
   model_app_params_;
 
@@ -160,30 +164,30 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_maps_;
 
-  //Teuchos array holding main diagonal jacobians (non-coupled models)
+  /// Teuchos array holding main diagonal jacobians (non-coupled models)
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
   jacs_;
 
   int
   num_models_;
 
-  //like num_param_vecs
+  /// Like num_param_vecs
   int
   num_params_total_;
 
-  //like dist_param_vecs
+  /// Like dist_param_vecs
   int
   num_dist_params_total_;
 
-  //like num_response_vecs
+  /// Like num_response_vecs
   int
   num_responses_total_;
 
-  //for setting get_W_factory() 
+  /// For setting get_W_factory()
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
   solver_factory_;
     
-  //! Array of Sacado parameter vectors
+  /// Array of Sacado parameter vectors
   mutable Teuchos::Array<Teuchos::Array<ParamVec>>
   sacado_param_vecs_;
 
@@ -192,7 +196,6 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   solver_outargs_;
-
 };
 
 } // namespace LCM

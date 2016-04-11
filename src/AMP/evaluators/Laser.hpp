@@ -29,6 +29,7 @@ namespace AMP
     RealType x; // x-ccordinate
     RealType z; // z-coordinate
     int power;  // 1 => laser active. 0 => laser inactive
+    RealType power_fraction; //Laser power fraction to be applied on the Max. Laser power at different times. 
   };
 
   class Laser
@@ -43,7 +44,7 @@ namespace AMP
     // get LaserData_
     const Teuchos::Array<LaserCenter> &getLaserData();
     // interpolate
-    void getLaserPosition(RealType time, LaserCenter val, RealType &x, RealType &z, int &power);
+    void getLaserPosition(RealType time, LaserCenter val, RealType &x, RealType &z, int &power, RealType &power_fraction);
   private:
     Teuchos::Array<LaserCenter> LaserData_;
   };

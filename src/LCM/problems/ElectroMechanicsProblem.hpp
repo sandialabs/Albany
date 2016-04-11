@@ -167,7 +167,7 @@ protected:
   ///
   /// RCP to matDB object
   ///
-  Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  Teuchos::RCP<LCM::MaterialDatabase> material_db_;
 
   ///
   /// old state data

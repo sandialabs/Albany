@@ -690,11 +690,11 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
 
   {// XZHydrostatic Surface GeoPotential
-    RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_SurfaceGeopotential"));
+    RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_SurfaceGeopotential"));
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("XZHydrostatic Problem");
-    p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
     
     //Input
     

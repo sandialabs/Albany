@@ -39,7 +39,12 @@ evaluateResponseT(const double current_time,
 {
   Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
   LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
+
   gT_nonconstView[0] = peridigmManager.obcEvaluateFunctional();
+
+  if(commT->getRank() == 0){
+    std::cout << std::setprecision(12) << "\nOptimization based coupling functional value = " << gT_nonconstView[0] << std::endl;
+  }
 }
 
 void

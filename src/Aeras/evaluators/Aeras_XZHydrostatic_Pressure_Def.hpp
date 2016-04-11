@@ -61,7 +61,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
-/*
+/*//OG debugging statements
     	  if(cell == 0 && node == 0){
     		  std::cout << "Etatop = " << E.etatop() <<"\n";
     	  for (int level=0; level < numLevels; ++level) {
@@ -80,6 +80,10 @@ evaluateFields(typename Traits::EvalData workset)
       //here instead of computing eta, A, B, and pressure at level interfaces directly,
       //averages are used to approx. pressure at level interfaces.
       for (int level=0; level < numLevels; ++level) {
+    	  //OG Why not analyt. relationship? Verify this in homme. Update: Homme uses averaging below because of consistency restrictions as in Chapter 12.
+    	  //That is, it is required that B (and A) coeffs at midpoints equal averages from closest interfaces.
+          //const ScalarT pm   = E.A(level-.5)*E.p0() + E.B(level-.5)*Ps(cell,node);
+          //const ScalarT pp   = E.A(level+.5)*E.p0() + E.B(level+.5)*Ps(cell,node);
         const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : E.ptop();
         const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
         Pi(cell,node,level) = (pp - pm) /E.delta(level);

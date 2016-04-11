@@ -890,11 +890,23 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 	  }
 
           if(!minimizer.converged){
-	    std::cout << "\n**** CrystalPlasticityModel computeState() failed to converge.\n" << std::endl;
-            minimizer.printReport(std::cout);
+            if(verbosity_ > 2){
+	      std::cout << "\n**** CrystalPlasticityModel computeState() failed to converge.\n" << std::endl;
+              minimizer.printReport(std::cout);
+            }
 	    update_state_successful = false;
 	    forceGlobalLoadStepReduction();
           }
+
+          // cases in which the model is subject to divergence - more work to do in the nonlinear systems
+          if(minimizer.failed){
+            if (verbosity_ > 2){
+              std::cout << "\n**** CrystalPlasticityModel computeState() exited due to failure criteria.\n" << std::endl;
+            }
+            update_state_successful = false;
+            forceGlobalLoadStepReduction();
+          }
+
 
 	  // We now have the solution for slip_np1, including sensitivities (if any)
 	  // Re-evaluate all the other state variables based on slip_np1

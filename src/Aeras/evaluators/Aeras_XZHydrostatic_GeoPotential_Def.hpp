@@ -86,5 +86,16 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+
+  /* OG Debugging statements
+  std::cout << "Printing PHI at level 0 ----------------------------------------- \n";
+  //for(int level=0; level < numLevels; ++level){
+  for (int node=0; node < numNodes; ++node) {
+	 //std::cout << "lev= " << level <<  ", phi = " << Phi(23,0,level) <<"\n";
+	std::cout << "node = " << node <<  ", phi = " << Phi(23,node,0) <<"\n";
+  }
+  //}*/
+
 }
 }

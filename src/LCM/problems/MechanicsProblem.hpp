@@ -20,7 +20,10 @@
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
+#include "MaterialDatabase.h"
 
+static int dir_count = 0; //counter for registration of dirichlet_field 
+ 
 namespace Albany
 {
 
@@ -330,7 +333,7 @@ protected:
   ///
   /// RCP to matDB object
   ///
-  Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  Teuchos::RCP<LCM::MaterialDatabase> material_db_;
 
   ///
   /// old state data
@@ -352,7 +355,7 @@ protected:
   /// User defined NOX Status Test that allows model evaluators to set the NOX status to "failed".
   /// This is useful because it forces a global load step reduction.
   ///
-  Teuchos::RCP<NOX::StatusTest::Generic> userDefinedNOXStatusTest;
+  Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test_;
 };
 //------------------------------------------------------------------------------
 }
@@ -477,7 +480,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     std::string materialModelName = param_list.sublist("Material Model").get<std::string>("Model Name");
     if(materialModelName == "CrystalPlasticity"){
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
-	Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(userDefinedNOXStatusTest);
+	Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test_);
       param_list.set< Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> >("NOX Status Test", statusTest);
     }
   }
@@ -719,6 +722,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string he_concentration = (*fnm)["He_Concentration"];
   std::string total_bubble_density = (*fnm)["Total_Bubble_Density"];
   std::string bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
+  
 
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -1145,6 +1149,16 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+    }
+  // IKT, 3/27/16: register dirichlet_field for specifying Dirichlet data from a field 
+  // in the input exodus mesh.
+  if (dir_count == 0){ //constructEvaluators gets called multiple times for different specializations.  
+                       //Make sure dirichlet_field gets registered only once via counter.
+                       //I don't quite understand why this is needed for LCM but not for FELIX... 
+    //dirichlet_field
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+    stateMgr.registerStateVariable("dirichlet_field", dl_->node_vector, eb_name, true, &entity, "");
+    dir_count++; 
   }
 
   if (have_mech_eq_) { // Current Coordinates
@@ -2637,7 +2651,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Thermal Transient Coefficient Name",
         "Thermal Transient Coefficient");
     p->set<std::string>("Delta Time Name", "Delta Time");
-
+    
+    // MJJ: Need this here to compute responses later
+    RealType heat_capacity = param_list.get<RealType>("Heat Capacity");
+    RealType density = param_list.get<RealType>("Density");
+    pFromProb->set<RealType>("Heat Capacity",heat_capacity);
+    pFromProb->set<RealType>("Density",density);
+    
     if (have_mech_eq_) {
       p->set<bool>("Have Mechanics", true);
       p->set<std::string>("Deformation Gradient Name", defgrad);
