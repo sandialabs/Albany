@@ -24,11 +24,6 @@ Topology::Topology(const Teuchos::ParameterList& topoParams, int global_index)
 
   entityType = topoParams.get<std::string>("Entity Type");
 
-  if( topoParams.isType<std::string>("Integration Method") )
-    integrationMethod = topoParams.get<std::string>("Integration Method");
-  else
-    integrationMethod = "Gauss Quadrature";
-  
   if( topoParams.isType<int>("Topology Output Filter") )
     topologyOutputFilter = topoParams.get<int>("Topology Output Filter");
   else topologyOutputFilter = -1;

@@ -30,7 +30,8 @@ public virtual Albany::AbstractProblem {
                       double& v, double threshhold, double minP);
    void ComputeMeasure(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-                       double& v, double* dvdp=NULL);
+                       double& v, double* dvdp=NULL, 
+                       std::string strIntegrationMethod="Gauss Quadrature");
    void computeMeasure(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                        double& v, double* dvdp=NULL);
@@ -80,7 +81,7 @@ public virtual Albany::AbstractProblem {
 
    std::unordered_map<std::string, Teuchos::RCP<BlockMeasureMap> > measureModels;
 
-   std::string strIntegrationMethod;
+//   std::string strIntegrationMethod;
 
    int nTopologies;
 

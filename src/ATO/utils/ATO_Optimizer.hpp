@@ -54,6 +54,7 @@ class Optimizer
   int    _nIterations;
 
   std::string _measureType;
+  std::string _measureIntMethod;
 
 };
 

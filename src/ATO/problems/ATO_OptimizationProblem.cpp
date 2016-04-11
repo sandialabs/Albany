@@ -129,7 +129,8 @@ void
 ATO::OptimizationProblem::
 ComputeMeasure(std::string measureType, 
                std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
-               double& measure, double* dmdp)
+               double& measure, double* dmdp, 
+               std::string strIntegrationMethod)
 /******************************************************************************/
 {
   if(strIntegrationMethod == "Conformal")
@@ -581,7 +582,7 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
         TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
           "Error!  In ATO::OptimizationProblem setup:  Entity Type not recognized" << std::endl);
       }
-      strIntegrationMethod = topology->getIntegrationMethod();
+//      strIntegrationMethod = topology->getIntegrationMethod();
     }
     
     //tpetra-conversion If registerOldState is ever made true, the code will

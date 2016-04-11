@@ -1,0 +1,34 @@
+## /projects/cubit/claro.Lin64.15.1/bin/cubitx
+## Cubit Version 15.1
+## Cubit Build 403532
+## Revised 2016-04-06 17:08:02 -0600 (Wed, 06 Apr 2016)
+## Running 04/11/2016 09:54:50 AM
+## Command Options:
+create brick x 1 y 1 z 1
+webcut volume all with plane xplane offset 0.3
+webcut volume all with plane xplane offset -0.3
+webcut volume all with plane yplane offset 0.3
+webcut volume all with plane yplane offset -0.3
+webcut volume all with plane zplane offset 0.3
+webcut volume all with plane zplane offset -0.3
+delete volume 16 14 8 18 11 26
+delete volume 17
+imprint all
+merge all
+volume all size 0.1
+mesh volume all
+quality volume all
+block 1 volume all
+nodeset 1 surface 139 228 236 266 204 200 111 169
+nodeset 2 surface 89 178 186 244 214 210 121 151
+nodeset 3 surface 108 201 203 193 183 181 88 98
+nodeset 4 surface 118 211 213 223 233 231 138 128
+nodeset 5 surface 33 66 59 69 81 83 55 43
+nodeset 6 surface 53 86 79 71 61 63 35 46
+sideset 1 surface 139 228 236 266 204 200 111 169
+sideset 2 surface 89 178 186 244 214 210 121 151
+sideset 3 surface 108 201 203 193 183 181 88 98
+sideset 4 surface 118 211 213 223 233 231 138 128
+sideset 5 surface 33 66 59 69 81 83 55 43
+sideset 6 surface 53 86 79 71 61 63 35 46
+export mesh "cube.gen" overwrite

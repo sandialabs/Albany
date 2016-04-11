@@ -77,8 +77,15 @@ namespace ATO {
     virtual void getOptDofsLowerBound( Teuchos::Array<double>& b )=0;
     virtual void getOptDofsUpperBound( Teuchos::Array<double>& b )=0;
     virtual void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP)=0;
-    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp=0)=0;
+
     virtual void ComputeMeasure(std::string measureType, double& measure)=0;
+    virtual void ComputeMeasure(std::string measureType, const double* p, 
+                                double& measure, double* dmdp, std::string integrationMethod)=0;
+
+    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure);
+    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp);
+    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, std::string integrationMethod);
+
     virtual int GetNumOptDofs()=0;
   };
 
@@ -114,7 +121,8 @@ namespace ATO {
     void getOptDofsLowerBound( Teuchos::Array<double>& b );
     void getOptDofsUpperBound( Teuchos::Array<double>& b );
     void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP);
-    void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp=0);
+    void ComputeMeasure(std::string measureType, const double* p, 
+                        double& measure, double* dmdp, std::string integrationMethod);
     void ComputeMeasure(std::string measureType, double& measure);
     int GetNumOptDofs();
 

@@ -1,0 +1,112 @@
+## /projects/cubit/claro.Lin64.15.1/bin/cubitx
+## Cubit Version 15.1
+## Cubit Build 403086
+## Revised 2016-03-21 12:16:45 -0600 (Mon, 21 Mar 2016)
+## Running 03/22/2016 04:41:20 PM
+## Command Options:
+#{ xlen = 3.2 }
+#{ ylen = 2.4 }
+#{ zlen = 2.0 }
+#{ bolt_radius = 0.25 }
+#{ head_radius = 0.5 }
+#{ base_thickness = 0.25}
+#{ pad = 0.3}
+create brick x {xlen} y {ylen} z {zlen}
+webcut body all x with plane xplane offset {xlen/2.0-0.5}
+webcut body all with plane yplane offset 0.3
+webcut body all with plane yplane offset -0.3
+webcut volume all with plane zplane offset 0.3
+webcut volume all with plane zplane offset -0.3
+delete volume 3 9 15 17 13 7 1 5
+webcut volume 11 with plane xplane offset {xlen/2.0-0.4}
+webcut volume 11 with plane yplane offset 0.2
+webcut volume 11 with plane yplane offset -0.2
+delete volume 20 11
+webcut volume 21 with plane zplane offset 0.1
+webcut volume 22 with plane zplane offset -0.1
+delete volume 21 23
+unite volume 19 22
+tweak curve 368 366 chamfer radius 0.1
+tweak curve 356 355 fillet radius 0.2
+create cylinder height 0.3 radius {bolt_radius/2.0}
+move surface 234 location surface 212
+subtract volume 24 from volume 19
+create cylinder height {xlen} radius {bolt_radius/2.0}
+rotate volume 25 about y angle 90
+move surface 240 location surface 91
+volume 25 copy
+subtract volume 26 from volume 4
+move surface 240 location surface 69
+volume 25 copy
+subtract volume 27 from volume 2
+move surface 240 location surface 136
+volume 25 copy
+subtract volume 28 from volume 14
+move surface 240 location surface 154
+subtract volume 25 from volume 16
+webcut volume 16 10 4 6 12 18 14 8 2 with plane xplane offset {-xlen/2.0+base_thickness}
+create cylinder height {xlen} radius {head_radius/2.0}
+rotate volume 38 about y angle 90
+move surface 362 location surface 246
+webcut volume 4 31 with tool volume 38
+delete volume 39
+move surface 362 location surface 251
+webcut volume 2 37 with tool volume 38
+delete volume 41
+move surface 362 location surface 258
+webcut volume 35 14 with tool volume 38
+delete volume 44
+move surface 362 location surface 260
+webcut volume 29 16 with tool volume 38
+delete volume 46
+delete volume 38
+webcut volume 19 with plane zplane offset 0.2
+webcut volume 47 with plane zplane offset -0.2
+delete volume 19 48
+tweak curve 599 601 606 608 chamfer radius 0.1
+webcut volume 40 31 4 with plane vertex 3 vertex 15 vertex 78
+webcut volume 31 40 49 50 4 51 with plane vertex 80 vertex 76 vertex 30
+webcut volume 29 45 16 with plane vertex 8 vertex 14 vertex 142
+webcut volume 59 45 58 29 60 16 with plane vertex 124 vertex 122 vertex 25
+webcut volume 43 35 14 with plane vertex 7 vertex 13 vertex 141
+webcut volume 43 67 35 68 69 14 with plane vertex 42 vertex 44 vertex 108
+webcut volume 42 37 2 with plane vertex 4 vertex 16 vertex 57
+webcut volume 76 42 77 37 78 2 with plane vertex 60 vertex 59 vertex 48
+webcut volume 47 with plane surface 418
+create brick x {xlen-0.5} y {ylen+2*pad} z {zlen+2*pad}
+move surface 775 location surface 168
+webcut volume 86 with plane surface 297
+webcut volume 87 with plane surface 317
+webcut volume 88 87 86 with plane surface 278
+webcut volume 88 87 86 with plane surface 340
+delete volume 87
+webcut volume 92 88 89 90 93 94 86 91 with plane surface 306
+imprint all
+merge all
+body all size 0.2
+surface 236 scheme pave
+mesh surface 236
+mesh volume 85
+mesh volume 47
+mesh surface 941 942
+surface 940 938 scheme submap
+mesh surface 940 938
+mesh surface 150 111 128 174
+mesh surface 505 512 518 509 594 600 598 588 677 686 680 673 761 770 764 757
+mesh surface 852 854 844 836 830 806 814 824
+mesh volume 12
+mesh volume 10 6 8 18
+mesh volume 4 51 83 84 75 74 66 65 60 16 69 14 78 2 56 57
+surface 477 484 492 488 554 565 567 558 646 653 641 639 735 727 720 733 scheme map
+mesh surface 477 484 492 488 554 565 567 558 646 653 641 639 735 727 720 733
+mesh volume 45 59 61 62 29 58 63 64 67 71 70 43 35 68 73 72 34 36 33 30 32 82 81 79 80 42 76 77 37 31 50 40 49 54 53 52 55
+mesh volume 98 97 102 101 100 99 95 96 92 88 93 94 86 91 90 89
+quality volume all
+sideset 1 surface 235
+nodeset 3 surface 641 653 646 639 720 733 735 727 558 567 565 554 488 477 492 484
+nodeset 2 surface 721 736 732 728 494 487 482 478 638 647 654 642 568 564 555 557
+nodeset 1 surface 722 731 726 738 637 644 648 652 486 493 481 479 569 563 552 560
+block 2 volume 76 42 80 79 49 54 53 40 43 70 71 67 62 45 59 61 47 85
+block 1 volume all except volume 76 42 80 79 49 54 53 40 43 70 71 67 62 45 59 61 47 85
+transform mesh output scale 0.0254
+export mesh "padded.gen" overwrite

@@ -30,7 +30,7 @@
     <ParameterList name="Spatial Filters">
       <Parameter name="Number of Filters" type="int" value="1" />
       <ParameterList name="Filter 0">
-        <Parameter name="Filter Radius" type="double" value="0.06" />
+        <Parameter name="Filter Radius" type="double" value="0.10" />
         <Parameter name="Iterations" type="int" value="1" />
       </ParameterList>
     </ParameterList>
@@ -40,14 +40,14 @@
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
       <Parameter name="Move Limiter" type="double" value="0.5" />
       <ParameterList name="Convergence Tests">
-        <Parameter name="Maximum Iterations" type="int" value="20" />
+        <Parameter name="Maximum Iterations" type="int" value="40" />
         <Parameter name="Combo Type" type="string" value="OR"/>
         <Parameter name="Relative Topology Change" type="double" value="5e-3" />
         <Parameter name="Relative Objective Change" type="double" value="1e-6" />
       </ParameterList>
       <ParameterList name="Measure Enforcement">
         <Parameter name="Measure" type="string" value="Volume"/>
-        <Parameter name="Maximum Iterations" type="int" value="20" />
+        <Parameter name="Maximum Iterations" type="int" value="30" />
         <Parameter name="Convergence Tolerance" type="double" value="1e-7" />
         <Parameter name="Target" type="double" value="0.40" />
         <Parameter name="Minimum" type="double" value="0.10" />
@@ -69,7 +69,7 @@
       <ParameterList name="Topology 0">
         <Parameter name="Topology Name" type="string" value="Rho" />
         <Parameter name="Entity Type" type="string" value="Distributed Parameter" />
-        <Parameter name="Bounds" type="Array(double)" value="{0.0,1.0}" />
+        <Parameter name="Bounds" type="Array(double)" value="{1e-24,1.0}" />
         <Parameter name="Initial Value" type="double" value="0.5" />
         <ParameterList name="Functions">
           <Parameter name="Number of Functions" type="int" value="3" />
@@ -112,7 +112,7 @@
           <Parameter name="Linear Measure Type" type="string" value="Volume"/>
           <ParameterList name="Volume">
             <Parameter name="Topology Index" type="int" value="0"/>
-            <Parameter name="Function Index" type="int" value="1"/>
+            <Parameter name="Function Index" type="int" value="2"/>
           </ParameterList>
         </ParameterList>
       </ParameterList>
@@ -153,6 +153,8 @@
           <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
           <Parameter name="Work Conjugate Name" type="string" value="Stress" />
           <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
           <Parameter name="Response Name" type="string" value="R0" />
           <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
         </ParameterList>

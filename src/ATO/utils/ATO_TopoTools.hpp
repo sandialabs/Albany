@@ -42,13 +42,11 @@ public:
   int getGlobalIndex(){return globalIndex;}
   const Teuchos::Array<double> getBounds(){return bounds;}
   std::string getEntityType(){return entityType;}
-  std::string getIntegrationMethod(){return integrationMethod;}
   int TopologyOutputFilter(){return topologyOutputFilter;}
   int SpatialFilterIndex(){return spatialFilterIndex;}
 private:
   std::string name;
   std::string entityType;
-  std::string integrationMethod;
   int globalIndex;
 
   typedef struct PenaltyFunction {
@@ -74,7 +72,6 @@ private:
   int spatialFilterIndex;
 };
 
-//typedef std::unordered_map<std::string, Teuchos::RCP<Topology> > TopologyMap;
   typedef Teuchos::Array<Teuchos::RCP<Topology> > TopologyArray;
 
 

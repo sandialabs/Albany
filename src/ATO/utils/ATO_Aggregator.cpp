@@ -322,10 +322,9 @@ Aggregator_Scaled::Evaluate()
 
   *valueAggregated=shiftValueAggregated;
  
-  int nValues = values.size();
   if(normalize.size() == 0){
-    normalize.resize(nValues);
-    for(int i=0; i<nValues; i++){
+    normalize.resize(numValues);
+    for(int i=0; i<numValues; i++){
       Albany::StateArrayVec& src = values[i].app->getStateMgr().getStateArrays().elemStateArrays;
       Albany::MDArray& valSrc = src[0][values[i].name];
       double val = valSrc(0);

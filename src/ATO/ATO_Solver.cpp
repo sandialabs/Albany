@@ -724,7 +724,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
     int numMyNodes = topoVec->MyLength();
     for(int i=0; i<numMyNodes; i++) ltopo[i] = p[i];
   
-    if(!topoStruct->filterIsRecursive) smoothTopology(topoStruct);
+    smoothTopology(topoStruct);
   
     int numWorksets = wsElDofs.size();
     double matVal = topology->getMaterialValue();
@@ -879,8 +879,6 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       ltopo[lid] = p[lid+offset];
 
     smoothTopology(topoStruct);
-// HACK
-//    if(!topoStruct->filterIsRecursive) smoothTopology(topoStruct);
 
     Teuchos::RCP<Epetra_Vector> overlapTopoVec = topoStruct->overlapVector;
     overlapTopoVec->Import(*topoVec, *importer, Insert);
@@ -1042,11 +1040,38 @@ ATO::Solver::ComputeMeasure(std::string measureType, double& measure)
   return _atoProblem->ComputeMeasure(measureType, measure);
 }
 
+/******************************************************************************/
+void
+ATO::OptInterface::ComputeMeasure(std::string measureType, const double* p, 
+                                  double& measure)
+/******************************************************************************/
+{
+  ComputeMeasure(measureType, p, measure, NULL, "Gauss Quadrature");
+}
+
+/******************************************************************************/
+void
+ATO::OptInterface::ComputeMeasure(std::string measureType, const double* p, 
+                                  double& measure, double* dmdp)
+/******************************************************************************/
+{
+  ComputeMeasure(measureType, p, measure, dmdp, "Gauss Quadrature");
+}
+
+/******************************************************************************/
+void
+ATO::OptInterface::ComputeMeasure(std::string measureType, const double* p, 
+                                  double& measure, std::string integrationMethod)
+/******************************************************************************/
+{
+  ComputeMeasure(measureType, p, measure, NULL, integrationMethod);
+}
 
 /******************************************************************************/
 void
 ATO::Solver::ComputeMeasure(std::string measureType, const double* p, 
-                            double& measure, double* dmdp)
+                            double& measure, double* dmdp, 
+                            std::string integrationMethod)
 /******************************************************************************/
 {
   // communicate boundary topo data
@@ -1090,7 +1115,8 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
     topologyStructs[itopo]->dataVector = overlapTopoVec;
   }
 
-  return _atoProblem->ComputeMeasure(measureType, topologyStructs, measure, dmdp);
+  return _atoProblem->ComputeMeasure(measureType, topologyStructs, 
+                                     measure, dmdp, integrationMethod);
 }
 
 
@@ -1114,9 +1140,6 @@ void
 ATO::Solver::Compute(double* p, double& g, double* dgdp, double& c, double* dcdp)
 /******************************************************************************/
 {
-// HACK
-//  if(_iteration!=0) smoothTopology(p);
-  
   Compute((const double*)p, g, dgdp, c, dcdp);
 }
 

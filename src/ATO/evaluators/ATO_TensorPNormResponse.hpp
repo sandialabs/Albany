@@ -23,7 +23,6 @@ namespace ATO
   public:
     typedef typename EvalT::ScalarT ScalarT;
 
-//    TensorPNormResponse(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
@@ -41,7 +40,6 @@ namespace ATO
     typedef PHAL::AlbanyTraits::Jacobian EvalT;
     typedef typename EvalT::ScalarT ScalarT;
     
-//    TensorPNormResponse(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
@@ -58,7 +56,6 @@ namespace ATO
     typedef PHAL::AlbanyTraits::DistParamDeriv EvalT;
     typedef typename EvalT::ScalarT ScalarT;
     
-//    TensorPNormResponse(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
@@ -76,7 +73,6 @@ namespace ATO
     typedef PHAL::AlbanyTraits::SGJacobian EvalT;
     typedef typename EvalT::ScalarT ScalarT;
     
-//    TensorPNormResponse(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
@@ -97,7 +93,6 @@ namespace ATO
     typedef PHAL::AlbanyTraits::MPJacobian EvalT;
     typedef typename EvalT::ScalarT ScalarT;
     
-//    TensorPNormResponse(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
@@ -115,7 +110,9 @@ namespace ATO
     typedef typename EvalT::MeshScalarT MeshScalarT;
     typedef typename EvalT::ParamScalarT ParamScalarT;
     
-    TensorPNormResponse(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+    TensorPNormResponse(Teuchos::ParameterList& p, 
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* meshSpecs);
   
     void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
     void preEvaluate(typename Traits::PreEvalData d);

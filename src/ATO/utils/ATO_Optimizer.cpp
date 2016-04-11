@@ -88,6 +88,12 @@ Optimizer::Optimizer(const Teuchos::ParameterList& optimizerParams)
       measureParams = optimizerParams.get<Teuchos::ParameterList>("Measure Enforcement");
 
     _measureType = measureParams.get<std::string>("Measure");
+
+    if( measureParams.isType<std::string>("Integration Method") )
+      _measureIntMethod = measureParams.get<std::string>("Integration Method");
+    else 
+      _measureIntMethod = "Gauss Quadrature";
+
   } else
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -365,8 +371,8 @@ Optimizer_OCG::Optimize()
         double be = dfdp[i]/(dgdp[i]-gmax_dgdp)/vmid;
         be = (be > 0.0) ? be : 0.0;
         double p_old = p_last[i];
-//        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
-        double p_new = p_old*pow(be,_stabExponent);
+        double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
+        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
         // limit change
         double dval = p_new - p_old;
         if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -743,13 +749,12 @@ Optimizer_OC::computeUpdatedTopology()
     for(int i=0; i<numOptDofs; i++) {
       double be = 0.0;
       if( dmdp[i] != 0.0 )
-//        be = -dfdp[i]/fabs(dmdp[i])/vmid;
         be = -dfdp[i]/dmdp[i]/vmid;
       else
         be = -dfdp[i]/vmid;
       double p_old = p_last[i];
-//      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
-      double p_new = p_old*pow(be,_stabExponent);
+      double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
+      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -762,7 +767,7 @@ Optimizer_OC::computeUpdatedTopology()
     // compute new measure
     if( _useNewtonSearch ){
       double prevResidual = measure - _measureConstraint*_optMeasure;
-      solverInterface->ComputeMeasure(_measureType, p, measure);
+      solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
       double newResidual = measure - _measureConstraint*_optMeasure;
       if( newResidual > 0.0 ){
         residRatio = newResidual/prevResidual;
@@ -771,7 +776,7 @@ Optimizer_OC::computeUpdatedTopology()
         break;
       } else v2 = vmid;
     } else {
-      solverInterface->ComputeMeasure(_measureType, p, measure);
+      solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
       double newResidual = measure - _measureConstraint*_optMeasure;
       if( newResidual > 0.0 ){
         v1 = vmid;
@@ -800,12 +805,12 @@ Optimizer_OC::computeUpdatedTopology()
     for(int i=0; i<numOptDofs; i++) {
       double be = 0.0;
       if( dmdp[i] != 0.0 )
-//        be = -dfdp[i]/fabs(dmdp[i])/vmid;
-        be = -dfdp[i]/dmdp[i]/vmid;
+        be = -dfdp[i]/dmdp[i]/lambda;
       else
-        be = -dfdp[i]/vmid;
+        be = -dfdp[i]/lambda;
       double p_old = p_last[i];
-      double p_new = p_old*pow(be,_stabExponent);
+      double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
+      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -815,7 +820,7 @@ Optimizer_OC::computeUpdatedTopology()
       p[i] = p_new;
     }
     // compute new measure
-    solverInterface->ComputeMeasure(_measureType, p, measure);
+    solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
     double f0 =  (measure - _measureConstraint*_optMeasure);
 
     if(comm->MyPID()==0){
@@ -831,13 +836,12 @@ Optimizer_OC::computeUpdatedTopology()
     for(int i=0; i<numOptDofs; i++) {
       double be = 0.0;
       if( dmdp[i] != 0.0 )
-//        be = -dfdp[i]/fabs(dmdp[i])/vmid;
-        be = -dfdp[i]/dmdp[i]/vmid;
+        be = -dfdp[i]/dmdp[i]/plambda;
       else
-        be = -dfdp[i]/vmid;
+        be = -dfdp[i]/plambda;
       double p_old = p_last[i];
-//      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
-      double p_new = p_old*pow(be,_stabExponent);
+      double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
+      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -847,7 +851,7 @@ Optimizer_OC::computeUpdatedTopology()
       p[i] = p_new;
     }
     // compute new measure
-    solverInterface->ComputeMeasure(_measureType, p, measure);
+    solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
     double f1 =  (measure - _measureConstraint*_optMeasure);
 
     if( f1-f0 == 0.0 ) break;
@@ -870,13 +874,12 @@ Optimizer_OC::computeUpdatedTopology()
       for(int i=0; i<numOptDofs; i++) {
         double be = 0.0;
         if( dmdp[i] != 0.0 )
-//          be = -dfdp[i]/fabs(dmdp[i])/vmid;
           be = -dfdp[i]/dmdp[i]/vmid;
         else
           be = -dfdp[i]/vmid;
         double p_old = p_last[i];
-//        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
-        double p_new = p_old*pow(be,_stabExponent);
+        double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
+        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
         // limit change
         double dval = p_new - p_old;
         if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -887,7 +890,7 @@ Optimizer_OC::computeUpdatedTopology()
       }
   
       // compute new measure
-      solverInterface->ComputeMeasure(_measureType, p, measure);
+      solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
       double newResidual = measure - _measureConstraint*_optMeasure;
       if( newResidual > 0.0 ){
         v1 = vmid;
@@ -929,6 +932,12 @@ Optimizer_NLopt::Initialize()
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error! NLopt package doesn't work in parallel.  Use OC package." << std::endl);
   TEUCHOS_TEST_FOR_EXCEPT ( (comm->NumProc() != 1) );
+  
+  // JR: todo -- add a distributed/local mode to the solver interface so 
+  // serial optimization libraries can be used for testing.  
+  //
+  // set interface to return gathered/summed quantities. (NLopt isn't parallel)
+  // solverInterface->Distributed() = false;
 
   numOptDofs = solverInterface->GetNumOptDofs();
  
@@ -978,9 +987,10 @@ Optimizer_NLopt::Initialize()
 
   solverInterface->InitializeOptDofs(p);
 
-  if( primaryConstraintType == ResponseType::Measure )
+  if( primaryConstraintType == ResponseType::Measure ){
+    solverInterface->ComputeMeasure(_measureType, _optMeasure);
     nlopt_add_inequality_constraint(opt, this->constraint, this, _measureConvTol*_optMeasure);
-  else
+  } else
   if( primaryConstraintType == ResponseType::Aggregate )
     nlopt_add_inequality_constraint(opt, this->constraint, this, _conConvTol);
 }
