@@ -16,6 +16,7 @@
 #endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
 #include "Adapt_ElementSizeField.hpp"
+#include "PHAL_ResponseSquaredL2Error.hpp"
 #include "PHAL_ResponseSquaredL2ErrorSide.hpp"
 #include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
@@ -109,18 +110,50 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 
 #ifdef ALBANY_FELIX
-  else if (responseName == "Squared L2 Error Side")
+  else if (responseName == "Squared L2 Error Target ST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorSide<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSide<EvalT,Traits>(*p,dls));
+    RCP<PHAL::ResponseSquaredL2ErrorTargetST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorTargetST<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-  else if (responseName == "Squared L2 Error Side No Target Deriv")
+  else if (responseName == "Squared L2 Error Target MST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorSide_noTargetDeriv<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSide_noTargetDeriv<EvalT,Traits>(*p,dls));
+    RCP<PHAL::ResponseSquaredL2ErrorTargetMST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorTargetMST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Target PST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorTargetPST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorTargetPST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Side Target ST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>(*p,dls));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Side Target MST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>(*p,dls));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Side Target PST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>(*p,dls));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

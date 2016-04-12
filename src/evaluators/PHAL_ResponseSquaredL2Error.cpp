@@ -9,4 +9,4 @@
 #include "PHAL_ResponseSquaredL2Error.hpp"
 #include "PHAL_ResponseSquaredL2Error_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::ResponseSquaredL2Error)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::ResponseSquaredL2ErrorBase)

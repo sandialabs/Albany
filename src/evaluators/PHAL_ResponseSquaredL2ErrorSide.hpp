@@ -55,10 +55,10 @@ template<typename EvalT, typename Traits>
 using ResponseSquaredL2ErrorSideTargetST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-using ResponseSquaredL2ErrorSideTargetMeshST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+using ResponseSquaredL2ErrorSideTargetMST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
 template<typename EvalT, typename Traits>
-using ResponseSquaredL2ErrorSideTargetParamST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+using ResponseSquaredL2ErrorSideTargetPST = ResponseSquaredL2ErrorSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

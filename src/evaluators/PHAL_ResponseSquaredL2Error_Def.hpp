@@ -18,7 +18,7 @@ ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
 
   // Gathering dimensions
-  numQPs   = dl->side_qp_scalar->dimension(2);
+  numQPs   = dl->qp_scalar->dimension(2);
 
   Teuchos::RCP<PHX::DataLayout> layout;
   std::string rank,fname,target_fname;
@@ -31,7 +31,7 @@ ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
 
   computedField = PHX::MDField<ScalarT>(fname,layout);
   targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
-  w_measure     = PHX::MDField<RealType,Cell,QuadPoint>("Weights");
+  w_measure     = PHX::MDField<RealType,Cell,QuadPoint>("Weights",dl->qp_scalar);
   scaling       = plist->get("Scaling",1.0);
 
   this->addDependentField(computedField);
@@ -92,9 +92,6 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::preEvaluate
 template<typename EvalT, typename Traits, typename TargetScalarT>
 void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::logic_error,
-                              " sets defined in input file but not properly specified on the mesh" << std::endl);
-
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
