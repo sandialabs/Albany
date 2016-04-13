@@ -817,20 +817,35 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   if (have_temperature_eq_) { // Gather Solution Temperature
     Teuchos::ArrayRCP<std::string> dof_names(1);
+    Teuchos::ArrayRCP<std::string> dof_names_dot(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
     dof_names[0] = "Temperature";
+    dof_names_dot[0] = "Temperature Dot";
     resid_names[0] = dof_names[0] + " Residual";
-    fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
+    
+    if (supports_transient) {
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
+          false,
+          dof_names,
+          dof_names_dot,
+          Teuchos::null));
+    } else {
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
         dof_names,
         offset));
-
+    }
+    
     fm0.template registerEvaluator<EvalT>
     (evalUtils.constructGatherCoordinateVectorEvaluator());
 
     if (!surface_element) {
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+      
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
 
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
@@ -2646,11 +2661,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     // Input
-    p->set<std::string>("Temperature Name", "Temperature");
+//    p->set<std::string>("Temperature Name", "Temperature");
+//    p->set<std::string>("Temperature Dot Name", "Temperature Dot");
     p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<std::string>("Thermal Transient Coefficient Name",
         "Thermal Transient Coefficient");
-    p->set<std::string>("Delta Time Name", "Delta Time");
+//    p->set<std::string>("Delta Time Name", "Delta Time");
     
     // MJJ: Need this here to compute responses later
     RealType heat_capacity = param_list.get<RealType>("Heat Capacity");
@@ -2665,7 +2681,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     // Output
     p->set<std::string>("Thermal Diffusivity Name", "Thermal Diffusivity");
-    p->set<std::string>("Temperature Dot Name", "Temperature Dot");
+//    p->set<std::string>("Temperature Dot Name", "Temperature Dot");
 
     ev = Teuchos::rcp(
         new LCM::ThermoMechanicalCoefficients<EvalT, PHAL::AlbanyTraits>(

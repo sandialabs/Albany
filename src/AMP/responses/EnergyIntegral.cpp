@@ -84,7 +84,7 @@ double computeAMPEnergyIntegral(apf::Mesh* m)
   // set some fake material properties
   // and the temperature field for the integrator
   integrator.rho = 1.0;
-  integrator.Cp = 4.25e6;
+  integrator.Cp = 450.0;
   integrator.temp = T;
 
   // this loops over all elements in the mesh and
