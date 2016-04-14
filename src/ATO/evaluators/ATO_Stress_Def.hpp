@@ -33,7 +33,7 @@ Stress(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(stress);
 
   if(p.isSublist("Homogenized Constants")){
-    homogenizedConstantsName = p.sublist("Homogenized Constants").get<std::string>("Name");
+    homogenizedConstantsName = p.sublist("Homogenized Constants").get<std::string>("Stiffness Name");
     useHomogenizedConstants = true;
     Albany::StateManager* stateMgr = p.get<Albany::StateManager*>("State Manager");
     Teuchos::RCP<Albany::Layouts> dl = p.get<Teuchos::RCP<Albany::Layouts> >("Data Layout");

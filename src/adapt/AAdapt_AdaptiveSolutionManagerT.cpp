@@ -354,9 +354,14 @@ AAdapt::AdaptiveSolutionManagerT::scatterXT(
   }
 
   if (x_dotdotT){
-     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 3, std::logic_error, 
+     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 3, std::logic_error,
          "AdaptiveSolutionManager error: x_dotdotT defined but xDotDot isn't defined in the multivector");
      overlapped_soln->getVectorNonConst(2)->doImport(*x_dotdotT, *importerT, Tpetra::INSERT);
+
+	  /*OG uncomment this to enable Laplace calculations in Aeras::Hydrostatic
+	 if(overlapped_soln->getNumVectors() == 3)
+	    overlapped_soln->getVectorNonConst(2)->doImport(*x_dotdotT, *importerT, Tpetra::INSERT);
+	    */
   }
 
 }

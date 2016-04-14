@@ -172,6 +172,9 @@ class SubIntegrator
   template<typename P>
   void SortMap(const std::vector<typename Vector3D<P>::Type>& points, std::vector<int>& map);
 
+  template<typename P>
+  bool areColinear(const std::vector<typename Vector3D<P>::Type>& points);
+
   template<typename V, typename P>
   void getValues( Intrepid2::FieldContainer_Kokkos<V, PHX::Layout, PHX::Device>& Nvals, const Intrepid2::FieldContainer_Kokkos<P, PHX::Layout, PHX::Device>& evalPoints);
 

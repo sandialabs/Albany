@@ -6,78 +6,58 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
+#include "Albany_Utils.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_PenaltyModel.hpp"
 
 template<typename EvalT, typename Traits>
 ATO::StiffnessObjectiveBase<EvalT, Traits>::
 StiffnessObjectiveBase(Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl) :
+		  const Teuchos::RCP<Albany::Layouts>& dl,
+                  const Albany::MeshSpecsStruct* meshSpecs) :
   qp_weights ("Weights", dl->qp_scalar     ),
   BF         ("BF",      dl->node_qp_scalar)
 
 {
-  Teuchos::ParameterList* responseParams = p.get<Teuchos::ParameterList*>("Parameter List");
-  std::string gfLayout = responseParams->get<std::string>("Gradient Field Layout");
-  std::string wcLayout = responseParams->get<std::string>("Work Conjugate Layout");
-  
-  Teuchos::RCP<PHX::DataLayout> layout;
-  if(gfLayout == "QP Tensor3") layout = dl->qp_tensor3;
-  else
-  if(gfLayout == "QP Tensor") layout = dl->qp_tensor;
-  else
-  if(gfLayout == "QP Vector") layout = dl->qp_vector;
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                               std::endl <<
-                               "Error!  Unknown Gradient Field Layout " << gfLayout <<
-                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
-                               std::endl);
 
-  PHX::MDField<ScalarT> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
-  gradX = _gradX;
+  elementBlockName = meshSpecs->ebName;
 
-  if(wcLayout == "QP Tensor3") layout = dl->qp_tensor3;
-  else
-  if(wcLayout == "QP Tensor") layout = dl->qp_tensor;
-  else
-  if(wcLayout == "QP Vector") layout = dl->qp_vector;
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                               std::endl <<
-                               "Error!  Unknown Work Conjugate Layout " << wcLayout <<
-                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
-                               std::endl);
-
-  PHX::MDField<ScalarT> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
-  workConj = _workConj;
-
+  ATO::PenaltyModelFactory<ScalarT> penaltyFactory;
+  penaltyModel = penaltyFactory.create(p, dl, elementBlockName);
 
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
 
+  topologies = paramsFromProblem->get<Teuchos::RCP<TopologyArray> >("Topologies");
 
-  topology = paramsFromProblem->get<Teuchos::RCP<Topology> >("Topology");
-
+  Teuchos::ParameterList* responseParams = p.get<Teuchos::ParameterList*>("Parameter List");
+  int nTopos = topologies->size();
   FName = responseParams->get<std::string>("Response Name");
-  dFdpName = responseParams->get<std::string>("Response Derivative Name");
-  if(responseParams->isType<int>("Penalty Function")){
-    functionIndex = responseParams->get<int>("Penalty Function");
-  } else functionIndex = 0;
+  std::string dFdpBaseName = responseParams->get<std::string>("Response Derivative Name");
+  dFdpNames.resize(nTopos);
+  for(int itopo=0; itopo<nTopos; itopo++){
+    dFdpNames[itopo] = Albany::strint(dFdpBaseName,itopo);
+  }
 
-  //! Register with state manager
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   this->pStateMgr->registerStateVariable(FName, dl->workset_scalar, dl->dummy, 
                                          "all", "scalar", 0.0, false, false);
-  this->pStateMgr->registerStateVariable(dFdpName, dl->node_scalar, dl->dummy, 
-                                         "all", "scalar", 0.0, false, false);
-
+  for(int itopo=0; itopo<nTopos; itopo++){
+    this->pStateMgr->registerStateVariable(dFdpNames[itopo], 
+                                           dl->node_scalar, dl->dummy, 
+                                           "all", "scalar", 0.0, false, false);
+  }
 
   this->addDependentField(qp_weights);
   this->addDependentField(BF);
-  this->addDependentField(gradX);
-  this->addDependentField(workConj);
 
-  // Create tag
+  Teuchos::Array< PHX::MDField<ScalarT> > depFields;
+  penaltyModel->getDependentFields(depFields);
+
+  int nFields = depFields.size();
+  for(int ifield=0; ifield<nFields; ifield++)
+    this->addDependentField(depFields[ifield]);
+
   stiffness_objective_tag =
     Teuchos::rcp(new PHX::Tag<ScalarT>(className, dl->dummy));
   this->addEvaluatedField(*stiffness_objective_tag);
@@ -92,8 +72,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(qp_weights,fm);
   this->utils.setFieldData(BF,fm);
-  this->utils.setFieldData(gradX,fm);
-  this->utils.setFieldData(workConj,fm);
+
+  Teuchos::Array<PHX::MDField<ScalarT>* > depFields;
+  penaltyModel->getDependentFields(depFields);
+
+  int nFields = depFields.size();
+  for(int ifield=0; ifield<nFields; ifield++)
+    this->utils.setFieldData(*depFields[ifield],fm);
+
 }
 
 // **********************************************************************
@@ -103,8 +89,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename Traits>
 ATO::
 StiffnessObjective<PHAL::AlbanyTraits::Residual, Traits>::
-StiffnessObjective(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
+StiffnessObjective(Teuchos::ParameterList& p, 
+                   const Teuchos::RCP<Albany::Layouts>& dl,
+                   const Albany::MeshSpecsStruct* meshSpecs) :
+  StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl, meshSpecs)
 {
 }
 
@@ -114,16 +102,27 @@ preEvaluate(typename Traits::PreEvalData workset)
 {
 }
 
+
 template<typename Traits>
 void ATO::StiffnessObjective<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
+  if( elementBlockName != workset.EBName ) return;
+
+  int nTopos = topologies->size();
+
+  Teuchos::Array<double> topoVals(nTopos);
   Albany::MDArray F = (*workset.stateArrayPtr)[FName];
-  Albany::MDArray dEdp = (*workset.stateArrayPtr)[dFdpName];
-  Albany::MDArray topo = (*workset.stateArrayPtr)[topology->getName()];
+  Teuchos::Array<Albany::MDArray> dEdp(nTopos), topo(nTopos);
+  for(int itopo=0; itopo<nTopos; itopo++){
+    dEdp[itopo] = (*workset.stateArrayPtr)[dFdpNames[itopo]];
+    topo[itopo] = (*workset.stateArrayPtr)[(*topologies)[itopo]->getName()];
+  }
+
+ 
   std::vector<int> dims;
-  gradX.dimensions(dims);
+  penaltyModel->getFieldDimensions(dims);
   int size = dims.size();
 
   double internalEnergy=0.0;
@@ -131,72 +130,38 @@ evaluateFields(typename Traits::EvalData workset)
   int numCells = dims[0];
   int numQPs   = dims[1];
   int numDims  = dims[2];
-  int numNodes = topo.dimension(1);
+  int numNodes = topo[0].dimension(1);
 
-  if( size == 3 ){
-    for(int cell=0; cell<numCells; cell++){
-      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-        double topoVal = 0.0;
+  double response;
+  Teuchos::Array<double> dResponse(nTopos);
+  
+  for(int cell=0; cell<numCells; cell++){
+
+    for(int itopo=0; itopo<nTopos; itopo++)
+      for(int node=0; node<numNodes; node++) 
+        dEdp[itopo](cell,node) = 0.0;
+
+    for(int qp=0; qp<numQPs; qp++){
+
+      // compute topology values at this qp
+      for(int itopo=0; itopo<nTopos; itopo++){
+        topoVals[itopo] = 0.0;
         for(int node=0; node<numNodes; node++)
-          topoVal += topo(cell,node)*BF(cell,node,qp);
-        double P = topology->Penalize(functionIndex,topoVal);
-        double dP = topology->dPenalize(functionIndex,topoVal);
-        double dE = 0.0;
-        for(int i=0; i<numDims; i++)
-          dE += gradX(cell,qp,i)*workConj(cell,qp,i)/2.0;
-        dE *= qp_weights(cell,qp);
-        internalEnergy += P*dE;
-        for(int node=0; node<numNodes; node++)
-          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
+          topoVals[itopo] += topo[itopo](cell,node)*BF(cell,node,qp);
       }
+
+      penaltyModel->Evaluate(topoVals, topologies, cell, qp, response, dResponse);
+
+      internalEnergy += response*qp_weights(cell,qp);
+
+      // assemble
+      for(int itopo=0; itopo<nTopos; itopo++)
+        for(int node=0; node<numNodes; node++)
+//          dEdp[itopo](cell,node) += dResponse[itopo]*BF(cell,node,qp)*qp_weights(cell,qp);
+//        JR:  The negative sign is to make this a total derivative 
+          dEdp[itopo](cell,node) -= dResponse[itopo]*BF(cell,node,qp)*qp_weights(cell,qp);
     }
-  } else
-  if( size == 4 ){
-    for(int cell=0; cell<numCells; cell++){
-      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-        double topoVal = 0.0;
-        for(int node=0; node<numNodes; node++)
-          topoVal += topo(cell,node)*BF(cell,node,qp);
-        double P = topology->Penalize(functionIndex,topoVal);
-        double dP = topology->dPenalize(functionIndex,topoVal);
-        double dE = 0.0;
-        for(int i=0; i<numDims; i++)
-          for(int j=0; j<numDims; j++)
-            dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j)/2.0;
-        dE *= qp_weights(cell,qp);
-        internalEnergy += P*dE;
-        for(int node=0; node<numNodes; node++)
-          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
-      }
-    }
-  } else
-  if( size == 5 ){
-    for(int cell=0; cell<numCells; cell++){
-      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-        double topoVal = 0.0;
-        for(int node=0; node<numNodes; node++)
-          topoVal += topo(cell,node)*BF(cell,node,qp);
-        double P = topology->Penalize(functionIndex,topoVal);
-        double dP = topology->dPenalize(functionIndex,topoVal);
-        double dE = 0.0;
-        for(int i=0; i<numDims; i++)
-          for(int j=0; j<numDims; j++)
-            for(int k=0; k<numDims; k++)
-              dE += gradX(cell,qp,i,j,k)*workConj(cell,qp,i,j,k)/2.0;
-        dE *= qp_weights(cell,qp);
-        internalEnergy += P*dE;
-        for(int node=0; node<numNodes; node++)
-          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
-      }
-    }
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>5, Teuchos::Exceptions::InvalidParameter,
-      "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
   }
-
   F(0) += internalEnergy;
 }
 

@@ -20,54 +20,83 @@
     <ParameterList name="Spatial Filters">
       <Parameter name="Number of Filters" type="int" value="1" />
       <ParameterList name="Filter 0">
-        <Parameter name="Filter Radius" type="double" value="0.06" />
+        <Parameter name="Filter Radius" type="double" value="0.10" />
+        <Parameter name="Iterations" type="int" value="1" />
       </ParameterList>
     </ParameterList>
 
     <ParameterList name="Topological Optimization">
       <Parameter name="Package" type="string" value="OC" />
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
-      <Parameter name="Move Limiter" type="double" value="0.5" />
+      <Parameter name="Move Limiter" type="double" value="1.0" />
       <ParameterList name="Convergence Tests">
-        <Parameter name="Maximum Iterations" type="int" value="35" />
+        <Parameter name="Maximum Iterations" type="int" value="50" />
         <Parameter name="Combo Type" type="string" value="OR"/>
         <Parameter name="Relative Topology Change" type="double" value="5e-3" />
         <Parameter name="Relative Objective Change" type="double" value="1e-6" />
       </ParameterList>
-      <ParameterList name="Volume Enforcement">
+      <ParameterList name="Measure Enforcement">
+        <Parameter name="Measure" type="string" value="Volume" />
         <Parameter name="Maximum Iterations" type="int" value="120" />
         <Parameter name="Convergence Tolerance" type="double" value="1e-3" />
-        <Parameter name="Target Volume Fraction" type="double" value="0.40" />
+        <Parameter name="Integration Method" type="string" value="Conformal" />
+        <Parameter name="Target" type="double" value="0.50" />
       </ParameterList>
-      <Parameter name="Objective Name" type="string" value="F" />
-      <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
+      <Parameter name="Objective" type="string" value="Aggregator" />
+      <Parameter name="Constraint" type="string" value="Measure" />
     </ParameterList>
     
-
-    <ParameterList name="Topology">
+    <ParameterList name="Topologies">
       <!-- 
-          This block defines the topology that all physics problems and responses 
-          are computed from.  There is only one topology.  This block is available
-          to the responses and is added to each physics parameter list by the ATO_Solver.
+          This block defines the topologies that all physics problems and responses 
+          are computed from.  This block is available to the responses and is added 
+          to each physics parameter list by the ATO_Solver.
       -->
-      <Parameter name="Topology Name" type="string" value="Rho" />
-      <Parameter name="Entity Type" type="string" value="State Variable" />
-      <Parameter name="Bounds" type="Array(double)" value="{-0.05,0.05}" />
-      <Parameter name="Initial Value" type="double" value="0.0" />
-      <Parameter name="Integration Method" type="string" value="Conformal" />
-      <ParameterList name="Functions">
-        <Parameter name="Number of Functions" type="int" value="2" />
-        <ParameterList name="Function 0">
-          <Parameter name="Function Type" type="string" value="H1" />
-          <Parameter name="Minimum" type="double" value="0.001" />
-          <Parameter name="Regularization Length" type="double" value="0.06" />
+      <Parameter name="Number of Topologies" type="int" value="1" />
+      <ParameterList name="Topology 0">
+        <Parameter name="Topology Name" type="string" value="Rho" />
+        <Parameter name="Entity Type" type="string" value="State Variable" />
+        <Parameter name="Bounds" type="Array(double)" value="{-0.05,0.05}" />
+        <Parameter name="Initial Value" type="double" value="0.0" />
+        <ParameterList name="Functions">
+          <Parameter name="Number of Functions" type="int" value="2" />
+          <ParameterList name="Function 0">
+            <Parameter name="Function Type" type="string" value="H1" />
+            <Parameter name="Minimum" type="double" value="0.001" />
+            <Parameter name="Regularization Length" type="double" value="0.06" />
+          </ParameterList>
+          <ParameterList name="Function 1">
+            <Parameter name="Function Type" type="string" value="H2" />
+            <Parameter name="Regularization Length" type="double" value="0.06" />
+          </ParameterList>
         </ParameterList>
-        <ParameterList name="Function 1">
-          <Parameter name="Function Type" type="string" value="H2" />
-          <Parameter name="Regularization Length" type="double" value="0.06" />
+        <Parameter name="Spatial Filter" type="int" value="0" />
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Configuration">
+      <ParameterList name="Element Blocks">
+        <Parameter name="Number of Element Blocks" type="int" value="1"/>
+        <ParameterList name="Element Block 0">
+          <Parameter name="Name" type="string" value="block_1"/>
+          <ParameterList name="Material">
+            <Parameter name="Elastic Modulus" type="double" value="1e9"/>
+            <Parameter name="Poissons Ratio" type="double" value="0.33"/>
+          </ParameterList>
         </ParameterList>
       </ParameterList>
-      <Parameter name="Spatial Filter" type="int" value="0" />
+
+      <ParameterList name="Linear Measures">
+        <Parameter name="Number of Linear Measures" type="int" value="1"/>
+        <ParameterList name="Linear Measure 0">
+          <Parameter name="Linear Measure Name" type="string" value="Volume"/>
+          <Parameter name="Linear Measure Type" type="string" value="Volume"/>
+          <ParameterList name="Volume">
+            <Parameter name="Topology Index" type="int" value="0"/>
+            <Parameter name="Function Index" type="int" value="1"/>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Physics Problem 0">    
@@ -85,12 +114,14 @@
       </ParameterList>
 
       <ParameterList name="Apply Topology Weight Functions">
-        <Parameter name="Stress" type="int" value="0" />
-        <Parameter name="Volume" type="int" value="1" />
+        <Parameter name="Number of Fields" type="int" value="1"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
       </ParameterList>
-
-      <Parameter name="Elastic Modulus" type="double" value="1e9"/>
-      <Parameter name="Poissons Ratio" type="double" value="0.33"/>
 
       <!--
           This response provides an objective function and the derivative of the 
@@ -106,9 +137,10 @@
           <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
           <Parameter name="Work Conjugate Name" type="string" value="Stress" />
           <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
           <Parameter name="Response Name" type="string" value="R0" />
           <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
-          <Parameter name="Penalty Function" type="int" value="0" />
         </ParameterList>
       </ParameterList>
     </ParameterList>

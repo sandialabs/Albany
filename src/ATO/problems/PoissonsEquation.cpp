@@ -49,7 +49,7 @@ buildProblem(
   if( haveSidesets )
     constructNeumannEvaluators(meshSpecs[0]);
 
-  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
+  if( params->isType<Teuchos::RCP<ATO::TopologyArray> >("Topologies") )
     setupTopOpt(meshSpecs,stateMgr);
 
 }
@@ -146,10 +146,11 @@ Albany::PoissonsEquationProblem::getValidProblemParameters() const
   validPL->set<int>("Add Cell Problem Forcing", 0);
   validPL->sublist("Homogenized Constants", false, "");
 
-  Teuchos::RCP<ATO::Topology> emptyTopo;
+  Teuchos::RCP<ATO::TopologyArray> emptyTopo;
   emptyTopo = Teuchos::null;
-  validPL->set<Teuchos::RCP<ATO::Topology> >("Topology", emptyTopo);
-  validPL->sublist("Topology Parameters", false, "");
+  validPL->set<Teuchos::RCP<ATO::TopologyArray> >("Topologies", emptyTopo);
+  validPL->sublist("Topologies Parameters", false, "");
+  validPL->sublist("Configuration", false, "");
   validPL->sublist("Objective Aggregator", false, "");
   validPL->sublist("Apply Topology Weight Functions", false, "");
 
