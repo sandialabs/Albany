@@ -21,6 +21,8 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
+  theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar),
   worksetSize(dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
@@ -50,6 +52,8 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   this->addDependentField(wBF);
   this->addDependentField(GradBF);
   this->addDependentField(wGradBF);
+  this->addDependentField(lambda_nodal);
+  this->addDependentField(theta_nodal);
 
   this->addEvaluatedField(*scatter_operation);
 
@@ -71,6 +75,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(lambda_nodal,fm);
+  this->utils.setFieldData(theta_nodal,fm);
 }
 
 
@@ -434,6 +440,7 @@ evaluateFields(typename Traits::EvalData workset)
   ST mc = workset.m_coeff;
 
   std::cout <<"Workset coefficients: j = "<< workset.j_coeff << ", m = " <<workset.m_coeff << ", n = " <<workset.n_coeff << "\n";
+
   bool buildMass = ( ( workset.j_coeff == 0 )&&( workset.m_coeff == 1.0 )&&( workset.n_coeff == 0 ) )
 		         ||( ( workset.j_coeff == 0 )&&( workset.m_coeff == -1.0 )&&( workset.n_coeff == 0 ) );
 
