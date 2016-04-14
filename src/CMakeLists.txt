@@ -794,6 +794,8 @@ ENDIF()
 ENDIF (NOT ALBANY_LIBRARIES_ONLY) 
 # End declaration of executables
 
+# Note: Albany_EXTRA_LIBRARIES is to allow users to specify
+# libraries that one cannot get out of Trilinos directly.
 set(ALL_LIBRARIES
   ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
@@ -805,6 +807,7 @@ set(ALL_LIBRARIES
   ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
+  ${Albany_EXTRA_LIBRARIES}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   )
 

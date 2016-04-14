@@ -386,6 +386,9 @@ void ATO::SubIntegrator::Dice(
       for(uint i=0; i<cutpoints.size(); i++) face.fieldvals[i] = zeroVal;
       Dice(intersectionPoly, zeroVal, compare, explicitPolygons);
 
+      // if no surface polys where found ...
+      if(explicitPolygons.size() == 0) continue;
+
       // create tets
       typename Vector3D<P>::Type center(0.0, 0.0, 0.0);
       typename std::vector<Simplex<V,P> >::iterator itg;
@@ -441,6 +444,11 @@ void ATO::SubIntegrator::Dice(
           points.push_back(newpoint);
         }
       }
+      
+      // if no vertex points are in material ...
+      if( points.size() <= 2 ) continue;
+
+      if( areColinear<P>(points) ) continue;
 
       SortMap<P>(points, map);
   
@@ -590,65 +598,13 @@ V ATO::SubIntegrator::Volume(Simplex<V,P>& simplex)
 namespace ATO {
 //******************************************************************************//
 template <>
-void SubIntegrator::SortMap<DFadType>(const std::vector<typename Vector3D<DFadType>::Type >& points, 
-                           std::vector<int>& map)
-//******************************************************************************//
-{
-  uint nPoints = points.size();
-  
-  if( nPoints < 2 ) return;
-
-  std::vector<typename Vector3D<RealType>::Type > rpoints(nPoints);
-  for(uint i=0; i<nPoints; i++){
-    rpoints[i](0) = points[i](0).val();
-    rpoints[i](1) = points[i](1).val();
-    rpoints[i](2) = points[i](2).val();
-  }
-
-  // find centerpoint
-  typename Vector3D<RealType>::Type center(rpoints[0]);
-  for(uint i=1; i<nPoints; i++) center += rpoints[i];
-  center /= nPoints;
-     
-  // sort by counterclockwise angle about surface normal
-  RealType pi = acos(-1.0);
-  typename Vector3D<RealType>::Type X(rpoints[0]-center);
-  RealType xnorm = Intrepid2::norm(X);
-  X /= xnorm;
-  typename Vector3D<RealType>::Type X1(rpoints[1]-center);
-  typename Vector3D<RealType>::Type Z = Intrepid2::cross(X, X1);
-  RealType znorm = Intrepid2::norm(Z);
-  Z /= znorm;
-  typename Vector3D<RealType>::Type Y = Intrepid2::cross(Z, X);
-
-  std::map<RealType, uint> angles;
-  angles.insert( std::pair<RealType, uint>(0.0,0) );
-  for(uint i=1; i<nPoints; i++){
-    typename Vector3D<RealType>::Type comp = rpoints[i] - center;
-    RealType compnorm = Intrepid2::norm(comp);
-    comp /= compnorm;
-    RealType prod = X*comp;
-    RealType angle = acos((float)prod);
-    if( Y * comp < 0.0 ) angle = 2.0*pi - angle;
-    angles.insert( std::pair<RealType, uint>(angle,i) );
-  }
-
-  map.resize(nPoints);
-  typename std::map<RealType, uint>::iterator ait;
-  std::vector<int>::iterator mit;
-  for(mit=map.begin(),ait=angles.begin(); ait!=angles.end(); mit++, ait++){
-    *mit = ait->second;
-  }
-}
-//******************************************************************************//
-template <>
 void SubIntegrator::SortMap<RealType>(const std::vector<typename Vector3D<RealType>::Type >& points, 
                            std::vector<int>& map)
 //******************************************************************************//
 {
   uint nPoints = points.size();
   
-  if( nPoints < 2 ) return;
+  if( nPoints <= 2 ) return;
 
   // find centerpoint
   typename Vector3D<RealType>::Type center(points[0]);
@@ -660,11 +616,23 @@ void SubIntegrator::SortMap<RealType>(const std::vector<typename Vector3D<RealTy
   typename Vector3D<RealType>::Type X(points[0]-center);
   RealType xnorm = Intrepid2::norm(X);
   X /= xnorm;
-  typename Vector3D<RealType>::Type X1(points[1]-center);
-  typename Vector3D<RealType>::Type Z = Intrepid2::cross(X, X1);
-  RealType znorm = Intrepid2::norm(Z);
-  Z /= znorm;
-  typename Vector3D<RealType>::Type Y = Intrepid2::cross(Z, X);
+  bool foundNormal = false;
+  typename Vector3D<RealType>::Type Y, Z;
+  for(uint i=1; i<nPoints; i++){
+    typename Vector3D<RealType>::Type X1(points[i]-center);
+    Z = Intrepid2::cross(X, X1);
+    RealType znorm = Intrepid2::norm(Z);
+    if( znorm == 0 ) continue;
+    foundNormal = true;
+    Z /= znorm;
+    Y = Intrepid2::cross(Z, X);
+    break;
+  }
+
+  if( !foundNormal ){
+    map.resize(0);
+    return;
+  }
 
   std::map<RealType, uint> angles;
   angles.insert( std::pair<RealType, uint>(0.0,0) );
@@ -685,8 +653,70 @@ void SubIntegrator::SortMap<RealType>(const std::vector<typename Vector3D<RealTy
     *mit = ait->second;
   }
 }
-}
+//******************************************************************************//
+template <>
+void SubIntegrator::SortMap<DFadType>(const std::vector<typename Vector3D<DFadType>::Type >& points, 
+                           std::vector<int>& map)
+//******************************************************************************//
+{
+  uint nPoints = points.size();
   
+  std::vector<typename Vector3D<RealType>::Type > rpoints(nPoints);
+  for(uint i=0; i<nPoints; i++){
+    rpoints[i](0) = points[i](0).val();
+    rpoints[i](1) = points[i](1).val();
+    rpoints[i](2) = points[i](2).val();
+  }
+
+  SortMap<RealType>(rpoints, map);
+
+}
+//******************************************************************************//
+template <>
+bool SubIntegrator::areColinear<RealType>(
+ const std::vector<typename Vector3D<RealType>::Type >& points)
+//******************************************************************************//
+{
+  uint nPoints = points.size();
+  
+  if( nPoints <= 2 ) return true;
+
+  // find centerpoint
+  typename Vector3D<RealType>::Type center(points[0]);
+  for(uint i=1; i<nPoints; i++) center += points[i];
+  center /= nPoints;
+     
+  typename Vector3D<RealType>::Type X(points[0]-center);
+  RealType xnorm = Intrepid2::norm(X);
+  X /= xnorm;
+  for(uint i=1; i<nPoints; i++){
+    typename Vector3D<RealType>::Type X1(points[i]-center);
+    typename Vector3D<RealType>::Type Z = Intrepid2::cross(X, X1);
+    RealType znorm = Intrepid2::norm(Z);
+    if(znorm != 0) return false;
+  }
+
+  return true;
+}
+
+//******************************************************************************//
+template <>
+bool SubIntegrator::areColinear<DFadType>(
+       const std::vector<typename Vector3D<DFadType>::Type >& points)
+//******************************************************************************//
+{
+  uint nPoints = points.size();
+  
+  std::vector<typename Vector3D<RealType>::Type > rpoints(nPoints);
+  for(uint i=0; i<nPoints; i++){
+    rpoints[i](0) = points[i](0).val();
+    rpoints[i](1) = points[i](1).val();
+    rpoints[i](2) = points[i](2).val();
+  }
+
+  return areColinear<RealType>(rpoints);
+}
+}  
 
 
 //******************************************************************************//

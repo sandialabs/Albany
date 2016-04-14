@@ -16,6 +16,7 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityProblem.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityModalProblem.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/PoissonsEquation.cpp
@@ -35,6 +36,7 @@ IF (ENABLE_DOTK)
 ENDIF()
 
 SET(HEADERS
+  ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Types.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective.hpp
@@ -56,6 +58,8 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_Utils.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_Utils_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityProblem.hpp
@@ -66,6 +70,8 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Integrator.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Integrator_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_PenaltyModel.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_PenaltyModel_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp

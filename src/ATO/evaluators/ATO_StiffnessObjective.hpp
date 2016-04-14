@@ -14,6 +14,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_PenaltyModel.hpp"
 
 namespace ATO {
 /**
@@ -28,7 +29,8 @@ namespace ATO {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     StiffnessObjectiveBase(Teuchos::ParameterList& p,
-		      const Teuchos::RCP<Albany::Layouts>& dl);
+		      const Teuchos::RCP<Albany::Layouts>& dl,
+                      const Albany::MeshSpecsStruct* meshSpecs);
 
     void postRegistrationSetup(typename Traits::SetupData d,
 			       PHX::FieldManager<Traits>& vm);
@@ -48,21 +50,20 @@ namespace ATO {
 
   protected:
 
-    std::string dFdpName;
+    Teuchos::Array<std::string> dFdpNames;
     std::string FName;
+    std::string elementBlockName;
     static const std::string className;
 
-    PHX::MDField<ScalarT> gradX;
-    PHX::MDField<ScalarT> workConj;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
     PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-
 
     Teuchos::RCP< PHX::Tag<ScalarT> > stiffness_objective_tag;
     Albany::StateManager* pStateMgr;
 
-    Teuchos::RCP<Topology> topology;
-    int functionIndex;
+    Teuchos::RCP<TopologyArray> topologies;
+
+    Teuchos::RCP< PenaltyModel<ScalarT> > penaltyModel;
 
   };
 
@@ -70,13 +71,12 @@ template<typename EvalT, typename Traits>
 class StiffnessObjective
    : public StiffnessObjectiveBase<EvalT, Traits> {
 
-   using StiffnessObjectiveBase<EvalT,Traits>::topology;
-   using StiffnessObjectiveBase<EvalT,Traits>::functionIndex;
-   using StiffnessObjectiveBase<EvalT,Traits>::dFdpName;
+   using StiffnessObjectiveBase<EvalT,Traits>::penaltyModel;
+   using StiffnessObjectiveBase<EvalT,Traits>::topologies;
+   using StiffnessObjectiveBase<EvalT,Traits>::dFdpNames;
    using StiffnessObjectiveBase<EvalT,Traits>::FName;
+   using StiffnessObjectiveBase<EvalT,Traits>::elementBlockName;
    using StiffnessObjectiveBase<EvalT,Traits>::className;
-   using StiffnessObjectiveBase<EvalT,Traits>::gradX;
-   using StiffnessObjectiveBase<EvalT,Traits>::workConj;
    using StiffnessObjectiveBase<EvalT,Traits>::qp_weights;
    using StiffnessObjectiveBase<EvalT,Traits>::BF;
    using StiffnessObjectiveBase<EvalT,Traits>::stiffness_objective_tag;
@@ -84,8 +84,9 @@ class StiffnessObjective
 
 public:
   StiffnessObjective(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-  StiffnessObjectiveBase<EvalT, Traits>(p, dl){}
+              const Teuchos::RCP<Albany::Layouts>& dl,
+              const Albany::MeshSpecsStruct* meshSpecs) :
+  StiffnessObjectiveBase<EvalT, Traits>(p, dl, meshSpecs){}
   void preEvaluate(typename Traits::PreEvalData d){}
   void postEvaluate(typename Traits::PostEvalData d){}
   void evaluateFields(typename Traits::EvalData d){}
@@ -104,13 +105,12 @@ template<typename Traits>
 class StiffnessObjective<PHAL::AlbanyTraits::Residual,Traits>
    : public StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits> {
 
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topology;
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::functionIndex;
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::dFdpName;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::penaltyModel;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topologies;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::dFdpNames;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::FName;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::elementBlockName;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::className;
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::gradX;
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::workConj;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::qp_weights;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::BF;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::stiffness_objective_tag;
@@ -118,7 +118,8 @@ class StiffnessObjective<PHAL::AlbanyTraits::Residual,Traits>
 
 public:
   StiffnessObjective(Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl);
+              const Teuchos::RCP<Albany::Layouts>& dl,
+              const Albany::MeshSpecsStruct* meshSpecs);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);

@@ -9,10 +9,15 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "Epetra_Vector.h"
+#include "ATO_Types.hpp"
 
 namespace ATO {
 
+
+class MeasureModel;
 class Topology;
+
+typedef std::unordered_map<std::string, Teuchos::RCP<MeasureModel> > BlockMeasureMap;
 
 class OptimizationProblem :
 public virtual Albany::AbstractProblem {
@@ -21,11 +26,21 @@ public virtual Albany::AbstractProblem {
    OptimizationProblem( const Teuchos::RCP<Teuchos::ParameterList>& _params,
                         const Teuchos::RCP<ParamLib>& _paramLib,
                         const int _numDim);
-
-   void ComputeVolume(const double* p, double& v, double* dvdp=NULL);
    void ComputeVolume(double* p, const double* dfdp,
                       double& v, double threshhold, double minP);
-   void ComputeVolume(double& v);
+   void ComputeMeasure(std::string measure, 
+                       std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                       double& v, double* dvdp=NULL, 
+                       std::string strIntegrationMethod="Gauss Quadrature");
+   void computeMeasure(std::string measure, 
+                       std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                       double& v, double* dvdp=NULL);
+   void computeConformalVolume(std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                      double& m, double* dmdp);
+   void computeConformalMeasure(std::string measure, 
+                      std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                      double& m, double* dmdp);
+   void ComputeMeasure(std::string measure, double& v);
    void setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> _disc)
           {disc = _disc;}
    void setCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm) {comm = _comm;}
@@ -58,17 +73,122 @@ public virtual Albany::AbstractProblem {
    Teuchos::RCP<Epetra_Vector> localVec;
    Teuchos::RCP<Epetra_Export> exporter;
 
-//   Teuchos::RCP<const Epetra_BlockMap> localNodeMap;
-//   Teuchos::RCP<const Epetra_BlockMap> overlapNodeMap;
+   Teuchos::Array<Teuchos::RCP<Epetra_Vector> > overlapVectors;
 
    Teuchos::RCP<const Epetra_Map> localNodeMap;
    Teuchos::RCP<const Epetra_Map> overlapNodeMap;
 
-   Teuchos::RCP<Topology> topology;
-   int functionIndex;
 
-   std::string strIntegrationMethod;
+   std::unordered_map<std::string, Teuchos::RCP<BlockMeasureMap> > measureModels;
 
+//   std::string strIntegrationMethod;
+
+   int nTopologies;
+
+};
+
+
+class MeasureModel
+{
+  public:
+    MeasureModel(){};
+    virtual ~MeasureModel(){};
+
+    virtual double Evaluate(const Teuchos::Array<double>& inVals,
+                            Teuchos::Array<Teuchos::RCP<Topology> >& topologies)=0;
+
+    virtual void Gradient(const Teuchos::Array<double>& inVals, 
+                          Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
+                          Teuchos::Array<double>& outVals)=0;
+
+    // temporary compromise (aka, hack) until comformal integration is handled correctly for mixtures
+    int getMaterialTopologyIndex(){return materialTopologyIndex;}
+  protected:
+    int materialTopologyIndex;
+    int materialFunctionIndex;
+};
+
+class TopologyWeightedIntegral_Mixture : public MeasureModel
+{
+  public:
+    TopologyWeightedIntegral_Mixture(const Teuchos::ParameterList& blockParams,
+                                     const Teuchos::ParameterList& measureParams );
+
+    double Evaluate(const Teuchos::Array<double>& inVals,
+                    Teuchos::Array<Teuchos::RCP<Topology> >& topologies);
+    void Gradient(const Teuchos::Array<double>& inVals, 
+                  Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
+                  Teuchos::Array<double>& outVals);
+ 
+  private:
+    Teuchos::Array<double> parameterValues;
+    Teuchos::Array<int> materialIndices;
+    Teuchos::Array<int> mixtureTopologyIndices;
+    Teuchos::Array<int> mixtureFunctionIndices;
+};
+
+class TopologyWeightedIntegral_Material : public MeasureModel
+{
+  public:
+    TopologyWeightedIntegral_Material(const Teuchos::ParameterList& blockParams,
+                                      const Teuchos::ParameterList& measureParams );
+
+    double Evaluate(const Teuchos::Array<double>& inVals,
+                    Teuchos::Array<Teuchos::RCP<Topology> >& topologies);
+    void Gradient(const Teuchos::Array<double>& inVals, 
+                  Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
+                  Teuchos::Array<double>& outVals);
+ 
+  private:
+    double parameterValue;
+};
+
+class VolumeMeasure : public MeasureModel
+{
+  public:
+    VolumeMeasure(const Teuchos::ParameterList& blockParams,
+                  const Teuchos::ParameterList& measureParams );
+
+    double Evaluate(const Teuchos::Array<double>& inVals,
+                    Teuchos::Array<Teuchos::RCP<Topology> >& topologies);
+    void Gradient(const Teuchos::Array<double>& inVals, 
+                  Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
+                  Teuchos::Array<double>& outVals);
+};
+
+class TopologyBasedMixture : public MeasureModel
+{
+  public:
+    TopologyBasedMixture(const Teuchos::ParameterList& blockParams );
+    double Evaluate(const Teuchos::Array<double>& inVals,
+                    Teuchos::Array<Teuchos::RCP<Topology> >& topologies);
+    void Gradient(const Teuchos::Array<double>& inVals, 
+                  Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
+                  Teuchos::Array<double>& outVals);
+    
+};
+class TopologyBasedMaterial : public MeasureModel
+{
+  public:
+    TopologyBasedMaterial(const Teuchos::ParameterList& blockParams );
+    double Evaluate(const Teuchos::Array<double>& inVals,
+                    Teuchos::Array<Teuchos::RCP<Topology> >& topologies);
+    void Gradient(const Teuchos::Array<double>& inVals, 
+                  Teuchos::Array<Teuchos::RCP<Topology> >& topologies,
+                  Teuchos::Array<double>& outVals);
+    
+};
+
+class MeasureModelFactory 
+{ 
+  public:
+    MeasureModelFactory( Teuchos::ParameterList _configParams );
+
+    Teuchos::RCP<BlockMeasureMap> create(const Teuchos::ParameterList& measureParams );
+ 
+  private:
+    Teuchos::ParameterList configParams;
+    
 };
 
 }

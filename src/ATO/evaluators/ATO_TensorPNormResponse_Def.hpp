@@ -16,7 +16,8 @@
 template<typename EvalT, typename Traits>
 ATO::TensorPNormResponse<EvalT, Traits>::
 TensorPNormResponse(Teuchos::ParameterList& p,
-		    const Teuchos::RCP<Albany::Layouts>& dl) :
+		    const Teuchos::RCP<Albany::Layouts>& dl,
+		    const Albany::MeshSpecsStruct* meshSpecs) :
   qp_weights ("Weights", dl->qp_scalar),
   BF         ("BF",      dl->node_qp_scalar)
 {
@@ -45,7 +46,16 @@ TensorPNormResponse(Teuchos::ParameterList& p,
 
   pVal = responseParams->get<double>("Exponent");
 
-  topology = paramsFromProblem->get<Teuchos::RCP<Topology> >("Topology");
+  Teuchos::RCP<TopologyArray>
+    topologies = paramsFromProblem->get<Teuchos::RCP<TopologyArray> >("Topologies");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    topologies->size() != 1,
+    Teuchos::Exceptions::InvalidParameter, std::endl
+    << "Error!  TensorPNormResponse not implemented for multiple topologies." << std::endl);
+
+  topology = (*topologies)[0];
+
   if(responseParams->isType<int>("Penalty Function")){
     functionIndex = responseParams->get<int>("Penalty Function");
   } else functionIndex = 0;

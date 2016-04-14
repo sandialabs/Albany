@@ -288,7 +288,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
-      rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl));
+      rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -308,7 +308,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::TensorPNormResponse<EvalT,Traits> > res_ev =
-      rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl));
+      rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -348,7 +348,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
-      rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl));
+      rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

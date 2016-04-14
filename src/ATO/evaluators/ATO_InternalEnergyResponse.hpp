@@ -9,6 +9,7 @@
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_PenaltyModel.hpp"
 
 
 
@@ -27,7 +28,8 @@ namespace ATO
     typedef typename EvalT::ParamScalarT ParamScalarT;
     
     InternalEnergyResponse(Teuchos::ParameterList& p,
-			const Teuchos::RCP<Albany::Layouts>& dl);
+			const Teuchos::RCP<Albany::Layouts>& dl,
+			const Albany::MeshSpecsStruct* meshSpecs);
   
     void postRegistrationSetup(typename Traits::SetupData d,
 				     PHX::FieldManager<Traits>& vm);
@@ -43,20 +45,23 @@ namespace ATO
 
     std::string dFdpName;
     std::string FName;
+    std::string elementBlockName;
     static const std::string className;
 
-    PHX::MDField<ScalarT> gradX;
-    PHX::MDField<ScalarT> workConj;
+//    PHX::MDField<ScalarT> gradX;
+//    PHX::MDField<ScalarT> workConj;
     PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
     PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-    PHX::MDField<ParamScalarT,Cell,Node> topo;
+    Teuchos::Array<PHX::MDField<ParamScalarT,Cell,Node> > topos;
 
 
     Teuchos::RCP< PHX::Tag<ScalarT> > stiffness_objective_tag;
     Albany::StateManager* pStateMgr;
 
-    Teuchos::RCP<Topology> topology;
-    int functionIndex;
+    Teuchos::RCP<TopologyArray> topologies;
+//    int functionIndex;
+
+    Teuchos::RCP< PenaltyModel<ScalarT> > penaltyModel;
 
   };
 	
