@@ -489,6 +489,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Weighted Gradient BF Name",            "wGrad BF");
     p->set<string>("BF Name",                    "BF");
     p->set<string>("Gradient BF Name",           "Grad BF");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
 
     p->set<string>("Scatter Field Name", "Compute And Scatter Jacobian");
 
