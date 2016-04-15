@@ -80,6 +80,7 @@ do
    ncap2 -s 'time_whole=0*time_whole' cube1_in_"$step".exo tmp.exo
    mv tmp.exo cube1_in_"$step".exo 
    #merge target_cube1_out_$step.exo file with cube1_in_$step.exo
+   #FIXME? do we want to merge cube1_in_"step".exo or cube1_out_$step".exo??
    ejoin target_cube1_out_"$step".exo cube1_in_"$step".exo #this produces a file ejoin-out.e
    mv ejoin-out.e cube1_restart_"$step".exo
 
@@ -96,6 +97,7 @@ do
    ncap2 -s 'time_whole=0*time_whole' cube0_in_"$step".exo tmp.exo
    mv tmp.exo cube0_in_"$step".exo 
    #merge target_cube0_out_$step.exo file with cube0_in_$step.exo
+   #FIXME? do we want to merge cube0_in_"step".exo or cube0_out_$step".exo??
    ejoin target_cube0_out_"$step".exo cube0_in_"$step".exo #this produces a file ejoin-out.e
    mv ejoin-out.e cube0_restart_"$step".exo
  
