@@ -16,11 +16,6 @@ template<typename EvalT, typename Traits>
 ThermoMechanicalCoefficients<EvalT, Traits>::
 ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
-//      temperature_(p.get < std::string > ("Temperature Name"), dl->qp_scalar),
-//      temperature_dot_(p.get < std::string > ("Temperature Dot Name"),
-//          dl->qp_scalar),
-//      delta_time_(p.get < std::string > ("Delta Time Name"),
-//          dl->workset_scalar),
       thermal_cond_(p.get < std::string > ("Thermal Conductivity Name"),
           dl->qp_scalar),
       thermal_transient_coeff_(
@@ -28,6 +23,7 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
           dl->qp_scalar),
       thermal_diffusivity_(p.get < std::string > ("Thermal Diffusivity Name"),
           dl->qp_tensor),
+      SolutionType_ (p.get<std::string>("Solution Method Type")),
       have_mech_(p.get<bool>("Have Mechanics", false))
 {
   // get the material parameter list
@@ -38,14 +34,28 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
   heat_capacity_ = mat_params->get<RealType>("Heat Capacity");
   density_ = mat_params->get<RealType>("Density");
 
-//  this->addDependentField(temperature_);
-//  this->addDependentField(temperature_dot_);
-  this->addDependentField(thermal_cond_);
-//  this->addDependentField(delta_time_);
+   if (SolutionType_ == "Continuation")
+    {
+       PHX::MDField<ScalarT,Cell,QuadPoint> 
+       temp(p.get < std::string > ("Temperature Name"), dl->qp_scalar);
+       temperature_ = temp;
+       //
+       PHX::MDField<ScalarT,Cell,QuadPoint> 
+       tmpDot(p.get < std::string > ("Temperature Dot Name"),
+                         dl->qp_scalar);
+       temperature_dot_ = tmpDot;
+       PHX::MDField<ScalarT,Dummy>
+       tmp(p.get < std::string > ("Delta Time Name"),
+                    dl->workset_scalar);
+       delta_time_ = tmp;
+        this->addDependentField(temperature_);
+        this->addDependentField(delta_time_);
+        this->addEvaluatedField(temperature_dot_);
+    }
+    this->addDependentField(thermal_cond_);
 
   this->addEvaluatedField(thermal_transient_coeff_);
   this->addEvaluatedField(thermal_diffusivity_);
-  //this->addEvaluatedField(temperature_dot_);
 
   this->setName(
       "ThermoMechanical Coefficients" + PHX::typeAsString<EvalT>());
@@ -63,7 +73,7 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
     this->addDependentField(def_grad_);
   }
 
-//  temperature_name_ = p.get<std::string>("Temperature Name")+"_old";
+  temperature_name_ = p.get<std::string>("Temperature Name")+"_old";
 }
 
 //------------------------------------------------------------------------------
@@ -72,14 +82,18 @@ void ThermoMechanicalCoefficients<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-//  this->utils.setFieldData(temperature_, fm);
-//  this->utils.setFieldData(temperature_dot_, fm);
-//  this->utils.setFieldData(delta_time_, fm);
-  this->utils.setFieldData(thermal_cond_, fm);
-  this->utils.setFieldData(thermal_transient_coeff_, fm);
-  this->utils.setFieldData(thermal_diffusivity_, fm);
-  if (have_mech_) {
-    this->utils.setFieldData(def_grad_, fm);
+    if (SolutionType_ == "Continuation")
+    {
+        this->utils.setFieldData(temperature_, fm);
+        this->utils.setFieldData(temperature_dot_, fm);
+        this->utils.setFieldData(delta_time_, fm);
+    }
+    this->utils.setFieldData(thermal_cond_, fm);
+    this->utils.setFieldData(thermal_transient_coeff_, fm);
+    this->utils.setFieldData(thermal_diffusivity_, fm);
+    if (have_mech_)
+    {
+        this->utils.setFieldData(def_grad_, fm);
   }
 }
 
@@ -92,19 +106,23 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
   Intrepid2::Tensor<ScalarT> tensor;
   Intrepid2::Tensor<ScalarT> F(num_dims_);
-
-//  ScalarT dt = delta_time_(0);
-//  if (dt == 0.0) 
-//      dt = 1.e-15;
   
-//  Albany::MDArray temperature_old = (*workset.stateArrayPtr)[temperature_name_];
-//  for (int cell = 0; cell < workset.numCells; ++cell) {
-//    for (int pt = 0; pt < num_pts_; ++pt) {
-//      temperature_dot_(cell,pt) =
-//        (temperature_(cell,pt) - temperature_old(cell,pt)) / dt;
-//    }
-//  }
-
+  if (SolutionType_ == "Continuation")
+    {
+        ScalarT dt = delta_time_(0);
+        if (dt == 0.0)
+            dt = 1.e-15;
+        Albany::MDArray temperature_old = (*workset.stateArrayPtr)[temperature_name_];
+        for (int cell = 0; cell < workset.numCells; ++cell)
+        {
+            for (int pt = 0; pt < num_pts_; ++pt)
+            {
+                temperature_dot_(cell, pt) =
+                        (temperature_(cell, pt) - temperature_old(cell, pt)) / dt;
+            }
+        }
+    }
+  
   if (have_mech_) {
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
