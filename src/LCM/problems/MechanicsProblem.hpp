@@ -723,7 +723,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   std::string total_bubble_density = (*fnm)["Total_Bubble_Density"];
   std::string bubble_volume_fraction = (*fnm)["Bubble_Volume_Fraction"];
   
-
+  
+  // Get the solution method type
+  Albany::SolutionMethodType SolutionType = getSolutionMethod();
+  TEUCHOS_TEST_FOR_EXCEPTION(SolutionType == Albany::SolutionMethodType::Unknown,
+            std::logic_error, "Solution Method must be Steady, Transient, "
+          "Continuation, Eigensolve, or Aeras Hyperviscosity");
+  
   if (have_mech_eq_) {
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> dof_names_dot(1);
@@ -762,6 +768,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+      
+      fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names_dot[0]));
 
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
@@ -823,7 +832,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     dof_names_dot[0] = "Temperature Dot";
     resid_names[0] = dof_names[0] + " Residual";
     
-    if (supports_transient) {
+    if (SolutionType == Albany::SolutionMethodType::Transient) {
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
           false,
@@ -844,9 +853,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
       
-      fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
-
+      if (SolutionType == Albany::SolutionMethodType::Transient)
+            {
+                fm0.template registerEvaluator<EvalT>
+                        (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+            }
+      
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
@@ -2661,12 +2673,20 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
     // Input
-//    p->set<std::string>("Temperature Name", "Temperature");
-//    p->set<std::string>("Temperature Dot Name", "Temperature Dot");
+    p->set<std::string>("Temperature Name", "Temperature");
+    p->set<std::string>("Temperature Dot Name", "Temperature Dot");
+    if (SolutionType == Albany::SolutionMethodType::Continuation)
+        {
+            p->set<std::string>("Solution Method Type", "Continuation");
+        }
+        else
+        {
+            p->set<std::string>("Solution Method Type", "No Continuation");
+        }
     p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
     p->set<std::string>("Thermal Transient Coefficient Name",
         "Thermal Transient Coefficient");
-//    p->set<std::string>("Delta Time Name", "Delta Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
     
     // MJJ: Need this here to compute responses later
     RealType heat_capacity = param_list.get<RealType>("Heat Capacity");

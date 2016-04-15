@@ -50,7 +50,7 @@ namespace LCM {
     ///
     /// Input: temperature
     ///
-//    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
 
     ///
     /// Input: thermal conductivity
@@ -60,7 +60,7 @@ namespace LCM {
     ///
     /// Input: time step
     ///
-//    PHX::MDField<ScalarT,Dummy> delta_time_;
+    PHX::MDField<ScalarT,Dummy> delta_time_;
 
     ///
     /// Optional deformation gradient
@@ -80,7 +80,7 @@ namespace LCM {
     ///
     /// Output: temperature dot
     ///
-//    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_dot_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_dot_;
 
     ///
     /// Number of integration points
@@ -100,7 +100,9 @@ namespace LCM {
     ///
     /// Scalar name
     ///
-//    std::string temperature_name_;
+    std::string temperature_name_;
+    
+    std::string SolutionType_;
 
     ///
     /// Mechanics flag
