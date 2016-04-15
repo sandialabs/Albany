@@ -17,10 +17,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/classical_schwarz.sh
                ${CMAKE_CURRENT_BINARY_DIR}/classical_schwarz.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube1_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube1_target.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube0_target.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube0_target.xml COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${DTK_Interp_Volume_to_NS.exe} ${CMAKE_CURRENT_BINARY_DIR}/DTK_Interp_Volume_to_NS)
+
 #get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 # Teko needs Epetra
