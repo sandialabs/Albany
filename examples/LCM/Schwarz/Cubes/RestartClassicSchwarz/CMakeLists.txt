@@ -15,6 +15,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube1_restart.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/classical_schwarz.sh
                ${CMAKE_CURRENT_BINARY_DIR}/classical_schwarz.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube1_target.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube1_target.xml COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
