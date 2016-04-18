@@ -1237,9 +1237,5 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<double>("Constant Surface Height",1.0,"Uniform surface height");
   validPL->set<double>("Constant Thickness",1.0,"Uniform thickness");
 
-#ifdef ALBANY_FELIX
-  validPL->sublist("Side Set Discretizations", false, "A sublist containing info for storing side discretizations");
-#endif
-
   return validPL;
 }

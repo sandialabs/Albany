@@ -501,7 +501,6 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
   validPL->set<Teuchos::ParameterList>("Required Fields Info",Teuchos::ParameterList());
   validPL->set<bool>("Write points coordinates to ascii file", "", "Write the mesh points coordinates to file?");
-  validPL->sublist("Side Set Discretizations", false, "Sublist of discretization parameters for the side set meshes");
 
   Teuchos::Array<std::string> emptyStringArray;
   validPL->set<Teuchos::Array<std::string> >("Additional Node Sets", emptyStringArray, "Declare additional node sets not present in the input file");

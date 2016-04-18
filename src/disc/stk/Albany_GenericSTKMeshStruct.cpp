@@ -1079,7 +1079,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     req_fields_info = &dummyList;
   }
 
-  int num_fields = req_fields_info->get<int>("Number Of Fields");
+  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   // L.B: is this check a good idea?
   TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list does not match the number of requirements declared in the problem section.\n");
 
@@ -1535,6 +1535,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<std::string>("STK Initial Convert", "", "stk::percept conversion option to apply after the mesh is input");
   validPL->set<bool>("Rebalance Mesh", false, "Parallel re-load balance initial mesh after generation");
   validPL->set<int>("Number of Refinement Passes", 1, "Number of times to apply the refinement process");
+
+  validPL->sublist("Side Set Discretizations", false, "A sublist containing info for storing side discretizations");
 
   return validPL;
 
