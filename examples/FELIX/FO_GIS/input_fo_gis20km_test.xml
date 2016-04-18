@@ -3,7 +3,6 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{surface_height}"/>
     <Parameter name="Basal Side Name"         type="string" value="basal"/>
 
@@ -61,7 +60,11 @@
         <Parameter name="Exodus Output File Name" type="string" value="gis20km_out_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="surface_height Field Type" type="string" value="From Mesh"/>
+          <Parameter name="Number Of Fields" type="int" value="1"/>
+          <ParameterList name="Field 0">
+            <Parameter name="Field Name" type="string" value="surface_height"/>
+            <Parameter name="Field Type" type="string" value="From Mesh"/>
+          </ParameterList>
         </ParameterList>
       </ParameterList>
     </ParameterList>

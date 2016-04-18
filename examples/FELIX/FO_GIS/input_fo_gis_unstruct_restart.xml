@@ -7,9 +7,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
-    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction, thickness}"/>
-    <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
+    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
     <Parameter name="Layered Data Length"     type="int"    value="11"/>
@@ -70,7 +68,11 @@
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="basal_friction Field Type" type="string" value="From Mesh"/>
+          <Parameter name="Number Of Fields" type="int" value="1"/>
+          <ParameterList name="Field 0">
+            <Parameter name="Field Name" type="string" value="basal_friction"/>
+            <Parameter name="Field Type" type="string" value="From Mesh"/>
+          </ParameterList>
         </ParameterList>
       </ParameterList>
       <ParameterList name="upperside">
@@ -80,10 +82,6 @@
         <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_surface_restart.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
-        <ParameterList name="Required Fields Info">
-          <Parameter name="surface_velocity Field Type"     type="string" value="From Mesh"/>
-          <Parameter name="surface_velocity_rms Field Type" type="string" value="From Mesh"/>
-        </ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList>
