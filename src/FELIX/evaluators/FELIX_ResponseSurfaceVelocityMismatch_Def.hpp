@@ -14,93 +14,13 @@
 
 template<typename EvalT, typename Traits>
 FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
-ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls)
-{
-  // get and validate Response parameter list
-  Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
-  Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
-  scaling = plist->get<double>("Scaling Coefficient", 1.0);
-  alpha = plist->get<double>("Regularization Coefficient", 0.0);
-  asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
-
-  const std::string& velocity_name           = paramList->get<std::string>("Surface Velocity Side QP Variable Name");
-  const std::string& obs_velocity_name       = paramList->get<std::string>("Observed Surface Velocity Side QP Variable Name");
-  const std::string& obs_velocityRMS_name    = paramList->get<std::string>("Observed Surface Velocity RMS Side QP Variable Name");
-  const std::string& w_measure_surface_name  = paramList->get<std::string>("Weighted Measure Surface Name");
-
-  surfaceSideName = paramList->get<std::string> ("Surface Side Name");
-  TEUCHOS_TEST_FOR_EXCEPTION (dls.find(surfaceSideName)==dls.end(), std::logic_error, "Error! Surface side data layout not found.\n");
-
-  Teuchos::RCP<Albany::Layouts> dl_surface = dls.at(surfaceSideName);
-
-  velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl_surface->side_qp_vector);
-  observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl_surface->side_qp_vector);
-  observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl_surface->side_qp_vector);
-  w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->side_qp_scalar);
-
-  Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
-  plist->validateParameters(*reflist, 0);
-
-  // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl_surface->side_node_qp_gradient->dimensions(dims);
-  numSideNodes  = dims[2];
-  numSideDims   = dims[4];
-  numSurfaceQPs = dl_surface->side_qp_scalar->dimension(2);
-
-  // add dependent fields
-  this->addDependentField(velocity);
-  this->addDependentField(observedVelocity);
-  this->addDependentField(observedVelocityRMS);
-  this->addDependentField(w_measure_surface);
-
-  if (alpha!=0)
-  {
-    // Adding the regularization required fields
-
-    basalSideName = paramList->get<std::string> ("Basal Side Name");
-
-    TEUCHOS_TEST_FOR_EXCEPTION (dls.find(basalSideName)==dls.end(), std::logic_error, "Error! Basal side data layout not found.\n");
-    Teuchos::RCP<Albany::Layouts> dl_basal = dls.at(basalSideName);
-
-    const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
-    const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
-
-    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl_basal->side_qp_gradient);
-    w_measure_basal     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->side_qp_scalar);
-
-    numBasalQPs = dl_basal->side_qp_scalar->dimension(2);
-
-    this->addDependentField(w_measure_basal);
-    this->addDependentField(grad_beta);
-  }
-
-  this->setName("Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
-
-  using PHX::MDALayout;
-
-  // Setup scatter evaluator
-  p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = "Local Response surface_velocity Mismatch";
-  std::string global_response_name = "Global Response surface_velocity Mismatch";
-  int worksetSize = dl_surface->qp_scalar->dimension(0);
-  int responseSize = 1;
-  Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
-  Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
-  PHX::Tag<ScalarT> local_response_tag(local_response_name, local_response_layout);
-  PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
-  p.set("Local Response Field Tag", local_response_tag);
-  p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl_surface);
-}
-
-template<typename EvalT, typename Traits>
-FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::
 ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   // get and validate Response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
+  plist->validateParameters(*reflist, 0);
+
   Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
   Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
   scaling = plist->get<double>("Scaling Coefficient", 1.0);
@@ -112,22 +32,21 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   const std::string& obs_velocityRMS_name    = paramList->get<std::string>("Observed Surface Velocity RMS Side QP Variable Name");
   const std::string& w_measure_surface_name  = paramList->get<std::string>("Weighted Measure Surface Name");
 
-  velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl->side_qp_vector);
-  observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl->side_qp_vector);
-  observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl->side_qp_vector);
-  w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl->side_qp_scalar);
+  surfaceSideName = paramList->get<std::string> ("Surface Side Name");
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(surfaceSideName)==dl->side_layouts.end(), std::runtime_error,
+                              "Error! Surface side data layout not found.\n");
 
-  Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
-  plist->validateParameters(*reflist, 0);
+  Teuchos::RCP<Albany::Layouts> dl_surface = dl->side_layouts.at(surfaceSideName);
+
+  velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl_surface->qp_vector);
+  observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl_surface->qp_vector);
+  observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl_surface->qp_vector);
+  w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->qp_scalar);
 
   // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl->side_node_qp_gradient->dimensions(dims);
-  numSideNodes = dims[2];
-  numBasalQPs = numSurfaceQPs = dims[3];
-  numSideDims  = dims[4];
-
-  surfaceSideName = paramList->get<std::string> ("Surface Side Name");
+  numSideNodes  = dl_surface->node_scalar->dimension(2);
+  numSideDims   = dl_surface->node_gradient->dimension(3);
+  numSurfaceQPs = dl_surface->qp_scalar->dimension(2);
 
   // add dependent fields
   this->addDependentField(velocity);
@@ -137,17 +56,20 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   if (alpha!=0)
   {
-    // Adding the regularization required fields
-
+    // Setting up the fields required by the regularizations
     basalSideName = paramList->get<std::string> ("Basal Side Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(basalSideName)==dl->side_layouts.end(), std::runtime_error,
+                                "Error! Basal side data layout not found.\n");
+    Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
     const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
     const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
 
-    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl->side_qp_gradient);
-    w_measure_basal     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl->side_qp_scalar);
+    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl_basal->qp_gradient);
+    w_measure_basal     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->qp_scalar);
 
-    numBasalQPs = dl->side_qp_scalar->dimension(2);
+    numBasalQPs = dl_basal->qp_scalar->dimension(2);
 
     this->addDependentField(w_measure_basal);
     this->addDependentField(grad_beta);

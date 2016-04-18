@@ -19,58 +19,51 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterList& p,
                                                      const Teuchos::RCP<Albany::Layouts>& dl) :
+  N          (p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar),
   alphaField ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param)
 {
-  surrogate = p.isParameter("Surrogate") ? p.get<bool>("Surrogate") : true;
   stokes = p.isParameter("Stokes") ? p.get<bool>("Stokes") : false;
+  surrogate = stokes && (p.isParameter("Surrogate") ? p.get<bool>("Surrogate") : true);
 
   TEUCHOS_TEST_FOR_EXCEPTION (surrogate && !stokes, std::logic_error, "Error! Surrogate effective pressure makes sense only for Stokes.\n");
 
   if (stokes)
   {
-    if (surrogate)
-    {
-      this->addDependentField (alphaField);
-      regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
-      printedAlpha = -1.0;
-    }
-    else
-    {
-      phi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->side_node_scalar);
-      z_s = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->side_node_scalar);
-
-      this->addDependentField (phi);
-      this->addDependentField (z_s);
-    }
-
-    H   = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->side_node_scalar);
-    N = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), dl->side_node_scalar);
-
     basalSideName = p.get<std::string>("Side Set Name");
-    numNodes = dl->side_node_scalar->dimension(2);
+    numNodes = dl->node_scalar->dimension(2);
   }
   else
   {
-    H    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
-    z_s  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
-    N    = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar);
-    phi  = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
-
     numNodes = dl->node_scalar->dimension(1);
+  }
+
+  if (surrogate)
+  {
+    this->addDependentField (alphaField);
+
+    regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
+    printedAlpha = -1.0;
+  }
+  else
+  {
+    z_s  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
+    phi  = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
 
     this->addDependentField (phi);
     this->addDependentField (z_s);
   }
 
+  H   = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
   this->addDependentField (H);
+
   this->addEvaluatedField (N);
 
   // Setting parameters
   Teuchos::ParameterList& physics  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
-  rho_i = physics.get<double>("Ice Density");
-  rho_w = physics.get<double>("Water Density");
-  g     = physics.get<double>("Gravity Acceleration");
+  rho_i = physics.get<double>("Ice Density",910);
+  rho_w = physics.get<double>("Water Density",1000);
+  g     = physics.get<double>("Gravity Acceleration",9.8);
 
   this->setName("EffectivePressure"+PHX::typeAsString<EvalT>());
 }

@@ -29,7 +29,6 @@
 #include "PHAL_AddNoise.hpp"
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_DOFCellToSide.hpp"
-#include "PHAL_DOFVecCellToSide.hpp"
 #include "PHAL_DOFVecInterpolationSide.hpp"
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
@@ -128,7 +127,6 @@ protected:
 
   int numDim;
   Teuchos::RCP<Albany::Layouts> dl,dl_basal,dl_surface;
-  std::map<std::string,Teuchos::RCP<Albany::Layouts>> dls;
 
   bool  sliding;
   std::string basalSideName;
@@ -152,8 +150,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
                                       const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtilsBasal(dl_basal);
-  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtilsSurface(dl_surface);
 
   int offset=0;
 
@@ -183,7 +179,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       //       I don't have a clean solution now, so I just ask the user to pass me the number of layers in the temperature file.
       int numLayers = params->get<int>("Layered Data Length",11); // Default 11 layers: 0, 0.1, ...,1.0
       Teuchos::RCP<PHX::DataLayout> dl_temp;
-      Teuchos::RCP<PHX::DataLayout> sns = dl_basal->side_node_scalar;
+      Teuchos::RCP<PHX::DataLayout> sns = dl_basal->node_scalar;
       dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
     }
@@ -211,7 +207,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
     auto it = std::find(req.begin(), req.end(), stateName);
     if (it!=req.end())
-      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   }
 
 #ifdef CISM_HAS_FELIX
@@ -293,18 +289,18 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (basalSideName!="INVALID")
     {
       // Interpolate the 3D state on the side (some evaluators need thickness as a side field)
-      ev = evalUtilsBasal.constructDOFCellToSideEvaluator(fieldName,basalSideName,cellType);
+      ev = evalUtils.constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
 
       stateName = "thickness_side_avg";
       if (std::find(req.begin(),req.end(),stateName)!=req.end())
       {
         // We interpolate the thickness from quad point to cell
-        ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+        ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
         fm0.template registerEvaluator<EvalT>(ev);
 
         // We save it on the basal mesh
-        p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_scalar, basalEBName, true);
+        p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->cell_scalar, basalEBName, true);
         p->set<bool>("Is Vector Field", false);
         ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
         fm0.template registerEvaluator<EvalT>(ev);
@@ -338,7 +334,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       // ...and thickness is one of them.
       fieldName = "Ice Thickness";
       entity = Albany::StateStruct::NodalDataToElemNode;
-      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
       ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
@@ -401,7 +397,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (basalSideName!="INVALID")
     {
       // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
-      ev = evalUtilsBasal.constructDOFCellToSideEvaluator(fieldName,basalSideName,cellType);
+      ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -414,7 +410,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       // ...and basal_friction is one of them.
       entity = Albany::StateStruct::NodalDataToElemNode;
       fieldName = "Beta Given";
-      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
       if (isBetaAParameter)
       {
         //basal friction is a distributed 3D parameter. We already took care of this case
@@ -426,7 +422,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         fm0.template registerEvaluator<EvalT>(ev);
 
         //---- Interpolate Beta Given on QP on side (may be used by a response)
-        ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator(fieldName, basalSideName);
+        ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator(fieldName, basalSideName);
         fm0.template registerEvaluator<EvalT>(ev);
       }
     }
@@ -437,11 +433,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (std::find(req.begin(), req.end(), stateName)!=req.end())
     {
       // We interpolate the given beta from quad point to side
-      ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
       fm0.template registerEvaluator<EvalT>(ev);
 
       // We save it on the basal mesh
-      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_scalar, basalEBName, true);
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->cell_scalar, basalEBName, true);
       p->set<bool>("Is Vector Field", false);
       ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -462,11 +458,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (std::find(req.begin(), req.end(), stateName)!=req.end())
     {
       // We interpolate beta from quad point to cell
-      ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
       fm0.template registerEvaluator<EvalT>(ev);
 
       // We save it on the basal mesh
-      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_scalar, basalEBName, true);
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->cell_scalar, basalEBName, true);
       p->set<bool>("Is Vector Field", false);
       ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -496,7 +492,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     // We restrict it back to the 2D mesh. Clearly, this is not optimal. Just add 'basal_friction' to the Basal Requirements!
     if(basalSideName!="INVALID") {
-      ev = evalUtilsBasal.constructDOFCellToSideEvaluator("Beta",basalSideName,cellType);
+      ev = evalUtils.constructDOFCellToSideEvaluator("Beta",basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -512,11 +508,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (it!=req.end())
     {
       // We interpolate the effective pressure from quad point to cell (to then save it)
-      ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
       fm0.template registerEvaluator<EvalT>(ev);
 
       // We register the state and build the loader
-      p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->side_scalar, basalEBName, true);
+      p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->cell_scalar, basalEBName, true);
       p->set<bool>("Is Vector Field", false);
       ev = Teuchos::rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
       fm0.template registerEvaluator<EvalT>(ev);
@@ -549,6 +545,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   fm0.template registerEvaluator<EvalT>(ev);
 #endif
 
+/*
   // Basal friction sensitivity
   stateName = "basal_friction_sensitivity";
   entity = Albany::StateStruct::NodalDistParameter;
@@ -558,6 +555,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   stateName = "thickness_sensitivity";
   entity = Albany::StateStruct::NodalDistParameter;
   stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity,"bottom");
+*/
 
   // ----------  Define Field Names ----------- //
   Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -653,132 +651,120 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   {
     // -------------------- Special evaluators for side handling ----------------- //
 
-    //---- Compute side basis functions
-    ev = evalUtilsBasal.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName);
+    //---- Restrict vertex coordinates from cell-based to cell-side-based
+    ev = evalUtils.getMSUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
-    //---- Compute Quad Points coordinates on the side set
-    ev = evalUtilsBasal.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName);
+    //---- Compute side basis functions
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Restrict velocity from cell-based to cell-side-based
-    ev = evalUtilsBasal.constructDOFVecCellToSideEvaluator("Velocity",basalSideName,cellType,"Basal Velocity");
+    ev = evalUtils.constructDOFCellToSideEvaluator("Velocity",basalSideName,"Node Vector",cellType,"Basal Velocity");
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity on QP on side
-    ev = evalUtilsBasal.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
+    //---- Compute Quad Points coordinates on the side set
+    ev = evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     //---- Interpolate velocity gradient on QP on side
-    ev = evalUtilsBasal.constructDOFVecGradInterpolationSideEvaluator("Basal Velocity", basalSideName);
+    ev = evalUtils.constructDOFVecGradInterpolationSideEvaluator("Basal Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict ice thickness from cell-based to cell-side-based
-    ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,cellType);
+    ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate thickness gradient on QP on side
-    ev = evalUtilsBasal.getPSUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness on QP on side
-    ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict ice thickness (param) from cell-based to cell-side-based
-    ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator("Ice Thickness Param",basalSideName,cellType);
+    ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator("Ice Thickness Param",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate thickness (param) gradient on QP on side
-    ev = evalUtilsBasal.constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    ev = evalUtils.constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate observed thickness on QP on side
-    ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Observed Ice Thickness", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Observed Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness on QP on side
-    ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness RMS on QP on side
-    ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness RMS", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness RMS", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate effective pressure on QP on side
-    ev = evalUtilsBasal.constructDOFInterpolationSideEvaluator("Effective Pressure", basalSideName);
+    ev = evalUtils.constructDOFInterpolationSideEvaluator("Effective Pressure", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate effective pressure gradient on QP on side
-    ev = evalUtilsBasal.constructDOFGradInterpolationSideEvaluator("Effective Pressure", basalSideName);
+    ev = evalUtils.constructDOFGradInterpolationSideEvaluator("Effective Pressure", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict surface height from cell-based to cell-side-based
-    ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator("Surface Height",basalSideName,cellType);
+    ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator("Surface Height",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface height on QP on side
-    ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
-    ev = evalUtilsBasal.constructDOFVecCellToSideEvaluator("Averaged Velocity",basalSideName,cellType);
+    ev = evalUtils.constructDOFCellToSideEvaluator("Averaged Velocity",basalSideName,"Node Vector",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface height on QP on side
-    ev = evalUtilsBasal.constructDOFDivInterpolationSideEvaluator("Averaged Velocity", basalSideName);
+    ev = evalUtils.constructDOFDivInterpolationSideEvaluator("Averaged Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate velocity on QP on side
-    ev = evalUtilsBasal.constructDOFVecInterpolationSideEvaluator("Averaged Velocity", basalSideName);
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Averaged Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (surfaceSideName!="INVALID")
   {
+    //---- Restrict vertex coordinates from cell-based to cell-side-based
+    ev = evalUtils.getMSUtils().constructDOFCellToSideEvaluator("Coord Vec",surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     //---- Compute side basis functions
-    ev = evalUtilsSurface.constructComputeBasisFunctionsSideEvaluator(cellType, surfaceSideBasis, surfaceCubature, surfaceSideName);
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, surfaceSideBasis, surfaceCubature, surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
-    ev = evalUtilsSurface.constructDOFVecCellToSideEvaluator("Velocity",surfaceSideName,cellType,"Surface Velocity");
+    ev = evalUtils.constructDOFCellToSideEvaluator("Velocity",surfaceSideName,"Node Vector",cellType,"Surface Velocity");
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity (the solution) on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
-  }
-
-  if (params->isSublist("FELIX Noise"))
-  {
-    if (params->sublist("FELIX Noise").isSublist("Observed Surface Velocity"))
-    {
-      // ---- Add noise to the measures ---- //
-      p = Teuchos::rcp(new Teuchos::ParameterList("Noisy Observed Velocity"));
-
-      //Input
-      p->set<std::string>("Field Name",       "Observed Surface Velocity");
-      p->set<Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_surface->side_qp_vector);
-      p->set<Teuchos::ParameterList*>("PDF Parameters", &params->sublist("FELIX Noise").sublist("Observed Surface Velocity"));
-
-      // Output
-      p->set<std::string>("Noisy Field Name", "Noisy Observed Surface Velocity");
-
-      ev = Teuchos::rcp(new PHAL::AddNoiseParam<EvalT,PHAL::AlbanyTraits> (*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
   }
 
   // -------------------------------- FELIX evaluators ------------------------- //
@@ -822,7 +808,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     //Output
     p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
 
-    ev = Teuchos::rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Sliding velocity calculation ---//
@@ -830,7 +816,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     // Input
     p->set<std::string>("Field Name","Basal Velocity");
-    p->set<std::string>("Field Layout","Cell Side QuadPoint");
+    p->set<std::string>("Field Layout","Cell Side QuadPoint Vector");
     p->set<std::string>("Side Set Name", basalSideName);
 
     // Output
@@ -843,7 +829,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Effective Pressure Surrogate"));
 
     // Input
-    p->set<std::string>("Hydrostatic Potential Variable Name","Subglacial Hydrostatic Potential");
+    p->set<std::string>("Surface Height Variable Name","Surface Height");
     p->set<std::string>("Ice Thickness Variable Name", "Ice Thickness");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<bool>("Surrogate", true);
@@ -910,8 +896,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     //Input
     p->set<std::string>("Sliding Velocity Side QP Variable Name", "Sliding Velocity");
-    p->set<std::string>("BF Side Variable Name", "BF " + basalSideName);
-    p->set<std::string>("Effective Pressure Side QP Variable Name", "Effective Pressure");
+    p->set<std::string>("BF Variable Name", "BF " + basalSideName);
+    p->set<std::string>("Effective Pressure QP Variable Name", "Effective Pressure");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec " + basalSideName);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
@@ -1018,7 +1004,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "surface_velocity";
     fieldName = "Observed Surface Velocity";
-    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->side_node_vector, surfaceEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->node_vector, surfaceEBName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -1026,7 +1012,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "surface_velocity_rms";
     fieldName = "Observed Surface Velocity RMS";
-    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->side_node_vector, surfaceEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->node_vector, surfaceEBName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -1037,7 +1023,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient Gradient"));
 
     // Input
-    p->set<std::string>("Beta Variable Name", "Beta");
+    p->set<std::string>("Beta Given Variable Name", "Beta Given");
     p->set<std::string>("Gradient BF Side Variable Name", "Grad BF "+basalSideName);
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<std::string>("Effective Pressure QP Name", "Effective Pressure");
@@ -1045,7 +1031,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("Basal Velocity QP Name", "Basal Velocity");
     p->set<std::string>("Basal Velocity Gradient QP Name", "Basal Velocity Gradient");
     p->set<std::string>("Sliding Velocity QP Name", "Sliding Velocity");
-    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec "+basalSideName);
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
@@ -1059,7 +1045,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "surface_mass_balance";
     fieldName = "Surface Mass Balance";
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -1067,7 +1053,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "surface_mass_balance_RMS";
     fieldName = "Surface Mass Balance RMS";
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -1075,7 +1061,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     entity = Albany::StateStruct::NodalDataToElemNode;
     stateName = "observed_thickness";
     fieldName = "Observed Ice Thickness";
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -1083,9 +1069,30 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "thickness_RMS";
     fieldName = "Ice Thickness RMS";
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  //--- FELIX noise (for synthetic inverse problem) ---//
+  if (params->isSublist("FELIX Noise"))
+  {
+    if (params->sublist("FELIX Noise").isSublist("Observed Surface Velocity"))
+    {
+      // ---- Add noise to the measures ---- //
+      p = Teuchos::rcp(new Teuchos::ParameterList("Noisy Observed Velocity"));
+
+      //Input
+      p->set<std::string>("Field Name",       "Observed Surface Velocity");
+      p->set<Teuchos::RCP<PHX::DataLayout>>("Field Layout", dl_surface->qp_vector);
+      p->set<Teuchos::ParameterList*>("PDF Parameters", &params->sublist("FELIX Noise").sublist("Observed Surface Velocity"));
+
+      // Output
+      p->set<std::string>("Noisy Field Name", "Noisy Observed Surface Velocity");
+
+      ev = Teuchos::rcp(new PHAL::AddNoiseParam<EvalT,PHAL::AlbanyTraits> (*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
@@ -1118,7 +1125,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<std::string>("Surface Side Name", surfaceSideName);
     paramList->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dls);
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 

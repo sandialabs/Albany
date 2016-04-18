@@ -18,12 +18,20 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterList& p,
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
-  u          (p.get<std::string> ("Velocity Side QP Variable Name"), dl->side_qp_vector),
-  beta       (p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl->side_qp_scalar),
-  BF         (p.get<std::string> ("BF Side Name"), dl->side_node_qp_scalar),
-  w_measure  (p.get<std::string> ("Weighted Measure Name"), dl->side_qp_scalar),
   basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector)
 {
+  basalSideName = p.get<std::string>("Side Set Name");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(basalSideName)==dl->side_layouts.end(), std::runtime_error,
+                              "Error! Basal side data layout not found.\n");
+
+  Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
+
+  u         = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+  beta      = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
+  BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+  w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+
   this->addDependentField(u);
   this->addDependentField(beta);
   this->addDependentField(BF);
@@ -32,7 +40,7 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   this->addEvaluatedField(basalResid);
 
   std::vector<PHX::DataLayout::size_type> dims;
-  dl->side_node_qp_gradient->dimensions(dims);
+  dl_basal->node_qp_gradient->dimensions(dims);
   int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
@@ -43,7 +51,6 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   vecDimFO     = std::min((int)dims[2],2);
   vecDim       = dims[2];
 
-  basalSideName = p.get<std::string>("Side Set Name");
   regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
 
   // Index of the nodes on the sides in the numeration of the cell

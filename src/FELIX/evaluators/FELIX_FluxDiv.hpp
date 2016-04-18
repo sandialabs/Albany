@@ -23,7 +23,7 @@ namespace FELIX
 
 template<typename EvalT, typename Traits>
 class FluxDiv : public PHX::EvaluatorWithBaseImpl<Traits>,
-                  public PHX::EvaluatorDerived<EvalT, Traits>
+                public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -32,7 +32,7 @@ public:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   FluxDiv (const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl);
+             const Teuchos::RCP<Albany::Layouts>& dl_basal);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);

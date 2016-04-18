@@ -92,12 +92,26 @@ public:
 protected:
 
   int numDim;
-  std::string sideSetName;
 
   Teuchos::ArrayRCP<std::string> dof_names;
   Teuchos::ArrayRCP<std::string> resid_names;
 
-  Teuchos::RCP<Albany::Layouts> dl;
+  Teuchos::RCP<shards::CellTopology> cellType;
+  Teuchos::RCP<shards::CellTopology> sideType;
+
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  cellCubature;
+  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  sideCubature;
+
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis;
+  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > sideBasis;
+
+  Teuchos::RCP<Albany::Layouts> dl, dl_side;
+
+  std::string sideSetName;
+
+  std::string cellEBName;
+  std::string sideEBName;
+  std::string basalEBName;
 };
 
 // ===================================== IMPLEMENTATION ======================================= //
@@ -131,32 +145,6 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   using PHX::MDALayout;
   using PHAL::AlbanyTraits;
 
-  // Retrieving FE information (basis and cell type)
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-
-  // Building the right quadrature formula
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-
-  // Some constants
-  const int numNodes = intrepidBasis->getCardinality();
-  const int worksetSize = meshSpecs.worksetSize;
-  const int numQPts = cubature->getNumPoints();
-  const int numVertices = cellType->getNodeCount();
-
-#ifdef OUTPUT_TO_SCREEN
-  *out << "Elliptic2D Field Dimensions: Workset=" << worksetSize
-       << ", Vertices= " << numVertices
-       << ", Nodes= " << numNodes
-       << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim << std::endl;
-#endif
-
-  // Building the data layout
-  dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-
-  const std::string& elementBlockName = meshSpecs.ebName;
   int offset = 0;
 
   // Using the utility for the common evaluators
@@ -172,7 +160,7 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature);
+  ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
   ev = evalUtils.constructGatherCoordinateVectorEvaluator();
@@ -181,7 +169,7 @@ Elliptic2D::constructEvaluators2D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Elliptic2D");
   fm0.template registerEvaluator<EvalT> (ev);
 
-  ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature);
+  ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // ------- DOF interpolations -------- //
@@ -251,43 +239,6 @@ Elliptic2D::constructEvaluators3D (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   using PHX::MDALayout;
   using PHAL::AlbanyTraits;
 
-  // Retrieving FE information (basis and cell type)
-  const CellTopologyData * const cell_top = &meshSpecs.ctd;
-  const CellTopologyData * const side_top = cell_top->side[0].topology;
-
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis = Albany::getIntrepid2Basis(*cell_top);
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > sideBasis = Albany::getIntrepid2Basis(*side_top);
-
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (cell_top));
-  RCP<shards::CellTopology> sideType = rcp(new shards::CellTopology (side_top));
-
-  // Building the right quadrature formula
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > sideCubature = cubFactory.create(*sideType, params->get<int>("Side Cubature Degree"));
-
-  // Some constants
-  const int numCellNodes = cellBasis->getCardinality();
-  const int numSideNodes = sideBasis->getCardinality();
-  const int worksetSize = meshSpecs.worksetSize;
-  const int numCellQPs = cellCubature->getNumPoints();
-  const int numSideQPs = sideCubature->getNumPoints();
-  const int numCellVertices = cellType->getNodeCount();
-  const int numSideVertices = sideType->getNodeCount();
-  const int numCellSides = cellType->getFaceCount();
-
-#ifdef OUTPUT_TO_SCREEN
-  *out << "Field Dimensions: Workset=" << worksetSize
-       << ", Vertices= " << numCellVertices
-       << ", Nodes= " << numCellNodes
-       << ", QuadPts= " << numCellQPs
-       << ", Dim= " << numDim << std::endl;
-#endif
-
-  // Building the data layout
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs, numDim, numDim, numCellSides, numSideNodes, numSideQPs));
-
-  const std::string& elementBlockName = meshSpecs.ebName;
   int offset = 0;
 
   // Using the utility for the common evaluators

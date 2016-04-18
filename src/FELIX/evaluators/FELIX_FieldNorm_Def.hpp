@@ -17,51 +17,107 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 FieldNorm<EvalT, Traits>::FieldNorm (const Teuchos::ParameterList& p,
-                                     const Teuchos::RCP<Albany::Layouts>& dl)
+                                     const Teuchos::RCP<Albany::Layouts>& dl) :
+  regularizationParamPtr (nullptr)
 {
   std::string fieldName = p.get<std::string> ("Field Name");
   std::string fieldNormName = p.get<std::string> ("Field Norm Name");
 
   std::string layout = p.get<std::string>("Field Layout");
-  if (layout=="Cell Node")
+  if (layout=="Cell Vector")
   {
-    PHX::MDField<ScalarT> f(fieldName, dl->node_vector);
-    PHX::MDField<ScalarT> fn(fieldNormName, dl->node_scalar);
-    field = f;
-    field_norm = fn;
+    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_vector);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+
+    dl->cell_vector->dimensions(dims);
+  }
+  else if (layout=="Cell Gradient")
+  {
+    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_gradient);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+
+    dl->cell_gradient->dimensions(dims);
+  }
+  else if (layout=="Cell Node Vector")
+  {
+    field      = PHX::MDField<ScalarT> (fieldName, dl->node_vector);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->node_scalar);
 
     dl->node_vector->dimensions(dims);
   }
-  else if (layout=="Cell QuadPoint")
+  else if (layout=="Cell QuadPoint Vector")
   {
-    PHX::MDField<ScalarT> f(fieldName, dl->qp_vector);
-    PHX::MDField<ScalarT> fn(fieldNormName, dl->qp_scalar);
-    field = f;
-    field_norm = fn;
+    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_vector);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
 
     dl->qp_vector->dimensions(dims);
   }
-  else if (layout=="Cell Side Node")
+  else if (layout=="Cell QuadPoint Gradient")
   {
-    PHX::MDField<ScalarT> f(fieldName, dl->side_node_vector);
-    PHX::MDField<ScalarT> fn(fieldNormName, dl->side_node_scalar);
-    field = f;
-    field_norm = fn;
+    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_gradient);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
 
-    dl->side_node_vector->dimensions(dims);
-
-    sideSetName = p.get<std::string>("Side Set Name");
+    dl->qp_gradient->dimensions(dims);
   }
-  else if (layout=="Cell Side QuadPoint")
+  else if (layout=="Cell Side Vector")
   {
-    PHX::MDField<ScalarT> f(fieldName, dl->side_qp_vector);
-    PHX::MDField<ScalarT> fn(fieldNormName, dl->side_qp_scalar);
-    field = f;
-    field_norm = fn;
-
-    dl->side_qp_vector->dimensions(dims);
-
     sideSetName = p.get<std::string>("Side Set Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layouts structure does not appear to be that of a side set.\n");
+
+    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_vector);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+
+    dl->cell_vector->dimensions(dims);
+  }
+  else if (layout=="Cell Side Gradient")
+  {
+    sideSetName = p.get<std::string>("Side Set Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layouts structure does not appear to be that of a side set.\n");
+
+    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_gradient);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+
+    dl->cell_gradient->dimensions(dims);
+  }
+  else if (layout=="Cell Side Node Vector")
+  {
+    sideSetName = p.get<std::string>("Side Set Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layouts structure does not appear to be that of a side set.\n");
+
+    field      = PHX::MDField<ScalarT> (fieldName, dl->node_vector);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->node_scalar);
+
+    dl->node_vector->dimensions(dims);
+  }
+  else if (layout=="Cell Side QuadPoint Vector")
+  {
+    sideSetName = p.get<std::string>("Side Set Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layouts structure does not appear to be that of a side set.\n");
+
+    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_vector);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+
+    dl->qp_vector->dimensions(dims);
+  }
+  else if (layout=="Cell Side QuadPoint Gradient")
+  {
+    sideSetName = p.get<std::string>("Side Set Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layouts structure does not appear to be that of a side set.\n");
+
+    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_gradient);
+    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+
+    dl->qp_gradient->dimensions(dims);
   }
   else
   {
@@ -76,9 +132,10 @@ FieldNorm<EvalT, Traits>::FieldNorm (const Teuchos::ParameterList& p,
     regularizationParam = p.get<double>("Regularization");
     regularizationParamPtr = &regularizationParam;
   }
-  else
+  else if (p.isParameter("Regularize With Continuation"))
   {
-    regularizationParamPtr = &FELIX::HomotopyParameter<EvalT>::value;
+    if (p.get<bool>("Regularize With Continuation"))
+      regularizationParamPtr = &FELIX::HomotopyParameter<EvalT>::value;
   }
 
   numDims = dims.size();
@@ -118,7 +175,7 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
   switch (numDims)
   {
     case 2:
-      // Cell vector
+      // Cell Vector/Gradient
       for (int cell(0); cell<dims[0]; ++cell)
       {
         norm = 0;
@@ -130,7 +187,7 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
       }
       break;
     case 3:
-      // Cell Node/QuadPoint Vector
+      // Cell Node/QuadPoint Vector/Gradient
       for (int cell(0); cell<dims[0]; ++cell)
       {
         norm = 0;
@@ -145,7 +202,7 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
       }
       break;
     case 4:
-      // Cell Side Node/QuadPoint Vector
+      // Cell Side Node/QuadPoint Vector/Gradient
       {
         const Albany::SideSetList& ssList = *(workset.sideSets);
         Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);

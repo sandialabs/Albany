@@ -12,7 +12,9 @@ namespace FELIX {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 HydrologyMeltingRate<EvalT, Traits>::HydrologyMeltingRate (const Teuchos::ParameterList& p,
-                                                   const Teuchos::RCP<Albany::Layouts>& dl)
+                                                   const Teuchos::RCP<Albany::Layouts>& dl) :
+  u_b (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar),
+  G   (p.get<std::string> ("Geothermal Heat Source QP Variable Name"), dl->qp_scalar)
 {
   if (p.isParameter("Stokes Coupling"))
   {
@@ -25,23 +27,22 @@ HydrologyMeltingRate<EvalT, Traits>::HydrologyMeltingRate (const Teuchos::Parame
 
   if (stokes_coupling)
   {
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure does not appear to be that of a side set.\n");
+
     sideSetName = p.get<std::string>("Side Set Name");
 
-    u_b  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
-    beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl->side_qp_scalar);
-    G    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Geothermal Heat Source Side QP Variable Name"), dl->side_qp_scalar);
-    m    = PHX::MDField<ScalarT>(p.get<std::string> ("MeltingRate Rate Side QP Variable Name"),dl->side_qp_scalar);
+    beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl->qp_scalar);
+    m    = PHX::MDField<ScalarT>(p.get<std::string> ("MeltingRate Rate Side QP Variable Name"),dl->qp_scalar);
 
-    numQPs = dl->side_qp_scalar->dimension(2);
+    numQPs = dl->qp_scalar->dimension(2);
 
     this->addDependentField(beta);
     this->addEvaluatedField(m);
   }
   else
   {
-    u_b    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
     beta_p = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient QP Variable Name"), dl->qp_scalar);
-    G      = PHX::MDField<ParamScalarT>(p.get<std::string> ("Geothermal Heat Source QP Variable Name"), dl->qp_scalar);
     m_p    = PHX::MDField<ParamScalarT>(p.get<std::string> ("MeltingRate Rate QP Variable Name"),dl->qp_scalar);
 
     numQPs = dl->qp_scalar->dimension(1);
@@ -86,17 +87,7 @@ void HydrologyMeltingRate<EvalT, Traits>::evaluateFields (typename Traits::EvalD
 {
   // m = \frac{ G - \beta |u_b|^2 + \nabla (phiH-N)\cdot q }{L} %% The nonlinear term \nabla (phiH-N)\cdot q can be ignored
 
-  if (!stokes_coupling)
-  {
-    for (int cell=0; cell < workset.numCells; ++cell)
-    {
-      for (int qp=0; qp < numQPs; ++qp)
-      {
-        m_p(cell,qp) = (G(cell,qp) - beta_p(cell,qp) * std::pow(u_b(cell,qp),2) ) / L; //- nonlin_coeff * prod) / L;
-      }
-    }
-  }
-  else
+  if (stokes_coupling)
   {
     if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
       return;
@@ -111,6 +102,16 @@ void HydrologyMeltingRate<EvalT, Traits>::evaluateFields (typename Traits::EvalD
       for (int qp=0; qp < numQPs; ++qp)
       {
         m(cell,side,qp) = ( G(cell,side,qp) - beta(cell,side,qp) * std::pow(u_b(cell,side,qp),2) ) / L;
+      }
+    }
+  }
+  else
+  {
+    for (int cell=0; cell < workset.numCells; ++cell)
+    {
+      for (int qp=0; qp < numQPs; ++qp)
+      {
+        m_p(cell,qp) = (G(cell,qp) - beta_p(cell,qp) * std::pow(u_b(cell,qp),2) ) / L; //- nonlin_coeff * prod) / L;
       }
     }
   }

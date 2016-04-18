@@ -27,24 +27,23 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
 
   if (stokes_coupling)
   {
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure does not appear to be that of a side set.\n");
+
     sideSetName = p.get<std::string>("Side Set Name");
 
-    gradPhi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->side_qp_gradient);
-    h       = PHX::MDField<ParamScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->side_qp_scalar);
-    q       = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->side_qp_gradient);
-
-    numQPs  = dl->side_qp_gradient->dimension(2);
-    numDim  = dl->side_qp_gradient->dimension(3);
+    numQPs  = dl->qp_gradient->dimension(2);
+    numDim  = dl->qp_gradient->dimension(3);
   }
   else
   {
-    gradPhi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->qp_gradient);
-    h       = PHX::MDField<ParamScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
-    q       = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->qp_gradient);
-
     numQPs  = dl->qp_gradient->dimension(1);
     numDim  = dl->qp_gradient->dimension(2);
   }
+
+  gradPhi = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Gradient QP Variable Name"), dl->qp_gradient);
+  h       = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
+  q       = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->qp_gradient);
 
   this->addDependentField(gradPhi);
   this->addDependentField(h);
@@ -56,7 +55,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   Teuchos::ParameterList& physics   = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
   mu_w = physics.get<double>("Water Viscosity");
-  k  = hydrology.get<double>("Transmissivity");
+  k    = hydrology.get<double>("Transmissivity");
 
   this->setName("HydrologyWaterDischarge"+PHX::typeAsString<EvalT>());
 }

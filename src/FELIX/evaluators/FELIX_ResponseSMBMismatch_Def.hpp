@@ -14,7 +14,7 @@
 
 template<typename EvalT, typename Traits>
 FELIX::ResponseSMBMismatch<EvalT, Traits>::
-ResponseSMBMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls)
+ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   // get and validate Response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
@@ -36,30 +36,28 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teucho
   const std::string& w_measure_2d_name          = paramList->get<std::string>("Weighted Measure 2D Name");
 
   basalSideName = paramList->get<std::string> ("Basal Side Name");
-  TEUCHOS_TEST_FOR_EXCEPTION (dls.find(basalSideName)==dls.end(), std::logic_error, "Error! Surface side data layout not found.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(basalSideName)==dl->side_layouts.end(), std::runtime_error,
+                              "Error! Basal side data layout not found.\n");
 
-  Teuchos::RCP<Albany::Layouts> dl_basal = dls.at(basalSideName);
+  Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(flux_div_name, dl_basal->side_qp_scalar);
-  SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl_basal->side_qp_scalar);
-  SMBRMS                = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smbRMS_name, dl_basal->side_qp_scalar);
-  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->side_qp_scalar);
-  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->side_qp_gradient);
-  obs_thickness         = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(obs_thickness_name, dl_basal->side_qp_scalar);
-  thicknessRMS          = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thicknessRMS_name, dl_basal->side_qp_scalar);
-  w_measure_2d          = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_2d_name, dl_basal->side_qp_scalar);
+  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(flux_div_name, dl_basal->qp_scalar);
+  SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl_basal->qp_scalar);
+  SMBRMS                = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smbRMS_name, dl_basal->qp_scalar);
+  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->qp_scalar);
+  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->qp_gradient);
+  obs_thickness         = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(obs_thickness_name, dl_basal->qp_scalar);
+  thicknessRMS          = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thicknessRMS_name, dl_basal->qp_scalar);
+  w_measure_2d          = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_2d_name, dl_basal->qp_scalar);
 
   cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
   plist->validateParameters(*reflist, 0);
-  
-    // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl_basal->side_node_qp_gradient->dimensions(dims);
-  numSideNodes  = dims[2];
-  numSideDims   = dims[4];
-  numBasalQPs = numSurfaceQPs = dl_basal->side_qp_scalar->dimension(2);
 
+  // Get Dimensions
+  numSideNodes = dl_basal->node_scalar->dimension(2);
+  numSideDims  = dl_basal->qp_gradient->dimension(3);
+  numBasalQPs  = dl_basal->qp_scalar->dimension(2);
 
   // add dependent fields
   this->addDependentField(flux_div);
@@ -90,82 +88,9 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const std::map<std::string,Teucho
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl_basal);
 }
 
-template<typename EvalT, typename Traits>
-FELIX::ResponseSMBMismatch<EvalT, Traits>::
-ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
-{
-  // get and validate Response parameter list
-  Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
-  Teuchos::RCP<ParamLib> paramLib = paramList->get< Teuchos::RCP<ParamLib> > ("Parameter Library");
-  scaling = plist->get<double>("Scaling Coefficient", 1.0);
-  alpha = plist->get<double>("Regularization Coefficient", 0.0);
-  alphaH = plist->get<double>("H Coefficient", 0.0);
-  alphaSMB = plist->get<double>("SMB Coefficient", 0.0);
-  asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
-
-  const std::string& flux_div_name              = paramList->get<std::string>("Flux Divergence Side QP Variable Name");
-  const std::string& smb_name                   = paramList->get<std::string>("SMB Side QP Variable Name");
-  const std::string& smbRMS_name                = paramList->get<std::string>("SMB RMS Side QP Variable Name");
-  const std::string& thickness_name             = paramList->get<std::string>("Thickness Side QP Variable Name");
-  const std::string& grad_thickness_name        = paramList->get<std::string>("Thickness Gradient Name");
-  const std::string& obs_thickness_name         = paramList->get<std::string>("Observed Thickness Side QP Variable Name");
-  const std::string& thicknessRMS_name          = paramList->get<std::string>("Thickness RMS Side QP Variable Name");
-  const std::string& w_measure_2d_name          = paramList->get<std::string>("Weighted Measure 2D Name");
-
-  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(flux_div_name, dl->side_qp_scalar);
-  SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl->side_qp_scalar);
-  SMBRMS                = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smbRMS_name, dl->side_qp_scalar);
-  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl->side_qp_scalar);
-  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl->side_qp_gradient);
-  obs_thickness         = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(obs_thickness_name, dl->side_qp_scalar);
-  thicknessRMS          = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thicknessRMS_name, dl->side_qp_scalar);
-  w_measure_2d          = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_2d_name, dl->side_qp_scalar);
-
-  Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
-  plist->validateParameters(*reflist, 0);
-
-  // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl->side_node_qp_gradient->dimensions(dims);
-  numSideNodes = dims[2];
-  numBasalQPs = numSurfaceQPs = dims[3];
-  numSideDims  = dims[4];
-
-  basalSideName = paramList->get<std::string> ("Basal Side Name");
-
-  // add dependent fields
-  this->addDependentField(flux_div);
-  this->addDependentField(SMB);
-  this->addDependentField(SMBRMS);
-  this->addDependentField(thickness);
-  this->addDependentField(grad_thickness);
-  this->addDependentField(obs_thickness);
-  this->addDependentField(thicknessRMS);
-  this->addDependentField(w_measure_2d);
-
-  this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
-
-  using PHX::MDALayout;
-
-  // Setup scatter evaluator
-  p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = "Local Response SMB Mismatch";
-  std::string global_response_name = "Global Response SMB Mismatch";
-  int worksetSize = dl->qp_scalar->dimension(0);
-  int responseSize = 1;
-  Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
-  Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
-  PHX::Tag<ScalarT> local_response_tag(local_response_name, local_response_layout);
-  PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
-  p.set("Local Response Field Tag", local_response_tag);
-  p.set("Global Response Field Tag", global_response_tag);
-  PHAL::SeparableScatterScalarResponse<EvalT, Traits>::setup(p, dl);
-}
-
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm) 
+void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(flux_div, fm);
   this->utils.setFieldData(SMB, fm);
@@ -192,7 +117,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::preEvaluate(typename Traits::Pre
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset) 
+void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets == Teuchos::null)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
@@ -211,41 +136,41 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
 
 
       ScalarT t = 0;
-      for (int qp=0; qp<numSurfaceQPs; ++qp)
+      for (int qp=0; qp<numBasalQPs; ++qp)
         t += pow((flux_div(cell,side,qp)-SMB(cell,side,qp))/SMBRMS(cell,side,qp),2) * w_measure_2d(cell,side,qp);
-        
+
       this->local_response(cell, 0) += t*scaling*alphaSMB;
       //std::cout << this->local_response(cell, 0) << std::endl;
       this->global_response(0) += t*scaling*alphaSMB;
       p_resp += t*scaling*alphaSMB;
     }
-  }
 
-  // --------------- Regularization term on the basal side ----------------- //
+    // --------------- Regularization term  ----------------- //
 
-  if ((workset.sideSets->find(basalSideName) != workset.sideSets->end()) && (alpha!=0 || alphaH !=0))
-  {
-    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
-    for (auto const& it_side : sideSet)
+    if (alpha!=0 || alphaH !=0)
     {
-      // Get the local data of side and cell
-      const int cell = it_side.elem_LID;
-      const int side = it_side.side_local_id;
-      ScalarT tr = 0, tH =0;
-      for (int qp=0; qp<numBasalQPs; ++qp)
+      for (auto const& it_side : sideSet)
       {
-      	ScalarT sum=0;
-      	for (int idim=0; idim<2; ++idim)
-       		sum += grad_thickness(cell,side,qp,idim)*grad_thickness(cell,side,qp,idim);
-      	tr += sum * w_measure_2d(cell,side,qp);;
-        tH += (pow((obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp),2)) * w_measure_2d(cell,side,qp);
-      	}
-      	this->local_response(cell, 0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
-      	this->global_response(0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
-      	p_reg += tr*scaling*alpha;
-      	p_misH += tH*scaling*alphaH;
-    	}
-  	}
+        // Get the local data of side and cell
+        const int cell = it_side.elem_LID;
+        const int side = it_side.side_local_id;
+        ScalarT tr = 0, tH =0;
+        for (int qp=0; qp<numBasalQPs; ++qp)
+        {
+          ScalarT sum=0;
+          for (int idim=0; idim<2; ++idim)
+            sum += grad_thickness(cell,side,qp,idim)*grad_thickness(cell,side,qp,idim);
+          tr += sum * w_measure_2d(cell,side,qp);;
+          tH += (pow((obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp),2)) * w_measure_2d(cell,side,qp);
+        }
+
+        this->local_response(cell, 0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
+        this->global_response(0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
+        p_reg += tr*scaling*alpha;
+        p_misH += tH*scaling*alphaH;
+      }
+    }
+  }
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
@@ -320,7 +245,6 @@ Teuchos::RCP<const Teuchos::ParameterList> FELIX::ResponseSMBMismatch<EvalT, Tra
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
 
   validPL->set<std::string> ("Basal Side Name", "", "Name of the side set correspongint to the ice-bedrock interface");
-  validPL->set<std::string> ("Surface Side Name", "", "Name of the side set corresponding to the ice surface");
 
   return validPL;
 }

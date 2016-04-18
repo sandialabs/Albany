@@ -38,22 +38,6 @@ StokesFOThickness( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     for (int i(0); i<req.size(); ++i)
       this->requirements.push_back(req[i]);
   }
-  else
-  {
-    // Old fashion of setting requirements (hard coded instead of loaded from file)
-    this->requirements.push_back("surface_height");
-#ifdef CISM_HAS_FELIX
-    this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM
-    this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM
-#endif
-    this->requirements.push_back("temperature");
-    this->requirements.push_back("basal_friction");
-    this->requirements.push_back("thickness");
-    this->requirements.push_back("flow_factor");
-    this->requirements.push_back("surface_velocity");
-    this->requirements.push_back("surface_velocity_rms");
-    this->requirements.push_back("bed_topography");
-  }
 
   basalSideName   = params->isParameter("Basal Side Name")   ? params->get<std::string>("Basal Side Name")   : "INVALID";
   surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
@@ -116,6 +100,23 @@ buildProblem(
 
   elementBlockName = meshSpecs[0]->ebName;
 
+  const int worksetSize     = meshSpecs[0]->worksetSize;
+  vecDimFO                  = std::min((int)neq,(int)2);
+  const int numCellSides    = cellType->getFaceCount();
+  const int numCellVertices = cellType->getNodeCount();
+  const int numCellNodes    = cellBasis->getCardinality();
+  const int numCellQPs      = cellCubature->getNumPoints();
+
+  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDimFO));
+  dl_full = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim, neq));
+
+  int numSurfaceSideVertices = -1;
+  int numSurfaceSideNodes    = -1;
+  int numSurfaceSideQPs      = -1;
+  int numBasalSideVertices   = -1;
+  int numBasalSideNodes      = -1;
+  int numBasalSideQPs        = -1;
+
   if (basalSideName!="INVALID")
   {
     TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
@@ -129,6 +130,14 @@ buildProblem(
 
     basalEBName   = basalMeshSpecs.ebName;
     basalCubature = cubFactory.create(*basalSideType, basalMeshSpecs.cubatureDegree);
+
+    numBasalSideVertices = basalSideType->getNodeCount();
+    numBasalSideNodes    = basalSideBasis->getCardinality();
+    numBasalSideQPs      = basalCubature->getNumPoints();
+
+    dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
+                                       numBasalSideQPs,numDim-1,numDim,numCellSides,vecDimFO));
+    dl->side_layouts[basalSideName] = dl_basal;
   }
 
   if (surfaceSideName!="INVALID")
@@ -145,53 +154,32 @@ buildProblem(
 
     surfaceEBName   = surfaceMeshSpecs.ebName;
     surfaceCubature = cubFactory.create(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
-  }
 
-  const int numCellVertices     = cellType->getNodeCount();
-  const int numCellNodes        = cellBasis->getCardinality();
-  const int numCellQPs          = cellCubature->getNumPoints();
-  const int numCellSides        = cellType->getFaceCount();
-  const int numBasalSideNodes   = (basalSideName=="INVALID" ? 0 : basalSideBasis->getCardinality());
-  const int numBasalQPs         = (basalSideName=="INVALID" ? 0 : basalCubature->getNumPoints());
-  const int numSurfaceSideNodes = (surfaceSideName=="INVALID" ? 0 : surfaceSideBasis->getCardinality());
-  const int numSurfaceQPs       = (surfaceSideName=="INVALID" ? 0 : surfaceCubature->getNumPoints());
-  const int worksetSize         = meshSpecs[0]->worksetSize;
-  vecDimFO                      = std::min((int)neq,(int)2);
+    numSurfaceSideVertices = surfaceSideType->getNodeCount();
+    numSurfaceSideNodes    = surfaceSideBasis->getCardinality();
+    numSurfaceSideQPs      = surfaceCubature->getNumPoints();
+
+    dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
+                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,vecDimFO));
+    dl->side_layouts[surfaceSideName] = dl_surface;
+  }
 
 //#ifdef OUTPUT_TO_SCREEN
   *out << "Field Dimensions: \n"
-       << "  Workset            = " << worksetSize << "\n"
-       << "  Vertices           = " << numCellVertices << "\n"
-       << "  CellNodes          = " << numCellNodes << "\n"
-       << "  CellQuadPts        = " << numCellQPs << "\n"
-       << "  Dim                = " << numDim << "\n"
-       << "  VecDimFO           = " << vecDimFO << "\n"
-       << "  BasalSideNodes     = " << numBasalSideNodes << "\n"
-       << "  BasalSideQuadPts   = " << numBasalQPs << "\n"
-       << "  SurfaceSideNodes   = " << numSurfaceSideNodes << "\n"
-       << "  SurfaceSideQuadPts = " << numSurfaceQPs << std::endl;
+       << "  Workset             = " << worksetSize << "\n"
+       << "  Vertices            = " << numCellVertices << "\n"
+       << "  CellNodes           = " << numCellNodes << "\n"
+       << "  CellQuadPts         = " << numCellQPs << "\n"
+       << "  Dim                 = " << numDim << "\n"
+       << "  VecDim              = " << neq << "\n"
+       << "  VecDimFO            = " << vecDimFO << "\n"
+       << "  BasalSideVertices   = " << numBasalSideVertices << "\n"
+       << "  BasalSideNodes      = " << numBasalSideNodes << "\n"
+       << "  BasalSideQuadPts    = " << numBasalSideQPs << "\n"
+       << "  SurfaceSideVertices = " << numSurfaceSideVertices << "\n"
+       << "  SurfaceSideNodes    = " << numSurfaceSideNodes << "\n"
+       << "  SurfaceSideQuadPts  = " << numSurfaceSideQPs << std::endl;
 //#endif
-
-  // Building the layouts
-  // NOTE: we build two side layouts, since basal and surface cubatures may differ
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDimFO));
-  dl_full = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim, neq));
-
-  dls["default"] = dl;
-  dls["full"]    = dl_full;
-
-  if (basalSideName!="INVALID")
-  {
-    dl_basal = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,
-                                       numDim,neq,numCellSides,numBasalSideNodes,numBasalQPs));
-    dls[basalSideName] = dl_basal;
-  }
-  if (surfaceSideName!="INVALID")
-  {
-    dl_surface = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,
-                                         numDim,vecDimFO,numCellSides,numSurfaceSideNodes,numSurfaceQPs));
-    dls[surfaceSideName] = dl_surface;
-  }
 
  /* Construct All Phalanx Evaluators */
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
@@ -238,7 +226,7 @@ FELIX::StokesFOThickness::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
-   offsets_ = dirUtils.getOffsets(); 
+   offsets_ = dirUtils.getOffsets();
 }
 
 // Neumann BCs

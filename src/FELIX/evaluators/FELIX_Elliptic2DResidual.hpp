@@ -38,31 +38,26 @@ private:
   typedef typename EvalT::MeshScalarT                   MeshScalarT;
 
   // Input:
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>       BF_side;
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>   GradBF_side;
-  PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>    inv_metric;
-  PHX::MDField<RealType,Cell,Side,QuadPoint>            w_measure;
-  PHX::MDField<ScalarT,Cell,Node>                       u_node;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>             u_side;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>         grad_u_side;
+  PHX::MDField<RealType>                                BF;
+  PHX::MDField<RealType>                                GradBF;
+  PHX::MDField<RealType>                                w_measure;
+  PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>    inv_metric; // Only used in 2D, so we know the layout
 
-  PHX::MDField<RealType,Cell,Node,QuadPoint>            BF;
-  PHX::MDField<RealType,Cell,Node,QuadPoint>            wBF;
-  PHX::MDField<RealType,Cell,Node,QuadPoint,Dim>        wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint>                  u;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>              grad_u;
-
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim>             coords;
+  PHX::MDField<ScalarT>                                 u;
+  PHX::MDField<ScalarT>                                 grad_u;
+  PHX::MDField<MeshScalarT>                             coords;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node>                       residual;
+  PHX::MDField<ScalarT,Cell,Node>                       residual; // Always a 3D residual, so we know the layout
 
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
 
-  unsigned int gradDim;
-  unsigned int numSideNodes,numSideQPs;
-  unsigned int numNodes, numQPs;
+  int gradDim;
+  int numSideNodes;
+  int numSideQPs;
+  int numNodes;
+  int numQPs;
 
   bool sideSetEquation;
 };

@@ -11,8 +11,18 @@ namespace FELIX {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-HydrologyResidualEllipticEqn<EvalT, Traits>::HydrologyResidualEllipticEqn (const Teuchos::ParameterList& p,
-                                                     const Teuchos::RCP<Albany::Layouts>& dl)
+HydrologyResidualEllipticEqn<EvalT, Traits>::
+HydrologyResidualEllipticEqn (const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
+  GradBF    (p.get<std::string> ("Gradient BF Name"), dl->node_qp_gradient),
+  w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
+  q         (p.get<std::string> ("Water Discharge QP Variable Name"), dl->qp_gradient),
+  N         (p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar),
+  h         (p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar),
+  m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
+  omega     (p.get<std::string> ("Surface Water Input QP Variable Name"), dl->qp_scalar),
+  u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar)
 {
   if (p.isParameter("Stokes Coupling"))
   {
@@ -25,26 +35,18 @@ HydrologyResidualEllipticEqn<EvalT, Traits>::HydrologyResidualEllipticEqn (const
 
   if (stokes_coupling)
   {
-    BF          = PHX::MDField<RealType>(p.get<std::string> ("BF Name"), dl->side_node_qp_scalar);
-    GradBF      = PHX::MDField<RealType>(p.get<std::string> ("Gradient BF Name"), dl->side_node_qp_gradient);
-    w_measure   = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->side_qp_scalar);
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! For Stokes-coupled hydrology, provide a side set layout structure.\n");
 
-    q           = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->side_qp_gradient);
-    N           = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->side_qp_scalar);
-    h           = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->side_qp_scalar);
-    m           = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl->side_qp_scalar);
-    omega       = PHX::MDField<ScalarT>(p.get<std::string> ("Surface Water Input QP Variable Name"), dl->side_qp_scalar);
-    u_b         = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->side_qp_scalar);
-
-    numNodes = dl->side_node_scalar->dimension(2);
-    numQPs   = dl->side_qp_scalar->dimension(2);
-    numDims  = dl->side_qp_gradient->dimension(3);
+    numNodes = dl->node_scalar->dimension(2);
+    numQPs   = dl->qp_scalar->dimension(2);
+    numDims  = dl->qp_gradient->dimension(3);
 
     sideSetName = p.get<std::string>("Side Set Name");
 
     // Index of the nodes on the sides in the numeration of the cell
-    int numSides = dl->side_node_scalar->dimension(1);
-    int sideDim  = dl->side_qp_gradient->dimension(3);
+    int numSides = dl->node_scalar->dimension(1);
+    int sideDim  = dl->qp_gradient->dimension(3);
 
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -62,17 +64,6 @@ HydrologyResidualEllipticEqn<EvalT, Traits>::HydrologyResidualEllipticEqn (const
   }
   else
   {
-    BF          = PHX::MDField<RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
-    GradBF      = PHX::MDField<RealType>(p.get<std::string> ("Gradient BF Name"), dl->node_qp_gradient);
-    w_measure   = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
-
-    q           = PHX::MDField<ScalarT>(p.get<std::string> ("Water Discharge QP Variable Name"), dl->qp_gradient);
-    N           = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
-    h           = PHX::MDField<ScalarT>(p.get<std::string> ("Drainage Sheet Depth QP Variable Name"), dl->qp_scalar);
-    m           = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar);
-    omega       = PHX::MDField<ScalarT>(p.get<std::string> ("Surface Water Input QP Variable Name"), dl->qp_scalar);
-    u_b         = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
-
     numNodes = dl->node_scalar->dimension(1);
     numQPs   = dl->qp_scalar->dimension(1);
     numDims  = dl->qp_gradient->dimension(2);

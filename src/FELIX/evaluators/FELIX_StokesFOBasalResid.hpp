@@ -23,7 +23,7 @@ namespace FELIX
 
 template<typename EvalT, typename Traits>
 class StokesFOBasalResid : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>
+                           public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -51,8 +51,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim>            basalResid;
 
-  std::string                     basalSideName;
   std::vector<std::vector<int> >  sideNodes;
+  std::string                     basalSideName;
 
   int numCellNodes;
   int numSideNodes;

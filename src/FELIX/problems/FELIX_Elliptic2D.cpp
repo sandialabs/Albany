@@ -33,9 +33,6 @@ Elliptic2D::Elliptic2D (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   if (numDim==3)
   {
-    this->requirements.push_back("surface_height");
-    this->requirements.push_back("thickness");
-
     sideSetName = params->get<std::string>("Side Set Name");
     this->sideSetEquations[0].push_back(sideSetName);
   }
@@ -51,6 +48,53 @@ void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsS
 {
   TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
 
+  // Building cell basis and cubature
+  const CellTopologyData * const cell_top = &meshSpecs[0]->ctd;
+  cellBasis = Albany::getIntrepid2Basis(*cell_top);
+  cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
+
+  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
+
+  cellEBName = meshSpecs[0]->ebName;
+
+  const int worksetSize     = meshSpecs[0]->worksetSize;
+  const int numCellSides    = cellType->getFaceCount();
+  const int numCellVertices = cellType->getNodeCount();
+  const int numCellNodes    = cellBasis->getCardinality();
+  const int numCellQPs      = cellCubature->getNumPoints();
+
+  dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim));
+
+  int numSideVertices = -1;
+  int numSideNodes    = -1;
+  int numSideQPs      = -1;
+
+  if (numDim==3)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(sideSetName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
+                                  "Error! Either 'Side Set Name' is wrong or something went wrong while building the side mesh specs.\n");
+
+    const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(sideSetName)[0];
+
+    // Building also side structures
+    const CellTopologyData * const side_top = &sideMeshSpecs.ctd;
+    sideBasis = Albany::getIntrepid2Basis(*side_top);
+    sideType = Teuchos::rcp(new shards::CellTopology (side_top));
+
+    sideEBName   = sideMeshSpecs.ebName;
+    sideCubature = cubFactory.create(*sideType, sideMeshSpecs.cubatureDegree);
+
+    numSideVertices = sideType->getNodeCount();
+    numSideNodes    = sideBasis->getCardinality();
+    numSideQPs      = sideCubature->getNumPoints();
+
+    dl_side = Teuchos::rcp(new Albany::Layouts(worksetSize,numSideVertices,numSideNodes,
+                                      numSideQPs,numDim-1,numDim,numCellSides));
+    dl->side_layouts[sideSetName] = dl_side;
+  }
+
+  /* Construct All Phalanx Evaluators */
   fm.resize(1);
   fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 

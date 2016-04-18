@@ -22,7 +22,7 @@ template<typename EvalT, typename Traits>
 BasalFrictionCoefficientGradient<EvalT, Traits>::
 BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
                                   const Teuchos::RCP<Albany::Layouts>& dl) :
-  grad_beta (p.get<std::string> ("Basal Friction Coefficient Gradient Name"), dl->side_qp_gradient)
+  grad_beta (p.get<std::string> ("Basal Friction Coefficient Gradient Name"), dl->qp_gradient)
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -32,8 +32,8 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "From File");
 
-  numSideQPs = dl->side_qp_gradient->dimension(2);
-  sideDim    = dl->side_qp_gradient->dimension(3);
+  numSideQPs = dl->qp_gradient->dimension(2);
+  sideDim    = dl->qp_gradient->dimension(3);
 
   basalSideName = p.get<std::string>("Side Set Name");
   if (betaType == "Given Constant")
@@ -50,13 +50,13 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_FIELD;
 
-    beta_given = PHX::MDField<ParamScalarT,Cell,Side,Node>(p.get<std::string> ("Beta Variable Name"), dl->side_node_scalar);
-    GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->side_node_qp_gradient);
+    beta_given = PHX::MDField<ParamScalarT,Cell,Side,Node>(p.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
+    GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
 
     this->addDependentField (beta_given);
     this->addDependentField (GradBF);
 
-    numSideNodes = dl->side_node_qp_gradient->dimension(2);
+    numSideNodes = dl->node_qp_gradient->dimension(2);
   }
   else if (betaType == "Regularized Coulomb")
   {
@@ -65,11 +65,11 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = REGULARIZED_COULOMB;
 
-    N      = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Name"), dl->side_qp_scalar);
-    U      = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Basal Velocity QP Name"), dl->side_qp_vector);
-    gradN  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Effective Pressure Gradient QP Name"), dl->side_qp_gradient);
-    gradU  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Basal Velocity Gradient QP Name"), dl->side_qp_vecgradient);
-    u_norm = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Name"), dl->side_qp_scalar);
+    N      = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Name"), dl->qp_scalar);
+    U      = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Basal Velocity QP Name"), dl->qp_vector);
+    gradN  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Effective Pressure Gradient QP Name"), dl->qp_gradient);
+    gradU  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Basal Velocity Gradient QP Name"), dl->qp_vecgradient);
+    u_norm = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Name"), dl->qp_scalar);
 
     this->addDependentField (N);
     this->addDependentField (U);
@@ -77,7 +77,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     this->addDependentField (gradU);
     this->addDependentField (u_norm);
 
-    vecDim = dl->side_qp_vecgradient->dimension(3);
+    vecDim = dl->qp_vecgradient->dimension(3);
 
     A = beta_list.get<double>("Constant Flow Factor A");
 
@@ -96,7 +96,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
   {
-    coordVec = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
+    coordVec = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
     x_0 = stereographicMapList->get<double>("X_0", 0);//-136);

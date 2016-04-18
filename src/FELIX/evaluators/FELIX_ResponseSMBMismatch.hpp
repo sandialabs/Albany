@@ -12,7 +12,7 @@
 #include "Intrepid2_Cubature.hpp"
 
 namespace FELIX {
-/** 
+/**
  * \brief Response Description
  */
   template<typename EvalT, typename Traits>
@@ -23,13 +23,10 @@ namespace FELIX {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     typedef typename EvalT::ParamScalarT ParamScalarT;
-    
+
     ResponseSMBMismatch(Teuchos::ParameterList& p,
-       const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
-    
-    ResponseSMBMismatch(Teuchos::ParameterList& p,
-			 const Teuchos::RCP<Albany::Layouts>& dl);
-  
+       const Teuchos::RCP<Albany::Layouts>& dl);
+
     void postRegistrationSetup(typename Traits::SetupData d,
              PHX::FieldManager<Traits>& vm);
 

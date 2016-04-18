@@ -15,16 +15,12 @@ namespace FELIX {
  * \brief Response Description
  */
   template<typename EvalT, typename Traits>
-  class ResponseSurfaceVelocityMismatch :
-    public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
+  class ResponseSurfaceVelocityMismatch : public PHAL::SeparableScatterScalarResponse<EvalT,Traits>
   {
   public:
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     typedef typename EvalT::ParamScalarT ParamScalarT;
-
-    ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p,
-       const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
 
     ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p,
        const Teuchos::RCP<Albany::Layouts>& dl);
@@ -60,6 +56,6 @@ namespace FELIX {
     double scaling, alpha, asinh_scaling;
   };
 
-}
+} // Namespace FELIX
 
-#endif
+#endif // FELIX_RESPONSE_SURFACE_VELOCITY_MISMATCH_HPP

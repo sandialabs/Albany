@@ -15,26 +15,26 @@
 template<typename EvalT, typename Traits>
 FELIX::FluxDiv<EvalT, Traits>::
 FluxDiv (const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl)
+         const Teuchos::RCP<Albany::Layouts>& dl_basal)
 {
   // get and validate Response parameter list
-   std::string fieldName = p.get<std::string> ("Field Name");
+  std::string fieldName = p.get<std::string> ("Field Name");
 
   const std::string& averaged_velocity_name     = p.get<std::string>("Averaged Velocity Side QP Variable Name");
   const std::string& div_averaged_velocity_name = p.get<std::string>("Averaged Velocity Side QP Divergence Name");
   const std::string& thickness_name             = p.get<std::string>("Thickness Side QP Variable Name");
   const std::string& grad_thickness_name        = p.get<std::string>("Thickness Gradient Name");
 
-  averaged_velocity     = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(averaged_velocity_name, dl->side_qp_vector);
-  div_averaged_velocity = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(div_averaged_velocity_name, dl->side_qp_scalar);
-  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl->side_qp_scalar);
-  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl->side_qp_gradient);
+  averaged_velocity     = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(averaged_velocity_name, dl_basal->qp_vector);
+  div_averaged_velocity = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(div_averaged_velocity_name, dl_basal->qp_scalar);
+  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->qp_scalar);
+  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->qp_gradient);
 
-  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(fieldName, dl->side_qp_scalar);
+  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(fieldName, dl_basal->qp_scalar);
 
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dims;
-  dl->side_qp_gradient->dimensions(dims);
+  dl_basal->qp_gradient->dimensions(dims);
   numSideQPs = dims[2];
   numSideDims  = dims[3];
 
@@ -66,9 +66,8 @@ void FELIX::FluxDiv<EvalT, Traits>::postRegistrationSetup(typename Traits::Setup
 template<typename EvalT, typename Traits>
 void FELIX::FluxDiv<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
-  if (workset.sideSets == Teuchos::null)
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
-
+  TEUCHOS_TEST_FOR_EXCEPTION (workset.sideSets==Teuchos::null, std::runtime_error,
+                              "Side sets defined in input file but not properly specified on the mesh.\n");
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {

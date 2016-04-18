@@ -18,57 +18,29 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 Elliptic2DResidual<EvalT, Traits>::Elliptic2DResidual (const Teuchos::ParameterList& p,
                                                        const Teuchos::RCP<Albany::Layouts>& dl) :
-  coords   (p.get<std::string> ("Coordinate Vector Variable Name"),dl->vertices_vector),
-  residual (p.get<std::string> ("Residual Variable Name"),dl->node_scalar)
+  u         (p.get<std::string> ("Solution QP Variable Name"), dl->qp_scalar),
+  grad_u    (p.get<std::string> ("Solution Gradient QP Variable Name"), dl->qp_gradient),
+  BF        (p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar),
+  GradBF    (p.get<std::string> ("Gradient BF Variable Name"), dl->node_qp_gradient),
+  coords    (p.get<std::string> ("Coordinate Vector Variable Name"),dl->vertices_vector),
+  residual  (p.get<std::string> ("Residual Variable Name"),dl->node_scalar),
+  w_measure (p.get<std::string> ("Weighted Measure Variable Name"), dl->qp_scalar)
 {
   sideSetEquation = p.get<bool>("Side Equation");
   if (sideSetEquation)
   {
-    u_node       = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Solution Variable Name"), dl->node_scalar);
-    u_side       = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Solution QP Variable Name"), dl->side_qp_scalar);
-    grad_u_side  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Solution Gradient QP Variable Name"), dl->side_qp_gradient);
-    inv_metric   = PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Inverse Metric Name"), dl->side_qp_tensor);
-    BF_side      = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->side_node_qp_scalar);
-    GradBF_side  = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Variable Name"), dl->side_node_qp_gradient);
-    w_measure    = PHX::MDField<RealType,Cell,Side,QuadPoint>(p.get<std::string> ("Weighted Measure Variable Name"), dl->side_qp_scalar);
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure does not appear to be that of a side set.\n");
 
-    this->addDependentField(u_node);
-    this->addDependentField(u_side);
-    this->addDependentField(BF_side);
+    inv_metric   = PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Inverse Metric Name"), dl->qp_tensor);
     this->addDependentField(inv_metric);
-    this->addDependentField(grad_u_side);
-    this->addDependentField(w_measure);
-  }
-  else
-  {
-    u       = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Solution QP Variable Name"), dl->qp_scalar);
-    grad_u  = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(p.get<std::string> ("Solution Gradient QP Variable Name"), dl->qp_gradient);
-    BF      = PHX::MDField<RealType,Cell,Node,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-    wBF     = PHX::MDField<RealType,Cell,Node,QuadPoint>(p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar);
-    wGradBF = PHX::MDField<RealType,Cell,Node,QuadPoint,Dim>(p.get<std::string> ("Weighted Gradient BF Variable Name"), dl->node_qp_gradient);
 
-    this->addDependentField(u);
-    this->addDependentField(grad_u);
-    this->addDependentField(BF);
-    this->addDependentField(wBF);
-    this->addDependentField(wGradBF);
-  }
-
-  this->addDependentField(coords);
-  this->addEvaluatedField(residual);
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl->side_node_qp_gradient->dimensions(dims);
-  int numSides = dims[1];
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
-  int sideDim  = dims[4];
-
-  gradDim = 2;
-
-  if (sideSetEquation)
-  {
     sideSetName = p.get<std::string>("Side Set Name");
+
+    int numSides = dl->cell_gradient->dimension(1);
+    numNodes     = dl->node_scalar->dimension(2);
+    numQPs       = dl->qp_scalar->dimension(2);
+    int sideDim  = dl->cell_gradient->dimension(2);
 
     // Index of the nodes on the sides in the numeration of the cell
     Teuchos::RCP<shards::CellTopology> cellType;
@@ -76,15 +48,25 @@ Elliptic2DResidual<EvalT, Traits>::Elliptic2DResidual (const Teuchos::ParameterL
     sideNodes.resize(numSides);
     for (int side=0; side<numSides; ++side)
     {
-      sideNodes[side].resize(numSideNodes);
-      for (int node=0; node<numSideNodes; ++node)
+      sideNodes[side].resize(numNodes);
+      for (int node=0; node<numNodes; ++node)
         sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
     }
   }
+  else
+  {
+    numNodes     = dl->node_scalar->dimension(1);
+    numQPs       = dl->qp_scalar->dimension(1);
+  }
 
-  dl->node_qp_scalar->dimensions(dims);
-  numNodes     = dims[1];
-  numQPs       = dims[2];
+  gradDim = 2;
+
+  this->addDependentField(u);
+  this->addDependentField(grad_u);
+  this->addDependentField(BF);
+  this->addDependentField(GradBF);
+  this->addDependentField(coords);
+  this->addEvaluatedField(residual);
 
   this->setName("Elliptic2DResidual"+PHX::typeAsString<EvalT>());
 }
@@ -95,28 +77,18 @@ void Elliptic2DResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(residual,fm);
-
-  this->utils.setFieldData(coords,fm);
-
   if (sideSetEquation)
   {
-    this->utils.setFieldData(u_node,fm);
-    this->utils.setFieldData(u_side,fm);
-    this->utils.setFieldData(BF_side,fm);
-    this->utils.setFieldData(GradBF_side,fm);
     this->utils.setFieldData(inv_metric,fm);
-    this->utils.setFieldData(grad_u_side,fm);
-    this->utils.setFieldData(w_measure,fm);
   }
-  else
-  {
-    this->utils.setFieldData(u,fm);
-    this->utils.setFieldData(grad_u,fm);
-    this->utils.setFieldData(wBF,fm);
-    this->utils.setFieldData(BF,fm);
-    this->utils.setFieldData(wGradBF,fm);
-  }
+
+  this->utils.setFieldData(coords,fm);
+  this->utils.setFieldData(u,fm);
+  this->utils.setFieldData(grad_u,fm);
+  this->utils.setFieldData(BF,fm);
+  this->utils.setFieldData(GradBF,fm);
+  this->utils.setFieldData(w_measure,fm);
+  this->utils.setFieldData(residual,fm);
 }
 
 //**********************************************************************
@@ -131,9 +103,6 @@ void Elliptic2DResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
     }
   }
 
-  std::vector<std::vector<bool> > done (workset.numCells,std::vector<bool>(numNodes,false));
-
-  std::set<int> dones;
   if (sideSetEquation)
   {
     const Albany::SideSetList& ssList = *(workset.sideSets);
@@ -150,54 +119,39 @@ void Elliptic2DResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
       const int cell = iter_s->elem_LID;
       const int side = iter_s->side_local_id;
 
-      std::vector<ScalarT> f_qp(numSideQPs,0);
-      for (int qp=0; qp<numSideQPs; ++qp)
+      std::vector<ScalarT> f_qp(numQPs,0);
+      for (int qp=0; qp<numQPs; ++qp)
       {
         for (int idim=0; idim<gradDim; ++idim)
         {
           MeshScalarT x_qp = 0;
-          for (int node=0; node<numSideNodes; ++node)
-            x_qp += coords(cell,sideNodes[side][node],idim)*BF_side(cell,side,node,qp);
+          for (int node=0; node<numNodes; ++node)
+            x_qp += coords(cell,sideNodes[side][node],idim)*BF(cell,side,node,qp);
 
           f_qp[qp] += std::pow(x_qp-0.5,2);
         }
         f_qp[qp] -= 4.0;
       }
 
-      for (int node=0; node<numSideNodes; ++node)
+      for (int node=0; node<numNodes; ++node)
       {
-        for (int qp=0; qp<numSideQPs; ++qp)
+        for (int qp=0; qp<numQPs; ++qp)
         {
           for (int idim(0); idim<gradDim; ++idim)
           {
             for (int jdim(0); jdim<gradDim; ++jdim)
             {
-              residual(cell,sideNodes[side][node]) -= grad_u_side(cell,side,qp,idim)
+              residual(cell,sideNodes[side][node]) -= grad_u(cell,side,qp,idim)
                                                     * inv_metric(cell,side,qp,idim,jdim)
-                                                    * GradBF_side(cell,side,node,qp,jdim)
+                                                    * GradBF(cell,side,node,qp,jdim)
                                                     * w_measure(cell,side,qp);
             }
           }
-          residual(cell,sideNodes[side][node]) -= u_side(cell,side,qp) * BF_side(cell,side,node,qp) * w_measure(cell,side,qp);
-          residual(cell,sideNodes[side][node]) += f_qp[qp] * BF_side(cell,side,node,qp) * w_measure(cell,side,qp);
-        }
-        done [cell][sideNodes[side][node]] = true;
-        dones.insert(workset.wsElNodeEqID[cell][sideNodes[side][node]][0]);
-      }
-    }
-/*
-    for (int cell(0); cell<workset.numCells; ++cell)
-    {
-      for (int node(0); node<numNodes; ++node)
-      {
-//        if (!done[cell][node])
-        if (dones.find (workset.wsElNodeEqID[cell][node][0])==dones.end())
-        {
-          residual(cell,node) = u_node(cell,node);
+          residual(cell,sideNodes[side][node]) -= u(cell,side,qp) * BF(cell,side,node,qp) * w_measure(cell,side,qp);
+          residual(cell,sideNodes[side][node]) += f_qp[qp] * BF(cell,side,node,qp) * w_measure(cell,side,qp);
         }
       }
     }
-*/
   }
   else
   {
@@ -225,10 +179,10 @@ void Elliptic2DResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
         {
           for (int idim(0); idim<gradDim; ++idim)
           {
-            residual(cell,node) -= grad_u(cell,qp,idim)*wGradBF(cell,node,qp,idim);
+            residual(cell,node) -= grad_u(cell,qp,idim)*GradBF(cell,node,qp,idim)*w_measure(cell,qp);
           }
-          residual(cell,node) -= u(cell,qp)*wBF(cell,node,qp);
-          residual(cell,node) += f_qp[qp]*wBF(cell,node,qp);
+          residual(cell,node) -= u(cell,qp)*BF(cell,node,qp)*w_measure(cell,qp);
+          residual(cell,node) += f_qp[qp]*BF(cell,node,qp)*w_measure(cell,qp);
         }
       }
     }

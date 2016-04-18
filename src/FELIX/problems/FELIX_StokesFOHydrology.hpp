@@ -28,7 +28,6 @@
 
 #include "PHAL_LoadStateField.hpp"
 #include "PHAL_DOFCellToSide.hpp"
-#include "PHAL_DOFVecCellToSide.hpp"
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
 
@@ -127,7 +126,6 @@ protected:
   int vecDimStokesFO;
   bool has_evolution_equation;
   Teuchos::RCP<Albany::Layouts> dl,dl_basal,dl_surface;
-  std::map<std::string,Teuchos::RCP<Albany::Layouts>> dls;
 
   std::string basalSideName;
   std::string surfaceSideName;
@@ -162,8 +160,6 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   using Teuchos::ParameterList;
 
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtilsBasal(dl_basal);
-  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtilsSurface(dl_surface);
 
   int offset=0;
 
@@ -187,7 +183,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   //       I don't have a clean solution now, so I just ask the user to pass me the number of layers in the temperature file.
   int numLayers = params->get<int>("Layered Data Length",11); // Default 11 layers: 0, 0.1, ...,1.0
   Teuchos::RCP<PHX::DataLayout> dl_temp;
-  Teuchos::RCP<PHX::DataLayout> sns = dl_basal->side_node_scalar;
+  Teuchos::RCP<PHX::DataLayout> sns = dl_basal->node_scalar;
   dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
   p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
 
@@ -202,7 +198,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   entity = Albany::StateStruct::NodalDataToElemNode;
   stateName = "surface_height";
   fieldName = "Surface Height";
-  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
   p->set<std::string>("Field Name", fieldName);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
@@ -232,7 +228,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   entity = Albany::StateStruct::NodalDataToElemNode;
   stateName = "thickness";
   fieldName = "Ice Thickness";
-  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
   p->set<std::string>("Field Name", fieldName);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
@@ -244,11 +240,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   if (std::find(basalReq.begin(), basalReq.end(), stateName) != basalReq.end())
   {
     // We interpolate beta from quad point to cell
-    ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+    ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
     fm0.template registerEvaluator<EvalT>(ev);
 
     // We save it on the basal mesh
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->side_scalar, basalEBName, true);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->cell_scalar2, basalEBName, true);
     p->set<bool>("Is Vector Field", false);
     ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -269,11 +265,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   if (std::find(basalReq.begin(), basalReq.end(), stateName)!=basalReq.end());
   {
     // We interpolate the effective pressure from quad point to cell
-    ev = evalUtilsBasal.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+    ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
     fm0.template registerEvaluator<EvalT>(ev);
 
     // We register the state and build the loader
-    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->side_scalar, basalEBName, true);
+    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->cell_scalar2, basalEBName, true);
     p->set<bool>("Is Vector Field", false);
     ev = rcp(new PHAL::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -299,7 +295,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   stateName = "surface_water_input";
   fieldName = "Surface Water Input";
   entity = Albany::StateStruct::NodalDataToElemNode;
-  p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+  p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   p->set<const std::string>("Field Name",fieldName);
   ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
@@ -308,7 +304,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   stateName = "geothermal flux";
   fieldName = "Geothermal Flux";
   entity = Albany::StateStruct::NodalDataToElemNode;
-  p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+  p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
   p->set<const std::string>("Field Name",fieldName);
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
@@ -319,7 +315,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     stateName = "drainage_sheet_depth";
     fieldName = "Drainage Sheet Depth";
     entity = Albany::StateStruct::NodalDataToElemNode;
-    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->side_node_scalar, basalEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(basalSideName,stateName,fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
     p->set<const std::string>("Field Name",fieldName);
     ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -331,7 +327,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "surface_velocity";
     fieldName = "Observed Surface Velocity";
-    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->side_node_vector, surfaceEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->node_vector, surfaceEBName, true, &entity);
     ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
@@ -339,7 +335,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     entity= Albany::StateStruct::NodalDataToElemNode;
     stateName = "surface_velocity_rms";
     fieldName = "Observed Surface Velocity RMS";
-    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->side_node_vector, surfaceEBName, true, &entity);
+    p = stateMgr.registerSideSetStateVariable(surfaceSideName, stateName, fieldName, dl_surface->node_vector, surfaceEBName, true, &entity);
     ev = rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -429,31 +425,31 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   // -------------------- Special evaluators for basal side handling ----------------- //
 
   //---- Compute side basis functions
-  ev = evalUtilsBasal.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName);
+  ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Restrict ice velocity from cell-based to cell-side-based
-  ev = evalUtilsBasal.constructDOFVecCellToSideEvaluator("Velocity",basalSideName,cellType,"Basal Velocity");
+  ev = evalUtils.constructDOFCellToSideEvaluator("Velocity",basalSideName,"Node Vector",cellType,"Basal Velocity");
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Restrict ice thickness from cell-based to cell-side-based
-  ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator ("Ice Thickness",basalSideName,cellType);
+  ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator ("Ice Thickness",basalSideName,"Node Scalar",cellType);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Restrict surface height from cell-based to cell-side-based
-  ev = evalUtilsBasal.getPSUtils().constructDOFCellToSideEvaluator ("Surface Height",basalSideName,cellType);
+  ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator ("Surface Height",basalSideName,"Node Scalar",cellType);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate velocity on QP on side
-  ev = evalUtilsBasal.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
+  ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate thickness on QP on side
-  ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
+  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate surface height on QP on side
-  ev = evalUtilsBasal.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
+  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate hydraulic potential gradient
@@ -473,23 +469,23 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   if (surfaceSideName!="INVALID")
   {
     //---- Compute side basis functions
-    ev = evalUtilsSurface.constructComputeBasisFunctionsSideEvaluator(cellType, surfaceSideBasis, surfaceCubature, surfaceSideName);
+    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, surfaceSideBasis, surfaceCubature, surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtilsSurface.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
-    ev = evalUtilsSurface.constructDOFVecCellToSideEvaluator("Velocity",surfaceSideName,cellType,"Surface Velocity");
+    ev = evalUtils.constructDOFCellToSideEvaluator("Velocity",surfaceSideName,"Node Vector", cellType,"Surface Velocity");
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity (the solution) on QP on side
-    ev = evalUtilsSurface.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
+    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -527,11 +523,12 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   p->set<std::string>("Velocity Side QP Variable Name", "Basal Velocity");
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+  p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
   //Output
   p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
 
-  ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+  ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
   //--- Sliding velocity calculation ---//
@@ -568,8 +565,8 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
 
   //Input
   p->set<std::string>("Sliding Velocity Side QP Variable Name", "Sliding Velocity");
-  p->set<std::string>("BF Side Variable Name", "BF "+basalSideName);
-  p->set<std::string>("Effective Pressure Side QP Variable Name", "Effective Pressure");
+  p->set<std::string>("BF Variable Name", "BF "+basalSideName);
+  p->set<std::string>("Effective Pressure QP Variable Name", "Effective Pressure");
   p->set<std::string>("Side Set Name", basalSideName);
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
   p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
@@ -741,7 +738,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     paramList->set<std::string>("Inverse Metric Basal Name","ERROR! REGULARIZATION SHOULD BE DISABLED.");
     paramList->set<std::string>("Weighted Measure Basal Name","ERROR! REGULARIZATION SHOULD BE DISABLED.");
 
-    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dls);
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 

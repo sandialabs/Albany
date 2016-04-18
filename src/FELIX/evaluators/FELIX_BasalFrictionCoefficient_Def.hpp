@@ -21,6 +21,7 @@ namespace FELIX
 template<typename EvalT, typename Traits>
 BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                                                                    const Teuchos::RCP<Albany::Layouts>& dl) :
+  beta        (p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->qp_scalar),
   muField     ("Coulomb Friction Coefficient", dl->shared_param),
   lambdaField ("Bed Roughness", dl->shared_param),
   powerField  ("Power Exponent", dl->shared_param)
@@ -34,20 +35,20 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
   is_hydrology         = (p.isParameter("Hydrology") ? p.get<bool>("Hydrology") : false);
 
+
   if (is_hydrology)
   {
-    beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->qp_scalar);
-
     numQPs   = dl->qp_scalar->dimension(1);
     numNodes = dl->node_scalar->dimension(1);
   }
   else
   {
-    beta = PHX::MDField<ScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->side_qp_scalar);
-    basalSideName = p.get<std::string>("Side Set Name");
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure does not appear to be that of a side set.\n");
 
-    numQPs   = dl->side_qp_scalar->dimension(2);
-    numNodes = dl->side_node_scalar->dimension(2);
+    basalSideName = p.get<std::string>("Side Set Name");
+    numQPs   = dl->qp_scalar->dimension(2);
+    numNodes = dl->node_scalar->dimension(2);
   }
 
   this->addEvaluatedField(beta);
@@ -70,16 +71,8 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     else
       beta_type = EXP_GIVEN_FIELD;
 
-    if (is_hydrology)
-    {
-      BF = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
-    }
-    else
-    {
-      BF = PHX::MDField<RealType>(p.get<std::string> ("BF Side Variable Name"), dl->side_node_qp_scalar);
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->side_node_scalar);
-    }
+    BF = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+    beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
 
     this->addDependentField (BF);
     this->addDependentField (beta_given_field);
@@ -95,16 +88,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    if (is_hydrology)
-    {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
-      u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
-    }
-    else
-    {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
-      u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
-    }
+    N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+    u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+
     this->addDependentField (muField);
     this->addDependentField (lambdaField);
     this->addDependentField (powerField);
@@ -136,16 +122,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    if (is_hydrology)
-    {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
-      u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
-    }
-    else
-    {
-      N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure Side QP Variable Name"), dl->side_qp_scalar);
-      u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity Side QP Variable Name"), dl->side_qp_scalar);
-    }
+    N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+    u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+
     this->addDependentField (muField);
     this->addDependentField (lambdaField);
     this->addDependentField (powerField);
@@ -163,10 +142,7 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
   {
-    if (is_hydrology)
-      coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
-    else
-      coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), dl->side_qp_coords);
+    coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
     x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
