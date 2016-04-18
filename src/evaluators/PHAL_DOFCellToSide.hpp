@@ -23,8 +23,8 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits, typename ScalarT>
 class DOFCellToSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+                          public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
   DOFCellToSideBase (const Teuchos::ParameterList& p,
@@ -39,17 +39,28 @@ private:
 
   std::string                     sideSetName;
   std::vector<std::vector<int> >  sideNodes;
+  std::vector<int>                dims;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node> val_cell;
+  PHX::MDField<ScalarT> val_cell;
 
   // Output:
   //! Values on side
-  PHX::MDField<ScalarT,Cell,Side,Node> val_side;
+  PHX::MDField<ScalarT> val_side;
 
+  enum LayoutType
+  {
+    CELL_SCALAR = 1,
+    CELL_VECTOR,
+    CELL_TENSOR,
+    NODE_SCALAR,
+    NODE_VECTOR,
+    NODE_TENSOR,
+    VERTEX_VECTOR
+  };
 
-  int numSideNodes;
+  LayoutType layout;
 };
 
 // Some shortcut names

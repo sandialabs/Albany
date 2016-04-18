@@ -13,34 +13,91 @@ namespace PHAL {
 template<typename EvalT, typename Traits, typename ScalarT>
 DOFSideToCellBase<EvalT, Traits, ScalarT>::
 DOFSideToCellBase(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-  sideSetName (p.get<std::string> ("Side Set Name")),
-  val_cell    (p.get<std::string> ("Cell Variable Name"), dl->node_scalar),
-  val_side    (p.get<std::string> ("Side Variable Name"), dl->side_node_scalar )
+                  const Teuchos::RCP<Albany::Layouts>& dl) :
+  sideSetName (p.get<std::string> ("Side Set Name"))
 {
-  this->addDependentField(val_side);
-  this->addEvaluatedField(val_cell);
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
+                              "Error! Layout for side set " << sideSetName << " not found.\n");
 
-  this->setName("DOFSideToCell"+PHX::typeAsString<EvalT>());
+  Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
+  std::string layout_str = p.get<std::string>("Data Layout");
 
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl->side_node_qp_gradient->dimensions(dims);
-  int numSides = dims[1];
-  numSideNodes = dims[2];
-  int sideDim  = dims[4];
-
-  Teuchos::RCP<shards::CellTopology> cellType;
-  cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-
-  sideNodes.resize(numSides);
-  for (int side=0; side<numSides; ++side)
+  if (layout_str=="Cell Scalar")
   {
-    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
+    val_cell = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->cell_scalar2);
+    val_side = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->cell_scalar2);
+
+    layout = CELL_SCALAR;
+  }
+  else if (layout_str=="Cell Vector")
+  {
+    val_cell = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->cell_vector);
+    val_side = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->cell_vector);
+
+    layout = CELL_VECTOR;
+  }
+  else if (layout_str=="Cell Tensor")
+  {
+    val_cell = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->cell_tensor);
+    val_side = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->cell_tensor);
+
+    layout = CELL_TENSOR;
+  }
+  else if (layout_str=="Node Scalar")
+  {
+    val_cell = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->node_scalar);
+    val_side = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->node_scalar);
+
+    layout = NODE_SCALAR;
+  }
+  else if (layout_str=="Node Vector")
+  {
+    val_cell = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->node_vector);
+    val_side = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->node_vector);
+
+    layout = NODE_VECTOR;
+  }
+  else if (layout_str=="Node Tensor")
+  {
+    val_cell = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->node_tensor);
+    val_side = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->node_tensor);
+
+    layout = NODE_TENSOR;
+  }
+  else if (layout_str=="Vertex Vector")
+  {
+    val_cell = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->vertices_vector);
+    val_side = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->vertices_vector);
+
+    layout = VERTEX_VECTOR;
+  }
+  else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
+  }
+
+  val_side.dimensions(dims);
+  this->addDependentField(val_cell);
+  this->addEvaluatedField(val_side);
+
+  this->setName("DOFSideToCell");
+
+  if (layout==NODE_SCALAR || layout==NODE_VECTOR || layout==NODE_TENSOR || layout==VERTEX_VECTOR)
+  {
+    Teuchos::RCP<shards::CellTopology> cellType;
+    cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+
+    int sideDim = dl_side->cell_gradient->dimension(2);
+    sideNodes.resize(dims[1]);
+    for (int side=0; side<dims[1]; ++side)
     {
-      sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+      int thisSideNodes = cellType->getNodeCount(sideDim,side);
+      sideNodes[side].resize(thisSideNodes);
+      for (int node=0; node<thisSideNodes; ++node)
+      {
+        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      }
     }
   }
 }
@@ -60,23 +117,52 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void DOFSideToCellBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
-
-  if (it_ss==ssList.end())
+  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
-  const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
-  std::vector<Albany::SideStruct>::const_iterator iter_s;
-  for (iter_s=sideSet.begin(); iter_s!=sideSet.end(); ++iter_s)
+  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+  for (auto const& it_side : sideSet)
   {
     // Get the local data of side and cell
-    const int cell = iter_s->elem_LID;
-    const int side = iter_s->side_local_id;
+    const int cell = it_side.elem_LID;
+    const int side = it_side.side_local_id;
 
-    for (int node=0; node<numSideNodes; ++node)
+    switch (layout)
     {
-      val_cell(cell,sideNodes[side][node]) = val_side(cell,side,node);
+      case CELL_SCALAR:
+        val_cell(cell) = val_side(cell,side);
+        break;
+
+      case CELL_VECTOR:
+        for (int i=0; i<dims[2]; ++i)
+          val_cell(cell,i) = val_side(cell,side,i);
+        break;
+
+      case CELL_TENSOR:
+        for (int i=0; i<dims[2]; ++i)
+          for (int j=0; j<dims[3]; ++j)
+            val_cell(cell,i,j) = val_side(cell,side,i,j);
+        break;
+
+      case NODE_SCALAR:
+        for (int node=0; node<dims[2]; ++node)
+          val_cell(cell,sideNodes[side][node]) = val_side(cell,side,node);
+        break;
+
+      case NODE_VECTOR:
+      case VERTEX_VECTOR:
+        for (int node=0; node<dims[2]; ++node)
+          for (int i=0; i<dims[3]; ++i)
+            val_cell(cell,sideNodes[side][node],i) = val_side(cell,side,node,i);
+        break;
+      case NODE_TENSOR:
+        for (int node=0; node<dims[2]; ++node)
+          for (int i=0; i<dims[3]; ++i)
+            for (int j=0; j<dims[4]; ++j)
+              val_cell(cell,sideNodes[side][node],i,j) = val_side(cell,side,node,i,j);
+        break;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid layout (this error should have happened earlier though).\n");
     }
   }
 }
