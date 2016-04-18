@@ -13,29 +13,33 @@ namespace PHAL {
 template<typename EvalT, typename Traits, typename ScalarT>
 SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::
 SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
-                                       const Teuchos::RCP<Albany::Layouts>& dl) :
-  w_measure (p.get<std::string>("Weighted Measure Name"), dl->side_qp_scalar)
+                                       const Teuchos::RCP<Albany::Layouts>& dl_side) :
+  w_measure (p.get<std::string>("Weighted Measure Name"), dl_side->qp_scalar)
 {
-  isVectorField = p.get<bool>("Is Vector Field");
+  fieldDim = p.isParameter("Field Dimension") ? p.get<int>("Field Dimension") : 0;
 
   sideSetName = p.get<std::string>("Side Set Name");
-  if (isVectorField)
+  if (fieldDim==0)
   {
-    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_vector);
-    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl->side_vector);
-
-    numSides = dl->side_qp_vector->dimension(1);
-    numQPs   = dl->side_qp_vector->dimension(2);
-    vecDim   = dl->side_qp_vector->dimension(3);
+    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl_side->qp_scalar);
+    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl_side->cell_scalar2);
+  }
+  else if (fieldDim==1)
+  {
+    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl_side->qp_vector);
+    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl_side->cell_vector);
+  }
+  else if (fieldDim==2)
+  {
+    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl_side->qp_tensor);
+    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl_side->cell_tensor);
   }
   else
   {
-    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->side_qp_scalar);
-    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl->side_scalar);
-
-    numSides = dl->side_qp_scalar->dimension(1);
-    numQPs   = dl->side_qp_scalar->dimension(2);
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Field dimension not supported.\n");
   }
+
+  field_qp.dimensions(dims);
 
   this->addDependentField (field_qp);
   this->addDependentField (w_measure);
@@ -76,27 +80,45 @@ void SideQuadPointsToSideInterpolationBase<EvalT, Traits, ScalarT>::evaluateFiel
     const int side = it_side.side_local_id;
 
     MeshScalarT meas = 0.0;
-    for (int qp(0); qp<numQPs; ++qp)
+    for (int qp(0); qp<dims[2]; ++qp)
     {
       meas += w_measure(cell,side,qp);
     }
 
-    if (isVectorField)
+    switch (fieldDim)
     {
-      for (int dim(0); dim<vecDim; ++dim)
-      {
-        field_side(cell,side,dim) = 0;
-        for (int qp(0); qp<numQPs; ++qp)
-          field_side(cell,side,dim) += field_qp(cell,side,qp,dim)*w_measure(cell,side,qp);
-        field_side(cell,side,dim) /= meas;
-      }
-    }
-    else
-    {
-      field_side(cell,side) = 0.0;
-      for (int qp(0); qp<numQPs; ++qp)
-        field_side(cell,side) += field_qp(cell,side,qp)*w_measure(cell,side,qp);
-      field_side(cell,side) /= meas;
+      case 0:
+        field_side(cell,side) = 0.0;
+        for (int qp(0); qp<dims[2]; ++qp)
+          field_side(cell,side) += field_qp(cell,side,qp)*w_measure(cell,side,qp);
+        field_side(cell,side) /= meas;
+        break;
+
+      case 1:
+        for (int i(0); i<dims[3]; ++i)
+        {
+          field_side(cell,side,i) = 0;
+          for (int qp(0); qp<dims[2]; ++qp)
+            field_side(cell,side,i) += field_qp(cell,side,qp,i)*w_measure(cell,side,qp);
+          field_side(cell,side,i) /= meas;
+        }
+        break;
+
+      case 2:
+        for (int i(0); i<dims[3]; ++i)
+        {
+          for (int j(0); j<dims[4]; ++j)
+          {
+            field_side(cell,side,i,j) = 0;
+            for (int qp(0); qp<dims[2]; ++qp)
+              field_side(cell,side,i,j) += field_qp(cell,side,qp,i,j)*w_measure(cell,side,qp);
+            field_side(cell,side,i,j) /= meas;
+          }
+        }
+        break;
+
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Field dimension not supported (this error should have already appeared).\n");
     }
   }
 }

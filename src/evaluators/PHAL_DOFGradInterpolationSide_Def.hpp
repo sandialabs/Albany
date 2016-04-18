@@ -15,23 +15,24 @@ namespace PHAL {
 template<typename EvalT, typename Traits, typename ScalarT>
 DOFGradInterpolationSideBase<EvalT, Traits, ScalarT>::
 DOFGradInterpolationSideBase(const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl) :
+                         const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl->side_node_scalar),
-  gradBF      (p.get<std::string> ("Gradient BF Name"), dl->side_node_qp_gradient),
-  grad_qp      (p.get<std::string> ("Gradient Variable Name"), dl->side_qp_gradient )
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_scalar),
+  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
+  grad_qp      (p.get<std::string> ("Gradient Variable Name"), dl_side->qp_gradient )
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                              "Error! The layouts structure does not appear to be that of a side set.\n");
+
   this->addDependentField(val_node);
   this->addDependentField(gradBF);
   this->addEvaluatedField(grad_qp);
 
-  this->setName("DOFGradInterpolationSideBase" );
+  this->setName("DOFGradInterpolationSideBase");
 
-  std::vector<PHX::DataLayout::size_type> dims;
-  gradBF.fieldTag().dataLayout().dimensions(dims);
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
-  numDims      = dims[4];
+  numSideNodes = dl_side->node_qp_gradient->dimension(2);
+  numSideQPs   = dl_side->node_qp_gradient->dimension(3);
+  numDims      = dl_side->node_qp_gradient->dimension(4);
 }
 
 //**********************************************************************

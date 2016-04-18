@@ -12,31 +12,29 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFDivInterpolationSide<EvalT, Traits>::
-DOFDivInterpolationSide(const Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl) :
+template<typename EvalT, typename Traits, typename ScalarT>
+DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
+DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
+                            const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl->side_node_vector),
-  gradBF      (p.get<std::string> ("Gradient BF Name"), dl->side_node_qp_gradient),
-  val_qp      (p.get<std::string> ("Divergence Variable Name"), dl->side_qp_scalar )
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector),
+  gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
+  val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar )
 {
   this->addDependentField(val_node);
   this->addDependentField(gradBF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFDivInterpolationSide" );
+  this->setName("DOFDivInterpolationSideBase" );
 
-  std::vector<PHX::DataLayout::size_type> dims;
-  gradBF.fieldTag().dataLayout().dimensions(dims);
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
-  numDims      = dims[4];
+  numSideNodes = dl_side->node_qp_gradient->dimension(2);
+  numSideQPs   = dl_side->node_qp_gradient->dimension(3);
+  numDims      = dl_side->node_qp_gradient->dimension(4);
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFDivInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -46,8 +44,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFDivInterpolationSide<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFDivInterpolationSideBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())

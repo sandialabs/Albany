@@ -17,13 +17,13 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 ComputeBasisFunctionsSide<EvalT, Traits>::
 ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec      (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector ),
-  inv_metric    (p.get<std::string> ("Inverse Metric Name"), dl->side_qp_tensor ),
-  w_measure     (p.get<std::string> ("Weighted Measure Name"), dl->side_qp_scalar ),
-  metric_det    (p.get<std::string> ("Metric Determinant Name"), dl->side_qp_scalar ),
-  BF            (p.get<std::string> ("BF Name"), dl->side_node_qp_scalar),
-  GradBF        (p.get<std::string> ("Gradient BF Name"), dl->side_node_qp_gradient)
+                           const Teuchos::RCP<Albany::Layouts>& dl_side) :
+  coordVec      (p.get<std::string> ("Coordinate Vector Name"), dl_side->vertices_vector ),
+  inv_metric    (p.get<std::string> ("Inverse Metric Name"), dl_side->qp_tensor ),
+  w_measure     (p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar ),
+  metric_det    (p.get<std::string> ("Metric Determinant Name"), dl_side->qp_scalar ),
+  BF            (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
+  GradBF        (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient)
 {
   this->addDependentField(coordVec);
   this->addEvaluatedField(w_measure);
@@ -38,14 +38,11 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
   // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dim;
-  dl->side_node_qp_gradient->dimensions(dim);
-
-  int numCells = dim[0];
-  numSides     = dim[1];
-  numSideNodes = dim[2];
-  numSideQPs   = dim[3];
-  sideDims     = dim[4];
+  int numCells = dl_side->node_qp_gradient->dimension(0);
+  numSides     = dl_side->node_qp_gradient->dimension(1);
+  numSideNodes = dl_side->node_qp_gradient->dimension(2);
+  numSideQPs   = dl_side->node_qp_gradient->dimension(3);
+  sideDims     = dl_side->node_qp_gradient->dimension(4);
   cellDims     = sideDims+1;
 
 #ifdef OUTPUT_TO_SCREEN
@@ -77,19 +74,6 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid Basis Side");
   intrepidBasis->getValues(val_at_cub_points, cub_points, Intrepid2::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
-
-  // Index of the nodes on the sides in the numeration of the cell
-  sideNodes.resize(numSides);
-  for (int side=0; side<numSides; ++side)
-  {
-    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDims,side);
-    sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
-    {
-      sideNodes[side][node] = cellType->getNodeMap(sideDims,side,node);
-    }
-  }
 
   this->setName("ComputeBasisFunctionsSide"+PHX::typeAsString<EvalT>());
 }
@@ -132,7 +116,7 @@ void ComputeBasisFunctionsSide<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  //TODO: use Intrepid routines as much as possible 
+  //TODO: use Intrepid routines as much as possible
   if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
     return;
 
@@ -153,7 +137,7 @@ evaluateFields(typename Traits::EvalData workset)
           tangents(itan,icoor,qp) = 0.;
           for (int node=0; node<numSideNodes; ++node)
           {
-            tangents(itan,icoor,qp) += coordVec(cell,sideNodes[side][node],icoor) * grad_at_cub_points(node,qp,itan);
+            tangents(itan,icoor,qp) += coordVec(cell,side,node,icoor) * grad_at_cub_points(node,qp,itan);
           }
         }
       }

@@ -15,25 +15,24 @@ namespace PHAL {
 template<typename EvalT, typename Traits, typename Type>
 DOFVecInterpolationSideBase<EvalT, Traits, Type>::
 DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
+                            const Teuchos::RCP<Albany::Layouts>& dl_side) :
   sideSetName (p.get<std::string> ("Side Set Name")),
-  val_node    (p.get<std::string> ("Variable Name"), dl->side_node_vector),
-  BF          (p.get<std::string> ("BF Name"), dl->side_node_qp_scalar),
-  val_qp      (p.get<std::string> ("Variable Name"), dl->side_qp_vector )
+  val_node    (p.get<std::string> ("Variable Name"), dl_side->node_vector),
+  BF          (p.get<std::string> ("BF Name"), dl_side->node_qp_scalar),
+  val_qp      (p.get<std::string> ("Variable Name"), dl_side->qp_vector)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                              "Error! The layouts structure does not appear to be that of a side set.\n");
+
   this->addDependentField(val_node);
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolationSide" );
 
-  std::vector<PHX::DataLayout::size_type> dims;
-  BF.fieldTag().dataLayout().dimensions(dims);
-  numSideNodes = dims[2];
-  numSideQPs   = dims[3];
-
-  dl->side_qp_vector->dimensions(dims);
-  vecDim = dims[3];
+  numSideNodes = dl_side->node_qp_scalar->dimension(2);
+  numSideQPs   = dl_side->node_qp_scalar->dimension(3);
+  vecDim       = dl_side->qp_vector->dimension(3);
 }
 
 //**********************************************************************

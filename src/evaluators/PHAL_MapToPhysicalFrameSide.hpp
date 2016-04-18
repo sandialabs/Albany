@@ -43,18 +43,18 @@ private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  // Input:
-  //! Values at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim>           coords_cell_vertices;
-
   // Accessory variables
   std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >     phi_at_cub_points;
   std::vector<std::vector<int>>                       sideVertices;
   std::vector<int>                                    numSideVertices;
 
-  int cellDim;
+  int numDim;
   int numSideQPs;
   std::string sideSetName;
+
+  // Input:
+  //! Values at vertices
+  PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim>      coords_side_vertices;
 
   // Output:
   //! Values at quadrature points

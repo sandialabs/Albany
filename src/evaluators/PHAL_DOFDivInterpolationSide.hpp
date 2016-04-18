@@ -21,14 +21,14 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFDivInterpolationSide : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                 public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFDivInterpolationSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                    public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  DOFDivInterpolationSide (const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFDivInterpolationSideBase (const Teuchos::ParameterList& p,
+                               const Teuchos::RCP<Albany::Layouts>& dl_side);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
@@ -37,7 +37,6 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   std::string sideSetName;
@@ -56,6 +55,16 @@ private:
   int numSideQPs;
   int numDims;
 };
+
+// Some shortcut names
+template<typename EvalT, typename Traits>
+using DOFDivInterpolationSide = DOFDivInterpolationSideBase<EvalT,Traits,typename EvalT::ScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFDivInterpolationSideMesh = DOFDivInterpolationSideBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFDivInterpolationSideParam = DOFDivInterpolationSideBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace PHAL
 

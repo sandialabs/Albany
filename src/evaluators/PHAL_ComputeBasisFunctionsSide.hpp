@@ -47,8 +47,8 @@ private:
   std::string sideSetName;
 
   // Input:
-  //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  //! Coordinate vector at side's vertices
+  PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim> coordVec;
 
   // Temporary FieldContainers
   Intrepid2::FieldContainer_Kokkos<RealType,    PHX::Layout, PHX::Device> val_at_cub_points;

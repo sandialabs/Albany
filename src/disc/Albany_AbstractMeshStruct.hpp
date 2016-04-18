@@ -76,8 +76,7 @@ class CellSpecs {
         cellType(shards::CellTopology (&ctd)),
         intrepidBasis(Albany::getIntrepid2Basis(ctd, compositeTet)),
         cellCubature(cubFactory.create(cellType, cubdegree)),
-        dl(worksetSize, cellType.getNodeCount(),
-                          intrepidBasis->getCardinality(), cellCubature->getNumPoints(), numdim, vecdim, numface)
+        dl(worksetSize, cellType.getNodeCount(), intrepidBasis->getCardinality(), cellCubature->getNumPoints(), numdim, vecdim)
      { }
 
      unsigned int getNumVertices(){ return cellType.getNodeCount(); }

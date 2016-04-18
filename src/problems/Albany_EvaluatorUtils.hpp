@@ -252,16 +252,18 @@ namespace Albany {
     constructDOFCellToSideEvaluator(
        const std::string& cell_dof_name,
        const std::string& sideSetName,
-       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& layout,
+       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
        const std::string& side_dof_name = "") const;
 
-    //! Same as above, for vector quantities
+    //! Function to create evaluator for prolongation to cell
     Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFVecCellToSideEvaluator(
-       const std::string& cell_dof_name,
+    constructDOFSideToCellEvaluator(
+       const std::string& side_dof_name,
        const std::string& sideSetName,
-       const Teuchos::RCP<shards::CellTopology>& cellType,
-       const std::string& side_dof_name = "") const;
+       const std::string& layout,
+       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
+       const std::string& cell_dof_name = "") const;
 
     //! Function to create evaluator NodesToCellInterpolation (=DOFInterpolation+QuadPointsToCellInterpolation)
     Teuchos::RCP< PHX::Evaluator<Traits> >

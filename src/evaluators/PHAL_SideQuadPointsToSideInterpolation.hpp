@@ -29,7 +29,7 @@ class SideQuadPointsToSideInterpolationBase : public PHX::EvaluatorWithBaseImpl<
 public:
 
   SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
-                                         const Teuchos::RCP<Albany::Layouts>& dl);
+                                         const Teuchos::RCP<Albany::Layouts>& dl_side);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -40,11 +40,8 @@ private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  int numQPs;
-  int vecDim;
-  int numSides;
-
-  bool isVectorField;
+  int fieldDim;
+  std::vector<int> dims;
 
   std::string sideSetName;
 

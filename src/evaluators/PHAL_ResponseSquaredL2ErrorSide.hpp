@@ -20,7 +20,7 @@ public:
   typedef typename EvalT::ScalarT     ScalarT;
 
   ResponseSquaredL2ErrorSideBase (Teuchos::ParameterList& p,
-                                  const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
+                                  const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);

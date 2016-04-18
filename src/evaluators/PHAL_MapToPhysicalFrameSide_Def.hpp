@@ -15,22 +15,27 @@ namespace PHAL {
 template<typename EvalT, typename Traits>
 MapToPhysicalFrameSide<EvalT, Traits>::
 MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
-                       const Teuchos::RCP<Albany::Layouts>& dl) :
-  coords_cell_vertices  (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector),
-  coords_side_qp        (p.get<std::string>  ("Coordinate Side QP Vector Name"), dl->side_qp_coords)
+                       const Teuchos::RCP<Albany::Layouts>& dl_side)
 {
-  this->addDependentField(coords_cell_vertices);
+  sideSetName = p.get<std::string>("Side Set Name");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                              "Error! The layouts structure does not appear to be that of a side set.\n");
+
+  coords_side_vertices = PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim>(p.get<std::string>("Coordinate Vector Vertex Name"), dl_side->vertices_vector);
+  coords_side_qp       = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector QP Name"), dl_side->qp_coords);
+
+  this->addDependentField(coords_side_vertices);
   this->addEvaluatedField(coords_side_qp);
 
   // Get Dimensions
-  int numSides = dl->side_qp_coords->dimension(1);
-  numSideQPs   = dl->side_qp_coords->dimension(2);
-  cellDim      = dl->side_qp_coords->dimension(3);
-  int sideDim  = cellDim-1;
+  int numSides = dl_side->qp_coords->dimension(1);
+  numSideQPs   = dl_side->qp_coords->dimension(2);
+  numDim       = dl_side->qp_coords->dimension(3);
+  int sideDim  = dl_side->qp_gradient->dimension(3);
 
   // Compute cubature points in reference elements
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = 
-    p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature");
+  auto cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<RealType,Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device>>>>("Cubature");
   Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> ref_cub_points, ref_weights;
   ref_cub_points.resize(numSideQPs,sideDim);
   ref_weights.resize(numSideQPs); // Not needed per se, but need to be passed to the following function call
@@ -39,27 +44,15 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   // Index of the vertices on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
   numSideVertices.resize(numSides);
-  sideVertices.resize(numSides);
   phi_at_cub_points.resize(numSides);
-  shards::CellTopology baseCellType(cellType->getBaseCellTopologyData());
   for (int side=0; side<numSides; ++side)
   {
-    // Need to get the subcell exact count, since different sides may have different number of vertices (e.g., Wedge)
-    numSideVertices[side] = baseCellType.getVertexCount(sideDim,side);
-    sideVertices[side].resize(numSideVertices[side]);
-    for (int vertex=0; vertex<numSideVertices[side]; ++vertex)
-    {
-      // Since it's the base cell type, node=vertex and we can use getNodeMap (there's no getVertexMap)
-      sideVertices[side][vertex] = baseCellType.getNodeMap(sideDim,side,vertex);
-    }
-
-    // Since sides may be different (and we don't know on which local side we are), we build one basis per side.
-    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > sideBasis = Albany::getIntrepid2Basis (*baseCellType.getCellTopologyData(sideDim,side));
+    // Since sides may be different (and we don't know on which local side this side set is), we build one basis per side.
+    auto sideBasis = Albany::getIntrepid2Basis (*cellType->getCellTopologyData(sideDim,side));
+    numSideVertices[side] = cellType->getVertexCount(sideDim,side);
     phi_at_cub_points[side].resize(numSideVertices[side],numSideQPs);
     sideBasis->getValues(phi_at_cub_points[side], ref_cub_points, Intrepid2::OPERATOR_VALUE);
   }
-
-  sideSetName = p.get<std::string>("Side Set Name");
 
   this->setName("MapToPhysicalFrameSide" );
 }
@@ -70,7 +63,7 @@ void MapToPhysicalFrameSide<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(coords_cell_vertices,fm);
+  this->utils.setFieldData(coords_side_vertices,fm);
   this->utils.setFieldData(coords_side_qp,fm);
 }
 
@@ -89,11 +82,11 @@ void MapToPhysicalFrameSide<EvalT, Traits>::evaluateFields(typename Traits::Eval
 
     for (int qp=0; qp<numSideQPs; ++qp)
     {
-      for (int dim=0; dim<cellDim; ++dim)
+      for (int dim=0; dim<numDim; ++dim)
       {
         coords_side_qp(cell,side,qp,dim) = 0;
         for (int v=0; v<numSideVertices[side]; ++v)
-          coords_side_qp(cell,side,qp,dim) += coords_cell_vertices(cell,sideVertices[side][v],dim)*phi_at_cub_points[side](v,qp);
+          coords_side_qp(cell,side,qp,dim) += coords_side_vertices(cell,side,v,dim)*phi_at_cub_points[side](v,qp);
       }
     }
   }

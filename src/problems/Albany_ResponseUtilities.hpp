@@ -32,7 +32,6 @@ class StateManager;
     public:
 
     ResponseUtilities(Teuchos::RCP<Albany::Layouts> dl);
-    ResponseUtilities(const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls);
 
     //! Utility for parsing response requests and creating response field manager
     Teuchos::RCP<const PHX::FieldTag>

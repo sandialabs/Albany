@@ -53,16 +53,6 @@ Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
 }
 
 template<typename EvalT, typename Traits>
-Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
-  const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls_) :
-  dls(dls_)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (dls.find("default")==dls.end(), std::logic_error, "Error! Data Layout map does not contain 'default'.\n");
-
-  dl = dls["default"]; // The "default" layout should be the one used for non-sidesets responses (bwd compatibility)
-}
-
-template<typename EvalT, typename Traits>
 Teuchos::RCP<const PHX::FieldTag>
 Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm,
@@ -137,7 +127,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Squared L2 Error Side Target ST")
   {
     RCP<PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>(*p,dls));
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -145,7 +135,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Squared L2 Error Side Target MST")
   {
     RCP<PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>(*p,dls));
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -153,53 +143,29 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Squared L2 Error Side Target PST")
   {
     RCP<PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>(*p,dls));
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
   else if (responseName == "Surface Velocity Mismatch")
   {
-    if (dls.size()<=1)
-    {
-      // No side data layouts have been passed to this class
-      RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
-        rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
-      fm.template registerEvaluator<EvalT>(res_ev);
-      response_tag = res_ev->getResponseFieldTag();
-      fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-    }
-    else
-    {
-      // Specific layouts for the sides have been passed to the class
-      RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
-        rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dls));
-      fm.template registerEvaluator<EvalT>(res_ev);
-      response_tag = res_ev->getResponseFieldTag();
-      fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-    }
+    // No side data layouts have been passed to this class
+    RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
+      rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
   else if (responseName == "Surface Mass Balance Mismatch")
   {
-    if (dls.size()<=1)
-    {
-      // No side data layouts have been passed to this class
-      RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
-        rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
-      fm.template registerEvaluator<EvalT>(res_ev);
-      response_tag = res_ev->getResponseFieldTag();
-      fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-    }
-    else
-    {
-      // Specific layouts for the sides have been passed to the class
-      RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
-        rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dls));
-      fm.template registerEvaluator<EvalT>(res_ev);
-      response_tag = res_ev->getResponseFieldTag();
-      fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-    }
+    // No side data layouts have been passed to this class
+    RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
+      rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
 #endif

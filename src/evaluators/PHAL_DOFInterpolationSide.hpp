@@ -28,7 +28,7 @@ class DOFInterpolationSideBase : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   DOFInterpolationSideBase (const Teuchos::ParameterList& p,
-                            const Teuchos::RCP<Albany::Layouts>& dl);
+                            const Teuchos::RCP<Albany::Layouts>& dl_side);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);

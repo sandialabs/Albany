@@ -12,30 +12,33 @@
 
 template<typename EvalT, typename Traits, typename TargetScalarT>
 PHAL::ResponseSquaredL2ErrorSideBase<EvalT, Traits, TargetScalarT>::
-ResponseSquaredL2ErrorSideBase(Teuchos::ParameterList& p, const std::map<std::string,Teuchos::RCP<Albany::Layouts>>& dls)
+ResponseSquaredL2ErrorSideBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   // get response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
 
   sideSetName = plist->get<std::string>("Side Set Name");
-  Teuchos::RCP<Albany::Layouts> dl = dls.at(sideSetName);
+  TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(sideSetName)==dl->side_layouts.end(), std::runtime_error,
+                              "Error! Layout for side set " << sideSetName << " not found.\n");
+
+  Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
 
   // Gathering dimensions
-  sideDim  = dl->side_gradient->dimension(2);
-  numQPs   = dl->side_qp_scalar->dimension(2);
+  sideDim = dl_side->cell_gradient->dimension(2);
+  numQPs  = dl_side->qp_scalar->dimension(2);
 
   Teuchos::RCP<PHX::DataLayout> layout;
   std::string rank,fname,target_fname;
 
-  rank           = plist->get<std::string>("Field Rank");
-  fname          = plist->get<std::string>("Field Name");
-  target_fname   = plist->get<std::string>("Target Field Name");
+  rank         = plist->get<std::string>("Field Rank");
+  fname        = plist->get<std::string>("Field Name");
+  target_fname = plist->get<std::string>("Target Field Name");
 
-  fieldDim = getLayout(dl,rank,layout);
+  fieldDim = getLayout(dl_side,rank,layout);
 
   computedField = PHX::MDField<ScalarT>(fname,layout);
   targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
-  w_measure     = PHX::MDField<RealType,Cell,Side,QuadPoint>("Weighted Measure " + sideSetName, dl->side_qp_scalar);
+  w_measure     = PHX::MDField<RealType,Cell,Side,QuadPoint>("Weighted Measure " + sideSetName, dl_side->qp_scalar);
   scaling       = plist->get("Scaling",1.0);
 
   this->addDependentField(computedField);
@@ -159,22 +162,22 @@ getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teu
   int dim = -1;
   if (rank=="Scalar")
   {
-    layout = dl->side_qp_scalar;
+    layout = dl->qp_scalar;
     dim = 0;
   }
   else if (rank=="Vector")
   {
-    layout = dl->side_qp_vector;
+    layout = dl->qp_vector;
     dim = 1;
   }
   else if (rank=="Gradient")
   {
-    layout = dl->side_qp_gradient;
+    layout = dl->qp_gradient;
     dim = 1;
   }
   else if (rank=="Tensor")
   {
-    layout = dl->side_qp_tensor;
+    layout = dl->qp_tensor;
     dim = 2;
   }
   else
