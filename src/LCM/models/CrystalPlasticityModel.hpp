@@ -22,12 +22,16 @@ public:
 
   enum class IntegrationScheme
   {
-    UNDEFINED = 0, EXPLICIT = 1, IMPLICIT = 2
+    UNDEFINED = 0, 
+    EXPLICIT = 1, 
+    IMPLICIT = 2
   };
 
   enum class ResidualType
   {
-    UNDEFINED = 0, SLIP = 1, SLIP_HARDNESS = 2
+    UNDEFINED = 0, 
+    SLIP = 1, 
+    SLIP_HARDNESS = 2
   };
 
   using ScalarT = typename EvalT::ScalarT;
@@ -49,8 +53,9 @@ public:
   ///
   /// Constructor
   ///
-  CrystalPlasticityModel(Teuchos::ParameterList* p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  CrystalPlasticityModel(
+      Teuchos::ParameterList* p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   ///
   /// Virtual Denstructor
@@ -65,18 +70,20 @@ public:
   ///
   virtual
   void
-  computeState(typename Traits::EvalData workset,
+  computeState(
+      typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
-      virtual
-      void
-      computeStateParallel(typename Traits::EvalData workset,
+  virtual
+  void
+  computeStateParallel(
+      typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
-      {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
-      }
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+  }
 
   ///
   ///  Set a NOX status test to Failed, which will trigger Piro to cut the global
@@ -98,67 +105,105 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  CrystalPlasticityModel(const CrystalPlasticityModel&);
+  CrystalPlasticityModel(const CrystalPlasticityModel &);
 
   ///
   /// Private to prohibit copying
   ///
-  CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
+  CrystalPlasticityModel & operator=(const CrystalPlasticityModel &);
 
   ///
   /// Crystal elasticity parameters
   ///
-  RealType c11_, c12_, c44_;
-  RealType c11_temperature_coeff_, c12_temperature_coeff_, 
-    c44_temperature_coeff_, reference_temperature_;
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM> C_;
-  Intrepid2::Tensor<RealType, CP::MAX_DIM> orientation_;
+  RealType
+  c11_;
+
+  RealType
+  c12_;
+
+  RealType
+  c44_;
+
+  RealType
+  c11_temperature_coeff_;
+
+  RealType
+  c12_temperature_coeff_;
+
+  RealType
+  c44_temperature_coeff_;
+
+  RealType
+  reference_temperature_;
+
+  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
+  C_;
+  
+  Intrepid2::Tensor<RealType, CP::MAX_DIM>
+  orientation_;
 
   ///
   /// Number of slip systems
   ///
-  int num_slip_;
+  int
+  num_slip_;
 
   ///
-  /// Crystal Plasticity parameters
+  /// Struct holding slip system data
   ///
-  RealType rate_slip_reference_, exponent_rate_, energy_activation_, 
-    H_, Rd_, tau_critical_,
-    resistance_slip_initial_, rate_hardening_, stress_saturation_initial_,
-    exponent_saturation_;
-
   std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
   slip_systems_;
 
   ///
   /// Constitutive relations
   ///
-  CP::FlowRule flow_rule_;
-  CP::HardeningLaw hardening_law_;
+  CP::FlowRule
+  flow_rule_;
+
+  CP::HardeningLaw
+  hardening_law_;
 
   ///
   /// Solution options
   ///
-  IntegrationScheme integration_scheme_;
-  ResidualType residual_type_;
-  bool apply_slip_predictor_;
-  Intrepid2::StepType step_type_;
+  IntegrationScheme 
+  integration_scheme_;
+  
+  ResidualType
+  residual_type_;
 
-  RealType implicit_nonlinear_solver_relative_tolerance_;
-  RealType implicit_nonlinear_solver_absolute_tolerance_;
-  int implicit_nonlinear_solver_max_iterations_;
-  int implicit_nonlinear_solver_min_iterations_;
+  bool
+  apply_slip_predictor_;
+  
+  Intrepid2::StepType
+  step_type_;
+
+  RealType
+  implicit_nonlinear_solver_relative_tolerance_;
+  
+  RealType
+  implicit_nonlinear_solver_absolute_tolerance_;
+  
+  int
+  implicit_nonlinear_solver_max_iterations_;
+  
+  int
+  implicit_nonlinear_solver_min_iterations_;
 
   ///
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
   ///
-  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+  nox_status_test_;
 
   ///
   /// Output options 
   ///
-  int verbosity_;
-  bool write_data_file_;
+  int 
+  verbosity_;
+
+  bool
+  write_data_file_;
 };
 
 }
