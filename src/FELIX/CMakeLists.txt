@@ -19,8 +19,10 @@
        evaluators/FELIX_HydrologyMeltingRate.cpp
        evaluators/FELIX_HydrologyResidualEllipticEqn.cpp
        evaluators/FELIX_HydrologyResidualEvolutionEqn.cpp
+       evaluators/FELIX_ProlongateVector.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_ResponseSMBMismatch.cpp
+       evaluators/FELIX_StackVectors.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
@@ -96,11 +98,15 @@ ENDIF()
        evaluators/FELIX_HydrologyResidualEllipticEqn_Def.hpp
        evaluators/FELIX_HydrologyResidualEvolutionEqn.hpp
        evaluators/FELIX_HydrologyResidualEvolutionEqn_Def.hpp
+       evaluators/FELIX_ProlongateVector.hpp
+       evaluators/FELIX_ProlongateVector_Def.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
        evaluators/FELIX_ResponseSMBMismatch.hpp
        evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        evaluators/FELIX_SharedParameter.hpp
+       evaluators/FELIX_StackVectors.hpp
+       evaluators/FELIX_StackVectors_Def.hpp
        evaluators/FELIX_StokesBodyForce.hpp
        evaluators/FELIX_StokesBodyForce_Def.hpp
        evaluators/FELIX_StokesContinuityResid.hpp
