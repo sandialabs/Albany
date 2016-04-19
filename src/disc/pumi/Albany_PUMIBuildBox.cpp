@@ -120,7 +120,7 @@ BoxBuilder::BoxBuilder(int nx, int ny, int nz,
       double wx, double wy, double wz,
       bool is):
   grid(nx + 1, ny + 1, nz + 1),
-  mgrid(nx ? 3 : 1,ny ? 3 : 1, nz ? 3 : 1)
+  mgrid(nx ? 3 : 1, ny ? 3 : 1, nz ? 3 : 1)
 {
   for (dim = 0; dim < 3 && grid.size[dim] > 1; ++dim);
   w[0] = nx ? (wx / nx) : 0;
@@ -152,10 +152,10 @@ void BoxBuilder::formModelTable()
 
 int BoxBuilder::getModelIndex(int i, int d)
 {
-  if (i == grid.size[d] - 1)
-    return 2;
   if (i == 0)
     return 0;
+  if (i == grid.size[d] - 1)
+    return 2;
   return 1;
 }
 
@@ -247,7 +247,7 @@ void BoxBuilder::buildCellEdges(int i)
   apf::MeshEntity* ev[2];
   ev[0] = getVert(vi);
   for (int j = 0; j < 3; ++j) {
-    if (mi[j] == 2)
+    if (mi[j] == mgrid.size[j] - 1)
       continue;
     ev[1] = getVert(vi + Indices::unit(j));
     Indices emi = mi;
@@ -282,7 +282,8 @@ void BoxBuilder::buildCellFaces(int i)
   fv[0] = getVert(vi);
   for (int jx = 0; jx < 3; ++jx) {
     int jy = (jx + 1) % 3;
-    if (mi[jx] == 2 || mi[jy] == 2)
+    if (mi[jx] == mgrid.size[jx] - 1 ||
+        mi[jy] == mgrid.size[jy] - 1)
       continue;
     fv[1] = getVert(vi + Indices::unit(jx));
     fv[2] = getVert(vi + Indices::unit(jx) + Indices::unit(jy));
@@ -329,7 +330,9 @@ void BoxBuilder::buildCellRegion(int i)
 {
   Indices vi = grid.out(i);
   Indices mi = getModelIndices(vi);
-  if (mi[0] == 2 || mi[1] == 2 || mi[2] == 2)
+  if (mi.x == mgrid.size.x - 1 ||
+      mi.y == mgrid.size.y - 1 ||
+      mi.z == mgrid.size.z - 1)
     return;
   apf::MeshEntity* rv[8];
   rv[0] = getVert(Indices(vi.x + 0, vi.y + 0, vi.z + 0));
@@ -376,7 +379,11 @@ void BoxBuilder::buildMeshAndModel()
 }
 
 void BoxBuilder::buildSets(apf::StkModels& sets)
-{ /* arrange these however you expect
+{
+  Grid side_grid(dim > 0 ? 2 : 1,
+                 dim > 1 ? 2 : 1,
+                 dim > 2 ? 2 : 1);
+  /* arrange these however you expect
      the NodeSets and SideSets to be ordered */
   Indices const faceTable[6] = {
     Indices(0,1,1),
@@ -389,8 +396,8 @@ void BoxBuilder::buildSets(apf::StkModels& sets)
   int dims[2] = {0, dim - 1};
   char const* names[2] = {"NodeSet", "SideSet"};
   for (int i = 0; i < 2; ++i) {
-    sets.models[dims[i]].resize(6);
-    for (int j = 0; j < 6; ++j) {
+    sets.models[dims[i]].resize(side_grid.total());
+    for (int j = 0; j < side_grid.total(); ++j) {
       Indices mi = faceTable[j];
       for (int k = dim; k < 3; ++k)
         mi[k] = 0;

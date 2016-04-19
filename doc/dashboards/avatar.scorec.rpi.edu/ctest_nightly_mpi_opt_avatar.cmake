@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 
 SET(CTEST_DO_SUBMIT ON)
-#SET(CTEST_TEST_TYPE Nightly)
+SET(CTEST_TEST_TYPE Nightly)
 
 #SET(CTEST_DO_SUBMIT OFF)
-SET(CTEST_TEST_TYPE Experimental)
+#SET(CTEST_TEST_TYPE Experimental)
 
 # What to build and test
 SET(BUILD_TRILINOS TRUE)
