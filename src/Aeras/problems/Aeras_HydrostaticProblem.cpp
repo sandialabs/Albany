@@ -231,6 +231,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::DistParamDeriv>(
 	return Teuchos::null;
 }
 
+#ifndef AERAS_IMPLICIT_HS
 template <>
 Teuchos::RCP<const PHX::FieldTag>
 HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
@@ -528,4 +529,5 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
 
   return Teuchos::null;
 }
+#endif
 }
