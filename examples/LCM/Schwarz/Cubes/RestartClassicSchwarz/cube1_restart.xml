@@ -64,7 +64,7 @@
     <Parameter name="Exodus Residual Name" type="string" value="resid"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="1"/>
-    <Parameter name="Restart Index" type="int" value="2"/>
+    <Parameter name="Restart Index" type="int" value="1"/>
   </ParameterList>
 
   
@@ -80,11 +80,11 @@
        <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
         <Parameter name="Continuation Method" type="string" value="Natural"/>
-	<Parameter  name="Initial Value" type="double" value="0.1"/>
+	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<Parameter  name="Max Steps" type="int" value="0"/>
-	<Parameter  name="Min Value" type="double" value="0.1"/>
-	<Parameter  name="Max Value" type="double" value="0.1"/>
+	<Parameter  name="Min Value" type="double" value="0.0"/>
+	<Parameter  name="Max Value" type="double" value="0.0"/>
 	<Parameter  name="Return Failed on Reaching Max Steps"
 		    type="bool" value="0"/>
 	<Parameter name="Hit Continuation Bound" type="bool" value="0"/>

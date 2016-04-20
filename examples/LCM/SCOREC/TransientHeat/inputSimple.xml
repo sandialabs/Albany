@@ -40,10 +40,9 @@
     <Parameter name="2D Elements" type="int" value="3"/>
     <Parameter name="1D Scale" type="double" value="1.0"/>
     <Parameter name="2D Scale" type="double" value="1.0"/>
-    <Parameter name="Cell Topology" type="string" value="Tri"/>
     <Parameter name="Workset Size" type="int" value="50"/>
-    <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="mech_tran_2d.exo"/>
+    <Parameter name="Method" type="string" value="PUMI"/>
+    <Parameter name="PUMI Output File Name" type="string" value="mech_tran_2d.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
