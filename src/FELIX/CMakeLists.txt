@@ -173,22 +173,42 @@ IF (ENABLE_CISM_INTERFACE)
 ENDIF()
 
 IF(ENABLE_CISM_INTERFACE)
-  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM}
-              ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp
-              ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
-  set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
-  include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                       ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
-                       ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
-                       ${Albany_SOURCE_DIR}/src/problems
-                       ${Albany_SOURCE_DIR}/src/FELIX/interface_with_cism ${Albany_SOURCE_DIR}/src/responses
-                       ./problems ./evaluators
-                      )
-  IF (INSTALL_ALBANY)
-    install(TARGETS cismInterface EXPORT albany-export
-      LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
-      ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
-      PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+  IF (ENABLE_CISM_EPETRA)
+    add_library(cismInterfaceE ${Albany_LIBRARY_TYPE} ${SOURCESCISM}
+                ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp
+                ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
+    set_target_properties(cismInterfaceE PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
+    include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
+                         ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
+                         ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+                         ${Albany_SOURCE_DIR}/src/problems
+                         ${Albany_SOURCE_DIR}/src/FELIX/interface_with_cism ${Albany_SOURCE_DIR}/src/responses
+                         ./problems ./evaluators
+                        )
+    IF (INSTALL_ALBANY)
+      install(TARGETS cismInterfaceE EXPORT albany-export
+        LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
+        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
+        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    ENDIF()
+  ELSE()
+    add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM}
+                ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp
+                ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
+    set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
+    include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
+                         ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
+                         ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+                         ${Albany_SOURCE_DIR}/src/problems
+                         ${Albany_SOURCE_DIR}/src/FELIX/interface_with_cism ${Albany_SOURCE_DIR}/src/responses
+                         ./problems ./evaluators
+                        )
+    IF (INSTALL_ALBANY)
+      install(TARGETS cismInterface EXPORT albany-export
+        LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
+        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
+        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    ENDIF()
   ENDIF()
 ELSE()
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

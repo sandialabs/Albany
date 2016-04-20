@@ -70,7 +70,7 @@ Optimizer_Pareto::Initialize()
   std::fill_n(p_last, numOptDofs, 1.0);
   std::fill_n(dfdp,   numOptDofs, 0.0);
 
-  solverInterface->ComputeVolume(_optVolume);
+  solverInterface->ComputeMeasure("Volume", _optVolume);
 
 }
 

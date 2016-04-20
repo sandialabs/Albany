@@ -306,6 +306,8 @@ if (BUILD_ALB32)
     "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
+    "-DENABLE_CISM_EPETRA:BOOL=ON"
+    "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
     "-DENABLE_INSTALL:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
@@ -432,7 +434,12 @@ if (BUILD_ALB32_NOEPETRA)
     "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
+    "-DENABLE_CISM_EPETRA:BOOL=OFF"
+    "-DENABLE_CISM_REDUCED_COMM:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
+    "-DENABLE_INSTALL:BOOL=ON"
+    "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetraInstall"
+    "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
     "-DENABLE_LAME:BOOL=OFF")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetra")
@@ -465,7 +472,7 @@ if (BUILD_ALB32_NOEPETRA)
   # Build Albany
   #
 
-  set (CTEST_BUILD_TARGET all)
+  set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
@@ -675,7 +682,7 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
@@ -778,7 +785,7 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
     "-DALBANY_FELIX_DYCORE:BOOL=ON"
     "-DALBANY_FELIX_CTEST:BOOL=ON"
-    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
+    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetraInstall"
     "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DCMAKE_Fortran_FLAGS='-g -O2 -ffree-line-length-none -fPIC -fno-range-check'"
@@ -850,6 +857,120 @@ if (BUILD_CISM_PISCEES)
 
   CTEST_TEST(
     BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+#                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#    NUMBER_FAILED  TEST_NUM_FAILED
+    RETURN_VALUE  HAD_ERROR
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Test
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany test results!")
+    endif ()
+  endif ()
+
+#  if (HAD_ERROR)
+#  	message(FATAL_ERROR "Some CISM-Albany tests failed.")
+#  endif ()
+
+endif ()
+
+
+if (BUILD_CISM_PISCEES_EPETRA)
+
+  # Configure the CISM-Albany build 
+  #
+  set_property (GLOBAL PROPERTY SubProject IKTCismAlbanyEpetra)
+  set_property (GLOBAL PROPERTY Label IKTCismAlbanyEpetra)
+
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
+  set (NETCDF_DIR /home/ikalash/Install/netcdf-4.2-fortran) 
+
+  set (CONFIGURE_OPTIONS
+    "-DCISM_USE_TRILINOS:BOOL=ON"
+    "-DCISM_TRILINOS_DIR=${TRILINSTALLDIR}"
+    "-DCISM_MPI_MODE:BOOL=ON"
+    "-DCISM_SERIAL_MODE:BOOL=OFF"
+    "-DCISM_BUILD_CISM_DRIVER:BOOL=ON"
+    "-DALBANY_FELIX_DYCORE:BOOL=ON"
+    "-DALBANY_FELIX_CTEST:BOOL=ON"
+    "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
+    "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
+    "-DCISM_NETCDF_LIBS='netcdff'"
+    "-DCMAKE_Fortran_FLAGS='-g -O2 -ffree-line-length-none -fPIC -fno-range-check'"
+    "-DCMAKE_VERBOSE_MAKEFILE=OFF"
+  )
+
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTCismAlbanyEpetra")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTCismAlbanyEpetra)
+  endif ()
+
+  CTEST_CONFIGURE(
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbanyEpetra"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/cism-piscees"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    APPEND
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany configure results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot configure CISM-Albany build!")
+  endif ()
+ 
+   #
+   # Build CISM-Albany
+   #
+   #
+    set (CTEST_TARGET all)
+
+  MESSAGE("\nBuilding target: '${CTEST_TARGET}' ...\n")
+
+  CTEST_BUILD(
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbanyEpetra"
+    RETURN_VALUE  HAD_ERROR
+    NUMBER_ERRORS  LIBS_NUM_ERRORS
+    APPEND
+    )
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Build
+      RETURN_VALUE  S_HAD_ERROR
+      )
+
+    if (S_HAD_ERROR)
+      message(FATAL_ERROR "Cannot submit CISM-Albany build results!")
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot build CISM-Albany!")
+  endif ()
+
+  if (LIBS_NUM_ERRORS GREATER 0)
+    message(FATAL_ERROR "Encountered build errors in CISM-Albany build. Exiting!")
+  endif ()
+
+  #
+  # Run CISM-Albany tests
+  #
+
+  set (CTEST_TEST_TIMEOUT 1200)
+  CTEST_TEST(
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTCismAlbanyEpetra"
 #                  PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
 #                  INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
 #    NUMBER_FAILED  TEST_NUM_FAILED

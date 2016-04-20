@@ -101,6 +101,8 @@ namespace LCM {
     /// Scalar name
     ///
     std::string temperature_name_;
+    
+    std::string SolutionType_;
 
     ///
     /// Mechanics flag

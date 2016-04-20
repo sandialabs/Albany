@@ -203,6 +203,7 @@ void AAdapt::MeshAdapt::adaptInPartition()
 {
   szField->computeError();
 
+  /* i.e. adapt */
   szField->configure(adapt_params_);
 
   szField->freeSizeField();
@@ -264,6 +265,8 @@ namespace {
 
 void AAdapt::MeshAdapt::afterAdapt()
 {
+  static int ncalls = 0;
+
   Teuchos::Array<std::string> defaultStArgs =
      Teuchos::tuple<std::string>("zoltan", "parma", "parma");
   double maxImb = adapt_params_->get<double>("Maximum LB Imbalance", 1.30);
@@ -274,6 +277,14 @@ void AAdapt::MeshAdapt::afterAdapt()
 
   mesh->verify();
 
+  apf::reorderMdsMesh(mesh);
+  if (adapt_params_->isParameter("Write Adapted SMB Files")) {
+    std::ostringstream smbOutName;
+    smbOutName << "adapted_mesh_" << ncalls << "/";
+    std::string outFile= smbOutName.str();
+    mesh->writeNative(outFile.c_str());
+  }
+
   szField->freeInputFields();
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
@@ -282,6 +293,8 @@ void AAdapt::MeshAdapt::afterAdapt()
   // detach QP fields from the apf mesh
   if (should_transfer_ip_data)
     pumi_discretization->detachQPData();
+
+  ncalls++;
 }
 
 struct AdaptCallbackOf : public Parma_GroupCode
@@ -530,6 +543,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
+  validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
   // For the new adaptive model, we preallocate all vectors larger than will be needed during the calculation.
   // We can adapt the mesh up to that point, but an exception will be thrown if the number of nodes grow beyond
   // the high water mark on the processor.

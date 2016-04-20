@@ -15,6 +15,7 @@ Albany::AbstractProblem::AbstractProblem(
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   neq(neq_),
   number_of_time_deriv(-1),
+  SolutionMethodName(Unknown),
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
@@ -36,15 +37,30 @@ Albany::AbstractProblem::AbstractProblem(
 
   std::string solutionMethod = params->get("Solution Method", "Steady");
   if(solutionMethod == "Steady")
+  {
     number_of_time_deriv = 0;
+    SolutionMethodName = Steady;
+  }
   else if(solutionMethod == "Continuation")
+  {
     number_of_time_deriv = 0;
+    SolutionMethodName = Continuation;
+  }
   else if(solutionMethod == "Transient")
+  {
     number_of_time_deriv = 1;
+    SolutionMethodName = Transient;
+  }
   else if(solutionMethod == "Eigensolve")
+  {
     number_of_time_deriv = 0;
+    SolutionMethodName = Eigensolve;
+  }
   else if(solutionMethod == "Aeras Hyperviscosity")
+  {
     number_of_time_deriv = 1;
+    SolutionMethodName = AerasHyperviscosity;
+  }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, "
@@ -77,6 +93,13 @@ Albany::AbstractProblem::setNumEquations(const int neq_)
   rigidBodyModes->setNumPDEs(neq_);
 }
 
+
+// Get the solution method type name
+Albany::SolutionMethodType 
+Albany::AbstractProblem::getSolutionMethod()
+{
+    return SolutionMethodName;
+}
 
 Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >
 Albany::AbstractProblem::getFieldManager()

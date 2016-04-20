@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "MaterialDatabase.h"
 #include "Teuchos_RCP.hpp"
 
 namespace LCM {
@@ -45,7 +45,7 @@ lcm_cbrt(T const & x)
   return std::cbrt(x);
 }
 
-Teuchos::RCP<QCAD::MaterialDatabase>
+Teuchos::RCP<MaterialDatabase>
 createMaterialDatabase(
     Teuchos::RCP<Teuchos::ParameterList> const & params,
     Teuchos::RCP<Teuchos_Comm const> & commT);

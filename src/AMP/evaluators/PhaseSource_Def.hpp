@@ -89,11 +89,12 @@ evaluateFields(typename Traits::EvalData workset)
   AMP::LaserCenter Val;
   Val.t = t;
   
-  RealType x, z;
+  RealType x, z, power_fraction;
   int power;
-  LaserData_.getLaserPosition(t,Val,x,z,power);
+  LaserData_.getLaserPosition(t,Val,x,z,power,power_fraction);
   ScalarT Laser_center_x = x;
   ScalarT Laser_center_z = z;
+  ScalarT Laser_power_fraction = power_fraction; 
 
   //source function
   ScalarT laser_beam_radius = 60.0e-6;
@@ -107,7 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
   // laser on or off
   if ( power == 1 )
     {
-      LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power;
+      LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power*Laser_power_fraction;
     }
   else
     {

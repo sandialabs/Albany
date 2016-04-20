@@ -12,12 +12,17 @@
 namespace CP
 {
 
-static constexpr Intrepid2::Index MAX_DIM = 3;
-static constexpr Intrepid2::Index MAX_SLIP = 12;
+static constexpr Intrepid2::Index 
+MAX_DIM = 3;
+
+static constexpr Intrepid2::Index
+MAX_SLIP = 12;
 
 enum class FlowRule
 {
-  UNDEFINED = 0, POWER_LAW = 1, THERMAL_ACTIVATION = 2
+  UNDEFINED = 0,
+  POWER_LAW = 1,
+  THERMAL_ACTIVATION = 2
 };
 
 enum class HardeningLaw
@@ -40,19 +45,84 @@ struct SlipSystemStruct
   SlipSystemStruct() {}
 
   //! Slip system vectors.
-  Intrepid2::Vector<RealType, NumDimT> s_, n_;
+  Intrepid2::Vector<RealType, NumDimT>
+  s_;
+
+  Intrepid2::Vector<RealType, NumDimT>
+  n_;
 
   //! Schmid Tensor.
-  Intrepid2::Tensor<RealType, NumDimT> projector_;
+  Intrepid2::Tensor<RealType, NumDimT> 
+  projector_;
 
-  //! Flow rule parameters
-  FlowRule flow_rule;
-  RealType rate_slip_reference_, exponent_rate_, energy_activation_;
+  //
+  // Flow rule parameters
+  //
+  FlowRule 
+  flow_rule;
 
-  // hardening law parameters
-  HardeningLaw hardening_law;
-  RealType tau_critical_, H_, Rd_, resistance_slip_initial_,
-    rate_hardening_, stress_saturation_initial_, exponent_saturation_;
+  RealType 
+  rate_slip_reference_;
+
+  RealType
+  exponent_rate_;
+
+  RealType
+  energy_activation_;
+
+  //
+  // Hardening law parameters
+  //
+  HardeningLaw
+  hardening_law;
+
+  ///
+  /// Hardening parameters: linear hardening
+  ///
+  RealType
+  tau_critical_;
+
+  RealType
+  H_;
+
+  RealType
+  Rd_;
+
+  ///
+  /// Hardening parameters: saturation hardening
+  ///    
+  RealType
+  resistance_slip_initial_;
+
+  RealType
+  rate_hardening_;
+
+  RealType
+  stress_saturation_initial_;
+
+  RealType
+  exponent_saturation_;
+
+  ///
+  /// Hardening parameters: dislocation density hardening
+  /// 
+  RealType
+  factor_geometry_dislocation_;
+
+  RealType
+  density_dislocation_;
+
+  RealType
+  c_generation_;
+
+  RealType
+  c_annihilation_;
+
+  RealType
+  modulus_shear_;
+
+  RealType
+  magnitude_burgers_;
 
 };
 
@@ -96,8 +166,9 @@ updateHardness(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
 
 
 
@@ -110,7 +181,7 @@ void
 updateSlip(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & hardness,
+    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance,
     Intrepid2::Vector<ArgT, NumSlipT> const & shear,
     Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_np1);
@@ -165,7 +236,7 @@ public:
       Intrepid2::Tensor4<ArgT, NumDimT> const & C,
       std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
       Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt);
@@ -182,7 +253,7 @@ public:
   // at step N+1.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
   Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x) const;
+  gradient(Intrepid2::Vector<T, N> const & x);
 
 
   //! Default implementation of hessian.
@@ -192,15 +263,32 @@ public:
 
 private:
 
-  RealType num_dim_;
-  RealType num_slip_;
-  Intrepid2::Tensor4<ArgT, NumDimT> const & C_;
-  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
-  Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
-  Intrepid2::Vector<RealType, NumSlipT> const & hardness_n_;
-  Intrepid2::Vector<RealType, NumSlipT> const & slip_n_;
-  Intrepid2::Tensor<ArgT, NumDimT> const & F_np1_;
-  RealType dt_;
+  RealType
+  num_dim_;
+
+  RealType
+  num_slip_;
+
+  Intrepid2::Tensor4<ArgT, NumDimT> const &
+  C_;
+
+  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const &
+  slip_systems_;
+
+  Intrepid2::Tensor<RealType, NumDimT> const &
+  Fp_n_;
+
+  Intrepid2::Vector<RealType, NumSlipT> const &
+  state_hardening_n_;
+
+  Intrepid2::Vector<RealType, NumSlipT> const &
+  slip_n_;
+
+  Intrepid2::Tensor<ArgT, NumDimT> const &
+  F_np1_;
+
+  RealType
+  dt_;
 };
 
 
@@ -223,7 +311,7 @@ public:
       Intrepid2::Tensor4<ArgT, NumDimT> const & C,
       std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
       Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt);
@@ -255,7 +343,7 @@ private:
   Intrepid2::Tensor4<ArgT, NumDimT> const & C_;
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
   Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
-  Intrepid2::Vector<RealType, NumSlipT> const & hardness_n_;
+  Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n_;
   Intrepid2::Vector<RealType, NumSlipT> const & slip_n_;
   Intrepid2::Tensor<ArgT, NumDimT> const & F_np1_;
   RealType dt_;
@@ -285,8 +373,9 @@ struct HardeningBase
     std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1) = 0;
+    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance) = 0;
 
   virtual
   ~HardeningBase() {}
@@ -329,8 +418,9 @@ struct LinearMinusRecoveryHardening final : public HardeningBase<NumDimT, NumSli
     std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~LinearMinusRecoveryHardening() {}
@@ -371,8 +461,9 @@ struct SaturationHardening final : public HardeningBase<NumDimT, NumSlipT, DataT
     std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~SaturationHardening() {}
@@ -412,8 +503,9 @@ struct DislocationDensityHardening final : public HardeningBase<NumDimT, NumSlip
     std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~DislocationDensityHardening() {}
@@ -453,8 +545,9 @@ struct NoHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
     std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1);
+    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~NoHardening() {}

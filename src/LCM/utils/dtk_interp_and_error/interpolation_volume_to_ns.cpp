@@ -91,7 +91,8 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
         plist->get<std::string>("Target Mesh Part");
   std::string field_name = 
 	plist->get<std::string>("Field Name", "solution");
-  std::string src_field_name = field_name+"_src"; 
+  bool write_dirichlet_field = 
+	plist->get<bool>("Write dirichlet_field to Exodus", false);
   std::string tgt_interp_field_name = field_name+"Ref";
     
   // Get the raw mpi communicator (basic typedef in STK).
@@ -204,6 +205,9 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
   FieldType& target_interp_field = tgt_broker.meta_data().declare_field<FieldType>( 
     	        stk::topology::NODE_RANK, tgt_interp_field_name );
   stk::mesh::put_field( target_interp_field, tgt_broker.meta_data().universal_part(), neq);
+  FieldType& dirichlet_field = tgt_broker.meta_data().declare_field<FieldType>( 
+    	        stk::topology::NODE_RANK, "dirichlet_field" );
+  stk::mesh::put_field( dirichlet_field, tgt_broker.meta_data().universal_part(), neq);
     
   // Create the target bulk data.
   tgt_broker.populate_bulk_data();
@@ -311,22 +315,19 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
   *out << "   tgt_vector: \n ";
   tgt_vector->describe(*out, Teuchos::VERB_EXTREME);
 #endif
-      
-  //Copy interpolated solution on the Schwarz nodeset onto the target solution's Schwarz nodeset  
+     
   double* tgt_field_data;
+  //Copy interpolated solution on the Schwarz nodeset onto the target solution's Schwarz nodeset  
   double* gold_value; //target_interp_field
   stk::mesh::BucketVector tgt_part_buckets = tgt_stk_selector.get_buckets( stk::topology::NODE_RANK );
   std::vector<stk::mesh::Entity> tgt_part_nodes;
   stk::mesh::get_selected_entities(tgt_stk_selector, tgt_part_buckets, tgt_part_nodes );
-  Intrepid::FieldContainer<double> tgt_node_coords = DataTransferKit::STKMeshHelpers::getEntityNodeCoordinates(
-              Teuchos::Array<stk::mesh::Entity>(tgt_part_nodes), *tgt_bulk_data );
   int num_tgt_part_nodes = tgt_part_nodes.size(); //number nodes (owned + overlap) 
 #ifdef DEBUG_OUTPUT
   std::cout << "   proc #: " << comm->getRank() << ", num_tgt_part_nodes = " << num_tgt_part_nodes << std::endl; 
 #endif
 
   for (int component = 0; component < neq; component++) {
-          
     for ( int n = 0; n < num_tgt_part_nodes; ++n )
     {
       gold_value = stk::mesh::field_data( target_interp_field, tgt_part_nodes[n] );
@@ -337,18 +338,38 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
            << std::endl;
 #endif
       tgt_field_data[component] = gold_value[component]; 
+    } 
+  }
+  if (write_dirichlet_field) {  
+    //Copy tgt_field_data into dirichlet_field for output  
+    double* dirichlet_data;
+    stk::mesh::Selector tgt_all_stk_selector = stk::mesh::Selector(tgt_broker.meta_data().universal_part()); 
+    stk::mesh::BucketVector tgt_all_buckets = tgt_all_stk_selector.get_buckets( stk::topology::NODE_RANK );
+    std::vector<stk::mesh::Entity> tgt_all_nodes;
+    stk::mesh::get_selected_entities(tgt_all_stk_selector, tgt_all_buckets, tgt_all_nodes );
+    int num_tgt_all_nodes = tgt_all_nodes.size(); //number nodes (owned + overlap) 
+#ifdef DEBUG_OUTPUT
+    std::cout << "   proc #: " << comm->getRank() << ", tgt_all_nodes = " << tgt_all_nodes << std::endl; 
+#endif
+    for (int component = 0; component < neq; component++) {
+      for ( int n = 0; n < num_tgt_all_nodes; ++n )
+      {
+        tgt_field_data = stk::mesh::field_data( *target_field, tgt_all_nodes[n] );
+        dirichlet_data = stk::mesh::field_data( dirichlet_field, tgt_all_nodes[n] );
+        dirichlet_data[component] = tgt_field_data[component]; 
+      }
     }
   }
-
-
-
   // TARGET MESH WRITE
   // -----------------
   std::size_t tgt_output_index = tgt_broker.create_output_mesh(
           target_mesh_output_file, stk::io::WRITE_RESULTS );
   //Uncomment the following if you want to write target_interp_field to the exodus output mesh 
   //tgt_broker.add_field( tgt_output_index, target_interp_field );
-  tgt_broker.add_field( tgt_output_index, *target_field );
+  if (write_dirichlet_field == false) 
+    tgt_broker.add_field( tgt_output_index, *target_field );
+  else 
+    tgt_broker.add_field( tgt_output_index, dirichlet_field );
   tgt_broker.begin_output_step( tgt_output_index, 0.0 );
   tgt_broker.write_defined_output_fields( tgt_output_index );
   tgt_broker.end_output_step( tgt_output_index );

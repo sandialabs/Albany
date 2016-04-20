@@ -56,7 +56,7 @@
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-  #include "SchwarzMultiscale.hpp"
+  #include "Schwarz_Multiscale.hpp"
   #include "Schwarz_PiroObserverT.hpp"
 #endif
 

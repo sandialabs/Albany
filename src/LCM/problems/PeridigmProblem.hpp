@@ -83,7 +83,7 @@ namespace Albany {
     bool haveMatDB;
     bool supportsTransient;
     std::string mtrlDbFilename;
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDataBase;
+    Teuchos::RCP<LCM::MaterialDatabase> materialDataBase;
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
     std::set<std::string> registered_distributedFields;
   };

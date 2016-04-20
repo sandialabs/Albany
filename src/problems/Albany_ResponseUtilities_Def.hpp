@@ -15,6 +15,7 @@
 #include "PHAL_ResponseFieldIntegral.hpp"
 #endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
+#include "PHAL_ResponseThermalEnergyT.hpp"
 #include "Adapt_ElementSizeField.hpp"
 #include "PHAL_ResponseSquaredL2Error.hpp"
 #include "PHAL_ResponseSquaredL2ErrorSide.hpp"
@@ -43,6 +44,9 @@
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
 #include "Aeras_ShallowWaterResponseL2Norm.hpp"
+#endif
+#ifdef ALBANY_AMP
+#include "Energy.hpp"
 #endif
 
 template<typename EvalT, typename Traits>
@@ -246,7 +250,27 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-
+  
+  else if (responseName == "PHAL Thermal EnergyT")
+  {
+    RCP<PHAL::ResponseThermalEnergyT<EvalT,Traits> > res_ev =
+      rcp(new PHAL::ResponseThermalEnergyT<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  
+#ifdef ALBANY_AMP
+  else if (responseName == "AMP Energy")
+  {
+    RCP<AMP::Energy<EvalT,Traits> > res_ev =
+      rcp(new AMP::Energy<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+#endif
+  
 #ifdef ALBANY_AERAS
   else if (responseName == "Aeras Shallow Water L2 Error")
   {
@@ -315,7 +339,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
-      rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl));
+      rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -335,7 +359,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::TensorPNormResponse<EvalT,Traits> > res_ev =
-      rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl));
+      rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -375,7 +399,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
-      rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl));
+      rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

@@ -65,65 +65,67 @@ case "$SCRIPT_NAME" in
 esac
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
 
+# Use different variable names for loop counters so they do not
+# conflict with the variables defined by the module command.
 module purge
-for PACKAGE in $PACKAGES; do
-    for ARCH in $ARCHES; do
-        for TOOL_CHAIN in $TOOL_CHAINS; do
-            for BUILD_TYPE in $BUILD_TYPES; do
-                MODULE="$ARCH"-"$TOOL_CHAIN"-"$BUILD_TYPE"
+for P in $PACKAGES; do
+    for A in $ARCHES; do
+        for TC in $TOOL_CHAINS; do
+            for BT in $BUILD_TYPES; do
+                MODULE="$A"-"$TC"-"$BT"
                 echo "MODULE: $MODULE"
                 module load "$MODULE"
-                "$COMMAND" "$PACKAGE" "$NUM_PROCS"
+                "$COMMAND" "$P" "$NUM_PROCS"
+                # Update wiki after compiling Albany with gcc debug only.
+                case "$PACKAGE" in
+                    albany)
+	                case "$ARCH" in
+	                    serial)
+		                case "$BUILD_TYPE" in
+		                    debug)
+			                case "$TOOL_CHAIN" in
+			                    gcc)
+				                update_wiki
+				                ;;
+			                    clang)
+				                ;;
+			                    intel)
+				                ;;
+			                    *)
+				                echo "Unrecognized tool chain option"
+				                exit 1
+				                ;;
+			                esac
+			                ;;
+		                    release)
+			                ;;
+		                    *)
+			                echo "Unrecognized build type option"
+			                exit 1
+			                ;;
+		                esac
+		                ;;
+	                    openmp)
+		                ;;
+	                    cuda)
+		                ;;
+	                    *)
+		                echo "Unrecongnized architecture option"
+		                exit 1
+		                ;;
+	                esac
+	                ;;
+                    trilinos)
+	                ;;
+                    *)
+	                echo "Unrecognized package option"
+	                exit 1
+	                ;;
+                esac
+                module purge
             done
         done
     done
 done
-
-# Update wiki after compiling Albany with gcc release only.
-case "$PACKAGE" in
-    albany)
-	case "$ARCH" in
-	    serial)
-		case "$BUILD_TYPE" in
-		    release)
-			case "$TOOL_CHAIN" in
-			    gcc)
-				update_wiki
-				;;
-			    clang)
-				;;
-			    intel)
-				;;
-			    *)
-				echo "Unrecognized tool chain option"
-				exit 1
-				;;
-			esac
-			;;
-		    release)
-			;;
-		    *)
-			echo "Unrecognized build type option"
-			exit 1
-			;;
-		esac
-		;;
-	    openmp)
-		;;
-	    cuda)
-		;;
-	    *)
-		echo "Unrecongnized architecture option"
-		exit 1
-		;;
-	esac
-	;;
-    trilinos)
-	;;
-    *)
-	echo "Unrecognized package option"
-	exit 1
-	;;
-esac
 
 cd "$LCM_DIR"

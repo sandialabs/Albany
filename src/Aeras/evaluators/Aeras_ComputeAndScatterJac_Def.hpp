@@ -21,6 +21,8 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
+  theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar),
   worksetSize(dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
@@ -50,10 +52,17 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   this->addDependentField(wBF);
   this->addDependentField(GradBF);
   this->addDependentField(wGradBF);
+  this->addDependentField(lambda_nodal);
+  this->addDependentField(theta_nodal);
 
   this->addEvaluatedField(*scatter_operation);
 
   this->setName(fieldName);
+
+ //read the hv coef
+  double HVcoef = p.get<double>("HV coefficient");
+  sqrtHVcoef = std::sqrt(HVcoef);
+
 }
 
 // **********************************************************************
@@ -66,6 +75,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(lambda_nodal,fm);
+  this->utils.setFieldData(theta_nodal,fm);
 }
 
 
@@ -244,18 +255,18 @@ evaluateFields(typename Traits::EvalData workset)
 //Mass:
 //loop over cells, c
 //  loop over levels, l
-//    loop over nodes,n
-//      q=n; m=n
-//      diag(c,l,n) = BF(n,q)*wBF(m,q)
+//    loop over nodes,node
+//      q=n; m=node
+//      diag(c,l,node) = BF(node,q)*wBF(m,q)
 //
 //Laplacian:
 //loop over cells, c
 //  loop over levels, l
-//    loop over nodes,n
+//    loop over nodes,node
 //      loop over nodes,m
 //        loop over qp, q
 //          loop over dim, d
-//            laplace(c,l,n,m) += gradBF(n,q,d)*wGradBF(m,q,d)
+//            laplace(c,l,node,m) += gradBF(node,q,d)*wGradBF(m,q,d)
 //
 //(There’s also a loop over unknowns per node.)
 //
@@ -423,6 +434,20 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 #if !OLDSCATTER
+//AMET calls for mass with (j, m, n ) = (0, -1, 0)
+//HVDecorator calls for mass with 0, -1, 0 (for the time step as in AMET) and 0, 1, 0 for the HV operator
+
+  ST mc = workset.m_coeff;
+
+  std::cout <<"Workset coefficients: j = "<< workset.j_coeff << ", m = " <<workset.m_coeff << ", n = " <<workset.n_coeff << "\n";
+
+  bool buildMass = ( ( workset.j_coeff == 0 )&&( workset.m_coeff == 1.0 )&&( workset.n_coeff == 0 ) )
+		         ||( ( workset.j_coeff == 0 )&&( workset.m_coeff == -1.0 )&&( workset.n_coeff == 0 ) );
+
+  bool buildLaplace = ( workset.j_coeff == 0 )&&( workset.m_coeff == 0 )&&( workset.n_coeff == 1.0 );
+
+  std::cout << "buildMass, buildLaplace " << buildMass << ", " << buildLaplace << "\n";
+
   int numcells_ = workset.numCells,
 	  numnodes_ = this->numNodes;
   //for mass we do not really need even this
@@ -432,6 +457,9 @@ evaluateFields(typename Traits::EvalData workset)
 	  for(int node = 0; node < numnodes_; node++)
 	     localMassMatr(cell, node, node) = this -> wBF(cell, node, node);
   }*/
+
+  if( buildMass ){
+
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -443,7 +471,7 @@ evaluateFields(typename Traits::EvalData workset)
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
         rowT = eqID[n];
-        ST val2 = - this -> wBF(cell, node, node);
+        ST val2 = mc * this -> wBF(cell, node, node);
         JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
       }
       eq += this->numNodeVar;
@@ -451,14 +479,14 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
             rowT = eqID[n];
-            ST val2 = - this -> wBF(cell, node, node);
+            ST val2 = mc * this -> wBF(cell, node, node);
             JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
           }
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
           rowT = eqID[n];
-          ST val2 = - this -> wBF(cell, node, node);
+          ST val2 = mc *  this -> wBF(cell, node, node);
           JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
         }
       }
@@ -467,13 +495,138 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           rowT = eqID[n];
           //Minus!
-          ST val2 = - this -> wBF(cell, node, node);
+          ST val2 = mc * this -> wBF(cell, node, node);
           JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
         }
       }
       eq += this->numTracerVar;
     }
   }
+  }
+
+
+////////////////////////////////////////////////////////
+  if( buildLaplace ){
+	  for (int cell=0; cell < workset.numCells; ++cell ) {
+	      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+	      const int neq = nodeID[0].size();
+	      colT.resize(neq * this->numNodes);
+
+	      for (int node=0; node<this->numNodes; node++){
+	        for (int eq_col=0; eq_col<neq; eq_col++) {
+	          colT[neq * node + eq_col] =  nodeID[node][eq_col];
+	        }
+	      }
+
+	      for (int node = 0; node < this->numNodes; ++node) {
+
+	        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
+	        int n = 0, eq = 0;
+
+	        //dealing with surf pressure
+
+	        for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+
+	        	//rowT is LID in row map for vector x=all variables
+	        	//so rowT here is a row index corresponding to pressure eqn at (node, cell)
+		       rowT = eqID[n];
+
+		       //loop over nodes on the same level
+		       for (unsigned int m=0; m< this->numNodes; m++) {
+
+		    	  const int col_ = colT[m*neq];//= nodeID[m][n];
+                  //const int row_ = nodeID[node][n];
+		    	  //at this point we know node, cell, m
+
+		    	  ST val = 0;
+		    	  for(int qp = 0; qp < this->numNodes; qp++){
+		             val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+		            	 + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+		    	  }
+		    	  val *= this->sqrtHVcoef;
+		    	  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
+	           }
+	        }
+	        eq += this->numNodeVar;
+
+	        for (int level = 0; level < this->numLevels; level++) {
+	          //dealing with velocity
+
+	          for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+
+	            for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+	            /*
+	              //const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
+	              rowT = eqID[n];
+	              if (valptr.hasFastAccess()) {
+	                  //Sum Jacobian entries
+	                  for (unsigned int i=0; i<neq*this->numNodes; ++i) {
+	                    ST val = valptr.fastAccessDx(i);
+	                    if (val != 0.0) {
+	                      JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
+	                    }
+	                  }
+	              }*/
+	            }
+	          }
+
+	          //dealing with temperature
+	          for (int j = eq+this->numVectorLevelVar;
+	                   j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+
+	        	   rowT = eqID[n];//the same as nodeID[node][n]
+			       //loop over nodes on the same level
+			       for (unsigned int m=0; m< this->numNodes; m++) {
+
+			    	  const int col_ = nodeID[m][n];
+	                  //const int row_ = nodeID[node][n];
+			    	  //at this point we know node, cell, m
+
+			    	  ST val = 0;
+			    	  for(int qp = 0; qp < this->numNodes; qp++){
+			             val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+			            	 + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+			    	  }
+			    	  val *= this->sqrtHVcoef;
+			    	  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
+		           }
+
+
+	          }
+	        }//end of level loop for velocity and temperature
+
+	        eq += this->numVectorLevelVar+this->numScalarLevelVar;
+	        for (int level = 0; level < this->numLevels; ++level) {
+	        	//dealing with tracers
+
+	          for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+
+	        	   rowT = eqID[n];//the same as nodeID[node][n]
+			       //loop over nodes on the same level
+			       for (unsigned int m=0; m< this->numNodes; m++) {
+
+			    	  const int col_ = nodeID[m][n];
+	                  //const int row_ = nodeID[node][n];
+			    	  //at this point we know node, cell, m
+
+			    	  ST val = 0;
+			    	  for(int qp = 0; qp < this->numNodes; qp++){
+			             val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+			            	 + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+			    	  }
+			    	  val *= this->sqrtHVcoef;
+			    	  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
+		           }
+
+	          }
+
+	        }//end of level loop for tracers
+	        eq += this->numTracerVar;
+	      }//end of loop over nodes
+	    }//end of loop over cells
+
+  }//end of if buildLaplace
 
 #endif
 

@@ -7,36 +7,50 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
-
 namespace LCM
 {
 
-//! \brief Constitutive Model Base Class
+///
+/// Constitutive Model Base Class
+///
 template<typename EvalT, typename Traits>
 class ConstitutiveModel
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using ScalarT = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
+  using Workset = typename Traits::EvalData;
+
+  using FieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>;
+  using DataLayoutMap = std::map<std::string, Teuchos::RCP<PHX::DataLayout>>;
 
   ///
   /// Constructor
   ///
-  ConstitutiveModel(Teuchos::ParameterList* p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  ConstitutiveModel(
+      Teuchos::ParameterList * p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   ///
   /// Virtual Destructor
   ///
   virtual
   ~ConstitutiveModel()
-  {};
+  {
+    return;
+  };
+
+  ///
+  /// No copy constructor
+  ///
+  ConstitutiveModel(ConstitutiveModel const &) = delete;
+
+  ///
+  /// No copy assignment
+  ///
+  ConstitutiveModel &
+  operator=(ConstitutiveModel const &) = delete;
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
@@ -44,48 +58,108 @@ public:
   virtual
   void
   computeState(
-      typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields) = 0;
+      Workset workset,
+      FieldMap dep_fields,
+      FieldMap eval_fields) = 0;
 
   virtual
   void
   computeStateParallel(
-      typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields) = 0;
+      Workset workset,
+      FieldMap dep_fields,
+      FieldMap eval_fields) = 0;
 
   ///
   /// Optional Method to volume average the pressure
   ///
-  virtual
   void
   computeVolumeAverage(
-      typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
+      Workset workset,
+      FieldMap dep_fields,
+      FieldMap eval_fields);
 
   ///
-  /// Return a map to the dependent fields
+  /// Accessors and mutators
   ///
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
+  int
+  getNumDimensions()
+  {
+    return num_dims_;
+  }
+
+  int
+  getNumCubaturePoints()
+  {
+    return num_pts_;
+  }
+
+  int
+  getNumStateVariables()
+  {
+    return num_state_variables_;
+  }
+
+  ///
+  /// state variable registration helpers
+  ///
+  std::string
+  getStateVarName(int state_var)
+  {
+    return state_var_names_[state_var];
+  }
+
+  Teuchos::RCP<PHX::DataLayout>
+  getStateVarLayout(int state_var)
+  {
+    return state_var_layouts_[state_var];
+  }
+
+  std::string
+  getStateVarInitType(int state_var)
+  {
+    return state_var_init_types_[state_var];
+  }
+
+  double
+  getStateVarInitValue(int state_var)
+  {
+    return state_var_init_values_[state_var];
+  }
+
+  bool
+  getStateVarOldStateFlag(int state_var)
+  {
+    return state_var_old_state_flags_[state_var];
+  }
+
+  bool
+  getStateVarOutputFlag(int state_var)
+  {
+    return state_var_output_flags_[state_var];
+  }
+
+  ///
+  /// Deal with fields
+  ///
+
+  Teuchos::RCP<std::map<std::string, std::string>>
+  getFieldNameMap()
+  {
+    return field_name_map_;
+  }
+
+  DataLayoutMap
   getDependentFieldMap()
   {
     return dep_field_map_;
   }
 
-  ///
-  /// Return a map to the evaluated fields
-  ///
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
+  DataLayoutMap
   getEvaluatedFieldMap()
   {
     return eval_field_map_;
   }
 
-  ///
-  /// Convenience function to set dependent fields.
-  ///
   void
   setDependentField(
       std::string const & field_name,
@@ -94,33 +168,12 @@ public:
     dep_field_map_.insert(std::make_pair(field_name, field));
   }
 
-  ///
-  /// Convenience function to set evaluated fields.
-  ///
   void
   setEvaluatedField(
       std::string const & field_name,
       Teuchos::RCP<PHX::DataLayout> const & field)
   {
     eval_field_map_.insert(std::make_pair(field_name, field));
-  }
-
-  ///
-  /// state variable registration helpers
-  ///
-  std::string getStateVarName(int state_var);
-  Teuchos::RCP<PHX::DataLayout> getStateVarLayout(int state_var);
-  std::string getStateVarInitType(int state_var);
-  double getStateVarInitValue(int state_var);
-  bool getStateVarOldStateFlag(int state_var);
-  bool getStateVarOutputFlag(int state_var);
-
-  ///
-  /// Retrive the number of state variables
-  ///
-  int getNumStateVariables()
-  {
-    return num_state_variables_;
   }
 
   ///
@@ -207,147 +260,174 @@ public:
 protected:
 
   ///
-  /// Number of State Variables
-  ///
-  int num_state_variables_;
-
-  ///
   /// Number of dimensions
   ///
-  int num_dims_;
+  int
+  num_dims_{0};
 
   ///
   /// Number of integration points
   ///
-  int num_pts_;
+  int
+  num_pts_{0};
 
-  ///
-  /// flag for integration point locations
-  ///
-  bool need_integration_pt_locations_;
+  std::vector<std::string>
+  state_var_names_;
 
-  ///
-  /// flag that the energy needs to be computed
-  ///
-  bool compute_energy_;
+  std::vector<Teuchos::RCP<PHX::DataLayout>>
+  state_var_layouts_;
 
-  ///
-  /// flag that the tangent needs to be computed
-  ///
-  bool compute_tangent_;
+  std::vector<std::string>
+  state_var_init_types_;
 
-  ///
-  /// Bool for temperature
-  ///
-  bool have_temperature_;
+  std::vector<double>
+  state_var_init_values_;
 
-  ///
-  /// Bool for damage
-  ///
-  bool have_damage_;
+  std::vector<bool>
+  state_var_old_state_flags_;
 
-  ///
-  /// Bool for total concentration
-  ///
-  bool have_total_concentration_;
-
-  ///
-  /// Bool for total bubble density
-  ///
-  bool have_total_bubble_density_;
-
-  ///
-  /// Bool for bubble_volume_fraction
-  ///
-  bool have_bubble_volume_fraction_;
-
-  ///
-  /// optional integration point locations field
-  ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord_vec_;
-
-  ///
-  /// optional temperature field
-  ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> temperature_;
-
-  ///
-  /// Optional total concentration field
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_;
-
-  ///
-  /// Optional total (He) bubble density field
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint> total_bubble_density_;
-
-  ///
-  /// Optional bubble volume fraction field
-  ///
-  PHX::MDField<ScalarT,Cell,QuadPoint> bubble_volume_fraction_;
-
-  ///
-  /// optional damage field
-  ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> damage_;
-
-  ///
-  /// optional weights field
-  ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_;
-
-  ///
-  /// optional J field
-  ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> j_;
+  std::vector<bool>
+  state_var_output_flags_;
 
   ///
   /// Map of field names
   ///
-  Teuchos::RCP<std::map<std::string, std::string>> field_name_map_;
+  Teuchos::RCP<std::map<std::string, std::string>>
+  field_name_map_;
 
-  std::vector<std::string> state_var_names_;
-  std::vector<Teuchos::RCP<PHX::DataLayout>> state_var_layouts_;
-  std::vector<std::string> state_var_init_types_;
-  std::vector<double> state_var_init_values_;
-  std::vector<bool> state_var_old_state_flags_;
-  std::vector<bool> state_var_output_flags_;
+  DataLayoutMap
+  dep_field_map_;
 
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout>> dep_field_map_;
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout>> eval_field_map_;
+  DataLayoutMap
+  eval_field_map_;
+
+  ///
+  /// Number of State Variables
+  ///
+  int
+  num_state_variables_{0};
+
+  ///
+  /// flag for integration point locations
+  ///
+  bool
+  need_integration_pt_locations_{false};
+
+  ///
+  /// flag that the energy needs to be computed
+  ///
+  bool
+  compute_energy_{false};
+
+  ///
+  /// flag that the tangent needs to be computed
+  ///
+  bool
+  compute_tangent_{false};
+
+  ///
+  /// Bool for temperature
+  ///
+  bool
+  have_temperature_{false};
+
+  ///
+  /// Bool for damage
+  ///
+  bool
+  have_damage_{false};
+
+  ///
+  /// Bool for total concentration
+  ///
+  bool
+  have_total_concentration_{false};
+
+  ///
+  /// Bool for total bubble density
+  ///
+  bool
+  have_total_bubble_density_{false};
+
+  ///
+  /// Bool for bubble_volume_fraction
+  ///
+  bool
+  have_bubble_volume_fraction_{false};
+
+  ///
+  /// optional integration point locations field
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
+  coord_vec_;
+
+  ///
+  /// optional temperature field
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint>
+  temperature_;
+
+  ///
+  /// Optional total concentration field
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint>
+  total_concentration_;
+
+  ///
+  /// Optional total (He) bubble density field
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint>
+  total_bubble_density_;
+
+  ///
+  /// Optional bubble volume fraction field
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint>
+  bubble_volume_fraction_;
+
+  ///
+  /// optional damage field
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint>
+  damage_;
+
+  ///
+  /// optional weights field
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint>
+  weights_;
+
+  ///
+  /// optional J field
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint>
+  j_;
 
   ///
   /// Thermal Expansion Coefficient
   ///
-  RealType expansion_coeff_;
+  RealType
+  expansion_coeff_{0.0};
 
   ///
   /// Reference Temperature
   ///
-  RealType ref_temperature_;
+  RealType
+  ref_temperature_{0.0};
 
   ///
   /// Heat Capacity
   ///
-  RealType heat_capacity_;
+  RealType
+  heat_capacity_{1.0};
 
   ///
   /// Density
   ///
-  RealType density_;
-
-private:
-  ///
-  /// Private to prohibit copying
-  ///
-  ConstitutiveModel(const ConstitutiveModel&);
-
-  ///
-  /// Private to prohibit copying
-  ///
-  ConstitutiveModel& operator=(const ConstitutiveModel&);
-
+  RealType
+  density_{1.0};
 };
-}
+
+} // namespace LCM
 
 #endif

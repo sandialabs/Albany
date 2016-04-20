@@ -1487,6 +1487,14 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
       "Name of solution output vector written to Exodus file. Requires SEACAS build");
   validPL->set<std::string>("Exodus Residual Name", "",
       "Name of residual output vector written to Exodus file. Requires SEACAS build");
+#ifdef ALBANY_DTK
+  validPL->set<std::string>("Exodus Solution DTK Name", "",
+      "Name of solution dtk written to Exodus file. Requires SEACAS build");
+  validPL->set<std::string>("Exodus SolutionDot DTK Name", "",
+      "Name of solution_dot dtk written to Exodus file. Requires SEACAS build");
+  validPL->set<std::string>("Exodus SolutionDotDot DTK Name", "",
+      "Name of solution_dotdot dtk written to Exodus file. Requires SEACAS build");
+#endif
   validPL->set<int>("Exodus Write Interval", 3, "Step interval to write solution data to Exodus file");
   validPL->set<std::string>("NetCDF Output File Name", "",
       "Request NetCDF output to given file name. Requires SEACAS build");

@@ -24,7 +24,7 @@ LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<std::string>("MaterialDB Filename")){
         haveMatDB = true;
     mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
+    materialDB = Teuchos::rcp(new MaterialDatabase(mtrlDbFilename, commT));
   }
 
   // currently only support 3D analyses

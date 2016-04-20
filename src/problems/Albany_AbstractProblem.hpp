@@ -49,6 +49,9 @@
 
 namespace Albany {
 
+// Define enumerator to store solution method name
+enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyperviscosity, Unknown};
+
 #if defined(ALBANY_LCM)
   class Application;
 #endif //ALBANY_LCM
@@ -77,6 +80,9 @@ namespace Albany {
     void setNumEquations(const int neq_);
     unsigned int numStates() const;
 
+    // Get the solution method type name
+    SolutionMethodType getSolutionMethod();
+    
     //! Get spatial dimension
     virtual int spatialDimension() const = 0;
 
@@ -145,6 +151,9 @@ namespace Albany {
     //! Equations that are defined ONLY on some part of the mesh
     std::map<int,std::vector<std::string> > sideSetEquations;
 
+    // Variable use to store the solution method name.
+    SolutionMethodType SolutionMethodName;
+    
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;
 

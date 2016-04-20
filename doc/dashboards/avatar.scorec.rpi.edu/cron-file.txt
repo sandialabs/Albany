@@ -1,3 +1,3 @@
 MAILTO=""
-00 00 * * * /lore/ghansen/nightly/nightly_cron_script.sh
+00 00 * * * /users/ghansen/Albany/doc/dashboards/avatar.scorec.rpi.edu/nightly_cron_script.sh
 

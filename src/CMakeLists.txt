@@ -290,6 +290,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_QuadPointsToCellInterpolation.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
+  evaluators/PHAL_ResponseThermalEnergyT.cpp
   evaluators/PHAL_SaveCellStateField.cpp
   evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_SaveSideSetStateField.cpp
@@ -433,6 +434,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_ResponseSquaredL2Error_Def.hpp
   evaluators/PHAL_ResponseSquaredL2ErrorSide.hpp
   evaluators/PHAL_ResponseSquaredL2ErrorSide_Def.hpp
+  evaluators/PHAL_ResponseThermalEnergyT.hpp
+  evaluators/PHAL_ResponseThermalEnergyT_Def.hpp
   evaluators/PHAL_SaveCellStateField.hpp
   evaluators/PHAL_SaveCellStateField_Def.hpp
   evaluators/PHAL_SaveNodalField.hpp
@@ -681,6 +684,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
+		     ./AMP/responses
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -842,6 +846,8 @@ ENDIF()
 ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
 
+# Note: Albany_EXTRA_LIBRARIES is to allow users to specify
+# libraries that one cannot get out of Trilinos directly.
 set(ALL_LIBRARIES
   ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
@@ -853,6 +859,7 @@ set(ALL_LIBRARIES
   ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
+  ${Albany_EXTRA_LIBRARIES}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
   )
 
@@ -891,7 +898,11 @@ IF (ALBANY_FELIX)
   ENDIF()
 
   IF (ENABLE_CISM_INTERFACE)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
+    IF (ENABLE_CISM_EPETRA) 
+      SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterfaceE)
+    ELSE()
+      SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
+    ENDIF()
   ENDIF()
 ENDIF()
 

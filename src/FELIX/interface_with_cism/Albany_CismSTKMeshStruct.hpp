@@ -104,14 +104,14 @@ namespace Albany {
     int NumEastFaces; 
     int NumSouthFaces; 
     int NumNorthFaces; 
-    double (*xyz)[3]; //hard-coded for 3D for now 
-    double* sh; //surface height
-    double* thck; //thickness
-    double (*shGrad)[2]; //surface height gradient (ds/dx, ds/dy)
-    double* beta;
-    GO* dirichletNodeMask;  
-    int (*eles)[8]; //hard-coded for 3D hexes for now 
-    double *flwa; //double array that gives value of flow factor  
+    std::vector<std::vector<double> > xyz;
+    std::vector<double> sh; //surface height
+    std::vector<double> thck; //thickness
+    std::vector<std::vector<double> >shGrad; //surface height gradient (ds/dx, ds/dy)
+    std::vector<double> beta;
+    std::vector<GO> dirichletNodeMask;  
+    std::vector<std::vector<int>> eles; //hard-coded for 3D hexes for now 
+    std::vector<double> flwa; //double array that gives value of flow factor  
     bool have_sh; // Does surface height data exist?
     bool have_thck; // Does thickness data field exist? 
     bool have_shGrad; // Does surface height gradient data exist?
@@ -121,14 +121,14 @@ namespace Albany {
     bool have_flwa; // Does flwa (flow factor) file exist?
     bool have_beta; // Does beta (basal fraction) file exist?
     bool have_dirichlet;
-    double *uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
-    double *vvel;  
-    int (*bf)[5]; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
-    int (*tf)[5]; 
-    int (*wf)[5]; 
-    int (*ef)[5]; 
-    int (*sf)[5]; 
-    int (*nf)[5]; 
+    std::vector<double> uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
+    std::vector<double> vvel;  
+    std::vector<std::vector<int>> bf; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
+    std::vector<std::vector<int>> tf;
+    std::vector<std::vector<int>> wf; 
+    std::vector<std::vector<int>> ef; 
+    std::vector<std::vector<int>> sf; 
+    std::vector<std::vector<int>> nf;
     Teuchos::RCP<Tpetra_Map> elem_mapT; //element map 
     Teuchos::RCP<Tpetra_Map> node_mapT; //node map 
     Teuchos::RCP<Tpetra_Map> basal_face_mapT; //basalface map 
@@ -140,6 +140,8 @@ namespace Albany {
     bool hasRestartSol;
     double restartTime;
     int debug_output_verbosity; 
+    void resizeVec(std::vector<std::vector<double> > &vec , const unsigned int rows , const unsigned int columns); 
+    void resizeVec(std::vector<std::vector<int> > &vec , const unsigned int rows , const unsigned int columns); 
     
     protected: 
   };

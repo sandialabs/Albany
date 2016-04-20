@@ -13,9 +13,8 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Application.hpp"
+#include "Schwarz_Multiscale.hpp"
 #include "Schwarz_ObserverImpl.hpp"
-#include "SchwarzMultiscale.hpp"
-
 #include "Teuchos_RCP.hpp"
 
 namespace LCM {

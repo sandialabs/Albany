@@ -111,7 +111,7 @@ class GOALMechanicsProblem: public Albany::AbstractProblem
     Teuchos::RCP<Layouts> dl;
 
     //! material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<LCM::MaterialDatabase> materialDB;
 
     //! old state data
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP

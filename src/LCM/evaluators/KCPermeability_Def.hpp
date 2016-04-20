@@ -130,7 +130,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int qp=0; qp < numQPs; ++qp) {
     	  // Cozeny Karman permeability equation
     	  kcPermeability(cell,qp) = constant_value*porosity(cell,qp)*porosity(cell,qp)*porosity(cell,qp)/
-    			                    (1-porosity(cell,qp)*porosity(cell,qp));
+    			                    ((1.0-porosity(cell,qp))*(1.0 - porosity(cell,qp)));
       }
     }
   }

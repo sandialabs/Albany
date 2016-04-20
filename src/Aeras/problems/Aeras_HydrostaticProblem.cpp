@@ -220,6 +220,20 @@ Aeras::HydrostaticProblem::getValidProblemParameters() const
 namespace Aeras{
 template <>
 Teuchos::RCP<const PHX::FieldTag>
+HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::DistParamDeriv>(
+  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+  const Albany::MeshSpecsStruct& meshSpecs,
+  Albany::StateManager& stateMgr,
+  Albany::FieldManagerChoice fieldManagerChoice,
+  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+{
+  //Do nothing -- DistParamDerivs are not meant to work for Aeras and with AlbanyT 
+	return Teuchos::null;
+}
+
+#ifndef AERAS_IMPLICIT_HS
+template <>
+Teuchos::RCP<const PHX::FieldTag>
 HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   const Albany::MeshSpecsStruct& meshSpecs,
@@ -476,8 +490,24 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Weighted Gradient BF Name",            "wGrad BF");
     p->set<string>("BF Name",                    "BF");
     p->set<string>("Gradient BF Name",           "Grad BF");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
 
     p->set<string>("Scatter Field Name", "Compute And Scatter Jacobian");
+
+
+    Teuchos::ParameterList& hydrostatic_params = params->sublist("Hydrostatic Problem");
+    const bool useExplHV = hydrostatic_params.get<bool>("Use Explicit Hyperviscosity", false);
+    const bool useImplHV = hydrostatic_params.get<bool>("Use Implicit Hyperviscosity", false);
+    if ( useImplHV )
+  		TEUCHOS_TEST_FOR_EXCEPTION(true,
+  		Teuchos::Exceptions::InvalidParameter,"Aeras::Hydrostatic: Implicit HV is not implemented, check parameter 'Use Implicit Hyperviscosity'. \n");
+
+    double HVcoef = hydrostatic_params.get<double>("Hyperviscosity Tau", 0.0);
+    if ( !useExplHV ) HVcoef = 0.0;
+
+
+    p->set<double>("HV coefficient", HVcoef);
 
     ev = rcp(new Aeras::ComputeAndScatterJac<EvalT,AlbanyTraits>(*p,dl));
     fm0.registerEvaluator<EvalT>(ev);
@@ -499,4 +529,5 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
 
   return Teuchos::null;
 }
+#endif
 }

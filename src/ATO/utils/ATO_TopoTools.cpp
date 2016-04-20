@@ -11,9 +11,10 @@
 namespace ATO {
 
 //**********************************************************************
-Topology::Topology(const Teuchos::ParameterList& topoParams)
+Topology::Topology(const Teuchos::ParameterList& topoParams, int global_index)
 //**********************************************************************
 {
+  globalIndex = global_index;
   name      = topoParams.get<std::string>("Topology Name");
   initValue = topoParams.get<double>("Initial Value");
 
@@ -23,11 +24,6 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
 
   entityType = topoParams.get<std::string>("Entity Type");
 
-  if( topoParams.isType<std::string>("Integration Method") )
-    integrationMethod = topoParams.get<std::string>("Integration Method");
-  else
-    integrationMethod = "Gauss Quadrature";
-  
   if( topoParams.isType<int>("Topology Output Filter") )
     topologyOutputFilter = topoParams.get<int>("Topology Output Filter");
   else topologyOutputFilter = -1;

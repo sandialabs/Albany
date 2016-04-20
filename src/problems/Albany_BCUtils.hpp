@@ -18,8 +18,11 @@
 #include "Phalanx.hpp"
 #include "PHAL_FactoryTraits.hpp"
 
+#if defined(ALBANY_LCM)
+#include "MaterialDatabase.h"
+#else
 #include "QCAD_MaterialDatabase.hpp"
-
+#endif // ALBANY_LCM
 
 namespace Albany {
 

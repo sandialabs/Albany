@@ -54,6 +54,35 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
+	/*// OG debugging statements
+	std::string	myName = this->getName();
+	std::cout << "MY GRAD NAME IS ------------- " << myName <<"\n";
+
+
+	val_node(23,0,0) = 0;
+	val_node(23,1,0) = 0;
+	val_node(23,2,0) = 0;
+	val_node(23,3,0) = 0;
+	val_node(23,4,0) = 1;
+	val_node(23,5,0) = 2;
+	val_node(23,6,0) = 3;
+	val_node(23,7,0) = 4;
+	val_node(23,8,0) = 0;
+	val_node(23,9,0) = 0;
+	val_node(23,10,0) = 0;
+	val_node(23,11,0) = 0;
+	val_node(23,12,0) = 0;
+	val_node(23,13,0) = 0;
+	val_node(23,14,0) = 0;
+	val_node(23,15,0) = 0;
+
+	std::cout << "Printing Geopotential on the first level ------------ \n";
+	for (int qp=0; qp < numQPs; ++qp) {
+		std::cout << "qp = " << qp << " value = "<< val_node(23,qp,0) <<"\n";
+	}
+*/
+
+
   PHAL::set(grad_val_qp, 0.0);
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
@@ -66,6 +95,12 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+/*//OG debugging statements
+    std::cout << "Printing Gradient on the first level ------------ \n";
+	for (int qp=0; qp < numQPs; ++qp) {
+	std::cout << "qp = " << qp << " value = "<< grad_val_qp(23,qp,0,0) << ", "<<grad_val_qp(23,qp,0,1) <<"\n";
+	}
+*/
 }
 
 //**********************************************************************

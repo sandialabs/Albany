@@ -276,11 +276,12 @@ void Albany::APFDiscretization::setupMLCoords()
 
   // get mesh dimension and part handle
   const int mesh_dim = getNumDim();
-  rigidBodyModes->resize(mesh_dim, numOwnedNodes);
+  coordMV = Teuchos::rcp(
+      new Tpetra_MultiVector(node_mapT, mesh_dim, false));
+
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = meshStruct->getMesh()->getCoordinateField();
 
-  double* const coords = rigidBodyModes->getCoordArray();
   for (std::size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
     if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
@@ -290,13 +291,13 @@ void Albany::APFDiscretization::setupMLCoords()
     double lcoords[3];
     apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
     for (std::size_t j = 0; j < mesh_dim; ++j)
-      coords[j*numOwnedNodes + node_lid] = lcoords[j];
+      coordMV->replaceLocalValue(node_lid, j, lcoords[j]);
   }
 
   if (meshStruct->useNullspaceTranslationOnly)
-    rigidBodyModes->setCoordinates(node_mapT);
+    rigidBodyModes->setCoordinates(coordMV);
   else
-    rigidBodyModes->setCoordinatesAndNullspace(node_mapT, mapT);
+    rigidBodyModes->setCoordinatesAndNullspace(coordMV, mapT);
 }
 
 const Albany::WorksetArray<std::string>::type&

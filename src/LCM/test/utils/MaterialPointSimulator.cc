@@ -17,7 +17,6 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_TestForException.hpp>
 #include <Teuchos_as.hpp>
-#include <QCAD_MaterialDatabase.hpp>
 #include <Phalanx.hpp>
 
 #include <PHAL_AlbanyTraits.hpp>
@@ -38,6 +37,7 @@
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 #include "BifurcationCheck.hpp"
+#include "MaterialDatabase.h"
 
 #include "Kokkos_Core.hpp"
 
@@ -129,8 +129,8 @@ int main(int ac, char* av[])
   Teuchos::RCP<const Teuchos_Comm> commT =
     Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
-  Teuchos::RCP<QCAD::MaterialDatabase> material_db;
-  material_db = Teuchos::rcp(new QCAD::MaterialDatabase(input_file, commT));
+  Teuchos::RCP<LCM::MaterialDatabase> material_db;
+  material_db = Teuchos::rcp(new LCM::MaterialDatabase(input_file, commT));
 
   // Get the name of the material model to be used (and make sure there is one)
   std::string element_block_name = "Block0";

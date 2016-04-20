@@ -188,10 +188,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     // After mesh modification, need to update the element connectivity and nodal coordinates
     virtual void updateMesh(bool shouldTransferIPData);
 
-    //! Accessor function to get coordinates for ML. Memory controlled here.
-    void getOwned_xyz(double **x, double **y, double **z, double **rbm,
-                      int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
-
     // Function that transforms a mesh of a unit cube (for FELIX problems)
     // not supported in PUMI now
     void transformMesh(){}
@@ -519,6 +515,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
+    Teuchos::RCP<Tpetra_MultiVector> coordMV;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
