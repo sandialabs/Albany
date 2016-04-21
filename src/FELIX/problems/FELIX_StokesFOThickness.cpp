@@ -136,8 +136,8 @@ buildProblem(
     numBasalSideQPs      = basalCubature->getNumPoints();
 
     dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                       numBasalSideQPs,numDim-1,numDim,numCellSides,vecDimFO));
-    dl->side_layouts[basalSideName] = dl_basal;
+                                       numBasalSideQPs,numDim-1,numDim,numCellSides,neq));
+    dl_full->side_layouts[basalSideName] = dl_basal;
   }
 
   if (surfaceSideName!="INVALID")

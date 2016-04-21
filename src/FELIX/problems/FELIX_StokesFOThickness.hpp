@@ -334,7 +334,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     if (basalSideName!="INVALID")
     {
       // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
-      ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
+      ev = evalUtils_full.getPSUtils().constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -369,7 +369,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     if (it!=req.end())
     {
       // We interpolate beta from quad point to cell
-      ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      ev = evalUtils_full.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
       fm0.template registerEvaluator<EvalT>(ev);
 
       // We save it on the basal mesh
@@ -408,7 +408,7 @@ FELIX::StokesFOThickness::constructEvaluators(
 
     // We restrict it back to the 2D mesh. Clearly, this is not optimal. Just add 'basal_friction' to the Basal Requirements!
     if(basalSideName!="INVALID") {
-      ev = evalUtils.constructDOFCellToSideEvaluator("Beta",basalSideName,"Node Scalar",cellType);
+      ev = evalUtils_full.constructDOFCellToSideEvaluator("Beta",basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -423,7 +423,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     if (it!=req.end())
     {
       // We interpolate the effective pressure from quad point to cell
-      ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
+      ev = evalUtils_full.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
       fm0.template registerEvaluator<EvalT>(ev);
 
       // We register the state and build the loader
@@ -531,44 +531,48 @@ FELIX::StokesFOThickness::constructEvaluators(
     // -------------------- Special evaluators for side handling ----------------- //
 
     //---- Restrict coordinate vector from cell-based to cell-side-based
-    ev = evalUtils.getMSUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
+    ev = evalUtils_full.getMSUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
-    ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName);
+    ev = evalUtils_full.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Restrict velocity from cell-based to cell-side-based
-    ev = evalUtils.constructDOFCellToSideEvaluator("Velocity Reduced",basalSideName,"Node Vector",cellType,"Basal Velocity");
+    ev = evalUtils_full.constructDOFCellToSideEvaluator("Velocity",basalSideName,"Node Vector",cellType,"Basal Velocity");
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Restrict ice thickness from cell-based to cell-side-based
-    ev = evalUtils.constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,"Node Scalar",cellType);
+    ev = evalUtils_full.constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Restrict surface height from cell-based to cell-side-based
-    ev = evalUtils.constructDOFCellToSideEvaluator("Surface Height",basalSideName,"Node Scalar",cellType);
+    ev = evalUtils_full.constructDOFCellToSideEvaluator("Surface Height",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate velocity on QP on side
-    ev = evalUtils.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
+    ev = evalUtils_full.constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness on QP on side
-    ev = evalUtils.constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
+    ev = evalUtils_full.constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface height on QP on side
-    ev = evalUtils.constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
+    ev = evalUtils_full.constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate effective pressure on QP on side
-    ev = evalUtils.constructDOFInterpolationSideEvaluator("Effective Pressure", basalSideName);
+    ev = evalUtils_full.constructDOFInterpolationSideEvaluator("Effective Pressure", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (surfaceSideName!="INVALID")
   {
+    //---- Restrict coordinate vector from cell-based to cell-side-based
+    ev = evalUtils.getMSUtils().constructDOFCellToSideEvaluator("Coord Vec",surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+    
     //---- Compute side basis functions
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, surfaceSideBasis, surfaceCubature, surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
@@ -718,7 +722,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     //Output
     p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
 
-    ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl_full));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // --- Prolongate Stokes FO Basal Residual --- //
