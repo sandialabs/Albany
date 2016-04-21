@@ -80,9 +80,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-
-  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
-
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
 
@@ -137,8 +134,6 @@ evaluateFields(typename Traits::EvalData workset)
   int numLayers = workset.disc->getLayeredMeshNumbering()->numLayers;
   this->fieldLevel = (this->fieldLevel < 0) ? numLayers : this->fieldLevel;
 
-  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
-
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
 
@@ -165,8 +160,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i = 0; i < numSideNodes; ++i){
         std::size_t node = side.node[i];
         const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        this->field2D(elem_LID,node) = FadType(numSideNodes*this->vecDim*(numLayers+1), xT_constView[eqID[this->offset]]);
-        this->field2D(elem_LID,node).fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset) = workset.j_coeff;
+        typename PHAL::Ref<ScalarT>::type val = (this->field2D)(elem_LID,node);
+        val = FadType(val.size(), xT_constView[eqID[this->offset]]);
+        val.fastAccessDx(numSideNodes*this->vecDim*this->fieldLevel+this->vecDim*i+this->offset) = workset.j_coeff;
       }
     }
   }
@@ -256,8 +252,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
-
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
@@ -295,8 +289,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  Kokkos::deep_copy(this->field2D.get_kokkos_view(), ScalarT(0.0));
-
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
 
@@ -319,7 +311,7 @@ evaluateFields(typename Traits::EvalData workset)
       LO inode = layeredMeshNumbering.getId(base_id, this->fieldLevel);
       typename PHAL::Ref<ScalarT>::type val = (this->field2D)(cell,node);
 
-      val = FadType(neq * this->numNodes, xT_constView[solDOFManager.getLocalDOF(inode, this->offset)]);
+      val = FadType(val.size(), xT_constView[solDOFManager.getLocalDOF(inode, this->offset)]);
       val.setUpdateValue(!workset.ignore_residual);
       val.fastAccessDx(firstunk) = workset.j_coeff;
     }
