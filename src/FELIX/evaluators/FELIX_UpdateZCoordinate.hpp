@@ -49,6 +49,7 @@ private:
   // Output:
   PHX::MDField<MeshScalarT, Cell, Node, Dim> coordVecOut;
 
+  double minH;
   unsigned int numDims, numNodes;
 };
 
@@ -76,11 +77,12 @@ private:
   PHX::MDField<MeshScalarT, Cell, Node,Dim> coordVecIn;
   PHX::MDField<MeshScalarT, Cell, Node> dH;
   PHX::MDField<MeshScalarT, Cell, Node> topSurface;
-  PHX::MDField<MeshScalarT, Cell, Node> H0;
+  PHX::MDField<MeshScalarT, Cell, Node> H;
 
   // Output:
   PHX::MDField<MeshScalarT, Cell, Node, Dim> coordVecOut;
 
+  double minH;
   unsigned int numDims, numNodes;
 };
 }

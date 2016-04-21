@@ -37,6 +37,7 @@ UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
 
   this->addDependentField(topSurface);
 
+  minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
   std::vector<PHX::DataLayout::size_type> dims;
   dl->vertices_vector->dimensions(dims);
   numNodes = dims[1];
@@ -89,11 +90,13 @@ evaluateFields(typename Traits::EvalData workset)
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
+      MeshScalarT h = H0(cell,node)+dH(cell,node);
+      MeshScalarT bed = topSurface(cell,node)- H0(cell,node);
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
         typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
         val = (icomp==2) ?
-            (H0(cell,node)+dH(cell,node)>1e-4) ? MeshScalarT(topSurface(cell,node)- H0(cell,node) + sigmaLevel[ ilevel]*(H0(cell,node)+dH(cell,node)))
-                                               : MeshScalarT(topSurface(cell,node)- H0(cell,node) + sigmaLevel[ ilevel]*1e-4)
+            (h>minH) ? MeshScalarT(bed + sigmaLevel[ ilevel]*h)
+                    : MeshScalarT(bed + sigmaLevel[ ilevel]*minH)
            : coordVecIn(cell,node,icomp);
       }
     }
@@ -107,17 +110,18 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVecIn (p.get<std::string> ("Old Coords Name"), dl->vertices_vector),
   coordVecOut(p.get<std::string> ("New Coords Name"), dl->vertices_vector),
-  H0(p.get<std::string> ("Past Thickness Name"), dl->node_scalar),
+  H(p.get<std::string> ("Thickness Name"), dl->node_scalar),
   topSurface(p.get<std::string>("Top Surface Name"), dl->node_scalar)
 {
   this->addEvaluatedField(coordVecOut);
 
   this->addDependentField(coordVecIn);
 
-  this->addDependentField(H0);
+  this->addDependentField(H);
 
   this->addDependentField(topSurface);
 
+  minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
   std::vector<PHX::DataLayout::size_type> dims;
   dl->vertices_vector->dimensions(dims);
   numNodes = dims[1];
@@ -133,7 +137,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVecIn,fm);
   this->utils.setFieldData(coordVecOut,fm);
-  this->utils.setFieldData(H0, fm);
+  this->utils.setFieldData(H, fm);
   this->utils.setFieldData(topSurface,fm);
 }
 
@@ -170,11 +174,14 @@ evaluateFields(typename Traits::EvalData workset)
       LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
       LO base_id, ilevel;
       layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
+      MeshScalarT h = H(cell,node);
+      MeshScalarT top = topSurface(cell,node);
+
       for(std::size_t icomp=0; icomp< numDims; icomp++) {
         typename PHAL::Ref<MeshScalarT>::type val = coordVecOut(cell,node,icomp);
         val = (icomp==2) ?
-            (H0(cell,node)>1e-4) ? MeshScalarT(topSurface(cell,node) - (1- sigmaLevel[ ilevel])*(H0(cell,node)))
-                                               : MeshScalarT(topSurface(cell,node) - (1-sigmaLevel[ ilevel])*1e-4)
+            (h>minH) ? MeshScalarT(top - (1- sigmaLevel[ ilevel])*h)
+                    : MeshScalarT(top - (1-sigmaLevel[ ilevel])*minH)
            : coordVecIn(cell,node,icomp);
       }
     }
