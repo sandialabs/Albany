@@ -328,15 +328,18 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
   {
+    stateName = "thickness";
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
     if (std::find(req.begin(), req.end(), stateName)!=req.end())
     {
       // ...and thickness is one of them.
-      fieldName = "Ice Thickness";
-      entity = Albany::StateStruct::NodalDataToElemNode;
-      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
-      ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
+      if (std::find(requirements.begin(),requirements.end(),stateName)==requirements.end()) {
+        fieldName = "Ice Thickness";
+        entity = Albany::StateStruct::NodalDataToElemNode;
+        p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
+        ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
     }
   }
 
@@ -623,7 +626,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     p->set<std::string>("Old Coords Name", "Coord Vec Old");
     p->set<std::string>("New Coords Name", "Coord Vec");
-    p->set<std::string>("Past Thickness Name", "Ice Thickness Param");
+    p->set<std::string>("Thickness Name", "Ice Thickness Param");
     p->set<std::string>("Top Surface Name", "Surface Height");
 
     ev = Teuchos::rcp(new FELIX::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
@@ -692,7 +695,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate thickness (param) gradient on QP on side
-    ev = evalUtils.constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    ev = evalUtils.getPSUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate observed thickness on QP on side
@@ -737,6 +740,10 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     //---- Interpolate surface velocity on QP on side
     ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+    
+    //---- Interpolate surface velocity on QP on side
+    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance RMS", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

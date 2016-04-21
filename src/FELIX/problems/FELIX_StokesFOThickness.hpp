@@ -847,7 +847,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     // Output:: Coordindate Vector at vertices
     p->set<std::string>("Coordinate Vector Name", "Coord Vec Old");
 
-    ev =  rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    ev =  rcp(new PHAL::GatherCoordinateVector<EvalT,PHAL::AlbanyTraits>(*p,dl_full));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -860,9 +860,9 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("New Coords Name", "Coord Vec");
     p->set<std::string>("Thickness Increment Name", "ExtrudedThickness");
     p->set<std::string>("Past Thickness Name", "Ice Thickness");
-    p->set<std::string>("Elevation Name", "Surface Height");
+    p->set<std::string>("Top Surface Name", "Surface Height");
 
-    ev = rcp(new FELIX::UpdateZCoordinate<EvalT,PHAL::AlbanyTraits>(*p, dl_full));
+    ev = rcp(new FELIX::UpdateZCoordinateMovingTop<EvalT,PHAL::AlbanyTraits>(*p, dl_full));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 #endif
