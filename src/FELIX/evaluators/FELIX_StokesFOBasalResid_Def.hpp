@@ -92,10 +92,10 @@ void StokesFOBasalResid<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
 {
   ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
   ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam) : ScalarT(0);
-#ifdef OUTPUT_TO_SCREEN
+ #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    if (std::fabs(printedFF-ff)/ff>0.0001)
+    if (std::fabs(printedFF-ff)>0.0001*ff)
     {
         *output << "[Basal Residual] ff = " << ff << "\n";
         printedFF = ff;
