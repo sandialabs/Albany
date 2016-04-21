@@ -7,14 +7,13 @@ SET(CTEST_TEST_TYPE Nightly)
 #SET(CTEST_TEST_TYPE Experimental)
 
 # What to build and test
+SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALB32 TRUE)
 SET(BUILD_ALB64 TRUE)
-SET(BUILD_TRILINOS TRUE)
-SET(BUILD_ALB64CLANG11 TRUE)
-SET(BUILD_TRILINOSCLANG11 TRUE)
-SET(BUILD_ALBFUNCTOR TRUE)
 
-set(extra_cxx_flags "")
+SET(BUILD_TRILINOSCLANG TRUE)
+SET(BUILD_ALB64CLANG TRUE)
+SET(BUILD_ALBFUNCTOR TRUE)
 
 SET(DOWNLOAD TRUE)
 SET(CLEAN_BUILD TRUE)
@@ -33,7 +32,7 @@ set( CTEST_SOURCE_NAME          repos)
 set( CTEST_BUILD_NAME           "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          build)
 
-SET(PREFIX_DIR /users/ambrad)
+SET(PREFIX_DIR /users/ghansen)
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -68,8 +67,6 @@ find_program(CTEST_SVN_COMMAND NAMES svn)
 
 SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/trilinos.git)
 
-#SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
-#SET(Albany_REPOSITORY_LOCATION ambrad@jumpgate.scorec.rpi.edu:/users/ambrad/Albany.git)
 SET(SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
@@ -91,13 +88,13 @@ ENDIF()
 
 IF (DOWNLOAD)
 
-  # Get the publicTrilinos repo
+  # Get the Trilinos repo
 
   set(CTEST_CHECKOUT_COMMAND)
 
-  if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/publicTrilinos")
+  if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -114,14 +111,14 @@ IF (DOWNLOAD)
 
   # Get the SCOREC repo
 
-  if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC")
+  if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC")
     #  EXECUTE_PROCESS(COMMAND "${CTEST_SVN_COMMAND}" 
-    #    checkout ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC
+    #    checkout ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC
     #    OUTPUT_VARIABLE _out
     #    ERROR_VARIABLE _err
     #    RESULT_VARIABLE HAD_ERROR)
     EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC
+      clone ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -174,7 +171,7 @@ IF(DOWNLOAD)
   SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
   SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
 
-  ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos" RETURN_VALUE count)
+  ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
   message("Found ${count} changed files")
 
   IF(CTEST_DO_SUBMIT)
@@ -193,7 +190,7 @@ IF(DOWNLOAD)
 
   #set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
   set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE count)
+  ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC" RETURN_VALUE count)
   message("Found ${count} changed files")
 
   IF(CTEST_DO_SUBMIT)
@@ -237,6 +234,8 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+  "-DTPL_FIND_SHARED_LIBS:BOOL=OFF"
+  "-DCMAKE_FIND_LIBRARY_SUFFIXES=.a"
   #
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
   "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
@@ -264,19 +263,20 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
   "-DTPL_ENABLE_Netcdf:STRING=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DTPL_Netcdf_LIBRARIES:STRING=${PREFIX_DIR}/lib/libnetcdf.a"
+  "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DTPL_Netcdf_LIBRARIES=${PREFIX_DIR}/lib/libnetcdf.a"
+  "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+  "-DTPL_Pnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DTPL_Pnetcdf_LIBRARIES=${PREFIX_DIR}/lib/libnetcdf.a"
   #
   "-DTPL_ENABLE_HDF5:STRING=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DTPL_HDF5_LIBRARIES:STRING=${PREFIX_DIR}/lib/libhdf5_hl.a;${PREFIX_DIR}/lib/libhdf5.a"
+  "-DTPL_HDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DTPL_HDF5_LIBRARIES=${PREFIX_DIR}/lib/libhdf5_hl.a"
+  "-DTrilinos_EXTRA_LINK_FLAGS:STRING='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lcurl'"
   #
   "-DTPL_ENABLE_Zlib:STRING=ON"
   "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DTPL_Zlib_LIBRARIES:PATH=${PREFIX_DIR}/lib/libz.a"
   #
   "-DTPL_ENABLE_ParMETIS:STRING=ON"
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
@@ -376,7 +376,6 @@ IF(BUILD_TRILINOS)
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     ${COMMON_CONFIGURE_OPTIONS}
     )
@@ -387,7 +386,7 @@ IF(BUILD_TRILINOS)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
@@ -463,13 +462,13 @@ IF(BUILD_TRILINOS)
 
   ENDIF()
 
-ENDIF()
+ENDIF(BUILD_TRILINOS)
 
-IF(BUILD_TRILINOSCLANG11)
+IF(BUILD_TRILINOSCLANG)
 
   # Configure the Trilinos/SCOREC build
-  SET_PROPERTY (GLOBAL PROPERTY SubProject TrilinosClang++11)
-  SET_PROPERTY (GLOBAL PROPERTY Label TrilinosClang++11)
+  SET_PROPERTY (GLOBAL PROPERTY SubProject TrilinosClang)
+  SET_PROPERTY (GLOBAL PROPERTY Label TrilinosClang)
 
   SET(CONFIGURE_OPTIONS
     "-DTPL_ENABLE_MPI:BOOL=ON"
@@ -485,9 +484,7 @@ IF(BUILD_TRILINOSCLANG11)
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm /users/ambrad/lib64/libgfortran.a'"
-    #  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm -lcurl ${PREFIX_DIR}/ompi-clang/lib/libmpi.so'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallClang"
     "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
     "-DTpetra_INST_FLOAT=OFF"
     "-DTpetra_INST_INT_INT=ON"
@@ -497,23 +494,23 @@ IF(BUILD_TRILINOSCLANG11)
     "-DTpetra_INST_INT_LONG=OFF"
     "-DTpetra_INST_INT_UNSIGNED=OFF"
     "-DTpetra_INST_INT_LONG_LONG=ON"
-    "-DBUILD_SHARED_LIBS:BOOL=ON"
+    "-DBUILD_SHARED_LIBS:BOOL=OFF"
     ${COMMON_CONFIGURE_OPTIONS}
     )
 
-  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildC11")
-    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildC11)
+  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildClang")
+    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildClang)
   endif()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildC11"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildClang"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure TrilinosClang++11 build!")
+    message(FATAL_ERROR "Cannot configure TrilinosClang build!")
   endif()
 
   IF(CTEST_DO_SUBMIT)
@@ -522,7 +519,7 @@ IF(BUILD_TRILINOSCLANG11)
       )
 
     if(HAD_ERROR)
-      message( "Cannot submit TrilinosClang++11 configure results!")
+      message( "Cannot submit TrilinosClang configure results!")
     endif()
   ENDIF()
 
@@ -531,10 +528,10 @@ IF(BUILD_TRILINOSCLANG11)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
-  set(ENV{LD_LIBRARY_PATH} "/users/ambrad/ompi-clang/lib:${INITIAL_LD_LIBRARY_PATH}")
+  set(ENV{LD_LIBRARY_PATH} "/users/ghansen/ompi-clang/lib:${INITIAL_LD_LIBRARY_PATH}")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildC11"
+    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildClang"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -552,12 +549,12 @@ IF(BUILD_TRILINOSCLANG11)
       )
 
     if(HAD_ERROR)
-      message( "Cannot submit TrilinoClang++11 build results!")
+      message( "Cannot submit TrilinoClang build results!")
     endif()
 
   ENDIF()
 
-ENDIF()
+ENDIF(BUILD_TRILINOSCLANG)
 
 IF (BUILD_ALB32)
   # Configure the Albany 32 Bit build 
@@ -656,7 +653,7 @@ IF (BUILD_ALB32)
     endif()
   ENDIF()
 
-ENDIF()
+ENDIF(BUILD_ALB32)
 
 # Configure the Albany build using GO = long
 IF (BUILD_ALB64)
@@ -756,15 +753,15 @@ IF (BUILD_ALB64)
       message("Cannot submit Albany 64 bit test results!")
     endif()
   ENDIF()
-ENDIF()
+ENDIF(BUILD_ALB64)
 
 # Configure the Albany Clang build using GO = long
-IF (BUILD_ALB64CLANG11)
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany64BitClang++11)
-  SET_PROPERTY (GLOBAL PROPERTY Label Albany64BitClang++11)
+IF (BUILD_ALB64CLANG)
+  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany64BitClang)
+  SET_PROPERTY (GLOBAL PROPERTY Label Albany64BitClang)
 
   SET(CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallClang"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
@@ -779,14 +776,14 @@ IF (BUILD_ALB64CLANG11)
     #  "-DENABLE_CHECK_FPE:BOOL=ON"
     )
 
-  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64BitC11")
-    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64BitC11)
+  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64BitClang")
+    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64BitClang)
   endif()
 
   # The 64 bit build 
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitClang"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -818,7 +815,7 @@ IF (BUILD_ALB64CLANG11)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitClang"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -841,7 +838,7 @@ IF (BUILD_ALB64CLANG11)
   # Run Albany 64 bit tests
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitClang"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED

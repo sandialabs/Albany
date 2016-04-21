@@ -291,7 +291,7 @@ namespace LCM
 	    
 	    // compute pressure
 	    pressure = p_star - p_0;
-
+            
 	    // compute first Piola-Kirchhoff stress tensor
 	    PK = F * Dev_Stress - Jac * pressure * transpose(Finv);
 

@@ -6,6 +6,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include <typeinfo>
 
 
@@ -139,6 +140,10 @@ postEvaluate(typename Traits::PostEvalData workset)
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response);
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
+  
+  // print output
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  *out << "Thermal Energy is " << (this->global_response)(0) << std::endl; 
 }
 
 // **********************************************************************
