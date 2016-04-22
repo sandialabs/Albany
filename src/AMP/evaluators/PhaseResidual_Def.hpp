@@ -110,7 +110,39 @@ evaluateFields(typename Traits::EvalData workset)
 
     // diffusive term
     FST::scalarMultiplyDataData<ScalarT> (term1_, k_, T_grad_);
-    FST::integrate<ScalarT>(residual_, term1_, w_grad_bf_, Intrepid2::COMP_CPP, false);
+    // FST::integrate<ScalarT>(residual_, term1_, w_grad_bf_, Intrepid2::COMP_CPP, false);
+    //Using for loop to calculate the residual 
+
+    
+    // zero out residual
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        residual_(cell,node) = 0.0;
+      }
+    }
+
+//    for (int cell = 0; cell < workset.numCells; ++cell) {
+//      for (int qp = 0; qp < num_qps_; ++qp) {
+//        for (int node = 0; node < num_nodes_; ++node) {
+//          for (int i = 0; i < num_dims_; ++i) {
+//             residual_(cell,node) += w_grad_bf_(cell,node,qp,i) * term1_(cell,qp,i);
+//          }
+//        }
+//      }
+//    }
+   
+    
+    
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < num_qps_; ++qp) {
+        for (int node = 0; node < num_nodes_; ++node) {
+             residual_(cell,node) += 
+                       w_grad_bf_(cell,node,qp,0) * term1_(cell,qp,0)
+                     + w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
+                     + w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2);
+        }
+      }
+    }
 
     // heat source from laser 
     PHAL::scale(laser_source_, -1.0);
