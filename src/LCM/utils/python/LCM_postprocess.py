@@ -5,12 +5,135 @@ LCM_postprocess.py input.e output.e
 creates usable output from LCM calculations
 '''
 
+
 import sys
 import os
 from exodus import exodus
 from exodus import copy_mesh
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+from scipy.linalg import *
+
+
+
+def GetWeights(inFile, num_points):
+
+    weights = dict()
+    volume = dict()
+
+    for block in inFile.get_elem_blk_ids():
+
+        weights_block = []
+
+        for point in range(num_points):
+
+            key_weights = 'Weights_' + str(point + 1)
+
+            values_weights = inFile.get_element_variable_values(
+                block, 
+                key_weights, 
+                1)
+
+            weights_block.append(values_weights)
+
+        weights[block] = weights_block
+
+        volume[block] = np.sum(weights_block)
+
+    return weights, volume
+
+
+
+def VolumeAverageTensor(
+    inFile, 
+    outFile, 
+    num_points, 
+    weights, 
+    volume, 
+    name_variable_base):
+
+    num_dims = inFile.num_dimensions()
+    block_ids = inFile.get_elem_blk_ids()
+
+    values = dict()
+    average_value = dict()
+
+    for step in range(len(inFile.get_times())):
+        
+        average_value_component_step = dict()
+
+        values_step = dict()
+
+        for block in block_ids:
+
+            values_block = dict()
+
+            for dim_i in range(num_dims):
+
+                for dim_j in range(num_dims):
+
+                    index_dim = num_dims * dim_i + dim_j + 1
+
+                    values_component = []
+
+                    for point in range(num_points):
+
+                        values_weights = weights[block][point]
+
+                        index_pt = point * num_dims**2 + index_dim
+
+                        if index_pt < 10:
+                            str_index = '0' + str(index_pt)
+                        else:
+                            str_index = str(index_pt)
+
+                        key_stress = name_variable_base + '_' + str_index
+
+                        values_stress = inFile.get_element_variable_values(
+                            block, 
+                            key_stress, 
+                            step + 1)
+                    
+                        values_component.extend(
+                            [x*y for (x,y) in zip(values_stress, values_weights)])
+
+                    name_component = name_variable_base + '_' + str(dim_i+1) + str(dim_j+1)
+
+                    average_component = np.sum(values_component) / volume[block]
+
+                    # output the volume-averaged quantity
+                    outFile.put_element_variable_values(
+                        block, 
+                        name_component, 
+                        step + 1, 
+                        average_component * np.ones(len(values_component)))
+
+                    values_block[(dim_i, dim_j)] = average_component
+
+            values_step[block] = values_block
+
+        # end for block in block_ids:
+
+        values[step] = values_step
+
+        for dim_i in range(num_dims):
+
+            for dim_j in range(num_dims):
+
+                average_value_component_step[(dim_i, dim_j)] = \
+                    np.sum([values[step][x][(dim_i, dim_j)] * y 
+                        for (x, y) in zip(block_ids, volume.values())])
+
+        average_value[step] = average_value_component_step
+
+    # end for step in range(len(times)):
+
+    return average_value
+
+# end def VolumeAverageTensor(weights, name_variable_base):
+
+
 
 def postprocess(inFileName, outFileName):
 
@@ -33,6 +156,7 @@ def postprocess(inFileName, outFileName):
 
     # get times
     times = inFile.get_times()
+    num_times = len(times)
     print "Print the times"
     print times[0], times[-1]
 
@@ -62,12 +186,6 @@ def postprocess(inFileName, outFileName):
     # get number of element blocks and block ids
     block_ids = inFile.get_elem_blk_ids()
     num_blocks = inFile.num_blks()
-
-
-
-
-    # create any global variables
-
 
     # figure out number of integration points
     num_points = 0
@@ -106,30 +224,29 @@ def postprocess(inFileName, outFileName):
       outFile.put_node_variable_values('displacement_y',step+1,dy)
       outFile.put_node_variable_values('displacement_z',step+1,dz)
 
-
+    #
     # create variables in output file
+    #
+    outFile.set_element_variable_number(2 * num_dims**2)
 
-    outFile.set_element_variable_number(int(18))
-    outFile.put_element_variable_name('stress_cauchy_11', 1)
-    outFile.put_element_variable_name('stress_cauchy_12', 2)
-    outFile.put_element_variable_name('stress_cauchy_13', 3)
-    outFile.put_element_variable_name('stress_cauchy_21', 4)
-    outFile.put_element_variable_name('stress_cauchy_22', 5)
-    outFile.put_element_variable_name('stress_cauchy_23', 6)
-    outFile.put_element_variable_name('stress_cauchy_31', 7)
-    outFile.put_element_variable_name('stress_cauchy_32', 8)
-    outFile.put_element_variable_name('stress_cauchy_33', 9)
-    outFile.put_element_variable_name('F_11', 10)
-    outFile.put_element_variable_name('F_12', 11)
-    outFile.put_element_variable_name('F_13', 12)
-    outFile.put_element_variable_name('F_21', 13)
-    outFile.put_element_variable_name('F_22', 14)
-    outFile.put_element_variable_name('F_23', 15)
-    outFile.put_element_variable_name('F_31', 16)
-    outFile.put_element_variable_name('F_32', 17)
-    outFile.put_element_variable_name('F_33', 18)
+    for dim_i in range(num_dims):
 
+        for dim_j in range(num_dims):
 
+            outFile.put_element_variable_name(
+                'Cauchy_Stress_' + str(dim_i + 1) + str(dim_j + 1), 
+                dim_i * num_dims + dim_j + 1)
+
+            outFile.put_element_variable_name(
+                'F_' + str(dim_i + 1) + str(dim_j + 1), 
+                num_dims**2 + dim_i * num_dims + dim_j + 1)
+
+    #
+    # Record the integration point weights
+    #
+    weights, volume = GetWeights(inFile, num_points)
+
+    print 'Volume: ', np.sum(volume.values())
 
     #
     # search through variables, find desired quantities, and output them
@@ -141,124 +258,66 @@ def postprocess(inFileName, outFileName):
         #
         if (name == 'Cauchy_Stress'):
 
-            for step in range(len(times)):
+            print name
 
-                for block in block_ids:
-
-                    stress_cauchy = []
-
-                    for dim_i in range(num_dims):
-
-                        for dim_j in range(num_dims):
-
-                            index_dim = num_dims * dim_i + dim_j + 1
-
-                            stress_cauchy_component = []
-
-                            for point in range(num_points):
-
-                                key_weights = 'Weights_' + str(point + 1)
-
-                                values_weights = inFile.get_element_variable_values(
-                                    block, key_weights, step + 1)
-
-                                index_pt = point * num_dims**2 + index_dim
-
-                                if index_pt < 10:
-                                    str_index = '0' + str(index_pt)
-                                else:
-                                    str_index = str(index_pt)
-
-                                key_stress = 'Cauchy_Stress_' + str_index
-
-                                values_stress = \
-                                    inFile.get_element_variable_values(block, key_stress, step+1)
-                            
-                                stress_cauchy_component.extend(
-                                    [x*y for (x,y) in zip(values_stress, values_weights)])
-
-                            if debug != 0:
-                                print 'stress_cauchy_'+str(dim_i+1)+str(dim_j+1)
-                                print np.sum(stress_cauchy_component)
-
-                            # output the volume-averaged quantity
-                            outFile.put_element_variable_values(
-                                block,'stress_cauchy_'+str(dim_i+1)+str(dim_j+1),step+1,np.sum(stress_cauchy_component)*np.ones(len(stress_cauchy_component)))
-
-                            stress_cauchy.append(stress_cauchy_component)
-
-                    if debug != 0:
-                        print 'Cauchy_Stress', np.shape(stress_cauchy)
-                        print stress_cauchy
-
-                # end for step in range(len(times)):
-
-            # end if (name == 'Cauchy_Stress'):
+            stress_cauchy = VolumeAverageTensor(
+                inFile,
+                outFile,
+                num_points,
+                weights,
+                volume,
+                name)
 
         #
         # handle the deformation gradient
         #
         if (name == 'F'):
 
-            for step in range(len(times)):
+            print name
 
-                for block in block_ids:
-
-                    defgrad = []
-
-                    for dim_i in range(num_dims):
-
-                        for dim_j in range(num_dims):
-
-                            index_dim = num_dims * dim_i + dim_j + 1
-
-                            defgrad_component = []
-
-                            for point in range(num_points):
-
-                                key_weights = 'Weights_' + str(point + 1)
-
-                                values_weights = inFile.get_element_variable_values(
-                                    block, key_weights, step + 1)
-
-                                index_pt = point * num_dims**2 + index_dim
-
-                                if index_pt < 10:
-                                    str_index = '0' + str(index_pt)
-                                else:
-                                    str_index = str(index_pt)
-
-                                key_defgrad = 'F_' + str_index
-
-                                values_defgrad = \
-                                    inFile.get_element_variable_values(block, key_defgrad, step+1)
-                            
-                                defgrad_component.extend(
-                                    [x*y for (x,y) in zip(values_defgrad, values_weights)])
-
-                            if debug != 0:
-                                print 'defgrad_'+str(dim_i+1)+str(dim_j+1)
-                                print np.sum(defgrad_component)
-
-                            # output the volume-averaged quantity
-                            outFile.put_element_variable_values(
-                                block,'F_'+str(dim_i+1)+str(dim_j+1),step+1,np.sum(defgrad_component)*np.ones(len(defgrad_component)))
-
-                            defgrad.append(defgrad_component)
-
-                    if debug != 0:
-                        print 'defgrad', np.shape(defgrad)
-                        print defgrad
-
-                # end for step in range(len(times)):
-
-            # end if (name == 'F'):
+            defgrad = VolumeAverageTensor(
+                inFile,
+                outFile,
+                num_points,
+                weights,
+                volume,
+                name)
 
         # end for name in names_variable_unique:
 
     outFile.close()
 
-    # end def postprocess(inFileName, outFileName):
+    strain = dict()
+    for step in range(num_times):
+        defgrad_step = np.zeros((3,3))
+        for dim_i in range(num_dims):
+            for dim_j in range(num_dims):
+                defgrad_step[dim_i][dim_j] = defgrad[step][(dim_i, dim_j)]
+        strain[step] = 0.5 * logm(np.transpose(defgrad_step) * defgrad_step)
+
+
+    rcParams.update({'figure.autolayout': True})
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif', size=22)
+
+    fig = plt.figure()
+
+    for dim_i in range(num_dims):
+
+        for dim_j in range(num_dims):
+
+            fig.clf()
+            plt.plot(
+                [strain[step][dim_i][dim_j] for step in range(num_times)],
+                [stress_cauchy[step][(dim_i, dim_j)] for step in range(num_times)])
+            plt.xlabel('Logarithmic Strain $\epsilon_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$')
+            plt.ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
+            plt.savefig('stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf')
+
+# end def postprocess(inFileName, outFileName):
+
+
 
 if __name__ == '__main__':
     inFileName = sys.argv[1]
