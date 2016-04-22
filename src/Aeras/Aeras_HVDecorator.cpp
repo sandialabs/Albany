@@ -89,24 +89,21 @@ Aeras::HVDecorator::HVDecorator(
   std::cout << "In HVDecorator app name: " << app->getProblemPL()->get("Name", "") << std::endl;
 #endif
 
-  // Create and store mass and Laplacian operators (in CrsMatrix form). 
-  const Teuchos::RCP<Tpetra_CrsMatrix> mass = createOperatorDiag(1.0, 0.0, 0.0); 
+  std::string appname = app->getProblemPL()->get("Name", "");
+  const bool SW_app = (appname == "Aeras Shallow Water 3D");
+  const bool Hydro_app = (appname == "Aeras Hydrostatic");
 
-  //OG We need a different fix to build Laplace operator in Aeras:Hydrostatic, because
-  //x_dotdot variable was not accommodated for in Aeras_Scatter/Gather. The easiest way to construct
-  //Laplace is to use n_coeff as a flag/marker. It seems that in Aeras:Hydrostatic
-  //some vars already have gradient evaluators (at least, temperature).
-  //If we pass alpha=0, beta=1, omega=22 (I will fix it to be some nice readable '#define BUILD_LAPLACE 22' value),
-  //and have logic like
-  //  if( n_coeff == BUILD_LAPLACE AND j_coeff == 1){
-  //       Residual = Laplace (xT) }
-  //  in evaluators, then we can capture a Laplace operator. Note that there is no particular reason
-  //to use beta coefficient instead of alpha, only to save one's time to write gradient evaluators
-  //for x_dot variables.
-  //If we do this for Aeras:Hyperviscosity, we'd better change Aeras:ShallowWater for consistency, too.
-  //I may add some check to keep both codes working till kernels in ShallowWater are rewritten.
-  //const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 1.0, 22.0);
-  const Teuchos::RCP<Tpetra_CrsMatrix> laplace = createOperator(0.0, 0.0, 1.0);
+  // Create and store mass and Laplacian operators (in CrsMatrix form). 
+  Teuchos::RCP<Tpetra_CrsMatrix> mass;
+  if(SW_app)
+	  mass = createOperatorDiag(1.0, 0.0, 0.0, true);
+  if(Hydro_app)
+	  mass = createOperatorDiag(1.0, 0.0, 0.0, false);
+  Teuchos::RCP<Tpetra_CrsMatrix> laplace;
+  if(SW_app)
+      laplace = createOperator(0.0, 0.0, 1.0, true);
+  if(Hydro_app)
+      laplace = createOperator(0.0, 0.0, 1.0, false);
 
   // Do some preprocessing to speed up subsequent residual calculations.
   // 1. Store the lumped mass diag reciprocal.
@@ -134,7 +131,7 @@ Aeras::HVDecorator::HVDecorator(
 //utilde/htilde variables when integrating the hyperviscosity system in time using 
 //an explicit scheme. 
 Teuchos::RCP<Tpetra_CrsMatrix> 
-Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
+Aeras::HVDecorator::createOperator(double alpha, double beta, double omega, bool xdotdot_nonnull)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -159,7 +156,12 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
     Teuchos::null;
   //IKT: it's important to make x_dotdotT non-null.  Otherwise 2nd derivative terms defining the laplace operator
   //will not get set in PHAL_GatherSolution_Def.hpp. 
-  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+
+  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+  Teuchos::RCP<Tpetra_Vector> x_dotdotT = Teuchos::null;
+  if(xdotdot_nonnull)
+     x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+
   const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
   app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
                                sacado_param_vec, fT.get(), *Op_crs);
@@ -167,7 +169,7 @@ Aeras::HVDecorator::createOperator(double alpha, double beta, double omega)
 }
 
 Teuchos::RCP<Tpetra_CrsMatrix> 
-Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
+Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega, bool xdotdot_nonnull)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -188,7 +190,12 @@ Aeras::HVDecorator::createOperatorDiag(double alpha, double beta, double omega)
     Teuchos::null;
   //IKT: it's important to make x_dotdotT non-null.  Otherwise 2nd derivative terms defining the laplace operator
   //will not get set in PHAL_GatherSolution_Def.hpp. 
-  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+
+  Teuchos::RCP<Tpetra_Vector> x_dotdotT = Teuchos::null;
+  if(xdotdot_nonnull)
+     x_dotdotT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true));
+
   const Teuchos::RCP<Tpetra_Vector> fT = Teuchos::rcp(new Tpetra_Vector(xT->getMap(), true)); 
   app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
                                sacado_param_vec, fT.get(), *Op_crs);
