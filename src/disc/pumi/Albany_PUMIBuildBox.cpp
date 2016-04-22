@@ -380,9 +380,7 @@ void BoxBuilder::buildMeshAndModel()
 
 void BoxBuilder::buildSets(apf::StkModels& sets)
 {
-  Grid side_grid(dim > 0 ? 2 : 1,
-                 dim > 1 ? 2 : 1,
-                 dim > 2 ? 2 : 1);
+  int nsides = dim * 2;
   /* arrange these however you expect
      the NodeSets and SideSets to be ordered */
   Indices const faceTable[6] = {
@@ -396,8 +394,8 @@ void BoxBuilder::buildSets(apf::StkModels& sets)
   int dims[2] = {0, dim - 1};
   char const* names[2] = {"NodeSet", "SideSet"};
   for (int i = 0; i < 2; ++i) {
-    sets.models[dims[i]].resize(side_grid.total());
-    for (int j = 0; j < side_grid.total(); ++j) {
+    sets.models[dims[i]].resize(nsides);
+    for (int j = 0; j < nsides; ++j) {
       Indices mi = faceTable[j];
       for (int k = dim; k < 3; ++k)
         mi[k] = 0;
