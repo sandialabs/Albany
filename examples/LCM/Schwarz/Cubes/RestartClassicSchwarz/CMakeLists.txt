@@ -19,6 +19,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube1_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube1_target.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube0_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube0_target.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/norm_displacements.m
+               ${CMAKE_CURRENT_BINARY_DIR}/norm_displacements.m COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
