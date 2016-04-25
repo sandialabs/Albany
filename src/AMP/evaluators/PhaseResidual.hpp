@@ -53,6 +53,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> source_;
   PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
   PHX::MDField<ScalarT,Cell,QuadPoint> psi_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity_;
   PHX::MDField<ScalarT,Cell,QuadPoint> energyDot_;
   PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
   PHX::MDField<ScalarT,Dummy> time;

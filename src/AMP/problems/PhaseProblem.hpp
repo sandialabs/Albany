@@ -106,6 +106,7 @@ protected:
 #include "RhoCp.hpp"
 #include "Phi.hpp"
 #include "Psi.hpp"
+#include "Local_Porosity.hpp"
 #include "ThermalCond.hpp"
 #include "PhaseSource.hpp"
 #include "LaserSource.hpp"
@@ -379,7 +380,25 @@ Albany::PhaseProblem::constructEvaluators(
     ev = rcp(new AMP::RhoCp<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
+    { // Local_Porosity
+    RCP<ParameterList> p = rcp(new ParameterList("Porosity"));
 
+    Teuchos::ParameterList& param_list =
+      material_db_->getElementBlockSublist(eb_name, "Porosity");    
+
+    //Input
+    p->set<string>("Coordinate Name","Coord Vec");
+    p->set<string>("Psi Name", "Psi");
+    p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+
+    //Output
+    p->set<string>("Porosity Name", "Porosity");
+
+    ev = rcp(new AMP::Local_Porosity<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
   { // Source Function
     RCP<ParameterList> p = rcp(new ParameterList("Source Function"));
 
@@ -472,6 +491,7 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Laser Source Name","Laser Source");
     p->set<string>("Phi Name","Phi");
     p->set<string>("Psi Name","Psi");
+    p->set<string>("Porosity Name", "Porosity");
     p->set<string>("Energy Rate Name", "Energy Rate");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");

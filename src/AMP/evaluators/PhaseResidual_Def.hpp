@@ -28,6 +28,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   time              (p.get<std::string>("Time Name"), dl->workset_scalar),
   psi_              (p.get<std::string>("Psi Name"), dl->qp_scalar),
   phi_              (p.get<std::string>("Phi Name"), dl->qp_scalar),
+  porosity_         (p.get<std::string>("Porosity Name"),dl->qp_scalar),
   energyDot_        (p.get<std::string>("Energy Rate Name"), dl->qp_scalar),
   deltaTime         (p.get<std::string>("Delta Time Name"), dl->workset_scalar),
   residual_         (p.get<std::string>("Residual Name"), dl->node_scalar)
@@ -43,6 +44,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   this->addDependentField(laser_source_);
   this->addDependentField(phi_);
   this->addDependentField(psi_);
+  this->addDependentField(porosity_);
   this->addDependentField(energyDot_);
   this->addDependentField(time);
   this->addDependentField(deltaTime);
@@ -82,6 +84,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(deltaTime,fm);
   this->utils.setFieldData(phi_,fm);
   this->utils.setFieldData(psi_,fm);
+  this->utils.setFieldData(porosity_,fm);
   this->utils.setFieldData(energyDot_,fm);
   this->utils.setFieldData(residual_,fm);
 }
