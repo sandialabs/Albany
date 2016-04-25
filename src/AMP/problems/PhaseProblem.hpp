@@ -372,6 +372,7 @@ Albany::PhaseProblem::constructEvaluators(
 
     //Input
     p->set<string>("Coordinate Name","Coord Vec");
+    p->set<string>("Porosity Name", "Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
 
     //Output
@@ -428,6 +429,7 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Coordinate Name","Coord Vec");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
+    p->set<string>("Porosity Name", "Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
 
     //Output

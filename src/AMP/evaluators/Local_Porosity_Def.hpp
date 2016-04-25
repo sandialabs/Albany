@@ -17,8 +17,7 @@ namespace AMP {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 Local_Porosity<EvalT, Traits>::
-Local_Porosity(Teuchos::ParameterList& p,
-            const Teuchos::RCP<Albany::Layouts>& dl) :
+Local_Porosity(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   coord_      (p.get<std::string>("Coordinate Name"),dl->qp_vector),
   porosity_   (p.get<std::string>("Porosity Name"),dl->qp_scalar),
   psi_        (p.get<std::string>("Psi Name"),dl->qp_scalar)
