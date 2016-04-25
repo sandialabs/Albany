@@ -497,6 +497,12 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Energy Rate Name", "Energy Rate");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
+    
+    
+    // take porosity parameter list
+    Teuchos::ParameterList& param_list_porosity =
+      material_db_->getElementBlockSublist(eb_name, "Porosity");
+    p->set<Teuchos::ParameterList*>("Porosity Parameter List", &param_list_porosity);
 
     //Output
     p->set<string>("Residual Name", "Temperature Residual");
