@@ -54,6 +54,7 @@ private:
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;
