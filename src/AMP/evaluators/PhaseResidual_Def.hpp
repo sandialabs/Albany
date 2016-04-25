@@ -51,6 +51,11 @@ PhaseResidual(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(residual_);
   
+  
+  Teuchos::ParameterList* cond_list = p.get<Teuchos::ParameterList*>("Porosity Parameter List");
+  
+  Initial_porosity = cond_list->get("Value", 0.0);
+  
   std::vector<PHX::Device::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
   workset_size_ = dims[0];
@@ -139,10 +144,14 @@ evaluateFields(typename Traits::EvalData workset)
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int qp = 0; qp < num_qps_; ++qp) {
         for (int node = 0; node < num_nodes_; ++node) {
-             residual_(cell,node) += 
+            porosity_function1 = pow(((1.0 - porosity_(cell,qp))/(1.0 - Initial_porosity)),2);
+            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
+            //In the model that is currently used, the Y-axis corresponds to the depth direction. Hence the term porosity
+            //function1 is multiplied with the second term. 
+            residual_(cell,node) += porosity_function2*(
                        w_grad_bf_(cell,node,qp,0) * term1_(cell,qp,0)
-                     + w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
-                     + w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2);
+                     + porosity_function1* w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
+                     + w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2));
         }
       }
     }

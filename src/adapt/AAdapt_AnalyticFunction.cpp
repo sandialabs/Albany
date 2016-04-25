@@ -1030,6 +1030,12 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
 
   const double Eta0 = 0.252, Etas=1.0, Etat=0.2, TT0=288.0,
 		       Gamma = 0.005, deltaT = 4.8E+5, Rd = 287.04;
+  const double radius                 = 10.0;// radius of the perturbation
+  const double perturbation_amplitude =  1.0;// amplitude of u perturbation 1 m/s
+  const double perturbation_longitude = 20.0;// longitudinal position, 20E
+  const double perturbation_latitude  = 40.0;// latitudinal position, 40N
+
+  bool perturbation = true;
 
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
@@ -1146,7 +1152,25 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
     const double cosEtav = std::cos((Eta-Eta0)*constPi/2.0);
 
     //Velocities
-    solution[offset++] = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ;
+
+    double uwind = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ;
+    if(perturbation){
+    	const double pertlon = perturbation_longitude*constPi/180.0,
+    			     pertlat = perturbation_latitude*constPi/180.0;
+        //phi_vertical = (eta - eta0) *0.5d0*constPi;
+        //u_lat = (COS(phi_vertical))**1.5d0 * 4.d0 * u0 * (sin(rot_lat))**2 * (cos(rot_lat))**2
+        //u_wind = u_lat
+
+        const double sin_tmp = std::sin(pertlat)*std::sin(theta);
+        const double cos_tmp = std::cos(pertlat)*std::cos(theta);
+
+        const double r = std::acos( sin_tmp + cos_tmp*std::cos(lambda - pertlon) );//    ! great circle distance
+        const double u_perturb = perturbation_amplitude*std::exp( - (r*radius)*(r*radius) );
+
+    	uwind += u_perturb;
+    }
+
+    solution[offset++] = uwind;
     solution[offset++] = 0.0;
 
     //homme lines
@@ -1174,13 +1198,37 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
                   u0 * (COS(phi_vertical))**1.5d0  +                                                       &
                   (8.d0/5.d0*(COS(rot_lat))**3 * ((SIN(rot_lat))**2 + 2.d0/3.d0) - pi/4.d0)*a_omega*0.5d0 )
   END FUNCTION t_deviation
-     */
+...
+    perturb_lon = perturbation_longitude*deg2rad
+    perturb_lat = perturbation_latitude*deg2rad
 
-    //Temperature
-    //const double Tavg =  Eta<Etat ? TT0 * std::pow(Eta, Rd*Gamma/g) + deltaT * std::pow(Etat - Eta, 5) : TT0 * std::pow(Eta, Rd*Gamma/g);
-    //const double tt0 = (3.0/4.0) * ((Eta*constPi*u0)/Rd) * sinEtav * std::pow(cosEtav, 0.5);
-    //const double tt1 = (-2 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1/3.0) + 10.0/63.0) * 2.0 * u0* std::pow(cosEtav,1.5);
-    //const double tt2 = ((8.0/5.0) * std::pow(cosTheta,3) * (std::pow(sinTheta, 2) + 2.0/3.0) - constPi/4.0) * a * omega;
+    phi_vertical = (eta - eta0) *0.5d0*pi
+    u_lat = (COS(phi_vertical))**1.5d0 * 4.d0 * u0 * (sin(rot_lat))**2 * (cos(rot_lat))**2
+    u_wind = u_lat
+
+    IF (lperturb) THEN
+
+       sin_tmp = SIN(perturb_lat)*SIN(rot_lat)
+       cos_tmp = COS(perturb_lat)*COS(rot_lat)
+
+       r = ACOS( sin_tmp + cos_tmp*COS(rot_lon-perturb_lon) )    ! great circle distance
+       u_perturb = perturbation_amplitude*EXP(- (r*radius)**2 )
+       u_lat     = u_perturb + u_lat
+    ENDIF
+...
+       u_wind = u_lat
+...
+  END FUNCTION u_wind
+
+  REAL(r8) FUNCTION v_wind(lon,lat,eta,lperturb,rotation_angle)
+...
+    perturb_lon = perturbation_longitude*deg2rad
+    perturb_lat = perturbation_latitude*deg2rad
+...
+       v_wind = 0.0d0
+...
+  END FUNCTION v_wind
+     */
 
     double Tavg =  TT0 * std::pow(Eta, Rd*Gamma/g);
     if( Eta <= Etat ) Tavg += deltaT * std::pow(Etat - Eta, 5.0);
