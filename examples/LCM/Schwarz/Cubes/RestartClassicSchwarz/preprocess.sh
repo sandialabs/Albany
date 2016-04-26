@@ -47,7 +47,7 @@ init_exo_in_name=cube"$cube"_in.exo
 sed -i -e "s/$init_exo_in_name/$exo_in_name/g" cube"$cube"_restart_load"$step"_schwarz"$schwarz_iter".xml
 #Replace name of output file to restart from for load step $step and schwarz step $schwarz_iter
 exo_out_name=cube"$cube"_restart_out_load"$step"_schwarz"$schwarz_iter".exo
-init_exo_out_name=cube"$cube"_restart_out_exo
+init_exo_out_name=cube"$cube"_restart_out.exo
 sed -i -e "s/$init_exo_out_name/$exo_out_name/g" cube"$cube"_restart_load"$step"_schwarz"$schwarz_iter".xml
 #Set the load in the input file.  
 sed -i -e 's#<Parameter  name="Initial Value" type="double" value="0.0"/>#<Parameter  name="Initial Value" type="double" value="'$load_value'"/>#g' cube"$cube"_restart_load"$step"_schwarz"$schwarz_iter".xml

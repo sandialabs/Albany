@@ -35,7 +35,8 @@ rm -rf displ1_old
 rm -rf displ0_current*
 rm -rf displ1_current*
 rm -rf error*
-rm -rf *.txt 
+rm -rf *.txt
+rm -rf dtk_*  
 echo "...cleanup done."
 
 tol_schwarz=$2
@@ -71,18 +72,52 @@ for (( step=0; step<$1; step++ )); do
        ncks -d time_step,$step cube0_in.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
        ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
      fi
+     #FIXME: create cube*_in* files for step > 0.  For these, the Dirichlet data should be from step $step
+     #in cube0_in.exo and cube1_in.exo; but the displacement should be from 
+     #  - cube0_restart_load$step_schwarz($schwarz_iter-1).exo (similarly for cube1) if load step has not been incremented
+     #  - cube0_restart_load$(step-1)_schwarz(last schwarz iter #).exo.
     
      #################  PRE-PROCESSING  ##############################
      echo "      Starting pre-processing..."
      bash preprocess.sh $step $schwarz_iter $load_value 0 #cube0 
      bash preprocess.sh $step $schwarz_iter $load_value 1 #cube1
-     echo "      pre-processing done." 
+     echo "      ...pre-processing done." 
      ##################################################################
 
      #################  ALBANY RUN FOR CUBE0  #########################
-     echo "      Running Albany on subdomain 0..."
+     echo "      Running Albany on cube0..."
      bash runalbany.sh $step $schwarz_iter 0 
-     echo "      Albany subdomain 0 run done..."
+     echo "      ...Albany cube0 run done."
+     ##################################################################
+     
+     #################  DTK TRANSFER FROM CUBE0 TO CUBE1  #############
+     echo "      Transferring solution in cube0 onto cube1 using DTK..."
+     bash dtktransfer.sh $step $schwarz_iter 1 
+     echo "      ...DTK transfer from cube0 onto cube1 done."
+     ##################################################################
+
+     #################  POST-DTK RUN PROCESSING FOR CUBE1  ############
+     echo "      Starting post-DTK run for cube1 processing..."
+     bash postdtkprocess.sh $step $schwarz_iter 1
+     echo "      ...post-DTK cube1 run done."
+     ##################################################################
+
+     #################  ALBANY RUN FOR CUBE1  #########################
+     echo "      Running Albany on cube1..."
+     bash runalbany.sh $step $schwarz_iter 1
+     echo "      ...Albany cube1 run done."
+     ##################################################################
+
+     #################  DTK TRANSFER FROM CUBE1 TO CUBE0  #############
+     echo "      Transferring solution in cube1 onto cube0 using DTK..."
+     bash dtktransfer.sh $step $schwarz_iter 0 
+     echo "      ...DTK transfer from cube1 onto cube0 done."
+     ##################################################################
+
+     #################  POST-DTK RUN PROCESSING FOR CUBE0  ############
+     echo "      Starting post-DTK run for cube0 processing..."
+     bash postdtkprocess.sh $step $schwarz_iter 0
+     echo "      ...post-DTK cube0 run done."
      ##################################################################
 
      #FIXME: the following line will need to change 
