@@ -13,8 +13,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube0_restart.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube1_restart.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/classical_schwarz.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/classical_schwarz.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/full_schwarz.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/full_schwarz.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube1_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube1_target.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube0_target.xml
