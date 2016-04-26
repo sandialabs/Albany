@@ -6,10 +6,15 @@
 %vals_nod_var1, vals_nod_var2, and vals_nod_var3 in the *exo file,
 %respectively.  If they are not, code needs to be modified.
 
-function[error] = norm_displacements(file0_exo_name, file1_exo_name) 
+%Input: Schwarz step number, step_no (int) 
+function[] = norm_displacements(step_no) 
 
-%file0_exo_name = 'cube0_restart_1.exo';
-%file1_exo_name = 'cube1_restart_1.exo'; 
+file0_exo_name = strcat('cube0_restart_',num2str(step_no),'.exo');
+file1_exo_name = strcat('cube1_restart_',num2str(step_no),'.exo');
+
+step_no
+file0_exo_name
+file1_exo_name
 
 %Here we hard-code 2-norm.  norm_type could be made an input argument.
 norm_type = 2; 
@@ -51,38 +56,39 @@ disp1(3:3:end) = disp1_z;
 disp{1} = disp0; 
 disp{2} = disp1; 
 
-disp0_old = dlmread('disp0_old'); 
-disp1_old = dlmread('disp1_old'); 
-disp_old{1} = disp0_old; 
-disp_old{2} = disp1_old; 
-
-%The following is based on Alejandro's file FullSchwarz.m 
-%specific case of 2 domains
-for i=1:2
+if (step_no == 0)
+  %if it's the first step, set error = 1 so that code continues
+  %TODO: check with Alejandro what he does.
+  error = 1;  
+else
+  %The following is based on Alejandro's file FullSchwarz.m 
+  %specific case of 2 domains
+  for i=1:2
     displacement_norms(i) = norm(disp{i}); 
     diff = disp{i} - disp_old{i}; 
     difference_norms(i) = norm(diff); 
-end
+  end
 
-norm_disp = norm(displacement_norms, norm_type); 
-norm_difference = norm(difference_norms, norm_type); 
+  norm_disp = norm(displacement_norms, norm_type); 
+  norm_difference = norm(difference_norms, norm_type); 
 
-%compute error which will be used to determine if Schwarz has converged.
-%Currently, error is returned by this function.
-norm_disp
-if (norm_disp > 0.0)
+  %compute error which will be used to determine if Schwarz has converged.
+  norm_disp
+  if (norm_disp > 0.0)
     error = norm_difference / norm_disp; 
     norm_difference
     norm_difference / norm_disp
     error
-else
+  else
     error = norm_difference;
+  end
 end
 
 %write new displacements to disp*_old files.
 dlmwrite('disp0_old', disp{1}); 
 dlmwrite('disp1_old', disp{2}); 
-
+%write error to file
+dlmwrite('error', error); 
 
 
 
