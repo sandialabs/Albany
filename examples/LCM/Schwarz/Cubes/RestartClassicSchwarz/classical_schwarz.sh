@@ -12,11 +12,6 @@
 #norm_displacements.m
 
 
-if [ ! $1 ] ; then
-    echo "This function requires 1 argument: # load steps (int)";
-    exit
-fi
-
 echo "Initial cleanup..."
 #initial cleanup: remove all old *exo files
 rm -rf target_cube0_out_*.exo 
@@ -36,14 +31,18 @@ rm -rf disp1_old
 rm -rf error  
 echo "...cleanup done."
 
-tol_schwarz=0.000000000000001; #1e-15
+#tol_schwarz=0.000000000000001 #1e-15
+tol_schwarz=0.001
 echo "Schwarz convergence tolerance = $tol_schwarz"
 
-#FIXME: set load correctly 
-for (( step=0; step<$1; step++ ))
-do
-   echo "Starting step $step of classical Schwarz with load = $step..."
+iterate_schwarz=1 #flag to tell code to continue Schwarz; if =0, Schwarz will stop 
+step=0 #start with Schwarz step 0 
 
+#FIXME: set load correctly
+
+while [ $iterate_schwarz -eq 1 ]; do 
+ 
+   echo "Starting step $step of classical Schwarz with load = $step..."
    echo "   Pre-processing..."
    #################  PRE-PROCESSING  ##############################
    #################  Cube 0  ######################################
@@ -101,8 +100,6 @@ do
    sed -i -e "s/target_cube1_out.exo/$exo_tgt_out_name/g" input_schwarz_cube1_target_"$step".xml
    echo "   ...pre-processing done."
    
-   #TODO: add while loop here (while Schwarz unconverged)
-
    echo "   Running Albany on subdomain 0..."
    #################  ALBANY RUN FOR CUBE0  ##############################
    #run Albany with cube0_restart_"$step".xml input file
@@ -157,25 +154,13 @@ do
    #read error from error file
    err=$(sed "${1}q;d" error)
    #check if error < tol_schwarz; if it is, the method is converged 
-   if (($(echo $err '<' $tol_schwarz | bc -l))); then 
-     echo "converged!" 
+   if (($(echo $err '<=' $tol_schwarz | bc -l))); then 
+     echo "...classical Schwarz converged after $step steps!"
+     iterate_schwarz=0 
    else
-     echo "error = $err > tol_schwarz = $tol_schwarz"
-     echo "Schwarz failed to converge.  Continuing."
+     echo "   error = $err > tol_schwarz = $tol_schwarz"
+     echo "...Schwarz failed to converge.  Continuing."
+     let "step=step+1"
    fi
-   #echo $err '<' $tol_schwarz | bc -l 
-   #if ((
-   #  echo "converged!" 
-   #else
-   #  echo "error = $err > tol_schwarz = $tol_schwarz"
-   #  echo "Schwarz failed to converge.  Continuing."
-   #fi
- 
-   #TODO: check convergence
-   #if (converged)
-   #   exit while loop
-
-   #TODO: end while loop
-   echo "...step $step of classical Schwarz done!"
 done
 
