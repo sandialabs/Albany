@@ -7,11 +7,12 @@
 %respectively.  If they are not, code needs to be modified.
 
 %Input: Schwarz step number, schwarz_no (int) 
-function[] = norm_displacements(schwarz_no) 
+function[] = norm_displacements(schwarz_no, step_no) 
 
-file0_exo_name = strcat('cube0_restart_',num2str(schwarz_no),'.exo');
-file1_exo_name = strcat('cube1_restart_',num2str(schwarz_no),'.exo');
+file0_exo_name = strcat('cube0_restart_',num2str(step_no),'.exo');
+file1_exo_name = strcat('cube1_restart_',num2str(step_no),'.exo');
 
+disp(['      step_no = ',num2str(step_no)]); 
 disp(['      schwarz_no = ',num2str(schwarz_no)]); 
 
 %Here we hard-code 2-norm.  norm_type could be made an input argument.
