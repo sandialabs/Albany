@@ -32,7 +32,9 @@ rm -rf cube1_restart_*.xml
 #initial cleanup: remove other old files
 rm -rf displ0_old 
 rm -rf displ1_old
-rm -rf error  
+rm -rf displ0_current*
+rm -rf displ1_current*
+rm -rf error* 
 echo "...cleanup done."
 
 tol_schwarz=$2
@@ -41,6 +43,12 @@ tol_schwarz=`echo ${tol_schwarz} | sed -e 's/[eE]+*/\\*10\\^/'`
 echo "Schwarz convergence tolerance = $tol_schwarz"
 #TODO? Set alternative convergence tolerance, e.g., max # Schwarz iterations
 #FIXME: save more history for debugging (e.g., history of displ*_old's, not just the past one).
+#NOTE: the code assumes cube0_in.exo and cube1_in.exo have $1 snapshots.  I think this is necessary 
+#if there is a time-dependent boundary condition; otherwise it is not and the code below can be rewritten 
+#easily to handle this case. 
+#TODO: can Alejandro or Coleman create input  *exo file for this problem that contains only dirichlet_field field
+#to make sure things still work with a restart from a trivial initial condition? 
+
 
 #load step loop
 for (( step=0; step<$1; step++ )); do
@@ -103,7 +111,7 @@ for (( step=0; step<$1; step++ )); do
    sed -i -e "s/target_cube1_out.exo/$exo_tgt_out_name/g" input_schwarz_cube1_target_"$step".xml
    echo "   ...pre-processing done."
    
-   iterate_schwarz=1 #flag to tell code to continue Schwarz; if =0, Schwarz will stop
+   iterate_schwarz=1 #flag to tell code to continue Schwarz; if iterate_schwarz==0, Schwarz will stop
                      #this parameter should be reset to 1 in each load step 
    schwarz_iter=0 #Schwarz iteration number 
 

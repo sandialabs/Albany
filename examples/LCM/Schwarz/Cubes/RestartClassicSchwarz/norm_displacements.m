@@ -12,6 +12,10 @@ function[] = norm_displacements(schwarz_no, step_no)
 file0_exo_name = strcat('cube0_restart_',num2str(step_no),'.exo');
 file1_exo_name = strcat('cube1_restart_',num2str(step_no),'.exo');
 
+displ0_current_name = strcat('displ0_current_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
+displ1_current_name = strcat('displ1_current_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
+error_name = strcat('error_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
+
 disp(['      step_no = ',num2str(step_no)]); 
 disp(['      schwarz_no = ',num2str(schwarz_no)]); 
 
@@ -56,6 +60,7 @@ displ{1} = displ0;
 displ{2} = displ1; 
 
 if (schwarz_no == 0)
+  %TO ASK ALEJANDRO: Is this right -- to set disp_old to all zeros in the first Schwarz step always? 
   displ_old{1} = zeros(length(displ{1}),1); 
   displ_old{2} = zeros(length(displ{2}),1); 
 else
@@ -84,12 +89,23 @@ else
 end
 
 disp(['      error = ', num2str(error)]);
-format long g 
+
+%debug output
+disp('       displ0 = ');
+displ{1}
+disp('       displ1 = ');
+displ{2}
+
 %write new displacements to displ*_old files.
 dlmwrite('displ0_old', displ{1}, 'precision', 10); 
-dlmwrite('displ1_old', displ{2}, 'precision', 10); 
+dlmwrite('displ1_old', displ{2}, 'precision', 10);
+%write new displacements to files with unique names for debugging/diagnosing 
+dlmwrite(displ0_current_name, displ{1}, 'precision', 10); 
+dlmwrite(displ1_current_name, displ{2}, 'precision', 10); 
 %write error to file
-dlmwrite('error', error, 'precision', 10); 
+dlmwrite('error', error, 'precision', 10);
+%write error to file with unique name for debugging/diagnosing 
+dlmwrite(error_name, error, 'precision', 10); 
 
 
 
