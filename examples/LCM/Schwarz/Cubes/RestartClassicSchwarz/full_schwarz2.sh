@@ -76,7 +76,7 @@ for (( step=0; step<$1; step++ )); do
      #FIXME: create cube*_in* files for step > 0.  For these, the Dirichlet data should be from step $step
      #in cube0_in.exo and cube1_in.exo; but the displacement should be from 
      #  - cube0_restart_load$step_schwarz($schwarz_iter-1).exo (similarly for cube1) if load step has not been incremented
-     #  - cube0_restart_load$(step-1)_schwarz(last schwarz iter #).exo.
+     #  - cube0_restart_load($step-1)_schwarz"$num_schwarz_iter_prev".exo if load step has been incremented.
     
      #################  PRE-PROCESSING  ##############################
      echo "      Starting pre-processing..."
