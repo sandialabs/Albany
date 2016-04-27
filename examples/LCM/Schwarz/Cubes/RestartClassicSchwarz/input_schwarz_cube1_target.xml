@@ -5,7 +5,8 @@
   <Parameter name="Target Mesh Output File" type="string" value="target_cube1_out.exo"/>
   <Parameter name="Target Mesh Part" type="string" value="nodelist_5"/>
   <Parameter name="Target Mesh Snapshot Number" type="int" value="1"/>
-  <Parameter name="Field Name" type="string" value="disp"/>
+  <Parameter name="Source Field Name" type="string" value="disp"/>
+  <Parameter name="Target Field Name" type="string" value="dirichlet_field"/>
   <Parameter name="Field Type" type="string" value="Node Vector"/>
   <Parameter name="Number of Iterations" type="int" value="10"/> 
   <Parameter name="Write dirichlet_field to Exodus" type="bool" value="true"/>

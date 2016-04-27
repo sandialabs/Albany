@@ -9,8 +9,8 @@
 %Inputs: Schwarz step number (int), load step number (int), # of Schwarz steps in previous load step run (int)  
 function[] = norm_displacements(schwarz_no, step_no, num_schwarz_prev) 
 
-file0_exo_name = strcat('cube0_restart_load',num2str(step_no),'_schwarz',num2str(schwarz_no),'.exo');
-file1_exo_name = strcat('cube1_restart_load',num2str(step_no),'_schwarz',num2str(schwarz_no),'.exo');
+file0_exo_name = strcat('cube0_restart_out_load',num2str(step_no),'_schwarz',num2str(schwarz_no),'.exo');
+file1_exo_name = strcat('cube1_restart_out_load',num2str(step_no),'_schwarz',num2str(schwarz_no),'.exo');
 
 displ0_current_name = strcat('displ0_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
 displ1_current_name = strcat('displ1_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
@@ -66,12 +66,14 @@ if (schwarz_no == 0 && step_no == 0)
 else
   %read displ_old from file
   if (schwarz_no == 0) 
-    disp0_old_name = strcat('displ0_load', num2str(step_no-1),'_schwarz',num2str(num_schwarz_prev));
-    disp1_old_name = strcat('displ1_load', num2str(step_no-1),'_schwarz',num2str(num_schwarz_prev));
+    displ0_old_name = strcat('displ0_load', num2str(step_no-1),'_schwarz',num2str(num_schwarz_prev));
+    displ1_old_name = strcat('displ1_load', num2str(step_no-1),'_schwarz',num2str(num_schwarz_prev));
   else
-    disp0_old_name = strcat('displ0_load', num2str(step_no),'_schwarz',num2str(schwarz_no-1));
-    disp1_old_name = strcat('displ1_load', num2str(step_no),'_schwarz',num2str(schwarz_no-1));
+    displ0_old_name = strcat('displ0_load', num2str(step_no),'_schwarz',num2str(schwarz_no-1));
+    displ1_old_name = strcat('displ1_load', num2str(step_no),'_schwarz',num2str(schwarz_no-1));
   end
+  displ_old{1} = dlmread(displ0_old_name); 
+  displ_old{2} = dlmread(displ1_old_name); 
 end
  
 %The following is based on Alejandro's file FullSchwarz.m 

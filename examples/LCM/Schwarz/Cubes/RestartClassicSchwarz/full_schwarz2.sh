@@ -51,8 +51,12 @@ for (( step=0; step<$1; step++ )); do
      
      echo "   Starting schwarz iter = $schwarz_iter..."
      
-     #initial load step: extract first snapshot from cube0_in.exo and cube1_in.exo
-     if [ $step -eq 0 ]; then
+     if [ $schwarz_iter -eq 0 ]; then
+       #extract first snapshot from cube0_in.exo and cube1_in.exo.
+       #the latter is required for the first DTK transfer step.
+       #FIXME: by doing this, we are using a 0 initial guess for Newton's method for all load steps.
+       #it makes more sense to take the converged solution from the previous load step for $step > 0
+       #code needs to be modified to do this.
        ncks -d time_step,$step cube0_in.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
        ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
      fi
@@ -86,21 +90,19 @@ for (( step=0; step<$1; step++ )); do
      #################  DTK TRANSFER FROM CUBE0 TO CUBE1  #############
      echo "      Transferring solution in cube0 onto cube1 using DTK..."
      #we run DTK_Interp_Volume_to_NS with input file input_schwarz_cube0_target_load"$step"_schwarz"$schwarz_iter".xml
-     #the output from the run is redirected to ...
+     #the output from the run is redirected to dtk_cube1_load"$step"_schwarz"$schwarz_iter"_out.tx
      #the input source mesh is cube0_restart_out_load"$step"_schwarz"$schwarz_iter".exo
      #the input target mesh is cube1_in_load"$step"_schwarz"$schwarz_iter".exo
      #the output target mesh is target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
-     #interpolation is performed for the dirichlet_field field.
+     #interpolation is performed for the disp field from source input mesh onto the dirichlet_field field 
+     #in the target input mesh and written to the dirichlet_field field of target output mesh.
      bash dtktransfer.sh $step $schwarz_iter 1 
      echo "      ...DTK transfer from cube0 onto cube1 done."
      ##################################################################
 
      #################  POST-DTK RUN PROCESSING FOR CUBE1  ############
      echo "      Starting post-DTK run for cube1 processing..."
-     #the time stamp in cube1_in_load"$step"_schwarz"$schwarz_iter".exo is changed to 0
-     #the file target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo is merged with cube1_in_load"$step"_schwarz"$schwarz_iter".exo
-     #so the latter file has the interpolated dirichlet_field field from the former file 
-     bash postdtkprocess.sh $step $schwarz_iter 1
+     cp target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
      echo "      ...post-DTK cube1 run done."
      ##################################################################
 
@@ -109,30 +111,9 @@ for (( step=0; step<$1; step++ )); do
      #we run Albany with input file cube1_restart_load"$step"_schwarz"$schwarz_iter".xml
      #the output from the run is redirected to albanyT_cube1_load"$step"_schwarz"$schwarz_iter"_out.txt
      #the input Exodus mesh is cube1_in_load"$step"_schwarz"$schwarz_iter".exo
-     #the output Exodus mesh is cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+     #the output Exodus mesh is cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo.  it has 1 snapshot.
      bash runalbany.sh $step $schwarz_iter 1
      echo "      ...Albany cube1 run done."
-     ##################################################################
-
-     #################  DTK TRANSFER FROM CUBE1 TO CUBE0  #############
-     echo "      Transferring solution in cube1 onto cube0 using DTK..."
-     #we run DTK_Interp_Volume_to_NS with input file input_schwarz_cube1_target_load"$step"_schwarz"$schwarz_iter".xml
-     #the output from the run is redirected to ...
-     #the input source mesh is cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
-     #the input target mesh is cube0_in_load"$step"_schwarz"$schwarz_iter".exo
-     #the output target mesh is target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
-     #interpolation is performed for the disp field
-     bash dtktransfer.sh $step $schwarz_iter 0 
-     echo "      ...DTK transfer from cube1 onto cube0 done."
-     ##################################################################
-
-     #################  POST-DTK RUN PROCESSING FOR CUBE0  ############
-     echo "      Starting post-DTK run for cube0 processing..."
-     #the time stamp in cube0_in_load"$step"_schwarz"$schwarz_iter".exo is changed to 0
-     #the file target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo is merged with cube0_in_load"$step"_schwarz"$schwarz_iter".exo
-     #so the latter file has the interpolated disp and dirichlet_field from the former file (TODO: double check)
-     bash postdtkprocess.sh $step $schwarz_iter 0
-     echo "      ...post-DTK cube0 run done."
      ##################################################################
 
      #################  CHECK CONVERGENCE OF SCHWARZ  #################
@@ -154,6 +135,8 @@ for (( step=0; step<$1; step++ )); do
        echo "     ...Schwarz failed to converge.  Continuing."
        #increment Schwarz iteration 
        let "schwarz_iter=schwarz_iter+1"
+       #FIXME: the exit is temporary...
+       exit
      fi
 
      ##################################################################
