@@ -17,24 +17,7 @@ if [ ! $2 ] ; then
 fi
 
 echo "Initial cleanup..."
-#initial cleanup: remove all old *exo files
-rm -rf target_cube0_out_*.exo 
-rm -rf target_cube1_out_*.exo 
-rm -rf cube0_restart_*.exo 
-rm -rf cube1_restart_*.exo
-rm -rf cube0_restart_out_*.exo 
-rm -rf cube1_restart_out_*.exo
-rm -rf cube0_in_*.exo
-rm -rf cube1_in_*.exo
-#initial cleanup: remove all old *xml files
-rm -rf cube0_restart_*.xml 
-rm -rf cube1_restart_*.xml
-#initial cleanup: remove other old files
-rm -rf displ0_*
-rm -rf displ1_*
-rm -rf error*
-rm -rf *.txt
-rm -rf dtk_*  
+bash initcleanup.sh
 echo "...cleanup done."
 
 tol_schwarz=$2
@@ -80,6 +63,11 @@ for (( step=0; step<$1; step++ )); do
     
      #################  PRE-PROCESSING  ##############################
      echo "      Starting pre-processing..."
+     #the following creates input files:
+     #- cube0_restart_load"$step"_schwarz"$schwarz_iter".xml
+     #- cube1_restart_load"$step"_schwarz"$schwarz_iter".xml
+     #- target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
+     #- target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
      bash preprocess.sh $step $schwarz_iter $load_value 0 #cube0 
      bash preprocess.sh $step $schwarz_iter $load_value 1 #cube1
      echo "      ...pre-processing done." 
@@ -87,45 +75,71 @@ for (( step=0; step<$1; step++ )); do
 
      #################  ALBANY RUN FOR CUBE0  #########################
      echo "      Running Albany on cube0..."
+     #we run Albany with input file cube0_restart_load"$step"_schwarz"$schwarz_iter".xml
+     #the output from the run is redirected to albanyT_cube0_load"$step"_schwarz"$schwarz_iter"_out.txt
+     #the input Exodus mesh is cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+     #the output Exodus mesh is cube0_restart_out_load"$step"_schwarz"$schwarz_iter".exo.  it has 1 snapshot.
      bash runalbany.sh $step $schwarz_iter 0 
      echo "      ...Albany cube0 run done."
      ##################################################################
      
      #################  DTK TRANSFER FROM CUBE0 TO CUBE1  #############
      echo "      Transferring solution in cube0 onto cube1 using DTK..."
+     #we run DTK_Interp_Volume_to_NS with input file input_schwarz_cube0_target_load"$step"_schwarz"$schwarz_iter".xml
+     #the output from the run is redirected to ...
+     #the input source mesh is cube0_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+     #the input target mesh is cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     #the output target mesh is target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
+     #interpolation is performed for the dirichlet_field field.
      bash dtktransfer.sh $step $schwarz_iter 1 
      echo "      ...DTK transfer from cube0 onto cube1 done."
      ##################################################################
 
      #################  POST-DTK RUN PROCESSING FOR CUBE1  ############
      echo "      Starting post-DTK run for cube1 processing..."
+     #the time stamp in cube1_in_load"$step"_schwarz"$schwarz_iter".exo is changed to 0
+     #the file target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo is merged with cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     #so the latter file has the interpolated dirichlet_field field from the former file 
      bash postdtkprocess.sh $step $schwarz_iter 1
      echo "      ...post-DTK cube1 run done."
      ##################################################################
 
      #################  ALBANY RUN FOR CUBE1  #########################
      echo "      Running Albany on cube1..."
+     #we run Albany with input file cube1_restart_load"$step"_schwarz"$schwarz_iter".xml
+     #the output from the run is redirected to albanyT_cube1_load"$step"_schwarz"$schwarz_iter"_out.txt
+     #the input Exodus mesh is cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     #the output Exodus mesh is cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
      bash runalbany.sh $step $schwarz_iter 1
      echo "      ...Albany cube1 run done."
      ##################################################################
 
      #################  DTK TRANSFER FROM CUBE1 TO CUBE0  #############
      echo "      Transferring solution in cube1 onto cube0 using DTK..."
+     #we run DTK_Interp_Volume_to_NS with input file input_schwarz_cube1_target_load"$step"_schwarz"$schwarz_iter".xml
+     #the output from the run is redirected to ...
+     #the input source mesh is cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+     #the input target mesh is cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+     #the output target mesh is target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
+     #interpolation is performed for the disp field
      bash dtktransfer.sh $step $schwarz_iter 0 
      echo "      ...DTK transfer from cube1 onto cube0 done."
      ##################################################################
 
      #################  POST-DTK RUN PROCESSING FOR CUBE0  ############
      echo "      Starting post-DTK run for cube0 processing..."
+     #the time stamp in cube0_in_load"$step"_schwarz"$schwarz_iter".exo is changed to 0
+     #the file target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo is merged with cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+     #so the latter file has the interpolated disp and dirichlet_field from the former file (TODO: double check)
      bash postdtkprocess.sh $step $schwarz_iter 0
      echo "      ...post-DTK cube0 run done."
      ##################################################################
 
      #################  CHECK CONVERGENCE OF SCHWARZ  #################
      echo "      Checking if Schwarz converged..."
-     #the following will create an ascii file error containing the value of the error as well as ascii files with the displacements
+     #the following will create an ascii file containing the value of the error as well as ascii files with the displacements
      matlab -nodesktop -nosplash -r "norm_displacements2($schwarz_iter, $step, $num_schwarz_iter_prev);quit;"
-     #read error from error file
+     #read error from ascii file
      err=$(head -n 1 error)
      #convert from scientific "e" notation to notation readable by the bc bash tool
      err=`echo ${err} | sed -e 's/[eE]+*/\\*10\\^/'`
@@ -133,7 +147,7 @@ for (( step=0; step<$1; step++ )); do
      #check if error < tol_schwarz; if it is, the method is converged 
      if (($(echo $err '<=' $tol_schwarz | bc -l))); then
        num_schwarz_iter_prev=$schwarz_iter
-       echo "     ...classical Schwarz converged after $num_schwarz_iter_prev Schwarz iterations!"
+       echo "     ...full Schwarz converged after $num_schwarz_iter_prev Schwarz iterations!"
        iterate_schwarz=0
      else
        echo "     error = $err > tol_schwarz = $tol_schwarz"

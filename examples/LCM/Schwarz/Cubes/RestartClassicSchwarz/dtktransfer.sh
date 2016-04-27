@@ -1,4 +1,5 @@
 
+#!/bin/bash
 
 if [ ! $3 ] ; then
     echo "This function requires 3 arguments: load step # (int), schwarz step # (int), cube # (int)";
