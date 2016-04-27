@@ -30,10 +30,8 @@ rm -rf cube1_in_*.exo
 rm -rf cube0_restart_*.xml 
 rm -rf cube1_restart_*.xml
 #initial cleanup: remove other old files
-rm -rf displ0_old 
-rm -rf displ1_old
-rm -rf displ0_current*
-rm -rf displ1_current*
+rm -rf displ0_*
+rm -rf displ1_*
 rm -rf error*
 rm -rf *.txt
 rm -rf dtk_*  
@@ -62,6 +60,9 @@ for (( step=0; step<$1; step++ )); do
 
    #Set the load value.  Note that load_value assumes the load is going from 0->1 right now.
    load_value=0.$step
+
+   #integer for keeping track of how many schwarz iterations were in the previous schwarz step
+   num_schwarz_iter_prev=0 
 
    while [ $iterate_schwarz -eq 1 ]; do
      
@@ -120,10 +121,29 @@ for (( step=0; step<$1; step++ )); do
      echo "      ...post-DTK cube0 run done."
      ##################################################################
 
-     #FIXME: the following line will need to change 
-     let "iterate_schwarz=0"
-     echo "   ...finished schwarz iter = $schwarz_iter" 
-    
+     #################  CHECK CONVERGENCE OF SCHWARZ  #################
+     echo "      Checking if Schwarz converged..."
+     #the following will create an ascii file error containing the value of the error as well as ascii files with the displacements
+     matlab -nodesktop -nosplash -r "norm_displacements2($schwarz_iter, $step, $num_schwarz_iter_prev);quit;"
+     #read error from error file
+     err=$(head -n 1 error)
+     #convert from scientific "e" notation to notation readable by the bc bash tool
+     err=`echo ${err} | sed -e 's/[eE]+*/\\*10\\^/'`
+     echo "      error = $err" 
+     #check if error < tol_schwarz; if it is, the method is converged 
+     if (($(echo $err '<=' $tol_schwarz | bc -l))); then
+       num_schwarz_iter_prev=$schwarz_iter
+       echo "     ...classical Schwarz converged after $num_schwarz_iter_prev Schwarz iterations!"
+       iterate_schwarz=0
+     else
+       echo "     error = $err > tol_schwarz = $tol_schwarz"
+       echo "     ...Schwarz failed to converge.  Continuing."
+       #increment Schwarz iteration 
+       let "schwarz_iter=schwarz_iter+1"
+     fi
+
+     ##################################################################
+
    done #while loop
    echo "...finished load step $step run!" 
 done #load step loop 
