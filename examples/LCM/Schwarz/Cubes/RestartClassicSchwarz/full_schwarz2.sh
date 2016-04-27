@@ -51,20 +51,6 @@ for (( step=0; step<$1; step++ )); do
      
      echo "   Starting schwarz iter = $schwarz_iter..."
      
-     if [ $schwarz_iter -eq 0 ]; then
-       #extract first snapshot from cube0_in.exo and cube1_in.exo.
-       #the latter is required for the first DTK transfer step.
-       #FIXME: by doing this, we are using a 0 initial guess for Newton's method for all load steps.
-       #it makes more sense to take the converged solution from the previous load step for $step > 0
-       #code needs to be modified to do this.
-       ncks -d time_step,$step cube0_in.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
-       ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
-     fi
-     #FIXME: create cube*_in* files for step > 0.  For these, the Dirichlet data should be from step $step
-     #in cube0_in.exo and cube1_in.exo; but the displacement should be from 
-     #  - cube0_restart_load$step_schwarz($schwarz_iter-1).exo (similarly for cube1) if load step has not been incremented
-     #  - cube0_restart_load($step-1)_schwarz"$num_schwarz_iter_prev".exo if load step has been incremented.
-    
      #################  PRE-PROCESSING  ##############################
      echo "      Starting pre-processing..."
      #the following creates input files:
@@ -76,7 +62,44 @@ for (( step=0; step<$1; step++ )); do
      bash preprocess.sh $step $schwarz_iter $load_value 1 #cube1
      echo "      ...pre-processing done." 
      ##################################################################
+     
+     if [ $schwarz_iter -eq 0 ]; then
+       #extract first snapshot from cube0_in.exo and cube1_in.exo.
+       #the latter is required for the first DTK transfer step.
+       #FIXME: by doing this, we are using a 0 initial guess for Newton's method for all load steps.
+       #it makes more sense to take the converged solution from the previous load step for $step > 0
+       #code needs to be modified to do this.
+       ncks -d time_step,$step cube0_in.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     else 
+       #################  DTK TRANSFER FROM CUBE1 TO CUBE0  #############
+       echo "      Transferring solution in cube1 onto cube0 using DTK..."
+       cp cube0_in_load"$step"_schwarz0.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       cp cube1_in_load"$step"_schwarz0.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+       let "prev_schwarz_iter=schwarz_iter-1"
+       mv cube1_restart_out_load"$step"_schwarz"$prev_schwarz_iter".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+       #we run DTK_Interp_Volume_to_NS with input file input_schwarz_cube1_target_load"$step"_schwarz"$schwarz_iter".xml
+       #the output from the run is redirected to dtk_cube0_load"$step"_schwarz"$schwarz_iter"_out.txt
+       #the input source mesh is cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+       #the input target mesh is cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       #the output target mesh is target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
+       #interpolation is performed for the disp field from source input mesh onto the dirichlet_field field 
+       #in the target input mesh and written to the dirichlet_field field of target output mesh.
+       bash dtktransfer.sh $step $schwarz_iter 0 
+       echo "      ...DTK transfer from cube1 onto cube0 done."
+       ##################################################################
 
+       #################  POST-DTK RUN PROCESSING FOR CUBE0  ############
+       echo "      Starting post-DTK run for cube0 processing..."
+       cp target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       echo "      ...post-DTK cube0 run done."
+       ##################################################################
+     fi
+     #FIXME: create cube*_in* files for step > 0.  For these, the Dirichlet data should be from step $step
+     #in cube0_in.exo and cube1_in.exo; but the displacement should be from 
+     #  - cube0_restart_load$step_schwarz($schwarz_iter-1).exo (similarly for cube1) if load step has not been incremented
+     #  - cube0_restart_load($step-1)_schwarz"$num_schwarz_iter_prev".exo if load step has been incremented.
+    
      #################  ALBANY RUN FOR CUBE0  #########################
      echo "      Running Albany on cube0..."
      #we run Albany with input file cube0_restart_load"$step"_schwarz"$schwarz_iter".xml
@@ -135,10 +158,11 @@ for (( step=0; step<$1; step++ )); do
        echo "     ...Schwarz failed to converge.  Continuing."
        #increment Schwarz iteration 
        let "schwarz_iter=schwarz_iter+1"
-       #FIXME: the exit is temporary...
-       exit
      fi
-
+     #if [ $schwarz_iter -eq 2 ]; then
+     #   exit
+     #fi
+   
      ##################################################################
 
    done #while loop
