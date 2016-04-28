@@ -24,28 +24,25 @@ tol_schwarz=$2
 #convert from scientific "e" notation to notation readable by the bc bash tool
 tol_schwarz=`echo ${tol_schwarz} | sed -e 's/[eE]+*/\\*10\\^/'`
 echo "Schwarz convergence tolerance = $tol_schwarz"
-#TODO? Set alternative convergence tolerance, e.g., max # Schwarz iterations
-#FIXME: save more history for debugging (e.g., history of displ*_old's, not just the past one).
-#NOTE: the code assumes cube0_in.exo and cube1_in.exo have $1 snapshots.  I think this is necessary 
-#if there is a time-dependent boundary condition; otherwise it is not and the code below can be rewritten 
-#easily to handle this case. 
-#TODO: can Alejandro or Coleman create input  *exo file for this problem that contains only dirichlet_field field
-#to make sure things still work with a restart from a trivial initial condition? 
+#FIXME: Set alternative convergence tolerance, e.g., max # Schwarz iterations
+
+#integer for keeping track of how many schwarz iterations were in the previous schwarz step
+num_schwarz_iter_prev=0 
 
 
 #load step loop
 for (( step=0; step<$1; step++ )); do
  
    echo "Starting load step = $step..."
+
+   echo "   num_schwarz_iter_prev = $num_schwarz_iter_prev"
+
    iterate_schwarz=1 #flag to tell code to continue Schwarz; if iterate_schwarz==0, Schwarz will stop
                      #this parameter should be reset to 1 in each load step 
    schwarz_iter=0 #Schwarz iteration number 
 
    #Set the load value.  Note that load_value assumes the load is going from 0->1 right now.
    load_value=0.$step
-
-   #integer for keeping track of how many schwarz iterations were in the previous schwarz step
-   num_schwarz_iter_prev=0 
 
    while [ $iterate_schwarz -eq 1 ]; do
      
@@ -63,21 +60,25 @@ for (( step=0; step<$1; step++ )); do
      echo "      ...pre-processing done." 
      ##################################################################
      
-     if [ $schwarz_iter -eq 0 ]; then
-       #extract first snapshot from cube0_in.exo and cube1_in.exo.
-       #the latter is required for the first DTK transfer step.
-       #FIXME: by doing this, we are using a 0 initial guess for Newton's method for all load steps.
-       #it makes more sense to take the converged solution from the previous load step for $step > 0
-       #code needs to be modified to do this.
-       ncks -d time_step,$step cube0_in.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
-       ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
-     else 
-       #################  DTK TRANSFER FROM CUBE1 TO CUBE0  #############
+     #extract first snapshot from cube0_in.exo and cube1_in.exo.
+     #the latter is required for the first DTK transfer step.
+     #FIXME: by doing this, we are using a 0 initial guess for Newton's method for all load steps.
+     #it makes more sense to take the converged solution from the previous load step for $step > 0
+     #code needs to be modified to do this.
+     ncks -d time_step,$step cube0_in.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+     ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+
+     #################  DTK TRANSFER FROM CUBE1 TO CUBE0  #############
+     #DTK transfer does not make sense for 1st load step 
+     if [ $step -gt 0 ]; then 
        echo "      Transferring solution in cube1 onto cube0 using DTK..."
-       cp cube0_in_load"$step"_schwarz0.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
-       cp cube1_in_load"$step"_schwarz0.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
-       let "prev_schwarz_iter=schwarz_iter-1"
-       mv cube1_restart_out_load"$step"_schwarz"$prev_schwarz_iter".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+       if [ $schwarz_iter -eq 0 ]; then
+         let "prev_step=step-1"
+         mv cube1_restart_out_load"$prev_step"_schwarz"$num_schwarz_iter_prev".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+       else  
+         let "prev_schwarz_iter=schwarz_iter-1"
+         mv cube1_restart_out_load"$step"_schwarz"$prev_schwarz_iter".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+       fi
        #we run DTK_Interp_Volume_to_NS with input file input_schwarz_cube1_target_load"$step"_schwarz"$schwarz_iter".xml
        #the output from the run is redirected to dtk_cube0_load"$step"_schwarz"$schwarz_iter"_out.txt
        #the input source mesh is cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
