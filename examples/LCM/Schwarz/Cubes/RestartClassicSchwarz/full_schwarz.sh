@@ -11,8 +11,8 @@
 #cube1_restart.xml  
 #norm_displacements.m
 
-if [ ! $2 ] ; then
-    echo "This function requires 2 arguments: # load steps (int), Schwarz convergence tolerance (double)";
+if [ ! $3 ] ; then
+    echo "This function requires 3 arguments: # load steps (int), Schwarz convergence tolerance (double), max number Schwarz iters (int)";
     exit
 fi
 
@@ -24,7 +24,8 @@ tol_schwarz=$2
 #convert from scientific "e" notation to notation readable by the bc bash tool
 tol_schwarz=`echo ${tol_schwarz} | sed -e 's/[eE]+*/\\*10\\^/'`
 echo "Schwarz convergence tolerance = $tol_schwarz"
-#FIXME: Set alternative convergence tolerance, e.g., max # Schwarz iterations
+max_schwarz_iter=$3
+let "max_schwarz_iter=max_schwarz_iter-1"
 
 #integer for keeping track of how many schwarz iterations were in the previous schwarz step
 num_schwarz_iter_prev=0 
@@ -152,9 +153,15 @@ for (( step=0; step<$1; step++ )); do
        iterate_schwarz=0
      else
        echo "     error = $err > tol_schwarz = $tol_schwarz"
-       echo "     ...Schwarz failed to converge.  Continuing."
-       #increment Schwarz iteration 
-       let "schwarz_iter=schwarz_iter+1"
+       if [ $schwarz_iter -lt $max_schwarz_iter ]; then
+         echo "     ...Schwarz failed to converge.  Continuing."
+         #increment Schwarz iteration 
+         let "schwarz_iter=schwarz_iter+1"
+       else 
+         echo "     ...Schwarz failed to converge, but max number of Schwarz iterations (= $max_schwarz_iter) hit.  Proceeding to next load step."
+         num_schwarz_iter_prev=$schwarz_iter
+         iterate_schwarz=0
+       fi
      fi
      #if [ $schwarz_iter -eq 2 ]; then
      #   exit
