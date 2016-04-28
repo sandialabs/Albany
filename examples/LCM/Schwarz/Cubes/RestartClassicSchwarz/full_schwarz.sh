@@ -139,7 +139,7 @@ for (( step=0; step<$1; step++ )); do
      #################  CHECK CONVERGENCE OF SCHWARZ  #################
      echo "      Checking if Schwarz converged..."
      #the following will create an ascii file containing the value of the error as well as ascii files with the displacements
-     matlab -nodesktop -nosplash -r "norm_displacements2($schwarz_iter, $step, $num_schwarz_iter_prev);quit;"
+     matlab -nodesktop -nosplash -r "norm_displacements($schwarz_iter, $step, $num_schwarz_iter_prev);quit;"
      #read error from ascii file
      err=$(head -n 1 error)
      #convert from scientific "e" notation to notation readable by the bc bash tool
