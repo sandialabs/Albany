@@ -13,14 +13,26 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube0_restart.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube1_restart.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/full_schwarz.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/full_schwarz.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube1_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube1_target.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube0_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube0_target.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/full_schwarz.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/full_schwarz.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/preprocess.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/preprocess.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/process_errors.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/process_errors COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dtktransfer.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/dtktransfer.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/initcleanup.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/initcleanup.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runalbany.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/runalbany.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/norm_displacements.m
                ${CMAKE_CURRENT_BINARY_DIR}/norm_displacements.m COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_errs.m
+               ${CMAKE_CURRENT_BINARY_DIR}/plot_errs.m COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink

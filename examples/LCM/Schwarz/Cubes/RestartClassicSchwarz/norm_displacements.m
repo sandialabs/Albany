@@ -6,14 +6,14 @@
 %vals_nod_var1, vals_nod_var2, and vals_nod_var3 in the *exo file,
 %respectively.  If they are not, code needs to be modified.
 
-%Input: Schwarz step number, schwarz_no (int) 
-function[] = norm_displacements(schwarz_no, step_no) 
+%Inputs: Schwarz step number (int), load step number (int), # of Schwarz steps in previous load step run (int)  
+function[] = norm_displacements(schwarz_no, step_no, num_schwarz_prev) 
 
-file0_exo_name = strcat('cube0_restart_',num2str(step_no),'.exo');
-file1_exo_name = strcat('cube1_restart_',num2str(step_no),'.exo');
+file0_exo_name = strcat('cube0_restart_out_load',num2str(step_no),'_schwarz',num2str(schwarz_no),'.exo');
+file1_exo_name = strcat('cube1_restart_out_load',num2str(step_no),'_schwarz',num2str(schwarz_no),'.exo');
 
-displ0_current_name = strcat('displ0_current_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
-displ1_current_name = strcat('displ1_current_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
+displ0_current_name = strcat('displ0_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
+displ1_current_name = strcat('displ1_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
 error_name = strcat('error_load', num2str(step_no),'_schwarz',num2str(schwarz_no));
 
 disp(['      step_no = ',num2str(step_no)]); 
@@ -59,14 +59,21 @@ displ1(3:3:end) = displ1_z;
 displ{1} = displ0; 
 displ{2} = displ1; 
 
-if (schwarz_no == 0)
-  %TO ASK ALEJANDRO: Is this right -- to set disp_old to all zeros in the first Schwarz step always? 
+if (schwarz_no == 0 && step_no == 0)
+  %Set disp_old to all zeros in the first load and Schwarz step
   displ_old{1} = zeros(length(displ{1}),1); 
   displ_old{2} = zeros(length(displ{2}),1); 
 else
   %read displ_old from file
-  displ_old{1} = dlmread('displ0_old'); 
-  displ_old{2} = dlmread('displ1_old');
+  if (schwarz_no == 0) 
+    displ0_old_name = strcat('displ0_load', num2str(step_no-1),'_schwarz',num2str(num_schwarz_prev));
+    displ1_old_name = strcat('displ1_load', num2str(step_no-1),'_schwarz',num2str(num_schwarz_prev));
+  else
+    displ0_old_name = strcat('displ0_load', num2str(step_no),'_schwarz',num2str(schwarz_no-1));
+    displ1_old_name = strcat('displ1_load', num2str(step_no),'_schwarz',num2str(schwarz_no-1));
+  end
+  displ_old{1} = dlmread(displ0_old_name); 
+  displ_old{2} = dlmread(displ1_old_name); 
 end
  
 %The following is based on Alejandro's file FullSchwarz.m 
@@ -77,6 +84,8 @@ for i=1:2
   difference_norms(i) = norm(diff); 
 end
 
+displacement_norms
+difference_norms
 norm_displ = norm(displacement_norms, norm_type); 
 norm_difference = norm(difference_norms, norm_type); 
 
@@ -91,15 +100,12 @@ end
 disp(['      error = ', num2str(error)]);
 
 %debug output
-disp('       displ0 = ');
-displ{1}
-disp('       displ1 = ');
-displ{2}
+%disp('       displ0 = ');
+%displ{1}
+%disp('       displ1 = ');
+%displ{2}
 
-%write new displacements to displ*_old files.
-dlmwrite('displ0_old', displ{1}, 'precision', 10); 
-dlmwrite('displ1_old', displ{2}, 'precision', 10);
-%write new displacements to files with unique names for debugging/diagnosing 
+%write new displacements to file 
 dlmwrite(displ0_current_name, displ{1}, 'precision', 10); 
 dlmwrite(displ1_current_name, displ{2}, 'precision', 10); 
 %write error to file
