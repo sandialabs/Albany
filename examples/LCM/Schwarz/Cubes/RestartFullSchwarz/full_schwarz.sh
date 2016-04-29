@@ -70,15 +70,16 @@ for (( step=0; step<$1; step++ )); do
      ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
 
      #################  DTK TRANSFER FROM CUBE1 TO CUBE0  #############
-     #DTK transfer does not make sense for 1st load step 
+     #DTK transfer does not make sense for 1st load step
+     #NOTE: the logic here implicitly assumes the 1st load step is trivial (solutions are all 0). 
      if [ $step -gt 0 ]; then 
        echo "      Transferring solution in cube1 onto cube0 using DTK..."
        if [ $schwarz_iter -eq 0 ]; then
          let "prev_step=step-1"
-         mv cube1_restart_out_load"$prev_step"_schwarz"$num_schwarz_iter_prev".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+         cp cube1_restart_out_load"$prev_step"_schwarz"$num_schwarz_iter_prev".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
        else  
          let "prev_schwarz_iter=schwarz_iter-1"
-         mv cube1_restart_out_load"$step"_schwarz"$prev_schwarz_iter".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
+         cp cube1_restart_out_load"$step"_schwarz"$prev_schwarz_iter".exo cube1_restart_out_load"$step"_schwarz"$schwarz_iter".exo
        fi
        #we run DTK_Interp_Volume_to_NS with input file input_schwarz_cube1_target_load"$step"_schwarz"$schwarz_iter".xml
        #the output from the run is redirected to dtk_cube0_load"$step"_schwarz"$schwarz_iter"_out.txt
@@ -92,8 +93,12 @@ for (( step=0; step<$1; step++ )); do
        ##################################################################
 
        #################  POST-DTK RUN PROCESSING FOR CUBE0  ############
+       #here, we replace the dirichlet_field in cube0_in_load"$step"_schwarz"$schwarz_iter".exo 
+       #with the dirichlet_field in target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
        echo "      Starting post-DTK run for cube0 processing..."
-       cp target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       source_file=target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
+       target_file=cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       matlab -nodesktop -nosplash -r "replace_nodal_field('$target_file', '$source_file', [1,2,3], [1,2,3]);quit;"
        echo "      ...post-DTK cube0 run done."
        ##################################################################
      fi
@@ -123,7 +128,11 @@ for (( step=0; step<$1; step++ )); do
 
      #################  POST-DTK RUN PROCESSING FOR CUBE1  ############
      echo "      Starting post-DTK run for cube1 processing..."
-     cp target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     #here, we replace the dirichlet_field in cube1_in_load"$step"_schwarz"$schwarz_iter".exo 
+     #with the dirichlet_field in target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
+     source_file=target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
+     target_file=cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     matlab -nodesktop -nosplash -r "replace_nodal_field('$target_file', '$source_file', [1,2,3], [1,2,3]);quit;"
      echo "      ...post-DTK cube1 run done."
      ##################################################################
 

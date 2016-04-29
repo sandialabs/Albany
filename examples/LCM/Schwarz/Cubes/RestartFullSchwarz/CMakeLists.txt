@@ -33,6 +33,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/norm_displacements.m
                ${CMAKE_CURRENT_BINARY_DIR}/norm_displacements.m COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_errs.m
                ${CMAKE_CURRENT_BINARY_DIR}/plot_errs.m COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/replace_nodal_field.m
+               ${CMAKE_CURRENT_BINARY_DIR}/replace_nodal_field.m COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
