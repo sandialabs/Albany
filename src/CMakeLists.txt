@@ -1000,7 +1000,7 @@ IF (INSTALL_ALBANY)
   MESSAGE("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
   STRING(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
   STRING(REPLACE ";" " -l" ALBANY_LINK_LIBS
-        "-L ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
+        "-L${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
         " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
   CONFIGURE_FILE(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
 

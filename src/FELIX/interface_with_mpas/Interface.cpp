@@ -354,6 +354,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   discretizationList.set("Method", discretizationList.get("Method", "Extruded")); //set to Extruded is not defined
   discretizationList.set("Cubature Degree", discretizationList.get("Cubature Degree", 1));  //set 1 if not defined
   discretizationList.set("Interleaved Ordering", discretizationList.get("Interleaved Ordering", true));  //set true if not define
+  paramList->sublist("Problem").set<int>("importCellTemperatureFromMesh",1);
   
   paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
 

@@ -162,11 +162,23 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   std::string stateName, fieldName, param_name;
 
   // Temperature
-  entity = Albany::StateStruct::NodalDataToElemNode;
-  stateName = fieldName = "temperature";
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
+  if(params->get<int>("importCellTemperatureFromMesh",0)) {
+    entity = Albany::StateStruct::ElemData;
+    stateName =  fieldName = "temperature";
+    p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity);
+    p->set<std::string>("Field Name", fieldName);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  else{
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    stateName = fieldName = "temperature";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
   {
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
@@ -533,6 +545,12 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   // Bed topography
   stateName = "bed_topography";
+  entity= Albany::StateStruct::NodalDataToElemNode;
+  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+  stateName = "basal_friction";
   entity= Albany::StateStruct::NodalDataToElemNode;
   p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
   ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
@@ -975,7 +993,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
   //Input
   p->set<std::string>("CISM Surface Height Gradient X Variable Name", "CISM Surface Height Gradient X");
-  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "CISM Surface Height Gradient X");
+  p->set<std::string>("CISM Surface Height Gradient Y Variable Name", "CISM Surface Height Gradient Y");
   p->set<std::string>("BF Variable Name", "BF");
 
   //Output

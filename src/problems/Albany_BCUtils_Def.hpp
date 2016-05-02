@@ -786,7 +786,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
           else if(conditions[k] == "basal_scalar_field") {
             Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
             p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
-            p->set<string>("Beta Field Name", "beta_field");
+            p->set<string>("Beta Field Name", "basal_friction");
             p->set<string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
             p->set<string>("thickness Field Name", "thickness");
@@ -957,7 +957,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
 
 
 #ifdef ALBANY_FELIX
-  // Build evaluator for basal_friction
+/*  // Build evaluator for basal_friction
   string NeuGBF="Evaluator for Gather basal_friction";
   {
     string paramName = "basal_friction";
@@ -974,6 +974,22 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
       p->set< string >("State Name", paramName);
       p->set< string >("Field Name", paramName);
     }
+
+    evaluators_to_build[NeuGBF] = p;
+  }
+  */
+  // Build evaluator for thickness
+  string NeuGBF = "Evaluator for Gather basal_friction";
+  {
+    const string paramName = "basal_friction";
+    RCP<ParameterList> p = rcp(new ParameterList());
+    p->set<int>("Type", traits_type::typeSF);
+
+    // for new way
+    p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
+    p->set< string >("State Name", paramName);
+    p->set< std::string >("Field Name", paramName);
+
 
     evaluators_to_build[NeuGBF] = p;
   }

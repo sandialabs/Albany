@@ -109,6 +109,7 @@ namespace Albany {
     bool hasRestartSol;
     double restartTime;
     Teuchos::RCP<Tpetra_Map> elem_mapT; //element map
+    LayeredMeshOrdering Ordering;
 
     protected:
 

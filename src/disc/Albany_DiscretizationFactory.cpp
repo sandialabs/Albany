@@ -413,7 +413,7 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                                "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                                "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
-                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Mpas, Ascii," <<
+                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Ascii," <<
                                " Ascii2D, Extruded" << std::endl);
   }
 }
